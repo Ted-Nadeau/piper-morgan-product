@@ -8,7 +8,9 @@ from services.shared_types import ( #
     TaskType, TaskStatus
 )
 
-from .engine import engine, OrchestrationEngine #
+# Don't import engine at module level
+# Let consumers import what they need
+
 from .workflows import Workflow, WorkflowDefinition, WORKFLOW_DEFINITIONS #
 from .tasks import Task, TaskResult #
 

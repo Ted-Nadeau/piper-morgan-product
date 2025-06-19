@@ -412,5 +412,10 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             output_data={"placeholder": True}
         )
 
+def get_github_analyzer():
+    # Import only when needed
+    from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
+    return GitHubIssueAnalyzer()
+
 # Global engine instance
 engine = OrchestrationEngine()

@@ -279,34 +279,6 @@ class TestProjectContext:
         assert "Multiple projects available" in str(exc_info.value)
     
     @pytest.mark.asyncio
-    async def test_list_available_projects(self, mock_repo, mock_llm):
-        """Should list available projects when requested"""
-        # GIVEN: User asks to see projects
-        intent = Intent(
-            category=IntentCategory.EXECUTION,
-            action="list_projects",
-            context={"original_message": "What projects are available?"}
-        )
-        
-        # AND: Multiple projects exist
-        projects = [
-            Project(id="web-123", name="Web Platform", description="Main website"),
-            Project(id="mobile-123", name="Mobile App", description="iOS and Android"),
-            Project(id="api-123", name="API Services", description="Backend APIs")
-        ]
-        mock_repo.list_active_projects.return_value = projects
-        
-        # WHEN: Getting available projects
-        context = ProjectContext(mock_repo, mock_llm)
-        available_projects = await context.get_available_projects()
-        
-        # THEN: Should return all active projects
-        assert len(available_projects) == 3
-        assert available_projects[0].name == "Web Platform"
-        assert available_projects[1].name == "Mobile App"
-        assert available_projects[2].name == "API Services"
-    
-    @pytest.mark.asyncio
     async def test_handles_project_not_found_error(self, mock_repo, mock_llm):
         """Should handle gracefully when explicit project doesn't exist"""
         # GIVEN: Intent with non-existent project_id

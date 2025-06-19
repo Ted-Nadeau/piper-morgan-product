@@ -4,9 +4,9 @@ Project Context Service for PM-009
 Centralizes project resolution and context management
 """
 
-from .project_context import ProjectContext, AmbiguousProjectError
+from .exceptions import AmbiguousProjectError, ProjectNotFoundError
+from .project_context import ProjectContext
 
-# Add the missing exception that tests expect:
-class ProjectNotFoundError(Exception):
-    """Raised when a project ID is not found"""
-    pass
+__all__ = ["ProjectContext", "AmbiguousProjectError", "ProjectNotFoundError"]
+
+from services.project_context import ProjectContext, AmbiguousProjectError, ProjectNotFoundError
