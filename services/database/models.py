@@ -8,7 +8,8 @@ from datetime import datetime
 import enum
 
 from .connection import Base
-from services.shared_types import IntentCategory, WorkflowType, WorkflowStatus, TaskType, TaskStatus
+from services.shared_types import IntentCategory, WorkflowType, WorkflowStatus, TaskType, TaskStatus, IntegrationType
+import services.domain.models as domain
 
 class Product(Base):
     """Product being managed"""
@@ -130,3 +131,85 @@ class Stakeholder(Base):
     interests = Column(JSON)  # List of interest areas
     influence_level = Column(Integer, default=1)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class ProjectDB(Base):
+    """A PM project with multiple tool integrations"""
+    __tablename__ = "projects"
+    
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    description = Column(Text)
+    is_default = Column(Boolean, default=False)
+    is_archived = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    integrations = relationship("ProjectIntegrationDB", back_populates="project", 
+                              cascade="all, delete-orphan")
+
+    def to_domain(self) -> domain.Project:
+        project = domain.Project(
+            id=self.id,
+            name=self.name,
+            description=self.description,
+            is_default=self.is_default,
+            is_archived=self.is_archived,
+            created_at=self.created_at,
+            updated_at=self.updated_at
+        )
+        # Map integrations relationship
+        project.integrations = [
+            integration.to_domain() for integration in self.integrations
+        ]
+        return project
+    
+    @classmethod
+    def from_domain(cls, project: domain.Project) -> 'ProjectDB':
+        return cls(
+            id=project.id,
+            name=project.name,
+            description=project.description,
+            is_default=project.is_default,
+            is_archived=project.is_archived,
+            created_at=project.created_at,
+            updated_at=project.updated_at
+            # Note: integrations handled separately in repository
+        )
+
+class ProjectIntegrationDB(Base):
+    """Integration configuration for a project"""
+    __tablename__ = "project_integrations"
+    
+    id = Column(String, primary_key=True)
+    project_id = Column(String, ForeignKey("projects.id"), nullable=False)
+    type = Column(Enum(IntegrationType), nullable=False)
+    name = Column(String, nullable=False)
+    config = Column(JSON, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    project = relationship("ProjectDB", back_populates="integrations")
+
+    def to_domain(self) -> domain.ProjectIntegration:
+        return domain.ProjectIntegration(
+            id=self.id,
+            type=self.type,
+            name=self.name,
+            config=self.config,
+            is_active=self.is_active,
+            created_at=self.created_at
+        )
+    
+    @classmethod
+    def from_domain(cls, integration: domain.ProjectIntegration, project_id: str) -> 'ProjectIntegrationDB':
+        return cls(
+            id=integration.id,
+            project_id=project_id,
+            type=integration.type,
+            name=integration.name,
+            config=integration.config,
+            is_active=integration.is_active,
+            created_at=integration.created_at
+        )

@@ -20,6 +20,9 @@ class WorkflowType(Enum):
     GENERATE_REPORT = "generate_report"
     PLAN_STRATEGY = "plan_strategy"
     LEARN_PATTERN = "learn_pattern"
+    # PM-009: Project management workflow types
+    CONFIRM_PROJECT = "confirm_project"
+    SELECT_PROJECT = "select_project"
     
 class WorkflowStatus(Enum):
     PENDING = "pending"
@@ -55,3 +58,10 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
+
+# PM-009: Integration type enum for project integrations
+class IntegrationType(Enum):
+    GITHUB = "github"
+    JIRA = "jira"
+    LINEAR = "linear"
+    SLACK = "slack"

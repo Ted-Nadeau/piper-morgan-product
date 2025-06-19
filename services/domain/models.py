@@ -1,18 +1,20 @@
 """
 Piper Morgan 1.0 - Domain Models
 The heart of the system - these models drive everything else.
+Pure business logic with no persistence concerns.
 """
 # 2025-06-14: Fixed Task type field and status enum to match database model and shared_types
+# 2025-06-15: Added Project and ProjectIntegration models for PM-009
+# 2025-06-17: Cleaned separation - removed SQLAlchemy code, fixed duplicate imports
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from enum import Enum
 from uuid import uuid4
 
 # Import shared types for consistency
-from services.shared_types import TaskType, TaskStatus, IntentCategory, WorkflowType, WorkflowStatus
-
-
+from services.shared_types import (
+    TaskType, TaskStatus, IntentCategory, WorkflowType, WorkflowStatus, IntegrationType
+)
 
 # Core Entities
 @dataclass
@@ -66,6 +68,83 @@ class WorkItem:
     metadata: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
 
+# PM-009: Project Management Domain Models
+@dataclass
+class ProjectIntegration:
+    """Integration configuration for a project"""
+    type: IntegrationType  # Required field - no default
+    id: str = field(default_factory=lambda: str(uuid4()))
+    name: str = ""  # User-friendly name like "Main Repository", "Bug Tracker"
+    config: Dict[str, Any] = field(default_factory=dict)
+    is_active: bool = True
+    created_at: datetime = field(default_factory=datetime.now)
+    
+    def validate_config(self) -> bool:
+        """Validate configuration based on integration type"""
+        if self.type == IntegrationType.GITHUB:
+            return 'repository' in self.config
+        elif self.type == IntegrationType.JIRA:
+            return all(k in self.config for k in ['url', 'project_key'])
+        elif self.type == IntegrationType.LINEAR:
+            return all(k in self.config for k in ['api_key', 'team_id'])
+        elif self.type == IntegrationType.SLACK:
+            return all(k in self.config for k in ['webhook_url', 'channel'])
+        return True
+
+@dataclass
+class Project:
+    """A PM project with multiple tool integrations"""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    name: str = ""
+    description: str = ""
+    integrations: List[ProjectIntegration] = field(default_factory=list)
+    is_default: bool = False
+    is_archived: bool = False
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    
+    def get_integration(self, integration_type: IntegrationType) -> Optional[ProjectIntegration]:
+        """Get first active integration of specified type"""
+        for integration in self.integrations:
+            if integration.type == integration_type and integration.is_active:
+                return integration
+        return None
+    
+    def get_github_repository(self) -> Optional[str]:
+        """Get GitHub repository for this project"""
+        github_integration = self.get_integration(IntegrationType.GITHUB)
+        return github_integration.config.get('repository') if github_integration else None
+    
+    def validate_integrations(self) -> List[str]:
+        """Validate all integrations, return list of errors"""
+        errors = []
+        for integration in self.integrations:
+            if not integration.validate_config():
+                errors.append(f"{integration.type.value}: Invalid configuration")
+        return errors
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "integrations": [
+                {
+                    "id": integ.id,
+                    "type": integ.type.value,
+                    "name": integ.name,
+                    "config": integ.config,
+                    "is_active": integ.is_active,
+                    "created_at": integ.created_at.isoformat()
+                }
+                for integ in self.integrations
+            ],
+            "is_default": self.is_default,
+            "is_archived": self.is_archived,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
+        }
 
 @dataclass  
 class Intent:
@@ -76,7 +155,6 @@ class Intent:
     context: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.0
     created_at: datetime = field(default_factory=datetime.now)
-
 
 @dataclass
 class Task:
