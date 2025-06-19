@@ -33,7 +33,7 @@ class WorkflowFactory:
             'analyze_data': WorkflowType.REVIEW_ITEM,  # Maps fallback classifier action
         }
     
-    async def create_from_intent(self, intent: Intent) -> Optional[Workflow]:
+    async def create_from_intent(self, intent: Intent, project_context: Optional[Dict[str, Any]] = None) -> Optional[Workflow]:
         """Create workflow from intent with context mapping"""
         
         # Determine workflow type from intent action
@@ -52,11 +52,16 @@ class WorkflowFactory:
             else:
                 return None
         
-        # Create workflow with intent context
+        # Merge intent context and project_context if provided
+        context = dict(intent.context)
+        if project_context:
+            context.update(project_context)
+        
+        # Create workflow with merged context
         workflow = Workflow(
             type=workflow_type,
             status=WorkflowStatus.PENDING,
-            context=intent.context,
+            context=context,
             intent_id=intent.id
         )
         
