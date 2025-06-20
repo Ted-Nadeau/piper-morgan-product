@@ -63,7 +63,6 @@ class IntentClassifier:
         
         return intent
     
-# Then update the _classify_with_reasoning method:
     async def _classify_with_reasoning(
         self, message: str, context: Dict
     ) -> Tuple[Intent, Dict]:
@@ -84,11 +83,9 @@ class IntentClassifier:
         except Exception as e:
             logger.warning(f"Knowledge search failed: {e}")
         
-# Update this part of the prompt in _classify_with_reasoning method:
-
         prompt = f"""Analyze this PM request and classify it.
 
-Request: "{message}"
+Request: \"{message}\"
 
 {knowledge_context}
 
@@ -111,13 +108,22 @@ Categories:
 - LEARNING: Understanding patterns, improving processes
 - QUERY: Asking for information, listing items, getting details (read-only operations)
 
-For the "action" field, use these patterns:
-- For creating: "create_[thing]" (e.g., create_feature, create_ticket, create_task)
-- For analyzing: "analyze_[thing]" (e.g., analyze_metrics, analyze_data)
-- For reviewing: "review_[thing]" (e.g., review_code, review_design)
-- For generating: "generate_[thing]" (e.g., generate_report, generate_summary)
-- For planning: "plan_[thing]" (e.g., plan_strategy, plan_sprint)
-- For queries: "list_[thing]", "get_[thing]", "find_[thing]" (e.g., list_projects, get_project, find_project)
+For the \"action\" field, use these patterns:
+- For creating: \"create_[thing]\" (e.g., create_feature, create_ticket, create_task)
+- For analyzing: \"analyze_[thing]\" (e.g., analyze_metrics, analyze_data)
+- For reviewing: \"review_[thing]\" (e.g., review_code, review_design)
+- For generating: \"generate_[thing]\" (e.g., generate_report, generate_summary)
+- For planning: \"plan_[thing]\" (e.g., plan_strategy, plan_sprint)
+- For queries: \"list_[thing]\", \"get_[thing]\", \"find_[thing]\", \"count_[thing]\" (e.g., list_projects, get_project, find_project, count_projects, get_default_project)
+
+Examples:
+- \"List all projects\" => QUERY, action: list_projects
+- \"Show me the default project\" => QUERY, action: get_default_project
+- \"How many projects do we have?\" => QUERY, action: count_projects
+- \"Find project named Web Platform\" => QUERY, action: find_project
+- \"Get project details for project ID 123\" => QUERY, action: get_project
+- \"List all features\" => QUERY, action: list_features
+- \"How many open tasks?\" => QUERY, action: count_tasks
 """
 
         try:
@@ -150,14 +156,6 @@ For the "action" field, use these patterns:
             
             return intent, reasoning
             
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
-            # Try to extract what we can from the response
-            intent = self._fallback_classify(message)
-            reasoning = {"error": "JSON parse failed", "raw_response": response[:200]}
-            return intent, reasoning
-
-
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM response as JSON: {e}")
             # Try to extract what we can from the response
@@ -211,8 +209,21 @@ For the "action" field, use these patterns:
     def _fallback_classify(self, message: str) -> Intent:
         """Simple keyword-based classification as fallback"""
         message_lower = message.lower()
-        
-        if any(word in message_lower for word in ["create", "make", "build", "add", "new"]):
+
+        # Explicit project query mappings
+        if "how many projects" in message_lower or ("how many" in message_lower and "project" in message_lower):
+            category = IntentCategory.QUERY
+            action = "count_projects"
+        elif "default project" in message_lower:
+            category = IntentCategory.QUERY
+            action = "get_default_project"
+        elif "find project" in message_lower:
+            category = IntentCategory.QUERY
+            action = "find_project"
+        elif "project details" in message_lower or ("get project" in message_lower and "id" in message_lower):
+            category = IntentCategory.QUERY
+            action = "get_project"
+        elif any(word in message_lower for word in ["create", "make", "build", "add", "new"]):
             category = IntentCategory.EXECUTION
             action = "create_item"
         elif any(word in message_lower for word in ["analyze", "check", "review", "look at"]):
@@ -230,7 +241,7 @@ For the "action" field, use these patterns:
         else:
             category = IntentCategory.LEARNING
             action = "learn_pattern"
-        
+
         return Intent(
             category=category,
             action=action,

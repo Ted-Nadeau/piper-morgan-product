@@ -56,6 +56,8 @@ async def lifespan(app: FastAPI):
     logger.info("✅ Orchestration engine ready")
     yield
     # Shutdown
+    from services.database.connection import db
+    await db.close()
     logger.info("Shutting down...")
 
 # Create FastAPI app

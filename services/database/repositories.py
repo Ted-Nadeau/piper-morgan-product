@@ -221,11 +221,14 @@ class ProjectIntegrationRepository(BaseRepository):
 
 # Repository factory
 class RepositoryFactory:
-    """Creates repositories with session"""
-    
+    """Creates repositories with session
+    NOTE: The caller is responsible for closing the returned session (repos["session"]) after use, ideally in a finally block.
+    """
     @staticmethod
     async def get_repositories():
-        """Get all repositories with a new session"""
+        """Get all repositories with a new session
+        Caller must close repos["session"] after use to avoid connection leaks.
+        """
         session = await db.get_session()
         return {
             "products": ProductRepository(session),
