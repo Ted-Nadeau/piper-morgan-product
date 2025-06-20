@@ -90,5 +90,3 @@ For questions about this documentation or the Piper Morgan platform:
 ---
 
 _Last Updated: June 6, 2025 | Version: 1.0.0 | Status: Foundation Phase_
-
-# fnord
