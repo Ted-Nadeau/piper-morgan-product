@@ -15,15 +15,17 @@ from fastapi import File, UploadFile, Form
 import tempfile
 import shutil
 from services.knowledge_graph import get_document_service
+from services.api.middleware import ErrorHandlingMiddleware
+from services.orchestration import engine, WorkflowType, WorkflowStatus
+from services.queries import QueryRouter, ProjectQueryService
+from services.database.repositories import RepositoryFactory
+from services.api.errors import APIError
 
 # Load environment variables FIRST
 load_dotenv()
 
 from services.domain.models import Product, Feature, Intent, IntentCategory
 from services.intent_service import classifier
-from services.orchestration import engine, WorkflowType, WorkflowStatus
-from services.queries import QueryRouter, ProjectQueryService
-from services.database.repositories import RepositoryFactory
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -67,6 +69,9 @@ app = FastAPI(
     description="Intelligent Product Management Assistant",
     lifespan=lifespan
 )
+
+# Add middleware
+app.add_middleware(ErrorHandlingMiddleware)
 
 @app.get("/")
 async def root():
@@ -170,10 +175,12 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 response=response_text,
                 workflow_id=workflow_id
             )
+    except APIError:
+        raise # Re-raise our custom errors to be handled by the middleware
     except HTTPException:
-        raise  # Let FastAPI handle it
+        raise  # Let FastAPI handle its own exceptions
     except Exception as e:
-        logger.error(f"Intent processing failed: {e}")
+        logger.error(f"Intent processing failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process intent")
 
 @app.get("/api/v1/workflows/{workflow_id}", response_model=WorkflowResponse)

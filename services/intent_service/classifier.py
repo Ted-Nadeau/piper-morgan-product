@@ -8,6 +8,11 @@ from shared.events import EventBus
 import structlog
 from services.knowledge_graph import get_ingester
 import os
+from services.api.errors import (
+    IntentClassificationFailedError,
+    LowConfidenceIntentError,
+    NoRelevantKnowledgeError,
+)
 
 logger = structlog.get_logger()
 
@@ -35,6 +40,13 @@ class IntentClassifier:
             # Perform classification with confidence scoring
             intent, reasoning = await self._classify_with_reasoning(message, context)
             
+            # Low confidence check
+            if intent.confidence < 0.7:
+                suggestions = ", ".join(reasoning.get("helpful_knowledge_domains", []))
+                raise LowConfidenceIntentError(
+                    suggestions=f"ask about one of these topics: {suggestions}" if suggestions else "rephrase your request"
+                )
+
             # Identify learning opportunities
             intent.learning_signals = self._identify_learning_signals(
                 message, intent, reasoning
@@ -55,11 +67,13 @@ class IntentClassifier:
                     "learning_signals": intent.learning_signals
                 })
         
+        except LowConfidenceIntentError:
+            # Re-raise to be caught by the middleware
+            raise
         except Exception as e:
-            logger.error(f"Classification failed, using fallback: {e}")
-            # Fallback to simple keyword-based classification
-            intent = self._fallback_classify(message)
-            intent.learning_signals = {"error": str(e), "fallback_used": True}
+            logger.error(f"Classification failed: {e}", exc_info=True)
+            # Raise a structured error instead of falling back
+            raise IntentClassificationFailedError(details={"original_error": str(e)})
         
         return intent
     
@@ -81,7 +95,8 @@ class IntentClassifier:
                 for i, result in enumerate(search_results, 1):
                     knowledge_context += f"{i}. {result['content'][:200]}...\n"
         except Exception as e:
-            logger.warning(f"Knowledge search failed: {e}")
+            logger.warning(f"Knowledge search failed during intent classification: {e}")
+            # This is not fatal, but we can log it. We could also raise NoRelevantKnowledgeError if needed.
         
         prompt = f"""Analyze this PM request and classify it.
 
@@ -156,12 +171,9 @@ Examples:
             
             return intent, reasoning
             
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
-            # Try to extract what we can from the response
-            intent = self._fallback_classify(message)
-            reasoning = {"error": "JSON parse failed", "raw_response": response[:200]}
-            return intent, reasoning
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error(f"Failed to parse or read LLM response: {e}", raw_response=response)
+            raise IntentClassificationFailedError(details={"reason": "LLM response was malformed", "raw_response": response[:200]})
     
     def _identify_learning_signals(
         self, message: str, intent: Intent, reasoning: Dict

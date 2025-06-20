@@ -33,86 +33,45 @@ class GitHubIssueAnalyzer:
     
     async def analyze_issue_by_url(self, url: str) -> Dict[str, Any]:
         """
-        Analyze a GitHub issue by URL and provide improvement suggestions
-        
-        Args:
-            url: GitHub issue URL
-            
-        Returns:
-            Analysis results with summary, comment, and rewrite suggestions
+        Analyze a GitHub issue by URL, raising exceptions on failure.
         """
-        try:
-            # Step 1: Fetch the issue
-            issue_result = await self.github.get_issue_by_url(url)
-            if not issue_result['success']:
-                return {
-                    'success': False,
-                    'error': f"Failed to fetch issue: {issue_result['error']}"
-                }
+        # Step 1: Fetch the issue (this will now raise exceptions on failure)
+        issue_data = await self.github.get_issue_by_url(url)
+        
+        # Step 2: Perform analysis
+        analysis = await self._analyze_issue(issue_data)
+        
+        return {
+            'success': True,
+            'url': url,
+            'issue': {
+                'title': issue_data['title'],
+                'number': issue_data['number'],
+                'repository': issue_data['repository']['full_name']
+            },
+            'analysis': analysis
+        }
             
-            issue_data = issue_result['issue']
-            
-            # Step 2: Perform analysis
-            analysis = await self._analyze_issue(issue_data)
-            
-            return {
-                'success': True,
-                'url': url,
-                'issue': {
-                    'title': issue_data['title'],
-                    'number': issue_data['number'],
-                    'repository': issue_data['repository']['full_name']
-                },
-                'analysis': analysis
-            }
-            
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f"Analysis failed: {str(e)}"
-            }
-    
     async def analyze_issue_by_number(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
         """
-        Analyze a GitHub issue by repository and number
-        
-        Args:
-            repo_name: Repository name in format "owner/repo"
-            issue_number: Issue number
-            
-        Returns:
-            Analysis results
+        Analyze a GitHub issue by repository and number, raising exceptions on failure.
         """
-        try:
-            # Fetch the issue
-            issue_result = await self.github.get_issue(repo_name, issue_number)
-            if not issue_result['success']:
-                return {
-                    'success': False,
-                    'error': f"Failed to fetch issue: {issue_result['error']}"
-                }
-            
-            issue_data = issue_result['issue']
-            
-            # Perform analysis
-            analysis = await self._analyze_issue(issue_data)
-            
-            return {
-                'success': True,
-                'repository': repo_name,
-                'issue_number': issue_number,
-                'issue': {
-                    'title': issue_data['title'],
-                    'url': issue_data['url']
-                },
-                'analysis': analysis
-            }
-            
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f"Analysis failed: {str(e)}"
-            }
+        # Fetch the issue (this will now raise exceptions on failure)
+        issue_data = await self.github.get_issue(repo_name, issue_number)
+        
+        # Perform analysis
+        analysis = await self._analyze_issue(issue_data)
+        
+        return {
+            'success': True,
+            'repository': repo_name,
+            'issue_number': issue_number,
+            'issue': {
+                'title': issue_data['title'],
+                'url': issue_data['url']
+            },
+            'analysis': analysis
+        }
     
     async def _analyze_issue(self, issue_data: Dict[str, Any]) -> IssueAnalysis:
         """

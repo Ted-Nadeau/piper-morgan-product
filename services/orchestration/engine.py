@@ -16,6 +16,7 @@ from services.database import RepositoryFactory
 from services.shared_types import WorkflowType, WorkflowStatus, TaskType, TaskStatus
 from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
 from services.llm.clients import llm_client
+from services.api.errors import TaskFailedError, WorkflowTimeoutError
 
 logger = structlog.get_logger()
 
@@ -88,6 +89,7 @@ class OrchestrationEngine:
         """
         workflow = self.workflows.get(workflow_id)
         if not workflow:
+            # In a real system, you might load it from the DB here
             raise ValueError(f"Workflow {workflow_id} not found")
         
         workflow.status = WorkflowStatus.RUNNING
@@ -101,16 +103,23 @@ class OrchestrationEngine:
                 WorkflowStatus.RUNNING
             )
             await repos["session"].commit()
-            
-            # Execute tasks using domain workflow methods
-            while task := workflow.get_next_task():
-                await self._execute_task(workflow, task)
-                
-                # Persist task results after each execution
-                await self._persist_task_update(workflow_id, task)
-                
-                if workflow.status == WorkflowStatus.FAILED:
-                    break
+
+            # Execute tasks with a timeout
+            try:
+                async with asyncio.timeout(300): # 5-minute timeout for the whole workflow
+                    while task := workflow.get_next_task():
+                        await self._execute_task(workflow, task)
+                        
+                        # Persist task results after each execution
+                        await self._persist_task_update(workflow_id, task)
+                        
+                        if workflow.status == WorkflowStatus.FAILED:
+                            # The task itself will raise an exception, which we'll catch below
+                            break
+            except TimeoutError:
+                logger.error("Workflow timed out", workflow_id=workflow_id)
+                raise WorkflowTimeoutError(details={"workflow_id": workflow_id})
+
             
             if workflow.is_complete():
                 workflow.status = WorkflowStatus.COMPLETED
@@ -125,6 +134,20 @@ class OrchestrationEngine:
                 
                 logger.info("Workflow completed", workflow_id=workflow_id)
             
+        except (TaskFailedError, WorkflowTimeoutError) as e:
+            workflow.status = WorkflowStatus.FAILED
+            workflow.error = e.error_code
+            
+            await repos["workflows"].update_status(
+                workflow_id,
+                WorkflowStatus.FAILED,
+                error=e.error_code,
+                output_data=e.details
+            )
+            await repos["session"].commit()
+            
+            logger.error("Workflow failed with controlled error", workflow_id=workflow_id, error_code=e.error_code)
+            raise # Re-raise for the middleware to catch
         except Exception as e:
             workflow.status = WorkflowStatus.FAILED
             workflow.error = str(e)
@@ -136,7 +159,9 @@ class OrchestrationEngine:
             )
             await repos["session"].commit()
             
-            logger.error("Workflow failed", workflow_id=workflow_id, error=str(e))
+            logger.error("Workflow failed with unexpected error", workflow_id=workflow_id, error=str(e), exc_info=True)
+            # Wrap unexpected errors in a standard TaskFailedError
+            raise TaskFailedError(task_description="workflow execution", recovery_suggestion="check logs for details", details={"original_error": str(e)}) from e
         finally:
             await repos["session"].close()
         
@@ -169,8 +194,9 @@ class OrchestrationEngine:
             if not handler:
                 raise ValueError(f"No handler for task type {task.type}")
             
-            # Execute task
-            result = await handler(workflow, task)
+            # Execute task with a timeout
+            async with asyncio.timeout(120): # 2-minute timeout per task
+                result = await handler(workflow, task)
             
             # Update domain task with results
             if result.success:
@@ -184,6 +210,12 @@ class OrchestrationEngine:
                 task.status = TaskStatus.FAILED
                 task.error = result.error or "Task execution failed"
                 workflow.status = WorkflowStatus.FAILED
+                # Raise a specific error instead of just setting status
+                raise TaskFailedError(
+                    task_description=task.type.value, 
+                    recovery_suggestion="review the task details and logs", 
+                    details={"task_id": task.id, "error": task.error}
+                )
             
             logger.info(
                 "Task completed",
@@ -193,16 +225,33 @@ class OrchestrationEngine:
                 success=result.success
             )
             
+        except TimeoutError as e:
+            task.status = TaskStatus.FAILED
+            task.error = "Task timed out after 120 seconds"
+            workflow.status = WorkflowStatus.FAILED
+            logger.error("Task timed out", workflow_id=workflow.id, task_id=task.id, task_type=task.type.value)
+            raise TaskFailedError(
+                task_description=task.type.value,
+                recovery_suggestion="the system may be under heavy load, please try again later",
+                details={"task_id": task.id, "reason": "timeout"}
+            ) from e
         except Exception as e:
             task.status = TaskStatus.FAILED
             task.error = str(e)
             workflow.status = WorkflowStatus.FAILED
             logger.error(
-                "Task failed",
+                "Task failed with unexpected error",
                 workflow_id=workflow.id,
                 task_id=task.id,
-                error=str(e)
+                error=str(e),
+                exc_info=True,
             )
+            # Wrap the unexpected error
+            raise TaskFailedError(
+                task_description=task.type.value,
+                recovery_suggestion="an unexpected error occurred, check system logs",
+                details={"task_id": task.id, "original_error": str(e)}
+            ) from e
     
     # Task handler implementations
     async def _analyze_request(self, workflow: Workflow, task: Task) -> TaskResult:

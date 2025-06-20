@@ -5,9 +5,10 @@ Adds issue fetching and URL parsing capabilities
 import os
 import re
 from typing import Optional, Dict, Any, List, Tuple
-from github import Github
+from github import Github, BadCredentialsException, RateLimitExceededException, UnknownObjectException
 from github.Issue import Issue as GitHubIssue
 from github.Repository import Repository
+from services.api.errors import GitHubAuthFailedError, GitHubRateLimitError
 
 class GitHubAgent:
     """GitHub API operations for issue management and analysis"""
@@ -17,8 +18,11 @@ class GitHubAgent:
         if not self.token:
             raise ValueError('GitHub token required - set GITHUB_TOKEN environment variable')
         
-        self.client = Github(self.token)
-        self.user = self.client.get_user()
+        try:
+            self.client = Github(self.token)
+            self.user = self.client.get_user()
+        except BadCredentialsException as e:
+            raise GitHubAuthFailedError(details={"reason": "Invalid GitHub token provided."}) from e
     
     def parse_github_url(self, url: str) -> Optional[Tuple[str, str, int]]:
         """
@@ -49,88 +53,59 @@ class GitHubAgent:
     
     async def get_issue_by_url(self, url: str) -> Dict[str, Any]:
         """
-        Fetch GitHub issue by URL
-        
-        Args:
-            url: GitHub issue or PR URL
-            
-        Returns:
-            Dictionary with issue data or error information
+        Fetch GitHub issue by URL, raising exceptions on failure.
         """
-        try:
-            # Parse URL
-            parsed = self.parse_github_url(url)
-            if not parsed:
-                return {
-                    'success': False,
-                    'error': 'Invalid GitHub URL format. Expected: https://github.com/owner/repo/issues/123'
-                }
+        parsed = self.parse_github_url(url)
+        if not parsed:
+            raise ValueError('Invalid GitHub URL format. Expected: https://github.com/owner/repo/issues/123')
+        
+        owner, repo, issue_number = parsed
+        return await self.get_issue(f"{owner}/{repo}", issue_number)
             
-            owner, repo, issue_number = parsed
-            return await self.get_issue(f"{owner}/{repo}", issue_number)
-            
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f'Failed to fetch issue from URL: {str(e)}'
-            }
-    
     async def get_issue(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
         """
-        Fetch GitHub issue by repository and issue number
-        
-        Args:
-            repo_name: Repository in format "owner/repo"
-            issue_number: Issue number
-            
-        Returns:
-            Dictionary with issue data or error information
+        Fetch GitHub issue, raising exceptions on failure.
         """
         try:
-            # Get repository
             repo = self.client.get_repo(repo_name)
-            
-            # Get issue
             issue = repo.get_issue(issue_number)
             
-            # Extract labels
             labels = [label.name for label in issue.labels]
-            
-            # Extract assignees
             assignees = [assignee.login for assignee in issue.assignees]
             
             return {
-                'success': True,
-                'issue': {
-                    'id': issue.id,
-                    'number': issue.number,
-                    'title': issue.title,
-                    'body': issue.body or '',
-                    'state': issue.state,
-                    'labels': labels,
-                    'assignees': assignees,
-                    'created_at': issue.created_at.isoformat(),
-                    'updated_at': issue.updated_at.isoformat(),
-                    'url': issue.html_url,
-                    'user': {
-                        'login': issue.user.login,
-                        'name': issue.user.name
-                    },
-                    'repository': {
-                        'name': repo.name,
-                        'full_name': repo.full_name,
-                        'private': repo.private
-                    },
-                    'comments_count': issue.comments,
-                    'is_pull_request': issue.pull_request is not None
-                }
+                'id': issue.id,
+                'number': issue.number,
+                'title': issue.title,
+                'body': issue.body or '',
+                'state': issue.state,
+                'labels': labels,
+                'assignees': assignees,
+                'created_at': issue.created_at.isoformat(),
+                'updated_at': issue.updated_at.isoformat(),
+                'url': issue.html_url,
+                'user': {
+                    'login': issue.user.login,
+                    'name': issue.user.name
+                },
+                'repository': {
+                    'name': repo.name,
+                    'full_name': repo.full_name,
+                    'private': repo.private
+                },
+                'comments_count': issue.comments,
+                'is_pull_request': issue.pull_request is not None
             }
-            
+        except BadCredentialsException as e:
+            raise GitHubAuthFailedError() from e
+        except RateLimitExceededException as e:
+            retry_after = e.headers.get("Retry-After", 60) # Default to 60 seconds
+            raise GitHubRateLimitError(retry_after=int(retry_after) // 60) from e
+        except UnknownObjectException as e:
+            raise ValueError(f"GitHub resource not found: {repo_name} or issue #{issue_number}") from e
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            # For other unexpected GitHub errors
+            raise ConnectionError(f"An unexpected error occurred with the GitHub API: {e}") from e
     
     def list_repositories(self) -> List[Dict[str, Any]]:
         """List accessible repositories"""
@@ -146,12 +121,9 @@ class GitHubAgent:
     
     async def create_issue(self, repo_name: str, title: str, body: str, 
                           labels: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Create a GitHub issue"""
+        """Create a GitHub issue, raising exceptions on failure."""
         try:
-            # Get repository
             repo = self.client.get_repo(repo_name)
-            
-            # Create issue
             issue = repo.create_issue(
                 title=title,
                 body=body,
@@ -159,34 +131,31 @@ class GitHubAgent:
             )
             
             return {
-                'success': True,
-                'issue': {
-                    'id': issue.id,
-                    'number': issue.number,
-                    'title': issue.title,
-                    'url': issue.html_url,
-                    'state': issue.state
-                }
+                'id': issue.id,
+                'number': issue.number,
+                'title': issue.title,
+                'url': issue.html_url,
+                'state': issue.state
             }
-            
+        except BadCredentialsException as e:
+            raise GitHubAuthFailedError() from e
+        except RateLimitExceededException as e:
+            retry_after = e.headers.get("Retry-After", 60)
+            raise GitHubRateLimitError(retry_after=int(retry_after) // 60) from e
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            raise ConnectionError(f"Failed to create GitHub issue: {e}") from e
     
     def test_connection(self) -> Dict[str, Any]:
-        """Test GitHub API connection"""
+        """Test GitHub API connection, raising exceptions on failure."""
         try:
             user = self.client.get_user()
             return {
-                'success': True,
+                'success': True, # Keep success for simple health checks
                 'user': user.login,
                 'name': user.name,
                 'repos_count': user.public_repos
             }
+        except (BadCredentialsException, RateLimitExceededException) as e:
+            raise GitHubAuthFailedError(details={"reason": str(e)}) from e
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            raise ConnectionError(f"GitHub connection test failed: {e}") from e
