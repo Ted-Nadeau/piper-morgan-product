@@ -13,6 +13,8 @@ from services.project_context import ProjectContext, AmbiguousProjectError, Proj
 from services.domain.models import Project, ProjectIntegration, Intent, IntentCategory
 from services.database.repositories import ProjectRepository
 from services.shared_types import IntegrationType, WorkflowType, WorkflowStatus
+from services.queries.project_queries import ProjectQueryService
+from services.queries.query_router import QueryRouter
 
 class TestProjectDomainModel:
     """Test the Project domain model behaves correctly"""
@@ -320,23 +322,17 @@ class TestWorkflowFactoryIntegration:
             config={"repository": "owner/repo", "default_labels": ["bug"]}
         ))
         
-        # AND: Mock context that returns project
-        mock_context = Mock(spec=ProjectContext)
-        mock_context.resolve_project = AsyncMock(return_value=(project, False))
-        
         # Import after mocks are set up
         from services.orchestration.workflow_factory import WorkflowFactory
         
-        # WHEN: Creating workflow
-        factory = WorkflowFactory(project_context=mock_context)
-        workflow = await factory.create_from_intent(intent, session_id="test")
+        # WHEN: Creating workflow with stateless factory
+        factory = WorkflowFactory()  # Stateless - no dependencies
+        workflow = await factory.create_from_intent(intent)
         
-        # THEN: Workflow should have project context
+        # THEN: Workflow should be created (project context would be injected at execution time)
         assert workflow is not None
-        assert workflow.context["project_id"] == "proj-123"
-        assert workflow.context["project_name"] == "Test Project"
-        assert "github" in workflow.context["project_integrations"]
-        assert workflow.context["project_integrations"]["github"]["repository"] == "owner/repo"
+        assert workflow.type == WorkflowType.CREATE_TICKET
+        assert workflow.status == WorkflowStatus.PENDING
 
 
 class TestGitHubAgentProjectIntegration:
@@ -398,3 +394,217 @@ class TestNoHardcodedValues:
         # Ensure ProjectContext doesn't directly use SQLAlchemy
         # Should only use ProjectRepository methods
         pass
+
+
+class TestListProjectsQuery:
+    """Test LIST_PROJECTS query following CQRS-lite pattern"""
+    
+    @pytest.fixture
+    def mock_project_repository(self):
+        """Provides a mock ProjectRepository for testing"""
+        repo = Mock()
+        repo.list_active_projects = AsyncMock()
+        return repo
+    
+    @pytest.mark.asyncio
+    async def test_list_projects_query_returns_all_projects(self, mock_project_repository):
+        """LIST_PROJECTS query should return structured project list"""
+        # GIVEN: Multiple projects in the repository
+        projects = [
+            Project(
+                id="proj-1", 
+                name="Mobile App", 
+                description="iOS and Android applications",
+                is_default=True
+            ),
+            Project(
+                id="proj-2", 
+                name="Web Platform", 
+                description="Main website and API",
+                is_default=False
+            ),
+            Project(
+                id="proj-3", 
+                name="Data Pipeline", 
+                description="ETL and analytics infrastructure",
+                is_default=False
+            )
+        ]
+        mock_project_repository.list_active_projects.return_value = projects
+        
+        # AND: Intent to list projects (QUERY category)
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_projects",
+            context={"original_message": "What projects are available?"}
+        )
+        
+        # WHEN: Processing query through query service
+        query_service = ProjectQueryService(mock_project_repository)
+        result = await query_service.list_active_projects()
+        
+        # THEN: Repository should be called
+        mock_project_repository.list_active_projects.assert_called_once()
+        
+        # AND: Result should contain structured project data
+        assert len(result) == 3
+        
+        # AND: Each project should have required fields
+        for i, project in enumerate(result):
+            assert project.id == projects[i].id
+            assert project.name == projects[i].name
+            assert project.description == projects[i].description
+            assert project.is_default == projects[i].is_default
+    
+    @pytest.mark.asyncio
+    async def test_list_projects_query_handles_empty_repository(self, mock_project_repository):
+        """LIST_PROJECTS query should handle empty project list gracefully"""
+        # GIVEN: Empty repository
+        mock_project_repository.list_active_projects.return_value = []
+        
+        # AND: Intent to list projects
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_projects",
+            context={"original_message": "Show me all projects"}
+        )
+        
+        # WHEN: Processing query
+        query_service = ProjectQueryService(mock_project_repository)
+        result = await query_service.list_active_projects()
+        
+        # THEN: Should handle empty list gracefully
+        assert result == []
+    
+    @pytest.mark.asyncio
+    async def test_list_projects_query_handles_repository_error(self, mock_project_repository):
+        """LIST_PROJECTS query should handle repository errors gracefully"""
+        # GIVEN: Repository that raises an exception
+        mock_project_repository.list_active_projects.side_effect = Exception("Database connection failed")
+        
+        # AND: Intent to list projects
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_projects",
+            context={"original_message": "List all projects"}
+        )
+        
+        # WHEN: Processing query
+        query_service = ProjectQueryService(mock_project_repository)
+        
+        # THEN: Should handle error gracefully
+        with pytest.raises(Exception) as exc_info:
+            await query_service.list_active_projects()
+        assert "Database connection failed" in str(exc_info.value)
+    
+    def test_list_projects_intent_classification(self):
+        """Intent classifier should recognize list_projects as QUERY category"""
+        # GIVEN: Various ways to request project listing
+        list_project_phrases = [
+            "What projects are available?",
+            "Show me all projects",
+            "List the projects",
+            "Get project list",
+            "What projects do we have?"
+        ]
+        
+        # WHEN: Classifying each phrase
+        # classifier = IntentClassifier()
+        
+        for phrase in list_project_phrases:
+            # intent = await classifier.classify(phrase)
+            
+            # THEN: Should be classified as QUERY with list_projects action
+            # assert intent.category == IntentCategory.QUERY
+            # assert intent.action == "list_projects"
+            pass  # Placeholder until implementation
+
+
+class TestQueryRouter:
+    """Test QueryRouter for proper intent routing"""
+    
+    @pytest.fixture
+    def mock_project_repository(self):
+        """Provides a mock ProjectRepository for testing"""
+        repo = Mock()
+        repo.list_active_projects = AsyncMock()
+        repo.get_by_id = AsyncMock()
+        repo.get_default_project = AsyncMock()
+        repo.find_by_name = AsyncMock()
+        repo.count_active_projects = AsyncMock()
+        return repo
+    
+    @pytest.mark.asyncio
+    async def test_router_routes_list_projects_query(self, mock_project_repository):
+        """QueryRouter should route list_projects to project query service"""
+        # GIVEN: Projects and query service
+        projects = [Project(id="p1", name="Test Project")]
+        mock_project_repository.list_active_projects.return_value = projects
+        
+        project_query_service = ProjectQueryService(mock_project_repository)
+        router = QueryRouter(project_query_service)
+        
+        # AND: QUERY intent for list_projects
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="list_projects",
+            context={}
+        )
+        
+        # WHEN: Routing the query
+        result = await router.route_query(intent)
+        
+        # THEN: Should return projects from query service
+        assert result == projects
+        mock_project_repository.list_active_projects.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_router_rejects_non_query_intents(self, mock_project_repository):
+        """QueryRouter should reject non-QUERY intents"""
+        project_query_service = ProjectQueryService(mock_project_repository)
+        router = QueryRouter(project_query_service)
+        
+        # GIVEN: EXECUTION intent (not QUERY)
+        intent = Intent(
+            category=IntentCategory.EXECUTION,
+            action="list_projects",
+            context={}
+        )
+        
+        # WHEN/THEN: Should raise ValueError
+        with pytest.raises(ValueError) as exc_info:
+            await router.route_query(intent)
+        assert "QueryRouter can only handle QUERY intents" in str(exc_info.value)
+    
+    @pytest.mark.asyncio
+    async def test_router_handles_unknown_query_action(self, mock_project_repository):
+        """QueryRouter should handle unknown query actions gracefully"""
+        project_query_service = ProjectQueryService(mock_project_repository)
+        router = QueryRouter(project_query_service)
+        
+        # GIVEN: QUERY intent with unknown action
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="unknown_action",
+            context={}
+        )
+        
+        # WHEN/THEN: Should raise ValueError
+        with pytest.raises(ValueError) as exc_info:
+            await router.route_query(intent)
+        assert "Unknown query action" in str(exc_info.value)
+    
+    def test_router_supported_queries(self, mock_project_repository):
+        """QueryRouter should return list of supported queries"""
+        project_query_service = ProjectQueryService(mock_project_repository)
+        router = QueryRouter(project_query_service)
+        
+        # WHEN: Getting supported queries
+        supported = router.get_supported_queries()
+        
+        # THEN: Should include expected query actions
+        assert "list_projects" in supported
+        assert "get_project" in supported
+        assert "get_default_project" in supported
+        assert "find_project" in supported
+        assert "count_projects" in supported

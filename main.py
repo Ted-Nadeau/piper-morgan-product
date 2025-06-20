@@ -22,6 +22,8 @@ load_dotenv()
 from services.domain.models import Product, Feature, Intent, IntentCategory
 from services.intent_service import classifier
 from services.orchestration import engine, WorkflowType, WorkflowStatus
+from services.queries import QueryRouter, ProjectQueryService
+from services.database.repositories import RepositoryFactory
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -89,46 +91,91 @@ async def health():
 
 @app.post("/api/v1/intent", response_model=IntentResponse)
 async def process_intent(request: IntentRequest, background_tasks: BackgroundTasks):
-    """Process a natural language message with real AI and optionally create workflow"""
+    """Process a natural language message with real AI and route to appropriate handler"""
     try:
         # Use real intent classifier
         intent = await classifier.classify(request.message)
         
-        # Try to create a workflow from the intent
-        workflow = await engine.create_workflow_from_intent(intent)
-        workflow_id = None
-        
-        if workflow:
-            # Execute workflow in background
-            workflow_id = workflow.id
-            background_tasks.add_task(engine.execute_workflow, workflow_id)
-            response_text = f"I understand you want to {intent.action}. I've started a workflow to handle this."
+        # Route based on intent category
+        if intent.category == IntentCategory.QUERY:
+            # Handle query intents through QueryRouter
+            try:
+                # Get repositories for query service
+                repos = await RepositoryFactory.get_repositories()
+                project_query_service = ProjectQueryService(repos["projects"])
+                query_router = QueryRouter(project_query_service)
+                
+                # Route the query
+                query_result = await query_router.route_query(intent)
+                
+                # Format response for query results
+                if intent.action == "list_projects":
+                    project_list = [project.to_dict() for project in query_result]
+                    response_text = f"I found {len(project_list)} projects: " + ", ".join([p["name"] for p in project_list])
+                else:
+                    response_text = f"Here's what I found for {intent.action}: {query_result}"
+                
+                return IntentResponse(
+                    message=request.message,
+                    intent={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                        "context": intent.context
+                    },
+                    response=response_text,
+                    workflow_id=None  # No workflow for queries
+                )
+            except Exception as query_error:
+                logger.error(f"Query processing failed: {query_error}")
+                response_text = f"I couldn't process that query: {str(query_error)}"
+                return IntentResponse(
+                    message=request.message,
+                    intent={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                        "context": intent.context
+                    },
+                    response=response_text,
+                    workflow_id=None
+                )
         else:
-            # No workflow needed, just respond
-            response_text = f"I understand you want to {intent.action}. "
+            # Handle command intents through WorkflowFactory
+            workflow = await engine.create_workflow_from_intent(intent)
+            workflow_id = None
             
-            if intent.category == IntentCategory.EXECUTION:
-                response_text += "I'll help you execute that task."
-            elif intent.category == IntentCategory.ANALYSIS:
-                response_text += "Let me analyze that for you."
-            elif intent.category == IntentCategory.SYNTHESIS:
-                response_text += "I'll help you create that."
-            elif intent.category == IntentCategory.STRATEGY:
-                response_text += "Let's think strategically about this."
+            if workflow:
+                # Execute workflow in background
+                workflow_id = workflow.id
+                background_tasks.add_task(engine.execute_workflow, workflow_id)
+                response_text = f"I understand you want to {intent.action}. I've started a workflow to handle this."
             else:
-                response_text += "I'll help you learn from this."
-        
-        return IntentResponse(
-            message=request.message,
-            intent={
-                "category": intent.category.value,
-                "action": intent.action,
-                "confidence": intent.confidence,
-                "context": intent.context
-            },
-            response=response_text,
-            workflow_id=workflow_id
-        )
+                # No workflow needed, just respond
+                response_text = f"I understand you want to {intent.action}. "
+                
+                if intent.category == IntentCategory.EXECUTION:
+                    response_text += "I'll help you execute that task."
+                elif intent.category == IntentCategory.ANALYSIS:
+                    response_text += "Let me analyze that for you."
+                elif intent.category == IntentCategory.SYNTHESIS:
+                    response_text += "I'll help you create that."
+                elif intent.category == IntentCategory.STRATEGY:
+                    response_text += "Let's think strategically about this."
+                else:
+                    response_text += "I'll help you learn from this."
+            
+            return IntentResponse(
+                message=request.message,
+                intent={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "context": intent.context
+                },
+                response=response_text,
+                workflow_id=workflow_id
+            )
     except Exception as e:
         logger.error(f"Intent processing failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to process intent")

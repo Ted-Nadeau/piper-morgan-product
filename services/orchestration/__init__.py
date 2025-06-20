@@ -8,6 +8,9 @@ from services.shared_types import ( #
     TaskType, TaskStatus
 )
 
+# Import the engine instance
+from .engine import engine, OrchestrationEngine
+
 # Don't import engine at module level
 # Let consumers import what they need
 

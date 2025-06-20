@@ -10,6 +10,7 @@ class IntentCategory(Enum):
     SYNTHESIS = "synthesis"
     STRATEGY = "strategy"
     LEARNING = "learning"
+    QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
 
 class WorkflowType(Enum):
     CREATE_FEATURE = "create_feature"
@@ -23,7 +24,7 @@ class WorkflowType(Enum):
     # PM-009: Project management workflow types
     CONFIRM_PROJECT = "confirm_project"
     SELECT_PROJECT = "select_project"
-    
+
 class WorkflowStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"

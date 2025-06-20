@@ -7,6 +7,7 @@ from services.llm.clients import llm_client
 from shared.events import EventBus
 import structlog
 from services.knowledge_graph import get_ingester
+import os
 
 logger = structlog.get_logger()
 
@@ -93,7 +94,7 @@ Request: "{message}"
 
 Respond with JSON containing:
 {{
-    "category": "EXECUTION|ANALYSIS|SYNTHESIS|STRATEGY|LEARNING",
+    "category": "EXECUTION|ANALYSIS|SYNTHESIS|STRATEGY|LEARNING|QUERY",
     "action": "specific_action_description",
     "confidence": 0.0-1.0,
     "reasoning": "why you chose this classification",
@@ -108,6 +109,7 @@ Categories:
 - SYNTHESIS: Generating documents, summaries, or reports  
 - STRATEGY: Planning, prioritizing, or making recommendations
 - LEARNING: Understanding patterns, improving processes
+- QUERY: Asking for information, listing items, getting details (read-only operations)
 
 For the "action" field, use these patterns:
 - For creating: "create_[thing]" (e.g., create_feature, create_ticket, create_task)
@@ -115,6 +117,7 @@ For the "action" field, use these patterns:
 - For reviewing: "review_[thing]" (e.g., review_code, review_design)
 - For generating: "generate_[thing]" (e.g., generate_report, generate_summary)
 - For planning: "plan_[thing]" (e.g., plan_strategy, plan_sprint)
+- For queries: "list_[thing]", "get_[thing]", "find_[thing]" (e.g., list_projects, get_project, find_project)
 """
 
         try:
@@ -221,6 +224,9 @@ For the "action" field, use these patterns:
         elif any(word in message_lower for word in ["plan", "strategy", "prioritize", "decide"]):
             category = IntentCategory.STRATEGY
             action = "strategic_planning"
+        elif any(word in message_lower for word in ["list", "show", "get", "find", "what", "which", "how many"]):
+            category = IntentCategory.QUERY
+            action = "list_items"
         else:
             category = IntentCategory.LEARNING
             action = "learn_pattern"
