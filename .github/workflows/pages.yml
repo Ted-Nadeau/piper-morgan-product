@@ -16,7 +16,7 @@ jobs:
       - name: Copy docs to public
         run: |
           mkdir public
-          cp -r docs/* public/
+          cp -rL docs/* public/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
