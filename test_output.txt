@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-8.4.1, pluggy-1.6.0
+rootdir: /Users/xian/Development/piper-morgan-product
+plugins: anyio-3.7.1, asyncio-1.0.0
+asyncio: mode=strict, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 34 items
+
+tests/test_pm009_project_support.py ..................................   [100%]
+
+=============================== warnings summary ===============================
+tests/test_pm009_project_support.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context
+  /Users/xian/Development/piper-morgan-product/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+    warnings.warn(
+
+tests/test_pm009_project_support.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context
+  /Users/xian/Development/piper-morgan-product/venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21: DeprecationWarning: PyPDF2 is deprecated. Please move to the pypdf library instead.
+    warnings.warn(
+
+tests/test_pm009_project_support.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context
+  /Users/xian/Development/piper-morgan-product/venv/lib/python3.9/site-packages/github/MainClass.py:145: DeprecationWarning: Argument login_or_token is deprecated, please use auth=github.Auth.Token(...) instead
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 34 passed, 3 warnings in 4.68s ========================

@@ -16,6 +16,16 @@ from services.shared_types import IntegrationType, WorkflowType, WorkflowStatus
 from services.queries.project_queries import ProjectQueryService
 from services.queries.query_router import QueryRouter
 
+@pytest.fixture
+def mock_project_repository():
+    repo = Mock()
+    repo.list_active_projects = AsyncMock()
+    repo.get_by_id = AsyncMock()
+    repo.get_default_project = AsyncMock()
+    repo.find_by_name = AsyncMock()
+    repo.count_active_projects = AsyncMock()
+    return repo
+
 class TestProjectDomainModel:
     """Test the Project domain model behaves correctly"""
     
@@ -608,3 +618,85 @@ class TestQueryRouter:
         assert "get_default_project" in supported
         assert "find_project" in supported
         assert "count_projects" in supported
+
+@pytest.mark.asyncio
+async def test_get_project_by_id_returns_project(mock_project_repository):
+    project = Project(id="proj-1", name="Test Project")
+    mock_project_repository.get_by_id.return_value = project
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.get_project_by_id("proj-1")
+    assert result == project
+
+@pytest.mark.asyncio
+async def test_get_project_by_id_returns_none_for_missing(mock_project_repository):
+    mock_project_repository.get_by_id.return_value = None
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.get_project_by_id("nonexistent")
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_get_project_by_id_handles_repository_error(mock_project_repository):
+    mock_project_repository.get_by_id.side_effect = Exception("DB error")
+    query_service = ProjectQueryService(mock_project_repository)
+    with pytest.raises(Exception) as exc_info:
+        await query_service.get_project_by_id("proj-1")
+    assert "DB error" in str(exc_info.value)
+
+@pytest.mark.asyncio
+async def test_get_default_project_returns_project(mock_project_repository):
+    project = Project(id="proj-1", name="Default Project", is_default=True)
+    mock_project_repository.get_default_project.return_value = project
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.get_default_project()
+    assert result == project
+
+@pytest.mark.asyncio
+async def test_get_default_project_returns_none_if_missing(mock_project_repository):
+    mock_project_repository.get_default_project.return_value = None
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.get_default_project()
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_find_project_by_name_returns_project(mock_project_repository):
+    project = Project(id="proj-2", name="Web Platform")
+    mock_project_repository.find_by_name.return_value = project
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.find_project_by_name("Web Platform")
+    assert result == project
+
+@pytest.mark.asyncio
+async def test_find_project_by_name_returns_none_for_missing(mock_project_repository):
+    mock_project_repository.find_by_name.return_value = None
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.find_project_by_name("Nonexistent")
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_count_active_projects_returns_count(mock_project_repository):
+    mock_project_repository.count_active_projects.return_value = 3
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.count_active_projects()
+    assert result == 3
+
+@pytest.mark.asyncio
+async def test_count_active_projects_handles_repository_error(mock_project_repository):
+    mock_project_repository.count_active_projects.side_effect = Exception("DB error")
+    query_service = ProjectQueryService(mock_project_repository)
+    with pytest.raises(Exception) as exc_info:
+        await query_service.count_active_projects()
+    assert "DB error" in str(exc_info.value)
+
+@pytest.mark.asyncio
+async def test_get_project_by_id_with_invalid_id(mock_project_repository):
+    mock_project_repository.get_by_id.return_value = None
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.get_project_by_id("")
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_find_project_by_name_with_invalid_name(mock_project_repository):
+    mock_project_repository.find_by_name.return_value = None
+    query_service = ProjectQueryService(mock_project_repository)
+    result = await query_service.find_project_by_name("")
+    assert result is None

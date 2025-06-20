@@ -1,0 +1,71 @@
+import pytest
+from fastapi.testclient import TestClient
+from main import app
+
+client = TestClient(app)
+
+@pytest.fixture(scope="module")
+def setup_projects():
+    # This fixture could be expanded to set up test data in the DB if needed
+    # For now, assumes DB is seeded or uses in-memory/test DB
+    pass
+
+def test_list_projects_query(setup_projects):
+    response = client.post("/api/v1/intent", json={
+        "message": "List all projects"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["intent"]["category"] == "query"
+    assert data["intent"]["action"] == "list_projects"
+    assert isinstance(data["response"], str)
+    assert "projects" in data["response"].lower() or "project" in data["response"].lower()
+
+def test_get_project_query(setup_projects):
+    # Replace 'test-project-id' with a real project ID from your test DB
+    response = client.post("/api/v1/intent", json={
+        "message": "Get project details",
+        "context": {"project_id": "test-project-id"}
+    })
+    # Accepts 200 or 404 depending on DB state
+    assert response.status_code in (200, 404)
+
+def test_get_default_project_query(setup_projects):
+    response = client.post("/api/v1/intent", json={
+        "message": "Show me the default project"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["intent"]["action"] == "get_default_project"
+
+def test_find_project_query(setup_projects):
+    response = client.post("/api/v1/intent", json={
+        "message": "Find project named Web Platform",
+        "context": {"name": "Web Platform"}
+    })
+    assert response.status_code in (200, 404)
+
+def test_count_projects_query(setup_projects):
+    response = client.post("/api/v1/intent", json={
+        "message": "How many projects do we have?"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["intent"]["action"] == "count_projects"
+
+def test_get_project_query_missing_id(setup_projects):
+    response = client.post("/api/v1/intent", json={
+        "message": "Get project details"
+    })
+    assert response.status_code == 400 or response.status_code == 500
+    # Should return a user-friendly error message
+    data = response.json()
+    assert "project_id" in data.get("detail", "") or "error" in data.get("detail", "")
+
+def test_find_project_query_missing_name(setup_projects):
+    response = client.post("/api/v1/intent", json={
+        "message": "Find project"
+    })
+    assert response.status_code == 400 or response.status_code == 500
+    data = response.json()
+    assert "name" in data.get("detail", "") or "error" in data.get("detail", "") 
