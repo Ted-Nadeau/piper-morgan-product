@@ -126,20 +126,12 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                     response=response_text,
                     workflow_id=None  # No workflow for queries
                 )
+            except ValueError as query_error:
+                logger.error(f"Query processing failed: {query_error}")
+                raise HTTPException(status_code=422, detail=str(query_error))
             except Exception as query_error:
                 logger.error(f"Query processing failed: {query_error}")
-                response_text = f"I couldn't process that query: {str(query_error)}"
-                return IntentResponse(
-                    message=request.message,
-                    intent={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                        "context": intent.context
-                    },
-                    response=response_text,
-                    workflow_id=None
-                )
+                raise HTTPException(status_code=500, detail="Internal server error")
         else:
             # Handle command intents through WorkflowFactory
             workflow = await engine.create_workflow_from_intent(intent)
@@ -176,6 +168,8 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 response=response_text,
                 workflow_id=workflow_id
             )
+    except HTTPException:
+        raise  # Let FastAPI handle it
     except Exception as e:
         logger.error(f"Intent processing failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to process intent")
