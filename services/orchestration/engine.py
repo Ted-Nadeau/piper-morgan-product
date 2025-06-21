@@ -104,19 +104,22 @@ class OrchestrationEngine:
             )
             await repos["session"].commit()
 
+            # Define the core workflow loop as a separate coroutine
+            async def workflow_loop():
+                while task := workflow.get_next_task():
+                    await self._execute_task(workflow, task)
+                    
+                    # Persist task results after each execution
+                    await self._persist_task_update(workflow_id, task)
+                    
+                    if workflow.status == WorkflowStatus.FAILED:
+                        # The task itself will raise an exception, which we'll catch below
+                        break
+            
             # Execute tasks with a timeout
             try:
-                async with asyncio.timeout(300): # 5-minute timeout for the whole workflow
-                    while task := workflow.get_next_task():
-                        await self._execute_task(workflow, task)
-                        
-                        # Persist task results after each execution
-                        await self._persist_task_update(workflow_id, task)
-                        
-                        if workflow.status == WorkflowStatus.FAILED:
-                            # The task itself will raise an exception, which we'll catch below
-                            break
-            except TimeoutError:
+                await asyncio.wait_for(workflow_loop(), timeout=300) # 5-minute timeout
+            except asyncio.TimeoutError:
                 logger.error("Workflow timed out", workflow_id=workflow_id)
                 raise WorkflowTimeoutError(details={"workflow_id": workflow_id})
 
@@ -195,8 +198,7 @@ class OrchestrationEngine:
                 raise ValueError(f"No handler for task type {task.type}")
             
             # Execute task with a timeout
-            async with asyncio.timeout(120): # 2-minute timeout per task
-                result = await handler(workflow, task)
+            result = await asyncio.wait_for(handler(workflow, task), timeout=120) # 2-minute timeout per task
             
             # Update domain task with results
             if result.success:
@@ -225,7 +227,7 @@ class OrchestrationEngine:
                 success=result.success
             )
             
-        except TimeoutError as e:
+        except asyncio.TimeoutError as e:
             task.status = TaskStatus.FAILED
             task.error = "Task timed out after 120 seconds"
             workflow.status = WorkflowStatus.FAILED
