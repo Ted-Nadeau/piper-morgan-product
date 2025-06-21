@@ -12,6 +12,7 @@ import logging
 from dotenv import load_dotenv
 import os
 from fastapi import File, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
 import tempfile
 import shutil
 from services.knowledge_graph import get_document_service
@@ -68,6 +69,22 @@ app = FastAPI(
     version="1.0.0-bootstrap",
     description="Intelligent Product Management Assistant",
     lifespan=lifespan
+)
+
+# Set up CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8080", # Default for many local dev servers
+    "http://127.0.0.1:5500", # Common for VS Code Live Server
+    # Add other origins as needed
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Add middleware
