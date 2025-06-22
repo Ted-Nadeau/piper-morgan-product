@@ -5,13 +5,15 @@ from typing import Any, Dict, List
 from services.domain.models import Intent
 from services.shared_types import IntentCategory
 from services.queries.project_queries import ProjectQueryService
+from services.queries.conversation_queries import ConversationQueryService
 
 
 class QueryRouter:
     """Routes QUERY intents to appropriate query services"""
     
-    def __init__(self, project_query_service: ProjectQueryService):
+    def __init__(self, project_query_service: ProjectQueryService, conversation_query_service: ConversationQueryService):
         self.project_queries = project_query_service
+        self.conversation_queries = conversation_query_service
     
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service"""
@@ -34,6 +36,14 @@ class QueryRouter:
             return await self.project_queries.find_project_by_name(name)
         elif intent.action == "count_projects":
             return await self.project_queries.count_active_projects()
+        elif intent.action == "get_greeting":
+            return await self.conversation_queries.get_greeting()
+        elif intent.action == "get_help":
+            return await self.conversation_queries.get_help()
+        elif intent.action == "get_status":
+            return await self.conversation_queries.get_status()
+        elif intent.action == "get_initial_contact":
+            return await self.conversation_queries.get_initial_contact()
         else:
             raise ValueError(f"Unknown query action: {intent.action}")
     
@@ -44,5 +54,9 @@ class QueryRouter:
             "get_project", 
             "get_default_project",
             "find_project",
-            "count_projects"
+            "count_projects",
+            "get_greeting",
+            "get_help",
+            "get_status",
+            "get_initial_contact"
         ] 

@@ -2,9 +2,20 @@
 Piper Morgan 1.0 - Main Application
 Bootstrap version to prove the architecture
 """
+import sys
+
+# --- Python Version Check ---
+MIN_PYTHON_VERSION = (3, 9)
+if sys.version_info < MIN_PYTHON_VERSION:
+    sys.exit(
+        f"Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]} or higher is required."
+        f" You are using {sys.version.split(' ')[0]}"
+    )
+# --- End Version Check ---
+
 import asyncio
 import uvicorn
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Depends
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -15,12 +26,16 @@ from fastapi import File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 import tempfile
 import shutil
-from services.knowledge_graph import get_document_service
+from services.knowledge_graph import get_document_service, get_ingester
+from services.knowledge_graph.document_service import DocumentService
+from services.knowledge_graph.ingestion import DocumentIngester
 from services.api.middleware import ErrorHandlingMiddleware
 from services.orchestration import engine, WorkflowType, WorkflowStatus
 from services.queries import QueryRouter, ProjectQueryService
+from services.queries.conversation_queries import ConversationQueryService
 from services.database.repositories import RepositoryFactory
 from services.api.errors import APIError
+from services.api.serializers import intent_to_dict
 
 # Load environment variables FIRST
 load_dotenv()
@@ -53,6 +68,17 @@ class WorkflowResponse(BaseModel):
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting Piper Morgan 1.0...")
+    
+    # Set up services and routers
+    repos = await RepositoryFactory.get_repositories()
+    project_query_service = ProjectQueryService(repos["projects"])
+    conversation_query_service = ConversationQueryService()
+    app.state.query_router = QueryRouter(project_query_service, conversation_query_service)
+
+    # Set up knowledge services
+    app.state.document_service = get_document_service()
+    app.state.ingester = get_ingester()
+
     logger.info("✅ Domain models loaded")
     logger.info("✅ LLM clients initialized")
     logger.info("✅ Intent classifier ready")
@@ -74,7 +100,8 @@ app = FastAPI(
 # Set up CORS
 origins = [
     "http://localhost",
-    "http://localhost:8080", # Default for many local dev servers
+    "http://localhost:8080",
+    os.getenv("WEB_UI_ORIGIN", "http://localhost:8081"),
     "http://127.0.0.1:5500", # Common for VS Code Live Server
     # Add other origins as needed
 ]
@@ -113,8 +140,21 @@ async def health():
         }
     }
 
+def get_query_router(request: Request) -> QueryRouter:
+    return request.app.state.query_router
+
+def get_doc_service(request: Request) -> DocumentService:
+    return request.app.state.document_service
+
+def get_ingester_service(request: Request) -> DocumentIngester:
+    return request.app.state.ingester
+
 @app.post("/api/v1/intent", response_model=IntentResponse)
-async def process_intent(request: IntentRequest, background_tasks: BackgroundTasks):
+async def process_intent(
+    request: IntentRequest, 
+    background_tasks: BackgroundTasks,
+    query_router: QueryRouter = Depends(get_query_router)
+):
     """Process a natural language message with real AI and route to appropriate handler"""
     try:
         # Use real intent classifier
@@ -124,11 +164,6 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         if intent.category == IntentCategory.QUERY:
             # Handle query intents through QueryRouter
             try:
-                # Get repositories for query service
-                repos = await RepositoryFactory.get_repositories()
-                project_query_service = ProjectQueryService(repos["projects"])
-                query_router = QueryRouter(project_query_service)
-                
                 # Route the query
                 query_result = await query_router.route_query(intent)
                 
@@ -136,17 +171,19 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 if intent.action == "list_projects":
                     project_list = [project.to_dict() for project in query_result]
                     response_text = f"I found {len(project_list)} projects: " + ", ".join([p["name"] for p in project_list])
+                elif intent.action == "count_projects":
+                    response_text = f"There are {query_result} active projects." if query_result is not None else "No projects found."
+                elif intent.action == "get_default_project":
+                    if query_result is None:
+                        response_text = "No default project is set."
+                    else:
+                        response_text = f"The default project is: {getattr(query_result, 'name', str(query_result))}"
                 else:
-                    response_text = f"Here's what I found for {intent.action}: {query_result}"
+                    response_text = str(query_result) if query_result is not None else "No result."
                 
                 return IntentResponse(
                     message=request.message,
-                    intent={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                        "context": intent.context
-                    },
+                    intent=intent_to_dict(intent),
                     response=response_text,
                     workflow_id=None  # No workflow for queries
                 )
@@ -183,12 +220,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             
             return IntentResponse(
                 message=request.message,
-                intent={
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                    "context": intent.context
-                },
+                intent=intent_to_dict(intent),
                 response=response_text,
                 workflow_id=workflow_id
             )
@@ -197,7 +229,14 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
     except HTTPException:
         raise  # Let FastAPI handle its own exceptions
     except Exception as e:
-        logger.error(f"Intent processing failed: {e}", exc_info=True)
+        # Use getattr for safe access to potentially non-existent attributes
+        error_details = {
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "intent_id": getattr(intent, 'id', 'N/A'),
+            "intent_action": getattr(intent, 'action', 'N/A')
+        }
+        logger.error("Failed to process intent", extra=error_details, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process intent")
 
 @app.get("/api/v1/workflows/{workflow_id}", response_model=WorkflowResponse)
@@ -260,7 +299,8 @@ async def upload_document(
     title: Optional[str] = Form(None),
     author: Optional[str] = Form(None),
     source_type: Optional[str] = Form("reference"),
-    knowledge_domain: Optional[str] = Form("pm_fundamentals")
+    knowledge_domain: Optional[str] = Form("pm_fundamentals"),
+    doc_service: DocumentService = Depends(get_doc_service)
 ):
     """Upload a document to the knowledge base"""
     
@@ -280,7 +320,7 @@ async def upload_document(
     
     try:
         # Use document service - clean abstraction!
-        result = await get_document_service().upload_pdf(file, metadata)
+        result = await doc_service.upload_pdf(file, metadata)
         
         # Emit event for learning system
         if hasattr(app.state, 'event_bus'):
@@ -300,7 +340,11 @@ async def upload_document(
         raise HTTPException(status_code=500, detail="Failed to process document")
 
 @app.get("/api/v1/knowledge/search")
-async def search_knowledge(query: str, limit: int = 5):
+async def search_knowledge(
+    query: str, 
+    limit: int = 5,
+    ingester: DocumentIngester = Depends(get_ingester_service)
+):
     """
     Search the knowledge base
     
@@ -309,7 +353,7 @@ async def search_knowledge(query: str, limit: int = 5):
         limit: Maximum number of results
     """
     try:
-        results = await get_ingester().search(query, n_results=limit)
+        results = await ingester.search(query, n_results=limit)
         return {
             "query": query,
             "results": results,
@@ -323,7 +367,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8001,
+        port=int(os.getenv("API_PORT", 8001)),
         reload=True,
         log_level="info"
     )

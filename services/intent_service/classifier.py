@@ -85,7 +85,8 @@ class IntentClassifier:
         # Search knowledge base for relevant context
         knowledge_context = ""
         try:
-            search_results = await get_ingester().search_with_context(
+            ingester = get_ingester()
+            search_results = await ingester.search_with_context(
                 message, 
                 hierarchy_preference=3,  # Focus on specific knowledge
                 n_results=3
@@ -132,13 +133,19 @@ For the \"action\" field, use these patterns:
 - For queries: \"list_[thing]\", \"get_[thing]\", \"find_[thing]\", \"count_[thing]\" (e.g., list_projects, get_project, find_project, count_projects, get_default_project)
 
 Examples:
+- \"Users are complaining the login page is slow\" => EXECUTION, action: create_ticket
+- \"The mobile app crashes on startup\" => EXECUTION, action: create_ticket
+- \"Can you analyze the performance metrics for the latest release?\" => ANALYSIS, action: analyze_metrics
+- \"people say our login screen is bonkers\" => ANALYSIS, action: analyze_feedback
+- \"Please review the GitHub issue at https://github.com/org/repo/issues/123\" => ANALYSIS, action: analyze_github_issue
+- \"Generate a summary of the project status\" => SYNTHESIS, action: generate_summary
 - \"List all projects\" => QUERY, action: list_projects
 - \"Show me the default project\" => QUERY, action: get_default_project
 - \"How many projects do we have?\" => QUERY, action: count_projects
 - \"Find project named Web Platform\" => QUERY, action: find_project
-- \"Get project details for project ID 123\" => QUERY, action: get_project
-- \"List all features\" => QUERY, action: list_features
-- \"How many open tasks?\" => QUERY, action: count_tasks
+- \"Hello\" => QUERY, action: get_initial_contact
+- \"How are you?\" => QUERY, action: get_status
+- \"Help\" => QUERY, action: get_help
 """
 
         try:

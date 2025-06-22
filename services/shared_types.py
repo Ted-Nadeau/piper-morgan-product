@@ -21,6 +21,7 @@ class WorkflowType(Enum):
     GENERATE_REPORT = "generate_report"
     PLAN_STRATEGY = "plan_strategy"
     LEARN_PATTERN = "learn_pattern"
+    ANALYZE_FEEDBACK = "analyze_feedback"
     # PM-009: Project management workflow types
     CONFIRM_PROJECT = "confirm_project"
     SELECT_PROJECT = "select_project"
@@ -52,6 +53,9 @@ class TaskType(Enum):
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
     JIRA_CREATE_TICKET = "jira_create_ticket"
     SLACK_SEND_MESSAGE = "slack_send_message"
+    
+    # Feedback tasks
+    PROCESS_USER_FEEDBACK = "process_user_feedback"
 
 class TaskStatus(Enum):
     PENDING = "pending"

@@ -27,6 +27,11 @@ class MockLLMClient:
         self.inferred_project_id = inferred_project_id
     async def infer_project_id(self, intent):
         return self.inferred_project_id
+    async def complete(self, prompt):
+        # Mock implementation for the complete method
+        if self.inferred_project_id:
+            return self.inferred_project_id
+        return "default_project"
 
 def make_project(id=None, name="Test Project"):
     return Project(id=id or str(uuid.uuid4()), name=name)

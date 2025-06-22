@@ -31,6 +31,9 @@ class WorkflowFactory:
             'review_github_issue': WorkflowType.REVIEW_ITEM,
             'check_issue': WorkflowType.REVIEW_ITEM,
             'analyze_data': WorkflowType.REVIEW_ITEM,  # Maps fallback classifier action
+
+            # New feedback analysis mapping
+            'analyze_feedback': WorkflowType.ANALYZE_FEEDBACK,
         }
     
     async def create_from_intent(self, intent: Intent, project_context: Optional[Dict[str, Any]] = None) -> Optional[Workflow]:
@@ -78,6 +81,13 @@ class WorkflowFactory:
             task = Task(
                 name='Analyze GitHub Issue',
                 type=TaskType.ANALYZE_GITHUB_ISSUE,
+                status=TaskStatus.PENDING
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.ANALYZE_FEEDBACK:
+            task = Task(
+                name='Process User Feedback',
+                type=TaskType.PROCESS_USER_FEEDBACK,
                 status=TaskStatus.PENDING
             )
             workflow.tasks.append(task)

@@ -15,6 +15,7 @@ from services.database.repositories import ProjectRepository
 from services.shared_types import IntegrationType, WorkflowType, WorkflowStatus
 from services.queries.project_queries import ProjectQueryService
 from services.queries.query_router import QueryRouter
+from services.queries.conversation_queries import ConversationQueryService
 
 @pytest.fixture
 def mock_project_repository():
@@ -552,7 +553,8 @@ class TestQueryRouter:
         mock_project_repository.list_active_projects.return_value = projects
         
         project_query_service = ProjectQueryService(mock_project_repository)
-        router = QueryRouter(project_query_service)
+        conversation_query_service = ConversationQueryService()
+        router = QueryRouter(project_query_service, conversation_query_service)
         
         # AND: QUERY intent for list_projects
         intent = Intent(
@@ -572,7 +574,8 @@ class TestQueryRouter:
     async def test_router_rejects_non_query_intents(self, mock_project_repository):
         """QueryRouter should reject non-QUERY intents"""
         project_query_service = ProjectQueryService(mock_project_repository)
-        router = QueryRouter(project_query_service)
+        conversation_query_service = ConversationQueryService()
+        router = QueryRouter(project_query_service, conversation_query_service)
         
         # GIVEN: EXECUTION intent (not QUERY)
         intent = Intent(
@@ -590,7 +593,8 @@ class TestQueryRouter:
     async def test_router_handles_unknown_query_action(self, mock_project_repository):
         """QueryRouter should handle unknown query actions gracefully"""
         project_query_service = ProjectQueryService(mock_project_repository)
-        router = QueryRouter(project_query_service)
+        conversation_query_service = ConversationQueryService()
+        router = QueryRouter(project_query_service, conversation_query_service)
         
         # GIVEN: QUERY intent with unknown action
         intent = Intent(
@@ -607,7 +611,8 @@ class TestQueryRouter:
     def test_router_supported_queries(self, mock_project_repository):
         """QueryRouter should return list of supported queries"""
         project_query_service = ProjectQueryService(mock_project_repository)
-        router = QueryRouter(project_query_service)
+        conversation_query_service = ConversationQueryService()
+        router = QueryRouter(project_query_service, conversation_query_service)
         
         # WHEN: Getting supported queries
         supported = router.get_supported_queries()
