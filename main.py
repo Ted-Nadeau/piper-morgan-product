@@ -75,7 +75,9 @@ app = FastAPI(
 origins = [
     "http://localhost",
     "http://localhost:8080", # Default for many local dev servers
+    "http://localhost:8081",  # Add this line for your web UI
     "http://127.0.0.1:5500", # Common for VS Code Live Server
+    "http://127.0.0.1:8081",  # Also add this for 127.0.0.1 access
     # Add other origins as needed
 ]
 
