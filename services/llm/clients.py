@@ -37,11 +37,11 @@ class LLMClient:
             logger.warning("No OPENAI_API_KEY found")
     
     async def complete(self, 
-                      task_type: str,
-                      prompt: str,
-                      context: Optional[Dict[str, Any]] = None) -> str:
+                  task_type: str,
+                  prompt: str,
+                  context: Optional[Dict[str, Any]] = None) -> str:
         """
-        Get completion for a specific task type
+        Get completion for a specific task type with automatic fallback
         
         Args:
             task_type: Type of task (intent_classification, reasoning, etc)
@@ -52,14 +52,40 @@ class LLMClient:
             The LLM's response
         """
         config = MODEL_CONFIGS.get(task_type, MODEL_CONFIGS["reasoning"])
-        provider = config["provider"]
+        primary_provider = config["provider"]
         
-        if provider == LLMProvider.ANTHROPIC:
-            return await self._anthropic_complete(prompt, config)
-        elif provider == LLMProvider.OPENAI:
-            return await self._openai_complete(prompt, config)
-        else:
-            raise ValueError(f"Unknown provider: {provider}")
+        # Try primary provider first
+        try:
+            if primary_provider == LLMProvider.ANTHROPIC:
+                return await self._anthropic_complete(prompt, config)
+            elif primary_provider == LLMProvider.OPENAI:
+                return await self._openai_complete(prompt, config)
+            else:
+                raise ValueError(f"Unknown provider: {primary_provider}")
+        except Exception as e:
+            # Log the primary provider failure
+            logger.warning(f"Primary provider {primary_provider.value} failed: {str(e)}")
+            
+            # Determine fallback provider
+            fallback_provider = LLMProvider.OPENAI if primary_provider == LLMProvider.ANTHROPIC else LLMProvider.ANTHROPIC
+            fallback_config = {**config, "provider": fallback_provider}
+            
+            # Adjust model for fallback provider
+            if fallback_provider == LLMProvider.OPENAI:
+                fallback_config["model"] = LLMModel.GPT4
+            else:
+                fallback_config["model"] = LLMModel.CLAUDE_SONNET
+            
+            logger.info(f"Falling back to {fallback_provider.value}")
+            
+            try:
+                if fallback_provider == LLMProvider.ANTHROPIC:
+                    return await self._anthropic_complete(prompt, fallback_config)
+                else:
+                    return await self._openai_complete(prompt, fallback_config)
+            except Exception as fallback_error:
+                logger.error(f"Fallback provider {fallback_provider.value} also failed: {str(fallback_error)}")
+                raise RuntimeError(f"Both LLM providers failed. Primary: {str(e)}, Fallback: {str(fallback_error)}")
     
     async def _anthropic_complete(self, prompt: str, config: Dict[str, Any]) -> str:
         """Get completion from Anthropic"""

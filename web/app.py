@@ -183,11 +183,23 @@ async def home(request: Request):
         });
         
         async function pollWorkflowStatus(workflowId, elementToUpdate) {
+            let pollCount = 0;
+            const maxPolls = 30; // Stop after 60 seconds (2s intervals)
+            
             const intervalId = setInterval(async () => {
+                pollCount++;
+                
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/v1/workflows/${workflowId}`);
+                    
                     if (!response.ok) {
-                        // Stop polling on server error
+                        // If 404 and we've seen success before, assume it completed
+                        if (response.status === 404 && elementToUpdate.textContent.includes('completed')) {
+                            clearInterval(intervalId);
+                            return; // Keep the success message
+                        }
+                        
+                        // Otherwise show error and stop
                         elementToUpdate.innerHTML = `<div class="result error">Error checking status.</div>`;
                         clearInterval(intervalId);
                         return;
@@ -196,26 +208,37 @@ async def home(request: Request):
                     const data = await response.json();
                     elementToUpdate.textContent = data.message;
                     
-                    if (data.status === 'COMPLETED' || data.status === 'FAILED') {
+                    if (data.status === 'completed' || data.status === 'failed') {
                         clearInterval(intervalId);
                         let finalHTML;
-                        if (data.status === 'COMPLETED') {
-                            // Assuming result is in the last task's output
-                            const finalResult = data.tasks[data.tasks.length - 1]?.result?.issue;
-                            if (finalResult && finalResult.url) {
-                                finalHTML = `
-                                    <div class="result success">
-                                        <strong>✅ GitHub Issue Created!</strong><br>
-                                        <strong>#${finalResult.number}:</strong> ${finalResult.title}<br>
-                                        <strong>URL:</strong> <a href="${finalResult.url}" target="_blank">View on GitHub</a>
-                                    </div>`;
+                        if (data.status === 'completed') {
+                            // For file analysis workflows, show appropriate message
+                            if (data.type === 'analyze_file') {
+                                finalHTML = `<div class="result success">File analysis completed successfully!</div>`;
                             } else {
-                                finalHTML = `<div class="result success">Workflow completed successfully.</div>`;
+                                // Original GitHub issue logic
+                                const finalResult = data.tasks && data.tasks[data.tasks.length - 1]?.result?.issue;
+                                if (finalResult && finalResult.url) {
+                                    finalHTML = `
+                                        <div class="result success">
+                                            <strong>✅ GitHub Issue Created!</strong><br>
+                                            <strong>#${finalResult.number}:</strong> ${finalResult.title}<br>
+                                            <strong>URL:</strong> <a href="${finalResult.url}" target="_blank">View on GitHub</a>
+                                        </div>`;
+                                } else {
+                                    finalHTML = `<div class="result success">Workflow completed successfully!</div>`;
+                                }
                             }
                         } else {
                             finalHTML = `<div class="result error"><strong>Workflow Failed:</strong><br>${data.message}</div>`;
                         }
                         elementToUpdate.innerHTML = finalHTML;
+                    }
+                    
+                    // Stop polling after max attempts
+                    if (pollCount >= maxPolls) {
+                        clearInterval(intervalId);
+                        elementToUpdate.innerHTML = `<div class="result error">Workflow status check timed out.</div>`;
                     }
                 } catch (error) {
                     console.error("Polling error:", error);
