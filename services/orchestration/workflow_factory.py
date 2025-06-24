@@ -30,7 +30,7 @@ class WorkflowFactory:
             'analyze_issue': WorkflowType.REVIEW_ITEM,
             'review_github_issue': WorkflowType.REVIEW_ITEM,
             'check_issue': WorkflowType.REVIEW_ITEM,
-            'analyze_data': WorkflowType.REVIEW_ITEM,  # Maps fallback classifier action
+            'analyze_data': WorkflowType.ANALYZE_FILE,  # For file/data analysis
         }
     
     async def create_from_intent(self, intent: Intent, project_context: Optional[Dict[str, Any]] = None) -> Optional[Workflow]:

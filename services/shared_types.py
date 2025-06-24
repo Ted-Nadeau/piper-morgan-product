@@ -26,6 +26,7 @@ class WorkflowType(Enum):
     # PM-009: Project management workflow types
     CONFIRM_PROJECT = "confirm_project"
     SELECT_PROJECT = "select_project"
+    ANALYZE_FILE = "analyze_file"  # Add this line for file analysis workflows
 
 class WorkflowStatus(Enum):
     PENDING = "pending"

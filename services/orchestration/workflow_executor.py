@@ -28,6 +28,8 @@ class WorkflowExecutor:
         try:
             if workflow.type == WorkflowType.CREATE_TICKET:
                 return await self._execute_create_ticket(workflow)
+            elif workflow.type == WorkflowType.ANALYZE_FILE:
+                return await self._execute_analyze_file(workflow)
             else:
                 return WorkflowResult(
                     success=False,
@@ -112,4 +114,22 @@ class WorkflowExecutor:
         return WorkflowResult(
             success=False,
             error='No Create GitHub Issue task found in workflow'
+        )
+
+    async def _execute_analyze_file(self, workflow: Workflow) -> WorkflowResult:
+        """Execute file analysis workflow"""
+        file_id = workflow.context.get('resolved_file_id')
+        if not file_id:
+            return WorkflowResult(
+                success=False,
+                error="No file ID provided for analysis"
+            )
+        # For now, just return success - actual analysis logic to be implemented
+        return WorkflowResult(
+            success=True,
+            data={
+                "message": f"File analysis completed for file {file_id}",
+                "file_id": file_id,
+                "analysis_type": "basic"
+            }
         )
