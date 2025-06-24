@@ -138,19 +138,19 @@ async def home(request: Request):
             formData.append('file', file);
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/knowledge/upload`, {
+                const response = await fetch(`${API_BASE_URL}/api/v1/files/upload`, {
                     method: 'POST',
                     body: formData,
                 });
                 const result = await response.json();
                 let botResponseHTML;
 
-                if (response.ok && result.document_id) {
+                if (response.ok && result.file_id) {
                      botResponseHTML = `
                         <div class="result success">
                             <strong>✅ Document Uploaded!</strong><br>
                             <strong>File:</strong> ${result.filename}<br>
-                            <strong>Doc ID:</strong> ${result.document_id}
+                            <strong>File ID:</strong> ${result.file_id}
                         </div>`;
                 } else {
                     botResponseHTML = `
