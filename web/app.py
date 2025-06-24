@@ -102,6 +102,7 @@ async def home(request: Request):
     <script>
         const API_BASE_URL = "API_BASE_URL_PLACEHOLDER";
         const chatWindow = document.getElementById('chat-window');
+        let sessionId = null;
 
         function appendMessage(html, isUser = false) {
             const msgContainer = document.createElement('div');
@@ -136,6 +137,9 @@ async def home(request: Request):
 
             const formData = new FormData();
             formData.append('file', file);
+            if (sessionId) {
+                formData.append('session_id', sessionId);
+            }
 
             try {
                 const response = await fetch(`${API_BASE_URL}/api/v1/files/upload`, {
@@ -161,6 +165,10 @@ async def home(request: Request):
                 }
                 thinkingDiv.innerHTML = botResponseHTML;
                 thinkingDiv.classList.remove('thinking');
+
+                if (result.session_id) {
+                    sessionId = result.session_id;
+                }
             } catch (error) {
                 thinkingDiv.innerHTML = `
                     <div class="result error">
@@ -234,7 +242,10 @@ async def home(request: Request):
                 const response = await fetch(`${API_BASE_URL}/api/v1/intent`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({ 
+                        message: message,
+                        session_id: sessionId 
+                    })
                 });
                 
                 const result = await response.json();
@@ -253,6 +264,9 @@ async def home(request: Request):
                     pollWorkflowStatus(result.workflow_id, statusDiv);
                 }
                 
+                if (result.session_id) {
+                    sessionId = result.session_id;
+                }
             } catch (error) {
                 thinkingDiv.innerHTML = `
                     <div class="result error">

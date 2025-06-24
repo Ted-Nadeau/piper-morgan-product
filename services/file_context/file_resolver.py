@@ -37,6 +37,15 @@ class FileResolver:
         if not files:
             return None, 0.0
         
+        # SPECIAL CASE: If only one file in session and explicit reference
+        # ("the file", "that file", "file I uploaded"), use it with high confidence
+        original_message = intent.context.get('original_message', '').lower()
+        explicit_references = ['the file', 'that file', 'file i', 'document i', 'what i uploaded', 'just uploaded']
+        
+        if len(files) == 1 and any(ref in original_message for ref in explicit_references):
+            # Single file with explicit reference = no ambiguity
+            return files[0].id, 0.95  # Very high confidence
+        
         # Score each file
         scored_files = []
         for file in files:
