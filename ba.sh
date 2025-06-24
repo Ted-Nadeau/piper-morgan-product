@@ -1,7 +1,17 @@
-#!/bin/bash
+# Check your current status
+git status
 
-# Check which version of app.py you're running
-tail -5 web/app.py
+# Stage your work
+git add .
 
-# The last line should show:
-# return HTMLResponse(content=html_content.replace("{api_base_url}", API_BASE_URL))
+# Commit with a meaningful message
+git commit -m "feat: File resolution system complete, PM-011 UI testing in progress
+
+- Completed Phase 3.3 file resolution with scoring algorithm
+- Added disambiguation handling for ambiguous file references
+- Comprehensive edge case testing
+- UI testing revealed need for conversational handling (complete)
+- File processing workflows still needed for full upload flow"
+
+# Push to remote
+git push origin main

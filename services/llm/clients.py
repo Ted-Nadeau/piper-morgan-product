@@ -72,7 +72,11 @@ class LLMClient:
             temperature=config["temperature"],
             messages=[{"role": "user", "content": prompt}]
         )
-        
+        # Log approximate tokens/cost
+        logger.info("llm_usage",
+                    provider="anthropic",
+                    tokens_sent=len(prompt)//4,
+                    tokens_received=len(response.content[0].text)//4)
         return response.content[0].text
     
     async def _openai_complete(self, prompt: str, config: Dict[str, Any]) -> str:
@@ -86,7 +90,11 @@ class LLMClient:
             temperature=config["temperature"],
             messages=[{"role": "user", "content": prompt}]
         )
-        
+        # Log approximate tokens/cost
+        logger.info("llm_usage",
+                    provider="openai",
+                    tokens_sent=len(prompt)//4,
+                    tokens_received=len(response.choices[0].message.content)//4)
         return response.choices[0].message.content
 
 # Global client instance

@@ -299,3 +299,17 @@ class InsightGenerated(Event):
     insight: str = ""
     confidence: float = 0.0
     sources: List[str] = field(default_factory=list)
+
+@dataclass
+class UploadedFile:
+    """Domain model for uploaded files"""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    session_id: str = ""
+    filename: str = ""
+    file_type: str = ""  # MIME type
+    file_size: int = 0
+    storage_path: str = ""  # Where file is stored
+    upload_time: datetime = field(default_factory=datetime.now)
+    last_referenced: Optional[datetime] = None
+    reference_count: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)

@@ -11,6 +11,8 @@ class IntentCategory(Enum):
     STRATEGY = "strategy"
     LEARNING = "learning"
     QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
+    CONVERSATION = "conversation"  # For greetings, chitchat, social interaction
+    UNKNOWN = "unknown"  # For unclear or ambiguous requests
 
 class WorkflowType(Enum):
     CREATE_FEATURE = "create_feature"
