@@ -243,7 +243,7 @@ async def home(request: Request):
                     throw new Error(result.detail || "An API error occurred");
                 }
 
-                thinkingDiv.innerHTML = result.response;
+                thinkingDiv.innerHTML = result.message;
                 thinkingDiv.classList.remove('thinking');
 
                 if (result.workflow_id) {

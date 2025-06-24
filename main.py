@@ -30,6 +30,7 @@ from services.repositories import DatabasePool
 from services.domain.models import UploadedFile
 from services.intent_service.intent_enricher import IntentEnricher
 from services.utils.serialization import serialize_dataclass
+# from services.ingestion_service import get_ingester
 
 # Load environment variables FIRST
 load_dotenv()
@@ -188,7 +189,12 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         
         # Normal classification flow
         intent = await classifier.classify(request.message)
-        
+
+        # Handle conversational intents immediately (minimal, pre-enrichment)
+        if intent.category == IntentCategory.CONVERSATION:
+            result = await conversation_handler.respond(intent, session_id)
+            return IntentResponse(**result)
+
         # Add this debug line
         print(f"DEBUG: Intent classified as - Category: {intent.category}, Action: {intent.action}, Confidence: {intent.confidence}")
         
@@ -240,26 +246,6 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                     requires_clarification=True,
                     clarification_type="no_files_found"
                 )
-        
-        # Handle conversational intents immediately
-        if enriched_intent.category == IntentCategory.CONVERSATION:
-            if enriched_intent.action == "clarification_needed":
-                # Handle vague intent with clarification
-                response = await conversation_handler.respond(enriched_intent, session_id)
-            else:
-                # Handle other conversational intents
-                response = await conversation_handler.respond(enriched_intent, session_id)
-            
-            # Record interaction in session
-            session.add_interaction(enriched_intent, response.get("message", ""))
-            
-            return IntentResponse(
-                message=response["message"],
-                intent=response["intent"],
-                workflow_id=response.get("workflow_id"),
-                requires_clarification=response.get("requires_clarification", False),
-                clarification_type=response.get("clarification_type")
-            )
         
         # Route based on intent category
         if enriched_intent.category == IntentCategory.QUERY:
@@ -519,25 +505,19 @@ async def upload_file(
         logger.error(f"File upload failed: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-@app.post("/api/v1/knowledge/search")
-async def search_knowledge(query: str, limit: int = 5):
-    """
-    Search the knowledge base
-    
-    Args:
-        query: Search query
-        limit: Maximum number of results
-    """
-    try:
-        results = await get_ingester().search(query, n_results=limit)
-        return {
-            "query": query,
-            "results": results,
-            "count": len(results)
-        }
-    except Exception as e:
-        logger.error(f"Knowledge search failed: {e}")
-        raise HTTPException(status_code=500, detail="Search failed")
+# Comment out the knowledge search endpoint that uses get_ingester
+# @app.post("/api/v1/knowledge_search")
+# async def knowledge_search(request: KnowledgeSearchRequest):
+#     """Search the knowledge base for relevant documents"""
+#     query = request.query
+#     limit = request.limit or 5
+#     try:
+#         # results = await get_ingester().search(query, n_results=limit)
+#         results = []  # Stubbed out
+#         return {"results": results}
+#     except Exception as e:
+#         logger.error(f"Knowledge search failed: {e}")
+#         raise HTTPException(status_code=500, detail="Knowledge search failed")
 
 @app.post("/api/v1/clarification", response_model=IntentResponse)
 async def handle_clarification(request: ClarificationResponse, background_tasks: BackgroundTasks):
