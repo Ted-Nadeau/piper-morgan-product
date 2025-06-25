@@ -1,67 +1,94 @@
 import pandas as pd
+from datetime import datetime
 from services.analysis.base_analyzer import BaseAnalyzer
 from services.domain.models import AnalysisResult, AnalysisType
-from datetime import datetime
 
 class CSVAnalyzer(BaseAnalyzer):
-    def analyze(self, file_path):
+    async def analyze(self, file_path):
         try:
             df = pd.read_csv(file_path)
             row_count = len(df)
             columns = list(df.columns)
-            
-            # Calculate statistics for numeric columns
+
+            # Statistical summary for numeric columns
             column_stats = {}
-            numeric_columns = df.select_dtypes(include=['int64', 'float64']).columns
-            
-            for col in numeric_columns:
+            numeric_cols = df.select_dtypes(include=['number']).columns
+            for col in numeric_cols:
+                col_data = df[col]
                 column_stats[col] = {
-                    'mean': round(df[col].mean(), 2),
-                    'median': round(df[col].median(), 2),
-                    'std': round(df[col].std(), 2),
-                    'min': round(df[col].min(), 2),
-                    'max': round(df[col].max(), 2)
+                    'mean': col_data.mean(),
+                    'median': col_data.median(),
+                    'min': col_data.min(),
+                    'max': col_data.max(),
+                    'std': col_data.std()
                 }
-            
-            # Calculate missing data
-            missing_data = {}
-            
+
+            # Missing data detection (refactored structure)
+            by_column = {}
+            total_missing = 0
             for col in columns:
                 missing_count = df[col].isnull().sum()
-                missing_percent = round((missing_count / row_count) * 100, 2) if row_count > 0 else 0
-                
-                missing_data[col] = {
+                percent = (missing_count / row_count * 100) if row_count > 0 else 0.0
+                by_column[col] = {
                     'count': int(missing_count),
-                    'percent': missing_percent
+                    'percent': percent
                 }
-            
+                total_missing += int(missing_count)
+            total_cells = row_count * len(columns) if row_count > 0 else 0
+            percent_missing = (total_missing / total_cells * 100) if total_cells > 0 else 0.0
+            missing_data = {
+                'summary': {
+                    'total_missing': total_missing,
+                    'percent_missing': percent_missing
+                },
+                'by_column': by_column
+            }
+
+            metadata = {
+                'row_count': row_count,
+                'columns': columns,
+                'column_stats': column_stats,
+                'missing_data': missing_data
+            }
             return AnalysisResult(
                 file_id=file_path,
                 analysis_type=AnalysisType.DATA,
                 summary=f"CSV file with {row_count} rows and {len(columns)} columns.",
                 key_findings=[],
-                metadata={
-                    'row_count': row_count,
-                    'columns': columns,
-                    'column_stats': column_stats,
-                    'missing_data': missing_data
-                },
                 recommendations=[],
                 generated_at=datetime.now(),
-                filename=file_path
+                metadata=metadata
             )
-            
-        except pd.errors.ParserError as e:
+        except pd.errors.EmptyDataError:
+            metadata = {
+                'row_count': 0,
+                'columns': [],
+                'column_stats': {},
+                'missing_data': {}
+            }
             return AnalysisResult(
                 file_id=file_path,
                 analysis_type=AnalysisType.DATA,
-                summary="Unable to parse CSV file due to malformed data structure.",
-                key_findings=[],
-                metadata={
-                    'error': 'malformed',
-                    'error_details': str(e)
-                },
-                recommendations=[],
+                summary="Empty CSV file (no data to parse)",
+                key_findings=["File contains no parseable data"],
+                recommendations=["Ensure file contains valid CSV data"],
                 generated_at=datetime.now(),
-                filename=file_path
+                metadata=metadata
+            )
+        except pd.errors.ParserError:
+            metadata = {
+                'row_count': 0,
+                'columns': [],
+                'column_stats': {},
+                'missing_data': {},
+                'error': 'malformed'
+            }
+            return AnalysisResult(
+                file_id=file_path,
+                analysis_type=AnalysisType.DATA,
+                summary="Malformed CSV file (parse error)",
+                key_findings=["File could not be parsed due to malformed structure"],
+                recommendations=["Check CSV formatting and consistency"],
+                generated_at=datetime.now(),
+                metadata=metadata
             ) 
