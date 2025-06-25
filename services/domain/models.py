@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from uuid import uuid4
+from enum import Enum
 
 # Import shared types for consistency
 from services.shared_types import (
@@ -313,3 +314,45 @@ class UploadedFile:
     last_referenced: Optional[datetime] = None
     reference_count: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+class AnalysisType(Enum):
+    DATA = "data"
+    DOCUMENT = "document"
+    TEXT = "text"
+    UNKNOWN = "unknown"
+
+@dataclass
+class ValidationResult:
+    """Result of file security validation"""
+    is_valid: bool
+    message: str
+    details: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class FileTypeInfo:
+    """File type detection results"""
+    mime_type: str
+    extension: str
+    analyzer_type: str  # Will convert to AnalysisType enum later
+    confidence: float = 0.0
+
+@dataclass
+class DocumentSample:
+    """Smart content sampling result"""
+    content: str
+    is_complete: bool
+    sampling_method: str
+    total_length: Optional[int] = None
+
+@dataclass
+class AnalysisResult:
+    """Results from file analysis"""
+    file_id: str
+    analysis_type: AnalysisType
+    summary: str
+    key_findings: List[str]
+    metadata: Dict[str, Any]
+    recommendations: List[str]
+    generated_at: datetime
+    filename: str = ""
+    analysis_metadata: Dict[str, Any] = field(default_factory=dict)
