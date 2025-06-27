@@ -11,6 +11,8 @@ class IntentCategory(Enum):
     STRATEGY = "strategy"
     LEARNING = "learning"
     QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
+    CONVERSATION = "conversation"  # For greetings, chitchat, social interaction
+    UNKNOWN = "unknown"  # For unclear or ambiguous requests
 
 class WorkflowType(Enum):
     CREATE_FEATURE = "create_feature"
@@ -25,6 +27,7 @@ class WorkflowType(Enum):
     # PM-009: Project management workflow types
     CONFIRM_PROJECT = "confirm_project"
     SELECT_PROJECT = "select_project"
+    ANALYZE_FILE = "analyze_file"  # Add this line for file analysis workflows
 
 class WorkflowStatus(Enum):
     PENDING = "pending"
@@ -51,6 +54,7 @@ class TaskType(Enum):
     # Integration tasks
     GITHUB_CREATE_ISSUE = "github_create_issue"
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
+    ANALYZE_FILE = "analyze_file"
     JIRA_CREATE_TICKET = "jira_create_ticket"
     SLACK_SEND_MESSAGE = "slack_send_message"
     

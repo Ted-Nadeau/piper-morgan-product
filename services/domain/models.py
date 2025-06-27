@@ -7,9 +7,10 @@ Pure business logic with no persistence concerns.
 # 2025-06-15: Added Project and ProjectIntegration models for PM-009
 # 2025-06-17: Cleaned separation - removed SQLAlchemy code, fixed duplicate imports
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
 from uuid import uuid4
+from enum import Enum
 
 # Import shared types for consistency
 from services.shared_types import (
@@ -299,3 +300,67 @@ class InsightGenerated(Event):
     insight: str = ""
     confidence: float = 0.0
     sources: List[str] = field(default_factory=list)
+
+@dataclass
+class UploadedFile:
+    """Domain model for uploaded files"""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    session_id: str = ""
+    filename: str = ""
+    file_type: str = ""  # MIME type
+    file_size: int = 0
+    storage_path: str = ""  # Where file is stored
+    upload_time: datetime = field(default_factory=datetime.now)
+    last_referenced: Optional[datetime] = None
+    reference_count: int = 0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+class AnalysisType(Enum):
+    DATA = "data"
+    DOCUMENT = "document"
+    TEXT = "text"
+    UNKNOWN = "unknown"
+
+@dataclass
+class ValidationResult:
+    """Result of file security validation"""
+    is_valid: bool
+    message: str
+    details: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class FileTypeInfo:
+    """File type detection results"""
+    mime_type: str
+    extension: str
+    analyzer_type: str  # Will convert to AnalysisType enum later
+    confidence: float = 0.0
+
+@dataclass
+class DocumentSample:
+    """Smart content sampling result"""
+    content: str
+    is_complete: bool
+    sampling_method: str
+    total_length: Optional[int] = None
+
+@dataclass
+class ContentSample:
+    """Sample of file content for analysis"""
+    text: str
+    is_truncated: bool
+    original_length: int
+    sample_ranges: Optional[List[Tuple[int, int]]] = None
+
+@dataclass
+class AnalysisResult:
+    """Results from file analysis"""
+    file_id: str
+    analysis_type: AnalysisType
+    summary: str
+    key_findings: List[str]
+    metadata: Dict[str, Any]
+    recommendations: List[str]
+    generated_at: datetime
+    filename: str = ""
+    analysis_metadata: Dict[str, Any] = field(default_factory=dict)

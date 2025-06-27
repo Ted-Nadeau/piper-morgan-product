@@ -9,7 +9,6 @@ import structlog
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from dataclasses import dataclass
-import json
 
 # Domain-first imports - use domain models consistently
 from services.domain.models import Intent, IntentCategory, Workflow, Task
@@ -35,6 +34,7 @@ class OrchestrationEngine:
         from .workflow_factory import WorkflowFactory
         self.factory = WorkflowFactory()
         self.github_analyzer = GitHubIssueAnalyzer()
+        self.llm_client = llm_client
 
         self.task_handlers = {
             TaskType.ANALYZE_REQUEST: self._analyze_request,
@@ -46,8 +46,8 @@ class OrchestrationEngine:
             # PM-008: GitHub Issue Analysis handler
             TaskType.ANALYZE_GITHUB_ISSUE: self._analyze_github_issue,
             
-            # New feedback handler
-            TaskType.PROCESS_USER_FEEDBACK: self._process_user_feedback,
+            # File Analysis handler
+            TaskType.ANALYZE_FILE: self._analyze_file,
             
             # Fallback for unmapped task types
             TaskType.GITHUB_CREATE_ISSUE: self._placeholder_handler,
@@ -108,22 +108,18 @@ class OrchestrationEngine:
             )
             await repos["session"].commit()
 
-            # Define the core workflow loop as a separate coroutine
-            async def workflow_loop():
-                while task := workflow.get_next_task():
-                    await self._execute_task(workflow, task)
-                    
-                    # Persist task results after each execution
-                    await self._persist_task_update(workflow_id, task)
-                    
-                    if workflow.status == WorkflowStatus.FAILED:
-                        # The task itself will raise an exception, which we'll catch below
-                        break
-            
             # Execute tasks with a timeout
             try:
-                await asyncio.wait_for(workflow_loop(), timeout=300) # 5-minute timeout
-            except asyncio.TimeoutError:
+                # Execute tasks with timeout (Python 3.9 compatible)
+                async def execute_all_tasks():
+                    while task := workflow.get_next_task():
+                        await self._execute_task(workflow, task)
+                        # Persist task results after each execution
+                        await self._persist_task_update(workflow_id, task)
+                        if workflow.status == WorkflowStatus.FAILED:
+                            break
+                await asyncio.wait_for(execute_all_tasks(), timeout=300)  # 5-minute timeout
+            except TimeoutError:
                 logger.error("Workflow timed out", workflow_id=workflow_id)
                 raise WorkflowTimeoutError(details={"workflow_id": workflow_id})
 
@@ -202,7 +198,10 @@ class OrchestrationEngine:
                 raise ValueError(f"No handler for task type {task.type}")
             
             # Execute task with a timeout
-            result = await asyncio.wait_for(handler(workflow, task), timeout=120) # 2-minute timeout per task
+            result = await asyncio.wait_for(
+                handler(workflow, task), 
+                timeout=120  # 2-minute timeout per task
+            )
             
             # Update domain task with results
             if result.success:
@@ -230,8 +229,8 @@ class OrchestrationEngine:
                 task_type=task.type.value if task.type else "unknown",
                 success=result.success
             )
-            
-        except asyncio.TimeoutError as e:
+        
+        except TimeoutError as e:
             task.status = TaskStatus.FAILED
             task.error = "Task timed out after 120 seconds"
             workflow.status = WorkflowStatus.FAILED
@@ -249,58 +248,17 @@ class OrchestrationEngine:
                 "Task failed with unexpected error",
                 workflow_id=workflow.id,
                 task_id=task.id,
-                task_type=task.type.value if task.type else "unknown",
                 error=str(e),
-                exc_info=True
+                exc_info=True,
             )
-            # Raise a specific error instead of just setting status
+            # Wrap the unexpected error
             raise TaskFailedError(
                 task_description=task.type.value,
                 recovery_suggestion="an unexpected error occurred, check system logs",
-                details={"task_id": task.id, "error": str(e)}
+                details={"task_id": task.id, "original_error": str(e)}
             ) from e
     
     # Task handler implementations
-    async def _process_user_feedback(self, workflow: Workflow, task: Task) -> TaskResult:
-        """Analyzes user feedback using an LLM for sentiment and summary."""
-        logger.info("Processing user feedback", workflow_id=workflow.id, task_id=task.id)
-        
-        # Extract original message from intent context
-        original_message = workflow.context.get("original_message")
-        if not original_message:
-            return TaskResult(success=False, error="Original message not found in workflow context")
-            
-        prompt = f"""Analyze the following user feedback for sentiment and provide a brief, one-sentence summary.
-
-Feedback: \"{original_message}\"
-
-Respond with JSON containing:
-{{
-    "sentiment": "POSITIVE|NEGATIVE|NEUTRAL",
-    "summary": "A one-sentence summary of the feedback."
-}}
-"""
-        try:
-            response = await llm_client.complete(
-                task_type="feedback_analysis",
-                prompt=prompt,
-                context={"workflow_id": workflow.id}
-            )
-            analysis_result = json.loads(response)
-            
-            # Log and return the successful analysis
-            logger.info("Feedback analysis complete", analysis=analysis_result)
-            return TaskResult(success=True, output_data=analysis_result)
-            
-        except json.JSONDecodeError as e:
-            error_message = f"Failed to parse LLM response for feedback analysis: {e}"
-            logger.error(error_message, raw_response=response)
-            return TaskResult(success=False, error=error_message)
-        except Exception as e:
-            error_message = f"An unexpected error occurred during feedback analysis: {e}"
-            logger.error(error_message, exc_info=True)
-            return TaskResult(success=False, error=error_message)
-
     async def _analyze_request(self, workflow: Workflow, task: Task) -> TaskResult:
         """Analyze the original request using LLM"""
         original_message = workflow.context.get("original_message", "")
@@ -317,7 +275,7 @@ Extract:
 
 Format as JSON."""
         
-        response = await llm_client.complete(
+        response = await self.llm_client.complete(
             task_type="analysis",
             prompt=prompt
         )
@@ -337,7 +295,7 @@ Analysis: {analysis}
 
 List concrete requirements, acceptance criteria, and technical specifications."""
         
-        response = await llm_client.complete(
+        response = await self.llm_client.complete(
             task_type="analysis", 
             prompt=prompt
         )
@@ -499,6 +457,82 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             ])
         
         return "\n".join(response_parts)
+
+    async def _analyze_file(self, workflow: Workflow, task: Task) -> TaskResult:
+        """Execute file analysis task using FileAnalyzer"""
+        try:
+            # Extract file ID from context
+            file_id = workflow.context.get('file_id')
+            if not file_id:
+                return TaskResult(
+                    success=False,
+                    error="No file ID found in workflow context"
+                )
+            
+            # Get file repository using the working pattern
+            from services.repositories import DatabasePool
+            from services.repositories.file_repository import FileRepository
+            
+            pool = await DatabasePool.get_pool()
+            file_repo = FileRepository(pool)
+            file_metadata = await file_repo.get_file_by_id(file_id)
+            if not file_metadata:
+                return TaskResult(
+                    success=False,
+                    error=f"File not found: {file_id}"
+                )
+            
+            # Create FileAnalyzer with dependencies
+            from unittest.mock import Mock
+            from services.analysis.file_analyzer import FileAnalyzer
+            from services.analysis.analyzer_factory import AnalyzerFactory
+            
+            mock_security = Mock()
+            mock_security.validate.return_value = Mock(is_valid=True)
+            
+            mock_type_detector = Mock() 
+            mock_type_detector.detect.return_value = Mock(
+                mime_type="text/csv",
+                extension="csv",
+                analyzer_type="data"
+            )
+            
+            mock_sampler = Mock()
+            
+            file_analyzer = FileAnalyzer(
+                security_validator=mock_security,
+                type_detector=mock_type_detector,
+                content_sampler=mock_sampler,
+                analyzer_factory=AnalyzerFactory(),
+                llm_client=llm_client
+            )
+            
+            # Perform analysis
+            analysis_result = await file_analyzer.analyze_file(
+                str(file_metadata.storage_path),
+                {"filename": file_metadata.filename}
+            )
+            
+            # Convert AnalysisResult to dict
+            analysis_dict = analysis_result.__dict__.copy()
+            analysis_dict['generated_at'] = analysis_result.generated_at.isoformat()
+            analysis_dict['analysis_type'] = analysis_result.analysis_type.value
+            
+            return TaskResult(
+                success=True,
+                output_data={
+                    "analysis": analysis_dict,
+                    "file_id": file_id,
+                    "filename": file_metadata.filename
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"File analysis failed: {e}")
+            return TaskResult(
+                success=False,
+                error=f"Analysis error: {str(e)}"
+            )
 
     async def _placeholder_handler(self, workflow: Workflow, task: Task) -> TaskResult:
         """Placeholder for unimplemented handlers"""

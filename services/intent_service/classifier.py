@@ -1,6 +1,6 @@
 # services/intent_service/classifier.py
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 import json
 from services.domain.models import Intent, IntentCategory
 from services.llm.clients import llm_client
@@ -13,6 +13,10 @@ from services.api.errors import (
     LowConfidenceIntentError,
     NoRelevantKnowledgeError,
 )
+import re
+from services.intent_service.pre_classifier import PreClassifier
+from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
+from services.api.serializers import intent_to_dict
 
 logger = structlog.get_logger()
 
@@ -27,26 +31,60 @@ class IntentClassifier:
             "task_context"         # Current task specifics
         ]
     
-    async def classify(self, message: str, context: Optional[Dict] = None) -> Intent:
+    async def classify(self, message: str, context: Optional[Dict] = None, session: Optional[Any] = None) -> Intent:
+        # Stage 1: Pre-classification
+        pre_intent = PreClassifier.pre_classify(message)
+        if pre_intent:
+            logger.info("intent_classification",
+                        source="PRE_CLASSIFIER",
+                        action=pre_intent.action,
+                        message_length=len(message),
+                        message_preview=message[:50])  # First 50 chars for debugging
+            return pre_intent
+        
+        # Stage 2: LLM classification
+        logger.info("intent_classification_attempt",
+                    source="LLM",
+                    message_length=len(message),
+                    message_preview=message[:50])
+        
+        # Check for file references
+        has_file_reference = PreClassifier.detect_file_reference(message)
+        
+        # Prepare file context
+        file_context = ""
+        if session and has_file_reference:
+            recent_files = session.get_recent_files()
+            if recent_files:
+                file_context = f"Recent uploads: {[f['filename'] for f in recent_files]}"
+        
         # Capture input context for learning
         classification_context = {
             "message": message,
             "timestamp": datetime.now().isoformat(),
             "available_knowledge": self._assess_available_knowledge(context),
-            "user_context": context or {}
+            "user_context": context or {},
+            "has_file_reference": has_file_reference,
+            "file_context": file_context
         }
         
         try:
             # Perform classification with confidence scoring
-            intent, reasoning = await self._classify_with_reasoning(message, context)
+            intent, reasoning = await self._classify_with_reasoning(message, context, file_context)
             
-            # Low confidence check
-            if intent.confidence < 0.7:
-                suggestions = ", ".join(reasoning.get("helpful_knowledge_domains", []))
-                raise LowConfidenceIntentError(
-                    suggestions=f"ask about one of these topics: {suggestions}" if suggestions else "rephrase your request"
+            # Strengthened vague/low-confidence detection
+            if intent.confidence < 0.7 or self._seems_vague(intent):
+                logger.info("Low confidence or vague intent detected, requesting clarification")
+                return Intent(
+                    category=IntentCategory.CONVERSATION,
+                    action="clarification_needed",
+                    confidence=intent.confidence,
+                    context={
+                        "original_classification": intent_to_dict(intent),
+                        "trigger": "low_confidence" if intent.confidence < 0.7 else "vague_pattern"
+                    }
                 )
-
+            
             # Identify learning opportunities
             intent.learning_signals = self._identify_learning_signals(
                 message, intent, reasoning
@@ -57,16 +95,20 @@ class IntentClassifier:
                 await self.event_bus.emit("intent.classified", {
                     "intent_id": intent.id,
                     "classification_context": classification_context,
-                    "intent": {
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                        "context": intent.context
-                    },
+                    "intent": intent_to_dict(intent),
                     "reasoning": reasoning,
                     "learning_signals": intent.learning_signals
                 })
-        
+            
+            # After successful LLM classification
+            logger.info("intent_classification",
+                        source="LLM",
+                        action=intent.action,
+                        message_length=len(message),
+                        confidence=intent.confidence)
+            
+            return intent
+            
         except LowConfidenceIntentError:
             # Re-raise to be caught by the middleware
             raise
@@ -74,79 +116,20 @@ class IntentClassifier:
             logger.error(f"Classification failed: {e}", exc_info=True)
             # Raise a structured error instead of falling back
             raise IntentClassificationFailedError(details={"original_error": str(e)})
-        
-        return intent
     
-    async def _classify_with_reasoning(
-        self, message: str, context: Dict
-    ) -> Tuple[Intent, Dict]:
-        """Classification that returns both result and reasoning trace"""
+    async def _classify_with_reasoning(self, message: str, context: Optional[Dict] = None, file_context: str = "") -> Tuple[Intent, Dict[str, Any]]:
+        """Classify intent with detailed reasoning"""
+        # Prepare context for LLM
+        context_info = ""
+        if context:
+            context_info = f"\nContext: {json.dumps(context, indent=2)}"
         
-        # Search knowledge base for relevant context
-        knowledge_context = ""
-        try:
-            ingester = get_ingester()
-            search_results = await ingester.search_with_context(
-                message, 
-                hierarchy_preference=3,  # Focus on specific knowledge
-                n_results=3
-            )
-            if search_results:
-                knowledge_context = "\n\nRelevant PM knowledge:\n"
-                for i, result in enumerate(search_results, 1):
-                    knowledge_context += f"{i}. {result['content'][:200]}...\n"
-        except Exception as e:
-            logger.warning(f"Knowledge search failed during intent classification: {e}")
-            # This is not fatal, but we can log it. We could also raise NoRelevantKnowledgeError if needed.
-        
-        prompt = f"""Analyze this PM request and classify it.
-
-Request: \"{message}\"
-
-{knowledge_context}
-
-Respond with JSON containing:
-{{
-    "category": "EXECUTION|ANALYSIS|SYNTHESIS|STRATEGY|LEARNING|QUERY",
-    "action": "specific_action_description",
-    "confidence": 0.0-1.0,
-    "reasoning": "why you chose this classification",
-    "knowledge_domains": ["domains that would help"],
-    "ambiguity_notes": ["any unclear aspects"],
-    "knowledge_used": ["what PM knowledge informed this classification"]
-}}
-
-Categories:
-- EXECUTION: Creating, updating, or managing tasks/tickets
-- ANALYSIS: Reviewing data, finding patterns, checking metrics
-- SYNTHESIS: Generating documents, summaries, or reports  
-- STRATEGY: Planning, prioritizing, or making recommendations
-- LEARNING: Understanding patterns, improving processes
-- QUERY: Asking for information, listing items, getting details (read-only operations)
-
-For the \"action\" field, use these patterns:
-- For creating: \"create_[thing]\" (e.g., create_feature, create_ticket, create_task)
-- For analyzing: \"analyze_[thing]\" (e.g., analyze_metrics, analyze_data)
-- For reviewing: \"review_[thing]\" (e.g., review_code, review_design)
-- For generating: \"generate_[thing]\" (e.g., generate_report, generate_summary)
-- For planning: \"plan_[thing]\" (e.g., plan_strategy, plan_sprint)
-- For queries: \"list_[thing]\", \"get_[thing]\", \"find_[thing]\", \"count_[thing]\" (e.g., list_projects, get_project, find_project, count_projects, get_default_project)
-
-Examples:
-- \"Users are complaining the login page is slow\" => EXECUTION, action: create_ticket
-- \"The mobile app crashes on startup\" => EXECUTION, action: create_ticket
-- \"Can you analyze the performance metrics for the latest release?\" => ANALYSIS, action: analyze_metrics
-- \"people say our login screen is bonkers\" => ANALYSIS, action: analyze_feedback
-- \"Please review the GitHub issue at https://github.com/org/repo/issues/123\" => ANALYSIS, action: analyze_github_issue
-- \"Generate a summary of the project status\" => SYNTHESIS, action: generate_summary
-- \"List all projects\" => QUERY, action: list_projects
-- \"Show me the default project\" => QUERY, action: get_default_project
-- \"How many projects do we have?\" => QUERY, action: count_projects
-- \"Find project named Web Platform\" => QUERY, action: find_project
-- \"Hello\" => QUERY, action: get_initial_contact
-- \"How are you?\" => QUERY, action: get_status
-- \"Help\" => QUERY, action: get_help
-"""
+        # Build prompt with context
+        prompt = INTENT_CLASSIFICATION_PROMPT.format(
+            user_message=message,
+            context_info=context_info,
+            file_context=file_context
+        )
 
         try:
             # Use your task-based routing with "intent_classification" task type
@@ -157,10 +140,16 @@ Examples:
             )
             
             # Parse JSON response
-            parsed = json.loads(response)
+            # Extract the first JSON object from the response
+            json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(0)
+                parsed = json.loads(json_str)
+            else:
+                raise ValueError("No valid JSON object found in response")
             
             intent = Intent(
-                category=IntentCategory[parsed["category"]],
+                category=IntentCategory(parsed["category"]),
                 action=parsed["action"],
                 confidence=parsed["confidence"],
                 context={
@@ -267,6 +256,25 @@ Examples:
             confidence=0.5,  # Lower confidence for fallback
             context={"original_message": message, "method": "fallback"}
         )
+
+    def _seems_vague(self, intent: Intent) -> bool:
+        """Detects if the intent/action is vague/underspecified."""
+        vague_actions = {"clarification_needed", "unknown", "get_greeting", "get_help", "get_info", "get_something"}
+        vague_keywords = [
+            "thing", "something", "it", "this", "that", "problem", "issue", "bug", "help", "fix", "do", "improve", "change", "update"
+        ]
+        # If action is a known vague action
+        if intent.action in vague_actions:
+            return True
+        # If action or context contains vague keywords
+        action_lower = (intent.action or "").lower()
+        if any(word in action_lower for word in vague_keywords):
+            return True
+        # If ambiguity notes are present in context
+        ambiguity_notes = intent.context.get("ambiguity_notes") if intent.context else None
+        if ambiguity_notes and any(isinstance(note, str) and note for note in ambiguity_notes):
+            return True
+        return False
 
 # Create a singleton instance without event bus for backward compatibility
 classifier = IntentClassifier()

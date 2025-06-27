@@ -2,7 +2,7 @@
 Database Models
 SQLAlchemy models for persistent storage
 """
-from sqlalchemy import Column, String, Text, DateTime, Float, JSON, Enum, ForeignKey, Boolean, Integer
+from sqlalchemy import Column, String, Text, DateTime, Float, JSON, Enum, ForeignKey, Boolean, Integer, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -10,6 +10,11 @@ import enum
 from .connection import Base
 from services.shared_types import IntentCategory, WorkflowType, WorkflowStatus, TaskType, TaskStatus, IntegrationType
 import services.domain.models as domain
+
+class TimestampMixin:
+    """Mixin to add created_at and updated_at timestamps to models"""
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Product(Base):
     """Product being managed"""
@@ -102,7 +107,7 @@ class Workflow(Base):
     intent = relationship("Intent", back_populates="workflow", uselist=False)
     tasks = relationship("Task", back_populates="workflow")
 
-class Task(Base):
+class Task(Base, TimestampMixin):
     """Individual task in a workflow"""
     __tablename__ = "tasks"
     
@@ -212,4 +217,53 @@ class ProjectIntegrationDB(Base):
             config=integration.config,
             is_active=integration.is_active,
             created_at=integration.created_at
+        )
+
+class UploadedFileDB(Base):
+    """Database model for uploaded files"""
+    __tablename__ = "uploaded_files"
+    
+    id = Column(String, primary_key=True)
+    session_id = Column(String, nullable=False)
+    filename = Column(String(500), nullable=False)
+    file_type = Column(String(255))
+    file_size = Column(Integer)
+    storage_path = Column(String(1000))
+    upload_time = Column(DateTime, default=datetime.utcnow)
+    last_referenced = Column(DateTime)
+    reference_count = Column(Integer, default=0)
+    file_metadata = Column(JSON, default=dict)
+    
+    __table_args__ = (
+        Index('idx_files_session', 'session_id', 'upload_time'),
+        Index('idx_files_filename', 'filename'),
+    )
+    
+    def to_domain(self) -> domain.UploadedFile:
+        return domain.UploadedFile(
+            id=self.id,
+            session_id=self.session_id,
+            filename=self.filename,
+            file_type=self.file_type,
+            file_size=self.file_size,
+            storage_path=self.storage_path,
+            upload_time=self.upload_time,
+            last_referenced=self.last_referenced,
+            reference_count=self.reference_count,
+            metadata=self.file_metadata or {}
+        )
+    
+    @classmethod
+    def from_domain(cls, file: domain.UploadedFile) -> 'UploadedFileDB':
+        return cls(
+            id=file.id,
+            session_id=file.session_id,
+            filename=file.filename,
+            file_type=file.file_type,
+            file_size=file.file_size,
+            storage_path=file.storage_path,
+            upload_time=file.upload_time,
+            last_referenced=file.last_referenced,
+            reference_count=file.reference_count,
+            file_metadata=file.metadata
         )

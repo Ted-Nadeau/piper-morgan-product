@@ -30,10 +30,8 @@ class WorkflowFactory:
             'analyze_issue': WorkflowType.REVIEW_ITEM,
             'review_github_issue': WorkflowType.REVIEW_ITEM,
             'check_issue': WorkflowType.REVIEW_ITEM,
-            'analyze_data': WorkflowType.REVIEW_ITEM,  # Maps fallback classifier action
-
-            # New feedback analysis mapping
-            'analyze_feedback': WorkflowType.ANALYZE_FEEDBACK,
+            'analyze_data': WorkflowType.ANALYZE_FILE,  # For file/data analysis
+            'analyze_file': WorkflowType.ANALYZE_FILE,  # Add this line
         }
     
     async def create_from_intent(self, intent: Intent, project_context: Optional[Dict[str, Any]] = None) -> Optional[Workflow]:
@@ -84,10 +82,11 @@ class WorkflowFactory:
                 status=TaskStatus.PENDING
             )
             workflow.tasks.append(task)
-        elif workflow_type == WorkflowType.ANALYZE_FEEDBACK:
+        elif workflow_type == WorkflowType.ANALYZE_FILE:
+            # Add File Analysis task
             task = Task(
-                name='Process User Feedback',
-                type=TaskType.PROCESS_USER_FEEDBACK,
+                name='Analyze File',
+                type=TaskType.ANALYZE_FILE,
                 status=TaskStatus.PENDING
             )
             workflow.tasks.append(task)
