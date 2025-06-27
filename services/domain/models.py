@@ -7,7 +7,7 @@ Pure business logic with no persistence concerns.
 # 2025-06-15: Added Project and ProjectIntegration models for PM-009
 # 2025-06-17: Cleaned separation - removed SQLAlchemy code, fixed duplicate imports
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
 from uuid import uuid4
 from enum import Enum
@@ -343,6 +343,14 @@ class DocumentSample:
     is_complete: bool
     sampling_method: str
     total_length: Optional[int] = None
+
+@dataclass
+class ContentSample:
+    """Sample of file content for analysis"""
+    text: str
+    is_truncated: bool
+    original_length: int
+    sample_ranges: Optional[List[Tuple[int, int]]] = None
 
 @dataclass
 class AnalysisResult:

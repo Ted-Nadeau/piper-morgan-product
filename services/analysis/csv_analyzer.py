@@ -4,7 +4,13 @@ from services.analysis.base_analyzer import BaseAnalyzer
 from services.domain.models import AnalysisResult, AnalysisType
 
 class CSVAnalyzer(BaseAnalyzer):
-    async def analyze(self, file_path):
+    async def analyze(self, file_path: str, **kwargs) -> AnalysisResult:
+        """Analyze CSV file and return structured results.
+        
+        Args:
+            file_path: Path to the CSV file
+            **kwargs: Additional optional parameters (not used currently)
+        """
         try:
             df = pd.read_csv(file_path)
             row_count = len(df)

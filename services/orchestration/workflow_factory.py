@@ -82,5 +82,13 @@ class WorkflowFactory:
                 status=TaskStatus.PENDING
             )
             workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.ANALYZE_FILE:
+            # Add File Analysis task
+            task = Task(
+                name='Analyze File',
+                type=TaskType.ANALYZE_FILE,
+                status=TaskStatus.PENDING
+            )
+            workflow.tasks.append(task)
 
         return workflow

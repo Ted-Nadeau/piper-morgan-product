@@ -66,7 +66,7 @@ class ConversationSession:
         """Track a file upload in session"""
         file_info = {
             "file_id": file_id,
-            filename: filename,
+            "filename": filename,
             "file_type": file_type,
             "upload_time": upload_time,
             "referenced": False
