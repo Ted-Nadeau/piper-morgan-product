@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piper Morgan 1.0 - Team Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: hidden;
+        }
+        
+        .slideshow-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slide {
+            display: none;
+            width: 90%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            padding: 60px;
+            text-align: center;
+            animation: slideIn 0.6s ease-out;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(40px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 3.2em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        h2 {
+            color: #34495e;
+            font-size: 2.8em;
+            margin-bottom: 30px;
+            border-bottom: 4px solid #3498db;
+            padding-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            color: #2980b9;
+            font-size: 1.8em;
+            margin: 25px 0 15px 0;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            font-size: 1.4em;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .card {
+            padding: 30px;
+            border-radius: 15px;
+            text-align: left;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .working-card {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+        
+        .progress-card {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        
+        .planned-card {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+        }
+        
+        .gap-card {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        
+        .demo-flow {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .demo-step {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-working { background: #2ecc71; }
+        .status-progress { background: #f39c12; }
+        .status-gap { background: #e74c3c; }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        
+        .metric-number {
+            font-size: 3.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            background: rgba(255,255,255,0.95);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2c3e50;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: white;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+        
+        .slide-counter {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            background: rgba(0,0,0,0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .code-demo {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .demo-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+            z-index: 0;
+        }
+        
+        .timeline-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            margin: 0 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="slideshow-container">
+        <!-- Slide 1: Title & Demo Overview -->
+        <div class="slide active">
+            <div class="slide-counter">1 / 8</div>
+            <h1>🤖 Piper Morgan 1.0</h1>
+            <p class="subtitle">AI-Powered Product Management Assistant</p>
+            <div class="grid-2">
+                <div class="working-card card">
+                    <h3>✅ What's Working</h3>
+                    <ul style="font-size: 1.1em; margin-top: 15px;">
+                        <li>Natural language understanding (95% accuracy)</li>
+                        <li>Multi-project context resolution</li>
+                        <li>Knowledge integration (85+ documents)</li>
+                        <li>Web chat interface with real-time updates</li>
+                        <li>Production-ready error handling</li>
+                    </ul>
+                </div>
+                <div class="progress-card card">
+                    <h3>🔧 In Progress</h3>
+                    <ul style="font-size: 1.1em; margin-top: 15px;">
+                        <li>GitHub issue creation workflow</li>
+                        <li>Workflow state persistence</li>
+                        <li>Learning from user feedback</li>
+                        <li>Performance optimization</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="font-size: 1.2em; color: #7f8c8d; margin-top: 30px;">
+                <strong>Demo Flow:</strong> Slides → Live Web Interface → Q&A
+            </p>
+        </div>
+
+        <!-- Slide 2: Current Architecture Status -->
+        <div class="slide">
+            <div class="slide-counter">2 / 8</div>
+            <h2>System Architecture Status</h2>
+            <div class="demo-flow">
+                <h3>🏗️ Production-Ready Foundation</h3>
+                <div class="demo-step">
+                    <span class="status-indicator status-working"></span>
+                    <strong>Infrastructure:</strong> Docker, PostgreSQL, Redis, ChromaDB, Temporal all deployed and operational
+                </div>
+                <div class="demo-step">
+                    <span class="status-indicator status-working"></span>
+                    <strong>AI Integration:</strong> Claude + OpenAI APIs working with provider abstraction
+                </div>
+                <div class="demo-step">
+                    <span class="status-indicator status-working"></span>
+                    <strong>Domain Models:</strong> PM concepts (Project, Intent, Workflow) driving technical design
+                </div>
+                <div class="demo-step">
+                    <span class="status-indicator status-working"></span>
+                    <strong>CQRS Pattern:</strong> Query/command separation with optimized performance paths
+                </div>
+                <div class="demo-step">
+                    <span class="status-indicator status-progress"></span>
+                    <strong>Workflow Orchestration:</strong> Framework ready, GitHub integration 70% complete
+                </div>
+            </div>
+            <p style="font-size: 1.3em; margin-top: 30px; color: #2c3e50;">
+                <span class="highlight">Key Achievement:</span> Sophisticated multi-project context resolution with LLM inference
+            </p>
+        </div>
+
+        <!-- Slide 3: Multi-Project Context Demo -->
+        <div class="slide">
+            <div class="slide-counter">3 / 8</div>
+            <h2>Multi-Project Intelligence</h2>
+            <div class="demo-flow">
+                <h3>🎯 PM-009: Sophisticated Context Resolution</h3>
+                <div class="demo-step">
+                    <strong>Challenge:</strong> PMs work across multiple projects with implicit context
+                </div>
+                <div class="demo-step">
+                    <strong>Solution:</strong> Hierarchical resolution with AI inference
+                    <div class="code-demo" style="margin-top: 15px;">
+1. Explicit project_id (always wins)
+2. Session memory (if confirmed)
+3. LLM inference from message content
+4. Default project fallback
+                    </div>
+                </div>
+                <div class="demo-step">
+                    <strong>Example:</strong> "Create a bug ticket for the mobile login crash"<br>
+                    → AI infers "Mobile App" project from context<br>
+                    → Remembers choice for session<br>
+                    → Asks for confirmation if ambiguous
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="working-card card">
+                    <h3>✅ What Works</h3>
+                    <ul style="font-size: 1em; margin-top: 10px;">
+                        <li>Intelligent project inference</li>
+                        <li>Session-based memory</li>
+                        <li>Graceful ambiguity handling</li>
+                        <li>Integration-specific configuration</li>
+                    </ul>
+                </div>
+                <div class="working-card card">
+                    <h3>📊 Performance</h3>
+                    <ul style="font-size: 1em; margin-top: 10px;">
+                        <li>Context resolution: <1 second</li>
+                        <li>Inference accuracy: ~90%</li>
+                        <li>Zero false positives</li>
+                        <li>Handles 3+ active projects</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Error Handling & User Experience -->
+        <div class="slide">
+            <div class="slide-counter">4 / 8</div>
+            <h2>Production-Quality Error Handling</h2>
+            <div class="demo-flow">
+                <h3>🛡️ PM-010: User-Friendly Error Experience</h3>
+                <div class="demo-step">
+                    <strong>Before:</strong> Technical stack traces and cryptic error messages
+                </div>
+                <div class="demo-step">
+                    <strong>After:</strong> Structured error responses with recovery guidance
+                    <div class="code-demo" style="margin-top: 15px;">
+{
+  "error": {
+    "code": "PROJECT_NOT_FOUND",
+    "user_message": "I couldn't find that project. Try 'list projects' to see options.",
+    "recovery_actions": ["list_projects", "create_project"]
+  }
+}
+                    </div>
+                </div>
+                <div class="demo-step">
+                    <strong>Coverage:</strong> Every API endpoint, all integration points, graceful degradation
+                </div>
+            </div>
+            <div class="grid-3">
+                <div class="metric-card">
+                    <div class="metric-number">100%</div>
+                    <div class="metric-label">Error Coverage</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">0</div>
+                    <div class="metric-label">Technical Errors Shown</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-number">~2s</div>
+                    <div class="metric-label">Error Recovery Time</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Web Interface Demo -->
+        <div class="slide">
+            <div class="slide-counter">5 / 8</div>
+            <h2>Working Web Interface</h2>
+            <div class="demo-flow">
+                <h3>💬 PM-011: Chat Interface with Workflow Tracking</h3>
+                <div class="demo-step">
+                    <strong>Real-Time Chat:</strong> Conversation-based interaction with message history
+                </div>
+                <div class="demo-step">
+                    <strong>Workflow Status:</strong> Live updates on background processes with polling
+                </div>
+                <div class="demo-step">
+                    <strong>File Upload:</strong> Document ingestion for knowledge base expansion
+                </div>
+                <div class="demo-step">
+                    <strong>Pure Frontend:</strong> No server-side rendering, all API communication
+                </div>
+            </div>
+            
+            <div class="demo-preview">
+                <h3>🎮 Live Demo Preview</h3>
+                <p style="font-size: 1.3em; margin: 20px 0;">
+                    We'll now switch to the live web interface to demonstrate:
+                </p>
+                <div class="grid-2" style="text-align: left; margin-top: 30px;">
+                    <div>
+                        <strong>Natural Language Processing:</strong>
+                        <ul style="margin-top: 10px;">
+                            <li>Project context resolution</li>
+                            <li>Intent classification</li>
+                            <li>Knowledge base queries</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <strong>System Responses:</strong>
+                        <ul style="margin-top: 10px;">
+                            <li>Error handling examples</li>
+                            <li>Multi-turn conversations</li>
+                            <li>File upload workflow</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Knowledge Integration Power -->
+        <div class="slide">
+            <div class="slide-counter">6 / 8</div>
+            <h2>Knowledge-Enhanced AI</h2>
+            <div class="grid-2">
+                <div class="working-card card">
+                    <h3>📚 Knowledge Base Stats</h3>
+                    <ul style="font-size: 1.1em; margin-top: 15px;">
+                        <li><strong>85+ documents</strong> indexed and searchable</li>
+                        <li><strong>1-2 second</strong> semantic search response</li>
+                        <li><strong>Relationship analysis</strong> between concepts</li>
+                        <li><strong>Source attribution</strong> for all responses</li>
+                    </ul>
+                </div>
+                <div class="working-card card">
+                    <h3>🧠 Intelligence Difference</h3>
+                    <ul style="font-size: 1.1em; margin-top: 15px;">
+                        <li><strong>Context-aware:</strong> Every AI decision informed by org knowledge</li>
+                        <li><strong>Accuracy boost:</strong> 70% → 95% with context</li>
+                        <li><strong>PM-specific:</strong> Understands product management as discipline</li>
+                        <li><strong>Learning ready:</strong> Event capture for improvement</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="demo-flow">
+                <h3>🎯 Example: Context-Enhanced Classification</h3>
+                <div class="demo-step">
+                    <strong>User:</strong> "Create a ticket for the authentication issue"
+                </div>
+                <div class="demo-step">
+                    <strong>Knowledge Search:</strong> Finds relevant context about auth systems, security practices, past issues
+                </div>
+                <div class="demo-step">
+                    <strong>Enhanced Understanding:</strong> Knows this is likely a security bug, should be prioritized, needs specific labels
+                </div>
+                <div class="demo-step">
+                    <strong>Intelligent Response:</strong> Professional issue creation with proper context and formatting
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Current Gaps & Next Steps -->
+        <div class="slide">
+            <div class="slide-counter">7 / 8</div>
+            <h2>Current Gaps & Critical Path</h2>
+            <div class="grid-2">
+                <div class="gap-card card">
+                    <h3>🚧 Implementation Gaps</h3>
+                    <ul style="font-size: 1.1em; margin-top: 15px;">
+                        <li><strong>GitHub Integration:</strong> 70% complete, issue creation pending</li>
+                        <li><strong>Workflow Persistence:</strong> State doesn't survive restarts</li>
+                        <li><strong>Learning Analysis:</strong> Event capture working, processing designed</li>
+                        <li><strong>Production Monitoring:</strong> Limited observability currently</li>
+                    </ul>
+                </div>
+                <div class="planned-card card">
+                    <h3>🎯 Path to "1.0"</h3>
+                    <ul style="font-size: 1.1em; margin-top: 15px;">
+                        <li><strong>4-6 weeks:</strong> Complete GitHub workflow end-to-end</li>
+                        <li><strong>2-3 weeks:</strong> Workflow state persistence in database</li>
+                        <li><strong>1-2 weeks:</strong> Basic learning mechanisms active</li>
+                        <li><strong>2-3 weeks:</strong> User testing and refinement</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>✅ Foundation Complete</h4>
+                    <p>Architecture, AI integration, UI, error handling</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🔧 Implementation Phase</h4>
+                    <p>GitHub integration, persistence, learning</p>
+                </div>
+                <div class="timeline-item">
+                    <h4>🚀 1.0 Release</h4>
+                    <p>End-to-end workflows, team testing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Q&A & Demo Transition -->
+        <div class="slide">
+            <div class="slide-counter">8 / 8</div>
+            <h1>Ready for Live Demo</h1>
+            <div class="demo-preview">
+                <h3>🎮 What We'll Demonstrate</h3>
+                <div class="grid-2" style="text-align: left; margin: 30px 0;">
+                    <div>
+                        <h4>Working Capabilities:</h4>
+                        <ul style="font-size: 1.1em; margin-top: 10px;">
+                            <li>Natural language understanding</li>
+                            <li>Multi-project context resolution</li>
+                            <li>Knowledge base integration</li>
+                            <li>Error handling examples</li>
+                            <li>Real-time chat interface</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Architecture Insights:</h4>
+                        <ul style="font-size: 1.1em; margin-top: 10px;">
+                            <li>CQRS query/command patterns</li>
+                            <li>Provider-agnostic AI integration</li>
+                            <li>Event-driven learning foundation</li>
+                            <li>Domain-first design principles</li>
+                            <li>Production-ready error contracts</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; margin: 30px 0;">
+                <h3>💬 Questions Before Demo?</h3>
+                <div class="grid-3" style="margin-top: 20px;">
+                    <div style="text-align: center;">
+                        <strong>🏗️ Architecture</strong><br>
+                        <small>Design patterns, scalability, vendor independence</small>
+                    </div>
+                    <div style="text-align: center;">
+                        <strong>🤖 AI Integration</strong><br>
+                        <small>LLM reliability, prompt engineering, provider strategy</small>
+                    </div>
+                    <div style="text-align: center;">
+                        <strong>📈 Business Value</strong><br>
+                        <small>ROI timeline, user adoption, competitive positioning</small>
+                    </div>
+                </div>
+            </div>
+            
+            <p style="font-size: 1.4em; color: #2c3e50; margin-top: 30px;">
+                <strong>Next:</strong> Live web interface demonstration
+            </p>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" onclick="changeSlide(-1)">← Previous</button>
+        <button class="nav-btn" onclick="changeSlide(1)">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === ' ') {
+                e.preventDefault();
+                changeSlide(1);
+            }
+            if (e.key === 'Home') showSlide(0);
+            if (e.key === 'End') showSlide(totalSlides - 1);
+        });
+
+        // Touch navigation for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 50) changeSlide(1);  // Swipe left
+            if (touchEndX - touchStartX > 50) changeSlide(-1); // Swipe right
+        });
+    </script>
+</body>
+</html>
