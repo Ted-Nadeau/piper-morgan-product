@@ -34,6 +34,7 @@ class OrchestrationEngine:
         from .workflow_factory import WorkflowFactory
         self.factory = WorkflowFactory()
         self.github_analyzer = GitHubIssueAnalyzer()
+        self.llm_client = llm_client
 
         self.task_handlers = {
             TaskType.ANALYZE_REQUEST: self._analyze_request,
@@ -44,6 +45,9 @@ class OrchestrationEngine:
             
             # PM-008: GitHub Issue Analysis handler
             TaskType.ANALYZE_GITHUB_ISSUE: self._analyze_github_issue,
+            
+            # File Analysis handler
+            TaskType.ANALYZE_FILE: self._analyze_file,
             
             # Fallback for unmapped task types
             TaskType.GITHUB_CREATE_ISSUE: self._placeholder_handler,
@@ -271,7 +275,7 @@ Extract:
 
 Format as JSON."""
         
-        response = await llm_client.complete(
+        response = await self.llm_client.complete(
             task_type="analysis",
             prompt=prompt
         )
@@ -291,7 +295,7 @@ Analysis: {analysis}
 
 List concrete requirements, acceptance criteria, and technical specifications."""
         
-        response = await llm_client.complete(
+        response = await self.llm_client.complete(
             task_type="analysis", 
             prompt=prompt
         )
@@ -453,6 +457,82 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             ])
         
         return "\n".join(response_parts)
+
+    async def _analyze_file(self, workflow: Workflow, task: Task) -> TaskResult:
+        """Execute file analysis task using FileAnalyzer"""
+        try:
+            # Extract file ID from context
+            file_id = workflow.context.get('file_id')
+            if not file_id:
+                return TaskResult(
+                    success=False,
+                    error="No file ID found in workflow context"
+                )
+            
+            # Get file repository using the working pattern
+            from services.repositories import DatabasePool
+            from services.repositories.file_repository import FileRepository
+            
+            pool = await DatabasePool.get_pool()
+            file_repo = FileRepository(pool)
+            file_metadata = await file_repo.get_file_by_id(file_id)
+            if not file_metadata:
+                return TaskResult(
+                    success=False,
+                    error=f"File not found: {file_id}"
+                )
+            
+            # Create FileAnalyzer with dependencies
+            from unittest.mock import Mock
+            from services.analysis.file_analyzer import FileAnalyzer
+            from services.analysis.analyzer_factory import AnalyzerFactory
+            
+            mock_security = Mock()
+            mock_security.validate.return_value = Mock(is_valid=True)
+            
+            mock_type_detector = Mock() 
+            mock_type_detector.detect.return_value = Mock(
+                mime_type="text/csv",
+                extension="csv",
+                analyzer_type="data"
+            )
+            
+            mock_sampler = Mock()
+            
+            file_analyzer = FileAnalyzer(
+                security_validator=mock_security,
+                type_detector=mock_type_detector,
+                content_sampler=mock_sampler,
+                analyzer_factory=AnalyzerFactory(),
+                llm_client=llm_client
+            )
+            
+            # Perform analysis
+            analysis_result = await file_analyzer.analyze_file(
+                str(file_metadata.storage_path),
+                {"filename": file_metadata.filename}
+            )
+            
+            # Convert AnalysisResult to dict
+            analysis_dict = analysis_result.__dict__.copy()
+            analysis_dict['generated_at'] = analysis_result.generated_at.isoformat()
+            analysis_dict['analysis_type'] = analysis_result.analysis_type.value
+            
+            return TaskResult(
+                success=True,
+                output_data={
+                    "analysis": analysis_dict,
+                    "file_id": file_id,
+                    "filename": file_metadata.filename
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"File analysis failed: {e}")
+            return TaskResult(
+                success=False,
+                error=f"Analysis error: {str(e)}"
+            )
 
     async def _placeholder_handler(self, workflow: Workflow, task: Task) -> TaskResult:
         """Placeholder for unimplemented handlers"""
