@@ -1,15 +1,12 @@
-This is line 1.
-This is line 2.
-This is line 3.
-This is line 4.
-This is line 5.
-This is line 6.
-This is line 7.
-This is line 8.
-This is line 9.
-This is line 10.
-This is line 11.
-This is line 12.
-This is line 13.
-This is line 14.
-This is line 15. 
+This is a sample plain text file.
+It contains several lines of text.
+Each line is a sentence or a phrase.
+This file is used for testing.
+Line five is here.
+Line six is here.
+Line seven is here.
+Line eight is here.
+Line nine is here.
+Line ten is here.
+Line eleven is here.
+Line twelve is here. 

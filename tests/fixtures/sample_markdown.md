@@ -1,18 +1,18 @@
-# Sample Markdown Document
+# Sample Markdown
 
-## Section 1
+This is a sample markdown file for testing.
 
-- Item 1
-- Item 2
-- Item 3
+## Features
 
-## Section 2
+- Header detection
+- List detection
+- Code block detection
 
-Here is a code block:
+### Example Code
 
-```
+```python
 def hello():
-    print("Hello, world!")
+    print('Hello, world!')
 ```
 
-Some more text.
+- Another list item
