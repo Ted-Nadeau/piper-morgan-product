@@ -620,3 +620,8 @@ const response = await fetch('http://localhost:8001/api/v1/intent', {
 const workflow = await fetch(`http://localhost:8001/api/v1/workflows/${workflowId}`)
   .then(res => res.json());
 ```
+---
+*Last Updated: June 27, 2025*
+
+## Revision Log
+- **June 27, 2025**: Added systematic documentation dating and revision tracking

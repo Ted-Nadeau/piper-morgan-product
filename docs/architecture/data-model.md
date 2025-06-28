@@ -626,3 +626,9 @@ def upgrade():
 - In-memory caching for session data
 - Invalidation on updates
 - TTL-based expiration
+---
+*Last Updated: June 27, 2025*
+
+## Revision Log
+- **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
+- **June 27, 2025**: Added systematic documentation dating and revision tracking

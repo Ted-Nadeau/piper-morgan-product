@@ -166,3 +166,9 @@ Event types:
 - `workflow.failed`
 
 For integration patterns, see [User Guide](../user-guides/user-guide.md).
+
+---
+*Last Updated: June 27, 2025*
+
+## Revision Log
+- **June 27, 2025**: Added systematic documentation dating and revision tracking

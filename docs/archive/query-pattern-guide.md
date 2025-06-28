@@ -209,3 +209,9 @@ If you find a workflow that's actually a query:
 2. Verify QueryRouter routing: Add logging to route_query method
 3. Test query service directly: Call service method with test data
 4. Check repository connection: Verify database is accessible
+
+---
+*Last Updated: June 27, 2025*
+
+## Revision Log
+- **June 27, 2025**: Added systematic documentation dating and revision tracking

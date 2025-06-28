@@ -340,14 +340,14 @@ class ProjectQueryService:
 
 **Query vs Command Decision Matrix**:
 
-| Operation | Type | Handler | Example |
-| --- | --- | --- | --- |
-| List entities | Query | QueryService | "Show all projects" |
-| Get by ID | Query | QueryService | "Get project details" |
-| Search/Find | Query | QueryService | "Find mobile project" |
-| Create | Command | Workflow | "Create new issue" |
-| Update | Command | Workflow | "Update project status" |
-| Complex process | Command | Workflow | "Analyze repository" |
+| Operation       | Type    | Handler      | Example                 |
+| --------------- | ------- | ------------ | ----------------------- |
+| List entities   | Query   | QueryService | "Show all projects"     |
+| Get by ID       | Query   | QueryService | "Get project details"   |
+| Search/Find     | Query   | QueryService | "Find mobile project"   |
+| Create          | Command | Workflow     | "Create new issue"      |
+| Update          | Command | Workflow     | "Update project status" |
+| Complex process | Command | Workflow     | "Analyze repository"    |
 
 ### 2.7 Project Context (`services/project_context/project_context.py`)
 
@@ -603,4 +603,9 @@ async def test_create_issue_workflow():
 
 ---
 
-This Technical Architecture document provides the detailed component design and patterns. Should I proceed with creating the separate **Data Model Document** next?
+_Last Updated: June 21, 2025_
+
+## Revision Log
+- **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
+
+- **June 21, 2025**: Added systematic documentation dating and revision tracking

@@ -673,3 +673,9 @@ with response_time.time():
 - [SQLAlchemy Async Guide](https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html)
 - [Structlog Documentation](https://www.structlog.org/)
 - [Pytest Async](https://pytest-asyncio.readthedocs.io/)
+---
+*Last Updated: June 27, 2025*
+
+## Revision Log
+- **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
+- **June 27, 2025**: Added systematic documentation dating and revision tracking
