@@ -142,6 +142,18 @@ class ProjectRepository(BaseRepository):
     """Repository for Project operations"""
     model = ProjectDB
     
+    async def get_by_id(self, project_id: str) -> Optional[domain.Project]:
+        """Get project by ID with integrations - returns domain model"""
+        result = await self.session.execute(
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))
+            .where(ProjectDB.id == project_id)
+        )
+        db_project = result.scalar_one_or_none()
+        if db_project:
+            return db_project.to_domain()
+        return None
+    
     async def get_default_project(self) -> Optional[domain.Project]:
         result = await self.session.execute(
             select(ProjectDB).where(ProjectDB.is_default == True, ProjectDB.is_archived == False)
