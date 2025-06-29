@@ -23,7 +23,7 @@ async def test_github_issue_creation():
         category=IntentCategory.EXECUTION,
         action="create_github_issue",
         context={
-            "project_id": "test-project-id",  # You'll need a real project ID
+            "project_id": "test-piper-project",
             "title": "Test Issue from Piper Morgan",
             "body": "This is a test issue created by the GitHub integration.",
             "labels": ["test", "automated"]
@@ -39,12 +39,22 @@ async def test_github_issue_creation():
         
         print("\nExecuting workflow...")
         result = await engine.execute_workflow(workflow.id)
+        print(f"DEBUG - Result type: {type(result)}")
+        print(f"DEBUG - Result: {result}")
         
-        if result.success:
-            print(f"✅ SUCCESS! Issue created:")
-            print(f"   Issue URL: {result.data.get('tasks', [{}])[0].get('result', {}).get('output_data', {}).get('issue_url', 'N/A')}")
+        if result["status"] == "completed":
+            print(f"✅ SUCCESS! Workflow completed")
+            # Get issue URL from first task
+            if result["tasks"] and len(result["tasks"]) > 0:
+                task = result["tasks"][0]
+                if task.get("result") and task["result"].get("output_data"):
+                    issue_url = task["result"]["output_data"].get("issue_url", "N/A")
+                    print(f"   Issue URL: {issue_url}")
+                    print(f"   Issue #: {task['result']['output_data'].get('issue_number', 'N/A')}")
         else:
-            print(f"❌ FAILED: {result.error}")
+            print(f"❌ FAILED: Workflow status: {result['status']}")
+            if result.get("error"):
+                print(f"   Error: {result['error']}")
             
     except Exception as e:
         print(f"❌ ERROR: {str(e)}")
