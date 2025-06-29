@@ -7,14 +7,16 @@ This document defines the API contracts for Piper Morgan, including REST endpoin
 ## Base Configuration
 
 ### API Version
+
 - Base URL: `http://localhost:8001/api/v1`
 - Version: 1.0
 - Format: JSON
 
 ### Authentication
+
 - **Development**: API key in environment variables
 - **Production**: Bearer token authentication (planned)
-- **Headers**: 
+- **Headers**:
   ```
   Authorization: Bearer <token>
   Content-Type: application/json
@@ -25,9 +27,11 @@ This document defines the API contracts for Piper Morgan, including REST endpoin
 ### 1. Intent Processing
 
 #### POST `/api/v1/intent`
+
 Process natural language input and execute appropriate action.
 
 **Request:**
+
 ```json
 {
   "message": "Create a bug ticket for the mobile login crash",
@@ -39,6 +43,7 @@ Process natural language input and execute appropriate action.
 ```
 
 **Response (Command - Workflow Created):**
+
 ```json
 {
   "status": "success",
@@ -50,6 +55,7 @@ Process natural language input and execute appropriate action.
     "context": {
       "project_id": "proj-123",
       "project_name": "Mobile App",
+      "repository": "org/mobile-app",
       "original_message": "Create a bug ticket for the mobile login crash"
     }
   },
@@ -64,6 +70,7 @@ Process natural language input and execute appropriate action.
 ```
 
 **Response (Query - Direct Data):**
+
 ```json
 {
   "status": "success",
@@ -110,6 +117,7 @@ Process natural language input and execute appropriate action.
 ```
 
 **Response (Clarification Needed):**
+
 ```json
 {
   "status": "clarification_needed",
@@ -142,9 +150,11 @@ Process natural language input and execute appropriate action.
 ### 2. Workflow Management
 
 #### GET `/api/v1/workflows/{workflow_id}`
+
 Get workflow status and details.
 
 **Response:**
+
 ```json
 {
   "id": "workflow-uuid",
@@ -168,7 +178,8 @@ Get workflow status and details.
       "completed_at": "2025-06-19T10:30:15Z",
       "output": {
         "issue_number": 123,
-        "issue_url": "https://github.com/org/mobile-app/issues/123"
+        "issue_url": "https://github.com/org/mobile-app/issues/123",
+        "repository": "org/mobile-app"
       }
     }
   ],
@@ -185,14 +196,17 @@ Get workflow status and details.
 ```
 
 #### GET `/api/v1/workflows`
+
 List recent workflows.
 
 **Query Parameters:**
+
 - `limit` (default: 20, max: 100)
 - `offset` (default: 0)
 - `status` (optional: pending, running, completed, failed)
 
 **Response:**
+
 ```json
 {
   "workflows": [
@@ -213,9 +227,11 @@ List recent workflows.
 ### 3. Project Management
 
 #### GET `/api/v1/projects`
+
 List all active projects.
 
 **Response:**
+
 ```json
 {
   "projects": [
@@ -239,9 +255,11 @@ List all active projects.
 ```
 
 #### GET `/api/v1/projects/{project_id}`
+
 Get specific project details.
 
 **Response:**
+
 ```json
 {
   "id": "proj-123",
@@ -271,9 +289,11 @@ Get specific project details.
 ### 4. Knowledge Base
 
 #### POST `/api/v1/knowledge/upload`
+
 Upload documents to knowledge base.
 
 **Request (multipart/form-data):**
+
 ```
 file: <binary data>
 metadata: {
@@ -284,6 +304,7 @@ metadata: {
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -300,9 +321,11 @@ metadata: {
 ```
 
 #### POST `/api/v1/knowledge/search`
+
 Search knowledge base.
 
 **Request:**
+
 ```json
 {
   "query": "mobile app performance metrics",
@@ -318,6 +341,7 @@ Search knowledge base.
 ```
 
 **Response:**
+
 ```json
 {
   "results": [
@@ -340,14 +364,17 @@ Search knowledge base.
 ### 5. Analytics & Reporting
 
 #### GET `/api/v1/analytics/usage`
+
 Get system usage analytics.
 
 **Query Parameters:**
+
 - `period` (day, week, month)
 - `start_date` (ISO date)
 - `end_date` (ISO date)
 
 **Response:**
+
 ```json
 {
   "period": "week",
@@ -376,12 +403,15 @@ Get system usage analytics.
 ## WebSocket API
 
 ### Connection
+
 ```
 ws://localhost:8001/ws
 ```
 
 ### Authentication
+
 Send auth message after connection:
+
 ```json
 {
   "type": "auth",
@@ -392,6 +422,7 @@ Send auth message after connection:
 ### Event Types
 
 #### Workflow Updates
+
 ```json
 {
   "type": "workflow.task_started",
@@ -436,6 +467,7 @@ Send auth message after connection:
 ```
 
 #### System Events
+
 ```json
 {
   "type": "system.knowledge_update",
@@ -450,6 +482,7 @@ Send auth message after connection:
 ## Error Handling
 
 ### Error Response Format
+
 ```json
 {
   "status": "error",
@@ -467,23 +500,27 @@ Send auth message after connection:
 
 ### Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `INVALID_REQUEST` | 400 | Request validation failed |
-| `UNAUTHORIZED` | 401 | Missing or invalid authentication |
-| `FORBIDDEN` | 403 | Insufficient permissions |
-| `NOT_FOUND` | 404 | Resource not found |
-| `PROJECT_NOT_FOUND` | 404 | Specified project doesn't exist |
-| `WORKFLOW_NOT_FOUND` | 404 | Specified workflow doesn't exist |
-| `AMBIGUOUS_REQUEST` | 400 | Request needs clarification |
-| `INTENT_CLASSIFICATION_FAILED` | 500 | Could not classify intent |
-| `EXTERNAL_SERVICE_ERROR` | 502 | GitHub/Jira/etc API error |
-| `RATE_LIMITED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Unexpected server error |
+| Code                           | HTTP Status | Description                           |
+| ------------------------------ | ----------- | ------------------------------------- |
+| `INVALID_REQUEST`              | 400         | Request validation failed             |
+| `UNAUTHORIZED`                 | 401         | Missing or invalid authentication     |
+| `FORBIDDEN`                    | 403         | Insufficient permissions              |
+| `NOT_FOUND`                    | 404         | Resource not found                    |
+| `PROJECT_NOT_FOUND`            | 404         | Specified project doesn't exist       |
+| `WORKFLOW_NOT_FOUND`           | 404         | Specified workflow doesn't exist      |
+| `AMBIGUOUS_REQUEST`            | 400         | Request needs clarification           |
+| `INTENT_CLASSIFICATION_FAILED` | 500         | Could not classify intent             |
+| `EXTERNAL_SERVICE_ERROR`       | 502         | GitHub/Jira/etc API error             |
+| `GITHUB_RATE_LIMITED`          | 429         | GitHub API rate limit exceeded        |
+| `GITHUB_REPO_NOT_FOUND`        | 404         | Specified GitHub repository not found |
+| `GITHUB_ISSUE_CREATION_FAILED` | 502         | Failed to create GitHub issue         |
+| `RATE_LIMITED`                 | 429         | Too many requests                     |
+| `INTERNAL_ERROR`               | 500         | Unexpected server error               |
 
 ### Rate Limiting
 
 **Headers:**
+
 ```
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
@@ -491,6 +528,7 @@ X-RateLimit-Reset: 1623456789
 ```
 
 **Rate Limit Exceeded Response:**
+
 ```json
 {
   "status": "error",
@@ -507,12 +545,14 @@ X-RateLimit-Reset: 1623456789
 Standard pagination for list endpoints:
 
 **Request Parameters:**
+
 - `limit` - Number of items (default: 20, max: 100)
 - `offset` - Starting position (default: 0)
 - `sort` - Sort field (varies by endpoint)
 - `order` - Sort order (asc/desc)
 
 **Response Format:**
+
 ```json
 {
   "data": [...],
@@ -528,10 +568,12 @@ Standard pagination for list endpoints:
 ## Content Types
 
 ### Request Content Types
+
 - `application/json` - Default for all endpoints
 - `multipart/form-data` - File uploads only
 
 ### Response Content Types
+
 - `application/json` - All responses
 
 ## API Versioning
@@ -547,9 +589,11 @@ Standard pagination for list endpoints:
 ## Health Check
 
 #### GET `/api/v1/health`
+
 System health status.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -560,6 +604,11 @@ System health status.
     "chromadb": "healthy",
     "temporal": "healthy",
     "github": "healthy",
+    "github_rate_limit": {
+      "limit": 5000,
+      "remaining": 4987,
+      "reset": 1623456789
+    },
     "claude": "healthy",
     "openai": "healthy"
   },
@@ -571,6 +620,7 @@ System health status.
 ## Development Tools
 
 ### API Documentation
+
 - Swagger UI: `http://localhost:8001/docs`
 - ReDoc: `http://localhost:8001/redoc`
 - OpenAPI Schema: `http://localhost:8001/openapi.json`
@@ -578,6 +628,7 @@ System health status.
 ### Request Examples
 
 #### cURL
+
 ```bash
 # Create ticket
 curl -X POST http://localhost:8001/api/v1/intent \
@@ -592,6 +643,7 @@ curl http://localhost:8001/api/v1/projects
 ```
 
 #### Python
+
 ```python
 import requests
 
@@ -605,23 +657,48 @@ response = requests.post(
 workflow = requests.get(
     f"http://localhost:8001/api/v1/workflows/{workflow_id}"
 ).json()
+
+# Example: Check repository in workflow context
+print("Repository:", workflow["tasks"][1]["output"].get("repository"))
 ```
 
 #### JavaScript
+
 ```javascript
 // Create ticket
-const response = await fetch('http://localhost:8001/api/v1/intent', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ message: 'Create a bug ticket for login issue' })
+const response = await fetch("http://localhost:8001/api/v1/intent", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ message: "Create a bug ticket for login issue" }),
 });
 
 // Get workflow status
-const workflow = await fetch(`http://localhost:8001/api/v1/workflows/${workflowId}`)
-  .then(res => res.json());
+const workflow = await fetch(
+  `http://localhost:8001/api/v1/workflows/${workflowId}`
+).then((res) => res.json());
 ```
+
 ---
-*Last Updated: June 21, 2025*
+
+_Last Updated: June 28, 2025_
 
 ## Revision Log
-- **June 21, 2025**: Added systematic documentation dating and revision tracking
+
+- **June 28, 2025**: Updated API contract for GitHub integration, repository context enrichment, error codes, and health check
+
+## Workflow Context Enrichment
+
+For workflows that require repository context (e.g., GitHub issue creation), the system automatically enriches the context with the repository if available from the project configuration. This enables downstream handlers to create issues in the correct repository without requiring explicit user input.
+
+**Example enriched context:**
+
+```json
+{
+  "project_id": "proj-123",
+  "project_name": "Mobile App",
+  "repository": "org/mobile-app",
+  "title": "Login fails on iOS",
+  "body": "Steps to reproduce...",
+  "labels": ["bug", "ios"]
+}
+```

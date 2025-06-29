@@ -9,6 +9,7 @@ This document describes the complete data model for Piper Morgan, including doma
 ### Core Entities
 
 #### Product
+
 Represents a product or project being managed.
 
 ```python
@@ -24,7 +25,7 @@ class Product:
     is_archived: bool = False
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
-    
+
     # Relationships
     features: List['Feature'] = field(default_factory=list)
     stakeholders: List['Stakeholder'] = field(default_factory=list)
@@ -33,20 +34,21 @@ class Product:
 ```
 
 #### Project (extends Product)
+
 Alias for Product with additional project-specific methods.
 
 ```python
 @dataclass
 class Project(Product):
     """Project is a Product with additional context"""
-    
+
     def get_integration(self, integration_type: IntegrationType) -> Optional[ProjectIntegration]:
         """Get integration configuration by type"""
         for integration in self.integrations:
             if integration.type == integration_type:
                 return integration
         return None
-    
+
     def get_github_repository(self) -> Optional[str]:
         """Convenience method to get GitHub repository"""
         github = self.get_integration(IntegrationType.GITHUB)
@@ -54,6 +56,7 @@ class Project(Product):
 ```
 
 #### ProjectIntegration
+
 Configuration for external system integrations.
 
 ```python
@@ -66,9 +69,17 @@ class ProjectIntegration:
     config: Dict[str, Any] = field(default_factory=dict)
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
+
+    def validate_config(self) -> bool:
+        """Validate integration config. Example: GitHub requires 'repository' key."""
+        if self.type == IntegrationType.GITHUB:
+            return "repository" in self.config and isinstance(self.config["repository"], str)
+        # Add validation for other types as needed
+        return True
 ```
 
 #### Feature
+
 A feature or capability within a product.
 
 ```python
@@ -85,7 +96,7 @@ class Feature:
     priority: int = 0
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
-    
+
     # Relationships
     dependencies: List['Feature'] = field(default_factory=list)
     risks: List['Risk'] = field(default_factory=list)
@@ -93,6 +104,7 @@ class Feature:
 ```
 
 #### Stakeholder
+
 Someone with interest in the product.
 
 ```python
@@ -111,6 +123,7 @@ class Stakeholder:
 ```
 
 #### WorkItem
+
 Universal work item that can map to any external system.
 
 ```python
@@ -133,6 +146,7 @@ class WorkItem:
 ### Intent System
 
 #### Intent
+
 User intent parsed from natural language.
 
 ```python
@@ -152,6 +166,7 @@ class Intent:
 ### Workflow System
 
 #### Workflow
+
 Orchestrates multi-step processes.
 
 ```python
@@ -168,7 +183,7 @@ class Workflow:
     error: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
-    
+
     def get_next_task(self) -> Optional['Task']:
         """Get next pending task"""
         for task in self.tasks:
@@ -178,6 +193,7 @@ class Workflow:
 ```
 
 #### Task
+
 Individual unit of work within a workflow.
 
 ```python
@@ -199,6 +215,7 @@ class Task:
 ### Event System
 
 #### Event
+
 Base event for system activity tracking.
 
 ```python
@@ -218,6 +235,7 @@ class Event:
 ### SQLAlchemy Models
 
 #### Base Model
+
 ```python
 class Base(DeclarativeBase):
     """Base class for all database models"""
@@ -230,10 +248,11 @@ class TimestampMixin:
 ```
 
 #### Product Table
+
 ```python
 class ProductDB(Base, TimestampMixin):
     __tablename__ = "products"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     name = Column(String(255), nullable=False)
     description = Column(Text)
@@ -241,7 +260,7 @@ class ProductDB(Base, TimestampMixin):
     strategy = Column(Text)
     is_default = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
-    
+
     # Relationships
     features = relationship("FeatureDB", back_populates="product", cascade="all, delete-orphan")
     stakeholders = relationship("StakeholderDB", back_populates="product", cascade="all, delete-orphan")
@@ -249,26 +268,28 @@ class ProductDB(Base, TimestampMixin):
 ```
 
 #### ProjectIntegration Table
+
 ```python
 class ProjectIntegrationDB(Base, TimestampMixin):
     __tablename__ = "project_integrations"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     project_id = Column(String, ForeignKey("products.id", ondelete="CASCADE"))
     type = Column(Enum(IntegrationType), nullable=False)
     name = Column(String(255), nullable=False)
     config = Column(JSON, default=dict)
     is_active = Column(Boolean, default=True)
-    
+
     # Relationships
     project = relationship("ProductDB", back_populates="integrations")
 ```
 
 #### Feature Table
+
 ```python
 class FeatureDB(Base, TimestampMixin):
     __tablename__ = "features"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     product_id = Column(String, ForeignKey("products.id", ondelete="CASCADE"))
     name = Column(String(255), nullable=False)
@@ -277,17 +298,18 @@ class FeatureDB(Base, TimestampMixin):
     acceptance_criteria = Column(JSON, default=list)
     status = Column(String(50), default="draft")
     priority = Column(Integer, default=0)
-    
+
     # Relationships
     product = relationship("ProductDB", back_populates="features")
     work_items = relationship("WorkItemDB", back_populates="feature", cascade="all, delete-orphan")
 ```
 
 #### WorkItem Table
+
 ```python
 class WorkItemDB(Base, TimestampMixin):
     __tablename__ = "work_items"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     feature_id = Column(String, ForeignKey("features.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(500), nullable=False)
@@ -297,10 +319,10 @@ class WorkItemDB(Base, TimestampMixin):
     external_id = Column(String(255))    # ID in source system
     external_refs = Column(JSON, default=dict)  # {"github": "123", "jira": "PROJ-456"}
     metadata = Column(JSON, default=dict)
-    
+
     # Relationships
     feature = relationship("FeatureDB", back_populates="work_items")
-    
+
     # Indexes
     __table_args__ = (
         Index('idx_work_items_external', 'source_system', 'external_id'),
@@ -308,10 +330,11 @@ class WorkItemDB(Base, TimestampMixin):
 ```
 
 #### Intent Table
+
 ```python
 class IntentDB(Base):
     __tablename__ = "intents"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     category = Column(Enum(IntentCategory), nullable=False)
     action = Column(String(255), nullable=False)
@@ -320,16 +343,17 @@ class IntentDB(Base):
     knowledge_context = Column(JSON, default=list)
     original_message = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    
+
     # Relationships
     workflows = relationship("WorkflowDB", back_populates="intent")
 ```
 
 #### Workflow Table
+
 ```python
 class WorkflowDB(Base):
     __tablename__ = "workflows"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     type = Column(Enum(WorkflowType), nullable=False)
     status = Column(Enum(WorkflowStatus), default=WorkflowStatus.PENDING)
@@ -339,17 +363,18 @@ class WorkflowDB(Base):
     error = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at = Column(DateTime)
-    
+
     # Relationships
     intent = relationship("IntentDB", back_populates="workflows")
     tasks = relationship("TaskDB", back_populates="workflow", cascade="all, delete-orphan")
 ```
 
 #### Task Table
+
 ```python
 class TaskDB(Base):
     __tablename__ = "tasks"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     workflow_id = Column(String, ForeignKey("workflows.id", ondelete="CASCADE"))
     type = Column(Enum(TaskType), nullable=False)
@@ -360,23 +385,24 @@ class TaskDB(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
-    
+
     # Relationships
     workflow = relationship("WorkflowDB", back_populates="tasks")
 ```
 
 #### Event Table
+
 ```python
 class EventDB(Base):
     __tablename__ = "events"
-    
+
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     type = Column(String(100), nullable=False)
     aggregate_id = Column(String)
     aggregate_type = Column(String(50))
     data = Column(JSON, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
-    
+
     # Indexes
     __table_args__ = (
         Index('idx_events_aggregate', 'aggregate_type', 'aggregate_id'),
@@ -387,6 +413,7 @@ class EventDB(Base):
 ## Enumerations
 
 ### IntentCategory
+
 ```python
 class IntentCategory(Enum):
     EXECUTION = "execution"    # Create, update, status changes
@@ -398,6 +425,7 @@ class IntentCategory(Enum):
 ```
 
 ### WorkflowType
+
 ```python
 class WorkflowType(Enum):
     CREATE_FEATURE = "create_feature"
@@ -411,6 +439,7 @@ class WorkflowType(Enum):
 ```
 
 ### IntegrationType
+
 ```python
 class IntegrationType(Enum):
     GITHUB = "github"
@@ -421,6 +450,7 @@ class IntegrationType(Enum):
 ```
 
 ### WorkflowStatus
+
 ```python
 class WorkflowStatus(Enum):
     PENDING = "pending"
@@ -431,18 +461,19 @@ class WorkflowStatus(Enum):
 ```
 
 ### TaskType
+
 ```python
 class TaskType(Enum):
     # Analysis tasks
     ANALYZE_REQUEST = "analyze_request"
     EXTRACT_REQUIREMENTS = "extract_requirements"
     IDENTIFY_DEPENDENCIES = "identify_dependencies"
-    
+
     # Execution tasks
     CREATE_WORK_ITEM = "create_work_item"
     UPDATE_WORK_ITEM = "update_work_item"
     NOTIFY_STAKEHOLDERS = "notify_stakeholders"
-    
+
     # Integration tasks
     GITHUB_CREATE_ISSUE = "github_create_issue"
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
@@ -451,6 +482,7 @@ class TaskType(Enum):
 ```
 
 ### TaskStatus
+
 ```python
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -463,24 +495,25 @@ class TaskStatus(Enum):
 ## Repository Pattern
 
 ### Base Repository
+
 ```python
 class BaseRepository:
     """Base repository with common CRUD operations"""
-    
+
     def __init__(self, db_session: AsyncSession, model_class: Type[Base]):
         self.db = db_session
         self.model_class = model_class
-    
+
     async def create(self, **kwargs) -> Any:
         instance = self.model_class(**kwargs)
         self.db.add(instance)
         await self.db.commit()
         await self.db.refresh(instance)
         return instance
-    
+
     async def get_by_id(self, id: str) -> Optional[Any]:
         return await self.db.get(self.model_class, id)
-    
+
     async def update(self, id: str, **kwargs) -> Optional[Any]:
         instance = await self.get_by_id(id)
         if instance:
@@ -489,7 +522,7 @@ class BaseRepository:
             await self.db.commit()
             await self.db.refresh(instance)
         return instance
-    
+
     async def delete(self, id: str) -> bool:
         instance = await self.get_by_id(id)
         if instance:
@@ -502,27 +535,28 @@ class BaseRepository:
 ### Domain-Specific Repositories
 
 #### ProjectRepository
+
 ```python
 class ProjectRepository(BaseRepository):
     """Repository for Project/Product operations"""
-    
+
     def __init__(self, db_session: AsyncSession):
         super().__init__(db_session, ProductDB)
-    
+
     async def list_active_projects(self) -> List[Project]:
         result = await self.db.execute(
             select(ProductDB).where(ProductDB.is_archived == False)
         )
         db_projects = result.scalars().all()
         return [self._to_domain(p) for p in db_projects]
-    
+
     async def get_default_project(self) -> Optional[Project]:
         result = await self.db.execute(
             select(ProductDB).where(ProductDB.is_default == True)
         )
         db_project = result.scalar_one_or_none()
         return self._to_domain(db_project) if db_project else None
-    
+
     async def find_by_name(self, name: str) -> List[Project]:
         result = await self.db.execute(
             select(ProductDB).where(
@@ -532,7 +566,7 @@ class ProjectRepository(BaseRepository):
         )
         db_projects = result.scalars().all()
         return [self._to_domain(p) for p in db_projects]
-    
+
     def _to_domain(self, db_model: ProductDB) -> Project:
         """Convert database model to domain model"""
         return Project(
@@ -560,14 +594,18 @@ class ProjectRepository(BaseRepository):
 ## Data Access Patterns
 
 ### Query Pattern
+
 For read-only operations, use Query Services that directly access repositories:
+
 ```python
 # Query Service → Repository → Database
 projects = await project_query_service.list_active_projects()
 ```
 
 ### Command Pattern
+
 For state changes, use Workflows that orchestrate multiple operations:
+
 ```python
 # Workflow → Tasks → Repositories → Database
 workflow = await workflow_factory.create_from_intent(intent)
@@ -575,6 +613,7 @@ result = await orchestration_engine.execute_workflow(workflow.id)
 ```
 
 ### Transaction Boundaries
+
 - Each repository method is a transaction
 - Workflows may span multiple transactions
 - Use database transactions for consistency
@@ -583,12 +622,14 @@ result = await orchestration_engine.execute_workflow(workflow.id)
 ## Migration Strategy
 
 ### Schema Evolution
+
 1. Use Alembic for database migrations
 2. Domain models drive schema changes
 3. Backward compatibility for API changes
 4. Zero-downtime deployment support
 
 ### Example Migration
+
 ```python
 # alembic/versions/001_add_project_integrations.py
 def upgrade():
@@ -610,25 +651,100 @@ def upgrade():
 ## Performance Considerations
 
 ### Indexes
+
 - Primary keys on all tables
 - Foreign key indexes for joins
 - Composite indexes for common queries
 - Full-text search for descriptions
 
 ### Query Optimization
+
 - Use eager loading for related data
 - Pagination for large result sets
 - Database-level filtering
 - Connection pooling
 
 ### Caching Strategy
+
 - Redis for frequently accessed data
 - In-memory caching for session data
 - Invalidation on updates
 - TTL-based expiration
----
-*Last Updated: June 27, 2025*
+
+## Workflow Context Patterns
+
+Workflows carry a context dictionary that is enriched automatically during creation. For GitHub workflows, the repository is injected if available.
+
+**Example: GitHub Issue Creation Workflow Context**
+
+```json
+{
+  "project_id": "proj-123",
+  "project_name": "Mobile App",
+  "repository": "acme/mobile-app",
+  "title": "Login fails on iOS",
+  "body": "Steps to reproduce...",
+  "labels": ["bug", "ios"]
+}
+```
+
+- The `repository` field is injected automatically if available from project context.
+- Downstream handlers (e.g., GitHub issue creation) consume this context.
+
+## TaskResult Model
+
+@dataclass
+class TaskResult:
+"""Result of a completed task"""
+task_id: str
+status: TaskStatus
+output: Dict[str, Any] = field(default_factory=dict)
+error: Optional[str] = None
+completed_at: Optional[datetime] = None
+
+## Integration Configuration Examples
+
+### GitHub Integration Example
+
+```json
+{
+  "type": "github",
+  "name": "Acme GitHub",
+  "config": {
+    "repository": "acme/mobile-app",
+    "default_labels": ["bug", "ios"]
+  },
+  "is_active": true
+}
+```
+
+### Jira Integration Example
+
+```json
+{
+  "type": "jira",
+  "name": "Acme Jira",
+  "config": {
+    "project_key": "ACME",
+    "url": "https://acme.atlassian.net"
+  },
+  "is_active": true
+}
+```
+
+### Workflow Creation with Context
+
+For workflows that require repository context (e.g., GitHub issue creation), the context is enriched automatically:
+
+```python
+workflow = await workflow_factory.create_from_intent(intent, session_id, project_context)
+# The resulting workflow.context will include 'repository' if available from project
+```
 
 ## Revision Log
-- **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
-- **June 27, 2025**: Added systematic documentation dating and revision tracking
+
+- **June 28, 2025**: Added workflow context patterns, TaskResult model, ProjectIntegration config validation, integration config examples, and workflow creation with context example for GitHub integration
+
+---
+
+_Last Updated: June 28, 2025_

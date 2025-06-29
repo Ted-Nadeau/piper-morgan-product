@@ -14,6 +14,8 @@ http://localhost:8001
 
 Process natural language requests and execute actions.
 
+> **Note:** For workflows that require repository context (e.g., GitHub issue creation), the system automatically enriches the context with the repository if available from the project configuration. Users do not need to specify the repository explicitly.
+
 ```http
 POST /api/v1/intent
 Content-Type: application/json
@@ -36,6 +38,8 @@ Content-Type: application/json
 ### Workflow Management
 
 Track long-running operations like GitHub issue creation.
+
+> **Note:** Workflow context will include the repository field if available, enabling downstream handlers to create issues in the correct repository automatically.
 
 ```http
 # Get workflow status
@@ -100,6 +104,7 @@ if response.json().get("workflow"):
 
     # Poll for completion
     status = requests.get(f"http://localhost:8001/api/v1/workflows/{workflow_id}")
+    # The workflow context will include the repository if available
     print(status.json()["result"])
 ```
 
@@ -170,6 +175,38 @@ Access the chat interface at: http://localhost:3000
 | `analysis`  | Analyze, assess        | analyze_metrics, review_performance      |
 | `synthesis` | Generate, summarize    | create_report, summarize_meeting         |
 | `strategy`  | Plan, prioritize       | plan_roadmap, prioritize_features        |
+
+## GitHub-Specific Examples
+
+### Example: Create GitHub Issue with Automatic Repository Context
+
+```python
+import requests
+
+response = requests.post("http://localhost:8001/api/v1/intent", json={
+    "message": "Create a bug ticket for the mobile login crash"
+})
+
+workflow_id = response.json()["workflow"]["id"]
+status = requests.get(f"http://localhost:8001/api/v1/workflows/{workflow_id}")
+workflow_context = status.json()["workflow"]["context"]
+
+print("Repository used:", workflow_context.get("repository"))
+print("Issue title:", workflow_context.get("title"))
+```
+
+### Example: Workflow Context for GitHub Issue
+
+```json
+{
+  "project_id": "proj-123",
+  "project_name": "Mobile App",
+  "repository": "acme/mobile-app",
+  "title": "Login fails on iOS",
+  "body": "Steps to reproduce...",
+  "labels": ["bug", "ios"]
+}
+```
 
 ## Error Handling
 
@@ -245,8 +282,8 @@ result = client.send_message("Create a ticket for the login bug")
 
 ---
 
-_Last Updated: June 21, 2025_
+_Last Updated: June 28, 2025_
 
 ## Revision Log
 
-- **June 21, 2025**: Added systematic documentation dating and revision tracking
+- **June 28, 2025**: Added notes and examples for automatic repository context enrichment and GitHub integration patterns

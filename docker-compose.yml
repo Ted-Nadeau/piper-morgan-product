@@ -1,16 +1,22 @@
+version: "3.8"
+
+# EXPLICIT PROJECT NAME - survives directory renames!
+name: piper-morgan-stable
+
 services:
   # PostgreSQL - Main database
   postgres:
-    image: postgres:15-alpine
-    container_name: piper-postgres
+    image: postgres:15
+    container_name: piper-postgres # Fixed name
     environment:
-      POSTGRES_DB: piper_morgan
       POSTGRES_USER: piper
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_changeme}
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: dev_changeme_in_production
+      POSTGRES_DB: piper_morgan
     ports:
       - "5433:5432"
+    volumes:
+      # NAMED VOLUME - survives everything!
+      - piper_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U piper"]
       interval: 10s
@@ -52,7 +58,7 @@ services:
       - "7233:7233"
       - "8088:8088"
     environment:
-      - DB=postgres12  # Fixed: needs to be postgres12, not postgres
+      - DB=postgres12 # Fixed: needs to be postgres12, not postgres
       - DB_PORT=5432
       - POSTGRES_USER=piper
       - POSTGRES_PWD=${POSTGRES_PASSWORD:-dev_changeme}
@@ -74,10 +80,15 @@ services:
       - "--log.level=INFO"
     ports:
       - "80:80"
-      - "8090:8080"  # Traefik dashboard
+      - "8090:8080" # Traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
 networks:
   default:
     name: piper-network
+
+volumes:
+  # EXPLICIT VOLUME NAME - never loses data
+  piper_postgres_data:
+    name: piper_postgres_data_v1 # Version it!

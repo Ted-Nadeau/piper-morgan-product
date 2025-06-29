@@ -17,6 +17,7 @@ from services.shared_types import WorkflowType, WorkflowStatus, TaskType, TaskSt
 from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
 from services.llm.clients import llm_client
 from services.api.errors import TaskFailedError, WorkflowTimeoutError
+from services.integrations.github.github_agent import GitHubAgent
 
 logger = structlog.get_logger()
 
@@ -34,6 +35,7 @@ class OrchestrationEngine:
         from .workflow_factory import WorkflowFactory
         self.factory = WorkflowFactory()
         self.github_analyzer = GitHubIssueAnalyzer()
+        self.github_agent = GitHubAgent()
         self.llm_client = llm_client
 
         self.task_handlers = {
@@ -50,7 +52,7 @@ class OrchestrationEngine:
             TaskType.ANALYZE_FILE: self._analyze_file,
             
             # Fallback for unmapped task types
-            TaskType.GITHUB_CREATE_ISSUE: self._placeholder_handler,
+            TaskType.GITHUB_CREATE_ISSUE: self._create_github_issue,
             TaskType.JIRA_CREATE_TICKET: self._placeholder_handler,
             TaskType.SLACK_SEND_MESSAGE: self._placeholder_handler,
             TaskType.GENERATE_DOCUMENT: self._placeholder_handler,
@@ -60,6 +62,26 @@ class OrchestrationEngine:
     async def create_workflow_from_intent(self, intent: Intent) -> Optional[Workflow]:
         """Create appropriate workflow based on intent with database persistence"""
         workflow = await self.factory.create_from_intent(intent)
+        # Enrich CREATE_TICKET workflows with repository from project
+        if workflow and workflow.type == WorkflowType.CREATE_TICKET:
+            project_id = intent.context.get("project_id")
+            if project_id:
+                try:
+                    repos = await RepositoryFactory.get_repositories()
+                    project_repo = repos["projects"]
+                    project = await project_repo.get_by_id(project_id)
+                    if project:
+                        repository = project.get_github_repository()
+                        if repository:
+                            workflow.context["repository"] = repository
+                            logger.info(f"Enriched CREATE_TICKET workflow with repository: {repository}")
+                        else:
+                            logger.warning(f"Project {project_id} has no GitHub repository configured")
+                    else:
+                        logger.warning(f"Project {project_id} not found")
+                except Exception as e:
+                    logger.error(f"Failed to enrich workflow with repository: {str(e)}")
+                    # Continue without repository - handler will provide appropriate error
         if workflow:
             # Store in memory for execution
             self.workflows[workflow.id] = workflow
@@ -532,6 +554,46 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             return TaskResult(
                 success=False,
                 error=f"Analysis error: {str(e)}"
+            )
+
+    async def _create_github_issue(self, workflow: Workflow, task: Task) -> TaskResult:
+        """Create a GitHub issue from workflow context."""
+        try:
+            # Extract required fields from context
+            repository = workflow.context.get("repository")
+            title = workflow.context.get("title", "New Issue")
+            body = workflow.context.get("body", "")
+            labels = workflow.context.get("labels", [])
+            
+            # Validate required fields
+            if not repository:
+                return TaskResult(
+                    success=False,
+                    error="Repository not specified in workflow context"
+                )
+            
+            # Create the issue
+            issue_data = await self.github_agent.create_issue(
+                repo_name=repository,
+                title=title,
+                body=body,
+                labels=labels
+            )
+            
+            return TaskResult(
+                success=True,
+                output_data={
+                    "issue_number": issue_data.get("number"),
+                    "issue_url": issue_data.get("html_url"),
+                    "issue_data": issue_data
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to create GitHub issue: {str(e)}")
+            return TaskResult(
+                success=False,
+                error=f"GitHub API error: {str(e)}"
             )
 
     async def _placeholder_handler(self, workflow: Workflow, task: Task) -> TaskResult:

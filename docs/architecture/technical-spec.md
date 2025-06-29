@@ -225,30 +225,32 @@ class GitHubAgent:
 
 ### 2.5 Orchestration Engine (`services/orchestration/engine.py`)
 
-**Purpose**: Workflow execution and coordination
+**Purpose**: Workflow execution and coordination using internal method handlers for all task types.
 
 ```python
 class OrchestrationEngine:
-    def __init__(self, temporal_client: TemporalClient, workflow_factory: WorkflowFactory):
-        self.temporal = temporal_client
-        self.factory = workflow_factory
+    def __init__(self, github_agent: GitHubAgent, ...):
+        self.github_agent = github_agent
+        self.task_handlers = {
+            TaskType.FILE_ANALYSIS: self._analyze_file,
+            TaskType.GITHUB_CREATE_ISSUE: self._create_github_issue,
+            # ... other handlers ...
+        }
         self.workflows = {}  # In-memory workflow tracking
 
     async def execute_workflow(self, workflow_id: str) -> WorkflowResult:
-        """Execute workflow with proper task handling"""
         workflow = self.workflows.get(workflow_id)
         if not workflow:
             raise WorkflowNotFoundError(workflow_id)
-
-        # Execute each task in sequence
         for task in workflow.tasks:
             if task.status != TaskStatus.PENDING:
                 continue
-
             try:
                 task.status = TaskStatus.RUNNING
-                # Route to appropriate handler
-                result = await self._execute_task(task, workflow.context)
+                handler = self.task_handlers.get(task.type)
+                if not handler:
+                    raise NotImplementedError(f"No handler for {task.type}")
+                result = await handler(task, workflow.context)
                 task.status = TaskStatus.COMPLETED
                 task.result = result
             except Exception as e:
@@ -257,17 +259,44 @@ class OrchestrationEngine:
                 workflow.status = WorkflowStatus.FAILED
                 workflow.error = f"Task {task.id} failed: {e}"
                 break
-
-        # Update final status
         if all(t.status == TaskStatus.COMPLETED for t in workflow.tasks):
             workflow.status = WorkflowStatus.COMPLETED
-
         return WorkflowResult(
             success=workflow.status == WorkflowStatus.COMPLETED,
             data={"tasks": [t.to_dict() for t in workflow.tasks]},
             error=workflow.error
         )
+```
 
+#### Internal Handler Pattern
+
+- All task handlers are methods on the engine instance.
+- `self.task_handlers` maps TaskType to handler methods.
+- No external handler classes or modules.
+- Handlers have direct access to engine state and dependencies.
+
+### 2.5.1 GitHub Task Handlers
+
+**Example: GitHub Issue Creation Handler**
+
+```python
+async def _create_github_issue(self, task: Task, context: dict):
+    """
+    Handler for GITHUB_CREATE_ISSUE tasks. Uses GitHubAgent to create an issue.
+    Expects context to include 'repository', 'title', and 'body'.
+    """
+    repo = context.get("repository")
+    title = context.get("title")
+    body = context.get("body")
+    if not repo or not title or not body:
+        return {"error": "Missing required context for GitHub issue creation"}
+    result = await self.github_agent.create_issue(
+        repository=repo,
+        title=title,
+        body=body,
+        labels=context.get("labels", [])
+    )
+    return {"github_issue": result}
 ```
 
 ### 2.6 Query Service (`services/queries/query_service.py`)
@@ -420,10 +449,11 @@ class ProjectContext:
 2. Intent Classification: {category: EXECUTION, action: "create_ticket"}
 3. Project Resolution: Infer "mobile-app" project from context
 4. Workflow Creation: CreateTicketWorkflow with project context
+   - Repository context is automatically enriched (if available)
 5. Task Execution:
    - Analyze request
    - Generate issue content
-   - Create GitHub issue
+   - Create GitHub issue (uses enriched repository context)
 6. Response: "Created issue #123 in mobile-app repository"
 
 ```
@@ -438,6 +468,24 @@ class ProjectContext:
 5. Response: List of projects with details
 
 ```
+
+### 3.3 Workflow Context Structure
+
+**Example: GitHub Issue Creation Workflow Context**
+
+```json
+{
+  "project_id": "proj-123",
+  "project_name": "Mobile App",
+  "repository": "acme/mobile-app",
+  "title": "Login fails on iOS",
+  "body": "Steps to reproduce...",
+  "labels": ["bug", "ios"]
+}
+```
+
+- The `repository` field is automatically injected during workflow creation if available from project context.
+- Downstream handlers (e.g., GitHub issue creation) consume this context.
 
 ## 4. API Design
 
@@ -603,9 +651,10 @@ async def test_create_issue_workflow():
 
 ---
 
-_Last Updated: June 21, 2025_
+_Last Updated: June 28, 2025_
 
 ## Revision Log
-- **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
+
+- **June 28, 2025**: Updated Orchestration Engine section for internal handler pattern, added GitHub handler example, updated command flow for repository enrichment, added workflow context structure for GitHub integration
 
 - **June 21, 2025**: Added systematic documentation dating and revision tracking

@@ -28,9 +28,9 @@
 │  ✅ Domain Models           │  ✅ Workflow Service    │  📋 Feedback Service  │
 │  (Built)                    │  (Built & Working)      │  (Not Yet Designed)   │
 │                             │                         │                       │
-│  ✅ Event System            │  ✅ GitHub Agent        │  📋 Analytics Agent   │
-│  (Built)                    │  (Built & Working)      │  (Not Yet Designed)   │
-│                             │                         │                       │
+│  ✅ Event System            │  ✅ GitHub Integration  │  📋 Analytics Agent   │
+│  (Built)                    │  (Fully Integrated)     │  (Not Yet Designed)   │
+│                             │  (Issue Creation Working)│                      │
 │  ✅ Knowledge Base          │  ✅ Document Processor  │  📋 Report Generator  │
 │  (Built & Working)          │  (Built & Working)      │  (Not Yet Designed)   │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -59,8 +59,8 @@
 │                       EXTERNAL INTEGRATIONS                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  ✅ Claude API              │  ✅ GitHub API          │  📋 Slack/Teams       │
-│  (Connected & Working)      │  (Connected & Working)  │  (Not Yet Designed)   │
-│                             │                         │                       │
+│  (Connected & Working)      │  (Fully Integrated)    │  (Not Yet Designed)   │
+│                             │  (Issue Creation Working)│                     │
 │  ✅ OpenAI API              │  📋 Jira API            │  📋 Analytics APIs    │
 │  (Connected & Working)      │  (Not Yet Designed)     │  (Not Yet Designed)   │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -240,6 +240,24 @@ Moved from hardcoded SQL to SQLAlchemy model-driven schema:
 - Eliminates manual schema drift
 - Ensures consistency between domain and persistence layers
 
+### 5. Internal Task Handler Pattern (June 2025)
+
+Discovered and documented during GitHub integration:
+
+- OrchestrationEngine uses internal method handlers instead of separate task handler classes
+- Pattern: `self.task_handlers = {TaskType.X: self._method_x}`
+- Benefits: Simpler architecture, fewer files, direct access to engine state
+- Example: `TaskType.GITHUB_CREATE_ISSUE: self._create_github_issue`
+
+### 6. Repository Context Enrichment Pattern (June 2025)
+
+Implemented automatic repository lookup for GitHub workflows:
+
+- Context enrichment happens in `create_workflow_from_intent`
+- Non-blocking pattern: failures logged but don't break workflow creation
+- Hierarchy: Project → Integration → Repository → Workflow Context
+- Enables seamless "create a ticket" without specifying repository
+
 ## Critical Gaps (Current Priority)
 
 ### 1. Basic Error Handling
@@ -291,13 +309,13 @@ External systems as plugins for:
 
 ### Phase 1 (Current - Q2 2025): Foundation + Basic Execution
 
-**Status**: 85% Complete
+**Status**: 100% Complete
 
 - ✅ Infrastructure deployment and configuration
 - ✅ Core domain models and persistence
 - ✅ Intent classification with high accuracy
 - ✅ Basic workflow execution (working end-to-end)
-- ✅ GitHub integration functional
+- ✅ GitHub integration functional (issue creation and analysis automated)
 - ✅ Database persistence with domain-first schema
 - 🔄 PM-009 multi-project support (context resolution done, queries in progress)
 - 🔄 Query/Command pattern introduction
@@ -329,9 +347,8 @@ External systems as plugins for:
 
 ### Immediate Risks
 
-1. **Placeholder Handlers**: GitHub issue creation uses placeholder - needs real implementation
-2. **Import Dependencies**: Some circular dependency risks in orchestration layer
-3. **Error Handling**: No user-friendly error messages
+1. **Import Dependencies**: Some circular dependency risks in orchestration layer
+2. **Error Handling**: No user-friendly error messages
 
 ### Medium-Term Considerations
 
@@ -361,9 +378,11 @@ External systems as plugins for:
 - **Knowledge Relevance**: 90%+
 - **User Satisfaction**: 4.5/5 rating
 - **Error Handling**: 90%+ errors with user-friendly messages
+
 ---
-*Last Updated: June 27, 2025*
+
+_Last Updated: June 28, 2025_
 
 ## Revision Log
-- **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
-- **June 27, 2025**: Added systematic documentation dating and revision tracking
+
+- **June 28, 2025**: GitHub integration complete, added Internal Task Handler and Repository Context Enrichment patterns, updated Service Layer and External Integrations, removed placeholder handler risk, updated Evolution Path
