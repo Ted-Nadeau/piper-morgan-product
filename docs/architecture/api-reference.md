@@ -49,6 +49,24 @@ GET /api/v1/workflows/{workflow_id}
 GET /api/v1/workflows?limit=20&status=completed
 ```
 
+### Execute Workflow
+
+**Response Structure**:
+
+```python
+# Actual response (dict, not object)
+response = await engine.execute_workflow(workflow_id)
+
+# Check success:
+if response["status"] == "completed":
+    # Get task results:
+    for task in response["tasks"]:
+        if task["status"] == "completed":
+            output = task["result"]["output_data"]
+```
+
+Note: Returns dict, not WorkflowResult object as might be expected.
+
 ### Project Management
 
 Manage multi-project contexts.

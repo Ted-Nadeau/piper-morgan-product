@@ -788,6 +788,111 @@ def create_workflow_from_intent(intent: Intent, project_context: Project):
 - ❌ Failing workflows on enrichment errors.
 - ❌ Scattering enrichment logic across multiple modules.
 
+## 13. Repository Domain Model Conversion
+
+### Purpose
+
+Ensure that repository methods return domain models, not database models, to maintain clean architectural boundaries and avoid exposing database details to business logic.
+
+### Implementation
+
+```python
+class BaseRepository:
+    """Base repository with common CRUD operations"""
+
+    def __init__(self, db_session: AsyncSession, model_class: Type[Base]):
+        self.db = db_session
+        self.model_class = model_class
+
+    async def create(self, **kwargs) -> Any:
+        instance = self.model_class(**kwargs)
+        self.db.add(instance)
+        await self.db.commit()
+        await self.db.refresh(instance)
+        return instance
+
+    async def get_by_id(self, id: str) -> Optional[Any]:
+        return await self.db.get(self.model_class, id)
+
+class ProjectRepository(BaseRepository):
+    """Domain-specific repository"""
+
+    def __init__(self, db_session: AsyncSession):
+        super().__init__(db_session, ProductDB)
+
+    async def list_active_projects(self) -> List[Project]:
+        result = await self.db.execute(
+            select(ProductDB).where(ProductDB.is_archived == False)
+        )
+        db_projects = result.scalars().all()
+        return [self._to_domain(p) for p in db_projects]
+
+    def _to_domain(self, db_model: ProductDB) -> Project:
+        """Convert database model to domain model"""
+        # Conversion logic here
+```
+
+### Usage Guidelines
+
+- Ensure repository methods return domain models, not database models
+- Maintain clean architectural boundaries
+- Avoid exposing database details to business logic
+- Use consistent conversion logic across repositories
+
+### Anti-patterns to Avoid
+
+- ❌ Returning database models directly from repositories
+- ❌ Exposing database details in repository methods
+- ❌ Hardcoding conversion logic in repositories
+- ❌ Mixing domain logic with repository logic
+
+## 14. Async Relationship Eager Loading
+
+### Purpose
+
+Prevent async SQLAlchemy context errors by eagerly loading relationships that will be accessed after the database session.
+
+### Implementation
+
+```python
+from sqlalchemy.orm import selectinload
+
+# Eager load integrations with project
+result = await self.session.execute(
+    select(ProjectDB)
+    .options(selectinload(ProjectDB.integrations))  # Eager load!
+    .where(ProjectDB.id == project_id)
+)
+db_project = result.scalar_one_or_none()
+if db_project:
+    return db_project.to_domain()  # All relationships available
+```
+
+### Usage Guidelines
+
+- Use `selectinload()` for one-to-many relationships
+- Load all relationships needed for domain conversion
+- Avoid lazy loading in async contexts
+- Prefer single query with eager loading over multiple queries
+
+### Benefits
+
+- Prevents "greenlet_spawn has not been called" errors
+- All data available for domain conversion
+- Better performance (single query vs N+1)
+- Reliable relationship access
+
+### Anti-patterns to Avoid
+
+- ❌ Lazy loading relationships in async context
+- ❌ Accessing relationships after session closes
+- ❌ Using `joinedload()` for collections (can cause issues)
+- ❌ Missing relationship loading in repository methods
+
+### Discovered
+
+PM-011 - Lazy loading caused "greenlet_spawn has not been called" errors when accessing project integrations after session context.
+
 ## Summary
 
 These patterns form the architectural foundation of Piper Morgan:
@@ -804,13 +909,16 @@ These patterns form the architectural foundation of Piper Morgan:
 10. **Error Handling Pattern** - User-friendly API responses
 11. **Internal Task Handler Pattern** - Engine method-based task handling
 12. **Repository Context Enrichment Pattern** - Automatic repo context for integrations
+13. **Repository Domain Model Conversion** - Clean architectural boundaries
+14. **Async Relationship Eager Loading** - Reliable async data access
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
 ---
 
-_Last Updated: June 28, 2025_
+_Last Updated: June 29, 2025_
 
 ## Revision Log
 
+- **June 29, 2025**: Added Repository Domain Model Conversion Pattern (#13) and Async Relationship Eager Loading Pattern (#14) for PM-011 GitHub integration
 - **June 28, 2025**: Added Internal Task Handler Pattern (#11) and Repository Context Enrichment Pattern (#12) for GitHub integration
