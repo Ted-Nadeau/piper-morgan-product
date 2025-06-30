@@ -258,6 +258,31 @@ Implemented automatic repository lookup for GitHub workflows:
 - Hierarchy: Project → Integration → Repository → Workflow Context
 - Enables seamless "create a ticket" without specifying repository
 
+### 7. Docker Best Practices (June 2025)
+
+**Named Volumes (Recommended)**:
+
+```yaml
+volumes:
+  piper_postgres_data:
+    name: piper_postgres_data_v1 # Explicit versioned name
+```
+
+**Benefits**:
+
+- Survives directory renames
+- Managed by Docker
+- Explicit versioning
+- No path dependencies
+
+**Avoid Bind Mounts for Databases**:
+
+- Fragile with directory changes
+- Path-dependent
+- Can be lost during refactoring
+
+**Lesson Learned**: PM-011 - Directory rename caused data loss with bind mounts
+
 ## Critical Gaps (Current Priority)
 
 ### 1. Basic Error Handling

@@ -275,7 +275,41 @@ class OrchestrationEngine:
 - No external handler classes or modules.
 - Handlers have direct access to engine state and dependencies.
 
-### 2.5.1 GitHub Task Handlers
+### 2.5.1 Workflow Execution Return Structure
+
+The `execute_workflow` method returns a dictionary (not WorkflowResult object):
+
+```python
+{
+    "id": "workflow-uuid",
+    "type": "CREATE_TICKET",
+    "status": "completed",  # or "failed", "pending"
+    "tasks": [
+        {
+            "id": "task-uuid",
+            "type": "GITHUB_CREATE_ISSUE",
+            "status": "completed",
+            "result": {
+                "output_data": {
+                    "issue_number": 7,
+                    "issue_url": "https://github.com/owner/repo/issues/7",
+                    "issue_data": {...}
+                }
+            }
+        }
+    ],
+    "context": {},
+    "error": null,
+    "created_at": "2025-06-29T...",
+    "updated_at": "2025-06-29T..."
+}
+```
+
+**Success Check**: Use `result["status"] == "completed"` (no `success` field)
+
+**Task Results**: Access via `result["tasks"][0]["result"]["output_data"]`
+
+### 2.5.2 GitHub Task Handlers
 
 **Example: GitHub Issue Creation Handler**
 

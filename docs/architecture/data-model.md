@@ -4,6 +4,25 @@
 
 This document describes the complete data model for Piper Morgan, including domain models, database schema, and the mapping between them. The system follows a domain-first approach where business logic drives technical implementation.
 
+## Model Distinctions
+
+### Product vs Project
+
+- **Product**: What you're building/managing (domain concept)
+- **Project**: PM workspace with tool integrations (configuration)
+
+### Database vs Domain Models
+
+- **ProjectDB**: SQLAlchemy ORM model for persistence
+- **Project**: Domain model for business logic
+- Always convert via `.to_domain()` at repository boundary
+
+### Relationship Loading
+
+- Async SQLAlchemy requires eager loading
+- Use `selectinload()` for one-to-many relationships
+- Load all needed relationships in repository methods
+
 ## Domain Models
 
 ### Core Entities
