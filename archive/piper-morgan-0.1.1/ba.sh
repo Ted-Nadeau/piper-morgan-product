@@ -1,10 +1,9 @@
-# 1. Map the current codebase structure
-find . -name "*.py" | head -20
-ls -la services/ 2>/dev/null || echo "No services dir"
+cd /Users/xian/Development/piper-morgan/archive/piper-morgan-0.1.1/
 
-# 2. Identify the main entry points
-grep -r "if __name__" . --include="*.py"
-grep -r "FastAPI\|app\|uvicorn" . --include="*.py"
+# Find the ChromaDB database location
+find . -name "*.sqlite*" -o -name "chroma*" -type d
 
-# 3. Find the broken functionality
-grep -r "def.*intent\|def.*workflow\|def.*github" . --include="*.py"
+# Create a backup
+mkdir -p backups/$(date +%Y%m%d_%H%M%S)
+cp -r ./chroma* backups/$(date +%Y%m%d_%H%M%S)/ 2>/dev/null || echo "No chroma directory found"
+cp *.sqlite* backups/$(date +%Y%m%d_%H%M%S)/ 2>/dev/null || echo "No sqlite files found"

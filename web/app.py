@@ -5,12 +5,16 @@ Simple FastAPI app for interacting with the main Piper Morgan Platform API
 import os
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 # Configuration - CORRECT PORT
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 # Create FastAPI app
 app = FastAPI(title='Piper Morgan UI', description='Web Interface for the Piper Morgan Platform')
+
+# Mount static files
+app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")), name="assets")
 
 @app.get('/', response_class=HTMLResponse)
 async def home(request: Request):
@@ -55,7 +59,7 @@ async def home(request: Request):
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 Piper Morgan</h1>
+            <h1><img src="/assets/pm-logo.png" alt="Piper Morgan" style="height: 60px; vertical-align: middle;"> Piper Morgan</h1>
             <p>AI Product Management Assistant</p>
             <p><em>I can create GitHub issues, analyze documents, and more!</em></p>
         </div>
