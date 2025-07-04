@@ -11,9 +11,10 @@ from services.shared_types import (
 from .engine import engine, OrchestrationEngine
 
 # Import from domain models
-from services.domain.models import Workflow, Task
+from services.domain.models import Workflow, Task, WorkflowDefinition
 
 # Import local definitions
+from .workflows import WORKFLOW_DEFINITIONS
 from .tasks import TaskResult
 
 __all__ = [
@@ -24,8 +25,10 @@ __all__ = [
     # Domain Models (from services.domain.models)
     "Workflow",
     "Task",
+    "WorkflowDefinition",
     
     # Local Definitions
+    "WORKFLOW_DEFINITIONS",
     "TaskResult",
     
     # Shared Enums

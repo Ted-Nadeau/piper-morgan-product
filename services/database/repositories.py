@@ -104,8 +104,8 @@ class WorkflowRepository(BaseRepository):
             id=domain_workflow.id,
             type=domain_workflow.type,
             status=domain_workflow.status,
-            input_data=domain_workflow.input_data,
-            output_data=domain_workflow.output_data,
+            input_data={},  # Domain model has context instead
+            output_data=domain_workflow.result.__dict__ if domain_workflow.result else None,
             context=domain_workflow.context,
             created_at=domain_workflow.created_at
         )
@@ -134,7 +134,7 @@ class TaskRepository(BaseRepository):
             workflow_id=workflow_id,
             type=domain_task.type,
             status=domain_task.status,
-            input_data=domain_task.input_data
+            input_data={},  # Domain task has no input_data
         )
 
 # PM-009: Project Repository for multi-project support

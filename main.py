@@ -19,6 +19,8 @@ from services.knowledge_graph import get_document_service
 from services.api.middleware import ErrorHandlingMiddleware
 from services.orchestration import engine, WorkflowType, WorkflowStatus
 from services.queries import QueryRouter, ProjectQueryService
+from services.queries.conversation_queries import ConversationQueryService
+from services.queries.file_queries import FileQueryService
 from services.database.repositories import RepositoryFactory
 from services.api.errors import APIError
 from services.session.session_manager import SessionManager, ConversationSession
@@ -254,7 +256,10 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 # Get repositories for query service
                 repos = await RepositoryFactory.get_repositories()
                 project_query_service = ProjectQueryService(repos["projects"])
-                query_router = QueryRouter(project_query_service)
+                conversation_query_service = ConversationQueryService()
+                pool = await DatabasePool.get_pool()
+                file_query_service = FileQueryService(FileRepository(pool))
+                query_router = QueryRouter(project_query_service, conversation_query_service, file_query_service)
                 
                 # Route the query
                 query_result = await query_router.route_query(enriched_intent)
