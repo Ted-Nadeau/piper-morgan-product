@@ -6,14 +6,16 @@ from services.domain.models import Intent
 from services.shared_types import IntentCategory
 from services.queries.project_queries import ProjectQueryService
 from services.queries.conversation_queries import ConversationQueryService
+from services.queries.file_queries import FileQueryService
 
 
 class QueryRouter:
     """Routes QUERY intents to appropriate query services"""
     
-    def __init__(self, project_query_service: ProjectQueryService, conversation_query_service: ConversationQueryService):
+    def __init__(self, project_query_service: ProjectQueryService, conversation_query_service: ConversationQueryService, file_query_service: FileQueryService):
         self.project_queries = project_query_service
         self.conversation_queries = conversation_query_service
+        self.file_queries = file_query_service
     
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service"""
@@ -44,6 +46,11 @@ class QueryRouter:
             return await self.conversation_queries.get_status()
         elif intent.action == "get_initial_contact":
             return await self.conversation_queries.get_initial_contact()
+        elif intent.action == "read_file_contents":
+            file_id = intent.context.get("resolved_file_id")
+            print(f"DEBUG: QueryRouter - file_id from context: {file_id}")
+            print(f"DEBUG: QueryRouter - full context: {intent.context}")
+            return await self.file_queries.read_file_contents(file_id)
         else:
             raise ValueError(f"Unknown query action: {intent.action}")
     
