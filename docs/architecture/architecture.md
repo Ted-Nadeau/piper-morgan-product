@@ -7,8 +7,8 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           USER INTERFACE LAYER                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  ✅ FastAPI Web Server     │  📋 Simple Web UI      │  📋 Admin Interface    │
-│  (Built & Running)         │  (Not Started)         │  (Not Yet Designed)   │
+│  ✅ FastAPI Web Server     │  ✅ Web UI (DDD, TDD) │  📋 Admin Interface    │
+│  (Built & Running)         │  (Built & Working)    │  (Not Yet Designed)   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -198,6 +198,28 @@ class ProjectQueryService:
 - `get_default_project` - Get the default project
 - `find_project` - Find project by name
 - `count_projects` - Count active projects
+
+## Web UI: DDD-Compliant Response Rendering (2025)
+
+The web UI is now implemented as a DDD-compliant, test-driven interface. All bot message rendering and response handling is unified in a shared domain module (`bot-message-renderer.js`), ensuring:
+
+- Consistent user experience across all response types
+- Separation of domain logic from UI/infrastructure
+- Full test coverage via TDD (unit and integration tests)
+- Easy extensibility for new message types and workflows
+
+**Key Features:**
+
+- Unified renderer for all bot messages (success, error, thinking)
+- Modular, reusable domain logic
+- Real-time feedback and error handling
+- Markdown rendering with `marked.js` (battle-tested library)
+
+**Architecture Impact:**
+
+- UI layer now fully reflects DDD principles
+- All message formatting and business rules live in the domain module, not the presentation layer
+- TDD process ensures maintainability and reliability
 
 ## Current Architecture Strengths
 

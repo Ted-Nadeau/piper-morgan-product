@@ -44,6 +44,25 @@
 - **Temporal**: Workflow orchestration
 - **Traefik**: API gateway and load balancing
 
+### 1.2 User Interface: DDD-Compliant Web UI (2025)
+
+The web UI is now implemented as a DDD-compliant, test-driven interface. Key aspects:
+
+- All bot message rendering and response handling is unified in a shared domain module (`bot-message-renderer.js`)
+- UI logic is modular, reusable, and fully testable
+- TDD process: All UI logic is covered by unit and integration tests (`test-message-renderer.js`, `test-response-integration.js`)
+- Markdown rendering uses the `marked.js` library for reliability
+
+**Benefits:**
+
+- Consistent user experience
+- Separation of concerns (domain logic vs. presentation)
+- Easy extensibility for new message types and workflows
+- Real-time feedback and error handling
+
+**Architecture Note:**
+The UI layer now fully reflects DDD principles, with all message formatting and business rules in the domain module, not the presentation layer.
+
 ## 2. Core Components
 
 ### 2.1 Intent Classifier (`services/intent_service/classifier.py`)
@@ -77,6 +96,30 @@ class IntentClassifier:
 - Support for QUERY category for read-only operations
 - Structured prompt templates for consistent results
 - Confidence scoring and uncertainty handling
+
+**Planned Enhancement: Context-Aware Classification**
+
+The current regex-based approach will be enhanced with LLM-powered classification to support:
+
+- **Conversational Memory**: Track recent interactions and entity references
+- **Anaphoric Resolution**: Understand "that", "it", "the previous" references
+- **Natural Variations**: Multiple ways to express the same intent
+- **Dynamic Actions**: Adapt to available capabilities (especially with MCP)
+
+Example evolution:
+
+```python
+# Current: Rigid regex
+if re.match(r"show_summary project_id:(\w+)", message):
+    # Extract project_id
+
+# Future: Natural understanding
+# "show me that summary again"
+# "can you display the mobile app summary?"
+# "summarize the project we just discussed"
+```
+
+This enhancement discovered during Claude Code integration (July 2025) when natural conversational patterns emerged during development.
 
 **Intent Routing**:
 

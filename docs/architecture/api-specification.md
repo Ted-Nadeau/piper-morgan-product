@@ -702,3 +702,14 @@ For workflows that require repository context (e.g., GitHub issue creation), the
   "labels": ["bug", "ios"]
 }
 ```
+
+## UI Response Structure and Feedback (2025)
+
+The Piper Morgan web UI now uses a DDD-compliant, test-driven domain module (`bot-message-renderer.js`) for all bot message rendering and response handling. This ensures:
+
+- Consistent response formatting for all success, error, and progress messages
+- Real-time feedback and actionable error messages in the UI
+- All UI logic is fully covered by automated tests (TDD)
+
+**Technical Note:**
+API responses intended for the UI should provide clear status, message, and error fields. The UI will render these using the unified renderer for a consistent user experience.

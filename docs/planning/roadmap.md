@@ -16,6 +16,9 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - Knowledge base with 85+ documents
 - PM-009: Multi-project support with query layer
 - CQRS-lite pattern implementation
+- ✅ PM-032: Unified Response Rendering & DDD/TDD Web UI Refactor
+
+**Summary**: All bot message rendering and response handling is now unified in a DDD-compliant, test-driven domain module (`bot-message-renderer.js`). The web UI provides real-time feedback, actionable error messages, and consistent user experience. All logic is fully covered by automated tests.
 
 ### 🚧 In Progress
 
@@ -209,11 +212,16 @@ These features directly support the evolution from task automation to analytical
 - ✅ Multi-repository workflow support
 - ✅ Enhanced knowledge search with relationship awareness
 - ✅ Basic analytics and reporting
-- 🆕 **MCP Integration Pilot (PM-XXX)**
+- 🆕 **MCP Integration Pilot (PM-033)**
   - Phase 1: Enable MCP consumer capabilities
   - Enhance PM-009 multi-project context with federated search
   - Connect to external documentation systems
   - Timeline: Weeks 4-8 after PM-011 closure
+- 🆕 **LLM-Based Intent Classification (PM-034)**
+  - Replace regex patterns with conversational understanding
+  - Enable natural language interactions
+  - Add conversation memory and context
+  - Timeline: 2-3 weeks after MCP Phase 1
 - 🆕 **Meeting Intelligence**: Automated meeting analysis and visualization (PM-028)
 - 🆕 **Analytics Automation**: Dashboard integration for proactive insights (PM-029)
 - 🆕 **Knowledge Graph**: Advanced relationship mapping and discovery (PM-030)
