@@ -893,6 +893,49 @@ if db_project:
 
 PM-011 - Lazy loading caused "greenlet_spawn has not been called" errors when accessing project integrations after session context.
 
+## 15. MCP Adapter Pattern (Planned)
+
+### Purpose
+
+Abstract Model Context Protocol behind existing integration interfaces to maintain backward compatibility while enabling new capabilities.
+
+### Implementation
+
+```python
+class MCPAdapter(IntegrationPlugin):
+    """Adapts MCP protocol to existing plugin interface"""
+
+    def __init__(self, mcp_client: MCPClient):
+        self.mcp_client = mcp_client
+        self._discovered_tools = {}
+
+    async def discover_capabilities(self):
+        """MCP-specific capability discovery"""
+        tools = await self.mcp_client.list_tools()
+        self._discovered_tools = {t.name: t for t in tools}
+
+    async def execute(self, action: str, params: Dict) -> Dict:
+        """Translate plugin calls to MCP protocol"""
+        tool = self._discovered_tools.get(action)
+        if not tool:
+            raise ToolNotFoundError(action)
+        return await self.mcp_client.invoke(tool, params)
+```
+
+### Usage Guidelines
+
+- Maintain existing plugin interface
+- Add MCP-specific features progressively
+- Enable graceful fallback for non-MCP tools
+- Support capability negotiation
+
+### Anti-patterns to Avoid
+
+- ❌ Replacing existing integrations wholesale
+- ❌ Exposing MCP protocol details to service layer
+- ❌ Breaking backward compatibility
+- ❌ Tight coupling to MCP version
+
 ## Summary
 
 These patterns form the architectural foundation of Piper Morgan:
@@ -911,6 +954,7 @@ These patterns form the architectural foundation of Piper Morgan:
 12. **Repository Context Enrichment Pattern** - Automatic repo context for integrations
 13. **Repository Domain Model Conversion** - Clean architectural boundaries
 14. **Async Relationship Eager Loading** - Reliable async data access
+15. **MCP Adapter Pattern** - MCP-specific integration
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
@@ -919,6 +963,7 @@ Each pattern addresses specific architectural concerns while maintaining overall
 _Last Updated: June 29, 2025_
 
 ## Revision Log
+- **July 09, 2025**: Added vertical resize feature to chat window for improved usability
 
 - **June 29, 2025**: Added Repository Domain Model Conversion Pattern (#13) and Async Relationship Eager Loading Pattern (#14) for PM-011 GitHub integration
 - **June 28, 2025**: Added Internal Task Handler Pattern (#11) and Repository Context Enrichment Pattern (#12) for GitHub integration
