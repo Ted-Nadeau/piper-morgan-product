@@ -168,7 +168,7 @@
 ### PM-028: Meeting Transcript Analysis & Visualization
 
 **Story**: As a PM, I want to upload meeting transcripts and get actionable outputs
-**Description**: Process meeting recordings/transcripts to generate mind maps, decision trees, action item lists, and shareable summaries
+**Description**: Process meeting recordings/transcripts to generate mind `maps, decision trees, action item lists, and shareable summaries
 **Estimate**: 8 points | **Status**: Designed | **Dependencies**: Knowledge base working
 **Implementation Details**:
 
@@ -415,7 +415,7 @@ _Last Updated: June 21, 2025_
 
 ## Next Up
 
-### PM-XXX: MCP Integration Pilot
+### PM-033: MCP Integration Pilot
 
 **Status**: Approved, Scheduled for Week 4+  
 **Priority**: High  
@@ -441,3 +441,49 @@ _Last Updated: June 21, 2025_
 
 - PM-011 closure (workflow persistence fix)
 - PM-009 completion (query implementation)
+
+### PM-034: LLM-Based Intent Classification
+
+**Status**: Proposed  
+**Priority**: High  
+**Effort**: 2-3 weeks  
+**Discovered**: July 8, 2025 during Claude Code integration
+
+**Description**: Replace rigid regex-based intent patterns with context-aware LLM classification to enable natural conversational interactions.
+
+**Problem**: Current classifier cannot handle:
+
+- Conversational context ("show that again")
+- Anaphoric references ("that summary", "it")
+- Natural language variations
+- Multi-turn interactions
+
+**Scope**:
+
+- Phase 1: Hybrid regex/LLM system (1 week)
+- Phase 2: Full LLM migration with conversation memory (1 week)
+- Phase 3: Enhancements and optimizations (1 week)
+
+**Success Criteria**:
+
+- [ ] 95%+ classification accuracy maintained
+- [ ] 90%+ anaphoric reference resolution
+- [ ] <500ms latency overhead
+- [ ] Improved user experience metrics
+
+**Dependencies**:
+
+- Claude Code integration (for better development)
+- Basic MCP Phase 1 (potential synergies)
+
+### ✅ PM-032: Unified Response Rendering & DDD/TDD Web UI Refactor - COMPLETE
+
+**Story**: As a user, I want all bot responses to be consistent, actionable, and easy to maintain, with a DDD-compliant, test-driven web UI.
+**Status**: ✅ COMPLETE | **Points**: 8 | **Completed**: July 9, 2025
+
+- Unified bot message renderer module (`bot-message-renderer.js`)
+- DDD-compliant separation of domain logic from UI
+- Full TDD coverage (unit and integration tests)
+- Real-time feedback and actionable error messages
+- Markdown rendering with marked.js
+- Refactored all UI code to use shared domain module
