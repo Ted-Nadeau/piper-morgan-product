@@ -31,15 +31,32 @@ class FileResolver:
         Resolve file reference with confidence score
         Returns: (file_id, confidence) or (None, 0.0)
         """
-        # Get all files for the session
-        files = await self.repo.get_files_for_session(session_id, limit=20)
+        original_message = intent.context.get('original_message', '').lower()
         
-        if not files:
-            return None, 0.0
+        # Check for temporal references that might span sessions
+        temporal_patterns = [
+            r'\b(few days ago|days ago|yesterday|last week|earlier|previously|before|recently)\b',
+            r'\b(uploaded.*ago|uploaded.*earlier|uploaded.*before|uploaded.*recently)\b',
+            r'\b(just uploaded|I uploaded|I just uploaded|the file I uploaded)\b',
+            r'\b(that file|the file|my file)\b'
+        ]
+        
+        is_temporal_reference = any(re.search(pattern, original_message) for pattern in temporal_patterns)
+        
+        if is_temporal_reference:
+            # For temporal references, search across sessions
+            files = await self.repo.get_recent_files_all_sessions(days=7)
+            if not files:
+                return None, 0.0
+        else:
+            # Get all files for the current session
+            files = await self.repo.get_files_for_session(session_id, limit=20)
+            
+            if not files:
+                return None, 0.0
         
         # SPECIAL CASE: If only one file in session and explicit reference
         # ("the file", "that file", "file I uploaded"), use it with high confidence
-        original_message = intent.context.get('original_message', '').lower()
         explicit_references = ['the file', 'that file', 'file i', 'document i', 'what i uploaded', 'just uploaded']
         
         if len(files) == 1 and any(ref in original_message for ref in explicit_references):

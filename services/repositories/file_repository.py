@@ -1,7 +1,7 @@
 import asyncpg
 import json
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from services.domain.models import UploadedFile
 
 class FileRepository:
@@ -75,7 +75,27 @@ class FileRepository:
                 SELECT * FROM uploaded_files 
                 WHERE session_id = $1 AND upload_time > $2
                 ORDER BY upload_time DESC
-            """, session_id, datetime.now().replace(hour=datetime.now().hour - hours))
+            """, session_id, datetime.now() - timedelta(hours=hours))
+            return [self._row_to_file(row) for row in rows]
+    
+    async def search_files_by_name_all_sessions(self, query: str, days: int = 30) -> List[UploadedFile]:
+        """Search files by name across all sessions within the last N days"""
+        async with self.db_pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT * FROM uploaded_files 
+                WHERE filename ILIKE $1 AND upload_time > $2
+                ORDER BY upload_time DESC
+            """, f"%{query}%", datetime.now() - timedelta(days=days))
+            return [self._row_to_file(row) for row in rows]
+    
+    async def get_recent_files_all_sessions(self, days: int = 7) -> List[UploadedFile]:
+        """Get files uploaded across all sessions within the last N days"""
+        async with self.db_pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT * FROM uploaded_files 
+                WHERE upload_time > $1
+                ORDER BY upload_time DESC
+            """, datetime.now() - timedelta(days=days))
             return [self._row_to_file(row) for row in rows]
 
     async def delete_file(self, file_id: str) -> bool:

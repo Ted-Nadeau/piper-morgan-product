@@ -69,4 +69,83 @@ async def test_encoding_detection():
     analyzer = TextAnalyzer()
     result = await analyzer.analyze(os.path.join(FIXTURE_DIR, 'sample_text.txt'))
     assert 'encoding' in result.metadata
-    assert result.metadata['encoding'] in ['utf-8', 'ascii'] 
+    assert result.metadata['encoding'] in ['utf-8', 'ascii']
+
+@pytest.mark.asyncio
+async def test_llm_integration_with_summarize_task_type():
+    from services.analysis.text_analyzer import TextAnalyzer
+    from services.shared_types import TaskType
+    from unittest.mock import AsyncMock, Mock
+    
+    # Mock LLM client
+    mock_llm_client = Mock()
+    mock_llm_client.complete = AsyncMock(side_effect=[
+        "This is a test summary",
+        "• Key finding 1\n• Key finding 2"
+    ])
+    
+    analyzer = TextAnalyzer(llm_client=mock_llm_client)
+    result = await analyzer.analyze(os.path.join(FIXTURE_DIR, 'sample_text.txt'))
+    
+    # Verify LLM client was called with correct TaskType
+    assert mock_llm_client.complete.call_count == 2
+    calls = mock_llm_client.complete.call_args_list
+    
+    # Check that both calls used TaskType.SUMMARIZE
+    assert calls[0][1]['task_type'] == TaskType.SUMMARIZE.value
+    assert calls[1][1]['task_type'] == TaskType.SUMMARIZE.value
+    
+    # Check that prompts were used correctly
+    assert 'content' in calls[0][1]['prompt']
+    assert 'content' in calls[1][1]['prompt']
+    
+    # Check that summary was updated from LLM
+    assert result.summary == "This is a test summary"
+
+@pytest.mark.asyncio
+async def test_llm_integration_with_different_file_types():
+    from services.analysis.text_analyzer import TextAnalyzer
+    from services.shared_types import TaskType
+    from unittest.mock import AsyncMock, Mock
+    
+    # Mock LLM client
+    mock_llm_client = Mock()
+    mock_llm_client.complete = AsyncMock(return_value="File type specific summary")
+    
+    analyzer = TextAnalyzer(llm_client=mock_llm_client)
+    
+    # Test with markdown file
+    result = await analyzer.analyze(os.path.join(FIXTURE_DIR, 'sample_markdown.md'))
+    
+    # Verify correct prompt was used for markdown
+    calls = mock_llm_client.complete.call_args_list
+    # Should use TEXT_FILE_SUMMARY_PROMPT for .md files
+    assert 'text file' in calls[0][1]['prompt'].lower()
+    
+    assert result.summary == "File type specific summary"
+
+@pytest.mark.asyncio
+async def test_llm_markdown_formatting():
+    from services.analysis.text_analyzer import TextAnalyzer
+    from services.shared_types import TaskType
+    from unittest.mock import AsyncMock, Mock
+    
+    # Mock LLM client with markdown responses
+    mock_llm_client = Mock()
+    mock_llm_client.complete = AsyncMock(side_effect=[
+        "# Summary\n\nThis is a **formatted** summary with:\n\n- Bullet points\n- *Italic* text\n- Code: `example`",
+        "- **Key finding 1**: Important insight\n- **Key finding 2**: Another insight\n- **Key finding 3**: Third insight"
+    ])
+    
+    analyzer = TextAnalyzer(llm_client=mock_llm_client)
+    result = await analyzer.analyze(os.path.join(FIXTURE_DIR, 'sample_text.txt'))
+    
+    # Verify markdown formatting is preserved
+    assert "# Summary" in result.summary
+    assert "**formatted**" in result.summary
+    assert "- Bullet points" in result.summary
+    assert "`example`" in result.summary
+    
+    # Verify key findings are formatted as markdown
+    assert any("**Key finding 1**" in finding for finding in result.key_findings)
+    assert any("**Key finding 2**" in finding for finding in result.key_findings) 

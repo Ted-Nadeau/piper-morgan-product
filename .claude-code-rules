@@ -1,0 +1,128 @@
+# Claude Code Rules for Piper Morgan
+
+## Architectural Principles
+
+### 1. Domain-Driven Design
+- Domain models (in `services/database/models.py`) drive ALL design decisions
+- Database schema is generated from SQLAlchemy models, not vice versa
+- Business logic belongs in domain models or services, never in repositories
+
+### 2. Repository Pattern
+- ALL data access must go through repositories in `services/repositories/`
+- Repositories return domain models, never database models
+- One repository per aggregate root
+- No business logic in repositories - only data access
+
+### 3. CQRS-lite Pattern
+- Read operations: Use `services/queries/` (QueryRouter and query services)
+- Write operations: Use `services/orchestration/` (workflows and commands)
+- Simple reads bypass workflow orchestration for performance
+- No state changes in query services
+
+### 4. Stateless Factory Pattern
+- WorkflowFactory and other factories must remain stateless
+- All context passed as method parameters, never stored in instance
+- Support concurrent operations safely
+- No request-specific data in factory instances
+
+### 5. Internal Task Handler Pattern
+- OrchestrationEngine uses internal methods for task handling
+- No separate handler classes needed
+- Automatic repository context enrichment for workflows
+
+## Code Style Rules
+
+### Python Standards
+- Python 3.11+ type hints on all functions
+- Async/await for all I/O operations
+- Dataclasses for domain models
+- SQLAlchemy for database models
+
+### Error Handling
+- Return specific HTTP status codes (400, 404, 409, etc.)
+- Include actionable error messages
+- Use domain exceptions for business logic errors
+- Log errors with appropriate context
+
+### Testing
+- Always run tests with `PYTHONPATH=. pytest`
+- Integration tests use real database (PostgreSQL on port 5433)
+- Test files follow pattern: `test_<module_name>.py`
+- Mock external services (GitHub, OpenAI, Anthropic) in tests
+
+## Development Workflow
+
+### Session Management
+1. Create session log at start of each coding session
+   - Location: `docs/development/session-logs/`
+   - Format: `YYYY-MM-DD-log.md` (add suffix a, b, c for multiple daily sessions)
+   - Track objectives, decisions, progress, and lessons learned
+   - Update throughout session with key milestones
+   - Include timeline and context for next session
+
+### Before Making Changes
+1. Understand existing patterns by examining similar code
+2. Check if libraries/frameworks are already in use
+3. Follow established naming conventions
+4. Review related test files
+
+### When Creating New Features
+1. Start with domain model if needed
+2. Create repository for data access
+3. Decide: Query service (read) or Workflow (write)?
+4. Write integration tests
+5. Update API endpoints in `main.py`
+
+### Database Changes
+1. Modify SQLAlchemy models in `services/database/models.py`
+2. Database migrations are handled automatically
+3. Never modify schema directly in PostgreSQL
+
+## Forbidden Practices
+
+### NEVER Do These
+- ❌ Direct database access outside repositories
+- ❌ Business logic in repositories
+- ❌ Exposing database models in API responses
+- ❌ Stateful factories or services
+- ❌ Synchronous I/O operations
+- ❌ Hardcoded credentials or secrets
+- ❌ State changes in query services
+- ❌ Skipping repository pattern for "simple" queries
+
+### Always Avoid
+- Creating new patterns without documenting in `pattern-catalog.md`
+- Breaking established architectural boundaries
+- Mixing read and write operations in same service
+- Ignoring type hints
+- Writing tests without proper database cleanup
+
+## Project-Specific Context
+
+### Current State
+- Multi-project support in progress (PM-009)
+- GitHub integration fully functional
+- Intent classification working with 95%+ accuracy
+- File query routing being debugged
+
+### Key Services
+- Intent Service: Classifies messages into QUERY, EXECUTION, ANALYSIS
+- Orchestration Engine: Manages complex workflows
+- Query Router: Handles all read operations
+- Knowledge Base: Vector storage with 85+ PM documents
+
+### Environment
+- Main API: Port 8001
+- Web UI: Port 8081
+- PostgreSQL: Port 5433 (not default 5432!)
+- Required: ANTHROPIC_API_KEY and OPENAI_API_KEY in .env
+
+## Review Checklist
+
+Before completing any task:
+1. ✓ Follows repository pattern?
+2. ✓ Respects CQRS separation?
+3. ✓ Maintains stateless design?
+4. ✓ Tests pass with `PYTHONPATH=. pytest`?
+5. ✓ Type hints complete?
+6. ✓ No architectural violations?

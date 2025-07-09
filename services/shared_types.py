@@ -55,6 +55,7 @@ class TaskType(Enum):
     GITHUB_CREATE_ISSUE = "github_create_issue"
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
     ANALYZE_FILE = "analyze_file"
+    SUMMARIZE = "summarize"
     JIRA_CREATE_TICKET = "jira_create_ticket"
     SLACK_SEND_MESSAGE = "slack_send_message"
     
