@@ -165,6 +165,45 @@
 - Visual context indicators in chat
 - Session state persistence across page reloads
 
+### PM-028: Meeting Transcript Analysis & Visualization
+
+**Story**: As a PM, I want to upload meeting transcripts and get actionable outputs
+**Description**: Process meeting recordings/transcripts to generate mind maps, decision trees, action item lists, and shareable summaries
+**Estimate**: 8 points | **Status**: Designed | **Dependencies**: Knowledge base working
+**Implementation Details**:
+
+- Meeting transcript ingestion (audio/text)
+- LLM-based content extraction
+- Visual output generation (mind maps, decision trees)
+- Action item identification and tracking
+- Integration with project context
+
+### PM-029: Analytics Dashboard Integration
+
+**Story**: As a PM, I want automated reports from our analytics tools so I can focus on insights
+**Description**: Connect to Datadog, New Relic, Google Analytics for automated anomaly detection, trend analysis, and actionable insights
+**Estimate**: 13 points | **Status**: Planned | **Dependencies**: External API authentication
+**Implementation Details**:
+
+- Multi-platform API integration framework
+- Automated anomaly detection algorithms
+- Scheduled report generation
+- Alert configuration and routing
+- Insight generation with LLM analysis
+
+### PM-030: Advanced Knowledge Graph Implementation
+
+**Story**: As an organization, we want dynamic knowledge relationships for better discovery
+**Description**: Implement graph-based knowledge representation with relationship mapping and organizational learning
+**Estimate**: 21 points | **Status**: Planned | **Dependencies**: PM-007 enhancement, vector store optimization
+**Implementation Details**:
+
+- Graph database integration (Neo4j or similar)
+- Dynamic relationship extraction
+- Cross-project knowledge linking
+- Knowledge discovery algorithms
+- Organizational pattern recognition
+
 ---
 
 ## 🚀 P3 - Advanced Capabilities
@@ -180,6 +219,32 @@
 **Story**: As a team, we want workflows to optimize and improve themselves automatically
 **Description**: Self-optimizing workflows with A/B testing and automatic improvements
 **Estimate**: 34 points | **Status**: Research Phase | **Dependencies**: Advanced AI reasoning
+
+### PM-031: Visual Content Analysis Pipeline
+
+**Story**: As a PM, I want to upload screenshots and get automated issue descriptions
+**Description**: Advanced implementation of screenshot/mockup analysis for bug reporting and feature requests
+**Estimate**: 21 points | **Status**: Planned | **Dependencies**: Computer vision integration
+**Implementation Details**:
+
+- Screenshot ingestion and preprocessing
+- UI element detection and analysis
+- Automated issue description generation
+- Bug vs feature classification
+- Integration with GitHub issue creation
+
+### PM-032: Predictive Project Analytics
+
+**Story**: As a PM, I want concrete predictions about project outcomes
+**Description**: Delivery timeline predictions, risk assessment scores, resource optimization recommendations
+**Estimate**: 34 points | **Status**: Planned | **Dependencies**: Historical data accumulation
+**Implementation Details**:
+
+- Timeline prediction models
+- Risk factor analysis
+- Resource allocation optimization
+- Confidence intervals and accuracy tracking
+- Early warning alert system
 
 ---
 
@@ -224,6 +289,46 @@
 - What privacy-preserving mechanisms enable knowledge sharing?
 - How do we establish industry standards for PM AI assistance?
   **Estimate**: 34 points | **Risk**: Research | **Dependencies**: Multi-organization coordination
+
+### PM-R005: Autonomous Issue Lifecycle Management
+
+**Story**: As a team, we want issues to manage themselves through their lifecycle
+**Research Questions**:
+
+- How can AI reliably determine issue state transitions?
+- What level of human oversight is required for safety?
+- How do we handle edge cases and exceptions?
+- Can we predict optimal assignees with high accuracy?
+  **Implementation Phases**:
+- Phase 1: Automated triage and labeling
+- Phase 2: Predictive assignment suggestions
+- Phase 3: Autonomous status updates
+- Phase 4: Self-closing resolved issues
+  **Estimate**: 34 points | **Risk**: Research | **Dependencies**: Issue pattern analysis
+
+### PM-R006: Cross-Team Federated Knowledge Sharing
+
+**Story**: As an organization, we want to share PM knowledge across teams while preserving privacy
+**Research Questions**:
+
+- How can MCP enable federated knowledge architectures?
+- What privacy-preserving mechanisms are needed?
+- How do we handle conflicting information across teams?
+- What are the performance implications of federation?
+  **MCP Integration**: Primary implementation via Model Context Protocol
+  **Estimate**: 34 points | **Risk**: Research | **Dependencies**: MCP integration complete
+
+### PM-R007: Natural Language Business Intelligence
+
+**Story**: As a PM, I want to query our data using plain English
+**Research Questions**:
+
+- How do we ensure query safety and prevent injection?
+- What accuracy can we achieve for complex business queries?
+- How do we handle ambiguous or incomplete queries?
+- What are the authorization and access control requirements?
+  **Security Focus**: Extensive safety research before implementation
+  **Estimate**: 21 points | **Risk**: Research | **Dependencies**: Data access patterns, security framework
 
 ---
 
@@ -307,3 +412,32 @@ _Last Updated: June 21, 2025_
 ## Revision Log
 
 - **June 21, 2025**: Consolidated backlog reflecting PM-009/010/011 completions, added technical debt items, corrected ticket numbering
+
+## Next Up
+
+### PM-XXX: MCP Integration Pilot
+
+**Status**: Approved, Scheduled for Week 4+  
+**Priority**: High  
+**Effort**: 6-8 weeks
+
+**Description**: Implement Model Context Protocol support to enable federated tool and knowledge access.
+
+**Scope**:
+
+- Phase 1: MCP Consumer implementation (4-6 weeks)
+- Phase 2: Bridge existing agents to MCP (2-3 weeks)
+- Integration with PM-009 for enhanced context resolution
+
+**Success Criteria**:
+
+- [ ] MCP client adapter implemented
+- [ ] 2+ external MCP servers connected
+- [ ] Enhanced project context resolution
+- [ ] No degradation of existing functionality
+- [ ] Documentation and patterns updated
+
+**Dependencies**:
+
+- PM-011 closure (workflow persistence fix)
+- PM-009 completion (query implementation)
