@@ -179,3 +179,8 @@ The markdown formatting issue requires architectural guidance and research beyon
 - Session log: `docs/development/session-logs/2025-07-09-log.md`
 - Implementation files: `services/utils/markdown_formatter.py`, `services/prompts/summarization.py`
 - Test examples: Available in workflow logs
+---
+*Last Updated: July 09, 2025*
+
+## Revision Log
+- **July 09, 2025**: Added vertical resize feature to chat window for improved usability
