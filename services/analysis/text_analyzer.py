@@ -1,9 +1,17 @@
 from services.analysis.base_analyzer import BaseAnalyzer
 from services.domain.models import AnalysisResult, AnalysisType
+from services.shared_types import TaskType
+from services.prompts import get_summary_prompt, get_key_findings_prompt
+from services.utils.markdown_formatter import clean_markdown_response, MarkdownFormatter, format_key_findings_as_markdown
 from datetime import datetime
 import re
+import structlog
+import os
 
 class TextAnalyzer(BaseAnalyzer):
+    def __init__(self, llm_client=None):
+        self.llm_client = llm_client
+
     async def analyze(self, file_path: str, **kwargs) -> AnalysisResult:
         encoding = 'utf-8'
         try:
@@ -23,6 +31,8 @@ class TextAnalyzer(BaseAnalyzer):
             header_count = 0
             code_block_count = 0
             list_item_count = 0
+            summary = "Empty text file."
+            key_findings = []
         else:
             lines = text.splitlines()
             line_count = len(lines)
@@ -47,6 +57,39 @@ class TextAnalyzer(BaseAnalyzer):
                 # List item: starts with -, *, or digit(s).
                 if re.match(r'^\s*([-*]|\d+\.)\s', line):
                     list_item_count += 1
+            # --- LLM Summarization ---
+            logger = structlog.get_logger()
+            if self.llm_client is not None:
+                try:
+                    # Get file extension for appropriate prompt
+                    file_ext = os.path.splitext(file_path)[1][1:] if '.' in file_path else None
+                    
+                    summary_prompt = get_summary_prompt(file_ext)
+                    summary_raw = await self.llm_client.complete(
+                        task_type=TaskType.SUMMARIZE.value,
+                        prompt=summary_prompt.format(content=text[:3000])
+                    )
+                    # Apply domain formatting rules only
+                    summary, formatting_issues = MarkdownFormatter.clean_and_validate(summary_raw)
+                    # Skip additional processing - let marked.js handle it
+                    
+                    key_findings_prompt = get_key_findings_prompt()
+                    key_findings_raw = await self.llm_client.complete(
+                        task_type=TaskType.SUMMARIZE.value,
+                        prompt=key_findings_prompt.format(content=text[:3000])
+                    )
+                    # Apply domain formatting rules only
+                    key_findings_cleaned, _ = MarkdownFormatter.clean_and_validate(key_findings_raw)
+                    # Skip additional processing - let marked.js handle it
+                    key_findings_text = key_findings_cleaned
+                    key_findings = [k.strip() for k in key_findings_text.split('\n') if k.strip()]
+                except Exception as e:
+                    logger.error(f"LLM analysis failed: {e}")
+                    summary = f"Summary generation failed. File contains {len(text)} characters."
+                    key_findings = []
+            else:
+                summary = f"Text file with {line_count} lines, {word_count} words, {char_count} characters."
+                key_findings = []
 
         metadata = {
             'line_count': line_count,
@@ -62,8 +105,8 @@ class TextAnalyzer(BaseAnalyzer):
         return AnalysisResult(
             file_id=file_path,
             analysis_type=AnalysisType.TEXT,
-            summary=f"Text file with {line_count} lines, {word_count} words, {char_count} characters.",
-            key_findings=[],
+            summary=summary,
+            key_findings=key_findings,
             metadata=metadata,
             recommendations=[],
             generated_at=datetime.now(),

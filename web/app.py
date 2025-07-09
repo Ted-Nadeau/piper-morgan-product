@@ -16,6 +16,63 @@ app = FastAPI(title='Piper Morgan UI', description='Web Interface for the Piper 
 # Mount static files
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")), name="assets")
 
+@app.get('/debug-markdown', response_class=HTMLResponse)
+async def debug_markdown(request: Request):
+    return HTMLResponse(content='''<!DOCTYPE html>
+<html>
+<head>
+    <title>Markdown Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        .raw { background: #f0f0f0; padding: 10px; margin: 5px 0; }
+        .rendered { background: #e8f4f8; padding: 10px; margin: 5px 0; }
+        h1 { color: #2c3e50; border-bottom: 1px solid #ecf0f1; }
+        h2 { color: #34495e; }
+        strong { color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <h1>Markdown Renderer Debug Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: Check if renderMarkdown function exists</h3>
+        <div class="rendered" id="test1"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Simple Header</h3>
+        <div class="raw">Input: "# Header 1"</div>
+        <div class="rendered" id="test2"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Your Failing Example</h3>
+        <div class="raw">Input: "Here's my summary... # Header ## Subheader"</div>
+        <div class="rendered" id="test3"></div>
+    </div>
+    
+    <script src="/assets/markdown-renderer.js?v=2"></script>
+    <script>
+        // Test if the function is loaded
+        if (typeof renderMarkdown === 'function') {
+            document.getElementById('test1').innerHTML = '✅ renderMarkdown function loaded successfully';
+            
+            // Test 2: Simple header
+            document.getElementById('test2').innerHTML = renderMarkdown('# Header 1');
+            
+            // Test 3: Your failing example
+            const failingText = `Here's my summary: # Piper Morgan Summary ## File Type This appears to be documentation.`;
+            document.getElementById('test3').innerHTML = renderMarkdown(failingText);
+            
+        } else {
+            document.getElementById('test1').innerHTML = '❌ renderMarkdown function not loaded - check console for errors';
+            console.error('renderMarkdown function not found');
+        }
+    </script>
+</body>
+</html>''')
+
 @app.get('/', response_class=HTMLResponse)
 async def home(request: Request):
     # Use a different template approach to avoid format/replace issues
@@ -54,6 +111,23 @@ async def home(request: Request):
         .examples { margin-top: 30px; }
         .example { padding: 10px; margin: 5px 0; background: #f8f9fa; border-left: 4px solid #3498db; cursor: pointer; }
         .example:hover { background: #e9ecef; }
+        
+        /* Markdown styling */
+        .message h1, .message h2, .message h3, .message h4, .message h5, .message h6 { margin: 15px 0 10px 0; color: #2c3e50; }
+        .message h1 { font-size: 1.5em; border-bottom: 1px solid #ecf0f1; padding-bottom: 5px; }
+        .message h2 { font-size: 1.3em; }
+        .message h3 { font-size: 1.1em; }
+        .message ul, .message ol { margin: 10px 0; padding-left: 20px; }
+        .message li { margin: 5px 0; }
+        .message code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em; }
+        .message pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; }
+        .message pre code { background: none; padding: 0; }
+        .message blockquote { border-left: 4px solid #3498db; margin: 10px 0; padding-left: 15px; color: #7f8c8d; }
+        .message strong { color: #2c3e50; }
+        .message em { color: #34495e; }
+        .message table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+        .message th, .message td { border: 1px solid #ecf0f1; padding: 8px; text-align: left; }
+        .message th { background: #f8f9fa; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -103,17 +177,33 @@ async def home(request: Request):
         </div>
     </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/assets/bot-message-renderer.js"></script>
     <script>
         const API_BASE_URL = "API_BASE_URL_PLACEHOLDER";
         const chatWindow = document.getElementById('chat-window');
         let sessionId = null;
+        
+        // Use DDD bot message renderer for all bot messages
+        
+        // Wait for DOM and scripts to load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, marked.js available:', typeof marked !== 'undefined');
+        });
 
         function appendMessage(html, isUser = false) {
             const msgContainer = document.createElement('div');
             msgContainer.className = 'message-container';
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            msgDiv.innerHTML = html;
+            
+            // If it's a user message, use textContent; if bot message, use innerHTML for markdown
+            if (isUser) {
+                msgDiv.textContent = html;
+            } else {
+                msgDiv.innerHTML = html;
+            }
+            
             msgContainer.appendChild(msgDiv);
             chatWindow.appendChild(msgContainer);
             chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -210,33 +300,13 @@ async def home(request: Request):
                     }
                     
                     const data = await response.json();
-                    elementToUpdate.textContent = data.message;
-                    
-                    if (data.status === 'completed' || data.status === 'failed') {
+                    // Use DDD handler for workflow responses
+                    if (data.status === 'completed') {
+                        handleWorkflowResponse(data, elementToUpdate);
                         clearInterval(intervalId);
-                        let finalHTML;
-                        if (data.status === 'completed') {
-                            // For file analysis workflows, show appropriate message
-                            if (data.type === 'analyze_file') {
-                                finalHTML = `<div class="result success">File analysis completed successfully!</div>`;
-                            } else {
-                                // Original GitHub issue logic
-                                const finalResult = data.tasks && data.tasks[data.tasks.length - 1]?.result?.issue;
-                                if (finalResult && finalResult.url) {
-                                    finalHTML = `
-                                        <div class="result success">
-                                            <strong>✅ GitHub Issue Created!</strong><br>
-                                            <strong>#${finalResult.number}:</strong> ${finalResult.title}<br>
-                                            <strong>URL:</strong> <a href="${finalResult.url}" target="_blank">View on GitHub</a>
-                                        </div>`;
-                                } else {
-                                    finalHTML = `<div class="result success">Workflow completed successfully!</div>`;
-                                }
-                            }
-                        } else {
-                            finalHTML = `<div class="result error"><strong>Workflow Failed:</strong><br>${data.message}</div>`;
-                        }
-                        elementToUpdate.innerHTML = finalHTML;
+                    } else if (data.status === 'failed') {
+                        elementToUpdate.innerHTML = renderBotMessage(`Workflow Failed: ${data.message}`, 'error', false);
+                        clearInterval(intervalId);
                     }
                     
                     // Stop polling after max attempts
@@ -281,7 +351,8 @@ async def home(request: Request):
                     throw new Error(result.detail || "An API error occurred");
                 }
 
-                thinkingDiv.innerHTML = result.message;
+                // Use DDD handler for direct responses
+                handleDirectResponse(result, thinkingDiv);
                 thinkingDiv.classList.remove('thinking');
 
                 if (result.workflow_id) {
@@ -295,11 +366,7 @@ async def home(request: Request):
                     sessionId = result.session_id;
                 }
             } catch (error) {
-                thinkingDiv.innerHTML = `
-                    <div class="result error">
-                        <strong>❌ Error</strong><br>
-                        ${error.message}
-                    </div>`;
+                handleErrorResponse(error, thinkingDiv);
                 thinkingDiv.classList.remove('thinking');
                 thinkingDiv.classList.add('error');
             }
