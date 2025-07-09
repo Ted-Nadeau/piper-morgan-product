@@ -302,9 +302,13 @@ async def home(request: Request):
                     const data = await response.json();
                     // Use DDD handler for workflow responses
                     if (data.status === 'completed') {
+                        elementToUpdate.classList.remove('thinking');
+                        elementToUpdate.classList.add('reply');
                         handleWorkflowResponse(data, elementToUpdate);
                         clearInterval(intervalId);
                     } else if (data.status === 'failed') {
+                        elementToUpdate.classList.remove('thinking');
+                        elementToUpdate.classList.add('error');
                         elementToUpdate.innerHTML = renderBotMessage(`Workflow Failed: ${data.message}`, 'error', false);
                         clearInterval(intervalId);
                     }
@@ -332,6 +336,7 @@ async def home(request: Request):
             appendMessage(message, true);
             input.value = '';
 
+            // Show a temporary 'thinking' message
             const thinkingDiv = appendMessage('Thinking...');
             thinkingDiv.classList.add('thinking');
 
@@ -351,9 +356,12 @@ async def home(request: Request):
                     throw new Error(result.detail || "An API error occurred");
                 }
 
-                // Use DDD handler for direct responses
-                handleDirectResponse(result, thinkingDiv);
-                thinkingDiv.classList.remove('thinking');
+                // Replace the 'thinking' message with a new bot message (with 'reply' class)
+                const botDiv = appendMessage('', false);
+                botDiv.classList.add('reply');
+                handleDirectResponse(result, botDiv);
+                // Remove the old thinking message
+                thinkingDiv.remove();
 
                 if (result.workflow_id) {
                     // If a workflow was started, create a new message bubble to poll for its status
@@ -366,9 +374,11 @@ async def home(request: Request):
                     sessionId = result.session_id;
                 }
             } catch (error) {
-                handleErrorResponse(error, thinkingDiv);
-                thinkingDiv.classList.remove('thinking');
-                thinkingDiv.classList.add('error');
+                // Replace the 'thinking' message with a new error message (with 'error' class)
+                const errorDiv = appendMessage('', false);
+                errorDiv.classList.add('error');
+                handleErrorResponse(error, errorDiv);
+                thinkingDiv.remove();
             }
         });
     </script>
