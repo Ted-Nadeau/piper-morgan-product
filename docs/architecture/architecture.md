@@ -62,10 +62,36 @@
 │  (Connected & Working)      │  (Fully Integrated)    │  (Not Yet Designed)   │
 │                             │  (Issue Creation Working)│                     │
 │  ✅ OpenAI API              │  📋 Jira API            │  📋 Analytics APIs    │
-│  (Connected & Working)      │  (Not Yet Designed)     │  (Not Yet Designed)   │
+│  (Connected & Working)      │  (Not Yet Designed)     │  (Planned Q3 2025)    │
+│                             │                         │  - Datadog            │
+│                             │                         │  - New Relic          │
+│                             │                         │  - Google Analytics   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
+## Planned: MCP Integration Layer (Q3 2025)
+
+### Overview
+Model Context Protocol (MCP) integration will enable Piper Morgan to discover and consume external tools and knowledge sources through a standardized protocol.
+
+### Integration Architecture
 ```
+
+Current: API → Service → Agent → External System
+Future: API → Service → MCP Adapter → MCP Server → External System
+
+```
+
+### Phased Approach
+- **Phase 1**: MCP Consumer (4-6 weeks) - Enable consumption of external MCP services
+- **Phase 2**: Hybrid Integration (2-3 weeks) - Bridge existing agents to MCP
+- **Phase 3**: MCP Provider (Future) - Expose Piper capabilities as MCP services
+
+### Target Use Cases
+- Federated knowledge base search
+- Multi-tool project context resolution
+- Dynamic tool discovery and integration
+
+> **[TODO: Update the architecture diagram above to show the planned MCP layer, marked as "Planned Q3 2025"]**
 
 ## Legend
 
@@ -80,8 +106,8 @@
 ```
 
 User Intent → Intent Classifier → EXECUTION/SYNTHESIS → Workflow Factory → Orchestration Engine → External Systems
-                                                                              ↓
-                                                                         State Changes
+↓
+State Changes
 
 ```
 
@@ -90,10 +116,10 @@ User Intent → Intent Classifier → EXECUTION/SYNTHESIS → Workflow Factory �
 ```
 
 User Intent → Intent Classifier → QUERY → Query Service → Repository → Direct Data Access
-                                                               ↓
-                                                          Read-Only Results
+↓
+Read-Only Results
 
-```
+````
 
 ### Decision Criteria
 
@@ -130,7 +156,7 @@ else:
 # Route to WorkflowFactory for commands
     workflow = await workflow_factory.create_from_intent(intent)
 
-```
+````
 
 ### Query Router
 
@@ -357,6 +383,10 @@ External systems as plugins for:
 - Enhanced knowledge search with relationship awareness
 - Basic analytics and reporting
 - Production monitoring and hardening
+- Analytics platform integration (Datadog, New Relic, GA)
+- Meeting transcript processing and visualization
+- Advanced knowledge graph with relationship mapping
+- Visual content analysis foundation
 
 ### Phase 3 (Future - Q4 2025+): Advanced Capabilities
 
@@ -403,6 +433,10 @@ External systems as plugins for:
 - **Knowledge Relevance**: 90%+
 - **User Satisfaction**: 4.5/5 rating
 - **Error Handling**: 90%+ errors with user-friendly messages
+- **Meeting Processing**: 90%+ action item extraction accuracy
+- **Analytics Integration**: Daily automated insights generation
+- **Knowledge Discovery**: 50%+ improvement in cross-project insight finding
+- **Autonomous Operations**: 30%+ routine tasks self-managed
 
 ---
 
