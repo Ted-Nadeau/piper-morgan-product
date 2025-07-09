@@ -18,6 +18,8 @@
 
 #### Web Interface (Current)
 
+**New Feature:** The chat window is now vertically resizable. You can drag the bottom edge of the chat window to adjust its height, with a minimum and maximum limit. If the content exceeds the visible area, a scrollbar will appear automatically.
+
 Piper Morgan now includes a DDD-compliant, test-driven web chat interface:
 
 - Chat-based conversational UI for natural language requests

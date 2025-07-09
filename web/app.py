@@ -91,7 +91,18 @@ async def home(request: Request):
         .chat-input:focus { outline: none; border-color: #3498db; }
         .submit-btn { background: #3498db; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
         .submit-btn:hover { background: #2980b9; }
-        #chat-window { height: 400px; overflow-y: auto; border: 1px solid #ecf0f1; padding: 20px; border-radius: 8px; margin-bottom: 20px; background: #fdfdfd; }
+        #chat-window {
+            height: 400px;
+            min-height: 150px;
+            max-height: 80vh;
+            resize: vertical;
+            overflow-y: auto;
+            border: 1px solid #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #fdfdfd;
+        }
         .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.4; }
         .user-message { background: #3498db; color: white; align-self: flex-end; margin-left: auto; }
         .bot-message { background: #ecf0f1; color: #2c3e50; align-self: flex-start; }
