@@ -7,7 +7,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           USER INTERFACE LAYER                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  ✅ FastAPI Web Server     │  ✅ Web UI (DDD, TDD) │  📋 Admin Interface    │
+│  ✅ FastAPI Web Server     │  ✅ Web UI (DDD, TDD, resizable chat window) │  📋 Admin Interface    │
 │  (Built & Running)         │  (Built & Working)    │  (Not Yet Designed)   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
