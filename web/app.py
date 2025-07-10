@@ -2,7 +2,9 @@
 Piper Morgan Web Interface
 Simple FastAPI app for interacting with the main Piper Morgan Platform API
 """
+
 import os
+
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,17 +13,26 @@ from fastapi.staticfiles import StaticFiles
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 # Create FastAPI app
-app = FastAPI(title='Piper Morgan UI', description='Web Interface for the Piper Morgan Platform')
+app = FastAPI(
+    title="Piper Morgan UI", description="Web Interface for the Piper Morgan Platform"
+)
 
 # Mount static files
-app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")), name="assets")
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")),
+    name="assets",
+)
 
-@app.get('/debug-markdown', response_class=HTMLResponse)
+
+@app.get("/debug-markdown", response_class=HTMLResponse)
 async def debug_markdown(request: Request):
-    return HTMLResponse(content='''<!DOCTYPE html>
+    return HTMLResponse(
+        content="""<!DOCTYPE html>
 <html>
 <head>
     <title>Markdown Debug Test</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .test-section { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
@@ -34,52 +45,55 @@ async def debug_markdown(request: Request):
 </head>
 <body>
     <h1>Markdown Renderer Debug Test</h1>
-    
+
     <div class="test-section">
         <h3>Test 1: Check if renderMarkdown function exists</h3>
         <div class="rendered" id="test1"></div>
     </div>
-    
+
     <div class="test-section">
         <h3>Test 2: Simple Header</h3>
         <div class="raw">Input: "# Header 1"</div>
         <div class="rendered" id="test2"></div>
     </div>
-    
+
     <div class="test-section">
         <h3>Test 3: Your Failing Example</h3>
         <div class="raw">Input: "Here's my summary... # Header ## Subheader"</div>
         <div class="rendered" id="test3"></div>
     </div>
-    
+
     <script src="/assets/markdown-renderer.js?v=2"></script>
     <script>
         // Test if the function is loaded
         if (typeof renderMarkdown === 'function') {
             document.getElementById('test1').innerHTML = '✅ renderMarkdown function loaded successfully';
-            
+
             // Test 2: Simple header
             document.getElementById('test2').innerHTML = renderMarkdown('# Header 1');
-            
+
             // Test 3: Your failing example
             const failingText = `Here's my summary: # Piper Morgan Summary ## File Type This appears to be documentation.`;
             document.getElementById('test3').innerHTML = renderMarkdown(failingText);
-            
+
         } else {
             document.getElementById('test1').innerHTML = '❌ renderMarkdown function not loaded - check console for errors';
             console.error('renderMarkdown function not found');
         }
     </script>
 </body>
-</html>''')
+</html>"""
+    )
 
-@app.get('/', response_class=HTMLResponse)
+
+@app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     # Use a different template approach to avoid format/replace issues
     html_template = """<!DOCTYPE html>
 <html>
 <head>
     <title>Piper Morgan - AI PM Assistant</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
         .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -122,7 +136,7 @@ async def home(request: Request):
         .examples { margin-top: 30px; }
         .example { padding: 10px; margin: 5px 0; background: #f8f9fa; border-left: 4px solid #3498db; cursor: pointer; }
         .example:hover { background: #e9ecef; }
-        
+
         /* Markdown styling */
         .message h1, .message h2, .message h3, .message h4, .message h5, .message h6 { margin: 15px 0 10px 0; color: #2c3e50; }
         .message h1 { font-size: 1.5em; border-bottom: 1px solid #ecf0f1; padding-bottom: 5px; }
@@ -148,7 +162,7 @@ async def home(request: Request):
             <p>AI Product Management Assistant</p>
             <p><em>I can create GitHub issues, analyze documents, and more!</em></p>
         </div>
-        
+
         <div id="chat-window">
              <div class="message-container">
                 <div class="message bot-message">
@@ -158,12 +172,12 @@ async def home(request: Request):
         </div>
 
         <form class="chat-form" id="chatForm">
-            <input type="text" name="message" class="chat-input" 
-                   placeholder="e.g., Users are complaining about the login page being slow..." 
+            <input type="text" name="message" class="chat-input"
+                   placeholder="e.g., Users are complaining about the login page being slow..."
                    required>
             <button type="submit" class="submit-btn">Send</button>
         </form>
-        
+
         <div class="upload-section">
             <button class="upload-toggle" id="upload-toggle-btn">📄 Upload a document to the knowledge base</button>
             <div id="upload-form-container">
@@ -173,7 +187,7 @@ async def home(request: Request):
                 </form>
             </div>
         </div>
-         
+
         <div class="examples">
             <h3>💡 Try these examples:</h3>
             <div class="example" onclick="setExample(this)">
@@ -187,16 +201,16 @@ async def home(request: Request):
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/assets/bot-message-renderer.js"></script>
     <script>
         const API_BASE_URL = "API_BASE_URL_PLACEHOLDER";
         const chatWindow = document.getElementById('chat-window');
         let sessionId = null;
-        
+
         // Use DDD bot message renderer for all bot messages
-        
+
         // Wait for DOM and scripts to load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, marked.js available:', typeof marked !== 'undefined');
@@ -207,14 +221,14 @@ async def home(request: Request):
             msgContainer.className = 'message-container';
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            
+
             // If it's a user message, use textContent; if bot message, use innerHTML for markdown
             if (isUser) {
                 msgDiv.textContent = html;
             } else {
                 msgDiv.innerHTML = html;
             }
-            
+
             msgContainer.appendChild(msgDiv);
             chatWindow.appendChild(msgContainer);
             chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -224,7 +238,7 @@ async def home(request: Request):
         function setExample(element) {
             document.querySelector('.chat-input').value = element.textContent.trim();
         }
-        
+
         document.getElementById('upload-toggle-btn').addEventListener('click', () => {
             const container = document.getElementById('upload-form-container');
             container.style.display = container.style.display === 'none' ? 'block' : 'none';
@@ -286,30 +300,30 @@ async def home(request: Request):
                 form.reset();
             }
         });
-        
+
         async function pollWorkflowStatus(workflowId, elementToUpdate) {
             let pollCount = 0;
             const maxPolls = 30; // Stop after 60 seconds (2s intervals)
-            
+
             const intervalId = setInterval(async () => {
                 pollCount++;
-                
+
                 try {
                     const response = await fetch(`${API_BASE_URL}/api/v1/workflows/${workflowId}`);
-                    
+
                     if (!response.ok) {
                         // If 404 and we've seen success before, assume it completed
                         if (response.status === 404 && elementToUpdate.textContent.includes('completed')) {
                             clearInterval(intervalId);
                             return; // Keep the success message
                         }
-                        
+
                         // Otherwise show error and stop
                         elementToUpdate.innerHTML = `<div class="result error">Error checking status.</div>`;
                         clearInterval(intervalId);
                         return;
                     }
-                    
+
                     const data = await response.json();
                     // Use DDD handler for workflow responses
                     if (data.status === 'completed') {
@@ -323,7 +337,7 @@ async def home(request: Request):
                         elementToUpdate.innerHTML = renderBotMessage(`Workflow Failed: ${data.message}`, 'error', false);
                         clearInterval(intervalId);
                     }
-                    
+
                     // Stop polling after max attempts
                     if (pollCount >= maxPolls) {
                         clearInterval(intervalId);
@@ -355,14 +369,14 @@ async def home(request: Request):
                 const response = await fetch(`${API_BASE_URL}/api/v1/intent`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         message: message,
-                        session_id: sessionId 
+                        session_id: sessionId
                     })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (!response.ok) {
                     throw new Error(result.detail || "An API error occurred");
                 }
@@ -380,7 +394,7 @@ async def home(request: Request):
                     statusDiv.classList.add('thinking');
                     pollWorkflowStatus(result.workflow_id, statusDiv);
                 }
-                
+
                 if (result.session_id) {
                     sessionId = result.session_id;
                 }
@@ -395,8 +409,8 @@ async def home(request: Request):
     </script>
 </body>
 </html>"""
-    
+
     # Replace the placeholder with actual API URL
     html_content = html_template.replace("API_BASE_URL_PLACEHOLDER", API_BASE_URL)
-    
+
     return HTMLResponse(content=html_content)

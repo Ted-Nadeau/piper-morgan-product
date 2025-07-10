@@ -2,42 +2,50 @@
 Piper Morgan Web Interface with Clarifying Questions
 PM-006 Implementation - Intelligent question generation
 """
+
 import asyncio
 import os
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
-from enum import Enum
-from uuid import uuid4
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
+from uuid import uuid4
+
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 
 # Load environment
-with open('../.env', 'r') as f:
+with open("../.env", "r") as f:
     for line in f:
-        if line.strip() and not line.startswith('#') and '=' in line:
-            key, value = line.strip().split('=', 1)
+        if line.strip() and not line.startswith("#") and "=" in line:
+            key, value = line.strip().split("=", 1)
             os.environ[key] = value
 
 # Add the services directory to path
 import sys
-sys.path.append('../services')
+
+sys.path.append("../services")
 
 from github import Github
-from intelligence.conversation_aware import ConversationAwareClarifyingGenerator
+from intelligence.conversation_aware import \
+    ConversationAwareClarifyingGenerator
+
 
 # All our proven models (same as before)
 class IntentCategory(Enum):
-    EXECUTION = 'execution'
+    EXECUTION = "execution"
+
 
 class WorkflowType(Enum):
-    CREATE_TICKET = 'create_ticket'
+    CREATE_TICKET = "create_ticket"
+
 
 class WorkflowStatus(Enum):
-    PENDING = 'pending'
-    RUNNING = 'running'
-    COMPLETED = 'completed'
-    FAILED = 'failed'
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
 
 @dataclass
 class Intent:
@@ -45,82 +53,91 @@ class Intent:
     action: str
     context: Dict[str, Any]
     id: str = None
-    
+
     def __post_init__(self):
         if not self.id:
             self.id = str(uuid4())
 
-@dataclass 
+
+@dataclass
 class Workflow:
     type: WorkflowType
     context: Dict[str, Any]
     status: WorkflowStatus = WorkflowStatus.PENDING
     id: str = None
     result: Optional[Dict] = None
-    
+
     def __post_init__(self):
         if not self.id:
             self.id = str(uuid4())
 
+
 @dataclass
 class UserFeedback:
     id: str = None
-    workflow_id: str = ''
-    issue_id: str = ''
-    original_content: str = ''
-    user_edits: str = ''
-    approval_status: str = 'pending'
-    feedback_notes: str = ''
-    created_at: str = ''
-    
+    workflow_id: str = ""
+    issue_id: str = ""
+    original_content: str = ""
+    user_edits: str = ""
+    approval_status: str = "pending"
+    feedback_notes: str = ""
+    created_at: str = ""
+
     def __post_init__(self):
         if not self.id:
             self.id = str(uuid4())
         if not self.created_at:
             self.created_at = datetime.now().isoformat()
 
+
 # Proven GitHub agent and workflow classes (same as before)
 class GitHubAgent:
     def __init__(self):
-        token = os.getenv('GITHUB_TOKEN')
+        token = os.getenv("GITHUB_TOKEN")
         self.client = Github(token)
-        
+
     async def create_issue(self, repo_name: str, title: str, body: str, labels=None):
         try:
             repo = self.client.get_repo(repo_name)
             issue = repo.create_issue(title=title, body=body, labels=labels or [])
             return {
-                'success': True,
-                'issue': {
-                    'id': issue.id,
-                    'number': issue.number,
-                    'title': issue.title,
-                    'url': issue.html_url,
-                    'state': issue.state
-                }
+                "success": True,
+                "issue": {
+                    "id": issue.id,
+                    "number": issue.number,
+                    "title": issue.title,
+                    "url": issue.html_url,
+                    "state": issue.state,
+                },
             }
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
+
 
 class WorkflowFactory:
     async def create_from_intent(self, intent: Intent) -> Optional[Workflow]:
-        if intent.action == 'create_github_issue':
+        if intent.action == "create_github_issue":
             return Workflow(type=WorkflowType.CREATE_TICKET, context=intent.context)
         return None
+
 
 class WorkflowExecutor:
     def __init__(self):
         self.github_agent = GitHubAgent()
-    
+
     async def execute_workflow(self, workflow: Workflow):
         workflow.status = WorkflowStatus.RUNNING
-        
+
         if workflow.type == WorkflowType.CREATE_TICKET:
-            description = workflow.context.get('description', 'No description')
-            repo = workflow.context.get('repository', 'mediajunkie/piper-morgan-platform')
-            
-            title = f'[Piper Morgan] {description[:50]}' + ('...' if len(description) > 50 else '')
-            
+            description = workflow.context.get("description", "No description")
+            repo = workflow.context.get(
+                "repository", "mediajunkie/piper-morgan-platform"
+            )
+
+            title = f"[Piper Morgan] {description[:50]}" + (
+                "..." if len(description) > 50 else ""
+            )
+
             body = f"""## Description
 {description}
 
@@ -130,20 +147,26 @@ class WorkflowExecutor:
 
 ---
 *Generated by Piper Morgan AI Assistant*"""
-            
+
             result = await self.github_agent.create_issue(
-                repo_name=repo, title=title, body=body, labels=['piper-morgan']
+                repo_name=repo, title=title, body=body, labels=["piper-morgan"]
             )
-            
-            workflow.status = WorkflowStatus.COMPLETED if result['success'] else WorkflowStatus.FAILED
+
+            workflow.status = (
+                WorkflowStatus.COMPLETED if result["success"] else WorkflowStatus.FAILED
+            )
             workflow.result = result
             return result
-        
+
         workflow.status = WorkflowStatus.FAILED
-        return {'success': False, 'error': 'Unknown workflow type'}
+        return {"success": False, "error": "Unknown workflow type"}
+
 
 # Create FastAPI app
-app = FastAPI(title='Piper Morgan', description='AI Product Management Assistant with Intelligence')
+app = FastAPI(
+    title="Piper Morgan",
+    description="AI Product Management Assistant with Intelligence",
+)
 
 # Storage and services
 workflows = {}
@@ -152,7 +175,8 @@ executor = WorkflowExecutor()
 factory = WorkflowFactory()
 clarifying_generator = ConversationAwareClarifyingGenerator()
 
-@app.get('/', response_class=HTMLResponse)
+
+@app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return """<!DOCTYPE html>
 <html>
@@ -195,17 +219,17 @@ async def home(request: Request):
             <p>Intelligent Product Management Assistant</p>
             <p><em>I'll ask clarifying questions to create better GitHub issues!</em></p>
         </div>
-        
+
         <form class="chat-form" id="chatForm">
-            <input type="text" name="message" class="chat-input" 
-                   placeholder="e.g., The login page is slow..." 
+            <input type="text" name="message" class="chat-input"
+                   placeholder="e.g., The login page is slow..."
                    required>
             <br>
             <button type="submit" class="submit-btn">Analyze Request</button>
         </form>
-        
+
         <div id="result"></div>
-        
+
         <div class="examples">
             <h3>💡 Try these examples to see clarifying questions:</h3>
             <div class="example" onclick="setExample(this)">
@@ -218,35 +242,35 @@ async def home(request: Request):
                 The mobile app crashes when users upload photos larger than 10MB on iOS devices consistently
             </div>
         </div>
-        
+
         <div class="analytics-link">
             <a href="/feedback/analysis" target="_blank">📊 View Feedback Analytics</a>
         </div>
     </div>
-    
+
     <script>
         function setExample(element) {
             document.querySelector('.chat-input').value = element.textContent.trim();
         }
-        
+
         document.getElementById('chatForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const formData = new FormData(e.target);
             const message = formData.get('message');
             const resultDiv = document.getElementById('result');
-            
+
             resultDiv.innerHTML = '<div class="workflow-status">🤔 Analyzing your request...</div>';
-            
+
             try {
                 const response = await fetch('/analyze-request', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams(formData)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.needs_clarification) {
                     resultDiv.innerHTML = `
                         <div class="result questions">
@@ -254,16 +278,16 @@ async def home(request: Request):
                             <p>${result.message}</p>
                             <div style="margin-top: 15px;">
                                 <form id="continueForm" onsubmit="continueConversation(event, '${result.conversation_id}')">
-                                    <input type="text" placeholder="Please provide more details..." 
+                                    <input type="text" placeholder="Please provide more details..."
                                            id="followupInput" required
                                            style="width: 70%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                    <button type="submit" 
+                                    <button type="submit"
                                             style="background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-left: 8px; cursor: pointer;">
                                         Continue
                                     </button>
                                 </form>
                                 <div style="margin-top: 10px;">
-                                    <button onclick="proceedAnyway('${message}')" 
+                                    <button onclick="proceedAnyway('${message}')"
                                             style="background: #17a2b8; color: white; padding: 6px 12px; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; font-size: 12px;">
                                         Create Issue Anyway
                                     </button>
@@ -280,7 +304,7 @@ async def home(request: Request):
                             <p><strong>Issue #${issue.number}:</strong> ${issue.title}</p>
                             <p><strong>URL:</strong> <a href="${issue.url}" target="_blank">${issue.url}</a></p>
                             <p><strong>Workflow ID:</strong> ${result.workflow_id}</p>
-                            
+
                             <div class="feedback-section">
                                 <h4>📝 How did I do?</h4>
                                 <button class="feedback-btn approve-btn" onclick="submitFeedback('${result.workflow_id}', 'approve')">
@@ -310,20 +334,20 @@ async def home(request: Request):
                 `;
             }
         });
-        
+
         async function proceedAnyway(message) {
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '<div class="workflow-status">🔄 Creating issue anyway...</div>';
-            
+
             try {
                 const response = await fetch('/create-issue', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ message: message })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     const issue = result.issue;
                     resultDiv.innerHTML = `
@@ -332,7 +356,7 @@ async def home(request: Request):
                             <p><strong>Issue #${issue.number}:</strong> ${issue.title}</p>
                             <p><strong>URL:</strong> <a href="${issue.url}" target="_blank">${issue.url}</a></p>
                             <p><strong>Workflow ID:</strong> ${result.workflow_id}</p>
-                            
+
                             <div class="feedback-section">
                                 <h4>📝 How did I do?</h4>
                                 <button class="feedback-btn approve-btn" onclick="submitFeedback('${result.workflow_id}', 'approve')">
@@ -350,17 +374,17 @@ async def home(request: Request):
                 resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
             }
         }
-        
+
         async function submitFeedback(workflowId, approval) {
             const feedbackDiv = document.getElementById(`feedback-${workflowId}`);
-            
+
             if (approval === 'reject') {
                 feedbackDiv.innerHTML = `
                     <div style="margin-top: 10px;">
-                        <textarea placeholder="What could be improved?" id="notes-${workflowId}" 
+                        <textarea placeholder="What could be improved?" id="notes-${workflowId}"
                                   class="feedback-text" rows="3"></textarea>
                         <br>
-                        <button onclick="sendFeedback('${workflowId}', 'reject')" 
+                        <button onclick="sendFeedback('${workflowId}', 'reject')"
                                 class="feedback-btn" style="background: #007bff; color: white; margin-top: 8px;">
                             Submit Feedback
                         </button>
@@ -370,10 +394,10 @@ async def home(request: Request):
                 await sendFeedback(workflowId, 'approve');
             }
         }
-        
+
         async function sendFeedback(workflowId, approval) {
             const notes = document.getElementById(`notes-${workflowId}`)?.value || '';
-            
+
             try {
                 const response = await fetch('/feedback', {
                     method: 'POST',
@@ -384,10 +408,10 @@ async def home(request: Request):
                         notes: notes
                     })
                 });
-                
+
                 const result = await response.json();
                 const feedbackDiv = document.getElementById(`feedback-${workflowId}`);
-                
+
                 if (result.success) {
                     feedbackDiv.innerHTML = `
                         <div style="color: #28a745; font-weight: bold; padding: 10px; background: #d4edda; border-radius: 4px;">
@@ -402,17 +426,17 @@ async def home(request: Request):
             }
         }
 
-        
+
         async function continueConversation(event, conversationId) {
             event.preventDefault();
-            
+
             const followupInput = document.getElementById('followupInput');
             const message = followupInput.value.trim();
             const resultDiv = document.getElementById('result');
-            
-            
+
+
             resultDiv.innerHTML = '<div class="workflow-status">🤔 Analyzing your additional details...</div>';
-            
+
             try {
                 const response = await fetch('/analyze-request', {
                     method: 'POST',
@@ -422,9 +446,9 @@ async def home(request: Request):
                         conversation_id: conversationId
                     })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.needs_clarification) {
                     resultDiv.innerHTML = `
                         <div class="result questions">
@@ -432,16 +456,16 @@ async def home(request: Request):
                             <p>${result.message}</p>
                             <div style="margin-top: 15px;">
                                 <form id="continueForm" onsubmit="continueConversation(event, '${result.conversation_id}')">
-                                    <input type="text" placeholder="Please provide more details..." 
+                                    <input type="text" placeholder="Please provide more details..."
                                            id="followupInput" required
                                            style="width: 70%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                    <button type="submit" 
+                                    <button type="submit"
                                             style="background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-left: 8px; cursor: pointer;">
                                         Continue
                                     </button>
                                 </form>
                                 <div style="margin-top: 10px;">
-                                    <button onclick="proceedAnyway('${message}')" 
+                                    <button onclick="proceedAnyway('${message}')"
                                             style="background: #17a2b8; color: white; padding: 6px 12px; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; font-size: 12px;">
                                         Create Issue Anyway
                                     </button>
@@ -458,7 +482,7 @@ async def home(request: Request):
                             <p><strong>Issue #${issue.number}:</strong> ${issue.title}</p>
                             <p><strong>URL:</strong> <a href="${issue.url}" target="_blank">${issue.url}</a></p>
                             <p><strong>Workflow ID:</strong> ${result.workflow_id}</p>
-                            
+
                             <div class="feedback-section">
                                 <h4>📝 How did I do with the clarifying questions?</h4>
                                 <button class="feedback-btn approve-btn" onclick="submitFeedback('${result.workflow_id}', 'approve')">
@@ -480,121 +504,148 @@ async def home(request: Request):
 </body>
 </html>"""
 
+
 # Add conversation storage
 conversations = {}
 
-@app.post('/analyze-request')
-async def analyze_request(message: str = Form(...), conversation_id: str = Form(default=None)):
+
+@app.post("/analyze-request")
+async def analyze_request(
+    message: str = Form(...), conversation_id: str = Form(default=None)
+):
     """Analyze request and either ask questions or proceed to create issue"""
     try:
         # Generate conversation ID if not provided
         if not conversation_id:
             conversation_id = f"conv_{hash(message)}_{len(conversations)}"
-        
+
         # Analyze for ambiguity with conversation awareness
         analysis = await clarifying_generator.analyze_request(message, conversation_id)
-        
+
         if not analysis.can_proceed:
             # Ask clarifying questions
-            formatted_questions = clarifying_generator.format_questions_for_user(analysis)
-            return JSONResponse({
-                'needs_clarification': True,
-                'message': formatted_questions,
-                'conversation_id': conversation_id,
-                'detected_issues': [issue.value for issue in analysis.detected_issues],
-                'confidence': analysis.confidence
-            })
+            formatted_questions = clarifying_generator.format_questions_for_user(
+                analysis
+            )
+            return JSONResponse(
+                {
+                    "needs_clarification": True,
+                    "message": formatted_questions,
+                    "conversation_id": conversation_id,
+                    "detected_issues": [
+                        issue.value for issue in analysis.detected_issues
+                    ],
+                    "confidence": analysis.confidence,
+                }
+            )
         else:
             # Proceed to create issue
             return await create_issue_directly(message)
-            
-    except Exception as e:
-        return JSONResponse({'success': False, 'error': str(e)})
 
-@app.post('/create-issue')
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+@app.post("/create-issue")
 async def create_issue(message: str = Form(...)):
     """Create issue directly (bypass clarifying questions)"""
     return await create_issue_directly(message)
+
 
 async def create_issue_directly(message: str):
     """Common issue creation logic"""
     try:
         intent = Intent(
             category=IntentCategory.EXECUTION,
-            action='create_github_issue',
+            action="create_github_issue",
             context={
-                'description': message,
-                'repository': 'mediajunkie/piper-morgan-platform'
-            }
+                "description": message,
+                "repository": "mediajunkie/piper-morgan-platform",
+            },
         )
-        
+
         workflow = await factory.create_from_intent(intent)
         if not workflow:
-            return JSONResponse({'success': False, 'error': 'Could not create workflow'})
-        
+            return JSONResponse(
+                {"success": False, "error": "Could not create workflow"}
+            )
+
         workflows[workflow.id] = workflow
         result = await executor.execute_workflow(workflow)
-        
-        if result['success']:
-            return JSONResponse({
-                'success': True,
-                'workflow_id': workflow.id,
-                'issue': result['issue']
-            })
-        else:
-            return JSONResponse({'success': False, 'error': result['error']})
-            
-    except Exception as e:
-        return JSONResponse({'success': False, 'error': str(e)})
 
-@app.post('/feedback')
+        if result["success"]:
+            return JSONResponse(
+                {"success": True, "workflow_id": workflow.id, "issue": result["issue"]}
+            )
+        else:
+            return JSONResponse({"success": False, "error": result["error"]})
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+@app.post("/feedback")
 async def submit_feedback(
     workflow_id: str = Form(...),
     approval: str = Form(...),
-    notes: str = Form(default='')
+    notes: str = Form(default=""),
 ):
     """Track user feedback on generated issues"""
     try:
         workflow = workflows.get(workflow_id)
         if not workflow:
-            return JSONResponse({'success': False, 'error': 'Workflow not found'})
-        
+            return JSONResponse({"success": False, "error": "Workflow not found"})
+
         feedback = UserFeedback(
             workflow_id=workflow_id,
-            issue_id=workflow.result.get('issue', {}).get('number', '') if workflow.result else '',
-            original_content=workflow.context.get('description', ''),
-            approval_status='approved' if approval == 'approve' else 'rejected',
-            feedback_notes=notes
+            issue_id=(
+                workflow.result.get("issue", {}).get("number", "")
+                if workflow.result
+                else ""
+            ),
+            original_content=workflow.context.get("description", ""),
+            approval_status="approved" if approval == "approve" else "rejected",
+            feedback_notes=notes,
         )
-        
-        feedback_storage[feedback.id] = feedback
-        
-        return JSONResponse({
-            'success': True,
-            'feedback_id': feedback.id,
-            'message': f'Feedback recorded: {approval}'
-        })
-        
-    except Exception as e:
-        return JSONResponse({'success': False, 'error': str(e)})
 
-@app.get('/feedback/analysis')
+        feedback_storage[feedback.id] = feedback
+
+        return JSONResponse(
+            {
+                "success": True,
+                "feedback_id": feedback.id,
+                "message": f"Feedback recorded: {approval}",
+            }
+        )
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+@app.get("/feedback/analysis")
 async def get_feedback_analysis():
     """Analyze collected feedback for learning insights"""
     try:
         total_feedback = len(feedback_storage)
-        approved = sum(1 for f in feedback_storage.values() if f.approval_status == 'approved')
-        rejected = sum(1 for f in feedback_storage.values() if f.approval_status == 'rejected')
-        
-        common_rejections = [f.feedback_notes for f in feedback_storage.values() 
-                           if f.approval_status == 'rejected' and f.feedback_notes]
-        
+        approved = sum(
+            1 for f in feedback_storage.values() if f.approval_status == "approved"
+        )
+        rejected = sum(
+            1 for f in feedback_storage.values() if f.approval_status == "rejected"
+        )
+
+        common_rejections = [
+            f.feedback_notes
+            for f in feedback_storage.values()
+            if f.approval_status == "rejected" and f.feedback_notes
+        ]
+
         html = f"""
         <html>
         <head><title>Feedback Analytics</title></head>
         <body style="font-family: sans-serif; padding: 20px;">
             <h1>📊 Piper Morgan Feedback Analytics</h1>
-            
+
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0;">
                 <div style="background: #d4edda; padding: 20px; border-radius: 8px; text-align: center;">
                     <h2 style="margin: 0; color: #155724;">{total_feedback}</h2>
@@ -609,27 +660,29 @@ async def get_feedback_analysis():
                     <p>Rejected</p>
                 </div>
             </div>
-            
+
             <div style="margin: 20px 0;">
                 <h3>Approval Rate: {round(approved / total_feedback * 100, 1) if total_feedback > 0 else 0}%</h3>
             </div>
-            
+
             <div style="margin: 20px 0;">
                 <h3>Recent Improvement Suggestions:</h3>
                 <ul>
                     {''.join(f'<li>{note}</li>' for note in common_rejections[-5:])}
                 </ul>
             </div>
-            
+
             <a href="/" style="color: #3498db;">← Back to Piper Morgan</a>
         </body>
         </html>
         """
         return HTMLResponse(html)
-        
-    except Exception as e:
-        return JSONResponse({'success': False, 'error': str(e)})
 
-if __name__ == '__main__':
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)

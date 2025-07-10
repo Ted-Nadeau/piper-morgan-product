@@ -42,10 +42,13 @@ Return a JSON object with:
 Examples:
 - "create a ticket for the login bug" → {{"category": "execution", "action": "create_ticket", "confidence": 0.9}}
 - "analyze the file I uploaded" → {{"category": "analysis", "action": "analyze_data", "confidence": 0.8}}
-- "summarize the document" → {{"category": "synthesis", "action": "generate_summary", "confidence": 0.85}}
+# - "summarize the document" → {{"category": "synthesis", "action": "generate_summary", "confidence": 0.85}}
 - "list all projects" → {{"category": "query", "action": "list_projects", "confidence": 0.95}}
 - "hi there" → {{"category": "conversation", "action": "greeting", "confidence": 0.9}}
 - "fix it" → {{"category": "conversation", "action": "clarification_needed", "confidence": 0.7}}
+- "summarize the file I uploaded" → {{"category": "query", "action": "summarize_file", "confidence": 0.9}}
+- "please summarize that document" → {{"category": "query", "action": "summarize_file", "confidence": 0.9}}
+- "what are the key points in this file?" → {{"category": "query", "action": "summarize_file", "confidence": 0.85}}
 
 IMPORTANT: Return ONLY valid JSON. No additional text.
 """
@@ -56,7 +59,7 @@ Message: {message}
 
 Identify:
 - Product names
-- Feature names  
+- Feature names
 - Stakeholder names/roles
 - Any metrics or KPIs mentioned
 - Time frames or deadlines

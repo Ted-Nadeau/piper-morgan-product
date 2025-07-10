@@ -48,14 +48,14 @@ class TestProjectContext:
         # Given: Mock repository
         mock_repo = Mock(spec=ProjectRepository)
         mock_repo.get_by_id.return_value = Project(id="123", name="Test")
-        
+
         # When: Resolving with explicit ID
         context = ProjectContext(mock_repo, mock_llm)
         project, needs_confirm = await context.resolve_project(
             Intent(context={"project_id": "123"}),
             session_id="test"
         )
-        
+
         # Then: Returns project without confirmation
         assert project.id == "123"
         assert needs_confirm is False
@@ -85,12 +85,12 @@ class TestQueryIntegration:
     async def test_list_projects_through_api(self, test_client, test_db):
         # Given: Projects in database
         await create_test_projects(test_db)
-        
+
         # When: API request
         response = await test_client.post("/api/v1/intent", json={
             "message": "list all projects"
         })
-        
+
         # Then: Correct response format
         assert response.status_code == 200
         data = response.json()
@@ -122,16 +122,16 @@ class TestGitHubWorkflow:
     @pytest.mark.asyncio
     async def test_create_issue_from_natural_language(self, live_system):
         # Given: Live system with GitHub integration
-        
+
         # When: Natural language request
         response = await live_system.process_intent(
             "Create a bug ticket for the login crash on mobile"
         )
-        
+
         # Then: Real GitHub issue created
         assert response.workflow_status == "completed"
         assert "github.com" in response.issue_url
-        
+
         # Verify issue content
         issue = await verify_github_issue(response.issue_number)
         assert "mobile" in issue.labels
@@ -161,7 +161,7 @@ class TestIntentClassification:
     async def test_classification_accuracy(self, classifier, message, expected_category, expected_action):
         # Run classification
         intent = await classifier.classify(message)
-        
+
         # Assert with confidence threshold
         assert intent.category == expected_category
         assert intent.action == expected_action
@@ -182,7 +182,7 @@ class TestPromptStability:
             ("Create GitHub issue", {"action": "create_github_issue", "confidence": 0.95}),
             # ... more examples
         ]
-    
+
     async def test_prompt_regression(self, classifier, golden_dataset):
         for input_text, expected in golden_dataset:
             result = await classifier.classify(input_text)
@@ -200,10 +200,10 @@ class TestKnowledgeSearch:
     async def test_search_relevance(self, knowledge_base):
         # Given: Known documents
         await knowledge_base.ingest("pm_best_practices.md", content=PM_BEST_PRACTICES)
-        
+
         # When: Searching
         results = await knowledge_base.search("agile sprint planning")
-        
+
         # Then: Relevant results
         assert len(results) >= 3
         assert any("sprint" in r.content.lower() for r in results)
@@ -245,7 +245,7 @@ async def test_db(db_engine):
 class ProjectBuilder:
     def __init__(self):
         self._project = Project(name="Test Project")
-    
+
     def with_github(self, repo="test/repo"):
         self._project.integrations.append(
             ProjectIntegration(
@@ -254,11 +254,11 @@ class ProjectBuilder:
             )
         )
         return self
-    
+
     def with_default(self):
         self._project.is_default = True
         return self
-    
+
     def build(self):
         return self._project
 
@@ -271,11 +271,11 @@ project = ProjectBuilder().with_github().with_default().build()
 ```python
 class MockLLMClient:
     """Deterministic LLM for testing"""
-    
+
     def __init__(self, responses=None):
         self.responses = responses or {}
         self.calls = []
-    
+
     async def complete(self, prompt):
         self.calls.append(prompt)
         # Return predetermined response based on prompt content
@@ -301,12 +301,12 @@ async def test_concurrent_intent_processing():
             })
         )
         tasks.append(task)
-    
+
     # Measure performance
     start = time.time()
     responses = await asyncio.gather(*tasks)
     duration = time.time() - start
-    
+
     # Assert performance criteria
     assert duration < 10  # 100 requests in 10 seconds
     assert all(r.status_code == 200 for r in responses)
@@ -321,15 +321,15 @@ async def test_knowledge_base_memory_usage():
     import psutil
     process = psutil.Process()
     baseline_memory = process.memory_info().rss
-    
+
     # Ingest large documents
     for i in range(100):
         await knowledge_base.ingest(f"doc_{i}.txt", content="x" * 10000)
-    
+
     # Check memory growth
     final_memory = process.memory_info().rss
     memory_growth_mb = (final_memory - baseline_memory) / 1024 / 1024
-    
+
     assert memory_growth_mb < 500  # Less than 500MB growth
 ```
 
@@ -474,7 +474,7 @@ assert intent.confidence >= CLASSIFICATION_CONFIDENCE_THRESHOLD
 async def test_low_confidence_fallback():
     # Given: Ambiguous input
     intent = await classifier.classify("do the thing")
-    
+
     # Then: Low confidence triggers fallback
     if intent.confidence < 0.5:
         assert intent.category == IntentCategory.UNKNOWN
@@ -488,14 +488,14 @@ class ABTestFramework:
     async def test_prompt_variant(self, variant_a, variant_b, test_cases):
         results_a = []
         results_b = []
-        
+
         for test in test_cases:
             result_a = await self.run_with_prompt(variant_a, test.input)
             result_b = await self.run_with_prompt(variant_b, test.input)
-            
+
             results_a.append(self.score_result(result_a, test.expected))
             results_b.append(self.score_result(result_b, test.expected))
-        
+
         # Statistical comparison
         assert self.is_significant_improvement(results_b, results_a)
 ```
@@ -521,18 +521,18 @@ def test_invalid_project_id_raises_not_found_error():
 class TestWorkflowExecution:
     """
     Test workflow execution engine.
-    
+
     These tests validate that workflows:
     1. Execute tasks in correct order
     2. Handle failures gracefully
     3. Persist state correctly
     4. Emit proper events
     """
-    
+
     async def test_successful_workflow_completion(self):
         """
         Test that a workflow with multiple tasks completes successfully.
-        
+
         Scenario:
         - Create workflow with 3 tasks
         - Execute workflow

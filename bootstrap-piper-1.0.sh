@@ -8,40 +8,40 @@ echo "🚀 Setting up Piper Morgan 1.0 Bootstrap Stack..."
 # Check prerequisites
 check_prerequisites() {
     echo "Checking prerequisites..."
-    
+
     command -v docker >/dev/null 2>&1 || { echo "❌ Docker required but not installed."; exit 1; }
     command -v docker-compose >/dev/null 2>&1 || { echo "❌ Docker Compose required but not installed."; exit 1; }
     command -v python3 >/dev/null 2>&1 || { echo "❌ Python 3 required but not installed."; exit 1; }
     command -v git >/dev/null 2>&1 || { echo "❌ Git required but not installed."; exit 1; }
-    
+
     echo "✅ All prerequisites installed"
 }
 
 # Create directory structure
 setup_directories() {
     echo "Creating directory structure..."
-    
+
     # Infrastructure
     mkdir -p infrastructure/{docker,config,scripts}
     mkdir -p data/{postgres,redis,keycloak,chromadb}
     mkdir -p logs
-    
+
     # Services (monorepo structure)
     mkdir -p services/{domain,intent-service,orchestration-engine,knowledge-graph}
     mkdir -p services/integrations/{github,jira,slack}
     mkdir -p shared/{contracts,utils,events}
-    
+
     # Frontend and docs
     mkdir -p frontend/{web-app,cli}
     mkdir -p docs/{architecture,api,deployment}
-    
+
     echo "✅ Directory structure created"
 }
 
 # Create Docker Compose file
 create_docker_compose() {
     echo "Creating docker-compose.yml..."
-    
+
     cat > docker-compose.yml << 'EOF'
 version: '3.8'
 
@@ -129,14 +129,14 @@ networks:
   default:
     name: piper-network
 EOF
-    
+
     echo "✅ docker-compose.yml created"
 }
 
 # Create environment file
 create_env_file() {
     echo "Creating environment configuration..."
-    
+
     cat > .env.example << 'EOF'
 # Database
 POSTGRES_PASSWORD=dev_changeme_in_production
@@ -176,14 +176,14 @@ EOF
         cp .env.example .env
         echo "⚠️  Created .env file - please update with your API keys"
     fi
-    
+
     echo "✅ Environment configuration created"
 }
 
 # Create Python setup
 create_python_setup() {
     echo "Creating Python environment setup..."
-    
+
     cat > setup-python.sh << 'EOF'
 #!/bin/bash
 # Setup Python environment for Piper Morgan 1.0
@@ -251,7 +251,7 @@ pip install -r requirements.txt
 echo "✅ Python environment ready"
 echo "💡 Activate with: source venv/bin/activate"
 EOF
-    
+
     chmod +x setup-python.sh
     echo "✅ Python setup script created"
 }
@@ -259,7 +259,7 @@ EOF
 # Create initial service structure
 create_service_structure() {
     echo "Creating initial service structure..."
-    
+
     # Domain models
     cat > services/domain/__init__.py << 'EOF'
 """
@@ -288,7 +288,7 @@ class Product:
     vision: str = ""
     strategy: str = ""
     created_at: datetime = field(default_factory=datetime.now)
-    
+
     # Relationships
     features: List['Feature'] = field(default_factory=list)
     stakeholders: List['Stakeholder'] = field(default_factory=list)
@@ -304,8 +304,8 @@ class Feature:
     acceptance_criteria: List[str] = field(default_factory=list)
     status: str = "draft"
     created_at: datetime = field(default_factory=datetime.now)
-    
-    # Relationships  
+
+    # Relationships
     dependencies: List['Feature'] = field(default_factory=list)
     risks: List['Risk'] = field(default_factory=list)
 
@@ -319,7 +319,7 @@ class Stakeholder:
     influence_level: int = 1  # 1-5 scale
     satisfaction: Optional[float] = None
 
-@dataclass 
+@dataclass
 class WorkItem:
     """Universal work item - can be from any system"""
     id: str = field(default_factory=lambda: str(uuid4()))
@@ -368,7 +368,7 @@ class FeatureCreated(Event):
 @dataclass
 class InsightGenerated(Event):
     """AI generated an insight"""
-    type: str = "insight.generated" 
+    type: str = "insight.generated"
     insight: str = ""
     confidence: float = 0.0
     sources: List[str] = field(default_factory=list)
@@ -428,7 +428,7 @@ async def health():
         "services": {
             "postgres": "connected",  # TODO: Real health checks
             "redis": "connected",
-            "chromadb": "connected", 
+            "chromadb": "connected",
             "temporal": "connected"
         }
     }
@@ -474,7 +474,7 @@ EOF
 # Create management scripts
 create_scripts() {
     echo "Creating management scripts..."
-    
+
     # Start script
     cat > start.sh << 'EOF'
 #!/bin/bash
@@ -591,7 +591,7 @@ main() {
     echo "🤖 Piper Morgan 1.0 Bootstrap Setup"
     echo "======================================"
     echo ""
-    
+
     check_prerequisites
     setup_directories
     create_docker_compose
@@ -600,7 +600,7 @@ main() {
     create_service_structure
     create_scripts
     create_gitignore
-    
+
     echo ""
     echo "✅ Piper Morgan 1.0 bootstrap complete!"
     echo ""

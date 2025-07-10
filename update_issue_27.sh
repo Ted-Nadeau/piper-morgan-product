@@ -66,10 +66,10 @@ from services.database.models import WorkflowDB
 def check_consistency():
     domain_fields = {f.name for f in dataclasses.fields(Workflow)}
     db_fields = {c.name for c in WorkflowDB.__table__.columns}
-    
+
     missing_in_domain = db_fields - domain_fields
     missing_in_db = domain_fields - db_fields
-    
+
     if missing_in_domain or missing_in_db:
         # Custom error class would be ideal
         raise Exception(
@@ -88,4 +88,4 @@ gh issue edit "$ISSUE_NUMBER" --repo "$REPO" \
   --title "$NEW_TITLE" \
   --body-file issue_body.tmp
 
-echo "🎉 Issue #$ISSUE_NUMBER has been successfully updated." 
+echo "🎉 Issue #$ISSUE_NUMBER has been successfully updated."

@@ -2,7 +2,7 @@
 
 ## What Worked Well
 - LLMAdapter abstraction pattern
-- Custom exception hierarchy  
+- Custom exception hierarchy
 - GitHub integration approach
 - Basic intent recognition
 

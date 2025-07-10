@@ -13,4 +13,3 @@ fi
 # Start the demo
 echo "✅ Starting Streamlit on http://localhost:8501"
 python -m streamlit run chat_interface.py --server.headless true
-

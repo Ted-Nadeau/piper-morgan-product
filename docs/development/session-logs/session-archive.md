@@ -4,9 +4,9 @@
 
 # May 29 - Piper Morgan Development Session Log
 
-**Date**: May 29, 2025  
-**Session Duration**: Extended architectural analysis and handoff preparation  
-**Participants**: PM/Developer + Claude Sonnet 4  
+**Date**: May 29, 2025
+**Session Duration**: Extended architectural analysis and handoff preparation
+**Participants**: PM/Developer + Claude Sonnet 4
 **Context**: Transitioning from POC to production architecture (Piper Morgan 1.0)
 
 ---
@@ -266,8 +266,8 @@ This session focused on transitioning from a working POC to a production-ready a
 4. Keep POC running as reference but don't refactor it
 5. Build vertical slices (complete features) rather than horizontal layers
 
-**Architecture confidence level**: HIGH - Clear path forward established  
-**Technical risk level**: LOW - Using proven patterns and tools  
+**Architecture confidence level**: HIGH - Clear path forward established
+**Technical risk level**: LOW - Using proven patterns and tools
 **Product-market fit risk**: LOW - Building on validated POC learnings
 
 ---
@@ -276,8 +276,8 @@ _End of Session Log_
 
 # June 1 - AI PM Agent Development - Session Log
 
-_Date: Current Session_  
-_Participants: Christian Crumlish, Claude Sonnet 4_  
+_Date: Current Session_
+_Participants: Christian Crumlish, Claude Sonnet 4_
 _Session Type: Project Documentation & Presentation Prep_
 
 ## SESSION OVERVIEW
@@ -318,26 +318,26 @@ This session focused on consolidating project progress into comprehensive docume
 
 ### Documentation Strategy
 
-**Decision**: Create multiple document types rather than single comprehensive doc  
-**Rationale**: Different audiences need different levels of detail (exec summary vs. technical implementation)  
+**Decision**: Create multiple document types rather than single comprehensive doc
+**Rationale**: Different audiences need different levels of detail (exec summary vs. technical implementation)
 **Impact**: Enables targeted communication and easier maintenance
 
 ### Presentation Approach
 
-**Decision**: Focus on demo and practical value rather than technical architecture  
-**Rationale**: All-hands audience needs to see immediate utility, not implementation details  
+**Decision**: Focus on demo and practical value rather than technical architecture
+**Rationale**: All-hands audience needs to see immediate utility, not implementation details
 **Format**: 8-slide deck with live demo as centerpiece (slides 3-4)
 
 ### Project Naming
 
-**Decision**: Maintain "Piper Morgan" as internal codename  
-**Rationale**: Humanizing the agent creates better team relationship and adoption  
+**Decision**: Maintain "Piper Morgan" as internal codename
+**Rationale**: Humanizing the agent creates better team relationship and adoption
 **Communication**: Use both technical and friendly names depending on context
 
 ### Roadmap Structure
 
-**Decision**: Now/Next/Later format with clear success metrics  
-**Rationale**: Balances immediate needs with long-term vision, shows thoughtful planning  
+**Decision**: Now/Next/Later format with clear success metrics
+**Rationale**: Balances immediate needs with long-term vision, shows thoughtful planning
 **Timeframes**: Now (current sprint), Next (2-3 sprints), Later (3-6 months)
 
 ---
@@ -346,26 +346,26 @@ This session focused on consolidating project progress into comprehensive docume
 
 ### Self-Referential Development
 
-**Insight**: AI agent analyzing its own architecture and planning creates powerful feedback loop  
-**Technical Implication**: Enables autonomous identification of improvement opportunities  
+**Insight**: AI agent analyzing its own architecture and planning creates powerful feedback loop
+**Technical Implication**: Enables autonomous identification of improvement opportunities
 **Business Value**: Reduces human oversight burden while maintaining quality
 
 ### Documentation as Development Tool
 
-**Insight**: Comprehensive documentation enables agent to understand its own capabilities and limitations  
-**Implementation**: Agent can use requirements and specs to guide its own responses  
+**Insight**: Comprehensive documentation enables agent to understand its own capabilities and limitations
+**Implementation**: Agent can use requirements and specs to guide its own responses
 **Future Potential**: Self-modifying systems with built-in guardrails
 
 ### Modular Architecture Benefits Realized
 
-**Insight**: Vendor-agnostic design (LLM adapter pattern) proved valuable during Claude migration  
-**Validation**: Easy switching between AI providers without architectural changes  
+**Insight**: Vendor-agnostic design (LLM adapter pattern) proved valuable during Claude migration
+**Validation**: Easy switching between AI providers without architectural changes
 **Lesson**: Early architectural decisions around flexibility pay long-term dividends
 
 ### User Experience Evolution
 
-**Insight**: Command-line → Web interface transition dramatically improved adoption potential  
-**Impact**: Lower technical barrier enables broader team usage  
+**Insight**: Command-line → Web interface transition dramatically improved adoption potential
+**Impact**: Lower technical barrier enables broader team usage
 **Principle**: UI accessibility often more important than feature completeness for adoption
 
 ---
@@ -374,26 +374,26 @@ This session focused on consolidating project progress into comprehensive docume
 
 ### Scope Management Challenge
 
-**Issue**: Tendency to expand feature scope during documentation  
-**Resolution**: Strict adherence to "what's built vs. what's planned" distinction  
+**Issue**: Tendency to expand feature scope during documentation
+**Resolution**: Strict adherence to "what's built vs. what's planned" distinction
 **Prevention**: Clear status indicators (✅ working, 🎯 planned, 🔬 research)
 
 ### Audience Fragmentation
 
-**Issue**: Multiple stakeholder groups need different information depth  
-**Resolution**: Layered documentation approach (one-pager → full report → technical specs)  
+**Issue**: Multiple stakeholder groups need different information depth
+**Resolution**: Layered documentation approach (one-pager → full report → technical specs)
 **Tool**: Table of contents with chapter summaries for navigation
 
 ### Current Limitation Humor
 
-**Issue**: Agent currently converts all requests into GitHub tickets (including self-improvement requests)  
-**Resolution**: Frame as feature demonstration and limitation awareness  
+**Issue**: Agent currently converts all requests into GitHub tickets (including self-improvement requests)
+**Resolution**: Frame as feature demonstration and limitation awareness
 **Opportunity**: Perfect example for presentation humor and roadmap justification
 
 ### Documentation Volume
 
-**Issue**: Comprehensive documentation creates maintenance burden  
-**Resolution**: Modular documents that can be updated independently  
+**Issue**: Comprehensive documentation creates maintenance burden
+**Resolution**: Modular documents that can be updated independently
 **Strategy**: Version control and change logs for document evolution
 
 ---
@@ -402,20 +402,20 @@ This session focused on consolidating project progress into comprehensive docume
 
 ### API Key Security Learning
 
-**Discovery**: Importance of secure credential management demonstrated early  
-**Best Practice**: Environment variables, never in code or conversations  
+**Discovery**: Importance of secure credential management demonstrated early
+**Best Practice**: Environment variables, never in code or conversations
 **Education**: Good example of security practices for team onboarding
 
 ### Library Compatibility Management
 
-**Discovery**: LangChain ecosystem evolving rapidly, version conflicts common  
-**Solution**: Specific version pinning and upgrade path documentation  
+**Discovery**: LangChain ecosystem evolving rapidly, version conflicts common
+**Solution**: Specific version pinning and upgrade path documentation
 **Monitoring**: Regular dependency audits needed for stability
 
 ### Performance Optimization Insights
 
-**Discovery**: Vector database queries and document processing are primary bottlenecks  
-**Current Status**: Acceptable for individual use, scaling considerations needed  
+**Discovery**: Vector database queries and document processing are primary bottlenecks
+**Current Status**: Acceptable for individual use, scaling considerations needed
 **Planning**: Performance monitoring essential before team rollout
 
 ---
@@ -496,26 +496,26 @@ This session focused on consolidating project progress into comprehensive docume
 
 ### Development Velocity
 
-**Observation**: Documentation phase took significant effort but creates foundation for accelerated development  
-**Strategy**: Balance coding vs. documentation based on project maturity  
+**Observation**: Documentation phase took significant effort but creates foundation for accelerated development
+**Strategy**: Balance coding vs. documentation based on project maturity
 **Tool**: Session logs help track time allocation and productivity patterns
 
 ### Stakeholder Communication
 
-**Learning**: Multiple document formats needed for different audiences  
-**Approach**: Layered communication strategy (technical → business → executive)  
+**Learning**: Multiple document formats needed for different audiences
+**Approach**: Layered communication strategy (technical → business → executive)
 **Measurement**: Track which documents get used and how
 
 ### Agent Evolution
 
-**Potential**: Self-referential development capabilities show promise  
-**Caution**: Need guardrails for autonomous modification  
+**Potential**: Self-referential development capabilities show promise
+**Caution**: Need guardrails for autonomous modification
 **Opportunity**: Agent-assisted development could accelerate innovation cycles
 
 ### Team Adoption Strategy
 
-**Focus**: Practical value demonstration over technical sophistication  
-**Method**: Hands-on trial with real work scenarios  
+**Focus**: Practical value demonstration over technical sophistication
+**Method**: Hands-on trial with real work scenarios
 **Success Factor**: Early adopter enthusiasm and success stories
 
 ---
@@ -535,9 +535,9 @@ The meta-insight about agent self-assessment opens intriguing possibilities for 
 
 # Piper Morgan 1.0 - June 2 - Development Session Log
 
-**Date:** June 2, 2025  
-**Session Type:** Fresh Start & Bootstrap Setup  
-**Duration:** Extended session  
+**Date:** June 2, 2025
+**Session Type:** Fresh Start & Bootstrap Setup
+**Duration:** Extended session
 **Participants:** User (xian), Claude (Sonnet 4)
 
 ## Session Overview
@@ -832,14 +832,14 @@ Comprehensive setup of Piper Morgan 1.0 from POC lessons learned, including full
 
 ---
 
-**Session End Status: ✅ Complete Success**  
-**Foundation Ready:** Piper Morgan 1.0 infrastructure deployed and validated  
+**Session End Status: ✅ Complete Success**
+**Foundation Ready:** Piper Morgan 1.0 infrastructure deployed and validated
 **Next Milestone:** Real AI integration and first plugin implementation
 
 # June 2 - Piper Morgan Development Session Log
 
-**Date:** June 2, 2025  
-**Session Duration:** ~8 hours (multiple breaks)  
+**Date:** June 2, 2025
+**Session Duration:** ~8 hours (multiple breaks)
 **Starting Context:** Fresh build of Piper Morgan 1.0 after architectural redesign
 
 ## Progress Checkpoints
@@ -895,32 +895,32 @@ Comprehensive setup of Piper Morgan 1.0 from POC lessons learned, including full
 
 ### 1. Domain-First Design
 
-**Decision:** Start with PM domain models, not tool integrations  
-**Rationale:** Tools change, but PM concepts (Product, Feature, WorkItem) are stable  
+**Decision:** Start with PM domain models, not tool integrations
+**Rationale:** Tools change, but PM concepts (Product, Feature, WorkItem) are stable
 **Result:** Clean separation of concerns, tool-agnostic core
 
 ### 2. Plugin Architecture for Integrations
 
-**Decision:** Every external system (GitHub, Jira, Slack) is a plugin  
-**Rationale:** Avoid coupling to specific tools, enable easy swapping  
+**Decision:** Every external system (GitHub, Jira, Slack) is a plugin
+**Rationale:** Avoid coupling to specific tools, enable easy swapping
 **Note:** Identified need to refactor workflows away from GitHub-centric approach
 
 ### 3. Multi-LLM Strategy
 
-**Decision:** Different models for different tasks  
-**Rationale:** Optimize cost/performance - Sonnet for quick tasks, Opus for complex reasoning  
+**Decision:** Different models for different tasks
+**Rationale:** Optimize cost/performance - Sonnet for quick tasks, Opus for complex reasoning
 **Implementation:** Task-based model configuration in `llm/config.py`
 
 ### 4. Event-Driven Architecture
 
-**Decision:** All services communicate through events  
-**Rationale:** Enables learning, auditing, and loose coupling  
+**Decision:** All services communicate through events
+**Rationale:** Enables learning, auditing, and loose coupling
 **Status:** Foundation laid, full implementation pending
 
 ### 5. Repository Pattern for Data Access
 
-**Decision:** Centralized data access through repositories  
-**Rationale:** Keep domain logic pure, enable testing, consistent transactions  
+**Decision:** Centralized data access through repositories
+**Rationale:** Keep domain logic pure, enable testing, consistent transactions
 **Result:** Clean separation between domain models and persistence
 
 ## Technical Insights Discovered
@@ -945,26 +945,26 @@ Using asyncpg with SQLAlchemy's async support enables non-blocking database oper
 
 ### Issue 1: Environment Variables Not Loading
 
-**Symptom:** "No ANTHROPIC_API_KEY found" despite .env file  
-**Cause:** Need to call `load_dotenv()` before imports that use env vars  
+**Symptom:** "No ANTHROPIC_API_KEY found" despite .env file
+**Cause:** Need to call `load_dotenv()` before imports that use env vars
 **Fix:** Added `load_dotenv()` at top of main.py and init_db.py
 
 ### Issue 2: SQL Execution Error
 
-**Symptom:** "Not an executable object: 'SELECT COUNT(_) FROM products'"  
-**Cause:** Raw SQL strings need `text()` wrapper in SQLAlchemy  
+**Symptom:** "Not an executable object: 'SELECT COUNT(_) FROM products'"
+**Cause:** Raw SQL strings need `text()` wrapper in SQLAlchemy
 **Fix:** `await conn.execute(text("SELECT COUNT(_) FROM products"))`
 
 ### Issue 3: Circular Import
 
-**Symptom:** ImportError on RepositoryFactory  
-**Cause:** Database imports from orchestration, orchestration imports from database  
+**Symptom:** ImportError on RepositoryFactory
+**Cause:** Database imports from orchestration, orchestration imports from database
 **Fix:** Extract shared enums to `shared_types.py`
 
 ### Issue 4: Temporal UI Not Accessible
 
-**Symptom:** Connection reset on port 8088  
-**Cause:** Auto-setup image doesn't include web UI  
+**Symptom:** Connection reset on port 8088
+**Cause:** Auto-setup image doesn't include web UI
 **Resolution:** Verified service working on port 7233, UI not critical for development
 
 ## Current System Status
@@ -1048,8 +1048,8 @@ _End of Session Log_
 
 ## Session 1 - Project Setup & Organization
 
-**Date:** June 3, 2025  
-**Duration:** Initial setup session  
+**Date:** June 3, 2025
+**Duration:** Initial setup session
 **Participants:** Principal Architect guidance + PM
 
 ### Accomplishments
@@ -1085,9 +1085,9 @@ _End of Session Log_
 
 # June 3? Piper Morgan Development Session Log
 
-**Date**: June 3?, 2025  
-**Session Duration**: Extended architectural analysis and handoff preparation  
-**Participants**: PM/Developer + Claude Sonnet 4  
+**Date**: June 3?, 2025
+**Session Duration**: Extended architectural analysis and handoff preparation
+**Participants**: PM/Developer + Claude Sonnet 4
 **Context**: Transitioning from POC to production architecture (Piper Morgan 1.0)
 
 ---
@@ -1347,8 +1347,8 @@ This session focused on transitioning from a working POC to a production-ready a
 4. Keep POC running as reference but don't refactor it
 5. Build vertical slices (complete features) rather than horizontal layers
 
-**Architecture confidence level**: HIGH - Clear path forward established  
-**Technical risk level**: LOW - Using proven patterns and tools  
+**Architecture confidence level**: HIGH - Clear path forward established
+**Technical risk level**: LOW - Using proven patterns and tools
 **Product-market fit risk**: LOW - Building on validated POC learnings
 
 ---
@@ -1357,8 +1357,8 @@ _End of Session Log_
 
 # June 4-6 - Piper Morgan Development Session Log
 
-**Dates**: June 4-6, 2025  
-**Participants**: Xian (Christian Crumlish), Claude (Opus)  
+**Dates**: June 4-6, 2025
+**Participants**: Xian (Christian Crumlish), Claude (Opus)
 **Focus**: Knowledge base implementation and intent-to-workflow connection
 
 ## Progress Checkpoints
@@ -1423,22 +1423,22 @@ _End of Session Log_
 
 ### 1. Knowledge Domain Structure
 
-**Decision**: Four-tier hierarchy (pm_fundamentals → business_context → product_context → task_context)  
+**Decision**: Four-tier hierarchy (pm_fundamentals → business_context → product_context → task_context)
 **Rationale**: Mirrors how PMs actually develop expertise - foundational knowledge before specific applications
 
 ### 2. Lazy Initialization Pattern
 
-**Decision**: Use get_ingester() function instead of module-level instantiation  
+**Decision**: Use get_ingester() function instead of module-level instantiation
 **Rationale**: Prevents initialization before environment variables are loaded
 
 ### 3. Enhanced Workflow Types
 
-**Decision**: Expand from 2 to 8 workflow types  
+**Decision**: Expand from 2 to 8 workflow types
 **Rationale**: Support more PM tasks beyond just "create feature" and "analyze metrics"
 
 ### 4. Scaffolding vs. Flexibility
 
-**Decision**: Keep rigid enum-based system for now  
+**Decision**: Keep rigid enum-based system for now
 **Rationale**: Provides stability while building core features; designed for future removal
 
 ## Architectural Insights Discovered
@@ -1471,32 +1471,32 @@ _End of Session Log_
 
 ### 1. Circular Dependencies
 
-**Issue**: Import cycles between services  
+**Issue**: Import cycles between services
 **Resolution**: Used existing shared_types.py pattern
 
 ### 2. ChromaDB NumPy Compatibility
 
-**Issue**: ChromaDB 0.4.22 incompatible with NumPy 2.0  
+**Issue**: ChromaDB 0.4.22 incompatible with NumPy 2.0
 **Resolution**: Downgrade NumPy to <2.0
 
 ### 3. Missing python-multipart
 
-**Issue**: FastAPI file upload requires multipart  
+**Issue**: FastAPI file upload requires multipart
 **Resolution**: pip install python-multipart
 
 ### 4. JSON Parse Errors from LLM
 
-**Issue**: Claude sometimes returns malformed JSON  
+**Issue**: Claude sometimes returns malformed JSON
 **Resolution**: Fallback classifier catches errors; improved prompt structure
 
 ### 5. PostgreSQL User Missing
 
-**Issue**: Database role "piper" doesn't exist  
+**Issue**: Database role "piper" doesn't exist
 **Resolution**: Need to run scripts/init_db.py (pending)
 
 ### 6. Duplicate ChromaDB Entries
 
-**Issue**: Multiple uploads created duplicate embeddings  
+**Issue**: Multiple uploads created duplicate embeddings
 **Resolution**: Warnings only; consider adding duplicate detection
 
 ## Current Status
@@ -1580,8 +1580,8 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 # June 7 - Piper Morgan Development Session Log
 
-**Date**: June 7, 2025  
-**Session Focus**: Documentation completion and PM-001/PM-002 implementation  
+**Date**: June 7, 2025
+**Session Focus**: Documentation completion and PM-001/PM-002 implementation
 **Duration**: Extended session covering documentation pipeline and database initialization
 
 ## 🎯 Session Objectives
@@ -1674,7 +1674,7 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 ### Issue 1: GitHub API 403 Forbidden
 
 **Problem**: Personal access token lacking proper permissions for issue creation
-**Root Cause**: Token had `issues=read` instead of `issues=write` permissions  
+**Root Cause**: Token had `issues=read` instead of `issues=write` permissions
 **Resolution**: Created new classic personal access token with full `repo` scope
 **Learning**: Fine-grained tokens have more restrictive permissions than classic tokens
 
@@ -1694,7 +1694,7 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### Issue 4: Async Database Connection from Scripts
 
-**Problem**: asyncpg connection failing from external scripts  
+**Problem**: asyncpg connection failing from external scripts
 **Root Cause**: Connection attempted from outside Docker network context
 **Resolution**: Created Docker-exec wrapper script for database operations
 **Learning**: Database access patterns differ between application and administrative scripts
@@ -1717,7 +1717,7 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### Decision 3: Auto-Update Scripts as Default
 
-**Context**: Manual file editing prone to errors and inefficient  
+**Context**: Manual file editing prone to errors and inefficient
 **Choice**: Python scripts with regex for targeted file modifications
 **Rationale**: Reproducible, less error-prone, faster execution
 **Implementation**: Pattern established for future file modifications
@@ -1803,15 +1803,15 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ---
 
-**Session Quality**: High productivity with significant foundational progress  
-**Technical Debt**: Minimal - clean implementations with proper separation of concerns  
-**Risk Level**: Low - solid foundation established with clear next steps  
+**Session Quality**: High productivity with significant foundational progress
+**Technical Debt**: Minimal - clean implementations with proper separation of concerns
+**Risk Level**: Low - solid foundation established with clear next steps
 **Velocity**: Strong - completed major infrastructure components efficiently
 
 # SESSION LOG: June 8 - PM-007 Knowledge Hierarchy Enhancement
 
-**Date**: June 8, 2025  
-**Duration**: Extended session  
+**Date**: June 8, 2025
+**Duration**: Extended session
 **Objective**: Implement sophisticated knowledge categorization and relationship mapping
 
 ## 🎯 SPRINT GOALS ACHIEVED
@@ -1851,7 +1851,7 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### 1. LLM-Based Relationship Analysis
 
-**Decision**: Use Claude/GPT for content analysis over rule-based extraction  
+**Decision**: Use Claude/GPT for content analysis over rule-based extraction
 **Rationale**:
 
 - PM knowledge is conceptual with implicit relationships
@@ -1863,7 +1863,7 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### 2. ChromaDB Metadata Enhancement
 
-**Decision**: Extend existing ChromaDB collections vs. separate relationship store  
+**Decision**: Extend existing ChromaDB collections vs. separate relationship store
 **Rationale**:
 
 - Maintains working system architecture
@@ -1886,7 +1886,7 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### 3. Context-Aware Search Implementation
 
-**Decision**: Relationship scoring combined with semantic similarity  
+**Decision**: Relationship scoring combined with semantic similarity
 **Rationale**:
 
 - Pure semantic search misses domain relationships
@@ -1901,15 +1901,15 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### 1. Script Execution Hanging
 
-**Problem**: Monolithic enhancement script hung during execution  
-**Root Cause**: Large heredoc creation and complex bash operations  
-**Resolution**: Broke into 4 focused scripts (backup, enhance, update, test)  
+**Problem**: Monolithic enhancement script hung during execution
+**Root Cause**: Large heredoc creation and complex bash operations
+**Resolution**: Broke into 4 focused scripts (backup, enhance, update, test)
 **Lesson**: Prefer small, testable scripts over complex automation
 
 ### 2. Python/Virtual Environment Issues
 
-**Problem**: `python` command not found, venv activation failures  
-**Root Cause**: Project directory move broke venv symlinks  
+**Problem**: `python` command not found, venv activation failures
+**Root Cause**: Project directory move broke venv symlinks
 **Resolution**:
 
 - Fixed broken symlinks pointing to old project path
@@ -1919,22 +1919,22 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### 3. ChromaDB/NumPy Compatibility
 
-**Problem**: `AttributeError: np.float_ was removed in NumPy 2.0 release`  
-**Root Cause**: NumPy 2.x breaking changes, ChromaDB incompatibility  
-**Resolution**: Downgraded to `numpy<2.0` in requirements.txt  
+**Problem**: `AttributeError: np.float_ was removed in NumPy 2.0 release`
+**Root Cause**: NumPy 2.x breaking changes, ChromaDB incompatibility
+**Resolution**: Downgraded to `numpy<2.0` in requirements.txt
 **Insight**: Pin dependency versions to prevent breaking changes
 
 ### 4. Environment Variable Loading
 
-**Problem**: `.env` file not loaded automatically in ingestion module  
-**Root Cause**: Missing `load_dotenv()` call  
-**Resolution**: Added dotenv loading to ingestion.py imports  
+**Problem**: `.env` file not loaded automatically in ingestion module
+**Root Cause**: Missing `load_dotenv()` call
+**Resolution**: Added dotenv loading to ingestion.py imports
 **Best Practice**: Always add environment loading checklist for new services
 
 ### 5. Requirements.txt Maintenance
 
-**Problem**: Missing packages from manual pip installs  
-**Root Cause**: Accumulated manual installs not tracked in requirements  
+**Problem**: Missing packages from manual pip installs
+**Root Cause**: Accumulated manual installs not tracked in requirements
 **Resolution**:
 
 - Updated requirements.txt with missing packages
@@ -1947,27 +1947,27 @@ curl -X POST http://localhost:8001/api/v1/knowledge/upload \
 
 ### 1. Incremental Architecture Wins
 
-**Insight**: "Get the plumbing built, then gradually enrich" approach superior to big-bang architecture  
-**Evidence**: Successfully enhanced working system without disruption  
+**Insight**: "Get the plumbing built, then gradually enrich" approach superior to big-bang architecture
+**Evidence**: Successfully enhanced working system without disruption
 **Application**: Use for future features (PM-008, PM-009)
 
 ### 2. LLM Integration Patterns
 
-**Insight**: LLM-based analysis works well for PM domain knowledge  
-**Evidence**: Relationship analysis produces relevant metadata  
-**Pattern**: `prompt design → JSON parsing → metadata enhancement`  
+**Insight**: LLM-based analysis works well for PM domain knowledge
+**Evidence**: Relationship analysis produces relevant metadata
+**Pattern**: `prompt design → JSON parsing → metadata enhancement`
 **Reusability**: Template for future LLM analysis features
 
 ### 3. Knowledge Base Evolution
 
-**Insight**: Metadata versioning critical for knowledge base evolution  
-**Implementation**: Added `relationship_analysis_version` field  
+**Insight**: Metadata versioning critical for knowledge base evolution
+**Implementation**: Added `relationship_analysis_version` field
 **Benefit**: Enables gradual migration and A/B testing of analysis improvements
 
 ### 4. Development Environment Fragility
 
-**Insight**: Virtual environments break easily with project moves  
-**Mitigation**: Document recreation steps, use relative paths where possible  
+**Insight**: Virtual environments break easily with project moves
+**Mitigation**: Document recreation steps, use relative paths where possible
 **VS Code Integration**: Python interpreter selection crucial for smooth development
 
 ---
@@ -2248,9 +2248,9 @@ Completed PM-008 chat integration, connecting the GitHub issue analyzer (built i
 
 # SESSION LOG: June 14- PM-008 Completion & Architecture Alignment
 
-**Date**: June 14, 2025  
-**Duration**: Extended session  
-**Goal**: Complete PM-008 GitHub issue analysis in demoable state  
+**Date**: June 14, 2025
+**Duration**: Extended session
+**Goal**: Complete PM-008 GitHub issue analysis in demoable state
 **Outcome**: ✅ SUCCESS - Full end-to-end workflow functional
 
 ---
@@ -2554,9 +2554,9 @@ def get_next_task(self) -> Optional[Task]:  # Added
 
 # PM-011 June 23 - File Resolution Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-implementation  
-**Started**: June 23, 2025, ~10:00 AM (estimated)  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-implementation
+**Started**: June 23, 2025, ~10:00 AM (estimated)
 **Status**: File resolution complete, discovered need for sustainable development practices
 
 ## Session Objective
@@ -2710,9 +2710,9 @@ _End of session: Called BREAK PROTOCOL properly, committed work, wrote blog post
 
 # PM-011 - Jue 24 - File Analysis Implementation Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-file-analysis  
-**Started**: June 24, 2025, Morning Session  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-file-analysis
+**Started**: June 24, 2025, Morning Session
 **Status**: Design revision in progress
 
 ## Session Objective
@@ -2838,9 +2838,9 @@ Creating comprehensive technical design that addresses security, performance, an
 
 # June 24 - File Analysis Architecture Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Session**: File Analysis Planning & Design  
-**Started**: June 24, 2025, 2:00 PM  
+**Project**: Piper Morgan - AI PM Assistant
+**Session**: File Analysis Planning & Design
+**Started**: June 24, 2025, 2:00 PM
 **Status**: Implementation in Progress - Unit Tests Phase
 
 ## Session Objective
@@ -3236,7 +3236,7 @@ FileAnalyzer (Orchestrator)
 
 ## Current Status Update
 
-**Time**: 5:00 PM  
+**Time**: 5:00 PM
 **Current Step**: ALL ANALYZERS COMPLETE! 🎊
 
 ### Session Achievements:
@@ -3269,9 +3269,9 @@ FileAnalyzer (Orchestrator)
 
 # June 24 - PM-011 Testing Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-testing-round-2  
-**Started**: June 24, 2025, ~5:30 AM  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-testing-round-2
+**Started**: June 24, 2025, ~5:30 AM
 **Status**: Major progress on file analysis slice
 
 ## Session Objective
@@ -3370,9 +3370,9 @@ System has working file upload → reference → (mock) analysis flow. All integ
 
 # PM-011 - June 25 - File Analysis Recovery Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-testing-round-2  
-**Started**: June 25, 2025, Evening Session  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-testing-round-2
+**Started**: June 25, 2025, Evening Session
 **Status**: Recovering Lost Work
 
 ## Session Objective
@@ -3479,9 +3479,9 @@ _Session ended with decision to retrace original path_
 
 # PM-011 - June 25 - File Analysis Integration Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-file-analysis-integration  
-**Started**: June 25, 2025, Morning Session  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-file-analysis-integration
+**Started**: June 25, 2025, Morning Session
 **Status**: TDD Design Complete, Ready for Implementation
 
 ## Session Objective
@@ -3550,9 +3550,9 @@ Integration testing revealed Liskov Substitution Principle violation: concrete a
 
 # PM-011 File Analysis Recovery Session Log
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-testing-round-2  
-**Started**: June 25, 2025, Evening Session  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-testing-round-2
+**Started**: June 25, 2025, Evening Session
 **Status**: Recovering Lost Work
 
 ## Session Objective
@@ -3686,9 +3686,9 @@ _Session ended with decision to retrace original path_
 - **Optimal Dynamic**: Human provides strategic direction and quality control, AI provides systematic execution with verification
 - **Key Learning**: Real architectural discipline requires constant vigilance against the temptation to "just be helpful"
 - **Project History**: Previous sessions show incremental development and test-driven discovery work well# PM-011 File Analysis Integration Session Log - June 26, 2025
-  **Project**: Piper Morgan - AI PM Assistant  
-  **Branch**: pm-011-file-analysis-integration  
-  **Started**: June 26, 2025  
+  **Project**: Piper Morgan - AI PM Assistant
+  **Branch**: pm-011-file-analysis-integration
+  **Started**: June 26, 2025
   **Status**: Continuing Integration - Step 1.11
 
 ## CRITICAL REMINDER FOR FUTURE SESSIONS
@@ -3801,7 +3801,7 @@ Continue file analysis integration from Step 1.10 (PDF analysis integration test
 
 ## Current Status
 
-**Time**: June 26, 2025  
+**Time**: June 26, 2025
 **Location**: Step 1.10 - Ready to implement PDF test
 **Test Status**: 57 tests passing (includes CSV integration)
 
@@ -3870,9 +3870,9 @@ Continue file analysis integration from Step 1.10 (PDF analysis integration test
 - **Optimal Dynamic**: Human provides strategic direction and quality control, AI provides systematic execution with verification
 - **Key Learning**: Real architectural discipline requires constant vigilance against the temptation to "just be helpful"
 - **Project History**: Previous sessions show incremental development and test-driven discovery work well# PM-011 File Analysis Integration Session Log - June 26, 2025
-  **Project**: Piper Morgan - AI PM Assistant  
-  **Branch**: pm-011-file-analysis-integration  
-  **Started**: June 26, 2025  
+  **Project**: Piper Morgan - AI PM Assistant
+  **Branch**: pm-011-file-analysis-integration
+  **Started**: June 26, 2025
   **Status**: Continuing Integration - Step 1.11
 
 ## CRITICAL REMINDER FOR FUTURE SESSIONS
@@ -3985,7 +3985,7 @@ Continue file analysis integration from Step 1.10 (PDF analysis integration test
 
 ## Current Status
 
-**Time**: June 26, 2025  
+**Time**: June 26, 2025
 **Location**: Step 1.10 - Ready to implement PDF test
 **Test Status**: 57 tests passing (includes CSV integration)
 
@@ -4029,9 +4029,9 @@ Continue file analysis integration from Step 1.10 (PDF analysis integration test
 
 # PM-011 File Analysis Integration Session Log - June 27, 2025
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Branch**: pm-011-file-analysis-integration  
-**Session Start**: June 27, 2025  
+**Project**: Piper Morgan - AI PM Assistant
+**Branch**: pm-011-file-analysis-integration
+**Session Start**: June 27, 2025
 **Previous Session**: June 26, 2025 (Completed Phases 1-2)
 
 ## Context: Web UI Test #2 - File Upload
@@ -4151,9 +4151,9 @@ Fix DocumentAnalyzer contract violation discovered through failing tests, then p
 
 # PM-011 GitHub Testing Session Log - June 29, 2025
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Previous Session**: June 28, 2025 (GitHub integration implemented)  
-**Session Start**: June 29, 2025  
+**Project**: Piper Morgan - AI PM Assistant
+**Previous Session**: June 28, 2025 (GitHub integration implemented)
+**Session Start**: June 29, 2025
 **Objective**: Test GitHub integration end-to-end and close PM-011
 
 ## Context from Previous Session
@@ -4263,9 +4263,9 @@ User accidentally gave CA the token setup instructions, then joked about being "
 
 # PM-011 GitHub Testing Session Log - July 1, 2025
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Previous Session**: June 29, 2025 (GitHub integration implemented)  
-**Session Start**: July 1, 2025  
+**Project**: Piper Morgan - AI PM Assistant
+**Previous Session**: June 29, 2025 (GitHub integration implemented)
+**Session Start**: July 1, 2025
 **Objective**: Complete UI testing for 4 original test cases and close PM-011
 
 ## Context from Previous Session
@@ -4557,9 +4557,9 @@ _Last Updated: July 3, 2025_
 
 # PM-011 UI Testing Session Log - July 3, 2025
 
-**Epic**: PM-011 - UI Testing & Architectural Cleanup  
-**Session Start**: July 3, 2025, ~3:00 PM  
-**Previous Session**: July 1, 2025 (WorkflowDefinition cleanup started)  
+**Epic**: PM-011 - UI Testing & Architectural Cleanup
+**Session Start**: July 3, 2025, ~3:00 PM
+**Previous Session**: July 1, 2025 (WorkflowDefinition cleanup started)
 **Objective**: Complete WorkflowDefinition removal and resume UI testing
 
 ## Session Progress
@@ -5931,10 +5931,10 @@ _Session ongoing - debugging regression issues_
 
 # PM-COMMS-007 Communications Session Log - July 8, 2025
 
-**Project**: Piper Morgan - AI PM Assistant  
-**Role**: Director of Communications  
-**Session Type**: Blog post creation for "Building Piper Morgan" series  
-**Session Start**: July 8, 2025  
+**Project**: Piper Morgan - AI PM Assistant
+**Role**: Director of Communications
+**Session Type**: Blog post creation for "Building Piper Morgan" series
+**Session Start**: July 8, 2025
 **Previous Context**: Reviewing pivotal architectural decision session where POC was abandoned for platform rebuild
 
 ## Session Objectives
@@ -6028,7 +6028,7 @@ Created three interconnected posts for the "Building Piper Morgan" series:
 
 ## Handoff Preparation
 
-**Current Capacity**: ~50%  
+**Current Capacity**: ~50%
 **Handoff Trigger**: Will remind at 80% capacity
 **Key Context**: Writing "Building Piper Morgan" blog series about the POC→Platform transition
 

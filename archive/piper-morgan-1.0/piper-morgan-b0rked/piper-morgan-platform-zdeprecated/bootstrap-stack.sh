@@ -15,31 +15,31 @@ NC='\033[0m' # No Color
 # Check prerequisites
 check_prerequisites() {
     echo -e "${BLUE}Checking prerequisites...${NC}"
-    
+
     if ! command -v docker &> /dev/null; then
         echo -e "${RED}❌ Docker required but not installed.${NC}"
         echo "Please install Docker Desktop or Colima first."
         exit 1
     fi
-    
+
     if ! command -v docker-compose &> /dev/null; then
         echo -e "${RED}❌ Docker Compose required but not installed.${NC}"
         exit 1
     fi
-    
+
     if ! docker info &> /dev/null; then
         echo -e "${RED}❌ Docker daemon is not running.${NC}"
         echo "Please start Docker Desktop or 'colima start'"
         exit 1
     fi
-    
+
     echo -e "${GREEN}✅ All prerequisites met!${NC}"
 }
 
 # Create directory structure
 create_directories() {
     echo -e "${BLUE}Creating directory structure...${NC}"
-    
+
     mkdir -p infrastructure/docker/postgres
     mkdir -p infrastructure/docker/redis
     mkdir -p infrastructure/docker/keycloak
@@ -52,14 +52,14 @@ create_directories() {
     mkdir -p data/postgres
     mkdir -p data/chromadb
     mkdir -p logs
-    
+
     echo -e "${GREEN}✅ Directory structure created!${NC}"
 }
 
 # Create environment file
 create_env_file() {
     echo -e "${BLUE}Creating environment configuration...${NC}"
-    
+
     cat > .env << 'EOF'
 # Piper Morgan Bootstrap Environment
 
@@ -98,14 +98,14 @@ LOKI_PORT=3100
 # API
 API_PORT=8000
 EOF
-    
+
     echo -e "${GREEN}✅ Environment file created!${NC}"
 }
 
 # Create main docker-compose file
 create_docker_compose() {
     echo -e "${BLUE}Creating Docker Compose configuration...${NC}"
-    
+
     cat > docker-compose.yml << 'EOF'
 version: '3.8'
 
@@ -260,14 +260,14 @@ networks:
   piper-network:
     driver: bridge
 EOF
-    
+
     echo -e "${GREEN}✅ Docker Compose file created!${NC}"
 }
 
 # Create configuration files
 create_configs() {
     echo -e "${BLUE}Creating configuration files...${NC}"
-    
+
     # Postgres init script
     cat > infrastructure/docker/postgres/init.sql << 'EOF'
 -- Initialize Piper Morgan database
@@ -299,7 +299,7 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
-  
+
   - job_name: 'piper-api'
     static_configs:
       - targets: ['api:8000']
@@ -370,10 +370,10 @@ EOF
 # Create basic Python API service
 create_api_service() {
     echo -e "${BLUE}Creating basic API service...${NC}"
-    
+
     # Create Python service structure
     mkdir -p services/api
-    
+
     # Requirements
     cat > services/api/requirements.txt << 'EOF'
 fastapi==0.104.1
@@ -436,8 +436,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Redis connection
 redis_client = redis.Redis(
-    host='redis', 
-    port=6379, 
+    host='redis',
+    port=6379,
     password=os.getenv('REDIS_PASSWORD'),
     decode_responses=True
 )
@@ -475,13 +475,13 @@ async def health_check():
         # Check database
         with engine.connect() as conn:
             conn.execute(sa.text("SELECT 1"))
-        
+
         # Check Redis
         redis_client.ping()
-        
+
         logger.info("Health check passed")
         return {"status": "healthy", "services": {"database": "up", "redis": "up"}}
-    
+
     except Exception as e:
         logger.error("Health check failed", error=str(e))
         raise HTTPException(status_code=503, detail="Service unhealthy")
@@ -502,19 +502,19 @@ async def create_event(event_data: dict):
                 VALUES (:event_type, :event_data, :created_by)
                 RETURNING id
             """)
-            
+
             result = session.execute(query, {
                 "event_type": event_data.get("type", "unknown"),
                 "event_data": event_data,
                 "created_by": event_data.get("user", "system")
             })
-            
+
             event_id = result.fetchone()[0]
             session.commit()
-            
+
             logger.info("Event created", event_id=str(event_id), event_type=event_data.get("type"))
             return {"id": str(event_id), "status": "created"}
-    
+
     except Exception as e:
         logger.error("Failed to create event", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to create event")
@@ -530,7 +530,7 @@ async def get_events(limit: int = 10):
                 ORDER BY created_at DESC
                 LIMIT :limit
             """)
-            
+
             result = session.execute(query, {"limit": limit})
             events = [
                 {
@@ -542,9 +542,9 @@ async def get_events(limit: int = 10):
                 }
                 for row in result.fetchall()
             ]
-            
+
             return {"events": events}
-    
+
     except Exception as e:
         logger.error("Failed to get events", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to get events")
@@ -604,7 +604,7 @@ EOF
 # Create management scripts
 create_scripts() {
     echo -e "${BLUE}Creating management scripts...${NC}"
-    
+
     # Start script
     cat > start.sh << 'EOF'
 #!/bin/bash
@@ -668,11 +668,11 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "🗑️  Stopping and removing containers..."
     docker-compose down -v
-    
+
     echo "🗑️  Removing data directories..."
     rm -rf data/postgres/*
     rm -rf data/chromadb/*
-    
+
     echo "🚀 Starting fresh stack..."
     ./start.sh
 else
@@ -681,14 +681,14 @@ fi
 EOF
 
     chmod +x start.sh stop.sh logs.sh reset.sh
-    
+
     echo -e "${GREEN}✅ Management scripts created!${NC}"
 }
 
 # Create README
 create_readme() {
     echo -e "${BLUE}Creating documentation...${NC}"
-    
+
     cat > BOOTSTRAP-README.md << 'EOF'
 # Piper Morgan Bootstrap Stack
 
@@ -815,7 +815,7 @@ EOF
 main() {
     echo -e "${YELLOW}Piper Morgan Bootstrap Stack Setup${NC}"
     echo -e "${YELLOW}===================================${NC}"
-    
+
     check_prerequisites
     create_directories
     create_env_file
@@ -824,7 +824,7 @@ main() {
     create_api_service
     create_scripts
     create_readme
-    
+
     echo ""
     echo -e "${GREEN}🎉 Bootstrap stack setup complete!${NC}"
     echo ""

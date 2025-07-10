@@ -1,7 +1,7 @@
 # ADR-001: MCP Integration Pilot
 
-**Date**: July 3, 2025  
-**Status**: Accepted  
+**Date**: July 3, 2025
+**Status**: Accepted
 **Deciders**: Principal Architect, Chief of Staff
 
 ## Context

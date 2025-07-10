@@ -5,16 +5,16 @@
 An AI-powered Product Management assistant that automates routine PM tasks using natural language. The agent can create GitHub issues, review existing tickets, and leverage organizational knowledge to provide context-aware recommendations.
 
 ## Key Capabilities
-**✅ Natural Language → GitHub Issues** - Convert casual descriptions into professionally formatted tickets with automatic labeling  
-**✅ Intelligent Issue Review** - Analyze existing GitHub issues and suggest improvements  
-**✅ Knowledge Base Integration** - Process organizational documents (PDF, DOCX, TXT, MD) for context-aware responses  
-**✅ Web Interface** - User-friendly chat interface for easy team adoption  
+**✅ Natural Language → GitHub Issues** - Convert casual descriptions into professionally formatted tickets with automatic labeling
+**✅ Intelligent Issue Review** - Analyze existing GitHub issues and suggest improvements
+**✅ Knowledge Base Integration** - Process organizational documents (PDF, DOCX, TXT, MD) for context-aware responses
+**✅ Web Interface** - User-friendly chat interface for easy team adoption
 
 ## Development Journey
-**Phase 1: Research & POC** - Evaluated platforms, designed modular architecture, built working prototype with document Q&A  
-**Phase 2: Enhanced Reasoning** - Migrated from OpenAI to Claude API for better PM-specific reasoning quality  
-**Phase 3: GitHub Integration** - Added intelligent issue creation with automatic context inference and labeling  
-**Phase 4: Production Features** - Built web interface and integrated organizational knowledge base for contextual responses  
+**Phase 1: Research & POC** - Evaluated platforms, designed modular architecture, built working prototype with document Q&A
+**Phase 2: Enhanced Reasoning** - Migrated from OpenAI to Claude API for better PM-specific reasoning quality
+**Phase 3: GitHub Integration** - Added intelligent issue creation with automatic context inference and labeling
+**Phase 4: Production Features** - Built web interface and integrated organizational knowledge base for contextual responses
 
 ## Technical Architecture
 - **Core**: Python + LangChain + Claude API
@@ -24,7 +24,7 @@ An AI-powered Product Management assistant that automates routine PM tasks using
 - **Design**: Vendor-agnostic adapter pattern preventing lock-in
 
 ## Real-World Example
-**Input**: "Users are complaining that the mobile app crashes when they try to upload photos larger than 10MB"  
+**Input**: "Users are complaining that the mobile app crashes when they try to upload photos larger than 10MB"
 **Output**: Professionally formatted bug report with mobile label, technical requirements, acceptance criteria, and implementation suggestions
 
 ## Business Impact

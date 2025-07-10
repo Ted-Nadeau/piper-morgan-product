@@ -71,7 +71,7 @@ graph TD
     %% Presentation Layer
     API[REST API]
     WS[WebSocket]
-    
+
     %% Application Layer
     IC[Intent Classifier]
     WF[Workflow Factory]
@@ -79,23 +79,23 @@ graph TD
     OE[Orchestration Engine]
     PC[Project Context]
     KM[Knowledge Manager]
-    
+
     %% Service Layer
     DS[Domain Services]
     RF[Repository Factory]
     EB[Event Bus]
     GH[GitHub Plugin]
-    
+
     %% Data Layer
     PG[(PostgreSQL)]
     CH[(ChromaDB)]
     RD[(Redis)]
-    
+
     %% External Services
     CL[Claude API]
     OA[OpenAI API]
     GHA[GitHub API]
-    
+
     %% Dependencies
     API --> IC
     API --> QR
@@ -115,14 +115,14 @@ graph TD
     RF --> PG
     EB --> RD
     GH --> GHA
-    
+
     %% Styling
     classDef presentation fill:#e1f5fe
     classDef application fill:#fff3e0
     classDef service fill:#f3e5f5
     classDef data fill:#e8f5e9
     classDef external fill:#ffebee
-    
+
     class API,WS presentation
     class IC,WF,QR,OE,PC,KM application
     class DS,RF,EB,GH service

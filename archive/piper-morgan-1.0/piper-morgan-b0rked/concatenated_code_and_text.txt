@@ -91,7 +91,7 @@ class PmIssueCreationAgent: # Renamed class for clarity
         repo = None
         try:
             repo = self.github.get_repo(repo_name)
-            
+
             # Dynamically add available labels, assignees, and milestones from GitHub
             issue_format["labels"] = [label.name for label in repo.get_labels()]
             issue_format["assignees"] = [assignee.login for assignee in repo.get_assignees()]
@@ -296,13 +296,13 @@ class KnowledgeBase:
     def __init__(self, directory: str = app_config.KB_DIRECTORY, collection_name: str = app_config.KB_COLLECTION_NAME): # Get defaults from config
         self.directory = directory
         self.collection_name = collection_name
-        
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
             self.embedding_function = embedding_functions.SentenceTransformerEmbeddingFunction(
                 model_name=app_config.KB_EMBEDDING_MODEL # Get embedding model from config
             )
-        
+
         try:
             self.client = chromadb.PersistentClient(path=self.directory)
             self.collection = self.client.get_or_create_collection(
@@ -349,20 +349,20 @@ class KnowledgeBase:
             where_clause = {}
             if category:
                 where_clause["category"] = category
-            
+
             # Note: ChromaDB's where clause for 'in' operator on a list requires a specific syntax
             # If you intend to search across MULTIPLE categories (e.g., categories=["A", "B"]),
             # you'd need `{"category": {"$in": ["A", "B"]}}`.
             # Your current `query_documents` only takes a single `category` string.
             # We'll adapt `get_context_for_query` to call this multiple times if needed,
             # or you can enhance `query_documents` to accept a list of categories.
-            
+
             query_results = self.collection.query(
                 query_texts=[query],
                 n_results=n_results,
                 where=where_clause # Use the constructed where clause
             )
-            
+
             results = []
             if query_results and query_results["documents"]:
                 for i in range(len(query_results["documents"][0])):
@@ -384,7 +384,7 @@ class KnowledgeBase:
         try:
             context_parts = []
             current_tokens = 0
-            
+
             # If categories are provided, query for each category
             if categories:
                 for cat in categories:
@@ -392,28 +392,28 @@ class KnowledgeBase:
                     relevant_docs_for_cat = self.query_documents(query, n_results=5, category=cat)
                     for doc in relevant_docs_for_cat:
                         doc_content = doc["content"]
-                        doc_tokens = len(self.tokenizer.encode(doc_content)) 
-                        
+                        doc_tokens = len(self.tokenizer.encode(doc_content))
+
                         if current_tokens + doc_tokens <= max_tokens:
                             context_parts.append(doc_content)
                             current_tokens += doc_tokens
                         else:
                             # Stop if adding this document exceeds max_tokens
-                            return context_parts 
+                            return context_parts
             else:
                 # If no categories specified, query across all documents
-                relevant_docs = self.query_documents(query, n_results=5) 
+                relevant_docs = self.query_documents(query, n_results=5)
                 for doc in relevant_docs:
                     doc_content = doc["content"]
-                    doc_tokens = len(self.tokenizer.encode(doc_content)) 
-                    
+                    doc_tokens = len(self.tokenizer.encode(doc_content))
+
                     if current_tokens + doc_tokens <= max_tokens:
                         context_parts.append(doc_content)
                         current_tokens += doc_tokens
                     else:
                         # Stop if adding this document exceeds max_tokens
                         return context_parts
-            
+
             return context_parts
         except Exception as e:
             raise KnowledgeBaseError(f"Failed to retrieve context for query '{query}' from knowledge base: {e}") from e
@@ -467,8 +467,8 @@ class PMAgent:
         try:
             # Initialize GitHubAgent
             # Corrected to not pass arguments, as GitHubAgent's __init__ takes none.
-            self.github_agent = GitHubAgent() 
-            
+            self.github_agent = GitHubAgent()
+
             # Verify GitHub connection
             logger.info(f"✅ Connected to GitHub as: {self.github_agent.user.login}")
 
@@ -490,9 +490,9 @@ class PMAgent:
                 knowledge_base=self.knowledge_base,
                 llm_adapter=self.claude_client
             )
-            
-            self.github_reviewer = GitHubReviewer(github_agent=self.github_agent) 
-            
+
+            self.github_reviewer = GitHubReviewer(github_agent=self.github_agent)
+
             logger.info("✅ PMAgent initialized successfully.")
 
         except (GitHubAPIError, LLMGenerationError, KnowledgeBaseError, ValueError) as e:
@@ -501,11 +501,11 @@ class PMAgent:
         except Exception as e:
             logger.critical(f"An unexpected error occurred during PMAgent initialization: {e}")
             raise PMAgentError(f"An unexpected error occurred during PMAgent initialization: {e}") from e
-        
+
     def _initialize_knowledge_base(self):
         """Adds dummy documents to the knowledge base if they don't exist, for testing."""
         logger.info("Initializing knowledge base with dummy documents...")
-        
+
         dummy_docs = [
             {"file": "general_pm_knowledge.txt", "category": "General PM knowledge", "content": "Project management often involves agile methodologies like Scrum and Kanban. User stories are key for defining features."},
             {"file": "current_project_info.txt", "category": "Current project", "content": "Our current project, Piper Morgan, is building a new AI assistant for product managers. It uses Python and Streamlit."},
@@ -513,7 +513,7 @@ class PMAgent:
             {"file": "github_workflow.txt", "category": "GitHub Workflow", "content": "We use GitHub for issue tracking, pull requests, and code reviews. All new features require an issue with labels and assignees."},
             {"file": "piper_morgan_client_brief.txt", "category": "Our business/company", "content": "Piper Morgan is a key client focused on digital marketing solutions. Their main product is a content creation platform."}
         ]
-        
+
         try:
             for doc in dummy_docs:
                 self.knowledge_base.add_document(doc["file"], doc["category"], doc["content"])
@@ -521,10 +521,10 @@ class PMAgent:
         except KnowledgeBaseError as e:
             logger.error(f"❌ Error initializing knowledge base with dummy documents: {e}")
 
-    def create_github_issue(self, 
-                            repo_name: str, 
-                            user_request: str, 
-                            client_name: Optional[str] = None, 
+    def create_github_issue(self,
+                            repo_name: str,
+                            user_request: str,
+                            client_name: Optional[str] = None,
                             project_name: Optional[str] = None) -> Optional[str]:
         """
         Main function to create a GitHub issue from a natural language request.
@@ -532,7 +532,7 @@ class PMAgent:
         """
         logger.info(f"\n--- Processing request for repo '{repo_name}' ---")
         logger.info(f"User Request: '{user_request}'")
-        
+
         try:
             issue_url = self.issue_creation_agent.create_issue_from_request(
                 repo_name=repo_name,
@@ -540,13 +540,13 @@ class PMAgent:
                 client_name=client_name,
                 project_name=project_name
             )
-            
+
             if issue_url:
                 logger.info(f"✅ Successfully processed request. GitHub Issue URL: {issue_url}")
             else:
                 logger.error("❌ Failed to create GitHub issue (no URL returned).")
             return issue_url
-            
+
         except GitHubAPIError as e:
             logger.error(f"❌ GitHub API Error during issue creation: {e}")
             return None
@@ -569,13 +569,13 @@ class PMAgent:
         """
         logger.info(f"\n--- Reviewing issue #{issue_number} in repo '{repo_name}' ---")
         logger.info(f"Review Instructions: '{review_instructions}'")
-        
+
         try:
             issue_details = self.github_agent.get_issue_details(repo_name, issue_number)
             if not issue_details:
                 logger.warning(f"Issue #{issue_number} not found or accessible in {repo_name}.")
                 return None
-            
+
             logger.info("Review functionality is still a placeholder. Needs full implementation.")
             return None # Placeholder, as the actual review logic was not fully implemented here yet
         except GitHubAPIError as e:
@@ -683,7 +683,7 @@ if __name__ == "__main__":
         agent = PMAgent()
 
         # Optional: Initialize KB with dummy documents if not done already
-        # agent._initialize_knowledge_base() 
+        # agent._initialize_knowledge_base()
 
         print("\n--- Test 1: Create Issue Intent ---")
         agent.process_user_query(
@@ -818,14 +818,14 @@ class IssueTemplate:
     labels: List[str] = None
     assignees: List[str] = None
     milestone: str = None
-    
+
 class GitHubAgent:
     def __init__(self): # Removed token parameter, now uses config
         """Initialize GitHub connection"""
         self.token = app_config.GITHUB_TOKEN # Get token from config
         if not self.token: # This check is also in Config's __init__ but good redundancy
             raise ValueError("GitHub token required. Set GITHUB_TOKEN in .env or Config.")
-        
+
         try:
             self.client = Github(self.token)
             self.user = self.client.get_user()
@@ -834,7 +834,7 @@ class GitHubAgent:
             raise GitHubAPIError(f"Failed to connect to GitHub with provided token: {e}") from e
         except Exception as e:
             raise GitHubAPIError(f"An unexpected error occurred during GitHub connection: {e}") from e
-    
+
     def list_repos(self, limit: int = 10, user_only: bool = True) -> List[Dict]:
         """List accessible repositories"""
         repos = []
@@ -860,7 +860,7 @@ class GitHubAgent:
             raise GitHubAPIError(f"Failed to list GitHub repositories: {e}") from e
         except Exception as e:
             raise GitHubAPIError(f"An unexpected error occurred while listing repositories: {e}") from e
-    
+
     def get_repo(self, repo_name: str):
         """Get a specific repository"""
         try:
@@ -871,7 +871,7 @@ class GitHubAgent:
             raise GitHubAPIError(f"Failed to access GitHub repository '{repo_name}': {e}") from e
         except Exception as e:
             raise GitHubAPIError(f"An unexpected error occurred while getting repository '{repo_name}': {e}") from e
-    
+
     def create_issue(self, repo_name: str, issue: IssueTemplate) -> Optional[str]:
         """Create a new issue in the specified repository"""
         try:
@@ -886,7 +886,7 @@ class GitHubAgent:
                 labels=issue.labels or [],
                 assignees=issue.assignees or []
             )
-            
+
             if issue.milestone:
                 milestones = repo.get_milestones(state='open')
                 target_milestone = next((m for m in milestones if m.title == issue.milestone), None)
@@ -897,12 +897,12 @@ class GitHubAgent:
 
             print(f"✅ Created issue #{github_issue.number}: {github_issue.title}")
             return github_issue.html_url
-            
+
         except GithubException as e:
             raise GitHubAPIError(f"Failed to create GitHub issue in '{repo_name}': {e}") from e
         except Exception as e:
             raise GitHubAPIError(f"An unexpected error occurred while creating issue in '{repo_name}': {e}") from e
-    
+
     def search_issues(self, repo_name: str, query: str, state: str = 'open') -> List[Dict]:
         """Search issues in a repository"""
         try:
@@ -938,7 +938,7 @@ class GitHubAgent:
 
         try:
             issue = repo.get_issue(number=issue_number)
-            
+
             return {
                 "number": issue.number,
                 "title": issue.title,
@@ -970,7 +970,7 @@ class GitHubAgent:
 
         try:
             pull = repo.get_pull(number=pr_number)
-            
+
             return {
                 "number": pull.number,
                 "title": pull.title,
@@ -1031,11 +1031,11 @@ st.markdown("Create GitHub issues from natural language descriptions")
 with st.sidebar:
     st.header("Settings")
     repo_name = st.text_input(
-        "Repository", 
+        "Repository",
         value="mediajunkie/piper-morgan",
         help="Format: owner/repo"
     )
-    
+
 
     st.markdown("---")
     st.header("🏢 Context Settings")
@@ -1064,7 +1064,7 @@ with st.sidebar:
     else:
         st.session_state.client_name = selected_client
 
-    # Project selector with "Add new" option  
+    # Project selector with "Add new" option
     project_options = st.session_state.project_options + ['+ Add new project...']
     selected_project = st.selectbox(
         "Current Project",
@@ -1081,38 +1081,38 @@ with st.sidebar:
             st.rerun()
     else:
         st.session_state.project_name = selected_project
-    
+
     st.markdown("---")
     st.header("📚 Knowledge Base")
-    
+
     uploaded_file = st.file_uploader(
         "Upload a document",
         type=['txt', 'md', 'pdf', 'docx'],
         help="Upload documents to give Piper Morgan context"
     )
-    
+
     if uploaded_file is not None:
         # Show what was uploaded
         st.success(f"📄 Uploaded: {uploaded_file.name}")
-        
+
         # Simple tier selection
         tier = st.selectbox(
             "What does this document relate to?",
             [
                 "General PM knowledge",
-                "Our business/company", 
+                "Our business/company",
                 "Current project",
                 "Specific feature/issue"
             ]
         )
-        
+
         if st.button("💾 Add to Knowledge Base"):
             with st.spinner("Processing document..."):
                 # Save uploaded file temporarily
                 temp_path = f"temp_{uploaded_file.name}"
                 with open(temp_path, "wb") as f:
                     f.write(uploaded_file.read())
-                
+
                 # Ingest document
                 file_type = uploaded_file.name.split('.')[-1].lower()
                 doc_id = st.session_state.knowledge_base.ingest_document(
@@ -1121,12 +1121,12 @@ with st.sidebar:
                     file_type,
                     tier
                 )
-                
+
                 # Clean up
                 os.remove(temp_path)
-                
+
                 st.success(f"✅ Added to knowledge base! Doc ID: {doc_id}")
-    
+
     st.markdown("---")
     st.markdown("### Example Requests")
     examples = [
@@ -1135,7 +1135,7 @@ with st.sidebar:
         "Add dark mode support to the mobile app",
         "Users can't reset their password if email has a + symbol"
     ]
-    
+
     for example in examples:
         if st.button(f"📝 {example}", key=example):
             st.session_state.messages.append({"role": "user", "content": example})
@@ -1155,12 +1155,12 @@ prompt = st.chat_input("Describe an issue (e.g., 'Users need a way to export the
 if prompt:
     # Add user message to chat
     st.session_state.messages.append({"role": "user", "content": prompt})
-    
+
     # Display user message
     with chat_container:
         with st.chat_message("user"):
             st.write(prompt)
-    
+
     # Create issue
     with chat_container:
         with st.chat_message("assistant"):
@@ -1168,12 +1168,12 @@ if prompt:
                 try:
                     # First, show what we're going to create
                     st.write("📝 Creating GitHub issue...")
-                    
+
                     # Get the structured data from Claude
                     preview_prompt = f"""
                     Convert this request into a GitHub issue:
                     Request: {prompt}
-                    
+
                     Respond in JSON format:
                     {{
                         "title": "Clear, actionable title",
@@ -1181,37 +1181,37 @@ if prompt:
                         "labels": ["appropriate", "labels"]
                     }}
                     """
-                    
+
                     result = st.session_state.agent.claude.query_structured(
                         preview_prompt,
                         {
                             "title": "string",
-                            "body": "string", 
+                            "body": "string",
                             "labels": ["string"]
                         }
                     )
-                    
+
                     # Show preview
                     with st.expander("📋 Issue Preview", expanded=True):
                         st.markdown(f"**Title:** {result['title']}")
                         st.markdown("**Body:**")
                         st.text(result['body'])
                         st.markdown(f"**Labels:** {', '.join(result['labels'])}")
-                    
+
                     # Create the actual issue
                     url = st.session_state.agent.create_issue_from_request(
-                        repo_name, 
+                        repo_name,
                         prompt,
                         client_name=st.session_state.get('client_name'),
                         project_name=st.session_state.get('project_name')
                     )
-                    
+
                     st.success(f"✅ Issue created: [View on GitHub]({url})")
-                    
+
                     # Add response to chat
                     response = f"I've created an issue titled '{result['title']}' with labels: {', '.join(result['labels'])}. [View it on GitHub]({url})"
                     st.session_state.messages.append({"role": "assistant", "content": response})
-                    
+
                 except Exception as e:
                     st.error(f"Error: {str(e)}")
                     st.session_state.messages.append({"role": "assistant", "content": f"Sorry, I encountered an error: {str(e)}"})
@@ -1237,7 +1237,7 @@ import os
 from github.GithubException import GithubException
 from typing import Dict, List, Optional
 # Import GitHubAgent so GitHubReviewer can use its instance
-from github_agent import GitHubAgent 
+from github_agent import GitHubAgent
 
 class GitHubReviewer:
     # Now accepts a GitHubAgent instance
@@ -1412,7 +1412,7 @@ class ClaudeClient(LLMAdapter):
         """
         logger.info(f"Querying Claude (model: {self.model}, temp: {temperature}, max_tokens: {max_tokens}).")
         logger.debug(f"Prompt: {prompt[:200]}...")
-        
+
         # In the query method, we were already using the system role correctly
         # for context if provided. The main difference is the structured query.
         messages = [{"role": "user", "content": prompt}]
@@ -1450,7 +1450,7 @@ class ClaudeClient(LLMAdapter):
         """
         logger.info(f"Querying Claude for structured response (model: {self.model}).")
         logger.debug(f"Prompt: {prompt[:200]}...")
-        
+
         # --- MODIFIED LOGIC HERE ---
         # Build the system message content
         system_message_parts = [

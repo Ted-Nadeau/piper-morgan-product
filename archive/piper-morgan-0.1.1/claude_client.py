@@ -1,13 +1,15 @@
-import os
 import json
-import anthropic
+import os
 from typing import Dict, List, Optional
+
+import anthropic
 from config import app_config
-from llm_adapter import LLMAdapter
 from exceptions import LLMGenerationError, LLMParseError
-from logger_config import logger # Import logger
+from llm_adapter import LLMAdapter
+from logger_config import logger  # Import logger
 
 _anthropic_client = None
+
 
 def get_anthropic_client():
     """Returns a singleton Anthropic client instance."""
@@ -21,8 +23,11 @@ def get_anthropic_client():
             logger.info("Anthropic client initialized.")
         except Exception as e:
             logger.exception("Failed to initialize Anthropic client.")
-            raise LLMGenerationError(f"Failed to initialize Anthropic client: {e}") from e
+            raise LLMGenerationError(
+                f"Failed to initialize Anthropic client: {e}"
+            ) from e
     return _anthropic_client
+
 
 class ClaudeClient(LLMAdapter):
     def __init__(self, model: str = app_config.ANTHROPIC_DEFAULT_MODEL):
@@ -30,11 +35,13 @@ class ClaudeClient(LLMAdapter):
         self.model = model
         logger.info(f"ClaudeClient initialized with model: {self.model}")
 
-    def query(self,
-              prompt: str,
-              context: Optional[str] = None,
-              max_tokens: int = app_config.ANTHROPIC_MAX_TOKENS,
-              temperature: float = app_config.ANTHROPIC_TEMPERATURE) -> str:
+    def query(
+        self,
+        prompt: str,
+        context: Optional[str] = None,
+        max_tokens: int = app_config.ANTHROPIC_MAX_TOKENS,
+        temperature: float = app_config.ANTHROPIC_TEMPERATURE,
+    ) -> str:
         """
         Queries the Claude LLM for a free-form text response.
         """
@@ -53,18 +60,26 @@ class ClaudeClient(LLMAdapter):
             )
             return message.content[0].text
         except anthropic.APIError as e:
-            logger.error(f"Anthropic API error during query: Status {e.status_code} - {e.response}")
-            raise LLMGenerationError(f"Anthropic API error during query: {e.status_code} - {e.response}") from e
+            logger.error(
+                f"Anthropic API error during query: Status {e.status_code} - {e.response}"
+            )
+            raise LLMGenerationError(
+                f"Anthropic API error during query: {e.status_code} - {e.response}"
+            ) from e
         except Exception as e:
             logger.exception("An unexpected error occurred during Claude query.")
-            raise LLMGenerationError(f"An unexpected error occurred during Claude query: {e}") from e
+            raise LLMGenerationError(
+                f"An unexpected error occurred during Claude query: {e}"
+            ) from e
 
-    def query_structured(self,
-                         prompt: str,
-                         response_format: Dict,
-                         context: Optional[str] = None,
-                         max_tokens: int = app_config.ANTHROPIC_MAX_TOKENS,
-                         temperature: float = 0.0) -> Dict: # Structured queries often use lower temp
+    def query_structured(
+        self,
+        prompt: str,
+        response_format: Dict,
+        context: Optional[str] = None,
+        max_tokens: int = app_config.ANTHROPIC_MAX_TOKENS,
+        temperature: float = 0.0,
+    ) -> Dict:  # Structured queries often use lower temp
         """
         Queries the Claude LLM for a structured (JSON) response.
         """
@@ -103,8 +118,12 @@ class ClaudeClient(LLMAdapter):
 
             # Anthropic models sometimes return JSON within markdown.
             # Clean it up if necessary.
-            if raw_text.strip().startswith("```json") and raw_text.strip().endswith("```"):
-                json_str = raw_text.strip()[len("```json"):len(raw_text.strip())-len("```")].strip()
+            if raw_text.strip().startswith("```json") and raw_text.strip().endswith(
+                "```"
+            ):
+                json_str = raw_text.strip()[
+                    len("```json") : len(raw_text.strip()) - len("```")
+                ].strip()
             elif raw_text.strip().startswith("{") and raw_text.strip().endswith("}"):
                 json_str = raw_text.strip()
             else:
@@ -124,8 +143,16 @@ class ClaudeClient(LLMAdapter):
             logger.debug(f"Raw LLM response causing JSONDecodeError: {raw_text}")
             raise LLMParseError(f"LLM generated invalid JSON: {e}") from e
         except anthropic.APIError as e:
-            logger.error(f"Anthropic API error during structured query: Status {e.status_code} - {e.response}")
-            raise LLMGenerationError(f"Anthropic API error during structured query: {e.status_code} - {e.response}") from e
+            logger.error(
+                f"Anthropic API error during structured query: Status {e.status_code} - {e.response}"
+            )
+            raise LLMGenerationError(
+                f"Anthropic API error during structured query: {e.status_code} - {e.response}"
+            ) from e
         except Exception as e:
-            logger.exception("An unexpected error occurred during Claude structured query.")
-            raise LLMGenerationError(f"An unexpected error occurred during Claude structured query: {e}") from e
+            logger.exception(
+                "An unexpected error occurred during Claude structured query."
+            )
+            raise LLMGenerationError(
+                f"An unexpected error occurred during Claude structured query: {e}"
+            ) from e

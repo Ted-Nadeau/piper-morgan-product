@@ -122,6 +122,13 @@ image_sequence/
 *.rar
 *.7z
 
+# Large image files in docs (blog images, etc.)
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.gif
+docs/**/*.svg
+
 # ============================================
 # PROJECT-SPECIFIC ADDITIONS
 # ============================================

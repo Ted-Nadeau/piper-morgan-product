@@ -1,27 +1,36 @@
 """
 Query Router - Routes QUERY intents to appropriate query services
 """
+
 from typing import Any, Dict, List
+
 from services.domain.models import Intent
-from services.shared_types import IntentCategory
-from services.queries.project_queries import ProjectQueryService
 from services.queries.conversation_queries import ConversationQueryService
 from services.queries.file_queries import FileQueryService
+from services.queries.project_queries import ProjectQueryService
+from services.shared_types import IntentCategory
 
 
 class QueryRouter:
     """Routes QUERY intents to appropriate query services"""
-    
-    def __init__(self, project_query_service: ProjectQueryService, conversation_query_service: ConversationQueryService, file_query_service: FileQueryService):
+
+    def __init__(
+        self,
+        project_query_service: ProjectQueryService,
+        conversation_query_service: ConversationQueryService,
+        file_query_service: FileQueryService,
+    ):
         self.project_queries = project_query_service
         self.conversation_queries = conversation_query_service
         self.file_queries = file_query_service
-    
+
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service"""
         if intent.category != IntentCategory.QUERY:
-            raise ValueError(f"QueryRouter can only handle QUERY intents, got {intent.category}")
-        
+            raise ValueError(
+                f"QueryRouter can only handle QUERY intents, got {intent.category}"
+            )
+
         if intent.action == "list_projects":
             return await self.project_queries.list_active_projects()
         elif intent.action == "get_project":
@@ -51,19 +60,23 @@ class QueryRouter:
             print(f"DEBUG: QueryRouter - file_id from context: {file_id}")
             print(f"DEBUG: QueryRouter - full context: {intent.context}")
             return await self.file_queries.read_file_contents(file_id)
+        elif intent.action == "summarize_file":
+            file_id = intent.context.get("resolved_file_id")
+            print(f"DEBUG: QueryRouter - summarize file_id: {file_id}")
+            return await self.file_queries.summarize_file(file_id)
         else:
             raise ValueError(f"Unknown query action: {intent.action}")
-    
+
     def get_supported_queries(self) -> List[str]:
         """Get list of supported query actions"""
         return [
             "list_projects",
-            "get_project", 
+            "get_project",
             "get_default_project",
             "find_project",
             "count_projects",
             "get_greeting",
             "get_help",
             "get_status",
-            "get_initial_contact"
-        ] 
+            "get_initial_contact",
+        ]

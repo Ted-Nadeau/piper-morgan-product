@@ -2,8 +2,8 @@
 
 ## MarkdownFormatter Domain Service
 
-**File**: `services/utils/markdown_formatter.py`  
-**Purpose**: Ensure LLM-generated markdown follows CommonMark standards  
+**File**: `services/utils/markdown_formatter.py`
+**Purpose**: Ensure LLM-generated markdown follows CommonMark standards
 **Domain**: Document Analysis & Summarization
 
 ### Business Rules Enforced
@@ -58,8 +58,8 @@ INFO: Markdown formatting issues detected and fixed: ['Non-standard bullet synta
 
 ## BotMessageRenderer Domain Service (Web UI, 2025)
 
-**File**: `web/bot-message-renderer.js`  
-**Purpose**: Unify all bot message rendering and response handling in the web UI, following DDD principles  
+**File**: `web/bot-message-renderer.js`
+**Purpose**: Unify all bot message rendering and response handling in the web UI, following DDD principles
 **Domain**: Web UI Response Handling
 
 ### Business Rules Enforced

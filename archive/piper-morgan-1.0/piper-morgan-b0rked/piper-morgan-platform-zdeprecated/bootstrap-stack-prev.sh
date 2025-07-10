@@ -8,31 +8,31 @@ echo "🚀 Setting up Piper Morgan Bootstrap Stack..."
 # Check prerequisites
 check_prerequisites() {
     echo "Checking prerequisites..."
-    
+
     command -v docker >/dev/null 2>&1 || { echo "❌ Docker required but not installed."; exit 1; }
     command -v docker-compose >/dev/null 2>&1 || { echo "❌ Docker Compose required but not installed."; exit 1; }
     command -v python3 >/dev/null 2>&1 || { echo "❌ Python 3 required but not installed."; exit 1; }
     command -v git >/dev/null 2>&1 || { echo "❌ Git required but not installed."; exit 1; }
-    
+
     echo "✅ All prerequisites installed"
 }
 
 # Create directory structure
 setup_directories() {
     echo "Creating directory structure..."
-    
+
     mkdir -p infrastructure/docker/{keycloak,postgres,redis,monitoring}
     mkdir -p infrastructure/config
     mkdir -p data/{postgres,redis,keycloak,grafana,prometheus}
     mkdir -p logs
-    
+
     echo "✅ Directories created"
 }
 
 # Create Docker Compose file
 create_docker_compose() {
     echo "Creating docker-compose.yml..."
-    
+
     cat > docker-compose.yml << 'EOF'
 version: '3.8'
 
@@ -192,14 +192,14 @@ networks:
   default:
     name: piper-network
 EOF
-    
+
     echo "✅ docker-compose.yml created"
 }
 
 # Create configuration files
 create_config_files() {
     echo "Creating configuration files..."
-    
+
     # Prometheus config
     mkdir -p infrastructure/config/prometheus
     cat > infrastructure/config/prometheus/prometheus.yml << 'EOF'
@@ -211,7 +211,7 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
-  
+
   - job_name: 'piper-services'
     static_configs:
       - targets: ['host.docker.internal:8001']  # Your app metrics endpoint
@@ -228,7 +228,7 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
-    
+
   - name: Loki
     type: loki
     access: proxy
@@ -329,7 +329,7 @@ EOF
 # Create environment file
 create_env_file() {
     echo "Creating .env file..."
-    
+
     cat > .env.example << 'EOF'
 # Database
 POSTGRES_PASSWORD=changeme_strong_password_here
@@ -372,14 +372,14 @@ EOF
         cp .env.example .env
         echo "⚠️  Created .env file - please update with your values"
     fi
-    
+
     echo "✅ Environment file created"
 }
 
 # Create Python setup script
 create_python_setup() {
     echo "Creating Python setup script..."
-    
+
     cat > setup-python.sh << 'EOF'
 #!/bin/bash
 # Setup Python environment for Piper Morgan
@@ -441,7 +441,7 @@ pip install -r requirements.txt
 echo "✅ Python environment ready"
 echo "Activate with: source venv/bin/activate"
 EOF
-    
+
     chmod +x setup-python.sh
     echo "✅ Python setup script created"
 }
@@ -449,7 +449,7 @@ EOF
 # Create initial application structure
 create_app_structure() {
     echo "Creating initial application structure..."
-    
+
     cat > main.py << 'EOF'
 """
 Piper Morgan Platform - Bootstrap Version
@@ -474,7 +474,7 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting Piper Morgan Platform...")
     logger.info("✅ Connected to PostgreSQL")
-    logger.info("✅ Connected to Redis") 
+    logger.info("✅ Connected to Redis")
     logger.info("✅ Connected to ChromaDB")
     logger.info("✅ Keycloak authentication ready")
     logger.info("✅ Temporal workflow engine ready")
@@ -531,7 +531,7 @@ EOF
 # Create startup script
 create_startup_script() {
     echo "Creating startup script..."
-    
+
     cat > start.sh << 'EOF'
 #!/bin/bash
 # Start Piper Morgan Platform
@@ -575,7 +575,7 @@ echo "Starting application..."
 source venv/bin/activate
 python main.py
 EOF
-    
+
     chmod +x start.sh
     echo "✅ Startup script created"
 }
@@ -583,7 +583,7 @@ EOF
 # Create stop script
 create_stop_script() {
     echo "Creating stop script..."
-    
+
     cat > stop.sh << 'EOF'
 #!/bin/bash
 # Stop Piper Morgan Platform
@@ -598,7 +598,7 @@ docker-compose down
 
 echo "✅ All services stopped"
 EOF
-    
+
     chmod +x stop.sh
     echo "✅ Stop script created"
 }
@@ -609,7 +609,7 @@ main() {
     echo "Piper Morgan Bootstrap Stack Setup"
     echo "==================================="
     echo ""
-    
+
     check_prerequisites
     setup_directories
     create_docker_compose
@@ -619,7 +619,7 @@ main() {
     create_app_structure
     create_startup_script
     create_stop_script
-    
+
     echo ""
     echo "✅ Bootstrap stack setup complete!"
     echo ""

@@ -2,14 +2,14 @@
 
 ## MarkdownFormatter Domain Service
 
-**File**: `services/utils/markdown_formatter.py`  
-**Purpose**: Ensure LLM-generated markdown follows CommonMark standards  
+**File**: `services/utils/markdown_formatter.py`
+**Purpose**: Ensure LLM-generated markdown follows CommonMark standards
 **Domain**: Document Analysis & Summarization
 
 ### Business Rules Enforced
 
 1. **Standard Bullet Syntax**: Converts `• -` to `-` (CommonMark standard)
-2. **Header Spacing**: Ensures `##Header` becomes `## Header` 
+2. **Header Spacing**: Ensures `##Header` becomes `## Header`
 3. **Bold Formatting**: Fixes unclosed `**` tags
 4. **Multi-space Cleanup**: Normalizes spacing in headers
 
@@ -31,7 +31,7 @@ issues = MarkdownFormatter.validate_markdown_syntax(llm_output)
 ### Integration Points
 
 - **TextAnalyzer**: Applied after LLM summary generation
-- **DocumentAnalyzer**: Applied after LLM summary generation  
+- **DocumentAnalyzer**: Applied after LLM summary generation
 - **Prompt Templates**: Updated with explicit formatting rules
 
 ### Monitoring

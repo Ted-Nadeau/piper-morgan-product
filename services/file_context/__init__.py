@@ -1,1 +1,1 @@
-"""File context services for intelligent file resolution""" 
+"""File context services for intelligent file resolution"""

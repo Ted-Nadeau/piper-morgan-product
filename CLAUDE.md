@@ -53,6 +53,73 @@ docker exec -it piper-redis redis-cli
 docker-compose logs -f [service_name]
 ```
 
+### Session Logs
+
+When creating session logs in `docs/development/session-logs/`:
+
+**Naming Convention:**
+- First session of day: `YYYY-MM-DD-log.md`
+- Subsequent sessions: `YYYY-MM-DDa-log.md`, `YYYY-MM-DDb-log.md`, etc.
+- Optional descriptive suffix: `YYYY-MM-DDa-log-descriptive-name.md`
+
+**Required Template Structure:**
+```markdown
+# Session Log: [Brief Description]
+
+**Date:** YYYY-MM-DD
+**Duration:** ~X hours
+**Focus:** [Primary objective]
+**Status:** [Complete/In Progress/Blocked]
+
+## Summary
+[Brief overview of what was accomplished]
+
+## Problems Addressed
+[List of issues tackled]
+
+## Solutions Implemented
+[What was built/fixed]
+
+## Key Decisions Made
+[Important architectural or design choices]
+
+## Files Modified
+[List of changed files]
+
+## Next Steps
+[What should happen next]
+```
+
+## Development Approach
+
+### Core Principles
+- Question assumptions and explore alternatives
+- Catch antipatterns before they take root
+- Use decision points as teaching moments
+- Keep responses "concise but complete"
+- One actionable step at a time
+
+### Key Constraints
+- $0 software budget - use only free/open source tools
+- Single developer bandwidth - optimize for maintainability
+- Production-ready from start - no "we'll fix it later"
+
+### Critical Files to Review
+
+Always check these files when starting work:
+- `services/domain/models.py` - Canonical source of truth
+- `services/shared_types.py` - All enums defined here
+- `docs/architecture/architecture.md` - System design and patterns
+- `docs/architecture/pattern-catalog.md` - Approved implementation patterns
+- Session logs in `docs/development/session-logs/` - Current context
+
+### Detailed Guidelines
+
+For comprehensive development methodology, see:
+- **Working Method**: `docs/development/working-method.md` - Step-by-step execution patterns
+- **Architecture Guidelines**: `docs/development/architectural-guidelines.md` - Antipatterns and best practices
+- **Session Handoffs**: `docs/development/continuity-prompt-template.md` - Managing session transitions
+
 ## Architecture & Code Structure
 
 ### Core Design Patterns
@@ -62,13 +129,13 @@ docker-compose logs -f [service_name]
    - **Layered Architecture**: Domain → Application → Infrastructure → Presentation
    - **Business logic belongs in domain services**, not UI or infrastructure layers
 
-2. **CQRS-lite Pattern**: 
+2. **CQRS-lite Pattern**:
    - Read operations: `services/queries/` (QueryRouter handles all read-only operations)
    - Write operations: `services/orchestration/` (workflows and commands)
 
 3. **Repository Pattern**: All data access through repositories in `services/repositories/`
 
-4. **Workflow Orchestration**: 
+4. **Workflow Orchestration**:
    - Uses internal task handler pattern in `OrchestrationEngine`
    - Stateless `WorkflowFactory` with per-call context injection
    - Automatic repository context enrichment for workflows

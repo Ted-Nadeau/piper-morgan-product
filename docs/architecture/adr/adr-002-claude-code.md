@@ -1,7 +1,7 @@
 # ADR-002: Claude Code Integration
 
-**Date**: July 6, 2025  
-**Status**: Accepted  
+**Date**: July 6, 2025
+**Status**: Accepted
 **Deciders**: Principal Architect, Chief of Staff, CTO, PM
 **Last Modified**: July 8, 2025 (Sprint Zero findings added)
 

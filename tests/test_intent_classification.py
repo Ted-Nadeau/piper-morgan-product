@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from services.intent_service.classifier import IntentClassifier
+
+import pytest
+
 from services.domain.models import Intent, IntentCategory
+from services.intent_service.classifier import IntentClassifier
+
 
 @pytest.fixture
 def classifier():
@@ -15,9 +18,12 @@ def classifier():
     classifier_instance.knowledge_graph = MagicMock()
     ingester_mock = MagicMock()
     ingester_mock.search_with_context = AsyncMock(return_value=[])
-    classifier_instance.knowledge_graph.get_ingester = MagicMock(return_value=ingester_mock)
-    
+    classifier_instance.knowledge_graph.get_ingester = MagicMock(
+        return_value=ingester_mock
+    )
+
     return classifier_instance
+
 
 @pytest.mark.asyncio
 async def test_classify_user_complaint_as_create_ticket(classifier):
@@ -27,7 +33,7 @@ async def test_classify_user_complaint_as_create_ticket(classifier):
     """
     # Arrange
     user_message = "Users are complaining the login page is slow"
-    
+
     # This is the expected JSON response from the LLM based on the improved prompt
     mock_llm_response = """
     {
@@ -40,7 +46,7 @@ async def test_classify_user_complaint_as_create_ticket(classifier):
         "knowledge_used": ["The prompt example for user complaints guided this classification."]
     }
     """
-    
+
     classifier.llm.complete.return_value = mock_llm_response
 
     # Act
@@ -51,7 +57,7 @@ async def test_classify_user_complaint_as_create_ticket(classifier):
     assert result_intent.category == IntentCategory.EXECUTION
     assert result_intent.action == "create_ticket"
     assert result_intent.confidence >= 0.7
-    
+
     # Verify that the LLM was called correctly
     classifier.llm.complete.assert_called_once()
     call_args = classifier.llm.complete.call_args

@@ -18,13 +18,13 @@ AttributeError: 'Anthropic' object has no attribute 'get_tokenizer'
 2025-05-31 23:30:10,335 - pm_agent_app - INFO - ✅ Connected to GitHub as: mediajunkie
 2025-05-31 23:30:10,365 - pm_agent_app - INFO - Anthropic client initialized.
 2025-05-31 23:30:10,366 - pm_agent_app - INFO - ClaudeClient initialized with model: claude-sonnet-4-20250514
-2025-05-31 23:35:03,601 - pm_agent_app - INFO - 
+2025-05-31 23:35:03,601 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:35:03,602 - pm_agent_app - INFO - User Request: 'Rebuild file upload and context settings from earlier versions of the Piper Morgan prototype (0.1) chat interface.'
 2025-05-31 23:35:03,800 - pm_agent_app - ERROR - Failed to retrieve context for query 'Rebuild file upload and context settings from earlier versions of the Piper Morgan prototype (0.1) chat interface.' from knowledge base: 'KnowledgeBase' object has no attribute 'tokenizer'
 2025-05-31 23:35:03,801 - pm_agent_app - ERROR - Error retrieving context from knowledge base: Failed to retrieve context for query 'Rebuild file upload and context settings from earlier versions of the Piper Morgan prototype (0.1) chat interface.' from knowledge base: 'KnowledgeBase' object has no attribute 'tokenizer'
 2025-05-31 23:35:03,801 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:35:03,801 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:35:03,801 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -83,7 +83,7 @@ AttributeError: 'Anthropic' object has no attribute 'get_tokenizer'
   ]
 }
         ```
-        
+
 2025-05-31 23:35:03,801 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n8. The 'intent' must always be 'create_issue'.\n9. Ensure 'client_name' is 'PM Agent Development' if provided, otherwise infer.\n10. Ensure 'project_name' is 'Piper Morgan' if provided, otherwise infer.\n\nKnowledge Base Context (if available):\nNo additional context available.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n"}, {'role': 'user', 'content': 'Rebuild file upload and context settings from earlier versions of the Piper Morgan prototype (0.1) chat interface.'}]
 2025-05-31 23:35:03,802 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:35:03,802 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -112,13 +112,13 @@ TypeError: __init__() got an unexpected keyword argument 'intent'
 2025-05-31 23:41:43,206 - pm_agent_app - INFO - ✅ Connected to GitHub as: mediajunkie
 2025-05-31 23:41:43,240 - pm_agent_app - INFO - Anthropic client initialized.
 2025-05-31 23:41:43,241 - pm_agent_app - INFO - ClaudeClient initialized with model: claude-sonnet-4-20250514
-2025-05-31 23:42:28,568 - pm_agent_app - INFO - 
+2025-05-31 23:42:28,568 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:42:28,570 - pm_agent_app - INFO - User Request: 'Let's try to bring back the contextual features for github issues and knowledge uploads from the Piper Morgan prototype.'
 2025-05-31 23:42:28,570 - pm_agent_app - INFO - Searching knowledge base with query: 'Let's try to bring back the contextual features for github issues and knowledge uploads from the Piper Morgan prototype. Piper Morgan project'
 2025-05-31 23:42:28,695 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query 'Let's try to bring back the contextual features for github issues and knowledge uploads from the Piper Morgan prototype. Piper Morgan project'.
 2025-05-31 23:42:28,696 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:42:28,696 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:42:28,696 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -163,7 +163,7 @@ TypeError: __init__() got an unexpected keyword argument 'intent'
   ]
 }
         ```
-        
+
 2025-05-31 23:42:28,696 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: 'Let's try to bring back the contextual features for github issues and knowledge uploads from the Piper Morgan prototype.'"}]
 2025-05-31 23:42:28,696 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:42:28,696 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -185,13 +185,13 @@ TypeError: __init__() got an unexpected keyword argument 'intent'
 2025-05-31 23:47:42,963 - pm_agent_app - INFO - ✅ Connected to GitHub as: mediajunkie
 2025-05-31 23:47:42,993 - pm_agent_app - INFO - Anthropic client initialized.
 2025-05-31 23:47:42,993 - pm_agent_app - INFO - ClaudeClient initialized with model: claude-sonnet-4-20250514
-2025-05-31 23:48:44,257 - pm_agent_app - INFO - 
+2025-05-31 23:48:44,257 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - User Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - Searching knowledge base with query: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'
 2025-05-31 23:48:44,345 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'.
 2025-05-31 23:48:44,346 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -236,7 +236,7 @@ TypeError: __init__() got an unexpected keyword argument 'intent'
   ]
 }
         ```
-        
+
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'"}]
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -256,7 +256,7 @@ TypeError: __init__() got an unexpected keyword argument 'intent'
 2025-05-31 23:49:27,098 - pm_agent_app - INFO - Current document count: 4
 2025-05-31 23:49:27,482 - pm_agent_app - INFO - ✅ Connected to GitHub as: mediajunkie
 2025-05-31 23:49:27,483 - pm_agent_app - INFO - ClaudeClient initialized with model: claude-sonnet-4-20250514
-2025-05-31 23:49:27,489 - pm_agent_app - INFO - 
+2025-05-31 23:49:27,489 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:49:27,489 - pm_agent_app - INFO - User Request: '
   You can now view your Streamlit app in your browser.
@@ -268,7 +268,7 @@ TypeError: __init__() got an unexpected keyword argument 'intent'
 
   $ xcode-select --install
   $ pip install watchdog
-            
+
 2025-05-31 23:47:36,413 - pm_agent_app - INFO - Logging configured successfully.
 2025-05-31 23:47:42,506 - pm_agent_app - INFO - ✅ KnowledgeBase connected to collection: 'pm_knowledge_base' in 'pm_kb_docs'
 2025-05-31 23:47:42,554 - pm_agent_app - INFO - Current document count: 4
@@ -291,13 +291,13 @@ Traceback (most recent call last):
   File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/torch/_classes.py", line 13, in __getattr__
     proxy = torch._C._get_custom_class_python_wrapper(self.name, attr)
 RuntimeError: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
-2025-05-31 23:48:44,257 - pm_agent_app - INFO - 
+2025-05-31 23:48:44,257 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - User Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - Searching knowledge base with query: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'
 2025-05-31 23:48:44,345 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'.
 2025-05-31 23:48:44,346 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -342,7 +342,7 @@ RuntimeError: Tried to instantiate class '__path__._path', but it does not exist
   ]
 }
         ```
-        
+
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'"}]
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -376,7 +376,7 @@ To disable this warning, you can either:
 
   $ xcode-select --install
   $ pip install watchdog
-            
+
 2025-05-31 23:47:36,413 - pm_agent_app - INFO - Logging configured successfully.
 2025-05-31 23:47:42,506 - pm_agent_app - INFO - ✅ KnowledgeBase connected to collection: 'pm_knowledge_base' in 'pm_kb_docs'
 2025-05-31 23:47:42,554 - pm_agent_app - INFO - Current document count: 4
@@ -399,13 +399,13 @@ Traceback (most recent call last):
   File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/torch/_classes.py", line 13, in __getattr__
     proxy = torch._C._get_custom_class_python_wrapper(self.name, attr)
 RuntimeError: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
-2025-05-31 23:48:44,257 - pm_agent_app - INFO - 
+2025-05-31 23:48:44,257 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - User Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - Searching knowledge base with query: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'
 2025-05-31 23:48:44,345 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'.
 2025-05-31 23:48:44,346 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -450,7 +450,7 @@ RuntimeError: Tried to instantiate class '__path__._path', but it does not exist
   ]
 }
         ```
-        
+
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'"}]
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -484,7 +484,7 @@ To disable this warning, you can either:
 
   $ xcode-select --install
   $ pip install watchdog
-            
+
 2025-05-31 23:47:36,413 - pm_agent_app - INFO - Logging configured successfully.
 2025-05-31 23:47:42,506 - pm_agent_app - INFO - ✅ KnowledgeBase connected to collection: 'pm_knowledge_base' in 'pm_kb_docs'
 2025-05-31 23:47:42,554 - pm_agent_app - INFO - Current document count: 4
@@ -507,13 +507,13 @@ Traceback (most recent call last):
   File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/torch/_classes.py", line 13, in __getattr__
     proxy = torch._C._get_custom_class_python_wrapper(self.name, attr)
 RuntimeError: Tried to instantiate class '__path__._path', but it does not exist! Ensure that it is registered via torch::class_
-2025-05-31 23:48:44,257 - pm_agent_app - INFO - 
+2025-05-31 23:48:44,257 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - User Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'
 2025-05-31 23:48:44,258 - pm_agent_app - INFO - Searching knowledge base with query: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'
 2025-05-31 23:48:44,345 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project'.
 2025-05-31 23:48:44,346 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -558,7 +558,7 @@ RuntimeError: Tried to instantiate class '__path__._path', but it does not exist
   ]
 }
         ```
-        
+
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: 'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)'"}]
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -583,7 +583,7 @@ To disable this warning, you can either:
 2025-05-31 23:48:55,025 - pm_agent_app - INFO - Generated issue data: Title='Restore context features for GitHub issues and knowledge uploads in Piper Morgan v0.1.1', Labels=['feature', 'enhancement', 'prototype', 'context', 'github-integration']
 2025-05-31 23:48:55,477 - pm_agent_app - ERROR - GitHub API error during issue creation: An unexpected error occurred during issue creation: None Piper Morgan project'.
 2025-05-31 23:49:27,553 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:49:27,553 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:49:27,553 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -628,7 +628,7 @@ To disable this warning, you can either:
   ]
 }
         ```
-        
+
 2025-05-31 23:49:27,553 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': 'Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user\'s request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., \'feature\', \'bug\', \'enhancement\').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: \'\n  You can now view your Streamlit app in your browser.\n\n  Local URL: http://localhost:8501\n  Network URL: http://192.168.4.150:8501\n\n  For better performance, install the Watchdog module:\n\n  $ xcode-select --install\n  $ pip install watchdog\n            \n2025-05-31 23:47:36,413 - pm_agent_app - INFO - Logging configured successfully.\n2025-05-31 23:47:42,506 - pm_agent_app - INFO - ✅ KnowledgeBase connected to collection: \'pm_knowledge_base\' in \'pm_kb_docs\'\n2025-05-31 23:47:42,554 - pm_agent_app - INFO - Current document count: 4\n2025-05-31 23:47:42,963 - pm_agent_app - INFO - ✅ Connected to GitHub as: mediajunkie\n2025-05-31 23:47:42,993 - pm_agent_app - INFO - Anthropic client initialized.\n2025-05-31 23:47:42,993 - pm_agent_app - INFO - ClaudeClient initialized with model: claude-sonnet-4-20250514\n2025-05-31 23:47:43.185 Examining the path of torch.classes raised:\nTraceback (most recent call last):\n  File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/streamlit/web/bootstrap.py", line 347, in run\n    if asyncio.get_running_loop().is_running():\nRuntimeError: no running event loop\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/streamlit/watcher/local_sources_watcher.py", line 217, in get_module_paths\n    potential_paths = extract_paths(module)\n  File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/streamlit/watcher/local_sources_watcher.py", line 210, in <lambda>\n    lambda m: list(m.__path__._path),\n  File "/Users/xian/Experiments/Piper Morgan/piper-morgan-0.1.1/venv/lib/python3.9/site-packages/torch/_classes.py", line 13, in __getattr__\n    proxy = torch._C._get_custom_class_python_wrapper(self.name, attr)\nRuntimeError: Tried to instantiate class \'__path__._path\', but it does not exist! Ensure that it is registered via torch::class_\n2025-05-31 23:48:44,257 - pm_agent_app - INFO - \n--- Processing request for repo \'mediajunkie/piper-morgan\' ---\n2025-05-31 23:48:44,258 - pm_agent_app - INFO - User Request: \'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)\'\n2025-05-31 23:48:44,258 - pm_agent_app - INFO - Searching knowledge base with query: \'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project\'\n2025-05-31 23:48:44,345 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query \'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1) Piper Morgan project\'.\n2025-05-31 23:48:44,346 - pm_agent_app - INFO - Generating structured issue data with LLM...\n2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - System Prompt: \n        You are a highly skilled AI assistant.\n        Your task is to respond with a JSON object that strictly adheres to the following JSON schema.\n        Do NOT include any other text, explanations, or formatting outside the JSON object.\n        ONLY return the JSON object.\n\n        JSON Schema:\n        ```json\n        {\n  "type": "object",\n  "properties": {\n    "title": {\n      "type": "string",\n      "description": "Concise and clear title for the GitHub issue."\n    },\n    "body": {\n      "type": "string",\n      "description": "Detailed description for the GitHub issue, including acceptance criteria, and background context. Include relevant information from the knowledge base if available and useful. Markdown formatting is encouraged for readability."\n    },\n    "labels": {\n      "type": "array",\n      "items": {\n        "type": "string"\n      },\n      "description": "A list of relevant GitHub labels for the issue (e.g., \'bug\', \'feature\', \'enhancement\', \'documentation\', \'urgent\', \'priority\', \'tech debt\', \'discovery\'). Choose labels based on the request\'s content and urgency. Ensure these labels are already defined in the GitHub repository or are common enough to be created."\n    },\n    "assignees": {\n      "type": "array",\n      "items": {\n        "type": "string"\n      },\n      "description": "A list of GitHub usernames to assign to the issue (e.g., [\'mediajunkie\']). Only assign if a specific user is mentioned or implied by the request. If no specific assignee is mentioned, leave this empty."\n    },\n    "milestone": {\n      "type": "string",\n      "description": "The name of the GitHub milestone this issue belongs to (e.g., \'Q3 2024 Planning\', \'Sprint 1\'). Only include if a specific milestone is clearly indicated in the request. If no specific milestone is mentioned, leave this empty."\n    }\n  },\n  "required": [\n    "title",\n    "body",\n    "labels"\n  ]\n}\n        ```\n        \n2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Messages: [{\'role\': \'user\', \'content\': \'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\\nDo NOT include any other text, explanations, or formatting outside the JSON object.\\nONLY return the JSON object.\'}, {\'role\': \'user\', \'content\': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\\n\\nFollow these rules:\\n1. Extract all relevant details from the user\'s request.\\n2. If available, use information from the provided knowledge base context to enrich the issue body.\\n3. Ensure the issue title is concise and informative.\\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., \'feature\', \'bug\', \'enhancement\').\\n6. Assignees should only be included if explicitly mentioned or clearly implied.\\n7. Milestones should only be included if explicitly mentioned.\\n\\nKnowledge Base Context (if available):\\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\\n\\nDynamic Variables:\\nClient Name: PM Agent Development\\nProject Name: Piper Morgan\\n\\nUser Request: \'Bring back the context features (for github issues and knowledge uploads) for the Piper Morgan prototype (0.1.1)\'"}]\n2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514\n2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000\n2025-05-31 23:48:44,346 - pm_agent_app - DEBUG - Structured Query - Temperature: 0.0\nhuggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...\nTo disable this warning, you can either:\n\t- Avoid using `tokenizers` before the fork if possible\n\t- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)\nhuggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...\nTo disable this warning, you can either:\n\t- Avoid using `tokenizers` before the fork if possible\n\t- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)\n2025-05-31 23:48:55,023 - pm_agent_app - DEBUG - Raw LLM structured response: ```json\n{\n  "title": "Restore context features for GitHub issues and knowledge uploads in Piper Morgan v0.1.1",\n  "body": "## Description\\n\\nRestore the context features that were previously available in the Piper Morgan prototype, specifically focusing on GitHub issues and knowledge uploads functionality. These features appear to have been removed or disabled in the current version and need to be brought back for v0.1.1.\\n\\n## Background\\n\\nThe Piper Morgan prototype previously included context features that allowed users to:\\n- Integrate with GitHub issues\\n- Upload and manage knowledge base content\\n\\nThese features are essential for the prototype\'s functionality and user experience.\\n\\n## Acceptance Criteria\\n\\n- [ ] GitHub issues context feature is fully restored and functional\\n- [ ] Knowledge uploads context feature is fully restored and functional\\n- [ ] All previously available context features are working as expected\\n- [ ] Features are properly integrated with the existing Piper Morgan v0.1.1 codebase\\n- [ ] No regression in existing functionality\\n- [ ] Context features maintain compatibility with current authentication flows\\n- [ ] Documentation is updated to reflect the restored features\\n\\n## Technical Considerations\\n\\n- Review previous implementation to understand how context features were integrated\\n- Ensure compatibility with current CI/CD pipelines and deployment strategies\\n- Verify that restored features align with existing development processes\\n- Test integration points with GitHub API for issues functionality\\n- Validate knowledge upload mechanisms and storage\\n\\n## Definition of Done\\n\\n- [ ] Context features are fully functional in development environment\\n- [ ] All tests pass including new tests for restored features\\n- [ ] Code review completed\\n- [ ] Features tested in staging environment\\n- [ ] Documentation updated\\n- [ ] Ready for deployment to production",\n  "labels": ["feature", "enhancement", "prototype", "context", "github-integration"]\n}\n```\n2025-05-31 23:48:55,024 - pm_agent_app - INFO - Claude structured query successful, JSON parsed.\n2025-05-31 23:48:55,024 - pm_agent_app - INFO - Claude structured query successful, JSON parsed.\n2025-05-31 23:48:55,025 - pm_agent_app - INFO - Generated issue data: Title=\'Restore context features for GitHub issues and knowledge uploads in Piper Morgan v0.1.1\', Labels=[\'feature\', \'enhancement\', \'prototype\', \'context\', \'github-integration\']\n2025-05-31 23:48:55,477 - pm_agent_app - ERROR - GitHub API error during issue creation: An unexpected error occurred during issue creation: None\''}]
 2025-05-31 23:49:27,553 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:49:27,553 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
@@ -650,13 +650,13 @@ To disable this warning, you can either:
 2025-05-31 23:50:44,246 - pm_agent_app - INFO - ✅ Connected to GitHub as: mediajunkie
 2025-05-31 23:50:44,276 - pm_agent_app - INFO - Anthropic client initialized.
 2025-05-31 23:50:44,276 - pm_agent_app - INFO - ClaudeClient initialized with model: claude-sonnet-4-20250514
-2025-05-31 23:51:21,640 - pm_agent_app - INFO - 
+2025-05-31 23:51:21,640 - pm_agent_app - INFO -
 --- Processing request for repo 'mediajunkie/piper-morgan' ---
 2025-05-31 23:51:21,643 - pm_agent_app - INFO - User Request: 'Bring back context feature (github and kb upload) for p-m prototype 0.1.1.'
 2025-05-31 23:51:21,643 - pm_agent_app - INFO - Searching knowledge base with query: 'Bring back context feature (github and kb upload) for p-m prototype 0.1.1. Piper Morgan project'
 2025-05-31 23:51:21,743 - pm_agent_app - DEBUG - Retrieved 4 relevant documents for query 'Bring back context feature (github and kb upload) for p-m prototype 0.1.1. Piper Morgan project'.
 2025-05-31 23:51:21,743 - pm_agent_app - INFO - Generating structured issue data with LLM...
-2025-05-31 23:51:21,743 - pm_agent_app - DEBUG - Structured Query - System Prompt: 
+2025-05-31 23:51:21,743 - pm_agent_app - DEBUG - Structured Query - System Prompt:
         You are a highly skilled AI assistant.
         Your task is to respond with a JSON object that strictly adheres to the following JSON schema.
         Do NOT include any other text, explanations, or formatting outside the JSON object.
@@ -701,7 +701,7 @@ To disable this warning, you can either:
   ]
 }
         ```
-        
+
 2025-05-31 23:51:21,744 - pm_agent_app - DEBUG - Structured Query - Messages: [{'role': 'user', 'content': 'Context: You are a highly skilled AI assistant, an expert GitHub Issue creator.\nYour task is to respond with a JSON object that strictly adheres to the following JSON schema.\nDo NOT include any other text, explanations, or formatting outside the JSON object.\nONLY return the JSON object.'}, {'role': 'user', 'content': "Context: You are an expert GitHub Issue creator. Your task is to accurately translate user requests into well-structured GitHub issues.\n\nFollow these rules:\n1. Extract all relevant details from the user's request.\n2. If available, use information from the provided knowledge base context to enrich the issue body.\n3. Ensure the issue title is concise and informative.\n4. The issue body must be detailed, comprehensive, and include clear acceptance criteria. Use Markdown for formatting.\n5. Identify appropriate labels. If no specific labels are mentioned, suggest relevant ones based on the issue type (e.g., 'feature', 'bug', 'enhancement').\n6. Assignees should only be included if explicitly mentioned or clearly implied.\n7. Milestones should only be included if explicitly mentioned.\n\nKnowledge Base Context (if available):\nThis document outlines the development process for the Piper Morgan project, including CI/CD pipelines and deployment strategies.\nThis document details the user authentication flows for the OCTO project, covering OAuth2 and SSO integrations.\nThis document specifies design guidelines for dark mode implementations across all user-facing applications, emphasizing accessibility.\nThis document talks about general product management best practices, focusing on user stories and acceptance criteria.\n\nDynamic Variables:\nClient Name: PM Agent Development\nProject Name: Piper Morgan\n\nUser Request: 'Bring back context feature (github and kb upload) for p-m prototype 0.1.1.'"}]
 2025-05-31 23:51:21,744 - pm_agent_app - DEBUG - Structured Query - Model: claude-sonnet-4-20250514
 2025-05-31 23:51:21,744 - pm_agent_app - DEBUG - Structured Query - Max tokens: 4000
