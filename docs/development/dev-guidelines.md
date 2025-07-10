@@ -7,24 +7,72 @@ This document establishes development standards, practices, and guidelines for c
 ## Development Philosophy
 
 ### Domain-First Design
+
 - Business concepts drive technical implementation
 - PM terminology and workflows guide architecture
 - Database schema follows domain models
 - External tools are plugins, not core
 
 ### Test-First Development
+
 - Write tests before implementation
 - Tests define expected behavior
 - Use tests to catch architectural drift
 - Maintain high test coverage (>80%)
 
 ### Incremental Delivery
+
 - Each PR should provide working functionality
 - Avoid large, complex changes
 - Use feature flags for partial implementations
 - Maintain backward compatibility
 
 ## Code Standards
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks to enforce code quality standards automatically. The hooks run before each commit and will:
+
+- **black**: Format Python code consistently
+- **flake8**: Check for code quality and style issues
+- **isort**: Sort and organize imports
+- **trailing-whitespace**: Remove trailing whitespace
+- **end-of-file-fixer**: Ensure files end with newline
+- **check-yaml**: Validate YAML files
+- **check-added-large-files**: Prevent committing large files
+
+#### Setup (already done)
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install the hooks
+python -m pre_commit install
+```
+
+#### Usage
+
+```bash
+# Run hooks on all files
+python -m pre_commit run --all-files
+
+# Run hooks on staged files only
+python -m pre_commit run
+
+# Skip hooks for a commit (use sparingly)
+git commit --no-verify -m "Emergency fix"
+```
+
+#### Updating Hooks
+
+```bash
+# Update to latest versions
+python -m pre_commit autoupdate
+
+# Update specific hook
+python -m pre_commit update black
+```
 
 ### Python Style Guide
 
@@ -47,12 +95,12 @@ from shared_types import WorkflowType, IntentCategory
 # Class naming
 class ProjectRepository:  # PascalCase for classes
     """Repository for project operations"""  # Docstring required
-    
+
     async def list_active_projects(self) -> List[Project]:  # Type hints required
         """Get all active projects"""
         # Implementation
 
-# Function naming  
+# Function naming
 async def process_intent(intent: Intent) -> WorkflowResult:  # snake_case
     """Process user intent and return result"""
     # Implementation
@@ -69,6 +117,7 @@ def _internal_helper(self) -> None:  # Leading underscore
 ### Type Hints
 
 Always use type hints for:
+
 - Function parameters
 - Return values
 - Class attributes
@@ -99,7 +148,7 @@ async def get_projects(self) -> List[Project]:
 # ❌ Wrong
 time.sleep(5)  # Blocks event loop
 
-# ✅ Correct  
+# ✅ Correct
 await asyncio.sleep(5)  # Non-blocking
 
 # Concurrent operations
@@ -150,6 +199,7 @@ async def get_project(self, project_id: str) -> Project:
 ```
 
 Rules:
+
 - Dependencies flow downward only
 - Domain models have no dependencies
 - Repositories return domain models
@@ -158,6 +208,7 @@ Rules:
 ### When to Use Workflows vs Queries
 
 **Use Workflows for:**
+
 - Multi-step processes
 - State changes
 - External system updates
@@ -165,6 +216,7 @@ Rules:
 - Complex orchestration
 
 **Use Queries for:**
+
 - Data retrieval
 - Listings and searches
 - Read-only operations
@@ -204,29 +256,29 @@ from unittest.mock import Mock, AsyncMock
 
 class TestProjectService:
     """Test project service operations"""
-    
+
     @pytest.fixture
     def mock_repo(self):
         """Provides mock repository"""
         repo = Mock(spec=ProjectRepository)
         repo.get_by_id = AsyncMock()
         return repo
-    
+
     @pytest.fixture
     def service(self, mock_repo):
         """Provides service with mocked dependencies"""
         return ProjectService(mock_repo)
-    
+
     @pytest.mark.asyncio
     async def test_get_project_success(self, service, mock_repo):
         """Should return project when found"""
         # Arrange
         expected = Project(id="123", name="Test")
         mock_repo.get_by_id.return_value = expected
-        
+
         # Act
         result = await service.get_project("123")
-        
+
         # Assert
         assert result == expected
         mock_repo.get_by_id.assert_called_once_with("123")
@@ -247,7 +299,7 @@ from services.domain.models import Project, ProjectIntegration
 
 class ProjectFactory:
     """Creates test projects"""
-    
+
     @staticmethod
     def create(**kwargs):
         defaults = {
@@ -258,7 +310,7 @@ class ProjectFactory:
         }
         defaults.update(kwargs)
         return Project(**defaults)
-    
+
     @staticmethod
     def create_with_github(**kwargs):
         project = ProjectFactory.create(**kwargs)
@@ -278,10 +330,10 @@ class ProjectFactory:
 ```python
 class ProjectRepository(BaseRepository):
     """Follow repository pattern consistently"""
-    
+
     def __init__(self, session: AsyncSession):
         super().__init__(session, ProjectDB)
-    
+
     async def find_by_name(self, name: str) -> List[Project]:
         # Repository method returns domain models
         result = await self.session.execute(
@@ -289,7 +341,7 @@ class ProjectRepository(BaseRepository):
         )
         db_projects = result.scalars().all()
         return [self._to_domain(p) for p in db_projects]
-    
+
     def _to_domain(self, db_model: ProjectDB) -> Project:
         # Convert database model to domain model
         return Project(
@@ -304,7 +356,7 @@ class ProjectRepository(BaseRepository):
 ```python
 class ProjectService:
     """Services orchestrate but don't contain business logic"""
-    
+
     async def create_project_with_github(
         self,
         name: str,
@@ -313,22 +365,22 @@ class ProjectService:
     ) -> Project:
         # Orchestrate multiple operations
         project = Project(name=name, description=description)
-        
+
         # Add GitHub integration
         project.add_integration(
             IntegrationType.GITHUB,
             {"repository": github_repo}
         )
-        
+
         # Persist
         async with self.repo_factory.get_repository(ProjectRepository) as repo:
             saved = await repo.create(project)
-        
+
         # Publish event
         await self.event_bus.publish(
             ProjectCreatedEvent(project_id=saved.id)
         )
-        
+
         return saved
 ```
 
@@ -399,22 +451,22 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     """Application settings from environment"""
-    
+
     # Required settings
     database_url: str
     anthropic_api_key: str
     github_token: str
-    
+
     # Optional with defaults
     log_level: str = "INFO"
     max_retries: int = 3
     timeout_seconds: int = 30
-    
+
     # Computed settings
     @property
     def redis_url(self) -> str:
         return os.getenv("REDIS_URL", "redis://localhost:6379")
-    
+
     class Config:
         env_file = ".env"
         case_sensitive = False
@@ -429,7 +481,7 @@ settings = Settings()
 # feature_flags.py
 class FeatureFlags:
     """Manage feature toggles"""
-    
+
     ENABLE_CLARIFYING_QUESTIONS = os.getenv("FF_CLARIFYING_QUESTIONS", "false").lower() == "true"
     ENABLE_MULTI_REPO = os.getenv("FF_MULTI_REPO", "false").lower() == "true"
     ENABLE_LEARNING = os.getenv("FF_LEARNING", "false").lower() == "true"
@@ -449,20 +501,20 @@ else:
 class ProjectContext:
     """
     Resolves project context from various sources.
-    
+
     This class implements a sophisticated resolution hierarchy:
     1. Explicit project_id in the intent
     2. Last used project in the session
     3. Inferred from message content
     4. Default project fallback
-    
+
     Example:
         context = ProjectContext(repo, llm)
         project, needs_confirm = await context.resolve_project(
             intent, session_id="abc123"
         )
     """
-    
+
     async def resolve_project(
         self,
         intent: Intent,
@@ -471,15 +523,15 @@ class ProjectContext:
     ) -> Tuple[Project, bool]:
         """
         Resolve project from intent and context.
-        
+
         Args:
             intent: The classified intent with context
             session_id: Current session identifier
             confirmed: Whether user confirmed project selection
-            
+
         Returns:
             Tuple of (resolved_project, needs_confirmation)
-            
+
         Raises:
             ProjectNotFoundError: If explicit project_id doesn't exist
             AmbiguousProjectError: If project cannot be determined
@@ -577,7 +629,7 @@ from pydantic import BaseModel, validator
 class IntentRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
-    
+
     @validator('message')
     def message_not_empty(cls, v):
         if not v.strip():
@@ -647,16 +699,19 @@ with response_time.time():
 ### Common Issues
 
 1. **Import Errors**
+
    - Check `__init__.py` files exist
    - Verify PYTHONPATH includes project root
    - Ensure consistent module naming
 
 2. **Async Context Errors**
+
    - Remember to await async functions
    - Use `pytest.mark.asyncio` for async tests
    - Check event loop configuration
 
 3. **Database Connection Issues**
+
    - Verify DATABASE_URL is set
    - Check Docker containers are running
    - Ensure migrations are applied
@@ -673,9 +728,12 @@ with response_time.time():
 - [SQLAlchemy Async Guide](https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html)
 - [Structlog Documentation](https://www.structlog.org/)
 - [Pytest Async](https://pytest-asyncio.readthedocs.io/)
+
 ---
-*Last Updated: June 27, 2025*
+
+_Last Updated: June 27, 2025_
 
 ## Revision Log
+
 - **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
 - **June 27, 2025**: Added systematic documentation dating and revision tracking
