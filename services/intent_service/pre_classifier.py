@@ -7,20 +7,21 @@ import string
 class PreClassifier:
     """Rule-based pre-classification for common patterns"""
     
-    # Greeting patterns
+    # Greeting patterns - using regex with word boundaries for precision
     GREETING_PATTERNS = [
-        "hello", "hi", "hey", "good morning", "good afternoon", "good evening",
-        "greetings", "howdy", "hi there"
+        r'\bhello\b', r'\bhi\b', r'\bhey\b', r'\bgood morning\b', 
+        r'\bgood afternoon\b', r'\bgood evening\b', r'\bgreetings\b', 
+        r'\bhowdy\b', r'\bhi there\b'
     ]
     
-    # Farewell patterns  
+    # Farewell patterns - using regex with word boundaries for precision
     FAREWELL_PATTERNS = [
-        "bye", "goodbye", "see you", "later", "farewell"
+        r'\bbye\b', r'\bgoodbye\b', r'\bsee you\b', r'\blater\b', r'\bfarewell\b'
     ]
     
-    # Thanks patterns
+    # Thanks patterns - using regex with word boundaries for precision
     THANKS_PATTERNS = [
-        "thanks", "thank you", "thx", "ty", "much appreciated"
+        r'\bthanks\b', r'\bthank you\b', r'\bthx\b', r'\bty\b', r'\bmuch appreciated\b'
     ]
     
     # File reference patterns (with variations and typo tolerance)
@@ -74,8 +75,22 @@ class PreClassifier:
         clean_msg = message.strip().lower()
         clean_for_matching = clean_msg.rstrip(string.punctuation + "!?.,;:😊🙂👋")
         
+        # DEBUG: Log the processing
+        import structlog
+        logger = structlog.get_logger()
+        logger.info(f"PRE_CLASSIFIER DEBUG - Original: '{message}'")
+        logger.info(f"PRE_CLASSIFIER DEBUG - Clean: '{clean_msg}'")
+        logger.info(f"PRE_CLASSIFIER DEBUG - Clean for matching: '{clean_for_matching}'")
+        
         # Check for greetings
-        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.GREETING_PATTERNS):
+        greeting_match = PreClassifier._matches_patterns(clean_for_matching, PreClassifier.GREETING_PATTERNS)
+        logger.info(f"PRE_CLASSIFIER DEBUG - Greeting match: {greeting_match}")
+        if greeting_match:
+            # Find which pattern matched for debugging
+            for pattern in PreClassifier.GREETING_PATTERNS:
+                if re.search(pattern, clean_for_matching):
+                    logger.info(f"PRE_CLASSIFIER DEBUG - Matched greeting pattern: '{pattern}'")
+                    break
             return Intent(
                 category=IntentCategory.CONVERSATION,
                 action="greeting",
@@ -93,7 +108,7 @@ class PreClassifier:
             )
         
         # Check for thanks
-        if clean_for_matching in PreClassifier.THANKS_PATTERNS:
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.THANKS_PATTERNS):
             return Intent(
                 category=IntentCategory.CONVERSATION,
                 action="thanks",

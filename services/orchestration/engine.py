@@ -5,6 +5,7 @@ PM-008 Github integration
 """
 # 2025-06-14: Fixed to use domain-first design - domain models instead of orchestration-specific classes
 import asyncio
+import os
 import structlog
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -18,6 +19,7 @@ from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
 from services.llm.clients import llm_client
 from services.api.errors import TaskFailedError, WorkflowTimeoutError
 from services.integrations.github.github_agent import GitHubAgent
+from services.analysis.file_type_detector import FileTypeDetector
 
 logger = structlog.get_logger()
 
@@ -51,6 +53,12 @@ class OrchestrationEngine:
             # File Analysis handler
             TaskType.ANALYZE_FILE: self._analyze_file,
             
+            # Summarization handler
+            TaskType.SUMMARIZE: self._summarize,
+            
+            # Work Item Extraction handler
+            TaskType.EXTRACT_WORK_ITEM: self._extract_work_item,
+            
             # Fallback for unmapped task types
             TaskType.GITHUB_CREATE_ISSUE: self._create_github_issue,
             TaskType.JIRA_CREATE_TICKET: self._placeholder_handler,
@@ -82,6 +90,15 @@ class OrchestrationEngine:
                 except Exception as e:
                     logger.error(f"Failed to enrich workflow with repository: {str(e)}")
                     # Continue without repository - handler will provide appropriate error
+            else:
+                # No project context - use default repository
+                default_repo = os.getenv("GITHUB_DEFAULT_REPO")
+                logger.info(f"🔍 No project context, checking GITHUB_DEFAULT_REPO: {default_repo}")
+                if default_repo:
+                    workflow.context["repository"] = default_repo
+                    logger.info(f"✅ Using default repository for CREATE_TICKET workflow: {default_repo}")
+                else:
+                    logger.warning("❌ No project context and no GITHUB_DEFAULT_REPO configured")
         if workflow:
             # Store in memory for execution
             self.workflows[workflow.id] = workflow
@@ -113,11 +130,15 @@ class OrchestrationEngine:
         """
         Execute a workflow asynchronously using domain objects
         """
+        print(f"🔍 execute_workflow called for workflow ID: {workflow_id}")
         workflow = self.workflows.get(workflow_id)
         if not workflow:
             # In a real system, you might load it from the DB here
             raise ValueError(f"Workflow {workflow_id} not found")
         
+        print(f"🔍 Workflow type: {workflow.type}")
+        print(f"🔍 Workflow context: {workflow.context}")
+        print(f"🔍 Found {len(workflow.tasks)} tasks to execute")
         workflow.status = WorkflowStatus.RUNNING
         
         # Update status in database
@@ -135,6 +156,8 @@ class OrchestrationEngine:
                 # Execute tasks with timeout (Python 3.9 compatible)
                 async def execute_all_tasks():
                     while task := workflow.get_next_task():
+                        print(f"🔍 Executing task: {task.type}")
+                        print(f"🔍 Task handler: {self.task_handlers.get(task.type)}")
                         await self._execute_task(workflow, task)
                         # Persist task results after each execution
                         await self._persist_task_update(workflow_id, task)
@@ -153,7 +176,11 @@ class OrchestrationEngine:
                 await repos["workflows"].update_status(
                     workflow_id,
                     WorkflowStatus.COMPLETED,
-                    output_data=workflow.context  # Use context as output
+                    output_data={
+                        "success": True,
+                        "data": workflow.context,
+                        "error": None
+                    }
                 )
                 await repos["session"].commit()
                 
@@ -484,7 +511,11 @@ List concrete requirements, acceptance criteria, and technical specifications.""
         """Execute file analysis task using FileAnalyzer"""
         try:
             # Extract file ID from context
-            file_id = workflow.context.get('file_id')
+            file_id = (
+                workflow.context.get('file_id') or
+                workflow.context.get('resolved_file_id') or
+                workflow.context.get('probable_file_id')
+            )
             if not file_id:
                 return TaskResult(
                     success=False,
@@ -508,28 +539,34 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             from unittest.mock import Mock
             from services.analysis.file_analyzer import FileAnalyzer
             from services.analysis.analyzer_factory import AnalyzerFactory
-            
+
             mock_security = Mock()
             mock_security.validate.return_value = Mock(is_valid=True)
-            
-            mock_type_detector = Mock() 
-            mock_type_detector.detect.return_value = Mock(
-                mime_type="text/csv",
-                extension="csv",
-                analyzer_type="data"
-            )
-            
+
+            type_detector = FileTypeDetector()
+
             mock_sampler = Mock()
-            
+
+            analyzer_factory = AnalyzerFactory(llm_client=self.llm_client)
             file_analyzer = FileAnalyzer(
                 security_validator=mock_security,
-                type_detector=mock_type_detector,
+                type_detector=type_detector,
                 content_sampler=mock_sampler,
-                analyzer_factory=AnalyzerFactory(),
-                llm_client=llm_client
+                analyzer_factory=analyzer_factory,
+                llm_client=self.llm_client
             )
             
             # Perform analysis
+            logger.info(f"DEBUG: Analyzing file {file_metadata.filename} at path {file_metadata.storage_path}")
+            
+            # Debug: Read first 500 chars of file to verify content
+            try:
+                with open(file_metadata.storage_path, 'r') as f:
+                    file_content_preview = f.read(500)
+                    logger.info(f"DEBUG: File content preview: {file_content_preview}")
+            except Exception as e:
+                logger.error(f"DEBUG: Could not read file content: {e}")
+            
             analysis_result = await file_analyzer.analyze_file(
                 str(file_metadata.storage_path),
                 {"filename": file_metadata.filename}
@@ -559,32 +596,55 @@ List concrete requirements, acceptance criteria, and technical specifications.""
     async def _create_github_issue(self, workflow: Workflow, task: Task) -> TaskResult:
         """Create a GitHub issue from workflow context."""
         try:
-            # Extract required fields from context
-            repository = workflow.context.get("repository")
-            title = workflow.context.get("title", "New Issue")
-            body = workflow.context.get("body", "")
-            labels = workflow.context.get("labels", [])
+            logger.info(f"🔍 _create_github_issue called with workflow ID: {workflow.id}")
+            logger.info(f"🔍 Workflow context: {workflow.context}")
             
-            # Validate required fields
+            # Get repository from context
+            repository = workflow.context.get("repository")
             if not repository:
+                logger.error("❌ Repository not specified in workflow context")
                 return TaskResult(
                     success=False,
                     error="Repository not specified in workflow context"
                 )
             
-            # Create the issue
-            issue_data = await self.github_agent.create_issue(
-                repo_name=repository,
-                title=title,
-                body=body,
-                labels=labels
-            )
+            # Look for work item from previous extraction task
+            work_item = None
+            
+            # Check if we have a work item from the extraction task
+            for completed_task in workflow.tasks:
+                if (completed_task.type == TaskType.EXTRACT_WORK_ITEM and 
+                    completed_task.status == TaskStatus.COMPLETED and 
+                    completed_task.result):
+                    work_item = completed_task.result.get("work_item")
+                    break
+            
+            if work_item:
+                # Use the extracted work item
+                logger.info(f"🔍 Using extracted work item: {work_item.get('title')}")
+                issue_data = await self.github_agent.create_issue_from_work_item(
+                    repo_name=repository,
+                    work_item=work_item
+                )
+            else:
+                # Fallback to old method for backward compatibility
+                logger.info("🔍 No work item found, using fallback method")
+                title = workflow.context.get("title", "New Issue")
+                body = workflow.context.get("body", "")
+                labels = workflow.context.get("labels", [])
+                
+                issue_data = await self.github_agent.create_issue(
+                    repo_name=repository,
+                    title=title,
+                    body=body,
+                    labels=labels
+                )
             
             return TaskResult(
                 success=True,
                 output_data={
                     "issue_number": issue_data.get("number"),
-                    "issue_url": issue_data.get("html_url"),
+                    "issue_url": issue_data.get("url"),
                     "issue_data": issue_data
                 }
             )
@@ -594,6 +654,103 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             return TaskResult(
                 success=False,
                 error=f"GitHub API error: {str(e)}"
+            )
+
+    async def _extract_work_item(self, workflow: Workflow, task: Task) -> TaskResult:
+        """Extract work item details from natural language"""
+        try:
+            # Get the original message from workflow context
+            original_message = workflow.context.get('original_message', '')
+            
+            if not original_message:
+                return TaskResult(
+                    success=False,
+                    error="No original message found in workflow context"
+                )
+            
+            # Create WorkItemExtractor and extract work item
+            from services.domain.work_item_extractor import WorkItemExtractor
+            extractor = WorkItemExtractor(self.llm_client)
+            
+            # Get project context if available
+            project_context = None
+            project_id = workflow.context.get('project_id')
+            if project_id:
+                try:
+                    repos = await RepositoryFactory.get_repositories()
+                    project_repo = repos["projects"]
+                    project = await project_repo.get_by_id(project_id)
+                    if project:
+                        project_context = project.to_dict()
+                except Exception as e:
+                    logger.warning(f"Failed to get project context: {str(e)}")
+            
+            # Extract work item
+            work_item = await extractor.extract_from_prompt(original_message, project_context)
+            
+            return TaskResult(
+                success=True,
+                output_data={
+                    "work_item": work_item.to_dict(),
+                    "extraction_success": True
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Work item extraction failed: {str(e)}")
+            return TaskResult(
+                success=False,
+                error=f"Extraction error: {str(e)}"
+            )
+
+    async def _summarize(self, workflow: Workflow, task: Task) -> TaskResult:
+        """Handle general analysis/summarization tasks without files"""
+        try:
+            if not self.llm_client:
+                return TaskResult(
+                    success=False,
+                    error="LLM client not available for summarization"
+                )
+            
+            # Get the original message/query from workflow context
+            original_message = workflow.context.get("original_message", "")
+            
+            if not original_message:
+                return TaskResult(
+                    success=False,
+                    error="No message content found for analysis"
+                )
+            
+            # Use the SUMMARIZE task type for general analysis
+            prompt = f"""Please analyze the following user request and provide a helpful response:
+
+{original_message}
+
+Focus on:
+- Understanding what the user is asking for
+- Providing actionable insights or recommendations
+- Offering specific steps or solutions where applicable
+"""
+            
+            response = await self.llm_client.complete(
+                task_type=TaskType.SUMMARIZE.value,
+                prompt=prompt
+            )
+            
+            return TaskResult(
+                success=True,
+                output_data={
+                    "message": response,
+                    "analysis_type": "general_analysis",
+                    "original_request": original_message
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"Summarization failed: {e}")
+            return TaskResult(
+                success=False,
+                error=f"Analysis failed: {str(e)}"
             )
 
     async def _placeholder_handler(self, workflow: Workflow, task: Task) -> TaskResult:
