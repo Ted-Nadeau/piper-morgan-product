@@ -57,7 +57,7 @@ class WorkflowFactory:
                 workflow_type = WorkflowType.CREATE_TICKET
             elif intent.category == IntentCategory.ANALYSIS:
                 # Check if it's GitHub-related analysis
-                message = context.get('original_message', '').lower()
+                message = intent.context.get('original_message', '').lower()
                 if 'github.com' in message or 'github issue' in message:
                     workflow_type = WorkflowType.REVIEW_ITEM  # For GitHub issues
                 else:
