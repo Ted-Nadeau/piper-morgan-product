@@ -1,22 +1,23 @@
-from typing import Optional, Tuple, Dict
-from services.domain.models import Project, Intent
+from typing import Dict, Optional, Tuple
+
 from services.database.repositories import ProjectRepository
+from services.domain.models import Intent, Project
 from services.llm.clients import LLMClient
+from services.project_context.exceptions import (AmbiguousProjectError,
+                                                 ProjectNotFoundError)
 from services.shared_types import IntentCategory
-from services.project_context.exceptions import AmbiguousProjectError, ProjectNotFoundError
+
 
 class ProjectContext:
     """Business logic for resolving project context from user intents"""
+
     def __init__(self, project_repo: ProjectRepository, llm_client: LLMClient):
         self.project_repo = project_repo  # Dependency injection
         self.llm_client = llm_client
         self._session_last_used: Dict[str, str] = {}  # session_id -> project_id
 
     async def resolve_project(
-        self,
-        intent: Intent,
-        session_id: str,
-        confirmed_this_session: bool = False
+        self, intent: Intent, session_id: str, confirmed_this_session: bool = False
     ) -> Tuple[Project, bool]:
         """
         Resolve project following hierarchy:
@@ -40,21 +41,25 @@ class ProjectContext:
         session_project = None
         if last_project_id:
             session_project = await self.project_repo.get_by_id(last_project_id)
-        
+
         # 3. Infer from message context using LLM
         inferred_project = None
-        inferred_project_name = await self.llm_client.complete(f"Which project does this relate to: {intent.context.get('original_message', '')}")
+        inferred_project_name = await self.llm_client.complete(
+            f"Which project does this relate to: {intent.context.get('original_message', '')}"
+        )
         if inferred_project_name == "UNCLEAR":
             projects = await self.project_repo.list_active_projects()
             project_names = [p.name for p in projects]
-            raise AmbiguousProjectError(f"Multiple projects available but cannot determine which one to use: {project_names}")
+            raise AmbiguousProjectError(
+                f"Multiple projects available but cannot determine which one to use: {project_names}"
+            )
         elif inferred_project_name:
             projects = await self.project_repo.list_active_projects()
             for project in projects:
                 if project.name.lower() == inferred_project_name.strip().lower():
                     inferred_project = project
                     break
-        
+
         # Decision logic: inference wins if different from session
         if session_project and confirmed_this_session:
             # Session confirmed, use it
@@ -62,8 +67,10 @@ class ProjectContext:
         elif inferred_project:
             # Use inferred project (needs confirmation if session exists and differs)
             self._session_last_used[session_id] = inferred_project.id
-            needs_confirmation = (session_project is not None and 
-                                session_project.id != inferred_project.id)
+            needs_confirmation = (
+                session_project is not None
+                and session_project.id != inferred_project.id
+            )
             return inferred_project, needs_confirmation
         elif session_project:
             # Fall back to session project if no inference

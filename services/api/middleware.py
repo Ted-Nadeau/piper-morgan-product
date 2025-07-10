@@ -1,12 +1,15 @@
 import logging
+
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.middleware.base import (BaseHTTPMiddleware,
+                                       RequestResponseEndpoint)
 
-from .errors import APIError, ERROR_MESSAGES
+from .errors import ERROR_MESSAGES, APIError
 
 # Configure logger
 logger = logging.getLogger(__name__)
+
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
@@ -16,8 +19,10 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         except APIError as exc:
             # Handle our custom, structured API errors
-            user_message = ERROR_MESSAGES.get(exc.error_code, "An unexpected error occurred.")
-            
+            user_message = ERROR_MESSAGES.get(
+                exc.error_code, "An unexpected error occurred."
+            )
+
             # Format the message with details from the exception
             try:
                 formatted_message = user_message.format(**exc.details)
@@ -53,4 +58,4 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                         "message": "An unexpected internal error occurred. The technical team has been notified.",
                     }
                 },
-            ) 
+            )

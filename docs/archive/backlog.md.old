@@ -26,7 +26,7 @@
 **Estimate**: 3 points | **Risk**: Low | **Dependencies**: None
 **Implementation Note**: Straightforward database work, but must be done first
 
-### PM-002: Workflow Factory Implementation  
+### PM-002: Workflow Factory Implementation
 **Story**: As the orchestration engine, I need to create workflows from intents so user requests trigger actual execution
 **Current State**: 🚨 **CRITICAL** - Intent classification works but no workflow persistence or execution
 **Reality Check**: System understands requests but can't act on them. Core value proposition non-functional.

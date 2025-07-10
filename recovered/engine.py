@@ -1,5 +1,7 @@
-from services.integrations.github.github_agent import GitHubAgent
 from typing import Optional
+
+from services.integrations.github.github_agent import GitHubAgent
+
 
 class OrchestrationEngine:
     def __init__(self):
@@ -14,37 +16,30 @@ class OrchestrationEngine:
             title = workflow.context.get("title", "New Issue")
             body = workflow.context.get("body", "")
             labels = workflow.context.get("labels", [])
-            
+
             # Validate required fields
             if not repository:
                 return TaskResult(
-                    success=False,
-                    error="Repository not specified in workflow context"
+                    success=False, error="Repository not specified in workflow context"
                 )
-            
+
             # Create the issue
             issue_data = await self.github_agent.create_issue(
-                repo_name=repository,
-                title=title,
-                body=body,
-                labels=labels
+                repo_name=repository, title=title, body=body, labels=labels
             )
-            
+
             return TaskResult(
                 success=True,
                 output_data={
                     "issue_number": issue_data.get("number"),
                     "issue_url": issue_data.get("html_url"),
-                    "issue_data": issue_data
-                }
+                    "issue_data": issue_data,
+                },
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to create GitHub issue: {str(e)}")
-            return TaskResult(
-                success=False,
-                error=f"GitHub API error: {str(e)}"
-            )
+            return TaskResult(success=False, error=f"GitHub API error: {str(e)}")
 
     async def create_workflow_from_intent(self, intent: Intent) -> Optional[Workflow]:
         """Create appropriate workflow based on intent with database persistence"""
@@ -62,16 +57,22 @@ class OrchestrationEngine:
                             repository = project.get_github_repository()
                             if repository:
                                 workflow.context["repository"] = repository
-                                logger.info(f"Enriched CREATE_TICKET workflow with repository: {repository}")
+                                logger.info(
+                                    f"Enriched CREATE_TICKET workflow with repository: {repository}"
+                                )
                             else:
-                                logger.warning(f"Project {project_id} has no GitHub repository configured")
+                                logger.warning(
+                                    f"Project {project_id} has no GitHub repository configured"
+                                )
                         else:
                             logger.warning(f"Project {project_id} not found")
                     except Exception as e:
-                        logger.error(f"Failed to enrich workflow with repository: {str(e)}")
+                        logger.error(
+                            f"Failed to enrich workflow with repository: {str(e)}"
+                        )
                         # Continue without repository - handler will provide appropriate error
             # Store in memory for execution
             self.workflows[workflow.id] = workflow
             # Persist to database using repository pattern
             await self._persist_workflow_to_database(workflow)
-        return workflow 
+        return workflow

@@ -2,23 +2,27 @@
 Test coverage for OrchestrationEngine
 Tests the core orchestration logic without external dependencies
 """
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
 
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from services.domain.models import (Intent, IntentCategory, Task, UploadedFile,
+                                    Workflow)
 from services.orchestration.engine import OrchestrationEngine, TaskResult
-from services.domain.models import Intent, IntentCategory, Workflow, Task, UploadedFile
-from services.shared_types import WorkflowType, WorkflowStatus, TaskType, TaskStatus
+from services.shared_types import (TaskStatus, TaskType, WorkflowStatus,
+                                   WorkflowType)
 
 
 class TestOrchestrationEngine:
     """Test OrchestrationEngine core functionality"""
-    
+
     @pytest.fixture
     def engine(self):
         """Create a fresh OrchestrationEngine instance for each test"""
         return OrchestrationEngine()
-    
+
     @pytest.fixture
     def mock_intent(self):
         """Create a mock analyze_file intent"""
@@ -27,9 +31,9 @@ class TestOrchestrationEngine:
             category=IntentCategory.ANALYSIS,
             action="analyze_file",
             confidence=0.95,
-            context={"file_id": "test-file-123", "filename": "test.csv"}
+            context={"file_id": "test-file-123", "filename": "test.csv"},
         )
-    
+
     @pytest.fixture
     def mock_workflow(self):
         """Create a mock workflow with analyze_file task"""
@@ -37,17 +41,17 @@ class TestOrchestrationEngine:
             id="test-workflow-123",
             type=WorkflowType.ANALYZE_FILE,
             status=WorkflowStatus.PENDING,
-            context={"file_id": "test-file-123", "filename": "test.csv"}
+            context={"file_id": "test-file-123", "filename": "test.csv"},
         )
         task = Task(
             id="test-task-123",
             name="Analyze File",
             type=TaskType.ANALYZE_FILE,
-            status=TaskStatus.PENDING
+            status=TaskStatus.PENDING,
         )
         workflow.tasks.append(task)
         return workflow
-    
+
     @pytest.fixture
     def mock_file_metadata(self):
         """Create mock file metadata"""
@@ -58,7 +62,7 @@ class TestOrchestrationEngine:
             file_type="text/csv",
             file_size=1024,
             storage_path="tests/fixtures/sample_data.csv",
-            upload_time=datetime.now()
+            upload_time=datetime.now(),
         )
 
     @pytest.mark.asyncio
@@ -67,33 +71,39 @@ class TestOrchestrationEngine:
         # Mock the factory to return a workflow
         mock_workflow = Mock(spec=Workflow)
         mock_workflow.id = "test-workflow-123"
-        
-        with patch.object(engine.factory, 'create_from_intent', new_callable=AsyncMock) as mock_factory:
+
+        with patch.object(
+            engine.factory, "create_from_intent", new_callable=AsyncMock
+        ) as mock_factory:
             mock_factory.return_value = mock_workflow
-            
+
             # Mock database persistence
-            with patch.object(engine, '_persist_workflow_to_database', new_callable=AsyncMock) as mock_persist:
+            with patch.object(
+                engine, "_persist_workflow_to_database", new_callable=AsyncMock
+            ) as mock_persist:
                 result = await engine.create_workflow_from_intent(mock_intent)
-        
+
         # Verify workflow was created and stored
         assert result is not None
         assert result.id == "test-workflow-123"
         assert engine.workflows["test-workflow-123"] == mock_workflow
-        
+
         # Verify factory was called
         mock_factory.assert_called_once_with(mock_intent)
-        
+
         # Verify persistence was called
         mock_persist.assert_called_once_with(mock_workflow)
 
     @pytest.mark.asyncio
     async def test_create_workflow_from_intent_failure(self, engine, mock_intent):
         """Test workflow creation when factory returns None"""
-        with patch.object(engine.factory, 'create_from_intent', new_callable=AsyncMock) as mock_factory:
+        with patch.object(
+            engine.factory, "create_from_intent", new_callable=AsyncMock
+        ) as mock_factory:
             mock_factory.return_value = None
-            
+
             result = await engine.create_workflow_from_intent(mock_intent)
-        
+
         # Verify no workflow was created
         assert result is None
         assert len(engine.workflows) == 0
@@ -105,13 +115,15 @@ class TestOrchestrationEngine:
             await engine.execute_workflow("test-missing")
 
     @pytest.mark.asyncio
-    async def test_analyze_file_success(self, engine, mock_workflow, mock_file_metadata):
+    async def test_analyze_file_success(
+        self, engine, mock_workflow, mock_file_metadata
+    ):
         """Test successful file analysis execution"""
         # Mock database pool and file repository
         mock_pool = AsyncMock()
         mock_file_repo = AsyncMock()
         mock_file_repo.get_file_by_id.return_value = mock_file_metadata
-        
+
         # Create a simple object instead of Mock to avoid configuration issues
         class MockAnalysisResult:
             def __init__(self):
@@ -121,33 +133,40 @@ class TestOrchestrationEngine:
                 self.generated_at = datetime.now()
                 self.analysis_type = Mock()
                 self.analysis_type.value = "data"
-        
+
         mock_analysis_result = MockAnalysisResult()
-        
+
         mock_file_analyzer = AsyncMock()
         mock_file_analyzer.analyze_file.return_value = mock_analysis_result
-        
+
         # Fix import paths - patch the actual import locations
-        with patch('services.repositories.DatabasePool.get_pool', return_value=mock_pool), \
-             patch('services.repositories.file_repository.FileRepository', return_value=mock_file_repo), \
-             patch('services.analysis.file_analyzer.FileAnalyzer', return_value=mock_file_analyzer), \
-             patch('services.analysis.analyzer_factory.AnalyzerFactory', return_value=Mock()):
-            
+        with patch(
+            "services.repositories.DatabasePool.get_pool", return_value=mock_pool
+        ), patch(
+            "services.repositories.file_repository.FileRepository",
+            return_value=mock_file_repo,
+        ), patch(
+            "services.analysis.file_analyzer.FileAnalyzer",
+            return_value=mock_file_analyzer,
+        ), patch(
+            "services.analysis.analyzer_factory.AnalyzerFactory", return_value=Mock()
+        ):
+
             # Get the analyze_file task
             task = mock_workflow.tasks[0]
-            
+
             # Execute the task
             result = await engine._analyze_file(mock_workflow, task)
-        
+
         # Verify success
         assert result.success is True
         assert "analysis" in result.output_data
         assert result.output_data["file_id"] == "test-file-123"
         assert result.output_data["filename"] == "test.csv"
-        
+
         # Verify file repository was called
         mock_file_repo.get_file_by_id.assert_called_once_with("test-file-123")
-        
+
         # Verify FileAnalyzer was called
         mock_file_analyzer.analyze_file.assert_called_once()
 
@@ -156,10 +175,10 @@ class TestOrchestrationEngine:
         """Test file analysis with missing file ID in context"""
         # Remove file_id from context
         mock_workflow.context = {}
-        
+
         task = mock_workflow.tasks[0]
         result = await engine._analyze_file(mock_workflow, task)
-        
+
         # Verify failure
         assert result.success is False
         assert "No file ID found in workflow context" in result.error
@@ -171,39 +190,52 @@ class TestOrchestrationEngine:
         mock_pool = AsyncMock()
         mock_file_repo = AsyncMock()
         mock_file_repo.get_file_by_id.return_value = None  # File not found
-        
+
         # Fix import paths
-        with patch('services.repositories.DatabasePool.get_pool', return_value=mock_pool), \
-             patch('services.repositories.file_repository.FileRepository', return_value=mock_file_repo):
-            
+        with patch(
+            "services.repositories.DatabasePool.get_pool", return_value=mock_pool
+        ), patch(
+            "services.repositories.file_repository.FileRepository",
+            return_value=mock_file_repo,
+        ):
+
             task = mock_workflow.tasks[0]
             result = await engine._analyze_file(mock_workflow, task)
-        
+
         # Verify failure
         assert result.success is False
         assert "File not found: test-file-123" in result.error
 
     @pytest.mark.asyncio
-    async def test_analyze_file_analysis_exception(self, engine, mock_workflow, mock_file_metadata):
+    async def test_analyze_file_analysis_exception(
+        self, engine, mock_workflow, mock_file_metadata
+    ):
         """Test file analysis when FileAnalyzer raises an exception"""
         # Mock database pool and file repository
         mock_pool = AsyncMock()
         mock_file_repo = AsyncMock()
         mock_file_repo.get_file_by_id.return_value = mock_file_metadata
-        
+
         # Mock FileAnalyzer to raise exception
         mock_file_analyzer = AsyncMock()
         mock_file_analyzer.analyze_file.side_effect = Exception("Analysis failed")
-        
+
         # Fix import paths
-        with patch('services.repositories.DatabasePool.get_pool', return_value=mock_pool), \
-             patch('services.repositories.file_repository.FileRepository', return_value=mock_file_repo), \
-             patch('services.analysis.file_analyzer.FileAnalyzer', return_value=mock_file_analyzer), \
-             patch('services.analysis.analyzer_factory.AnalyzerFactory', return_value=Mock()):
-            
+        with patch(
+            "services.repositories.DatabasePool.get_pool", return_value=mock_pool
+        ), patch(
+            "services.repositories.file_repository.FileRepository",
+            return_value=mock_file_repo,
+        ), patch(
+            "services.analysis.file_analyzer.FileAnalyzer",
+            return_value=mock_file_analyzer,
+        ), patch(
+            "services.analysis.analyzer_factory.AnalyzerFactory", return_value=Mock()
+        ):
+
             task = mock_workflow.tasks[0]
             result = await engine._analyze_file(mock_workflow, task)
-        
+
         # Verify failure
         assert result.success is False
         assert "Analysis error: Analysis failed" in result.error
@@ -225,7 +257,7 @@ class TestOrchestrationEngine:
             TaskType.GENERATE_DOCUMENT,
             TaskType.CREATE_SUMMARY,
         ]
-        
+
         for task_type in expected_handlers:
             assert task_type in engine.task_handlers
             assert callable(engine.task_handlers[task_type])
@@ -238,11 +270,11 @@ class TestOrchestrationEngine:
             id="test-placeholder-task",
             name="Placeholder Task",
             type=TaskType.GITHUB_CREATE_ISSUE,  # This uses placeholder handler
-            status=TaskStatus.PENDING
+            status=TaskStatus.PENDING,
         )
-        
+
         result = await engine._placeholder_handler(mock_workflow, task)
-        
+
         # Verify placeholder behavior
         assert result.success is True
         assert result.output_data["placeholder"] is True
@@ -255,30 +287,34 @@ class TestOrchestrationEngine:
         mock_workflow.id = "test-workflow-123"
         mock_workflow.status = WorkflowStatus.PENDING
         mock_workflow.context = {}
-        
+
         # Mock the workflow methods
         mock_workflow.get_next_task.return_value = None  # No more tasks
         mock_workflow.is_complete.return_value = True
-        
+
         # Store workflow in engine
         engine.workflows[mock_workflow.id] = mock_workflow
-        
+
         # Mock repository factory and repositories
         mock_repos = {
             "workflows": AsyncMock(),
             "tasks": AsyncMock(),
-            "session": AsyncMock()
+            "session": AsyncMock(),
         }
-        
+
         # Fix import path for RepositoryFactory
-        with patch('services.database.RepositoryFactory.get_repositories', return_value=mock_repos), \
-             patch.object(engine, '_execute_task', new_callable=AsyncMock) as mock_execute_task:
-            
+        with patch(
+            "services.database.RepositoryFactory.get_repositories",
+            return_value=mock_repos,
+        ), patch.object(
+            engine, "_execute_task", new_callable=AsyncMock
+        ) as mock_execute_task:
+
             result = await engine.execute_workflow(mock_workflow.id)
-        
+
         # Verify workflow status transitions
         assert mock_workflow.status == WorkflowStatus.COMPLETED
-        
+
         # Verify database updates were called
         mock_repos["workflows"].update_status.assert_called()
         mock_repos["session"].commit.assert_called()
@@ -291,28 +327,32 @@ class TestOrchestrationEngine:
         mock_workflow.id = "test-workflow-123"
         mock_workflow.status = WorkflowStatus.PENDING
         mock_workflow.context = {}
-        
+
         # Mock the workflow methods
         mock_workflow.get_next_task.return_value = Mock()  # Return a task
         mock_workflow.is_complete.return_value = False
-        
+
         # Store workflow in engine
         engine.workflows[mock_workflow.id] = mock_workflow
-        
+
         # Mock repository factory and repositories
         mock_repos = {
             "workflows": AsyncMock(),
             "tasks": AsyncMock(),
-            "session": AsyncMock()
+            "session": AsyncMock(),
         }
-        
+
         # Fix import path for RepositoryFactory
-        with patch('services.database.RepositoryFactory.get_repositories', return_value=mock_repos), \
-             patch.object(engine, '_execute_task', side_effect=Exception("Task execution failed")):
-            
+        with patch(
+            "services.database.RepositoryFactory.get_repositories",
+            return_value=mock_repos,
+        ), patch.object(
+            engine, "_execute_task", side_effect=Exception("Task execution failed")
+        ):
+
             with pytest.raises(Exception):
                 await engine.execute_workflow(mock_workflow.id)
-        
+
         # Verify workflow status was updated to failed
         assert mock_workflow.status == WorkflowStatus.FAILED
-        assert mock_workflow.error is not None 
+        assert mock_workflow.error is not None

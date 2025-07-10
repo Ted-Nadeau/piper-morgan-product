@@ -1,10 +1,13 @@
-import asyncpg
 import os
+
+import asyncpg
+
 
 class DatabasePool:
     """Singleton database connection pool"""
+
     _pool = None
-    
+
     @classmethod
     async def get_pool(cls):
         if cls._pool is None:
@@ -15,10 +18,10 @@ class DatabasePool:
                 password=os.getenv("POSTGRES_PASSWORD", "dev_changeme"),
                 database=os.getenv("POSTGRES_DB", "piper_morgan"),
                 min_size=1,
-                max_size=10
+                max_size=10,
             )
         return cls._pool
-    
+
     @classmethod
     async def close_pool(cls):
         if cls._pool:

@@ -140,7 +140,7 @@ APP_ENV=development
    ```bash
    # Check logs for specific service
    docker-compose logs <service-name>
-   
+
    # Common causes:
    # - Port conflicts (5433, 6379, 8000, 7233, 8088, 80, 8001, 8501)
    # - Insufficient memory
@@ -151,13 +151,13 @@ APP_ENV=development
    ```bash
    # Check postgres health
    docker-compose exec postgres pg_isready -U piper
-   
+
    # Verify environment variables
    echo $POSTGRES_PASSWORD
-   
+
    # Check database exists
    docker-compose exec postgres psql -U piper -d piper_morgan -c "\dt"
-   
+
    # Note: PostgreSQL is on port 5433, not default 5432!
    ```
 
@@ -165,7 +165,7 @@ APP_ENV=development
    ```bash
    # Verify environment file
    cat .env | grep API_KEY
-   
+
    # Check application logs
    # API server logs visible in terminal where uvicorn runs
    ```
@@ -174,10 +174,10 @@ APP_ENV=development
    ```bash
    # Check Streamlit is running
    ps aux | grep streamlit
-   
+
    # Verify port 8501 is available
    lsof -i :8501
-   
+
    # Check Streamlit logs in terminal
    ```
 

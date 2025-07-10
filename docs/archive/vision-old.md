@@ -32,7 +32,7 @@ Organizations accumulate vast amounts of product knowledge, but accessing and ap
 **Key Challenges**: Achieving consistent AI output quality, building reliable feedback loops, user adoption
 
 ### Phase 2: Analytical Intelligence (2026)
-**Vision**: Piper Morgan as an analytical PM associate  
+**Vision**: Piper Morgan as an analytical PM associate
 - Proactive insights from data patterns and trends (requires significant ML development)
 - Cross-project knowledge synthesis and recommendations (complex AI reasoning challenge)
 - Automated monitoring and anomaly detection (multiple integration challenges)
@@ -68,7 +68,7 @@ Transparent decision-making, human oversight of critical choices, and clear boun
 ### Immediate Success (6 months)
 Sarah, a junior PM, describes a user complaint in natural language. Piper Morgan *attempts* to create a GitHub issue with relevant context from previous similar issues. The result requires Sarah's review and often significant editing, but provides a useful starting point that saves her 5-7 minutes instead of the hoped-for instant completion.
 
-### Medium-term Success (18 months)  
+### Medium-term Success (18 months)
 The product team's quarterly planning session *could include* Piper Morgan analyzing user feedback trends and internal data to suggest feature prioritization options—*if* the system achieves sufficient reliability and the team develops trust in AI-generated insights. Success depends heavily on data quality and change management.
 
 ### Long-term Success (3+ years)

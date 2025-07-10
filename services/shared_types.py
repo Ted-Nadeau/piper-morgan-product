@@ -2,7 +2,9 @@
 Shared Types
 Common enums and types used across services
 """
+
 from enum import Enum
+
 
 class IntentCategory(Enum):
     EXECUTION = "execution"
@@ -13,6 +15,7 @@ class IntentCategory(Enum):
     QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
     CONVERSATION = "conversation"  # For greetings, chitchat, social interaction
     UNKNOWN = "unknown"  # For unclear or ambiguous requests
+
 
 class WorkflowType(Enum):
     CREATE_FEATURE = "create_feature"
@@ -29,6 +32,7 @@ class WorkflowType(Enum):
     SELECT_PROJECT = "select_project"
     ANALYZE_FILE = "analyze_file"  # Add this line for file analysis workflows
 
+
 class WorkflowStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -36,17 +40,18 @@ class WorkflowStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class TaskType(Enum):
     # Analysis tasks
     ANALYZE_REQUEST = "analyze_request"
     EXTRACT_REQUIREMENTS = "extract_requirements"
     IDENTIFY_DEPENDENCIES = "identify_dependencies"
-    
+
     # Execution tasks
     CREATE_WORK_ITEM = "create_work_item"
     UPDATE_WORK_ITEM = "update_work_item"
     NOTIFY_STAKEHOLDERS = "notify_stakeholders"
-    
+
     # Synthesis tasks
     GENERATE_DOCUMENT = "generate_document"
     CREATE_SUMMARY = "create_summary"
@@ -56,11 +61,13 @@ class TaskType(Enum):
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
     ANALYZE_FILE = "analyze_file"
     SUMMARIZE = "summarize"
+    EXTRACT_WORK_ITEM = "extract_work_item"
     JIRA_CREATE_TICKET = "jira_create_ticket"
     SLACK_SEND_MESSAGE = "slack_send_message"
-    
+
     # Feedback tasks
     PROCESS_USER_FEEDBACK = "process_user_feedback"
+
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -68,6 +75,7 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
+
 
 # PM-009: Integration type enum for project integrations
 class IntegrationType(Enum):

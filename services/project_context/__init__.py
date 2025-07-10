@@ -9,4 +9,5 @@ from .project_context import ProjectContext
 
 __all__ = ["ProjectContext", "AmbiguousProjectError", "ProjectNotFoundError"]
 
-from services.project_context import ProjectContext, AmbiguousProjectError, ProjectNotFoundError
+from services.project_context import (AmbiguousProjectError, ProjectContext,
+                                      ProjectNotFoundError)

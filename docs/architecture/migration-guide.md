@@ -45,7 +45,7 @@ class WorkflowEngine:
 # ❌ Old pattern
 class ListProjectsWorkflow(Workflow):
     type = WorkflowType.LIST_PROJECTS
-    
+
     async def execute(self, context):
         repo = ProjectRepository(get_session())
         projects = await repo.list_active_projects()
@@ -62,7 +62,7 @@ if intent.action == "list_projects":
 class ProjectQueryService:
     def __init__(self, repository: ProjectRepository):
         self.repo = repository
-    
+
     async def list_active_projects(self) -> List[Project]:
         return await self.repo.list_active_projects()
 
@@ -88,7 +88,7 @@ if intent.category == IntentCategory.QUERY:
 class ProjectService:
     def __init__(self, db_connection):
         self.db = db_connection
-    
+
     async def get_project(self, project_id: str):
         result = await self.db.execute(
             "SELECT * FROM projects WHERE id = ?",
@@ -103,7 +103,7 @@ class ProjectService:
 class ProjectRepository(BaseRepository):
     def __init__(self, session: AsyncSession):
         super().__init__(session, ProjectDB)
-    
+
     async def get_by_id(self, project_id: str) -> Optional[Project]:
         db_project = await self.session.get(ProjectDB, project_id)
         return self._to_domain(db_project) if db_project else None
@@ -111,7 +111,7 @@ class ProjectRepository(BaseRepository):
 class ProjectService:
     def __init__(self, repo_factory: RepositoryFactory):
         self.repo_factory = repo_factory
-    
+
     async def get_project(self, project_id: str) -> Project:
         async with self.repo_factory.get_repository(ProjectRepository) as repo:
             project = await repo.get_by_id(project_id)
@@ -134,14 +134,14 @@ class ProjectService:
 # ❌ Old pattern
 class ProjectDB(Base):
     __tablename__ = "projects"
-    
+
     id = Column(String, primary_key=True)
     name = Column(String)
-    
+
     def validate(self):  # Business logic in DB model
         if len(self.name) < 3:
             raise ValueError("Name too short")
-    
+
     def add_integration(self, integration):  # Business method
         self.integrations.append(integration)
 ```
@@ -155,11 +155,11 @@ class Project:
     id: str
     name: str
     integrations: List[ProjectIntegration]
-    
+
     def validate(self):
         if len(self.name) < 3:
             raise ValidationError("Project name must be at least 3 characters")
-    
+
     def add_integration(self, integration_type: IntegrationType, config: Dict):
         integration = ProjectIntegration(type=integration_type, config=config)
         self.integrations.append(integration)
@@ -167,7 +167,7 @@ class Project:
 # Database model (persistence only)
 class ProjectDB(Base):
     __tablename__ = "projects"
-    
+
     id = Column(String, primary_key=True)
     name = Column(String(255), nullable=False)
     # Pure schema definition
@@ -189,7 +189,7 @@ class WorkflowEngine:
     def __init__(self):
         self.notification_service = NotificationService()
         self.analytics_service = AnalyticsService()
-    
+
     async def complete_workflow(self, workflow):
         # Direct calls create tight coupling
         await self.notification_service.send_completion_email(workflow)
@@ -202,7 +202,7 @@ class WorkflowEngine:
 class WorkflowEngine:
     def __init__(self, event_bus: EventBus):
         self.event_bus = event_bus
-    
+
     async def complete_workflow(self, workflow):
         # Publish event - no direct dependencies
         await self.event_bus.publish(
@@ -216,7 +216,7 @@ class WorkflowEngine:
 class NotificationService:
     def __init__(self, event_bus: EventBus):
         event_bus.subscribe("workflow.completed", self.handle_completion)
-    
+
     async def handle_completion(self, event: WorkflowCompletedEvent):
         await self.send_completion_email(event.workflow_id)
 ```
@@ -278,10 +278,10 @@ class ProjectAggregate:
         self.id = None
         self.name = None
         self.integrations = []
-        
+
         for event in events:
             self.apply(event)
-    
+
     def apply(self, event: Event):
         if isinstance(event, ProjectCreatedEvent):
             self.id = event.project_id
@@ -298,7 +298,7 @@ class CommandHandler:
         # Write to event store
         events = [ProjectCreatedEvent(...)]
         await self.event_store.append(events)
-        
+
         # Async projection to read model
         await self.event_bus.publish(events)
 

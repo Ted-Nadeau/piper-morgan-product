@@ -69,10 +69,10 @@ Key findings (in markdown format):
 """
 
 SUMMARY_BY_FILE_TYPE = {
-    'pdf': DOCUMENT_SUMMARY_PROMPT,
-    'txt': TEXT_FILE_SUMMARY_PROMPT,
-    'md': TEXT_FILE_SUMMARY_PROMPT,
-    'csv': """
+    "pdf": DOCUMENT_SUMMARY_PROMPT,
+    "txt": TEXT_FILE_SUMMARY_PROMPT,
+    "md": TEXT_FILE_SUMMARY_PROMPT,
+    "csv": """
 You are analyzing a CSV file. Please provide a summary of its structure and content.
 
 Instructions:
@@ -88,7 +88,7 @@ CSV content (first 3000 characters):
 
 Please provide a data summary in markdown format:
 """,
-    'json': """
+    "json": """
 You are analyzing a JSON file. Please provide a summary of its structure and content.
 
 Instructions:
@@ -103,8 +103,9 @@ JSON content:
 {content}
 
 Please provide a structural summary in markdown format:
-"""
+""",
 }
+
 
 def get_summary_prompt(file_extension: str = None) -> str:
     """Get appropriate summary prompt based on file type."""
@@ -112,6 +113,57 @@ def get_summary_prompt(file_extension: str = None) -> str:
         return SUMMARY_BY_FILE_TYPE[file_extension.lower()]
     return DOCUMENT_SUMMARY_PROMPT
 
+
 def get_key_findings_prompt() -> str:
     """Get the key findings extraction prompt."""
     return KEY_FINDINGS_PROMPT
+
+
+# JSON Mode Prompts - Structured Output
+JSON_SUMMARY_PROMPT = """
+You are analyzing a document and must provide a structured summary in JSON format.
+
+CRITICAL FORMATTING RULES:
+- Return ONLY valid JSON - no additional text, explanations, or markdown
+- Use proper ASCII markdown syntax in your content:
+  * For bullet points: Use "- " (dash + space) NEVER "•", "●", or "• -"
+  * For headers: Use "## " (hash + space) NEVER "##" without space
+  * NO Unicode bullet characters (•, ●, ◦) anywhere in the content
+- All text content should be clean and readable
+
+IMPORTANT: key_findings and points MUST be arrays of strings, NOT single strings!
+
+Required JSON structure:
+{{
+  "title": "Document title or main topic",
+  "document_type": "Type of document (report, specification, guide, etc.)",
+  "key_findings": [
+    "Important finding 1",
+    "Important finding 2",
+    "Important finding 3"
+  ],
+  "sections": [
+    {{
+      "heading": "Section Name",
+      "points": [
+        "Point 1 about this section",
+        "Point 2 about this section"
+      ]
+    }}
+  ]
+}}
+
+EXAMPLES OF CORRECT vs INCORRECT:
+✓ CORRECT: "key_findings": ["Finding 1", "Finding 2", "Finding 3"]
+✗ INCORRECT: "key_findings": "• Finding 1 • Finding 2 • Finding 3"
+
+Document content:
+{content}
+
+Return only the JSON response:
+"""
+
+
+def get_json_summary_prompt() -> str:
+    """Get the JSON mode summary prompt."""
+    return JSON_SUMMARY_PROMPT

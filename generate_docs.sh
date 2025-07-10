@@ -39,10 +39,10 @@ print_error() {
 # Function to create directory structure
 create_docs_structure() {
     print_status "Creating documentation directory structure..."
-    
+
     # Main docs directory
     mkdir -p "$DOCS_DIR"
-    
+
     # Subdirectories
     mkdir -p "$DOCS_DIR/architecture"
     mkdir -p "$DOCS_DIR/development"
@@ -51,14 +51,14 @@ create_docs_structure() {
     mkdir -p "$DOCS_DIR/api"
     mkdir -p "$DOCS_DIR/presentations"
     mkdir -p "$DOCS_DIR/assets"
-    
+
     print_success "Directory structure created"
 }
 
 # Function to generate main README
 generate_main_readme() {
     print_status "Generating main README.md..."
-    
+
     cat > "$DOCS_DIR/README.md" << 'EOF'
 # Piper Morgan 1.0 - Documentation
 
@@ -149,34 +149,34 @@ EOF
 # Function to copy documents to appropriate directories
 organize_documents() {
     print_status "Organizing documents into directory structure..."
-    
+
     # Check if source documents exist (would be provided separately)
     print_warning "Note: Document content should be copied from source files:"
-    
+
     # Executive documents (root level)
     echo "  - one-pager.md → docs/"
     echo "  - vision.md → docs/"
     echo "  - project-report.md → docs/"
-    
+
     # Architecture documents
     echo "  - architecture.md → docs/architecture/"
     echo "  - technical-spec.md → docs/architecture/"
     echo "  - requirements.md → docs/architecture/"
-    
+
     # Development documents
     echo "  - roadmap.md → docs/development/"
     echo "  - backlog.md → docs/development/"
-    
+
     # Presentations
     echo "  - team-all-hands.html → docs/presentations/"
-    
+
     print_warning "Manual copy required - script cannot access document content directly"
 }
 
 # Function to generate development guide
 generate_dev_guide() {
     print_status "Generating development guide..."
-    
+
     cat > "$DOCS_DIR/development/dev-guide.md" << 'EOF'
 # Piper Morgan 1.0 - Development Guide
 
@@ -252,7 +252,7 @@ EOF
 # Function to generate deployment guide
 generate_deployment_guide() {
     print_status "Generating deployment guide..."
-    
+
     cat > "$DOCS_DIR/operations/deployment.md" << 'EOF'
 # Piper Morgan 1.0 - Deployment Guide
 
@@ -387,7 +387,7 @@ EOF
 # Function to generate API documentation
 generate_api_docs() {
     print_status "Generating API documentation..."
-    
+
     cat > "$DOCS_DIR/api/api-reference.md" << 'EOF'
 # Piper Morgan 1.0 - API Reference
 
@@ -565,7 +565,7 @@ EOF
 # Function to generate user guide
 generate_user_guide() {
     print_status "Generating user guide..."
-    
+
     cat > "$DOCS_DIR/user-guides/user-guide.md" << 'EOF'
 # Piper Morgan 1.0 - User Guide
 
@@ -736,12 +736,12 @@ EOF
 # Function to create placeholder files
 create_placeholder_files() {
     print_status "Creating placeholder files..."
-    
+
     # Architecture placeholders
     echo "# Monitoring Guide - To Be Developed" > "$DOCS_DIR/operations/monitoring.md"
     echo "# Security Guide - To Be Developed" > "$DOCS_DIR/operations/security.md"
     echo "# Configuration Guide - To Be Developed" > "$DOCS_DIR/user-guides/configuration.md"
-    
+
     # Assets directory with README
     cat > "$DOCS_DIR/assets/README.md" << 'EOF'
 # Assets Directory
@@ -767,7 +767,7 @@ EOF
 # Function to generate documentation index
 generate_doc_index() {
     print_status "Generating documentation index..."
-    
+
     cat > "$DOCS_DIR/doc-index.md" << 'EOF'
 # Piper Morgan 1.0 - Documentation Index
 
@@ -810,7 +810,7 @@ generate_doc_index() {
 
 ### Completion Status
 - **Executive Documents**: 100% complete
-- **Technical Architecture**: 100% complete  
+- **Technical Architecture**: 100% complete
 - **Development Guides**: 80% complete
 - **Operations Guides**: 40% complete
 - **User Documentation**: 60% complete
@@ -859,10 +859,10 @@ main() {
     print_status "Date: $DATE"
     print_status "Version: $VERSION"
     echo
-    
+
     # Create directory structure
     create_docs_structure
-    
+
     # Generate main documentation files
     generate_main_readme
     generate_dev_guide
@@ -870,13 +870,13 @@ main() {
     generate_api_docs
     generate_user_guide
     generate_doc_index
-    
+
     # Create supporting files
     create_placeholder_files
-    
+
     # Show organization instructions
     organize_documents
-    
+
     echo
     print_success "Documentation generation complete!"
     print_status "Directory structure created in: $DOCS_DIR/"

@@ -1,1 +1,2 @@
-from .simple_hierarchy import SimpleKnowledgeHierarchy, DocumentType, SimpleDocument
+from .simple_hierarchy import (DocumentType, SimpleDocument,
+                               SimpleKnowledgeHierarchy)

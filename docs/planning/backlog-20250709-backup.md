@@ -417,8 +417,8 @@ _Last Updated: June 21, 2025_
 
 ### PM-033: MCP Integration Pilot
 
-**Status**: Approved, Scheduled for Week 4+  
-**Priority**: High  
+**Status**: Approved, Scheduled for Week 4+
+**Priority**: High
 **Effort**: 6-8 weeks
 
 **Description**: Implement Model Context Protocol support to enable federated tool and knowledge access.
@@ -444,9 +444,9 @@ _Last Updated: June 21, 2025_
 
 ### PM-034: LLM-Based Intent Classification
 
-**Status**: Proposed  
-**Priority**: High  
-**Effort**: 2-3 weeks  
+**Status**: Proposed
+**Priority**: High
+**Effort**: 2-3 weeks
 **Discovered**: July 8, 2025 during Claude Code integration
 
 **Description**: Replace rigid regex-based intent patterns with context-aware LLM classification to enable natural conversational interactions.

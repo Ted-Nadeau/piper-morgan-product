@@ -14,7 +14,7 @@ This document defines the API contracts for Piper Morgan, including REST endpoin
 ### Authentication
 - **Development**: API key in environment variables
 - **Production**: Bearer token authentication (planned)
-- **Headers**: 
+- **Headers**:
   ```
   Authorization: Bearer <token>
   Content-Type: application/json

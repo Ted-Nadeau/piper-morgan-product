@@ -11,13 +11,13 @@ A three-horizon roadmap organizing development around thematic tracks. Timeline 
 ### Intent & Execution Track
 **🎯 Complete Workflow Execution** (*Critical - Currently Broken*)
 - Database initialization and workflow persistence (3 points)
-- Intent → Workflow factory pattern implementation (5 points) 
+- Intent → Workflow factory pattern implementation (5 points)
 - End-to-end GitHub issue creation from natural language (8 points)
 - Basic error handling and user feedback (3 points)
 
 **Reality Check**: Workflows currently don't persist. This is a blocking issue preventing any meaningful testing.
 
-### Knowledge & Learning Track  
+### Knowledge & Learning Track
 **🎯 Knowledge Base Improvements** (*Quality Currently Poor*)
 - Document ingestion pipeline reliability (PDF, DOCX, TXT, MD) (3 points)
 - Search relevance tuning and optimization (5 points)
@@ -37,14 +37,14 @@ A three-horizon roadmap organizing development around thematic tracks. Timeline 
 
 ---
 
-## 🟡 NEXT (Q4 2025 - Q1 2026)  
+## 🟡 NEXT (Q4 2025 - Q1 2026)
 *Goal: Enhanced reliability and multi-workflow capabilities*
 *Assumes NOW phase successful and lessons learned*
 
 ### Intent & Execution Track
 **🚀 Advanced Workflow Types** (*High Complexity*)
 - Multi-step workflow orchestration (13 points)
-- Clarifying questions system (8 points)  
+- Clarifying questions system (8 points)
 - Bulk operations and batch processing (8 points)
 
 **Risk**: Complex orchestration increases failure modes significantly.
@@ -74,7 +74,7 @@ A three-horizon roadmap organizing development around thematic tracks. Timeline 
 ### Strategic Intelligence (*Research-Level Challenges*)
 **🌟 Organizational Intelligence**
 - Cross-team knowledge synthesis (21 points)
-- Predictive analytics and insights (21 points)  
+- Predictive analytics and insights (21 points)
 - Strategic recommendation generation (21 points)
 
 **Reality Check**: This requires advances in AI reasoning that may not be achievable.
@@ -127,7 +127,7 @@ A three-horizon roadmap organizing development around thematic tracks. Timeline 
 - **Integration Complexity**: Each external system adds maintenance overhead
 - **Scale Challenges**: Performance with larger knowledge bases unproven
 
-### Product Risks  
+### Product Risks
 - **User Adoption**: Teams may resist AI assistance
 - **Quality Expectations**: AI output quality may not meet professional standards
 - **Workflow Fit**: PM processes may not map well to automated workflows

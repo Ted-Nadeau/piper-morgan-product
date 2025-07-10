@@ -30,7 +30,7 @@ I'd just gotten access to Claude Code after ADR-002 promised a 50% reduction in 
 Claude Code approaches problems like a philosophy major who discovered programming. Every status update is an existential meditation:
 
 - "Hoping this implementation aligns with your architectural vision..."
-- "Soothing the troubled waters of markdown parsing..."  
+- "Soothing the troubled waters of markdown parsing..."
 - "Savoring the elegance of domain-driven design..."
 
 [SPECIFIC EXAMPLE NEEDED: What was your favorite Claude Code progress message?]
@@ -81,7 +81,7 @@ At 6:35 PM Pacific, staring at the still-broken output, I had a thought. Not a t
 Claude Code investigated. Twenty minutes later, we found it: three different formatting layers all "helping" each other:
 
 1. `MarkdownFormatter.clean_and_validate()` - Adding its opinions
-2. `format_key_findings_as_markdown()` - Adding more opinions  
+2. `format_key_findings_as_markdown()` - Adding more opinions
 3. `clean_markdown_response()` - Making everything worse
 
 It was like hiring three proofreaders who all use different style guides.

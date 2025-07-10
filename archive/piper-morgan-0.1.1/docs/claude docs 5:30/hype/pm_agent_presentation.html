@@ -13,7 +13,7 @@
             color: #333;
             overflow: hidden;
         }
-        
+
         .slideshow-container {
             position: relative;
             width: 100%;
@@ -22,7 +22,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .slide {
             display: none;
             width: 90%;
@@ -34,23 +34,23 @@
             text-align: center;
             animation: slideIn 0.5s ease-in-out;
         }
-        
+
         .slide.active {
             display: block;
         }
-        
+
         @keyframes slideIn {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         h1 {
             color: #2c3e50;
             font-size: 3em;
             margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
-        
+
         h2 {
             color: #34495e;
             font-size: 2.5em;
@@ -58,26 +58,26 @@
             border-bottom: 3px solid #3498db;
             padding-bottom: 10px;
         }
-        
+
         h3 {
             color: #2980b9;
             font-size: 1.8em;
             margin: 30px 0 15px 0;
         }
-        
+
         .subtitle {
             font-size: 1.3em;
             color: #7f8c8d;
             margin-bottom: 40px;
         }
-        
+
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 30px;
             margin: 40px 0;
         }
-        
+
         .feature-card {
             background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
             color: white;
@@ -87,16 +87,16 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
         }
-        
+
         .feature-card:hover {
             transform: translateY(-5px);
         }
-        
+
         .feature-card h4 {
             margin: 0 0 10px 0;
             font-size: 1.3em;
         }
-        
+
         .demo-box {
             background: #f8f9fa;
             border: 2px solid #e9ecef;
@@ -105,7 +105,7 @@
             margin: 30px 0;
             text-align: left;
         }
-        
+
         .input-text {
             background: #fff3cd;
             padding: 15px;
@@ -113,7 +113,7 @@
             margin: 15px 0;
             font-style: italic;
         }
-        
+
         .output-text {
             background: #d1ecf1;
             padding: 15px;
@@ -122,7 +122,7 @@
             font-family: monospace;
             font-size: 0.9em;
         }
-        
+
         .timeline {
             display: flex;
             justify-content: space-between;
@@ -130,7 +130,7 @@
             margin: 40px 0;
             position: relative;
         }
-        
+
         .timeline::before {
             content: '';
             position: absolute;
@@ -141,7 +141,7 @@
             background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
             z-index: 0;
         }
-        
+
         .timeline-item {
             background: white;
             padding: 20px;
@@ -153,14 +153,14 @@
             margin: 0 10px;
             text-align: center;
         }
-        
+
         .metrics {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 30px;
             margin: 40px 0;
         }
-        
+
         .metric-card {
             background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
             color: white;
@@ -168,18 +168,18 @@
             border-radius: 15px;
             text-align: center;
         }
-        
+
         .metric-number {
             font-size: 3em;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        
+
         .metric-label {
             font-size: 1.1em;
             opacity: 0.9;
         }
-        
+
         .navigation {
             position: fixed;
             bottom: 30px;
@@ -189,7 +189,7 @@
             gap: 15px;
             z-index: 1000;
         }
-        
+
         .nav-btn {
             background: rgba(255,255,255,0.9);
             border: none;
@@ -202,13 +202,13 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
-        
+
         .nav-btn:hover {
             background: white;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
-        
+
         .slide-number {
             position: absolute;
             top: 20px;
@@ -219,7 +219,7 @@
             font-size: 0.9em;
             color: #666;
         }
-        
+
         ul {
             text-align: left;
             font-size: 1.2em;
@@ -227,19 +227,19 @@
             max-width: 800px;
             margin: 0 auto;
         }
-        
+
         li {
             margin: 15px 0;
             padding-left: 10px;
         }
-        
+
         .highlight {
             background: linear-gradient(120deg, #a8edea 0%, #fed6e3 100%);
             padding: 2px 8px;
             border-radius: 5px;
             font-weight: bold;
         }
-        
+
         .cta {
             background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
             color: white;
@@ -253,7 +253,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             transition: transform 0.3s ease;
         }
-        
+
         .cta:hover {
             transform: translateY(-3px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.15);
@@ -308,7 +308,7 @@
                 <div class="input-text">
                     "Users are complaining that the mobile app crashes when they try to upload photos larger than 10MB"
                 </div>
-                
+
                 <h3>Output (what gets created):</h3>
                 <div class="output-text">
                     <strong>Title:</strong> [Mobile] App crashes on large photo uploads (>10MB)<br><br>
@@ -410,7 +410,7 @@
                     <li>Share feedback - what works, what doesn't?</li>
                 </ul>
             </div>
-            
+
             <div class="feature-grid" style="margin-top: 40px;">
                 <div style="text-align: center;">
                     <h4>🎯 Perfect For:</h4>
@@ -433,11 +433,11 @@
                 <p>📈 <strong>Impact:</strong> How do we measure success?</p>
                 <p>🚀 <strong>Future:</strong> What else could it do?</p>
             </div>
-            
+
             <div class="cta" style="display: inline-block; margin-top: 40px;">
                 Let's discuss and get you set up!
             </div>
-            
+
             <p style="font-size: 1.1em; color: #7f8c8d; margin-top: 40px;">
                 Thanks! • Christian Crumlish • @xian
             </p>

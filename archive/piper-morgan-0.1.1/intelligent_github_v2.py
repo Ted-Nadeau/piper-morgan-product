@@ -1,29 +1,36 @@
-import os
-from github_agent import GitHubAgent, IssueTemplate
-from llm_adapter import LLMAdapter
-from claude_client import ClaudeClient # Keep for type hinting or default instantiation if needed
-from knowledge_base import KnowledgeBase
-from typing import Dict, List, Optional
 import json
+import os
+from typing import Dict, List, Optional
 
+from claude_client import \
+    ClaudeClient  # Keep for type hinting or default instantiation if needed
 # Import custom exceptions
-from exceptions import GitHubAPIError, LLMGenerationError, LLMParseError, KnowledgeBaseError
-from logger_config import logger # Import logger
+from exceptions import (GitHubAPIError, KnowledgeBaseError, LLMGenerationError,
+                        LLMParseError)
+from github_agent import GitHubAgent, IssueTemplate
+from knowledge_base import KnowledgeBase
+from llm_adapter import LLMAdapter
+from logger_config import logger  # Import logger
 
-class PmIssueCreationAgent: # Renamed class for clarity
-    def __init__(self,
-                 github_agent: GitHubAgent,
-                 knowledge_base: KnowledgeBase,
-                 llm_adapter: LLMAdapter): # Now accepts an LLMAdapter instance
+
+class PmIssueCreationAgent:  # Renamed class for clarity
+    def __init__(
+        self,
+        github_agent: GitHubAgent,
+        knowledge_base: KnowledgeBase,
+        llm_adapter: LLMAdapter,
+    ):  # Now accepts an LLMAdapter instance
         self.github = github_agent
         self.knowledge_base = knowledge_base
-        self.llm = llm_adapter # Use the injected LLMAdapter
+        self.llm = llm_adapter  # Use the injected LLMAdapter
 
-    def create_issue_from_request(self,
-                                 repo_name: str,
-                                 request: str,
-                                 client_name: str = None,
-                                 project_name: str = None) -> Optional[Dict]: # Changed return type to Dict
+    def create_issue_from_request(
+        self,
+        repo_name: str,
+        request: str,
+        client_name: str = None,
+        project_name: str = None,
+    ) -> Optional[Dict]:  # Changed return type to Dict
         """Convert natural language request into GitHub issue with context"""
 
         logger.info(f"\n--- Processing request for repo '{repo_name}' ---")
@@ -42,26 +49,39 @@ class PmIssueCreationAgent: # Renamed class for clarity
                 elif client_name:
                     search_query = f"{request} {client_name} client"
                 else:
-                    search_query = request # Default to just the request
+                    search_query = request  # Default to just the request
 
                 logger.info(f"Searching knowledge base with query: '{search_query}'")
-                retrieved_context = self.knowledge_base.query_knowledge_base(search_query)
-                
+                retrieved_context = self.knowledge_base.query_knowledge_base(
+                    search_query
+                )
+
                 if retrieved_context:
-                    context_parts.append("Knowledge Base Context (if available):\n" + "\n".join(retrieved_context))
+                    context_parts.append(
+                        "Knowledge Base Context (if available):\n"
+                        + "\n".join(retrieved_context)
+                    )
                 else:
-                    context_parts.append("Knowledge Base Context (if available):\nNo additional context available.")
+                    context_parts.append(
+                        "Knowledge Base Context (if available):\nNo additional context available."
+                    )
             else:
-                context_parts.append("Knowledge Base Context (if available):\nKnowledge Base not initialized.")
-            
+                context_parts.append(
+                    "Knowledge Base Context (if available):\nKnowledge Base not initialized."
+                )
+
             # Add dynamic variables to context
-            context_parts.append(f"Dynamic Variables:\nClient Name: {client_name if client_name else 'N/A'}\nProject Name: {project_name if project_name else 'N/A'}")
+            context_parts.append(
+                f"Dynamic Variables:\nClient Name: {client_name if client_name else 'N/A'}\nProject Name: {project_name if project_name else 'N/A'}"
+            )
 
             full_context = "\n\n".join(context_parts)
 
         except KnowledgeBaseError as e:
             logger.error(f"Error retrieving context from knowledge base: {e}")
-            full_context = f"Knowledge Base Context (if available):\nError retrieving context: {e}"
+            full_context = (
+                f"Knowledge Base Context (if available):\nError retrieving context: {e}"
+            )
 
         # Define the JSON schema for the desired output from the LLM
         # Removed 'intent', 'client_name', 'project_name' from the LLM output schema
@@ -71,36 +91,28 @@ class PmIssueCreationAgent: # Renamed class for clarity
             "properties": {
                 "title": {
                     "type": "string",
-                    "description": "Concise and clear title for the GitHub issue."
+                    "description": "Concise and clear title for the GitHub issue.",
                 },
                 "body": {
                     "type": "string",
-                    "description": "Detailed description for the GitHub issue, including acceptance criteria, and background context. Include relevant information from the knowledge base if available and useful. Markdown formatting is encouraged for readability."
+                    "description": "Detailed description for the GitHub issue, including acceptance criteria, and background context. Include relevant information from the knowledge base if available and useful. Markdown formatting is encouraged for readability.",
                 },
                 "labels": {
                     "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "A list of relevant GitHub labels for the issue (e.g., 'bug', 'feature', 'enhancement', 'documentation', 'urgent', 'priority', 'tech debt', 'discovery'). Choose labels based on the request's content and urgency. Ensure these labels are already defined in the GitHub repository or are common enough to be created."
+                    "items": {"type": "string"},
+                    "description": "A list of relevant GitHub labels for the issue (e.g., 'bug', 'feature', 'enhancement', 'documentation', 'urgent', 'priority', 'tech debt', 'discovery'). Choose labels based on the request's content and urgency. Ensure these labels are already defined in the GitHub repository or are common enough to be created.",
                 },
                 "assignees": {
                     "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "A list of GitHub usernames to assign to the issue (e.g., ['mediajunkie']). Only assign if a specific user is mentioned or implied by the request. If no specific assignee is mentioned, leave this empty."
+                    "items": {"type": "string"},
+                    "description": "A list of GitHub usernames to assign to the issue (e.g., ['mediajunkie']). Only assign if a specific user is mentioned or implied by the request. If no specific assignee is mentioned, leave this empty.",
                 },
                 "milestone": {
                     "type": "string",
-                    "description": "The name of the GitHub milestone this issue belongs to (e.g., 'Q3 2024 Planning', 'Sprint 1'). Only include if a specific milestone is clearly indicated in the request. If no specific milestone is mentioned, leave this empty."
-                }
+                    "description": "The name of the GitHub milestone this issue belongs to (e.g., 'Q3 2024 Planning', 'Sprint 1'). Only include if a specific milestone is clearly indicated in the request. If no specific milestone is mentioned, leave this empty.",
+                },
             },
-            "required": [
-                "title",
-                "body",
-                "labels"
-            ]
+            "required": ["title", "body", "labels"],
         }
 
         # Construct the prompt for the LLM
@@ -122,7 +134,7 @@ class PmIssueCreationAgent: # Renamed class for clarity
             "6. Assignees should only be included if explicitly mentioned or clearly implied.\n"
             "7. Milestones should only be included if explicitly mentioned.\n"
             "\n"
-            f"{full_context}\n\n" # Inject the dynamically built context here
+            f"{full_context}\n\n"  # Inject the dynamically built context here
             f"User Request: '{request}'"
         )
 
@@ -131,18 +143,21 @@ class PmIssueCreationAgent: # Renamed class for clarity
             parsed_issue_data = self.llm.query_structured(
                 prompt=user_message_content,
                 response_format=issue_template_schema,
-                context=system_prompt # Pass system_prompt as context for structured query
+                context=system_prompt,  # Pass system_prompt as context for structured query
             )
             logger.info("Claude structured query successful, JSON parsed.")
 
             # Filter out keys not expected by IssueTemplate (e.g., 'intent' if it somehow reappears)
             issue_data_for_template = {
-                k: v for k, v in parsed_issue_data.items()
+                k: v
+                for k, v in parsed_issue_data.items()
                 if k in IssueTemplate.__annotations__
             }
 
             issue_template = IssueTemplate(**issue_data_for_template)
-            logger.info(f"Generated issue data: Title='{issue_template.title}', Labels={issue_template.labels}")
+            logger.info(
+                f"Generated issue data: Title='{issue_template.title}', Labels={issue_template.labels}"
+            )
 
             # Create the GitHub issue
             issue_url = self.github.create_github_issue(repo_name, issue_template)
@@ -150,21 +165,24 @@ class PmIssueCreationAgent: # Renamed class for clarity
                 "title": issue_template.title,
                 "body": issue_template.body,
                 "labels": issue_template.labels,
-                "url": issue_url
+                "url": issue_url,
             }
 
         except LLMGenerationError as e:
             logger.error(f"LLM generation error: {e}")
-            raise # Re-raise to be caught by Streamlit's error handling
+            raise  # Re-raise to be caught by Streamlit's error handling
         except LLMParseError as e:
             logger.error(f"LLM parse error: {e}")
-            raise # Re-raise
+            raise  # Re-raise
         except GitHubAPIError as e:
             logger.error(f"GitHub API error during issue creation: {e}")
-            raise # Re-raise
+            raise  # Re-raise
         except Exception as e:
-            logger.exception("An unexpected error occurred during issue creation from request.")
-            raise # Re-raise
+            logger.exception(
+                "An unexpected error occurred during issue creation from request."
+            )
+            raise  # Re-raise
+
 
 # Example Usage (commented out as this file is imported)
 # if __name__ == "__main__":

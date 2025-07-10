@@ -1,50 +1,70 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
+
 from main import app
-from services.api.errors import LowConfidenceIntentError, TaskFailedError, GitHubAuthFailedError
-from services.domain.models import Intent, Workflow, Task
-from services.shared_types import IntentCategory, WorkflowType, TaskType
+from services.api.errors import (GitHubAuthFailedError,
+                                 LowConfidenceIntentError, TaskFailedError)
+from services.domain.models import Intent, Task, Workflow
+from services.shared_types import IntentCategory, TaskType, WorkflowType
+
 
 @pytest.fixture(scope="module")
 def setup_projects():
     # This fixture could be expanded to set up test data in the DB if needed
     pass
 
-@patch('main.classifier.classify', new_callable=AsyncMock)
+
+@patch("main.classifier.classify", new_callable=AsyncMock)
 def test_low_confidence_intent_error(mock_classify, test_client):
     """
     Test that the middleware correctly handles a LowConfidenceIntentError.
     """
     # Arrange
-    mock_classify.side_effect = LowConfidenceIntentError(suggestions="try 'list projects'")
+    mock_classify.side_effect = LowConfidenceIntentError(
+        suggestions="try 'list projects'"
+    )
 
     # Act
-    response = test_client.post("/api/v1/intent", json={"message": "uhhh, i dunno, show me stuff?"})
+    response = test_client.post(
+        "/api/v1/intent", json={"message": "uhhh, i dunno, show me stuff?"}
+    )
 
     # Assert
     assert response.status_code == 422
     data = response.json()
     assert "LOW_CONFIDENCE_INTENT" == data.get("error", {}).get("code")
     assert "suggestions" in data.get("error", {}).get("details", {})
-    assert "try 'list projects'" in data.get("error", {}).get("details", {}).get("suggestions", "")
+    assert "try 'list projects'" in data.get("error", {}).get("details", {}).get(
+        "suggestions", ""
+    )
 
-@patch('main.engine.execute_workflow')
-@patch('main.engine.create_workflow_from_intent', new_callable=AsyncMock)
-@patch('main.classifier.classify', new_callable=AsyncMock)
-def test_workflow_task_failed_error(mock_classify, mock_create_workflow, mock_execute_workflow, test_client):
+
+@patch("main.engine.execute_workflow")
+@patch("main.engine.create_workflow_from_intent", new_callable=AsyncMock)
+@patch("main.classifier.classify", new_callable=AsyncMock)
+def test_workflow_task_failed_error(
+    mock_classify, mock_create_workflow, mock_execute_workflow, test_client
+):
     """
     Test that the middleware correctly handles a TaskFailedError from the workflow engine.
     """
     # Arrange
-    mock_classify.return_value = Intent(category=IntentCategory.EXECUTION, action="create_ticket", confidence=0.9)
-    mock_create_workflow.return_value = Workflow(id="wf-123", type=WorkflowType.CREATE_TICKET, tasks=[Task(id="task-1", type=TaskType.CREATE_WORK_ITEM)])
+    mock_classify.return_value = Intent(
+        category=IntentCategory.EXECUTION, action="create_ticket", confidence=0.9
+    )
+    mock_create_workflow.return_value = Workflow(
+        id="wf-123",
+        type=WorkflowType.CREATE_TICKET,
+        tasks=[Task(id="task-1", type=TaskType.CREATE_WORK_ITEM)],
+    )
     # We patch `execute_workflow` as it's called in a background task.
     # The error will be raised when the background task runs.
     # For testing, we can trigger it directly to see the exception.
     mock_execute_workflow.side_effect = TaskFailedError(
         task_description="creating the work item",
-        recovery_suggestion="check the project integration settings"
+        recovery_suggestion="check the project integration settings",
     )
 
     # Act
@@ -54,10 +74,13 @@ def test_workflow_task_failed_error(mock_classify, mock_create_workflow, mock_ex
     # The initial response will be successful because the error is in a background task.
     assert response.status_code == 200
 
-@patch('main.engine.github_analyzer', autospec=True)
-@patch('main.engine.create_workflow_from_intent', new_callable=AsyncMock)
-@patch('main.classifier.classify', new_callable=AsyncMock)
-def test_github_auth_failed_error(mock_classify, mock_create_workflow, mock_github_analyzer, test_client):
+
+@patch("main.engine.github_analyzer", autospec=True)
+@patch("main.engine.create_workflow_from_intent", new_callable=AsyncMock)
+@patch("main.classifier.classify", new_callable=AsyncMock)
+def test_github_auth_failed_error(
+    mock_classify, mock_create_workflow, mock_github_analyzer, test_client
+):
     """
     Test that a GitHubAuthFailedError from a deep integration is handled by the middleware.
     """
@@ -66,13 +89,13 @@ def test_github_auth_failed_error(mock_classify, mock_create_workflow, mock_gith
         category=IntentCategory.EXECUTION,
         action="analyze_github_issue",
         confidence=0.95,
-        context={"url": "http://github.com/fake/repo/issues/1"}
+        context={"url": "http://github.com/fake/repo/issues/1"},
     )
     workflow_for_github = Workflow(
         id="wf-gh-1",
         type=WorkflowType.REVIEW_ITEM,
         tasks=[Task(id="task-gh-1", type=TaskType.ANALYZE_GITHUB_ISSUE)],
-        context={"url": "http://github.com/fake/repo/issues/1"}
+        context={"url": "http://github.com/fake/repo/issues/1"},
     )
 
     mock_classify.return_value = intent_for_github
@@ -86,7 +109,10 @@ def test_github_auth_failed_error(mock_classify, mock_create_workflow, mock_gith
     mock_create_workflow.side_effect = GitHubAuthFailedError()
 
     # Act
-    response = test_client.post("/api/v1/intent", json={"message": "analyze http://github.com/fake/repo/issues/1"})
+    response = test_client.post(
+        "/api/v1/intent",
+        json={"message": "analyze http://github.com/fake/repo/issues/1"},
+    )
 
     # Assert
-    assert response.status_code == 502 
+    assert response.status_code == 502

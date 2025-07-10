@@ -29,7 +29,7 @@ find docs/ -name "*.md" -type f | while read file; do
     else
         file_modified=false
     fi
-    
+
     # Check if footer exists
     if ! grep -q "Last Updated:" "$file"; then
         # Add new footer
@@ -46,11 +46,11 @@ find docs/ -name "*.md" -type f | while read file; do
         if [ "$file_modified" = true ]; then
             # Update the Last Updated date
             sed -i.bak "s/\*Last Updated: .*/\*Last Updated: $DATE\*/" "$file"
-            
+
             # Add new revision entry (insert after "## Revision Log" line)
             # This handles both cases: empty log and existing entries
             awk -v date="$DATE" -v msg="$UPDATE_MESSAGE" '
-                /^## Revision Log/ { 
+                /^## Revision Log/ {
                     print $0
                     print "- **" date "**: " msg
                     revision_added=1
@@ -58,10 +58,10 @@ find docs/ -name "*.md" -type f | while read file; do
                 }
                 { print }
             ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
-            
+
             # Clean up backup
             rm -f "$file.bak"
-            
+
             echo -e "${YELLOW}↻ Updated revision log: $file${NC}"
             ((updated_revisions++))
         else

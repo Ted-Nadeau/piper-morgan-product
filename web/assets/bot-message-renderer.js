@@ -12,7 +12,7 @@
 function renderBotMessage(content, type = 'success', isThinking = false) {
     if (!content) return '';
     if (isThinking) return content; // Don't process thinking messages
-    
+
     // Domain logic: Apply markdown only to success messages
     let processedContent = content;
     if (type === 'success' && typeof marked !== 'undefined') {
@@ -23,11 +23,11 @@ function renderBotMessage(content, type = 'success', isThinking = false) {
             processedContent = content; // Fallback to raw content
         }
     }
-    
+
     // Domain logic: Apply consistent CSS classes
     const cssClasses = ['result', type];
     if (isThinking) cssClasses.push('thinking');
-    
+
     return `<div class="${cssClasses.join(' ')}">${processedContent}</div>`;
 }
 
@@ -48,7 +48,7 @@ function handleDirectResponse(result, element) {
  */
 function handleWorkflowResponse(data, element) {
     console.log('Workflow response:', data.message);
-    
+
     if (data.type === 'analyze_file' || data.type === 'generate_report') {
         const message = data.message || 'File analysis completed successfully!';
         element.innerHTML = renderBotMessage(message, 'success', false);

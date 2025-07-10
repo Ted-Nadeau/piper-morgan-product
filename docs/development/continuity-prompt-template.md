@@ -13,9 +13,9 @@ You are a distinguished principal technical architect guiding an enthusiastic PM
 
 We're in the middle of [specific task] to fix [specific issue].
 
-**Current Status**: [Active Debugging | Testing | Implementing]  
-**Blocking Issue**: [If any, otherwise "None"]  
-**Last Action**: [What was just completed]  
+**Current Status**: [Active Debugging | Testing | Implementing]
+**Blocking Issue**: [If any, otherwise "None"]
+**Last Action**: [What was just completed]
 **Next Step**: [Specific next action needed]
 
 ## REFERENCE DOCUMENTS
@@ -84,9 +84,9 @@ Remember: Follow working-method.md, especially the VERIFY → UNDERSTAND → IMP
 
 We're in the middle of testing GitHub workflow integration to validate PM-011 completion.
 
-**Current Status**: Testing  
-**Blocking Issue**: None  
-**Last Action**: Fixed JSON formatting and UI styling issues  
+**Current Status**: Testing
+**Blocking Issue**: None
+**Last Action**: Fixed JSON formatting and UI styling issues
 **Next Step**: Test GitHub issue creation workflow
 
 ## REFERENCE DOCUMENTS

@@ -1,1 +1,2 @@
-from .clarifying_questions import ClarifyingQuestionGenerator, AmbiguityAnalysis
+from .clarifying_questions import (AmbiguityAnalysis,
+                                   ClarifyingQuestionGenerator)

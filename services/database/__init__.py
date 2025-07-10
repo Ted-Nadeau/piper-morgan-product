@@ -2,24 +2,19 @@
 Database Service
 Handles data persistence and retrieval
 """
-from .connection import db, Base
-from .models import Product, Feature, WorkItem, Intent, Workflow, Task, Stakeholder, ProjectDB, ProjectIntegrationDB
-from .repositories import (
-    ProductRepository,
-    FeatureRepository, 
-    WorkItemRepository,
-    WorkflowRepository,
-    TaskRepository,
-    ProjectRepository,
-    ProjectIntegrationRepository,
-    RepositoryFactory
-)
+
+from .connection import Base, db
+from .models import (Feature, Intent, Product, ProjectDB, ProjectIntegrationDB,
+                     Stakeholder, Task, Workflow, WorkItem)
+from .repositories import (FeatureRepository, ProductRepository,
+                           ProjectIntegrationRepository, ProjectRepository,
+                           RepositoryFactory, TaskRepository,
+                           WorkflowRepository, WorkItemRepository)
 
 __all__ = [
     # Connection
     "db",
     "Base",
-    
     # Models
     "Product",
     "Feature",
@@ -30,7 +25,6 @@ __all__ = [
     "Stakeholder",
     "ProjectDB",
     "ProjectIntegrationDB",
-    
     # Repositories
     "ProductRepository",
     "FeatureRepository",
@@ -39,5 +33,5 @@ __all__ = [
     "TaskRepository",
     "ProjectRepository",
     "ProjectIntegrationRepository",
-    "RepositoryFactory"
+    "RepositoryFactory",
 ]

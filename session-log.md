@@ -1,8 +1,8 @@
 # Piper Morgan Development Session Log
 
 ## Session 2 - Resuming development
-**Date:** June 3, 2025  
-**Duration:** Initial setup session  
+**Date:** June 3, 2025
+**Duration:** Initial setup session
 **Participants:** Principal Architect guidance + PM
 
 ### What We Accomplished Today
@@ -31,8 +31,8 @@ Piper Morgan can now:
 
 
 ## Session 1 - Project Setup & Organization
-**Date:** June 3, 2025  
-**Duration:** Initial setup session  
+**Date:** June 3, 2025
+**Duration:** Initial setup session
 **Participants:** Principal Architect guidance + PM
 
 ### Accomplishments

@@ -2,10 +2,11 @@
 GitHub Issue Analyzer - PM-008 Implementation
 Analyzes existing GitHub issues and provides improvement suggestions
 """
+
 import os
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 # Local imports (adjust paths as needed)
 from services.integrations.github.github_agent import GitHubAgent
@@ -13,73 +14,75 @@ from services.integrations.github.issue_generator import IssueContentGenerator
 from services.knowledge_graph.ingestion import get_ingester
 from services.llm.clients import llm_client
 
+
 @dataclass
 class IssueAnalysis:
     """Results of GitHub issue analysis"""
+
     summary: List[str]  # 3-bullet summary
     draft_comment: str  # Constructive feedback comment
     draft_rewrite: str  # Improved version of the issue
-    confidence: float   # Analysis confidence (0-1)
+    confidence: float  # Analysis confidence (0-1)
     knowledge_context: List[str]  # Relevant knowledge sources
     analysis_metadata: Dict[str, Any]  # Additional analysis data
 
+
 class GitHubIssueAnalyzer:
     """Analyzes GitHub issues and provides improvement suggestions"""
-    
+
     def __init__(self, github_agent: Optional[GitHubAgent] = None):
         self.github = github_agent or GitHubAgent()
         self.knowledge = get_ingester()
         self.ideal_generator = IssueContentGenerator()
-    
+
     async def analyze_issue_by_url(self, url: str) -> Dict[str, Any]:
         """
         Analyze a GitHub issue by URL, raising exceptions on failure.
         """
         # Step 1: Fetch the issue (this will now raise exceptions on failure)
         issue_data = await self.github.get_issue_by_url(url)
-        
+
         # Step 2: Perform analysis
         analysis = await self._analyze_issue(issue_data)
-        
+
         return {
-            'success': True,
-            'url': url,
-            'issue': {
-                'title': issue_data['title'],
-                'number': issue_data['number'],
-                'repository': issue_data['repository']['full_name']
+            "success": True,
+            "url": url,
+            "issue": {
+                "title": issue_data["title"],
+                "number": issue_data["number"],
+                "repository": issue_data["repository"]["full_name"],
             },
-            'analysis': analysis
+            "analysis": analysis,
         }
-            
-    async def analyze_issue_by_number(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
+
+    async def analyze_issue_by_number(
+        self, repo_name: str, issue_number: int
+    ) -> Dict[str, Any]:
         """
         Analyze a GitHub issue by repository and number, raising exceptions on failure.
         """
         # Fetch the issue (this will now raise exceptions on failure)
         issue_data = await self.github.get_issue(repo_name, issue_number)
-        
+
         # Perform analysis
         analysis = await self._analyze_issue(issue_data)
-        
+
         return {
-            'success': True,
-            'repository': repo_name,
-            'issue_number': issue_number,
-            'issue': {
-                'title': issue_data['title'],
-                'url': issue_data['url']
-            },
-            'analysis': analysis
+            "success": True,
+            "repository": repo_name,
+            "issue_number": issue_number,
+            "issue": {"title": issue_data["title"], "url": issue_data["url"]},
+            "analysis": analysis,
         }
-    
+
     async def _analyze_issue(self, issue_data: Dict[str, Any]) -> IssueAnalysis:
         """
         Core analysis logic for a GitHub issue
-        
+
         Args:
             issue_data: Complete issue data from GitHub API
-            
+
         Returns:
             IssueAnalysis with all improvement suggestions
         """
@@ -89,76 +92,78 @@ class GitHubIssueAnalyzer:
             query=search_query,
             project_filter=None,  # Could use repo name if we map it
             hierarchy_preference=3,  # Include project and implementation level
-            n_results=5
+            n_results=5,
         )
-        
+
         # Step 2: Generate "ideal" issue for comparison
         ideal_issue = await self._generate_ideal_issue(issue_data)
-        
+
         # Step 3: Perform LLM-based analysis
         analysis_prompt = self._build_analysis_prompt(
             issue_data, ideal_issue, knowledge_results
         )
-        
+
         analysis_response = await llm_client.complete(
             task_type="issue_analysis",
             prompt=analysis_prompt,
             context={
-                'issue_title': issue_data['title'],
-                'repository': issue_data['repository']['full_name'],
-                'knowledge_context': [r['content'][:200] for r in knowledge_results]
-            }
+                "issue_title": issue_data["title"],
+                "repository": issue_data["repository"]["full_name"],
+                "knowledge_context": [r["content"][:200] for r in knowledge_results],
+            },
         )
-        
+
         # Step 4: Parse and structure the analysis
         return self._parse_analysis_response(
             analysis_response, knowledge_results, issue_data
         )
-    
+
     async def _generate_ideal_issue(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate an 'ideal' version of the issue using existing generator"""
         try:
             # Use the issue body as description for the generator
-            description = issue_data['body'] or issue_data['title']
-            
+            description = issue_data["body"] or issue_data["title"]
+
             # Create context from issue metadata
             context = {
-                'repository': issue_data['repository']['full_name'],
-                'existing_labels': issue_data['labels'],
-                'is_pull_request': issue_data.get('is_pull_request', False)
+                "repository": issue_data["repository"]["full_name"],
+                "existing_labels": issue_data["labels"],
+                "is_pull_request": issue_data.get("is_pull_request", False),
             }
-            
+
             # Generate ideal content using existing generator
             ideal_content = await self.ideal_generator.generate_issue_content(
                 description, context
             )
-            
+
             return {
-                'title': ideal_content.title,
-                'body': ideal_content.body,
-                'labels': ideal_content.labels
+                "title": ideal_content.title,
+                "body": ideal_content.body,
+                "labels": ideal_content.labels,
             }
-            
+
         except Exception as e:
             # Fallback to basic structure if generation fails
             return {
-                'title': issue_data['title'],
-                'body': issue_data['body'],
-                'labels': issue_data['labels']
+                "title": issue_data["title"],
+                "body": issue_data["body"],
+                "labels": issue_data["labels"],
             }
-    
-    def _build_analysis_prompt(self, issue_data: Dict[str, Any], 
-                              ideal_issue: Dict[str, Any], 
-                              knowledge_results: List[Dict]) -> str:
+
+    def _build_analysis_prompt(
+        self,
+        issue_data: Dict[str, Any],
+        ideal_issue: Dict[str, Any],
+        knowledge_results: List[Dict],
+    ) -> str:
         """Build the analysis prompt for the LLM"""
-        
+
         knowledge_context = ""
         if knowledge_results:
-            knowledge_context = "\n".join([
-                f"- {result['content'][:150]}..."
-                for result in knowledge_results[:3]
-            ])
-        
+            knowledge_context = "\n".join(
+                [f"- {result['content'][:150]}..." for result in knowledge_results[:3]]
+            )
+
         return f"""Analyze this GitHub issue and provide improvement suggestions.
 
 ACTUAL ISSUE:
@@ -191,80 +196,88 @@ DRAFT_REWRITE:
 CONFIDENCE: [0.0-1.0]
 
 Focus on PM best practices: clear problem statements, acceptance criteria, user impact, reproducible steps, and appropriate labeling."""
-    
-    def _parse_analysis_response(self, response: str, knowledge_results: List[Dict], 
-                                issue_data: Dict[str, Any]) -> IssueAnalysis:
+
+    def _parse_analysis_response(
+        self, response: str, knowledge_results: List[Dict], issue_data: Dict[str, Any]
+    ) -> IssueAnalysis:
         """Parse the LLM analysis response into structured format"""
-        
+
         try:
             # Extract sections using simple parsing
             sections = {}
             current_section = None
             current_content = []
-            
-            for line in response.split('\n'):
+
+            for line in response.split("\n"):
                 line = line.strip()
-                if line.upper().endswith(':') and line.upper() in ['SUMMARY:', 'DRAFT_COMMENT:', 'DRAFT_REWRITE:', 'CONFIDENCE:']:
+                if line.upper().endswith(":") and line.upper() in [
+                    "SUMMARY:",
+                    "DRAFT_COMMENT:",
+                    "DRAFT_REWRITE:",
+                    "CONFIDENCE:",
+                ]:
                     if current_section:
-                        sections[current_section] = '\n'.join(current_content).strip()
-                    current_section = line.upper().replace(':', '')
+                        sections[current_section] = "\n".join(current_content).strip()
+                    current_section = line.upper().replace(":", "")
                     current_content = []
                 elif current_section:
                     current_content.append(line)
-            
+
             # Don't forget the last section
             if current_section:
-                sections[current_section] = '\n'.join(current_content).strip()
-            
+                sections[current_section] = "\n".join(current_content).strip()
+
             # Parse summary bullets
-            summary_text = sections.get('SUMMARY', '')
+            summary_text = sections.get("SUMMARY", "")
             summary_bullets = [
-                line.strip('- ').strip() 
-                for line in summary_text.split('\n') 
-                if line.strip().startswith('-')
+                line.strip("- ").strip()
+                for line in summary_text.split("\n")
+                if line.strip().startswith("-")
             ]
-            
+
             # Ensure we have 3 bullets
             while len(summary_bullets) < 3:
                 summary_bullets.append("Analysis point not provided")
             summary_bullets = summary_bullets[:3]
-            
+
             # Parse confidence
-            confidence_text = sections.get('CONFIDENCE', '0.5')
+            confidence_text = sections.get("CONFIDENCE", "0.5")
             try:
                 confidence = float(confidence_text)
             except ValueError:
                 confidence = 0.5
-            
+
             return IssueAnalysis(
                 summary=summary_bullets,
-                draft_comment=sections.get('DRAFT_COMMENT', 'No comment provided'),
-                draft_rewrite=sections.get('DRAFT_REWRITE', 'No rewrite provided'),
+                draft_comment=sections.get("DRAFT_COMMENT", "No comment provided"),
+                draft_rewrite=sections.get("DRAFT_REWRITE", "No rewrite provided"),
                 confidence=confidence,
-                knowledge_context=[r['content'][:100] + '...' for r in knowledge_results[:3]],
+                knowledge_context=[
+                    r["content"][:100] + "..." for r in knowledge_results[:3]
+                ],
                 analysis_metadata={
-                    'issue_id': issue_data['id'],
-                    'analyzed_at': datetime.now().isoformat(),
-                    'repository': issue_data['repository']['full_name'],
-                    'original_labels': issue_data['labels'],
-                    'knowledge_sources_used': len(knowledge_results)
-                }
+                    "issue_id": issue_data["id"],
+                    "analyzed_at": datetime.now().isoformat(),
+                    "repository": issue_data["repository"]["full_name"],
+                    "original_labels": issue_data["labels"],
+                    "knowledge_sources_used": len(knowledge_results),
+                },
             )
-            
+
         except Exception as e:
             # Fallback analysis if parsing fails
             return IssueAnalysis(
                 summary=[
                     "Analysis parsing failed",
-                    "Manual review recommended", 
-                    "Raw response available in logs"
+                    "Manual review recommended",
+                    "Raw response available in logs",
                 ],
                 draft_comment="Analysis could not be completed. Please review manually.",
                 draft_rewrite="Original issue content should be reviewed manually.",
                 confidence=0.0,
                 knowledge_context=[],
                 analysis_metadata={
-                    'error': str(e),
-                    'analyzed_at': datetime.now().isoformat()
-                }
+                    "error": str(e),
+                    "analyzed_at": datetime.now().isoformat(),
+                },
             )

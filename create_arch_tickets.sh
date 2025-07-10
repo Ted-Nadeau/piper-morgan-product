@@ -108,4 +108,4 @@ gh issue create --repo "$REPO" \
 echo "✅ Ticket 3 created."
 echo ""
 
-echo "🎉 All architectural follow-up tickets have been successfully created." 
+echo "🎉 All architectural follow-up tickets have been successfully created."

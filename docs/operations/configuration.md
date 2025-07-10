@@ -148,18 +148,18 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     project_name: str = "Piper Morgan API"
     version: str = "1.0.0-PM-011"
-    
+
     # CORS Settings
     cors_origins: list = ["http://localhost:3000", "http://localhost:8080"]
-    
+
     # Rate Limiting
     rate_limit_enabled: bool = False
     rate_limit_per_minute: int = 60
-    
+
     # File Upload
     max_upload_size: int = 50 * 1024 * 1024  # 50MB
     allowed_file_types: list = [".pdf", ".txt", ".md", ".docx"]
-    
+
     class Config:
         env_file = ".env"
 ```
@@ -294,10 +294,10 @@ load_dotenv()
 # Configuration class
 class Config:
     """Centralized configuration management"""
-    
+
     def __init__(self):
         self.validate_required_vars()
-    
+
     def validate_required_vars(self):
         """Ensure required environment variables are set"""
         required = [
@@ -305,15 +305,15 @@ class Config:
             "OPENAI_API_KEY",
             "DATABASE_URL"
         ]
-        
+
         missing = [var for var in required if not os.getenv(var)]
         if missing:
             raise ValueError(f"Missing required environment variables: {missing}")
-    
+
     @property
     def is_production(self):
         return os.getenv("APP_ENV") == "production"
-    
+
     @property
     def is_debug(self):
         return os.getenv("DEBUG", "false").lower() == "true"
@@ -326,7 +326,7 @@ config = Config()
 ```python
 class FeatureFlags:
     """Manage feature toggles"""
-    
+
     @staticmethod
     def is_enabled(feature: str) -> bool:
         """Check if feature is enabled"""

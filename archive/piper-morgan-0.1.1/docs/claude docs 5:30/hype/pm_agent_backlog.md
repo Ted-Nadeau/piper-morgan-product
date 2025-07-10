@@ -223,4 +223,4 @@
 ### Sprint Capacity Recommendations
 - **Sprint Duration**: 2 weeks
 - **Capacity**: 8-10 story points per developer per sprint
-- **Story Point Scale**: 1 (1 day), 2 (2-3 days), 3 (3-5 days), 
+- **Story Point Scale**: 1 (1 day), 2 (2-3 days), 3 (3-5 days),

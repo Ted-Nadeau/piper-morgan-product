@@ -175,7 +175,7 @@ import re
 class SecureIntentRequest(BaseModel):
     message: str
     project_id: Optional[str]
-    
+
     @validator('message')
     def validate_message(cls, v):
         # Prevent injection attacks
@@ -184,7 +184,7 @@ class SecureIntentRequest(BaseModel):
         if re.search(r'[<>]', v):
             raise ValueError("Invalid characters")
         return v
-    
+
     @validator('project_id')
     def validate_project_id(cls, v):
         if v and not re.match(r'^[a-zA-Z0-9-]+$', v):

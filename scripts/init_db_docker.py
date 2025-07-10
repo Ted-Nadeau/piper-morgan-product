@@ -4,15 +4,24 @@ Piper Morgan 1.0 - Database Initialization via Docker
 Creates all required tables for domain models and event sourcing
 """
 
-import subprocess
 import os
+import subprocess
+
 
 def run_sql(sql_command):
     """Run SQL command via docker-compose exec"""
     cmd = [
-        "docker-compose", "exec", "-T", "postgres", 
-        "psql", "-U", "piper", "-d", "piper_morgan", 
-        "-c", sql_command
+        "docker-compose",
+        "exec",
+        "-T",
+        "postgres",
+        "psql",
+        "-U",
+        "piper",
+        "-d",
+        "piper_morgan",
+        "-c",
+        sql_command,
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
@@ -21,13 +30,14 @@ def run_sql(sql_command):
     print(result.stdout.strip())
     return True
 
+
 def init_database():
     """Initialize database with clean schema"""
     print("🗄️  Dropping existing tables...")
-    
+
     drop_commands = [
         "DROP TABLE IF EXISTS workflow_tasks CASCADE",
-        "DROP TABLE IF EXISTS events CASCADE", 
+        "DROP TABLE IF EXISTS events CASCADE",
         "DROP TABLE IF EXISTS workflows CASCADE",
         "DROP TABLE IF EXISTS intents CASCADE",
         "DROP TABLE IF EXISTS features CASCADE",
@@ -35,14 +45,14 @@ def init_database():
         "DROP TABLE IF EXISTS stakeholders CASCADE",
         "DROP TABLE IF EXISTS work_items CASCADE",
         "DROP TYPE IF EXISTS workflowtype CASCADE",
-        "DROP TYPE IF EXISTS workflowstatus CASCADE"
+        "DROP TYPE IF EXISTS workflowstatus CASCADE",
     ]
-    
+
     for cmd in drop_commands:
         run_sql(cmd)
-    
+
     print("🗄️  Creating fresh schema...")
-    
+
     # Create tables
     tables = [
         """CREATE TABLE intents (
@@ -54,7 +64,6 @@ def init_database():
             knowledge_context TEXT[],
             created_at TIMESTAMP DEFAULT NOW()
         )""",
-        
         """CREATE TABLE workflows (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             type VARCHAR(50) NOT NULL,
@@ -67,7 +76,6 @@ def init_database():
             updated_at TIMESTAMP DEFAULT NOW(),
             completed_at TIMESTAMP
         )""",
-        
         """CREATE TABLE workflow_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             workflow_id UUID REFERENCES workflows(id) ON DELETE CASCADE,
@@ -80,7 +88,6 @@ def init_database():
             updated_at TIMESTAMP DEFAULT NOW(),
             completed_at TIMESTAMP
         )""",
-        
         """CREATE TABLE events (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             type VARCHAR(100) NOT NULL,
@@ -89,27 +96,28 @@ def init_database():
             aggregate_type VARCHAR(50),
             version INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT NOW()
-        )"""
+        )""",
     ]
-    
+
     for table_sql in tables:
         if not run_sql(table_sql):
             return False
-    
+
     print("🗄️  Creating indexes...")
-    
+
     indexes = [
         "CREATE INDEX idx_workflows_status ON workflows(status)",
-        "CREATE INDEX idx_workflows_type ON workflows(type)", 
+        "CREATE INDEX idx_workflows_type ON workflows(type)",
         "CREATE INDEX idx_events_type ON events(type)",
-        "CREATE INDEX idx_events_aggregate_id ON events(aggregate_id)"
+        "CREATE INDEX idx_events_aggregate_id ON events(aggregate_id)",
     ]
-    
+
     for index_sql in indexes:
         run_sql(index_sql)
-    
+
     print("✅ Database schema initialized successfully!")
     return True
+
 
 if __name__ == "__main__":
     init_database()

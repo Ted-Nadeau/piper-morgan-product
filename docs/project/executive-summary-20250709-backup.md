@@ -15,7 +15,7 @@ Piper Morgan has evolved from research project to working system with sophistica
 
 ### ✅ Production-Ready Architecture
 - **Scalable Infrastructure**: Docker-based deployment supporting team growth
-- **Domain-Driven Design**: PM concepts drive technical decisions, not tool limitations  
+- **Domain-Driven Design**: PM concepts drive technical decisions, not tool limitations
 - **Vendor Independence**: AI provider abstraction prevents technology lock-in
 - **Event-Driven Learning**: Foundation for continuous improvement through usage
 

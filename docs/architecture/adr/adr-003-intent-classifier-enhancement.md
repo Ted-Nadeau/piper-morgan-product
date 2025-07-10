@@ -1,7 +1,7 @@
 # ADR-003: LLM-Based Intent Classification
 
-**Date**: July 8, 2025  
-**Status**: Proposed  
+**Date**: July 8, 2025
+**Status**: Proposed
 **Deciders**: Principal Architect, Chief of Staff, CTO
 
 ## Context

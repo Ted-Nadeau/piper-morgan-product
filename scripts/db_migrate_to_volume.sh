@@ -23,4 +23,4 @@ docker-compose up -d postgres
 sleep 5
 
 # Verify
-docker-compose exec postgres psql -U piper -d piper_morgan -c "\dt" | head -10 
+docker-compose exec postgres psql -U piper -d piper_morgan -c "\dt" | head -10

@@ -2,9 +2,10 @@
 Service for handling simple conversational queries
 """
 
+
 class ConversationQueryService:
     """Handles simple, stateless conversational queries."""
-    
+
     async def get_greeting(self) -> str:
         """Returns a simple greeting message."""
         return "Hello there! How can I help you today?"
@@ -17,7 +18,7 @@ class ConversationQueryService:
     async def get_status(self) -> str:
         """Returns a status message."""
         return "I'm operating normally. All systems are go!"
-        
+
     async def get_initial_contact(self) -> str:
         """Handles a user's initial greeting."""
-        return "Hello to you too!" 
+        return "Hello to you too!"
