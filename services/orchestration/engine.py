@@ -738,9 +738,11 @@ Focus on:
             return TaskResult(
                 success=True,
                 output_data={
-                    "message": response,
-                    "analysis_type": "general_analysis",
-                    "original_request": original_message,
+                    "analysis": {
+                        "summary": response,
+                        "analysis_type": "general_analysis",
+                        "original_request": original_message,
+                    }
                 },
             )
 

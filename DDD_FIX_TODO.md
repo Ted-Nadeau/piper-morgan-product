@@ -2,9 +2,9 @@
 
 ## Problem Analysis
 
-**Domain**: Document Analysis & Summarization  
-**Issue**: LLM generates non-standard markdown (`• -` bullets, formatting issues)  
-**Wrong Fix**: Frontend preprocessing (violates layered architecture)  
+**Domain**: Document Analysis & Summarization
+**Issue**: LLM generates non-standard markdown (`• -` bullets, formatting issues)
+**Wrong Fix**: Frontend preprocessing (violates layered architecture)
 **Correct Fix**: Domain layer formatting rules and post-processing
 
 ## Domain-Driven Solution
@@ -22,14 +22,14 @@ You are a skilled document analyst. Please provide a comprehensive summary of th
 IMPORTANT FORMATTING RULES:
 - Use standard markdown formatting only
 - Headers: Use "## Header" with space after ##
-- Bullet points: Use "- " (dash space) NOT "• -" 
-- Bold text: Use **text** 
+- Bullet points: Use "- " (dash space) NOT "• -"
+- Bold text: Use **text**
 - Code: Use `code`
 - Lists must follow CommonMark specification
 
 Your response should include:
 1. File Type/Purpose
-2. Main Content and Structure  
+2. Main Content and Structure
 3. Important Technical Details/Patterns
 4. Summary
 
@@ -52,29 +52,29 @@ from typing import str
 
 class MarkdownFormatter:
     """Domain service responsible for ensuring markdown output follows standards"""
-    
+
     @staticmethod
     def ensure_standard_format(markdown_text: str) -> str:
         """
         Ensure LLM-generated markdown follows CommonMark standards
-        
+
         This is a domain service that enforces business rules about
         how markdown should be formatted in our system.
         """
         if not markdown_text:
             return ""
-            
+
         # Domain rule: Use standard bullet syntax
         cleaned = re.sub(r'^• - ', '- ', markdown_text, flags=re.MULTILINE)
-        
+
         # Domain rule: Ensure proper header spacing
         cleaned = re.sub(r'^(#{1,6})([^\s#])', r'\1 \2', cleaned, flags=re.MULTILINE)
-        
+
         # Domain rule: Fix broken bold formatting
         cleaned = re.sub(r'\*\*([^*]+)\*([^*]*)\*\*', r'**\1\2**', cleaned)
-        
+
         return cleaned
-    
+
     @staticmethod
     def validate_markdown_syntax(markdown_text: str) -> list[str]:
         """
@@ -82,15 +82,15 @@ class MarkdownFormatter:
         Used for monitoring LLM output quality
         """
         issues = []
-        
+
         # Check for non-standard bullet syntax
         if re.search(r'^• - ', markdown_text, re.MULTILINE):
             issues.append("Non-standard bullet syntax: '• -' found")
-            
+
         # Check for malformed headers
         if re.search(r'^#{1,6}[^\s#]', markdown_text, re.MULTILINE):
             issues.append("Malformed headers: missing space after #")
-            
+
         return issues
 ```
 
@@ -119,7 +119,7 @@ if issues:
     logger.warning(f"Markdown formatting issues detected: {issues}")
 ```
 
-#### Task 4: Update Document Analyzer  
+#### Task 4: Update Document Analyzer
 - [ ] **File**: `services/analysis/document_analyzer.py`
 - [ ] **Action**: Same integration as text analyzer
 - [ ] **Implementation**: Apply `MarkdownFormatter.ensure_standard_format()` after LLM completion
@@ -135,19 +135,19 @@ import pytest
 from services.utils.markdown_formatter import MarkdownFormatter
 
 class TestMarkdownFormatter:
-    
+
     def test_fixes_non_standard_bullets(self):
         input_text = "• - Item 1\n• - Item 2"
         expected = "- Item 1\n- Item 2"
         result = MarkdownFormatter.ensure_standard_format(input_text)
         assert result == expected
-    
+
     def test_fixes_malformed_headers(self):
         input_text = "##Header\n###Another"
-        expected = "## Header\n### Another"  
+        expected = "## Header\n### Another"
         result = MarkdownFormatter.ensure_standard_format(input_text)
         assert result == expected
-    
+
     def test_validates_syntax_issues(self):
         problematic_text = "• - Bad bullet\n##Bad header"
         issues = MarkdownFormatter.validate_markdown_syntax(problematic_text)
@@ -164,7 +164,7 @@ class TestMarkdownFormatter:
 async def test_analyze_document_formats_markdown_properly(self):
     # Test that domain formatting rules are applied
     result = await self.analyzer.analyze_document(...)
-    
+
     # Should not contain non-standard syntax
     assert "• -" not in result.summary
     assert not result.summary.startswith("##")  # Should have space
@@ -192,7 +192,7 @@ if issues:
 - [ ] ✅ No quick fixes or workarounds in wrong layers
 - [ ] ✅ Standard markdown output from all summarization operations
 
-### Technical Validation  
+### Technical Validation
 - [ ] ✅ All tests pass
 - [ ] ✅ LLM output follows CommonMark standards
 - [ ] ✅ UI renders markdown properly without preprocessing
@@ -202,7 +202,7 @@ if issues:
 
 1. **Correct Layer**: Business rule (markdown format) enforced in domain layer
 2. **Single Responsibility**: MarkdownFormatter has one job
-3. **Testable**: Domain service can be unit tested independently  
+3. **Testable**: Domain service can be unit tested independently
 4. **Maintainable**: Changes to formatting rules happen in one place
 5. **Monitoring**: Can track LLM output quality over time
 6. **Scalable**: Works for all future summarization features

@@ -43,7 +43,7 @@ test('renders inline headers correctly', () => {
 test('failing markdown gets processed correctly', () => {
     const rendered = renderMarkdown(failingMarkdown);
     console.log('Rendered output:', rendered);
-    
+
     assertContains(rendered, '<h1>Piper Morgan 1.0 - Data Model Summary</h1>', 'Should render main header');
     assertContains(rendered, '<h2>File Type/Purpose</h2>', 'Should render subheader');
     assertContains(rendered, '<h2>Main Content and Structure</h2>', 'Should render another subheader');
@@ -54,7 +54,7 @@ test('failing markdown gets processed correctly', () => {
 test('handles mixed content correctly', () => {
     const mixed = 'Start # Header some **bold** text ## Another header end';
     const result = renderMarkdown(mixed);
-    
+
     assertContains(result, '<h1>Header</h1>', 'Should render h1');
     assertContains(result, '<h2>Another header</h2>', 'Should render h2');
     assertContains(result, '<strong>bold</strong>', 'Should render bold');
@@ -65,7 +65,7 @@ test('handles mixed content correctly', () => {
 test('handles numbered lists in text', () => {
     const withLists = 'Text: 1. Overview 2. Model Distinctions 3. Domain Models';
     const result = renderMarkdown(withLists);
-    
+
     // Numbers in text should be preserved, not converted to HTML lists
     assertContains(result, '1. Overview', 'Should preserve numbered text');
     assertContains(result, '2. Model Distinctions', 'Should preserve numbered text');
@@ -74,7 +74,7 @@ test('handles numbered lists in text', () => {
 test('handles bullet lists correctly', () => {
     const withBullets = 'Items:\n- Item 1\n- Item 2\nEnd';
     const result = renderMarkdown(withBullets);
-    
+
     assertContains(result, '<ul>', 'Should create list');
     assertContains(result, '<li>Item 1</li>', 'Should render list items');
     assertContains(result, '<li>Item 2</li>', 'Should render list items');

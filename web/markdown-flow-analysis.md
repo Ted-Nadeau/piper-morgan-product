@@ -51,7 +51,7 @@ finding = re.sub(r'^[•\-\*\+]\s*', '', finding)
 ## The Specific Regex Issue
 
 Testing the character class `[•\-\*\+]`:
-- `•` (Unicode 8226) 
+- `•` (Unicode 8226)
 - `\-` creates range from `•` to `\` (Unicode 92)
 - This range includes many characters: `•`, `‚`, `ƒ`, `„`, `…`, `†`, `‡`, `ˆ`, `‰`, `Š`, `‹`, `Œ`, `Ž`, `'`, `'`, `"`, `"`, `•`, `–`, `—`, `˜`, `™`, `š`, `›`, `œ`, `ž`, `Ÿ`, ` `, `¡`, `¢`, `£`, `¤`, `¥`, `¦`, `§`, `¨`, `©`, `ª`, `«`, `¬`, `­`, `®`, `¯`, `°`, `±`, `²`, `³`, `´`, `µ`, `¶`, `·`, `¸`, `¹`, `º`, `»`, `¼`, `½`, `¾`, `¿`, `À`, `Á`, `Â`, `Ã`, `Ä`, `Å`, `Æ`, `Ç`, `È`, `É`, `Ê`, `Ë`, `Ì`, `Í`, `Î`, `Ï`, `Ð`, `Ñ`, `Ò`, `Ó`, `Ô`, `Õ`, `Ö`, `×`, `Ø`, `Ù`, `Ú`, `Û`, `Ü`, `Ý`, `Þ`, `ß`, `à`, `á`, `â`, `ã`, `ä`, `å`, `æ`, `ç`, `è`, `é`, `ê`, `ë`, `ì`, `í`, `î`, `ï`, `ð`, `ñ`, `ò`, `ó`, `ô`, `õ`, `ö`, `÷`, `ø`, `ù`, `ú`, `û`, `ü`, `ý`, `þ`, `ÿ`, and finally `\`
 
@@ -70,7 +70,7 @@ The malformed regex likely matches more text than intended, potentially removing
 1. **Frontend**: Uses `marked.js` - a well-established, mature markdown library
 2. **Backend**: The issue isn't with library choice but with custom preprocessing
 
-**Better Approach**: 
+**Better Approach**:
 - Remove the custom "jury-rigged" formatting in `format_key_findings_as_markdown()`
 - Let the LLM output proper markdown directly (the prompts already instruct this)
 - Use standard markdown libraries like `markdown-it` (Node.js) or `python-markdown` (Python)

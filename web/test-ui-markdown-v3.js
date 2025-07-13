@@ -49,7 +49,7 @@ test('renders inline headers correctly', () => {
 test('failing markdown gets processed correctly', () => {
     const rendered = renderMarkdown(failingMarkdown);
     console.log('Failing markdown result:', rendered);
-    
+
     assertContains(rendered, '<h1>Piper Morgan 1.0 - Data Model Summary</h1>', 'Should render main header');
     assertContains(rendered, '<h2>File Type/Purpose', 'Should render subheader start');
     assertContains(rendered, '<h2>Main Content and Structure', 'Should render another subheader start');
@@ -61,7 +61,7 @@ test('handles mixed content correctly', () => {
     const mixed = 'Start # Header some **bold** text ## Another header end';
     const result = renderMarkdown(mixed);
     console.log('Mixed result:', result);
-    
+
     assertContains(result, '<h1>Header some <strong>bold</strong> text</h1>', 'Should render h1 with content');
     assertContains(result, '<h2>Another header end</h2>', 'Should render h2 with remaining text');
     assertContains(result, 'Start', 'Should preserve start text');

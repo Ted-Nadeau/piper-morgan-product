@@ -2,8 +2,8 @@
 
 ## Domain Analysis
 
-**Domain**: Web UI Response Handling  
-**Aggregate Root**: BotMessage  
+**Domain**: Web UI Response Handling
+**Aggregate Root**: BotMessage
 **Problem**: Two disconnected paths for rendering bot responses leading to inconsistent UX
 
 **Current Architecture Issues:**
@@ -123,7 +123,7 @@ function renderBotMessage(content, type = 'success', isThinking = false) {
     // Guard clauses
     if (!content) return '';
     if (isThinking) return content; // Don't process thinking messages
-    
+
     // Domain logic: Apply markdown only to success messages
     let processedContent = content;
     if (type === 'success' && typeof marked !== 'undefined') {
@@ -134,11 +134,11 @@ function renderBotMessage(content, type = 'success', isThinking = false) {
             processedContent = content; // Fallback to raw content
         }
     }
-    
+
     // Domain logic: Apply consistent CSS classes
     const cssClasses = ['result', type];
     if (isThinking) cssClasses.push('thinking');
-    
+
     return `<div class="${cssClasses.join(' ')}">${processedContent}</div>`;
 }
 ```
@@ -165,7 +165,7 @@ function handleDirectResponse(result, element) {
  */
 function handleWorkflowResponse(data, element) {
     console.log('Workflow response:', data.message);
-    
+
     if (data.type === 'analyze_file' || data.type === 'generate_report') {
         const message = data.message || 'File analysis completed successfully!';
         element.innerHTML = renderBotMessage(message, 'success', false);
@@ -263,11 +263,11 @@ handleErrorResponse(error, thinkingDiv);
 - [ ] **Test Case 1**: Direct response (simple query)
   - [ ] Action: Ask "Hello, how are you?"
   - [ ] Expected: Response renders with proper formatting
-  
+
 - [ ] **Test Case 2**: Workflow response (file analysis)
   - [ ] Action: "Please summarize that file I uploaded recently"
   - [ ] Expected: Markdown renders properly (headers, bullets, bold)
-  
+
 - [ ] **Test Case 3**: Error response
   - [ ] Action: Trigger an error condition
   - [ ] Expected: Error displays without markdown processing
@@ -322,7 +322,7 @@ If tests fail or issues arise:
 ## Time Estimate
 
 - **Phase 1 (Tests)**: 15 minutes
-- **Phase 2 (Implementation)**: 20 minutes  
+- **Phase 2 (Implementation)**: 20 minutes
 - **Phase 3 (Refactor)**: 15 minutes
 - **Phase 4 (Testing)**: 10 minutes
 - **Phase 5 (Cleanup)**: 5 minutes

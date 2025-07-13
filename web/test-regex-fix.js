@@ -14,7 +14,7 @@ const fixedRegex = /^[•\-*+]\s*/;
 // Test strings that should match (normal bullet points)
 const normalBullets = [
     "- Normal dash bullet",
-    "* Normal asterisk bullet", 
+    "* Normal asterisk bullet",
     "+ Normal plus bullet",
     "• Normal Unicode bullet"
 ];
@@ -75,7 +75,7 @@ function simulateMarkdownProcessing(text, useFixedRegex = false) {
     const regex = useFixedRegex ? fixedRegex : problematicRegex;
     const lines = text.split('\n');
     const findings = [];
-    
+
     for (let line of lines) {
         if (line.trim() && line.includes('Key Findings')) {
             continue; // Skip header
@@ -86,7 +86,7 @@ function simulateMarkdownProcessing(text, useFixedRegex = false) {
             findings.push(`- ${processed}`);
         }
     }
-    
+
     return findings.join('\n');
 }
 

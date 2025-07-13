@@ -21,7 +21,7 @@
       if (typeof renderMarkdown === 'function' && !isThinking) {
           processedMessage = renderMarkdown(message);
       }
-      
+
       // Return formatted HTML with consistent styling
       const cssClass = isThinking ? 'thinking' : (isSuccess ? 'success' : 'error');
       return `<div class="result ${cssClass}">${processedMessage}</div>`;
@@ -29,7 +29,7 @@
   ```
 
 ### Task 2: Refactor Direct Response Path
-- [ ] **File**: `web/app.py`  
+- [ ] **File**: `web/app.py`
 - [ ] **Location**: Lines ~367-378 (direct response handling)
 - [ ] **Action**: Replace existing logic with unified handler
 - [ ] **Before**:
@@ -37,7 +37,7 @@
   // Debug logging
   console.log('Raw result.message:', result.message);
   console.log('renderMarkdown function exists:', typeof renderMarkdown === 'function');
-  
+
   if (typeof renderMarkdown === 'function') {
       const rendered = renderMarkdown(result.message);
       console.log('Rendered output:', rendered);
@@ -51,20 +51,20 @@
   ```javascript
   // Debug logging (keep for now)
   console.log('Direct response:', result.message);
-  
+
   thinkingDiv.innerHTML = displayBotMessage(result.message, true);
   ```
 
 ### Task 3: Refactor Workflow Response Path
 - [ ] **File**: `web/app.py`
-- [ ] **Location**: Lines ~311-338 (workflow completion handling)  
+- [ ] **Location**: Lines ~311-338 (workflow completion handling)
 - [ ] **Action**: Replace complex conditional logic with unified handler
 - [ ] **Before**: Complex if/else with different message processing
-- [ ] **After**: 
+- [ ] **After**:
   ```javascript
   if (data.status === 'completed') {
       console.log('Workflow response:', data.message);
-      
+
       if (data.type === 'analyze_file' || data.type === 'generate_report') {
           finalHTML = displayBotMessage(data.message || 'File analysis completed successfully!');
       } else {
@@ -87,7 +87,7 @@
 - [ ] **File**: `web/app.py`
 - [ ] **Location**: Lines ~376-382 (error handling in direct path)
 - [ ] **Action**: Use unified handler for errors
-- [ ] **Replace**: 
+- [ ] **Replace**:
   ```javascript
   thinkingDiv.innerHTML = `<div class="result error">...</div>`;
   ```
@@ -115,7 +115,7 @@
 
 ## Testing Checklist
 - [ ] Test direct API responses (simple queries)
-- [ ] Test workflow responses (file summarization)  
+- [ ] Test workflow responses (file summarization)
 - [ ] Test error responses
 - [ ] Test thinking/loading states
 - [ ] Verify markdown rendering works in all paths
