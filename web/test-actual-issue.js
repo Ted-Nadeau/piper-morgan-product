@@ -24,20 +24,20 @@ const testCases = [
 console.log("TESTING REGEX PROCESSING:");
 testCases.forEach((testCase, index) => {
     console.log(`\nTest Case ${index + 1}: "${testCase}"`);
-    
+
     // Test with problematic regex
     const problematicMatch = testCase.match(problematicRegex);
     const problematicResult = testCase.replace(problematicRegex, '');
-    
+
     // Test with fixed regex
     const fixedMatch = testCase.match(fixedRegex);
     const fixedResult = testCase.replace(fixedRegex, '');
-    
+
     console.log(`  Problematic match: ${problematicMatch}`);
     console.log(`  Problematic result: "${problematicResult}"`);
     console.log(`  Fixed match: ${fixedMatch}`);
     console.log(`  Fixed result: "${fixedResult}"`);
-    
+
     // Check if result would cause markdown italic formatting
     const hasUnpairedAsterisk = (problematicResult.match(/\*/g) || []).length % 2 === 1;
     console.log(`  Would cause italic formatting: ${hasUnpairedAsterisk}`);
@@ -50,7 +50,7 @@ console.log("\n=== TESTING SPECIFIC ITALIC ISSUE ===\n");
 const llmOutput = `## Key Findings
 
 * System performance improved by 40%
-* User experience enhanced significantly  
+* User experience enhanced significantly
 * Database queries optimized
 * Security vulnerabilities addressed
 * Mobile responsiveness improved`;
@@ -62,31 +62,31 @@ console.log(llmOutput);
 function simulateKeyFindingsProcessing(text) {
     const lines = text.split('\n');
     const findings = [];
-    
+
     let inKeyFindings = false;
-    
+
     for (let line of lines) {
         if (line.includes('Key Findings')) {
             inKeyFindings = true;
             continue;
         }
-        
+
         if (inKeyFindings && line.trim()) {
             console.log(`\nProcessing line: "${line}"`);
-            
+
             // Apply the problematic regex
             const problematicProcessed = line.replace(problematicRegex, '');
             console.log(`After problematic regex: "${problematicProcessed}"`);
-            
+
             // Apply the fixed regex
             const fixedProcessed = line.replace(fixedRegex, '');
             console.log(`After fixed regex: "${fixedProcessed}"`);
-            
+
             // Add markdown bullet point
             findings.push(`- ${problematicProcessed}`);
         }
     }
-    
+
     return findings.join('\n');
 }
 
@@ -104,15 +104,15 @@ const boldRegex = /\*\*([^*]+)\*\*/g;
 
 function simulateMarkdownRendering(text) {
     console.log(`Input: "${text}"`);
-    
+
     // First apply bold (should be done first)
     let processed = text.replace(boldRegex, '<strong>$1</strong>');
     console.log(`After bold: "${processed}"`);
-    
+
     // Then apply italic
     processed = processed.replace(italicRegex, '<em>$1</em>');
     console.log(`After italic: "${processed}"`);
-    
+
     return processed;
 }
 
@@ -142,5 +142,5 @@ console.log(`\nTesting "${testString}":`);
 console.log(`Problematic regex matches: ${problematicRegex.test(testString)}`);
 console.log(`Fixed regex matches: ${fixedRegex.test(testString)}`);
 
-// The issue might be that the asterisk at the start of "* This starts with asterisk" 
+// The issue might be that the asterisk at the start of "* This starts with asterisk"
 // is not being removed properly, leaving the entire line to be processed as italic

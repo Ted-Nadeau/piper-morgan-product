@@ -58,14 +58,14 @@ function createMockElement(className) {
 // Simulate the appendMessage function from the UI
 function appendMessage(html, isUser = false) {
     const msgDiv = createMockElement(`message ${isUser ? 'user-message' : 'bot-message'}`);
-    
+
     // This is the key logic from the UI
     if (isUser) {
         msgDiv.textContent = html;
     } else {
         msgDiv.innerHTML = html; // Bot messages should use innerHTML for markdown
     }
-    
+
     return msgDiv;
 }
 
@@ -101,7 +101,7 @@ test('user message uses textContent for safety', () => {
 
 test('failing markdown gets processed correctly', () => {
     const rendered = renderMarkdown(failingMarkdown);
-    
+
     assertContains(rendered, '<h1>Piper Morgan 1.0 - Data Model Summary</h1>', 'Should render main header');
     assertContains(rendered, '<h2>File Type/Purpose</h2>', 'Should render subheader');
     assertContains(rendered, '<h2>Main Content and Structure</h2>', 'Should render another subheader');
@@ -111,7 +111,7 @@ test('failing markdown gets processed correctly', () => {
 
 test('bot message with failing markdown renders as HTML', () => {
     const botMessage = appendMessage(renderMarkdown(failingMarkdown), false);
-    
+
     assertContains(botMessage.innerHTML, '<h1>', 'Bot message should contain HTML headers');
     assertContains(botMessage.innerHTML, '<h2>', 'Bot message should contain HTML subheaders');
     assertContains(botMessage.innerHTML, '<ul>', 'Bot message should contain HTML lists');
@@ -122,11 +122,11 @@ test('workflow simulation - API returns markdown, UI renders HTML', () => {
     const apiResponse = {
         message: failingMarkdown
     };
-    
+
     // Simulate the UI processing (from the chat form handler)
     const processedHTML = renderMarkdown(apiResponse.message);
     const botMessage = appendMessage(processedHTML, false);
-    
+
     // The bot message should contain rendered HTML, not raw markdown
     assertContains(botMessage.innerHTML, '<h1>Piper Morgan 1.0 - Data Model Summary</h1>', 'Should render as HTML');
     assertTrue(!botMessage.innerHTML.includes('# Piper Morgan'), 'Should not contain raw markdown');

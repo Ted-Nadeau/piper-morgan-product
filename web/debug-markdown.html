@@ -14,51 +14,51 @@
 </head>
 <body>
     <h1>Markdown Renderer Debug Test</h1>
-    
+
     <div class="test-section">
         <h3>Test 1: Simple Header</h3>
         <div class="raw">Input: "# Header 1"</div>
         <div class="rendered" id="test1"></div>
     </div>
-    
+
     <div class="test-section">
         <h3>Test 2: Inline Headers</h3>
         <div class="raw">Input: "Text # Header 1 ## Header 2 more text"</div>
         <div class="rendered" id="test2"></div>
     </div>
-    
+
     <div class="test-section">
         <h3>Test 3: Your Failing Example</h3>
         <div class="raw">Input: "Here's my summary of the document: # Piper Morgan 1.0 Pattern Catalog Summary This file appears..."</div>
         <div class="rendered" id="test3"></div>
     </div>
-    
+
     <div class="test-section">
         <h3>Test 4: Check if renderMarkdown function exists</h3>
         <div class="rendered" id="test4"></div>
     </div>
-    
+
     <script src="/assets/markdown-renderer.js?v=2"></script>
     <script>
         // Test if the function is loaded
         if (typeof renderMarkdown === 'function') {
             document.getElementById('test4').innerHTML = '✅ renderMarkdown function loaded successfully';
-            
+
             // Test 1: Simple header
             document.getElementById('test1').innerHTML = renderMarkdown('# Header 1');
-            
+
             // Test 2: Inline headers
             document.getElementById('test2').innerHTML = renderMarkdown('Text # Header 1 ## Header 2 more text');
-            
+
             // Test 3: Your failing example
             const failingText = `Here's my summary of the document: # Piper Morgan 1.0 Pattern Catalog Summary This file appears to be documentation for the architectural and design patterns used in a project called "Piper Morgan". It is structured as a markdown file with headers, code examples, and guidelines for each pattern. ## Patterns Covered 1. Repository Pattern 2. Factory Pattern (Stateless)`;
             document.getElementById('test3').innerHTML = renderMarkdown(failingText);
-            
+
         } else {
             document.getElementById('test4').innerHTML = '❌ renderMarkdown function not loaded - check console for errors';
             console.error('renderMarkdown function not found');
         }
-        
+
         // Log any JavaScript errors
         window.addEventListener('error', function(e) {
             console.error('JavaScript error:', e.error);

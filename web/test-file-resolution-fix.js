@@ -40,7 +40,7 @@ test('original patterns miss "recently"', () => {
         /\b(few days ago|days ago|yesterday|last week|earlier|previously|before)\b/i,
         /\b(uploaded.*ago|uploaded.*earlier|uploaded.*before)\b/i
     ];
-    
+
     const isMatch = originalPatterns.some(pattern => pattern.test(failingQuery));
     assertTrue(!isMatch, 'Original patterns should not match "recently"');
 });
@@ -59,7 +59,7 @@ test('detects various temporal references', () => {
         "That document I uploaded earlier today",
         "The file I uploaded this morning"
     ];
-    
+
     testCases.forEach(testCase => {
         const isMatch = detectTemporalReference(testCase);
         assertTrue(isMatch, `Should detect temporal reference in: "${testCase}"`);

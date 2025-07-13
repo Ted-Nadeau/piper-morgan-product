@@ -55,7 +55,7 @@ test('handles line breaks correctly', () => {
 
 test('handles complex markdown', () => {
     const input = `# Summary
-    
+
 ## Key Points
 - **Important**: This is bold
 - *Emphasis*: This is italic
@@ -63,10 +63,10 @@ test('handles complex markdown', () => {
 
 ### Details
 Normal text here.`;
-    
+
     const result = renderMarkdown(input);
     console.log('Complex markdown result:', result);
-    
+
     // Should contain all elements
     if (!result.includes('<h1>Summary</h1>')) throw new Error('Missing h1');
     if (!result.includes('<h2>Key Points</h2>')) throw new Error('Missing h2');

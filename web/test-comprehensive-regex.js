@@ -9,7 +9,7 @@ const problematicRegex = /^[•\-\*\+]\s*/;
 
 // Test different interpretations of the fix
 const fixedRegex1 = /^[•\-*+]\s*/;  // Escape asterisk instead of dash
-const fixedRegex2 = /^[•\\\-*+]\s*/; // Escape both dash and asterisk  
+const fixedRegex2 = /^[•\\\-*+]\s*/; // Escape both dash and asterisk
 const fixedRegex3 = /^[•\-\*\+]\s*/; // Original (for comparison)
 
 console.log("Regex patterns:");
@@ -22,7 +22,7 @@ console.log();
 // Test more edge cases to find the difference
 const testCases = [
     "- Normal dash",
-    "* Normal asterisk", 
+    "* Normal asterisk",
     "+ Normal plus",
     "• Normal bullet",
     "– En dash (8211)",
@@ -40,7 +40,7 @@ testCases.forEach(testCase => {
     const f1 = fixedRegex1.test(testCase);
     const f2 = fixedRegex2.test(testCase);
     const f3 = fixedRegex3.test(testCase);
-    
+
     console.log(`"${testCase}"`);
     console.log(`  Problematic: ${p}, Fixed1: ${f1}, Fixed2: ${f2}, Fixed3: ${f3}`);
     console.log(`  Unicode: ${testCase.charCodeAt(0)}`);
@@ -81,7 +81,7 @@ console.log("\n=== ITALIC-CAUSING CHARACTERS ===\n");
 
 const italicCausingChars = [
     '*', // Asterisk - causes italics in markdown
-    '_', // Underscore - causes italics in markdown  
+    '_', // Underscore - causes italics in markdown
     '`', // Backtick - causes code formatting
     '~', // Tilde - causes strikethrough
     '\\', // Backslash - escape character
@@ -91,7 +91,7 @@ italicCausingChars.forEach(char => {
     const testStr = char + ' some text';
     const problematicMatch = problematicRegex.test(testStr);
     const fixedMatch = fixedRegex1.test(testStr);
-    
+
     console.log(`Character "${char}" (${char.charCodeAt(0)}):`);
     console.log(`  Problematic matches: ${problematicMatch}`);
     console.log(`  Fixed matches: ${fixedMatch}`);
@@ -102,15 +102,15 @@ italicCausingChars.forEach(char => {
 // Test the actual markdown processing simulation
 function simulateFullProcessing(text) {
     console.log(`Original: "${text}"`);
-    
+
     // Simulate the problematic regex replacement
     const problematicResult = text.replace(problematicRegex, '');
     console.log(`After problematic regex: "${problematicResult}"`);
-    
+
     // Simulate the fixed regex replacement
     const fixedResult = text.replace(fixedRegex1, '');
     console.log(`After fixed regex: "${fixedResult}"`);
-    
+
     console.log();
 }
 

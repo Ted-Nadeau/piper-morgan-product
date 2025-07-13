@@ -389,6 +389,8 @@ External systems as plugins for:
 - ✅ Intent classification with high accuracy
 - ✅ Basic workflow execution (working end-to-end)
 - ✅ GitHub integration functional (issue creation and analysis automated)
+- ✅ SUMMARIZE task handler domain model consistency fixed
+- ✅ Workflow context handling robustness improved
 - ✅ Database persistence with domain-first schema
 - 🔄 PM-009 multi-project support (context resolution done, queries in progress)
 - 🔄 Query/Command pattern introduction
