@@ -323,6 +323,98 @@ class ProjectFactory:
         return project
 ```
 
+### Test Contract Evolution (July 2025)
+
+When architectural patterns evolve, tests must be updated to match new contracts:
+
+#### **Async Test Configuration**
+```python
+# pytest.ini or pyproject.toml
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "asyncio: mark test as requiring async event loop",
+]
+```
+
+#### **Context Handling Patterns**
+```python
+# Current pattern: context propagation includes template fields
+def test_workflow_context():
+    intent = Intent(category=IntentCategory.EXECUTION, action="create_ticket")
+    workflow = await factory.create_from_intent(intent)
+
+    # New context fields added for template system
+    assert workflow.context["intent_category"] == "execution"
+    assert workflow.context["intent_action"] == "create_ticket"
+    # Original context still preserved
+    assert workflow.context["original_message"] == intent.context["original_message"]
+```
+
+#### **Pre-Classifier Test Expectations**
+```python
+# Simple greetings: should be pre-classified
+def test_simple_greeting():
+    intent = PreClassifier.pre_classify("hello")
+    assert intent is not None
+    assert intent.action == "greeting"
+
+# Compound messages: should NOT be pre-classified
+def test_compound_greeting():
+    intent = PreClassifier.pre_classify("hello there how are you")
+    assert intent is None  # Let LLM handle complex patterns
+```
+
+#### **Type Safety at Boundaries**
+```python
+# Repository interfaces expect specific types
+def test_file_repository():
+    file_id = "uuid-string"  # Not integer
+    result = await repo.get_file_by_id(file_id)
+    # Test should verify string input, not assume integer conversion
+```
+
+#### **Template System Integration**
+```python
+# Template tests should verify context-aware messaging
+def test_template_resolution():
+    template = get_message_template(
+        intent_category="analysis",
+        intent_action="investigate_issue",
+        workflow_type=WorkflowType.GENERATE_REPORT
+    )
+    assert template == "Here's my analysis of the reported issue:"
+```
+
+#### **JSON-Mode LLM Testing Patterns**
+```python
+# LLM services using JSON structured output (TextAnalyzer, etc.)
+def test_llm_json_mode():
+    mock_llm_client = Mock()
+    mock_llm_client.complete = AsyncMock(
+        return_value='{"title": "Test Doc", "key_findings": ["Finding 1"], "sections": [{"heading": "Section", "points": ["Point 1"]}]}'
+    )
+
+    analyzer = TextAnalyzer(llm_client=mock_llm_client)
+    result = await analyzer.analyze("file.txt")
+
+    # Verify JSON prompt and response format
+    call = mock_llm_client.complete.call_args_list[0]
+    assert "JSON format" in call[1]["prompt"]
+    assert call[1]["response_format"] == {"type": "json_object"}
+
+    # Verify domain model conversion
+    assert result.key_findings == ["Finding 1"]
+    assert "Test Doc" in result.summary  # Generated markdown
+```
+
+#### **Contract Documentation Requirements**
+1. **Document interface changes** alongside implementation
+2. **Update test expectations** when architectural patterns evolve
+3. **Verify test compatibility** before merging architectural improvements
+4. **Maintain backward compatibility** in test fixtures when possible
+5. **JSON-mode tests** should mock structured responses and verify conversion to domain models
+
 ## Common Patterns
 
 ### Repository Pattern
