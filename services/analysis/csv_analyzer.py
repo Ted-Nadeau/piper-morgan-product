@@ -41,9 +41,7 @@ class CSVAnalyzer(BaseAnalyzer):
                 by_column[col] = {"count": int(missing_count), "percent": percent}
                 total_missing += int(missing_count)
             total_cells = row_count * len(columns) if row_count > 0 else 0
-            percent_missing = (
-                (total_missing / total_cells * 100) if total_cells > 0 else 0.0
-            )
+            percent_missing = (total_missing / total_cells * 100) if total_cells > 0 else 0.0
             missing_data = {
                 "summary": {
                     "total_missing": total_missing,

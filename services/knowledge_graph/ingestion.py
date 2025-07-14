@@ -42,18 +42,12 @@ class DocumentIngester:
         self.collection = self.client.get_or_create_collection(
             name="pm_knowledge",
             embedding_function=self.embedding_function,
-            metadata={
-                "description": "Product Management knowledge base with relationships"
-            },
+            metadata={"description": "Product Management knowledge base with relationships"},
         )
 
-        logger.info(
-            f"Knowledge collection initialized with {self.collection.count()} documents"
-        )
+        logger.info(f"Knowledge collection initialized with {self.collection.count()} documents")
 
-    async def _analyze_document_relationships(
-        self, content: str, existing_metadata: Dict
-    ) -> Dict:
+    async def _analyze_document_relationships(self, content: str, existing_metadata: Dict) -> Dict:
         """Use LLM to analyze document relationships and hierarchy"""
 
         prompt = f"""Analyze this PM document and extract relationship metadata.
@@ -148,9 +142,7 @@ Be specific and concise. Extract real concepts from the content."""
 
             logger.info("Analyzing document relationships...")
 
-            enhanced_metadata = await self._analyze_document_relationships(
-                chunks[0], metadata
-            )
+            enhanced_metadata = await self._analyze_document_relationships(chunks[0], metadata)
 
         # Generate document ID based on content hash
         doc_hash = hashlib.md5(open(file_path, "rb").read()).hexdigest()[:8]
@@ -160,9 +152,7 @@ Be specific and concise. Extract real concepts from the content."""
         enhanced_metadata = metadata
         if chunks:
             logger.info("Analyzing document relationships...")
-            enhanced_metadata = await self._analyze_document_relationships(
-                chunks[0], metadata
-            )
+            enhanced_metadata = await self._analyze_document_relationships(chunks[0], metadata)
 
         # Prepare documents for ChromaDB
         documents = []
@@ -189,9 +179,7 @@ Be specific and concise. Extract real concepts from the content."""
         # Add to ChromaDB
         if documents:
             self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
-            logger.info(
-                f"Added {len(documents)} chunks with enhanced metadata to knowledge base"
-            )
+            logger.info(f"Added {len(documents)} chunks with enhanced metadata to knowledge base")
 
         # Return summary
         duration = (datetime.now() - start_time).total_seconds()
@@ -274,9 +262,7 @@ Be specific and concise. Extract real concepts from the content."""
                     {
                         "content": doc,
                         "metadata": metadata,
-                        "distance": (
-                            results["distances"][0][i] if results["distances"] else 0
-                        ),
+                        "distance": (results["distances"][0][i] if results["distances"] else 0),
                         "relationship_score": rel_score,
                         "combined_score": (1 - results["distances"][0][i]) * rel_score,
                         "id": results["ids"][0][i] if results["ids"] else "",

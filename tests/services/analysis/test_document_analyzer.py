@@ -140,9 +140,7 @@ async def test_document_corrupted_pdf_handling():
     analyzer = DocumentAnalyzer()
     result = await analyzer.analyze(FIXTURE_DIR + "corrupted_document.pdf")
     assert "error" in result.metadata
-    assert (
-        "corrupt" in result.metadata["error"] or "invalid" in result.metadata["error"]
-    )
+    assert "corrupt" in result.metadata["error"] or "invalid" in result.metadata["error"]
 
 
 # 6. Inheritance from BaseAnalyzer

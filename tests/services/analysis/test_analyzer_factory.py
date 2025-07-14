@@ -7,8 +7,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from services.analysis.analyzer_factory import (AnalyzerFactory,
-                                                UnsupportedAnalysisTypeError)
+from services.analysis.analyzer_factory import AnalyzerFactory, UnsupportedAnalysisTypeError
 from services.analysis.csv_analyzer import CSVAnalyzer
 from services.analysis.document_analyzer import DocumentAnalyzer
 from services.analysis.text_analyzer import TextAnalyzer
@@ -102,8 +101,7 @@ def test_factory_creates_text_analyzer():
 
 
 def test_factory_unsupported_type():
-    from services.analysis.analyzer_factory import (
-        AnalyzerFactory, UnsupportedAnalysisTypeError)
+    from services.analysis.analyzer_factory import AnalyzerFactory, UnsupportedAnalysisTypeError
 
     factory = AnalyzerFactory()
     with pytest.raises(UnsupportedAnalysisTypeError):

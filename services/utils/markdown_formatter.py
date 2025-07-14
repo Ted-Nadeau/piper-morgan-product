@@ -195,9 +195,7 @@ class MarkdownFormatter:
         Returns:
             Tuple of (cleaned_text, list_of_issues)
         """
-        logger.info(
-            f"MARKDOWN DEBUG - Input text (first 500 chars): {markdown_text[:500]}"
-        )
+        logger.info(f"MARKDOWN DEBUG - Input text (first 500 chars): {markdown_text[:500]}")
 
         issues = MarkdownFormatter.validate_markdown_syntax(markdown_text)
         cleaned = MarkdownFormatter.ensure_standard_format(markdown_text)

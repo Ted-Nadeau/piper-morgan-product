@@ -13,9 +13,7 @@ class Config:
 
     # Anthropic (Claude) Configuration
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY")
-    ANTHROPIC_DEFAULT_MODEL: str = os.getenv(
-        "ANTHROPIC_DEFAULT_MODEL", "claude-3-opus-20240229"
-    )
+    ANTHROPIC_DEFAULT_MODEL: str = os.getenv("ANTHROPIC_DEFAULT_MODEL", "claude-3-opus-20240229")
     ANTHROPIC_MAX_TOKENS: int = int(os.getenv("ANTHROPIC_MAX_TOKENS", 4000))
     ANTHROPIC_TEMPERATURE: float = float(os.getenv("ANTHROPIC_TEMPERATURE", 0.7))
 

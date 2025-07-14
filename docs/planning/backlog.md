@@ -111,7 +111,27 @@
 **Description**: Implement feedback collection and analysis to improve suggestion quality
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: Basic workflows working
 
-### PM-014: Advanced Workflow Orchestration
+### PM-014: Documentation and Test Suite Health
+
+**Story**: As a maintainable system, I need complete documentation and a healthy test suite so the codebase remains reliable and understandable
+**Description**: Complete Action Humanizer documentation and triage test suite failures (37 failures, 19 errors) following PM-011 implementation
+**Estimate**: 8 points | **Status**: Ready | **Dependencies**: PM-011 ✅
+
+**Implementation Details**:
+
+- Complete Action Humanizer documentation (data model, API, architecture, patterns, ADR)
+- Triage and fix test suite failures
+- Address missing test fixtures and mocking issues
+- Verify no regressions from recent changes
+
+**Success Criteria**:
+
+- [ ] All documentation complete and reviewed
+- [ ] Test suite back to 100% pass rate
+- [ ] No regressions from recent changes
+- [ ] Clear understanding of any model drift
+
+### PM-015: Advanced Workflow Orchestration
 
 **Story**: As a power user, I want complex multi-step workflows so I can automate sophisticated PM tasks
 **Description**: Multi-step workflows with conditional logic and cross-system coordination
@@ -121,25 +141,25 @@
 
 ## 📈 P2 - Extended Capabilities
 
-### PM-015: Bulk Operations Support
+### PM-016: Bulk Operations Support
 
 **Story**: As a PM, I want to perform bulk operations so I can handle large-scale tasks efficiently
 **Description**: Batch issue creation, bulk editing, and progress tracking for large operations
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: PM-012
 
-### PM-016: Analytics Dashboard Integration
+### PM-017: Analytics Dashboard Integration
 
 **Story**: As a PM, I want automated reports from our analytics tools so I can focus on insights
 **Description**: Connect to analytics platforms for automated reporting and anomaly detection
 **Estimate**: 21 points | **Status**: Planned | **Dependencies**: External API integrations
 
-### PM-017: Slack/Teams Integration
+### PM-018: Slack/Teams Integration
 
 **Story**: As a team member, I want to interact with Piper Morgan through our chat tools
 **Description**: Bot interfaces for Slack and Teams with context sharing and notifications
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: Authentication system
 
-### PM-026: Session Knowledge Manager
+### PM-027: Session Knowledge Manager
 
 **Story**: As a user, I want uploaded documents to remain available throughout my conversation session
 **Description**: Extend Phase 1 message-scoped context to session-persistent knowledge with management controls
@@ -152,11 +172,11 @@
 - Document deduplication and version handling
 - API endpoints for document management (add/remove/list)
 
-### PM-027: Session Context UI
+### PM-028: Session Context UI
 
 **Story**: As a user, I want to see and manage what documents are active in my current session
 **Description**: Sidebar interface for session document management with drag-to-remove and context indicators
-**Estimate**: 5 points | **Status**: Designed | **Dependencies**: PM-026
+**Estimate**: 5 points | **Status**: Designed | **Dependencies**: PM-027
 
 **Implementation Details**:
 
@@ -165,7 +185,7 @@
 - Visual context indicators in chat
 - Session state persistence across page reloads
 
-### PM-028: Meeting Transcript Analysis & Visualization
+### PM-029: Meeting Transcript Analysis & Visualization
 
 **Story**: As a PM, I want to upload meeting transcripts and get actionable outputs
 **Description**: Process meeting recordings/transcripts to generate mind `maps, decision trees, action item lists, and shareable summaries
@@ -178,7 +198,7 @@
 - Action item identification and tracking
 - Integration with project context
 
-### PM-029: Analytics Dashboard Integration
+### PM-030: Analytics Dashboard Integration
 
 **Story**: As a PM, I want automated reports from our analytics tools so I can focus on insights
 **Description**: Connect to Datadog, New Relic, Google Analytics for automated anomaly detection, trend analysis, and actionable insights
@@ -191,7 +211,7 @@
 - Alert configuration and routing
 - Insight generation with LLM analysis
 
-### PM-030: Advanced Knowledge Graph Implementation
+### PM-031: Advanced Knowledge Graph Implementation
 
 **Story**: As an organization, we want dynamic knowledge relationships for better discovery
 **Description**: Implement graph-based knowledge representation with relationship mapping and organizational learning
@@ -411,6 +431,7 @@ _Last Updated: June 21, 2025_
 
 ## Revision Log
 
+- **July 13, 2025**: Added PM-014 (Documentation and Test Suite Health) following Action Humanizer implementation, updated ticket numbering
 - **June 21, 2025**: Consolidated backlog reflecting PM-009/010/011 completions, added technical debt items, corrected ticket numbering
 
 ## Next Up

@@ -2,8 +2,7 @@ import logging
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
-from starlette.middleware.base import (BaseHTTPMiddleware,
-                                       RequestResponseEndpoint)
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from .errors import ERROR_MESSAGES, APIError
 
@@ -12,16 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         try:
             return await call_next(request)
         except APIError as exc:
             # Handle our custom, structured API errors
-            user_message = ERROR_MESSAGES.get(
-                exc.error_code, "An unexpected error occurred."
-            )
+            user_message = ERROR_MESSAGES.get(exc.error_code, "An unexpected error occurred.")
 
             # Format the message with details from the exception
             try:

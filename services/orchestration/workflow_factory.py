@@ -5,13 +5,13 @@ PM-008 Github integration
 """
 
 from datetime import datetime
+
 # 2025-06-14: Fixed imports and task creation to use correct enums and types
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from services.domain.models import Intent, Task, Workflow
-from services.shared_types import (IntentCategory, TaskStatus, TaskType,
-                                   WorkflowStatus, WorkflowType)
+from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 
 class WorkflowFactory:
@@ -53,9 +53,7 @@ class WorkflowFactory:
 
         # Determine workflow type from intent action
         workflow_type = self.workflow_registry.get(intent.action.lower())
-        print(
-            f"🔍 Action '{intent.action.lower()}' mapped to workflow_type: {workflow_type}"
-        )
+        print(f"🔍 Action '{intent.action.lower()}' mapped to workflow_type: {workflow_type}")
 
         if not workflow_type:
             # Default mapping based on intent category
@@ -73,18 +71,18 @@ class WorkflowFactory:
             elif intent.category == IntentCategory.STRATEGY:
                 workflow_type = WorkflowType.PLAN_STRATEGY
             else:
-                print(
-                    f"❌ No workflow type found for intent category: {intent.category}"
-                )
+                print(f"❌ No workflow type found for intent category: {intent.category}")
                 return None
-            print(
-                f"🔍 Category {intent.category} mapped to workflow_type: {workflow_type}"
-            )
+            print(f"🔍 Category {intent.category} mapped to workflow_type: {workflow_type}")
 
         # Merge intent context and project_context if provided
         context = dict(intent.context or {})
         if project_context:
             context.update(project_context)
+
+        # Add intent category and action for message templating
+        context["intent_category"] = intent.category.value
+        context["intent_action"] = intent.action
 
         # Map resolved_file_id to file_id for workflow compatibility
         if "resolved_file_id" in context and "file_id" not in context:

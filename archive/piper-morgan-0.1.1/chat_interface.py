@@ -1,15 +1,14 @@
 import json
 import os
+
 # Suppress torch warnings that don't affect our functionality
 import warnings
 
 import streamlit as st
-from claude_client import \
-    ClaudeClient  # Import ClaudeClient for initialization
+from claude_client import ClaudeClient  # Import ClaudeClient for initialization
 from config import app_config  # Import app_config
 from github_agent import GitHubAgent  # Import GitHubAgent for initialization
-from intelligent_github_v2 import \
-    PmIssueCreationAgent  # Renamed class for clarity
+from intelligent_github_v2 import PmIssueCreationAgent  # Renamed class for clarity
 from knowledge_base import KnowledgeBase
 
 warnings.filterwarnings("ignore", message=".*torch.*")
@@ -27,9 +26,7 @@ if "github_agent" not in st.session_state:  # Initialize GitHubAgent
     st.session_state.github_agent = GitHubAgent()
 if "llm_client" not in st.session_state:  # Initialize ClaudeClient as the LLM
     st.session_state.llm_client = ClaudeClient()
-if (
-    "agent" not in st.session_state
-):  # Initialize PmIssueCreationAgent with all its dependencies
+if "agent" not in st.session_state:  # Initialize PmIssueCreationAgent with all its dependencies
     st.session_state.agent = PmIssueCreationAgent(
         github_agent=st.session_state.github_agent,
         knowledge_base=st.session_state.knowledge_base,
@@ -41,9 +38,7 @@ if "client_options" not in st.session_state:
     st.session_state.client_options = ["PM Agent Development", "OCTO"]
 if "project_options" not in st.session_state:
     st.session_state.project_options = ["Piper Morgan", "Benefits Portfolio"]
-if (
-    "client_name" not in st.session_state
-):  # Initialize client_name in session state if not present
+if "client_name" not in st.session_state:  # Initialize client_name in session state if not present
     st.session_state.client_name = (
         st.session_state.client_options[0] if st.session_state.client_options else ""
     )
@@ -146,14 +141,10 @@ with st.sidebar:
 
                     # Store success message in session state so it persists
                     st.session_state.upload_success = f"✅ Added '{uploaded_file.name}' to knowledge base as '{context_level}' context!"
-                    st.session_state.doc_count = (
-                        st.session_state.knowledge_base.collection.count()
-                    )
+                    st.session_state.doc_count = st.session_state.knowledge_base.collection.count()
 
                 except Exception as e:
-                    st.session_state.upload_error = (
-                        f"❌ Error processing document: {str(e)}"
-                    )
+                    st.session_state.upload_error = f"❌ Error processing document: {str(e)}"
 
     # Display persistent messages
     if hasattr(st.session_state, "upload_success"):
@@ -206,9 +197,7 @@ if prompt := st.chat_input("How can I help you with a GitHub issue?"):
 
                     # Add response to chat
                     response = f"I've created an issue titled '{result.get('title', 'N/A')}' with labels: {', '.join(labels) if labels else 'N/A'}. [View it on GitHub]({url})"
-                    st.session_state.messages.append(
-                        {"role": "assistant", "content": response}
-                    )
+                    st.session_state.messages.append({"role": "assistant", "content": response})
                 else:
                     st.error("Failed to create issue. No URL returned from agent.")
                     st.session_state.messages.append(

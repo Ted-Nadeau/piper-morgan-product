@@ -67,9 +67,7 @@ async def test_issue_fetching():
             print("  ⚠️  get_issue_by_url method not found - using fallback")
             # Parse URL manually and use existing methods if available
             parsed = (
-                agent.parse_github_url(test_url)
-                if hasattr(agent, "parse_github_url")
-                else None
+                agent.parse_github_url(test_url) if hasattr(agent, "parse_github_url") else None
             )
             if parsed:
                 owner, repo, issue_num = parsed
@@ -84,9 +82,7 @@ async def test_issue_fetching():
         if result["success"]:
             issue = result["issue"]
             print(f"  ✅ Success! Issue #{issue['number']}: {issue['title'][:60]}...")
-            print(
-                f"     State: {issue['state']} | Labels: {len(issue.get('labels', []))}"
-            )
+            print(f"     State: {issue['state']} | Labels: {len(issue.get('labels', []))}")
             print(f"     Body length: {len(issue.get('body', ''))} chars")
             return True
         else:
@@ -118,9 +114,7 @@ async def test_knowledge_search():
         for i, result in enumerate(results[:2]):  # Show first 2
             print(f"     {i+1}. Score: {result.get('combined_score', 'N/A'):.2f}")
             print(f"        Content: {result['content'][:80]}...")
-            print(
-                f"        Metadata: {result['metadata'].get('document_type', 'unknown')}"
-            )
+            print(f"        Metadata: {result['metadata'].get('document_type', 'unknown')}")
 
         return len(results) > 0
 

@@ -3,8 +3,7 @@ from typing import Dict, Optional, Tuple
 from services.database.repositories import ProjectRepository
 from services.domain.models import Intent, Project
 from services.llm.clients import LLMClient
-from services.project_context.exceptions import (AmbiguousProjectError,
-                                                 ProjectNotFoundError)
+from services.project_context.exceptions import AmbiguousProjectError, ProjectNotFoundError
 from services.shared_types import IntentCategory
 
 
@@ -68,8 +67,7 @@ class ProjectContext:
             # Use inferred project (needs confirmation if session exists and differs)
             self._session_last_used[session_id] = inferred_project.id
             needs_confirmation = (
-                session_project is not None
-                and session_project.id != inferred_project.id
+                session_project is not None and session_project.id != inferred_project.id
             )
             return inferred_project, needs_confirmation
         elif session_project:

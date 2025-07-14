@@ -22,9 +22,7 @@ class DocumentService:
     def __init__(self):
         self.ingester = get_ingester()
 
-    async def upload_pdf(
-        self, file: UploadFile, metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def upload_pdf(self, file: UploadFile, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
         Handle PDF upload with proper file management
 

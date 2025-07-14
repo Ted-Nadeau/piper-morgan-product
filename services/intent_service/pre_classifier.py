@@ -92,9 +92,7 @@ class PreClassifier:
         logger = structlog.get_logger()
         logger.info(f"PRE_CLASSIFIER DEBUG - Original: '{message}'")
         logger.info(f"PRE_CLASSIFIER DEBUG - Clean: '{clean_msg}'")
-        logger.info(
-            f"PRE_CLASSIFIER DEBUG - Clean for matching: '{clean_for_matching}'"
-        )
+        logger.info(f"PRE_CLASSIFIER DEBUG - Clean for matching: '{clean_for_matching}'")
 
         # Check for greetings
         greeting_match = PreClassifier._matches_patterns(
@@ -105,9 +103,7 @@ class PreClassifier:
             # Find which pattern matched for debugging
             for pattern in PreClassifier.GREETING_PATTERNS:
                 if re.search(pattern, clean_for_matching):
-                    logger.info(
-                        f"PRE_CLASSIFIER DEBUG - Matched greeting pattern: '{pattern}'"
-                    )
+                    logger.info(f"PRE_CLASSIFIER DEBUG - Matched greeting pattern: '{pattern}'")
                     break
             return Intent(
                 category=IntentCategory.CONVERSATION,
@@ -117,9 +113,7 @@ class PreClassifier:
             )
 
         # Check for farewells
-        if PreClassifier._matches_patterns(
-            clean_for_matching, PreClassifier.FAREWELL_PATTERNS
-        ):
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.FAREWELL_PATTERNS):
             return Intent(
                 category=IntentCategory.CONVERSATION,
                 action="farewell",
@@ -128,9 +122,7 @@ class PreClassifier:
             )
 
         # Check for thanks
-        if PreClassifier._matches_patterns(
-            clean_for_matching, PreClassifier.THANKS_PATTERNS
-        ):
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.THANKS_PATTERNS):
             return Intent(
                 category=IntentCategory.CONVERSATION,
                 action="thanks",
@@ -144,9 +136,7 @@ class PreClassifier:
     def detect_file_reference(message: str) -> bool:
         """Check if message references an uploaded file"""
         clean_msg = message.strip().lower()
-        return PreClassifier._matches_patterns(
-            clean_msg, PreClassifier.FILE_REFERENCE_PATTERNS
-        )
+        return PreClassifier._matches_patterns(clean_msg, PreClassifier.FILE_REFERENCE_PATTERNS)
 
     @staticmethod
     def get_file_reference_confidence(message: str) -> float:
@@ -181,9 +171,7 @@ class PreClassifier:
             return 0.7
         elif PreClassifier._matches_patterns(clean_msg, low_confidence_patterns):
             return 0.5
-        elif PreClassifier._matches_patterns(
-            clean_msg, PreClassifier.FILE_REFERENCE_PATTERNS
-        ):
+        elif PreClassifier._matches_patterns(clean_msg, PreClassifier.FILE_REFERENCE_PATTERNS):
             return 0.6  # Generic patterns
         else:
             return 0.0

@@ -4,8 +4,7 @@ from typing import Dict
 import pytest
 
 from services.domain.models import Intent, Project
-from services.project_context.project_context import (AmbiguousProjectError,
-                                                      ProjectContext)
+from services.project_context.project_context import AmbiguousProjectError, ProjectContext
 
 
 class MockProjectRepository:

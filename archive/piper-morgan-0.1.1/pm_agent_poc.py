@@ -3,15 +3,23 @@ import os
 from typing import Dict, List, Optional
 
 from claude_client import ClaudeClient
+
 # Import the centralized config
 from config import app_config
+
 # Import custom exceptions
-from exceptions import (GitHubAPIError, KnowledgeBaseError, LLMGenerationError,
-                        LLMParseError, PMAgentError)
+from exceptions import (
+    GitHubAPIError,
+    KnowledgeBaseError,
+    LLMGenerationError,
+    LLMParseError,
+    PMAgentError,
+)
 from github_agent import GitHubAgent, IssueTemplate
 from github_reviewer import GitHubReviewer
 from intelligent_github_v2 import PmIssueCreationAgent
 from knowledge_base import KnowledgeBase
+
 # Import the centralized logger
 from logger_config import logger  # Assuming you have logger_config.py now
 
@@ -55,9 +63,7 @@ class PMAgent:
             logger.critical(f"Failed to initialize PMAgent: {e}")
             raise  # Re-raise to stop execution if init fails
         except Exception as e:
-            logger.critical(
-                f"An unhandled error occurred during PMAgent initialization: {e}"
-            )
+            logger.critical(f"An unhandled error occurred during PMAgent initialization: {e}")
             raise
 
     def _initialize_knowledge_base(self):
@@ -65,9 +71,7 @@ class PMAgent:
         Initializes the knowledge base with dummy documents for testing purposes.
         In a real scenario, this would load actual project documentation.
         """
-        logger.info(
-            "Initializing knowledge base with dummy documents for demonstration..."
-        )
+        logger.info("Initializing knowledge base with dummy documents for demonstration...")
         self.knowledge_base.clear_collection()  # Clear existing for fresh start
 
         # Example documents for 'Piper Morgan' project
@@ -133,9 +137,7 @@ class PMAgent:
         Processes a natural language user query, identifies intent,
         and triggers the appropriate GitHub action.
         """
-        logger.info(
-            f"\n--- Processing User Query: '{user_query}' ---"
-        )  # CHANGED FROM print()
+        logger.info(f"\n--- Processing User Query: '{user_query}' ---")  # CHANGED FROM print()
 
         # Step 1: Use LLM to determine intent and extract parameters
         # Define the expected JSON format for the structured response
@@ -213,12 +215,8 @@ class PMAgent:
             # Update parsed_intent with resolved repo_name
             parsed_intent["repo_name"] = repo_name
 
-            logger.info(
-                f"📝 Recognized Intent: {parsed_intent['intent']}"
-            )  # CHANGED FROM print()
-            logger.info(
-                f"📁 Target Repo: {parsed_intent['repo_name']}"
-            )  # CHANGED FROM print()
+            logger.info(f"📝 Recognized Intent: {parsed_intent['intent']}")  # CHANGED FROM print()
+            logger.info(f"📁 Target Repo: {parsed_intent['repo_name']}")  # CHANGED FROM print()
             if parsed_intent.get("issue_number"):
                 logger.info(
                     f"🔢 Issue Number: {parsed_intent['issue_number']}"
@@ -257,9 +255,7 @@ class PMAgent:
                 # Placeholder for actual review logic.
                 # In a real app, this would fetch issue details, potentially code,
                 # send to LLM for review, and post comment.
-                issue_details = self.github_agent.get_issue_details(
-                    repo_name, issue_number
-                )
+                issue_details = self.github_agent.get_issue_details(repo_name, issue_number)
                 if issue_details:
                     review_comment = self.github_reviewer.review_code_with_llm(
                         code_content=issue_details.get("body", ""),  # Placeholder
@@ -280,9 +276,7 @@ class PMAgent:
                 logger.info(
                     f"\n--- Getting status for issue #{issue_number} in repo '{repo_name}' ---"
                 )  # CHANGED FROM print()
-                issue_details = self.github_agent.get_issue_details(
-                    repo_name, issue_number
-                )
+                issue_details = self.github_agent.get_issue_details(repo_name, issue_number)
                 if issue_details:
                     status = issue_details.get("state", "N/A")
                     title = issue_details.get("title", "N/A")
@@ -303,9 +297,7 @@ class PMAgent:
                 return "An internal error occurred: Unhandled intent."
 
         except LLMParseError as e:
-            logger.error(
-                f"LLM generated an unparseable response for intent recognition: {e}"
-            )
+            logger.error(f"LLM generated an unparseable response for intent recognition: {e}")
             return None
         except LLMGenerationError as e:
             logger.error(f"Error during LLM intent recognition: {e}")
@@ -314,9 +306,7 @@ class PMAgent:
             logger.error(f"❌ GitHub API Error during intent processing: {e}")
             return None
         except Exception as e:
-            logger.exception(
-                f"❌ An unexpected error occurred during query processing: {e}"
-            )
+            logger.exception(f"❌ An unexpected error occurred during query processing: {e}")
             return None
 
 
@@ -333,9 +323,7 @@ if __name__ == "__main__":
             "I need a new feature for the user profile page. Add a dark mode toggle. This is for the Piper Morgan project."
         )
 
-        logger.info(
-            "\n--- Test 2: Review Issue Intent (Placeholder) ---"
-        )  # CHANGED FROM print()
+        logger.info("\n--- Test 2: Review Issue Intent (Placeholder) ---")  # CHANGED FROM print()
         agent.process_user_query(
             f"Can you review issue #123 in mediajunkie/test-piper-morgan? Check the acceptance criteria."  # Repo will default
         )
@@ -346,9 +334,7 @@ if __name__ == "__main__":
         )
 
         logger.info("\n--- Test 4: Unknown Intent ---")  # CHANGED FROM print()
-        agent.process_user_query(
-            "Tell me a joke about a developer and a product manager."
-        )
+        agent.process_user_query("Tell me a joke about a developer and a product manager.")
 
     except PMAgentError as e:
         logger.critical(f"Caught critical PMAgent error: {e}")

@@ -83,9 +83,7 @@ class FileResolver:
             "just uploaded",
         ]
 
-        if len(files) == 1 and any(
-            ref in original_message for ref in explicit_references
-        ):
+        if len(files) == 1 and any(ref in original_message for ref in explicit_references):
             # Single file with explicit reference = no ambiguity
             return files[0].id, 0.95  # Very high confidence
 
@@ -144,9 +142,7 @@ class FileResolver:
         final_score = min(total_score, 1.0)  # Cap at 1.0
 
         # Debug logging
-        print(
-            f"DEBUG Scoring {file.filename}: total={final_score:.3f}, components={components}"
-        )
+        print(f"DEBUG Scoring {file.filename}: total={final_score:.3f}, components={components}")
 
         return final_score
 

@@ -44,16 +44,12 @@ class FileRepository:
     async def get_file_by_id(self, file_id: str) -> Optional[UploadedFile]:
         """Get file by ID"""
         async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM uploaded_files WHERE id = $1", file_id
-            )
+            row = await conn.fetchrow("SELECT * FROM uploaded_files WHERE id = $1", file_id)
             if row:
                 return self._row_to_file(row)
         return None
 
-    async def get_files_for_session(
-        self, session_id: str, limit: int = 10
-    ) -> List[UploadedFile]:
+    async def get_files_for_session(self, session_id: str, limit: int = 10) -> List[UploadedFile]:
         """Get files for a session, ordered by upload time (most recent first)"""
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(
@@ -82,9 +78,7 @@ class FileRepository:
                 datetime.now(),
             )
 
-    async def search_files_by_name(
-        self, session_id: str, query: str
-    ) -> List[UploadedFile]:
+    async def search_files_by_name(self, session_id: str, query: str) -> List[UploadedFile]:
         """Search files by name within a session (case-insensitive partial match)"""
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(
@@ -98,9 +92,7 @@ class FileRepository:
             )
             return [self._row_to_file(row) for row in rows]
 
-    async def get_recent_files(
-        self, session_id: str, hours: int = 24
-    ) -> List[UploadedFile]:
+    async def get_recent_files(self, session_id: str, hours: int = 24) -> List[UploadedFile]:
         """Get files uploaded within the last N hours"""
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(
@@ -146,9 +138,7 @@ class FileRepository:
     async def delete_file(self, file_id: str) -> bool:
         """Delete file metadata by ID"""
         async with self.db_pool.acquire() as conn:
-            result = await conn.execute(
-                "DELETE FROM uploaded_files WHERE id = $1", file_id
-            )
+            result = await conn.execute("DELETE FROM uploaded_files WHERE id = $1", file_id)
             return result == "DELETE 1"
 
     def _row_to_file(self, row) -> UploadedFile:

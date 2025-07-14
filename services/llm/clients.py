@@ -70,9 +70,7 @@ class LLMClient:
                 raise ValueError(f"Unknown provider: {primary_provider}")
         except Exception as e:
             # Log the primary provider failure
-            logger.warning(
-                f"Primary provider {primary_provider.value} failed: {str(e)}"
-            )
+            logger.warning(f"Primary provider {primary_provider.value} failed: {str(e)}")
 
             # Determine fallback provider
             fallback_provider = (
@@ -92,13 +90,9 @@ class LLMClient:
 
             try:
                 if fallback_provider == LLMProvider.ANTHROPIC:
-                    return await self._anthropic_complete(
-                        prompt, fallback_config, response_format
-                    )
+                    return await self._anthropic_complete(prompt, fallback_config, response_format)
                 else:
-                    return await self._openai_complete(
-                        prompt, fallback_config, response_format
-                    )
+                    return await self._openai_complete(prompt, fallback_config, response_format)
             except Exception as fallback_error:
                 logger.error(
                     f"Fallback provider {fallback_provider.value} also failed: {str(fallback_error)}"

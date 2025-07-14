@@ -246,9 +246,7 @@ class TestPreClassifier:
 
         for pattern in non_matches:
             intent = PreClassifier.pre_classify(pattern)
-            assert (
-                intent is None
-            ), f"Expected None for non-match '{pattern}', got {intent}"
+            assert intent is None, f"Expected None for non-match '{pattern}', got {intent}"
 
     def test_greeting_with_follow_up(self):
         """Test that greetings followed by other content are NOT pre-classified"""
@@ -274,6 +272,4 @@ class TestPreClassifier:
 
         for pattern in yes_no_patterns:
             intent = PreClassifier.pre_classify(pattern)
-            assert (
-                intent is None
-            ), f"Expected None for yes/no pattern '{pattern}', got {intent}"
+            assert intent is None, f"Expected None for yes/no pattern '{pattern}', got {intent}"

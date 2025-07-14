@@ -893,7 +893,167 @@ if db_project:
 
 PM-011 - Lazy loading caused "greenlet_spawn has not been called" errors when accessing project integrations after session context.
 
-## 15. MCP Adapter Pattern (Planned)
+## 15. Action Humanizer Pattern
+
+### Purpose
+
+Convert technical action strings into natural language for improved user experience while maintaining system consistency and performance through intelligent caching.
+
+### Context
+
+System actions are represented as snake_case strings (e.g., `investigate_crash`) which are not user-friendly. These need to be converted to natural language while maintaining consistency and performance.
+
+### Solution
+
+#### Core Components
+
+**ActionHumanizer Service**
+
+```python
+class ActionHumanizer:
+    """Service to convert technical action strings to natural language"""
+
+    def __init__(self, repo: ActionHumanizationRepository):
+        self.repo = repo
+
+    async def humanize(self, action: str, category: Optional[str] = None) -> str:
+        """Convert technical action to human-readable format"""
+
+        # Check cache first
+        cached = await self.repo.get_by_action(action)
+        if cached:
+            await self.repo.increment_usage(action)
+            return cached.human_readable
+
+        # Apply rule-based conversion
+        human_readable = self._apply_rules(action)
+
+        # Cache the result
+        humanization = ActionHumanization(
+            action=action,
+            category=category,
+            human_readable=human_readable
+        )
+        await self.repo.create(humanization)
+
+        return human_readable
+
+    def _apply_rules(self, action: str) -> str:
+        """Rule-based conversion for common patterns"""
+        if '_' not in action:
+            return action
+
+        parts = action.split('_')
+
+        # Handle verb_noun pattern
+        if len(parts) == 2:
+            verb, noun = parts
+            if verb in ['create', 'investigate', 'analyze', 'review', 'update', 'delete']:
+                article = 'an' if noun[0].lower() in 'aeiou' else 'a'
+                return f"{verb} {article} {noun}"
+            elif verb in ['list', 'count']:
+                return f"{verb} {noun}s"  # pluralize
+
+        # Handle compound nouns
+        if len(parts) >= 2:
+            verb = parts[0]
+            compound = ' '.join(parts[1:])
+            if verb in ['analyze', 'check', 'verify', 'validate']:
+                return f"{verb} {compound}"
+
+        # Default: replace underscores
+        return action.replace('_', ' ')
+```
+
+**TemplateRenderer Integration**
+
+```python
+class TemplateRenderer:
+    """Template-based message generation with humanization"""
+
+    def __init__(self, humanizer: Optional[ActionHumanizer] = None):
+        self.humanizer = humanizer
+
+    async def render_template(
+        self,
+        template: str,
+        intent_action: str,
+        intent_category: Optional[str] = None,
+        **kwargs
+    ) -> str:
+        """Render template with humanized action"""
+
+        # Add humanized action if needed
+        if "{human_action}" in template and self.humanizer:
+            human_action = await self.humanizer.humanize(
+                intent_action,
+                intent_category
+            )
+            kwargs["human_action"] = human_action
+
+        # Keep original action available
+        kwargs["action"] = intent_action
+
+        return template.format(**kwargs)
+```
+
+### Implementation Guidelines
+
+#### DO:
+
+- ✅ Always check cache before generating
+- ✅ Track usage for analytics
+- ✅ Use consistent rules across the system
+- ✅ Handle edge cases gracefully
+- ✅ Support both {action} and {human_action} in templates
+
+#### DON'T:
+
+- ❌ Generate new humanizations for every request
+- ❌ Use synchronous operations (everything is async)
+- ❌ Hardcode humanizations in templates
+- ❌ Create multiple humanizer instances
+- ❌ Bypass the caching layer
+
+### Usage Example
+
+```python
+# In main.py or workflow handler
+humanizer = ActionHumanizer(repo=action_humanization_repo)
+renderer = TemplateRenderer(humanizer=humanizer)
+
+# Get appropriate template
+template = get_message_template(
+    intent.category,
+    intent.action,
+    workflow_type
+)
+
+# Render with humanization
+message = await renderer.render_template(
+    template,
+    intent_action=intent.action,
+    intent_category=intent.category.value,
+    workflow_id=workflow.id
+)
+```
+
+### Performance Considerations
+
+- Cache lookups: O(1) with indexed database field
+- Rule application: O(n) where n is action string length
+- First-time humanization: ~1-5ms
+- Cached humanization: <0.1ms
+
+### Future Enhancements
+
+1. **LLM Integration**: For complex or unknown patterns
+2. **Context Awareness**: Different humanizations based on category
+3. **Internationalization**: Support for multiple languages
+4. **A/B Testing**: Track which humanizations perform better
+5. **Admin Interface**: Manual override for specific actions
+
+## 16. MCP Adapter Pattern (Planned)
 
 ### Purpose
 
@@ -954,7 +1114,8 @@ These patterns form the architectural foundation of Piper Morgan:
 12. **Repository Context Enrichment Pattern** - Automatic repo context for integrations
 13. **Repository Domain Model Conversion** - Clean architectural boundaries
 14. **Async Relationship Eager Loading** - Reliable async data access
-15. **MCP Adapter Pattern** - MCP-specific integration
+15. **Action Humanizer Pattern** - User-friendly message generation
+16. **MCP Adapter Pattern** - MCP-specific integration
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
@@ -963,6 +1124,7 @@ Each pattern addresses specific architectural concerns while maintaining overall
 _Last Updated: June 29, 2025_
 
 ## Revision Log
+
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
 
 - **June 29, 2025**: Added Repository Domain Model Conversion Pattern (#13) and Async Relationship Eager Loading Pattern (#14) for PM-011 GitHub integration

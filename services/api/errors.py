@@ -4,9 +4,7 @@ from typing import Any, Dict
 class APIError(Exception):
     """Base class for all application-specific API errors."""
 
-    def __init__(
-        self, status_code: int, error_code: str, details: Dict[str, Any] = None
-    ):
+    def __init__(self, status_code: int, error_code: str, details: Dict[str, Any] = None):
         self.status_code = status_code
         self.error_code = error_code
         self.details = details or {}
@@ -22,9 +20,7 @@ class IntentClassificationFailedError(APIError):
 
 
 class LowConfidenceIntentError(APIError):
-    def __init__(
-        self, suggestions: str = "clarify your request", details: Dict[str, Any] = None
-    ):
+    def __init__(self, suggestions: str = "clarify your request", details: Dict[str, Any] = None):
         details = details or {}
         details["suggestions"] = suggestions
         super().__init__(422, "LOW_CONFIDENCE_INTENT", details)

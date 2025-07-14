@@ -7,9 +7,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
-from services.api.errors import (IntentClassificationFailedError,
-                                 LowConfidenceIntentError,
-                                 NoRelevantKnowledgeError)
+from services.api.errors import (
+    IntentClassificationFailedError,
+    LowConfidenceIntentError,
+    NoRelevantKnowledgeError,
+)
 from services.api.serializers import intent_to_dict
 from services.domain.models import Intent, IntentCategory
 from services.intent_service.pre_classifier import PreClassifier
@@ -66,9 +68,7 @@ class IntentClassifier:
         if session and has_file_reference:
             recent_files = session.get_recent_files()
             if recent_files:
-                file_context = (
-                    f"Recent uploads: {[f['filename'] for f in recent_files]}"
-                )
+                file_context = f"Recent uploads: {[f['filename'] for f in recent_files]}"
 
         # Capture input context for learning
         classification_context = {
@@ -82,16 +82,12 @@ class IntentClassifier:
 
         try:
             # Perform classification with confidence scoring
-            intent, reasoning = await self._classify_with_reasoning(
-                message, context, file_context
-            )
+            intent, reasoning = await self._classify_with_reasoning(message, context, file_context)
 
             # Check for truly vague intents that need clarification
             # Lower confidence threshold to avoid overriding legitimate classifications
             if intent.confidence < 0.3 or self._seems_vague(intent):
-                logger.info(
-                    "Low confidence or vague intent detected, requesting clarification"
-                )
+                logger.info("Low confidence or vague intent detected, requesting clarification")
                 return Intent(
                     category=IntentCategory.CONVERSATION,
                     action="clarification_needed",
@@ -99,17 +95,13 @@ class IntentClassifier:
                     context={
                         "original_classification": intent_to_dict(intent),
                         "trigger": (
-                            "low_confidence"
-                            if intent.confidence < 0.3
-                            else "vague_pattern"
+                            "low_confidence" if intent.confidence < 0.3 else "vague_pattern"
                         ),
                     },
                 )
 
             # Identify learning opportunities
-            intent.learning_signals = self._identify_learning_signals(
-                message, intent, reasoning
-            )
+            intent.learning_signals = self._identify_learning_signals(message, intent, reasoning)
 
             # Emit event for future learning system if event bus is available
             if self.event_bus:
@@ -165,9 +157,7 @@ class IntentClassifier:
 
             # Parse JSON response
             # Extract the first JSON object from the response
-            json_match = re.search(
-                r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL
-            )
+            json_match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", response, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
                 parsed = json.loads(json_str)
@@ -194,9 +184,7 @@ class IntentClassifier:
             return intent, reasoning
 
         except (json.JSONDecodeError, KeyError) as e:
-            logger.error(
-                f"Failed to parse or read LLM response: {e}", raw_response=response
-            )
+            logger.error(f"Failed to parse or read LLM response: {e}", raw_response=response)
             raise IntentClassificationFailedError(
                 details={
                     "reason": "LLM response was malformed",
@@ -204,9 +192,7 @@ class IntentClassifier:
                 }
             )
 
-    def _identify_learning_signals(
-        self, message: str, intent: Intent, reasoning: Dict
-    ) -> Dict:
+    def _identify_learning_signals(self, message: str, intent: Intent, reasoning: Dict) -> Dict:
         """Identify what learning opportunities this interaction presents"""
 
         signals = {
@@ -240,9 +226,7 @@ class IntentClassifier:
         # Check knowledge hierarchy needs
         for domain in reasoning.get("helpful_knowledge_domains", []):
             if domain not in self.knowledge_hierarchy:
-                signals["knowledge_gaps"].append(
-                    {"type": "missing_domain", "domain": domain}
-                )
+                signals["knowledge_gaps"].append({"type": "missing_domain", "domain": domain})
 
         return signals
 
@@ -273,26 +257,16 @@ class IntentClassifier:
         ):
             category = IntentCategory.QUERY
             action = "get_project"
-        elif any(
-            word in message_lower for word in ["create", "make", "build", "add", "new"]
-        ):
+        elif any(word in message_lower for word in ["create", "make", "build", "add", "new"]):
             category = IntentCategory.EXECUTION
             action = "create_item"
-        elif any(
-            word in message_lower for word in ["analyze", "check", "review", "look at"]
-        ):
+        elif any(word in message_lower for word in ["analyze", "check", "review", "look at"]):
             category = IntentCategory.ANALYSIS
             action = "analyze_data"
-        elif any(
-            word in message_lower
-            for word in ["summarize", "document", "write", "report"]
-        ):
+        elif any(word in message_lower for word in ["summarize", "document", "write", "report"]):
             category = IntentCategory.SYNTHESIS
             action = "generate_content"
-        elif any(
-            word in message_lower
-            for word in ["plan", "strategy", "prioritize", "decide"]
-        ):
+        elif any(word in message_lower for word in ["plan", "strategy", "prioritize", "decide"]):
             category = IntentCategory.STRATEGY
             action = "strategic_planning"
         elif any(
@@ -338,12 +312,8 @@ class IntentClassifier:
             if re.search(r"\b" + re.escape(word) + r"\b", action_lower):
                 return True
         # If ambiguity notes are present in context
-        ambiguity_notes = (
-            intent.context.get("ambiguity_notes") if intent.context else None
-        )
-        if ambiguity_notes and any(
-            isinstance(note, str) and note for note in ambiguity_notes
-        ):
+        ambiguity_notes = intent.context.get("ambiguity_notes") if intent.context else None
+        if ambiguity_notes and any(isinstance(note, str) and note for note in ambiguity_notes):
             return True
         return False
 

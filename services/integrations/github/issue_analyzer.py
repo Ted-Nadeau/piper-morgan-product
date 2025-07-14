@@ -56,9 +56,7 @@ class GitHubIssueAnalyzer:
             "analysis": analysis,
         }
 
-    async def analyze_issue_by_number(
-        self, repo_name: str, issue_number: int
-    ) -> Dict[str, Any]:
+    async def analyze_issue_by_number(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
         """
         Analyze a GitHub issue by repository and number, raising exceptions on failure.
         """
@@ -99,9 +97,7 @@ class GitHubIssueAnalyzer:
         ideal_issue = await self._generate_ideal_issue(issue_data)
 
         # Step 3: Perform LLM-based analysis
-        analysis_prompt = self._build_analysis_prompt(
-            issue_data, ideal_issue, knowledge_results
-        )
+        analysis_prompt = self._build_analysis_prompt(issue_data, ideal_issue, knowledge_results)
 
         analysis_response = await llm_client.complete(
             task_type="issue_analysis",
@@ -114,9 +110,7 @@ class GitHubIssueAnalyzer:
         )
 
         # Step 4: Parse and structure the analysis
-        return self._parse_analysis_response(
-            analysis_response, knowledge_results, issue_data
-        )
+        return self._parse_analysis_response(analysis_response, knowledge_results, issue_data)
 
     async def _generate_ideal_issue(self, issue_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate an 'ideal' version of the issue using existing generator"""
@@ -132,9 +126,7 @@ class GitHubIssueAnalyzer:
             }
 
             # Generate ideal content using existing generator
-            ideal_content = await self.ideal_generator.generate_issue_content(
-                description, context
-            )
+            ideal_content = await self.ideal_generator.generate_issue_content(description, context)
 
             return {
                 "title": ideal_content.title,
@@ -252,9 +244,7 @@ Focus on PM best practices: clear problem statements, acceptance criteria, user 
                 draft_comment=sections.get("DRAFT_COMMENT", "No comment provided"),
                 draft_rewrite=sections.get("DRAFT_REWRITE", "No rewrite provided"),
                 confidence=confidence,
-                knowledge_context=[
-                    r["content"][:100] + "..." for r in knowledge_results[:3]
-                ],
+                knowledge_context=[r["content"][:100] + "..." for r in knowledge_results[:3]],
                 analysis_metadata={
                     "issue_id": issue_data["id"],
                     "analyzed_at": datetime.now().isoformat(),

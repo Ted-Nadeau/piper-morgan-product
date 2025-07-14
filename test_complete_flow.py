@@ -38,9 +38,7 @@ def simulate_classification_without_llm():
         print(f"  1. Pre-classifier: {pre_result}")
 
         if pre_result:
-            print(
-                f"     -> Pre-classified as: {pre_result.category.value}/{pre_result.action}"
-            )
+            print(f"     -> Pre-classified as: {pre_result.category.value}/{pre_result.action}")
             continue
 
         # Step 2: LLM would fail (no API keys)

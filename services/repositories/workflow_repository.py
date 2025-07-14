@@ -4,8 +4,7 @@ from typing import List, Optional
 
 import asyncpg
 
-from services.domain.models import (Workflow, WorkflowResult, WorkflowStatus,
-                                    WorkflowType)
+from services.domain.models import Workflow, WorkflowResult, WorkflowStatus, WorkflowType
 
 
 class WorkflowRepository:
@@ -45,9 +44,7 @@ class WorkflowRepository:
     async def find_by_id(self, workflow_id: str) -> Optional[Workflow]:
         """Find workflow by ID"""
         async with self.db_pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM workflows WHERE id = $1", workflow_id
-            )
+            row = await conn.fetchrow("SELECT * FROM workflows WHERE id = $1", workflow_id)
             if row:
                 return self._row_to_workflow(row)
         return None
@@ -99,7 +96,5 @@ class WorkflowRepository:
             intent_id=None,  # Not stored in database, would need separate query
             created_at=row["created_at"],
             updated_at=row["completed_at"]
-            or row[
-                "created_at"
-            ],  # Use completed_at as updated_at, fallback to created_at
+            or row["created_at"],  # Use completed_at as updated_at, fallback to created_at
         )

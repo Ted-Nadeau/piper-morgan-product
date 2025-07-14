@@ -27,9 +27,7 @@ class TestClarificationEdgeCases:
         return ConversationHandler(session_manager=session_manager)
 
     @pytest.mark.asyncio
-    async def test_context_switch_during_clarification(
-        self, session_manager, conversation_handler
-    ):
+    async def test_context_switch_during_clarification(self, session_manager, conversation_handler):
         """Test user changing topic mid-clarification"""
         session_id = "test_context_switch"
 
@@ -71,9 +69,7 @@ class TestClarificationEdgeCases:
         assert session.get_pending_clarification() is not None
 
     @pytest.mark.asyncio
-    async def test_multiple_clarifications_needed(
-        self, session_manager, conversation_handler
-    ):
+    async def test_multiple_clarifications_needed(self, session_manager, conversation_handler):
         """Test multiple rounds of clarification"""
         session_id = "test_multi_turn"
 
@@ -96,9 +92,7 @@ class TestClarificationEdgeCases:
 
         # Should still need more info - check for clarification indicators
         message = response1.get("message", "").lower()
-        assert any(
-            word in message for word in ["what", "details", "detail", "more", "need"]
-        )
+        assert any(word in message for word in ["what", "details", "detail", "more", "need"])
 
         # Check that clarification is still pending
         session = session_manager.get_or_create_session(session_id)
@@ -119,10 +113,7 @@ class TestClarificationEdgeCases:
         else:
             # Still needs more info, which is also valid
             message = response2.get("message", "").lower()
-            assert any(
-                word in message
-                for word in ["what", "details", "detail", "more", "need"]
-            )
+            assert any(word in message for word in ["what", "details", "detail", "more", "need"])
 
     @pytest.mark.asyncio
     async def test_session_timeout_during_clarification(
@@ -152,9 +143,7 @@ class TestClarificationEdgeCases:
         assert "message" in response2
 
     @pytest.mark.asyncio
-    async def test_invalid_clarification_response(
-        self, session_manager, conversation_handler
-    ):
+    async def test_invalid_clarification_response(self, session_manager, conversation_handler):
         """Test handling of unhelpful clarification responses"""
         session_id = "test_invalid"
 
@@ -249,9 +238,7 @@ class TestClarificationEdgeCases:
             assert result is session  # Same object reference
 
     @pytest.mark.asyncio
-    async def test_clarification_with_empty_response(
-        self, session_manager, conversation_handler
-    ):
+    async def test_clarification_with_empty_response(self, session_manager, conversation_handler):
         """Test handling of empty or whitespace-only clarification responses"""
         session_id = "test_empty"
 
@@ -263,9 +250,7 @@ class TestClarificationEdgeCases:
         empty_responses = ["", "   ", "\n", "\t"]
 
         for empty in empty_responses:
-            response = await conversation_handler.handle_clarification_response(
-                empty, session_id
-            )
+            response = await conversation_handler.handle_clarification_response(empty, session_id)
 
             # Should handle gracefully
             assert response is not None

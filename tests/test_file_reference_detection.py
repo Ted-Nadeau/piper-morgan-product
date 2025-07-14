@@ -74,9 +74,7 @@ class TestFileReferenceDetection:
         )
 
         # Test classification with file reference
-        intent = await classifier.classify(
-            message="analyze the file I uploaded", session=session
-        )
+        intent = await classifier.classify(message="analyze the file I uploaded", session=session)
 
         # Should be classified as analysis intent
         assert intent.category.value == "analysis"
@@ -84,9 +82,7 @@ class TestFileReferenceDetection:
         assert intent.confidence > 0.7
 
     @pytest.mark.asyncio
-    async def test_classification_without_file_context(
-        self, session_manager, classifier
-    ):
+    async def test_classification_without_file_context(self, session_manager, classifier):
         """Test that classification works without file context"""
         session_id = "test_no_file_context"
         session = session_manager.get_or_create_session(session_id)
@@ -100,23 +96,17 @@ class TestFileReferenceDetection:
         assert intent.confidence > 0.7
 
     @pytest.mark.asyncio
-    async def test_file_reference_with_multiple_files(
-        self, session_manager, classifier
-    ):
+    async def test_file_reference_with_multiple_files(self, session_manager, classifier):
         """Test file reference when multiple files are uploaded"""
         session_id = "test_multiple_files"
         session = session_manager.get_or_create_session(session_id)
 
         # Add multiple files
-        session.add_uploaded_file(
-            "file1", "report.pdf", "application/pdf", datetime.utcnow()
-        )
+        session.add_uploaded_file("file1", "report.pdf", "application/pdf", datetime.utcnow())
         session.add_uploaded_file("file2", "data.csv", "text/csv", datetime.utcnow())
 
         # Test classification with ambiguous file reference
-        intent = await classifier.classify(
-            message="analyze the document", session=session
-        )
+        intent = await classifier.classify(message="analyze the document", session=session)
 
         # Should still be classified as analysis, but may need clarification
         assert intent.category.value in ["analysis", "conversation"]
@@ -137,6 +127,4 @@ class TestFileReferenceDetection:
 
         for message, expected in edge_cases:
             result = PreClassifier.detect_file_reference(message)
-            assert (
-                result == expected
-            ), f"Expected {expected} for '{message}', got {result}"
+            assert result == expected, f"Expected {expected} for '{message}', got {result}"

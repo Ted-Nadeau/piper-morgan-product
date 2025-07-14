@@ -22,9 +22,7 @@ def get_anthropic_client():
             logger.info("Anthropic client initialized.")
         except Exception as e:
             logger.exception("Failed to initialize Anthropic client.")
-            raise LLMGenerationError(
-                f"Failed to initialize Anthropic client: {e}"
-            ) from e
+            raise LLMGenerationError(f"Failed to initialize Anthropic client: {e}") from e
     return _anthropic_client
 
 
@@ -61,9 +59,7 @@ class ClaudeClient(LLMAdapter):  # This inheritance is now valid
             logger.debug(f"Raw LLM response: {response.content[0].text[:200]}...")
             return response.content[0].text
         except anthropic.APIError as e:
-            logger.error(
-                f"Anthropic API error during query: Status {e.status_code} - {e.response}"
-            )
+            logger.error(f"Anthropic API error during query: Status {e.status_code} - {e.response}")
             raise LLMGenerationError(
                 f"Anthropic API error during query: {e.status_code} - {e.response}"
             ) from e
@@ -95,9 +91,7 @@ class ClaudeClient(LLMAdapter):  # This inheritance is now valid
 
         logger.debug(f"Structured Query - Model: {self.model}")
         logger.debug(f"Structured Query - System payload: {system_message[:200]}...")
-        logger.debug(
-            f"Structured Query - Messages payload: {json.dumps(messages, indent=2)}"
-        )
+        logger.debug(f"Structured Query - Messages payload: {json.dumps(messages, indent=2)}")
         logger.debug(f"Structured Query - Max tokens: {max_tokens}")
         logger.debug(f"Structured Query - Temperature: {temperature}")
 
@@ -113,9 +107,7 @@ class ClaudeClient(LLMAdapter):  # This inheritance is now valid
             logger.debug(f"Raw LLM structured response: {raw_text[:200]}...")
 
             json_str = raw_text
-            if raw_text.strip().startswith("```json") and raw_text.strip().endswith(
-                "```"
-            ):
+            if raw_text.strip().startswith("```json") and raw_text.strip().endswith("```"):
                 json_str = raw_text.strip()[
                     len("```json") : len(raw_text.strip()) - len("```")
                 ].strip()
@@ -144,9 +136,7 @@ class ClaudeClient(LLMAdapter):  # This inheritance is now valid
                 f"Anthropic API error during structured query: {e.status_code} - {e.response}"
             ) from e
         except Exception as e:
-            logger.exception(
-                "An unexpected error occurred during Claude structured query."
-            )
+            logger.exception("An unexpected error occurred during Claude structured query.")
             raise LLMGenerationError(
                 f"An unexpected error occurred during Claude structured query: {e}"
             ) from e

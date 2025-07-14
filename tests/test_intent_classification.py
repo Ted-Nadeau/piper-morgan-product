@@ -18,9 +18,7 @@ def classifier():
     classifier_instance.knowledge_graph = MagicMock()
     ingester_mock = MagicMock()
     ingester_mock.search_with_context = AsyncMock(return_value=[])
-    classifier_instance.knowledge_graph.get_ingester = MagicMock(
-        return_value=ingester_mock
-    )
+    classifier_instance.knowledge_graph.get_ingester = MagicMock(return_value=ingester_mock)
 
     return classifier_instance
 

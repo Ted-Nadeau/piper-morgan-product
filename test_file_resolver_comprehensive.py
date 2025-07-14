@@ -67,9 +67,7 @@ async def test_file_resolver_comprehensive():
         if file_id == recent_file.id and confidence > 0.5:
             print("✅ Recent file correctly selected with high confidence")
         else:
-            print(
-                f"❌ Expected recent file, got {file_id} with confidence {confidence}"
-            )
+            print(f"❌ Expected recent file, got {file_id} with confidence {confidence}")
 
         # Test 3: Identical filenames
         print("\n=== Test 3: Identical Filenames ===")
@@ -125,9 +123,7 @@ async def test_file_resolver_comprehensive():
         )
 
         try:
-            file_id, confidence = await resolver.resolve_file_reference(
-                unicode_intent, session_id
-            )
+            file_id, confidence = await resolver.resolve_file_reference(unicode_intent, session_id)
 
             if file_id is not None:
                 print("✅ Correctly resolved specific unicode filename reference")
@@ -147,9 +143,7 @@ async def test_file_resolver_comprehensive():
         )
 
         try:
-            file_id, confidence = await resolver.resolve_file_reference(
-                japanese_intent, session_id
-            )
+            file_id, confidence = await resolver.resolve_file_reference(japanese_intent, session_id)
 
             if file_id is not None:
                 print("✅ Correctly resolved Japanese filename reference")
@@ -189,27 +183,19 @@ async def test_file_resolver_comprehensive():
         start_time = time.time()
 
         try:
-            file_id, confidence = await resolver.resolve_file_reference(
-                perf_intent, session_id
-            )
+            file_id, confidence = await resolver.resolve_file_reference(perf_intent, session_id)
             elapsed = (time.time() - start_time) * 1000  # Convert to ms
 
             if elapsed < 100 and file_id is not None:
                 print(f"✅ Performance test passed: {elapsed:.2f}ms")
             else:
-                print(
-                    f"❌ Performance test failed: {elapsed:.2f}ms, file_id: {file_id}"
-                )
+                print(f"❌ Performance test failed: {elapsed:.2f}ms, file_id: {file_id}")
         except Exception as e:
             elapsed = (time.time() - start_time) * 1000
             if "AmbiguousFileReferenceError" in str(type(e)):
-                print(
-                    f"✅ Performance test passed (ambiguity detected): {elapsed:.2f}ms"
-                )
+                print(f"✅ Performance test passed (ambiguity detected): {elapsed:.2f}ms")
             else:
-                print(
-                    f"❌ Performance test failed with unexpected error: {e} ({elapsed:.2f}ms)"
-                )
+                print(f"❌ Performance test failed with unexpected error: {e} ({elapsed:.2f}ms)")
 
         # Test with a single file to verify resolution works
         single_file_session = f"single_test_{uuid4().hex[:8]}"
@@ -238,9 +224,7 @@ async def test_file_resolver_comprehensive():
         if elapsed < 100 and file_id == single_file.id:
             print(f"✅ Single file resolution test passed: {elapsed:.2f}ms")
         else:
-            print(
-                f"❌ Single file resolution test failed: {elapsed:.2f}ms, file_id: {file_id}"
-            )
+            print(f"❌ Single file resolution test failed: {elapsed:.2f}ms, file_id: {file_id}")
 
         # Test 6: Scoring component breakdown
         print("\n=== Test 6: Scoring Component Breakdown ===")
@@ -264,9 +248,7 @@ async def test_file_resolver_comprehensive():
 
         # Test individual scoring components
         recency_score = resolver._calculate_recency_score(test_file.upload_time)
-        type_score = resolver._calculate_type_score(
-            test_file.file_type, test_intent.action
-        )
+        type_score = resolver._calculate_type_score(test_file.file_type, test_intent.action)
         name_score = resolver._calculate_name_score(test_file.filename, test_intent)
         usage_score = resolver._calculate_usage_score(test_file)
         total_score = resolver._calculate_score(test_file, test_intent)
@@ -326,9 +308,7 @@ async def test_file_resolver_comprehensive():
             context={"original_message": "analyze the data"},
         )
 
-        file_id, confidence = await resolver.resolve_file_reference(
-            data_intent, session_id
-        )
+        file_id, confidence = await resolver.resolve_file_reference(data_intent, session_id)
         csv_file = next(f for f in type_files if f.filename == "data.csv")
 
         if file_id == csv_file.id:
@@ -343,9 +323,7 @@ async def test_file_resolver_comprehensive():
             context={"original_message": "analyze the report"},
         )
 
-        file_id, confidence = await resolver.resolve_file_reference(
-            report_intent, session_id
-        )
+        file_id, confidence = await resolver.resolve_file_reference(report_intent, session_id)
         pdf_file = next(f for f in type_files if f.filename == "report.pdf")
 
         if file_id == pdf_file.id:

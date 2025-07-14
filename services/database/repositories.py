@@ -16,8 +16,16 @@ import services.domain.models as domain
 from services.shared_types import IntegrationType
 
 from .connection import db
-from .models import (Feature, Intent, Product, ProjectDB, ProjectIntegrationDB,
-                     Task, Workflow, WorkItem)
+from .models import (
+    Feature,
+    Intent,
+    Product,
+    ProjectDB,
+    ProjectIntegrationDB,
+    Task,
+    Workflow,
+    WorkItem,
+)
 
 logger = structlog.get_logger()
 
@@ -43,9 +51,7 @@ class BaseRepository:
 
     async def get_by_id(self, id: str) -> Optional[Any]:
         """Get entity by ID"""
-        result = await self.session.execute(
-            select(self.model).where(self.model.id == id)
-        )
+        result = await self.session.execute(select(self.model).where(self.model.id == id))
         return result.scalar_one_or_none()
 
     # Keep legacy get method for backwards compatibility
@@ -113,16 +119,12 @@ class WorkflowRepository(BaseRepository):
             type=domain_workflow.type,
             status=domain_workflow.status,
             input_data={},  # Domain model has context instead
-            output_data=(
-                domain_workflow.result.__dict__ if domain_workflow.result else None
-            ),
+            output_data=(domain_workflow.result.__dict__ if domain_workflow.result else None),
             context=domain_workflow.context,
             created_at=domain_workflow.created_at,
         )
 
-    async def update_status(
-        self, workflow_id: str, status, output_data=None, error=None
-    ):
+    async def update_status(self, workflow_id: str, status, output_data=None, error=None):
         """Update workflow status"""
         updates = {"status": status}
         if output_data:
@@ -171,18 +173,14 @@ class ProjectRepository(BaseRepository):
 
     async def get_default_project(self) -> Optional[domain.Project]:
         result = await self.session.execute(
-            select(ProjectDB).where(
-                ProjectDB.is_default == True, ProjectDB.is_archived == False
-            )
+            select(ProjectDB).where(ProjectDB.is_default == True, ProjectDB.is_archived == False)
         )
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
     async def list_active_projects(self) -> List[domain.Project]:
         result = await self.session.execute(
-            select(ProjectDB)
-            .where(ProjectDB.is_archived == False)
-            .order_by(ProjectDB.name)
+            select(ProjectDB).where(ProjectDB.is_archived == False).order_by(ProjectDB.name)
         )
         return [db_project.to_domain() for db_project in result.scalars().all()]
 
@@ -219,9 +217,7 @@ class ProjectRepository(BaseRepository):
         await self.session.refresh(db_project)
         return db_project.to_domain()
 
-    async def get_project_with_integrations(
-        self, project_id: str
-    ) -> Optional[domain.Project]:
+    async def get_project_with_integrations(self, project_id: str) -> Optional[domain.Project]:
         result = await self.session.execute(
             select(ProjectDB)
             .where(ProjectDB.id == project_id, ProjectDB.is_archived == False)
@@ -252,9 +248,7 @@ class ProjectIntegrationRepository(BaseRepository):
     async def list_by_project(
         self, project_id: str, active_only: bool = True
     ) -> List[domain.ProjectIntegration]:
-        query = select(ProjectIntegrationDB).where(
-            ProjectIntegrationDB.project_id == project_id
-        )
+        query = select(ProjectIntegrationDB).where(ProjectIntegrationDB.project_id == project_id)
         if active_only:
             query = query.where(ProjectIntegrationDB.is_active == True)
         result = await self.session.execute(query.order_by(ProjectIntegrationDB.type))

@@ -13,9 +13,7 @@ from fastapi.staticfiles import StaticFiles
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")
 
 # Create FastAPI app
-app = FastAPI(
-    title="Piper Morgan UI", description="Web Interface for the Piper Morgan Platform"
-)
+app = FastAPI(title="Piper Morgan UI", description="Web Interface for the Piper Morgan Platform")
 
 # Mount static files
 app.mount(

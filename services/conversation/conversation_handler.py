@@ -2,8 +2,7 @@ from typing import Any, Dict
 
 from services.api.serializers import intent_to_dict
 from services.domain.models import Intent
-from services.intelligence.conversation_aware import \
-    ConversationAwareClarifyingGenerator
+from services.intelligence.conversation_aware import ConversationAwareClarifyingGenerator
 from services.session.session_manager import SessionManager
 from services.shared_types import IntentCategory
 
@@ -70,9 +69,7 @@ class ConversationHandler:
 
         if analysis.questions:
             # Format questions for user
-            questions_text = self.clarifying_generator.format_questions_for_user(
-                analysis
-            )
+            questions_text = self.clarifying_generator.format_questions_for_user(analysis)
 
             # Store clarification state in session if available
             if self.session_manager and session_id:
@@ -80,9 +77,7 @@ class ConversationHandler:
                 session.set_pending_clarification(
                     original_intent=intent,
                     missing_info={
-                        "detected_issues": [
-                            issue.value for issue in analysis.detected_issues
-                        ],
+                        "detected_issues": [issue.value for issue in analysis.detected_issues],
                         "questions": [
                             {
                                 "question": q.question,
@@ -102,9 +97,7 @@ class ConversationHandler:
                 "workflow_id": None,
                 "clarification_data": {
                     "is_ambiguous": analysis.is_ambiguous,
-                    "detected_issues": [
-                        issue.value for issue in analysis.detected_issues
-                    ],
+                    "detected_issues": [issue.value for issue in analysis.detected_issues],
                     "questions": [
                         {
                             "question": q.question,
@@ -194,17 +187,13 @@ class ConversationHandler:
             }
         else:
             # Still need more clarification
-            questions_text = self.clarifying_generator.format_questions_for_user(
-                analysis
-            )
+            questions_text = self.clarifying_generator.format_questions_for_user(analysis)
 
             # Update the pending clarification
             session.set_pending_clarification(
                 original_intent=original_intent,
                 missing_info={
-                    "detected_issues": [
-                        issue.value for issue in analysis.detected_issues
-                    ],
+                    "detected_issues": [issue.value for issue in analysis.detected_issues],
                     "questions": [
                         {
                             "question": q.question,
@@ -228,9 +217,7 @@ class ConversationHandler:
                 "workflow_id": None,
                 "clarification_data": {
                     "is_ambiguous": analysis.is_ambiguous,
-                    "detected_issues": [
-                        issue.value for issue in analysis.detected_issues
-                    ],
+                    "detected_issues": [issue.value for issue in analysis.detected_issues],
                     "questions": [
                         {
                             "question": q.question,

@@ -27,9 +27,7 @@ class QueryRouter:
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service"""
         if intent.category != IntentCategory.QUERY:
-            raise ValueError(
-                f"QueryRouter can only handle QUERY intents, got {intent.category}"
-            )
+            raise ValueError(f"QueryRouter can only handle QUERY intents, got {intent.category}")
 
         if intent.action == "list_projects":
             return await self.project_queries.list_active_projects()

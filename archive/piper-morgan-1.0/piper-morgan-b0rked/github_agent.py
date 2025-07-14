@@ -6,12 +6,15 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 import urllib3
+
 # Import the centralized config
 from config import app_config
+
 # Import custom exceptions
 from exceptions import GitHubAPIError
 from github import Github
 from github.GithubException import GithubException, UnknownObjectException
+
 # Import the centralized logger
 from logger_config import logger  # ADDED
 
@@ -31,26 +34,18 @@ class GitHubAgent:
     def __init__(self):  # Removed token parameter, now uses config
         """Initialize GitHub connection"""
         self.token = app_config.GITHUB_TOKEN  # Get token from config
-        if (
-            not self.token
-        ):  # This check is also in Config's __init__ but good redundancy
-            raise ValueError(
-                "GitHub token required. Set GITHUB_TOKEN in .env or Config."
-            )
+        if not self.token:  # This check is also in Config's __init__ but good redundancy
+            raise ValueError("GitHub token required. Set GITHUB_TOKEN in .env or Config.")
 
         try:
             self.client = Github(self.token)
             self.user = self.client.get_user()
-            logger.info(
-                f"✅ Connected to GitHub as: {self.user.login}"
-            )  # CHANGED FROM print()
+            logger.info(f"✅ Connected to GitHub as: {self.user.login}")  # CHANGED FROM print()
         except GithubException as e:
             logger.error(
                 f"Failed to connect to GitHub with provided token: {e}"
             )  # CHANGED FROM print()
-            raise GitHubAPIError(
-                f"Failed to connect to GitHub with provided token: {e}"
-            ) from e
+            raise GitHubAPIError(f"Failed to connect to GitHub with provided token: {e}") from e
         except Exception as e:
             logger.exception(
                 "An unexpected error occurred during GitHub connection."
@@ -79,9 +74,7 @@ class GitHubAgent:
             else:
                 for (
                     repo
-                ) in (
-                    self.client.get_user().get_repos()
-                ):  # This gets all repos user can access
+                ) in self.client.get_user().get_repos():  # This gets all repos user can access
                     repos.append(
                         {
                             "name": repo.full_name,
@@ -122,9 +115,7 @@ class GitHubAgent:
                 )  # CHANGED FROM print()
                 return None
         except GithubException as e:
-            logger.error(
-                f"Failed to get repository '{repo_name}': {e}"
-            )  # CHANGED FROM print()
+            logger.error(f"Failed to get repository '{repo_name}': {e}")  # CHANGED FROM print()
             return None
         except Exception as e:
             logger.exception(
@@ -132,9 +123,7 @@ class GitHubAgent:
             )  # CHANGED FROM print()
             return None
 
-    def create_issue(
-        self, repo_name: str, issue_template: IssueTemplate
-    ) -> Optional[str]:
+    def create_issue(self, repo_name: str, issue_template: IssueTemplate) -> Optional[str]:
         """
         Creates a new GitHub issue.
         Returns the URL of the created issue.
@@ -166,9 +155,7 @@ class GitHubAgent:
             logger.exception(
                 "An unexpected error occurred during issue creation."
             )  # CHANGED FROM print()
-            raise GitHubAPIError(
-                f"An unexpected error occurred during issue creation: {e}"
-            ) from e
+            raise GitHubAPIError(f"An unexpected error occurred during issue creation: {e}") from e
 
     def get_issue_details(self, repo_name: str, issue_number: int) -> Optional[Dict]:
         """
@@ -190,9 +177,7 @@ class GitHubAgent:
                 "body": issue.body,
                 "state": issue.state,
                 "created_at": issue.created_at.isoformat(),
-                "updated_at": (
-                    issue.updated_at.isoformat() if issue.updated_at else None
-                ),
+                "updated_at": (issue.updated_at.isoformat() if issue.updated_at else None),
                 "closed_at": issue.closed_at.isoformat() if issue.closed_at else None,
                 "html_url": issue.html_url,
                 "user": issue.user.login if issue.user else None,
@@ -269,16 +254,12 @@ class GitHubAgent:
             logger.warning(
                 f"GitHub PR #{pr_number} not found in '{repo_name}'."
             )  # CHANGED FROM print()
-            raise GitHubAPIError(
-                f"GitHub PR #{pr_number} not found in '{repo_name}': {e}"
-            ) from e
+            raise GitHubAPIError(f"GitHub PR #{pr_number} not found in '{repo_name}': {e}") from e
         except GithubException as e:
             logger.error(
                 f"Failed to fetch PR #{pr_number} from '{repo_name}': {e}"
             )  # CHANGED FROM print()
-            raise GitHubAPIError(
-                f"Failed to fetch PR #{pr_number} from '{repo_name}': {e}"
-            ) from e
+            raise GitHubAPIError(f"Failed to fetch PR #{pr_number} from '{repo_name}': {e}") from e
         except Exception as e:
             logger.exception(
                 f"An unexpected error occurred while getting PR #{pr_number} from '{repo_name}'."

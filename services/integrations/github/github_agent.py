@@ -7,8 +7,12 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from github import (BadCredentialsException, Github,
-                    RateLimitExceededException, UnknownObjectException)
+from github import (
+    BadCredentialsException,
+    Github,
+    RateLimitExceededException,
+    UnknownObjectException,
+)
 from github.Issue import Issue as GitHubIssue
 from github.Repository import Repository
 
@@ -21,17 +25,13 @@ class GitHubAgent:
     def __init__(self, token: Optional[str] = None):
         self.token = token or os.getenv("GITHUB_TOKEN")
         if not self.token:
-            raise ValueError(
-                "GitHub token required - set GITHUB_TOKEN environment variable"
-            )
+            raise ValueError("GitHub token required - set GITHUB_TOKEN environment variable")
 
         try:
             self.client = Github(self.token)
             self.user = self.client.get_user()
         except BadCredentialsException as e:
-            raise GitHubAuthFailedError(
-                details={"reason": "Invalid GitHub token provided."}
-            ) from e
+            raise GitHubAuthFailedError(details={"reason": "Invalid GitHub token provided."}) from e
 
     def parse_github_url(self, url: str) -> Optional[Tuple[str, str, int]]:
         """
@@ -115,9 +115,7 @@ class GitHubAgent:
             ) from e
         except Exception as e:
             # For other unexpected GitHub errors
-            raise ConnectionError(
-                f"An unexpected error occurred with the GitHub API: {e}"
-            ) from e
+            raise ConnectionError(f"An unexpected error occurred with the GitHub API: {e}") from e
 
     def list_repositories(self) -> List[Dict[str, Any]]:
         """List accessible repositories"""
@@ -173,9 +171,7 @@ class GitHubAgent:
 
             # Create the issue
             repo = self.client.get_repo(repo_name)
-            issue = repo.create_issue(
-                title=title, body=description, labels=labels or []
-            )
+            issue = repo.create_issue(title=title, body=description, labels=labels or [])
 
             # Add assignee if specified
             if assignee:
@@ -203,9 +199,7 @@ class GitHubAgent:
             retry_after = e.headers.get("Retry-After", 60)
             raise GitHubRateLimitError(retry_after=int(retry_after) // 60) from e
         except Exception as e:
-            raise ConnectionError(
-                f"Failed to create GitHub issue from work item: {e}"
-            ) from e
+            raise ConnectionError(f"Failed to create GitHub issue from work item: {e}") from e
 
     def test_connection(self) -> Dict[str, Any]:
         """Test GitHub API connection, raising exceptions on failure."""

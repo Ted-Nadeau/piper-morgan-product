@@ -50,9 +50,7 @@ async def test_intent_enrichment_integration():
 
         print(f"   Original intent action: {intent.action}")
         print(f"   Enriched intent action: {enriched_intent.action}")
-        print(
-            f"   File context: {enriched_intent.context.get('resolved_file_id', 'None')}"
-        )
+        print(f"   File context: {enriched_intent.context.get('resolved_file_id', 'None')}")
 
         if "resolved_file_id" in enriched_intent.context:
             print("   ✅ File reference resolved successfully")
@@ -68,9 +66,7 @@ async def test_intent_enrichment_integration():
 
         print(f"   Original intent action: {intent_no_file.action}")
         print(f"   Enriched intent action: {enriched_no_file.action}")
-        print(
-            f"   File context: {enriched_no_file.context.get('resolved_file_id', 'None')}"
-        )
+        print(f"   File context: {enriched_no_file.context.get('resolved_file_id', 'None')}")
 
         if "resolved_file_id" not in enriched_no_file.context:
             print("   ✅ No file context added (correct behavior)")
@@ -79,13 +75,9 @@ async def test_intent_enrichment_integration():
 
         # Test 3: Check that enrichment preserves intent structure
         print("\n3. Testing intent structure preservation...")
-        assert (
-            enriched_intent.category == intent.category
-        ), "Category should be preserved"
+        assert enriched_intent.category == intent.category, "Category should be preserved"
         assert enriched_intent.action == intent.action, "Action should be preserved"
-        assert (
-            enriched_intent.confidence == intent.confidence
-        ), "Confidence should be preserved"
+        assert enriched_intent.confidence == intent.confidence, "Confidence should be preserved"
         print("   ✅ Intent structure preserved during enrichment")
 
         # Cleanup

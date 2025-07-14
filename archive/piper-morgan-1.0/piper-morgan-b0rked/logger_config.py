@@ -16,9 +16,7 @@ def setup_logging():
     # Overall logger level (e.g., DEBUG to capture everything for file)
     # This level determines the *minimum* severity that the logger *will process*.
     # Messages below this level are ignored by the logger entirely.
-    overall_log_level_str = (
-        "DEBUG"  # Always capture DEBUG or higher for the logger itself
-    )
+    overall_log_level_str = "DEBUG"  # Always capture DEBUG or higher for the logger itself
     overall_log_level = getattr(logging, overall_log_level_str, logging.DEBUG)
 
     # Level for console output (from config)
@@ -28,9 +26,7 @@ def setup_logging():
 
     # Create logger
     logger = logging.getLogger("pm_agent_app")
-    logger.setLevel(
-        overall_log_level
-    )  # Set logger to capture lowest desired level (e.g., DEBUG)
+    logger.setLevel(overall_log_level)  # Set logger to capture lowest desired level (e.g., DEBUG)
     logger.propagate = False  # Prevent messages from being passed to the root logger
 
     # Clear existing handlers to prevent duplicate logs during reloads (e.g., in development)
@@ -43,9 +39,7 @@ def setup_logging():
     console_handler.setLevel(
         console_log_level
     )  # Set console handler to its specific level (e.g., INFO)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 

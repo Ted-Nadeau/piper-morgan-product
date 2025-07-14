@@ -13,8 +13,7 @@ from services.domain.models import Intent, Task, Workflow
 from services.domain.work_item_extractor import WorkItemExtractor
 from services.integrations.github.github_agent import GitHubAgent
 from services.orchestration.engine import OrchestrationEngine
-from services.shared_types import (IntentCategory, TaskStatus, TaskType,
-                                   WorkflowType)
+from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowType
 
 
 class TestGitHubIntegrationE2E:
@@ -110,9 +109,7 @@ class TestGitHubIntegrationE2E:
         assert work_item.metadata["extraction_method"] == "fallback"
 
     @pytest.mark.asyncio
-    async def test_github_agent_work_item_creation(
-        self, mock_github_agent, sample_work_item
-    ):
+    async def test_github_agent_work_item_creation(self, mock_github_agent, sample_work_item):
         """Test that GitHub agent can create issues from work items"""
 
         # Mock successful issue creation
@@ -184,8 +181,7 @@ class TestGitHubIntegrationE2E:
         assert workflow.type == WorkflowType.CREATE_TICKET
         assert workflow.context["repository"] == "test/repo"
         assert (
-            workflow.context["original_message"]
-            == "Create a bug ticket for login crash on mobile"
+            workflow.context["original_message"] == "Create a bug ticket for login crash on mobile"
         )
 
         # Test that we can create the required tasks
@@ -224,15 +220,11 @@ class TestGitHubIntegrationE2E:
         assert work_item.title == prompt  # Uses original prompt as title
 
     @pytest.mark.asyncio
-    async def test_error_handling_in_github_creation(
-        self, mock_github_agent, sample_work_item
-    ):
+    async def test_error_handling_in_github_creation(self, mock_github_agent, sample_work_item):
         """Test error handling when GitHub issue creation fails"""
 
         # Mock GitHub API failure
-        mock_github_agent.create_issue_from_work_item.side_effect = Exception(
-            "GitHub API error"
-        )
+        mock_github_agent.create_issue_from_work_item.side_effect = Exception("GitHub API error")
 
         # Test that exception is raised
         with pytest.raises(Exception, match="GitHub API error"):

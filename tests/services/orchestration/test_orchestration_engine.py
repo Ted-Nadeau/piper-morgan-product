@@ -8,11 +8,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from services.domain.models import (Intent, IntentCategory, Task, UploadedFile,
-                                    Workflow)
+from services.domain.models import Intent, IntentCategory, Task, UploadedFile, Workflow
 from services.orchestration.engine import OrchestrationEngine, TaskResult
-from services.shared_types import (TaskStatus, TaskType, WorkflowStatus,
-                                   WorkflowType)
+from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 
 class TestOrchestrationEngine:
@@ -115,9 +113,7 @@ class TestOrchestrationEngine:
             await engine.execute_workflow("test-missing")
 
     @pytest.mark.asyncio
-    async def test_analyze_file_success(
-        self, engine, mock_workflow, mock_file_metadata
-    ):
+    async def test_analyze_file_success(self, engine, mock_workflow, mock_file_metadata):
         """Test successful file analysis execution"""
         # Mock database pool and file repository
         mock_pool = AsyncMock()
@@ -140,16 +136,17 @@ class TestOrchestrationEngine:
         mock_file_analyzer.analyze_file.return_value = mock_analysis_result
 
         # Fix import paths - patch the actual import locations
-        with patch(
-            "services.repositories.DatabasePool.get_pool", return_value=mock_pool
-        ), patch(
-            "services.repositories.file_repository.FileRepository",
-            return_value=mock_file_repo,
-        ), patch(
-            "services.analysis.file_analyzer.FileAnalyzer",
-            return_value=mock_file_analyzer,
-        ), patch(
-            "services.analysis.analyzer_factory.AnalyzerFactory", return_value=Mock()
+        with (
+            patch("services.repositories.DatabasePool.get_pool", return_value=mock_pool),
+            patch(
+                "services.repositories.file_repository.FileRepository",
+                return_value=mock_file_repo,
+            ),
+            patch(
+                "services.analysis.file_analyzer.FileAnalyzer",
+                return_value=mock_file_analyzer,
+            ),
+            patch("services.analysis.analyzer_factory.AnalyzerFactory", return_value=Mock()),
         ):
 
             # Get the analyze_file task
@@ -192,11 +189,12 @@ class TestOrchestrationEngine:
         mock_file_repo.get_file_by_id.return_value = None  # File not found
 
         # Fix import paths
-        with patch(
-            "services.repositories.DatabasePool.get_pool", return_value=mock_pool
-        ), patch(
-            "services.repositories.file_repository.FileRepository",
-            return_value=mock_file_repo,
+        with (
+            patch("services.repositories.DatabasePool.get_pool", return_value=mock_pool),
+            patch(
+                "services.repositories.file_repository.FileRepository",
+                return_value=mock_file_repo,
+            ),
         ):
 
             task = mock_workflow.tasks[0]
@@ -207,9 +205,7 @@ class TestOrchestrationEngine:
         assert "File not found: test-file-123" in result.error
 
     @pytest.mark.asyncio
-    async def test_analyze_file_analysis_exception(
-        self, engine, mock_workflow, mock_file_metadata
-    ):
+    async def test_analyze_file_analysis_exception(self, engine, mock_workflow, mock_file_metadata):
         """Test file analysis when FileAnalyzer raises an exception"""
         # Mock database pool and file repository
         mock_pool = AsyncMock()
@@ -221,16 +217,17 @@ class TestOrchestrationEngine:
         mock_file_analyzer.analyze_file.side_effect = Exception("Analysis failed")
 
         # Fix import paths
-        with patch(
-            "services.repositories.DatabasePool.get_pool", return_value=mock_pool
-        ), patch(
-            "services.repositories.file_repository.FileRepository",
-            return_value=mock_file_repo,
-        ), patch(
-            "services.analysis.file_analyzer.FileAnalyzer",
-            return_value=mock_file_analyzer,
-        ), patch(
-            "services.analysis.analyzer_factory.AnalyzerFactory", return_value=Mock()
+        with (
+            patch("services.repositories.DatabasePool.get_pool", return_value=mock_pool),
+            patch(
+                "services.repositories.file_repository.FileRepository",
+                return_value=mock_file_repo,
+            ),
+            patch(
+                "services.analysis.file_analyzer.FileAnalyzer",
+                return_value=mock_file_analyzer,
+            ),
+            patch("services.analysis.analyzer_factory.AnalyzerFactory", return_value=Mock()),
         ):
 
             task = mock_workflow.tasks[0]
@@ -303,12 +300,13 @@ class TestOrchestrationEngine:
         }
 
         # Fix import path for RepositoryFactory
-        with patch(
-            "services.database.RepositoryFactory.get_repositories",
-            return_value=mock_repos,
-        ), patch.object(
-            engine, "_execute_task", new_callable=AsyncMock
-        ) as mock_execute_task:
+        with (
+            patch(
+                "services.database.RepositoryFactory.get_repositories",
+                return_value=mock_repos,
+            ),
+            patch.object(engine, "_execute_task", new_callable=AsyncMock) as mock_execute_task,
+        ):
 
             result = await engine.execute_workflow(mock_workflow.id)
 
@@ -343,11 +341,12 @@ class TestOrchestrationEngine:
         }
 
         # Fix import path for RepositoryFactory
-        with patch(
-            "services.database.RepositoryFactory.get_repositories",
-            return_value=mock_repos,
-        ), patch.object(
-            engine, "_execute_task", side_effect=Exception("Task execution failed")
+        with (
+            patch(
+                "services.database.RepositoryFactory.get_repositories",
+                return_value=mock_repos,
+            ),
+            patch.object(engine, "_execute_task", side_effect=Exception("Task execution failed")),
         ):
 
             with pytest.raises(Exception):

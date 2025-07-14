@@ -67,9 +67,7 @@ class OrchestrationEngine:
                         else:
                             logger.warning(f"Project {project_id} not found")
                     except Exception as e:
-                        logger.error(
-                            f"Failed to enrich workflow with repository: {str(e)}"
-                        )
+                        logger.error(f"Failed to enrich workflow with repository: {str(e)}")
                         # Continue without repository - handler will provide appropriate error
             # Store in memory for execution
             self.workflows[workflow.id] = workflow

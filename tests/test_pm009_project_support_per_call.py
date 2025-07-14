@@ -42,16 +42,11 @@ class TestWorkflowFactoryIntegration:
                 "github": {"repository": "owner/repo", "default_labels": ["bug"]}
             },
         }
-        workflow = await factory.create_from_intent(
-            intent, project_context=project_context
-        )
+        workflow = await factory.create_from_intent(intent, project_context=project_context)
 
         # THEN: Workflow should have project context
         assert workflow is not None
         assert workflow.context["project_id"] == "proj-123"
         assert workflow.context["project_name"] == "Test Project"
         assert "github" in workflow.context["project_integrations"]
-        assert (
-            workflow.context["project_integrations"]["github"]["repository"]
-            == "owner/repo"
-        )
+        assert workflow.context["project_integrations"]["github"]["repository"] == "owner/repo"

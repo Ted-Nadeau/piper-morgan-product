@@ -53,9 +53,7 @@ class SummaryParser:
         if not isinstance(key_findings, list):
             # Handle case where LLM returns a single string instead of array
             if isinstance(key_findings, str):
-                logger.info(
-                    f"Fixing inline formatting for key_findings: {key_findings[:100]}..."
-                )
+                logger.info(f"Fixing inline formatting for key_findings: {key_findings[:100]}...")
                 key_findings = self._fix_inline_formatting(key_findings)
                 logger.info(f"Fixed to {len(key_findings)} items: {key_findings}")
             else:

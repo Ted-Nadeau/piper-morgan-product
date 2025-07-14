@@ -26,9 +26,7 @@ async def main():
 
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
-        print(
-            f"❌ DATABASE_URL not set in environment. Looked for .env at: {dotenv_path}"
-        )
+        print(f"❌ DATABASE_URL not set in environment. Looked for .env at: {dotenv_path}")
         return
 
     # Use the existing db object for connection URL
@@ -50,9 +48,7 @@ async def main():
             column_exists = result.scalar_one_or_none()
 
             if column_exists:
-                print(
-                    "✅ Column 'created_at' already exists in 'tasks' table. No action needed."
-                )
+                print("✅ Column 'created_at' already exists in 'tasks' table. No action needed.")
                 return
 
             # If column does not exist, add it

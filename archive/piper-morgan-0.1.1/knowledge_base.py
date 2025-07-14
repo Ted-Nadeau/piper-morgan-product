@@ -1,13 +1,14 @@
 import os
 import warnings
-from typing import (Dict, List,  # Added Union for Optional[List[str]]
-                    Optional, Union)
+from typing import Dict, List, Optional, Union  # Added Union for Optional[List[str]]
 
 import chromadb
 from chromadb.api.types import QueryResult
 from chromadb.utils import embedding_functions
+
 # import anthropic # No longer needed if tokenizer is removed
 from config import app_config  # Import the centralized config
+
 # Import custom exception
 from exceptions import KnowledgeBaseError
 from logger_config import logger  # Import logger
@@ -36,9 +37,7 @@ class KnowledgeBase:
             logger.info(
                 f"✅ KnowledgeBase connected to collection: '{self.collection_name}' in '{self.directory}'"
             )
-            logger.info(
-                f"Current document count: {self.collection.count()}"
-            )  # Using logger now
+            logger.info(f"Current document count: {self.collection.count()}")  # Using logger now
             # self.tokenizer = anthropic.Anthropic().get_tokenizer() # <-- REMOVE THIS LINE IF IT'S STILL HERE
             # If you still need a tokenizer for token counting, consider using a different, lighter library
             # or pass one in from the LLM adapter if it's generic enough.
@@ -55,10 +54,7 @@ class KnowledgeBase:
             logger.warning("No documents provided to add to the knowledge base.")
             return
 
-        ids = [
-            f"doc_{len(self.collection.peek()['ids']) + i}"
-            for i in range(len(documents))
-        ]
+        ids = [f"doc_{len(self.collection.peek()['ids']) + i}" for i in range(len(documents))]
         contents = [doc["page_content"] for doc in documents]
         metadatas = [doc["metadata"] for doc in documents]
 
@@ -66,9 +62,7 @@ class KnowledgeBase:
             self.collection.add(documents=contents, metadatas=metadatas, ids=ids)
             logger.info(f"✅ Added {len(documents)} documents to knowledge base.")
         except Exception as e:
-            raise KnowledgeBaseError(
-                f"Failed to add documents to knowledge base: {e}"
-            ) from e
+            raise KnowledgeBaseError(f"Failed to add documents to knowledge base: {e}") from e
 
     def query_knowledge_base(self, query: str, n_results: int = 5) -> List[str]:
         """
@@ -98,15 +92,11 @@ class KnowledgeBase:
             #         break # Use break here to stop iterating if budget exceeded
 
             # For now, just return all documents up to n_results
-            logger.debug(
-                f"Retrieved {len(relevant_docs)} relevant documents for query '{query}'."
-            )
+            logger.debug(f"Retrieved {len(relevant_docs)} relevant documents for query '{query}'.")
             return relevant_docs
 
         except Exception as e:
-            logger.error(
-                f"Failed to retrieve context for query '{query}' from knowledge base: {e}"
-            )
+            logger.error(f"Failed to retrieve context for query '{query}' from knowledge base: {e}")
             raise KnowledgeBaseError(
                 f"Failed to retrieve context for query '{query}' from knowledge base: {e}"
             ) from e
@@ -131,9 +121,7 @@ class KnowledgeBase:
             self.collection = self.client.get_or_create_collection(
                 name=self.collection_name, embedding_function=self.embedding_function
             )
-            logger.info(
-                f"✅ Cleared all documents from collection: '{self.collection_name}'"
-            )
+            logger.info(f"✅ Cleared all documents from collection: '{self.collection_name}'")
             return True
         except Exception as e:
             raise KnowledgeBaseError(

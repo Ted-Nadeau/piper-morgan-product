@@ -6,13 +6,30 @@ SQLAlchemy models for persistent storage
 import enum
 from datetime import datetime
 
-from sqlalchemy import (JSON, Boolean, Column, DateTime, Enum, Float,
-                        ForeignKey, Index, Integer, String, Text)
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 import services.domain.models as domain
-from services.shared_types import (IntegrationType, IntentCategory, TaskStatus,
-                                   TaskType, WorkflowStatus, WorkflowType)
+from services.shared_types import (
+    IntegrationType,
+    IntentCategory,
+    TaskStatus,
+    TaskType,
+    WorkflowStatus,
+    WorkflowType,
+)
 
 from .connection import Base
 
@@ -218,9 +235,7 @@ class ProjectDB(Base):
             updated_at=self.updated_at,
         )
         # Map integrations relationship
-        project.integrations = [
-            integration.to_domain() for integration in self.integrations
-        ]
+        project.integrations = [integration.to_domain() for integration in self.integrations]
         return project
 
     @classmethod
