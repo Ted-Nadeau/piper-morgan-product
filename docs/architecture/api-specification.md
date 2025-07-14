@@ -713,3 +713,104 @@ The Piper Morgan web UI now uses a DDD-compliant, test-driven domain module (`bo
 
 **Technical Note:**
 API responses intended for the UI should provide clear status, message, and error fields. The UI will render these using the unified renderer for a consistent user experience.
+
+### UI Message Services
+
+#### ActionHumanizer Service
+
+Converts technical action strings to natural language with intelligent caching.
+
+- **Purpose**: Transform system action identifiers into user-friendly text
+- **Location**: `services/ui_messages/action_humanizer.py`
+- **Dependencies**: ActionHumanizationRepository, LLMClient (future)
+
+**Primary Method**:
+
+```python
+async def humanize(self, action: str, category: Optional[str] = None) -> str:
+    """
+    Convert technical action to human-readable format.
+
+    Args:
+        action: Technical action string (e.g., "investigate_crash")
+        category: Optional intent category for context
+
+    Returns:
+        Human-readable string (e.g., "investigate a crash")
+
+    Process:
+        1. Check cache for existing humanization
+        2. If found, increment usage and return
+        3. If not found, apply rule-based conversion
+        4. Cache result for future use
+    """
+```
+
+**Rule-Based Patterns**:
+
+- `verb_noun` → `verb a/an noun` (e.g., create_ticket → create a ticket)
+- `verb_compound` → `verb compound` (e.g., analyze_performance → analyze performance)
+- Handles articles (a/an) based on noun
+- Recognizes common abbreviations (github → GitHub, api → API)
+
+#### TemplateRenderer Service
+
+Generates user-facing messages using templates with humanized actions.
+
+- **Purpose**: Consistent message generation across the system
+- **Location**: `services/ui_messages/templates.py`
+- **Dependencies**: ActionHumanizer (optional)
+
+**Primary Method**:
+
+```python
+async def render_template(
+    self,
+    template: str,
+    intent_action: str,
+    intent_category: Optional[str] = None,
+    **kwargs
+) -> str:
+    """
+    Render template with humanized action and additional context.
+
+    Args:
+        template: Message template with placeholders
+        intent_action: Technical action string
+        intent_category: Optional category for context
+        **kwargs: Additional template variables
+
+    Returns:
+        Rendered message with humanized action
+    """
+```
+
+**Template Variables**:
+
+- `{action}` - Original technical action
+- `{human_action}` - Humanized action string
+- Standard kwargs passed through
+
+#### Integration with Workflows
+
+Workflow responses now include humanized acknowledgment messages:
+
+```json
+{
+  "success": true,
+  "workflow_id": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "I'll investigate the crash you reported. Let me analyze this for you.",
+  "data": {
+    "workflow_type": "GENERATE_REPORT",
+    "status": "RUNNING",
+    "tasks": [...]
+  }
+}
+```
+
+**Message Generation Flow**:
+
+1. Workflow returns technical response
+2. Main.py retrieves appropriate template
+3. TemplateRenderer formats message with humanized action
+4. Response sent to user with natural language

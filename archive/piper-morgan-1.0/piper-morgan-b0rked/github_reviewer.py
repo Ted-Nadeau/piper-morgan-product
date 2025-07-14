@@ -4,9 +4,13 @@ from typing import Dict, List, Optional
 # Import custom exceptions
 from exceptions import GitHubAPIError  # ADDED
 from github.GithubException import (  # ADDED UnknownObjectException
-    GithubException, UnknownObjectException)
+    GithubException,
+    UnknownObjectException,
+)
+
 # Import GitHubAgent so GitHubReviewer can use its instance
 from github_agent import GitHubAgent
+
 # Import the centralized logger
 from logger_config import logger  # ADDED
 
@@ -19,9 +23,7 @@ class GitHubReviewer:
         """
         self.github_agent = github_agent
         # No need for token or direct PyGithub client here, as GitHubAgent handles it
-        logger.info(
-            f"✅ GitHubReviewer initialized, using GitHubAgent."
-        )  # CHANGED FROM print()
+        logger.info(f"✅ GitHubReviewer initialized, using GitHubAgent.")  # CHANGED FROM print()
 
     # Note: get_issue_details and get_pr_details have been moved to github_agent.py
 
@@ -34,9 +36,7 @@ class GitHubReviewer:
         logger.info("Reviewing code with LLM (placeholder)...")  # CHANGED FROM print()
         return f"LLM Review of code (prompt: {review_prompt[:50]}...): Not implemented."
 
-    def post_comment_on_issue(
-        self, repo_name: str, issue_number: int, comment_body: str
-    ) -> bool:
+    def post_comment_on_issue(self, repo_name: str, issue_number: int, comment_body: str) -> bool:
         """
         Posts a comment on a GitHub issue or pull request.
         """

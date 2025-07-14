@@ -42,9 +42,7 @@ async def test_intent_enricher_high_confidence():
 
     # Mock the file resolver to return high confidence
     mock_file_resolver = Mock()
-    mock_file_resolver.resolve_file_reference = AsyncMock(
-        return_value=(test_file.id, 0.95)
-    )
+    mock_file_resolver.resolve_file_reference = AsyncMock(return_value=(test_file.id, 0.95))
     enricher.file_resolver = mock_file_resolver
 
     # Enrich intent
@@ -87,9 +85,7 @@ async def test_intent_enricher_medium_confidence():
 
     # Mock the file resolver to return medium confidence
     mock_file_resolver = Mock()
-    mock_file_resolver.resolve_file_reference = AsyncMock(
-        return_value=(test_file.id, 0.65)
-    )
+    mock_file_resolver.resolve_file_reference = AsyncMock(return_value=(test_file.id, 0.65))
     enricher.file_resolver = mock_file_resolver
 
     # Enrich intent

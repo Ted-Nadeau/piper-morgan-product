@@ -68,9 +68,7 @@ class ConversationSession:
         self.clarification_context = {}
         self.last_activity = datetime.utcnow()
 
-    def add_uploaded_file(
-        self, file_id: str, filename: str, file_type: str, upload_time: datetime
-    ):
+    def add_uploaded_file(self, file_id: str, filename: str, file_type: str, upload_time: datetime):
         """Track a file upload in session"""
         file_info = {
             "file_id": file_id,
@@ -84,9 +82,7 @@ class ConversationSession:
 
     def get_recent_files(self, limit: int = 5) -> List[Dict]:
         """Get recently uploaded files"""
-        return sorted(
-            self.uploaded_files, key=lambda x: x["upload_time"], reverse=True
-        )[:limit]
+        return sorted(self.uploaded_files, key=lambda x: x["upload_time"], reverse=True)[:limit]
 
 
 class SessionManager:
@@ -94,9 +90,7 @@ class SessionManager:
         self._sessions: Dict[str, ConversationSession] = {}
         self.ttl = timedelta(minutes=ttl_minutes)
 
-    def get_or_create_session(
-        self, session_id: Optional[str] = None
-    ) -> ConversationSession:
+    def get_or_create_session(self, session_id: Optional[str] = None) -> ConversationSession:
         """Get existing session or create new one"""
         now = datetime.utcnow()
         if session_id and session_id in self._sessions:
@@ -113,9 +107,7 @@ class SessionManager:
         """Remove sessions older than TTL"""
         now = datetime.utcnow()
         expired = [
-            sid
-            for sid, sess in self._sessions.items()
-            if now - sess.last_activity > self.ttl
+            sid for sid, sess in self._sessions.items() if now - sess.last_activity > self.ttl
         ]
         for sid in expired:
             del self._sessions[sid]

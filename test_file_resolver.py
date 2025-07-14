@@ -98,9 +98,7 @@ async def test_file_resolver():
             resolved_file = await repo.get_file_by_id(file_id) if file_id else None
 
             print(f"Intent: {analyze_report_intent.action}")
-            print(
-                f"Resolved file: {resolved_file.filename if resolved_file else 'None'}"
-            )
+            print(f"Resolved file: {resolved_file.filename if resolved_file else 'None'}")
             print(f"Confidence: {confidence:.3f}")
 
             expected_file = "Q3_Sales_Report.pdf"
@@ -125,9 +123,7 @@ async def test_file_resolver():
             context={"keywords": ["sales", "data", "analysis"]},
         )
 
-        file_id, confidence = await resolver.resolve_file_reference(
-            analyze_data_intent, session_id
-        )
+        file_id, confidence = await resolver.resolve_file_reference(analyze_data_intent, session_id)
         resolved_file = await repo.get_file_by_id(file_id) if file_id else None
 
         print(f"Intent: {analyze_data_intent.action}")
@@ -175,9 +171,7 @@ async def test_file_resolver():
             context={"keywords": ["document", "file"]},
         )
 
-        file_id, confidence = await resolver.resolve_file_reference(
-            generic_intent, session_id
-        )
+        file_id, confidence = await resolver.resolve_file_reference(generic_intent, session_id)
         resolved_file = await repo.get_file_by_id(file_id) if file_id else None
 
         print(f"Intent: {generic_intent.action}")
@@ -203,9 +197,7 @@ async def test_file_resolver():
 
         # Calculate individual scores
         recency_score = resolver._calculate_recency_score(test_file.upload_time)
-        type_score = resolver._calculate_type_score(
-            test_file.file_type, test_intent.action
-        )
+        type_score = resolver._calculate_type_score(test_file.file_type, test_intent.action)
         name_score = resolver._calculate_name_score(test_file.filename, test_intent)
         usage_score = resolver._calculate_usage_score(test_file)
         total_score = resolver._calculate_score(test_file, test_intent)

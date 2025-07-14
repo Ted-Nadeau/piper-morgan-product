@@ -1,16 +1,18 @@
 import os
 import warnings
-from typing import (Dict, List,  # Added Union for Optional[List[str]]
-                    Optional, Union)
+from typing import Dict, List, Optional, Union  # Added Union for Optional[List[str]]
 
 import anthropic
 import chromadb
 from chromadb.api.types import QueryResult
 from chromadb.utils import embedding_functions
+
 # Import the centralized config
 from config import app_config
+
 # Import custom exception
 from exceptions import KnowledgeBaseError
+
 # Import the centralized logger
 from logger_config import logger  # ADDED
 
@@ -43,29 +45,21 @@ class KnowledgeBase:
             )  # CHANGED FROM print()
             self.tokenizer = anthropic.Anthropic().get_tokenizer()
         except Exception as e:
-            logger.exception(
-                "Failed to initialize KnowledgeBase."
-            )  # CHANGED FROM print()
+            logger.exception("Failed to initialize KnowledgeBase.")  # CHANGED FROM print()
             raise KnowledgeBaseError(f"Failed to initialize KnowledgeBase: {e}") from e
 
-    def add_document(
-        self, content: str, metadata: Dict, id: Optional[str] = None
-    ) -> str:
+    def add_document(self, content: str, metadata: Dict, id: Optional[str] = None) -> str:
         """
         Adds a document to the knowledge base.
         Metadata should contain 'source' (e.g., file path or URL) and 'type' (e.g., 'document', 'issue', 'comment').
         """
         if not id:
-            id = os.path.basename(
-                metadata.get("source", f"doc_{self.collection.count()}")
-            )
+            id = os.path.basename(metadata.get("source", f"doc_{self.collection.count()}"))
         try:
             # Ensure ID is unique, append a number if it clashes
             original_id = id
             counter = 0
-            while self.collection.get(ids=[id], include=[])[
-                "ids"
-            ]:  # Check if ID already exists
+            while self.collection.get(ids=[id], include=[])["ids"]:  # Check if ID already exists
                 id = f"{original_id}_{counter}"
                 counter += 1
 
@@ -75,12 +69,8 @@ class KnowledgeBase:
             )  # CHANGED FROM print()
             return id
         except Exception as e:
-            logger.error(
-                f"Failed to add document to knowledge base: {e}"
-            )  # CHANGED FROM print()
-            raise KnowledgeBaseError(
-                f"Failed to add document to knowledge base: {e}"
-            ) from e
+            logger.error(f"Failed to add document to knowledge base: {e}")  # CHANGED FROM print()
+            raise KnowledgeBaseError(f"Failed to add document to knowledge base: {e}") from e
 
     def retrieve_context(
         self,

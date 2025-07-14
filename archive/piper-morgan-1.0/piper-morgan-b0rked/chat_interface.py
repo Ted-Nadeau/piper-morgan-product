@@ -19,9 +19,7 @@ if "knowledge_base" not in st.session_state:
 if "github_agent" not in st.session_state:  # Initialize GitHubAgent
     st.session_state.github_agent = GitHubAgent()
 if "claude_client" not in st.session_state:  # Initialize ClaudeClient
-    st.session_state.claude_client = ClaudeClient(
-        model=app_config.ANTHROPIC_DEFAULT_MODEL
-    )
+    st.session_state.claude_client = ClaudeClient(model=app_config.ANTHROPIC_DEFAULT_MODEL)
 
 if "agent" not in st.session_state:
     st.session_state.agent = PmIssueCreationAgent(  # Corrected class name and arguments
@@ -120,16 +118,10 @@ if prompt:
 
             if url:
                 st.success(f"✅ Issue created: [View on GitHub]({url})")
-                response = (
-                    f"I've created a new issue for you. [View it on GitHub]({url})"
-                )
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": response}
-                )
+                response = f"I've created a new issue for you. [View it on GitHub]({url})"
+                st.session_state.messages.append({"role": "assistant", "content": response})
             else:
-                st.error(
-                    "❌ Failed to create issue. Please check the logs for details."
-                )
+                st.error("❌ Failed to create issue. Please check the logs for details.")
                 st.session_state.messages.append(
                     {
                         "role": "assistant",

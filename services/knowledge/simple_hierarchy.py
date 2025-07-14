@@ -39,16 +39,11 @@ class SimpleKnowledgeHierarchy:
         content_lower = content.lower()
         title_lower = title.lower()
 
-        if any(
-            word in content_lower
-            for word in ["architecture", "system design", "technical"]
-        ):
+        if any(word in content_lower for word in ["architecture", "system design", "technical"]):
             return DocumentType.ARCHITECTURE
         elif any(word in title_lower for word in ["bug", "error", "issue"]):
             return DocumentType.BUG_REPORT
-        elif any(
-            word in content_lower for word in ["user story", "as a user", "as an"]
-        ):
+        elif any(word in content_lower for word in ["user story", "as a user", "as an"]):
             return DocumentType.USER_STORY
         elif any(word in title_lower for word in ["meeting", "notes"]):
             return DocumentType.MEETING_NOTES
@@ -81,9 +76,7 @@ class SimpleKnowledgeHierarchy:
 
         return important_words
 
-    def add_document(
-        self, content: str, title: str = "", project_tags: Set[str] = None
-    ) -> str:
+    def add_document(self, content: str, title: str = "", project_tags: Set[str] = None) -> str:
         """Add document to hierarchy"""
         doc_id = f"doc_{len(self.documents)}"
 

@@ -67,9 +67,7 @@ class TextProcessor(BaseProcessor):
                 chunks.append(chunk)
             return chunks
         except Exception as e:
-            logger.error(
-                f"Error extracting text from {file_path}: {e}", file_path=file_path
-            )
+            logger.error(f"Error extracting text from {file_path}: {e}", file_path=file_path)
             raise
 
 
@@ -92,9 +90,7 @@ class DocxProcessor(BaseProcessor):
                 chunks.append(chunk)
             return chunks
         except Exception as e:
-            logger.error(
-                f"Error extracting DOCX text from {file_path}: {e}", file_path=file_path
-            )
+            logger.error(f"Error extracting DOCX text from {file_path}: {e}", file_path=file_path)
             raise
 
 
@@ -123,7 +119,5 @@ class HtmlProcessor(BaseProcessor):
                 chunks.append(chunk)
             return chunks
         except Exception as e:
-            logger.error(
-                f"Error extracting HTML text from {file_path}: {e}", file_path=file_path
-            )
+            logger.error(f"Error extracting HTML text from {file_path}: {e}", file_path=file_path)
             raise

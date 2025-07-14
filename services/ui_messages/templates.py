@@ -1,0 +1,94 @@
+# Create a new module for centralized message templates
+
+from typing import Dict, Optional, Tuple
+
+from services.shared_types import IntentCategory, WorkflowType
+from services.ui_messages.action_humanizer import ActionHumanizer
+
+# Primary templates keyed by (category, action)
+INTENT_BASED_TEMPLATES = {
+    # ANALYSIS intents
+    ("analysis", "investigate_issue"): "Here's my analysis of the reported issue:",
+    ("analysis", "investigate_crash"): "Here's my analysis of the reported issue:",
+    ("analysis", "performance_analysis"): "Here's my performance analysis:",
+    ("analysis", "performance_investigation"): "Here's my performance analysis:",
+    ("analysis", "analyze_metrics"): "Here's my analysis of the metrics:",
+    ("analysis", "analyze_document"): "Here's my analysis of {filename}:",
+    ("analysis", "analyze_file"): "Here's my analysis:",
+    # SYNTHESIS intents
+    ("synthesis", "summarize_document"): "Here's my summary of {filename}:",
+    ("synthesis", "summarize_file"): "Here's my summary:",
+    ("synthesis", "generate_report"): "Here's the generated report:",
+    # EXECUTION intents
+    (
+        "execution",
+        "create_ticket",
+    ): "✅ Successfully created GitHub issue #{issue_number}:",
+    ("execution", "create_task"): "✅ Successfully created task:",
+    ("execution", "create_feature"): "✅ Successfully created feature:",
+    # QUERY intents
+    ("query", "list_projects"): "Here are your projects:",
+    ("query", "count_projects"): "Project count:",
+    # LEARNING intents
+    ("learning", "learn_pattern"): "Here's what I learned:",
+    ("learning", "extract_insights"): "Key insights discovered:",
+}
+
+# Fallback templates by workflow type
+WORKFLOW_BASED_TEMPLATES = {
+    WorkflowType.GENERATE_REPORT: "Here's my analysis:",
+    WorkflowType.CREATE_TICKET: "✅ Task completed successfully:",
+    WorkflowType.ANALYZE_FILE: "Here's my file analysis:",
+    # Add more as needed
+}
+
+# Generic fallbacks
+DEFAULT_TEMPLATES = {
+    "success": "Workflow completed successfully!",
+    "in_progress": "Working on your request...",
+    "failed": "I encountered an issue: {error}",
+}
+
+
+def get_message_template(
+    intent_category: Optional[str] = None,
+    intent_action: Optional[str] = None,
+    workflow_type: Optional[WorkflowType] = None,
+) -> str:
+    """Get appropriate message template based on context"""
+    # Try intent-based template first
+    if intent_category and intent_action:
+        key = (intent_category, intent_action)
+        if key in INTENT_BASED_TEMPLATES:
+            return INTENT_BASED_TEMPLATES[key]
+    # Fall back to workflow type
+    if workflow_type and workflow_type in WORKFLOW_BASED_TEMPLATES:
+        return WORKFLOW_BASED_TEMPLATES[workflow_type]
+    # Default fallback
+    return DEFAULT_TEMPLATES["success"]
+
+
+class TemplateRenderer:
+    """Enhanced template rendering with action humanization"""
+
+    def __init__(self, humanizer: Optional[ActionHumanizer] = None):
+        self.humanizer = humanizer
+
+    async def render_template(
+        self, template: str, intent_action: str, intent_category: Optional[str] = None, **kwargs
+    ) -> str:
+        """Render template with humanized action"""
+
+        # Humanize the action if it appears in the template
+        if "{human_action}" in template:
+            if self.humanizer:
+                human_action = await self.humanizer.humanize(intent_action, intent_category)
+            else:
+                # Fallback when humanizer not available
+                human_action = intent_action
+            kwargs["human_action"] = human_action
+
+        # Always preserve the original action
+        kwargs["action"] = intent_action
+
+        return template.format(**kwargs)

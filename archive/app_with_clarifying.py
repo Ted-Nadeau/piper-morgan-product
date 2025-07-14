@@ -27,8 +27,7 @@ import sys
 sys.path.append("../services")
 
 from github import Github
-from intelligence.conversation_aware import \
-    ConversationAwareClarifyingGenerator
+from intelligence.conversation_aware import ConversationAwareClarifyingGenerator
 
 
 # All our proven models (same as before)
@@ -130,13 +129,9 @@ class WorkflowExecutor:
 
         if workflow.type == WorkflowType.CREATE_TICKET:
             description = workflow.context.get("description", "No description")
-            repo = workflow.context.get(
-                "repository", "mediajunkie/piper-morgan-platform"
-            )
+            repo = workflow.context.get("repository", "mediajunkie/piper-morgan-platform")
 
-            title = f"[Piper Morgan] {description[:50]}" + (
-                "..." if len(description) > 50 else ""
-            )
+            title = f"[Piper Morgan] {description[:50]}" + ("..." if len(description) > 50 else "")
 
             body = f"""## Description
 {description}
@@ -510,9 +505,7 @@ conversations = {}
 
 
 @app.post("/analyze-request")
-async def analyze_request(
-    message: str = Form(...), conversation_id: str = Form(default=None)
-):
+async def analyze_request(message: str = Form(...), conversation_id: str = Form(default=None)):
     """Analyze request and either ask questions or proceed to create issue"""
     try:
         # Generate conversation ID if not provided
@@ -524,17 +517,13 @@ async def analyze_request(
 
         if not analysis.can_proceed:
             # Ask clarifying questions
-            formatted_questions = clarifying_generator.format_questions_for_user(
-                analysis
-            )
+            formatted_questions = clarifying_generator.format_questions_for_user(analysis)
             return JSONResponse(
                 {
                     "needs_clarification": True,
                     "message": formatted_questions,
                     "conversation_id": conversation_id,
-                    "detected_issues": [
-                        issue.value for issue in analysis.detected_issues
-                    ],
+                    "detected_issues": [issue.value for issue in analysis.detected_issues],
                     "confidence": analysis.confidence,
                 }
             )
@@ -566,9 +555,7 @@ async def create_issue_directly(message: str):
 
         workflow = await factory.create_from_intent(intent)
         if not workflow:
-            return JSONResponse(
-                {"success": False, "error": "Could not create workflow"}
-            )
+            return JSONResponse({"success": False, "error": "Could not create workflow"})
 
         workflows[workflow.id] = workflow
         result = await executor.execute_workflow(workflow)
@@ -599,9 +586,7 @@ async def submit_feedback(
         feedback = UserFeedback(
             workflow_id=workflow_id,
             issue_id=(
-                workflow.result.get("issue", {}).get("number", "")
-                if workflow.result
-                else ""
+                workflow.result.get("issue", {}).get("number", "") if workflow.result else ""
             ),
             original_content=workflow.context.get("description", ""),
             approval_status="approved" if approval == "approve" else "rejected",
@@ -627,12 +612,8 @@ async def get_feedback_analysis():
     """Analyze collected feedback for learning insights"""
     try:
         total_feedback = len(feedback_storage)
-        approved = sum(
-            1 for f in feedback_storage.values() if f.approval_status == "approved"
-        )
-        rejected = sum(
-            1 for f in feedback_storage.values() if f.approval_status == "rejected"
-        )
+        approved = sum(1 for f in feedback_storage.values() if f.approval_status == "approved")
+        rejected = sum(1 for f in feedback_storage.values() if f.approval_status == "rejected")
 
         common_rejections = [
             f.feedback_notes

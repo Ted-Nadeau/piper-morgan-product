@@ -98,14 +98,10 @@ async def test_scoring_component_breakdown(db_session):
     assert 0.0 <= usage_score <= 1.0, f"Usage score {usage_score} out of range"
 
     # Verify recent files get higher recency scores
-    assert (
-        recency_score > 0.5
-    ), f"Recent file should have high recency score, got {recency_score}"
+    assert recency_score > 0.5, f"Recent file should have high recency score, got {recency_score}"
 
     # Verify PDF files get higher type scores for analysis
-    assert (
-        type_score > 0.5
-    ), f"PDF should have high type score for analysis, got {type_score}"
+    assert type_score > 0.5, f"PDF should have high type score for analysis, got {type_score}"
 
 
 @pytest.mark.asyncio

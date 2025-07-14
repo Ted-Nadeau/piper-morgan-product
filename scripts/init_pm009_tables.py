@@ -11,8 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Only import what we actually use
 from services.database.connection import db
-from services.database.models import \
-    ProjectDB  # DB model for database operations
+from services.database.models import ProjectDB  # DB model for database operations
 from services.domain.models import Project  # Domain model for business logic
 
 

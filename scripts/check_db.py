@@ -85,9 +85,7 @@ async def check_database():
 
             print("\n=== Recent Work Items ===")
             if work_items:
-                print(
-                    tabulate(work_items, headers=["ID", "Title", "Status", "Created"])
-                )
+                print(tabulate(work_items, headers=["ID", "Title", "Status", "Created"]))
             else:
                 print("No work items found")
 

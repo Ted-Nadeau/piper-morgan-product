@@ -55,9 +55,7 @@ async def test_bug_classification():
 
             # Check if it's misclassified
             if result.category == IntentCategory.CONVERSATION:
-                print(
-                    f"  ❌ MISCLASSIFIED as CONVERSATION - should be EXECUTION/ANALYSIS"
-                )
+                print(f"  ❌ MISCLASSIFIED as CONVERSATION - should be EXECUTION/ANALYSIS")
             else:
                 print(f"  ✅ Correctly classified")
             print()

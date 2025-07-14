@@ -3,15 +3,12 @@ import time
 import pytest
 
 from services.domain.models import Intent
-from services.session.session_manager import (ConversationSession,
-                                              SessionManager)
+from services.session.session_manager import ConversationSession, SessionManager
 from services.shared_types import IntentCategory
 
 
 class DummyIntent:
-    def __init__(
-        self, action="test", category=IntentCategory.CONVERSATION, confidence=1.0
-    ):
+    def __init__(self, action="test", category=IntentCategory.CONVERSATION, confidence=1.0):
         self.action = action
         self.category = category
         self.confidence = confidence
@@ -50,8 +47,6 @@ def test_session_manager_get_or_create():
     session3 = manager.get_or_create_session()
     assert session3.session_id != session1.session_id
     # Test cleanup
-    session1.last_activity = session1.last_activity.replace(
-        year=2000
-    )  # Simulate old session
+    session1.last_activity = session1.last_activity.replace(year=2000)  # Simulate old session
     manager.cleanup_expired_sessions()
     assert session1.session_id not in manager._sessions

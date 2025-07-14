@@ -5,11 +5,11 @@ Handles multi-step workflow execution for PM tasks
 
 # Import from domain models
 from services.domain.models import Task, Workflow
-from services.shared_types import (TaskStatus, TaskType, WorkflowStatus,
-                                   WorkflowType)
+from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 # Import the engine instance
 from .engine import OrchestrationEngine, engine
+
 # Import local definitions
 from .tasks import TaskResult
 

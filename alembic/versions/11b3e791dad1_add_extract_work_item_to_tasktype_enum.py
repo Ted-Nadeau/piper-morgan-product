@@ -52,8 +52,6 @@ def downgrade():
     """
     )
     # 3. Alter the column to use the new type
-    op.execute(
-        "ALTER TABLE tasks ALTER COLUMN type TYPE tasktype USING type::text::tasktype;"
-    )
+    op.execute("ALTER TABLE tasks ALTER COLUMN type TYPE tasktype USING type::text::tasktype;")
     # 4. Drop the old enum
     op.execute("DROP TYPE tasktype_old;")

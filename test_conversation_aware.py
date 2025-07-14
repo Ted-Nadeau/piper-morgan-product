@@ -5,8 +5,7 @@ Test script to analyze the conversation aware clarification generator
 
 import asyncio
 
-from services.intelligence.conversation_aware import \
-    ConversationAwareClarifyingGenerator
+from services.intelligence.conversation_aware import ConversationAwareClarifyingGenerator
 
 
 async def test_conversation_aware():
@@ -37,9 +36,7 @@ async def test_conversation_aware():
         print(f"  Is ambiguous: {analysis.is_ambiguous}")
         print(f"  Confidence: {analysis.confidence}")
         print(f"  Can proceed: {analysis.can_proceed}")
-        print(
-            f"  Detected issues: {[issue.value for issue in analysis.detected_issues]}"
-        )
+        print(f"  Detected issues: {[issue.value for issue in analysis.detected_issues]}")
         print(f"  Number of questions: {len(analysis.questions)}")
 
         if analysis.questions:

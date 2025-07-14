@@ -40,9 +40,7 @@ class FeedbackCapture:
 
         # Store in Redis for immediate access
         key = f"correction:{intent_id}:{datetime.now().timestamp()}"
-        await self.redis.setex(
-            key, 86400 * 7, json.dumps(correction)  # Keep for 7 days
-        )
+        await self.redis.setex(key, 86400 * 7, json.dumps(correction))  # Keep for 7 days
 
         # Emit for learning system
         await self.events.emit("feedback.correction", correction)

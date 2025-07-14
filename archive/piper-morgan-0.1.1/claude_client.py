@@ -23,9 +23,7 @@ def get_anthropic_client():
             logger.info("Anthropic client initialized.")
         except Exception as e:
             logger.exception("Failed to initialize Anthropic client.")
-            raise LLMGenerationError(
-                f"Failed to initialize Anthropic client: {e}"
-            ) from e
+            raise LLMGenerationError(f"Failed to initialize Anthropic client: {e}") from e
     return _anthropic_client
 
 
@@ -60,9 +58,7 @@ class ClaudeClient(LLMAdapter):
             )
             return message.content[0].text
         except anthropic.APIError as e:
-            logger.error(
-                f"Anthropic API error during query: Status {e.status_code} - {e.response}"
-            )
+            logger.error(f"Anthropic API error during query: Status {e.status_code} - {e.response}")
             raise LLMGenerationError(
                 f"Anthropic API error during query: {e.status_code} - {e.response}"
             ) from e
@@ -118,9 +114,7 @@ class ClaudeClient(LLMAdapter):
 
             # Anthropic models sometimes return JSON within markdown.
             # Clean it up if necessary.
-            if raw_text.strip().startswith("```json") and raw_text.strip().endswith(
-                "```"
-            ):
+            if raw_text.strip().startswith("```json") and raw_text.strip().endswith("```"):
                 json_str = raw_text.strip()[
                     len("```json") : len(raw_text.strip()) - len("```")
                 ].strip()
@@ -150,9 +144,7 @@ class ClaudeClient(LLMAdapter):
                 f"Anthropic API error during structured query: {e.status_code} - {e.response}"
             ) from e
         except Exception as e:
-            logger.exception(
-                "An unexpected error occurred during Claude structured query."
-            )
+            logger.exception("An unexpected error occurred during Claude structured query.")
             raise LLMGenerationError(
                 f"An unexpected error occurred during Claude structured query: {e}"
             ) from e

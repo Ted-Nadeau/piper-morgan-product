@@ -1,17 +1,28 @@
 [flake8]
 max-line-length = 100
 extend-ignore =
-    E203,  # whitespace before ':'
-    E501,  # line too long (handled by black)
-    F401,  # imported but unused
-    F541,  # f-string is missing placeholders
-    F811,  # redefinition of unused
-    F821,  # undefined name
-    F841,  # local variable assigned but never used
-    E402,  # module level import not at top of file
-    E712,  # comparison to True/False
-    W291,  # trailing whitespace
-    W293,  # blank line contains whitespace
+    # whitespace before ':'
+    E203,
+    # line too long (handled by black)
+    E501,
+    # imported but unused
+    F401,
+    # f-string is missing placeholders
+    F541,
+    # redefinition of unused
+    F811,
+    # undefined name
+    F821,
+    # local variable assigned but never used
+    F841,
+    # module level import not at top of file
+    E402,
+    # comparison to True/False
+    E712,
+    # trailing whitespace
+    W291,
+    # blank line contains whitespace
+    W293,
 exclude =
     .git,
     __pycache__,
@@ -32,4 +43,5 @@ exclude =
     temp_engine_update.py,
     update_engine.py,
     test_*.py,
-    tests/test_*.py
+    tests/test_*.py,
+    fix.py,

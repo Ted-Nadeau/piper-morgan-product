@@ -7,8 +7,7 @@ from datetime import datetime
 from services.domain.models import Intent, IntentCategory, UploadedFile
 from services.repositories import DatabasePool
 from services.repositories.file_repository import FileRepository
-from services.session.session_manager import (ConversationSession,
-                                              SessionManager)
+from services.session.session_manager import ConversationSession, SessionManager
 from services.utils.serialization import serialize_dataclass
 
 
@@ -94,18 +93,14 @@ async def test_disambiguation_flow():
             # Parse user choice
             if user_response.isdigit():
                 choice = int(user_response) - 1
-                ambiguous_files = session.get_clarification_context(
-                    "ambiguous_files", []
-                )
+                ambiguous_files = session.get_clarification_context("ambiguous_files", [])
 
                 if 0 <= choice < len(ambiguous_files):
                     selected_file = ambiguous_files[choice]
                     print(f"   ✅ User selected: {selected_file['filename']}")
 
                     # Get original intent
-                    original_intent_data = session.get_clarification_context(
-                        "original_intent"
-                    )
+                    original_intent_data = session.get_clarification_context("original_intent")
                     if original_intent_data:
                         print("   ✅ Retrieved original intent data")
 
@@ -121,12 +116,8 @@ async def test_disambiguation_flow():
                         )
 
                         print(f"   ✅ Reconstructed intent: {intent.action}")
-                        print(
-                            f"   ✅ Resolved file ID: {intent.context.get('resolved_file_id')}"
-                        )
-                        print(
-                            f"   ✅ File confidence: {intent.context.get('file_confidence')}"
-                        )
+                        print(f"   ✅ Resolved file ID: {intent.context.get('resolved_file_id')}")
+                        print(f"   ✅ File confidence: {intent.context.get('file_confidence')}")
 
                         # Clear disambiguation state
                         session.clear_clarification()

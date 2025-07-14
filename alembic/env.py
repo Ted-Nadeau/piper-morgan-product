@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+
 # Import your SQLAlchemy Base
 from services.database.connection import Base
 

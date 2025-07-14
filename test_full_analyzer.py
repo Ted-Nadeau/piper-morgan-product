@@ -23,14 +23,11 @@ async def test_issue_analyzer():
     try:
         # First save the analyzer files to your project
         print("📋 Note: Make sure you've saved the GitHubIssueAnalyzer files:")
-        print(
-            "   1. Replace services/integrations/github/github_agent.py with extended version"
-        )
+        print("   1. Replace services/integrations/github/github_agent.py with extended version")
         print("   2. Create services/integrations/github/issue_analyzer.py")
         print()
 
-        from services.integrations.github.issue_analyzer import \
-            GitHubIssueAnalyzer
+        from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
 
         analyzer = GitHubIssueAnalyzer()
         print("✅ Issue analyzer created successfully")
@@ -54,9 +51,7 @@ async def test_issue_analyzer():
                     issue_info = result["issue"]
 
                     print(f"✅ Analysis Complete!")
-                    print(
-                        f"   Issue: #{issue_info['number']} - {issue_info['title'][:50]}..."
-                    )
+                    print(f"   Issue: #{issue_info['number']} - {issue_info['title'][:50]}...")
                     print(f"   Repository: {issue_info['repository']}")
                     print(f"   Confidence: {analysis.confidence:.2f}")
                     print()

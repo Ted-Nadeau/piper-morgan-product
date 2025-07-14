@@ -37,10 +37,7 @@ async def test_api_flow():
     print(f"   Input: '{vague_message}'")
     print(f"   Intent: {intent.category} / {intent.action}")
 
-    if (
-        intent.category == IntentCategory.CONVERSATION
-        and intent.action == "clarification_needed"
-    ):
+    if intent.category == IntentCategory.CONVERSATION and intent.action == "clarification_needed":
         print("   ✅ Vague intent detected")
 
         # Simulate API response

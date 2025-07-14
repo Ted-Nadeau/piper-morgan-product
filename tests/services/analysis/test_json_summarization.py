@@ -388,9 +388,7 @@ class TestEndToEndMarkdownGeneration:
             "title": "Test Document",
             "document_type": "Test",
             "key_findings": ["Finding with • bullet"],
-            "sections": [
-                {"heading": "Section • with bullet", "points": ["Point with • bullet"]}
-            ],
+            "sections": [{"heading": "Section • with bullet", "points": ["Point with • bullet"]}],
         }
 
         parser = SummaryParser()

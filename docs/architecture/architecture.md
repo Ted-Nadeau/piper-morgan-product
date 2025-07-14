@@ -36,6 +36,20 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
+│                            UI MESSAGE LAYER                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ActionHumanizer           │  TemplateRenderer        │  Message Templates   │
+│  • Cache-first lookup      │  • Template selection    │  • Intent-based     │
+│  • Rule-based conversion   │  • Variable substitution │  • Workflow-based   │
+│  • Usage tracking          │  • Humanization integration │  • Fallbacks     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                │                        │                         │
+                └────────────────────────┴─────────────────────────┘
+                                        │
+                                        ▼
+                              User-Facing Messages
+
+┌─────────────────────────────────────────────────────────────────────────────┐
 │                           DATA LAYER                                       │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  ✅ PostgreSQL              │  ✅ ChromaDB            │  ✅ Redis              │
@@ -220,6 +234,38 @@ The web UI is now implemented as a DDD-compliant, test-driven interface. All bot
 - UI layer now fully reflects DDD principles
 - All message formatting and business rules live in the domain module, not the presentation layer
 - TDD process ensures maintainability and reliability
+
+#### Message Humanization Flow
+
+1. **Intent Processing**: User input classified into category and action
+2. **Workflow Execution**: Technical operations performed
+3. **Template Selection**: Appropriate template chosen based on intent
+4. **Action Humanization**: Technical strings converted via cache/rules
+5. **Message Rendering**: Template populated with humanized content
+6. **User Response**: Natural language message delivered
+
+**Example Flow**:
+
+```
+User Input: "Users are complaining about crashes when uploading photos"
+     ↓
+Intent: ANALYSIS / investigate_crash
+     ↓
+Workflow: GENERATE_REPORT (crash analysis)
+     ↓
+Template: "I'll {human_action} you reported. Let me analyze this for you."
+     ↓
+Humanization: "investigate_crash" → "investigate the crash"
+     ↓
+Response: "I'll investigate the crash you reported. Let me analyze this for you."
+```
+
+#### Design Principles
+
+- **Cache-First**: Always check cache before generating humanizations
+- **Consistency**: Same action always produces same humanization
+- **Performance**: Sub-millisecond response for cached entries
+- **Extensibility**: Rule-based now, ML-enhanced future
 
 ## Current Architecture Strengths
 

@@ -4,8 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from services.api.errors import (GitHubAuthFailedError,
-                                 LowConfidenceIntentError, TaskFailedError)
+from services.api.errors import GitHubAuthFailedError, LowConfidenceIntentError, TaskFailedError
 from services.domain.models import Intent, Task, Workflow
 from services.shared_types import IntentCategory, TaskType, WorkflowType
 
@@ -22,23 +21,17 @@ def test_low_confidence_intent_error(mock_classify, test_client):
     Test that the middleware correctly handles a LowConfidenceIntentError.
     """
     # Arrange
-    mock_classify.side_effect = LowConfidenceIntentError(
-        suggestions="try 'list projects'"
-    )
+    mock_classify.side_effect = LowConfidenceIntentError(suggestions="try 'list projects'")
 
     # Act
-    response = test_client.post(
-        "/api/v1/intent", json={"message": "uhhh, i dunno, show me stuff?"}
-    )
+    response = test_client.post("/api/v1/intent", json={"message": "uhhh, i dunno, show me stuff?"})
 
     # Assert
     assert response.status_code == 422
     data = response.json()
     assert "LOW_CONFIDENCE_INTENT" == data.get("error", {}).get("code")
     assert "suggestions" in data.get("error", {}).get("details", {})
-    assert "try 'list projects'" in data.get("error", {}).get("details", {}).get(
-        "suggestions", ""
-    )
+    assert "try 'list projects'" in data.get("error", {}).get("details", {}).get("suggestions", "")
 
 
 @patch("main.engine.execute_workflow")

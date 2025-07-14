@@ -58,7 +58,9 @@ class DocumentAnalyzer(BaseAnalyzer):
 
                     except Exception as e:
                         logger.error(f"LLM analysis failed: {e}")
-                        summary = f"Summary generation failed. Document contains {len(text)} characters."
+                        summary = (
+                            f"Summary generation failed. Document contains {len(text)} characters."
+                        )
                         key_points = []
                 else:
                     summary = f"PDF with {page_count} pages and {len(text)} characters of text."
@@ -66,9 +68,7 @@ class DocumentAnalyzer(BaseAnalyzer):
                 metadata["summary"] = summary
                 metadata["key_points"] = key_points
             else:
-                summary = (
-                    f"PDF with {page_count} pages and {len(text)} characters of text."
-                )
+                summary = f"PDF with {page_count} pages and {len(text)} characters of text."
                 metadata["summary"] = summary
                 metadata["key_points"] = []
             # TODO: Move key_points to the top-level key_findings field in AnalysisResult to match the domain model.

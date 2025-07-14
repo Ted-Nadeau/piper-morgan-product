@@ -14,8 +14,14 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 # Import shared types for consistency
-from services.shared_types import (IntegrationType, IntentCategory, TaskStatus,
-                                   TaskType, WorkflowStatus, WorkflowType)
+from services.shared_types import (
+    IntegrationType,
+    IntentCategory,
+    TaskStatus,
+    TaskType,
+    WorkflowStatus,
+    WorkflowType,
+)
 
 
 # Core Entities
@@ -141,9 +147,7 @@ class Project:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
-    def get_integration(
-        self, integration_type: IntegrationType
-    ) -> Optional[ProjectIntegration]:
+    def get_integration(self, integration_type: IntegrationType) -> Optional[ProjectIntegration]:
         """Get first active integration of specified type"""
         for integration in self.integrations:
             if integration.type == integration_type and integration.is_active:
@@ -153,9 +157,7 @@ class Project:
     def get_github_repository(self) -> Optional[str]:
         """Get GitHub repository for this project"""
         github_integration = self.get_integration(IntegrationType.GITHUB)
-        return (
-            github_integration.config.get("repository") if github_integration else None
-        )
+        return github_integration.config.get("repository") if github_integration else None
 
     def validate_integrations(self) -> List[str]:
         """Validate all integrations, return list of errors"""
@@ -275,10 +277,7 @@ class Workflow:
 
     def is_complete(self) -> bool:
         """Check if all tasks are completed"""
-        return all(
-            task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED]
-            for task in self.tasks
-        )
+        return all(task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED] for task in self.tasks)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -304,12 +303,8 @@ class Workflow:
             context=data.get("context", {}),
             error=data.get("error"),
             intent_id=data.get("intent_id"),
-            created_at=datetime.fromisoformat(
-                data.get("created_at", datetime.now().isoformat())
-            ),
-            updated_at=datetime.fromisoformat(
-                data.get("updated_at", datetime.now().isoformat())
-            ),
+            created_at=datetime.fromisoformat(data.get("created_at", datetime.now().isoformat())),
+            updated_at=datetime.fromisoformat(data.get("updated_at", datetime.now().isoformat())),
         )
 
         # Convert tasks
@@ -499,3 +494,16 @@ class DocumentSummary:
             if section.heading == heading:
                 return section
         return None
+
+
+@dataclass
+class ActionHumanization:
+    """Cached human-readable version of technical action strings"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    action: str = ""  # e.g., "investigate_crash"
+    category: Optional[str] = None  # e.g., "ANALYSIS"
+    human_readable: str = ""  # e.g., "investigate a crash"
+    created_at: datetime = field(default_factory=datetime.now)
+    usage_count: int = 0
+    last_used: Optional[datetime] = None

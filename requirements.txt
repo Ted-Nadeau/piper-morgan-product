@@ -117,3 +117,6 @@ pillow==10.0.0
 python-magic==0.4.27
 chardet==5.0.0
 pandas>=2.3.0
+alembic>=1.16.0
+psycopg2-binary>=2.9.0
+pre-commit>=4.2.0

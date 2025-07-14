@@ -29,18 +29,14 @@ class GitHubAgent:
     def __init__(self):
         self.token = app_config.GITHUB_TOKEN
         if not self.token:
-            raise ValueError(
-                "GitHub token required. Set GITHUB_TOKEN in .env or Config."
-            )
+            raise ValueError("GitHub token required. Set GITHUB_TOKEN in .env or Config.")
 
         try:
             self.client = Github(self.token)
             self.user = self.client.get_user()
             logger.info(f"✅ Connected to GitHub as: {self.user.login}")
         except GithubException as e:
-            raise GitHubAPIError(
-                f"Failed to connect to GitHub with provided token: {e}"
-            ) from e
+            raise GitHubAPIError(f"Failed to connect to GitHub with provided token: {e}") from e
         except Exception as e:
             raise GitHubAPIError(
                 f"An unexpected error occurred during GitHub connection: {e}"
@@ -81,9 +77,7 @@ class GitHubAgent:
             raise GitHubAPIError(f"Repository '{repo_name}' not found or accessible.")
         except Exception as e:
             # Catch other potential errors during repo retrieval
-            raise GitHubAPIError(
-                f"Error accessing repository '{repo_name}': {e}"
-            ) from e
+            raise GitHubAPIError(f"Error accessing repository '{repo_name}': {e}") from e
 
     def get_issue_details(self, repo_name: str, issue_number: int) -> Optional[Dict]:
         """Get details of a specific issue"""
@@ -109,19 +103,13 @@ class GitHubAgent:
             # Re-raise the custom GitHubAPIError from get_repo
             raise e
         except GithubException as e:
-            logger.error(
-                f"Error fetching issue #{issue_number} from '{repo_name}': {e}"
-            )
+            logger.error(f"Error fetching issue #{issue_number} from '{repo_name}': {e}")
             raise GitHubAPIError(f"Error fetching issue #{issue_number}: {e}") from e
         except Exception as e:
-            logger.exception(
-                "An unexpected error occurred while fetching issue details."
-            )
+            logger.exception("An unexpected error occurred while fetching issue details.")
             raise GitHubAPIError(f"An unexpected error occurred: {e}") from e
 
-    def create_github_issue(
-        self, repo_name: str, issue_template: IssueTemplate
-    ) -> Optional[str]:
+    def create_github_issue(self, repo_name: str, issue_template: IssueTemplate) -> Optional[str]:
         """
         Creates a new GitHub issue in the specified repository.
         Handles labels, assignees, and milestones dynamically based on IssueTemplate.
@@ -141,8 +129,7 @@ class GitHubAgent:
             create_issue_args = {
                 "title": issue_template.title,
                 "body": issue_template.body,
-                "labels": issue_template.labels
-                or [],  # Ensure labels is an empty list if None
+                "labels": issue_template.labels or [],  # Ensure labels is an empty list if None
             }
 
             # Conditionally add 'assignees' if provided and not empty
@@ -169,9 +156,7 @@ class GitHubAgent:
             # If issue_template.milestone is None or an empty string, we do nothing,
             # so 'milestone' is not passed to create_issue at all, which is the desired behavior for no milestone.
 
-            github_issue = repo.create_issue(
-                **create_issue_args
-            )  # Use ** to unpack the dictionary
+            github_issue = repo.create_issue(**create_issue_args)  # Use ** to unpack the dictionary
 
             logger.info(f"✅ Successfully created issue: '{github_issue.title}'")
             return github_issue.html_url
@@ -203,13 +188,9 @@ class GitHubAgent:
             logger.exception(
                 f"An unexpected error occurred during issue creation. Exception type: {type(e)}, Message: {e}"
             )
-            raise GitHubAPIError(
-                f"An unexpected error occurred during issue creation: {e}"
-            ) from e
+            raise GitHubAPIError(f"An unexpected error occurred during issue creation: {e}") from e
 
-    def search_issues(
-        self, repo_name: str, query: str, state: str = "open"
-    ) -> List[Dict]:
+    def search_issues(self, repo_name: str, query: str, state: str = "open") -> List[Dict]:
         """Search issues in a repository"""
         try:
             repo = self.get_repo(repo_name)

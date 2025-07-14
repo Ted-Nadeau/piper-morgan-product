@@ -760,10 +760,50 @@ workflow = await workflow_factory.create_from_intent(intent, session_id, project
 # The resulting workflow.context will include 'repository' if available from project
 ```
 
+### Action Humanization Model
+
+The `ActionHumanization` model caches human-readable versions of technical action strings to improve user experience and performance.
+
+```python
+@dataclass
+class ActionHumanization:
+    """Cached human-readable version of technical action strings"""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    action: str = ""  # e.g., "investigate_crash"
+    category: Optional[str] = None  # e.g., "ANALYSIS"
+    human_readable: str = ""  # e.g., "investigate a crash"
+    created_at: datetime = field(default_factory=datetime.now)
+    usage_count: int = 0
+    last_used: Optional[datetime] = None
+```
+
+**Purpose**:
+
+- Convert technical action strings to natural language for improved UX
+- Cache humanizations to avoid repeated processing and database lookups
+- Track usage patterns for optimization and analytics
+- Support both rule-based and future ML-based humanization
+
+**Persistence**:
+
+- Stored in `action_humanizations` table
+- Indexed on `action` field for fast lookups
+- Usage tracking via `usage_count` and `last_used` fields
+
+**Usage Example**:
+
+```python
+# Cached lookup
+humanization = await repo.get_by_action("investigate_crash")
+if humanization:
+    return humanization.human_readable  # "investigate a crash"
+```
+
 ## Revision Log
 
 - **June 28, 2025**: Added workflow context patterns, TaskResult model, ProjectIntegration config validation, integration config examples, and workflow creation with context example for GitHub integration
+- **July 13, 2025**: Added Action Humanization Model for user-facing message generation
 
 ---
 
-_Last Updated: June 28, 2025_
+_Last Updated: July 13, 2025_

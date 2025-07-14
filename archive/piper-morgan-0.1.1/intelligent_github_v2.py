@@ -2,11 +2,10 @@ import json
 import os
 from typing import Dict, List, Optional
 
-from claude_client import \
-    ClaudeClient  # Keep for type hinting or default instantiation if needed
+from claude_client import ClaudeClient  # Keep for type hinting or default instantiation if needed
+
 # Import custom exceptions
-from exceptions import (GitHubAPIError, KnowledgeBaseError, LLMGenerationError,
-                        LLMParseError)
+from exceptions import GitHubAPIError, KnowledgeBaseError, LLMGenerationError, LLMParseError
 from github_agent import GitHubAgent, IssueTemplate
 from knowledge_base import KnowledgeBase
 from llm_adapter import LLMAdapter
@@ -52,14 +51,11 @@ class PmIssueCreationAgent:  # Renamed class for clarity
                     search_query = request  # Default to just the request
 
                 logger.info(f"Searching knowledge base with query: '{search_query}'")
-                retrieved_context = self.knowledge_base.query_knowledge_base(
-                    search_query
-                )
+                retrieved_context = self.knowledge_base.query_knowledge_base(search_query)
 
                 if retrieved_context:
                     context_parts.append(
-                        "Knowledge Base Context (if available):\n"
-                        + "\n".join(retrieved_context)
+                        "Knowledge Base Context (if available):\n" + "\n".join(retrieved_context)
                     )
                 else:
                     context_parts.append(
@@ -79,9 +75,7 @@ class PmIssueCreationAgent:  # Renamed class for clarity
 
         except KnowledgeBaseError as e:
             logger.error(f"Error retrieving context from knowledge base: {e}")
-            full_context = (
-                f"Knowledge Base Context (if available):\nError retrieving context: {e}"
-            )
+            full_context = f"Knowledge Base Context (if available):\nError retrieving context: {e}"
 
         # Define the JSON schema for the desired output from the LLM
         # Removed 'intent', 'client_name', 'project_name' from the LLM output schema
@@ -149,9 +143,7 @@ class PmIssueCreationAgent:  # Renamed class for clarity
 
             # Filter out keys not expected by IssueTemplate (e.g., 'intent' if it somehow reappears)
             issue_data_for_template = {
-                k: v
-                for k, v in parsed_issue_data.items()
-                if k in IssueTemplate.__annotations__
+                k: v for k, v in parsed_issue_data.items() if k in IssueTemplate.__annotations__
             }
 
             issue_template = IssueTemplate(**issue_data_for_template)
@@ -178,9 +170,7 @@ class PmIssueCreationAgent:  # Renamed class for clarity
             logger.error(f"GitHub API error during issue creation: {e}")
             raise  # Re-raise
         except Exception as e:
-            logger.exception(
-                "An unexpected error occurred during issue creation from request."
-            )
+            logger.exception("An unexpected error occurred during issue creation from request.")
             raise  # Re-raise
 
 

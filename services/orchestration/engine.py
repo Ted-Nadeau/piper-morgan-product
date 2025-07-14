@@ -16,13 +16,13 @@ import structlog
 from services.analysis.file_type_detector import FileTypeDetector
 from services.api.errors import TaskFailedError, WorkflowTimeoutError
 from services.database import RepositoryFactory
+
 # Domain-first imports - use domain models consistently
 from services.domain.models import Intent, IntentCategory, Task, Workflow
 from services.integrations.github.github_agent import GitHubAgent
 from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
 from services.llm.clients import llm_client
-from services.shared_types import (TaskStatus, TaskType, WorkflowStatus,
-                                   WorkflowType)
+from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 logger = structlog.get_logger()
 
@@ -99,18 +99,14 @@ class OrchestrationEngine:
             else:
                 # No project context - use default repository
                 default_repo = os.getenv("GITHUB_DEFAULT_REPO")
-                logger.info(
-                    f"🔍 No project context, checking GITHUB_DEFAULT_REPO: {default_repo}"
-                )
+                logger.info(f"🔍 No project context, checking GITHUB_DEFAULT_REPO: {default_repo}")
                 if default_repo:
                     workflow.context["repository"] = default_repo
                     logger.info(
                         f"✅ Using default repository for CREATE_TICKET workflow: {default_repo}"
                     )
                 else:
-                    logger.warning(
-                        "❌ No project context and no GITHUB_DEFAULT_REPO configured"
-                    )
+                    logger.warning("❌ No project context and no GITHUB_DEFAULT_REPO configured")
         if workflow:
             # Store in memory for execution
             self.workflows[workflow.id] = workflow
@@ -134,9 +130,7 @@ class OrchestrationEngine:
             logger.info("Workflow persisted to database", workflow_id=workflow.id)
         except Exception as e:
             await repos["session"].rollback()
-            logger.error(
-                "Failed to persist workflow", workflow_id=workflow.id, error=str(e)
-            )
+            logger.error("Failed to persist workflow", workflow_id=workflow.id, error=str(e))
         finally:
             await repos["session"].close()
 
@@ -175,9 +169,7 @@ class OrchestrationEngine:
                         if workflow.status == WorkflowStatus.FAILED:
                             break
 
-                await asyncio.wait_for(
-                    execute_all_tasks(), timeout=300
-                )  # 5-minute timeout
+                await asyncio.wait_for(execute_all_tasks(), timeout=300)  # 5-minute timeout
             except TimeoutError:
                 logger.error("Workflow timed out", workflow_id=workflow_id)
                 raise WorkflowTimeoutError(details={"workflow_id": workflow_id})
@@ -221,9 +213,7 @@ class OrchestrationEngine:
             workflow.status = WorkflowStatus.FAILED
             workflow.error = str(e)
 
-            await repos["workflows"].update_status(
-                workflow_id, WorkflowStatus.FAILED, error=str(e)
-            )
+            await repos["workflows"].update_status(workflow_id, WorkflowStatus.FAILED, error=str(e))
             await repos["session"].commit()
 
             logger.error(
@@ -367,9 +357,7 @@ List concrete requirements, acceptance criteria, and technical specifications.""
 
         return TaskResult(success=True, output_data={"requirements": response})
 
-    async def _identify_dependencies(
-        self, workflow: Workflow, task: Task
-    ) -> TaskResult:
+    async def _identify_dependencies(self, workflow: Workflow, task: Task) -> TaskResult:
         """Identify dependencies and blockers"""
         # Placeholder - would analyze existing features, teams, etc
         return TaskResult(success=True, output_data={"dependencies": []})
@@ -427,9 +415,7 @@ List concrete requirements, acceptance criteria, and technical specifications.""
 
             # Perform issue analysis using PM-008
             logger.info(f"Analyzing GitHub issue: {github_url}")
-            analysis_result = await self.github_analyzer.analyze_issue_by_url(
-                github_url
-            )
+            analysis_result = await self.github_analyzer.analyze_issue_by_url(github_url)
 
             if not analysis_result["success"]:
                 return TaskResult(
@@ -442,9 +428,7 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             issue_info = analysis_result["issue"]
 
             # Format results for user
-            formatted_response = self._format_issue_analysis_response(
-                analysis, issue_info
-            )
+            formatted_response = self._format_issue_analysis_response(analysis, issue_info)
 
             return TaskResult(
                 success=True,
@@ -528,9 +512,9 @@ List concrete requirements, acceptance criteria, and technical specifications.""
                 or workflow.context.get("probable_file_id")
             )
             if not file_id:
-                return TaskResult(
-                    success=False, error="No file ID found in workflow context"
-                )
+                return TaskResult(success=False, error="No file ID found in workflow context")
+            # Convert file_id to string (database expects string type)
+            file_id = str(file_id)
 
             # Get file repository using the working pattern
             from services.repositories import DatabasePool
@@ -602,9 +586,7 @@ List concrete requirements, acceptance criteria, and technical specifications.""
     async def _create_github_issue(self, workflow: Workflow, task: Task) -> TaskResult:
         """Create a GitHub issue from workflow context."""
         try:
-            logger.info(
-                f"🔍 _create_github_issue called with workflow ID: {workflow.id}"
-            )
+            logger.info(f"🔍 _create_github_issue called with workflow ID: {workflow.id}")
             logger.info(f"🔍 Workflow context: {workflow.context}")
 
             # Get repository from context
@@ -688,9 +670,7 @@ List concrete requirements, acceptance criteria, and technical specifications.""
                     logger.warning(f"Failed to get project context: {str(e)}")
 
             # Extract work item
-            work_item = await extractor.extract_from_prompt(
-                original_message, project_context
-            )
+            work_item = await extractor.extract_from_prompt(original_message, project_context)
 
             return TaskResult(
                 success=True,
@@ -708,17 +688,13 @@ List concrete requirements, acceptance criteria, and technical specifications.""
         """Handle general analysis/summarization tasks without files"""
         try:
             if not self.llm_client:
-                return TaskResult(
-                    success=False, error="LLM client not available for summarization"
-                )
+                return TaskResult(success=False, error="LLM client not available for summarization")
 
             # Get the original message/query from workflow context
             original_message = workflow.context.get("original_message", "")
 
             if not original_message:
-                return TaskResult(
-                    success=False, error="No message content found for analysis"
-                )
+                return TaskResult(success=False, error="No message content found for analysis")
 
             # Use the SUMMARIZE task type for general analysis
             prompt = f"""Please analyze the following user request and provide a helpful response:
@@ -752,9 +728,7 @@ Focus on:
 
     async def _placeholder_handler(self, workflow: Workflow, task: Task) -> TaskResult:
         """Placeholder for unimplemented handlers"""
-        logger.info(
-            f"Placeholder handler for {task.type.value if task.type else 'unknown'}"
-        )
+        logger.info(f"Placeholder handler for {task.type.value if task.type else 'unknown'}")
         return TaskResult(success=True, output_data={"placeholder": True})
 
 

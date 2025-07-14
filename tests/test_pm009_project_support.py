@@ -10,11 +10,10 @@ from uuid import uuid4
 import pytest
 
 from services.database.repositories import ProjectRepository
-from services.domain.models import (Intent, IntentCategory, Project,
-                                    ProjectIntegration)
+from services.domain.models import Intent, IntentCategory, Project, ProjectIntegration
+
 # Domain imports (these will need to be implemented)
-from services.project_context import (AmbiguousProjectError, ProjectContext,
-                                      ProjectNotFoundError)
+from services.project_context import AmbiguousProjectError, ProjectContext, ProjectNotFoundError
 from services.queries.conversation_queries import ConversationQueryService
 from services.queries.project_queries import ProjectQueryService
 from services.queries.query_router import QueryRouter
@@ -97,9 +96,7 @@ class TestProjectDomainModel:
 
         # Invalid GitHub integration (missing repository)
         project.integrations.append(
-            ProjectIntegration(
-                type=IntegrationType.GITHUB, name="Invalid GitHub", config={}
-            )
+            ProjectIntegration(type=IntegrationType.GITHUB, name="Invalid GitHub", config={})
         )
 
         # WHEN: Validating integrations
@@ -258,9 +255,7 @@ class TestProjectContext:
 
         # AND: Only one project exists (the default)
         mock_repo.count_active_projects.return_value = 1
-        default_project = Project(
-            id="default-123", name="Default Project", is_default=True
-        )
+        default_project = Project(id="default-123", name="Default Project", is_default=True)
         mock_repo.get_default_project.return_value = default_project
 
         # WHEN: Resolving project
@@ -431,9 +426,7 @@ class TestListProjectsQuery:
         return repo
 
     @pytest.mark.asyncio
-    async def test_list_projects_query_returns_all_projects(
-        self, mock_project_repository
-    ):
+    async def test_list_projects_query_returns_all_projects(self, mock_project_repository):
         """LIST_PROJECTS query should return structured project list"""
         # GIVEN: Multiple projects in the repository
         projects = [
@@ -483,9 +476,7 @@ class TestListProjectsQuery:
             assert project.is_default == projects[i].is_default
 
     @pytest.mark.asyncio
-    async def test_list_projects_query_handles_empty_repository(
-        self, mock_project_repository
-    ):
+    async def test_list_projects_query_handles_empty_repository(self, mock_project_repository):
         """LIST_PROJECTS query should handle empty project list gracefully"""
         # GIVEN: Empty repository
         mock_project_repository.list_active_projects.return_value = []
@@ -505,9 +496,7 @@ class TestListProjectsQuery:
         assert result == []
 
     @pytest.mark.asyncio
-    async def test_list_projects_query_handles_repository_error(
-        self, mock_project_repository
-    ):
+    async def test_list_projects_query_handles_repository_error(self, mock_project_repository):
         """LIST_PROJECTS query should handle repository errors gracefully"""
         # GIVEN: Repository that raises an exception
         mock_project_repository.list_active_projects.side_effect = Exception(
@@ -578,9 +567,7 @@ class TestQueryRouter:
         router = QueryRouter(project_query_service, conversation_query_service)
 
         # AND: QUERY intent for list_projects
-        intent = Intent(
-            category=IntentCategory.QUERY, action="list_projects", context={}
-        )
+        intent = Intent(category=IntentCategory.QUERY, action="list_projects", context={})
 
         # WHEN: Routing the query
         result = await router.route_query(intent)
@@ -597,9 +584,7 @@ class TestQueryRouter:
         router = QueryRouter(project_query_service, conversation_query_service)
 
         # GIVEN: EXECUTION intent (not QUERY)
-        intent = Intent(
-            category=IntentCategory.EXECUTION, action="list_projects", context={}
-        )
+        intent = Intent(category=IntentCategory.EXECUTION, action="list_projects", context={})
 
         # WHEN/THEN: Should raise ValueError
         with pytest.raises(ValueError) as exc_info:
@@ -614,9 +599,7 @@ class TestQueryRouter:
         router = QueryRouter(project_query_service, conversation_query_service)
 
         # GIVEN: QUERY intent with unknown action
-        intent = Intent(
-            category=IntentCategory.QUERY, action="unknown_action", context={}
-        )
+        intent = Intent(category=IntentCategory.QUERY, action="unknown_action", context={})
 
         # WHEN/THEN: Should raise ValueError
         with pytest.raises(ValueError) as exc_info:

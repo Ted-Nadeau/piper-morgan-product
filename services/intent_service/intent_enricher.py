@@ -26,9 +26,7 @@ class IntentEnricher:
         original_message = intent.context.get("original_message", "")
 
         # First try to get confidence score from improved PreClassifier
-        file_ref_confidence = PreClassifier.get_file_reference_confidence(
-            original_message
-        )
+        file_ref_confidence = PreClassifier.get_file_reference_confidence(original_message)
 
         if file_ref_confidence == 0.0:
             # --- NEW LOGIC: Try to extract direct filename references ---
@@ -40,16 +38,10 @@ class IntentEnricher:
             if filename_match:
                 filename = filename_match.group(1)
                 # First try current session
-                files = await self.file_repository.search_files_by_name(
-                    session_id, filename
-                )
+                files = await self.file_repository.search_files_by_name(session_id, filename)
                 if not files:
                     # If not found in current session, try all sessions
-                    files = (
-                        await self.file_repository.search_files_by_name_all_sessions(
-                            filename
-                        )
-                    )
+                    files = await self.file_repository.search_files_by_name_all_sessions(filename)
                     if files:
                         logger.info(
                             f"Found file from previous session: {filename} -> {files[0].id}"
@@ -59,9 +51,7 @@ class IntentEnricher:
                     # Use the most recent match
                     intent.context["file_id"] = files[0].id
                     intent.context["file_confidence"] = 0.95
-                    logger.info(
-                        f"Resolved file by filename: {filename} -> {files[0].id}"
-                    )
+                    logger.info(f"Resolved file by filename: {filename} -> {files[0].id}")
                 else:
                     logger.info(f"No file found matching filename: {filename}")
             return intent
@@ -71,14 +61,12 @@ class IntentEnricher:
 
         try:
             # Resolve file reference
-            file_id, resolution_confidence = (
-                await self.file_resolver.resolve_file_reference(intent, session_id)
+            file_id, resolution_confidence = await self.file_resolver.resolve_file_reference(
+                intent, session_id
             )
 
             # Combine pattern confidence with resolution confidence
-            combined_confidence = (file_ref_confidence * 0.4) + (
-                resolution_confidence * 0.6
-            )
+            combined_confidence = (file_ref_confidence * 0.4) + (resolution_confidence * 0.6)
 
             # Handle based on combined confidence
             if combined_confidence > 0.8:

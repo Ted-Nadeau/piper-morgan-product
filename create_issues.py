@@ -192,11 +192,7 @@ class BacklogParser:
         try:
             # Extract story from **Story**: line
             story_match = re.search(r"\*\*Story\*\*:\s*(.+?)(?:\n|$)", content)
-            story = (
-                story_match.group(1).strip()
-                if story_match
-                else f"As a user, I want {title}"
-            )
+            story = story_match.group(1).strip() if story_match else f"As a user, I want {title}"
 
             # Extract description - try multiple patterns
             description = ""
@@ -215,9 +211,7 @@ class BacklogParser:
 
             # Extract acceptance criteria from **Acceptance Criteria**: section
             criteria = []
-            criteria_match = re.search(
-                r"\*\*Acceptance Criteria\*\*:\s*\n((?:- .+\n?)*)", content
-            )
+            criteria_match = re.search(r"\*\*Acceptance Criteria\*\*:\s*\n((?:- .+\n?)*)", content)
             if criteria_match:
                 criteria_text = criteria_match.group(1)
                 criteria = [
@@ -251,9 +245,7 @@ class BacklogParser:
             if deps_match:
                 deps_text = deps_match.group(1)
                 if "None" not in deps_text:
-                    dependencies = [
-                        dep.strip() for dep in deps_text.split(",") if dep.strip()
-                    ]
+                    dependencies = [dep.strip() for dep in deps_text.split(",") if dep.strip()]
 
             # Generate labels based on priority and content
             labels = self._generate_labels(priority, title, content, status, estimate)
@@ -341,9 +333,7 @@ class GitHubIssueCreator:
         self.repo = self.github.get_repo(repo_name)
         self.created_issues = []
 
-    def create_issues(
-        self, items: List[BacklogItem], dry_run: bool = True
-    ) -> List[Dict]:
+    def create_issues(self, items: List[BacklogItem], dry_run: bool = True) -> List[Dict]:
         """Create GitHub issues from backlog items"""
         print_status(f"Creating {len(items)} GitHub issues...")
         if dry_run:
@@ -374,9 +364,7 @@ class GitHubIssueCreator:
         print_status(f"  Priority: {item.priority} | Estimate: {item.estimate} points")
         print_status(f"  Labels: {', '.join(item.labels)}")
         if item.acceptance_criteria:
-            print_status(
-                f"  Acceptance Criteria: {len(item.acceptance_criteria)} items"
-            )
+            print_status(f"  Acceptance Criteria: {len(item.acceptance_criteria)} items")
         return {
             "id": item.id,
             "title": item.title,
@@ -461,9 +449,7 @@ class GitHubIssueCreator:
 
         # Footer
         body_parts.append("---")
-        body_parts.append(
-            f"*Generated from backlog on {datetime.now().strftime('%Y-%m-%d')}*"
-        )
+        body_parts.append(f"*Generated from backlog on {datetime.now().strftime('%Y-%m-%d')}*")
         body_parts.append(f"*Issue ID: {item.id}*")
 
         return "\n".join(body_parts)
@@ -484,18 +470,12 @@ def load_backlog_content(file_path: str) -> str:
 
 def main():
     """Main execution function"""
-    parser = argparse.ArgumentParser(
-        description="Generate GitHub issues from Piper Morgan backlog"
-    )
+    parser = argparse.ArgumentParser(description="Generate GitHub issues from Piper Morgan backlog")
     parser.add_argument(
         "--backlog", "-b", default="backlog.md", help="Path to backlog markdown file"
     )
-    parser.add_argument(
-        "--repo", "-r", required=True, help="GitHub repository (owner/repo)"
-    )
-    parser.add_argument(
-        "--token", "-t", help="GitHub token (or set GITHUB_TOKEN env var)"
-    )
+    parser.add_argument("--repo", "-r", required=True, help="GitHub repository (owner/repo)")
+    parser.add_argument("--token", "-t", help="GitHub token (or set GITHUB_TOKEN env var)")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -514,9 +494,7 @@ def main():
     # Get GitHub token
     token = args.token or os.getenv("GITHUB_TOKEN")
     if not token:
-        print_error(
-            "GitHub token required. Use --token or set GITHUB_TOKEN environment variable"
-        )
+        print_error("GitHub token required. Use --token or set GITHUB_TOKEN environment variable")
         sys.exit(1)
 
     print_status("Piper Morgan GitHub Issues Generator")
@@ -532,9 +510,7 @@ def main():
     # Filter by priority if specified
     if args.filter_priority:
         items = [item for item in items if item.priority == args.filter_priority]
-        print_status(
-            f"Filtered to {len(items)} items with priority {args.filter_priority}"
-        )
+        print_status(f"Filtered to {len(items)} items with priority {args.filter_priority}")
 
     if not items:
         print_warning("No backlog items found to process")
@@ -558,9 +534,7 @@ def main():
         print(f"  Failed: {len([r for r in results if not r.get('success')])}")
 
         if args.dry_run:
-            print_warning(
-                "\nThis was a dry run. Remove --dry-run to actually create issues."
-            )
+            print_warning("\nThis was a dry run. Remove --dry-run to actually create issues.")
 
     except GithubException as e:
         print_error(f"GitHub API error: {e}")

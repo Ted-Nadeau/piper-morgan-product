@@ -52,9 +52,7 @@ async def test_github_issue_creation():
                 if task.get("result") and task["result"].get("output_data"):
                     issue_url = task["result"]["output_data"].get("issue_url", "N/A")
                     print(f"   Issue URL: {issue_url}")
-                    print(
-                        f"   Issue #: {task['result']['output_data'].get('issue_number', 'N/A')}"
-                    )
+                    print(f"   Issue #: {task['result']['output_data'].get('issue_number', 'N/A')}")
         else:
             print(f"❌ FAILED: Workflow status: {result['status']}")
             if result.get("error"):

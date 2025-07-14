@@ -23,9 +23,7 @@ class NoFilesFoundError(FileResolutionError):
     def __init__(self, session_id: str, reference: str):
         self.session_id = session_id
         self.reference = reference
-        super().__init__(
-            f"No files found in session {session_id} matching '{reference}'"
-        )
+        super().__init__(f"No files found in session {session_id} matching '{reference}'")
 
 
 class FileNotFoundError(FileResolutionError):

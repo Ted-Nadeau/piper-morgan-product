@@ -8,8 +8,7 @@ from typing import Optional
 
 import structlog
 from dotenv import load_dotenv
-from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
 # Load environment variables from .env file

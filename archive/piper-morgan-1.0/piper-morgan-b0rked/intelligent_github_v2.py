@@ -2,14 +2,14 @@ import json
 import os
 from typing import Dict, List, Optional
 
-from claude_client import \
-    ClaudeClient  # Keep for type hinting or default instantiation if needed
+from claude_client import ClaudeClient  # Keep for type hinting or default instantiation if needed
+
 # Import custom exceptions
-from exceptions import (GitHubAPIError, KnowledgeBaseError, LLMGenerationError,
-                        LLMParseError)
+from exceptions import GitHubAPIError, KnowledgeBaseError, LLMGenerationError, LLMParseError
 from github_agent import GitHubAgent, IssueTemplate
 from knowledge_base import KnowledgeBase
 from llm_adapter import LLMAdapter
+
 # Import the centralized logger
 from logger_config import logger  # ADDED
 
@@ -34,9 +34,7 @@ class PmIssueCreationAgent:  # Renamed class for clarity
     ) -> Optional[str]:
         """Convert natural language request into GitHub issue with context"""
 
-        logger.info(
-            f"\n--- Processing request for repo '{repo_name}' ---"
-        )  # CHANGED FROM print()
+        logger.info(f"\n--- Processing request for repo '{repo_name}' ---")  # CHANGED FROM print()
         logger.info(f"User Request: '{request}'")  # CHANGED FROM print()
 
         context_str = ""
@@ -52,9 +50,7 @@ class PmIssueCreationAgent:  # Renamed class for clarity
                         f"Searching knowledge base for project-specific context: {search_filter}"
                     )  # ADDED
                     context_parts.extend(
-                        self.knowledge_base.retrieve_context(
-                            request, filter_metadata=search_filter
-                        )
+                        self.knowledge_base.retrieve_context(request, filter_metadata=search_filter)
                     )
                 elif client_name:
                     # For other clients, filter by 'client_name'
@@ -63,15 +59,11 @@ class PmIssueCreationAgent:  # Renamed class for clarity
                         f"Searching knowledge base for client-specific context: {search_filter}"
                     )  # ADDED
                     context_parts.extend(
-                        self.knowledge_base.retrieve_context(
-                            request, filter_metadata=search_filter
-                        )
+                        self.knowledge_base.retrieve_context(request, filter_metadata=search_filter)
                     )
                 else:
                     # General search if no specific project/client
-                    logger.debug(
-                        "Searching knowledge base for general context."
-                    )  # ADDED
+                    logger.debug("Searching knowledge base for general context.")  # ADDED
                     context_parts.extend(self.knowledge_base.retrieve_context(request))
 
             if context_parts:
@@ -148,26 +140,18 @@ class PmIssueCreationAgent:  # Renamed class for clarity
 
             # Confirm with the user before creating (in a real app, this would be an interactive step)
             # For this PoC, we'll auto-confirm
-            logger.info(
-                f"Attempting to create issue in repo '{repo_name}'"
-            )  # CHANGED FROM print()
+            logger.info(f"Attempting to create issue in repo '{repo_name}'")  # CHANGED FROM print()
             issue_url = self.github.create_issue(repo_name, issue_template)
             return issue_url
 
         except LLMParseError as e:
-            logger.error(
-                f"LLM did not return a valid issue template: {e}"
-            )  # CHANGED FROM print()
+            logger.error(f"LLM did not return a valid issue template: {e}")  # CHANGED FROM print()
             raise
         except LLMGenerationError as e:
-            logger.error(
-                f"Error generating issue template with LLM: {e}"
-            )  # CHANGED FROM print()
+            logger.error(f"Error generating issue template with LLM: {e}")  # CHANGED FROM print()
             raise
         except GitHubAPIError as e:
-            logger.error(
-                f"GitHub API Error during issue creation: {e}"
-            )  # CHANGED FROM print()
+            logger.error(f"GitHub API Error during issue creation: {e}")  # CHANGED FROM print()
             raise
         except KnowledgeBaseError as e:
             logger.error(

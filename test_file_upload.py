@@ -8,8 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 from services.domain.models import UploadedFile
-from services.file_context.storage import (generate_session_id,
-                                           save_file_to_storage)
+from services.file_context.storage import generate_session_id, save_file_to_storage
 from services.repositories import DatabasePool
 from services.repositories.file_repository import FileRepository
 

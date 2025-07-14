@@ -31,9 +31,7 @@ class ContentSampler:
             ContentSample with sampled text and metadata
         """
         if len(content) <= self.max_sample_size:
-            return ContentSample(
-                text=content, is_truncated=False, original_length=len(content)
-            )
+            return ContentSample(text=content, is_truncated=False, original_length=len(content))
 
         # Sample from beginning and end
         chunk_size = self.max_sample_size // 2 - 50  # Leave room for ellipsis

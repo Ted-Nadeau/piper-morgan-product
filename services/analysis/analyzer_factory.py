@@ -23,6 +23,4 @@ class AnalyzerFactory:
             return self.analyzer_registry[analysis_type](llm_client=self.llm_client)
         if analysis_type in self.analyzer_registry:
             return self.analyzer_registry[analysis_type]()
-        raise UnsupportedAnalysisTypeError(
-            f"Unsupported analysis type: {analysis_type}"
-        )
+        raise UnsupportedAnalysisTypeError(f"Unsupported analysis type: {analysis_type}")

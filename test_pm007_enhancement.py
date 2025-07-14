@@ -37,14 +37,10 @@ async def test_enhanced_knowledge_hierarchy():
                     f"   ✅ Relationship analysis present: v{metadata['relationship_analysis_version']}"
                 )
                 print(f"   Document type: {metadata.get('document_type', 'unknown')}")
-                print(
-                    f"   Hierarchy level: {metadata.get('hierarchy_level', 'unknown')}"
-                )
+                print(f"   Hierarchy level: {metadata.get('hierarchy_level', 'unknown')}")
                 print(f"   Main concepts: {metadata.get('main_concepts', [])}")
             else:
-                print(
-                    "   ⚠️  No relationship analysis found - documents may need re-ingestion"
-                )
+                print("   ⚠️  No relationship analysis found - documents may need re-ingestion")
 
     except Exception as e:
         print(f"   ❌ Basic search failed: {e}")

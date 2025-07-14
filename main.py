@@ -13,28 +13,32 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
-                     UploadFile)
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from services.api.errors import APIError
 from services.api.middleware import ErrorHandlingMiddleware
 from services.conversation.conversation_handler import ConversationHandler
+from services.database.connection import db
 from services.database.repositories import RepositoryFactory
 from services.domain.models import UploadedFile
-from services.file_context.storage import (generate_session_id,
-                                           save_file_to_storage)
+from services.file_context.storage import generate_session_id, save_file_to_storage
 from services.intent_service.intent_enricher import IntentEnricher
 from services.knowledge_graph import get_document_service
+from services.llm.clients import llm_client
 from services.orchestration import WorkflowStatus, WorkflowType, engine
+from services.persistence.repositories.action_humanization_repository import (
+    ActionHumanizationRepository,
+)
 from services.queries import ProjectQueryService, QueryRouter
 from services.queries.conversation_queries import ConversationQueryService
 from services.queries.file_queries import FileQueryService
 from services.repositories import DatabasePool
 from services.repositories.file_repository import FileRepository
-from services.session.session_manager import (ConversationSession,
-                                              SessionManager)
+from services.session.session_manager import ConversationSession, SessionManager
+from services.ui_messages.action_humanizer import ActionHumanizer
+from services.ui_messages.templates import TemplateRenderer, get_message_template
 from services.utils.serialization import serialize_dataclass
 
 # from services.ingestion_service import get_ingester
@@ -52,6 +56,11 @@ logger = logging.getLogger(__name__)
 # Initialize session manager and conversation handler
 session_manager = SessionManager(ttl_minutes=30)
 conversation_handler = ConversationHandler(session_manager=session_manager)
+
+# Dependency injection for ActionHumanizer and TemplateRenderer
+# (Assume db is an async session or provide a way to get one)
+action_humanizer = ActionHumanizer()
+template_renderer = TemplateRenderer(humanizer=action_humanizer)
 
 
 # Request/Response models
@@ -189,10 +198,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             if response.get("clarification_resolved"):
                 # Get the clarified intent and process it normally
                 clarified_intent = response.get("intent")
-                if (
-                    clarified_intent
-                    and clarified_intent.get("category") != "CONVERSATION"
-                ):
+                if clarified_intent and clarified_intent.get("category") != "CONVERSATION":
                     # Process the clarified intent through the normal workflow
                     # This would typically involve creating a workflow or handling the query
                     response["message"] += " Processing your request..."
@@ -296,12 +302,13 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 # Format response for query results
                 if enriched_intent.action == "list_projects":
                     project_list = [project.to_dict() for project in query_result]
-                    response_text = (
-                        f"I found {len(project_list)} projects: "
-                        + ", ".join([p["name"] for p in project_list])
+                    response_text = f"I found {len(project_list)} projects: " + ", ".join(
+                        [p["name"] for p in project_list]
                     )
                 else:
-                    response_text = f"Here's what I found for {enriched_intent.action}: {query_result}"
+                    response_text = (
+                        f"Here's what I found for {enriched_intent.action}: {query_result}"
+                    )
 
                 return IntentResponse(
                     message=response_text,
@@ -331,22 +338,29 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 # Execute workflow in background
                 workflow_id = workflow.id
                 background_tasks.add_task(engine.execute_workflow, workflow_id)
-                response_text = f"I understand you want to {enriched_intent.action}. I've started a workflow to handle this."
+                # Use TemplateRenderer for humanized message
+                response_text = await template_renderer.render_template(
+                    "I understand you want to {human_action}. I've started a workflow to handle this.",
+                    intent_action=enriched_intent.action,
+                    intent_category=enriched_intent.category.value,
+                )
             else:
                 # No workflow needed, just respond
-                response_text = f"I understand you want to {enriched_intent.action}. "
-
+                response_text = await template_renderer.render_template(
+                    "I understand you want to {human_action}.",
+                    intent_action=enriched_intent.action,
+                    intent_category=enriched_intent.category.value,
+                )
                 if enriched_intent.category == IntentCategory.EXECUTION:
-                    response_text += "I'll help you execute that task."
+                    response_text += " I'll help you execute that task."
                 elif enriched_intent.category == IntentCategory.ANALYSIS:
-                    response_text += "Let me analyze that for you."
+                    response_text += " Let me analyze that for you."
                 elif enriched_intent.category == IntentCategory.SYNTHESIS:
-                    response_text += "I'll help you create that."
+                    response_text += " I'll help you create that."
                 elif enriched_intent.category == IntentCategory.STRATEGY:
-                    response_text += "Let's think strategically about this."
+                    response_text += " Let's think strategically about this."
                 else:
-                    response_text += "I'll help you learn from this."
-
+                    response_text += " I'll help you learn from this."
             return IntentResponse(
                 message=response_text,
                 intent={
@@ -420,9 +434,7 @@ async def handle_file_disambiguation(
                         clarification_type=None,
                     )
                 except Exception as e:
-                    logger.error(
-                        f"Workflow creation failed after file disambiguation: {e}"
-                    )
+                    logger.error(f"Workflow creation failed after file disambiguation: {e}")
                     return IntentResponse(
                         message=f"Got it! Using {selected_file['filename']}. I'll process your request.",
                         intent=serialize_dataclass(intent),
@@ -466,59 +478,80 @@ async def get_workflow(workflow_id: str):
     # Create user-friendly message based on status
     if workflow.status == WorkflowStatus.COMPLETED:
         # Format response based on workflow type and task results
+        template = get_message_template(
+            intent_category=workflow.context.get("intent_category"),
+            intent_action=workflow.context.get("intent_action"),
+            workflow_type=workflow.type,
+        )
+        # Use TemplateRenderer for humanized action in template
         if workflow.type == WorkflowType.CREATE_TICKET:
-            # Handle GitHub issue creation
             if workflow.result and workflow.result.data:
                 issue_url = workflow.result.data.get("issue_url")
                 issue_number = workflow.result.data.get("issue_number")
-                if issue_url and issue_number:
-                    message = f"✅ Successfully created GitHub issue #{issue_number}:\n{issue_url}"
-                else:
-                    message = (
-                        "✅ GitHub issue created successfully, but URL not available."
-                    )
+                message = await template_renderer.render_template(
+                    template,
+                    intent_action=workflow.context.get("intent_action", ""),
+                    intent_category=workflow.context.get("intent_category", None),
+                    issue_number=issue_number,
+                )
+                if issue_url:
+                    message += f"\n{issue_url}"
             else:
-                message = "✅ GitHub issue created successfully!"
-
+                message = await template_renderer.render_template(
+                    template,
+                    intent_action=workflow.context.get("intent_action", ""),
+                    intent_category=workflow.context.get("intent_category", None),
+                )
         elif workflow.type == WorkflowType.REVIEW_ITEM:
-            # Handle GitHub issue analysis and other review tasks
-            if workflow.result and workflow.result.data:
-                analysis = workflow.result.data.get("analysis")
-                if analysis:
-                    message = f"📋 GitHub Issue Analysis:\n\n{analysis}"
-                else:
-                    message = "✅ Issue analysis completed successfully!"
-            else:
-                message = "✅ Review completed successfully!"
-
+            analysis = (
+                workflow.result.data.get("analysis")
+                if (workflow.result and workflow.result.data)
+                else None
+            )
+            message = await template_renderer.render_template(
+                template,
+                intent_action=workflow.context.get("intent_action", ""),
+                intent_category=workflow.context.get("intent_category", None),
+            )
+            if analysis:
+                message += f"\n\n{analysis}"
         elif workflow.type in [WorkflowType.GENERATE_REPORT, WorkflowType.ANALYZE_FILE]:
-            # Handle document analysis and reports
             analysis = None
             if workflow.result and workflow.result.data:
                 analysis = workflow.result.data.get("analysis")
-
-            # Fallback to context for backward compatibility
             if not analysis and workflow.context:
                 analysis = workflow.context.get("analysis")
-
             if analysis and analysis.get("summary"):
                 filename = workflow.context.get("filename", "the document")
-                message = f"Here's my summary of {filename}:\n\n{analysis['summary']}"
+                message = await template_renderer.render_template(
+                    template,
+                    intent_action=workflow.context.get("intent_action", ""),
+                    intent_category=workflow.context.get("intent_category", None),
+                    filename=filename,
+                )
+                message += f"\n\n{analysis['summary']}"
             else:
                 message = "I've completed the analysis but couldn't generate a summary."
-
         else:
-            # Generic fallback for other workflow types
-            message = "Workflow completed successfully!"
+            message = await template_renderer.render_template(
+                template,
+                intent_action=workflow.context.get("intent_action", ""),
+                intent_category=workflow.context.get("intent_category", None),
+            )
     elif workflow.status == WorkflowStatus.RUNNING:
-        completed_tasks = sum(
-            1 for t in workflow.tasks if t.status.value == "completed"
-        )
-        message = f"Workflow in progress... ({completed_tasks}/{len(workflow.tasks)} tasks completed)"
+        from services.ui_messages.templates import DEFAULT_TEMPLATES
+
+        completed_tasks = sum(1 for t in workflow.tasks if t.status.value == "completed")
+        message = DEFAULT_TEMPLATES["in_progress"]
+        message += f" ({completed_tasks}/{len(workflow.tasks)} tasks completed)"
     elif workflow.status == WorkflowStatus.FAILED:
-        message = f"Workflow failed: {workflow.error}"
+        from services.ui_messages.templates import DEFAULT_TEMPLATES
+
+        message = DEFAULT_TEMPLATES["failed"].format(error=workflow.error)
     else:
-        message = "Workflow is pending"
+        from services.ui_messages.templates import DEFAULT_TEMPLATES
+
+        message = DEFAULT_TEMPLATES["success"]
 
     return WorkflowResponse(
         workflow_id=workflow_id,
@@ -558,9 +591,7 @@ async def list_products():
 
 
 @app.post("/api/v1/files/upload")
-async def upload_file(
-    file: UploadFile = File(...), session_id: Optional[str] = Form(None)
-):
+async def upload_file(file: UploadFile = File(...), session_id: Optional[str] = Form(None)):
     """Upload a file and track it in the session"""
     try:
         # Generate session ID if not provided
@@ -628,9 +659,7 @@ async def upload_file(
 
 
 @app.post("/api/v1/clarification", response_model=IntentResponse)
-async def handle_clarification(
-    request: ClarificationResponse, background_tasks: BackgroundTasks
-):
+async def handle_clarification(request: ClarificationResponse, background_tasks: BackgroundTasks):
     """Handle user's response to clarification questions"""
     try:
         # Use the same session ID for now (in production, extract from headers/auth)

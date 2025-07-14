@@ -40,9 +40,7 @@ class IssueContentGenerator:
         labels = []
         desc_lower = description.lower()
 
-        if any(
-            word in desc_lower for word in ["bug", "error", "crash", "broken", "fail"]
-        ):
+        if any(word in desc_lower for word in ["bug", "error", "crash", "broken", "fail"]):
             labels.append("bug")
         elif any(word in desc_lower for word in ["feature", "add", "new", "enhance"]):
             labels.append("enhancement")
@@ -52,9 +50,7 @@ class IssueContentGenerator:
             labels.append("authentication")
 
         # Determine priority
-        if any(
-            word in desc_lower for word in ["urgent", "critical", "production", "down"]
-        ):
+        if any(word in desc_lower for word in ["urgent", "critical", "production", "down"]):
             labels.append("priority-high")
         elif any(word in desc_lower for word in ["minor", "small", "typo"]):
             labels.append("priority-low")

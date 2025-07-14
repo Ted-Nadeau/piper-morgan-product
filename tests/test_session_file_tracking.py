@@ -73,9 +73,7 @@ class TestSessionFileTracking:
         session = session_manager.get_or_create_session(session_id)
 
         # Add first file
-        session.add_uploaded_file(
-            "file1", "first.pdf", "application/pdf", datetime.utcnow()
-        )
+        session.add_uploaded_file("file1", "first.pdf", "application/pdf", datetime.utcnow())
         assert session.active_file_id == "file1"
 
         # Add second file
@@ -88,9 +86,7 @@ class TestSessionFileTracking:
         session = session_manager.get_or_create_session(session_id)
 
         # Add a file
-        session.add_uploaded_file(
-            "test_file", "test.pdf", "application/pdf", datetime.utcnow()
-        )
+        session.add_uploaded_file("test_file", "test.pdf", "application/pdf", datetime.utcnow())
 
         # Initially not referenced
         assert session.uploaded_files[0]["referenced"] == False
@@ -105,9 +101,7 @@ class TestSessionFileTracking:
 
         # Create session and add file
         session1 = session_manager.get_or_create_session(session_id)
-        session1.add_uploaded_file(
-            "test_file", "test.pdf", "application/pdf", datetime.utcnow()
-        )
+        session1.add_uploaded_file("test_file", "test.pdf", "application/pdf", datetime.utcnow())
 
         # Retrieve same session
         session2 = session_manager.get_or_create_session(session_id)

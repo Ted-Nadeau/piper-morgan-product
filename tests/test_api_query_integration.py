@@ -19,9 +19,7 @@ def test_list_projects_query(test_client, setup_projects):
     assert data["intent"]["category"] == "query"
     assert data["intent"]["action"] == "list_projects"
     assert isinstance(data["response"], str)
-    assert (
-        "projects" in data["response"].lower() or "project" in data["response"].lower()
-    )
+    assert "projects" in data["response"].lower() or "project" in data["response"].lower()
 
 
 def test_get_project_query(test_client, setup_projects):
@@ -41,9 +39,7 @@ def test_get_project_query(test_client, setup_projects):
 
 
 def test_get_default_project_query(test_client, setup_projects):
-    response = test_client.post(
-        "/api/v1/intent", json={"message": "Show me the default project"}
-    )
+    response = test_client.post("/api/v1/intent", json={"message": "Show me the default project"})
     assert response.status_code == 200
     data = response.json()
     assert data["intent"]["action"] == "get_default_project"
@@ -65,18 +61,14 @@ def test_find_project_query(test_client, setup_projects):
 
 
 def test_count_projects_query(test_client, setup_projects):
-    response = test_client.post(
-        "/api/v1/intent", json={"message": "How many projects do we have?"}
-    )
+    response = test_client.post("/api/v1/intent", json={"message": "How many projects do we have?"})
     assert response.status_code == 200
     data = response.json()
     assert data["intent"]["action"] == "count_projects"
 
 
 def test_get_project_query_missing_id(test_client, setup_projects):
-    response = test_client.post(
-        "/api/v1/intent", json={"message": "Get project details"}
-    )
+    response = test_client.post("/api/v1/intent", json={"message": "Get project details"})
     assert response.status_code == 422
     # Should return a user-friendly error message
     data = response.json()

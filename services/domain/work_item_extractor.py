@@ -119,9 +119,7 @@ Response must be valid JSON only."""
                 f"Failed to parse LLM response as JSON: {str(e)}\nResponse: {response}"
             )
 
-    def _create_work_item(
-        self, extracted_data: Dict[str, Any], original_prompt: str
-    ) -> WorkItem:
+    def _create_work_item(self, extracted_data: Dict[str, Any], original_prompt: str) -> WorkItem:
         """Create WorkItem from extracted data with validation"""
 
         # Validate required fields
@@ -169,9 +167,7 @@ Response must be valid JSON only."""
 
         # Simple heuristics for type detection
         prompt_lower = prompt.lower()
-        if any(
-            word in prompt_lower for word in ["bug", "crash", "error", "broken", "fail"]
-        ):
+        if any(word in prompt_lower for word in ["bug", "crash", "error", "broken", "fail"]):
             item_type = "bug"
             labels = ["bug"]
         elif any(word in prompt_lower for word in ["feature", "add", "new", "enhance"]):
@@ -182,10 +178,7 @@ Response must be valid JSON only."""
             labels = ["task"]
 
         # Priority detection
-        if any(
-            word in prompt_lower
-            for word in ["urgent", "critical", "production", "down"]
-        ):
+        if any(word in prompt_lower for word in ["urgent", "critical", "production", "down"]):
             priority = "critical"
             labels.append("priority-high")
         elif any(word in prompt_lower for word in ["minor", "small", "typo"]):
