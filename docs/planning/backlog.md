@@ -103,7 +103,7 @@
 
 **Story**: As a PM, I want to create GitHub issues in the correct repository based on project context
 **Description**: Enable GitHub issue creation using project-specific repository configuration
-**Estimate**: 5 points | **Status**: Ready | **Dependencies**: PM-009 ✅, PM-003
+**Estimate**: 5 points | **Status**: NEXT UP - Starting July 21, 2025 | **Dependencies**: PM-009 ✅, PM-003, PM-014
 
 ### PM-013: Learning & Feedback Implementation
 
@@ -115,7 +115,15 @@
 
 **Story**: As a maintainable system, I need complete documentation and a healthy test suite so the codebase remains reliable and understandable
 **Description**: Complete Action Humanizer documentation and triage test suite failures (37 failures, 19 errors) following PM-011 implementation
-**Estimate**: 8 points | **Status**: Ready | **Dependencies**: PM-011 ✅
+**Estimate**: 8 points | **Status**: IN PROGRESS - Started July 14, 2025 | **Dependencies**: PM-011 ✅
+
+**Current Test Suite State**: 87% (177/204 passing)
+**This Week's Goals**:
+
+- Raise pass rate to 90%+
+- Resolve session leaks and infrastructure blockers
+- Document FileRepository pool vs session testability issue
+- Complete and review all Action Humanizer and test suite documentation
 
 **Implementation Details**:
 
@@ -441,6 +449,8 @@ _Last Updated: June 21, 2025_
 **Status**: Approved, Scheduled for Week 4+
 **Priority**: High
 **Effort**: 6-8 weeks
+**Starting August 5, 2025**
+**Planning: July 28 - August 3, 2025**
 
 **Description**: Implement Model Context Protocol support to enable federated tool and knowledge access.
 

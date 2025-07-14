@@ -22,9 +22,9 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 
 ### 🚧 In Progress
 
-- Basic error handling across all layers
-- Simple web chat interface
-- Query service for read operations
+- Test infrastructure recovery (87% → 95%+ target)
+- PM-014: Documentation and Test Suite Health
+- PM-012: Real GitHub issue creation (starting July 21)
 
 ### 📋 Not Started
 
@@ -60,6 +60,18 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - Zero technical errors shown to users
 - Chat interface supports basic workflows
 - Non-technical users can interact successfully
+
+### Sprint 2A: Foundation Stabilization (July 14-20, 2025)
+
+- [ ] Test infrastructure recovery (target: 95%+ pass rate)
+- [ ] PM-014: Documentation and Test Suite Health
+- **Success Criteria**: All critical tests passing, documentation reviewed, no session leaks, testability issues documented
+
+### Sprint 2B: Core Features & MCP Prep (July 21 - Aug 3, 2025)
+
+- [ ] PM-012: Real GitHub issue creation (start July 21)
+- [ ] MCP integration planning and scaffolding
+- **Success Criteria**: GitHub issues created in real repos, MCP pilot plan ready, dependencies mapped
 
 ### Sprint 2: Core Feature Polish
 
@@ -217,6 +229,7 @@ These features directly support the evolution from task automation to analytical
   - Enhance PM-009 multi-project context with federated search
   - Connect to external documentation systems
   - Timeline: Weeks 4-8 after PM-011 closure
+  - **PM-033 Start Date: August 5, 2025 (Week 4 post-PM-011)**
 - 🆕 **LLM-Based Intent Classification (PM-034)**
   - Replace regex patterns with conversational understanding
   - Enable natural language interactions
