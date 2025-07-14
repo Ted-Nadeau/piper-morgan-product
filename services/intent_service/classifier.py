@@ -252,9 +252,10 @@ class IntentClassifier:
         elif "find project" in message_lower:
             category = IntentCategory.QUERY
             action = "find_project"
-        elif "project details" in message_lower or (
-            "get project" in message_lower and "id" in message_lower
-        ):
+        elif "project details" in message_lower:
+            category = IntentCategory.QUERY
+            action = "get_project_details"
+        elif "get project" in message_lower and "id" in message_lower:
             category = IntentCategory.QUERY
             action = "get_project"
         elif any(word in message_lower for word in ["create", "make", "build", "add", "new"]):

@@ -45,6 +45,11 @@ class QueryRouter:
             return await self.project_queries.find_project_by_name(name)
         elif intent.action == "count_projects":
             return await self.project_queries.count_active_projects()
+        elif intent.action == "get_project_details":
+            project_id = intent.context.get("project_id")
+            if not project_id:
+                raise ValueError("get_project_details query requires project_id in context")
+            return await self.project_queries.get_project_details(project_id)
         elif intent.action == "get_greeting":
             return await self.conversation_queries.get_greeting()
         elif intent.action == "get_help":
@@ -70,6 +75,7 @@ class QueryRouter:
         return [
             "list_projects",
             "get_project",
+            "get_project_details",
             "get_default_project",
             "find_project",
             "count_projects",
