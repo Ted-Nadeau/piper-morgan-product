@@ -1,0 +1,3520 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-8.4.1, pluggy-1.6.0 -- /Users/xian/Development/piper-morgan/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pyproject.toml
+plugins: anyio-3.7.1
+collecting ... collected 228 items
+
+github_test.py::test_issue_analysis_intent FAILED                        [  0%]
+services/integrations/github/test_pm0008.py::test_url_parsing PASSED     [  0%]
+services/integrations/github/test_pm0008.py::test_imports PASSED         [  1%]
+test_api_flow.py::test_api_flow FAILED                                   [  1%]
+test_bug_classification.py::test_bug_classification FAILED               [  2%]
+test_conversation_aware.py::test_conversation_aware FAILED               [  2%]
+test_disambiguation_flow.py::test_disambiguation_flow FAILED             [  3%]
+test_execution_classification.py::test_execution_classification FAILED   [  3%]
+test_fallback_classification.py::test_fallback_classification PASSED     [  3%]
+test_file_repository.py::test_file_repository FAILED                     [  4%]
+test_file_resolver.py::test_file_resolver FAILED                         [  4%]
+test_file_resolver_comprehensive.py::test_file_resolver_comprehensive FAILED [  5%]
+test_file_upload.py::test_file_upload FAILED                             [  5%]
+test_full_analyzer.py::test_issue_analyzer FAILED                        [  6%]
+test_github.py::test_github_ticket_creation_still_works FAILED           [  6%]
+test_github_integration.py::test_github_connection FAILED                [  7%]
+test_github_integration.py::test_issue_fetching FAILED                   [  7%]
+test_github_integration.py::test_knowledge_search FAILED                 [  7%]
+test_github_integration_simple-no2.py::test_github_issue_creation FAILED [  8%]
+test_github_integration_simple.py::test_github_issue_creation FAILED     [  8%]
+test_intent_integration.py::test_intent_enrichment_integration FAILED    [  9%]
+test_pm007_enhancement.py::test_enhanced_knowledge_hierarchy FAILED      [  9%]
+test_pm007_quick.py::test FAILED                                         [ 10%]
+test_pm007_simple.py::test_relationship_analysis FAILED                  [ 10%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_workflow_acknowledgment_uses_humanized_action FAILED [ 10%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_create_ticket_workflow_message FAILED [ 11%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_analyze_file_workflow_message FAILED [ 11%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_summarize_document_workflow_message FAILED [ 12%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_unknown_action_fallback FAILED [ 12%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_action_without_underscores FAILED [ 13%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_template_without_human_action_placeholder FAILED [ 13%]
+tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_template_with_additional_context FAILED [ 14%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_create_data_analyzer PASSED [ 14%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_create_document_analyzer PASSED [ 14%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_create_text_analyzer PASSED [ 15%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_unsupported_analysis_type_error PASSED [ 15%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_dependency_injection_document_analyzer PASSED [ 16%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_factory_without_dependencies PASSED [ 16%]
+tests/services/analysis/test_analyzer_factory.py::TestAnalyzerFactory::test_factory_with_all_dependencies PASSED [ 17%]
+tests/services/analysis/test_analyzer_factory.py::test_factory_creates_data_analyzer PASSED [ 17%]
+tests/services/analysis/test_analyzer_factory.py::test_factory_creates_document_analyzer PASSED [ 17%]
+tests/services/analysis/test_analyzer_factory.py::test_factory_creates_text_analyzer PASSED [ 18%]
+tests/services/analysis/test_analyzer_factory.py::test_factory_unsupported_type PASSED [ 18%]
+tests/services/analysis/test_analyzer_factory.py::test_factory_dependency_injection PASSED [ 19%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_basic_csv_analysis FAILED [ 19%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_statistical_summary_numeric_columns FAILED [ 20%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_missing_data_detection FAILED [ 20%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_empty_csv_handling FAILED [ 21%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_malformed_csv_handling FAILED [ 21%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_inherits_from_base_analyzer PASSED [ 21%]
+tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_analyze_returns_analysis_result FAILED [ 22%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_basic_analysis FAILED [ 22%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_statistical_summary FAILED [ 23%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_missing_data_detection FAILED [ 23%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_empty_handling FAILED [ 24%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_malformed_handling FAILED [ 24%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_inherits_base_analyzer PASSED [ 25%]
+tests/services/analysis/test_csv_analyzer.py::test_csv_analyze_returns_analysis_result FAILED [ 25%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_basic_pdf_analysis FAILED [ 25%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_summary_generation_with_llm FAILED [ 26%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_key_points_extraction FAILED [ 26%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_empty_pdf_handling FAILED [ 27%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_corrupted_pdf_handling FAILED [ 27%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_inherits_from_base_analyzer PASSED [ 28%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_analyze_returns_analysis_result FAILED [ 28%]
+tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_llm_dependency_injection PASSED [ 28%]
+tests/services/analysis/test_document_analyzer.py::test_document_basic_pdf_analysis FAILED [ 29%]
+tests/services/analysis/test_document_analyzer.py::test_document_summary_generation FAILED [ 29%]
+tests/services/analysis/test_document_analyzer.py::test_document_key_points_extraction FAILED [ 30%]
+tests/services/analysis/test_document_analyzer.py::test_document_empty_pdf_handling FAILED [ 30%]
+tests/services/analysis/test_document_analyzer.py::test_document_corrupted_pdf_handling FAILED [ 31%]
+tests/services/analysis/test_document_analyzer.py::test_document_inherits_base_analyzer PASSED [ 31%]
+tests/services/analysis/test_document_analyzer.py::test_document_analyze_returns_analysis_result FAILED [ 32%]
+tests/services/analysis/test_document_analyzer.py::test_document_llm_dependency_injection PASSED [ 32%]
+tests/services/analysis/test_json_summarization.py::TestSummarySection::test_empty_section_to_markdown PASSED [ 32%]
+tests/services/analysis/test_json_summarization.py::TestSummarySection::test_section_with_points_to_markdown PASSED [ 33%]
+tests/services/analysis/test_json_summarization.py::TestSummarySection::test_section_with_special_characters PASSED [ 33%]
+tests/services/analysis/test_json_summarization.py::TestDocumentSummary::test_minimal_summary_to_markdown PASSED [ 34%]
+tests/services/analysis/test_json_summarization.py::TestDocumentSummary::test_summary_with_key_findings PASSED [ 34%]
+tests/services/analysis/test_json_summarization.py::TestDocumentSummary::test_summary_with_sections PASSED [ 35%]
+tests/services/analysis/test_json_summarization.py::TestDocumentSummary::test_get_section_by_heading PASSED [ 35%]
+tests/services/analysis/test_json_summarization.py::TestDocumentSummary::test_clean_bullet_formatting_in_output PASSED [ 35%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_valid_json_to_summary PASSED [ 36%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_minimal_json PASSED [ 36%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_invalid_json_returns_error_summary PASSED [ 37%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_json_missing_required_fields PASSED [ 37%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_json_with_empty_sections PASSED [ 38%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_json_with_malformed_key_findings_string PASSED [ 38%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_json_with_inline_bold_headings PASSED [ 39%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_json_with_numbered_lists PASSED [ 39%]
+tests/services/analysis/test_json_summarization.py::TestSummaryParser::test_parse_json_with_malformed_section_points PASSED [ 39%]
+tests/services/analysis/test_json_summarization.py::TestEndToEndMarkdownGeneration::test_complex_document_generates_clean_markdown PASSED [ 40%]
+tests/services/analysis/test_json_summarization.py::TestEndToEndMarkdownGeneration::test_no_malformed_headers_in_output PASSED [ 40%]
+tests/services/analysis/test_text_analyzer.py::test_basic_text_file_analysis FAILED [ 41%]
+tests/services/analysis/test_text_analyzer.py::test_markdown_structure_detection FAILED [ 41%]
+tests/services/analysis/test_text_analyzer.py::test_plain_text_vs_markdown FAILED [ 42%]
+tests/services/analysis/test_text_analyzer.py::test_empty_file_handling FAILED [ 42%]
+tests/services/analysis/test_text_analyzer.py::test_large_text_file_handling FAILED [ 42%]
+tests/services/analysis/test_text_analyzer.py::test_inherits_from_base_analyzer FAILED [ 43%]
+tests/services/analysis/test_text_analyzer.py::test_analyze_returns_analysis_result FAILED [ 43%]
+tests/services/analysis/test_text_analyzer.py::test_encoding_detection FAILED [ 44%]
+tests/services/analysis/test_text_analyzer.py::test_llm_integration_with_summarize_task_type FAILED [ 44%]
+tests/services/analysis/test_text_analyzer.py::test_llm_integration_with_different_file_types FAILED [ 45%]
+tests/services/analysis/test_text_analyzer.py::test_llm_markdown_formatting FAILED [ 45%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_create_workflow_from_intent_success FAILED [ 46%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_create_workflow_from_intent_failure FAILED [ 46%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_execute_workflow_not_found FAILED [ 46%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_success FAILED [ 47%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_missing_file_id FAILED [ 47%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_file_not_found FAILED [ 48%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_analysis_exception FAILED [ 48%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_task_handler_registration FAILED [ 49%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_placeholder_handler FAILED [ 49%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_workflow_state_transitions FAILED [ 50%]
+tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_workflow_error_handling FAILED [ 50%]
+tests/services/queries/test_file_queries.py::TestFileQueryService::test_read_file_contents FAILED [ 50%]
+tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_template_renderer_calls_action_humanizer FAILED [ 51%]
+tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_human_action_placeholder_replacement FAILED [ 51%]
+tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_fallback_when_humanizer_not_available FAILED [ 52%]
+tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_no_human_action_placeholder_no_humanizer_call FAILED [ 52%]
+tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_preserves_original_action_placeholder FAILED [ 53%]
+tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_additional_kwargs_passed_through FAILED [ 53%]
+tests/test_api_query_integration.py::test_list_projects_query ERROR      [ 53%]
+tests/test_api_query_integration.py::test_get_project_query ERROR        [ 54%]
+tests/test_api_query_integration.py::test_get_default_project_query ERROR [ 54%]
+tests/test_api_query_integration.py::test_find_project_query ERROR       [ 55%]
+tests/test_api_query_integration.py::test_count_projects_query ERROR     [ 55%]
+tests/test_api_query_integration.py::test_get_project_query_missing_id ERROR [ 56%]
+tests/test_api_query_integration.py::test_find_project_query_missing_name ERROR [ 56%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_context_switch_during_clarification FAILED [ 57%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_multiple_clarifications_needed FAILED [ 57%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_session_timeout_during_clarification FAILED [ 57%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_invalid_clarification_response FAILED [ 58%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_session_cleanup PASSED [ 58%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_session_performance PASSED [ 59%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_concurrent_session_access FAILED [ 59%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_clarification_with_empty_response FAILED [ 60%]
+tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_clarification_with_very_long_response FAILED [ 60%]
+tests/test_error_handling_integration.py::test_low_confidence_intent_error ERROR [ 60%]
+tests/test_error_handling_integration.py::test_workflow_task_failed_error ERROR [ 61%]
+tests/test_error_handling_integration.py::test_github_auth_failed_error ERROR [ 61%]
+tests/test_file_reference_detection.py::TestFileReferenceDetection::test_file_reference_patterns FAILED [ 62%]
+tests/test_file_reference_detection.py::TestFileReferenceDetection::test_non_file_references PASSED [ 62%]
+tests/test_file_reference_detection.py::TestFileReferenceDetection::test_classification_with_file_context FAILED [ 63%]
+tests/test_file_reference_detection.py::TestFileReferenceDetection::test_classification_without_file_context FAILED [ 63%]
+tests/test_file_reference_detection.py::TestFileReferenceDetection::test_file_reference_with_multiple_files FAILED [ 64%]
+tests/test_file_reference_detection.py::TestFileReferenceDetection::test_file_reference_edge_cases FAILED [ 64%]
+tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_no_files_in_session ERROR [ 64%]
+tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_very_old_file_scoring ERROR [ 65%]
+tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_identical_filenames_different_times ERROR [ 65%]
+tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_special_characters_in_filename ERROR [ 66%]
+tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_performance_with_many_files ERROR [ 66%]
+tests/test_file_scoring_weights.py::test_scoring_weight_distribution ERROR [ 67%]
+tests/test_file_scoring_weights.py::test_scoring_component_breakdown ERROR [ 67%]
+tests/test_file_scoring_weights.py::test_scoring_with_different_intent_types ERROR [ 67%]
+tests/test_file_scoring_weights.py::test_scoring_edge_cases ERROR        [ 68%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_work_item_extraction_from_prompt FAILED [ 68%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_work_item_extraction_fallback FAILED [ 69%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_github_agent_work_item_creation FAILED [ 69%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_complete_workflow_execution FAILED [ 70%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_error_handling_in_extraction FAILED [ 70%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_error_handling_in_github_creation FAILED [ 71%]
+tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_work_item_validation FAILED [ 71%]
+tests/test_intent_classification.py::test_classify_user_complaint_as_create_ticket FAILED [ 71%]
+tests/test_intent_enricher.py::test_intent_enricher_high_confidence FAILED [ 72%]
+tests/test_intent_enricher.py::test_intent_enricher_medium_confidence FAILED [ 72%]
+tests/test_intent_enricher.py::test_intent_enricher_no_file_reference FAILED [ 73%]
+tests/test_pm009_project_support.py::TestProjectDomainModel::test_project_creation_with_defaults PASSED [ 73%]
+tests/test_pm009_project_support.py::TestProjectDomainModel::test_get_github_integration PASSED [ 74%]
+tests/test_pm009_project_support.py::TestProjectDomainModel::test_get_github_repository_shortcut PASSED [ 74%]
+tests/test_pm009_project_support.py::TestProjectDomainModel::test_validate_integrations PASSED [ 75%]
+tests/test_pm009_project_support.py::TestProjectContext::test_explicit_project_id_takes_precedence FAILED [ 75%]
+tests/test_pm009_project_support.py::TestProjectContext::test_uses_last_project_from_session FAILED [ 75%]
+tests/test_pm009_project_support.py::TestProjectContext::test_infers_project_from_message_context FAILED [ 76%]
+tests/test_pm009_project_support.py::TestProjectContext::test_needs_confirmation_when_ambiguous FAILED [ 76%]
+tests/test_pm009_project_support.py::TestProjectContext::test_falls_back_to_default_project FAILED [ 77%]
+tests/test_pm009_project_support.py::TestProjectContext::test_raises_ambiguous_error_when_unclear FAILED [ 77%]
+tests/test_pm009_project_support.py::TestProjectContext::test_handles_project_not_found_error FAILED [ 78%]
+tests/test_pm009_project_support.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context FAILED [ 78%]
+tests/test_pm009_project_support.py::TestGitHubAgentProjectIntegration::test_uses_project_github_configuration FAILED [ 78%]
+tests/test_pm009_project_support.py::TestNoHardcodedValues::test_uses_enum_not_strings_for_integration_type PASSED [ 79%]
+tests/test_pm009_project_support.py::TestNoHardcodedValues::test_repository_pattern_for_database_operations PASSED [ 79%]
+tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_query_returns_all_projects FAILED [ 80%]
+tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_query_handles_empty_repository FAILED [ 80%]
+tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_query_handles_repository_error FAILED [ 81%]
+tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_intent_classification PASSED [ 81%]
+tests/test_pm009_project_support.py::TestQueryRouter::test_router_routes_list_projects_query FAILED [ 82%]
+tests/test_pm009_project_support.py::TestQueryRouter::test_router_rejects_non_query_intents FAILED [ 82%]
+tests/test_pm009_project_support.py::TestQueryRouter::test_router_handles_unknown_query_action FAILED [ 82%]
+tests/test_pm009_project_support.py::TestQueryRouter::test_router_supported_queries FAILED [ 83%]
+tests/test_pm009_project_support.py::test_get_project_by_id_returns_project FAILED [ 83%]
+tests/test_pm009_project_support.py::test_get_project_by_id_returns_none_for_missing FAILED [ 84%]
+tests/test_pm009_project_support.py::test_get_project_by_id_handles_repository_error FAILED [ 84%]
+tests/test_pm009_project_support.py::test_get_default_project_returns_project FAILED [ 85%]
+tests/test_pm009_project_support.py::test_get_default_project_returns_none_if_missing FAILED [ 85%]
+tests/test_pm009_project_support.py::test_find_project_by_name_returns_project FAILED [ 85%]
+tests/test_pm009_project_support.py::test_find_project_by_name_returns_none_for_missing FAILED [ 86%]
+tests/test_pm009_project_support.py::test_count_active_projects_returns_count FAILED [ 86%]
+tests/test_pm009_project_support.py::test_count_active_projects_handles_repository_error FAILED [ 87%]
+tests/test_pm009_project_support.py::test_get_project_by_id_with_invalid_id FAILED [ 87%]
+tests/test_pm009_project_support.py::test_find_project_by_name_with_invalid_name FAILED [ 88%]
+tests/test_pm009_project_support_per_call.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context FAILED [ 88%]
+tests/test_pre_classifier.py::TestPreClassifier::test_greeting_patterns PASSED [ 89%]
+tests/test_pre_classifier.py::TestPreClassifier::test_farewell_patterns PASSED [ 89%]
+tests/test_pre_classifier.py::TestPreClassifier::test_thanks_patterns PASSED [ 89%]
+tests/test_pre_classifier.py::TestPreClassifier::test_greeting_with_punctuation PASSED [ 90%]
+tests/test_pre_classifier.py::TestPreClassifier::test_farewell_with_punctuation PASSED [ 90%]
+tests/test_pre_classifier.py::TestPreClassifier::test_thanks_with_punctuation PASSED [ 91%]
+tests/test_pre_classifier.py::TestPreClassifier::test_non_conversational_patterns FAILED [ 91%]
+tests/test_pre_classifier.py::TestPreClassifier::test_case_insensitivity PASSED [ 92%]
+tests/test_pre_classifier.py::TestPreClassifier::test_whitespace_handling PASSED [ 92%]
+tests/test_pre_classifier.py::TestPreClassifier::test_empty_and_edge_cases FAILED [ 92%]
+tests/test_pre_classifier.py::TestPreClassifier::test_partial_matches_should_fail FAILED [ 93%]
+tests/test_pre_classifier.py::TestPreClassifier::test_greeting_with_follow_up FAILED [ 93%]
+tests/test_pre_classifier.py::TestPreClassifier::test_yes_no_not_preclassified PASSED [ 94%]
+tests/test_project_context.py::test_resolve_explicit_project FAILED      [ 94%]
+tests/test_project_context.py::test_resolve_last_used_project_confirmed FAILED [ 95%]
+tests/test_project_context.py::test_resolve_last_used_project_unconfirmed FAILED [ 95%]
+tests/test_project_context.py::test_resolve_llm_inferred_project FAILED  [ 96%]
+tests/test_project_context.py::test_resolve_default_project FAILED       [ 96%]
+tests/test_project_context.py::test_ambiguous_project_error FAILED       [ 96%]
+tests/test_session_file_tracking.py::TestSessionFileTracking::test_add_uploaded_file PASSED [ 97%]
+tests/test_session_file_tracking.py::TestSessionFileTracking::test_get_recent_files PASSED [ 97%]
+tests/test_session_file_tracking.py::TestSessionFileTracking::test_active_file_id_tracking PASSED [ 98%]
+tests/test_session_file_tracking.py::TestSessionFileTracking::test_file_reference_tracking PASSED [ 98%]
+tests/test_session_file_tracking.py::TestSessionFileTracking::test_session_persistence PASSED [ 99%]
+tests/test_session_manager.py::test_conversation_session_interaction FAILED [ 99%]
+tests/test_session_manager.py::test_session_manager_get_or_create PASSED [100%]
+
+==================================== ERRORS ====================================
+__________________ ERROR at setup of test_list_projects_query __________________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+---------------------------- Captured stdout setup -----------------------------
+2025-07-13 17:14:10 [info     ] Knowledge collection initialized with 0 documents
+___________________ ERROR at setup of test_get_project_query ___________________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+_______________ ERROR at setup of test_get_default_project_query _______________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+__________________ ERROR at setup of test_find_project_query ___________________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+_________________ ERROR at setup of test_count_projects_query __________________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+_____________ ERROR at setup of test_get_project_query_missing_id ______________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+____________ ERROR at setup of test_find_project_query_missing_name ____________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+______________ ERROR at setup of test_low_confidence_intent_error ______________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+______________ ERROR at setup of test_workflow_task_failed_error _______________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+_______________ ERROR at setup of test_github_auth_failed_error ________________
+
+    @pytest.fixture(scope="session")
+    def test_client():
+        """Create a test client with properly initialized app state"""
+        # Create mock repository for testing
+        mock_repo = Mock()
+        mock_repo.list_active_projects = AsyncMock(return_value=[])
+        mock_repo.get_by_id = AsyncMock(return_value=None)
+        mock_repo.get_default_project = AsyncMock(return_value=None)
+        mock_repo.find_by_name = AsyncMock(return_value=None)
+        mock_repo.count_active_projects = AsyncMock(return_value=0)
+    
+        # Create mock file repository for testing
+        mock_file_repo = Mock()
+        mock_file_repo.get_by_id = AsyncMock(return_value=None)
+        mock_file_repo.search_by_name = AsyncMock(return_value=[])
+    
+        # Initialize app state for tests (similar to lifespan function)
+        app.state.query_router = QueryRouter(
+            project_query_service=ProjectQueryService(mock_repo),
+            conversation_query_service=ConversationQueryService(),
+            file_query_service=FileQueryService(mock_file_repo),
+        )
+        app.state.document_service = DocumentService()
+        app.state.ingester = DocumentIngester()
+    
+>       return TestClient(app)
+
+conftest.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <starlette.testclient.TestClient object at 0x30571ceb0>
+app = <fastapi.applications.FastAPI object at 0x17d5dc310>
+base_url = 'http://testserver', raise_server_exceptions = True, root_path = ''
+backend = 'asyncio', backend_options = None, cookies = None
+headers = {'user-agent': 'testclient'}
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        base_url: str = "http://testserver",
+        raise_server_exceptions: bool = True,
+        root_path: str = "",
+        backend: str = "asyncio",
+        backend_options: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        cookies: httpx._client.CookieTypes = None,
+        headers: typing.Dict[str, str] = None,
+    ) -> None:
+        self.async_backend = _AsyncBackend(
+            backend=backend, backend_options=backend_options or {}
+        )
+        if _is_asgi3(app):
+            app = typing.cast(ASGI3App, app)
+            asgi_app = app
+        else:
+            app = typing.cast(ASGI2App, app)  # type: ignore[assignment]
+            asgi_app = _WrapASGI2(app)  # type: ignore[arg-type]
+        self.app = asgi_app
+        self.app_state: typing.Dict[str, typing.Any] = {}
+        transport = _TestClientTransport(
+            self.app,
+            portal_factory=self._portal_factory,
+            raise_server_exceptions=raise_server_exceptions,
+            root_path=root_path,
+            app_state=self.app_state,
+        )
+        if headers is None:
+            headers = {}
+        headers.setdefault("user-agent", "testclient")
+>       super().__init__(
+            app=self.app,
+            base_url=base_url,
+            headers=headers,
+            transport=transport,
+            follow_redirects=True,
+            cookies=cookies,
+        )
+E       TypeError: __init__() got an unexpected keyword argument 'app'
+
+.venv/lib/python3.9/site-packages/starlette/testclient.py:399: TypeError
+_____ ERROR at setup of TestFileResolverEdgeCases.test_no_files_in_session _____
+file /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py, line 14
+      @pytest.mark.asyncio
+      async def test_no_files_in_session(self, db_session):
+          """Test when user references files but none uploaded"""
+          resolver = FileResolver(FileRepository(db_session))
+
+          intent = Intent(
+              category=IntentCategory.ANALYSIS,
+              action="analyze_document",
+              context={"original_message": "analyze the report"},
+          )
+
+          # Should return None when no files exist
+          file_id, confidence = await resolver.resolve_file_reference(
+              intent, f"empty_session_{uuid4().hex}"
+          )
+
+          assert file_id is None
+          assert confidence == 0.0
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:14
+____ ERROR at setup of TestFileResolverEdgeCases.test_very_old_file_scoring ____
+file /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py, line 33
+      @pytest.mark.asyncio
+      async def test_very_old_file_scoring(self, db_session):
+          """Test that very old files score lower than recent ones"""
+          session_id = f"test_old_{uuid4().hex}"
+          repo = FileRepository(db_session)
+
+          # Create files with different ages
+          old_file = UploadedFile(
+              session_id=session_id,
+              filename="old_report.pdf",
+              file_type="application/pdf",
+              file_size=1000,
+              storage_path="/test/old_report.pdf",
+              upload_time=datetime.now() - timedelta(days=7),  # 1 week old
+          )
+          recent_file = UploadedFile(
+              session_id=session_id,
+              filename="recent_report.pdf",
+              file_type="application/pdf",
+              file_size=1000,
+              storage_path="/test/recent_report.pdf",
+              upload_time=datetime.now() - timedelta(minutes=5),
+          )
+
+          await repo.save_file_metadata(old_file)
+          await repo.save_file_metadata(recent_file)
+
+          # Test resolution
+          resolver = FileResolver(repo)
+          intent = Intent(
+              category=IntentCategory.ANALYSIS,
+              action="analyze_report",
+              context={"original_message": "analyze the report"},
+          )
+
+          file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+
+          # Recent file should win
+          assert file_id == recent_file.id
+          assert confidence > 0.5
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:33
+_ ERROR at setup of TestFileResolverEdgeCases.test_identical_filenames_different_times _
+file /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py, line 74
+      @pytest.mark.asyncio
+      async def test_identical_filenames_different_times(self, db_session):
+          """Test handling multiple files with same name"""
+          session_id = f"test_dup_{uuid4().hex}"
+          repo = FileRepository(db_session)
+
+          # Create files with same name but different upload times
+          files = []
+          for i in range(3):
+              file = UploadedFile(
+                  session_id=session_id,
+                  filename="report.pdf",  # Same name
+                  file_type="application/pdf",
+                  file_size=1000,
+                  storage_path=f"/test/report_{i}.pdf",
+                  upload_time=datetime.now() - timedelta(hours=i),
+              )
+              saved = await repo.save_file_metadata(file)
+              files.append(saved)
+
+          resolver = FileResolver(repo)
+          intent = Intent(
+              category=IntentCategory.ANALYSIS,
+              action="analyze_report",
+              context={"original_message": "analyze the report"},
+          )
+
+          # Should resolve to most recent
+          file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+          assert file_id == files[0].id  # Most recent
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:74
+_ ERROR at setup of TestFileResolverEdgeCases.test_special_characters_in_filename _
+file /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py, line 105
+      @pytest.mark.asyncio
+      async def test_special_characters_in_filename(self, db_session):
+          """Test files with spaces, unicode, special chars"""
+          session_id = f"test_special_{uuid4().hex}"
+          repo = FileRepository(db_session)
+
+          # Create files with special characters
+          test_files = [
+              "résumé (final).pdf",
+              "2024 Q3 Report - Sales & Marketing.pdf",
+              "データ分析.xlsx",  # Japanese characters
+              "report[v2](draft)_FINAL.docx",
+          ]
+
+          for filename in test_files:
+              file = UploadedFile(
+                  session_id=session_id,
+                  filename=filename,
+                  file_type="application/pdf",
+                  file_size=1000,
+                  storage_path=f"/test/{filename}",
+                  upload_time=datetime.now(),
+              )
+              await repo.save_file_metadata(file)
+
+          # Test resolution with partial match
+          resolver = FileResolver(repo)
+          intent = Intent(
+              category=IntentCategory.ANALYSIS,
+              action="analyze_document",
+              context={"original_message": "analyze the résumé"},
+          )
+
+          file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+          assert file_id is not None  # Should find the résumé file
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:105
+_ ERROR at setup of TestFileResolverEdgeCases.test_performance_with_many_files _
+file /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py, line 141
+      @pytest.mark.asyncio
+      async def test_performance_with_many_files(self, db_session):
+          """Test resolution performance with many files"""
+          import time
+
+          session_id = f"test_perf_{uuid4().hex}"
+          repo = FileRepository(db_session)
+
+          # Create 100 files
+          for i in range(100):
+              file = UploadedFile(
+                  session_id=session_id,
+                  filename=f"document_{i}.pdf",
+                  file_type="application/pdf",
+                  file_size=1000,
+                  storage_path=f"/test/document_{i}.pdf",
+                  upload_time=datetime.now() - timedelta(minutes=i),
+              )
+              await repo.save_file_metadata(file)
+
+          # Time the resolution
+          resolver = FileResolver(repo)
+          intent = Intent(
+              category=IntentCategory.ANALYSIS,
+              action="analyze_document",
+              context={"original_message": "analyze document_50"},
+          )
+
+          start_time = time.time()
+          file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+          elapsed = (time.time() - start_time) * 1000  # Convert to ms
+
+          # Should complete within 100ms
+          assert elapsed < 100, f"Resolution took {elapsed:.2f}ms, should be <100ms"
+          assert file_id is not None
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:141
+______________ ERROR at setup of test_scoring_weight_distribution ______________
+file /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py, line 11
+  @pytest.mark.asyncio
+  async def test_scoring_weight_distribution(db_session):
+      """Validate that scoring weights produce good distribution"""
+      session_id = f"test_weights_{uuid4().hex}"
+      repo = FileRepository(db_session)
+      resolver = FileResolver(repo)
+
+      # Create test scenarios
+      test_cases = [
+          # (filename, file_type, age_minutes, expected_score_range)
+          ("exact_match.pdf", "application/pdf", 5, (0.7, 1.0)),  # High
+          ("partial_match.pdf", "application/pdf", 30, (0.4, 0.7)),  # Medium
+          ("no_match.xlsx", "application/vnd.ms-excel", 120, (0.0, 0.3)),  # Low
+      ]
+
+      for filename, file_type, age_minutes, expected_range in test_cases:
+          file = UploadedFile(
+              session_id=session_id,
+              filename=filename,
+              file_type=file_type,
+              file_size=1000,
+              storage_path=f"/test/{filename}",
+              upload_time=datetime.now() - timedelta(minutes=age_minutes),
+          )
+          await repo.save_file_metadata(file)
+
+      # Test with intent that matches "exact_match"
+      intent = Intent(
+          category=IntentCategory.ANALYSIS,
+          action="analyze_report",
+          context={"original_message": "analyze exact_match"},
+      )
+
+      # Get all files and their scores
+      files = await repo.get_files_for_session(session_id)
+      scores = []
+      for file in files:
+          score = resolver._calculate_score(file, intent)
+          scores.append((file.filename, score))
+
+          # Verify score is in expected range
+          for test_name, _, _, expected in test_cases:
+              if file.filename == test_name:
+                  assert (
+                      expected[0] <= score <= expected[1]
+                  ), f"{test_name} score {score} not in range {expected}"
+
+      # Verify good distribution (scores should be spread out)
+      score_values = [s[1] for s in scores]
+      score_spread = max(score_values) - min(score_values)
+      assert score_spread > 0.4, "Scores not well distributed"
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:11
+______________ ERROR at setup of test_scoring_component_breakdown ______________
+file /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py, line 64
+  @pytest.mark.asyncio
+  async def test_scoring_component_breakdown(db_session):
+      """Test individual scoring components work correctly"""
+      session_id = f"test_components_{uuid4().hex}"
+      repo = FileRepository(db_session)
+      resolver = FileResolver(repo)
+
+      # Create a test file
+      file = UploadedFile(
+          session_id=session_id,
+          filename="test_report.pdf",
+          file_type="application/pdf",
+          file_size=1000,
+          storage_path="/test/test_report.pdf",
+          upload_time=datetime.now() - timedelta(minutes=10),
+      )
+      await repo.save_file_metadata(file)
+
+      intent = Intent(
+          category=IntentCategory.ANALYSIS,
+          action="analyze_report",
+          context={"original_message": "analyze the report"},
+      )
+
+      # Test individual scoring components
+      recency_score = resolver._calculate_recency_score(file.upload_time)
+      type_score = resolver._calculate_type_score(file.file_type, intent.action)
+      name_score = resolver._calculate_name_score(file.filename, intent)
+      usage_score = resolver._calculate_usage_score(file)
+
+      # Verify each component produces reasonable scores
+      assert 0.0 <= recency_score <= 1.0, f"Recency score {recency_score} out of range"
+      assert 0.0 <= type_score <= 1.0, f"Type score {type_score} out of range"
+      assert 0.0 <= name_score <= 1.0, f"Name score {name_score} out of range"
+      assert 0.0 <= usage_score <= 1.0, f"Usage score {usage_score} out of range"
+
+      # Verify recent files get higher recency scores
+      assert recency_score > 0.5, f"Recent file should have high recency score, got {recency_score}"
+
+      # Verify PDF files get higher type scores for analysis
+      assert type_score > 0.5, f"PDF should have high type score for analysis, got {type_score}"
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:64
+__________ ERROR at setup of test_scoring_with_different_intent_types __________
+file /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py, line 107
+  @pytest.mark.asyncio
+  async def test_scoring_with_different_intent_types(db_session):
+      """Test scoring varies appropriately with different intent types"""
+      session_id = f"test_intents_{uuid4().hex}"
+      repo = FileRepository(db_session)
+      resolver = FileResolver(repo)
+
+      # Create files of different types
+      files = [
+          UploadedFile(
+              session_id=session_id,
+              filename="data.csv",
+              file_type="text/csv",
+              file_size=1000,
+              storage_path="/test/data.csv",
+              upload_time=datetime.now(),
+          ),
+          UploadedFile(
+              session_id=session_id,
+              filename="report.pdf",
+              file_type="application/pdf",
+              file_size=1000,
+              storage_path="/test/report.pdf",
+              upload_time=datetime.now(),
+          ),
+          UploadedFile(
+              session_id=session_id,
+              filename="presentation.pptx",
+              file_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+              file_size=1000,
+              storage_path="/test/presentation.pptx",
+              upload_time=datetime.now(),
+          ),
+      ]
+
+      for file in files:
+          await repo.save_file_metadata(file)
+
+      # Test different intent types
+      intent_types = [
+          ("analyze_data", "data.csv", "CSV should score high for data analysis"),
+          ("analyze_report", "report.pdf", "PDF should score high for report analysis"),
+          (
+              "create_presentation",
+              "presentation.pptx",
+              "PPTX should score high for presentation creation",
+          ),
+      ]
+
+      for intent_action, expected_best_file, description in intent_types:
+          intent = Intent(
+              category=IntentCategory.ANALYSIS,
+              action=intent_action,
+              context={"original_message": f"perform {intent_action}"},
+          )
+
+          # Get scores for all files
+          file_scores = []
+          for file in files:
+              score = resolver._calculate_score(file, intent)
+              file_scores.append((file.filename, score))
+
+          # Find the highest scoring file
+          best_file = max(file_scores, key=lambda x: x[1])
+
+          # Verify the expected file scores highest
+          assert (
+              best_file[0] == expected_best_file
+          ), f"{description}: expected {expected_best_file}, got {best_file[0]} with score {best_file[1]}"
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:107
+__________________ ERROR at setup of test_scoring_edge_cases ___________________
+file /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py, line 178
+  @pytest.mark.asyncio
+  async def test_scoring_edge_cases(db_session):
+      """Test scoring handles edge cases gracefully"""
+      session_id = f"test_edge_{uuid4().hex}"
+      repo = FileRepository(db_session)
+      resolver = FileResolver(repo)
+
+      # Test with very old file
+      old_file = UploadedFile(
+          session_id=session_id,
+          filename="ancient.pdf",
+          file_type="application/pdf",
+          file_size=1000,
+          storage_path="/test/ancient.pdf",
+          upload_time=datetime.now() - timedelta(days=365),  # 1 year old
+      )
+      await repo.save_file_metadata(old_file)
+
+      intent = Intent(
+          category=IntentCategory.ANALYSIS,
+          action="analyze_report",
+          context={"original_message": "analyze the report"},
+      )
+
+      # Very old file should have low recency score but not crash
+      score = resolver._calculate_score(old_file, intent)
+      assert 0.0 <= score <= 1.0, f"Old file score {score} out of range"
+      assert score < 0.5, f"Very old file should have low score, got {score}"
+
+      # Test with unknown file type
+      unknown_file = UploadedFile(
+          session_id=session_id,
+          filename="unknown.xyz",
+          file_type="application/unknown",
+          file_size=1000,
+          storage_path="/test/unknown.xyz",
+          upload_time=datetime.now(),
+      )
+      await repo.save_file_metadata(unknown_file)
+
+      # Unknown file type should not crash
+      score = resolver._calculate_score(unknown_file, intent)
+      assert 0.0 <= score <= 1.0, f"Unknown file type score {score} out of range"
+E       fixture 'db_session' not found
+>       available fixtures: anyio_backend, anyio_backend_name, anyio_backend_options, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, close_db_event_loop, doctest_namespace, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, test_client, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:178
+=================================== FAILURES ===================================
+__________________________ test_issue_analysis_intent __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________________ test_api_flow _________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_bug_classification ____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_conversation_aware ____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_disambiguation_flow ___________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_execution_classification _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________________ test_file_repository _____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________________ test_file_resolver ______________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_file_resolver_comprehensive _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________________ test_file_upload _______________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________________ test_issue_analyzer ______________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_github_ticket_creation_still_works ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________________ test_github_connection ____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________________ test_issue_fetching ______________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________________ test_knowledge_search _____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________________ test_github_issue_creation __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________________ test_github_issue_creation __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_intent_enrichment_integration ______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_enhanced_knowledge_hierarchy _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________________________ test _____________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________________ test_relationship_analysis __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_ TestHumanizedWorkflowMessages.test_workflow_acknowledgment_uses_humanized_action _
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______ TestHumanizedWorkflowMessages.test_create_ticket_workflow_message _______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______ TestHumanizedWorkflowMessages.test_analyze_file_workflow_message _______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____ TestHumanizedWorkflowMessages.test_summarize_document_workflow_message ____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestHumanizedWorkflowMessages.test_unknown_action_fallback __________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________ TestHumanizedWorkflowMessages.test_action_without_underscores _________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_ TestHumanizedWorkflowMessages.test_template_without_human_action_placeholder _
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____ TestHumanizedWorkflowMessages.test_template_with_additional_context ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ TestCSVAnalyzer.test_basic_csv_analysis ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestCSVAnalyzer.test_statistical_summary_numeric_columns ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ TestCSVAnalyzer.test_missing_data_detection __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ TestCSVAnalyzer.test_empty_csv_handling ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ TestCSVAnalyzer.test_malformed_csv_handling __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________ TestCSVAnalyzer.test_analyze_returns_analysis_result _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_csv_basic_analysis ____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_csv_statistical_summary _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_csv_missing_data_detection ________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_csv_empty_handling ____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_csv_malformed_handling __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_csv_analyze_returns_analysis_result ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ TestDocumentAnalyzer.test_basic_pdf_analysis _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestDocumentAnalyzer.test_summary_generation_with_llm _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ TestDocumentAnalyzer.test_key_points_extraction ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ TestDocumentAnalyzer.test_empty_pdf_handling _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ TestDocumentAnalyzer.test_corrupted_pdf_handling _______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestDocumentAnalyzer.test_analyze_returns_analysis_result ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_document_basic_pdf_analysis _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_document_summary_generation _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________ test_document_key_points_extraction ______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_document_empty_pdf_handling _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________ test_document_corrupted_pdf_handling _____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ test_document_analyze_returns_analysis_result _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_basic_text_file_analysis _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_markdown_structure_detection _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_plain_text_vs_markdown __________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_empty_file_handling ___________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________________ test_large_text_file_handling _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________________ test_inherits_from_base_analyzer _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________ test_analyze_returns_analysis_result _____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________________ test_encoding_detection ____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ test_llm_integration_with_summarize_task_type _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ test_llm_integration_with_different_file_types ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_llm_markdown_formatting _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______ TestOrchestrationEngine.test_create_workflow_from_intent_success _______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______ TestOrchestrationEngine.test_create_workflow_from_intent_failure _______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestOrchestrationEngine.test_execute_workflow_not_found ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________ TestOrchestrationEngine.test_analyze_file_success _______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestOrchestrationEngine.test_analyze_file_missing_file_id ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestOrchestrationEngine.test_analyze_file_file_not_found ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestOrchestrationEngine.test_analyze_file_analysis_exception _________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestOrchestrationEngine.test_task_handler_registration ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ TestOrchestrationEngine.test_placeholder_handler _______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestOrchestrationEngine.test_workflow_state_transitions ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________ TestOrchestrationEngine.test_workflow_error_handling _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ TestFileQueryService.test_read_file_contents _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______ TestTemplateRenderer.test_template_renderer_calls_action_humanizer ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________ TestTemplateRenderer.test_human_action_placeholder_replacement ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______ TestTemplateRenderer.test_fallback_when_humanizer_not_available ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___ TestTemplateRenderer.test_no_human_action_placeholder_no_humanizer_call ____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______ TestTemplateRenderer.test_preserves_original_action_placeholder ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestTemplateRenderer.test_additional_kwargs_passed_through __________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____ TestClarificationEdgeCases.test_context_switch_during_clarification ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________ TestClarificationEdgeCases.test_multiple_clarifications_needed ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____ TestClarificationEdgeCases.test_session_timeout_during_clarification _____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________ TestClarificationEdgeCases.test_invalid_clarification_response ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestClarificationEdgeCases.test_concurrent_session_access ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______ TestClarificationEdgeCases.test_clarification_with_empty_response _______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____ TestClarificationEdgeCases.test_clarification_with_very_long_response _____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestFileReferenceDetection.test_file_reference_patterns ____________
+
+self = <test_file_reference_detection.TestFileReferenceDetection object at 0x3056360d0>
+
+    def test_file_reference_patterns(self):
+        """Test that file reference patterns are correctly detected"""
+        # Test various file reference patterns
+        file_references = [
+            "analyze the file I uploaded",
+            "create a ticket from that document",
+            "what's in the csv",
+            "summarize the pdf",
+            "the spreadsheet shows",
+            "my report contains",
+            "the data indicates",
+            "that upload has",
+            "the excel file shows",
+        ]
+    
+        for message in file_references:
+>           assert PreClassifier.detect_file_reference(
+                message
+            ), f"Failed to detect file reference in: {message}"
+E           AssertionError: Failed to detect file reference in: the data indicates
+E           assert False
+E            +  where False = <function PreClassifier.detect_file_reference at 0x1084bcb80>('the data indicates')
+E            +    where <function PreClassifier.detect_file_reference at 0x1084bcb80> = PreClassifier.detect_file_reference
+
+tests/test_file_reference_detection.py:39: AssertionError
+_______ TestFileReferenceDetection.test_classification_with_file_context _______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____ TestFileReferenceDetection.test_classification_without_file_context ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______ TestFileReferenceDetection.test_file_reference_with_multiple_files ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestFileReferenceDetection.test_file_reference_edge_cases ___________
+
+self = <test_file_reference_detection.TestFileReferenceDetection object at 0x305622d90>
+
+    def test_file_reference_edge_cases(self):
+        """Test edge cases for file reference detection"""
+        edge_cases = [
+            ("THE FILE", True),  # Case insensitive
+            ("that document!", True),  # With punctuation
+            ("my file and stuff", True),  # With additional words
+            ("file the report", False),  # Word order matters
+            ("the file is ready", True),  # Complete sentence
+            ("", False),  # Empty string
+            ("   the file   ", True),  # With whitespace
+        ]
+    
+        for message, expected in edge_cases:
+            result = PreClassifier.detect_file_reference(message)
+>           assert result == expected, f"Expected {expected} for '{message}', got {result}"
+E           AssertionError: Expected False for 'file the report', got True
+E           assert True == False
+
+tests/test_file_reference_detection.py:130: AssertionError
+________ TestGitHubIntegrationE2E.test_work_item_extraction_from_prompt ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestGitHubIntegrationE2E.test_work_item_extraction_fallback __________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________ TestGitHubIntegrationE2E.test_github_agent_work_item_creation _________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestGitHubIntegrationE2E.test_complete_workflow_execution ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestGitHubIntegrationE2E.test_error_handling_in_extraction __________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______ TestGitHubIntegrationE2E.test_error_handling_in_github_creation ________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________ TestGitHubIntegrationE2E.test_work_item_validation ______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ test_classify_user_complaint_as_create_ticket _________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________________ test_intent_enricher_high_confidence _____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_intent_enricher_medium_confidence ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_intent_enricher_no_file_reference ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestProjectContext.test_explicit_project_id_takes_precedence _________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestProjectContext.test_uses_last_project_from_session ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestProjectContext.test_infers_project_from_message_context __________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________ TestProjectContext.test_needs_confirmation_when_ambiguous ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestProjectContext.test_falls_back_to_default_project _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________ TestProjectContext.test_raises_ambiguous_error_when_unclear __________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestProjectContext.test_handles_project_not_found_error ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____ TestWorkflowFactoryIntegration.test_workflow_includes_project_context _____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___ TestGitHubAgentProjectIntegration.test_uses_project_github_configuration ___
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____ TestListProjectsQuery.test_list_projects_query_returns_all_projects ______
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___ TestListProjectsQuery.test_list_projects_query_handles_empty_repository ____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___ TestListProjectsQuery.test_list_projects_query_handles_repository_error ____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestQueryRouter.test_router_routes_list_projects_query ____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________ TestQueryRouter.test_router_rejects_non_query_intents _____________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________ TestQueryRouter.test_router_handles_unknown_query_action ___________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+________________ TestQueryRouter.test_router_supported_queries _________________
+
+self = <test_pm009_project_support.TestQueryRouter object at 0x30567f070>
+mock_project_repository = <Mock id='12978935360'>
+
+    def test_router_supported_queries(self, mock_project_repository):
+        """QueryRouter should return list of supported queries"""
+        project_query_service = ProjectQueryService(mock_project_repository)
+        conversation_query_service = ConversationQueryService()
+>       router = QueryRouter(project_query_service, conversation_query_service)
+E       TypeError: __init__() missing 1 required positional argument: 'file_query_service'
+
+tests/test_pm009_project_support.py:613: TypeError
+____________________ test_get_project_by_id_returns_project ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ test_get_project_by_id_returns_none_for_missing ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ test_get_project_by_id_handles_repository_error ________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_get_default_project_returns_project ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_______________ test_get_default_project_returns_none_if_missing _______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_find_project_by_name_returns_project ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________ test_find_project_by_name_returns_none_for_missing ______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_count_active_projects_returns_count ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_____________ test_count_active_projects_handles_repository_error ______________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_get_project_by_id_with_invalid_id ____________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________ test_find_project_by_name_with_invalid_name __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____ TestWorkflowFactoryIntegration.test_workflow_includes_project_context _____
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________ TestPreClassifier.test_non_conversational_patterns ______________
+
+self = <test_pre_classifier.TestPreClassifier object at 0x3058ea2e0>
+
+    def test_non_conversational_patterns(self):
+        """Test patterns that should NOT be pre-classified"""
+        non_conversational = [
+            "hello world",
+            "hi there everyone",
+            "goodbye cruel world",
+            "thanks for the help",
+            "thank you for everything",
+            "hello there how are you",
+            "bye bye for now",
+            "hello and welcome",
+            "goodbye and good luck",
+            "thanks a lot",
+            "thank you very much",
+            "hello, can you help me?",
+            "bye, see you tomorrow",
+            "thanks, that was helpful",
+            "thank you, I appreciate it",
+        ]
+    
+        for pattern in non_conversational:
+            intent = PreClassifier.pre_classify(pattern)
+>           assert intent is None, f"Expected None for '{pattern}', got {intent}"
+E           AssertionError: Expected None for 'hello world', got Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='58da91a3-47e1-4016-87f3-0eb8b250e819', context={'original_message': 'hello world'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 579795))
+E           assert Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='58da91a3-47e1-4016-87f3-0eb8b250e819', context={'original_message': 'hello world'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 579795)) is None
+
+tests/test_pre_classifier.py:158: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: True
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Matched greeting pattern: '\bhello\b'
+_________________ TestPreClassifier.test_empty_and_edge_cases __________________
+
+self = <test_pre_classifier.TestPreClassifier object at 0x3058eaaf0>
+
+    def test_empty_and_edge_cases(self):
+        """Test edge cases and empty inputs"""
+        edge_cases = [
+            "",
+            "   ",
+            "\t",
+            "\n",
+            "\r\n",
+            "x",
+            "a",
+            "z",
+            "123",
+            "hello123",
+            "hello world",
+            "hi there",
+            "bye bye",
+            "thank you very much",
+            "thanks a lot",
+        ]
+    
+        for pattern in edge_cases:
+            if pattern.strip() in PreClassifier.GREETING_PATTERNS:
+                intent = PreClassifier.pre_classify(pattern)
+                assert intent is not None
+            elif pattern.strip() in PreClassifier.FAREWELL_PATTERNS:
+                intent = PreClassifier.pre_classify(pattern)
+                assert intent is not None
+            elif pattern.strip() in PreClassifier.THANKS_PATTERNS:
+                intent = PreClassifier.pre_classify(pattern)
+                assert intent is not None
+            else:
+                intent = PreClassifier.pre_classify(pattern)
+>               assert intent is None, f"Expected None for '{pattern}', got {intent}"
+E               AssertionError: Expected None for 'hello world', got Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='94e1246a-7399-4f7f-bd9d-8b450e24928b', context={'original_message': 'hello world'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 602265))
+E               assert Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='94e1246a-7399-4f7f-bd9d-8b450e24928b', context={'original_message': 'hello world'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 602265)) is None
+
+tests/test_pre_classifier.py:232: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: '   '
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: '	'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: '
+'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: '
+'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: ''
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'x'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'x'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'x'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'a'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'a'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'a'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'z'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'z'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'z'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: '123'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: '123'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: '123'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'hello123'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'hello123'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'hello123'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: False
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: True
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Matched greeting pattern: '\bhello\b'
+______________ TestPreClassifier.test_partial_matches_should_fail ______________
+
+self = <test_pre_classifier.TestPreClassifier object at 0x3058ea4f0>
+
+    def test_partial_matches_should_fail(self):
+        """Test that partial matches in longer strings don't trigger pre-classification"""
+        non_matches = [
+            "hello world",  # Not just a greeting
+            "goodbye cruel world",  # Not just a farewell
+            "thanks for nothing",  # Not just thanks
+            "hello and welcome",  # Not just a greeting
+            "bye bye for now",  # Not just a farewell
+            "hello, can you help me?",  # Not just a greeting
+            "thanks, that was helpful",  # Not just thanks
+            "thank you, I appreciate it",  # Not just thanks
+        ]
+    
+        for pattern in non_matches:
+            intent = PreClassifier.pre_classify(pattern)
+>           assert intent is None, f"Expected None for non-match '{pattern}', got {intent}"
+E           AssertionError: Expected None for non-match 'hello world', got Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='7ccf38ac-d20c-4033-806f-f293c7d58fb1', context={'original_message': 'hello world'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 610557))
+E           assert Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='7ccf38ac-d20c-4033-806f-f293c7d58fb1', context={'original_message': 'hello world'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 610557)) is None
+
+tests/test_pre_classifier.py:249: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'hello world'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: True
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Matched greeting pattern: '\bhello\b'
+________________ TestPreClassifier.test_greeting_with_follow_up ________________
+
+self = <test_pre_classifier.TestPreClassifier object at 0x3058ea400>
+
+    def test_greeting_with_follow_up(self):
+        """Test that greetings followed by other content are NOT pre-classified"""
+        # These should be left for LLM to handle
+        intent = PreClassifier.pre_classify("hi there how are you")
+>       assert intent is None  # Let LLM handle compound greetings
+E       AssertionError: assert Intent(category=<IntentCategory.CONVERSATION: 'conversation'>, action='greeting', id='308c3e57-bb2c-438f-81b2-dd81a4d3ff7d', context={'original_message': 'hi there how are you'}, confidence=1.0, created_at=datetime.datetime(2025, 7, 13, 17, 14, 11, 618991)) is None
+
+tests/test_pre_classifier.py:255: AssertionError
+----------------------------- Captured stdout call -----------------------------
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Original: 'hi there how are you'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean: 'hi there how are you'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Clean for matching: 'hi there how are you'
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Greeting match: True
+2025-07-13 17:14:11 [info     ] PRE_CLASSIFIER DEBUG - Matched greeting pattern: '\bhi\b'
+________________________ test_resolve_explicit_project _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+___________________ test_resolve_last_used_project_confirmed ___________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+__________________ test_resolve_last_used_project_unconfirmed __________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+______________________ test_resolve_llm_inferred_project _______________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_resolve_default_project _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+_________________________ test_ambiguous_project_error _________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+____________________ test_conversation_session_interaction _____________________
+
+    def test_conversation_session_interaction():
+        session = ConversationSession("test-session")
+        intent = DummyIntent(action="greeting")
+>       session.add_interaction(intent, "Hello!")
+
+tests/test_session_manager.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+services/session/session_manager.py:28: in add_interaction
+    "intent": serialize_dataclass(intent),
+services/utils/serialization.py:21: in serialize_dataclass
+    data = asdict(obj)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <test_session_manager.DummyIntent object at 0x3059d7f10>
+
+    def asdict(obj, *, dict_factory=dict):
+        """Return the fields of a dataclass instance as a new dictionary mapping
+        field names to field values.
+    
+        Example usage:
+    
+          @dataclass
+          class C:
+              x: int
+              y: int
+    
+          c = C(1, 2)
+          assert asdict(c) == {'x': 1, 'y': 2}
+    
+        If given, 'dict_factory' will be used instead of built-in dict.
+        The function applies recursively to field values that are
+        dataclass instances. This will also look into built-in containers:
+        tuples, lists, and dicts.
+        """
+        if not _is_dataclass_instance(obj):
+>           raise TypeError("asdict() should be called on dataclass instances")
+E           TypeError: asdict() should be called on dataclass instances
+
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/dataclasses.py:1074: TypeError
+=============================== warnings summary ===============================
+.venv/lib/python3.9/site-packages/urllib3/__init__.py:35
+  /Users/xian/Development/piper-morgan/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+    warnings.warn(
+
+.venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21
+  /Users/xian/Development/piper-morgan/.venv/lib/python3.9/site-packages/PyPDF2/__init__.py:21: DeprecationWarning: PyPDF2 is deprecated. Please move to the pypdf library instead.
+    warnings.warn(
+
+.venv/lib/python3.9/site-packages/github/MainClass.py:145: 2 warnings
+tests/services/orchestration/test_orchestration_engine.py: 22 warnings
+  /Users/xian/Development/piper-morgan/.venv/lib/python3.9/site-packages/github/MainClass.py:145: DeprecationWarning: Argument login_or_token is deprecated, please use auth=github.Auth.Token(...) instead
+    warnings.warn(
+
+tests/integration/test_humanized_workflow_messages.py:32
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:32: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:57
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:57: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:76
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:76: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:95
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:95: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:114
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:114: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:133
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:133: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:152
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:152: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/integration/test_humanized_workflow_messages.py:170
+  /Users/xian/Development/piper-morgan/tests/integration/test_humanized_workflow_messages.py:170: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:18
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:18: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:26
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:26: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:35
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:35: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:49
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:49: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:57
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:57: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:72
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:72: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:81
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:81: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:92
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:92: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:110
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:110: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:127
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:127: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:150
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:150: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_csv_analyzer.py:171
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_csv_analyzer.py:171: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:21
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:21: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:29
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:29: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:38
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:38: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:47
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:47: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:56
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:56: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:72
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:72: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:86
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:86: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:98
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:98: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:111
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:111: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:125
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:125: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:136
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:136: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_document_analyzer.py:155
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_document_analyzer.py:155: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:11
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:11: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:22
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:22: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:34
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:34: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:45
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:45: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:56
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:56: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:67
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:67: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:74
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:74: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:83
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:83: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:93
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:93: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:125
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:125: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/analysis/test_text_analyzer.py:149
+  /Users/xian/Development/piper-morgan/tests/services/analysis/test_text_analyzer.py:149: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:66
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:66: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:95
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:95: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:109
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:109: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:115
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:115: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:170
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:170: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:183
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:183: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:207
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:207: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:240
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:240: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:262
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:262: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:279
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:279: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/orchestration/test_orchestration_engine.py:320
+  /Users/xian/Development/piper-morgan/tests/services/orchestration/test_orchestration_engine.py:320: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/queries/test_file_queries.py:16
+  /Users/xian/Development/piper-morgan/tests/services/queries/test_file_queries.py:16: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/ui_messages/test_template_renderer.py:23
+  /Users/xian/Development/piper-morgan/tests/services/ui_messages/test_template_renderer.py:23: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/ui_messages/test_template_renderer.py:50
+  /Users/xian/Development/piper-morgan/tests/services/ui_messages/test_template_renderer.py:50: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/ui_messages/test_template_renderer.py:66
+  /Users/xian/Development/piper-morgan/tests/services/ui_messages/test_template_renderer.py:66: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/ui_messages/test_template_renderer.py:80
+  /Users/xian/Development/piper-morgan/tests/services/ui_messages/test_template_renderer.py:80: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/ui_messages/test_template_renderer.py:98
+  /Users/xian/Development/piper-morgan/tests/services/ui_messages/test_template_renderer.py:98: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/services/ui_messages/test_template_renderer.py:114
+  /Users/xian/Development/piper-morgan/tests/services/ui_messages/test_template_renderer.py:114: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:29
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:29: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:71
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:71: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:118
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:118: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:145
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:145: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:219
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:219: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:240
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:240: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_clarification_edge_cases.py:259
+  /Users/xian/Development/piper-morgan/tests/test_clarification_edge_cases.py:259: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_reference_detection.py:62
+  /Users/xian/Development/piper-morgan/tests/test_file_reference_detection.py:62: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_reference_detection.py:84
+  /Users/xian/Development/piper-morgan/tests/test_file_reference_detection.py:84: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_reference_detection.py:98
+  /Users/xian/Development/piper-morgan/tests/test_file_reference_detection.py:98: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_resolver_edge_cases.py:14
+  /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_resolver_edge_cases.py:33
+  /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:33: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_resolver_edge_cases.py:74
+  /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:74: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_resolver_edge_cases.py:105
+  /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:105: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_resolver_edge_cases.py:141
+  /Users/xian/Development/piper-morgan/tests/test_file_resolver_edge_cases.py:141: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_scoring_weights.py:11
+  /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:11: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_scoring_weights.py:64
+  /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:64: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_scoring_weights.py:107
+  /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:107: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_file_scoring_weights.py:178
+  /Users/xian/Development/piper-morgan/tests/test_file_scoring_weights.py:178: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:59
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:59: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:91
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:91: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:111
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:111: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:146
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:146: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:205
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:205: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:222
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:222: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_github_integration_e2e.py:235
+  /Users/xian/Development/piper-morgan/tests/test_github_integration_e2e.py:235: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_intent_classification.py:26
+  /Users/xian/Development/piper-morgan/tests/test_intent_classification.py:26: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_intent_enricher.py:11
+  /Users/xian/Development/piper-morgan/tests/test_intent_enricher.py:11: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_intent_enricher.py:58
+  /Users/xian/Development/piper-morgan/tests/test_intent_enricher.py:58: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_intent_enricher.py:101
+  /Users/xian/Development/piper-morgan/tests/test_intent_enricher.py:101: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:131
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:131: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:157
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:157: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:184
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:184: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:214
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:214: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:246
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:246: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:272
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:272: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:300
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:300: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:325
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:325: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:360
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:360: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:428
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:428: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:478
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:478: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:498
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:498: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:558
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:558: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:579
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:579: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:594
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:594: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:626
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:626: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:635
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:635: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:643
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:643: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:652
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:652: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:661
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:661: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:669
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:669: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:678
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:678: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:686
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:686: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:694
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:694: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:703
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:703: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support.py:711
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support.py:711: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_pm009_project_support_per_call.py:13
+  /Users/xian/Development/piper-morgan/tests/test_pm009_project_support_per_call.py:13: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_project_context.py:56
+  /Users/xian/Development/piper-morgan/tests/test_project_context.py:56: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_project_context.py:68
+  /Users/xian/Development/piper-morgan/tests/test_project_context.py:68: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_project_context.py:83
+  /Users/xian/Development/piper-morgan/tests/test_project_context.py:83: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_project_context.py:98
+  /Users/xian/Development/piper-morgan/tests/test_project_context.py:98: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_project_context.py:110
+  /Users/xian/Development/piper-morgan/tests/test_project_context.py:110: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+tests/test_project_context.py:122
+  /Users/xian/Development/piper-morgan/tests/test_project_context.py:122: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED github_test.py::test_issue_analysis_intent - Failed: async def functio...
+FAILED test_api_flow.py::test_api_flow - Failed: async def functions are not ...
+FAILED test_bug_classification.py::test_bug_classification - Failed: async de...
+FAILED test_conversation_aware.py::test_conversation_aware - Failed: async de...
+FAILED test_disambiguation_flow.py::test_disambiguation_flow - Failed: async ...
+FAILED test_execution_classification.py::test_execution_classification - Fail...
+FAILED test_file_repository.py::test_file_repository - Failed: async def func...
+FAILED test_file_resolver.py::test_file_resolver - Failed: async def function...
+FAILED test_file_resolver_comprehensive.py::test_file_resolver_comprehensive
+FAILED test_file_upload.py::test_file_upload - Failed: async def functions ar...
+FAILED test_full_analyzer.py::test_issue_analyzer - Failed: async def functio...
+FAILED test_github.py::test_github_ticket_creation_still_works - Failed: asyn...
+FAILED test_github_integration.py::test_github_connection - Failed: async def...
+FAILED test_github_integration.py::test_issue_fetching - Failed: async def fu...
+FAILED test_github_integration.py::test_knowledge_search - Failed: async def ...
+FAILED test_github_integration_simple-no2.py::test_github_issue_creation - Fa...
+FAILED test_github_integration_simple.py::test_github_issue_creation - Failed...
+FAILED test_intent_integration.py::test_intent_enrichment_integration - Faile...
+FAILED test_pm007_enhancement.py::test_enhanced_knowledge_hierarchy - Failed:...
+FAILED test_pm007_quick.py::test - Failed: async def functions are not native...
+FAILED test_pm007_simple.py::test_relationship_analysis - Failed: async def f...
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_workflow_acknowledgment_uses_humanized_action
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_create_ticket_workflow_message
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_analyze_file_workflow_message
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_summarize_document_workflow_message
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_unknown_action_fallback
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_action_without_underscores
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_template_without_human_action_placeholder
+FAILED tests/integration/test_humanized_workflow_messages.py::TestHumanizedWorkflowMessages::test_template_with_additional_context
+FAILED tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_basic_csv_analysis
+FAILED tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_statistical_summary_numeric_columns
+FAILED tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_missing_data_detection
+FAILED tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_empty_csv_handling
+FAILED tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_malformed_csv_handling
+FAILED tests/services/analysis/test_csv_analyzer.py::TestCSVAnalyzer::test_analyze_returns_analysis_result
+FAILED tests/services/analysis/test_csv_analyzer.py::test_csv_basic_analysis
+FAILED tests/services/analysis/test_csv_analyzer.py::test_csv_statistical_summary
+FAILED tests/services/analysis/test_csv_analyzer.py::test_csv_missing_data_detection
+FAILED tests/services/analysis/test_csv_analyzer.py::test_csv_empty_handling
+FAILED tests/services/analysis/test_csv_analyzer.py::test_csv_malformed_handling
+FAILED tests/services/analysis/test_csv_analyzer.py::test_csv_analyze_returns_analysis_result
+FAILED tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_basic_pdf_analysis
+FAILED tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_summary_generation_with_llm
+FAILED tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_key_points_extraction
+FAILED tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_empty_pdf_handling
+FAILED tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_corrupted_pdf_handling
+FAILED tests/services/analysis/test_document_analyzer.py::TestDocumentAnalyzer::test_analyze_returns_analysis_result
+FAILED tests/services/analysis/test_document_analyzer.py::test_document_basic_pdf_analysis
+FAILED tests/services/analysis/test_document_analyzer.py::test_document_summary_generation
+FAILED tests/services/analysis/test_document_analyzer.py::test_document_key_points_extraction
+FAILED tests/services/analysis/test_document_analyzer.py::test_document_empty_pdf_handling
+FAILED tests/services/analysis/test_document_analyzer.py::test_document_corrupted_pdf_handling
+FAILED tests/services/analysis/test_document_analyzer.py::test_document_analyze_returns_analysis_result
+FAILED tests/services/analysis/test_text_analyzer.py::test_basic_text_file_analysis
+FAILED tests/services/analysis/test_text_analyzer.py::test_markdown_structure_detection
+FAILED tests/services/analysis/test_text_analyzer.py::test_plain_text_vs_markdown
+FAILED tests/services/analysis/test_text_analyzer.py::test_empty_file_handling
+FAILED tests/services/analysis/test_text_analyzer.py::test_large_text_file_handling
+FAILED tests/services/analysis/test_text_analyzer.py::test_inherits_from_base_analyzer
+FAILED tests/services/analysis/test_text_analyzer.py::test_analyze_returns_analysis_result
+FAILED tests/services/analysis/test_text_analyzer.py::test_encoding_detection
+FAILED tests/services/analysis/test_text_analyzer.py::test_llm_integration_with_summarize_task_type
+FAILED tests/services/analysis/test_text_analyzer.py::test_llm_integration_with_different_file_types
+FAILED tests/services/analysis/test_text_analyzer.py::test_llm_markdown_formatting
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_create_workflow_from_intent_success
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_create_workflow_from_intent_failure
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_execute_workflow_not_found
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_success
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_missing_file_id
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_file_not_found
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_analyze_file_analysis_exception
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_task_handler_registration
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_placeholder_handler
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_workflow_state_transitions
+FAILED tests/services/orchestration/test_orchestration_engine.py::TestOrchestrationEngine::test_workflow_error_handling
+FAILED tests/services/queries/test_file_queries.py::TestFileQueryService::test_read_file_contents
+FAILED tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_template_renderer_calls_action_humanizer
+FAILED tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_human_action_placeholder_replacement
+FAILED tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_fallback_when_humanizer_not_available
+FAILED tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_no_human_action_placeholder_no_humanizer_call
+FAILED tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_preserves_original_action_placeholder
+FAILED tests/services/ui_messages/test_template_renderer.py::TestTemplateRenderer::test_additional_kwargs_passed_through
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_context_switch_during_clarification
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_multiple_clarifications_needed
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_session_timeout_during_clarification
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_invalid_clarification_response
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_concurrent_session_access
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_clarification_with_empty_response
+FAILED tests/test_clarification_edge_cases.py::TestClarificationEdgeCases::test_clarification_with_very_long_response
+FAILED tests/test_file_reference_detection.py::TestFileReferenceDetection::test_file_reference_patterns
+FAILED tests/test_file_reference_detection.py::TestFileReferenceDetection::test_classification_with_file_context
+FAILED tests/test_file_reference_detection.py::TestFileReferenceDetection::test_classification_without_file_context
+FAILED tests/test_file_reference_detection.py::TestFileReferenceDetection::test_file_reference_with_multiple_files
+FAILED tests/test_file_reference_detection.py::TestFileReferenceDetection::test_file_reference_edge_cases
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_work_item_extraction_from_prompt
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_work_item_extraction_fallback
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_github_agent_work_item_creation
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_complete_workflow_execution
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_error_handling_in_extraction
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_error_handling_in_github_creation
+FAILED tests/test_github_integration_e2e.py::TestGitHubIntegrationE2E::test_work_item_validation
+FAILED tests/test_intent_classification.py::test_classify_user_complaint_as_create_ticket
+FAILED tests/test_intent_enricher.py::test_intent_enricher_high_confidence - ...
+FAILED tests/test_intent_enricher.py::test_intent_enricher_medium_confidence
+FAILED tests/test_intent_enricher.py::test_intent_enricher_no_file_reference
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_explicit_project_id_takes_precedence
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_uses_last_project_from_session
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_infers_project_from_message_context
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_needs_confirmation_when_ambiguous
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_falls_back_to_default_project
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_raises_ambiguous_error_when_unclear
+FAILED tests/test_pm009_project_support.py::TestProjectContext::test_handles_project_not_found_error
+FAILED tests/test_pm009_project_support.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context
+FAILED tests/test_pm009_project_support.py::TestGitHubAgentProjectIntegration::test_uses_project_github_configuration
+FAILED tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_query_returns_all_projects
+FAILED tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_query_handles_empty_repository
+FAILED tests/test_pm009_project_support.py::TestListProjectsQuery::test_list_projects_query_handles_repository_error
+FAILED tests/test_pm009_project_support.py::TestQueryRouter::test_router_routes_list_projects_query
+FAILED tests/test_pm009_project_support.py::TestQueryRouter::test_router_rejects_non_query_intents
+FAILED tests/test_pm009_project_support.py::TestQueryRouter::test_router_handles_unknown_query_action
+FAILED tests/test_pm009_project_support.py::TestQueryRouter::test_router_supported_queries
+FAILED tests/test_pm009_project_support.py::test_get_project_by_id_returns_project
+FAILED tests/test_pm009_project_support.py::test_get_project_by_id_returns_none_for_missing
+FAILED tests/test_pm009_project_support.py::test_get_project_by_id_handles_repository_error
+FAILED tests/test_pm009_project_support.py::test_get_default_project_returns_project
+FAILED tests/test_pm009_project_support.py::test_get_default_project_returns_none_if_missing
+FAILED tests/test_pm009_project_support.py::test_find_project_by_name_returns_project
+FAILED tests/test_pm009_project_support.py::test_find_project_by_name_returns_none_for_missing
+FAILED tests/test_pm009_project_support.py::test_count_active_projects_returns_count
+FAILED tests/test_pm009_project_support.py::test_count_active_projects_handles_repository_error
+FAILED tests/test_pm009_project_support.py::test_get_project_by_id_with_invalid_id
+FAILED tests/test_pm009_project_support.py::test_find_project_by_name_with_invalid_name
+FAILED tests/test_pm009_project_support_per_call.py::TestWorkflowFactoryIntegration::test_workflow_includes_project_context
+FAILED tests/test_pre_classifier.py::TestPreClassifier::test_non_conversational_patterns
+FAILED tests/test_pre_classifier.py::TestPreClassifier::test_empty_and_edge_cases
+FAILED tests/test_pre_classifier.py::TestPreClassifier::test_partial_matches_should_fail
+FAILED tests/test_pre_classifier.py::TestPreClassifier::test_greeting_with_follow_up
+FAILED tests/test_project_context.py::test_resolve_explicit_project - Failed:...
+FAILED tests/test_project_context.py::test_resolve_last_used_project_confirmed
+FAILED tests/test_project_context.py::test_resolve_last_used_project_unconfirmed
+FAILED tests/test_project_context.py::test_resolve_llm_inferred_project - Fai...
+FAILED tests/test_project_context.py::test_resolve_default_project - Failed: ...
+FAILED tests/test_project_context.py::test_ambiguous_project_error - Failed: ...
+FAILED tests/test_session_manager.py::test_conversation_session_interaction
+ERROR tests/test_api_query_integration.py::test_list_projects_query - TypeErr...
+ERROR tests/test_api_query_integration.py::test_get_project_query - TypeError...
+ERROR tests/test_api_query_integration.py::test_get_default_project_query - T...
+ERROR tests/test_api_query_integration.py::test_find_project_query - TypeErro...
+ERROR tests/test_api_query_integration.py::test_count_projects_query - TypeEr...
+ERROR tests/test_api_query_integration.py::test_get_project_query_missing_id
+ERROR tests/test_api_query_integration.py::test_find_project_query_missing_name
+ERROR tests/test_error_handling_integration.py::test_low_confidence_intent_error
+ERROR tests/test_error_handling_integration.py::test_workflow_task_failed_error
+ERROR tests/test_error_handling_integration.py::test_github_auth_failed_error
+ERROR tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_no_files_in_session
+ERROR tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_very_old_file_scoring
+ERROR tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_identical_filenames_different_times
+ERROR tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_special_characters_in_filename
+ERROR tests/test_file_resolver_edge_cases.py::TestFileResolverEdgeCases::test_performance_with_many_files
+ERROR tests/test_file_scoring_weights.py::test_scoring_weight_distribution
+ERROR tests/test_file_scoring_weights.py::test_scoring_component_breakdown
+ERROR tests/test_file_scoring_weights.py::test_scoring_with_different_intent_types
+ERROR tests/test_file_scoring_weights.py::test_scoring_edge_cases
+=========== 144 failed, 65 passed, 150 warnings, 19 errors in 11.93s ===========

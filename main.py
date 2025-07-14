@@ -283,9 +283,8 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         # Route based on intent category
         if enriched_intent.category == IntentCategory.QUERY:
             # Handle query intents through QueryRouter
+            repos = await RepositoryFactory.get_repositories()
             try:
-                # Get repositories for query service
-                repos = await RepositoryFactory.get_repositories()
                 project_query_service = ProjectQueryService(repos["projects"])
                 conversation_query_service = ConversationQueryService()
                 pool = await DatabasePool.get_pool()
@@ -328,6 +327,8 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             except Exception as query_error:
                 logger.error(f"Query processing failed: {query_error}")
                 raise HTTPException(status_code=500, detail="Internal server error")
+            finally:
+                await repos["session"].close()
         else:
             # Handle command intents through WorkflowFactory
             print(f"🔍 Creating workflow from intent...")

@@ -15,6 +15,7 @@ from services.domain.models import Intent, IntentCategory, Project, ProjectInteg
 # Domain imports (these will need to be implemented)
 from services.project_context import AmbiguousProjectError, ProjectContext, ProjectNotFoundError
 from services.queries.conversation_queries import ConversationQueryService
+from services.queries.file_queries import FileQueryService
 from services.queries.project_queries import ProjectQueryService
 from services.queries.query_router import QueryRouter
 from services.shared_types import IntegrationType, WorkflowStatus, WorkflowType
@@ -564,7 +565,8 @@ class TestQueryRouter:
 
         project_query_service = ProjectQueryService(mock_project_repository)
         conversation_query_service = ConversationQueryService()
-        router = QueryRouter(project_query_service, conversation_query_service)
+        file_query_service = FileQueryService(Mock())  # Add mock file query service
+        router = QueryRouter(project_query_service, conversation_query_service, file_query_service)
 
         # AND: QUERY intent for list_projects
         intent = Intent(category=IntentCategory.QUERY, action="list_projects", context={})
@@ -581,7 +583,8 @@ class TestQueryRouter:
         """QueryRouter should reject non-QUERY intents"""
         project_query_service = ProjectQueryService(mock_project_repository)
         conversation_query_service = ConversationQueryService()
-        router = QueryRouter(project_query_service, conversation_query_service)
+        file_query_service = FileQueryService(Mock())  # Add mock file query service
+        router = QueryRouter(project_query_service, conversation_query_service, file_query_service)
 
         # GIVEN: EXECUTION intent (not QUERY)
         intent = Intent(category=IntentCategory.EXECUTION, action="list_projects", context={})
@@ -596,7 +599,8 @@ class TestQueryRouter:
         """QueryRouter should handle unknown query actions gracefully"""
         project_query_service = ProjectQueryService(mock_project_repository)
         conversation_query_service = ConversationQueryService()
-        router = QueryRouter(project_query_service, conversation_query_service)
+        file_query_service = FileQueryService(Mock())  # Add mock file query service
+        router = QueryRouter(project_query_service, conversation_query_service, file_query_service)
 
         # GIVEN: QUERY intent with unknown action
         intent = Intent(category=IntentCategory.QUERY, action="unknown_action", context={})
@@ -610,7 +614,8 @@ class TestQueryRouter:
         """QueryRouter should return list of supported queries"""
         project_query_service = ProjectQueryService(mock_project_repository)
         conversation_query_service = ConversationQueryService()
-        router = QueryRouter(project_query_service, conversation_query_service)
+        file_query_service = FileQueryService(Mock())  # Add mock file query service
+        router = QueryRouter(project_query_service, conversation_query_service, file_query_service)
 
         # WHEN: Getting supported queries
         supported = router.get_supported_queries()
