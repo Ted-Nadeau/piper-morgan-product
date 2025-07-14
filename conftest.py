@@ -55,3 +55,15 @@ def test_client():
     app.state.ingester = DocumentIngester()
 
     return TestClient(app)
+
+
+@pytest.fixture
+async def db_session():
+    """Yield a fresh async database session for each test, and close it after use."""
+    from services.database.connection import db
+
+    session = await db.get_session()
+    try:
+        yield session
+    finally:
+        await session.close()

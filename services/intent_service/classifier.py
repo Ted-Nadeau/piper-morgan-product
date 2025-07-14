@@ -165,7 +165,7 @@ class IntentClassifier:
                 raise ValueError("No valid JSON object found in response")
 
             intent = Intent(
-                category=IntentCategory(parsed["category"]),
+                category=IntentCategory(parsed["category"].lower()),
                 action=parsed["action"],
                 confidence=parsed["confidence"],
                 context={
