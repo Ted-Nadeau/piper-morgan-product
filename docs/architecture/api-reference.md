@@ -137,7 +137,22 @@ response = requests.post("http://localhost:8001/api/v1/intent", json={
 projects = response.json()["data"]["projects"]
 ```
 
-### 3. Handle Clarification
+### 3. Get Project Details
+
+```python
+# Get detailed project information including integrations
+response = requests.post("http://localhost:8001/api/v1/intent", json={
+    "message": "Get project details",
+    "context": {"project_id": "proj-123"}
+})
+
+project_details = response.json()["data"]
+print("Project:", project_details["name"])
+print("Integrations:", project_details["integrations"])
+print("Active integrations:", project_details["active_integrations"])
+```
+
+### 4. Handle Clarification
 
 ```python
 response = requests.post("http://localhost:8001/api/v1/intent", json={
@@ -189,7 +204,7 @@ Access the chat interface at: http://localhost:3000
 | Category    | Purpose                | Example Actions                          |
 | ----------- | ---------------------- | ---------------------------------------- |
 | `execution` | Create, update, modify | create_github_issue, update_project      |
-| `query`     | Read, list, search     | list_projects, get_project, find_project |
+| `query`     | Read, list, search     | list_projects, get_project, get_project_details, find_project, get_default_project, count_projects |
 | `analysis`  | Analyze, assess        | analyze_metrics, review_performance      |
 | `synthesis` | Generate, summarize    | create_report, summarize_meeting         |
 | `strategy`  | Plan, prioritize       | plan_roadmap, prioritize_features        |
