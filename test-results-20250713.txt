@@ -248,12 +248,12 @@ __________________ ERROR at setup of test_list_projects_query __________________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -262,11 +262,11 @@ __________________ ERROR at setup of test_list_projects_query __________________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -331,12 +331,12 @@ ___________________ ERROR at setup of test_get_project_query ___________________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -345,11 +345,11 @@ ___________________ ERROR at setup of test_get_project_query ___________________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -412,12 +412,12 @@ _______________ ERROR at setup of test_get_default_project_query _______________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -426,11 +426,11 @@ _______________ ERROR at setup of test_get_default_project_query _______________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -493,12 +493,12 @@ __________________ ERROR at setup of test_find_project_query ___________________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -507,11 +507,11 @@ __________________ ERROR at setup of test_find_project_query ___________________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -574,12 +574,12 @@ _________________ ERROR at setup of test_count_projects_query __________________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -588,11 +588,11 @@ _________________ ERROR at setup of test_count_projects_query __________________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -655,12 +655,12 @@ _____________ ERROR at setup of test_get_project_query_missing_id ______________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -669,11 +669,11 @@ _____________ ERROR at setup of test_get_project_query_missing_id ______________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -736,12 +736,12 @@ ____________ ERROR at setup of test_find_project_query_missing_name ____________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -750,11 +750,11 @@ ____________ ERROR at setup of test_find_project_query_missing_name ____________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -817,12 +817,12 @@ ______________ ERROR at setup of test_low_confidence_intent_error ______________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -831,11 +831,11 @@ ______________ ERROR at setup of test_low_confidence_intent_error ______________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -898,12 +898,12 @@ ______________ ERROR at setup of test_workflow_task_failed_error _______________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -912,11 +912,11 @@ ______________ ERROR at setup of test_workflow_task_failed_error _______________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -979,12 +979,12 @@ _______________ ERROR at setup of test_github_auth_failed_error ________________
         mock_repo.get_default_project = AsyncMock(return_value=None)
         mock_repo.find_by_name = AsyncMock(return_value=None)
         mock_repo.count_active_projects = AsyncMock(return_value=0)
-    
+
         # Create mock file repository for testing
         mock_file_repo = Mock()
         mock_file_repo.get_by_id = AsyncMock(return_value=None)
         mock_file_repo.search_by_name = AsyncMock(return_value=[])
-    
+
         # Initialize app state for tests (similar to lifespan function)
         app.state.query_router = QueryRouter(
             project_query_service=ProjectQueryService(mock_repo),
@@ -993,11 +993,11 @@ _______________ ERROR at setup of test_github_auth_failed_error ________________
         )
         app.state.document_service = DocumentService()
         app.state.ingester = DocumentIngester()
-    
+
 >       return TestClient(app)
 
-conftest.py:57: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+conftest.py:57:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = <starlette.testclient.TestClient object at 0x30571ceb0>
 app = <fastapi.applications.FastAPI object at 0x17d5dc310>
@@ -2204,7 +2204,7 @@ self = <test_file_reference_detection.TestFileReferenceDetection object at 0x305
             "that upload has",
             "the excel file shows",
         ]
-    
+
         for message in file_references:
 >           assert PreClassifier.detect_file_reference(
                 message
@@ -2254,7 +2254,7 @@ self = <test_file_reference_detection.TestFileReferenceDetection object at 0x305
             ("", False),  # Empty string
             ("   the file   ", True),  # With whitespace
         ]
-    
+
         for message, expected in edge_cases:
             result = PreClassifier.detect_file_reference(message)
 >           assert result == expected, f"Expected {expected} for '{message}', got {result}"
@@ -2602,7 +2602,7 @@ self = <test_pre_classifier.TestPreClassifier object at 0x3058ea2e0>
             "thanks, that was helpful",
             "thank you, I appreciate it",
         ]
-    
+
         for pattern in non_conversational:
             intent = PreClassifier.pre_classify(pattern)
 >           assert intent is None, f"Expected None for '{pattern}', got {intent}"
@@ -2639,7 +2639,7 @@ self = <test_pre_classifier.TestPreClassifier object at 0x3058eaaf0>
             "thank you very much",
             "thanks a lot",
         ]
-    
+
         for pattern in edge_cases:
             if pattern.strip() in PreClassifier.GREETING_PATTERNS:
                 intent = PreClassifier.pre_classify(pattern)
@@ -2721,7 +2721,7 @@ self = <test_pre_classifier.TestPreClassifier object at 0x3058ea4f0>
             "thanks, that was helpful",  # Not just thanks
             "thank you, I appreciate it",  # Not just thanks
         ]
-    
+
         for pattern in non_matches:
             intent = PreClassifier.pre_classify(pattern)
 >           assert intent is None, f"Expected None for non-match '{pattern}', got {intent}"
@@ -2808,30 +2808,30 @@ ____________________ test_conversation_session_interaction _____________________
         intent = DummyIntent(action="greeting")
 >       session.add_interaction(intent, "Hello!")
 
-tests/test_session_manager.py:28: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_session_manager.py:28:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 services/session/session_manager.py:28: in add_interaction
     "intent": serialize_dataclass(intent),
 services/utils/serialization.py:21: in serialize_dataclass
     data = asdict(obj)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 obj = <test_session_manager.DummyIntent object at 0x3059d7f10>
 
     def asdict(obj, *, dict_factory=dict):
         """Return the fields of a dataclass instance as a new dictionary mapping
         field names to field values.
-    
+
         Example usage:
-    
+
           @dataclass
           class C:
               x: int
               y: int
-    
+
           c = C(1, 2)
           assert asdict(c) == {'x': 1, 'y': 2}
-    
+
         If given, 'dict_factory' will be used instead of built-in dict.
         The function applies recursively to field values that are
         dataclass instances. This will also look into built-in containers:
