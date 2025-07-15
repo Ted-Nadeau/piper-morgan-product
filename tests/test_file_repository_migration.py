@@ -1,0 +1,260 @@
+"""
+Test FileRepository migration to SQLAlchemy pattern
+Following TDD approach to migrate from asyncpg pools to AsyncSession
+"""
+
+import json
+from datetime import datetime, timedelta
+from uuid import uuid4
+
+import pytest
+from sqlalchemy import select
+
+from services.database.models import UploadedFileDB
+from services.domain.models import UploadedFile
+from services.repositories.file_repository_new import FileRepository
+
+
+@pytest.mark.asyncio
+async def test_file_repository_with_async_session(db_session):
+    """Test that FileRepository works with AsyncSession following BaseRepository pattern"""
+    # Arrange
+    repo = FileRepository(db_session)
+    test_file = UploadedFile(
+        id=str(uuid4()),
+        session_id="test_session_123",
+        filename="test_document.pdf",
+        file_type="application/pdf",
+        file_size=1024,
+        storage_path="/uploads/test_document.pdf",
+        upload_time=datetime.now(),
+        last_referenced=datetime.now(),
+        reference_count=0,
+        metadata={"test": "data"},
+    )
+
+    # Act - Save file
+    saved_file = await repo.save_file_metadata(test_file)
+
+    # Assert - Verify saved
+    assert saved_file.id == test_file.id
+    assert saved_file.filename == test_file.filename
+    assert saved_file.session_id == test_file.session_id
+
+
+@pytest.mark.asyncio
+async def test_get_file_by_id(db_session):
+    """Test retrieving file by ID using AsyncSession"""
+    # Arrange
+    repo = FileRepository(db_session)
+    file_id = str(uuid4())
+    test_file = UploadedFile(
+        id=file_id,
+        session_id="test_session_456",
+        filename="report.xlsx",
+        file_type="application/vnd.ms-excel",
+        file_size=2048,
+        storage_path="/uploads/report.xlsx",
+        upload_time=datetime.now(),
+        last_referenced=datetime.now(),
+        reference_count=0,
+        metadata={},
+    )
+
+    # Save file first
+    await repo.save_file_metadata(test_file)
+
+    # Act - Retrieve file
+    retrieved_file = await repo.get_file_by_id(file_id)
+
+    # Assert
+    assert retrieved_file is not None
+    assert retrieved_file.id == file_id
+    assert retrieved_file.filename == "report.xlsx"
+    assert retrieved_file.file_type == "application/vnd.ms-excel"
+    assert retrieved_file.file_size == 2048
+
+
+@pytest.mark.asyncio
+async def test_get_files_for_session(db_session):
+    """Test listing files for a session using AsyncSession"""
+    # Arrange
+    repo = FileRepository(db_session)
+    session_id = "test_session_789"
+
+    # Create multiple files for the session
+    files = []
+    for i in range(3):
+        file = UploadedFile(
+            id=str(uuid4()),
+            session_id=session_id,
+            filename=f"file_{i}.txt",
+            file_type="text/plain",
+            file_size=100 * (i + 1),
+            storage_path=f"/uploads/file_{i}.txt",
+            upload_time=datetime.now() - timedelta(minutes=i),
+            last_referenced=datetime.now(),
+            reference_count=0,
+            metadata={},
+        )
+        await repo.save_file_metadata(file)
+        files.append(file)
+
+    # Act - Get files for session
+    session_files = await repo.get_files_for_session(session_id, limit=10)
+
+    # Assert
+    assert len(session_files) == 3
+    # Should be ordered by upload_time DESC (most recent first)
+    assert session_files[0].filename == "file_0.txt"
+    assert session_files[1].filename == "file_1.txt"
+    assert session_files[2].filename == "file_2.txt"
+
+
+@pytest.mark.asyncio
+async def test_search_files_by_name(db_session):
+    """Test searching files by name pattern using AsyncSession"""
+    # Arrange
+    repo = FileRepository(db_session)
+    session_id = "test_search_session"
+
+    # Create files with different names
+    test_files = [
+        ("requirements.pdf", "application/pdf"),
+        ("requirements_v2.pdf", "application/pdf"),
+        ("design_doc.pdf", "application/pdf"),
+        ("test_requirements.txt", "text/plain"),
+    ]
+
+    for filename, file_type in test_files:
+        file = UploadedFile(
+            id=str(uuid4()),
+            session_id=session_id,
+            filename=filename,
+            file_type=file_type,
+            file_size=1000,
+            storage_path=f"/uploads/{filename}",
+            upload_time=datetime.now(),
+            last_referenced=datetime.now(),
+            reference_count=0,
+            metadata={},
+        )
+        await repo.save_file_metadata(file)
+
+    # Act - Search for files containing "requirements"
+    found_files = await repo.search_files_by_name(session_id, "requirements")
+
+    # Assert
+    assert len(found_files) == 3
+    filenames = [f.filename for f in found_files]
+    assert "requirements.pdf" in filenames
+    assert "requirements_v2.pdf" in filenames
+    assert "test_requirements.txt" in filenames
+    assert "design_doc.pdf" not in filenames
+
+
+@pytest.mark.asyncio
+async def test_increment_reference_count(db_session):
+    """Test incrementing reference count using AsyncSession"""
+    # Arrange
+    repo = FileRepository(db_session)
+    file_id = str(uuid4())
+    test_file = UploadedFile(
+        id=file_id,
+        session_id="ref_count_session",
+        filename="important.doc",
+        file_type="application/msword",
+        file_size=5000,
+        storage_path="/uploads/important.doc",
+        upload_time=datetime.now() - timedelta(hours=1),
+        last_referenced=datetime.now() - timedelta(hours=1),
+        reference_count=0,
+        metadata={},
+    )
+
+    await repo.save_file_metadata(test_file)
+
+    # Act - Increment reference count
+    await repo.increment_reference_count(file_id)
+
+    # Assert
+    updated_file = await repo.get_file_by_id(file_id)
+    assert updated_file.reference_count == 1
+    assert updated_file.last_referenced > test_file.last_referenced
+
+
+@pytest.mark.asyncio
+async def test_delete_file(db_session):
+    """Test deleting file using AsyncSession"""
+    # Arrange
+    repo = FileRepository(db_session)
+    file_id = str(uuid4())
+    test_file = UploadedFile(
+        id=file_id,
+        session_id="delete_test_session",
+        filename="to_delete.tmp",
+        file_type="application/octet-stream",
+        file_size=100,
+        storage_path="/uploads/to_delete.tmp",
+        upload_time=datetime.now(),
+        last_referenced=datetime.now(),
+        reference_count=0,
+        metadata={},
+    )
+
+    await repo.save_file_metadata(test_file)
+
+    # Verify file exists
+    assert await repo.get_file_by_id(file_id) is not None
+
+    # Act - Delete file
+    deleted = await repo.delete_file(file_id)
+
+    # Assert
+    assert deleted is True
+    assert await repo.get_file_by_id(file_id) is None
+
+
+@pytest.mark.asyncio
+async def test_repository_inherits_from_base(db_session):
+    """Test that FileRepository follows BaseRepository pattern"""
+    from services.database.repositories import BaseRepository
+
+    # Assert FileRepository inherits from BaseRepository
+    repo = FileRepository(db_session)
+    assert isinstance(repo, BaseRepository)
+    assert hasattr(repo, "session")
+    assert repo.session == db_session
+
+
+@pytest.mark.asyncio
+async def test_file_repository_returns_domain_models(db_session):
+    """Test that all repository methods return domain models, not DB models"""
+    # Arrange
+    repo = FileRepository(db_session)
+    test_file = UploadedFile(
+        id=str(uuid4()),
+        session_id="domain_test_session",
+        filename="domain_test.pdf",
+        file_type="application/pdf",
+        file_size=1024,
+        storage_path="/uploads/domain_test.pdf",
+        upload_time=datetime.now(),
+        last_referenced=datetime.now(),
+        reference_count=0,
+        metadata={"key": "value"},
+    )
+
+    # Act & Assert - All methods should return domain models
+    saved = await repo.save_file_metadata(test_file)
+    assert isinstance(saved, UploadedFile)
+    assert not isinstance(saved, UploadedFileDB)
+
+    retrieved = await repo.get_file_by_id(test_file.id)
+    assert isinstance(retrieved, UploadedFile)
+    assert not isinstance(retrieved, UploadedFileDB)
+
+    session_files = await repo.get_files_for_session(test_file.session_id)
+    for file in session_files:
+        assert isinstance(file, UploadedFile)
+        assert not isinstance(file, UploadedFileDB)
