@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from services.database.models import UploadedFileDB
 from services.domain.models import UploadedFile
-from services.repositories.file_repository_new import FileRepository
+from services.repositories.file_repository import FileRepository
 
 
 @pytest.mark.asyncio

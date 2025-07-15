@@ -138,6 +138,17 @@ class WorkflowRepository(BaseRepository):
 
         return await self.update(workflow_id, **updates)
 
+    async def find_by_id(self, workflow_id: str) -> Optional[domain.Workflow]:
+        """Find workflow by ID and return domain model (for API compatibility)"""
+        # Use selectinload to eagerly load the intent relationship
+        result = await self.session.execute(
+            select(Workflow)
+            .options(selectinload(Workflow.intent))
+            .where(Workflow.id == workflow_id)
+        )
+        db_workflow = result.scalar_one_or_none()
+        return db_workflow.to_domain() if db_workflow else None
+
 
 class TaskRepository(BaseRepository):
     model = Task

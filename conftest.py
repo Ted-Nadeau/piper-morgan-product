@@ -1,3 +1,24 @@
+"""
+conftest.py — Test infrastructure for Piper Morgan
+
+## Session Management Pattern (2025-07-14)
+
+**IMPORTANT:**
+- Do NOT reuse a single AsyncSession for multiple DB operations in a loop or across awaits.
+- This causes asyncpg/SQLAlchemy errors: 'cannot perform operation: another operation is in progress'.
+- Instead, use the new `db_session_factory` fixture to get a fresh session for each operation.
+
+### Example usage:
+    @pytest.mark.asyncio
+    async def test_something(db_session_factory):
+        for item in items:
+            async with await db_session_factory() as session:
+                repo = FileRepository(session)
+                await repo.save_file_metadata(file)
+
+This pattern prevents concurrent session usage errors and aligns with DDD/test best practices.
+"""
+
 import os
 import sys
 from unittest.mock import AsyncMock, Mock
@@ -67,3 +88,21 @@ async def db_session():
         yield session
     finally:
         await session.close()
+
+
+@pytest.fixture
+async def db_session_factory():
+    """Provide a factory that creates fresh async sessions for each operation.
+
+    Usage:
+        async with await db_session_factory() as session:
+            repo = FileRepository(session)
+            ...
+    """
+    from services.database.connection import db
+
+    async def _create_session():
+        session = await db.get_session()
+        return session
+
+    return _create_session

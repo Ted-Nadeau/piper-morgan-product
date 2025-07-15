@@ -287,8 +287,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             try:
                 project_query_service = ProjectQueryService(repos["projects"])
                 conversation_query_service = ConversationQueryService()
-                pool = await DatabasePool.get_pool()
-                file_query_service = FileQueryService(FileRepository(pool))
+                file_query_service = FileQueryService(FileRepository(repos["session"]))
                 query_router = QueryRouter(
                     project_query_service,
                     conversation_query_service,
@@ -461,12 +460,13 @@ async def get_workflow(workflow_id: str):
     workflow = engine.workflows.get(workflow_id)
 
     # Always fetch from database to ensure we have the latest state
-    from services.repositories import DatabasePool
-    from services.repositories.workflow_repository import WorkflowRepository
+    from services.database.repositories import RepositoryFactory
 
-    pool = await DatabasePool.get_pool()
-    repo = WorkflowRepository(pool)
-    db_workflow = await repo.find_by_id(workflow_id)
+    repos = await RepositoryFactory.get_repositories()
+    try:
+        db_workflow = await repos["workflows"].find_by_id(workflow_id)
+    finally:
+        await repos["session"].close()
 
     if not db_workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
@@ -617,9 +617,12 @@ async def upload_file(file: UploadFile = File(...), session_id: Optional[str] = 
         )
 
         # Save to database
-        pool = await DatabasePool.get_pool()
-        repo = FileRepository(pool)
-        saved_file = await repo.save_file_metadata(uploaded_file)
+        repos = await RepositoryFactory.get_repositories()
+        try:
+            repo = FileRepository(repos["session"])
+            saved_file = await repo.save_file_metadata(uploaded_file)
+        finally:
+            await repos["session"].close()
 
         # Track in session
         session = session_manager.get_or_create_session(session_id)
