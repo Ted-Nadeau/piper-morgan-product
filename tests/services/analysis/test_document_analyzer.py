@@ -21,7 +21,7 @@ class TestDocumentAnalyzer:
     @pytest.mark.asyncio
     async def test_basic_pdf_analysis(self):
         """Test page count and text extraction from a normal PDF"""
-        pdf_path = os.path.join(FIXTURE_DIR, "sample_document.pdf")
+        pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
         result = await self.analyzer.analyze(pdf_path)
         # Be more flexible with page count - just check it's a positive number
         assert result.metadata["page_count"] > 0
@@ -30,7 +30,7 @@ class TestDocumentAnalyzer:
     @pytest.mark.asyncio
     async def test_summary_generation_with_llm(self):
         """Test summary generation using LLM (mocked)"""
-        pdf_path = os.path.join(FIXTURE_DIR, "sample_document.pdf")
+        pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
         # Mock the complete method that the analyzer actually calls
         self.mock_llm.complete.return_value = (
             '{"summary": "This is a summary.", "key_findings": ["Point 1", "Point 2"]}'
@@ -42,7 +42,7 @@ class TestDocumentAnalyzer:
     @pytest.mark.asyncio
     async def test_key_points_extraction(self):
         """Test key points extraction from PDF using LLM (mocked)"""
-        pdf_path = os.path.join(FIXTURE_DIR, "sample_document.pdf")
+        pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
         # Mock the complete method that the analyzer actually calls
         self.mock_llm.complete.return_value = (
             '{"summary": "This is a summary.", "key_findings": ["Point 1", "Point 2"]}'
@@ -78,7 +78,7 @@ class TestDocumentAnalyzer:
 
     @pytest.mark.asyncio
     async def test_analyze_returns_analysis_result(self):
-        pdf_path = os.path.join(FIXTURE_DIR, "sample_document.pdf")
+        pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
         result = await self.analyzer.analyze(pdf_path)
         assert isinstance(result, AnalysisResult)
 
@@ -95,7 +95,7 @@ async def test_document_basic_pdf_analysis():
     from services.analysis.document_analyzer import DocumentAnalyzer
 
     analyzer = DocumentAnalyzer()
-    result = await analyzer.analyze(FIXTURE_DIR + "sample_document.pdf")
+    result = await analyzer.analyze(FIXTURE_DIR + "chapter.pdf")
     # Be more flexible with page count
     assert result.metadata["page_count"] > 0
     assert isinstance(result.metadata["text"], str)
@@ -112,7 +112,7 @@ async def test_document_summary_generation():
         '{"summary": "This is a summary.", "key_findings": ["Point 1", "Point 2"]}'
     )
     analyzer = DocumentAnalyzer(llm_client=mock_llm)
-    result = await analyzer.analyze(FIXTURE_DIR + "sample_document.pdf")
+    result = await analyzer.analyze(FIXTURE_DIR + "chapter.pdf")
     assert "summary" in result.metadata
     assert result.metadata["summary"] is not None
 
@@ -127,7 +127,7 @@ async def test_document_key_points_extraction():
         '{"summary": "This is a summary.", "key_findings": ["Point 1", "Point 2"]}'
     )
     analyzer = DocumentAnalyzer(llm_client=mock_llm)
-    result = await analyzer.analyze(FIXTURE_DIR + "sample_document.pdf")
+    result = await analyzer.analyze(FIXTURE_DIR + "chapter.pdf")
     assert "key_points" in result.metadata
     assert isinstance(result.metadata["key_points"], list)
 
@@ -168,7 +168,7 @@ async def test_document_analyze_returns_analysis_result():
     from services.analysis.document_analyzer import DocumentAnalyzer
 
     analyzer = DocumentAnalyzer()
-    result = await analyzer.analyze(FIXTURE_DIR + "sample_document.pdf")
+    result = await analyzer.analyze(FIXTURE_DIR + "chapter.pdf")
     assert isinstance(result, AnalysisResult)
 
 
