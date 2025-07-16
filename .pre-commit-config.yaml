@@ -19,3 +19,11 @@ repos:
     rev: 24.3.0
     hooks:
       - id: black
+  - repo: local
+    hooks:
+      - id: documentation-check
+        name: Documentation Check
+        entry: .git/hooks/pre-commit.legacy
+        language: script
+        always_run: true
+        pass_filenames: false
