@@ -202,8 +202,8 @@ class FileResolver:
         # Add context keywords
         if intent.context:
             context_text = str(intent.context).lower()
-            # Extract meaningful words (simple approach)
-            words = re.findall(r"\b[a-z]{3,}\b", context_text)
+            # Extract meaningful words (improved regex)
+            words = re.findall(r"\b[a-z0-9_-]{3,}\b", context_text)
             keywords.extend(words)
 
         if not keywords:
@@ -212,7 +212,6 @@ class FileResolver:
         # Check filename against keywords
         filename_lower = filename.lower()
         matches = 0
-
         for keyword in keywords:
             if keyword.lower() in filename_lower:
                 matches += 1

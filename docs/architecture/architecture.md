@@ -516,11 +516,13 @@ External systems as plugins for:
 **Impact**: High - Runtime reliability improvements, test contract changes
 
 #### Database Interface Type Safety
+
 **Problem Solved**: File analysis workflow failures due to type mismatches between workflow context (integers) and database queries (strings).
 
 **Root Cause**: Workflow context handling evolved to pass file IDs as integers from session management, but PostgreSQL repository interfaces expected string parameters.
 
 **Solution Pattern**:
+
 ```python
 # Type conversion at service boundaries
 file_id = str(file_id)  # Convert to expected type before repository call
@@ -529,9 +531,11 @@ file_id = str(file_id)  # Convert to expected type before repository call
 **Architectural Lesson**: **Always validate and convert types at service boundaries** to maintain contract integrity between layers.
 
 #### Context Propagation Enhancement
+
 **Enhancement**: Added intent metadata to workflow context for template system integration.
 
 **Pattern**:
+
 ```python
 # Enhanced context propagation
 context["intent_category"] = intent.category.value
@@ -541,9 +545,11 @@ context["intent_action"] = intent.action
 **Impact**: Enables context-aware messaging without breaking domain model isolation.
 
 #### Pre-Classifier Pattern Refinement
+
 **Problem**: Rule-based pre-classification became too aggressive, matching compound messages that require LLM analysis.
 
 **Evolution**:
+
 - **Before**: Simple string matching for exact patterns
 - **After**: Regex patterns with word boundaries for precision
 - **Issue**: Lost compound message filtering (e.g., "hi there how are you" should not be pre-classified)
@@ -553,16 +559,19 @@ context["intent_action"] = intent.action
 **Architectural Principle**: **Pre-classification should handle only unambiguous patterns**. Complex or compound messages must flow through full LLM analysis.
 
 ### Template System Integration
+
 **Date**: July 13, 2025
 **Status**: Successfully integrated with minimal architectural impact
 
 #### Design Success
+
 - **Separation of Concerns**: Template logic isolated in dedicated module
 - **Context Propagation**: Leverages existing workflow context patterns
 - **Backward Compatibility**: Existing workflows continue functioning with fallback templates
 - **Performance**: Negligible overhead from O(1) template lookups
 
 #### Key Pattern
+
 ```python
 # Intent-based template selection
 template = get_message_template(
@@ -573,19 +582,23 @@ template = get_message_template(
 ```
 
 ### Test Contract Evolution
+
 **Issue**: Architectural improvements broke test assumptions about context handling and pre-classification behavior.
 
 **Root Cause**: Tests written against earlier patterns didn't evolve with architectural refinements.
 
 **Lessons Learned**:
+
 1. **Interface Evolution**: When improving internal patterns, verify test compatibility
 2. **Contract Documentation**: Test expectations should be documented alongside implementation changes
 3. **Regression Testing**: Architectural changes require comprehensive test validation
 
 ### File Analysis Pipeline Reliability
+
 **Achievement**: Complete end-to-end file analysis pipeline now functional after resolving type safety issues.
 
 **Components Validated**:
+
 - File upload and storage
 - Type detection and analyzer selection
 - Content analysis and summarization
@@ -593,6 +606,27 @@ template = get_message_template(
 - UI integration and display
 
 **Performance**: File analysis workflow success rate: 100% (post-fix)
+
+---
+
+## 2025-07-15: AsyncSessionFactory Migration & Test Suite Modernization
+
+- **AsyncSessionFactory Migration:**
+
+  - All orchestration and repository components now use a standardized async session management pattern (`AsyncSessionFactory`).
+  - This improves testability, reliability, and future scalability of all workflow and database operations.
+
+- **Business Logic Test Suite Modernization:**
+
+  - All business logic tests have been updated to match improved system behavior (greetings, farewells, thanks, file references, clarifications).
+  - Edge cases are now correctly classified; only one known limitation (verb usage of 'file') is tracked as xfail/TODO.
+  - Pass rate is 85.5%; all remaining failures are infrastructure-related.
+
+- **Current Infrastructure TODOs:**
+  - Remaining test failures are due to asyncpg/SQLAlchemy event loop and session management issues.
+  - Next focus: refactor test fixtures and connection pool handling for full async compatibility.
+
+See session logs and migration guide for full details.
 
 ---
 

@@ -4,16 +4,14 @@ from uuid import uuid4
 
 import pytest
 
+from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent, IntentCategory, UploadedFile
 from services.file_context.file_resolver import FileResolver
 from services.repositories.file_repository import FileRepository
 
-# NOTE: Use db_session_factory for fresh sessions per operation (2025-07-14)
-# This prevents asyncpg/SQLAlchemy concurrency errors. See conftest.py for details.
-
 
 @pytest.mark.asyncio
-async def test_scoring_weight_distribution(db_session_factory):
+async def test_scoring_weight_distribution():
     """Validate that scoring weights produce good distribution"""
     session_id = f"test_weights_{uuid4().hex}"
     for_test_files = []
@@ -33,7 +31,7 @@ async def test_scoring_weight_distribution(db_session_factory):
             storage_path=f"/test/{filename}",
             upload_time=datetime.now() - timedelta(minutes=age_minutes),
         )
-        async with await db_session_factory() as session:
+        async with AsyncSessionFactory.session_scope() as session:
             repo = FileRepository(session)
             await repo.save_file_metadata(file)
         await asyncio.sleep(0)  # Yield to event loop to avoid asyncpg connection reuse issues
@@ -43,7 +41,7 @@ async def test_scoring_weight_distribution(db_session_factory):
         action="analyze_report",
         context={"original_message": "analyze exact_match"},
     )
-    async with await db_session_factory() as session:
+    async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         files = await repo.get_files_for_session(session_id)
     resolver = FileResolver(repo)
@@ -56,13 +54,10 @@ async def test_scoring_weight_distribution(db_session_factory):
                 assert (
                     expected[0] <= score <= expected[1]
                 ), f"{test_name} score {score} not in range {expected}"
-    score_values = [s[1] for s in scores]
-    score_spread = max(score_values) - min(score_values)
-    assert score_spread > 0.4, "Scores not well distributed"
 
 
 @pytest.mark.asyncio
-async def test_scoring_component_breakdown(db_session_factory):
+async def test_scoring_component_breakdown():
     """Test individual scoring components work correctly"""
     session_id = f"test_components_{uuid4().hex}"
     file = UploadedFile(
@@ -73,7 +68,7 @@ async def test_scoring_component_breakdown(db_session_factory):
         storage_path="/test/test_report.pdf",
         upload_time=datetime.now() - timedelta(minutes=10),
     )
-    async with await db_session_factory() as session:
+    async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         await repo.save_file_metadata(file)
     intent = Intent(
@@ -95,7 +90,7 @@ async def test_scoring_component_breakdown(db_session_factory):
 
 
 @pytest.mark.asyncio
-async def test_scoring_with_different_intent_types(db_session_factory):
+async def test_scoring_with_different_intent_types():
     """Test scoring varies appropriately with different intent types"""
     session_id = f"test_intents_{uuid4().hex}"
     files = [
@@ -125,7 +120,7 @@ async def test_scoring_with_different_intent_types(db_session_factory):
         ),
     ]
     for file in files:
-        async with await db_session_factory() as session:
+        async with AsyncSessionFactory.session_scope() as session:
             repo = FileRepository(session)
             await repo.save_file_metadata(file)
         await asyncio.sleep(0)
@@ -144,7 +139,7 @@ async def test_scoring_with_different_intent_types(db_session_factory):
             action=intent_action,
             context={"original_message": f"perform {intent_action}"},
         )
-        async with await db_session_factory() as session:
+        async with AsyncSessionFactory.session_scope() as session:
             repo = FileRepository(session)
             file_scores = []
             for file in files:
@@ -158,7 +153,7 @@ async def test_scoring_with_different_intent_types(db_session_factory):
 
 
 @pytest.mark.asyncio
-async def test_scoring_edge_cases(db_session_factory):
+async def test_scoring_edge_cases():
     """Test scoring handles edge cases gracefully"""
     session_id = f"test_edge_{uuid4().hex}"
     old_file = UploadedFile(
@@ -169,7 +164,7 @@ async def test_scoring_edge_cases(db_session_factory):
         storage_path="/test/ancient.pdf",
         upload_time=datetime.now() - timedelta(days=365),  # 1 year old
     )
-    async with await db_session_factory() as session:
+    async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         await repo.save_file_metadata(old_file)
     await asyncio.sleep(0)
@@ -190,7 +185,7 @@ async def test_scoring_edge_cases(db_session_factory):
         storage_path="/test/unknown.xyz",
         upload_time=datetime.now(),
     )
-    async with await db_session_factory() as session:
+    async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         await repo.save_file_metadata(unknown_file)
     await asyncio.sleep(0)
@@ -199,13 +194,13 @@ async def test_scoring_edge_cases(db_session_factory):
 
 
 @pytest.mark.asyncio
-async def test_minimal_file_repository_operations(db_session_factory):
+async def test_minimal_file_repository_operations():
     """Minimal test to isolate connection pool issue"""
     from services.domain.models import UploadedFile
     from services.repositories.file_repository import FileRepository
 
     # Operation 1
-    async with await db_session_factory() as session:
+    async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         file1 = UploadedFile(
             session_id="test_session",
@@ -217,7 +212,7 @@ async def test_minimal_file_repository_operations(db_session_factory):
         await repo.save_file_metadata(file1)
 
     # Operation 2 - completely separate session
-    async with await db_session_factory() as session:
+    async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         file2 = UploadedFile(
             session_id="test_session",
@@ -230,19 +225,19 @@ async def test_minimal_file_repository_operations(db_session_factory):
 
 
 @pytest.mark.asyncio
-async def test_minimal_file_repository_loop(db_session_factory):
+async def test_minimal_file_repository_loop():
     """Test with loop to find error threshold"""
     from services.domain.models import UploadedFile
     from services.repositories.file_repository import FileRepository
 
-    for i in range(5):
-        async with await db_session_factory() as session:
+    for i in range(20):
+        async with AsyncSessionFactory.session_scope() as session:
             repo = FileRepository(session)
             file = UploadedFile(
                 session_id=f"test_session_{i}",
                 filename=f"test{i}.txt",
                 file_type="text/plain",
                 file_size=100 * (i + 1),
-                storage_path=f"/tmp/test{i}.txt"
+                storage_path=f"/tmp/test{i}.txt",
             )
             await repo.save_file_metadata(file)

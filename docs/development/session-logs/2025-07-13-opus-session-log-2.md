@@ -75,7 +75,7 @@ Cursor Assistant has proposed comprehensive documentation updates:
 
 **Documentation Scope**:
 1. Data Model - ActionHumanization
-2. API Spec - UI Message Services  
+2. API Spec - UI Message Services
 3. Architecture - UI Message Layer
 4. Pattern Catalog - Pattern #15
 5. ADR-004 - Architecture Decision

@@ -28,6 +28,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from services.database.connection import db
+from services.database.session_factory import AsyncSessionFactory
 from services.knowledge_graph.document_service import DocumentService
 from services.knowledge_graph.ingestion import DocumentIngester
 from services.queries.conversation_queries import ConversationQueryService
@@ -44,8 +45,25 @@ def close_db_event_loop(request):
     def fin():
         import asyncio
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(db.close())
+        try:
+            # Try to get existing event loop
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                # Create new event loop if closed
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            # Close database connections
+            loop.run_until_complete(db.close())
+
+        except RuntimeError:
+            # If no event loop exists, create one for cleanup
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(db.close())
+            finally:
+                loop.close()
 
     request.addfinalizer(fin)
 
@@ -80,14 +98,13 @@ def test_client():
 
 @pytest.fixture
 async def db_session():
-    """Yield a fresh async database session for each test, and close it after use."""
-    from services.database.connection import db
+    """Yield a fresh async database session for each test, and close it after use.
 
-    session = await db.get_session()
-    try:
+    DEPRECATED: Use async_session fixture instead for new tests.
+    This fixture is maintained for backward compatibility.
+    """
+    async with AsyncSessionFactory.session_scope() as session:
         yield session
-    finally:
-        await session.close()
 
 
 @pytest.fixture
@@ -106,3 +123,39 @@ async def db_session_factory():
         return session
 
     return _create_session
+
+
+@pytest.fixture
+async def async_session():
+    """Provide AsyncSessionFactory.session_scope() for production-pattern tests.
+
+    Usage:
+        async def test_something(async_session):
+            async with async_session as session:
+                repo = FileRepository(session)
+                ...
+    """
+    return AsyncSessionFactory.session_scope()
+
+
+@pytest.fixture
+async def async_transaction():
+    """Provide AsyncSessionFactory.transaction_scope() for explicit transaction tests.
+
+    Usage:
+        async def test_something(async_transaction):
+            async with async_transaction as session:
+                repo = FileRepository(session)
+                ...
+    """
+    return AsyncSessionFactory.transaction_scope()
+
+
+@pytest.fixture(scope="function", autouse=True)
+async def cleanup_sessions():
+    """Ensure proper cleanup after each test function"""
+    yield
+    # Allow some time for any pending async operations to complete
+    import asyncio
+
+    await asyncio.sleep(0.1)  # Increased delay for more thorough cleanup

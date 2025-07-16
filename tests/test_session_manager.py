@@ -1,4 +1,5 @@
 import time
+from dataclasses import dataclass
 
 import pytest
 
@@ -7,12 +8,12 @@ from services.session.session_manager import ConversationSession, SessionManager
 from services.shared_types import IntentCategory
 
 
+@dataclass
 class DummyIntent:
-    def __init__(self, action="test", category=IntentCategory.CONVERSATION, confidence=1.0):
-        self.action = action
-        self.category = category
-        self.confidence = confidence
-        self.context = {}
+    action: str
+    category: IntentCategory
+    confidence: float
+    context: dict
 
     def to_dict(self):
         return {
@@ -24,7 +25,9 @@ class DummyIntent:
 
 def test_conversation_session_interaction():
     session = ConversationSession("test-session")
-    intent = DummyIntent(action="greeting")
+    intent = DummyIntent(
+        action="greeting", category=IntentCategory.CONVERSATION, confidence=1.0, context={}
+    )
     session.add_interaction(intent, "Hello!")
     assert len(session.history) == 1
     assert session.history[0]["intent"]["action"] == "greeting"

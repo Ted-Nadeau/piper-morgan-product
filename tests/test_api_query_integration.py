@@ -18,8 +18,8 @@ def test_list_projects_query(test_client, setup_projects):
     data = response.json()
     assert data["intent"]["category"] == "query"
     assert data["intent"]["action"] == "list_projects"
-    assert isinstance(data["response"], str)
-    assert "projects" in data["response"].lower() or "project" in data["response"].lower()
+    assert isinstance(data["message"], str)
+    assert "projects" in data["message"].lower() or "project" in data["message"].lower()
 
 
 def test_get_project_query(test_client, setup_projects):

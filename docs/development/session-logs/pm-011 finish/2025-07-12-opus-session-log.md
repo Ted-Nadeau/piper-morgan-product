@@ -100,12 +100,12 @@ OBJECTIVE: Find where orchestration marks workflows complete despite task failur
    - Start at UI response "I've completed the analysis"
    - grep for this exact string in web/
    - Trace back to see what API response triggers it
-   
+
 2. FIND WORKFLOW COMPLETION LOGIC:
    - Search for where WorkflowStatus.COMPLETED is set
    - Look in services/orchestration/engine.py
    - Check if it distinguishes between partial and full success
-   
+
 3. CHECK TASK FAILURE PROPAGATION:
    - Find where LLM failures are caught in workflow execution
    - See if task failures properly fail the workflow

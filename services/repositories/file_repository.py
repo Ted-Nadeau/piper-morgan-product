@@ -28,9 +28,9 @@ class FileRepository(BaseRepository):
         # Convert domain model to DB model
         db_file = UploadedFileDB.from_domain(file)
 
-        # Use merge to handle both insert and update
-        async with self.session.begin():
-            self.session.add(db_file)
+        # Add to session - transaction managed by caller
+        self.session.add(db_file)
+        await self.session.flush()
         await self.session.refresh(db_file)
 
         # Convert back to domain model
@@ -57,16 +57,14 @@ class FileRepository(BaseRepository):
 
     async def increment_reference_count(self, file_id: str):
         """Increment reference count and update last_referenced timestamp"""
-        async with self.session.begin():
-            await self.session.execute(
-                update(UploadedFileDB)
-                .where(UploadedFileDB.id == file_id)
-                .values(
-                    reference_count=UploadedFileDB.reference_count + 1,
-                    last_referenced=datetime.now(),
-                )
+        await self.session.execute(
+            update(UploadedFileDB)
+            .where(UploadedFileDB.id == file_id)
+            .values(
+                reference_count=UploadedFileDB.reference_count + 1,
+                last_referenced=datetime.now(),
             )
-        await self.session.commit()
+        )
 
     async def search_files_by_name(self, session_id: str, query: str) -> List[UploadedFile]:
         """Search files by name within a session (case-insensitive partial match)"""
@@ -136,7 +134,6 @@ class FileRepository(BaseRepository):
         db_file = result.scalar_one_or_none()
 
         if db_file:
-            async with self.session.begin():
-                await self.session.delete(db_file)
+            self.session.delete(db_file)
             return True
         return False

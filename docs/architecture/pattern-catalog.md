@@ -8,7 +8,7 @@ This catalog documents the key architectural and design patterns used in Piper M
 
 ### Purpose
 
-Encapsulate data access logic and provide a clean interface between domain models and database implementation.
+Encapsulate data access logic and provide a clean interface between domain models and database implementation, with automatic resource management and consistent transaction handling.
 
 ### Implementation
 
@@ -16,51 +16,77 @@ Encapsulate data access logic and provide a clean interface between domain model
 class BaseRepository:
     """Base repository with common CRUD operations"""
 
-    def __init__(self, db_session: AsyncSession, model_class: Type[Base]):
-        self.db = db_session
-        self.model_class = model_class
+    def __init__(self, session: AsyncSession):
+        self.session = session
 
     async def create(self, **kwargs) -> Any:
-        instance = self.model_class(**kwargs)
-        self.db.add(instance)
-        await self.db.commit()
-        await self.db.refresh(instance)
+        # Use transaction context for automatic commit/rollback
+        async with self.session.begin():
+            instance = self.model(**kwargs)
+            self.session.add(instance)
+            # Automatic commit via context manager
         return instance
 
     async def get_by_id(self, id: str) -> Optional[Any]:
-        return await self.db.get(self.model_class, id)
+        result = await self.session.execute(select(self.model).where(self.model.id == id))
+        return result.scalar_one_or_none()
 
 class ProjectRepository(BaseRepository):
     """Domain-specific repository"""
 
-    def __init__(self, db_session: AsyncSession):
-        super().__init__(db_session, ProductDB)
+    model = ProjectDB
+
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
 
     async def list_active_projects(self) -> List[Project]:
-        result = await self.db.execute(
-            select(ProductDB).where(ProductDB.is_archived == False)
+        result = await self.session.execute(
+            select(ProjectDB).where(ProjectDB.is_archived == False)
         )
         db_projects = result.scalars().all()
-        return [self._to_domain(p) for p in db_projects]
+        return [db_project.to_domain() for db_project in db_projects]
 
-    def _to_domain(self, db_model: ProductDB) -> Project:
-        """Convert database model to domain model"""
-        # Conversion logic here
+# Session Management Pattern
+from contextlib import asynccontextmanager
+from services.database.session_factory import AsyncSessionFactory
+
+async def service_example():
+    """Example service using context manager for automatic resource management"""
+    async with AsyncSessionFactory.session_scope() as session:
+        repo = ProjectRepository(session)
+        return await repo.list_active_projects()
+    # Automatic cleanup and transaction handling
 ```
 
 ### Usage Guidelines
 
+**Repository Design:**
 - One repository per aggregate root
 - Repository methods return domain models, not database models
 - Keep business logic out of repositories
 - Use repositories for all data access
+- **NEW**: Use `async with session.begin()` for all operations
+- **NEW**: No manual `session.commit()` calls
+
+**Session Management:**
+- **NEW**: Use `AsyncSessionFactory.session_scope()` context manager
+- **NEW**: No manual session creation or cleanup
+- **NEW**: Automatic transaction handling via context manager
+- **NEW**: Single session per operation scope
 
 ### Anti-patterns to Avoid
 
+**Repository Anti-patterns:**
 - ❌ Direct database access from services
 - ❌ Business logic in repositories
 - ❌ Exposing database models outside repository
 - ❌ Generic repositories without domain methods
+
+**Session Anti-patterns:**
+- ❌ Manual session creation/cleanup
+- ❌ Sharing sessions across operation boundaries
+- ❌ Manual `session.commit()` calls
+- ❌ Missing session cleanup in exception handlers
 
 ## 2. Factory Pattern (Stateless)
 
