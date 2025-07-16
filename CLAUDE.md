@@ -129,13 +129,19 @@ For comprehensive development methodology, see:
    - **Layered Architecture**: Domain → Application → Infrastructure → Presentation
    - **Business logic belongs in domain services**, not UI or infrastructure layers
 
-2. **CQRS-lite Pattern**:
+2. **AsyncSessionFactory Pattern**: Standardized async session management across all components (2025-07-15 migration)
+   - **Session Scope**: `AsyncSessionFactory.session_scope()` for automatic session lifecycle management
+   - **Transaction Awareness**: Repository methods detect existing transactions to prevent double-scoping
+   - **Context Managers**: All database operations use async context managers for cleanup
+   - **Consistent Pattern**: Replaces legacy RepositoryFactory and direct session creation
+
+3. **CQRS-lite Pattern**:
    - Read operations: `services/queries/` (QueryRouter handles all read-only operations)
    - Write operations: `services/orchestration/` (workflows and commands)
 
-3. **Repository Pattern**: All data access through repositories in `services/repositories/`
+4. **Repository Pattern**: All data access through repositories in `services/repositories/`
 
-4. **Workflow Orchestration**:
+5. **Workflow Orchestration**:
    - Uses internal task handler pattern in `OrchestrationEngine`
    - Stateless `WorkflowFactory` with per-call context injection
    - Automatic repository context enrichment for workflows
@@ -179,9 +185,26 @@ REDIS_URL=redis://localhost:6379
 ### Testing Strategy
 
 - Integration tests use real database connections (PostgreSQL on port 5433)
+- **AsyncSessionFactory Test Fixtures**: Use `async_session` and `async_transaction` fixtures for new tests
+- **Legacy Support**: `db_session` fixture maintained for backward compatibility
 - Tests automatically handle database cleanup between runs
 - Asyncpg warnings during teardown are benign and can be ignored
 - Always set `PYTHONPATH=.` when running tests
+
+#### Async Session Test Patterns
+```python
+# Recommended pattern for new tests
+async def test_something(async_transaction):
+    async with async_transaction as session:
+        repo = SomeRepository(session)
+        await repo.operation()
+
+# Alternative for read-only operations
+async def test_query(async_session):
+    async with async_session as session:
+        repo = SomeRepository(session)
+        result = await repo.get_something()
+```
 
 ### Current Development Focus
 
