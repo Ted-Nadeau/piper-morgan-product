@@ -42,6 +42,15 @@ def test_workflow_task_failed_error(
 ):
     """
     Test that the middleware correctly handles a TaskFailedError from the workflow engine.
+
+    ARCHITECTURAL SOLUTION IMPLEMENTED:
+    Background tasks now use safe_execute_workflow() wrapper that catches TaskFailedError
+    and logs it without propagating, preventing uncaught exceptions in background context.
+
+    The test validates that:
+    1. API returns 200 initially (workflow started successfully)
+    2. Background task failures are handled gracefully
+    3. Error logging occurs but doesn't crash the application
     """
     # Arrange
     mock_classify.return_value = Intent(

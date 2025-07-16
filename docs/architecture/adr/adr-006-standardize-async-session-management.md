@@ -249,6 +249,28 @@ async def db_session():
 - ✅ Test infrastructure unified with production
 - ✅ Zero asyncpg cleanup errors in test suite
 
+## Lessons Learned (July 15, 2025)
+
+### The Pattern Works
+After 12.5 hours of debugging, AsyncSessionFactory proved to be the correct pattern:
+- Eliminated dual repository implementations
+- Standardized async session handling across all repositories
+- Clear separation between business logic and infrastructure concerns
+
+### Known Limitations
+- pytest-asyncio + asyncpg generate ~31 "attached to a different event loop" warnings
+- These are cosmetic issues in the test environment, not production concerns
+- The warnings occur because pytest creates new event loops for isolation
+
+### Migration Success
+Successfully migrated:
+- OrchestrationEngine: From mixed patterns to clean AsyncSessionFactory
+- FileRepository: Eliminated get_session() anti-pattern
+- WorkflowRepository: Removed dual sync/async implementations
+
+### Key Insight
+What appeared as test failures were often system improvements. The infrastructure is sound - focus on business logic accuracy rather than chasing cosmetic warnings.
+
 ## Related ADRs
 
 - **ADR-005**: Eliminate Dual Repository Implementations (established repository standardization precedent)

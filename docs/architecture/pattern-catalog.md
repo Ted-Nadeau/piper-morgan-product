@@ -1142,16 +1142,17 @@ These patterns form the architectural foundation of Piper Morgan:
 14. **Async Relationship Eager Loading** - Reliable async data access
 15. **Action Humanizer Pattern** - User-friendly message generation
 16. **MCP Adapter Pattern** - MCP-specific integration
+17. **Background Task Error Handling Pattern** - Safe wrapper pattern for background task execution
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
 ---
 
-_Last Updated: June 29, 2025_
+_Last Updated: July 16, 2025_
 
 ## Revision Log
 
+- **July 16, 2025**: Added Background Task Error Handling Pattern (#17) for safe background task execution
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
-
 - **June 29, 2025**: Added Repository Domain Model Conversion Pattern (#13) and Async Relationship Eager Loading Pattern (#14) for PM-011 GitHub integration
 - **June 28, 2025**: Added Internal Task Handler Pattern (#11) and Repository Context Enrichment Pattern (#12) for GitHub integration
