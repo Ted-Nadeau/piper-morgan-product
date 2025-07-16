@@ -15,7 +15,8 @@ import structlog
 
 from services.analysis.file_type_detector import FileTypeDetector
 from services.api.errors import TaskFailedError, WorkflowTimeoutError
-from services.database import RepositoryFactory
+from services.database.repositories import TaskRepository, WorkflowRepository
+from services.database.session_factory import AsyncSessionFactory
 
 # Domain-first imports - use domain models consistently
 from services.domain.models import Intent, IntentCategory, Task, Workflow
@@ -77,22 +78,24 @@ class OrchestrationEngine:
             project_id = intent.context.get("project_id")
             if project_id:
                 try:
-                    repos = await RepositoryFactory.get_repositories()
-                    project_repo = repos["projects"]
-                    project = await project_repo.get_by_id(project_id)
-                    if project:
-                        repository = project.get_github_repository()
-                        if repository:
-                            workflow.context["repository"] = repository
-                            logger.info(
-                                f"Enriched CREATE_TICKET workflow with repository: {repository}"
-                            )
+                    async with AsyncSessionFactory.session_scope() as session:
+                        from services.database.repositories import ProjectRepository
+
+                        project_repo = ProjectRepository(session)
+                        project = await project_repo.get_by_id(project_id)
+                        if project:
+                            repository = project.get_github_repository()
+                            if repository:
+                                workflow.context["repository"] = repository
+                                logger.info(
+                                    f"Enriched CREATE_TICKET workflow with repository: {repository}"
+                                )
+                            else:
+                                logger.warning(
+                                    f"Project {project_id} has no GitHub repository configured"
+                                )
                         else:
-                            logger.warning(
-                                f"Project {project_id} has no GitHub repository configured"
-                            )
-                    else:
-                        logger.warning(f"Project {project_id} not found")
+                            logger.warning(f"Project {project_id} not found")
                 except Exception as e:
                     logger.error(f"Failed to enrich workflow with repository: {str(e)}")
                     # Continue without repository - handler will provide appropriate error
@@ -117,22 +120,20 @@ class OrchestrationEngine:
 
     async def _persist_workflow_to_database(self, workflow: Workflow):
         """Persist domain workflow to database using repository pattern"""
-        repos = await RepositoryFactory.get_repositories()
-        try:
-            # Create database workflow from domain workflow
-            db_workflow = await repos["workflows"].create_from_domain(workflow)
+        async with AsyncSessionFactory.session_scope() as session:
+            async with session.begin():
+                workflow_repo = WorkflowRepository(session)
+                task_repo = TaskRepository(session)
 
-            # Create database tasks for each domain task
-            for task in workflow.tasks:
-                await repos["tasks"].create_from_domain(db_workflow.id, task)
+                # Create database workflow from domain workflow
+                db_workflow = await workflow_repo.create_from_domain(workflow)
 
-            await repos["session"].commit()
-            logger.info("Workflow persisted to database", workflow_id=workflow.id)
-        except Exception as e:
-            await repos["session"].rollback()
-            logger.error("Failed to persist workflow", workflow_id=workflow.id, error=str(e))
-        finally:
-            await repos["session"].close()
+                # Create database tasks for each domain task
+                for task in workflow.tasks:
+                    await task_repo.create_from_domain(db_workflow.id, task)
+
+                # All operations within single transaction - automatic commit
+                logger.info("Workflow persisted to database", workflow_id=workflow.id)
 
     async def execute_workflow(self, workflow_id: str) -> Dict[str, Any]:
         """
@@ -149,12 +150,11 @@ class OrchestrationEngine:
         print(f"🔍 Found {len(workflow.tasks)} tasks to execute")
         workflow.status = WorkflowStatus.RUNNING
 
-        # Update status in database
-        repos = await RepositoryFactory.get_repositories()
-
+        # Update status in database and execute tasks
         try:
-            await repos["workflows"].update_status(workflow_id, WorkflowStatus.RUNNING)
-            await repos["session"].commit()
+            async with AsyncSessionFactory.session_scope() as session:
+                workflow_repo = WorkflowRepository(session)
+                await workflow_repo.update_status(workflow_id, WorkflowStatus.RUNNING)
 
             # Execute tasks with a timeout
             try:
@@ -178,16 +178,17 @@ class OrchestrationEngine:
                 workflow.status = WorkflowStatus.COMPLETED
 
                 # Update final workflow status
-                await repos["workflows"].update_status(
-                    workflow_id,
-                    WorkflowStatus.COMPLETED,
-                    output_data={
-                        "success": True,
-                        "data": workflow.context,
-                        "error": None,
-                    },
-                )
-                await repos["session"].commit()
+                async with AsyncSessionFactory.session_scope() as session:
+                    workflow_repo = WorkflowRepository(session)
+                    await workflow_repo.update_status(
+                        workflow_id,
+                        WorkflowStatus.COMPLETED,
+                        output_data={
+                            "success": True,
+                            "data": workflow.context,
+                            "error": None,
+                        },
+                    )
 
                 logger.info("Workflow completed", workflow_id=workflow_id)
 
@@ -195,13 +196,14 @@ class OrchestrationEngine:
             workflow.status = WorkflowStatus.FAILED
             workflow.error = e.error_code
 
-            await repos["workflows"].update_status(
-                workflow_id,
-                WorkflowStatus.FAILED,
-                error=e.error_code,
-                output_data=e.details,
-            )
-            await repos["session"].commit()
+            async with AsyncSessionFactory.session_scope() as session:
+                workflow_repo = WorkflowRepository(session)
+                await workflow_repo.update_status(
+                    workflow_id,
+                    WorkflowStatus.FAILED,
+                    error=e.error_code,
+                    output_data=e.details,
+                )
 
             logger.error(
                 "Workflow failed with controlled error",
@@ -213,8 +215,9 @@ class OrchestrationEngine:
             workflow.status = WorkflowStatus.FAILED
             workflow.error = str(e)
 
-            await repos["workflows"].update_status(workflow_id, WorkflowStatus.FAILED, error=str(e))
-            await repos["session"].commit()
+            async with AsyncSessionFactory.session_scope() as session:
+                workflow_repo = WorkflowRepository(session)
+                await workflow_repo.update_status(workflow_id, WorkflowStatus.FAILED, error=str(e))
 
             logger.error(
                 "Workflow failed with unexpected error",
@@ -228,25 +231,19 @@ class OrchestrationEngine:
                 recovery_suggestion="check logs for details",
                 details={"original_error": str(e)},
             ) from e
-        finally:
-            await repos["session"].close()
 
         return workflow.to_dict()
 
     async def _persist_task_update(self, workflow_id: str, task: Task):
         """Persist task updates to database using repository pattern"""
-        repos = await RepositoryFactory.get_repositories()
-        try:
+        async with AsyncSessionFactory.session_scope() as session:
+            task_repo = TaskRepository(session)
+
             # Update database task from domain task
-            await repos["tasks"].update(
+            await task_repo.update(
                 task.id, status=task.status, output_data=task.result, error=task.error
             )
-            await repos["session"].commit()
-        except Exception as e:
-            await repos["session"].rollback()
-            logger.error("Failed to persist task update", task_id=task.id, error=str(e))
-        finally:
-            await repos["session"].close()
+            # Automatic commit/rollback and session cleanup via context manager
 
     async def _execute_task(self, workflow: Workflow, task: Task):
         """Execute a single task using domain objects"""
@@ -365,22 +362,25 @@ List concrete requirements, acceptance criteria, and technical specifications.""
     async def _create_work_item(self, workflow: Workflow, task: Task) -> TaskResult:
         """Create internal work item representation"""
         # Create work item in database
-        repos = await RepositoryFactory.get_repositories()
         try:
-            work_item = await repos["work_items"].create(
-                title=workflow.context.get("original_message", "")[:100],
-                description=workflow.context.get("requirements", ""),
-                status="open",
-                external_refs={},
-            )
-            await repos["session"].commit()
+            async with AsyncSessionFactory.session_scope() as session:
+                from services.database.repositories import WorkItemRepository
 
-            result = TaskResult(
-                success=True,
-                output_data={"work_item_id": work_item.id, "title": work_item.title},
-            )
-        finally:
-            await repos["session"].close()
+                work_item_repo = WorkItemRepository(session)
+                work_item = await work_item_repo.create(
+                    title=workflow.context.get("original_message", "")[:100],
+                    description=workflow.context.get("requirements", ""),
+                    status="open",
+                    external_refs={},
+                )
+
+                result = TaskResult(
+                    success=True,
+                    output_data={"work_item_id": work_item.id, "title": work_item.title},
+                )
+        except Exception as e:
+            logger.error(f"Failed to create work item: {str(e)}")
+            result = TaskResult(success=False, error=f"Work item creation failed: {str(e)}")
 
         return result
 
@@ -516,68 +516,67 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             # Convert file_id to string (database expects string type)
             file_id = str(file_id)
 
-            # Get file repository using the working pattern
-            from services.repositories import DatabasePool
-            from services.repositories.file_repository import FileRepository
+            # Get file repository using AsyncSessionFactory
+            async with AsyncSessionFactory.session_scope() as session:
+                from services.repositories.file_repository import FileRepository
 
-            pool = await DatabasePool.get_pool()
-            file_repo = FileRepository(pool)
-            file_metadata = await file_repo.get_file_by_id(file_id)
-            if not file_metadata:
-                return TaskResult(success=False, error=f"File not found: {file_id}")
+                file_repo = FileRepository(session)
+                file_metadata = await file_repo.get_file_by_id(file_id)
+                if not file_metadata:
+                    return TaskResult(success=False, error=f"File not found: {file_id}")
 
-            # Create FileAnalyzer with dependencies
-            from unittest.mock import Mock
+                # Create FileAnalyzer with dependencies
+                from unittest.mock import Mock
 
-            from services.analysis.analyzer_factory import AnalyzerFactory
-            from services.analysis.file_analyzer import FileAnalyzer
+                from services.analysis.analyzer_factory import AnalyzerFactory
+                from services.analysis.file_analyzer import FileAnalyzer
 
-            mock_security = Mock()
-            mock_security.validate.return_value = Mock(is_valid=True)
+                mock_security = Mock()
+                mock_security.validate.return_value = Mock(is_valid=True)
 
-            type_detector = FileTypeDetector()
+                type_detector = FileTypeDetector()
 
-            mock_sampler = Mock()
+                mock_sampler = Mock()
 
-            analyzer_factory = AnalyzerFactory(llm_client=self.llm_client)
-            file_analyzer = FileAnalyzer(
-                security_validator=mock_security,
-                type_detector=type_detector,
-                content_sampler=mock_sampler,
-                analyzer_factory=analyzer_factory,
-                llm_client=self.llm_client,
-            )
+                analyzer_factory = AnalyzerFactory(llm_client=self.llm_client)
+                file_analyzer = FileAnalyzer(
+                    security_validator=mock_security,
+                    type_detector=type_detector,
+                    content_sampler=mock_sampler,
+                    analyzer_factory=analyzer_factory,
+                    llm_client=self.llm_client,
+                )
 
-            # Perform analysis
-            logger.info(
-                f"DEBUG: Analyzing file {file_metadata.filename} at path {file_metadata.storage_path}"
-            )
+                # Perform analysis
+                logger.info(
+                    f"DEBUG: Analyzing file {file_metadata.filename} at path {file_metadata.storage_path}"
+                )
 
-            # Debug: Read first 500 chars of file to verify content
-            try:
-                with open(file_metadata.storage_path, "r") as f:
-                    file_content_preview = f.read(500)
-                    logger.info(f"DEBUG: File content preview: {file_content_preview}")
-            except Exception as e:
-                logger.error(f"DEBUG: Could not read file content: {e}")
+                # Debug: Read first 500 chars of file to verify content
+                try:
+                    with open(file_metadata.storage_path, "r") as f:
+                        file_content_preview = f.read(500)
+                        logger.info(f"DEBUG: File content preview: {file_content_preview}")
+                except Exception as e:
+                    logger.error(f"DEBUG: Could not read file content: {e}")
 
-            analysis_result = await file_analyzer.analyze_file(
-                str(file_metadata.storage_path), {"filename": file_metadata.filename}
-            )
+                analysis_result = await file_analyzer.analyze_file(
+                    str(file_metadata.storage_path), {"filename": file_metadata.filename}
+                )
 
-            # Convert AnalysisResult to dict
-            analysis_dict = analysis_result.__dict__.copy()
-            analysis_dict["generated_at"] = analysis_result.generated_at.isoformat()
-            analysis_dict["analysis_type"] = analysis_result.analysis_type.value
+                # Convert AnalysisResult to dict
+                analysis_dict = analysis_result.__dict__.copy()
+                analysis_dict["generated_at"] = analysis_result.generated_at.isoformat()
+                analysis_dict["analysis_type"] = analysis_result.analysis_type.value
 
-            return TaskResult(
-                success=True,
-                output_data={
-                    "analysis": analysis_dict,
-                    "file_id": file_id,
-                    "filename": file_metadata.filename,
-                },
-            )
+                return TaskResult(
+                    success=True,
+                    output_data={
+                        "analysis": analysis_dict,
+                        "file_id": file_id,
+                        "filename": file_metadata.filename,
+                    },
+                )
 
         except Exception as e:
             logger.error(f"File analysis failed: {e}")
@@ -661,11 +660,13 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             project_id = workflow.context.get("project_id")
             if project_id:
                 try:
-                    repos = await RepositoryFactory.get_repositories()
-                    project_repo = repos["projects"]
-                    project = await project_repo.get_by_id(project_id)
-                    if project:
-                        project_context = project.to_dict()
+                    async with AsyncSessionFactory.session_scope() as session:
+                        from services.database.repositories import ProjectRepository
+
+                        project_repo = ProjectRepository(session)
+                        project = await project_repo.get_by_id(project_id)
+                        if project:
+                            project_context = project.to_dict()
                 except Exception as e:
                     logger.warning(f"Failed to get project context: {str(e)}")
 

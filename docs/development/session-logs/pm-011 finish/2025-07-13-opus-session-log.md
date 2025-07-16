@@ -88,7 +88,7 @@ The system is working **exactly as designed**:
 1. ✅ **Created** `services/ui_messages/templates.py`
    - Centralized all user-facing message templates
    - Keyed by (intent_category, intent_action) with workflow fallbacks
-   
+
 2. ✅ **Updated** workflow context in `workflow_factory.py`
    - Now includes `intent_category` and `intent_action` in context
    - Ensures downstream components can access intent info

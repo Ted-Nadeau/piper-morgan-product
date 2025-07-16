@@ -21,7 +21,8 @@ from services.api.errors import APIError
 from services.api.middleware import ErrorHandlingMiddleware
 from services.conversation.conversation_handler import ConversationHandler
 from services.database.connection import db
-from services.database.repositories import RepositoryFactory
+from services.database.repositories import ProjectRepository, RepositoryFactory
+from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import UploadedFile
 from services.file_context.storage import generate_session_id, save_file_to_storage
 from services.intent_service.intent_enricher import IntentEnricher
@@ -283,19 +284,23 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         # Route based on intent category
         if enriched_intent.category == IntentCategory.QUERY:
             # Handle query intents through QueryRouter
-            repos = await RepositoryFactory.get_repositories()
             try:
-                project_query_service = ProjectQueryService(repos["projects"])
-                conversation_query_service = ConversationQueryService()
-                file_query_service = FileQueryService(FileRepository(repos["session"]))
-                query_router = QueryRouter(
-                    project_query_service,
-                    conversation_query_service,
-                    file_query_service,
-                )
+                async with AsyncSessionFactory.session_scope() as session:
+                    project_repo = ProjectRepository(session)
+                    file_repo = FileRepository(session)
 
-                # Route the query
-                query_result = await query_router.route_query(enriched_intent)
+                    project_query_service = ProjectQueryService(project_repo)
+                    conversation_query_service = ConversationQueryService()
+                    file_query_service = FileQueryService(file_repo)
+                    query_router = QueryRouter(
+                        project_query_service,
+                        conversation_query_service,
+                        file_query_service,
+                    )
+
+                    # Route the query
+                    query_result = await query_router.route_query(enriched_intent)
+                    # Automatic session cleanup via context manager
 
                 # Format response for query results
                 if enriched_intent.action == "list_projects":
@@ -326,8 +331,6 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             except Exception as query_error:
                 logger.error(f"Query processing failed: {query_error}")
                 raise HTTPException(status_code=500, detail="Internal server error")
-            finally:
-                await repos["session"].close()
         else:
             # Handle command intents through WorkflowFactory
             print(f"🔍 Creating workflow from intent...")
@@ -460,13 +463,13 @@ async def get_workflow(workflow_id: str):
     workflow = engine.workflows.get(workflow_id)
 
     # Always fetch from database to ensure we have the latest state
-    from services.database.repositories import RepositoryFactory
+    from services.database.repositories import WorkflowRepository
+    from services.database.session_factory import AsyncSessionFactory
 
-    repos = await RepositoryFactory.get_repositories()
-    try:
-        db_workflow = await repos["workflows"].find_by_id(workflow_id)
-    finally:
-        await repos["session"].close()
+    async with AsyncSessionFactory.session_scope() as session:
+        workflow_repo = WorkflowRepository(session)
+        db_workflow = await workflow_repo.find_by_id(workflow_id)
+        # Automatic session cleanup via context manager
 
     if not db_workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
@@ -617,12 +620,10 @@ async def upload_file(file: UploadFile = File(...), session_id: Optional[str] = 
         )
 
         # Save to database
-        repos = await RepositoryFactory.get_repositories()
-        try:
-            repo = FileRepository(repos["session"])
-            saved_file = await repo.save_file_metadata(uploaded_file)
-        finally:
-            await repos["session"].close()
+        async with AsyncSessionFactory.session_scope() as session:
+            file_repo = FileRepository(session)
+            saved_file = await file_repo.save_file_metadata(uploaded_file)
+            # Automatic session cleanup via context manager
 
         # Track in session
         session = session_manager.get_or_create_session(session_id)

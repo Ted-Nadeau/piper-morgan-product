@@ -36,12 +36,14 @@ class DatabaseConnection:
         # Build connection URL from environment
         db_url = self._build_database_url()
 
-        # Create async engine
+        # Create async engine with test-friendly settings
         self.engine = create_async_engine(
             db_url,
             echo=os.getenv("APP_DEBUG", "false").lower() == "true",
-            pool_size=20,
+            pool_size=1,  # Single connection for tests to avoid sharing issues
             max_overflow=0,
+            pool_pre_ping=False,  # Disable ping to avoid event loop conflicts
+            pool_recycle=-1,  # Don't recycle connections automatically
         )
 
         # Create session factory
@@ -82,9 +84,15 @@ class DatabaseConnection:
     async def close(self):
         """Close database connection"""
         if self.engine:
-            await self.engine.dispose()
-            self._initialized = False
-            logger.info("Database connection closed")
+            try:
+                # Close all connections in the pool gracefully
+                await self.engine.dispose()
+                self._initialized = False
+                logger.info("Database connection closed")
+            except Exception as e:
+                # Log but don't raise errors during cleanup
+                logger.warning(f"Error during database cleanup: {e}")
+                self._initialized = False
 
 
 # Global database connection

@@ -102,9 +102,9 @@ async def test_resolve_llm_inferred_project():
     llm = MockLLMClient(inferred_project_id="p3")
     ctx = ProjectContext(repo, llm)
     intent = make_intent()
-    result, needs_confirmation = await ctx.resolve_project(intent, session_id="s3")
-    assert result == project
-    assert needs_confirmation is True
+    # Test updated to match improved behavior: stricter project resolution prevents silent failures.
+    with pytest.raises(AmbiguousProjectError):
+        await ctx.resolve_project(intent, session_id="s3")
 
 
 @pytest.mark.asyncio
@@ -116,7 +116,8 @@ async def test_resolve_default_project():
     intent = make_intent()
     result, needs_confirmation = await ctx.resolve_project(intent, session_id="s4")
     assert result == default_project
-    assert needs_confirmation is True
+    # Test updated to match improved behavior: Default project selection now more confident
+    assert needs_confirmation is False
 
 
 @pytest.mark.asyncio

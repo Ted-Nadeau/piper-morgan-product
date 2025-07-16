@@ -43,9 +43,18 @@ class BaseRepository:
         if "id" not in kwargs:
             kwargs["id"] = str(uuid.uuid4())
 
-        entity = self.model(**kwargs)
-        self.session.add(entity)
-        await self.session.commit()
+        # Check if we're already in a transaction
+        if self.session.in_transaction():
+            # Already in transaction, just add the entity
+            entity = self.model(**kwargs)
+            self.session.add(entity)
+            await self.session.flush()
+        else:
+            # Start new transaction
+            async with self.session.begin():
+                entity = self.model(**kwargs)
+                self.session.add(entity)
+                # Automatic commit via context manager
         await self.session.refresh(entity)
         return entity
 
@@ -70,10 +79,18 @@ class BaseRepository:
         if not entity:
             return None
 
-        for key, value in kwargs.items():
-            setattr(entity, key, value)
-
-        await self.session.commit()
+        # Check if we're already in a transaction
+        if self.session.in_transaction():
+            # Already in transaction, just update the entity
+            for key, value in kwargs.items():
+                setattr(entity, key, value)
+            await self.session.flush()
+        else:
+            # Start new transaction
+            async with self.session.begin():
+                for key, value in kwargs.items():
+                    setattr(entity, key, value)
+                # Automatic commit via context manager
         await self.session.refresh(entity)
         return entity
 
@@ -83,8 +100,16 @@ class BaseRepository:
         if not entity:
             return False
 
-        await self.session.delete(entity)
-        await self.session.commit()
+        # Check if we're already in a transaction
+        if self.session.in_transaction():
+            # Already in transaction, just delete the entity
+            self.session.delete(entity)
+            await self.session.flush()
+        else:
+            # Start new transaction
+            async with self.session.begin():
+                self.session.delete(entity)
+                # Automatic commit via context manager
         return True
 
 
@@ -114,15 +139,38 @@ class WorkflowRepository(BaseRepository):
 
     async def create_from_domain(self, domain_workflow) -> Workflow:
         """Create DB workflow from domain workflow"""
-        return await self.create(
-            id=domain_workflow.id,
-            type=domain_workflow.type,
-            status=domain_workflow.status,
-            input_data={},  # Domain model has context instead
-            output_data=(domain_workflow.result.__dict__ if domain_workflow.result else None),
-            context=domain_workflow.context,
-            created_at=domain_workflow.created_at,
-        )
+        # Check if we're already in a transaction
+        if self.session.in_transaction():
+            # Already in transaction, just add the workflow
+            workflow = Workflow(
+                id=domain_workflow.id,
+                type=domain_workflow.type,
+                status=domain_workflow.status,
+                input_data={},  # Domain model has context instead
+                output_data=(domain_workflow.result.__dict__ if domain_workflow.result else None),
+                context=domain_workflow.context,
+                created_at=domain_workflow.created_at,
+            )
+            self.session.add(workflow)
+            await self.session.flush()
+        else:
+            # Start new transaction
+            async with self.session.begin():
+                workflow = Workflow(
+                    id=domain_workflow.id,
+                    type=domain_workflow.type,
+                    status=domain_workflow.status,
+                    input_data={},  # Domain model has context instead
+                    output_data=(
+                        domain_workflow.result.__dict__ if domain_workflow.result else None
+                    ),
+                    context=domain_workflow.context,
+                    created_at=domain_workflow.created_at,
+                )
+                self.session.add(workflow)
+                # Automatic commit via context manager
+        await self.session.refresh(workflow)
+        return workflow
 
     async def update_status(self, workflow_id: str, status, output_data=None, error=None):
         """Update workflow status"""
