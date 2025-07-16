@@ -27,3 +27,9 @@ repos:
         language: script
         always_run: true
         pass_filenames: false
+      - id: backlog-roadmap-sync
+        name: Remind to sync GitHub when planning docs change
+        entry: scripts/check-backlog-sync.sh
+        language: script
+        files: (backlog|roadmap)\.md$
+        pass_filenames: false

@@ -16,15 +16,20 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - Knowledge base with 85+ documents
 - PM-009: Multi-project support with query layer
 - CQRS-lite pattern implementation
+- ✅ PM-001: Database Schema Initialization
+- ✅ PM-002: Workflow Factory Implementation
+- ✅ PM-003: GitHub Issue Creation Workflow
+- ✅ PM-004: Basic Workflow State Persistence
+- ✅ PM-008: GitHub Issue Review & Improvement
+- ✅ PM-014: Documentation and Test Suite Health
 - ✅ PM-032: Unified Response Rendering & DDD/TDD Web UI Refactor
 
-**Summary**: All bot message rendering and response handling is now unified in a DDD-compliant, test-driven domain module (`bot-message-renderer.js`). The web UI provides real-time feedback, actionable error messages, and consistent user experience. All logic is fully covered by automated tests.
+**Summary**: All bot message rendering and response handling is now unified in a DDD-compliant, test-driven domain module (`bot-message-renderer.js`). The web UI provides real-time feedback, actionable error messages, and consistent user experience. All logic is fully covered by automated tests. Infrastructure foundation is complete with 95%+ test suite health.
 
 ### 🚧 In Progress
 
-- Test infrastructure recovery (87% → 95%+ target)
-- PM-014: Documentation and Test Suite Health
-- PM-012: Real GitHub issue creation (starting July 21)
+- PM-012: GitHub Repository Integration (starting July 21)
+- PM-015: Test Infrastructure Isolation Fix
 
 ### 📋 Not Started
 
@@ -61,11 +66,11 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - Chat interface supports basic workflows
 - Non-technical users can interact successfully
 
-### Sprint 2A: Foundation Stabilization (July 14-20, 2025)
+### ✅ Sprint 2A: Foundation Stabilization (July 14-20, 2025) - COMPLETE
 
-- [ ] Test infrastructure recovery (target: 95%+ pass rate)
-- [ ] PM-014: Documentation and Test Suite Health
-- **Success Criteria**: All critical tests passing, documentation reviewed, no session leaks, testability issues documented
+- ✅ Test infrastructure recovery (95%+ pass rate achieved)
+- ✅ PM-014: Documentation and Test Suite Health
+- **Success Criteria**: ✅ All critical tests passing, documentation reviewed, infrastructure issues documented
 
 ### Sprint 2B: Core Features & MCP Prep (July 21 - Aug 3, 2025)
 
@@ -304,7 +309,7 @@ These features directly support the evolution from task automation to analytical
   - Screenshot and mockup processing
   - Automated issue generation from visuals
   - UI element detection and analysis
-- [ ] **PM-032**: Predictive Project Analytics (34 points)
+- [ ] **PM-035**: Predictive Project Analytics (34 points)
   - Concrete timeline predictions
   - Risk assessment automation
   - Resource optimization algorithms
@@ -469,7 +474,7 @@ graph TD
 
 ## This roadmap provides a realistic path from current state to advanced AI-powered PM assistance. Each phase builds on previous work while delivering incremental value. The modular approach allows for course corrections based on user feedback and technical learnings.
 
-_Last Updated: June 21, 2025_
+_Last Updated: July 16, 2025_
 
 ## Revision Log
 
