@@ -17,7 +17,7 @@ from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadF
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from services.api.errors import APIError
+from services.api.errors import APIError, TaskFailedError
 from services.api.middleware import ErrorHandlingMiddleware
 from services.conversation.conversation_handler import ConversationHandler
 from services.database.connection import db
@@ -88,6 +88,18 @@ class WorkflowResponse(BaseModel):
     type: str
     tasks: list
     message: str
+
+
+async def safe_execute_workflow(engine, workflow_id: str) -> None:
+    """Safely execute workflow in background, catching and logging errors."""
+    try:
+        await engine.execute_workflow(workflow_id)
+    except TaskFailedError as e:
+        logger.error(f"Background workflow {workflow_id} failed with TaskFailedError: {e}")
+        # Error is logged but not propagated - prevents uncaught exception
+    except Exception as e:
+        logger.error(f"Background workflow {workflow_id} failed unexpectedly: {e}")
+        # Catch-all for any other errors
 
 
 @asynccontextmanager
@@ -340,7 +352,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             if workflow:
                 # Execute workflow in background
                 workflow_id = workflow.id
-                background_tasks.add_task(engine.execute_workflow, workflow_id)
+                background_tasks.add_task(safe_execute_workflow, engine, workflow_id)
                 # Use TemplateRenderer for humanized message
                 response_text = await template_renderer.render_template(
                     "I understand you want to {human_action}. I've started a workflow to handle this.",
@@ -427,7 +439,7 @@ async def handle_file_disambiguation(
                     if workflow:
                         workflow_id = workflow.id
                         # Execute workflow in background (same as main flow)
-                        background_tasks.add_task(engine.execute_workflow, workflow_id)
+                        background_tasks.add_task(safe_execute_workflow, engine, workflow_id)
 
                     return IntentResponse(
                         message=f"Got it! Using {selected_file['filename']}. Processing your request...",

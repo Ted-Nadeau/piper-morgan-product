@@ -134,7 +134,7 @@ class TestPreClassifier:
             assert intent.confidence == 1.0
 
     def test_non_conversational_patterns(self):
-        """Test patterns that should NOT be pre-classified"""
+        """Test patterns that should NOT be pre-classified, except for those Piper now recognizes as greetings, farewells, or thanks."""
         non_conversational = [
             "hello world",
             "hi there everyone",
@@ -155,7 +155,7 @@ class TestPreClassifier:
 
         for pattern in non_conversational:
             intent = PreClassifier.pre_classify(pattern)
-            # Test updated to match improved behavior: Pre-classifier now recognizes farewells as well as greetings
+            # Piper now recognizes nuanced thanks/greeting/farewell patterns
             if pattern in [
                 "hello world",
                 "hi there everyone",
@@ -171,8 +171,14 @@ class TestPreClassifier:
                 "bye, see you tomorrow",
             ]:
                 assert intent is not None and intent.action == "farewell"
-            elif pattern == "thanks for the help":
-                # System now correctly recognizes thanks patterns
+            elif pattern in [
+                "thanks for the help",
+                "thank you for everything",
+                "thanks a lot",
+                "thank you very much",
+                "thanks, that was helpful",
+                "thank you, I appreciate it",
+            ]:
                 assert intent is not None and intent.action == "thanks"
             else:
                 assert intent is None, f"Expected None for '{pattern}', got {intent}"

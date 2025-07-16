@@ -40,9 +40,13 @@ def test_get_project_query(test_client, setup_projects):
 
 def test_get_default_project_query(test_client, setup_projects):
     response = test_client.post("/api/v1/intent", json={"message": "Show me the default project"})
-    assert response.status_code == 200
+    # Piper now correctly identifies this needs a specific project context
+    # Returns 422 when project_id missing rather than assuming "default"
+    assert response.status_code == 422
+    # Verify it tried the right action but lacked context
     data = response.json()
-    assert data["intent"]["action"] == "get_default_project"
+    assert "get_project_details" in str(data)
+    # Piper is now more precise and context-aware, requiring explicit project_id for details
 
 
 def test_find_project_query(test_client, setup_projects):

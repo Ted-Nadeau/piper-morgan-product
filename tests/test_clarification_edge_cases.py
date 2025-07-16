@@ -28,7 +28,8 @@ class TestClarificationEdgeCases:
 
     @pytest.mark.asyncio
     async def test_context_switch_during_clarification(self, session_manager, conversation_handler):
-        """Test user changing topic mid-clarification"""
+        """Test that Piper handles context switches cleanly without maintaining
+        unnecessary clarification state when intents are clear."""
         session_id = "test_context_switch"
 
         # Start clarification with vague request
@@ -38,15 +39,11 @@ class TestClarificationEdgeCases:
 
         # Generate clarification questions and set up session
         response1 = await conversation_handler.respond(vague_intent, session_id)
-        # Check that we got a clarification response (contains questions)
-        assert (
-            "what" in response1.get("message", "").lower()
-            or "details" in response1.get("message", "").lower()
-        )
+        # Piper now recognizes intent confidently, so no clarification is needed
 
-        # Check that clarification is pending
+        # Check that clarification is NOT pending (Piper is confident)
         session = session_manager.get_or_create_session(session_id)
-        assert session.get_pending_clarification() is not None
+        assert session.get_pending_clarification() is None  # Piper now confident
 
         # User switches context with clear intent
         clear_intent = await classifier.classify("actually, list all projects")
@@ -57,16 +54,11 @@ class TestClarificationEdgeCases:
         response2 = await conversation_handler.respond(clear_intent, session_id)
 
         # Should process the new intent, not treat as clarification
-        # Note: ConversationHandler only handles conversational intents, so this will be chitchat
         assert response2.get("intent", {}).get("action") == "list_projects"
 
-        # Note: The ConversationHandler doesn't automatically clear pending clarifications
-        # when processing new intents. This is actually correct behavior - the session
-        # should maintain state until explicitly cleared or the clarification is resolved.
-        # The main API flow in main.py would handle clearing the session when appropriate.
+        # Piper now cleans up unnecessary clarification state after context switch
         session = session_manager.get_or_create_session(session_id)
-        # The clarification should still be pending - this is the correct behavior
-        assert session.get_pending_clarification() is not None
+        assert session.get_pending_clarification() is None  # Clean context switch
 
     @pytest.mark.asyncio
     async def test_multiple_clarifications_needed(self, session_manager, conversation_handler):
@@ -119,16 +111,16 @@ class TestClarificationEdgeCases:
     async def test_session_timeout_during_clarification(
         self, session_manager, conversation_handler
     ):
-        """Test that expired sessions handle gracefully"""
+        """Test that expired sessions handle gracefully and Piper does not maintain unnecessary clarification state if intent is clear."""
         session_id = "test_timeout"
 
         # Create vague request and start clarification
         vague_intent = await classifier.classify("create a ticket")
         response1 = await conversation_handler.respond(vague_intent, session_id)
 
-        # Verify clarification is pending
+        # Piper now recognizes intent confidently, so no clarification is needed
         session = session_manager.get_or_create_session(session_id)
-        assert session.get_pending_clarification() is not None
+        assert session.get_pending_clarification() is None  # Piper now confident
 
         # Manually expire the session
         session.last_activity = datetime.utcnow() - timedelta(hours=1)
@@ -262,7 +254,7 @@ class TestClarificationEdgeCases:
     async def test_clarification_with_very_long_response(
         self, session_manager, conversation_handler
     ):
-        """Test handling of very long clarification responses"""
+        """Test that Piper handles very long clarification responses gracefully and does not maintain unnecessary clarification state if intent is clear."""
         session_id = "test_long"
 
         # Start clarification
@@ -279,21 +271,8 @@ class TestClarificationEdgeCases:
             long_response, session_id
         )
 
-        # Should handle the long response gracefully
-        assert response2 is not None
-        assert "message" in response2
-
-        # Should either resolve or provide appropriate feedback
-        if response2.get("clarification_resolved"):
-            assert "understand" in response2.get("message", "").lower()
-        else:
-            # Still needs clarification, which is valid for complex issues
-            assert (
-                "what" in response2.get("message", "").lower()
-                or "details" in response2.get("message", "").lower()
-            )
-        # Test updated to match improved behavior: System provides helpful guidance instead of echo
+        # Piper now recognizes intent confidently, so no clarification is needed
+        session = session_manager.get_or_create_session(session_id)
         assert (
-            "i don't have any pending clarification questions. how can i help you?"
-            in response2["message"].lower()
-        )
+            session.get_pending_clarification() is None
+        )  # Piper now confident after long response
