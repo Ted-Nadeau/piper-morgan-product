@@ -1,0 +1,10 @@
+This is a test document for MCP enhanced file search functionality.
+
+The document contains various keywords that can be used for testing search capabilities:
+- project management
+- workflow automation
+- content analysis
+- file processing
+- search optimization
+
+This content should be discoverable through MCP content search.

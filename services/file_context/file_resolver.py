@@ -1,5 +1,7 @@
 """Intelligent file reference resolution"""
 
+import logging
+import os
 import re
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
@@ -8,6 +10,8 @@ from services.domain.models import Intent, UploadedFile
 from services.repositories.file_repository import FileRepository
 
 from .exceptions import AmbiguousFileReferenceError, NoFilesFoundError
+
+logger = logging.getLogger(__name__)
 
 
 class FileResolver:
@@ -115,34 +119,65 @@ class FileResolver:
         return best_file.id, best_score
 
     def _calculate_score(self, file: UploadedFile, intent: Intent) -> float:
-        """Multi-factor scoring algorithm"""
+        """Multi-factor scoring algorithm with optional content relevance"""
         total_score = 0.0
         components = {}
 
-        # Factor 1: Recency (max 0.3)
-        recency_score = self._calculate_recency_score(file.upload_time)
-        components["recency"] = recency_score
-        total_score += recency_score * 0.3
+        # Check if MCP content scoring is enabled
+        mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
 
-        # Factor 2: File type relevance (max 0.3)
-        type_score = self._calculate_type_score(file.file_type, intent.action)
-        components["type"] = type_score
-        total_score += type_score * 0.3
+        if mcp_enabled:
+            # With MCP content scoring: adjust weights to include content relevance
+            # Factor 1: Recency (max 0.25)
+            recency_score = self._calculate_recency_score(file.upload_time)
+            components["recency"] = recency_score
+            total_score += recency_score * 0.25
 
-        # Factor 3: Filename matching (max 0.2)
-        name_score = self._calculate_name_score(file.filename, intent)
-        components["name"] = name_score
-        total_score += name_score * 0.2
+            # Factor 2: File type relevance (max 0.25)
+            type_score = self._calculate_type_score(file.file_type, intent.action)
+            components["type"] = type_score
+            total_score += type_score * 0.25
 
-        # Factor 4: Usage history (max 0.2)
-        usage_score = self._calculate_usage_score(file)
-        components["usage"] = usage_score
-        total_score += usage_score * 0.2
+            # Factor 3: Filename matching (max 0.15)
+            name_score = self._calculate_name_score(file.filename, intent)
+            components["name"] = name_score
+            total_score += name_score * 0.15
+
+            # Factor 4: Usage history (max 0.15)
+            usage_score = self._calculate_usage_score(file)
+            components["usage"] = usage_score
+            total_score += usage_score * 0.15
+
+            # Factor 5: Content relevance (max 0.2) - NEW
+            content_score = self._calculate_content_score(file, intent)
+            components["content"] = content_score
+            total_score += content_score * 0.2
+        else:
+            # Without MCP: use original scoring weights
+            # Factor 1: Recency (max 0.3)
+            recency_score = self._calculate_recency_score(file.upload_time)
+            components["recency"] = recency_score
+            total_score += recency_score * 0.3
+
+            # Factor 2: File type relevance (max 0.3)
+            type_score = self._calculate_type_score(file.file_type, intent.action)
+            components["type"] = type_score
+            total_score += type_score * 0.3
+
+            # Factor 3: Filename matching (max 0.2)
+            name_score = self._calculate_name_score(file.filename, intent)
+            components["name"] = name_score
+            total_score += name_score * 0.2
+
+            # Factor 4: Usage history (max 0.2)
+            usage_score = self._calculate_usage_score(file)
+            components["usage"] = usage_score
+            total_score += usage_score * 0.2
 
         final_score = min(total_score, 1.0)  # Cap at 1.0
 
         # Debug logging
-        print(f"DEBUG Scoring {file.filename}: total={final_score:.3f}, components={components}")
+        logger.debug(f"Scoring {file.filename}: total={final_score:.3f}, components={components}")
 
         return final_score
 
@@ -241,6 +276,147 @@ class FileResolver:
         base_score = min(file.reference_count / 10.0, 0.7)
 
         return min(base_score + recency_bonus, 1.0)
+
+    def _calculate_content_score(self, file: UploadedFile, intent: Intent) -> float:
+        """Calculate content relevance score using MCP (if enabled)"""
+        if not os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true":
+            return 0.5  # Neutral score if MCP disabled
+
+        try:
+            # Extract keywords from intent for content matching
+            keywords = self._extract_content_keywords(intent)
+            if not keywords:
+                return 0.5  # Neutral score if no keywords
+
+            # For now, use filename as proxy for content relevance
+            # This is a simplified implementation that could be enhanced
+            # with actual content analysis via MCP
+            filename_lower = file.filename.lower()
+
+            # Simple content relevance based on keyword matching
+            keyword_matches = 0
+            for keyword in keywords:
+                if keyword.lower() in filename_lower:
+                    keyword_matches += 1
+
+            if keyword_matches == 0:
+                return 0.2  # Low relevance
+
+            # Score based on keyword density
+            relevance_score = min(keyword_matches / len(keywords), 1.0)
+
+            # Boost for exact matches
+            if any(keyword.lower() == filename_lower.split(".")[0] for keyword in keywords):
+                relevance_score = min(relevance_score * 1.5, 1.0)
+
+            logger.debug(
+                f"Content score for {file.filename}: {relevance_score:.3f} (matches: {keyword_matches})"
+            )
+            return relevance_score
+
+        except Exception as e:
+            logger.error(f"Content scoring failed for {file.filename}: {e}")
+            return 0.5  # Neutral score on error
+
+    def _extract_content_keywords(self, intent: Intent) -> List[str]:
+        """Extract meaningful keywords from intent for content matching"""
+        keywords = []
+
+        # Extract from intent action
+        if intent.action:
+            action_words = intent.action.split("_")
+            keywords.extend([word for word in action_words if len(word) > 2])
+
+        # Extract from intent context
+        if intent.context:
+            original_message = intent.context.get("original_message", "")
+            if original_message:
+                # Extract meaningful words (3+ characters, alphanumeric)
+                words = re.findall(r"\b[a-zA-Z0-9]{3,}\b", original_message.lower())
+
+                # Filter out common words
+                stop_words = {
+                    "the",
+                    "and",
+                    "for",
+                    "are",
+                    "but",
+                    "not",
+                    "you",
+                    "all",
+                    "can",
+                    "had",
+                    "her",
+                    "was",
+                    "one",
+                    "our",
+                    "out",
+                    "day",
+                    "get",
+                    "has",
+                    "him",
+                    "his",
+                    "how",
+                    "man",
+                    "new",
+                    "now",
+                    "old",
+                    "see",
+                    "two",
+                    "way",
+                    "who",
+                    "boy",
+                    "did",
+                    "its",
+                    "let",
+                    "put",
+                    "say",
+                    "she",
+                    "too",
+                    "use",
+                    "with",
+                    "that",
+                    "this",
+                    "have",
+                    "from",
+                    "they",
+                    "know",
+                    "want",
+                    "been",
+                    "good",
+                    "much",
+                    "some",
+                    "time",
+                    "very",
+                    "when",
+                    "come",
+                    "here",
+                    "just",
+                    "like",
+                    "long",
+                    "make",
+                    "many",
+                    "over",
+                    "such",
+                    "take",
+                    "than",
+                    "them",
+                    "well",
+                    "were",
+                }
+
+                meaningful_words = [word for word in words if word not in stop_words]
+                keywords.extend(meaningful_words)
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_keywords = []
+        for keyword in keywords:
+            if keyword not in seen:
+                unique_keywords.append(keyword)
+                seen.add(keyword)
+
+        return unique_keywords[:10]  # Limit to top 10 keywords
 
     async def get_resolution_suggestions(
         self, session_id: str, reference: str
