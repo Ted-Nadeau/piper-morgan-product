@@ -1,0 +1,2 @@
+This is a sample plain text file for MCP extraction tests.
+It contains two lines of text.

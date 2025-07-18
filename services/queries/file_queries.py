@@ -1,8 +1,11 @@
 """File query service for read-only file operations"""
 
-from typing import Any, Dict, Optional
+import logging
+from typing import Any, Dict, List, Optional
 
 from services.repositories.file_repository import FileRepository
+
+logger = logging.getLogger(__name__)
 
 
 class FileQueryService:
@@ -34,3 +37,102 @@ class FileQueryService:
             "file": file_data,
             "summary": f"Summary of {file_data.get('filename', 'unknown file')} would go here. (Not yet implemented - needs file content reading)",
         }
+
+    async def search_files(self, session_id: str, query: str, limit: int = 10) -> Dict[str, Any]:
+        """
+        Enhanced file search with content awareness.
+        Uses MCP content search when enabled, falls back to filename search.
+        """
+        try:
+            logger.info(f"Searching files for session {session_id} with query: '{query}'")
+
+            # Use enhanced search method from FileRepository
+            # This method handles MCP integration and fallback automatically
+            files = await self.file_repository.search_files_with_content(session_id, query, limit)
+
+            logger.info(f"Found {len(files)} files matching query '{query}'")
+
+            # Convert to dict format for API response
+            file_results = []
+            for file in files:
+                file_dict = {
+                    "id": file.id,
+                    "filename": file.filename,
+                    "file_type": file.file_type,
+                    "size": file.size,
+                    "upload_time": file.upload_time.isoformat() if file.upload_time else None,
+                    "last_referenced": (
+                        file.last_referenced.isoformat() if file.last_referenced else None
+                    ),
+                    "reference_count": file.reference_count,
+                    "session_id": file.session_id,
+                }
+                file_results.append(file_dict)
+
+            return {
+                "success": True,
+                "files": file_results,
+                "total_count": len(files),
+                "query": query,
+                "search_type": "enhanced" if self._is_mcp_enabled() else "filename_only",
+            }
+
+        except Exception as e:
+            logger.error(f"File search failed for query '{query}': {e}")
+            return {"success": False, "error": f"Search failed: {str(e)}", "query": query}
+
+    async def search_files_all_sessions(
+        self, query: str, days: int = 30, limit: int = 10
+    ) -> Dict[str, Any]:
+        """
+        Enhanced file search across all sessions with content awareness.
+        Uses MCP content search when enabled, falls back to filename search.
+        """
+        try:
+            logger.info(
+                f"Searching files across all sessions with query: '{query}' (last {days} days)"
+            )
+
+            # Use enhanced search method from FileRepository
+            # This method handles MCP integration and fallback automatically
+            files = await self.file_repository.search_files_with_content_all_sessions(
+                query, days, limit
+            )
+
+            logger.info(f"Found {len(files)} files matching query '{query}' across all sessions")
+
+            # Convert to dict format for API response
+            file_results = []
+            for file in files:
+                file_dict = {
+                    "id": file.id,
+                    "filename": file.filename,
+                    "file_type": file.file_type,
+                    "size": file.size,
+                    "upload_time": file.upload_time.isoformat() if file.upload_time else None,
+                    "last_referenced": (
+                        file.last_referenced.isoformat() if file.last_referenced else None
+                    ),
+                    "reference_count": file.reference_count,
+                    "session_id": file.session_id,
+                }
+                file_results.append(file_dict)
+
+            return {
+                "success": True,
+                "files": file_results,
+                "total_count": len(files),
+                "query": query,
+                "search_type": "enhanced" if self._is_mcp_enabled() else "filename_only",
+                "days_searched": days,
+            }
+
+        except Exception as e:
+            logger.error(f"File search failed for query '{query}': {e}")
+            return {"success": False, "error": f"Search failed: {str(e)}", "query": query}
+
+    def _is_mcp_enabled(self) -> bool:
+        """Check if MCP file search is enabled"""
+        import os
+
+        return os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
