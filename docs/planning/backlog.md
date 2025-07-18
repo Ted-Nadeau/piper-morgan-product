@@ -136,11 +136,48 @@ _All P0 tickets completed - infrastructure foundation established_
 **Description**: Enable GitHub issue creation using project-specific repository configuration
 **Estimate**: 5 points | **Status**: NEXT UP - Starting July 21, 2025 | **Dependencies**: PM-009 ✅, PM-003 ✅
 
-### PM-013: Learning & Feedback Implementation
+### PM-039: Learning & Feedback Implementation
 
 **Story**: As a learning system, I need to track user edits and improve over time
 **Description**: Implement feedback collection and analysis to improve suggestion quality
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: Basic workflows working
+
+### PM-038: MCP Real Content Search Implementation
+
+**Story**: As a user, I want to search file content, not just filenames
+**Description**: Week 1 implementation of real content-based file search replacing POC fake implementation
+**Estimate**: 13 points (5 days) | **Status**: ⚡ ACTIVE - Starting July 18, 2025 | **Dependencies**: MCP POC ✅
+
+**Background**: POC proved MCP integration feasibility but used fake content search (filename matching). This implements REAL content extraction and search capabilities.
+
+**Week 1 Scope**:
+- ✅ Real content extraction from files (.txt, .md, .pdf)
+- ✅ Connection pooling to eliminate resource leaks
+- ✅ Centralized configuration service
+- ✅ Performance monitoring and optimization
+- ✅ Feature flag protected deployment (`ENABLE_MCP_FILE_SEARCH=false`)
+
+**Technical Approach**:
+- Test-Driven Development (TDD) for all new code
+- Domain-Driven Design (DDD) with proper bounded contexts
+- Performance budget: <500ms search latency (P95)
+- Comprehensive error handling and monitoring
+
+**Success Criteria**:
+- Search "project timeline" finds documents containing those words (not filenames)
+- <500ms search latency maintained
+- >85% test coverage for all new code
+- Zero production incidents
+- Instant rollback capability
+
+**Sub-tasks**:
+- PM-038.1: Domain Models + Content Extraction Core
+- PM-038.2: Connection Pooling + MCP Client Enhancement
+- PM-038.3: FileRepository Integration + Real Content Search ⭐ CRITICAL
+- PM-038.4: Configuration Service + Error Handling
+- PM-038.5: Performance Optimization + Monitoring
+
+**GitHub Issues**: #31 (parent), #32-36 (daily tasks)
 
 ### PM-015: Test Infrastructure Isolation Fix
 
@@ -171,7 +208,7 @@ _All P0 tickets completed - infrastructure foundation established_
 - [ ] Clear documentation of test isolation patterns
 - [ ] CI/CD pipeline reliability improved
 
-### PM-016: Advanced Workflow Orchestration
+### PM-045: Advanced Workflow Orchestration
 
 **Story**: As a power user, I want complex multi-step workflows so I can automate sophisticated PM tasks
 **Description**: Multi-step workflows with conditional logic and cross-system coordination
@@ -181,19 +218,19 @@ _All P0 tickets completed - infrastructure foundation established_
 
 ## 📈 P2 - Extended Capabilities
 
-### PM-016: Bulk Operations Support
+### PM-020: Bulk Operations Support
 
 **Story**: As a PM, I want to perform bulk operations so I can handle large-scale tasks efficiently
 **Description**: Batch issue creation, bulk editing, and progress tracking for large operations
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: PM-012
 
-### PM-017: Analytics Dashboard Integration
+### PM-048: Analytics Dashboard Integration
 
 **Story**: As a PM, I want automated reports from our analytics tools so I can focus on insights
 **Description**: Connect to analytics platforms for automated reporting and anomaly detection
 **Estimate**: 21 points | **Status**: Planned | **Dependencies**: External API integrations
 
-### PM-018: Slack/Teams Integration
+### PM-021: Slack/Teams Integration
 
 **Story**: As a team member, I want to interact with Piper Morgan through our chat tools
 **Description**: Bot interfaces for Slack and Teams with context sharing and notifications
@@ -251,7 +288,7 @@ _All P0 tickets completed - infrastructure foundation established_
 - Alert configuration and routing
 - Insight generation with LLM analysis
 
-### PM-031: Advanced Knowledge Graph Implementation
+### PM-040: Advanced Knowledge Graph Implementation
 
 **Story**: As an organization, we want dynamic knowledge relationships for better discovery
 **Description**: Implement graph-based knowledge representation with relationship mapping and organizational learning
@@ -316,19 +353,19 @@ _All P0 tickets completed - infrastructure foundation established_
 
 ## 🚀 P3 - Advanced Capabilities
 
-### PM-018: Predictive Analytics & Insights
+### PM-022: Predictive Analytics & Insights
 
 **Story**: As a strategic PM, I want predictions about project outcomes based on current patterns
 **Description**: Timeline prediction, risk assessment, and resource optimization recommendations
 **Estimate**: 34 points | **Status**: Research Phase | **Dependencies**: Significant historical data
 
-### PM-019: Autonomous Workflow Management
+### PM-052: Autonomous Workflow Management
 
 **Story**: As a team, we want workflows to optimize and improve themselves automatically
 **Description**: Self-optimizing workflows with A/B testing and automatic improvements
 **Estimate**: 34 points | **Status**: Research Phase | **Dependencies**: Advanced AI reasoning
 
-### PM-031: Visual Content Analysis Pipeline
+### PM-053: Visual Content Analysis Pipeline
 
 **Story**: As a PM, I want to upload screenshots and get automated issue descriptions
 **Description**: Advanced implementation of screenshot/mockup analysis for bug reporting and feature requests
@@ -341,7 +378,7 @@ _All P0 tickets completed - infrastructure foundation established_
 - Bug vs feature classification
 - Integration with GitHub issue creation
 
-### PM-035: Predictive Project Analytics
+### PM-054: Predictive Project Analytics
 
 **Story**: As a PM, I want concrete predictions about project outcomes
 **Description**: Delivery timeline predictions, risk assessment scores, resource optimization recommendations
@@ -494,17 +531,24 @@ _All P0 tickets completed - infrastructure foundation established_
 
 ## 🎯 Current Sprint Focus
 
+### ⚡ ACTIVE (This Week - July 18-25, 2025)
+
+1. **PM-038**: MCP Real Content Search Implementation - Week 1 TDD implementation
+   - **Critical milestone**: Replace fake content search with real text extraction
+   - **Daily deliverables**: Domain models → Pooling → Content search → Config → Performance
+   - **Success criteria**: Search "budget analysis" finds content inside files
+
 ### Immediate Priorities (Next 2 weeks)
 
-1. **PM-001**: Database Schema Initialization - Foundation for persistence
-2. **PM-002**: Workflow Factory Implementation - Enable workflow execution
-3. **PM-008**: GitHub Issue Review & Improvement - Leverage completed capabilities
+1. **PM-012**: GitHub Repository Integration - Connect projects to repositories
+2. **PM-015**: Test Infrastructure Isolation Fix - Clean up phantom test failures
+3. **PM-033**: MCP Integration Pilot Planning - Prepare for August implementation
 
 ### Near-term Goals (Next month)
 
-1. **PM-003**: GitHub Issue Creation Workflow - Complete core value proposition
-2. **PM-012**: GitHub Repository Integration - Connect projects to repositories
-3. **PM-004**: Workflow State Persistence - System reliability
+1. **PM-033**: MCP Integration Pilot - Enable federated tool access (August 5+)
+2. **PM-034**: LLM-Based Intent Classification - Replace regex patterns
+3. **PM-039**: Learning & Feedback Implementation - System improvement
 
 ### Success Metrics
 
@@ -515,10 +559,12 @@ _All P0 tickets completed - infrastructure foundation established_
 
 ---
 
-_Last Updated: July 16, 2025_
+_Last Updated: July 18, 2025_
 
 ## Revision Log
 
+- **July 18, 2025**: Systematic PM numbering cleanup - resolved all duplicate numbers (PM-013→PM-039, PM-016→PM-020/045, PM-018→PM-021/022, PM-031→PM-040/053, PM-035→PM-026/054), created numbering guide
+- **July 17, 2025**: Added PM-038 (MCP Real Content Search Implementation) - Week 1 TDD implementation replacing POC fake content search, updated current sprint focus
 - **July 13, 2025**: Added PM-014 (Documentation and Test Suite Health) following Action Humanizer implementation, updated ticket numbering
 - **June 21, 2025**: Consolidated backlog reflecting PM-009/010/011 completions, added technical debt items, corrected ticket numbering
 
@@ -599,7 +645,7 @@ _Last Updated: July 16, 2025_
 - Markdown rendering with marked.js
 - Refactored all UI code to use shared domain module
 
-### PM-035: Test Infrastructure Isolation Fix
+### PM-026: Test Infrastructure Isolation Fix
 
 **Story**: As a development team, we need clean test runs without false failures so we can trust our test suite and maintain high code quality
 **Description**: Fix test isolation issues causing ~31 phantom failures in full suite that mask real business logic health

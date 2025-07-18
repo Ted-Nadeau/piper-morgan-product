@@ -72,11 +72,15 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - ✅ PM-014: Documentation and Test Suite Health
 - **Success Criteria**: ✅ All critical tests passing, documentation reviewed, infrastructure issues documented
 
-### Sprint 2B: Core Features & MCP Prep (July 21 - Aug 3, 2025)
+### Sprint 2B: Core Features & MCP Implementation (July 18 - Aug 3, 2025)
 
 - [ ] PM-012: Real GitHub issue creation (start July 21)
+- [x] **PM-038: MCP Real Content Search** (July 18-25, 2025) - ACTIVE
+  - Week 1 TDD implementation of real content-based file search
+  - Daily deliverables: Domain models → Connection pooling → Content search → Config service → Performance
+  - Success criteria: Search "budget analysis" finds content inside files (not filenames)
 - [ ] MCP integration planning and scaffolding
-- **Success Criteria**: GitHub issues created in real repos, MCP pilot plan ready, dependencies mapped
+- **Success Criteria**: GitHub issues created in real repos, real content search working, MCP foundation established
 
 ### Sprint 2: Core Feature Polish
 
@@ -92,7 +96,7 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
   - Label management
   - Error handling for API failures
 
-- [ ] **PM-013**: Knowledge search improvements (3 points)
+- [ ] **PM-005**: Knowledge search improvements (3 points)
   - Tune relevance scoring
   - Improve chunking strategy
   - Add search filters
@@ -111,14 +115,14 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 
 #### Tasks
 
-- [ ] **PM-014**: Performance optimization (5 points)
+- [ ] **PM-041**: Performance optimization (5 points)
 
   - Database query optimization
   - Caching implementation
   - Async operation tuning
   - Load testing
 
-- [ ] **PM-015**: Deployment preparation (3 points)
+- [ ] **PM-042**: Deployment preparation (3 points)
   - Environment configuration
   - Deployment scripts
   - Basic monitoring setup
@@ -139,14 +143,14 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 
 #### Tasks
 
-- [ ] **PM-016**: Feedback processing pipeline (8 points)
+- [ ] **PM-043**: Feedback processing pipeline (8 points)
 
   - Analyze user corrections
   - Pattern identification
   - Model improvement triggers
   - Learning metrics
 
-- [ ] **PM-017**: Clarifying questions system (8 points)
+- [ ] **PM-044**: Clarifying questions system (8 points)
   - Ambiguity detection
   - Question generation
   - Multi-turn dialogue
@@ -165,14 +169,14 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 
 #### Tasks
 
-- [ ] **PM-018**: Multi-step workflows (13 points)
+- [ ] **PM-045**: Multi-step workflows (13 points)
 
   - Complex orchestration patterns
   - Conditional logic
   - Human-in-the-loop approvals
   - Progress tracking
 
-- [ ] **PM-019**: Bulk operations (8 points)
+- [ ] **PM-046**: Bulk operations (8 points)
   - Batch issue creation
   - CSV import/export
   - Progress indicators
@@ -191,14 +195,14 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 
 #### Tasks
 
-- [ ] **PM-020**: Slack integration (13 points)
+- [ ] **PM-047**: Slack integration (13 points)
 
   - Bot implementation
   - Channel notifications
   - Interactive commands
   - Thread management
 
-- [ ] **PM-021**: Analytics dashboards (13 points)
+- [ ] **PM-048**: Analytics dashboards (13 points)
   - Connect to data sources
   - Automated reporting
   - Anomaly detection
@@ -229,6 +233,12 @@ These features directly support the evolution from task automation to analytical
 - ✅ Multi-repository workflow support
 - ✅ Enhanced knowledge search with relationship awareness
 - ✅ Basic analytics and reporting
+- 🆕 **MCP Real Content Search (PM-038)** - ACTIVE
+  - Week 1 implementation of real content-based file search
+  - Replace POC fake content search with actual text extraction
+  - Connection pooling, configuration service, performance optimization
+  - Timeline: July 18-25, 2025 (5 days TDD implementation)
+  - **PM-038 Status: Ready for Implementation**
 - 🆕 **MCP Integration Pilot (PM-033)**
   - Phase 1: Enable MCP consumer capabilities
   - Enhance PM-009 multi-project context with federated search
@@ -253,14 +263,14 @@ These features directly support the evolution from task automation to analytical
 
 #### Tasks
 
-- [ ] **PM-022**: Pattern analysis engine (21 points)
+- [ ] **PM-049**: Pattern analysis engine (21 points)
 
   - Historical data processing
   - Trend identification
   - Success factor analysis
   - Prediction models
 
-- [ ] **PM-023**: Strategic recommendations (21 points)
+- [ ] **PM-050**: Strategic recommendations (21 points)
   - Market analysis integration
   - Competitive intelligence
   - Resource optimization
@@ -279,14 +289,14 @@ These features directly support the evolution from task automation to analytical
 
 #### Tasks
 
-- [ ] **PM-024**: Workflow optimization (21 points)
+- [ ] **PM-051**: Workflow optimization (21 points)
 
   - Performance analysis
   - Automatic improvements
   - A/B testing framework
   - Success tracking
 
-- [ ] **PM-025**: Proactive assistance (21 points)
+- [ ] **PM-052**: Proactive assistance (21 points)
   - Issue detection
   - Automatic prioritization
   - Preventive actions
@@ -305,11 +315,11 @@ These features directly support the evolution from task automation to analytical
 
 #### Tasks
 
-- [ ] **PM-031**: Visual Content Analysis Pipeline (21 points)
+- [ ] **PM-053**: Visual Content Analysis Pipeline (21 points)
   - Screenshot and mockup processing
   - Automated issue generation from visuals
   - UI element detection and analysis
-- [ ] **PM-035**: Predictive Project Analytics (34 points)
+- [ ] **PM-054**: Predictive Project Analytics (34 points)
   - Concrete timeline predictions
   - Risk assessment automation
   - Resource optimization algorithms
@@ -474,8 +484,10 @@ graph TD
 
 ## This roadmap provides a realistic path from current state to advanced AI-powered PM assistance. Each phase builds on previous work while delivering incremental value. The modular approach allows for course corrections based on user feedback and technical learnings.
 
-_Last Updated: July 16, 2025_
+_Last Updated: July 18, 2025_
 
 ## Revision Log
 
+- **July 18, 2025**: Systematic PM numbering cleanup - resolved PM-013 conflict (roadmap → PM-005), renumbered all conflicting tickets to eliminate duplicate numbering across documentation
+- **July 17, 2025**: Added PM-038 (MCP Real Content Search Implementation) to Sprint 2B, updated Q3 2025 timeline with active MCP development
 - **June 21, 2025**: Added systematic documentation dating and revision tracking
