@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 from .client import MCPResource, MCPResourceContent, PiperMCPClient
 from .exceptions import MCPConnectionError
 
+logger = logging.getLogger(__name__)
+
 # Import domain models for proper content extraction and scoring
 try:
     from services.domain.mcp.content_extraction import ContentExtractor
@@ -40,8 +42,6 @@ try:
 except ImportError:
     POOL_AVAILABLE = False
     logger.warning("MCP Connection Pool not available, using direct connections")
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
