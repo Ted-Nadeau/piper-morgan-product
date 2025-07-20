@@ -13,6 +13,25 @@ from typing import Any, Dict, List, Optional
 from .client import MCPResource, MCPResourceContent, PiperMCPClient
 from .exceptions import MCPConnectionError
 
+# Import domain models for proper content extraction and scoring
+try:
+    from services.domain.mcp.content_extraction import ContentExtractor
+    from services.domain.mcp.value_objects import RelevanceScore
+
+    DOMAIN_MODELS_AVAILABLE = True
+except ImportError:
+    DOMAIN_MODELS_AVAILABLE = False
+    logger.warning("MCP domain models not available, using basic scoring")
+
+# Import centralized configuration service
+try:
+    from services.infrastructure.config.mcp_configuration import get_config
+
+    CONFIG_SERVICE_AVAILABLE = True
+except ImportError:
+    CONFIG_SERVICE_AVAILABLE = False
+    logger.warning("Configuration service not available, using direct environment access")
+
 # Try to import connection pool - graceful fallback if not available
 try:
     from services.infrastructure.mcp.connection_pool import MCPConnectionPool
@@ -55,14 +74,29 @@ class MCPResourceManager:
         self.enabled = False  # Will be set by feature flag
 
         # Connection pooling configuration
-        self.use_pool = os.getenv("USE_MCP_POOL", "false").lower() == "true" and POOL_AVAILABLE
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()
+            self.use_pool = config.pool_enabled and POOL_AVAILABLE
+        else:
+            # Fallback to direct environment access
+            self.use_pool = os.getenv("USE_MCP_POOL", "false").lower() == "true" and POOL_AVAILABLE
         self.connection_pool = None
 
         # Resource cache with TTL
         self.resource_cache: Dict[str, Any] = {}
         self.cache_ttl = 300  # 5 minutes
 
-        logger.info(f"MCP Resource Manager initialized (pool: {self.use_pool})")
+        # Initialize domain model for content extraction and scoring
+        self.content_extractor = None
+        if DOMAIN_MODELS_AVAILABLE:
+            self.content_extractor = ContentExtractor()
+            logger.info(
+                f"MCP Resource Manager initialized (pool: {self.use_pool}, domain: available)"
+            )
+        else:
+            logger.info(
+                f"MCP Resource Manager initialized (pool: {self.use_pool}, domain: fallback)"
+            )
 
     async def initialize(self, enabled: bool = False) -> bool:
         """Initialize MCP client connection"""
@@ -169,8 +203,15 @@ class MCPResourceManager:
             processing_start = time.time()
             enhanced_results = []
             for content in content_results:
-                # Calculate relevance score (simple implementation)
-                relevance_score = self._calculate_relevance_score(content.content, query)
+                # Calculate relevance score using domain model
+                relevance_score = self._calculate_relevance_score_with_domain_model(
+                    content.content, query
+                )
+
+                # Extract metadata using domain model
+                enhanced_metadata = self._extract_enhanced_metadata(
+                    content.content, content.uri, query
+                )
 
                 # Create enhanced result
                 result = EnhancedFileResult(
@@ -179,7 +220,7 @@ class MCPResourceManager:
                     content_preview=self._create_content_preview(content.content, query),
                     relevance_score=relevance_score,
                     source="mcp",
-                    metadata=content.metadata or {},
+                    metadata=enhanced_metadata,
                 )
                 enhanced_results.append(result)
 
@@ -200,7 +241,24 @@ class MCPResourceManager:
             logger.error(f"MCP enhanced search failed after {duration:.3f}s: {e}")
             return []
 
-    def _calculate_relevance_score(self, content: str, query: str) -> float:
+    def _calculate_relevance_score_with_domain_model(self, content: str, query: str) -> float:
+        """Calculate relevance score using domain model TF-IDF or fallback to basic"""
+        if not content or not query:
+            return 0.0
+
+        if self.content_extractor:
+            # Use sophisticated domain model TF-IDF scoring
+            try:
+                relevance_score = self.content_extractor.calculate_relevance_score(content, query)
+                return relevance_score.value
+            except Exception as e:
+                logger.warning(f"Domain model scoring failed, falling back to basic: {e}")
+                return self._calculate_basic_relevance_score(content, query)
+        else:
+            # Fallback to basic scoring
+            return self._calculate_basic_relevance_score(content, query)
+
+    def _calculate_basic_relevance_score(self, content: str, query: str) -> float:
         """Simple relevance scoring based on query term frequency"""
         if not content or not query:
             return 0.0
@@ -219,6 +277,43 @@ class MCPResourceManager:
 
         # Average score across terms
         return total_score / len(query_terms) if query_terms else 0.0
+
+    def _extract_enhanced_metadata(self, content: str, uri: str, query: str) -> Dict[str, Any]:
+        """Extract enhanced metadata using domain model"""
+        base_metadata = {"uri": uri}
+
+        if self.content_extractor:
+            try:
+                # Extract content metadata using domain model
+                filename = self._extract_filename(uri)
+                content_extract = self.content_extractor.extract_text_content(content, filename)
+
+                # Extract keywords separately
+                keywords = self.content_extractor.extract_keywords(content, max_keywords=10)
+
+                # Add domain model metadata
+                base_metadata.update(
+                    {
+                        "file_type": content_extract.file_type,
+                        "word_count": content_extract.word_count,
+                        "keywords": keywords,
+                        "processed_by": "domain_model",
+                    }
+                )
+
+                # Add content matches for debugging
+                matches = self.content_extractor.find_content_matches(content, query)
+                if matches:
+                    base_metadata["content_matches"] = len(matches)
+                    base_metadata["top_match_score"] = max(m.relevance_score for m in matches)
+
+            except Exception as e:
+                logger.warning(f"Domain model metadata extraction failed: {e}")
+                base_metadata["processed_by"] = "fallback"
+        else:
+            base_metadata["processed_by"] = "basic"
+
+        return base_metadata
 
     def _extract_filename(self, uri: str) -> str:
         """Extract filename from URI"""

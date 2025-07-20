@@ -16,6 +16,14 @@ from services.database.models import UploadedFileDB
 from services.database.repositories import BaseRepository
 from services.domain.models import UploadedFile
 
+# Import centralized configuration service
+try:
+    from services.infrastructure.config.mcp_configuration import get_config
+
+    CONFIG_SERVICE_AVAILABLE = True
+except ImportError:
+    CONFIG_SERVICE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -155,7 +163,11 @@ class FileRepository(BaseRepository):
         filename_matches = await self.search_files_by_name(session_id, query)
 
         # Check if MCP content search is enabled
-        mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()
+            mcp_enabled = config.mcp_enabled
+        else:
+            mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
 
         if not mcp_enabled:
             logger.debug("MCP content search disabled, returning filename matches only")
@@ -224,7 +236,11 @@ class FileRepository(BaseRepository):
         filename_matches = await self.search_files_by_name_all_sessions(query, days)
 
         # Check if MCP content search is enabled
-        mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()
+            mcp_enabled = config.mcp_enabled
+        else:
+            mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
 
         if not mcp_enabled:
             logger.debug("MCP content search disabled, returning filename matches only")

@@ -11,6 +11,14 @@ from services.repositories.file_repository import FileRepository
 
 from .exceptions import AmbiguousFileReferenceError, NoFilesFoundError
 
+# Import centralized configuration service
+try:
+    from services.infrastructure.config.mcp_configuration import get_config
+
+    CONFIG_SERVICE_AVAILABLE = True
+except ImportError:
+    CONFIG_SERVICE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -124,7 +132,11 @@ class FileResolver:
         components = {}
 
         # Check if MCP content scoring is enabled
-        mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()
+            mcp_enabled = config.mcp_enabled
+        else:
+            mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
 
         if mcp_enabled:
             # With MCP content scoring: adjust weights to include content relevance
@@ -279,7 +291,14 @@ class FileResolver:
 
     def _calculate_content_score(self, file: UploadedFile, intent: Intent) -> float:
         """Calculate content relevance score using MCP (if enabled)"""
-        if not os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true":
+        # Check if MCP is enabled through configuration service
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()
+            mcp_enabled = config.mcp_enabled
+        else:
+            mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+
+        if not mcp_enabled:
             return 0.5  # Neutral score if MCP disabled
 
         try:
