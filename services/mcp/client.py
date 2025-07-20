@@ -268,12 +268,16 @@ class PiperMCPClient:
         if self.simulation_mode:
             results = []
             query_lower = query.lower()
+            query_terms = query_lower.split()
 
             for resource in self._simulated_resources:
                 # Get resource content
                 content = await self._get_resource_impl(resource.uri)
-                if content and query_lower in content.content.lower():
-                    results.append(content)
+                if content:
+                    content_lower = content.content.lower()
+                    # Check if any query terms appear in the content
+                    if any(term in content_lower for term in query_terms):
+                        results.append(content)
 
             return results
         else:

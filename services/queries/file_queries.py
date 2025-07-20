@@ -5,6 +5,14 @@ from typing import Any, Dict, List, Optional
 
 from services.repositories.file_repository import FileRepository
 
+# Import centralized configuration service
+try:
+    from services.infrastructure.config.mcp_configuration import get_config
+
+    CONFIG_SERVICE_AVAILABLE = True
+except ImportError:
+    CONFIG_SERVICE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -133,6 +141,11 @@ class FileQueryService:
 
     def _is_mcp_enabled(self) -> bool:
         """Check if MCP file search is enabled"""
-        import os
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()
+            return config.mcp_enabled
+        else:
+            # Fallback to direct environment access
+            import os
 
-        return os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+            return os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
