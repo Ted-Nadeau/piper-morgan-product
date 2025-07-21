@@ -139,6 +139,30 @@ class FileQueryService:
             logger.error(f"File search failed for query '{query}': {e}")
             return {"success": False, "error": f"Search failed: {str(e)}", "query": query}
 
+    async def search_files_by_query(
+        self, search_query: str, session_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Search files using natural language query (maps to existing search_files method)"""
+        if session_id:
+            return await self.search_files(session_id, search_query)
+        else:
+            # Search across all sessions if no specific session
+            return await self.search_files_all_sessions(search_query)
+
+    async def find_documents_about_topic(
+        self, topic: str, session_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Find documents about a specific topic (alias for search_files_by_query)"""
+        logger.info(f"Finding documents about topic: '{topic}'")
+        return await self.search_files_by_query(topic, session_id)
+
+    async def search_content_by_query(
+        self, content_query: str, session_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Search file content using natural language query (alias for search_files_by_query)"""
+        logger.info(f"Searching content for query: '{content_query}'")
+        return await self.search_files_by_query(content_query, session_id)
+
     def _is_mcp_enabled(self) -> bool:
         """Check if MCP file search is enabled"""
         if CONFIG_SERVICE_AVAILABLE:
