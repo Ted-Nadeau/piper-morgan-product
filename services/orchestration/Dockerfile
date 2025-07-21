@@ -2,7 +2,7 @@
 # 2025-06-03: Initial Dockerfile for orchestration service.
 
 # Use a specific Python base image for stability and smaller size
-FROM python:3.9-slim-buster
+FROM python:3.11-slim-buster
 
 # Set the working directory inside the container
 WORKDIR /app

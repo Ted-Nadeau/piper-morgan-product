@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Piper Morgan is an AI-powered Product Management Assistant platform that evolves from automating routine PM tasks to providing strategic insights. It's built with domain-driven design where PM concepts (Product, Feature, Intent, WorkItem) drive the technical architecture.
 
+## Requirements
+
+### Python Version
+- **Python 3.11** is required for all environments
+- Use `.python-version` file in project root for version management
+- Docker images use `python:3.11-slim-buster` base image
+- Virtual environment should be created with Python 3.11
+
 ## Key Commands
 
 ### Development Setup
