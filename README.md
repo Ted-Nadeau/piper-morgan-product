@@ -71,6 +71,40 @@ python scripts/init_db.py
 python main.py
 ```
 
+### Staging Environment (Production-Grade)
+
+For testing PM-038 MCP integration and production readiness:
+
+```bash
+# One-command staging deployment
+./scripts/deploy_staging.sh
+
+# Verify staging deployment (14 comprehensive tests)
+./scripts/verify_staging_deployment.sh
+
+# Access staging services
+# API: http://localhost:8001
+# Web UI: http://localhost:8081
+# Grafana: http://localhost:3001
+# Prometheus: http://localhost:9090
+```
+
+**Key Features:**
+- ✅ **PM-038 MCP Integration**: 642x performance improvement enabled
+- ✅ **Production Monitoring**: Prometheus + Grafana dashboards
+- ✅ **Health Checks**: Comprehensive component monitoring
+- ✅ **Automated Rollback**: Safe deployment with rollback procedures
+- ✅ **Performance Validation**: <500ms search target (achieving ~60ms)
+
+**Staging Architecture:**
+- 8 containerized services with Docker Compose
+- Named volume persistence with automated backups
+- Nginx load balancing and security headers
+- Circuit breaker pattern for fault tolerance
+- Real-time monitoring and alerting
+
+See [Staging Deployment Guide](docs/operations/staging-deployment-guide.md) for complete details.
+
 ## 🧑‍💻 Testing
 
 ```bash
@@ -166,10 +200,13 @@ piper-morgan-product/
 ## 📊 Current Status
 
 - [x] Domain-driven backend and query API robust and fully tested (PM-009 complete)
+- [x] **PM-038 MCP Integration**: 642x performance improvement with connection pooling
+- [x] **Production-Grade Staging**: Docker Compose with monitoring and rollback
 - [x] Architecture design and domain model definition
 - [x] Core infrastructure setup (Postgres, Redis, ChromaDB)
 - [x] Basic service scaffolding and orchestration engine
 - [x] Query intent pipeline with RESTful error handling and contract-driven tests
+- [x] Comprehensive health monitoring with Prometheus + Grafana
 - [ ] CI/CD pipeline (in progress)
 - [ ] Web UI and advanced integrations (upcoming)
 
@@ -185,6 +222,16 @@ Currently, work is being done on the `main` branch. Feature branches will be use
 
 ## 📚 Documentation
 
+### Core Documentation
 - [Architecture Overview](docs/architecture/architecture.md)
 - [Domain Model](docs/architecture/data-model.md)
 - [API Documentation](docs/api/api-reference.md)
+
+### Architecture Decision Records (ADRs)
+- [ADR-007: Staging Environment Architecture](docs/architecture/adr/adr-007-staging-environment-architecture.md)
+- [ADR-008: MCP Connection Pooling Strategy](docs/architecture/adr/adr-008-mcp-connection-pooling-production.md)
+- [ADR-009: Health Monitoring System Design](docs/architecture/adr/adr-009-health-monitoring-system.md)
+
+### Operations
+- [Staging Deployment Guide](docs/operations/staging-deployment-guide.md)
+- [Staging Rollback Procedures](docs/operations/staging-rollback-procedures.md)

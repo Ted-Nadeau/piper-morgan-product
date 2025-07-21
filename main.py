@@ -242,6 +242,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         # NEW: Enrich intent with file context
         # Add original message to context for file reference detection
         intent.context["original_message"] = request.message
+        intent.context["session_id"] = session_id  # Add session_id for search queries
 
         # Get database pool for enricher
         pool = await DatabasePool.get_pool()
@@ -658,6 +659,31 @@ async def upload_file(file: UploadFile = File(...), session_id: Optional[str] = 
     except Exception as e:
         logger.error(f"File upload failed: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@app.get("/api/v1/files/search")
+async def search_files(q: str, session_id: Optional[str] = None, limit: int = 10):
+    """Search files using natural language query with PM-038 MCP integration"""
+    try:
+        logger.info(f"File search request: query='{q}', session_id={session_id}, limit={limit}")
+
+        # Create FileQueryService using existing infrastructure
+        async with AsyncSessionFactory.session_scope() as session:
+            file_repo = FileRepository(session)
+            file_query_service = FileQueryService(file_repo)
+
+            # Use the enhanced search functionality
+            if session_id:
+                results = await file_query_service.search_files(session_id, q, limit)
+            else:
+                results = await file_query_service.search_files_all_sessions(q, limit=limit)
+
+        logger.info(f"File search completed: found {results.get('total_count', 0)} files")
+        return results
+
+    except Exception as e:
+        logger.error(f"File search failed for query '{q}': {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
 # Comment out the knowledge search endpoint that uses get_ingester

@@ -136,21 +136,75 @@ _All P0 tickets completed - infrastructure foundation established_
 **Description**: Enable GitHub issue creation using project-specific repository configuration
 **Estimate**: 5 points | **Status**: NEXT UP - Starting July 21, 2025 | **Dependencies**: PM-009 ✅, PM-003 ✅
 
-### PM-039: Learning & Feedback Implementation
+### PM-039: Intent Classification Coverage Improvements
+
+**Story**: As a user, I want more natural conversation patterns to be properly recognized so I can interact with Piper Morgan more naturally
+**Description**: Enhance intent classification system to handle conversation patterns and context resolution gaps identified during PM-038 validation
+**Estimate**: 3-5 points (1-2 days) | **Status**: Ready for Implementation | **Dependencies**: PM-038 ✅
+
+**Background**: During PM-038 validation, several intent classification gaps were identified where natural language patterns weren't properly recognized or routed.
+
+**Implementation Details**:
+
+**Context Handling Improvements**:
+
+- Enhanced session context propagation through intent pipeline
+- Better handling of multi-turn conversations and anaphoric references
+- Improved context enrichment for search queries
+
+**Intent Registration & Discovery**:
+
+- Audit existing intent patterns for coverage gaps
+- Register missing search patterns in intent classification
+- Validate intent action mapping completeness
+- Document intent registration process
+
+**Query Variations Support**:
+
+- Handle natural variations of search requests
+- Support conversational search patterns
+- Improve query extraction from natural language
+- Add fallback classification improvements
+
+**Success Criteria**:
+
+- [ ] All identified search patterns properly classified
+- [ ] Session context flows correctly through intent pipeline
+- [ ] Natural conversation patterns work without regex dependence
+- [ ] Intent registration process documented
+- [ ] > 90% classification accuracy maintained
+- [ ] Zero regression in existing functionality
+
+**Technical Approach**:
+
+- Incremental improvements to existing classifier
+- Comprehensive testing with edge cases
+- Documentation of classification patterns
+- Integration with PM-038 search infrastructure
+
+**Files to Modify**:
+
+- `services/intent_service/classifier.py` - Pattern improvements
+- `services/queries/query_router.py` - Action mapping validation
+- `tests/test_intent_classification.py` - Enhanced test coverage
+- `docs/architecture/intent-patterns.md` - Pattern documentation
+
+### PM-040: Learning & Feedback Implementation
 
 **Story**: As a learning system, I need to track user edits and improve over time
 **Description**: Implement feedback collection and analysis to improve suggestion quality
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: Basic workflows working
 
-### PM-038: MCP Real Content Search Implementation
+### ✅ PM-038: MCP Real Content Search Implementation - COMPLETE
 
 **Story**: As a user, I want to search file content, not just filenames
 **Description**: Week 1 implementation of real content-based file search replacing POC fake implementation
-**Estimate**: 13 points (5 days) | **Status**: ⚡ ACTIVE - Day 2 of 5 complete ✅ 642x performance improvement achieved | **Dependencies**: MCP POC ✅
+**Estimate**: 13 points (5 days) | **Status**: ✅ COMPLETE | **Completed**: July 20, 2025 | **Dependencies**: MCP POC ✅
 
 **Background**: POC proved MCP integration feasibility but used fake content search (filename matching). This implements REAL content extraction and search capabilities.
 
 **Week 1 Scope**:
+
 - ✅ Real content extraction from files (.txt, .md, .pdf)
 - ✅ Connection pooling to eliminate resource leaks
 - ✅ Centralized configuration service
@@ -158,37 +212,51 @@ _All P0 tickets completed - infrastructure foundation established_
 - ✅ Feature flag protected deployment (`ENABLE_MCP_FILE_SEARCH=false`)
 
 **Technical Approach**:
+
 - Test-Driven Development (TDD) for all new code
 - Domain-Driven Design (DDD) with proper bounded contexts
 - Performance budget: <500ms search latency (P95)
 - Comprehensive error handling and monitoring
 
 **Success Criteria**:
+
 - Search "project timeline" finds documents containing those words (not filenames)
 - <500ms search latency maintained
-- >85% test coverage for all new code
+- > 85% test coverage for all new code
 - Zero production incidents
 - Instant rollback capability
 
 **Sub-tasks**:
+
 - PM-038.1: Domain Models + Content Extraction Core ✅ COMPLETE (41 tests, pure domain logic)
 - PM-038.2: Connection Pooling + MCP Client Enhancement ✅ COMPLETE (642x performance improvement, 17 tests)
-- PM-038.3: FileRepository Integration + Real Content Search ⭐ NEXT
-- PM-038.4: Configuration Service + Error Handling
-- PM-038.5: Performance Optimization + Monitoring
+- PM-038.3: FileRepository Integration + Real Content Search ✅ COMPLETE
+- PM-038.4: Configuration Service + Error Handling ✅ COMPLETE
+- PM-038.5: Performance Optimization + Monitoring ✅ COMPLETE
+- PM-038.6: Production Staging Deployment ✅ COMPLETE
+- PM-038.7: Natural Language Search Integration ✅ COMPLETE
 
 **GitHub Issues**: #31 (parent), #32-36 (daily tasks)
 
-**Progress Notes**:
+**Final Results**:
+
 - **July 18, 2025**: Day 2 complete - Connection pool implemented with **642x performance improvement** (103ms → 0.16ms)
-- **Technical Achievement**: TDD approach delivered 17 passing tests and production-ready infrastructure
-- **Documentation**: Complete case study and architecture patterns documented
-- **Feature Flag**: Safe deployment with `USE_MCP_POOL=false` default, zero breaking changes
-- **Status**: Ahead of schedule, excellent foundation for Day 3 real content search integration
+- **July 20, 2025**: Full implementation complete - Production-grade staging environment with natural language search
+- **Technical Achievement**: Complete MCP integration with 92/95 tests passing (97% success rate)
+- **Infrastructure**: 8-service Docker Compose with monitoring, rollback, and automation
+- **Natural Language Search**: Users can search "find documents about project timeline" and get real results
+- **Documentation**: Complete ADR coverage and operational procedures
+- **Performance**: 642x improvement validated, <500ms search latency achieved
 
 **References**:
+
 - Case Study: `docs/case-studies/mcp-connection-pool-642x.md`
 - Architecture: `docs/architecture/architecture.md` (2025-07-18 section)
+- ADRs: `docs/architecture/adr/adr-007.md`, `adr-008.md`, `adr-009.md`
+- Operations: `docs/operations/staging-deployment-guide.md`
+- Session Log: `docs/development/session-logs/2025-07-20b-adr-documentation-log.md`
+
+**Follow-up**: PM-039 (Intent Classification Coverage Improvements) - GitHub #37
 
 ### PM-015: Test Infrastructure Isolation Fix
 
@@ -224,6 +292,59 @@ _All P0 tickets completed - infrastructure foundation established_
 **Story**: As a power user, I want complex multi-step workflows so I can automate sophisticated PM tasks
 **Description**: Multi-step workflows with conditional logic and cross-system coordination
 **Estimate**: 21 points | **Status**: Planned | **Dependencies**: PM-002 ✅, PM-003 ✅
+
+### PM-055: Enforce Python Version Consistency Across Environments
+
+**Story**: As a development team, we need consistent Python versions across all environments to prevent version-specific bugs
+**Description**: Recent asyncio.timeout bug was caused by Python version mismatch between dev and production
+**Estimate**: 2-3 points | **Status**: Ready | **Dependencies**: None
+**Implementation Details**:
+
+- Add .python-version file specifying Python 3.11
+- Create Dockerfile with official Python 3.11 base image
+- Update docker-compose.yml with build context
+- Update documentation with version requirements
+  **GitHub Issue**: #23
+
+### PM-056: Domain/Database Schema Validator Tool
+
+**Story**: As a development team, we need automated validation of domain/database consistency to prevent drift bugs
+**Description**: Create tool to programmatically compare SQLAlchemy models with domain dataclasses
+**Estimate**: 3-5 points | **Status**: Ready | **Dependencies**: None
+**Implementation Details**:
+
+- Create tools/check_domain_db_consistency.py script
+- Compare field names between domain and database models
+- Integrate into CI/CD pipeline with build failure on mismatch
+- Provide migration hints when mismatches found
+  **GitHub Issue**: #27
+
+### PM-057: Pre-execution Context Validation for Workflows
+
+**Story**: As a system, workflows should validate required context before execution to fail fast
+**Description**: Prevent TASK_FAILED errors from missing or incorrect workflow context
+**Estimate**: 3-5 points | **Status**: Ready | **Dependencies**: None
+**Implementation Details**:
+
+- Create validation registry in WorkflowFactory
+- Define required context keys for each WorkflowType
+- Validate context in create_from_intent method
+- Raise InvalidWorkflowContextError on validation failure
+- Add comprehensive unit tests
+  **GitHub Issue**: #26
+
+### PM-021: LIST_PROJECTS Workflow
+
+**Story**: As a user, I want to list all projects in the system so I can select the correct context for my work
+**Description**: Implement LIST_PROJECTS workflow to return all available projects
+**Estimate**: 1-2 points | **Status**: Ready | **Dependencies**: None
+**Implementation Details**:
+
+- Add LIST_PROJECTS to WorkflowType enum
+- Implement handler in WorkflowFactory
+- Add API endpoint for listing projects
+- Add unit and integration tests
+  **GitHub Issue**: #21
 
 ---
 
@@ -574,6 +695,7 @@ _Last Updated: July 18, 2025_
 
 ## Revision Log
 
+- **July 21, 2025**: Added PM-055, PM-056, PM-057, and LIST_PROJECTS workflow to P1 section. Reconciled backlog with Foundation & Cleanup sprint plan. Ensured unique PM numbers and estimates align with team capacity.
 - **July 18, 2025**: PM-038 Day 2 complete - MCP connection pool implemented with 642x performance improvement, comprehensive documentation and architecture patterns established
 - **July 18, 2025**: Systematic PM numbering cleanup - resolved all duplicate numbers (PM-013→PM-039, PM-016→PM-020/045, PM-018→PM-021/022, PM-031→PM-040/053, PM-035→PM-026/054), created numbering guide
 - **July 17, 2025**: Added PM-038 (MCP Real Content Search Implementation) - Week 1 TDD implementation replacing POC fake content search, updated current sprint focus

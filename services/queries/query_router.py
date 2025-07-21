@@ -67,6 +67,35 @@ class QueryRouter:
             file_id = intent.context.get("resolved_file_id")
             print(f"DEBUG: QueryRouter - summarize file_id: {file_id}")
             return await self.file_queries.summarize_file(file_id)
+        elif intent.action == "search_files":
+            search_query = intent.context.get("search_query")
+            session_id = intent.context.get("session_id")
+            if not search_query:
+                raise ValueError("search_files query requires search_query in context")
+            print(f"DEBUG: QueryRouter - searching files for: {search_query}")
+            return await self.file_queries.search_files_by_query(search_query, session_id)
+        elif intent.action == "find_documents":
+            search_query = intent.context.get("search_query")
+            session_id = intent.context.get("session_id")
+            if not search_query:
+                raise ValueError("find_documents query requires search_query in context")
+            print(f"DEBUG: QueryRouter - finding documents about: {search_query}")
+            return await self.file_queries.find_documents_about_topic(search_query, session_id)
+        elif intent.action == "search_content":
+            search_query = intent.context.get("search_query")
+            session_id = intent.context.get("session_id")
+            if not search_query:
+                raise ValueError("search_content query requires search_query in context")
+            print(f"DEBUG: QueryRouter - searching content for: {search_query}")
+            return await self.file_queries.search_content_by_query(search_query, session_id)
+        elif intent.action == "search_documents":
+            # Handle LLM-generated search_documents action (maps to find_documents)
+            search_query = intent.context.get("search_query") or intent.context.get(
+                "original_message", ""
+            )
+            session_id = intent.context.get("session_id")
+            print(f"DEBUG: QueryRouter - searching documents for: {search_query}")
+            return await self.file_queries.find_documents_about_topic(search_query, session_id)
         else:
             raise ValueError(f"Unknown query action: {intent.action}")
 
@@ -83,4 +112,10 @@ class QueryRouter:
             "get_help",
             "get_status",
             "get_initial_contact",
+            "read_file_contents",
+            "summarize_file",
+            "search_files",
+            "find_documents",
+            "search_content",
+            "search_documents",  # LLM-generated action
         ]
