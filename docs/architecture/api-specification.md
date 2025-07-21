@@ -814,3 +814,9 @@ Workflow responses now include humanized acknowledgment messages:
 2. Main.py retrieves appropriate template
 3. TemplateRenderer formats message with humanized action
 4. Response sent to user with natural language
+
+## PM-039 Canonical Action for Document/File Search
+
+- All document/file search actions (find_documents, search_files, etc.) are normalized to 'search_documents'.
+- This unification ensures robust, maintainable, and unified handling of all search intents.
+- Supported patterns and typo tolerance are documented in tests/test_intent_coverage_pm039.py and docs/development/testing/ui-message-template-system-report.md.

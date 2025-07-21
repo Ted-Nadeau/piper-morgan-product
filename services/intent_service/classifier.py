@@ -1,3 +1,11 @@
+"""
+PM-039 Action Normalization/Unification
+
+- All document/file search actions (find_documents, search_files, etc.) are normalized to 'search_documents'.
+- This ensures robust, maintainable, and unified handling of all search intents.
+- See tests/test_intent_coverage_pm039.py for comprehensive coverage and scenarios.
+"""
+
 # services/intent_service/classifier.py
 import json
 import os
@@ -14,6 +22,9 @@ from services.api.errors import (
 )
 from services.api.serializers import intent_to_dict
 from services.domain.models import Intent, IntentCategory
+
+# --- Add fuzzy matcher import ---
+from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_match
 from services.intent_service.pre_classifier import PreClassifier
 from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
 from services.knowledge_graph import get_ingester
@@ -83,6 +94,31 @@ class IntentClassifier:
         try:
             # Perform classification with confidence scoring
             intent, reasoning = await self._classify_with_reasoning(message, context, file_context)
+
+            # --- ACTION NORMALIZATION ---
+            action_normalization_map = {
+                "find_specifications": "search_documents",
+                "find_documentation": "search_documents",
+                "list_project_plans": "search_documents",
+                "list_documents": "search_documents",
+                "search_requirements": "search_documents",
+                "get_documents": "search_documents",
+                "locate_documentation": "search_documents",
+                "find_documents": "search_documents",
+                "search_files": "search_documents",
+                "find_requirements": "search_documents",
+                "find_files": "search_documents",
+                "find_docs": "search_documents",
+                "search_docs": "search_documents",
+                "search_documents": "search_documents",  # idempotent
+            }
+            if intent.action in action_normalization_map:
+                logger.info(
+                    "action_normalization",
+                    original_action=intent.action,
+                    normalized_action=action_normalization_map[intent.action],
+                )
+                intent.action = action_normalization_map[intent.action]
 
             # Check for truly vague intents that need clarification
             # Lower confidence threshold to avoid overriding legitimate classifications
@@ -237,9 +273,59 @@ class IntentClassifier:
         return []
 
     def _fallback_classify(self, message: str) -> Intent:
-        """Simple keyword-based classification as fallback"""
-        message_lower = message.lower()
+        """Simple keyword-based classification as fallback, now with typo correction and fuzzy matching"""
+        # --- Apply typo correction ---
+        message_lower = correct_common_typos(message.lower())
+        context = {"original_message": message, "method": "fallback"}
 
+        # --- Define all pattern phrases for fuzzy matching ---
+        pattern_action_map = {
+            # Core find/search patterns
+            "find documents": (IntentCategory.QUERY, "find_documents"),
+            "find files": (IntentCategory.QUERY, "find_documents"),
+            "find technical specifications": (IntentCategory.QUERY, "search_documents"),
+            "find architecture documents": (IntentCategory.QUERY, "search_documents"),
+            "find docs": (IntentCategory.QUERY, "find_documents"),
+            "locate files": (IntentCategory.QUERY, "search_documents"),
+            "locate documents": (IntentCategory.QUERY, "search_documents"),
+            "locate api documentation": (IntentCategory.QUERY, "search_documents"),
+            "locate api specifications": (IntentCategory.QUERY, "search_documents"),
+            "locate specs": (IntentCategory.QUERY, "search_documents"),
+            "look for files": (IntentCategory.QUERY, "find_documents"),
+            "look for documents": (IntentCategory.QUERY, "find_documents"),
+            "look for docs": (IntentCategory.QUERY, "find_documents"),
+            "search for files": (IntentCategory.QUERY, "search_files"),
+            "search for documents": (IntentCategory.QUERY, "search_files"),
+            "search for docs": (IntentCategory.QUERY, "search_files"),
+            "get all design docs": (IntentCategory.QUERY, "search_documents"),
+            "get all documents": (IntentCategory.QUERY, "search_documents"),
+            "get all files": (IntentCategory.QUERY, "search_documents"),
+            "get documents": (IntentCategory.QUERY, "search_documents"),
+            "get files": (IntentCategory.QUERY, "search_documents"),
+            "show me all project plans": (IntentCategory.QUERY, "search_documents"),
+            "show me all documents": (IntentCategory.QUERY, "search_documents"),
+            "show me all files": (IntentCategory.QUERY, "search_documents"),
+            "show me project plans": (IntentCategory.QUERY, "search_documents"),
+            "search files": (IntentCategory.QUERY, "search_files"),
+            "search documents": (IntentCategory.QUERY, "search_files"),
+            "file search": (IntentCategory.QUERY, "search_files"),
+            "document search": (IntentCategory.QUERY, "search_files"),
+            "search for": (IntentCategory.QUERY, "search_files"),
+            "show me files": (IntentCategory.QUERY, "find_documents"),
+            "show me documents": (IntentCategory.QUERY, "find_documents"),
+        }
+        # --- Fuzzy match the message to a pattern ---
+        matched_pattern = fuzzy_match(message_lower, list(pattern_action_map.keys()), cutoff=0.8)
+        if matched_pattern:
+            category, action = pattern_action_map[matched_pattern]
+            # Use comprehensive extraction for search_query
+            context["search_query"] = self._extract_search_query_comprehensive(message)
+            return Intent(
+                category=category,
+                action=action,
+                confidence=0.7,  # Higher confidence for fuzzy match
+                context=context,
+            )
         # Explicit project query mappings
         if "how many projects" in message_lower or (
             "how many" in message_lower and "project" in message_lower
@@ -261,6 +347,115 @@ class IntentClassifier:
         elif any(word in message_lower for word in ["create", "make", "build", "add", "new"]):
             category = IntentCategory.EXECUTION
             action = "create_item"
+        # Order matters: more specific patterns first
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                "find files containing",
+                "look for documents with",
+                "files containing",
+                "documents with",
+                "search content",
+                "search for content",
+                "find content",
+                "content search",
+            ]
+        ):
+            category = IntentCategory.QUERY
+            action = "search_content"
+            context["search_query"] = self._extract_search_query(
+                message,
+                [
+                    "find files containing",
+                    "look for documents with",
+                    "files containing",
+                    "documents with",
+                    "search content",
+                    "search for content",
+                    "find content",
+                    "content search",
+                ],
+            )
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                # Core find patterns
+                "find documents",
+                "find files",
+                "find technical specifications",
+                "find architecture documents",
+                "find docs",
+                # Common typos for find patterns
+                "find tehcnical specifications",
+                "find technical specfications",
+                "find requirements",
+                # Locate patterns
+                "locate files",
+                "locate documents",
+                "locate api documentation",
+                "locate api specifications",
+                "locate specs",
+                # Look for patterns
+                "look for files",
+                "look for documents",
+                "look for docs",
+                # Search for patterns
+                "search for files",
+                "search for documents",
+                "search for docs",
+                # Get patterns
+                "get all design docs",
+                "get all documents",
+                "get all files",
+                "get documents",
+                "get files",
+                # Show me patterns (specific)
+                "show me all project plans",
+                "show me all documents",
+                "show me all files",
+                "show me project plans",
+            ]
+        ):
+            category = IntentCategory.QUERY
+            action = "find_documents"
+            context["search_query"] = self._extract_search_query_comprehensive(message)
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                # Basic search patterns
+                "search files",
+                "search documents",
+                "file search",
+                "document search",
+                # Search for patterns (general)
+                "search for",
+                "search for requirements files",
+                "search for meeting notes files",
+                # Common typos for search patterns
+                "serach for requirments files",
+                "search for requirments files",
+                "search files",
+                # Show me patterns (general)
+                "show me files",
+                "show me documents",
+            ]
+        ):
+            category = IntentCategory.QUERY
+            action = "search_files"
+            context["search_query"] = self._extract_search_query_comprehensive(message)
+        elif "find" in message_lower and any(
+            keyword in message_lower
+            for keyword in ["about", "regarding", "related to", "concerning"]
+        ):
+            category = IntentCategory.QUERY
+            action = "find_documents"
+            context["search_query"] = self._extract_search_query_about(message)
+        elif any(
+            phrase in message_lower for phrase in ["show me", "show me the", "display"]
+        ) and any(keyword in message_lower for keyword in ["files", "documents", "docs"]):
+            category = IntentCategory.QUERY
+            action = "find_documents"
+            context["search_query"] = self._extract_search_query_show_me(message)
         elif any(word in message_lower for word in ["analyze", "check", "review", "look at"]):
             category = IntentCategory.ANALYSIS
             action = "analyze_data"
@@ -284,7 +479,7 @@ class IntentClassifier:
             category=category,
             action=action,
             confidence=0.5,  # Lower confidence for fallback
-            context={"original_message": message, "method": "fallback"},
+            context=context,
         )
 
     def _seems_vague(self, intent: Intent) -> bool:
@@ -317,6 +512,202 @@ class IntentClassifier:
         if ambiguity_notes and any(isinstance(note, str) and note for note in ambiguity_notes):
             return True
         return False
+
+    def _extract_search_query(self, message: str, trigger_phrases: List[str]) -> str:
+        """Extract search query from message after removing trigger phrases"""
+        message_lower = message.lower()
+
+        # Find which trigger phrase was used
+        for phrase in trigger_phrases:
+            if phrase in message_lower:
+                # Remove the trigger phrase and common prepositions
+                query = message_lower.replace(phrase, "").strip()
+                # Remove common prepositions and articles
+                query = re.sub(
+                    r"\b(for|about|on|in|with|by|from|to|at|of|the|a|an)\b", "", query
+                ).strip()
+                # Clean up extra spaces
+                query = re.sub(r"\s+", " ", query).strip()
+                return query if query else message.strip()
+
+        # Fallback: return the original message
+        return message.strip()
+
+    def _extract_search_query_about(self, message: str) -> str:
+        """Extract search query from 'find ... about ...' patterns"""
+        message_lower = message.lower()
+
+        # Pattern: "find documents about project timeline"
+        if "about" in message_lower:
+            parts = message_lower.split("about", 1)
+            if len(parts) > 1:
+                query = parts[1].strip()
+                # Clean up the query
+                query = re.sub(r"\b(the|a|an)\b", "", query).strip()
+                query = re.sub(r"\s+", " ", query).strip()
+                return query if query else message.strip()
+
+        # Pattern: "find ... regarding ..." or "find ... related to ..."
+        for keyword in ["regarding", "related to", "concerning"]:
+            if keyword in message_lower:
+                parts = message_lower.split(keyword, 1)
+                if len(parts) > 1:
+                    query = parts[1].strip()
+                    query = re.sub(r"\b(the|a|an)\b", "", query).strip()
+                    query = re.sub(r"\s+", " ", query).strip()
+                    return query if query else message.strip()
+
+        # Fallback: return the original message
+        return message.strip()
+
+    def _extract_search_query_show_me(self, message: str) -> str:
+        """Extract search query from 'show me' patterns"""
+        message_lower = message.lower()
+
+        # Pattern: "show me files about X" or "show me documents related to Y"
+        for prefix in [
+            "show me files",
+            "show me documents",
+            "show me docs",
+            "show me the files",
+            "show me the documents",
+            "show me",
+        ]:
+            if prefix in message_lower:
+                # Remove the prefix
+                query = message_lower.replace(prefix, "").strip()
+                # Remove common prepositions
+                for prep in [
+                    "about",
+                    "related to",
+                    "concerning",
+                    "regarding",
+                    "with",
+                    "containing",
+                ]:
+                    if prep in query:
+                        query = query.split(prep, 1)[1].strip()
+                        break
+                # Clean up articles
+                query = re.sub(r"\b(the|a|an)\b", "", query).strip()
+                query = re.sub(r"\s+", " ", query).strip()
+                return query if query else message.strip()
+
+        # Fallback: return the original message
+        return message.strip()
+
+    def _extract_search_query_comprehensive(self, message: str) -> str:
+        """Comprehensive search query extraction for all patterns"""
+        message_lower = message.lower()
+
+        # Define comprehensive trigger phrases with their priorities (most specific first)
+        trigger_patterns = [
+            # Very specific patterns
+            "find technical specifications",
+            "find architecture documents",
+            "locate api documentation",
+            "locate api specifications",
+            "get all design docs",
+            "show me all project plans",
+            "search for requirements files",
+            "search for meeting notes files",
+            # Moderately specific patterns
+            "find documents",
+            "find files",
+            "find docs",
+            "locate files",
+            "locate documents",
+            "locate specs",
+            "look for files",
+            "look for documents",
+            "look for docs",
+            "search for files",
+            "search for documents",
+            "search for docs",
+            "get all documents",
+            "get all files",
+            "get documents",
+            "get files",
+            "show me all documents",
+            "show me all files",
+            "show me project plans",
+            "show me files",
+            "show me documents",
+            # General patterns
+            "search files",
+            "search documents",
+            "file search",
+            "document search",
+            "search for",
+        ]
+
+        # Try each pattern from most specific to least
+        for pattern in trigger_patterns:
+            if pattern in message_lower:
+                # Remove the trigger phrase
+                query = message_lower.replace(pattern, "").strip()
+
+                # Handle specific pattern extractions
+                if "about" in query:
+                    # "find documents about X" → extract "X"
+                    parts = query.split("about", 1)
+                    if len(parts) > 1:
+                        query = parts[1].strip()
+                elif any(prep in query for prep in ["related to", "regarding", "concerning"]):
+                    # Handle other prepositions
+                    for prep in ["related to", "regarding", "concerning"]:
+                        if prep in query:
+                            query = query.split(prep, 1)[1].strip()
+                            break
+                elif query.startswith("all "):
+                    # "get all design docs" → extract "design docs"
+                    query = query[4:].strip()
+
+                # Clean up the query
+                if query:
+                    # Remove common articles and prepositions
+                    query = re.sub(
+                        r"\b(the|a|an|with|containing|for|on|in|at|of)\b", "", query
+                    ).strip()
+                    # Clean up multiple spaces
+                    query = re.sub(r"\s+", " ", query).strip()
+
+                    # Extract file type if present
+                    if " files" in query:
+                        query = query.replace(" files", "").strip()
+
+                    return query if query else self._extract_from_context(message)
+
+        # Fallback: try to extract meaningful terms
+        return self._extract_from_context(message)
+
+    def _extract_from_context(self, message: str) -> str:
+        """Extract search terms from message context when no specific pattern matches"""
+        message_lower = message.lower()
+
+        # Remove common command words
+        stop_words = [
+            "find",
+            "search",
+            "locate",
+            "get",
+            "show",
+            "me",
+            "all",
+            "the",
+            "a",
+            "an",
+            "for",
+            "about",
+        ]
+        words = message_lower.split()
+        meaningful_words = [word for word in words if word not in stop_words and len(word) > 2]
+
+        if meaningful_words:
+            return " ".join(meaningful_words)
+
+        # Ultimate fallback
+        return message.strip()
 
 
 # Create a singleton instance without event bus for backward compatibility
