@@ -40,10 +40,10 @@ class DatabaseConnection:
         self.engine = create_async_engine(
             db_url,
             echo=os.getenv("APP_DEBUG", "false").lower() == "true",
-            pool_size=1,  # Single connection for tests to avoid sharing issues
-            max_overflow=0,
+            pool_size=5,  # Multiple connections to handle concurrent test operations
+            max_overflow=10,  # Allow additional connections during peak usage
             pool_pre_ping=False,  # Disable ping to avoid event loop conflicts
-            pool_recycle=-1,  # Don't recycle connections automatically
+            pool_recycle=3600,  # Recycle connections every hour to prevent stale connections
         )
 
         # Create session factory

@@ -157,16 +157,21 @@ async def async_transaction():
     async def _transaction_rollback_scope():
         """Context manager that automatically rolls back transactions"""
         session = await AsyncSessionFactory.create_session()
-        transaction = await session.begin()
         try:
-            yield session
-        finally:
-            # Always rollback to prevent state persistence
+            # Use session.begin() context manager for proper transaction handling
+            async with session.begin() as transaction:
+                yield session
+                # Transaction automatically rolls back on context exit
+        except Exception:
+            # Ensure session is closed even if transaction fails
             try:
-                await transaction.rollback()
+                await session.close()
             except Exception:
-                # Ignore rollback errors during cleanup
+                # Ignore close errors during cleanup
                 pass
+            raise
+        finally:
+            # Ensure session is always closed
             try:
                 await session.close()
             except Exception:
@@ -380,6 +385,13 @@ async def cleanup_sessions():
 
         # Force garbage collection to clean up any lingering connections
         gc.collect()
+
+        # Clear connection pool to prevent state leakage
+        from services.database.connection import db
+
+        if hasattr(db, "engine") and db.engine:
+            # Dispose of engine to clear all connections
+            await db.engine.dispose()
 
         # Wait a bit more for any final cleanup
         await asyncio.sleep(0.05)

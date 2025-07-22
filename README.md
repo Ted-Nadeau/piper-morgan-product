@@ -37,7 +37,9 @@ This platform is built on a microservices architecture with the following core p
 
 ### Prerequisites
 
-- Python 3.11+
+- **Python 3.11+** (required)
+  - Docker with Python 3.11 base images
+  - Git
 - Docker & Docker Compose
 - PostgreSQL 14+
 - Redis 7+
@@ -46,16 +48,28 @@ This platform is built on a microservices architecture with the following core p
 ### Local Development Setup
 
 ```bash
+# Verify Python version (must be 3.11+)
+python --version  # Should show Python 3.11.x
+
 # Clone the repository
 git clone https://github.com/yourusername/piper-morgan-platform.git
 cd piper-morgan-platform
 
-# Set up Python virtual environment
+# Verify .python-version file
+cat .python-version  # Should show 3.11
+
+# Set up Python virtual environment with Python 3.11
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
+# Verify Python version in virtual environment
+python --version  # Should show Python 3.11.x
+
 # Install dependencies
 pip install -r requirements.txt
+
+# Verify asyncio.timeout availability (key PM-055 feature)
+python -c "import asyncio; asyncio.timeout(1.0); print('✅ Python 3.11 ready')"
 
 # Copy environment template
 cp .env.example .env
@@ -69,6 +83,17 @@ python scripts/init_db.py
 
 # Start the development server
 python main.py
+```
+
+### Docker Setup
+
+```bash
+# Docker containers now use Python 3.11
+docker-compose build
+docker-compose up
+
+# Verify container Python version
+docker-compose exec app python --version  # Should show Python 3.11.x
 ```
 
 ### Staging Environment (Production-Grade)
@@ -90,6 +115,7 @@ For testing PM-038 MCP integration and production readiness:
 ```
 
 **Key Features:**
+
 - ✅ **PM-038 MCP Integration**: 642x performance improvement enabled
 - ✅ **Production Monitoring**: Prometheus + Grafana dashboards
 - ✅ **Health Checks**: Comprehensive component monitoring
@@ -97,6 +123,7 @@ For testing PM-038 MCP integration and production readiness:
 - ✅ **Performance Validation**: <500ms search target (achieving ~60ms)
 
 **Staging Architecture:**
+
 - 8 containerized services with Docker Compose
 - Named volume persistence with automated backups
 - Nginx load balancing and security headers
@@ -223,15 +250,18 @@ Currently, work is being done on the `main` branch. Feature branches will be use
 ## 📚 Documentation
 
 ### Core Documentation
+
 - [Architecture Overview](docs/architecture/architecture.md)
 - [Domain Model](docs/architecture/data-model.md)
 - [API Documentation](docs/api/api-reference.md)
 
 ### Architecture Decision Records (ADRs)
+
 - [ADR-007: Staging Environment Architecture](docs/architecture/adr/adr-007-staging-environment-architecture.md)
 - [ADR-008: MCP Connection Pooling Strategy](docs/architecture/adr/adr-008-mcp-connection-pooling-production.md)
 - [ADR-009: Health Monitoring System Design](docs/architecture/adr/adr-009-health-monitoring-system.md)
 
 ### Operations
+
 - [Staging Deployment Guide](docs/operations/staging-deployment-guide.md)
 - [Staging Rollback Procedures](docs/operations/staging-rollback-procedures.md)

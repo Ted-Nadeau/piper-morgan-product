@@ -147,7 +147,7 @@ class FileRepository(BaseRepository):
         db_file = result.scalar_one_or_none()
 
         if db_file:
-            self.session.delete(db_file)
+            await self.session.delete(db_file)
             return True
         return False
 

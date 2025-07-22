@@ -1,9 +1,50 @@
-version: "3.8"
-
 # EXPLICIT PROJECT NAME - survives directory renames!
 name: piper-morgan-stable
 
 services:
+  # Main Application - Piper Morgan API
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: piper-app
+    environment:
+      - PYTHON_VERSION=3.11
+      - PYTHONPATH=/app
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+      - "traefik.http.services.api.loadbalancer.server.port=8001"
+    restart: unless-stopped
+
+  # Orchestration Service - Temporal Worker
+  orchestration:
+    build:
+      context: .
+      dockerfile: services/orchestration/Dockerfile
+    container_name: piper-orchestration
+    environment:
+      - PYTHON_VERSION=3.11
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    depends_on:
+      temporal:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   # PostgreSQL - Main database
   postgres:
     image: postgres:15

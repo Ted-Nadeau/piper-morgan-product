@@ -668,6 +668,7 @@ class MCPConnectionPool:
 #### Key Architecture Patterns
 
 ##### 1. Thread-Safe Singleton Pattern
+
 ```python
 _instance = None
 _instance_lock = threading.Lock()
@@ -682,6 +683,7 @@ def get_instance(cls):
 ```
 
 ##### 2. Lazy Async Resource Initialization
+
 ```python
 async def _ensure_async_resources(self):
     """Initialize async resources only when needed"""
@@ -694,6 +696,7 @@ async def _ensure_async_resources(self):
 **Critical Discovery**: **Never hold async locks during I/O operations**. Initial implementation deadlocked due to nested lock acquisition during connection creation.
 
 ##### 3. Circuit Breaker Integration
+
 ```python
 async def _check_circuit_breaker(self):
     """Prevent cascade failures with configurable thresholds"""
@@ -705,6 +708,7 @@ async def _check_circuit_breaker(self):
 ```
 
 **Configuration**:
+
 - **Failure Threshold**: 5 failures before opening
 - **Recovery Timeout**: 60 seconds for half-open state
 - **Health Monitoring**: Automatic dead connection removal
@@ -726,19 +730,21 @@ else:
 ```
 
 **Benefits**:
+
 - **Zero-risk deployment**: Default disabled
 - **Immediate rollback**: Configuration-based fallback
 - **Production validation**: Both modes tested in production
 
 #### Performance Results
 
-| Metric | Before (POC) | After (Pool) | Improvement |
-|--------|-------------|-------------|-------------|
-| Connection Time | 103ms | **0.16ms** | **642x faster** |
-| Memory Usage | Growing | Stable | Leak eliminated |
+| Metric             | Before (POC)       | After (Pool)         | Improvement       |
+| ------------------ | ------------------ | -------------------- | ----------------- |
+| Connection Time    | 103ms              | **0.16ms**           | **642x faster**   |
+| Memory Usage       | Growing            | Stable               | Leak eliminated   |
 | Concurrent Scaling | Linear degradation | Constant performance | Unlimited scaling |
 
 **Real-World Impact**:
+
 - 100 searches/day/user = 49.4 seconds saved per user
 - 20 concurrent users = 16.5 minutes daily productivity gain
 - Monthly savings: 5.5 hours of user productivity
@@ -746,12 +752,14 @@ else:
 #### Test-Driven Development Success
 
 **TDD Metrics**:
+
 - **17 comprehensive tests** written before implementation
 - **100% test coverage** including edge cases and concurrency
 - **Zero post-implementation bugs** through disciplined TDD
 - **90-minute implementation** time after 30-minute test design
 
 **Test Categories**:
+
 - Singleton pattern enforcement and thread safety
 - Connection lifecycle and reuse validation
 - Circuit breaker failure and recovery scenarios
@@ -869,6 +877,7 @@ async def connection(self, server_config: Dict[str, Any]):
 ```
 
 **Usage Benefits**:
+
 - **Guaranteed Cleanup**: Connection always returned to pool
 - **Exception Safety**: Cleanup occurs even on failures
 - **Clear Resource Scope**: Explicit connection lifetime boundaries
@@ -949,6 +958,7 @@ async def get_connection_stats(self):
 **Backward Compatibility**: All existing `MCPResourceManager` APIs maintained without modification.
 
 **Deployment Strategy**:
+
 - **Default Disabled**: `USE_MCP_POOL=false` by default
 - **Opt-In Activation**: Set `USE_MCP_POOL=true` to enable pool
 - **Graceful Fallback**: Pool unavailable → automatic direct connection mode
@@ -959,6 +969,7 @@ async def get_connection_stats(self):
 #### Connection Reuse Impact
 
 **Measurement Methodology**:
+
 - Baseline: POC with direct connections
 - Test Environment: MacBook Pro M1, Python 3.9.6, simulated MCP server
 - Metrics: Connection time, search latency, concurrent access scaling
@@ -973,11 +984,13 @@ async def get_connection_stats(self):
 #### Real-World Performance Impact
 
 **Production Load Simulation**:
+
 - 100 file searches per user per day
 - 8-hour work days
 - 20 concurrent users
 
 **Productivity Gains**:
+
 - **Per Operation**: 102.84ms saved (98.4% reduction)
 - **Per User Daily**: 49.4 seconds saved
 - **Team Daily**: 16.5 minutes total saved
@@ -988,6 +1001,7 @@ async def get_connection_stats(self):
 **Complete Technical Documentation**: [MCP Connection Pool - 642x Performance Improvement](../case-studies/mcp-connection-pool-642x.md)
 
 **Comprehensive Analysis Including**:
+
 - Detailed problem statement and root cause analysis
 - TDD implementation methodology with test coverage
 - Architecture patterns applicable to future infrastructure
@@ -996,6 +1010,7 @@ async def get_connection_stats(self):
 - Production deployment strategy with feature flags
 
 **Key Architectural Contributions**:
+
 - **Singleton Connection Pool Pattern**: Template for resource pooling
 - **Circuit Breaker Integration**: Fault tolerance for external services
 - **Async Resource Management**: Patterns for lock-free I/O operations
@@ -1004,7 +1019,35 @@ async def get_connection_stats(self):
 
 ---
 
-_Last Updated: July 18, 2025_
+## Python Version Requirements
+
+### Current Standard
+
+- **Python Version**: 3.11+ (required)
+- **Rationale**: AsyncIO.timeout functionality, performance improvements, enhanced error messages
+
+### Key Python 3.11 Features Used
+
+- `asyncio.timeout()`: Critical for async operation timeouts
+- Enhanced asyncio patterns: Improved async/await error handling
+- Performance optimizations: Faster startup and async operations
+
+### Environment Consistency
+
+- **Development**: Python 3.11+ required
+- **Docker**: python:3.11-slim-bullseye base images
+- **CI/CD**: GitHub Actions use Python 3.11
+- **Production**: Python 3.11+ required
+
+### Migration Completed
+
+- **PM-055**: Python version consistency achieved (July 2025)
+- **AsyncIO.timeout bug**: Resolved through Python 3.11 upgrade
+- **Environment standardization**: All contexts use Python 3.11
+
+---
+
+_Last Updated: July 22, 2025_
 
 ## Revision Log
 

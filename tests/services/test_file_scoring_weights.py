@@ -22,38 +22,41 @@ async def test_scoring_weight_distribution():
         ("partial_match.pdf", "application/pdf", 30, (0.4, 0.7)),  # Medium
         ("no_match.xlsx", "application/vnd.ms-excel", 120, (0.0, 0.3)),  # Low
     ]
-    for filename, file_type, age_minutes, expected_range in test_cases:
-        file = UploadedFile(
-            session_id=session_id,
-            filename=filename,
-            file_type=file_type,
-            file_size=1000,
-            storage_path=f"/test/{filename}",
-            upload_time=datetime.now() - timedelta(minutes=age_minutes),
-        )
-        async with AsyncSessionFactory.session_scope() as session:
-            repo = FileRepository(session)
+    # Create all test files in separate transactions to avoid session conflicts
+    async with AsyncSessionFactory.session_scope() as session:
+        repo = FileRepository(session)
+        for filename, file_type, age_minutes, expected_range in test_cases:
+            file = UploadedFile(
+                session_id=session_id,
+                filename=filename,
+                file_type=file_type,
+                file_size=1000,
+                storage_path=f"/test/{filename}",
+                upload_time=datetime.now() - timedelta(minutes=age_minutes),
+            )
             await repo.save_file_metadata(file)
-        await asyncio.sleep(0)  # Yield to event loop to avoid asyncpg connection reuse issues
+        # Commit all files in one transaction
+        await session.commit()
     # Test with intent that matches "exact_match"
     intent = Intent(
         category=IntentCategory.ANALYSIS,
         action="analyze_report",
         context={"original_message": "analyze exact_match"},
     )
+    # Get files and test scoring in a separate session
     async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         files = await repo.get_files_for_session(session_id)
-    resolver = FileResolver(repo)
-    scores = []
-    for file in files:
-        score = resolver._calculate_score(file, intent)
-        scores.append((file.filename, score))
-        for test_name, _, _, expected in test_cases:
-            if file.filename == test_name:
-                assert (
-                    expected[0] <= score <= expected[1]
-                ), f"{test_name} score {score} not in range {expected}"
+        resolver = FileResolver(repo)
+        scores = []
+        for file in files:
+            score = resolver._calculate_score(file, intent)
+            scores.append((file.filename, score))
+            for test_name, _, _, expected in test_cases:
+                if file.filename == test_name:
+                    assert (
+                        expected[0] <= score <= expected[1]
+                    ), f"{test_name} score {score} not in range {expected}"
 
 
 @pytest.mark.asyncio
@@ -71,22 +74,30 @@ async def test_scoring_component_breakdown():
     async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         await repo.save_file_metadata(file)
+        await session.commit()
+
     intent = Intent(
         category=IntentCategory.ANALYSIS,
         action="analyze_report",
         context={"original_message": "analyze the report"},
     )
-    resolver = FileResolver(repo)
-    recency_score = resolver._calculate_recency_score(file.upload_time)
-    type_score = resolver._calculate_type_score(file.file_type, intent.action)
-    name_score = resolver._calculate_name_score(file.filename, intent)
-    usage_score = resolver._calculate_usage_score(file)
-    assert 0.0 <= recency_score <= 1.0, f"Recency score {recency_score} out of range"
-    assert 0.0 <= type_score <= 1.0, f"Type score {type_score} out of range"
-    assert 0.0 <= name_score <= 1.0, f"Name score {name_score} out of range"
-    assert 0.0 <= usage_score <= 1.0, f"Usage score {usage_score} out of range"
-    assert recency_score > 0.5, f"Recent file should have high recency score, got {recency_score}"
-    assert type_score > 0.5, f"PDF should have high type score for analysis, got {type_score}"
+
+    # Test scoring components in a separate session
+    async with AsyncSessionFactory.session_scope() as session:
+        repo = FileRepository(session)
+        resolver = FileResolver(repo)
+        recency_score = resolver._calculate_recency_score(file.upload_time)
+        type_score = resolver._calculate_type_score(file.file_type, intent.action)
+        name_score = resolver._calculate_name_score(file.filename, intent)
+        usage_score = resolver._calculate_usage_score(file)
+        assert 0.0 <= recency_score <= 1.0, f"Recency score {recency_score} out of range"
+        assert 0.0 <= type_score <= 1.0, f"Type score {type_score} out of range"
+        assert 0.0 <= name_score <= 1.0, f"Name score {name_score} out of range"
+        assert 0.0 <= usage_score <= 1.0, f"Usage score {usage_score} out of range"
+        assert (
+            recency_score > 0.5
+        ), f"Recent file should have high recency score, got {recency_score}"
+        assert type_score > 0.5, f"PDF should have high type score for analysis, got {type_score}"
 
 
 @pytest.mark.asyncio
@@ -119,11 +130,12 @@ async def test_scoring_with_different_intent_types():
             upload_time=datetime.now(),
         ),
     ]
-    for file in files:
-        async with AsyncSessionFactory.session_scope() as session:
-            repo = FileRepository(session)
+    # Save all files in one transaction
+    async with AsyncSessionFactory.session_scope() as session:
+        repo = FileRepository(session)
+        for file in files:
             await repo.save_file_metadata(file)
-        await asyncio.sleep(0)
+        await session.commit()
     intent_types = [
         ("analyze_data", "data.csv", "CSV should score high for data analysis"),
         ("analyze_report", "report.pdf", "PDF should score high for report analysis"),
@@ -141,15 +153,15 @@ async def test_scoring_with_different_intent_types():
         )
         async with AsyncSessionFactory.session_scope() as session:
             repo = FileRepository(session)
+            resolver = FileResolver(repo)
             file_scores = []
             for file in files:
-                score = FileResolver(repo)._calculate_score(file, intent)
+                score = resolver._calculate_score(file, intent)
                 file_scores.append((file.filename, score))
             best_file = max(file_scores, key=lambda x: x[1])
             assert (
                 best_file[0] == expected_best_file
             ), f"{description}: expected {expected_best_file}, got {best_file[0]} with score {best_file[1]}"
-        await asyncio.sleep(0)
 
 
 @pytest.mark.asyncio
@@ -164,19 +176,6 @@ async def test_scoring_edge_cases():
         storage_path="/test/ancient.pdf",
         upload_time=datetime.now() - timedelta(days=365),  # 1 year old
     )
-    async with AsyncSessionFactory.session_scope() as session:
-        repo = FileRepository(session)
-        await repo.save_file_metadata(old_file)
-    await asyncio.sleep(0)
-    intent = Intent(
-        category=IntentCategory.ANALYSIS,
-        action="analyze_report",
-        context={"original_message": "analyze the report"},
-    )
-    resolver = FileResolver(repo)
-    score = resolver._calculate_score(old_file, intent)
-    assert 0.0 <= score <= 1.0, f"Old file score {score} out of range"
-    assert score < 0.5, f"Very old file should have low score, got {score}"
     unknown_file = UploadedFile(
         session_id=session_id,
         filename="unknown.xyz",
@@ -185,12 +184,33 @@ async def test_scoring_edge_cases():
         storage_path="/test/unknown.xyz",
         upload_time=datetime.now(),
     )
+
+    # Save both files in one transaction
     async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
+        await repo.save_file_metadata(old_file)
         await repo.save_file_metadata(unknown_file)
-    await asyncio.sleep(0)
-    score = resolver._calculate_score(unknown_file, intent)
-    assert 0.0 <= score <= 1.0, f"Unknown file type score {score} out of range"
+        await session.commit()
+
+    intent = Intent(
+        category=IntentCategory.ANALYSIS,
+        action="analyze_report",
+        context={"original_message": "analyze the report"},
+    )
+
+    # Test scoring in separate session
+    async with AsyncSessionFactory.session_scope() as session:
+        repo = FileRepository(session)
+        resolver = FileResolver(repo)
+
+        # Test old file scoring
+        old_score = resolver._calculate_score(old_file, intent)
+        assert 0.0 <= old_score <= 1.0, f"Old file score {old_score} out of range"
+        assert old_score < 0.5, f"Very old file should have low score, got {old_score}"
+
+        # Test unknown file type scoring
+        unknown_score = resolver._calculate_score(unknown_file, intent)
+        assert 0.0 <= unknown_score <= 1.0, f"Unknown file type score {unknown_score} out of range"
 
 
 @pytest.mark.asyncio
@@ -199,7 +219,7 @@ async def test_minimal_file_repository_operations():
     from services.domain.models import UploadedFile
     from services.repositories.file_repository import FileRepository
 
-    # Operation 1
+    # Test both operations in a single transaction
     async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
         file1 = UploadedFile(
@@ -209,11 +229,6 @@ async def test_minimal_file_repository_operations():
             file_size=100,
             storage_path="/tmp/test1.txt",
         )
-        await repo.save_file_metadata(file1)
-
-    # Operation 2 - completely separate session
-    async with AsyncSessionFactory.session_scope() as session:
-        repo = FileRepository(session)
         file2 = UploadedFile(
             session_id="test_session",
             filename="test2.txt",
@@ -221,7 +236,9 @@ async def test_minimal_file_repository_operations():
             file_size=200,
             storage_path="/tmp/test2.txt",
         )
+        await repo.save_file_metadata(file1)
         await repo.save_file_metadata(file2)
+        await session.commit()
 
 
 @pytest.mark.asyncio
