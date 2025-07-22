@@ -1,6 +1,9 @@
 """
 Error scenario testing for MCP integration
 Tests various failure modes and recovery mechanisms.
+
+PM-015 Group 2 Update: Tests now use centralized MCP fixtures from conftest.py
+for proper singleton isolation and environment management.
 """
 
 import asyncio

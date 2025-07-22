@@ -360,6 +360,15 @@ graph TD
 | Technical debt            | Medium | Regular refactoring sprints               |
 | Performance issues        | Medium | Early load testing, monitoring            |
 
+### Technical Debt: AsyncPG/SQLAlchemy Event Loop Issues (PM-058)
+
+Persistent event loop conflicts between asyncpg and SQLAlchemy cause intermittent test failures and unreliable test isolation. PM-015 delivered a partial resolution, but a full architectural refactor is needed in a future sprint.
+
+- Refactor event loop management in test infrastructure
+- Consider SQLAlchemy 2.0 async migration
+- Document async test best practices
+- See PM-058 in backlog for details
+
 ## Resource Requirements
 
 ### Development Resources
@@ -496,3 +505,45 @@ _Last Updated: July 18, 2025_
 - **July 18, 2025**: Systematic PM numbering cleanup - resolved PM-013 conflict (roadmap → PM-005), renumbered all conflicting tickets to eliminate duplicate numbering across documentation
 - **July 17, 2025**: Added PM-038 (MCP Real Content Search Implementation) to Sprint 2B, updated Q3 2025 timeline with active MCP development
 - **June 21, 2025**: Added systematic documentation dating and revision tracking
+
+### Foundation & Cleanup Sprint - Week 1 (July 21-25, 2025)
+
+**Status**: IN PROGRESS - Day 1 Complete
+
+#### Day 1 Achievements (Monday)
+
+- ✅ PM-039: Intent Classification Coverage Improvements complete (TDD, robust pattern support)
+- ✅ PM-015 Groups 1-2: Test infrastructure reliability and MCP fixes (91% success)
+- ✅ Group 3: Architectural debt identified, ADR-010 and GitHub issues created
+- 🔍 PM-055: Comprehensive readiness scouting and blocker analysis completed
+- 📋 All documentation, backlog, and session logs updated for handoff
+
+#### In Progress:
+
+- 🔄 PM-055: Python version consistency (Wed scheduled)
+- 🔄 PM-015 Group 3: ADRs and architectural decisions
+
+_Last Updated: July 21, 2025_
+
+## PENDING ARCHITECTURAL DECISIONS
+
+### Configuration Pattern Standardization (From PM-015)
+
+**Decision Required**: How should services access configuration?
+**Options**:
+
+- A: Pure dependency injection (explicit, testable)
+- B: Service locator pattern (convenient, implicit dependencies)
+- C: Hybrid approach with clean abstractions
+
+**Impact**: Affects MCPResourceManager, FileRepository, and future services
+**Timeline**: ADR required before implementation
+**GitHub Issues**: #39, #40
+
+**Related Decisions**:
+
+- Environment variable access strategy
+- Backward compatibility approach
+- Testing strategy for configuration-dependent code
+
+_Last Updated: July 21, 2025_

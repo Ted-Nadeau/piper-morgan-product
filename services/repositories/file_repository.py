@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.database.models import UploadedFileDB
 from services.database.repositories import BaseRepository
 from services.domain.models import UploadedFile
+from services.infrastructure.config.feature_flags import FeatureFlags
 
 # Import centralized configuration service
 try:
@@ -162,12 +163,8 @@ class FileRepository(BaseRepository):
         # Get files matching by filename first (always available)
         filename_matches = await self.search_files_by_name(session_id, query)
 
-        # Check if MCP content search is enabled
-        if CONFIG_SERVICE_AVAILABLE:
-            config = get_config()
-            mcp_enabled = config.mcp_enabled
-        else:
-            mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+        # Check if MCP content search is enabled using infrastructure feature flags
+        mcp_enabled = FeatureFlags.is_mcp_content_search_enabled()
 
         if not mcp_enabled:
             logger.debug("MCP content search disabled, returning filename matches only")
@@ -235,12 +232,8 @@ class FileRepository(BaseRepository):
         # Get files matching by filename first (always available)
         filename_matches = await self.search_files_by_name_all_sessions(query, days)
 
-        # Check if MCP content search is enabled
-        if CONFIG_SERVICE_AVAILABLE:
-            config = get_config()
-            mcp_enabled = config.mcp_enabled
-        else:
-            mcp_enabled = os.getenv("ENABLE_MCP_FILE_SEARCH", "false").lower() == "true"
+        # Check if MCP content search is enabled using infrastructure feature flags
+        mcp_enabled = FeatureFlags.is_mcp_content_search_enabled()
 
         if not mcp_enabled:
             logger.debug("MCP content search disabled, returning filename matches only")

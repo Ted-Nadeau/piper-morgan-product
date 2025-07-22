@@ -1,6 +1,15 @@
 """
 Test FileRepository migration to SQLAlchemy pattern
 Following TDD approach to migrate from asyncpg pools to AsyncSession
+
+TODO PM-058: ASYNCPG CONCURRENCY ISSUE
+Tests using async_transaction fixture fail when run in batch due to AsyncPG
+connection pool contention. Individual tests pass. Current status:
+- Tests with async_session fixture: WORKING
+- Tests with async_transaction fixture: FAIL in batch, PASS individually
+- Error: "cannot perform operation: another operation is in progress"
+
+Workaround: Use async_session instead of async_transaction for non-rollback tests.
 """
 
 import json
@@ -76,32 +85,33 @@ async def test_get_file_by_id(async_transaction):
         assert retrieved_file.file_size == 2048
 
 
-async def test_get_files_for_session():
+async def test_get_files_for_session(async_transaction):
     """Test listing files for a session using AsyncSession"""
-    # Arrange
-    session_id = "test_session_789"
+    async with async_transaction as session:
+        repo = FileRepository(session)
 
-    # Create multiple files for the session - use separate transactions
-    for i in range(3):
-        file = UploadedFile(
-            id=str(uuid4()),
-            session_id=session_id,
-            filename=f"file_{i}.txt",
-            file_type="text/plain",
-            file_size=100 * (i + 1),
-            storage_path=f"/uploads/file_{i}.txt",
-            upload_time=datetime.now() - timedelta(minutes=i),
-            last_referenced=datetime.now(),
-            reference_count=0,
-            metadata={},
-        )
-        async with AsyncSessionFactory.transaction_scope() as session:
-            repo = FileRepository(session)
+        # Arrange
+        session_id = "test_session_789"
+
+        # Create multiple files for the session
+        files = []
+        for i in range(3):
+            file = UploadedFile(
+                id=str(uuid4()),
+                session_id=session_id,
+                filename=f"file_{i}.txt",
+                file_type="text/plain",
+                file_size=100 * (i + 1),
+                storage_path=f"/uploads/file_{i}.txt",
+                upload_time=datetime.now() - timedelta(minutes=i),
+                last_referenced=datetime.now(),
+                reference_count=0,
+                metadata={},
+            )
+            files.append(file)
             await repo.save_file_metadata(file)
 
-    # Act - Get files for session in separate transaction
-    async with AsyncSessionFactory.session_scope() as session:
-        repo = FileRepository(session)
+        # Act - Get files for session
         session_files = await repo.get_files_for_session(session_id, limit=10)
 
         # Assert
@@ -112,40 +122,39 @@ async def test_get_files_for_session():
         assert session_files[2].filename == "file_2.txt"
 
 
-async def test_search_files_by_name():
+async def test_search_files_by_name(async_transaction):
     """Test searching files by name pattern using AsyncSession"""
-    # Arrange
-    session_id = "test_search_session"
+    async with async_transaction as session:
+        repo = FileRepository(session)
 
-    # Create files with different names
-    test_files = [
-        ("requirements.pdf", "application/pdf"),
-        ("requirements_v2.pdf", "application/pdf"),
-        ("design_doc.pdf", "application/pdf"),
-        ("test_requirements.txt", "text/plain"),
-    ]
+        # Arrange
+        session_id = "test_search_session"
 
-    # Save files in separate transactions
-    for filename, file_type in test_files:
-        file = UploadedFile(
-            id=str(uuid4()),
-            session_id=session_id,
-            filename=filename,
-            file_type=file_type,
-            file_size=1000,
-            storage_path=f"/uploads/{filename}",
-            upload_time=datetime.now(),
-            last_referenced=datetime.now(),
-            reference_count=0,
-            metadata={},
-        )
-        async with AsyncSessionFactory.transaction_scope() as session:
-            repo = FileRepository(session)
+        # Create files with different names
+        test_files = [
+            ("requirements.pdf", "application/pdf"),
+            ("requirements_v2.pdf", "application/pdf"),
+            ("design_doc.pdf", "application/pdf"),
+            ("test_requirements.txt", "text/plain"),
+        ]
+
+        # Save files
+        for filename, file_type in test_files:
+            file = UploadedFile(
+                id=str(uuid4()),
+                session_id=session_id,
+                filename=filename,
+                file_type=file_type,
+                file_size=1000,
+                storage_path=f"/uploads/{filename}",
+                upload_time=datetime.now(),
+                last_referenced=datetime.now(),
+                reference_count=0,
+                metadata={},
+            )
             await repo.save_file_metadata(file)
 
-    # Act - Search for files containing "requirements"
-    async with AsyncSessionFactory.session_scope() as session:
-        repo = FileRepository(session)
+        # Act - Search for files containing "requirements"
         found_files = await repo.search_files_by_name(session_id, "requirements")
 
         # Assert

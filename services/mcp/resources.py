@@ -10,6 +10,8 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from services.infrastructure.config.feature_flags import FeatureFlags
+
 from .client import MCPResource, MCPResourceContent, PiperMCPClient
 from .exceptions import MCPConnectionError
 
@@ -73,13 +75,8 @@ class MCPResourceManager:
         self.initialized = False
         self.enabled = False  # Will be set by feature flag
 
-        # Connection pooling configuration
-        if CONFIG_SERVICE_AVAILABLE:
-            config = get_config()
-            self.use_pool = config.pool_enabled and POOL_AVAILABLE
-        else:
-            # Fallback to direct environment access
-            self.use_pool = os.getenv("USE_MCP_POOL", "false").lower() == "true" and POOL_AVAILABLE
+        # Connection pooling configuration using infrastructure feature flags
+        self.use_pool = FeatureFlags.is_mcp_connection_pooling_enabled() and POOL_AVAILABLE
         self.connection_pool = None
 
         # Resource cache with TTL
