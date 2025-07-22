@@ -1122,6 +1122,111 @@ class MCPAdapter(IntegrationPlugin):
 - ❌ Breaking backward compatibility
 - ❌ Tight coupling to MCP version
 
+## 18. Configuration Access Pattern
+
+### Purpose
+
+Provide consistent, layer-appropriate configuration access that maintains clean architecture boundaries while supporting practical infrastructure needs.
+
+### Implementation
+
+**Application/Domain Layer Configuration:**
+```python
+# ✅ APPROVED: ConfigService injection for application logic
+class WorkflowService:
+    def __init__(self, config_service: ConfigService):
+        self.config = config_service
+
+    async def process_workflow(self, workflow_type: WorkflowType):
+        # Application configuration through service
+        if self.config.feature_enabled("advanced_workflows"):
+            return await self._process_advanced_workflow(workflow_type)
+        return await self._process_basic_workflow(workflow_type)
+
+    def get_timeout_config(self) -> int:
+        return self.config.get_timeout("workflow_execution", default=300)
+```
+
+**Infrastructure Layer Configuration:**
+```python
+# ✅ APPROVED: Repository with ConfigService + FeatureFlags utility
+from services.infrastructure.config.feature_flags import FeatureFlags
+
+class FileRepository(BaseRepository):
+    def __init__(self, session: AsyncSession, config_service: ConfigService):
+        super().__init__(session)
+        self.config = config_service
+
+    async def search_files_with_content(self, session_id: str, query: str):
+        # Infrastructure feature detection
+        if FeatureFlags.is_mcp_content_search_enabled():
+            return await self._enhanced_mcp_search(session_id, query)
+        return await self._standard_search(session_id, query)
+
+    def _get_cache_config(self) -> int:
+        # Application config through service
+        return self.config.get_int("file_cache_ttl", 300)
+```
+
+**Test Configuration:**
+```python
+# ✅ APPROVED: Mock ConfigService, not environment variables
+@pytest.fixture
+def mock_config_with_feature_enabled():
+    mock_config = Mock(spec=ConfigService)
+    mock_config.feature_enabled.return_value = True
+    mock_config.get_int.return_value = 300
+    return mock_config
+
+def test_feature_behavior(mock_config_with_feature_enabled):
+    service = WorkflowService(mock_config_with_feature_enabled)
+    # Test focuses on behavior, not environment state
+    result = await service.process_workflow(WorkflowType.ANALYSIS)
+    assert result.uses_advanced_features == True
+```
+
+### Usage Guidelines
+
+**Layer-Specific Rules:**
+- **Application/Domain**: Use ConfigService exclusively
+- **Infrastructure**: ConfigService preferred, FeatureFlags utility for infrastructure toggles
+- **Testing**: Mock ConfigService, avoid environment variable patching
+
+**Configuration Categories:**
+- **ConfigService**: Application behavior, user-facing features, business logic parameters
+- **FeatureFlags**: Infrastructure toggles, runtime detection, emergency overrides
+- **Environment Direct**: Container orchestration, security credentials (through utilities)
+
+### Anti-patterns to Avoid
+
+```python
+# ❌ AVOID: Direct environment access in domain layer
+class WorkflowService:
+    async def process_workflow(self):
+        if os.getenv("ENABLE_ADVANCED_WORKFLOWS") == "true":  # Violates layer boundary
+            pass
+
+# ❌ AVOID: Mixed configuration patterns
+class MCPResourceManager:
+    def __init__(self):
+        if CONFIG_SERVICE_AVAILABLE:
+            config = get_config()  # Sometimes use service
+        else:
+            self.use_pool = os.getenv("USE_MCP_POOL")  # Sometimes use env
+
+# ❌ AVOID: Environment patching in tests
+@pytest.fixture
+def test_config():
+    os.environ["ENABLE_FEATURE"] = "true"  # Brittle, environment-dependent
+    yield
+    del os.environ["ENABLE_FEATURE"]
+```
+
+### References
+- **ADR-010**: Configuration Access Patterns
+- **Implementation**: `services/infrastructure/config/feature_flags.py`
+- **Migration**: GitHub Issues #39 (MCPResourceManager), #40 (FileRepository)
+
 ## Summary
 
 These patterns form the architectural foundation of Piper Morgan:
@@ -1143,15 +1248,17 @@ These patterns form the architectural foundation of Piper Morgan:
 15. **Action Humanizer Pattern** - User-friendly message generation
 16. **MCP Adapter Pattern** - MCP-specific integration
 17. **Background Task Error Handling Pattern** - Safe wrapper pattern for background task execution
+18. **Configuration Access Pattern** - Layer-appropriate configuration management
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
 ---
 
-_Last Updated: July 16, 2025_
+_Last Updated: July 21, 2025_
 
 ## Revision Log
 
+- **July 21, 2025**: Added Configuration Access Pattern (#18) implementing ADR-010 layer-appropriate configuration management
 - **July 16, 2025**: Added Background Task Error Handling Pattern (#17) for safe background task execution
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
 - **June 29, 2025**: Added Repository Domain Model Conversion Pattern (#13) and Async Relationship Eager Loading Pattern (#14) for PM-011 GitHub integration

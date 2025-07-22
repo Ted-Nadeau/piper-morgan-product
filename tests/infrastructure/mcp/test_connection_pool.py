@@ -47,6 +47,10 @@ class TestMCPConnectionPoolSingleton:
 
     def test_cannot_instantiate_directly(self):
         """Direct instantiation should be prevented"""
+        # First create an instance through proper method
+        MCPConnectionPool.get_instance()
+
+        # Now direct instantiation should be prevented
         with pytest.raises(RuntimeError, match="Use get_instance"):
             MCPConnectionPool()
 
@@ -100,17 +104,10 @@ class TestMCPConnectionPoolLifecycle:
     def server_config(self):
         return {"url": "test://localhost:8080", "timeout": 5.0}
 
-    @pytest.fixture
-    def pool(self):
-        # Reset singleton before test
-        MCPConnectionPool._reset_instance()
-        pool = MCPConnectionPool.get_instance()
-        yield pool
-        # Cleanup after each test
-        asyncio.run(pool.shutdown())
-        pool._reset_instance()  # Reset singleton for clean state
+    # Note: Using mcp_connection_pool fixture from conftest.py for proper singleton management
+    # PM-015 Group 2: Updated to use centralized MCP fixtures instead of manual reset
 
-    async def test_get_connection_creates_new_when_empty(self, pool, server_config):
+    async def test_get_connection_creates_new_when_empty(self, mcp_connection_pool, server_config):
         """Should create new connection when pool is empty"""
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -120,14 +117,14 @@ class TestMCPConnectionPoolLifecycle:
             mock_client.is_connected.return_value = True
             mock_client_class.return_value = mock_client
 
-            connection = await pool.get_connection(server_config)
+            connection = await mcp_connection_pool.get_connection(server_config)
 
             assert connection is not None
             assert connection is mock_client
             mock_client_class.assert_called_once_with(server_config)
             mock_client.connect.assert_called_once()
 
-    async def test_get_connection_reuses_existing(self, pool, server_config):
+    async def test_get_connection_reuses_existing(self, mcp_connection_pool, server_config):
         """Should reuse existing connection when available"""
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -138,21 +135,21 @@ class TestMCPConnectionPoolLifecycle:
             mock_client_class.return_value = mock_client
 
             # Get first connection
-            connection1 = await pool.get_connection(server_config)
+            connection1 = await mcp_connection_pool.get_connection(server_config)
 
             # Return it to pool
-            await pool.return_connection(connection1)
+            await mcp_connection_pool.return_connection(connection1)
 
             # Get second connection - should be the same
-            connection2 = await pool.get_connection(server_config)
+            connection2 = await mcp_connection_pool.get_connection(server_config)
 
             assert connection1 is connection2
             # Client should only be created once
             mock_client_class.assert_called_once()
 
-    async def test_connection_limit_enforced(self, pool, server_config):
+    async def test_connection_limit_enforced(self, mcp_connection_pool, server_config):
         """Should enforce maximum connection limit"""
-        pool.configure({"max_connections": 2})
+        mcp_connection_pool.configure({"max_connections": 2})
 
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -164,14 +161,16 @@ class TestMCPConnectionPoolLifecycle:
             mock_client_class.side_effect = mock_clients
 
             # Get max connections
-            connection1 = await pool.get_connection(server_config)
-            connection2 = await pool.get_connection(server_config)
+            connection1 = await mcp_connection_pool.get_connection(server_config)
+            connection2 = await mcp_connection_pool.get_connection(server_config)
 
             # Third should timeout
             with pytest.raises(asyncio.TimeoutError):
-                await asyncio.wait_for(pool.get_connection(server_config), timeout=0.1)
+                await asyncio.wait_for(
+                    mcp_connection_pool.get_connection(server_config), timeout=0.1
+                )
 
-    async def test_return_connection_to_pool(self, pool, server_config):
+    async def test_return_connection_to_pool(self, mcp_connection_pool, server_config):
         """Should properly return connection to pool"""
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -181,15 +180,15 @@ class TestMCPConnectionPoolLifecycle:
             mock_client.is_connected.return_value = True
             mock_client_class.return_value = mock_client
 
-            connection = await pool.get_connection(server_config)
+            connection = await mcp_connection_pool.get_connection(server_config)
 
             # Pool should have 0 available connections
-            assert pool.available_connections == 0
+            assert mcp_connection_pool.available_connections == 0
 
-            await pool.return_connection(connection)
+            await mcp_connection_pool.return_connection(connection)
 
             # Pool should have 1 available connection
-            assert pool.available_connections == 1
+            assert mcp_connection_pool.available_connections == 1
 
 
 class TestMCPConnectionPoolCircuitBreaker:
@@ -200,16 +199,18 @@ class TestMCPConnectionPoolCircuitBreaker:
         # Reset singleton before test
         MCPConnectionPool._reset_instance()
         pool = MCPConnectionPool.get_instance()
-        pool.configure({"circuit_breaker_threshold": 2, "circuit_breaker_timeout": 1})
+        mcp_connection_pool.configure(
+            {"circuit_breaker_threshold": 2, "circuit_breaker_timeout": 1}
+        )
         yield pool
-        asyncio.run(pool.shutdown())
-        pool._reset_instance()
+        asyncio.run(mcp_connection_pool.shutdown())
+        mcp_connection_pool._reset_instance()
 
     @pytest.fixture
     def server_config(self):
         return {"url": "test://localhost:8080"}
 
-    async def test_circuit_breaker_opens_on_failures(self, pool, server_config):
+    async def test_circuit_breaker_opens_on_failures(self, mcp_connection_pool, server_config):
         """Circuit breaker should open after threshold failures"""
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -220,17 +221,17 @@ class TestMCPConnectionPoolCircuitBreaker:
 
             # First failure
             with pytest.raises(MCPConnectionError):
-                await pool.get_connection(server_config)
+                await mcp_connection_pool.get_connection(server_config)
 
             # Second failure - should open circuit breaker
             with pytest.raises(MCPConnectionError):
-                await pool.get_connection(server_config)
+                await mcp_connection_pool.get_connection(server_config)
 
             # Third attempt should fail with circuit breaker error
             with pytest.raises(MCPCircuitBreakerOpenError):
-                await pool.get_connection(server_config)
+                await mcp_connection_pool.get_connection(server_config)
 
-    async def test_circuit_breaker_recovers_after_timeout(self, pool, server_config):
+    async def test_circuit_breaker_recovers_after_timeout(self, mcp_connection_pool, server_config):
         """Circuit breaker should recover after timeout"""
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -252,15 +253,15 @@ class TestMCPConnectionPoolCircuitBreaker:
 
             # Cause circuit breaker to open
             with pytest.raises(MCPConnectionError):
-                await pool.get_connection(server_config)
+                await mcp_connection_pool.get_connection(server_config)
             with pytest.raises(MCPConnectionError):
-                await pool.get_connection(server_config)
+                await mcp_connection_pool.get_connection(server_config)
 
             # Wait for recovery timeout
             await asyncio.sleep(1.1)
 
             # Should succeed now
-            connection = await pool.get_connection(server_config)
+            connection = await mcp_connection_pool.get_connection(server_config)
             assert connection is not None
 
 
@@ -278,7 +279,7 @@ class TestMCPConnectionPoolGracefulShutdown:
     def server_config(self):
         return {"url": "test://localhost:8080"}
 
-    async def test_shutdown_disconnects_all_connections(self, pool, server_config):
+    async def test_shutdown_disconnects_all_connections(self, mcp_connection_pool, server_config):
         """Shutdown should disconnect all active connections"""
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -292,26 +293,26 @@ class TestMCPConnectionPoolGracefulShutdown:
             # Create connections
             connections = []
             for _ in range(3):
-                conn = await pool.get_connection(server_config)
+                conn = await mcp_connection_pool.get_connection(server_config)
                 connections.append(conn)
 
             # Shutdown
-            await pool.shutdown()
+            await mcp_connection_pool.shutdown()
 
             # All connections should be disconnected
             for mock_client in mock_clients:
                 mock_client.disconnect.assert_called_once()
 
-    async def test_shutdown_prevents_new_connections(self, pool, server_config):
+    async def test_shutdown_prevents_new_connections(self, mcp_connection_pool, server_config):
         """After shutdown, no new connections should be created"""
-        await pool.shutdown()
+        await mcp_connection_pool.shutdown()
 
         with pytest.raises(RuntimeError, match="Connection pool is shut down"):
-            await pool.get_connection(server_config)
+            await mcp_connection_pool.get_connection(server_config)
 
-    async def test_timeout_handling(self, pool, server_config):
+    async def test_timeout_handling(self, mcp_connection_pool, server_config):
         """Connection timeouts should be handled gracefully"""
-        pool.configure({"connection_timeout": 0.1})
+        mcp_connection_pool.configure({"connection_timeout": 0.1})
 
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
@@ -327,7 +328,7 @@ class TestMCPConnectionPoolGracefulShutdown:
             mock_client_class.return_value = mock_client
 
             with pytest.raises(asyncio.TimeoutError):
-                await pool.get_connection(server_config)
+                await mcp_connection_pool.get_connection(server_config)
 
 
 class TestMCPConnectionPoolHealthMonitoring:

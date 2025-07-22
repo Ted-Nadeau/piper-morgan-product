@@ -9,9 +9,17 @@ from services.file_context.exceptions import AmbiguousFileReferenceError
 from services.file_context.file_resolver import FileResolver
 from services.repositories.file_repository import FileRepository
 
-
 # NOTE: Use db_session_factory for fresh sessions per operation (2025-07-14)
 # This prevents asyncpg/SQLAlchemy concurrency errors. See conftest.py for details.
+
+# TODO PM-058: ASYNCPG CONCURRENCY ISSUE
+# Tests in this class fail when run in batch due to AsyncPG connection pool contention
+# when using async_transaction fixture. The error "cannot perform operation: another
+# operation is in progress" occurs when multiple async operations try to use the same
+# database connection. Individual tests pass, batch execution fails.
+# Current status: 1/5 tests pass in batch (test_no_files_in_session)
+
+
 class TestFileResolverEdgeCases:
 
     async def test_no_files_in_session(self, async_session):

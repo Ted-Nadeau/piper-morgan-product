@@ -13,6 +13,10 @@ class TestDocumentAnalyzer:
     def setup_method(self):
         # Mock LLM client for summary/key points - use AsyncMock for async compatibility
         self.mock_llm = AsyncMock()
+        # Configure default return value to prevent unawaited coroutine warnings
+        self.mock_llm.complete.return_value = (
+            '{"summary": "Default test summary.", "key_findings": ["Default point"]}'
+        )
         # DocumentAnalyzer will be implemented later
         from services.analysis.document_analyzer import DocumentAnalyzer
 
@@ -108,6 +112,7 @@ async def test_document_summary_generation():
     from services.analysis.document_analyzer import DocumentAnalyzer
 
     mock_llm = AsyncMock()
+    # Configure AsyncMock properly for Python 3.11+ compatibility
     mock_llm.complete.return_value = (
         '{"summary": "This is a summary.", "key_findings": ["Point 1", "Point 2"]}'
     )
@@ -123,6 +128,7 @@ async def test_document_key_points_extraction():
     from services.analysis.document_analyzer import DocumentAnalyzer
 
     mock_llm = AsyncMock()
+    # Configure AsyncMock properly for Python 3.11+ compatibility
     mock_llm.complete.return_value = (
         '{"summary": "This is a summary.", "key_findings": ["Point 1", "Point 2"]}'
     )

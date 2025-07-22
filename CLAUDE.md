@@ -6,6 +6,65 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Piper Morgan is an AI-powered Product Management Assistant platform that evolves from automating routine PM tasks to providing strategic insights. It's built with domain-driven design where PM concepts (Product, Feature, Intent, WorkItem) drive the technical architecture.
 
+## PM ISSUE IMPLEMENTATION PROTOCOL
+
+### GitHub-First Implementation Approach
+
+**CRITICAL: Before implementing any PM-XXX issue, ALWAYS:**
+
+1. **Review GitHub Issue Completely**
+   - Read the issue description and all comments
+   - Look for preparation reports from other agents (analysis, scouting, risk assessments)
+   - Check for implementation roadmaps or strategic guidance
+   - Verify current status and any recent updates
+
+2. **Coordinate with Preparation Work**
+   - Reference preparation findings in your implementation approach
+   - Follow recommended implementation sequences when provided
+   - Incorporate risk mitigation strategies from preparation reports
+   - Build on analysis work rather than duplicating effort
+
+3. **Verify Current Context**
+   - Confirm issue hasn't been updated since your assignment
+   - Check for dependencies or blockers mentioned in comments
+   - Look for related issues or cross-references
+   - Ensure you have the complete context before proceeding
+
+### Implementation Coordination Standards
+
+**For Critical Issues (PM-055, architectural work, etc.):**
+- **MANDATORY**: Review all GitHub issue comments before starting
+- **REQUIRED**: Reference preparation work in implementation strategy
+- **EXPECTED**: Coordinate findings and build on previous agent work
+- **DOCUMENT**: How preparation work influenced your implementation approach
+
+**For Standard Issues:**
+- **RECOMMENDED**: Quick GitHub issue review for context
+- **HELPFUL**: Look for related preparation or analysis work
+- **EFFICIENT**: Avoid duplicating research already completed
+
+**Quality Philosophy:**
+- GitHub issues are the **authoritative source of truth** for implementation context
+- Multi-agent coordination **builds value systematically** rather than working in isolation
+- **Preparation work accelerates implementation** rather than slowing it down
+- **Reading GitHub first saves time** and improves implementation quality
+
+### Success Examples from 2025-07-21
+
+**PM-015 Group 3 Implementation Success:**
+- Code reviewed ADR-010 documentation before implementing
+- Used fresh FeatureFlags utility from preparation work
+- Achieved 100% test success by building on architectural guidance
+- Implementation time minimized through preparation coordination
+
+**PM-055 Preparation Coordination:**
+- Cursor provided comprehensive implementation readiness report
+- Code's blocker mitigation work informed by preparation analysis
+- Wednesday implementation de-risked through systematic coordination
+- GitHub issue became central coordination point for multi-agent work
+
+These examples demonstrate how **GitHub-first coordination** amplifies agent effectiveness and accelerates systematic progress.
+
 ## Requirements
 
 ### Python Version

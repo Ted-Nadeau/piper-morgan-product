@@ -42,3 +42,5 @@ asyncio_mode = "auto"
 markers = [
     "asyncio: mark test as requiring async event loop",
 ]
+testpaths = ["tests"]
+addopts = "--ignore=tests/archive --ignore=*/archive/*"

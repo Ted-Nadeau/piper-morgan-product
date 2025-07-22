@@ -140,7 +140,7 @@ _All P0 tickets completed - infrastructure foundation established_
 
 **Story**: As a user, I want more natural conversation patterns to be properly recognized so I can interact with Piper Morgan more naturally
 **Description**: Enhance intent classification system to handle conversation patterns and context resolution gaps identified during PM-038 validation
-**Estimate**: 3-5 points (1-2 days) | **Status**: Ready for Implementation | **Dependencies**: PM-038 ✅
+**Estimate**: 3-5 points (1-2 days) | **Status**: ✅ COMPLETE (July 21, 2025) | **Dependencies**: PM-038 ✅
 
 **Background**: During PM-038 validation, several intent classification gaps were identified where natural language patterns weren't properly recognized or routed.
 
@@ -258,34 +258,29 @@ _All P0 tickets completed - infrastructure foundation established_
 
 **Follow-up**: PM-039 (Intent Classification Coverage Improvements) - GitHub #37
 
-### PM-015: Test Infrastructure Isolation Fix
+### PM-015: Test Infrastructure Reliability - PARTIALLY COMPLETE ✅🔄
 
-**Story**: As a development team, we need clean test runs without false failures so we can trust our test suite and maintain high code quality
-**Description**: Fix test isolation issues causing ~31 phantom failures in full suite that mask real business logic health
-**Estimate**: 3-5 points | **Status**: Ready | **Dependencies**: None
+**Status**: PARTIALLY COMPLETE (Groups 1-2 done, Group 3 architectural debt documented, Group 4-5 analysis complete, blockers being fixed)
 
-**Current State**:
+**Completed Work**:
 
-- Test health check tool shows 85.5% vs ~98% reality
-- AsyncSessionFactory works but test cleanup needed
-- 31 failures are infrastructure/async issues, not business logic
-- Business logic tests are actually healthy (95%+ pass rate)
+- ✅ Group 1: Core test reliability issues resolved
+- ✅ Group 2: MCP infrastructure fixes (91% success rate)
+  - ✅ Function-scoped autouse fixture for singleton resets
+  - ✅ Centralized MCP test fixtures
+  - ✅ Moved patching to fixtures
+  - ✅ Async context management audit
+  - ✅ 21/23 MCP configuration tests passing
+  - ✅ 3/3 singleton tests passing (100% success)
 
-**Implementation Details**:
+**Deferred Work** (Technical Debt - See GitHub Issues):
 
-- Investigate pytest --forked option for better isolation
-- Fix AsyncSessionFactory cleanup in test fixtures
-- Resolve asyncpg/SQLAlchemy event loop conflicts
-- Implement proper test database isolation
-- Add test isolation documentation and patterns
+- 🔄 ADR Required: MCPResourceManager configuration pattern standardization
+- 🔄 ADR Required: FileRepository environment variable access cleanup
+- 📋 Implementation of chosen configuration patterns
 
-**Success Criteria**:
-
-- [ ] Full test suite runs without phantom failures
-- [ ] Test health check tool shows accurate pass rates
-- [ ] No session leaks or connection pool issues
-- [ ] Clear documentation of test isolation patterns
-- [ ] CI/CD pipeline reliability improved
+**Priority**: Medium (Technical debt affecting maintainability)
+**Next Phase**: Architectural decision making before implementation
 
 ### PM-045: Advanced Workflow Orchestration
 
@@ -297,7 +292,7 @@ _All P0 tickets completed - infrastructure foundation established_
 
 **Story**: As a development team, we need consistent Python versions across all environments to prevent version-specific bugs
 **Description**: Recent asyncio.timeout bug was caused by Python version mismatch between dev and production
-**Estimate**: 2-3 points | **Status**: Ready | **Dependencies**: None
+**Estimate**: 2-3 points | **Status**: IN PROGRESS (Readiness scouting complete, blockers being fixed, implementation scheduled for Wednesday) | **Dependencies**: None
 **Implementation Details**:
 
 - Add .python-version file specifying Python 3.11
@@ -659,6 +654,24 @@ _All P0 tickets completed - infrastructure foundation established_
 - Performance regression testing in CI/CD
   **Estimate**: 8 points | **Risk**: Medium-High | **Dependencies**: Basic functionality stable
 
+### PM-058: AsyncPG/SQLAlchemy Event Loop Issue
+
+**Story**: As a development team, we need to resolve persistent asyncpg/SQLAlchemy event loop conflicts that cause phantom test failures and infrastructure flakiness
+**Description**: During PM-015 (Test Infrastructure Isolation Fix), we discovered that asyncpg and SQLAlchemy event loop handling causes intermittent test failures and unreliable test isolation. While PM-015 improved test health, a full architectural solution is needed to eliminate these issues for good.
+**Estimate**: 5 points | **Status**: Technical Debt | **Dependencies**: PM-015 (partial resolution)
+
+**Implementation Details**:
+
+- Investigate event loop management in asyncpg/SQLAlchemy stack
+- Refactor test infrastructure to use isolated event loops per test
+- Consider migration to SQLAlchemy 2.0 async patterns
+- Document best practices for async test isolation
+
+**References**:
+
+- PM-015: Test Infrastructure Isolation Fix (partial resolution)
+- Roadmap: Future architectural work planned
+
 ---
 
 ## 🎯 Current Sprint Focus
@@ -691,7 +704,33 @@ _All P0 tickets completed - infrastructure foundation established_
 
 ---
 
-_Last Updated: July 18, 2025_
+## ARCHITECTURAL DEBT QUEUE
+
+### Configuration Pattern Standardization
+
+**Source**: PM-015 Group 2 test failures analysis
+**Impact**: Mixed configuration patterns across services
+**Status**: GitHub issues created, ADRs required
+
+#### Items:
+
+1. **MCPResourceManager Configuration Architecture**
+
+   - Hybrid configuration approach needs standardization
+   - Test: `test_mcp_resource_manager_uses_configuration_service`
+   - GitHub Issue: #39
+
+2. **FileRepository Environment Access Cleanup**
+   - Direct os.getenv calls violate repository pattern
+   - Test: `test_file_repository_uses_configuration_service`
+   - GitHub Issue: #40
+
+**Decision Required**: Configuration access pattern for entire codebase
+**Timeline**: Future architectural sprint (post Foundation & Cleanup)
+
+---
+
+_Last Updated: July 21, 2025_
 
 ## Revision Log
 

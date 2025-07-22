@@ -424,6 +424,8 @@ class TestConfigurationIntegration:
         if not CONFIG_SERVICE_AVAILABLE:
             pytest.skip("Configuration service not available")
 
+        import inspect
+
         from services.repositories.file_repository import FileRepository
 
         # Should use configuration service instead of direct os.getenv
