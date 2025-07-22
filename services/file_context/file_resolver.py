@@ -48,6 +48,10 @@ class FileResolver:
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "text/csv",
             ],
+            "create_presentation": [
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "application/vnd.ms-powerpoint",
+            ],
             "ingest_generic": [],  # No preference, accept any
         }
 
@@ -248,10 +252,13 @@ class FileResolver:
 
         # Add context keywords
         if intent.context:
-            context_text = str(intent.context).lower()
-            # Extract meaningful words (improved regex)
-            words = re.findall(r"\b[a-z0-9_-]{3,}\b", context_text)
-            keywords.extend(words)
+            # Get the original message specifically, not the whole context dict
+            original_message = intent.context.get("original_message", "")
+            if original_message:
+                context_text = original_message.lower()
+                # Extract meaningful words (improved regex)
+                words = re.findall(r"\b[a-z0-9_-]{3,}\b", context_text)
+                keywords.extend(words)
 
         if not keywords:
             return 0.5  # No keywords, neutral score

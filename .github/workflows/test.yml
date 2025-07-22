@@ -1,0 +1,67 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Verify Python version
+        run: |
+          python --version
+          python -c "import sys; assert sys.version_info >= (3, 11), f'Python {sys.version} < 3.11'"
+          echo "✅ Python 3.11+ confirmed in CI"
+          echo "Python version: $(python --version)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-3.11-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Environment consistency check
+        run: |
+          echo "=== Environment Verification ==="
+          echo "Python version: $(python --version)"
+          echo "Pip version: $(pip --version)"
+          echo "Installed packages:"
+          pip list | head -10
+          echo "=== Consistency with production requirements ==="
+          python -c "
+          import sys
+          required = (3, 11)
+          current = sys.version_info[:2]
+          assert current >= required, f'Python {current} < {required}'
+          print('✅ Version consistency verified')
+          "
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ --tb=short -v
+
+      - name: Test summary
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All tests completed with Python 3.11" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: Ubuntu Latest" >> $GITHUB_STEP_SUMMARY

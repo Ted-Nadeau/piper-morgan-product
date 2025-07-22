@@ -195,23 +195,16 @@ class TestMCPConnectionPoolCircuitBreaker:
     """Test circuit breaker integration"""
 
     @pytest.fixture
-    def pool(self):
-        # Reset singleton before test
-        MCPConnectionPool._reset_instance()
-        pool = MCPConnectionPool.get_instance()
-        mcp_connection_pool.configure(
-            {"circuit_breaker_threshold": 2, "circuit_breaker_timeout": 1}
-        )
-        yield pool
-        asyncio.run(mcp_connection_pool.shutdown())
-        mcp_connection_pool._reset_instance()
-
-    @pytest.fixture
     def server_config(self):
         return {"url": "test://localhost:8080"}
 
     async def test_circuit_breaker_opens_on_failures(self, mcp_connection_pool, server_config):
         """Circuit breaker should open after threshold failures"""
+        # Configure circuit breaker to open after 2 failures
+        mcp_connection_pool.configure(
+            {"circuit_breaker_threshold": 2, "circuit_breaker_timeout": 1}
+        )
+
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
         ) as mock_client_class:
@@ -233,6 +226,11 @@ class TestMCPConnectionPoolCircuitBreaker:
 
     async def test_circuit_breaker_recovers_after_timeout(self, mcp_connection_pool, server_config):
         """Circuit breaker should recover after timeout"""
+        # Configure circuit breaker to open after 2 failures with 1 second recovery timeout
+        mcp_connection_pool.configure(
+            {"circuit_breaker_threshold": 2, "circuit_breaker_timeout": 1}
+        )
+
         with patch(
             "services.infrastructure.mcp.connection_pool.PiperMCPClient"
         ) as mock_client_class:

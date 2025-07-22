@@ -136,6 +136,17 @@ class PreClassifier:
     def detect_file_reference(message: str) -> bool:
         """Check if message references an uploaded file"""
         clean_msg = message.strip().lower()
+
+        # Exclude verb usage of "file" (e.g., "file the report", "file a complaint")
+        verb_file_patterns = [
+            r"\bfile\s+(?:the|a|an|this|that)\s+\w+",  # "file the report", "file a complaint"
+            r"\bfile\s+\w+\s+(?:for|against|with)",  # "file complaint for", "file report against"
+        ]
+
+        # If message matches verb usage patterns, it's not a file reference
+        if PreClassifier._matches_patterns(clean_msg, verb_file_patterns):
+            return False
+
         return PreClassifier._matches_patterns(clean_msg, PreClassifier.FILE_REFERENCE_PATTERNS)
 
     @staticmethod

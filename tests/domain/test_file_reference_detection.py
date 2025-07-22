@@ -128,8 +128,7 @@ class TestFileReferenceDetection:
             result = PreClassifier.detect_file_reference(message)
             assert result == expected, f"Expected {expected} for '{message}', got {result}"
 
-    @pytest.mark.xfail(reason="Known limitation: verb usage detection pending refinement")
     def test_file_the_report_verb_usage(self):
-        # TODO: Refine detection to distinguish verb usage of 'file'
-        # This is a minor edge case, documented as a known limitation
+        """Test that verb usage of 'file' is not detected as a file reference"""
+        # This was previously a known limitation, now resolved
         assert PreClassifier.detect_file_reference("file the report") is False
