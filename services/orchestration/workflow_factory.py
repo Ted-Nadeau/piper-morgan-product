@@ -100,13 +100,21 @@ class WorkflowFactory:
 
         # Add appropriate tasks based on workflow type
         if workflow_type == WorkflowType.CREATE_TICKET:
-            # Extract work item first, then create GitHub issue
+            # Three-step process: Extract work item → Generate enhanced content → Create GitHub issue
             extract_task = Task(
                 name="Extract Work Item",
                 type=TaskType.EXTRACT_WORK_ITEM,
                 status=TaskStatus.PENDING,
             )
             workflow.tasks.append(extract_task)
+
+            # NEW: Generate professional GitHub issue content using LLM
+            content_task = Task(
+                name="Generate Issue Content",
+                type=TaskType.GENERATE_GITHUB_ISSUE_CONTENT,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(content_task)
 
             create_task = Task(
                 name="Create GitHub Issue",

@@ -192,6 +192,15 @@ class Project:
 
 
 @dataclass
+class ProjectContext:
+    """Simplified project context for content generation"""
+
+    name: str = ""
+    description: str = ""
+    technologies: List[str] = field(default_factory=list)
+
+
+@dataclass
 class Intent:
     """User intent parsed from natural language"""
 

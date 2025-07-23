@@ -42,4 +42,10 @@ MODEL_CONFIGS: Dict[str, Dict[str, Any]] = {
         "temperature": 0.5,
         "max_tokens": 1500,
     },
+    "github_content_generation": {
+        "provider": LLMProvider.ANTHROPIC,
+        "model": LLMModel.CLAUDE_OPUS,
+        "temperature": 0.7,
+        "max_tokens": 3000,
+    },
 }
