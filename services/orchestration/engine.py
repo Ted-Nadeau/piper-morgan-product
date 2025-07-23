@@ -20,8 +20,14 @@ from services.database.session_factory import AsyncSessionFactory
 
 # Domain-first imports - use domain models consistently
 from services.domain.models import Intent, IntentCategory, Task, Workflow
+from services.integrations.github.config_service import GitHubConfigService
+from services.integrations.github.content_generator import GitHubIssueContentGenerator
 from services.integrations.github.github_agent import GitHubAgent
 from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
+from services.integrations.github.production_client import (
+    GitHubClientConfig,
+    ProductionGitHubClient,
+)
 from services.llm.clients import llm_client
 from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
@@ -45,7 +51,35 @@ class OrchestrationEngine:
 
         self.factory = WorkflowFactory()
         self.github_analyzer = GitHubIssueAnalyzer()
-        self.github_agent = GitHubAgent()
+
+        # Initialize GitHub clients with ADR-010 configuration patterns
+        self.github_config_service = GitHubConfigService()
+
+        try:
+            # Use production client with ConfigService if feature is enabled
+            if self.github_config_service.is_feature_enabled("production_client"):
+                self.github_client = ProductionGitHubClient(
+                    config_service=self.github_config_service
+                )
+                logger.info("✅ Using ProductionGitHubClient for GitHub operations")
+            else:
+                logger.info("📎 Production client disabled, using GitHubAgent")
+                self.github_client = GitHubAgent(
+                    token=self.github_config_service.get_authentication_token()
+                )
+        except Exception as e:
+            # Fall back to original agent for backward compatibility
+            logger.warning(f"ProductionGitHubClient unavailable: {e}")
+            logger.info("📎 Falling back to GitHubAgent")
+            try:
+                self.github_client = GitHubAgent(
+                    token=self.github_config_service.get_authentication_token()
+                )
+            except Exception as fallback_error:
+                logger.error(f"Both GitHub clients failed: {fallback_error}")
+                self.github_client = GitHubAgent()  # Final fallback without token
+
+        self.github_content_generator = GitHubIssueContentGenerator(llm_client)
         self.llm_client = llm_client
 
         self.task_handlers = {
@@ -62,8 +96,9 @@ class OrchestrationEngine:
             TaskType.SUMMARIZE: self._summarize,
             # Work Item Extraction handler
             TaskType.EXTRACT_WORK_ITEM: self._extract_work_item,
-            # Fallback for unmapped task types
+            # GitHub integration handlers
             TaskType.GITHUB_CREATE_ISSUE: self._create_github_issue,
+            TaskType.GENERATE_GITHUB_ISSUE_CONTENT: self._generate_github_issue_content,
             TaskType.JIRA_CREATE_TICKET: self._placeholder_handler,
             TaskType.SLACK_SEND_MESSAGE: self._placeholder_handler,
             TaskType.GENERATE_DOCUMENT: self._placeholder_handler,
@@ -599,30 +634,80 @@ List concrete requirements, acceptance criteria, and technical specifications.""
             # Look for work item from previous extraction task
             work_item = None
 
-            # Check if we have a work item from the extraction task
+            # First, check for enhanced content from the new content generation task
+            enhanced_content = None
+            work_item = None
+
             for completed_task in workflow.tasks:
+                # Check for enhanced content first (highest priority)
                 if (
+                    completed_task.type == TaskType.GENERATE_GITHUB_ISSUE_CONTENT
+                    and completed_task.status == TaskStatus.COMPLETED
+                    and completed_task.result
+                ):
+                    enhanced_content = completed_task.result.get("enhanced_content")
+                    logger.info(
+                        f"🎯 Using enhanced content: {enhanced_content.get('title') if enhanced_content else 'None'}"
+                    )
+                    break
+                # Fallback to work item from extraction task
+                elif (
                     completed_task.type == TaskType.EXTRACT_WORK_ITEM
                     and completed_task.status == TaskStatus.COMPLETED
                     and completed_task.result
                 ):
                     work_item = completed_task.result.get("work_item")
-                    break
 
-            if work_item:
-                # Use the extracted work item
-                logger.info(f"🔍 Using extracted work item: {work_item.get('title')}")
-                issue_data = await self.github_agent.create_issue_from_work_item(
-                    repo_name=repository, work_item=work_item
+            if enhanced_content:
+                # Use the LLM-generated enhanced content (preferred method)
+                logger.info(
+                    f"✨ Creating issue with enhanced content: '{enhanced_content.get('title')}'"
                 )
+
+                # Use the unified GitHub client interface
+                if hasattr(self.github_client, "create_issue") and asyncio.iscoroutinefunction(
+                    self.github_client.create_issue
+                ):
+                    # Production client (async)
+                    issue_data = await self.github_client.create_issue(
+                        repo_name=repository,
+                        title=enhanced_content.get("title", "New Issue"),
+                        body=enhanced_content.get("body", ""),
+                        labels=enhanced_content.get("labels", []),
+                    )
+                else:
+                    # Legacy agent (sync, wrapped in async)
+                    issue_data = await self.github_client.create_issue(
+                        repo_name=repository,
+                        title=enhanced_content.get("title", "New Issue"),
+                        body=enhanced_content.get("body", ""),
+                        labels=enhanced_content.get("labels", []),
+                    )
+            elif work_item:
+                # Use the extracted work item (fallback)
+                logger.info(f"🔍 Using extracted work item: {work_item.get('title')}")
+
+                # Check if we have the legacy agent with create_issue_from_work_item method
+                if hasattr(self.github_client, "create_issue_from_work_item"):
+                    issue_data = await self.github_client.create_issue_from_work_item(
+                        repo_name=repository, work_item=work_item
+                    )
+                else:
+                    # Convert work item to standard create_issue parameters
+                    issue_data = await self.github_client.create_issue(
+                        repo_name=repository,
+                        title=work_item.get("title", "New Issue"),
+                        body=work_item.get("description", ""),
+                        labels=work_item.get("labels", []),
+                    )
             else:
-                # Fallback to old method for backward compatibility
-                logger.info("🔍 No work item found, using fallback method")
+                # Final fallback to old method for backward compatibility
+                logger.info("🔍 No enhanced content or work item found, using fallback method")
                 title = workflow.context.get("title", "New Issue")
                 body = workflow.context.get("body", "")
                 labels = workflow.context.get("labels", [])
 
-                issue_data = await self.github_agent.create_issue(
+                issue_data = await self.github_client.create_issue(
                     repo_name=repository, title=title, body=body, labels=labels
                 )
 
@@ -638,6 +723,64 @@ List concrete requirements, acceptance criteria, and technical specifications.""
         except Exception as e:
             logger.error(f"Failed to create GitHub issue: {str(e)}")
             return TaskResult(success=False, error=f"GitHub API error: {str(e)}")
+
+    async def _generate_github_issue_content(self, workflow: Workflow, task: Task) -> TaskResult:
+        """Generate professional GitHub issue content from natural language using LLM"""
+        try:
+            logger.info(f"🎯 Generating GitHub issue content for workflow ID: {workflow.id}")
+
+            # Get the original message from workflow context
+            original_message = workflow.context.get("original_message", "")
+            if not original_message:
+                return TaskResult(
+                    success=False, error="No original message found in workflow context"
+                )
+
+            # Get project context if available
+            project_context = None
+            project_id = workflow.context.get("project_id")
+            if project_id:
+                try:
+                    async with AsyncSessionFactory.session_scope() as session:
+                        from services.database.repositories import ProjectRepository
+
+                        project_repo = ProjectRepository(session)
+                        project = await project_repo.get_by_id(project_id)
+                        if project:
+                            from services.domain.models import ProjectContext
+
+                            project_context = ProjectContext(
+                                name=project.name,
+                                description=project.description,
+                                technologies=[],  # TODO: Add technologies field to Project model if needed
+                            )
+                except Exception as e:
+                    logger.warning(f"Failed to load project context: {e}")
+
+            # Generate enhanced issue content
+            content = await self.github_content_generator.generate_issue_content(
+                user_request=original_message,
+                project_context=project_context,
+                template_preferences=workflow.context.get("template_preferences"),
+            )
+
+            logger.info(f"✅ Generated issue content: '{content.get('title', 'Unknown')}'")
+
+            return TaskResult(
+                success=True,
+                output_data={
+                    "enhanced_content": content,
+                    "title": content.get("title"),
+                    "body": content.get("body"),
+                    "labels": content.get("labels", []),
+                    "priority": content.get("priority", "medium"),
+                    "issue_type": content.get("issue_type", "question"),
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to generate GitHub issue content: {str(e)}")
+            return TaskResult(success=False, error=f"Content generation error: {str(e)}")
 
     async def _extract_work_item(self, workflow: Workflow, task: Task) -> TaskResult:
         """Extract work item details from natural language"""

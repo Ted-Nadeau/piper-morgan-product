@@ -58,6 +58,7 @@ class TaskType(Enum):
 
     # Integration tasks
     GITHUB_CREATE_ISSUE = "github_create_issue"
+    GENERATE_GITHUB_ISSUE_CONTENT = "generate_github_issue_content"
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
     ANALYZE_FILE = "analyze_file"
     SUMMARIZE = "summarize"
