@@ -29,6 +29,7 @@ from services.integrations.github.production_client import (
     ProductionGitHubClient,
 )
 from services.llm.clients import llm_client
+from services.orchestration.validation import workflow_validator, ContextValidationError
 from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 logger = structlog.get_logger()
@@ -110,6 +111,22 @@ class OrchestrationEngine:
     async def create_workflow_from_intent(self, intent: Intent) -> Optional[Workflow]:
         """Create appropriate workflow based on intent with database persistence"""
         workflow = await self.factory.create_from_intent(intent)
+        
+        # PM-057: Validate workflow context before execution
+        if workflow:
+            try:
+                workflow_validator.validate_workflow_context(workflow.type, workflow.context)
+                logger.info(f"✅ Workflow context validation passed for {workflow.type}")
+            except ContextValidationError as e:
+                logger.warning(f"❌ Workflow context validation failed: {e.user_message}")
+                # Store validation error in workflow context for user feedback
+                workflow.context["validation_error"] = {
+                    "user_message": e.user_message,
+                    "missing_fields": e.details.get("missing_fields", []),
+                    "suggestions": e.details.get("suggestions", [])
+                }
+                # Don't fail the workflow creation - let it proceed with validation info
+        
         # Enrich CREATE_TICKET workflows with repository from project
         if workflow and workflow.type == WorkflowType.CREATE_TICKET:
             project_id = intent.context.get("project_id")
@@ -284,6 +301,29 @@ class OrchestrationEngine:
 
     async def _execute_task(self, workflow: Workflow, task: Task):
         """Execute a single task using domain objects"""
+        
+        # PM-057: Check for validation errors and provide user feedback
+        validation_error = workflow.context.get("validation_error")
+        if validation_error:
+            task.status = TaskStatus.FAILED
+            task.error = validation_error["user_message"]
+            workflow.status = WorkflowStatus.FAILED
+            logger.warning(
+                "Task failed due to context validation error",
+                workflow_id=workflow.id,
+                task_id=task.id,
+                validation_error=validation_error
+            )
+            raise TaskFailedError(
+                task_description=task.type.value,
+                recovery_suggestion=validation_error["user_message"],
+                details={
+                    "task_id": task.id,
+                    "validation_error": validation_error,
+                    "reason": "context_validation_failed"
+                },
+            )
+        
         task.status = TaskStatus.RUNNING
 
         try:

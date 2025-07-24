@@ -84,6 +84,7 @@ ERROR_MESSAGES = {
     # Workflow errors
     "WORKFLOW_TIMEOUT": "This is taking longer than expected. I'll keep working on it and notify you when done.",
     "TASK_FAILED": "I encountered an issue with {task_description}. As a suggestion, {recovery_suggestion}.",
+    "CONTEXT_VALIDATION_FAILED": "{user_message}",
     # Integration errors
     "GITHUB_RATE_LIMIT": "GitHub is limiting our requests. Please try again in {retry_after} minutes.",
     "GITHUB_AUTH_FAILED": "I couldn't authenticate with GitHub. Please check your access token.",

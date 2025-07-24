@@ -2,6 +2,7 @@
 Workflow Factory - Creates workflows from intents
 PM-002 Implementation
 PM-008 Github integration
+PM-057 Context Validation Framework
 """
 
 from datetime import datetime
@@ -11,6 +12,7 @@ from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from services.domain.models import Intent, Task, Workflow
+from services.orchestration.validation import workflow_validator
 from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 
@@ -20,6 +22,9 @@ class WorkflowFactory:
     def __init__(self):
         self.workflow_registry = {}
         self._register_default_workflows()
+        
+        # PM-057: Validation registry for workflow requirements
+        self.validation_registry = self._register_validation_requirements()
 
     def _register_default_workflows(self):
         """Register default workflow mappings"""
@@ -45,6 +50,82 @@ class WorkflowFactory:
             "list_all_projects": WorkflowType.LIST_PROJECTS,
             "show_projects": WorkflowType.LIST_PROJECTS,
         }
+
+    def _register_validation_requirements(self) -> Dict[WorkflowType, Dict[str, Any]]:
+        """
+        PM-057: Register validation requirements for each workflow type.
+        Complements the validation service with factory-level context requirements.
+        """
+        return {
+            WorkflowType.CREATE_TICKET: {
+                "context_requirements": {
+                    "critical": ["original_message"],  # Always required
+                    "important": ["project_id", "repository"],  # Needed for context
+                    "optional": ["labels", "priority", "assignee"]  # Nice to have
+                },
+                "performance_threshold_ms": 50,  # Max validation time
+                "pre_execution_checks": ["project_resolution", "repository_access"]
+            },
+            
+            WorkflowType.LIST_PROJECTS: {
+                "context_requirements": {
+                    "critical": ["original_message"],
+                    "important": [],
+                    "optional": ["filter_criteria", "sort_order"]
+                },
+                "performance_threshold_ms": 30,
+                "pre_execution_checks": ["database_access"]
+            },
+            
+            WorkflowType.ANALYZE_FILE: {
+                "context_requirements": {
+                    "critical": ["original_message"],
+                    "important": ["file_id", "resolved_file_id"],
+                    "optional": ["analysis_type", "depth_level"]
+                },
+                "performance_threshold_ms": 75,
+                "pre_execution_checks": ["file_existence", "file_accessibility"]
+            },
+            
+            WorkflowType.GENERATE_REPORT: {
+                "context_requirements": {
+                    "critical": ["original_message"],
+                    "important": ["data_source"],  # Could be file_id or project_id
+                    "optional": ["report_format", "include_charts"]
+                },
+                "performance_threshold_ms": 60,
+                "pre_execution_checks": ["data_source_validation"]
+            },
+            
+            WorkflowType.REVIEW_ITEM: {
+                "context_requirements": {
+                    "critical": ["original_message"],
+                    "important": ["github_url", "item_type"],
+                    "optional": ["focus_areas", "review_depth"]
+                },
+                "performance_threshold_ms": 40,
+                "pre_execution_checks": ["github_accessibility", "url_validation"]
+            },
+            
+            WorkflowType.PLAN_STRATEGY: {
+                "context_requirements": {
+                    "critical": ["original_message"],
+                    "important": ["scope", "objectives"],
+                    "optional": ["timeline", "resources", "constraints"]
+                },
+                "performance_threshold_ms": 45,
+                "pre_execution_checks": ["context_sufficiency"]
+            }
+        }
+
+    def get_validation_requirements(self, workflow_type: WorkflowType) -> Optional[Dict[str, Any]]:
+        """Get validation requirements for a specific workflow type"""
+        return self.validation_registry.get(workflow_type)
+    
+    def get_performance_threshold(self, workflow_type: WorkflowType) -> int:
+        """Get performance threshold for validation in milliseconds"""
+        requirements = self.get_validation_requirements(workflow_type)
+        return requirements.get("performance_threshold_ms", 100) if requirements else 100
 
     async def create_from_intent(
         self, intent: Intent, project_context: Optional[Dict[str, Any]] = None

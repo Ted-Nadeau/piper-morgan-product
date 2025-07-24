@@ -266,10 +266,11 @@ class TestMCPIntegration:
         assert search_results == []
 
     @pytest.mark.asyncio
-    async def test_mcp_feature_flag_integration(self, temp_uploads_dir):
+    async def test_mcp_feature_flag_integration(self, temp_uploads_dir, mock_mcp_config_service):
         """Test MCP integration with feature flag"""
         # Test with feature flag disabled (default)
-        manager = MCPResourceManager()
+        # ADR-010: Use ConfigService injection for tests
+        manager = MCPResourceManager(config_service=mock_mcp_config_service)
 
         # Should not initialize when disabled
         initialized = await manager.initialize(enabled=False)
@@ -280,7 +281,7 @@ class TestMCPIntegration:
         assert results == []
 
         # Test with feature flag enabled
-        manager_enabled = MCPResourceManager()
+        manager_enabled = MCPResourceManager(config_service=mock_mcp_config_service)
         initialized = await manager_enabled.initialize(enabled=True)
         assert initialized == True
 
@@ -358,8 +359,10 @@ async def run_integration_tests():
 
                 await client.disconnect()
 
-            # Test resource manager
-            manager = MCPResourceManager()
+            # Test resource manager with config service
+            # ADR-010: Even main method should use proper configuration
+            config_service = MCPConfigurationService()
+            manager = MCPResourceManager(config_service=config_service)
             initialized = await manager.initialize(enabled=True)
             print(f"✓ Resource manager initialized: {initialized}")
 
