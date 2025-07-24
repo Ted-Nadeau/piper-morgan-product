@@ -22,7 +22,7 @@ class WorkflowFactory:
     def __init__(self):
         self.workflow_registry = {}
         self._register_default_workflows()
-        
+
         # PM-057: Validation registry for workflow requirements
         self.validation_registry = self._register_validation_requirements()
 
@@ -61,67 +61,62 @@ class WorkflowFactory:
                 "context_requirements": {
                     "critical": ["original_message"],  # Always required
                     "important": ["project_id", "repository"],  # Needed for context
-                    "optional": ["labels", "priority", "assignee"]  # Nice to have
+                    "optional": ["labels", "priority", "assignee"],  # Nice to have
                 },
                 "performance_threshold_ms": 50,  # Max validation time
-                "pre_execution_checks": ["project_resolution", "repository_access"]
+                "pre_execution_checks": ["project_resolution", "repository_access"],
             },
-            
             WorkflowType.LIST_PROJECTS: {
                 "context_requirements": {
                     "critical": ["original_message"],
                     "important": [],
-                    "optional": ["filter_criteria", "sort_order"]
+                    "optional": ["filter_criteria", "sort_order"],
                 },
                 "performance_threshold_ms": 30,
-                "pre_execution_checks": ["database_access"]
+                "pre_execution_checks": ["database_access"],
             },
-            
             WorkflowType.ANALYZE_FILE: {
                 "context_requirements": {
                     "critical": ["original_message"],
                     "important": ["file_id", "resolved_file_id"],
-                    "optional": ["analysis_type", "depth_level"]
+                    "optional": ["analysis_type", "depth_level"],
                 },
                 "performance_threshold_ms": 75,
-                "pre_execution_checks": ["file_existence", "file_accessibility"]
+                "pre_execution_checks": ["file_existence", "file_accessibility"],
             },
-            
             WorkflowType.GENERATE_REPORT: {
                 "context_requirements": {
                     "critical": ["original_message"],
                     "important": ["data_source"],  # Could be file_id or project_id
-                    "optional": ["report_format", "include_charts"]
+                    "optional": ["report_format", "include_charts"],
                 },
                 "performance_threshold_ms": 60,
-                "pre_execution_checks": ["data_source_validation"]
+                "pre_execution_checks": ["data_source_validation"],
             },
-            
             WorkflowType.REVIEW_ITEM: {
                 "context_requirements": {
                     "critical": ["original_message"],
                     "important": ["github_url", "item_type"],
-                    "optional": ["focus_areas", "review_depth"]
+                    "optional": ["focus_areas", "review_depth"],
                 },
                 "performance_threshold_ms": 40,
-                "pre_execution_checks": ["github_accessibility", "url_validation"]
+                "pre_execution_checks": ["github_accessibility", "url_validation"],
             },
-            
             WorkflowType.PLAN_STRATEGY: {
                 "context_requirements": {
                     "critical": ["original_message"],
                     "important": ["scope", "objectives"],
-                    "optional": ["timeline", "resources", "constraints"]
+                    "optional": ["timeline", "resources", "constraints"],
                 },
                 "performance_threshold_ms": 45,
-                "pre_execution_checks": ["context_sufficiency"]
-            }
+                "pre_execution_checks": ["context_sufficiency"],
+            },
         }
 
     def get_validation_requirements(self, workflow_type: WorkflowType) -> Optional[Dict[str, Any]]:
         """Get validation requirements for a specific workflow type"""
         return self.validation_registry.get(workflow_type)
-    
+
     def get_performance_threshold(self, workflow_type: WorkflowType) -> int:
         """Get performance threshold for validation in milliseconds"""
         requirements = self.get_validation_requirements(workflow_type)
