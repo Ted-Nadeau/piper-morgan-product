@@ -1,11 +1,11 @@
 """
 FileRepository implementation using SQLAlchemy AsyncSession
 Following Pattern #1: Repository Pattern from pattern-catalog.md
+Following ADR-010: Configuration Access Patterns
 """
 
 import json
 import logging
-import os
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -16,14 +16,10 @@ from services.database.models import UploadedFileDB
 from services.database.repositories import BaseRepository
 from services.domain.models import UploadedFile
 from services.infrastructure.config.feature_flags import FeatureFlags
-
-# Import centralized configuration service
-try:
-    from services.infrastructure.config.mcp_configuration import get_config
-
-    CONFIG_SERVICE_AVAILABLE = True
-except ImportError:
-    CONFIG_SERVICE_AVAILABLE = False
+from services.infrastructure.config.file_configuration import (
+    FileConfigService,
+    get_file_config_service,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +29,14 @@ class FileRepository(BaseRepository):
 
     model = UploadedFileDB
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, config_service: Optional[FileConfigService] = None):
         super().__init__(session)
+        # ADR-010: Use ConfigService for application layer configuration
+        self.config_service = config_service or get_file_config_service()
+
+    def get_repository_config(self) -> dict:
+        """Get repository configuration using ConfigService"""
+        return self.config_service.get_repository_config()
 
     async def save_file_metadata(self, file: UploadedFile) -> UploadedFile:
         """Save file metadata to database"""
@@ -163,8 +165,8 @@ class FileRepository(BaseRepository):
         # Get files matching by filename first (always available)
         filename_matches = await self.search_files_by_name(session_id, query)
 
-        # Check if MCP content search is enabled using infrastructure feature flags
-        mcp_enabled = FeatureFlags.is_mcp_content_search_enabled()
+        # ADR-010: Use ConfigService for application layer configuration
+        mcp_enabled = self.config_service.get_mcp_search_enabled()
 
         if not mcp_enabled:
             logger.debug("MCP content search disabled, returning filename matches only")
@@ -232,8 +234,8 @@ class FileRepository(BaseRepository):
         # Get files matching by filename first (always available)
         filename_matches = await self.search_files_by_name_all_sessions(query, days)
 
-        # Check if MCP content search is enabled using infrastructure feature flags
-        mcp_enabled = FeatureFlags.is_mcp_content_search_enabled()
+        # ADR-010: Use ConfigService for application layer configuration
+        mcp_enabled = self.config_service.get_mcp_search_enabled()
 
         if not mcp_enabled:
             logger.debug("MCP content search disabled, returning filename matches only")

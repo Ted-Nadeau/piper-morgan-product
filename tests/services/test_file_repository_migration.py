@@ -1,6 +1,7 @@
 """
 Test FileRepository migration to SQLAlchemy pattern
 Following TDD approach to migrate from asyncpg pools to AsyncSession
+Following ADR-010: Configuration Access Patterns
 
 TODO PM-058: ASYNCPG CONCURRENCY ISSUE
 Tests using async_transaction fixture fail when run in batch due to AsyncPG
@@ -14,6 +15,7 @@ Workaround: Use async_session instead of async_transaction for non-rollback test
 
 import json
 from datetime import datetime, timedelta
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
@@ -22,7 +24,26 @@ from sqlalchemy import select
 from services.database.models import UploadedFileDB
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import UploadedFile
+from services.infrastructure.config.file_configuration import FileConfigService
 from services.repositories.file_repository import FileRepository
+
+
+def create_mock_config_service() -> Mock:
+    """Create a mock ConfigService for testing"""
+    mock_config = Mock(spec=FileConfigService)
+    mock_config.get_file_cache_ttl.return_value = 300
+    mock_config.get_max_file_results.return_value = 1000
+    mock_config.get_file_search_timeout.return_value = 30.0
+    mock_config.get_mcp_search_enabled.return_value = False
+    mock_config.get_file_metadata_cache_size.return_value = 1000
+    mock_config.get_repository_config.return_value = {
+        "cache_ttl": 300,
+        "max_results": 1000,
+        "search_timeout": 30.0,
+        "mcp_search_enabled": False,
+        "metadata_cache_size": 1000,
+    }
+    return mock_config
 
 
 async def test_file_repository_with_async_session(async_transaction):
@@ -50,6 +71,40 @@ async def test_file_repository_with_async_session(async_transaction):
         assert saved_file.id == test_file.id
         assert saved_file.filename == test_file.filename
         assert saved_file.session_id == test_file.session_id
+
+
+async def test_file_repository_with_config_service(async_transaction):
+    """Test that FileRepository works with ConfigService injection following ADR-010"""
+    # Arrange
+    mock_config = create_mock_config_service()
+    test_file = UploadedFile(
+        id=str(uuid4()),
+        session_id="test_session_config",
+        filename="config_test.pdf",
+        file_type="application/pdf",
+        file_size=1024,
+        storage_path="/uploads/config_test.pdf",
+        upload_time=datetime.now(),
+        last_referenced=datetime.now(),
+        reference_count=0,
+        metadata={"test": "config_service"},
+    )
+
+    # Act - Save file using ConfigService injection
+    async with async_transaction as session:
+        repo = FileRepository(session, config_service=mock_config)
+        saved_file = await repo.save_file_metadata(test_file)
+
+        # Assert - Verify saved and config service used
+        assert saved_file.id == test_file.id
+        assert saved_file.filename == test_file.filename
+        assert repo.config_service == mock_config
+
+        # Verify config service methods called
+        config = repo.get_repository_config()
+        assert config["cache_ttl"] == 300
+        assert config["max_results"] == 1000
+        assert config["mcp_search_enabled"] is False
 
 
 async def test_get_file_by_id(async_transaction):

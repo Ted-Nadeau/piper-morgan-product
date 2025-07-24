@@ -1,15 +1,21 @@
 """
 Integration tests for MCP functionality
 Tests the MCP client, resource manager, and filesystem server integration.
+Following ADR-010: Configuration Access Patterns
 """
 
 import asyncio
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
 
+from services.infrastructure.config.mcp_configuration import (
+    MCPConfiguration,
+    MCPConfigurationService,
+)
 from services.mcp.client import MCPResource, PiperMCPClient
 from services.mcp.exceptions import MCPConnectionError
 from services.mcp.resources import MCPResourceManager
@@ -17,6 +23,25 @@ from services.mcp.resources import MCPResourceManager
 
 class TestMCPIntegration:
     """Test MCP integration functionality"""
+
+    @pytest.fixture
+    def mock_mcp_config_service(self):
+        """Create a mock MCP configuration service following ADR-010"""
+        mock_service = Mock(spec=MCPConfigurationService)
+        mock_config = MCPConfiguration(
+            mcp_enabled=True,
+            pool_enabled=False,  # Disable pooling for simpler tests
+            debug_enabled=False,
+            max_connections=5,
+            connection_timeout=5.0,
+            circuit_breaker_threshold=5,
+            circuit_breaker_timeout=60,
+            max_content_length=50000,
+            snippet_length=200,
+            max_keywords=20,
+        )
+        mock_service.get_config.return_value = mock_config
+        return mock_service
 
     @pytest.fixture
     def temp_uploads_dir(self):
@@ -160,9 +185,10 @@ class TestMCPIntegration:
         await client.disconnect()
 
     @pytest.mark.asyncio
-    async def test_mcp_resource_manager_disabled(self):
+    async def test_mcp_resource_manager_disabled(self, mock_mcp_config_service):
         """Test MCP resource manager when disabled"""
-        manager = MCPResourceManager()
+        # ADR-010: Use ConfigService injection for tests
+        manager = MCPResourceManager(config_service=mock_mcp_config_service)
 
         # Test initialization with disabled flag
         initialized = await manager.initialize(enabled=False)
@@ -182,9 +208,10 @@ class TestMCPIntegration:
         assert stats["available"] == False
 
     @pytest.mark.asyncio
-    async def test_mcp_resource_manager_enabled(self, temp_uploads_dir):
+    async def test_mcp_resource_manager_enabled(self, temp_uploads_dir, mock_mcp_config_service):
         """Test MCP resource manager when enabled"""
-        manager = MCPResourceManager()
+        # ADR-010: Use ConfigService injection for tests
+        manager = MCPResourceManager(config_service=mock_mcp_config_service)
 
         # Test initialization with enabled flag
         initialized = await manager.initialize(enabled=True)
