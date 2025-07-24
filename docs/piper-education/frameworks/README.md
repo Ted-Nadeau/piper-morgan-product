@@ -26,6 +26,15 @@ Frameworks that emerged organically through our development process.
 - Emerged from real-world challenges
 - Examples: Session Log Framework, Human-AI Collaboration Framework
 
+#### **Critical Emergent Frameworks**
+
+**Session Log Framework** ([./emergent/session-log-framework.md](./emergent/session-log-framework.md))
+
+- **Pattern Strength**: 16/16 (Maximum Strength)
+- **Purpose**: Maintain context, institutional memory, and effective handoffs
+- **Key Features**: Structured session logs, handoff protocols, archive system
+- **Real Examples**: Foundation Sprint, PM-012 GitHub Integration, PM-021 Error Handling
+
 ## Framework Categories
 
 ### **Architectural Frameworks**
