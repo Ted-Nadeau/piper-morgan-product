@@ -40,6 +40,10 @@ class WorkflowFactory:
             "performance_analysis": WorkflowType.GENERATE_REPORT,  # For performance analysis
             "user_feedback_analysis": WorkflowType.GENERATE_REPORT,  # For user feedback analysis
             "system_analysis": WorkflowType.GENERATE_REPORT,  # For system analysis
+            # PM-021: Project listing workflow mapping
+            "list_projects": WorkflowType.LIST_PROJECTS,
+            "list_all_projects": WorkflowType.LIST_PROJECTS,
+            "show_projects": WorkflowType.LIST_PROJECTS,
         }
 
     async def create_from_intent(
@@ -158,5 +162,13 @@ class WorkflowFactory:
                     created_at=datetime.now(),
                 )
             )
+        elif workflow_type == WorkflowType.LIST_PROJECTS:
+            # PM-021: Add project listing task
+            task = Task(
+                name="List Projects",
+                type=TaskType.LIST_PROJECTS,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
 
         return workflow

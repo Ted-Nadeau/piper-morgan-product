@@ -31,6 +31,8 @@ class WorkflowType(Enum):
     CONFIRM_PROJECT = "confirm_project"
     SELECT_PROJECT = "select_project"
     ANALYZE_FILE = "analyze_file"  # Add this line for file analysis workflows
+    # PM-021: Project listing workflow type
+    LIST_PROJECTS = "list_projects"
 
 
 class WorkflowStatus(Enum):
@@ -62,6 +64,9 @@ class TaskType(Enum):
     ANALYZE_GITHUB_ISSUE = "analyze_github_issue"
     ANALYZE_FILE = "analyze_file"
     SUMMARIZE = "summarize"
+
+    # PM-021: Project listing task type
+    LIST_PROJECTS = "list_projects"
     EXTRACT_WORK_ITEM = "extract_work_item"
     JIRA_CREATE_TICKET = "jira_create_ticket"
     SLACK_SEND_MESSAGE = "slack_send_message"

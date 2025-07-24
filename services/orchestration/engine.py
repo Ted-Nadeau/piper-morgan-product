@@ -99,6 +99,8 @@ class OrchestrationEngine:
             # GitHub integration handlers
             TaskType.GITHUB_CREATE_ISSUE: self._create_github_issue,
             TaskType.GENERATE_GITHUB_ISSUE_CONTENT: self._generate_github_issue_content,
+            # PM-021: Project listing handler
+            TaskType.LIST_PROJECTS: self._list_projects,
             TaskType.JIRA_CREATE_TICKET: self._placeholder_handler,
             TaskType.SLACK_SEND_MESSAGE: self._placeholder_handler,
             TaskType.GENERATE_DOCUMENT: self._placeholder_handler,
@@ -336,6 +338,9 @@ class OrchestrationEngine:
                 recovery_suggestion="the system may be under heavy load, please try again later",
                 details={"task_id": task.id, "reason": "timeout"},
             ) from e
+        except TaskFailedError:
+            # Re-raise TaskFailedError without re-wrapping
+            raise
         except Exception as e:
             task.status = TaskStatus.FAILED
             task.error = str(e)
@@ -625,6 +630,15 @@ List concrete requirements, acceptance criteria, and technical specifications.""
 
             # Get repository from context
             repository = workflow.context.get("repository")
+
+            # If not directly specified, try to extract from project integrations
+            if not repository and "integrations" in workflow.context:
+                for integration in workflow.context["integrations"]:
+                    if integration.get("type") == "github" and "config" in integration:
+                        repository = integration["config"].get("repository")
+                        if repository:
+                            break
+
             if not repository:
                 logger.error("❌ Repository not specified in workflow context")
                 return TaskResult(
@@ -869,6 +883,24 @@ Focus on:
         except Exception as e:
             logger.error(f"Summarization failed: {e}")
             return TaskResult(success=False, error=f"Analysis failed: {str(e)}")
+
+    async def _list_projects(self, workflow: Workflow, task: Task) -> TaskResult:
+        """List projects from the database."""
+        try:
+            async with AsyncSessionFactory.session_scope() as session:
+                from services.database.repositories import ProjectRepository
+
+                project_repo = ProjectRepository(session)
+                projects = await project_repo.list_active_projects()
+
+                if not projects:
+                    return TaskResult(success=True, output_data={"projects": []})
+
+                project_list = [p.to_dict() for p in projects]
+                return TaskResult(success=True, output_data={"projects": project_list})
+        except Exception as e:
+            logger.error(f"Failed to list projects: {str(e)}")
+            return TaskResult(success=False, error=f"Project listing error: {str(e)}")
 
     async def _placeholder_handler(self, workflow: Workflow, task: Task) -> TaskResult:
         """Placeholder for unimplemented handlers"""
