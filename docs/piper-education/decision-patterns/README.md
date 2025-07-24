@@ -6,65 +6,74 @@
 
 ### **Established Decision Patterns** ([./established/](./established/))
 
-Proven decision-making patterns and principles that we consciously adopted.
+Received wisdom and best practices for decision-making that we consciously adopted and applied.
 
 **Key Characteristics**:
 
-- Well-established and widely used
+- Well-documented and widely adopted
 - Include citations and references to original sources
-- Consciously applied in decision-making
-- Examples: Verification-First, Incremental Refactoring, Test-Driven Decisions
+- Consciously chosen and implemented
+- Examples: Verification-First, Incremental Refactoring, Risk-Based Decisions
 
 ### **Emergent Decision Patterns** ([./emergent/](./emergent/))
 
-Decision patterns that emerged through our development process and problem-solving.
+Decision patterns that emerged organically through our development process.
 
 **Key Characteristics**:
 
-- Discovered through real-world decision-making challenges
+- Discovered through problem-solving and iteration
 - Include evolution history and problem-solution mapping
-- Emerged from specific decision contexts
-- Examples: Context-Driven Decisions, AI-Assisted Decision Making
+- Emerged from real-world challenges
+- Examples: Context-Driven Decisions, AI-Assisted Decisions
+
+#### **Critical Emergent Decision Patterns**
+
+**Verification-First Pattern** ([./emergent/verification-first-pattern.md](./emergent/verification-first-pattern.md))
+
+- **Pattern Strength**: 15/16 (Critical Strength)
+- **Purpose**: Ensure reliability and prevent errors by systematically verifying AI-generated solutions
+- **Key Features**: Verification gates, systematic validation, error prevention
+- **Real Examples**: PM-055 Python Version Consistency, PM-012 GitHub Integration, PM-021 Error Handling
 
 ## Decision Pattern Categories
 
-### **Validation Patterns**
+### **Quality Assurance Patterns**
 
-- Patterns for validating decisions and assumptions
-- Verification and testing approaches
-- Quality assurance decision patterns
+- Verification and validation approaches
+- Testing and quality control decisions
+- Error prevention and handling patterns
 
-### **Collaboration Patterns**
+### **Architecture Decision Patterns**
 
-- Decision-making in team contexts
-- Human-AI collaboration decision patterns
-- Stakeholder engagement patterns
+- System design and structure decisions
+- Technology selection and evaluation
+- Integration and communication patterns
 
-### **Architecture Patterns**
+### **Process Decision Patterns**
 
-- Technical architecture decision patterns
-- System design decision approaches
-- Technology selection patterns
+- Development workflow decisions
+- Project management and coordination
+- Team collaboration and handoff patterns
 
-### **Process Patterns**
+### **AI-Assisted Development Patterns**
 
-- Development process decision patterns
-- Project management decision approaches
-- Workflow optimization patterns
+- AI integration and validation decisions
+- Human-AI collaboration patterns
+- AI-generated content verification
 
 ## Usage Guidelines
 
-1. **Understand Context**: Choose patterns based on decision context and requirements
-2. **Combine Approaches**: Use established patterns as foundation, enhance with emergent patterns
-3. **Document Decisions**: Use patterns to structure and document decision rationale
-4. **Validate Outcomes**: Apply validation patterns to ensure decision quality
-5. **Learn and Adapt**: Evolve patterns based on decision outcomes and feedback
+1. **Start with Established**: Begin with established patterns for proven approaches
+2. **Enhance with Emergent**: Use emergent patterns to address specific challenges
+3. **Combine Approaches**: Mix established and emergent patterns as appropriate
+4. **Document Decisions**: Track decision rationale and outcomes
+5. **Share Discoveries**: Contribute emergent patterns back to the community
 
 ## Related Content
 
-- **Implementation Guides**: [../implementation-guides/](../implementation-guides/) - Practical decision pattern application
-- **Case Studies**: [../case-studies/](../case-studies/) - Real-world decision-making examples
-- **Frameworks**: [../frameworks/](../frameworks/) - Frameworks that inform decision patterns
+- **Implementation Guides**: [../implementation-guides/](../implementation-guides/) - Practical implementation guidance
+- **Case Studies**: [../case-studies/](../case-studies/) - Real-world pattern applications
+- **Frameworks**: [../frameworks/](../frameworks/) - Architectural and development frameworks
 
 ---
 
