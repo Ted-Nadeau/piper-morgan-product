@@ -1,6 +1,6 @@
-# Session Archive: July 2025 (Second Half)
+# Session Archive: July 2025 (Second Part)
 
-This archive contains session logs from July 16-31, 2025, organized chronologically by date.
+This archive contains session logs from July 16-21, 2025, organized chronologically by date.
 
 ---
 
