@@ -1,6 +1,7 @@
 """
 MCP Resource Management for Piper Morgan
 Provides high-level resource access and management for MCP integration.
+Following ADR-010: Configuration Access Patterns
 """
 
 import asyncio
@@ -11,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from services.infrastructure.config.feature_flags import FeatureFlags
+from services.infrastructure.config.mcp_configuration import MCPConfigurationService, get_config
 
 from .client import MCPResource, MCPResourceContent, PiperMCPClient
 from .exceptions import MCPConnectionError
@@ -27,14 +29,7 @@ except ImportError:
     DOMAIN_MODELS_AVAILABLE = False
     logger.warning("MCP domain models not available, using basic scoring")
 
-# Import centralized configuration service
-try:
-    from services.infrastructure.config.mcp_configuration import get_config
-
-    CONFIG_SERVICE_AVAILABLE = True
-except ImportError:
-    CONFIG_SERVICE_AVAILABLE = False
-    logger.warning("Configuration service not available, using direct environment access")
+# Configuration service is now mandatory per ADR-010
 
 # Try to import connection pool - graceful fallback if not available
 try:
@@ -66,22 +61,31 @@ class MCPResourceManager:
     file repository operations with MCP resource access.
     """
 
-    def __init__(self, client_config: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        client_config: Optional[Dict[str, Any]] = None,
+        config_service: Optional[MCPConfigurationService] = None,
+    ):
+        # ADR-010: Use ConfigService for application layer configuration
+        self.config_service = config_service or MCPConfigurationService()
+        self.mcp_config = self.config_service.get_config()
+
+        # Client configuration from ConfigService
         self.client_config = client_config or {
-            "url": "stdio://./scripts/mcp_file_server.py",
-            "timeout": 5.0,
+            "url": FeatureFlags.get_mcp_server_url(),  # Infrastructure runtime config
+            "timeout": self.mcp_config.connection_timeout,
         }
         self.client: Optional[PiperMCPClient] = None
         self.initialized = False
         self.enabled = False  # Will be set by feature flag
 
-        # Connection pooling configuration using infrastructure feature flags
+        # ADR-010: Use FeatureFlags for infrastructure feature detection
         self.use_pool = FeatureFlags.is_mcp_connection_pooling_enabled() and POOL_AVAILABLE
         self.connection_pool = None
 
-        # Resource cache with TTL
+        # Resource cache configuration from ConfigService
         self.resource_cache: Dict[str, Any] = {}
-        self.cache_ttl = 300  # 5 minutes
+        self.cache_ttl = self.mcp_config.max_content_length // 1000  # Dynamic based on content size
 
         # Initialize domain model for content extraction and scoring
         self.content_extractor = None
