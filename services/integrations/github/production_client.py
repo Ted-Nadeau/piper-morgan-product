@@ -44,8 +44,8 @@ class RetryConfig:
     """Configuration for retry logic"""
 
     max_attempts: int = 3
-    base_delay: float = 1.0
-    max_delay: float = 60.0
+    base_delay_seconds: float = 1.0
+    max_delay_seconds: float = 60.0
     exponential_base: float = 2.0
     rate_limit_retry: bool = True
 
@@ -191,7 +191,7 @@ class ProductionGitHubClient:
                 if attempt < self.config.retry_config.max_attempts - 1:
                     # Calculate retry delay (respect GitHub's Retry-After header)
                     retry_after = int(e.headers.get("Retry-After", 60))
-                    delay = min(retry_after, self.config.retry_config.max_delay)
+                    delay = min(retry_after, self.config.retry_config.max_delay_seconds)
 
                     logger.info(f"Rate limited, waiting {delay} seconds before retry")
                     await asyncio.sleep(delay)
@@ -216,9 +216,9 @@ class ProductionGitHubClient:
                 if attempt < self.config.retry_config.max_attempts - 1:
                     # Exponential backoff for other GitHub API errors
                     delay = min(
-                        self.config.retry_config.base_delay
+                        self.config.retry_config.base_delay_seconds
                         * (self.config.retry_config.exponential_base**attempt),
-                        self.config.retry_config.max_delay,
+                        self.config.retry_config.max_delay_seconds,
                     )
 
                     logger.warning(
@@ -238,9 +238,9 @@ class ProductionGitHubClient:
 
                 if attempt < self.config.retry_config.max_attempts - 1:
                     delay = min(
-                        self.config.retry_config.base_delay
+                        self.config.retry_config.base_delay_seconds
                         * (self.config.retry_config.exponential_base**attempt),
-                        self.config.retry_config.max_delay,
+                        self.config.retry_config.max_delay_seconds,
                     )
 
                     logger.warning(

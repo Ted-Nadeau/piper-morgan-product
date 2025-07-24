@@ -30,6 +30,13 @@ class TestPM012GitHubProductionScenarios:
     """Comprehensive test scenarios for real GitHub integration"""
 
     # ============================================================================
+    async def create_and_store_workflow(self, intent, engine, project_context=None):
+        """Helper function to create workflow and store it in engine registry"""
+        factory = WorkflowFactory()
+        workflow = await factory.create_from_intent(intent, project_context)
+        engine.workflows[workflow.id] = workflow
+        return workflow
+
     # FIXTURES
     # ============================================================================
 
@@ -134,10 +141,12 @@ class TestPM012GitHubProductionScenarios:
         engine.github_agent = mock_github_agent
 
         # Create workflow
-        workflow = await factory.create_from_intent(intent, sample_project.to_dict())
+        workflow = await self.create_and_store_workflow(intent, engine, sample_project.to_dict())
         assert workflow is not None
         assert workflow.type == WorkflowType.CREATE_TICKET
-        assert len(workflow.tasks) == 2  # EXTRACT_WORK_ITEM + GITHUB_CREATE_ISSUE
+        assert (
+            len(workflow.tasks) == 3
+        )  # EXTRACT_WORK_ITEM + GENERATE_GITHUB_ISSUE_CONTENT + GITHUB_CREATE_ISSUE
 
         # Execute workflow
         result = await engine.execute_workflow(workflow.id)
@@ -229,7 +238,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent, sample_project.to_dict())
+        workflow = await self.create_and_store_workflow(intent, engine, sample_project.to_dict())
         result = await engine.execute_workflow(workflow.id)
 
         # Verify success with project context
@@ -270,7 +279,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
         result = await engine.execute_workflow(workflow.id)
 
         # Should still work with direct repository specification
@@ -341,7 +350,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
         result = await engine.execute_workflow(workflow.id)
 
         # Should handle special characters gracefully
@@ -398,7 +407,7 @@ class TestPM012GitHubProductionScenarios:
             engine = OrchestrationEngine()
             engine.github_agent = mock_github_agent
 
-            workflow = await factory.create_from_intent(intent)
+            workflow = await self.create_and_store_workflow(intent, engine)
             result = await engine.execute_workflow(workflow.id)
 
             # Should handle all repository formats
@@ -440,7 +449,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
         result = await engine.execute_workflow(workflow.id)
 
         # Should handle authentication failure gracefully
@@ -479,7 +488,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
         result = await engine.execute_workflow(workflow.id)
 
         # Should handle rate limit gracefully
@@ -509,7 +518,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
 
         # Should use fallback extraction when LLM fails
         extractor = WorkItemExtractor(mock_llm_client)
@@ -564,7 +573,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
         result = await engine.execute_workflow(workflow.id)
 
         # Should handle access denied gracefully
@@ -612,7 +621,7 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent, sample_project.to_dict())
+        workflow = await self.create_and_store_workflow(intent, engine, sample_project.to_dict())
         result = await engine.execute_workflow(workflow.id)
 
         # Verify project context was properly mapped to repository
@@ -663,11 +672,13 @@ class TestPM012GitHubProductionScenarios:
         engine = OrchestrationEngine()
         engine.github_agent = mock_github_agent
 
-        workflow = await factory.create_from_intent(intent)
+        workflow = await self.create_and_store_workflow(intent, engine)
 
         # Verify workflow structure
         assert workflow.type == WorkflowType.CREATE_TICKET
-        assert len(workflow.tasks) == 2
+        assert (
+            len(workflow.tasks) == 3
+        )  # EXTRACT_WORK_ITEM + GENERATE_GITHUB_ISSUE_CONTENT + GITHUB_CREATE_ISSUE
 
         # Verify task types
         task_types = [task.type for task in workflow.tasks]
@@ -728,7 +739,7 @@ class TestPM012GitHubProductionScenarios:
             factory = WorkflowFactory()
             engine = OrchestrationEngine()
 
-            workflow = await factory.create_from_intent(intent)
+            workflow = await self.create_and_store_workflow(intent, engine)
             result = await engine.execute_workflow(workflow.id)
 
             # Verify mock behavior
@@ -799,7 +810,7 @@ class TestPM012GitHubProductionScenarios:
             engine = OrchestrationEngine()
             engine.github_agent = mock_github_agent
 
-            workflow = await factory.create_from_intent(intent)
+            workflow = await self.create_and_store_workflow(intent, engine)
             result = await engine.execute_workflow(workflow.id)
 
             # Verify each issue creation
