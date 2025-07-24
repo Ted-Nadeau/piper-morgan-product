@@ -35,6 +35,20 @@ Frameworks that emerged organically through our development process.
 - **Key Features**: Structured session logs, handoff protocols, archive system
 - **Real Examples**: Foundation Sprint, PM-012 GitHub Integration, PM-021 Error Handling
 
+**Error Handling Framework** ([./emergent/error-handling-framework.md](./emergent/error-handling-framework.md))
+
+- **Pattern Strength**: 14/16 (High Strength)
+- **Purpose**: Systematic error handling and graceful degradation
+- **Key Features**: User-friendly error messages, structured exception handling, recovery guidance
+- **Real Examples**: PM-010 Comprehensive Error Handling, PM-012 GitHub Integration, PM-021 Error Handling Fix
+
+**Configuration Management Framework** ([./emergent/configuration-management-framework.md](./emergent/configuration-management-framework.md))
+
+- **Pattern Strength**: 14/16 (High Strength)
+- **Purpose**: Multi-environment orchestration and feature flag management
+- **Key Features**: ADR-010 patterns, environment detection, centralized configuration
+- **Real Examples**: PM-055 Python Version Consistency, PM-012 GitHub Integration, PM-015 Test Infrastructure
+
 ## Framework Categories
 
 ### **Architectural Frameworks**

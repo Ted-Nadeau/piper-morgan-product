@@ -31,6 +31,46 @@ Comprehensive implementation guide for the 8 high-strength emergent patterns ide
 7. CQRS-Lite Pattern
 8. Feature Flag Pattern
 
+### **Weekly Ship Template** ([./weekly-ship-template.md](./weekly-ship-template.md))
+
+Comprehensive weekly ship template that integrates all 5 critical learning patterns into team processes.
+
+**Contents**:
+
+- Sprint overview and progress tracking
+- Learning patterns application tracking
+- Metrics and performance measurement
+- Blockers and risk assessment
+- Lessons learned and continuous improvement
+- Pattern adoption tracking and effectiveness
+
+**Patterns Integrated**:
+
+1. Session Log Pattern (16/16 strength)
+2. Verification-First Pattern (15/16 strength)
+3. Human-AI Collaboration Referee (15/16 strength)
+4. Error Handling Framework (14/16 strength)
+5. Configuration Management Framework (14/16 strength)
+
+### **Pattern Adoption Metrics & Tracking** ([./pattern-adoption-metrics.md](./pattern-adoption-metrics.md))
+
+Comprehensive metrics and tracking system for measuring pattern adoption and effectiveness.
+
+**Contents**:
+
+- Quantitative and qualitative metrics for each pattern
+- Success criteria and targets
+- Tracking dashboard and reporting
+- Continuous improvement process
+- Implementation checklist and timelines
+
+**Metrics Covered**:
+
+1. Pattern adoption rates and success rates
+2. Team satisfaction and confidence ratings
+3. Business impact measurements
+4. Continuous improvement tracking
+
 ## Guide Categories
 
 ### **Framework Implementation Guides**
