@@ -49,6 +49,15 @@ class WorkflowFactory:
             "list_projects": WorkflowType.LIST_PROJECTS,
             "list_all_projects": WorkflowType.LIST_PROJECTS,
             "show_projects": WorkflowType.LIST_PROJECTS,
+            # PM-062: Missing workflow type mappings identified in reality check
+            "create_feature": WorkflowType.CREATE_FEATURE,
+            "analyze_metrics": WorkflowType.ANALYZE_METRICS,
+            "create_task": WorkflowType.CREATE_TASK,
+            "plan_strategy": WorkflowType.PLAN_STRATEGY,
+            "learn_pattern": WorkflowType.LEARN_PATTERN,
+            "analyze_feedback": WorkflowType.ANALYZE_FEEDBACK,
+            "confirm_project": WorkflowType.CONFIRM_PROJECT,
+            "select_project": WorkflowType.SELECT_PROJECT,
         }
 
     def _register_validation_requirements(self) -> Dict[WorkflowType, Dict[str, Any]]:
@@ -243,6 +252,78 @@ class WorkflowFactory:
             task = Task(
                 name="List Projects",
                 type=TaskType.LIST_PROJECTS,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.CREATE_FEATURE:
+            # Feature creation workflow
+            task = Task(
+                name="Create Feature",
+                type=TaskType.CREATE_WORK_ITEM,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.ANALYZE_METRICS:
+            # Metrics analysis workflow
+            task = Task(
+                name="Analyze Metrics",
+                type=TaskType.ANALYZE_REQUEST,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.CREATE_TASK:
+            # Task creation workflow
+            task = Task(
+                name="Create Task",
+                type=TaskType.CREATE_WORK_ITEM,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.PLAN_STRATEGY:
+            # Strategy planning workflow
+            task = Task(
+                name="Plan Strategy",
+                type=TaskType.SUMMARIZE,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.LEARN_PATTERN:
+            # Pattern learning workflow
+            task = Task(
+                name="Learn Pattern",
+                type=TaskType.ANALYZE_REQUEST,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.ANALYZE_FEEDBACK:
+            # Feedback analysis workflow
+            task = Task(
+                name="Analyze Feedback",
+                type=TaskType.ANALYZE_REQUEST,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.CONFIRM_PROJECT:
+            # Project confirmation workflow
+            task = Task(
+                name="Confirm Project",
+                type=TaskType.ANALYZE_REQUEST,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        elif workflow_type == WorkflowType.SELECT_PROJECT:
+            # Project selection workflow
+            task = Task(
+                name="Select Project",
+                type=TaskType.ANALYZE_REQUEST,
+                status=TaskStatus.PENDING,
+            )
+            workflow.tasks.append(task)
+        else:
+            # Default fallback for any unhandled workflow types
+            task = Task(
+                name=f"Handle {workflow_type.value}",
+                type=TaskType.ANALYZE_REQUEST,
                 status=TaskStatus.PENDING,
             )
             workflow.tasks.append(task)
