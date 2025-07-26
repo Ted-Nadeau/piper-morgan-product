@@ -33,23 +33,41 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - ✅ PM-012: GitHub API Design + High-Impact Implementation (July 23, 2025) - 85% → 100% production readiness
 - ✅ **PM-039 MCP Configuration Migration (July 24, 2025)** - MCPResourceManager ADR-010 compliance, 15-minute systematic migration
 - ✅ **PM-057 Context Validation Framework (July 24, 2025)** - Pre-execution validation system with user-friendly error messages, 17 comprehensive tests
+- ✅ **PM-070: Canonical Queries Foundation Document (July 26, 2025)** - 25 essential queries across 5 categories with testing framework and implementation roadmap
+- ✅ **PM-071: Morning Standup 5-Query Sequence Testing (July 26, 2025)** - Authentic user experience validation through existing UI with comprehensive timing and infrastructure analysis
 
 **Summary**: ✅ **Foundation Sprint COMPLETE** with systematic excellence. PM-055 Python 3.11 standardization delivered 1 day early. PM-015 test infrastructure fully stabilized with 95%+ success rate across all components. MCP integration achieved 642x performance improvement. Configuration patterns standardized with ADR-010. PM-012 delivered 100% production-ready GitHub integration with LLM-powered content generation, enterprise-grade client, and ADR-010 configuration patterns. PM-039 MCP configuration migration achieved zero-breaking-change ADR-010 compliance in 15 minutes using systematic verification methodology. PM-057 Context Validation Framework delivers comprehensive pre-execution validation with user-friendly error messages and 17 comprehensive tests (100% pass rate). All core infrastructure, validation framework, and user-facing features operational and production-ready.
 
 ### 🚧 Current Phase: Activation & Polish Week
 
+**PM-070: Canonical Queries Foundation Document** - COMPLETE ✅
+
+- 25 essential queries across 5 categories (Identity, Temporal, Spatial, Capability, Predictive)
+- Testing framework and implementation roadmap established
+- Foundation for automated testing and user experience validation
+
+**PM-071: Morning Standup 5-Query Sequence Testing** - COMPLETE ✅
+
+- Authentic user experience validation through existing UI
+- Success rate: 20% (1/5 queries successful)
+- Database connection issues identified and documented
+- Embodied AI concept validation: prioritization guidance working
+
 **PM-061: TLDR Continuous Verification System** (#45) - Claude Code
+
 - Core TLDR runner script for <0.1 second feedback loops
 - Agent-specific hooks configuration
 - Meta-acceleration effect for debugging productivity
 
 **PM-062: Systematic Workflow Completion Audit** (#46) - Cursor
+
 - Test ALL workflow types for completion vs. hang status
 - Root cause analysis for failures
 - Priority list for targeted fixes with TLDR verification
 
 ### 🎯 Phase Objective
-Identify and fix workflow completion issues with continuous micro-verification system enabling instant feedback for all subsequent development work.
+
+Complete embodied AI foundation with canonical queries and authentic user experience validation, then identify and fix workflow completion issues with continuous micro-verification system enabling instant feedback for all subsequent development work.
 
 ### 📋 Not Started
 
@@ -525,6 +543,7 @@ _Last Updated: July 18, 2025_
 
 ## Revision Log
 
+- **July 26, 2025**: PM-070/071 complete - Canonical queries foundation and morning standup testing completed, embodied AI concepts validated through authentic user experience
 - **July 22, 2025**: PM-055 complete - Python version consistency achieved across all environments, Foundation Sprint systematic approach successful
 - **July 21, 2025**: PM-039 complete - Intent classification coverage improvements, Foundation Sprint Day 1 achievements documented
 - **July 18, 2025**: PM-038 Day 2 complete - MCP connection pool with 642x performance improvement achieved, project ahead of schedule with excellent TDD foundation
