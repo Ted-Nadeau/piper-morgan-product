@@ -1,0 +1,76 @@
+{
+  "timestamp": "20250726_162028",
+  "total_duration_ms": 31011.097192764282,
+  "success_rate": 20.0,
+  "average_response_time_ms": 5400.555038452148,
+  "ux_insights": [
+    "Reliability issues: Only 20.0% success rate",
+    "Performance concerns: Slow response times detected",
+    "Performance spikes: Some queries take very long",
+    "Error pattern: 4 API Error occurrences",
+    "UI handles errors gracefully: Error responses are user-friendly"
+  ],
+  "infrastructure_issues": [
+    "API processing errors: 4 queries failed",
+    "Timeout issues: 1 queries took over 10 seconds"
+  ],
+  "embodied_ai_assessment": [
+    "Temporal awareness: Limited time-based responses",
+    "Memory and continuity: Context maintenance needs improvement",
+    "Planning and organization: Scheduling capabilities limited",
+    "Decision making: Assistant can provide prioritization guidance",
+    "Risk assessment: Proactive issue identification limited"
+  ],
+  "query_results": [
+    {
+      "query": "What day is it?",
+      "query_type": "Temporal awareness",
+      "response_time_ms": 4207.575082778931,
+      "success": false,
+      "response_text": "",
+      "error_type": "API Error",
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}",
+      "ui_behavior": "Error response"
+    },
+    {
+      "query": "What did we accomplish yesterday?",
+      "query_type": "Continuity",
+      "response_time_ms": 3474.6780395507812,
+      "success": false,
+      "response_text": "",
+      "error_type": "API Error",
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}",
+      "ui_behavior": "Error response"
+    },
+    {
+      "query": "What's on my agenda today?",
+      "query_type": "Planning",
+      "response_time_ms": 4075.025796890259,
+      "success": false,
+      "response_text": "",
+      "error_type": "API Error",
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}",
+      "ui_behavior": "Error response"
+    },
+    {
+      "query": "What should I focus on first?",
+      "query_type": "Prioritization",
+      "response_time_ms": 2571.693181991577,
+      "success": true,
+      "response_text": "I understand you want to prioritization guidance. I've started a workflow to handle this.",
+      "error_type": null,
+      "error_message": null,
+      "ui_behavior": "Normal response"
+    },
+    {
+      "query": "Any blockers I should know about?",
+      "query_type": "Risk awareness",
+      "response_time_ms": 12673.803091049194,
+      "success": false,
+      "response_text": "",
+      "error_type": "API Error",
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}",
+      "ui_behavior": "Error response"
+    }
+  ]
+}
