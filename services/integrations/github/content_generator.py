@@ -210,7 +210,30 @@ Return only the JSON object with the issue content. Ensure all fields are proper
 
     def _extract_content_from_text(self, response: str) -> Dict[str, Any]:
         """Extract issue content from non-JSON response"""
-        # Basic text parsing as fallback
+        import json
+        import re
+
+        # Try to find JSON content within the text
+        json_match = re.search(r"\{[\s\S]*\}", response)
+        if json_match:
+            try:
+                # Found potential JSON, try to parse it
+                json_content = json.loads(json_match.group())
+
+                # Validate it has the expected structure
+                if all(field in json_content for field in ["title", "body"]):
+                    # Fill in any missing fields with defaults
+                    return {
+                        "title": json_content.get("title", "Issue"),
+                        "body": json_content.get("body", response),
+                        "labels": json_content.get("labels", ["needs-triage"]),
+                        "priority": json_content.get("priority", "medium"),
+                        "issue_type": json_content.get("issue_type", "question"),
+                    }
+            except json.JSONDecodeError:
+                logger.debug("Found JSON-like content but failed to parse")
+
+        # Fallback to basic text parsing
         lines = response.strip().split("\n")
 
         content = {

@@ -129,10 +129,12 @@ app = FastAPI(
 # Set up CORS
 origins = [
     "http://localhost",
+    "http://localhost:8000",  # CORS FIX: Web UI might be served from port 8000
     "http://localhost:8080",  # Default for many local dev servers
-    "http://localhost:8081",  # Add this line for your web UI
+    "http://localhost:8081",  # Web UI configured port
+    "http://127.0.0.1:8000",  # 127.0.0.1 access for port 8000
     "http://127.0.0.1:5500",  # Common for VS Code Live Server
-    "http://127.0.0.1:8081",  # Also add this for 127.0.0.1 access
+    "http://127.0.0.1:8081",  # 127.0.0.1 access for web UI
     # Add other origins as needed
 ]
 
@@ -244,10 +246,15 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         intent.context["original_message"] = request.message
         intent.context["session_id"] = session_id  # Add session_id for search queries
 
-        # Get database pool for enricher
-        pool = await DatabasePool.get_pool()
-        enricher = IntentEnricher(pool)
-        enriched_intent = await enricher.enrich(intent, session_id)
+        # Get database pool for enricher with graceful degradation
+        try:
+            pool = await DatabasePool.get_pool()
+            enricher = IntentEnricher(pool)
+            enriched_intent = await enricher.enrich(intent, session_id)
+        except Exception as db_error:
+            logger.warning(f"Database unavailable for intent enrichment: {db_error}")
+            # Continue with unenriched intent when database unavailable
+            enriched_intent = intent
 
         # Check if file clarification is needed
         if enriched_intent.context.get("needs_file_clarification"):
@@ -296,7 +303,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
 
         # Route based on intent category
         if enriched_intent.category == IntentCategory.QUERY:
-            # Handle query intents through QueryRouter
+            # Handle query intents through QueryRouter with graceful degradation
             try:
                 async with AsyncSessionFactory.session_scope() as session:
                     project_repo = ProjectRepository(session)
@@ -309,18 +316,34 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                         project_query_service,
                         conversation_query_service,
                         file_query_service,
+                        test_mode=False,  # PM-063: Database available
                     )
 
                     # Route the query
                     query_result = await query_router.route_query(enriched_intent)
                     # Automatic session cleanup via context manager
+            except Exception as db_error:
+                logger.warning(f"Database unavailable for query processing: {db_error}")
+                # PM-063: Graceful degradation - create QueryRouter in test mode
+                conversation_query_service = ConversationQueryService()
+                query_router = QueryRouter(
+                    project_query_service=None,  # Not needed in test mode
+                    conversation_query_service=conversation_query_service,
+                    file_query_service=None,  # Not needed in test mode
+                    test_mode=True,
+                )
+                query_result = await query_router.route_query(enriched_intent)
 
                 # Format response for query results
                 if enriched_intent.action == "list_projects":
-                    project_list = [project.to_dict() for project in query_result]
-                    response_text = f"I found {len(project_list)} projects: " + ", ".join(
-                        [p["name"] for p in project_list]
-                    )
+                    # PM-063: Handle both project objects and graceful degradation strings
+                    if isinstance(query_result, str):
+                        response_text = query_result  # Graceful degradation message
+                    else:
+                        project_list = [project.to_dict() for project in query_result]
+                        response_text = f"I found {len(project_list)} projects: " + ", ".join(
+                            [p["name"] for p in project_list]
+                        )
                 else:
                     response_text = (
                         f"Here's what I found for {enriched_intent.action}: {query_result}"
@@ -475,20 +498,25 @@ async def get_workflow(workflow_id: str):
     # Try to get from memory first, then from database
     workflow = engine.workflows.get(workflow_id)
 
-    # Always fetch from database to ensure we have the latest state
-    from services.database.repositories import WorkflowRepository
-    from services.database.session_factory import AsyncSessionFactory
+    # Try to fetch from database for latest state, but gracefully degrade
+    try:
+        from services.database.repositories import WorkflowRepository
+        from services.database.session_factory import AsyncSessionFactory
 
-    async with AsyncSessionFactory.session_scope() as session:
-        workflow_repo = WorkflowRepository(session)
-        db_workflow = await workflow_repo.find_by_id(workflow_id)
-        # Automatic session cleanup via context manager
+        async with AsyncSessionFactory.session_scope() as session:
+            workflow_repo = WorkflowRepository(session)
+            db_workflow = await workflow_repo.find_by_id(workflow_id)
+            # Automatic session cleanup via context manager
 
-    if not db_workflow:
+        if db_workflow:
+            # Use the database version (which has the latest context)
+            workflow = db_workflow
+    except Exception as db_error:
+        logger.warning(f"Database unavailable for workflow status: {db_error}")
+        # Continue with in-memory workflow if available
+
+    if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
-
-    # Use the database version (which has the latest context)
-    workflow = db_workflow
 
     workflow_dict = workflow.to_dict()
 

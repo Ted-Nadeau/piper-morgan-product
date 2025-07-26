@@ -19,10 +19,12 @@ class QueryRouter:
         project_query_service: ProjectQueryService,
         conversation_query_service: ConversationQueryService,
         file_query_service: FileQueryService,
+        test_mode: bool = False,
     ):
         self.project_queries = project_query_service
         self.conversation_queries = conversation_query_service
         self.file_queries = file_query_service
+        self.test_mode = test_mode  # PM-063: Enable graceful degradation when database unavailable
 
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service"""
@@ -30,13 +32,20 @@ class QueryRouter:
             raise ValueError(f"QueryRouter can only handle QUERY intents, got {intent.category}")
 
         if intent.action == "list_projects":
+            if self.test_mode:
+                # PM-063: Graceful degradation when database unavailable
+                return "Database temporarily unavailable. Please ensure Docker is running or try again later."
             return await self.project_queries.list_active_projects()
         elif intent.action == "get_project":
+            if self.test_mode:
+                return "Database temporarily unavailable. Please ensure Docker is running or try again later."
             project_id = intent.context.get("project_id")
             if not project_id:
                 raise ValueError("get_project query requires project_id in context")
             return await self.project_queries.get_project_by_id(project_id)
         elif intent.action == "get_default_project":
+            if self.test_mode:
+                return "Database temporarily unavailable. Please ensure Docker is running or try again later."
             return await self.project_queries.get_default_project()
         elif intent.action == "find_project":
             name = intent.context.get("name")
@@ -44,6 +53,8 @@ class QueryRouter:
                 raise ValueError("find_project query requires name in context")
             return await self.project_queries.find_project_by_name(name)
         elif intent.action == "count_projects":
+            if self.test_mode:
+                return "Database temporarily unavailable. Please ensure Docker is running or try again later."
             return await self.project_queries.count_active_projects()
         elif intent.action == "get_project_details":
             project_id = intent.context.get("project_id")
