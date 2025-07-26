@@ -281,6 +281,7 @@ async def readiness_probe():
 ### Prometheus Metrics Integration
 
 **1. Health Metrics Endpoint**
+{% raw %}
 ```python
 @staging_health_router.get("/metrics")
 async def health_metrics():
@@ -327,6 +328,7 @@ async def health_metrics():
             detail=f"Metrics generation failed: {str(e)}"
         )
 ```
+{% endraw %}
 
 ### Performance Thresholds and Alerting
 
