@@ -61,6 +61,7 @@ async def service_example():
 ### Usage Guidelines
 
 **Repository Design:**
+
 - One repository per aggregate root
 - Repository methods return domain models, not database models
 - Keep business logic out of repositories
@@ -69,6 +70,7 @@ async def service_example():
 - **NEW**: No manual `session.commit()` calls
 
 **Session Management:**
+
 - **NEW**: Use `AsyncSessionFactory.session_scope()` context manager
 - **NEW**: No manual session creation or cleanup
 - **NEW**: Automatic transaction handling via context manager
@@ -77,12 +79,14 @@ async def service_example():
 ### Anti-patterns to Avoid
 
 **Repository Anti-patterns:**
+
 - ❌ Direct database access from services
 - ❌ Business logic in repositories
 - ❌ Exposing database models outside repository
 - ❌ Generic repositories without domain methods
 
 **Session Anti-patterns:**
+
 - ❌ Manual session creation/cleanup
 - ❌ Sharing sessions across operation boundaries
 - ❌ Manual `session.commit()` calls
@@ -1131,6 +1135,7 @@ Provide consistent, layer-appropriate configuration access that maintains clean 
 ### Implementation
 
 **Application/Domain Layer Configuration:**
+
 ```python
 # ✅ APPROVED: ConfigService injection for application logic
 class WorkflowService:
@@ -1148,6 +1153,7 @@ class WorkflowService:
 ```
 
 **Infrastructure Layer Configuration:**
+
 ```python
 # ✅ APPROVED: Repository with ConfigService + FeatureFlags utility
 from services.infrastructure.config.feature_flags import FeatureFlags
@@ -1169,6 +1175,7 @@ class FileRepository(BaseRepository):
 ```
 
 **Test Configuration:**
+
 ```python
 # ✅ APPROVED: Mock ConfigService, not environment variables
 @pytest.fixture
@@ -1188,11 +1195,13 @@ def test_feature_behavior(mock_config_with_feature_enabled):
 ### Usage Guidelines
 
 **Layer-Specific Rules:**
+
 - **Application/Domain**: Use ConfigService exclusively
 - **Infrastructure**: ConfigService preferred, FeatureFlags utility for infrastructure toggles
 - **Testing**: Mock ConfigService, avoid environment variable patching
 
 **Configuration Categories:**
+
 - **ConfigService**: Application behavior, user-facing features, business logic parameters
 - **FeatureFlags**: Infrastructure toggles, runtime detection, emergency overrides
 - **Environment Direct**: Container orchestration, security credentials (through utilities)
@@ -1223,6 +1232,7 @@ def test_config():
 ```
 
 ### References
+
 - **ADR-010**: Configuration Access Patterns
 - **Implementation**: `services/infrastructure/config/feature_flags.py`
 - **Migration**: GitHub Issues #39 (MCPResourceManager), #40 (FileRepository)
@@ -1249,15 +1259,237 @@ These patterns form the architectural foundation of Piper Morgan:
 16. **MCP Adapter Pattern** - MCP-specific integration
 17. **Background Task Error Handling Pattern** - Safe wrapper pattern for background task execution
 18. **Configuration Access Pattern** - Layer-appropriate configuration management
+19. **LLM Placeholder Instruction Pattern** - Prevent LLM hallucination with explicit placeholders for missing information
+20. **Spatial Metaphor Integration Pattern** - Process external events as spatial changes to AI environment
+21. **TDD Integration Testing Pattern** - Apply TDD methodology to integration testing with failing tests first
+
+## 19. LLM Placeholder Instruction Pattern
+
+### Purpose
+
+Prevent Large Language Model (LLM) hallucination by instructing models to use explicit placeholders when information is missing or uncertain, rather than fabricating technical details.
+
+### Implementation
+
+```python
+# In prompt instructions for LLM content generation
+prompt_instructions = """
+6. PLACEHOLDER INSTRUCTIONS (CRITICAL):
+   **NEVER fabricate specific technical details not provided in the user request.**
+
+   When information is missing or uncertain, use explicit placeholders:
+   - **[SPECIFIC EXAMPLE NEEDED: describe what kind]** - For technical details, error messages, version numbers
+   - **[FACT CHECK: claim]** - For unverified details, environments, browser versions, test results
+   - **[QUESTION: ask clarifying question]** - When guessing would be required
+
+   Examples:
+   - Instead of: "Error message: 'An unexpected error occurred. Please try again later.'"
+   - Use: "Error message: [SPECIFIC EXAMPLE NEEDED: exact error message displayed]"
+
+   - Instead of: "Tested on Chrome 89, Firefox 86, Safari 14"
+   - Use: "Tested on [FACT CHECK: browser versions and environments where issue occurs]"
+"""
+```
+
+### Usage Guidelines
+
+- Apply to all LLM-generated content where accuracy is critical
+- Use three placeholder types: SPECIFIC EXAMPLE NEEDED, FACT CHECK, QUESTION
+- Include clear examples of what NOT to fabricate
+- Make placeholders clearly visible and actionable for reviewers
+- Maintain professional content structure while preventing misinformation
+
+### Anti-Patterns
+
+- ❌ Allowing LLM to guess technical details
+- ❌ Fabricating browser versions, error messages, or environment details
+- ❌ Making unverified claims about testing or environments
+- ❌ Generating vague placeholders without specific guidance
+
+### Benefits
+
+- Increased accuracy and trustworthiness
+- Clear communication about missing information
+- Professional standards in generated content
+- Prevents misleading stakeholders with fabricated details
+
+## 20. Spatial Metaphor Integration Pattern
+
+### Purpose
+
+Process external system events (like Slack) as spatial changes to an AI agent's environment, enabling natural navigation and interaction patterns through physical space metaphors.
+
+### Implementation
+
+```python
+@dataclass
+class SpatialEvent:
+    """Spatial event representing changes to Piper's environment"""
+    event_type: str  # "message_placed", "attention_attracted", "room_created"
+    coordinates: SpatialCoordinates
+    timestamp: datetime
+    attention_attractor: Optional[AttentionAttractor] = None
+    emotional_marker: Optional[EmotionalMarker] = None
+    room: Optional[Room] = None
+
+@dataclass
+class SpatialCoordinates:
+    """Spatial coordinates in Piper's environment"""
+    territory_id: str  # Slack workspace
+    room_id: str       # Slack channel
+    object_id: Optional[str] = None  # Message timestamp
+    path_id: Optional[str] = None    # Thread timestamp
+
+class SlackEventHandler:
+    """Process Slack events as spatial changes"""
+
+    async def process_event(self, event: Dict[str, Any]) -> EventProcessingResult:
+        """Convert Slack event to spatial metaphor"""
+        if event["type"] == "message":
+            return self._process_message_as_spatial_object(event)
+        elif event["type"] == "app_mention":
+            return self._process_mention_as_attention_attractor(event)
+        elif event["type"] == "reaction_added":
+            return self._process_reaction_as_emotional_marker(event)
+```
+
+### Usage Guidelines
+
+- Map external events to spatial concepts (rooms, objects, inhabitants)
+- Use attention attractors for high-priority events (@mentions)
+- Process emotional markers from reactions and sentiment
+- Maintain spatial memory across sessions
+- Enable natural navigation between spaces
+
+### Anti-Patterns
+
+- ❌ Treating events as abstract data without spatial context
+- ❌ Ignoring attention and emotional dimensions
+- ❌ Not maintaining spatial memory and relationships
+- ❌ Complex spatial metaphors that don't match user expectations
+
+### Benefits
+
+- Natural interaction patterns through spatial navigation
+- Intuitive attention management and prioritization
+- Emotional awareness and context preservation
+- Scalable event processing with spatial organization
+
+## 21. TDD Integration Testing Pattern
+
+### Purpose
+
+Apply Test-Driven Development (TDD) methodology to integration testing, ensuring component interactions are validated through failing tests first, then implementation.
+
+### Implementation
+
+```python
+class TestOAuthSpatialIntegration:
+    """Test OAuth flow integration with spatial system initialization"""
+
+    async def test_oauth_success_initializes_spatial_territory(self, oauth_handler, spatial_agent):
+        """Test that successful OAuth initializes spatial territory"""
+        # Arrange
+        oauth_response = {
+            "access_token": "xoxb-test-token",
+            "team": {"id": "T123456", "name": "Test Workspace"}
+        }
+
+        # Act
+        spatial_territory = oauth_handler.initialize_spatial_territory(oauth_response)
+
+        # Assert
+        assert spatial_territory.territory_id == "T123456"
+        assert spatial_territory.type == TerritoryType.WORKSPACE
+
+# TDD Process:
+# 1. Write failing test first
+# 2. Run test to see it fail (verification of test validity)
+# 3. Verify components work together (integration validation)
+# 4. Make test pass (implementation validation)
+```
+
+### Usage Guidelines
+
+- Write failing tests FIRST for each component interaction
+- Run tests to see them fail (verification of test validity)
+- Verify components work together (integration validation)
+- Make tests pass (implementation validation)
+- Use comprehensive mocking for external dependencies
+- Test both success and error scenarios
+
+### Anti-Patterns
+
+- ❌ Writing tests after implementation
+- ❌ Not verifying test failures before implementation
+- ❌ Insufficient mocking of external dependencies
+- ❌ Testing only happy path scenarios
+
+### Benefits
+
+- Ensures integration points are properly designed
+- Validates component contracts and interfaces
+- Prevents integration issues through early testing
+- Maintains high test coverage for complex interactions
+
+### Purpose
+
+Prevent Large Language Model (LLM) hallucination by instructing models to use explicit placeholders when information is missing or uncertain, rather than fabricating technical details.
+
+### Implementation
+
+```python
+# In prompt instructions for LLM content generation
+prompt_instructions = """
+6. PLACEHOLDER INSTRUCTIONS (CRITICAL):
+   **NEVER fabricate specific technical details not provided in the user request.**
+
+   When information is missing or uncertain, use explicit placeholders:
+   - **[SPECIFIC EXAMPLE NEEDED: describe what kind]** - For technical details, error messages, version numbers
+   - **[FACT CHECK: claim]** - For unverified details, environments, browser versions, test results
+   - **[QUESTION: ask clarifying question]** - When guessing would be required
+
+   Examples:
+   - Instead of: "Error message: 'An unexpected error occurred. Please try again later.'"
+   - Use: "Error message: [SPECIFIC EXAMPLE NEEDED: exact error message displayed]"
+
+   - Instead of: "Tested on Chrome 89, Firefox 86, Safari 14"
+   - Use: "Tested on [FACT CHECK: browser versions and environments where issue occurs]"
+"""
+```
+
+### Usage Guidelines
+
+- Apply to all LLM-generated content where accuracy is critical
+- Use three placeholder types: SPECIFIC EXAMPLE NEEDED, FACT CHECK, QUESTION
+- Include clear examples of what NOT to fabricate
+- Make placeholders clearly visible and actionable for reviewers
+- Maintain professional content structure while preventing misinformation
+
+### Anti-Patterns
+
+- ❌ Allowing LLM to guess technical details
+- ❌ Fabricating browser versions, error messages, or environment details
+- ❌ Making unverified claims about testing or environments
+- ❌ Generating vague placeholders without specific guidance
+
+### Benefits
+
+- Increased accuracy and trustworthiness
+- Clear communication about missing information
+- Professional standards in generated content
+- Prevents misleading stakeholders with fabricated details
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
 ---
 
-_Last Updated: July 21, 2025_
+_Last Updated: July 27, 2025_
 
 ## Revision Log
 
+- **July 27, 2025**: Added Spatial Metaphor Integration Pattern (#20) and TDD Integration Testing Pattern (#21) for Slack integration with comprehensive spatial metaphor processing and 52 integration tests
+- **July 27, 2025**: Added LLM Placeholder Instruction Pattern (#19) to prevent hallucination in AI-generated content
 - **July 21, 2025**: Added Configuration Access Pattern (#18) implementing ADR-010 layer-appropriate configuration management
 - **July 16, 2025**: Added Background Task Error Handling Pattern (#17) for safe background task execution
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
