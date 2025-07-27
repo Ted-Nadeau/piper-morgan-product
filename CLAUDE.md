@@ -2,6 +2,25 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL: Excellence Flywheel Methodology - READ FIRST
+
+**WARNING**: Skipping this section will break our systematic excellence.
+
+### Mandatory Methodology Documents
+Before ANY work, read these in order:
+1. `docs/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md`
+2. `docs/development/methodology-core/methodology-01-TDD-REQUIREMENTS.md`
+3. `docs/development/methodology-core/methodology-02-AGENT-COORDINATION.md`
+4. `docs/development/methodology-core/methodology-03-COMMON-FAILURES.md`
+
+### The Four Pillars
+1. **Systematic Verification First** - Always check before acting
+2. **Test-Driven Development** - Tests before implementation
+3. **Multi-Agent Coordination** - Strategic deployment
+4. **GitHub-First Tracking** - All work tracked
+
+If you haven't read the methodology documents, STOP NOW and read them.
+
 ## Project Overview
 
 Piper Morgan is an AI-powered Product Management Assistant platform that evolves from automating routine PM tasks to providing strategic insights. It's built with domain-driven design where PM concepts (Product, Feature, Intent, WorkItem) drive the technical architecture.

@@ -18,6 +18,16 @@ Core system design and technical specifications
 
 Developer guides and resources
 
+#### 🎯 Excellence Flywheel Methodology - **MANDATORY FOR ALL DEVELOPERS**
+- **[methodology-core/](./development/methodology-core/)** - Core methodology documents that preserve our systematic approach
+  - **[methodology-00-EXCELLENCE-FLYWHEEL.md](./development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - The foundational flywheel concept and Four Pillars
+  - **[methodology-01-TDD-REQUIREMENTS.md](./development/methodology-core/methodology-01-TDD-REQUIREMENTS.md)** - Mandatory test-driven development practices
+  - **[methodology-02-AGENT-COORDINATION.md](./development/methodology-core/methodology-02-AGENT-COORDINATION.md)** - Strategic deployment patterns for Claude Code vs Cursor
+  - **[methodology-03-COMMON-FAILURES.md](./development/methodology-core/methodology-03-COMMON-FAILURES.md)** - Top 5 excellence killers and recovery protocols
+- **[prompt-templates/](./development/prompt-templates/)** - Templates for consistent development practices
+  - **[lead-developer-onboarding.md](./development/prompt-templates/lead-developer-onboarding.md)** - Mandatory first-read for new lead developers
+
+#### 📖 General Development Resources
 - **[quick-start.md](./development/quick-start.md)** - Get up and running fast
 - **[dev-guidelines.md](./development/dev-guidelines.md)** - Coding standards and practices
 - **[troubleshooting-guide.md](./development/troubleshooting-guide.md)** - Common issues and solutions

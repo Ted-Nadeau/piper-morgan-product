@@ -137,6 +137,23 @@ Guidelines for professional GitHub issues:
    - documentation: Documentation changes
    - question: Need clarification or help
    - discussion: RFC or architectural discussion
+
+6. PLACEHOLDER INSTRUCTIONS (CRITICAL):
+   **NEVER fabricate specific technical details not provided in the user request.**
+
+   When information is missing or uncertain, use explicit placeholders:
+   - **[SPECIFIC EXAMPLE NEEDED: describe what kind]** - For technical details, error messages, version numbers
+   - **[FACT CHECK: claim]** - For unverified details, environments, browser versions, test results
+   - **[QUESTION: ask clarifying question]** - When guessing would be required
+
+   Examples:
+   - Instead of: "Error message: 'An unexpected error occurred. Please try again later.'"
+   - Use: "Error message: [SPECIFIC EXAMPLE NEEDED: exact error message displayed]"
+
+   - Instead of: "Tested on Chrome 89, Firefox 86, Safari 14"
+   - Use: "Tested on [FACT CHECK: browser versions and environments where issue occurs]"
+
+   These placeholders should be clearly visible and guide the reviewer on what information is needed.
 """
 
         # Add project context if available

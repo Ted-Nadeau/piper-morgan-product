@@ -1,0 +1,136 @@
+{
+  "permissions": {
+    "allow": [
+      "// === AUTO-ALLOW: Safe Read-Only Operations ===",
+      "// Test execution and verification",
+      "Bash(python:*)",
+      "Bash(PYTHONPATH=. pytest:*)",
+      "Bash(./scripts/tldr_runner.py:*)",
+      "Bash(timeout:*)",
+      
+      "// Read-only file inspection", 
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(which:*)",
+      "Bash(pwd:*)",
+      "Bash(tree:*)",
+      
+      "// Safe environment queries",
+      "Bash(echo:*)",
+      "Bash(env | grep:*)",
+      "Bash(python --version:*)",
+      "Bash(node --version:*)",
+      
+      "// Safe git queries (read-only)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote -v:*)",
+      
+      "// GitHub CLI read operations", 
+      "Bash(gh repo view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh workflow list:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      
+      "// Safe docker queries",
+      "Bash(docker ps:*)",
+      "Bash(docker images:*)",
+      "Bash(docker-compose ps:*)",
+      
+      "// === REQUIRE PERMISSION: Potentially Destructive Operations ===",
+      "// These are commented out - uncomment to allow with permission",
+      "// File modifications",
+      "// Bash(rm:*)",
+      "// Bash(mv:*)", 
+      "// Bash(cp:*)",
+      "// Bash(chmod:*)",
+      "// Bash(mkdir:*)",
+      
+      "// Git write operations",
+      "// Bash(git add:*)",
+      "// Bash(git commit:*)",
+      "// Bash(git push:*)",
+      "// Bash(git checkout:*)",
+      "// Bash(git merge:*)",
+      "// Bash(git reset:*)",
+      "// Bash(git remote set-url:*)",
+      
+      "// GitHub CLI write operations",
+      "// Bash(gh issue create:*)",
+      "// Bash(gh pr create:*)",
+      "// Bash(gh repo set-default:*)",
+      
+      "// Network and external service calls",
+      "// Bash(curl:*)",
+      "// Bash(wget:*)",
+      "// WebFetch(*)",
+      
+      "// Package and dependency management",
+      "// Bash(pip install:*)",
+      "// Bash(npm install:*)",
+      "// Bash(npm run:*)",
+      
+      "// Docker operations",
+      "// Bash(docker run:*)",
+      "// Bash(docker-compose up:*)",
+      "// Bash(docker-compose down:*)",
+      "// Bash(docker build:*)",
+      
+      "// Database operations",
+      "// Bash(alembic:*)",
+      "// Bash(python scripts/init_db.py:*)",
+      
+      "// Process management",
+      "// Bash(kill:*)",
+      "// Bash(pkill:*)",
+      
+      "// Environment modifications", 
+      "// Bash(source:*)",
+      "// Bash(export:*)",
+      
+      "// System file access",
+      "// Bash(open:*)",
+      "// Bash(sed:*)"
+    ],
+    "deny": [
+      "// Explicitly deny dangerous operations",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(su:*)",
+      "Bash(> /dev/:*)",
+      "Bash(dd:*)",
+      "Bash(format:*)"
+    ]
+  },
+  "smart_permissions": {
+    "mode": "restrictive",
+    "auto_allow_categories": [
+      "test_execution",
+      "read_only_verification", 
+      "file_inspection",
+      "safe_queries"
+    ],
+    "require_permission_categories": [
+      "file_modifications",
+      "repository_changes",
+      "network_calls",
+      "package_management",
+      "docker_operations",
+      "database_operations",
+      "process_management",
+      "environment_changes"
+    ],
+    "permission_request_template": "Permission requested for {command}: {reason}",
+    "log_permission_requests": true
+  }
+}
