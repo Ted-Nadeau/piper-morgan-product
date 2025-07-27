@@ -107,6 +107,8 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 2. **Service Pattern**: `services/*/service.py` - Business logic encapsulation
 3. **ADR Patterns**: `docs/architecture/adr-*.md` - Architectural decision implementations
 4. **Test Patterns**: `tests/*/test_*.py` - Comprehensive test coverage approaches
+5. **Jekyll Liquid Escaping**: `{% raw %}...{% endraw %}` - Escape double braces in GitHub Pages documentation
+6. **Pattern Detection**: `scripts/pattern_sweep.py` - Automated pattern discovery and learning acceleration
 
 #### Implementation Workflow (MANDATORY)
 ```
@@ -171,6 +173,25 @@ PYTHONPATH=. pytest tests/test_api_query_integration.py
 
 # Run tests for a specific component
 PYTHONPATH=. pytest tests/test_intent_classification.py
+
+# TLDR Continuous Verification (ultra-fast feedback)
+PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
+PYTHONPATH=. ./scripts/tldr_runner.py --pattern validation
+
+# TLDR with Pattern Detection (compound learning)
+PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-patterns
+```
+
+### Pattern Detection & Learning
+```bash
+# Run pattern sweep across codebase
+PYTHONPATH=. ./scripts/pattern_sweep.py --pattern-sweep-only --verbose
+
+# Full TLDR + Pattern Sweep integration
+PYTHONPATH=. ./scripts/pattern_sweep.py --tldr-integration --verbose
+
+# Pattern detection with usage learning
+PYTHONPATH=. ./scripts/pattern_sweep.py --with-pattern-detection --learn-usage-patterns
 ```
 
 ### Common Development Tasks

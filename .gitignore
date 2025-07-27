@@ -197,3 +197,4 @@ htmlcov/
 *.log
 *.tmp
 *.bak
+scripts/pattern_sweep_data.json
