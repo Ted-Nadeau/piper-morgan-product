@@ -1,6 +1,6 @@
 # Claude Smart Permissions System
 
-**Date Implemented:** July 27, 2025  
+**Date Implemented:** July 27, 2025
 **Purpose:** Optimize development workflow while maintaining security through intelligent permission management
 
 ## Overview
@@ -19,7 +19,7 @@ These operations are automatically allowed for smooth development flow:
 - `./scripts/tldr_runner.py` - TLDR continuous verification
 - `timeout` - Time-limited command execution
 
-#### Read-Only File Operations  
+#### Read-Only File Operations
 - `ls` - List directory contents
 - `find` - Search for files
 - `grep` / `rg` - Search file contents
@@ -159,7 +159,7 @@ ls -la services/integrations/slack/
 rm old_file.py
 # Claude will ask: "Permission requested for rm old_file.py: Remove outdated file"
 
-# Commit changes  
+# Commit changes
 git commit -m "Add feature"
 # Claude will ask: "Permission requested for git commit: Create commit for new feature"
 

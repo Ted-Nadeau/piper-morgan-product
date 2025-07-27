@@ -1313,67 +1313,194 @@ prompt_instructions = """
 - Professional standards in generated content
 - Prevents misleading stakeholders with fabricated details
 
-## 20. Spatial Metaphor Integration Pattern
+## 20. Spatial Metaphor Integration Pattern (PM-074)
 
 ### Purpose
 
-Process external system events (like Slack) as spatial changes to an AI agent's environment, enabling natural navigation and interaction patterns through physical space metaphors.
+Process external system events (like Slack) as spatial changes to an AI agent's environment, enabling natural navigation and interaction patterns through physical space metaphors. Creates embodied AI experiences with persistent spatial memory.
 
-### Implementation
+### Core Spatial Architecture
 
 ```python
 @dataclass
-class SpatialEvent:
-    """Spatial event representing changes to Piper's environment"""
-    event_type: str  # "message_placed", "attention_attracted", "room_created"
-    coordinates: SpatialCoordinates
-    timestamp: datetime
-    attention_attractor: Optional[AttentionAttractor] = None
-    emotional_marker: Optional[EmotionalMarker] = None
-    room: Optional[Room] = None
+class Territory:
+    """Slack workspace as navigable territory/building"""
+    id: str
+    name: str
+    territory_type: TerritoryType  # CORPORATE, STARTUP, COMMUNITY
+    domain: Optional[str] = None
+    spatial_properties: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
-class SpatialCoordinates:
-    """Spatial coordinates in Piper's environment"""
-    territory_id: str  # Slack workspace
-    room_id: str       # Slack channel
-    object_id: Optional[str] = None  # Message timestamp
-    path_id: Optional[str] = None    # Thread timestamp
+class Room:
+    """Slack channel as specialized room with purpose"""
+    id: str
+    name: str
+    territory_id: str
+    purpose: RoomPurpose  # COLLABORATION, DEVELOPMENT, SUPPORT, PLANNING, SOCIAL
+    inhabitants: Set[str] = field(default_factory=set)
+    attention_history: List[Dict[str, Any]] = field(default_factory=list)
 
-class SlackEventHandler:
-    """Process Slack events as spatial changes"""
+@dataclass
+class AttentionEvent:
+    """Attention-generating event with decay models"""
+    event_id: str
+    source: AttentionSource  # MENTION, MESSAGE, EMERGENCY, WORKFLOW
+    spatial_coordinates: SpatialCoordinates
+    base_intensity: float  # 0.0 to 1.0
+    urgency_level: float
+    created_at: datetime = field(default_factory=datetime.now)
 
-    async def process_event(self, event: Dict[str, Any]) -> EventProcessingResult:
-        """Convert Slack event to spatial metaphor"""
-        if event["type"] == "message":
-            return self._process_message_as_spatial_object(event)
-        elif event["type"] == "app_mention":
-            return self._process_mention_as_attention_attractor(event)
-        elif event["type"] == "reaction_added":
-            return self._process_reaction_as_emotional_marker(event)
+    def get_current_intensity(self, decay_model: AttentionDecay = AttentionDecay.EXPONENTIAL) -> float:
+        """Calculate attention intensity with temporal decay"""
+        age = (datetime.now() - self.created_at).total_seconds()
+        if decay_model == AttentionDecay.EXPONENTIAL:
+            half_life = 1800.0  # 30 minutes
+            return self.base_intensity * math.exp(-age * math.log(2) / half_life)
+        # ... other decay models
+```
+
+### Advanced Components
+
+#### Spatial Memory with Pattern Learning
+```python
+class SpatialMemoryStore:
+    """Persistent spatial memory across sessions"""
+
+    def learn_spatial_pattern(self, category: str, pattern_name: str,
+                            pattern_data: Dict[str, Any], confidence: float,
+                            applicable_locations: List[str]):
+        """Learn navigation and interaction patterns"""
+        pattern = SpatialPattern(
+            pattern_id=f"spatial_{uuid4().hex[:8]}",
+            category=category,
+            pattern_name=pattern_name,
+            pattern_data=pattern_data,
+            confidence=confidence,
+            applicable_locations=applicable_locations
+        )
+        self._patterns[pattern.pattern_id] = pattern
+```
+
+#### Multi-Workspace Navigation
+```python
+class WorkspaceNavigator:
+    """Navigate across multiple territories with intelligence"""
+
+    def suggest_next_territory(self, context: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """Suggest territory based on attention priorities"""
+        priorities = self.attention_model.get_attention_priorities()
+        if priorities:
+            top_event, score = priorities[0]
+            return top_event.spatial_coordinates.territory_id
+        return None
+
+    def switch_territory(self, territory_id: str, context: Optional[Dict[str, Any]] = None) -> bool:
+        """Execute territory switch with state management"""
+        if territory_id not in self._territories:
+            return False
+
+        old_territory = self._current_territory
+        self._current_territory = territory_id
+
+        # Record navigation history
+        self._navigation_history.append({
+            "from_territory": old_territory,
+            "to_territory": territory_id,
+            "timestamp": datetime.now().isoformat(),
+            "context": context
+        })
+        return True
+```
+
+### Integration Pipeline
+
+#### Slack → Spatial → Workflow Flow
+```python
+class SlackSpatialMapper:
+    """Convert Slack events to spatial objects"""
+
+    async def map_message_to_spatial_event(self, slack_event: Dict[str, Any],
+                                         room: Room,
+                                         attention_attractor: Optional[AttentionAttractor] = None) -> SpatialEvent:
+        """Map Slack message to spatial event"""
+        coordinates = SpatialCoordinates(
+            territory_id=slack_event["team"],
+            room_id=slack_event["channel"],
+            object_id=slack_event["ts"]
+        )
+
+        # Determine event type from content analysis
+        event_type = self._classify_event_type(slack_event["text"])
+
+        return SpatialEvent(
+            event_type=event_type,
+            coordinates=coordinates,
+            content=slack_event["text"],
+            timestamp=datetime.fromtimestamp(float(slack_event["ts"])),
+            attention_attractor=attention_attractor
+        )
+
+# Workflow Integration
+class SpatialWorkflowIntegration:
+    """Connect spatial events to Piper workflows"""
+
+    async def create_workflow_from_spatial_event(self, spatial_event: SpatialEvent,
+                                               attention_event: AttentionEvent) -> Dict[str, Any]:
+        """Create Piper workflow with spatial context enrichment"""
+        workflow_context = {
+            "spatial_trigger": {
+                "event_type": spatial_event.event_type,
+                "coordinates": spatial_event.coordinates.to_slack_reference(),
+                "urgency": attention_event.urgency_level,
+                "requires_immediate_response": attention_event.urgency_level > 0.7
+            },
+            "attention_metadata": {
+                "source": attention_event.source.value,
+                "intensity": attention_event.base_intensity,
+                "keywords": attention_event.keywords
+            }
+        }
+        return workflow_context
+```
+
+### Quality Implementation Standards
+
+#### TDD Integration Testing
+```python
+# Tests written FIRST, expected to FAIL initially
+async def test_slack_help_request_creates_piper_task_workflow(
+    spatial_mapper, workspace_navigator, attention_model,
+    mock_workflow_factory, mock_orchestration_engine
+):
+    """Complete OAuth → Spatial → Workflow → Attention integration test"""
+    # Test validates complete end-to-end spatial intelligence pipeline
+    # 52 comprehensive integration tests covering all scenarios
 ```
 
 ### Usage Guidelines
 
-- Map external events to spatial concepts (rooms, objects, inhabitants)
-- Use attention attractors for high-priority events (@mentions)
-- Process emotional markers from reactions and sentiment
-- Maintain spatial memory across sessions
-- Enable natural navigation between spaces
+- **Spatial Consistency**: Maintain coherent spatial metaphors across all interactions
+- **Attention Management**: Use multi-factor scoring (proximity, urgency, relationships)
+- **Memory Persistence**: Enable cross-session spatial learning and pattern recognition
+- **Multi-Territory Support**: Handle complex multi-workspace scenarios with intelligent prioritization
+- **Performance Requirements**: <100ms spatial processing for real-time responsiveness
 
 ### Anti-Patterns
 
 - ❌ Treating events as abstract data without spatial context
-- ❌ Ignoring attention and emotional dimensions
-- ❌ Not maintaining spatial memory and relationships
-- ❌ Complex spatial metaphors that don't match user expectations
+- ❌ Ignoring temporal attention decay and emotional dimensions
+- ❌ Not maintaining persistent spatial memory across sessions
+- ❌ Complex spatial metaphors that don't match user mental models
+- ❌ Single-workspace assumptions in multi-territory environments
 
 ### Benefits
 
-- Natural interaction patterns through spatial navigation
-- Intuitive attention management and prioritization
-- Emotional awareness and context preservation
-- Scalable event processing with spatial organization
+- **Embodied AI Experience**: Natural spatial navigation and environmental awareness
+- **Intelligent Attention**: Context-aware prioritization with decay algorithms
+- **Pattern Learning**: Automatic behavior adaptation from interaction history
+- **Scalable Architecture**: Supports multiple workspaces with persistent memory
+- **Workflow Integration**: Seamless connection between spatial events and Piper workflows
 
 ## 21. TDD Integration Testing Pattern
 
