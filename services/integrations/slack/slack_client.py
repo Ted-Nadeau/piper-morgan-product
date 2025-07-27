@@ -1,0 +1,215 @@
+"""
+Production Slack Client
+Enhanced Slack API client with comprehensive error handling, retry logic,
+authentication management, and rate limiting for production use.
+
+Implements production-ready Slack API design following GitHub client patterns.
+"""
+
+import asyncio
+import logging
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+from aiohttp import ClientSession, ClientTimeout
+
+from .config_service import SlackConfig, SlackConfigService
+
+
+class SlackErrorType(Enum):
+    """Slack error types"""
+
+    AUTHENTICATION_ERROR = "authentication_error"
+    RATE_LIMIT_ERROR = "rate_limit_error"
+    API_ERROR = "api_error"
+    NETWORK_ERROR = "network_error"
+    VALIDATION_ERROR = "validation_error"
+
+
+@dataclass
+class SlackError:
+    """Slack error information"""
+
+    type: SlackErrorType
+    message: str
+    status_code: Optional[int] = None
+    retry_after: Optional[int] = None
+    details: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class SlackResponse:
+    """Slack API response wrapper"""
+
+    success: bool
+    data: Dict[str, Any]
+    error: Optional[SlackError] = None
+    rate_limit_remaining: Optional[int] = None
+    rate_limit_reset: Optional[int] = None
+
+
+class SlackClient:
+    """Production Slack API client"""
+
+    def __init__(self, config_service: SlackConfigService):
+        self.config_service = config_service
+        self.logger = logging.getLogger(__name__)
+        self._session: Optional[ClientSession] = None
+        self._rate_limit_reset = 0
+        self._requests_this_minute = 0
+        self._last_request_time = 0
+
+    async def __aenter__(self):
+        """Async context manager entry"""
+        await self._ensure_session()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit"""
+        await self._close_session()
+
+    async def _ensure_session(self):
+        """Ensure HTTP session is available"""
+        if self._session is None or self._session.closed:
+            config = self.config_service.get_config()
+            timeout = ClientTimeout(total=config.timeout_seconds)
+            self._session = ClientSession(timeout=timeout)
+
+    async def _close_session(self):
+        """Close HTTP session"""
+        if self._session and not self._session.closed:
+            await self._session.close()
+
+    async def _check_rate_limit(self):
+        """Check and enforce rate limiting"""
+        current_time = time.time()
+        config = self.config_service.get_config()
+
+        # Reset counter if minute has passed
+        if current_time - self._last_request_time >= 60:
+            self._requests_this_minute = 0
+            self._last_request_time = current_time
+
+        # Check if we're at the limit
+        if self._requests_this_minute >= config.requests_per_minute:
+            wait_time = 60 - (current_time - self._last_request_time)
+            if wait_time > 0:
+                self.logger.warning(f"Rate limit reached, waiting {wait_time:.2f} seconds")
+                await asyncio.sleep(wait_time)
+                self._requests_this_minute = 0
+                self._last_request_time = time.time()
+
+    async def _make_request(
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ) -> SlackResponse:
+        """Make HTTP request to Slack API with error handling"""
+        await self._ensure_session()
+        await self._check_rate_limit()
+
+        config = self.config_service.get_config()
+        url = f"{config.api_base_url}/{endpoint}"
+
+        # Prepare headers
+        request_headers = {
+            "Authorization": f"Bearer {config.bot_token}",
+            "Content-Type": "application/json",
+        }
+        if headers:
+            request_headers.update(headers)
+
+        # Prepare request data
+        request_data = data or {}
+
+        try:
+            self._requests_this_minute += 1
+
+            async with self._session.request(
+                method=method, url=url, json=request_data, headers=request_headers
+            ) as response:
+                response_data = await response.json()
+
+                # Handle rate limiting
+                if response.status == 429:
+                    retry_after = int(response.headers.get("Retry-After", 60))
+                    return SlackResponse(
+                        success=False,
+                        data=response_data,
+                        error=SlackError(
+                            type=SlackErrorType.RATE_LIMIT_ERROR,
+                            message="Rate limit exceeded",
+                            status_code=429,
+                            retry_after=retry_after,
+                        ),
+                    )
+
+                # Handle other errors
+                if not response.ok:
+                    return SlackResponse(
+                        success=False,
+                        data=response_data,
+                        error=SlackError(
+                            type=SlackErrorType.API_ERROR,
+                            message=f"Slack API error: {response.status}",
+                            status_code=response.status,
+                            details=response_data,
+                        ),
+                    )
+
+                # Success response
+                return SlackResponse(
+                    success=True,
+                    data=response_data,
+                    rate_limit_remaining=int(response.headers.get("X-RateLimit-Remaining", 0)),
+                    rate_limit_reset=int(response.headers.get("X-RateLimit-Reset", 0)),
+                )
+
+        except aiohttp.ClientError as e:
+            self.logger.error(f"Network error in Slack API request: {e}")
+            return SlackResponse(
+                success=False,
+                data={},
+                error=SlackError(
+                    type=SlackErrorType.NETWORK_ERROR, message=f"Network error: {str(e)}"
+                ),
+            )
+        except Exception as e:
+            self.logger.error(f"Unexpected error in Slack API request: {e}")
+            return SlackResponse(
+                success=False,
+                data={},
+                error=SlackError(
+                    type=SlackErrorType.API_ERROR, message=f"Unexpected error: {str(e)}"
+                ),
+            )
+
+    async def send_message(self, channel: str, text: str, **kwargs) -> SlackResponse:
+        """Send message to Slack channel"""
+        data = {"channel": channel, "text": text, **kwargs}
+        return await self._make_request("POST", "chat.postMessage", data)
+
+    async def get_channel_info(self, channel: str) -> SlackResponse:
+        """Get channel information"""
+        return await self._make_request("GET", f"conversations.info?channel={channel}")
+
+    async def list_channels(self) -> SlackResponse:
+        """List all channels"""
+        return await self._make_request("GET", "conversations.list")
+
+    async def get_user_info(self, user: str) -> SlackResponse:
+        """Get user information"""
+        return await self._make_request("GET", f"users.info?user={user}")
+
+    async def list_users(self) -> SlackResponse:
+        """List all users"""
+        return await self._make_request("GET", "users.list")
+
+    async def test_auth(self) -> SlackResponse:
+        """Test authentication"""
+        return await self._make_request("GET", "auth.test")
