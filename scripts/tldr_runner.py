@@ -231,6 +231,7 @@ Examples:
   ./scripts/tldr_runner.py --timeout 0.1
   ./scripts/tldr_runner.py --pattern validation --verbose
   ./scripts/tldr_runner.py --timeout 0.05 --exit-0-on-timeout
+  ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-patterns
         """,
     )
 
@@ -256,10 +257,42 @@ Examples:
         "--sequential", action="store_true", help="Run tests sequentially instead of parallel"
     )
     parser.add_argument("--single", type=str, help="Run single test file")
+    parser.add_argument(
+        "--with-pattern-detection",
+        action="store_true",
+        help="Run with pattern detection analysis",
+    )
+    parser.add_argument(
+        "--learn-usage-patterns",
+        action="store_true",
+        help="Include session log pattern learning",
+    )
 
     args = parser.parse_args()
 
     runner = TLDRRunner()
+
+    # Check for pattern detection integration
+    if args.with_pattern_detection or args.learn_usage_patterns:
+        try:
+            from pattern_sweep import PatternSweepRunner
+
+            pattern_runner = PatternSweepRunner()
+
+            if args.verbose:
+                print("🔍 Running with Pattern Detection integration...")
+
+            # Run pattern sweep with TLDR integration
+            pattern_results = await pattern_runner.run_with_tldr_integration(
+                pattern_sweep=True, run_tests=True, test_pattern=args.pattern, verbose=args.verbose
+            )
+
+            return 0
+
+        except ImportError:
+            print("⚠️  Pattern detection module not available. Falling back to standard TLDR...")
+        except Exception as e:
+            print(f"⚠️  Pattern detection failed: {e}. Falling back to standard TLDR...")
 
     try:
         if args.single:
