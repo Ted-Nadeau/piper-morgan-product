@@ -193,6 +193,9 @@ PYTHONPATH=. pytest tests/test_api_query_integration.py
 # Run tests for a specific component
 PYTHONPATH=. pytest tests/test_intent_classification.py
 
+# Run Slack integration tests
+PYTHONPATH=. pytest services/integrations/slack/tests/ -v
+
 # TLDR Continuous Verification (ultra-fast feedback)
 PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
 PYTHONPATH=. ./scripts/tldr_runner.py --pattern validation
@@ -344,6 +347,7 @@ Web UI (`web/app.py`, port 8081):
 ### Integration Points
 
 - **GitHub**: Fully functional issue creation and analysis (`services/integrations/github/`)
+- **Slack**: Complete spatial metaphor integration with OAuth, event processing, and workflow connection (`services/integrations/slack/`)
 - **Multi-LLM Strategy**: Claude for reasoning, OpenAI for embeddings
 - **Session Management**: Tracks user context and uploaded files
 

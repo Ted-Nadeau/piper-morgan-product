@@ -57,7 +57,7 @@ Following successful Foundation & Cleanup Sprint completion and first Weekly Shi
 *Status: Systematic but needs public refresh*
 - **Git Process**: Documentation well-integrated with commits
 - **Public Presence**: GitHub Pages deployment stalled, README outdated
-- **Domain Strategy**: 
+- **Domain Strategy**:
   - pmorgan.tech → technical documentation site
   - pipermorgan.ai → future marketing site
   - Blog series needs canonical home
