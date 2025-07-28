@@ -50,6 +50,7 @@ class IntentClassifier:
         message: str,
         context: Optional[Dict] = None,
         session: Optional[Any] = None,
+        spatial_context: Optional[Dict] = None,
     ) -> Intent:
         # Stage 1: Pre-classification
         pre_intent = PreClassifier.pre_classify(message)
@@ -89,11 +90,14 @@ class IntentClassifier:
             "user_context": context or {},
             "has_file_reference": has_file_reference,
             "file_context": file_context,
+            "spatial_context": spatial_context or {},
         }
 
         try:
             # Perform classification with confidence scoring
-            intent, reasoning = await self._classify_with_reasoning(message, context, file_context)
+            intent, reasoning = await self._classify_with_reasoning(
+                message, context, file_context, spatial_context
+            )
 
             # --- ACTION NORMALIZATION ---
             action_normalization_map = {
@@ -172,7 +176,11 @@ class IntentClassifier:
             raise IntentClassificationFailedError(details={"original_error": str(e)})
 
     async def _classify_with_reasoning(
-        self, message: str, context: Optional[Dict] = None, file_context: str = ""
+        self,
+        message: str,
+        context: Optional[Dict] = None,
+        file_context: str = "",
+        spatial_context: Optional[Dict] = None,
     ) -> Tuple[Intent, Dict[str, Any]]:
         """Classify intent with detailed reasoning"""
         # Prepare context for LLM
@@ -180,9 +188,17 @@ class IntentClassifier:
         if context:
             context_info = f"\nContext: {json.dumps(context, indent=2)}"
 
+        # Prepare spatial context for LLM
+        spatial_context_info = ""
+        if spatial_context:
+            spatial_context_info = f"\nSpatial Context: {json.dumps(spatial_context, indent=2)}"
+
         # Build prompt with context
         prompt = INTENT_CLASSIFICATION_PROMPT.format(
-            user_message=message, context_info=context_info, file_context=file_context
+            user_message=message,
+            context_info=context_info,
+            file_context=file_context,
+            spatial_context=spatial_context_info,
         )
 
         try:
@@ -200,14 +216,28 @@ class IntentClassifier:
             else:
                 raise ValueError("No valid JSON object found in response")
 
+            # Build context with spatial information
+            intent_context = {
+                "original_message": message,
+                "knowledge_used": parsed.get("knowledge_used", []),
+            }
+
+            # Add spatial context if available
+            if spatial_context:
+                intent_context["spatial_context"] = spatial_context
+                # Add spatial coordinates for response targeting
+                if "room_id" in spatial_context:
+                    intent_context["response_target"] = {
+                        "channel_id": spatial_context.get("room_id"),
+                        "thread_ts": spatial_context.get("path_id"),
+                        "workspace_id": spatial_context.get("territory_id"),
+                    }
+
             intent = Intent(
                 category=IntentCategory(parsed["category"].lower()),
                 action=parsed["action"],
                 confidence=parsed["confidence"],
-                context={
-                    "original_message": message,
-                    "knowledge_used": parsed.get("knowledge_used", []),
-                },
+                context=intent_context,
             )
 
             reasoning = {

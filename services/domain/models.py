@@ -516,3 +516,129 @@ class ActionHumanization:
     created_at: datetime = field(default_factory=datetime.now)
     usage_count: int = 0
     last_used: Optional[datetime] = None
+
+
+# Spatial Domain Models
+# These models implement the spatial metaphor system using integer positions
+# to maintain clean separation from external system identifiers
+
+
+@dataclass
+class SpatialEvent:
+    """Spatial event within the spatial metaphor system"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    event_type: str = ""  # join, leave, message_posted, thread_started, etc.
+
+    # Integer spatial positioning (pure domain)
+    territory_position: int = 0
+    room_position: int = 0
+    path_position: Optional[int] = None
+    object_position: Optional[int] = None
+
+    # Event details
+    actor_id: Optional[str] = None
+    affected_objects: List[str] = field(default_factory=list)
+    spatial_changes: Dict[str, Any] = field(default_factory=dict)
+
+    # Context
+    event_time: Optional[datetime] = None
+    significance_level: str = "routine"  # routine, notable, significant, critical
+
+    def get_spatial_coordinates(self) -> Dict[str, int]:
+        """Get spatial coordinates as integer positions"""
+        coords = {
+            "territory_position": self.territory_position,
+            "room_position": self.room_position,
+        }
+        if self.path_position is not None:
+            coords["path_position"] = self.path_position
+        if self.object_position is not None:
+            coords["object_position"] = self.object_position
+        return coords
+
+
+@dataclass
+class SpatialObject:
+    """Object placed within spatial environment"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    object_type: str = "text_message"  # text_message, file_document, code_block, etc.
+
+    # Integer spatial positioning (pure domain)
+    territory_position: int = 0
+    room_position: int = 0
+    path_position: Optional[int] = None
+    object_position: Optional[int] = None
+
+    # Object properties
+    content: str = ""
+    creator_id: str = ""
+    size_category: str = "standard"  # minimal, standard, substantial, extensive
+
+    # Spatial relationships
+    attention_attractors: List[str] = field(default_factory=list)
+    emotional_markers: List[str] = field(default_factory=list)
+    connected_objects: List[str] = field(default_factory=list)
+
+    # Context
+    placement_time: Optional[datetime] = None
+    last_interaction: Optional[datetime] = None
+    interaction_count: int = 0
+
+    def get_spatial_context(self) -> Dict[str, Any]:
+        """Get spatial context for object interaction"""
+        return {
+            "object_type": self.object_type,
+            "size_category": self.size_category,
+            "attention_level": len(self.attention_attractors),
+            "emotional_resonance": len(self.emotional_markers),
+            "connections": len(self.connected_objects),
+            "interaction_history": self.interaction_count,
+            "spatial_coordinates": self.get_spatial_coordinates(),
+        }
+
+    def get_spatial_coordinates(self) -> Dict[str, int]:
+        """Get spatial coordinates as integer positions"""
+        coords = {
+            "territory_position": self.territory_position,
+            "room_position": self.room_position,
+        }
+        if self.path_position is not None:
+            coords["path_position"] = self.path_position
+        if self.object_position is not None:
+            coords["object_position"] = self.object_position
+        return coords
+
+
+@dataclass
+class SpatialContext:
+    """Spatial context information for positioning"""
+
+    # Integer spatial positioning (pure domain)
+    territory_position: int = 0
+    room_position: int = 0
+    path_position: Optional[int] = None
+    object_position: Optional[int] = None
+
+    # Spatial characteristics
+    attention_level: str = "medium"  # low, medium, high, urgent
+    emotional_valence: str = "neutral"  # positive, negative, neutral
+    navigation_intent: str = "monitor"  # respond, investigate, monitor, explore
+
+    # External system mapping (via adapter)
+    external_system: str = ""
+    external_id: str = ""
+    external_context: Dict[str, Any] = field(default_factory=dict)
+
+    def get_spatial_coordinates(self) -> Dict[str, int]:
+        """Get spatial coordinates as integer positions"""
+        coords = {
+            "territory_position": self.territory_position,
+            "room_position": self.room_position,
+        }
+        if self.path_position is not None:
+            coords["path_position"] = self.path_position
+        if self.object_position is not None:
+            coords["object_position"] = self.object_position
+        return coords

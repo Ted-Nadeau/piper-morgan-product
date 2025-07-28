@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from services.domain.models import Intent, Task, Workflow, WorkflowResult
+from services.intent_service.classifier import IntentClassifier
+from services.intent_service.spatial_intent_classifier import SpatialIntentClassifier
 from services.orchestration.workflow_factory import WorkflowFactory
 from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
@@ -49,8 +51,14 @@ class SlackWorkflowMapping:
 class SlackWorkflowFactory:
     """Factory for creating workflows from Slack spatial events"""
 
-    def __init__(self, workflow_factory: WorkflowFactory):
+    def __init__(
+        self,
+        workflow_factory: WorkflowFactory,
+        intent_classifier: Optional[IntentClassifier] = None,
+    ):
         self.workflow_factory = workflow_factory
+        self.intent_classifier = intent_classifier or IntentClassifier()
+        self.spatial_intent_classifier = SpatialIntentClassifier()
         self.logger = logging.getLogger(__name__)
         self.spatial_mappings = self._create_spatial_mappings()
 
@@ -158,10 +166,30 @@ class SlackWorkflowFactory:
                 )
                 return None
 
-            # Create intent from spatial event
-            intent = self._create_intent_from_spatial_event(
-                event_result, navigation_decision, spatial_context, mapping
-            )
+            # Create spatial context for enhanced classification
+            if event_result.spatial_event:
+                spatial_context_dict = (
+                    self.spatial_intent_classifier.convert_spatial_context_to_dict(
+                        self.spatial_intent_classifier.create_spatial_context_from_event(
+                            event_result.spatial_event,
+                            navigation_decision.intent.value,
+                            spatial_context.user_context,
+                        )
+                    )
+                )
+
+                # Use enhanced IntentClassifier with spatial context
+                message = f"Spatial event: {event_result.spatial_event.event_type}"
+                intent = await self.intent_classifier.classify(
+                    message=message,
+                    context=spatial_context.user_context,
+                    spatial_context=spatial_context_dict,
+                )
+            else:
+                # Fallback to original method
+                intent = self._create_intent_from_spatial_event(
+                    event_result, navigation_decision, spatial_context, mapping
+                )
 
             # Create workflow using existing factory
             workflow = await self.workflow_factory.create_from_intent(

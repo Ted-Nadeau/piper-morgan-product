@@ -28,6 +28,8 @@ from services.integrations.github.production_client import (
     GitHubClientConfig,
     ProductionGitHubClient,
 )
+from services.integrations.slack.config_service import SlackConfigService
+from services.integrations.slack.response_flow_integration import ResponseFlowIntegration
 from services.llm.clients import llm_client
 from services.orchestration.validation import ContextValidationError, workflow_validator
 from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
@@ -82,6 +84,15 @@ class OrchestrationEngine:
 
         self.github_content_generator = GitHubIssueContentGenerator(llm_client)
         self.llm_client = llm_client
+
+        # Initialize response flow integration for Slack
+        try:
+            slack_config_service = SlackConfigService()
+            self.response_flow_integration = ResponseFlowIntegration(slack_config_service)
+            logger.info("✅ Response flow integration initialized for Slack")
+        except Exception as e:
+            logger.warning(f"Slack response flow integration unavailable: {e}")
+            self.response_flow_integration = None
 
         self.task_handlers = {
             TaskType.ANALYZE_REQUEST: self._analyze_request,
@@ -289,6 +300,30 @@ class OrchestrationEngine:
 
                 logger.info("Workflow completed", workflow_id=workflow_id)
 
+                # Send response to Slack if response flow integration is available
+                if self.response_flow_integration:
+                    try:
+                        from services.domain.models import WorkflowResult
+
+                        # Create workflow result for response flow
+                        workflow_result = WorkflowResult(
+                            success=True,
+                            data={
+                                "message": "Workflow completed successfully",
+                                "workflow_details": f"Workflow {workflow_id} completed",
+                                "task_results": [task.to_dict() for task in workflow.tasks],
+                            },
+                            error=None,
+                        )
+
+                        # Process workflow result for Slack response
+                        await self.response_flow_integration.process_workflow_result(
+                            workflow, workflow_result
+                        )
+
+                    except Exception as response_error:
+                        logger.warning(f"Failed to send response to Slack: {response_error}")
+
         except (TaskFailedError, WorkflowTimeoutError) as e:
             workflow.status = WorkflowStatus.FAILED
             workflow.error = e.error_code
@@ -312,6 +347,29 @@ class OrchestrationEngine:
                 workflow_id=workflow_id,
                 error_code=e.error_code,
             )
+
+            # Send error response to Slack if response flow integration is available
+            if self.response_flow_integration:
+                try:
+                    from services.domain.models import WorkflowResult
+
+                    # Create error workflow result
+                    workflow_result = WorkflowResult(
+                        success=False,
+                        data={
+                            "recovery_suggestion": e.recovery_suggestion,
+                        },
+                        error=e.error_code,
+                    )
+
+                    # Process error workflow result for Slack response
+                    await self.response_flow_integration.process_workflow_result(
+                        workflow, workflow_result
+                    )
+
+                except Exception as response_error:
+                    logger.warning(f"Failed to send error response to Slack: {response_error}")
+
             raise  # Re-raise for the middleware to catch
         except Exception as e:
             workflow.status = WorkflowStatus.FAILED
