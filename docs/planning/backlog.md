@@ -258,6 +258,41 @@
 - Complete developer guidance and troubleshooting ✅
 - Environment standardization: Python 3.11 across all contexts ✅
 
+### PM-013: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
+### PM-016: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
+### PM-017: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
+### PM-018: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
+### PM-019: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
+### PM-023: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
+### PM-024: Missing Issue (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
+
 ### PM-025: Message-Scoped Document Context
 
 **Story**: As a user, I want to attach documents to provide context for specific questions
@@ -270,6 +305,11 @@
 - Multi-file upload support with single context hint
 - Chat UI showing attached files per message
 - Context hint input for user guidance
+
+### PM-075: Strategic Documentation Alignment (Repository Only)
+
+**Story**: [Need to retrieve from GitHub repository]
+**Status**: Missing from Planning Docs | **Points**: TBD | **Dependencies**: TBD
 
 ---
 
@@ -442,6 +482,42 @@ _All P0 tickets completed - infrastructure foundation established_
 **Description**: Batch issue creation, bulk editing, and progress tracking for large operations
 **Estimate**: 13 points | **Status**: Planned | **Dependencies**: PM-012
 
+### PM-028: Meeting Transcript Analysis & Visualization
+
+**Story**: As a PM, I want to upload meeting transcripts and get actionable outputs
+**Description**: Process meeting recordings/transcripts to generate mind maps, decision trees, action item lists, and shareable summaries
+**Estimate**: 8 points | **Status**: Planned | **Dependencies**: Knowledge base working
+
+### PM-029: Analytics Dashboard Integration
+
+**Story**: As a PM, I want automated reports from our analytics tools so I can focus on insights
+**Description**: Connect to Datadog, New Relic, Google Analytics for automated anomaly detection, trend analysis, and actionable insights
+**Estimate**: 13 points | **Status**: Planned | **Dependencies**: External API authentication
+
+### PM-030: Advanced Knowledge Graph Implementation
+
+**Story**: As an organization, we want dynamic knowledge relationships for better discovery
+**Description**: Implement graph-based knowledge representation with relationship mapping and organizational learning
+**Estimate**: 21 points | **Status**: Planned | **Dependencies**: PM-007 enhancement, vector store optimization
+
+### PM-033: MCP Integration Pilot
+
+**Story**: As a system, I need MCP consumer capabilities to enable federated search and tool access
+**Description**: Phase 1 MCP implementation to enhance PM-009 multi-project context with federated search
+**Estimate**: 21 points | **Status**: Scheduled for August 5, 2025 | **Dependencies**: PM-011 closure
+
+### PM-034: LLM-Based Intent Classification
+
+**Story**: As a user, I want natural conversational interactions instead of rigid command patterns
+**Description**: Replace regex patterns with conversational understanding, add conversation memory and context
+**Estimate**: 13 points | **Status**: Planned | **Dependencies**: MCP Phase 1
+
+### PM-036: Engineering Infrastructure Monitoring
+
+**Story**: As an engineering team, we need comprehensive monitoring and observability so we can maintain system health and performance
+**Description**: Implement production-ready monitoring, logging, and alerting infrastructure
+**Estimate**: 8 points | **Status**: Ready | **Dependencies**: None
+
 ### PM-048: Analytics Dashboard Integration
 
 **Story**: As a PM, I want automated reports from our analytics tools so I can focus on insights
@@ -583,6 +659,18 @@ _All P0 tickets completed - infrastructure foundation established_
 **Description**: Self-optimizing workflows with A/B testing and automatic improvements
 **Estimate**: 34 points | **Status**: Research Phase | **Dependencies**: Advanced AI reasoning
 
+### PM-051: Workflow Optimization
+
+**Story**: As a system, I want workflows to optimize themselves automatically based on performance analysis
+**Description**: Implement performance analysis, automatic improvements, A/B testing framework, and success tracking
+**Estimate**: 21 points | **Status**: Planned | **Dependencies**: Advanced workflow capabilities
+
+### PM-052: Autonomous Workflow Management
+
+**Story**: As a team, we want workflows to optimize and improve themselves automatically
+**Description**: Self-optimizing workflows with A/B testing and automatic improvements
+**Estimate**: 34 points | **Status**: Research Phase | **Dependencies**: Advanced AI reasoning
+
 ### PM-053: Visual Content Analysis Pipeline
 
 **Story**: As a PM, I want to upload screenshots and get automated issue descriptions
@@ -608,6 +696,37 @@ _All P0 tickets completed - infrastructure foundation established_
 - Resource allocation optimization
 - Confidence intervals and accuracy tracking
 - Early warning alert system
+
+### PM-056: Domain/Database Schema Validator Tool
+
+**Story**: As a development team, we need automated validation of domain/database consistency to prevent drift bugs
+**Description**: Create tool to programmatically compare SQLAlchemy models with domain dataclasses
+**Estimate**: 3-5 points | **Status**: Ready | **Dependencies**: None
+
+### PM-069: GitHub Pages Documentation Publishing Fix
+
+**Story**: As a documentation system, we need reliable GitHub Pages publishing to ensure documentation accessibility
+**Status**: ✅ COMPLETE | **Points**: 1 | **Completed**: July 26, 2025
+
+### PM-070: Canonical Queries Foundation Document
+
+**Story**: As a development team, we need a comprehensive foundation of essential queries to establish automated testing and user experience validation
+**Status**: ✅ COMPLETE | **Points**: 5 | **Completed**: July 26, 2025
+
+### PM-071: Morning Standup 5-Query Sequence Testing
+
+**Story**: As a user experience validation system, we need to test embodied AI concepts through authentic user interaction patterns
+**Status**: ✅ COMPLETE | **Points**: 3 | **Completed**: July 26, 2025
+
+### PM-072: README Modernization
+
+**Story**: As a project, we need updated documentation reflecting current status and embodied AI vision
+**Status**: ✅ COMPLETE | **Points**: 2 | **Completed**: July 26, 2025
+
+### PM-073: Pattern Sweep Process with TLDR Integration
+
+**Story**: As a development team, we need automated pattern detection and learning acceleration to improve development velocity
+**Status**: ✅ COMPLETE | **Points**: 8 | **Completed**: July 26, 2025
 
 ---
 

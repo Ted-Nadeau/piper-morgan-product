@@ -25,6 +25,7 @@ from services.database.repositories import ProjectRepository, RepositoryFactory
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import UploadedFile
 from services.file_context.storage import generate_session_id, save_file_to_storage
+from services.integrations.slack.webhook_router import SlackWebhookRouter
 from services.intent_service.intent_enricher import IntentEnricher
 from services.knowledge_graph import get_document_service
 from services.llm.clients import llm_client
@@ -148,6 +149,10 @@ app.add_middleware(
 
 # Add middleware
 app.add_middleware(ErrorHandlingMiddleware)
+
+# Initialize and include Slack router
+slack_router = SlackWebhookRouter()
+app.include_router(slack_router.get_router())
 
 
 @app.get("/")

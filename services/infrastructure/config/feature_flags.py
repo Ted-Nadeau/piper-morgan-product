@@ -191,6 +191,32 @@ class FeatureFlags:
         """
         return FeatureFlags._get_boolean_flag("EMERGENCY_MODE", False)
 
+    @staticmethod
+    def is_enabled(flag_name: str, default: bool = False) -> bool:
+        """
+        Generic method to check if any feature flag is enabled.
+
+        Used by integrations that need dynamic feature flag checking.
+        For known flags, prefer the specific methods above.
+
+        Args:
+            flag_name: Environment variable name or feature name
+            default: Default value if flag not found
+
+        Returns:
+            Boolean value of the feature flag
+        """
+        # Map common feature names to environment variables
+        feature_env_map = {
+            "slack_webhooks": "ENABLE_SLACK_WEBHOOKS",
+            "slack_socket_mode": "ENABLE_SLACK_SOCKET_MODE",
+            "slack_spatial_mapping": "ENABLE_SLACK_SPATIAL_MAPPING",
+        }
+
+        # Use mapped environment variable if available, otherwise use flag_name directly
+        env_var = feature_env_map.get(flag_name, flag_name)
+        return FeatureFlags._get_boolean_flag(env_var, default)
+
     # Internal utility methods
     @staticmethod
     def _get_boolean_flag(flag_name: str, default: bool = False) -> bool:

@@ -109,7 +109,7 @@ class SlackSpatialMapper:
             return TerritoryType.CORPORATE
 
         # Check domain patterns for classification
-        domain = workspace.get("domain", "").lower()
+        domain = (workspace.get("domain") or "").lower()
 
         if any(pattern in domain for pattern in ["community", "group", "club"]):
             return TerritoryType.COMMUNITY
