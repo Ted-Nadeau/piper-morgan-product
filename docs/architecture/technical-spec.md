@@ -266,7 +266,173 @@ class GitHubAgent:
 
 ```
 
-### 2.5 Orchestration Engine (`services/orchestration/engine.py`)
+### 2.5 Slack Spatial Intelligence System (`services/integrations/slack/`)
+
+**Purpose**: Process Slack events as spatial changes to Piper's environment using spatial metaphors
+
+#### 2.5.1 Spatial Metaphor Architecture
+
+```python
+# Core spatial types
+class SpatialTerritory:
+    """Slack workspace as physical territory"""
+    id: str  # workspace_id
+    name: str
+    inhabitants: List[SpatialInhabitant]
+    rooms: List[SpatialRoom]
+
+class SpatialRoom:
+    """Slack channel as room with purpose"""
+    id: str  # channel_id
+    name: str
+    purpose: str
+    territory_id: str
+    inhabitants: List[SpatialInhabitant]
+
+class SpatialObject:
+    """Message as spatial object"""
+    id: str  # message_ts
+    content: str
+    room_id: str
+    creator_id: str
+    coordinates: SpatialCoordinates
+
+class SpatialInhabitant:
+    """User as inhabitant moving between rooms"""
+    id: str  # user_id
+    name: str
+    current_room_id: Optional[str]
+    attention_focus: Optional[str]
+```
+
+#### 2.5.2 Spatial Event Processing
+
+```python
+class SlackSpatialAgent:
+    def __init__(self, spatial_memory: SpatialMemory, attention_model: AttentionModel):
+        self.spatial_memory = spatial_memory
+        self.attention_model = attention_model
+
+    async def process_spatial_event(self, slack_event: Dict[str, Any]) -> SpatialEvent:
+        """Convert Slack event to spatial metaphor"""
+        spatial_event = await self.spatial_mapper.map_message_to_spatial_event(slack_event)
+
+        # Update spatial memory
+        await self.spatial_memory.update_from_event(spatial_event)
+
+        # Process attention attractors (@mentions)
+        if spatial_event.has_attention_attractor:
+            await self.attention_model.process_attention_attractor(spatial_event)
+
+        # Process emotional markers (reactions)
+        if spatial_event.has_emotional_markers:
+            await self.process_emotional_markers(spatial_event)
+
+        return spatial_event
+
+    async def make_navigation_decision(self, spatial_event: SpatialEvent) -> NavigationDecision:
+        """Determine if Piper should navigate to this spatial location"""
+        return await self.workspace_navigator.evaluate_navigation(spatial_event)
+```
+
+#### 2.5.3 Spatial Intent Classification
+
+```python
+class SpatialIntentClassifier:
+    def __init__(self, pattern_matcher: PatternMatcher, llm_client: LLMClient):
+        self.pattern_matcher = pattern_matcher
+        self.llm_client = llm_client
+
+    async def classify_spatial_event(self, spatial_event: SpatialEvent) -> SpatialIntent:
+        """Classify spatial event with confidence scoring"""
+        # Pattern matching for common spatial intents
+        pattern_result = await self.pattern_matcher.match_patterns(spatial_event)
+
+        if pattern_result.confidence > 0.8:
+            return pattern_result
+
+        # LLM-based classification for complex spatial events
+        llm_result = await self._llm_classify_spatial_event(spatial_event)
+
+        return llm_result
+```
+
+#### 2.5.4 Spatial Memory and Attention
+
+```python
+class SpatialMemory:
+    def __init__(self, redis_client: Redis):
+        self.redis = redis_client
+        self.ttl_hours = 24
+
+    async def update_from_event(self, spatial_event: SpatialEvent):
+        """Update spatial memory with new event"""
+        # Store spatial object
+        await self.redis.setex(
+            f"spatial:object:{spatial_event.object_id}",
+            self.ttl_hours * 3600,
+            spatial_event.to_json()
+        )
+
+        # Update inhabitant location
+        await self.redis.setex(
+            f"spatial:inhabitant:{spatial_event.creator_id}:location",
+            self.ttl_hours * 3600,
+            spatial_event.room_id
+        )
+
+class AttentionModel:
+    def __init__(self, proximity_calculator: ProximityCalculator):
+        self.proximity_calculator = proximity_calculator
+
+    async def process_attention_attractor(self, spatial_event: SpatialEvent):
+        """Process @mentions as high-priority attention attractors"""
+        if spatial_event.has_mention:
+            # High priority - immediate navigation
+            return NavigationDecision(
+                should_navigate=True,
+                priority=AttentionPriority.HIGH,
+                reason="Direct mention detected"
+            )
+```
+
+#### 2.5.5 Spatial to Workflow Integration
+
+```python
+class SlackWorkflowFactory:
+    def __init__(self, spatial_intent_classifier: SpatialIntentClassifier):
+        self.spatial_intent_classifier = spatial_intent_classifier
+
+    async def create_workflow_from_spatial_event(self, spatial_event: SpatialEvent) -> Workflow:
+        """Convert spatial event to Piper workflow"""
+        # Classify spatial intent
+        spatial_intent = await self.spatial_intent_classifier.classify_spatial_event(spatial_event)
+
+        # Create workflow with spatial context
+        workflow = Workflow(
+            id=str(uuid.uuid4()),
+            type=spatial_intent.workflow_type,
+            context={
+                "spatial_event": spatial_event.to_dict(),
+                "spatial_intent": spatial_intent.to_dict(),
+                "emotional_markers": spatial_event.emotional_markers,
+                "attention_priority": spatial_event.attention_priority
+            }
+        )
+
+        return workflow
+```
+
+**Key Features**:
+
+- **8 Spatial Components**: Complete spatial intelligence system
+- **52 TDD Integration Tests**: Comprehensive test coverage
+- **Production-Ready Configuration**: ADR-010 compliant config service
+- **Real-time Event Processing**: Webhook routing with ngrok integration
+- **Spatial Memory Persistence**: Redis-based spatial awareness
+- **Attention Modeling**: @mention processing and priority scoring
+
+### 2.6 Orchestration Engine (`services/orchestration/engine.py`)
 
 **Purpose**: Workflow execution and coordination using internal method handlers for all task types.
 
@@ -728,10 +894,10 @@ async def test_create_issue_workflow():
 
 ---
 
-_Last Updated: June 28, 2025_
+_Last Updated: July 28, 2025_
 
 ## Revision Log
 
+- **July 28, 2025**: Added Slack Spatial Intelligence System specifications (Section 2.5) with spatial metaphor architecture, event processing, intent classification, memory/attention, and workflow integration
 - **June 28, 2025**: Updated Orchestration Engine section for internal handler pattern, added GitHub handler example, updated command flow for repository enrichment, added workflow context structure for GitHub integration
-
 - **June 21, 2025**: Added systematic documentation dating and revision tracking

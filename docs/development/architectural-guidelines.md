@@ -28,52 +28,116 @@ grep -r "pattern_name" services/
 grep -r "similar_functionality" services/
 ```
 
+## Excellence Flywheel Methodology
+
+**MANDATORY**: All development work must follow the Excellence Flywheel methodology for systematic quality and velocity.
+
+### Core Principles
+
+1. **Systematic Verification First** - Verify requirements and existing state before implementation
+2. **TDD Requirements** - Write tests FIRST, then implementation
+3. **Agent Coordination** - Coordinate parallel work systematically
+4. **Quality Vigilance** - Maintain high standards throughout
+
+### Excellence Flywheel Process
+
+#### Phase 1: Systematic Verification
+
+- **Verify Requirements**: Understand exactly what needs to be built
+- **Check Existing State**: What's already implemented and working
+- **Identify Dependencies**: What other components are affected
+- **Plan Architecture**: How the new feature fits into existing patterns
+
+#### Phase 2: Test-Driven Development
+
+- **Write Failing Tests**: Define expected behavior before implementation
+- **Implement Minimum Viable**: Code that makes tests pass
+- **Refactor**: Improve code quality while maintaining functionality
+- **Verify Integration**: Ensure new code works with existing systems
+
+#### Phase 3: Quality Assurance
+
+- **Code Review**: Self-review against architectural guidelines
+- **Integration Testing**: Verify component interactions
+- **Performance Validation**: Ensure acceptable response times
+- **Documentation Update**: Update relevant documentation
+
+### Excellence Flywheel Benefits
+
+- **Quality creates velocity creates quality** - Systematic approaches create self-reinforcing productivity cycles
+- **Foundation-first approach** - Enables impossible speed with perfect quality
+- **Compound learning** - Each implementation builds knowledge for accelerated future work
+- **Risk mitigation** - Systematic verification prevents costly mistakes
+
+### Excellence Flywheel Integration
+
+- **Session Logs**: Every session must document Excellence Flywheel application
+- **Code Reviews**: Verify Excellence Flywheel methodology was followed
+- **Documentation**: Update architectural guidelines with new patterns discovered
+- **Knowledge Preservation**: Document successful patterns for future sessions
+
+For detailed methodology, see [Excellence Flywheel Documentation](./methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md).
+
 ## Common Antipatterns to Catch
 
 ### Development Antipatterns
+
 ❌ **Assuming methods exist without checking**
+
 - Always verify method signatures before calling
 - Use `grep` or direct file inspection
 
 ❌ **Galloping ahead without verification**
+
 - Follow VERIFY → UNDERSTAND → IMPLEMENT → VALIDATE
 - One step at a time, wait for confirmation
 
 ❌ **Modifying domain models to fix tests**
+
 - Tests should reflect domain reality
 - Fix tests, not domain models
 
 ❌ **Creating Path objects when strings expected**
+
 - Check expected parameter types
 - Use `str()` conversion when needed
 
 ❌ **Assuming import paths without verification**
+
 - Verify actual file locations
 - Check existing import patterns
 
 ### Domain Model Antipatterns
+
 ❌ **Fighting the intent classifier**
+
 - Work with its preferences
 - Understand its categorization logic
 
 ❌ **Creating enums outside shared_types.py**
+
 - All enums belong in `services/shared_types.py`
 - Maintain single source of truth
 
 ❌ **Assuming single data access pattern**
+
 - Check for tier differences
 - Verify repository patterns
 
 ### Architecture Antipatterns
+
 ❌ **Patching without understanding**
+
 - Stop and design when fixes accumulate
 - Address root causes, not symptoms
 
 ❌ **Skipping architecture review**
+
 - Always check docs first
 - Understand existing patterns
 
 ❌ **Mixing concerns across layers**
+
 - Keep domain logic in domain services
 - UI logic stays in presentation layer
 - Infrastructure concerns in infrastructure layer
@@ -81,24 +145,28 @@ grep -r "similar_functionality" services/
 ## Layer Boundaries
 
 ### Domain Layer
+
 - **Location**: `services/domain/`
 - **Responsibilities**: Core business logic, domain models
 - **Dependencies**: None (depends on nothing)
 - **Rules**: Pure business logic only
 
 ### Application Layer
+
 - **Location**: `services/queries/`, `services/orchestration/`
 - **Responsibilities**: Use cases, workflows, queries
 - **Dependencies**: Domain layer only
 - **Rules**: Coordinates domain objects
 
 ### Infrastructure Layer
+
 - **Location**: `services/database/`, `services/integrations/`
 - **Responsibilities**: External systems, persistence
 - **Dependencies**: Domain and application layers
 - **Rules**: Implements interfaces defined in domain
 
 ### Presentation Layer
+
 - **Location**: `main.py`, `web/`
 - **Responsibilities**: API endpoints, UI
 - **Dependencies**: Application layer
@@ -138,18 +206,21 @@ grep -r "enum_name" services/shared_types.py
 ## Best Practices
 
 ### Domain-Driven Design
+
 - **Models drive everything** - Start with domain models
 - **Ubiquitous language** - Use domain terms consistently
 - **Bounded contexts** - Keep related concepts together
 - **Aggregates** - Ensure consistency boundaries
 
 ### Testing Strategy
+
 - **Test domain logic** thoroughly
 - **Mock external dependencies** in unit tests
 - **Integration tests** for workflows
 - **End-to-end tests** for user scenarios
 
 ### Documentation
+
 - **ADRs** for significant architectural decisions
 - **Session logs** for development context
 - **Code comments** for complex business rules
@@ -186,8 +257,12 @@ Before merging any significant change:
 - [ ] Tests cover new functionality
 - [ ] Documentation updated
 - [ ] Session log reflects architectural decisions
+
 ---
-*Last Updated: July 09, 2025*
+
+_Last Updated: July 28, 2025_
 
 ## Revision Log
+
+- **July 28, 2025**: Added Excellence Flywheel Methodology section with core principles, process phases, benefits, and integration guidelines
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
