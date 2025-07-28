@@ -136,9 +136,38 @@ Piper Morgan aims to automate PM workflows and integrate organizational knowledg
 
 **Status**: Future capability requiring significant ML development work.
 
-### 2.6 User Interface & Interaction
+### 2.6 Spatial Intelligence & External Integration
 
-**FR-013**: The system SHALL provide web-based interface
+**FR-013**: The system SHALL process external events as spatial changes to Piper's environment
+
+- **FR-013a**: Convert Slack events to spatial metaphors (territories, rooms, objects, inhabitants) (_✅ IMPLEMENTED_)
+- **FR-013b**: Process @mentions as attention attractors with high priority (_✅ IMPLEMENTED_)
+- **FR-013c**: Handle reactions as emotional markers for context enrichment (_✅ IMPLEMENTED_)
+- **FR-013d**: Map channels as rooms with purposes and spatial memory (_✅ IMPLEMENTED_)
+
+**Status**: ✅ **IMPLEMENTED** - Complete spatial intelligence system operational with 8 spatial components.
+
+**FR-014**: The system SHALL provide spatial navigation and awareness
+
+- **FR-014a**: Maintain spatial memory across sessions (_✅ IMPLEMENTED_)
+- **FR-014b**: Navigate between spatial territories (Slack workspaces) (_✅ IMPLEMENTED_)
+- **FR-014c**: Track inhabitant movement and attention patterns (_✅ IMPLEMENTED_)
+- **FR-014d**: Generate spatial intent classifications with confidence scoring (_✅ IMPLEMENTED_)
+
+**Status**: ✅ **IMPLEMENTED** - Spatial navigation system with 52 TDD integration tests.
+
+**FR-015**: The system SHALL integrate spatial events with workflow orchestration
+
+- **FR-015a**: Convert spatial events to Piper workflows (_✅ IMPLEMENTED_)
+- **FR-015b**: Enrich workflows with spatial context and emotional markers (_✅ IMPLEMENTED_)
+- **FR-015c**: Handle OAuth flow with spatial territory initialization (_✅ IMPLEMENTED_)
+- **FR-015d**: Support webhook routing for real-time spatial event processing (_✅ IMPLEMENTED_)
+
+**Status**: ✅ **IMPLEMENTED** - Complete spatial-to-workflow integration with production-ready configuration.
+
+### 2.7 User Interface & Interaction
+
+**FR-016**: The system SHALL provide web-based interface
 
 - **FR-013a**: Support conversational interaction patterns (**Implemented: DDD-compliant web UI**)
 - **FR-013b**: Display real-time status and progress updates (**Implemented: Unified renderer, TDD tested**)
@@ -147,7 +176,7 @@ Piper Morgan aims to automate PM workflows and integrate organizational knowledg
 
 **Status**: ✅ **MET** - Users can interact via web UI with real-time feedback and file upload.
 
-**FR-014**: The system SHALL offer guidance and examples
+**FR-017**: The system SHALL offer guidance and examples
 
 - **FR-014a**: Include contextual help and usage instructions (_Not implemented_)
 - **FR-014b**: Provide example prompts and use cases (_Not implemented_)
@@ -332,6 +361,22 @@ Piper Morgan aims to automate PM workflows and integrate organizational knowledg
 **IR-008**: System SHALL support multiple repository access
 
 - **Status**: 🚨 **NOT IMPLEMENTED** - No GitHub integration exists
+
+**IR-009**: System SHALL integrate with Slack API for spatial intelligence
+
+- **Status**: ✅ **IMPLEMENTED** - Production-ready Slack client with error handling and rate limiting
+
+**IR-010**: System SHALL support Slack OAuth flow with spatial territory initialization
+
+- **Status**: ✅ **IMPLEMENTED** - Complete OAuth handler with spatial workspace mapping
+
+**IR-011**: System SHALL process Slack events as spatial metaphors
+
+- **Status**: ✅ **IMPLEMENTED** - Event handler with spatial mapping and intent classification
+
+**IR-012**: System SHALL support Slack webhook routing for real-time events
+
+- **Status**: ✅ **IMPLEMENTED** - Webhook router with ngrok integration for development
 
 ### 4.3 Data Storage
 
@@ -569,9 +614,10 @@ The Piper Morgan requirements analysis reveals a significant gap between archite
 
 ---
 
-_Last Updated: June 27, 2025_
+_Last Updated: July 28, 2025_
 
 ## Revision Log
 
+- **July 28, 2025**: Added spatial intelligence requirements (FR-013-015) and Slack integration requirements (IR-009-012) reflecting PM-074 completion
 - **June 27, 2025**: Post-PM-011 consolidation: Updated deployment/user guides for web interface, fixed PostgreSQL port, added monitoring/security/config documentation
 - **June 27, 2025**: Added systematic documentation dating and revision tracking
