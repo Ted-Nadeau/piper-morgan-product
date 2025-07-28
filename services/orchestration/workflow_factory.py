@@ -159,6 +159,14 @@ class WorkflowFactory:
                 workflow_type = WorkflowType.GENERATE_REPORT
             elif intent.category == IntentCategory.STRATEGY:
                 workflow_type = WorkflowType.PLAN_STRATEGY
+            elif intent.category == IntentCategory.CONVERSATION:
+                # Spatial integration: Conversational intents from Slack monitoring
+                # Map to report generation for context-aware responses
+                workflow_type = WorkflowType.GENERATE_REPORT
+            elif intent.category == IntentCategory.LEARNING:
+                # Spatial integration: Learning intents from Slack channel monitoring
+                # Map to report generation for pattern analysis and insights
+                workflow_type = WorkflowType.GENERATE_REPORT
             else:
                 print(f"❌ No workflow type found for intent category: {intent.category}")
                 return None

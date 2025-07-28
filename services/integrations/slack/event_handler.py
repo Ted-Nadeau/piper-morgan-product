@@ -65,7 +65,7 @@ class EventProcessingResult:
     success: bool
     spatial_event: Optional[SpatialEvent] = None
     spatial_changes: List[Dict[str, Any]] = field(default_factory=list)
-    attention_level: AttentionLevel = AttentionLevel.NONE
+    attention_level: AttentionLevel = AttentionLevel.AMBIENT
     emotional_valence: EmotionalValence = EmotionalValence.NEUTRAL
     navigation_suggestions: List[str] = field(default_factory=list)
     error: Optional[str] = None

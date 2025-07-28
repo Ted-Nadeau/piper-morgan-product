@@ -392,3 +392,38 @@ class SpatialIntentClassifier:
             results.append(result)
 
         return results
+
+    def create_spatial_context_from_event(
+        self,
+        spatial_event: Any,
+        navigation_intent: str,
+        user_context: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Create spatial context dictionary from spatial event"""
+        return {
+            "event_type": spatial_event.event_type,
+            "coordinates": {
+                "room_id": spatial_event.coordinates.room_id,
+                "territory_id": spatial_event.coordinates.territory_id,
+                "path_id": getattr(spatial_event.coordinates, "path_id", None),
+                "object_position": getattr(spatial_event.coordinates, "object_position", None),
+            },
+            "navigation_intent": navigation_intent,
+            "user_context": user_context,
+            "timestamp": (
+                getattr(spatial_event, "event_time", datetime.now()).isoformat()
+                if hasattr(getattr(spatial_event, "event_time", datetime.now()), "isoformat")
+                else str(getattr(spatial_event, "event_time", datetime.now()))
+            ),
+        }
+
+    def convert_spatial_context_to_dict(self, spatial_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert spatial context to dictionary format for IntentClassifier"""
+        return {
+            "room_id": spatial_context.get("coordinates", {}).get("room_id"),
+            "territory_id": spatial_context.get("coordinates", {}).get("territory_id"),
+            "path_id": spatial_context.get("coordinates", {}).get("path_id"),
+            "spatial_event_type": spatial_context.get("event_type"),
+            "navigation_intent": spatial_context.get("navigation_intent"),
+            "user_context": spatial_context.get("user_context", {}),
+        }

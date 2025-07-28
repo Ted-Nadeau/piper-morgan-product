@@ -24,9 +24,22 @@ File Context Instructions:
   - "summarize what I uploaded" → SYNTHESIS with file_id
   - "what's in the csv" → QUERY with file_id
 
+Spatial Context Instructions:
+- If spatial context is provided, understand the spatial metaphor:
+  - "room_id" = Slack channel where the event occurred
+  - "territory_id" = Slack workspace/team
+  - "path_id" = Thread ID if in a thread
+  - "attention_level" = How urgent/important the event is
+  - "emotional_valence" = Emotional context of the interaction
+  - "navigation_intent" = What Piper should do (respond, investigate, monitor)
+- Spatial events often indicate immediate response needs
+- High attention events (mentions) typically require EXECUTION or ANALYSIS
+- Emotional events may require CONVERSATION or SUPPORT actions
+
 User Message: {user_message}
 Context Information: {context_info}
 File Context: {file_context}
+Spatial Context: {spatial_context}
 
 Return a JSON object with:
 {{
