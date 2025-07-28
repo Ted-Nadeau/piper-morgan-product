@@ -62,6 +62,11 @@ class GitHubAuthFailedError(APIError):
         super().__init__(502, "GITHUB_AUTH_FAILED", details)
 
 
+class SlackAuthFailedError(APIError):
+    def __init__(self, details: Dict[str, Any] = None):
+        super().__init__(502, "SLACK_AUTH_FAILED", details)
+
+
 # --- Knowledge Base Errors ---
 
 
@@ -88,6 +93,7 @@ ERROR_MESSAGES = {
     # Integration errors
     "GITHUB_RATE_LIMIT": "GitHub is limiting our requests. Please try again in {retry_after} minutes.",
     "GITHUB_AUTH_FAILED": "I couldn't authenticate with GitHub. Please check your access token.",
+    "SLACK_AUTH_FAILED": "I couldn't authenticate with Slack. Please check your access token.",
     # Knowledge base errors
     "NO_RELEVANT_KNOWLEDGE": "I don't have enough context about that. Could you provide more details?",
     "DOCUMENT_PROCESSING_FAILED": "I couldn't process that document. Please check the file format and try again.",
