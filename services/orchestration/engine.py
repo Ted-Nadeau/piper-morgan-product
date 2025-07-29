@@ -127,6 +127,19 @@ class OrchestrationEngine:
         """Create appropriate workflow based on intent with database persistence"""
         workflow = await self.factory.create_from_intent(intent)
 
+        # Log workflow creation
+        if workflow:
+            logger.info(
+                f"SLACK_PIPELINE: Workflow creation result: SUCCESS - "
+                f"Type: {workflow.type.value}, ID: {workflow.id}, "
+                f"Intent: {intent.category.value} - {intent.action}"
+            )
+        else:
+            logger.warning(
+                f"SLACK_PIPELINE: Workflow creation result: FAILED - "
+                f"Intent: {intent.category.value} - {intent.action}"
+            )
+
         # PM-057: Validate workflow context before execution
         if workflow:
             try:

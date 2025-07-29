@@ -69,11 +69,23 @@ class SlackResponseHandler:
                 self.logger.debug(f"No intent created for spatial event {spatial_event.event_type}")
                 return None
 
+            self.logger.info(
+                f"SLACK_PIPELINE: Intent classified as {intent.category.value} - "
+                f"Action: {intent.action}, Confidence: {intent.confidence:.2f}, "
+                f"Channel: {slack_context.get('channel_id')}"
+            )
+
             # Step 3: Process through orchestration engine
             workflow_result = await self._process_through_orchestration(intent, slack_context)
             if not workflow_result:
                 self.logger.debug(f"No workflow result for intent {intent.action}")
                 return None
+
+            self.logger.info(
+                f"SLACK_PIPELINE: Workflow creation result: SUCCESS - "
+                f"Type: {workflow_result.get('type', 'unknown')}, "
+                f"Workflow ID: {workflow_result.get('workflow_id', 'N/A')}"
+            )
 
             # Step 4: Send response back to Slack with proper targeting
             response_result = await self._send_slack_response(workflow_result, slack_context)
@@ -278,6 +290,10 @@ class SlackResponseHandler:
             if not response_content:
                 self.logger.debug("No response content to send")
                 return None
+
+            self.logger.info(
+                f"SLACK_PIPELINE: Response generated: {response_content[:100]}{'...' if len(response_content) > 100 else ''}"
+            )
 
             # Prepare Slack message parameters with proper targeting
             message_params = {

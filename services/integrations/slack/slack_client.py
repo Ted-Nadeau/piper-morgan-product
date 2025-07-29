@@ -192,7 +192,32 @@ class SlackClient:
     async def send_message(self, channel: str, text: str, **kwargs) -> SlackResponse:
         """Send message to Slack channel"""
         data = {"channel": channel, "text": text, **kwargs}
-        return await self._make_request("POST", "chat.postMessage", data)
+
+        # Log the posting attempt
+        thread_info = (
+            f" (thread: {kwargs.get('thread_ts', 'N/A')})" if kwargs.get("thread_ts") else ""
+        )
+        self.logger.info(
+            f"SLACK_PIPELINE: Posting to Slack channel {channel}{thread_info} - "
+            f"Text preview: {text[:50]}{'...' if len(text) > 50 else ''}"
+        )
+
+        response = await self._make_request("POST", "chat.postMessage", data)
+
+        # Log the response status
+        if response.success:
+            self.logger.info(
+                f"SLACK_PIPELINE: SlackClient response: SUCCESS - "
+                f"Channel: {channel}, Message TS: {response.data.get('ts', 'N/A')}"
+            )
+        else:
+            error_msg = response.error.message if response.error else "Unknown error"
+            self.logger.error(
+                f"SLACK_PIPELINE: SlackClient response: FAILED - "
+                f"Channel: {channel}, Error: {error_msg}"
+            )
+
+        return response
 
     async def get_channel_info(self, channel: str) -> SlackResponse:
         """Get channel information"""
@@ -212,4 +237,21 @@ class SlackClient:
 
     async def test_auth(self) -> SlackResponse:
         """Test authentication"""
-        return await self._make_request("GET", "auth.test")
+        self.logger.info("SLACK_PIPELINE: Testing Slack authentication...")
+        response = await self._make_request("GET", "auth.test")
+
+        if response.success:
+            auth_data = response.data
+            self.logger.info(
+                f"SLACK_PIPELINE: SlackClient authentication: SUCCESS - "
+                f"Team: {auth_data.get('team', 'N/A')}, "
+                f"User: {auth_data.get('user', 'N/A')}, "
+                f"Bot ID: {auth_data.get('bot_id', 'N/A')}"
+            )
+        else:
+            error_msg = response.error.message if response.error else "Unknown error"
+            self.logger.error(
+                f"SLACK_PIPELINE: SlackClient authentication: FAILED - Error: {error_msg}"
+            )
+
+        return response
