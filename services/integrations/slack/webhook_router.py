@@ -447,8 +447,9 @@ class SlackWebhookRouter:
                 message_ts, "message_posted", context
             )
 
-            logger.debug(
-                f"Message mapped to spatial event: {spatial_event.event_type} at position {spatial_event.object_position}"
+            logger.info(
+                f"SLACK_PIPELINE: Spatial event created - Type: {spatial_event.event_type}, "
+                f"Position: {spatial_event.object_position}, Channel: {channel_id}, User: {user_id}"
             )
 
             # Context already stored by create_spatial_event_from_slack()
@@ -502,7 +503,9 @@ class SlackWebhookRouter:
             )
 
             logger.info(
-                f"App mention detected in room {channel_id} - attention attractor activated at position {spatial_event.object_position}"
+                f"SLACK_PIPELINE: Spatial event created - Type: {spatial_event.event_type}, "
+                f"Position: {spatial_event.object_position}, Channel: {channel_id}, User: {user_id}, "
+                f"Attention: HIGH, Intent: RESPOND"
             )
 
             # Context already stored by create_spatial_event_from_slack()
@@ -555,8 +558,10 @@ class SlackWebhookRouter:
                 message_ts, "emotional_marker_updated", context
             )
 
-            logger.debug(
-                f"Reaction {reaction} added in room {channel_id} - emotional marker detected at position {spatial_event.object_position}"
+            logger.info(
+                f"SLACK_PIPELINE: Spatial event created - Type: {spatial_event.event_type}, "
+                f"Position: {spatial_event.object_position}, Channel: {channel_id}, User: {user_id}, "
+                f"Reaction: {reaction}, Valence: {emotional_valence}"
             )
 
             # Context already stored by create_spatial_event_from_slack()
