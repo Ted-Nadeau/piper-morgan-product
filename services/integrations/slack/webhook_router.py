@@ -129,6 +129,8 @@ class SlackWebhookRouter:
             body = await request.body()
             event_data = json.loads(body.decode())
 
+            print(f"🚨 ALL WEBHOOK EVENTS: {event_data.get('type', 'NO_TYPE')} - {event_data}")
+
             # Handle URL verification challenge
             if event_data.get("type") == "url_verification":
                 return JSONResponse(
@@ -137,7 +139,33 @@ class SlackWebhookRouter:
 
             # Handle event callbacks
             if event_data.get("type") == "event_callback":
-                await self._process_event_callback(event_data)
+                # Process events asynchronously to avoid blocking webhook response
+                import asyncio
+
+                print(
+                    f"🎯 WEBHOOK DEBUG: Creating async task for event: {event_data.get('event', {}).get('type', 'unknown')}"
+                )
+                logger.info(
+                    f"🎯 WEBHOOK: Creating async task for event: {event_data.get('event', {}).get('type', 'unknown')}"
+                )
+
+                async def safe_process_event():
+                    try:
+                        logger.info(
+                            f"🔍 BACKGROUND: Starting processing for event: {event_data.get('event', {}).get('type', 'unknown')}"
+                        )
+                        await self._process_event_callback(event_data)
+                        logger.info(f"✅ BACKGROUND: Processing completed successfully")
+                    except Exception as e:
+                        logger.error(f"🚨 BACKGROUND PROCESSING CRASHED: {e}", exc_info=True)
+                        # Don't let exception kill server
+
+                try:
+                    task = asyncio.create_task(safe_process_event())
+                    logger.info(f"✅ WEBHOOK: Async task created successfully: {task}")
+                except Exception as e:
+                    logger.error(f"🚨 WEBHOOK: Failed to create async task: {e}", exc_info=True)
+
                 return JSONResponse(content={"status": "ok"}, status_code=200)
 
             # Handle other event types
@@ -482,6 +510,7 @@ class SlackWebhookRouter:
             context = {
                 "territory_id": team_id,
                 "room_id": channel_id,
+                "original_channel_id": channel_id,  # Preserve original Slack channel ID
                 "user_id": user_id,
                 "content": event.get("text", ""),
                 "attention_level": "high",
@@ -512,16 +541,25 @@ class SlackWebhookRouter:
             # No need for additional store_mapping() call
 
             # Process through complete integration pipeline (high priority for mentions)
-            try:
-                response_result = await self.response_handler.handle_spatial_event(spatial_event)
-                if response_result:
-                    logger.info(
-                        f"Response sent for mention event: {response_result.get('status', 'unknown')}"
+            # Use asyncio.create_task() to make response processing non-blocking
+            import asyncio
+
+            async def process_response():
+                try:
+                    response_result = await self.response_handler.handle_spatial_event(
+                        spatial_event
                     )
-                else:
-                    logger.warning("No response generated for mention event")
-            except Exception as response_error:
-                logger.error(f"Error processing response for mention event: {response_error}")
+                    if response_result:
+                        logger.info(
+                            f"Response sent for mention event: {response_result.get('status', 'unknown')}"
+                        )
+                    else:
+                        logger.warning("No response generated for mention event")
+                except Exception as response_error:
+                    logger.error(f"Error processing response for mention event: {response_error}")
+
+            # Create task to process response asynchronously (don't await!)
+            asyncio.create_task(process_response())
 
         except Exception as e:
             logger.error(f"Error processing mention event: {e}")
