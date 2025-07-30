@@ -225,6 +225,41 @@ class OrchestrationEngine:
                 # All operations within single transaction - automatic commit
                 logger.info("Workflow persisted to database", workflow_id=workflow.id)
 
+    def _generate_completion_message(self, workflow: Workflow) -> Optional[str]:
+        """
+        Generate meaningful completion message based on workflow type.
+
+        PM-079: Replace generic spam with workflow-specific messages.
+        Returns None for workflows that shouldn't generate notifications.
+        """
+        if workflow.type == WorkflowType.CREATE_TICKET:
+            # Extract issue URL from task results
+            for task in workflow.tasks:
+                if task.type == TaskType.GITHUB_CREATE_ISSUE and task.result:
+                    issue_url = task.result.get("output_data", {}).get("issue_url")
+                    issue_number = task.result.get("output_data", {}).get("issue_number")
+                    if issue_url:
+                        return f"✅ Created GitHub issue #{issue_number}: {issue_url}"
+            return "✅ GitHub issue created"
+
+        elif workflow.type == WorkflowType.LIST_PROJECTS:
+            # Extract project count if available
+            if workflow.result and workflow.result.data:
+                projects = workflow.result.data.get("projects", [])
+                return f"📋 Found {len(projects)} projects"
+            return "📋 Project list retrieved"
+
+        elif workflow.type == WorkflowType.ANALYZE_FILE:
+            return "📄 File analysis complete"
+
+        elif workflow.type == WorkflowType.GENERATE_REPORT:
+            return "📊 Analysis complete"
+
+        # For help, status, queries, and other non-actionable workflows - no spam
+        # This eliminates the "Workflow completed successfully" messages
+        logger.debug(f"No notification message for workflow type: {workflow.type}")
+        return None
+
     async def execute_workflow(self, workflow_id: str) -> Dict[str, Any]:
         """
         Execute a workflow asynchronously using domain objects
@@ -318,21 +353,30 @@ class OrchestrationEngine:
                     try:
                         from services.domain.models import WorkflowResult
 
-                        # Create workflow result for response flow
-                        workflow_result = WorkflowResult(
-                            success=True,
-                            data={
-                                "message": "Workflow completed successfully",
-                                "workflow_details": f"Workflow {workflow_id} completed",
-                                "task_results": [task.to_dict() for task in workflow.tasks],
-                            },
-                            error=None,
-                        )
+                        # Create workflow result for response flow with meaningful message
+                        completion_message = self._generate_completion_message(workflow)
+                        if completion_message:
+                            workflow_result = WorkflowResult(
+                                success=True,
+                                data={
+                                    "message": completion_message,
+                                    # Remove verbose workflow_details to reduce spam
+                                },
+                                error=None,
+                            )
+                        else:
+                            # No notification needed for this workflow type
+                            workflow_result = None
 
-                        # Process workflow result for Slack response
-                        await self.response_flow_integration.process_workflow_result(
-                            workflow, workflow_result
-                        )
+                        # Process workflow result for Slack response (only if there's a message)
+                        if workflow_result:
+                            await self.response_flow_integration.process_workflow_result(
+                                workflow, workflow_result
+                            )
+                        else:
+                            logger.debug(
+                                f"No Slack notification sent for workflow {workflow_id} (no meaningful message)"
+                            )
 
                     except Exception as response_error:
                         logger.warning(f"Failed to send response to Slack: {response_error}")

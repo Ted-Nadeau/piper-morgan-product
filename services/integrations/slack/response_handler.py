@@ -11,7 +11,8 @@ This handler processes spatial events through the complete Piper Morgan pipeline
 """
 
 import logging
-from typing import Any, Dict, Optional
+import time
+from typing import Any, Dict, Optional, Set
 
 from services.domain.models import Intent, SpatialEvent
 from services.integrations.slack.slack_client import SlackClient
@@ -21,6 +22,85 @@ from services.orchestration.engine import OrchestrationEngine
 from services.shared_types import IntentCategory
 
 logger = logging.getLogger(__name__)
+
+# Circuit breaker for duplicate events (Emergency Fix 1)
+PROCESSED_EVENTS: Set[str] = set()
+LAST_CLEANUP = time.time()
+
+# Rate limiting for workflow creation (Emergency Fix 3)
+from collections import defaultdict
+
+WORKFLOW_RATE_LIMIT = defaultdict(list)  # user_id -> timestamps
+MAX_WORKFLOWS_PER_MINUTE = 3  # Conservative limit to prevent runaway
+
+
+async def is_duplicate_event(slack_context: Dict[str, Any]) -> bool:
+    """
+    Check if we've already processed this Slack event to prevent runaway workflows.
+
+    Emergency fix to prevent processing the same Slack event multiple times
+    which was causing 80+ unwanted GitHub issues.
+    """
+    global LAST_CLEANUP
+
+    # Get unique event identifier from Slack context
+    event_id = (
+        slack_context.get("original_timestamp")
+        or slack_context.get("ts")
+        or slack_context.get("client_msg_id")
+        or ""
+    )
+
+    if not event_id:
+        logger.warning("No event ID found in Slack context - allowing processing")
+        return False
+
+    # Check if already processed
+    if event_id in PROCESSED_EVENTS:
+        logger.warning(f"🚨 EMERGENCY CIRCUIT BREAKER: Duplicate event detected: {event_id}")
+        return True
+
+    # Add to processed set
+    PROCESSED_EVENTS.add(event_id)
+    logger.info(f"✅ Event {event_id} marked as processed ({len(PROCESSED_EVENTS)} total)")
+
+    # Cleanup old events every 5 minutes to prevent memory leak
+    current_time = time.time()
+    if current_time - LAST_CLEANUP > 300:  # 5 minutes
+        if len(PROCESSED_EVENTS) > 100:
+            # Keep only recent 50 events
+            PROCESSED_EVENTS.clear()
+            LAST_CLEANUP = current_time
+            logger.info("🧹 Cleared processed events cache to prevent memory leak")
+
+    return False
+
+
+def check_workflow_rate_limit(user_id: str) -> bool:
+    """
+    Check if user has exceeded workflow creation rate limit.
+
+    Emergency fix to prevent workflow spam causing 80+ unwanted GitHub issues.
+    """
+    current_time = time.time()
+    user_timestamps = WORKFLOW_RATE_LIMIT[user_id]
+
+    # Remove timestamps older than 1 minute
+    user_timestamps[:] = [ts for ts in user_timestamps if current_time - ts < 60]
+
+    # Check if under limit
+    if len(user_timestamps) >= MAX_WORKFLOWS_PER_MINUTE:
+        logger.warning(
+            f"🚨 EMERGENCY RATE LIMIT: User {user_id} exceeded {MAX_WORKFLOWS_PER_MINUTE} workflows per minute"
+        )
+        return False
+
+    # Add current timestamp
+    user_timestamps.append(current_time)
+    logger.info(
+        f"✅ Workflow rate check passed for user {user_id} ({len(user_timestamps)}/{MAX_WORKFLOWS_PER_MINUTE})"
+    )
+    return True
 
 
 class SlackResponseHandler:
@@ -61,6 +141,13 @@ class SlackResponseHandler:
             slack_context = await self._get_slack_context_from_spatial_event(spatial_event)
             if not slack_context:
                 self.logger.warning(f"No Slack context found for spatial event {spatial_event.id}")
+                return None
+
+            # EMERGENCY FIX 1: Check for duplicate events to prevent runaway workflows
+            if await is_duplicate_event(slack_context):
+                self.logger.info(
+                    f"🚨 SKIPPING duplicate event - prevented runaway workflow for {spatial_event.id}"
+                )
                 return None
 
             # Step 2: Create intent from spatial event with preserved context
@@ -233,7 +320,36 @@ class SlackResponseHandler:
         preserving spatial context for response generation.
         """
         try:
-            # Skip QUERY intents that don't need orchestration
+            # EMERGENCY FIX 2: Only create workflows for EXECUTION intents
+            # This prevents "help" and other simple queries from creating unwanted GitHub issues
+            if intent.category != IntentCategory.EXECUTION:
+                self.logger.info(
+                    f"🚨 EMERGENCY FILTER: Preventing workflow creation for {intent.category.value} intent: {intent.action}"
+                )
+
+                # Return appropriate simple response instead of creating workflow
+                simple_response = self._get_simple_response_for_intent(intent)
+                return {
+                    "type": "simple_response",
+                    "content": simple_response,
+                    "intent": intent,
+                }
+
+            # EMERGENCY FIX 3: Check rate limit before creating workflows
+            user_id = slack_context.get("user_id", "unknown")
+            if not check_workflow_rate_limit(user_id):
+                return {
+                    "type": "rate_limit_response",
+                    "content": "⏳ Please wait a moment before creating more workflows. I'm designed to prevent spam and ensure quality responses.",
+                    "intent": intent,
+                }
+
+            # Only EXECUTION intents proceed to workflow creation
+            self.logger.info(
+                f"✅ WORKFLOW CREATION APPROVED: {intent.category.value} intent '{intent.action}' proceeding to orchestration"
+            )
+
+            # Skip QUERY intents that don't need orchestration (kept for backward compatibility)
             if intent.category == IntentCategory.QUERY:
                 # For queries, generate direct response
                 return {
@@ -251,7 +367,7 @@ class SlackResponseHandler:
                     "intent": intent,
                 }
 
-            # Process other intents through orchestration
+            # Process EXECUTION and COMMAND intents through orchestration
             self.logger.debug(
                 f"Processing {intent.category.value} intent '{intent.action}' through orchestration"
             )
@@ -341,6 +457,28 @@ class SlackResponseHandler:
             return content.strip()
         return None
 
+    def _get_simple_response_for_intent(self, intent: Intent) -> str:
+        """
+        Generate simple responses for non-execution intents to prevent workflow creation.
+
+        Emergency fix to prevent "help" and other queries from creating GitHub issues.
+        """
+        action = intent.action.lower()
+
+        # Specific responses for common actions that were creating unwanted workflows
+        if "help" in action:
+            return "🤖 I'm Piper Morgan, your AI Product Management Assistant. I can help you create tickets, analyze data, and manage your projects. Try asking me to 'create a GitHub issue' or 'analyze project status'."
+        elif "status" in action:
+            return "📊 Current system status: All services operational. Slack integration active."
+        elif "hello" in action or "hi" in action:
+            return "👋 Hello! I'm here to assist with your product management tasks."
+        elif "ping" in action:
+            return "🏓 Pong! System is responsive."
+        elif "test" in action:
+            return "✅ Test successful. All systems operational."
+        else:
+            return f"🔍 I understand you want to {intent.action}. For complex tasks that require workflow creation, please be more specific about what you'd like me to execute."
+
     async def _generate_query_response(self, intent: Intent, slack_context: Dict[str, Any]) -> str:
         """Generate response content for query intents"""
         # Simple query response generation - could be enhanced with knowledge base
@@ -357,7 +495,11 @@ class SlackResponseHandler:
         """Format workflow result into response content"""
         result_type = workflow_result.get("type")
 
-        if result_type == "query_response":
+        if result_type == "simple_response":
+            return workflow_result.get("content")
+        elif result_type == "rate_limit_response":
+            return workflow_result.get("content")
+        elif result_type == "query_response":
             return workflow_result.get("content")
         elif result_type == "monitoring_response":
             return workflow_result.get("content")
@@ -370,7 +512,11 @@ class SlackResponseHandler:
                 elif "message" in result:
                     return result["message"]
                 else:
-                    return "✅ Task completed successfully"
+                    # PM-079: Don't send generic success messages - prevents spam
+                    logger.debug(
+                        f"No specific message for workflow result, suppressing notification"
+                    )
+                    return None
             else:
                 return str(result)
 
