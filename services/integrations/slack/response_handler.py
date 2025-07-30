@@ -233,7 +233,7 @@ class SlackResponseHandler:
         preserving spatial context for response generation.
         """
         try:
-            # Skip only basic QUERY intents that don't need orchestration
+            # Skip QUERY intents that don't need orchestration
             if intent.category == IntentCategory.QUERY:
                 # For queries, generate direct response
                 return {
@@ -242,8 +242,16 @@ class SlackResponseHandler:
                     "intent": intent,
                 }
 
-            # Process CONVERSATION and LEARNING intents through orchestration
-            # These are spatial monitoring intents that need workflow processing
+            # Skip monitoring intents that should bypass orchestration
+            if intent.action == "monitor_system" or intent.context.get("monitoring"):
+                self.logger.debug(f"Bypassing orchestration for monitoring intent: {intent.action}")
+                return {
+                    "type": "monitoring_response",
+                    "content": "Monitoring active - system status normal",
+                    "intent": intent,
+                }
+
+            # Process other intents through orchestration
             self.logger.debug(
                 f"Processing {intent.category.value} intent '{intent.action}' through orchestration"
             )
@@ -350,6 +358,8 @@ class SlackResponseHandler:
         result_type = workflow_result.get("type")
 
         if result_type == "query_response":
+            return workflow_result.get("content")
+        elif result_type == "monitoring_response":
             return workflow_result.get("content")
         elif result_type == "workflow_result":
             result = workflow_result.get("result", {})
