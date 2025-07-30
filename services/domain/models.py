@@ -34,6 +34,7 @@ class Product:
     vision: str = ""
     strategy: str = ""
     created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
 
     # Relationships
     features: List["Feature"] = field(default_factory=list)
@@ -52,6 +53,7 @@ class Feature:
     acceptance_criteria: List[str] = field(default_factory=list)
     status: str = "draft"
     created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
 
     # Relationships
     dependencies: List["Feature"] = field(default_factory=list)
@@ -64,10 +66,12 @@ class Stakeholder:
 
     id: str = field(default_factory=lambda: str(uuid4()))
     name: str = ""
+    email: Optional[str] = None
     role: str = ""
     interests: List[str] = field(default_factory=list)
     influence_level: int = 1  # 1-5 scale
     satisfaction: Optional[float] = None
+    created_at: datetime = field(default_factory=datetime.now)
 
 
 @dataclass
@@ -116,6 +120,7 @@ class ProjectIntegration:
 
     type: IntegrationType  # Required field - no default
     id: str = field(default_factory=lambda: str(uuid4()))
+    project_id: str = ""
     name: str = ""  # User-friendly name like "Main Repository", "Bug Tracker"
     config: Dict[str, Any] = field(default_factory=dict)
     is_active: bool = True
@@ -209,6 +214,7 @@ class Intent:
     id: str = field(default_factory=lambda: str(uuid4()))
     context: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.0
+    original_message: str = ""
     created_at: datetime = field(default_factory=datetime.now)
 
 
@@ -218,7 +224,7 @@ class Task:
 
     id: str = field(default_factory=lambda: str(uuid4()))
     name: str = ""
-    type: Optional[TaskType] = None
+    type: TaskType = TaskType.ANALYZE_REQUEST
     status: TaskStatus = TaskStatus.PENDING
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -383,6 +389,7 @@ class UploadedFile:
     last_referenced: Optional[datetime] = None
     reference_count: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
+    file_metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class AnalysisType(Enum):
