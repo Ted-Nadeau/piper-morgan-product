@@ -36,6 +36,26 @@ class TestSlackResponseHandler:
         # Add _timestamp_to_position method to prevent AttributeError
         spatial_adapter._timestamp_to_position = MagicMock(return_value=123)
 
+        # Set up proper mock behavior for spatial adapter
+        # Create a mock timestamp-to-position mapping
+        spatial_adapter._timestamp_to_position = {"1234567890.123456": 123}
+        spatial_adapter._position_to_timestamp = {123: "1234567890.123456"}
+        spatial_adapter._context_storage = {
+            "1234567890.123456": {
+                "channel_id": "C1234567890",
+                "user_id": "U1234567890",
+                "workspace_id": "T1234567890",
+                "thread_ts": None,
+                "content": "Test message",
+            }
+        }
+
+        # Mock the get_response_context method to return proper context
+        async def mock_get_response_context(timestamp):
+            return spatial_adapter._context_storage.get(timestamp)
+
+        spatial_adapter.get_response_context = mock_get_response_context
+
         intent_classifier = AsyncMock()
         orchestration_engine = AsyncMock()
         slack_client = AsyncMock(spec=SlackClient)
@@ -351,16 +371,25 @@ class TestRobustTaskManager:
         """
         Test that task manager operations are observable.
 
-        This ensures all task operations are tracked and verifiable.
+        This ensures all task operations are tracked and verifiable using the proven
+        create_tracked_task() interface for context preservation and observability.
         """
         # Arrange: Set up task manager state
         task_manager.context = {"test": "context"}
         task_manager.correlation_id = "test_correlation_789"
 
-        # Act: Perform operations
-        task_manager.add_task("test_task", {"task_data": "value"})
-        task_manager.start_task("test_task")
-        task_manager.complete_task("test_task", {"result": "success"})
+        # Act: Create tracked task using the proven interface
+        async def test_coroutine():
+            return {"result": "success"}
+
+        task = task_manager.create_tracked_task(
+            test_coroutine(),
+            name="test_task",
+            metadata={"task_data": "value", "correlation_id": "test_correlation_789"},
+        )
+
+        # Wait for task to complete
+        result = await task
 
         # Assert: Operations should be observable
         assert task_manager.context == {"test": "context"}, "Context should be preserved"
@@ -368,8 +397,15 @@ class TestRobustTaskManager:
             task_manager.correlation_id == "test_correlation_789"
         ), "Correlation ID should be preserved"
 
-        # Assert: Task state should be observable
-        # Note: This would require checking internal task state, but we can verify the operations completed
+        # Assert: Task completed successfully with observable result
+        assert result == {"result": "success"}, "Task should complete with expected result"
+
+        # Assert: Task metrics should be tracked
+        assert len(task_manager.task_metrics) > 0, "Task metrics should be recorded"
+
+        # Assert: Task should be observable through task manager
+        task_summary = task_manager.get_active_tasks_summary()
+        assert task_summary["total_tasks_created"] > 0, "Task creation should be tracked"
 
 
 class TestSlackPipelineMetrics:
