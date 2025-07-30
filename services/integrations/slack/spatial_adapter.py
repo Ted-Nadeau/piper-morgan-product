@@ -152,10 +152,26 @@ class SlackSpatialAdapter(BaseSpatialAdapter):
         # Map timestamp to spatial position
         position = await self.map_to_position(slack_timestamp, context)
 
-        # Extract spatial coordinates from context
+        # Extract spatial coordinates from context with proper mapping
+        # Handle both integer positions and string IDs
         territory_position = context.get("territory_position", 0)
+        if isinstance(territory_position, str):
+            # Convert territory_id to integer position (simple hash for now)
+            territory_position = hash(territory_position) % 1000
+
         room_position = context.get("room_position", 0)
+        if isinstance(room_position, str):
+            # Convert room_id to integer position (simple hash for now)
+            room_position = hash(room_position) % 1000
+        elif "room_id" in context and not room_position:
+            # Use room_id if room_position not provided
+            room_position = hash(context["room_id"]) % 1000
+
         path_position = context.get("path_position")
+        if isinstance(path_position, str):
+            # Convert path_id to integer position
+            path_position = hash(path_position) % 1000
+
         object_position = position.position
 
         # Create spatial event with integer positioning
@@ -235,12 +251,13 @@ class SlackSpatialAdapter(BaseSpatialAdapter):
             context = self._context_storage[slack_timestamp]
 
             return {
-                "channel_id": context.get("original_channel_id", context.get("room_id")),
-                "thread_ts": context.get("path_id"),
+                "channel_id": context.get("room_id") or context.get("original_channel_id"),
+                "thread_ts": context.get("path_id") or context.get("thread_ts"),
                 "workspace_id": context.get("territory_id"),
                 "user_id": context.get("user_id"),
                 "attention_level": context.get("attention_level", "medium"),
                 "navigation_intent": context.get("navigation_intent", "monitor"),
+                "content": context.get("content", ""),
             }
 
     def _store_context_for_routing(self, external_id: str, context: Dict[str, Any]) -> None:
