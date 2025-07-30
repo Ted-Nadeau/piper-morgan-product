@@ -88,8 +88,16 @@ class WorkItem(Base):
     feature_id = Column(String, ForeignKey("features.id"))
     title = Column(String, nullable=False)
     description = Column(Text)
+    type = Column(String)  # bug, feature, task, improvement
     status = Column(String, default="open")
     priority = Column(String, default="medium")
+    labels = Column(JSON)  # List of labels
+    assignee = Column(String)  # Assigned person
+    project_id = Column(String)  # Project association (separate from FK)
+    source_system = Column(String)  # Source system name
+    external_id = Column(String)  # External system ID
+    external_url = Column(String)  # External system URL
+    item_metadata = Column(JSON)  # Additional metadata (renamed to avoid SQLAlchemy conflict)
 
     # External system references
     external_refs = Column(JSON)  # {"github": "issue-123", "jira": "PROJ-456"}
@@ -100,6 +108,44 @@ class WorkItem(Base):
     # Relationships
     product = relationship("Product", back_populates="work_items")
     feature = relationship("Feature", back_populates="work_items")
+
+    def to_domain(self) -> domain.WorkItem:
+        """Convert database model to domain model"""
+        return domain.WorkItem(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            type=self.type or "task",
+            status=self.status or "open",
+            priority=self.priority or "medium",
+            labels=self.labels or [],
+            assignee=self.assignee,
+            project_id=self.project_id,
+            source_system=self.source_system or "",
+            external_id=self.external_id or "",
+            external_url=self.external_url,
+            metadata=self.item_metadata or {},  # Map item_metadata to metadata
+            created_at=self.created_at,
+        )
+
+    @classmethod
+    def from_domain(cls, work_item: domain.WorkItem) -> "WorkItem":
+        """Create database model from domain model"""
+        return cls(
+            id=work_item.id,
+            title=work_item.title,
+            description=work_item.description,
+            type=work_item.type,
+            status=work_item.status,
+            priority=work_item.priority,
+            labels=work_item.labels,
+            assignee=work_item.assignee,
+            project_id=work_item.project_id,
+            source_system=work_item.source_system,
+            external_id=work_item.external_id,
+            external_url=work_item.external_url,
+            item_metadata=work_item.metadata,  # Map metadata to item_metadata
+        )
 
 
 class Intent(Base):
@@ -131,11 +177,13 @@ class Workflow(Base):
     input_data = Column(JSON)
     output_data = Column(JSON)
     context = Column(JSON)
+    result = Column(JSON)  # Workflow execution result
     error = Column(Text)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     intent = relationship("Intent", back_populates="workflow", uselist=False)
@@ -179,10 +227,12 @@ class Task(Base, TimestampMixin):
 
     id = Column(String, primary_key=True)
     workflow_id = Column(String, ForeignKey("workflows.id"))
+    name = Column(String, nullable=False)  # Task name
     type = Column(Enum(TaskType))
     status = Column(Enum(TaskStatus))
     input_data = Column(JSON)
     output_data = Column(JSON)
+    result = Column(JSON)  # Task execution result
     error = Column(Text)
 
     started_at = Column(DateTime)
@@ -203,6 +253,7 @@ class Stakeholder(Base):
     role = Column(String)
     interests = Column(JSON)  # List of interest areas
     influence_level = Column(Integer, default=1)
+    satisfaction = Column(Float)  # Stakeholder satisfaction level
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -326,6 +377,7 @@ class UploadedFileDB(Base):
             last_referenced=self.last_referenced,
             reference_count=self.reference_count,
             metadata=self.file_metadata or {},
+            file_metadata=self.file_metadata or {},  # Map to both fields
         )
 
     @classmethod
@@ -340,5 +392,6 @@ class UploadedFileDB(Base):
             upload_time=file.upload_time,
             last_referenced=file.last_referenced,
             reference_count=file.reference_count,
-            file_metadata=file.metadata,
+            file_metadata=file.file_metadata
+            or file.metadata,  # Prefer file_metadata, fallback to metadata
         )
