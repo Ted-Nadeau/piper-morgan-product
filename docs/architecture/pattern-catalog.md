@@ -144,7 +144,220 @@ class WorkflowFactory:
 - ❌ Hidden dependencies through instance state
 - ❌ Thread-unsafe shared state
 
-## 3. Query Service Pattern (CQRS-lite)
+## 3. Robust Task Manager Pattern
+
+### Purpose
+
+Manage background tasks with context preservation and comprehensive tracking, preventing garbage collection and providing full observability into task execution lifecycle.
+
+### Implementation
+
+```python
+class RobustTaskManager:
+    """Manages background tasks with context preservation and comprehensive tracking"""
+
+    def __init__(self):
+        self.active_tasks: Set[asyncio.Task] = set()
+        self.task_metrics: Dict[str, TaskMetrics] = {}
+        self.context: Dict[str, Any] = {}
+        self.correlation_id: Optional[str] = None
+
+    def add_task(self, task_name: str, task_data: Dict[str, Any]) -> str:
+        """Add a task to the manager for tracking"""
+        task_id = str(uuid.uuid4())
+        metrics = TaskMetrics(task_id=task_id, name=task_name, ...)
+        self.task_metrics[task_id] = metrics
+        return task_id
+
+    def start_task(self, task_name: str) -> bool:
+        """Mark a task as started"""
+        for task_id, metrics in self.task_metrics.items():
+            if metrics.name == task_name and metrics.started_at is None:
+                metrics.mark_started()
+                return True
+        return False
+
+    def complete_task(self, task_name: str, result: Dict[str, Any]) -> bool:
+        """Mark a task as completed with result"""
+        for task_id, metrics in self.task_metrics.items():
+            if metrics.name == task_name and metrics.completed_at is None:
+                metrics.mark_completed(success=True)
+                self.task_results[task_id] = result
+                return True
+        return False
+```
+
+### Usage Guidelines
+
+- Use for all background task management
+- Preserve context across async boundaries
+- Track task lifecycle with metrics
+- Prevent garbage collection of active tasks
+- Maintain correlation IDs for observability
+
+### Anti-patterns to Avoid
+
+- ❌ Manual task tracking without metrics
+- ❌ Losing context across async boundaries
+- ❌ No correlation tracking
+- ❌ Tasks that can be garbage collected
+
+## 4. Pipeline Metrics Pattern
+
+### Purpose
+
+Track comprehensive metrics for pipeline execution with correlation tracking and stage recording for observability.
+
+### Implementation
+
+```python
+@dataclass
+class SlackPipelineMetrics:
+    """Comprehensive metrics tracking for pipeline execution"""
+    correlation_id: str
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    processing_stages: List[Any] = field(default_factory=list)
+
+    def start_pipeline(self):
+        """Start pipeline timing"""
+        self.start_time = datetime.utcnow()
+
+    def end_pipeline(self):
+        """End pipeline timing"""
+        self.end_time = datetime.utcnow()
+
+    def record_stage(self, stage_name: str, stage_data: Dict[str, Any]):
+        """Record a processing stage with data"""
+        stage_record = {
+            "name": stage_name,
+            "data": stage_data,
+            "correlation_id": self.correlation_id,
+            "timestamp": datetime.utcnow()
+        }
+        self.processing_stages.append(stage_record)
+```
+
+### Usage Guidelines
+
+- Track all pipeline stages with correlation IDs
+- Record timing for performance monitoring
+- Maintain stage data for debugging
+- Use for end-to-end observability
+
+### Anti-patterns to Avoid
+
+- ❌ No correlation tracking across stages
+- ❌ Missing timing information
+- ❌ No stage data preservation
+- ❌ Inconsistent observability
+
+## 5. Response Handler Pattern
+
+### Purpose
+
+Handle response generation with intent-based routing and monitoring bypass for different types of requests.
+
+### Implementation
+
+```python
+class SlackResponseHandler:
+    """Handle Slack responses with intent-based routing"""
+
+    async def _process_through_orchestration(self, intent: Intent, slack_context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Process intent through orchestration engine with monitoring bypass"""
+
+        # Skip monitoring intents that should bypass orchestration
+        if intent.action == "monitor_system" or intent.context.get("monitoring"):
+            return {
+                "type": "monitoring_response",
+                "content": "Monitoring active - system status normal",
+                "intent": intent,
+            }
+
+        # Process other intents through orchestration
+        return await self.orchestration_engine.process_intent(intent, slack_context)
+```
+
+### Usage Guidelines
+
+- Implement intent-based routing
+- Provide monitoring bypass for system requests
+- Maintain observability throughout processing
+- Handle different response types appropriately
+
+### Anti-patterns to Avoid
+
+- ❌ No intent-based routing
+- ❌ Processing all requests through orchestration
+- ❌ Missing monitoring bypass
+- ❌ No observability tracking
+
+## 6. Spatial Adapter Pattern
+
+### Purpose
+
+Map external identifiers to spatial positions with bidirectional mapping and context preservation for response routing.
+
+### Implementation
+
+```python
+class SlackSpatialAdapter(BaseSpatialAdapter):
+    """Spatial adapter for Slack integration with channel ID preservation"""
+
+    async def create_spatial_event_from_slack(self, slack_timestamp: str, event_type: str, context: Dict[str, Any]) -> SpatialEvent:
+        """Create SpatialEvent from Slack timestamp with proper ID mapping"""
+
+        # Handle both integer positions and string IDs
+        territory_position = context.get("territory_position", 0)
+        if isinstance(territory_position, str):
+            territory_position = hash(territory_position) % 1000
+
+        room_position = context.get("room_position", 0)
+        if isinstance(room_position, str):
+            room_position = hash(room_position) % 1000
+        elif "room_id" in context and not room_position:
+            room_position = hash(context["room_id"]) % 1000
+
+        # Create spatial event with integer positioning
+        return SpatialEvent(
+            event_type=event_type,
+            territory_position=territory_position,
+            room_position=room_position,
+            # ... other fields
+        )
+
+    async def get_response_context(self, slack_timestamp: str) -> Optional[Dict[str, Any]]:
+        """Get context for response routing to Slack"""
+        async with self._lock:
+            if slack_timestamp not in self._context_storage:
+                return None
+
+            context = self._context_storage[slack_timestamp]
+            return {
+                "channel_id": context.get("room_id") or context.get("original_channel_id"),
+                "thread_ts": context.get("path_id") or context.get("thread_ts"),
+                "workspace_id": context.get("territory_id"),
+                "user_id": context.get("user_id"),
+                "content": context.get("content", ""),
+            }
+```
+
+### Usage Guidelines
+
+- Map external IDs to spatial positions consistently
+- Preserve context for response routing
+- Maintain bidirectional mapping
+- Handle both string and integer positions
+
+### Anti-patterns to Avoid
+
+- ❌ No bidirectional mapping
+- ❌ Losing context during mapping
+- ❌ Inconsistent ID handling
+- ❌ No response context preservation
+
+## 7. Query Service Pattern (CQRS-lite)
 
 ### Purpose
 
@@ -202,7 +415,7 @@ class ProjectQueryService:
 - ❌ Complex business logic in queries
 - ❌ Cross-repository transactions in queries
 
-## 4. Domain-First Database Pattern
+## 8. Domain-First Database Pattern
 
 ### Purpose
 
@@ -258,7 +471,7 @@ async def init_database():
 - ❌ Exposing database details in domain
 - ❌ Manual schema synchronization
 
-## 5. Event-Driven Communication Pattern
+## 9. Event-Driven Communication Pattern
 
 ### Purpose
 
@@ -316,7 +529,7 @@ await event_bus.publish(Event(
 - ❌ Business logic in event handlers
 - ❌ Assuming event ordering
 
-## 6. Plugin Architecture Pattern
+## 10. Plugin Architecture Pattern
 
 ### Purpose
 
@@ -378,7 +591,7 @@ class IntegrationManager:
 - ❌ Tight coupling to external APIs
 - ❌ Assuming plugin availability
 
-## 7. Context Resolution Pattern
+## 11. Context Resolution Pattern
 
 ### Purpose
 
@@ -451,7 +664,7 @@ class ProjectContext:
 - ❌ Silent fallbacks
 - ❌ Assuming context exists
 
-## 8. Adapter Pattern for LLM Providers
+## 12. Adapter Pattern for LLM Providers
 
 ### Purpose
 
@@ -513,7 +726,7 @@ class LLMFactory:
 - ❌ Hardcoding provider choice
 - ❌ Leaking provider abstractions
 
-## 9. Session Management Pattern
+## 13. Session Management Pattern
 
 ### Purpose
 
@@ -572,7 +785,7 @@ async with factory.get_repository(ProjectRepository) as repo:
 - ❌ Sessions crossing service boundaries
 - ❌ Assuming session state
 
-## 10. Error Handling Pattern (API Contract)
+## 14. Error Handling Pattern (API Contract)
 
 ### Purpose
 
@@ -694,7 +907,7 @@ async def process_intent(request: IntentRequest):
 - ❌ Wrong HTTP status codes for error types
 - ❌ Technical jargon in user-facing messages
 
-## 11. Internal Task Handler Pattern
+## 15. Internal Task Handler Pattern
 
 ### Purpose
 
@@ -763,7 +976,7 @@ class OrchestrationEngine:
 - ❌ Indirect state access via external handler classes.
 - ❌ Registering handlers dynamically in multiple places.
 
-## 12. Repository Context Enrichment Pattern
+## 16. Repository Context Enrichment Pattern
 
 ### Purpose
 
@@ -818,313 +1031,63 @@ def create_workflow_from_intent(intent: Intent, project_context: Project):
 - ❌ Failing workflows on enrichment errors.
 - ❌ Scattering enrichment logic across multiple modules.
 
-## 13. Repository Domain Model Conversion
+## 17. Background Task Error Handling Pattern
 
 ### Purpose
 
-Ensure that repository methods return domain models, not database models, to maintain clean architectural boundaries and avoid exposing database details to business logic.
+Wrap background task execution in a robust error handling pattern to ensure task failures are logged and managed appropriately, preventing application crashes and enabling graceful degradation.
 
 ### Implementation
 
 ```python
-class BaseRepository:
-    """Base repository with common CRUD operations"""
+class RobustTaskManager:
+    """Manages background tasks with context preservation and comprehensive tracking"""
 
-    def __init__(self, db_session: AsyncSession, model_class: Type[Base]):
-        self.db = db_session
-        self.model_class = model_class
+    def __init__(self):
+        self.active_tasks: Set[asyncio.Task] = set()
+        self.task_metrics: Dict[str, TaskMetrics] = {}
+        self.context: Dict[str, Any] = {}
+        self.correlation_id: Optional[str] = None
 
-    async def create(self, **kwargs) -> Any:
-        instance = self.model_class(**kwargs)
-        self.db.add(instance)
-        await self.db.commit()
-        await self.db.refresh(instance)
-        return instance
+    def add_task(self, task_name: str, task_data: Dict[str, Any]) -> str:
+        """Add a task to the manager for tracking"""
+        task_id = str(uuid.uuid4())
+        metrics = TaskMetrics(task_id=task_id, name=task_name, ...)
+        self.task_metrics[task_id] = metrics
+        return task_id
 
-    async def get_by_id(self, id: str) -> Optional[Any]:
-        return await self.db.get(self.model_class, id)
+    def start_task(self, task_name: str) -> bool:
+        """Mark a task as started"""
+        for task_id, metrics in self.task_metrics.items():
+            if metrics.name == task_name and metrics.started_at is None:
+                metrics.mark_started()
+                return True
+        return False
 
-class ProjectRepository(BaseRepository):
-    """Domain-specific repository"""
-
-    def __init__(self, db_session: AsyncSession):
-        super().__init__(db_session, ProductDB)
-
-    async def list_active_projects(self) -> List[Project]:
-        result = await self.db.execute(
-            select(ProductDB).where(ProductDB.is_archived == False)
-        )
-        db_projects = result.scalars().all()
-        return [self._to_domain(p) for p in db_projects]
-
-    def _to_domain(self, db_model: ProductDB) -> Project:
-        """Convert database model to domain model"""
-        # Conversion logic here
+    def complete_task(self, task_name: str, result: Dict[str, Any]) -> bool:
+        """Mark a task as completed with result"""
+        for task_id, metrics in self.task_metrics.items():
+            if metrics.name == task_name and metrics.completed_at is None:
+                metrics.mark_completed(success=True)
+                self.task_results[task_id] = result
+                return True
+        return False
 ```
 
 ### Usage Guidelines
 
-- Ensure repository methods return domain models, not database models
-- Maintain clean architectural boundaries
-- Avoid exposing database details to business logic
-- Use consistent conversion logic across repositories
+- Use for all background task management
+- Preserve context across async boundaries
+- Track task lifecycle with metrics
+- Prevent garbage collection of active tasks
+- Maintain correlation IDs for observability
 
 ### Anti-patterns to Avoid
 
-- ❌ Returning database models directly from repositories
-- ❌ Exposing database details in repository methods
-- ❌ Hardcoding conversion logic in repositories
-- ❌ Mixing domain logic with repository logic
-
-## 14. Async Relationship Eager Loading
-
-### Purpose
-
-Prevent async SQLAlchemy context errors by eagerly loading relationships that will be accessed after the database session.
-
-### Implementation
-
-```python
-from sqlalchemy.orm import selectinload
-
-# Eager load integrations with project
-result = await self.session.execute(
-    select(ProjectDB)
-    .options(selectinload(ProjectDB.integrations))  # Eager load!
-    .where(ProjectDB.id == project_id)
-)
-db_project = result.scalar_one_or_none()
-if db_project:
-    return db_project.to_domain()  # All relationships available
-```
-
-### Usage Guidelines
-
-- Use `selectinload()` for one-to-many relationships
-- Load all relationships needed for domain conversion
-- Avoid lazy loading in async contexts
-- Prefer single query with eager loading over multiple queries
-
-### Benefits
-
-- Prevents "greenlet_spawn has not been called" errors
-- All data available for domain conversion
-- Better performance (single query vs N+1)
-- Reliable relationship access
-
-### Anti-patterns to Avoid
-
-- ❌ Lazy loading relationships in async context
-- ❌ Accessing relationships after session closes
-- ❌ Using `joinedload()` for collections (can cause issues)
-- ❌ Missing relationship loading in repository methods
-
-### Discovered
-
-PM-011 - Lazy loading caused "greenlet_spawn has not been called" errors when accessing project integrations after session context.
-
-## 15. Action Humanizer Pattern
-
-### Purpose
-
-Convert technical action strings into natural language for improved user experience while maintaining system consistency and performance through intelligent caching.
-
-### Context
-
-System actions are represented as snake_case strings (e.g., `investigate_crash`) which are not user-friendly. These need to be converted to natural language while maintaining consistency and performance.
-
-### Solution
-
-#### Core Components
-
-**ActionHumanizer Service**
-
-```python
-class ActionHumanizer:
-    """Service to convert technical action strings to natural language"""
-
-    def __init__(self, repo: ActionHumanizationRepository):
-        self.repo = repo
-
-    async def humanize(self, action: str, category: Optional[str] = None) -> str:
-        """Convert technical action to human-readable format"""
-
-        # Check cache first
-        cached = await self.repo.get_by_action(action)
-        if cached:
-            await self.repo.increment_usage(action)
-            return cached.human_readable
-
-        # Apply rule-based conversion
-        human_readable = self._apply_rules(action)
-
-        # Cache the result
-        humanization = ActionHumanization(
-            action=action,
-            category=category,
-            human_readable=human_readable
-        )
-        await self.repo.create(humanization)
-
-        return human_readable
-
-    def _apply_rules(self, action: str) -> str:
-        """Rule-based conversion for common patterns"""
-        if '_' not in action:
-            return action
-
-        parts = action.split('_')
-
-        # Handle verb_noun pattern
-        if len(parts) == 2:
-            verb, noun = parts
-            if verb in ['create', 'investigate', 'analyze', 'review', 'update', 'delete']:
-                article = 'an' if noun[0].lower() in 'aeiou' else 'a'
-                return f"{verb} {article} {noun}"
-            elif verb in ['list', 'count']:
-                return f"{verb} {noun}s"  # pluralize
-
-        # Handle compound nouns
-        if len(parts) >= 2:
-            verb = parts[0]
-            compound = ' '.join(parts[1:])
-            if verb in ['analyze', 'check', 'verify', 'validate']:
-                return f"{verb} {compound}"
-
-        # Default: replace underscores
-        return action.replace('_', ' ')
-```
-
-**TemplateRenderer Integration**
-
-```python
-class TemplateRenderer:
-    """Template-based message generation with humanization"""
-
-    def __init__(self, humanizer: Optional[ActionHumanizer] = None):
-        self.humanizer = humanizer
-
-    async def render_template(
-        self,
-        template: str,
-        intent_action: str,
-        intent_category: Optional[str] = None,
-        **kwargs
-    ) -> str:
-        """Render template with humanized action"""
-
-        # Add humanized action if needed
-        if "{human_action}" in template and self.humanizer:
-            human_action = await self.humanizer.humanize(
-                intent_action,
-                intent_category
-            )
-            kwargs["human_action"] = human_action
-
-        # Keep original action available
-        kwargs["action"] = intent_action
-
-        return template.format(**kwargs)
-```
-
-### Implementation Guidelines
-
-#### DO:
-
-- ✅ Always check cache before generating
-- ✅ Track usage for analytics
-- ✅ Use consistent rules across the system
-- ✅ Handle edge cases gracefully
-- ✅ Support both {action} and {human_action} in templates
-
-#### DON'T:
-
-- ❌ Generate new humanizations for every request
-- ❌ Use synchronous operations (everything is async)
-- ❌ Hardcode humanizations in templates
-- ❌ Create multiple humanizer instances
-- ❌ Bypass the caching layer
-
-### Usage Example
-
-```python
-# In main.py or workflow handler
-humanizer = ActionHumanizer(repo=action_humanization_repo)
-renderer = TemplateRenderer(humanizer=humanizer)
-
-# Get appropriate template
-template = get_message_template(
-    intent.category,
-    intent.action,
-    workflow_type
-)
-
-# Render with humanization
-message = await renderer.render_template(
-    template,
-    intent_action=intent.action,
-    intent_category=intent.category.value,
-    workflow_id=workflow.id
-)
-```
-
-### Performance Considerations
-
-- Cache lookups: O(1) with indexed database field
-- Rule application: O(n) where n is action string length
-- First-time humanization: ~1-5ms
-- Cached humanization: <0.1ms
-
-### Future Enhancements
-
-1. **LLM Integration**: For complex or unknown patterns
-2. **Context Awareness**: Different humanizations based on category
-3. **Internationalization**: Support for multiple languages
-4. **A/B Testing**: Track which humanizations perform better
-5. **Admin Interface**: Manual override for specific actions
-
-## 16. MCP Adapter Pattern (Planned)
-
-### Purpose
-
-Abstract Model Context Protocol behind existing integration interfaces to maintain backward compatibility while enabling new capabilities.
-
-### Implementation
-
-```python
-class MCPAdapter(IntegrationPlugin):
-    """Adapts MCP protocol to existing plugin interface"""
-
-    def __init__(self, mcp_client: MCPClient):
-        self.mcp_client = mcp_client
-        self._discovered_tools = {}
-
-    async def discover_capabilities(self):
-        """MCP-specific capability discovery"""
-        tools = await self.mcp_client.list_tools()
-        self._discovered_tools = {t.name: t for t in tools}
-
-    async def execute(self, action: str, params: Dict) -> Dict:
-        """Translate plugin calls to MCP protocol"""
-        tool = self._discovered_tools.get(action)
-        if not tool:
-            raise ToolNotFoundError(action)
-        return await self.mcp_client.invoke(tool, params)
-```
-
-### Usage Guidelines
-
-- Maintain existing plugin interface
-- Add MCP-specific features progressively
-- Enable graceful fallback for non-MCP tools
-- Support capability negotiation
-
-### Anti-patterns to Avoid
-
-- ❌ Replacing existing integrations wholesale
-- ❌ Exposing MCP protocol details to service layer
-- ❌ Breaking backward compatibility
-- ❌ Tight coupling to MCP version
+- ❌ Manual task tracking without metrics
+- ❌ Losing context across async boundaries
+- ❌ No correlation tracking
+- ❌ Tasks that can be garbage collected
 
 ## 18. Configuration Access Pattern
 
@@ -1236,32 +1199,6 @@ def test_config():
 - **ADR-010**: Configuration Access Patterns
 - **Implementation**: `services/infrastructure/config/feature_flags.py`
 - **Migration**: GitHub Issues #39 (MCPResourceManager), #40 (FileRepository)
-
-## Summary
-
-These patterns form the architectural foundation of Piper Morgan:
-
-1. **Repository Pattern** - Clean data access
-2. **Factory Pattern (Stateless)** - Safe object creation
-3. **Query Service Pattern** - Optimized reads
-4. **Domain-First Database** - Business-driven schema
-5. **Event-Driven Communication** - Loose coupling
-6. **Plugin Architecture** - Extensible integrations
-7. **Context Resolution** - Smart defaults
-8. **Adapter Pattern** - Provider abstraction
-9. **Session Management** - Resource safety
-10. **Error Handling Pattern** - User-friendly API responses
-11. **Internal Task Handler Pattern** - Engine method-based task handling
-12. **Repository Context Enrichment Pattern** - Automatic repo context for integrations
-13. **Repository Domain Model Conversion** - Clean architectural boundaries
-14. **Async Relationship Eager Loading** - Reliable async data access
-15. **Action Humanizer Pattern** - User-friendly message generation
-16. **MCP Adapter Pattern** - MCP-specific integration
-17. **Background Task Error Handling Pattern** - Safe wrapper pattern for background task execution
-18. **Configuration Access Pattern** - Layer-appropriate configuration management
-19. **LLM Placeholder Instruction Pattern** - Prevent LLM hallucination with explicit placeholders for missing information
-20. **Spatial Metaphor Integration Pattern** - Process external events as spatial changes to AI environment
-21. **TDD Integration Testing Pattern** - Apply TDD methodology to integration testing with failing tests first
 
 ## 19. LLM Placeholder Instruction Pattern
 
@@ -1558,54 +1495,6 @@ class TestOAuthSpatialIntegration:
 - Validates component contracts and interfaces
 - Prevents integration issues through early testing
 - Maintains high test coverage for complex interactions
-
-### Purpose
-
-Prevent Large Language Model (LLM) hallucination by instructing models to use explicit placeholders when information is missing or uncertain, rather than fabricating technical details.
-
-### Implementation
-
-```python
-# In prompt instructions for LLM content generation
-prompt_instructions = """
-6. PLACEHOLDER INSTRUCTIONS (CRITICAL):
-   **NEVER fabricate specific technical details not provided in the user request.**
-
-   When information is missing or uncertain, use explicit placeholders:
-   - **[SPECIFIC EXAMPLE NEEDED: describe what kind]** - For technical details, error messages, version numbers
-   - **[FACT CHECK: claim]** - For unverified details, environments, browser versions, test results
-   - **[QUESTION: ask clarifying question]** - When guessing would be required
-
-   Examples:
-   - Instead of: "Error message: 'An unexpected error occurred. Please try again later.'"
-   - Use: "Error message: [SPECIFIC EXAMPLE NEEDED: exact error message displayed]"
-
-   - Instead of: "Tested on Chrome 89, Firefox 86, Safari 14"
-   - Use: "Tested on [FACT CHECK: browser versions and environments where issue occurs]"
-"""
-```
-
-### Usage Guidelines
-
-- Apply to all LLM-generated content where accuracy is critical
-- Use three placeholder types: SPECIFIC EXAMPLE NEEDED, FACT CHECK, QUESTION
-- Include clear examples of what NOT to fabricate
-- Make placeholders clearly visible and actionable for reviewers
-- Maintain professional content structure while preventing misinformation
-
-### Anti-Patterns
-
-- ❌ Allowing LLM to guess technical details
-- ❌ Fabricating browser versions, error messages, or environment details
-- ❌ Making unverified claims about testing or environments
-- ❌ Generating vague placeholders without specific guidance
-
-### Benefits
-
-- Increased accuracy and trustworthiness
-- Clear communication about missing information
-- Professional standards in generated content
-- Prevents misleading stakeholders with fabricated details
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
