@@ -235,7 +235,7 @@ class SlackSpatialAdapter(BaseSpatialAdapter):
             context = self._context_storage[slack_timestamp]
 
             return {
-                "channel_id": context.get("room_id"),
+                "channel_id": context.get("original_channel_id", context.get("room_id")),
                 "thread_ts": context.get("path_id"),
                 "workspace_id": context.get("territory_id"),
                 "user_id": context.get("user_id"),
