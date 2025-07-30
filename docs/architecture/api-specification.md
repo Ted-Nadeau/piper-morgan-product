@@ -588,34 +588,301 @@ Standard pagination for list endpoints:
 
 ## Health Check
 
-#### GET `/api/v1/health`
+#### GET `/health/`
 
-System health status.
+Basic health check endpoint.
 
 **Response:**
 
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-06-19T10:00:00Z",
-  "services": {
-    "database": "healthy",
-    "redis": "healthy",
-    "chromadb": "healthy",
-    "temporal": "healthy",
-    "github": "healthy",
-    "github_rate_limit": {
-      "limit": 5000,
-      "remaining": 4987,
-      "reset": 1623456789
-    },
-    "claude": "healthy",
-    "openai": "healthy"
-  },
-  "version": "1.0.0",
-  "uptime_seconds": 86400
+  "timestamp": "2025-07-30T10:00:00Z",
+  "environment": "staging"
 }
 ```
+
+#### GET `/health/liveness`
+
+Kubernetes-style liveness probe.
+
+**Response:**
+
+```json
+{
+  "status": "alive",
+  "timestamp": "2025-07-30T10:00:00Z"
+}
+```
+
+#### GET `/health/readiness`
+
+Kubernetes-style readiness probe with database connectivity check.
+
+**Response (Ready):**
+
+```json
+{
+  "status": "ready",
+  "timestamp": "2025-07-30T10:00:00Z"
+}
+```
+
+**Response (Not Ready):**
+
+HTTP 503 Service Unavailable
+
+```json
+{
+  "detail": "Not ready: Database connection failed"
+}
+```
+
+#### GET `/health/comprehensive`
+
+Comprehensive health check for all system components.
+
+**Response (Healthy):**
+
+```json
+{
+  "overall_status": "healthy",
+  "timestamp": "2025-07-30T10:00:00Z",
+  "environment": "staging",
+  "version": "PM-038-staging",
+  "components": {
+    "database": {
+      "status": "healthy",
+      "response_time_ms": 12.5,
+      "total_connections": 5,
+      "active_connections": 2,
+      "table_count": 15,
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time_ms": 8.3,
+      "connected_clients": 3,
+      "used_memory_human": "2.5M",
+      "redis_version": "7.0.0",
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "chromadb": {
+      "status": "healthy",
+      "response_time_ms": 45.2,
+      "heartbeat": {"nanosecond heartbeat": 1690789200123456789},
+      "collection_count": 2,
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "mcp_integration": {
+      "status": "healthy",
+      "total_response_time_ms": 320.5,
+      "tests": {
+        "resource_count": 5,
+        "search_response_time_ms": 250.2,
+        "search_results_count": 12,
+        "connection_stats": {"using_pool": true},
+        "performance_target_met": true
+      },
+      "pm038_features": {
+        "connection_pooling": true,
+        "content_search": true,
+        "performance_target": "< 500ms",
+        "actual_performance": "250.2ms"
+      },
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "slack_integration": {
+      "status": "healthy",
+      "checks": {
+        "slack_token_configured": true,
+        "slack_api_reachable": true,
+        "workspace_info": {
+          "team": "Piper Morgan Dev",
+          "user": "piper-bot",
+          "team_id": "T1234567890"
+        },
+        "active_background_tasks": 3,
+        "task_success_rate": 0.95,
+        "stuck_pipelines_count": 0,
+        "has_stuck_pipelines": false,
+        "meets_slack_timeout": true
+      },
+      "metrics": {
+        "api_response_time_ms": 125.3,
+        "recent_success_rate": 0.92,
+        "recent_pipeline_count": 8,
+        "successful_pipelines": 7,
+        "failed_pipelines": 1,
+        "avg_processing_time_ms": 1850.5,
+        "total_tasks_created": 45,
+        "failed_tasks": 2
+      },
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "system_resources": {
+      "status": "healthy",
+      "cpu_percent": 35.2,
+      "memory_percent": 45.8,
+      "disk_percent": 22.1,
+      "memory_available_gb": 8.5,
+      "disk_free_gb": 45.2,
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "api_endpoints": {
+      "status": "healthy",
+      "total_response_time_ms": 1250.8,
+      "healthy_endpoints": "4/4",
+      "endpoints": {
+        "/api/v1/intent": {
+          "status_code": 200,
+          "response_time_ms": 450.2,
+          "healthy": true
+        },
+        "/api/v1/files/search": {
+          "status_code": 200,
+          "response_time_ms": 320.5,
+          "healthy": true
+        },
+        "/health/liveness": {
+          "status_code": 200,
+          "response_time_ms": 15.3,
+          "healthy": true
+        },
+        "/health/readiness": {
+          "status_code": 200,
+          "response_time_ms": 25.8,
+          "healthy": true
+        }
+      },
+      "timestamp": "2025-07-30T10:00:00Z"
+    },
+    "external_services": {
+      "status": "degraded",
+      "reachable_services": "2/3",
+      "services": {
+        "anthropic": {
+          "status_code": 200,
+          "response_time_ms": 890.2,
+          "reachable": true
+        },
+        "openai": {
+          "status_code": 200,
+          "response_time_ms": 1250.8,
+          "reachable": true
+        },
+        "github": {
+          "status_code": 0,
+          "response_time_ms": 0,
+          "reachable": false,
+          "error": "Connection timeout"
+        }
+      },
+      "timestamp": "2025-07-30T10:00:00Z"
+    }
+  },
+  "summary": {
+    "total_components": 8,
+    "healthy_components": 7,
+    "degraded_components": 1,
+    "unhealthy_components": 0,
+    "health_percentage": 87.5
+  }
+}
+```
+
+**Response (Unhealthy):**
+
+HTTP 503 Service Unavailable - Returns same structure with failed components.
+
+#### GET `/health/mcp`
+
+Dedicated MCP (Model Context Protocol) health check.
+
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "total_response_time_ms": 320.5,
+  "tests": {
+    "resource_count": 5,
+    "search_response_time_ms": 250.2,
+    "search_results_count": 12,
+    "connection_stats": {"using_pool": true},
+    "performance_target_met": true
+  },
+  "pm038_features": {
+    "connection_pooling": true,
+    "content_search": true,
+    "performance_target": "< 500ms",
+    "actual_performance": "250.2ms"
+  },
+  "timestamp": "2025-07-30T10:00:00Z"
+}
+```
+
+#### GET `/health/slack`
+
+Dedicated Slack integration health check with pipeline monitoring.
+
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "slack_token_configured": true,
+    "slack_api_reachable": true,
+    "workspace_info": {
+      "team": "Piper Morgan Dev",
+      "user": "piper-bot",
+      "team_id": "T1234567890"
+    },
+    "active_background_tasks": 3,
+    "task_success_rate": 0.95,
+    "stuck_pipelines_count": 0,
+    "has_stuck_pipelines": false,
+    "meets_slack_timeout": true
+  },
+  "metrics": {
+    "api_response_time_ms": 125.3,
+    "recent_success_rate": 0.92,
+    "recent_pipeline_count": 8,
+    "successful_pipelines": 7,
+    "failed_pipelines": 1,
+    "avg_processing_time_ms": 1850.5,
+    "total_tasks_created": 45,
+    "failed_tasks": 2
+  },
+  "timestamp": "2025-07-30T10:00:00Z"
+}
+```
+
+#### GET `/health/metrics`
+
+Prometheus-compatible health metrics for monitoring integration.
+
+**Response (text/plain):**
+
+```
+piper_health_overall{environment="staging"} 1
+piper_health_component{component="database",environment="staging"} 1
+piper_health_component{component="redis",environment="staging"} 1
+piper_health_component{component="slack_integration",environment="staging"} 1
+piper_health_response_time_ms{component="database",environment="staging"} 12.5
+piper_health_response_time_ms{component="redis",environment="staging"} 8.3
+piper_system_cpu_percent{environment="staging"} 35.2
+piper_system_memory_percent{environment="staging"} 45.8
+piper_system_disk_percent{environment="staging"} 22.1
+```
+
+### Health Status Levels
+
+- **healthy**: All systems operational
+- **degraded**: Some performance issues but functional
+- **unhealthy**: Critical systems down or failing
+- **unknown**: Cannot determine status
 
 ## Development Tools
 
