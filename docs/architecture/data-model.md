@@ -137,7 +137,7 @@ class Stakeholder:
     email: Optional[str] = None
     interests: List[str] = field(default_factory=list)
     influence_level: int = 1  # 1-5 scale
-    satisfaction: Optional[float] = None
+    satisfaction: Optional[float] = None  # Stakeholder satisfaction level (0-10 scale)
     created_at: datetime = field(default_factory=datetime.now)
 ```
 
@@ -157,7 +157,7 @@ class WorkItem:
     source_system: str = ""  # github, jira, etc.
     external_id: str = ""    # ID in external system
     external_refs: Dict[str, str] = field(default_factory=dict)  # Multiple system refs
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    item_metadata: Dict[str, Any] = field(default_factory=dict)  # Renamed to avoid SQLAlchemy conflicts
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: Optional[datetime] = None
 ```
@@ -326,21 +326,27 @@ class FeatureDB(Base, TimestampMixin):
 #### WorkItem Table
 
 ```python
-class WorkItemDB(Base, TimestampMixin):
+class WorkItem(Base):
     __tablename__ = "work_items"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    feature_id = Column(String, ForeignKey("features.id", ondelete="SET NULL"), nullable=True)
-    title = Column(String(500), nullable=False)
+    id = Column(String, primary_key=True)
+    product_id = Column(String, ForeignKey("products.id"))
+    feature_id = Column(String, ForeignKey("features.id"))
+    title = Column(String, nullable=False)
     description = Column(Text)
-    status = Column(String(50), default="open")
-    source_system = Column(String(50))  # github, jira, etc.
-    external_id = Column(String(255))    # ID in source system
-    external_refs = Column(JSON, default=dict)  # {"github": "123", "jira": "PROJ-456"}
-    metadata = Column(JSON, default=dict)
+    type = Column(String)  # bug, feature, task, improvement
+    status = Column(String, default="open")
+    priority = Column(String, default="medium")
+    labels = Column(JSON)  # List of labels
+    assignee = Column(String)  # Assigned person
+    project_id = Column(String)  # Project association (separate from FK)
+    source_system = Column(String)  # Source system name
+    external_id = Column(String)  # External system ID
+    external_url = Column(String)  # External system URL
+    item_metadata = Column(JSON)  # Additional metadata (renamed to avoid SQLAlchemy conflict)
 
     # Relationships
-    feature = relationship("FeatureDB", back_populates="work_items")
+    feature = relationship("Feature", back_populates="work_items")
 
     # Indexes
     __table_args__ = (
@@ -370,43 +376,47 @@ class IntentDB(Base):
 #### Workflow Table
 
 ```python
-class WorkflowDB(Base):
+class Workflow(Base):
     __tablename__ = "workflows"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    type = Column(Enum(WorkflowType), nullable=False)
-    status = Column(Enum(WorkflowStatus), default=WorkflowStatus.PENDING)
-    intent_id = Column(String, ForeignKey("intents.id", ondelete="CASCADE"), nullable=True)
-    context = Column(JSON, default=dict)
-    result = Column(JSON)
+    id = Column(String, primary_key=True)
+    type = Column(Enum(WorkflowType))
+    status = Column(Enum(WorkflowStatus))
+    input_data = Column(JSON)
+    output_data = Column(JSON)
+    context = Column(JSON)
+    result = Column(JSON)  # Workflow execution result (added in Phase 1A)
     error = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime)
     completed_at = Column(DateTime)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Added in Phase 1A
 
     # Relationships
-    intent = relationship("IntentDB", back_populates="workflows")
-    tasks = relationship("TaskDB", back_populates="workflow", cascade="all, delete-orphan")
+    intent = relationship("Intent", back_populates="workflow", uselist=False)
+    tasks = relationship("Task", back_populates="workflow", cascade="all, delete-orphan")
 ```
 
 #### Task Table
 
 ```python
-class TaskDB(Base):
+class Task(Base, TimestampMixin):
     __tablename__ = "tasks"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid4()))
-    workflow_id = Column(String, ForeignKey("workflows.id", ondelete="CASCADE"))
-    type = Column(Enum(TaskType), nullable=False)
-    status = Column(Enum(TaskStatus), default=TaskStatus.PENDING)
-    input_data = Column(JSON, default=dict)
-    output_data = Column(JSON, default=dict)
+    id = Column(String, primary_key=True)
+    workflow_id = Column(String, ForeignKey("workflows.id"))
+    name = Column(String, nullable=False)  # Task name (added in Phase 1A)
+    type = Column(Enum(TaskType))
+    status = Column(Enum(TaskStatus))
+    input_data = Column(JSON)
+    output_data = Column(JSON)
+    result = Column(JSON)  # Task execution result (added in Phase 1A)
     error = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     started_at = Column(DateTime)
     completed_at = Column(DateTime)
 
     # Relationships
-    workflow = relationship("WorkflowDB", back_populates="tasks")
+    workflow = relationship("Workflow", back_populates="tasks")
 ```
 
 #### Event Table
@@ -799,11 +809,48 @@ if humanization:
     return humanization.human_readable  # "investigate a crash"
 ```
 
+## Schema Validation
+
+### PM-056 Schema Validator Tool
+
+The PM-056 Schema Validator tool automatically prevents domain/database model drift by comparing field names, types, and structures between domain models (`services/domain/models.py`) and SQLAlchemy database models (`services/database/models.py`).
+
+**Key Features:**
+- **Field Validation**: Detects missing fields and type mismatches
+- **Enum Consistency**: Ensures consistent enum usage across models
+- **Relationship Validation**: Validates SQLAlchemy relationships
+- **CI Integration**: Provides exit codes for automated validation
+
+**Usage:**
+```bash
+# Validate all models
+python tools/schema_validator.py
+
+# CI mode (exits with error code on critical issues)
+python tools/schema_validator.py --ci
+
+# Validate specific model
+python tools/schema_validator.py --model Product
+```
+
+**Prevention Examples:**
+- Catches `object_id` vs `object_position` type mismatches
+- Detects missing database columns before runtime errors
+- Validates enum consistency between domain and database models
+
+See `docs/tools/PM-056-schema-validator.md` for complete documentation.
+
 ## Revision Log
 
 - **June 28, 2025**: Added workflow context patterns, TaskResult model, ProjectIntegration config validation, integration config examples, and workflow creation with context example for GitHub integration
 - **July 13, 2025**: Added Action Humanization Model for user-facing message generation
+- **July 30, 2025**: Updated Phase 1A database schema changes:
+  - Added `Workflow.result` and `Workflow.updated_at` columns
+  - Added `Task.name` and `Task.result` columns
+  - Added `Stakeholder.satisfaction` column
+  - Renamed `WorkItem.metadata` to `WorkItem.item_metadata` to avoid SQLAlchemy conflicts
+  - Added PM-056 Schema Validator tool documentation
 
 ---
 
-_Last Updated: July 13, 2025_
+_Last Updated: July 30, 2025_
