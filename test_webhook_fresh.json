@@ -1,0 +1,13 @@
+{
+  "type": "event_callback",
+  "event": {
+    "type": "app_mention",
+    "text": "help - COMPLETE PIPELINE TEST",
+    "user": "U1234567890",
+    "ts": "1753906000.000001",
+    "channel": "C098J9UFQNU"
+  },
+  "team_id": "TAXBWPHSL",
+  "event_id": "Ev_PIPELINE_TEST_001",
+  "event_time": 1753906000
+}

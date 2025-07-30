@@ -253,6 +253,8 @@ async def mcp_infrastructure_reset():
 
     This fixture ensures clean state between all tests that might use MCP.
     """
+    import asyncio
+    import logging
     import os
 
     # Store original environment variables
@@ -268,16 +270,43 @@ async def mcp_infrastructure_reset():
 
     yield
 
-    # Clean up after test
+    # Clean up after test with aggressive timeout to prevent hanging
     try:
-        # Reset singletons again
-        from services.infrastructure.mcp.connection_pool import MCPConnectionPool
+        # Only try to reset MCP if the module exists and can be imported
+        try:
+            from services.infrastructure.mcp.connection_pool import MCPConnectionPool
+        except ImportError:
+            # MCP modules not available, skip cleanup
+            pass
+        else:
+            # Disable logging during shutdown to prevent I/O errors
+            original_level = logging.getLogger().level
+            logging.getLogger().setLevel(logging.ERROR)
 
-        pool = MCPConnectionPool.get_instance()
-        await pool.shutdown()  # Graceful shutdown of any connections
-        MCPConnectionPool._reset_instance()
-    except (ImportError, Exception):
-        pass  # Handle cleanup errors gracefully
+            try:
+                pool = MCPConnectionPool.get_instance()
+
+                # Use very short timeout to prevent hanging
+                try:
+                    await asyncio.wait_for(pool.shutdown(), timeout=0.1)
+                except asyncio.TimeoutError:
+                    # Force shutdown immediately if timeout occurs
+                    pool._is_shutdown = True
+                    pool._all_connections.clear()
+                    pool._available_connections.clear()
+                    pool._pool_lock = None
+
+                MCPConnectionPool._reset_instance()
+            except Exception:
+                # Ignore any errors during MCP cleanup
+                pass
+            finally:
+                # Restore logging level
+                logging.getLogger().setLevel(original_level)
+
+    except Exception:
+        # Handle any other cleanup errors gracefully
+        pass
 
     # Restore original environment variables
     for env_var in mcp_env_vars:
@@ -373,29 +402,14 @@ def mock_mcp_client():
 
 @pytest.fixture(scope="function", autouse=True)
 async def cleanup_sessions():
-    """Ensure proper cleanup after each test function"""
+    """Clean up database sessions and engine after each test"""
     yield
-    # Comprehensive cleanup after each test
-    import asyncio
-    import gc
 
+    # Dispose of database engine to clean up connection pool
     try:
-        # Allow pending async operations to complete
-        await asyncio.sleep(0.1)
-
-        # Force garbage collection to clean up any lingering connections
-        gc.collect()
-
-        # Clear connection pool to prevent state leakage
         from services.database.connection import db
 
-        if hasattr(db, "engine") and db.engine:
-            # Dispose of engine to clear all connections
+        if db.engine:
             await db.engine.dispose()
-
-        # Wait a bit more for any final cleanup
-        await asyncio.sleep(0.05)
-
     except Exception:
-        # Don't let cleanup errors break tests
-        pass
+        pass  # Ignore disposal errors during cleanup

@@ -7,13 +7,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **WARNING**: Skipping this section will break our systematic excellence.
 
 ### Mandatory Methodology Documents
+
 Before ANY work, read these in order:
+
 1. `docs/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md`
 2. `docs/development/methodology-core/methodology-01-TDD-REQUIREMENTS.md`
 3. `docs/development/methodology-core/methodology-02-AGENT-COORDINATION.md`
 4. `docs/development/methodology-core/methodology-03-COMMON-FAILURES.md`
 
 ### The Four Pillars
+
 1. **Systematic Verification First** - Always check before acting
 2. **Test-Driven Development** - Tests before implementation
 3. **Multi-Agent Coordination** - Strategic deployment
@@ -32,12 +35,14 @@ Piper Morgan is an AI-powered Product Management Assistant platform that evolves
 **CRITICAL: Before implementing any PM-XXX issue, ALWAYS:**
 
 1. **Review GitHub Issue Completely**
+
    - Read the issue description and all comments
    - Look for preparation reports from other agents (analysis, scouting, risk assessments)
    - Check for implementation roadmaps or strategic guidance
    - Verify current status and any recent updates
 
 2. **Coordinate with Preparation Work**
+
    - Reference preparation findings in your implementation approach
    - Follow recommended implementation sequences when provided
    - Incorporate risk mitigation strategies from preparation reports
@@ -52,17 +57,20 @@ Piper Morgan is an AI-powered Product Management Assistant platform that evolves
 ### Implementation Coordination Standards
 
 **For Critical Issues (PM-055, architectural work, etc.):**
+
 - **MANDATORY**: Review all GitHub issue comments before starting
 - **REQUIRED**: Reference preparation work in implementation strategy
 - **EXPECTED**: Coordinate findings and build on previous agent work
 - **DOCUMENT**: How preparation work influenced your implementation approach
 
 **For Standard Issues:**
+
 - **RECOMMENDED**: Quick GitHub issue review for context
 - **HELPFUL**: Look for related preparation or analysis work
 - **EFFICIENT**: Avoid duplicating research already completed
 
 **Quality Philosophy:**
+
 - GitHub issues are the **authoritative source of truth** for implementation context
 - Multi-agent coordination **builds value systematically** rather than working in isolation
 - **Preparation work accelerates implementation** rather than slowing it down
@@ -71,12 +79,14 @@ Piper Morgan is an AI-powered Product Management Assistant platform that evolves
 ### Success Examples from 2025-07-21
 
 **PM-015 Group 3 Implementation Success:**
+
 - Code reviewed ADR-010 documentation before implementing
 - Used fresh FeatureFlags utility from preparation work
 - Achieved 100% test success by building on architectural guidance
 - Implementation time minimized through preparation coordination
 
 **PM-055 Preparation Coordination:**
+
 - Cursor provided comprehensive implementation readiness report
 - Code's blocker mitigation work informed by preparation analysis
 - Wednesday implementation de-risked through systematic coordination
@@ -122,6 +132,7 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 ```
 
 #### Pattern Library Reference
+
 1. **Repository Pattern**: `services/repositories/*.py` - Standard async repository implementation
 2. **Service Pattern**: `services/*/service.py` - Business logic encapsulation
 3. **ADR Patterns**: `docs/architecture/adr-*.md` - Architectural decision implementations
@@ -130,6 +141,7 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 6. **Pattern Detection**: `scripts/pattern_sweep.py` - Automated pattern discovery and learning acceleration
 
 #### Implementation Workflow (MANDATORY)
+
 ```
 1. VERIFY → grep/find existing patterns (2-3 minutes)
 2. ANALYZE → understand current architecture (3-5 minutes)
@@ -140,6 +152,7 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 ```
 
 #### Why This Works (Empirically Proven)
+
 1. **Prevents Assumption-Based Development**: Eliminates "I think the pattern is..." → guarantees "I know the pattern is..."
 2. **Ensures Architectural Consistency**: Identifies established patterns before creating new ones
 3. **Accelerates Implementation**: Understanding existing structure eliminates false starts and rework
@@ -147,6 +160,7 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 5. **Enables Excellence Flywheel**: Each implementation builds knowledge for accelerated future work
 
 #### Success Metrics Achieved
+
 - **Implementation Speed**: 15-minute ADR migrations (previously 2+ hours)
 - **Quality Maintenance**: 100% test coverage during rapid development
 - **Pattern Consistency**: Zero architectural drift across 50+ implementations
@@ -157,6 +171,7 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 ## Requirements
 
 ### Python Version
+
 - **Python 3.11** is required for all environments
 - Use `.python-version` file in project root for version management
 - Docker images use `python:3.11-slim-buster` base image
@@ -165,6 +180,7 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 ## Key Commands
 
 ### Development Setup
+
 ```bash
 # Activate virtual environment
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -183,18 +199,26 @@ cd web && python -m uvicorn app:app --reload --port 8081
 ```
 
 ### Testing
+
+## Essential Testing Commands for Code Agent
+
+**Always use these exact patterns for running tests:**
+
 ```bash
-# Run all tests (always use PYTHONPATH)
-PYTHONPATH=. pytest
+# Individual test files
+PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v
 
-# Run specific test file
-PYTHONPATH=. pytest tests/test_api_query_integration.py
+# Test directories
+PYTHONPATH=. python -m pytest tests/unit/ -v
 
-# Run tests for a specific component
-PYTHONPATH=. pytest tests/test_intent_classification.py
+# Specific test methods
+PYTHONPATH=. python -m pytest tests/unit/test_slack_components.py::TestSlackResponseHandler::test_monitoring_intent_bypass -v
 
-# Run Slack integration tests
-PYTHONPATH=. pytest services/integrations/slack/tests/ -v
+# With coverage
+PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
+
+# Fast failure mode
+PYTHONPATH=. python -m pytest tests/ -x -v
 
 # TLDR Continuous Verification (ultra-fast feedback)
 PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
@@ -204,7 +228,61 @@ PYTHONPATH=. ./scripts/tldr_runner.py --pattern validation
 PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-patterns
 ```
 
+### Common Testing Mistakes to Avoid
+
+❌ **WRONG**: `pytest tests/integration/test_slack_e2e_pipeline.py -v`
+✅ **CORRECT**: `PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v`
+
+❌ **WRONG**: Assuming `pytest` command exists in PATH
+✅ **CORRECT**: Always use `python -m pytest` with PYTHONPATH
+
+### Test Environment Setup
+
+```bash
+# If tests fail with import errors, verify environment:
+python -c "import services.observability.slack_monitor; print('✅ Observability imports work')"
+python -c "import services.infrastructure.task_manager; print('✅ Task manager imports work')"
+
+# Check test structure
+find tests/ -name "*.py" -type f | head -10
+```
+
+### Test Status Verification
+
+```bash
+# Quick test status check
+PYTHONPATH=. python -m pytest tests/ --collect-only -q | tail -5
+
+# Test counts by category
+find tests/ -name "test_*.py" -exec basename {} \; | wc -l
+```
+
+**Why This Matters**: Code agent repeatedly forgets the PYTHONPATH requirement and tries `pytest` directly, causing "command not found" errors and wasted debugging time.
+
+## Testing Commands (Code Agent Reference)
+
+### Python Test Execution Patterns
+
+Always use these exact patterns:
+
+```bash
+# Individual test files
+PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v
+
+# Test directories
+PYTHONPATH=. python -m pytest tests/unit/ -v
+
+# With coverage
+PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
+```
+
+### Common Mistakes to Avoid
+
+❌ WRONG: pytest tests/file.py
+✅ CORRECT: PYTHONPATH=. python -m pytest tests/file.py
+
 ### Pattern Detection & Learning
+
 ```bash
 # Run pattern sweep across codebase
 PYTHONPATH=. ./scripts/pattern_sweep.py --pattern-sweep-only --verbose
@@ -217,6 +295,7 @@ PYTHONPATH=. ./scripts/pattern_sweep.py --with-pattern-detection --learn-usage-p
 ```
 
 ### Common Development Tasks
+
 ```bash
 # Check database connection
 PYTHONPATH=. python -c "from services.database.connection import get_db_session; list(get_db_session())"
@@ -236,11 +315,13 @@ docker-compose logs -f [service_name]
 When creating session logs in `docs/development/session-logs/`:
 
 **Naming Convention:**
+
 - First session of day: `YYYY-MM-DD-log.md`
 - Subsequent sessions: `YYYY-MM-DDa-log.md`, `YYYY-MM-DDb-log.md`, etc.
 - Optional descriptive suffix: `YYYY-MM-DDa-log-descriptive-name.md`
 
 **Required Template Structure:**
+
 ```markdown
 # Session Log: [Brief Description]
 
@@ -250,27 +331,34 @@ When creating session logs in `docs/development/session-logs/`:
 **Status:** [Complete/In Progress/Blocked]
 
 ## Summary
+
 [Brief overview of what was accomplished]
 
 ## Problems Addressed
+
 [List of issues tackled]
 
 ## Solutions Implemented
+
 [What was built/fixed]
 
 ## Key Decisions Made
+
 [Important architectural or design choices]
 
 ## Files Modified
+
 [List of changed files]
 
 ## Next Steps
+
 [What should happen next]
 ```
 
 ## Development Approach
 
 ### Core Principles
+
 - Question assumptions and explore alternatives
 - Catch antipatterns before they take root
 - Use decision points as teaching moments
@@ -278,6 +366,7 @@ When creating session logs in `docs/development/session-logs/`:
 - One actionable step at a time
 
 ### Key Constraints
+
 - $0 software budget - use only free/open source tools
 - Single developer bandwidth - optimize for maintainability
 - Production-ready from start - no "we'll fix it later"
@@ -285,6 +374,7 @@ When creating session logs in `docs/development/session-logs/`:
 ### Critical Files to Review
 
 Always check these files when starting work:
+
 - `services/domain/models.py` - Canonical source of truth
 - `services/shared_types.py` - All enums defined here
 - `docs/architecture/architecture.md` - System design and patterns
@@ -294,6 +384,7 @@ Always check these files when starting work:
 ### Detailed Guidelines
 
 For comprehensive development methodology, see:
+
 - **Working Method**: `docs/development/working-method.md` - Step-by-step execution patterns
 - **Architecture Guidelines**: `docs/development/architectural-guidelines.md` - Antipatterns and best practices
 - **Session Handoffs**: `docs/development/continuity-prompt-template.md` - Managing session transitions
@@ -303,17 +394,20 @@ For comprehensive development methodology, see:
 ### Core Design Patterns
 
 1. **Domain-Driven Design**: All business logic flows from domain models in `services/database/models.py`. The database schema is generated from SQLAlchemy models, not the other way around.
+
    - **NO QUICK FIXES**: Always fix issues at the correct domain layer
    - **Layered Architecture**: Domain → Application → Infrastructure → Presentation
    - **Business logic belongs in domain services**, not UI or infrastructure layers
 
 2. **AsyncSessionFactory Pattern**: Standardized async session management across all components (2025-07-15 migration)
+
    - **Session Scope**: `AsyncSessionFactory.session_scope()` for automatic session lifecycle management
    - **Transaction Awareness**: Repository methods detect existing transactions to prevent double-scoping
    - **Context Managers**: All database operations use async context managers for cleanup
    - **Consistent Pattern**: Replaces legacy RepositoryFactory and direct session creation
 
 3. **CQRS-lite Pattern**:
+
    - Read operations: `services/queries/` (QueryRouter handles all read-only operations)
    - Write operations: `services/orchestration/` (workflows and commands)
 
@@ -335,11 +429,13 @@ For comprehensive development methodology, see:
 ### API Endpoints
 
 Main API (`main.py`, port 8001):
+
 - `POST /api/v1/intent` - Process natural language messages
 - `GET /api/v1/workflows/{id}` - Check workflow status
 - `POST /api/v1/files/upload` - Upload documents for analysis
 
 Web UI (`web/app.py`, port 8081):
+
 - Chat interface for interacting with Piper Morgan
 - File upload and analysis
 - Real-time workflow status updates
@@ -354,6 +450,7 @@ Web UI (`web/app.py`, port 8081):
 ### Environment Configuration
 
 Required environment variables in `.env`:
+
 ```
 ANTHROPIC_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
@@ -371,6 +468,7 @@ REDIS_URL=redis://localhost:6379
 - Always set `PYTHONPATH=.` when running tests
 
 #### Async Session Test Patterns
+
 ```python
 # Recommended pattern for new tests
 async def test_something(async_transaction):
@@ -388,6 +486,7 @@ async def test_query(async_session):
 ### Current Development Focus
 
 Based on git status, active development includes:
+
 - Multi-project context resolution (PM-009)
 - File query routing and analysis
 - Architecture Decision Records (ADRs) for MCP integration

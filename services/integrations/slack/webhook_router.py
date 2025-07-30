@@ -16,12 +16,20 @@ import hmac
 import json
 import logging
 import time
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from services.api.errors import SlackAuthFailedError
+from services.infrastructure.task_manager import task_manager
+from services.observability.slack_monitor import (
+    ProcessingStage,
+    SlackPipelineMetrics,
+    correlation_id,
+    slack_event_id,
+)
 
 from .config_service import SlackConfigService
 from .oauth_handler import SlackOAuthHandler
@@ -81,6 +89,51 @@ class SlackWebhookRouter:
 
         logger.info("SlackWebhookRouter initialized with complete integration pipeline")
 
+    async def handle_slack_events(self, event_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Direct method for handling Slack events (for testing and direct integration).
+
+        This method provides a direct interface for processing Slack events without
+        requiring a FastAPI Request object, making it suitable for testing and
+        programmatic event processing.
+        """
+        try:
+            # Set up correlation tracking
+            event_correlation_id = correlation_id.set(f"slack_event_{int(time.time() * 1000)}")
+
+            if event_data.get("event"):
+                slack_event_id.set(event_data["event"].get("ts", "unknown"))
+
+            logger.info(f"Processing Slack event directly: {event_data.get('type', 'unknown')}")
+
+            # Handle URL verification challenge
+            if event_data.get("type") == "url_verification":
+                return {"challenge": event_data.get("challenge")}
+
+            # Handle event callbacks with observability
+            if event_data.get("type") == "event_callback":
+                # Create tracked background task using RobustTaskManager
+                task = task_manager.create_tracked_task(
+                    self._process_event_callback_with_observability(event_data),
+                    name=f"process_slack_event_{event_data.get('event', {}).get('type', 'unknown')}",
+                    metadata={
+                        "correlation_id": correlation_id.get(),
+                        "event_type": event_data.get("event", {}).get("type", "unknown"),
+                        "slack_event_id": event_data.get("event", {}).get("ts", "unknown"),
+                    },
+                )
+
+                logger.info(f"Created tracked task {task} for Slack event processing")
+                return {"status": "ok", "task_id": str(task)}
+
+            # Handle other event types
+            logger.warning(f"Unhandled Slack event type: {event_data.get('type')}")
+            return {"status": "ignored"}
+
+        except Exception as e:
+            logger.error(f"Error in handle_slack_events: {e}", exc_info=True)
+            return {"status": "error", "error": str(e)}
+
     def _register_routes(self):
         """Register all Slack webhook routes"""
 
@@ -139,34 +192,43 @@ class SlackWebhookRouter:
 
             # Handle event callbacks
             if event_data.get("type") == "event_callback":
-                # Process events asynchronously to avoid blocking webhook response
-                import asyncio
+                # Set up correlation tracking
+                event_correlation_id = correlation_id.set(
+                    f"slack_webhook_{int(time.time() * 1000)}"
+                )
+
+                if event_data.get("event"):
+                    slack_event_id.set(event_data["event"].get("ts", "unknown"))
 
                 print(
-                    f"🎯 WEBHOOK DEBUG: Creating async task for event: {event_data.get('event', {}).get('type', 'unknown')}"
+                    f"🎯 WEBHOOK DEBUG: Creating tracked task for event: {event_data.get('event', {}).get('type', 'unknown')}"
                 )
                 logger.info(
-                    f"🎯 WEBHOOK: Creating async task for event: {event_data.get('event', {}).get('type', 'unknown')}"
+                    f"🎯 WEBHOOK: Creating tracked task for event: {event_data.get('event', {}).get('type', 'unknown')}"
                 )
 
-                async def safe_process_event():
-                    try:
-                        logger.info(
-                            f"🔍 BACKGROUND: Starting processing for event: {event_data.get('event', {}).get('type', 'unknown')}"
-                        )
-                        await self._process_event_callback(event_data)
-                        logger.info(f"✅ BACKGROUND: Processing completed successfully")
-                    except Exception as e:
-                        logger.error(f"🚨 BACKGROUND PROCESSING CRASHED: {e}", exc_info=True)
-                        # Don't let exception kill server
-
                 try:
-                    task = asyncio.create_task(safe_process_event())
-                    logger.info(f"✅ WEBHOOK: Async task created successfully: {task}")
-                except Exception as e:
-                    logger.error(f"🚨 WEBHOOK: Failed to create async task: {e}", exc_info=True)
+                    # Use RobustTaskManager instead of asyncio.create_task
+                    task = task_manager.create_tracked_task(
+                        self._process_event_callback_with_observability(event_data),
+                        name=f"webhook_slack_event_{event_data.get('event', {}).get('type', 'unknown')}",
+                        metadata={
+                            "correlation_id": correlation_id.get(),
+                            "event_type": event_data.get("event", {}).get("type", "unknown"),
+                            "slack_event_id": event_data.get("event", {}).get("ts", "unknown"),
+                        },
+                    )
 
-                return JSONResponse(content={"status": "ok"}, status_code=200)
+                    logger.info(f"✅ WEBHOOK: Tracked task created successfully: {task}")
+                    return JSONResponse(
+                        content={"status": "ok", "task_id": str(task)}, status_code=200
+                    )
+
+                except Exception as e:
+                    logger.error(f"🚨 WEBHOOK: Failed to create tracked task: {e}", exc_info=True)
+                    return JSONResponse(
+                        content={"status": "error", "error": str(e)}, status_code=500
+                    )
 
             # Handle other event types
             logger.warning(f"Unhandled Slack event type: {event_data.get('type')}")
@@ -414,6 +476,71 @@ class SlackWebhookRouter:
             logger.error(f"Error verifying Slack signature: {e}")
             return False
 
+    async def _process_event_callback_with_observability(self, event_data: Dict[str, Any]) -> None:
+        """
+        Process Slack event callback with full observability and correlation tracking.
+
+        This method wraps the original _process_event_callback with comprehensive
+        observability, correlation tracking, and error handling to eliminate silent failures.
+        """
+        # Initialize pipeline metrics
+        current_correlation_id = correlation_id.get() or f"slack_event_{int(time.time() * 1000)}"
+        event_id = event_data.get("event", {}).get("ts", "unknown")
+
+        pipeline = SlackPipelineMetrics(
+            correlation_id=current_correlation_id,
+            slack_event_id=event_id,
+            started_at=datetime.utcnow(),
+            webhook_data=event_data,
+        )
+
+        # Record initial stage
+        stage_metrics = pipeline.start_stage(
+            ProcessingStage.WEBHOOK_RECEIVED,
+            {"event_type": event_data.get("event", {}).get("type")},
+        )
+        stage_metrics.complete_success()
+
+        try:
+            # Ensure correlation context is available
+            current_correlation_id = correlation_id.get()
+            if not current_correlation_id:
+                correlation_id.set(f"slack_event_{int(time.time() * 1000)}")
+
+            # Record processing start
+            processing_stage = pipeline.start_stage(ProcessingStage.CONTEXT_EXTRACTED)
+
+            # Call the original processing method
+            await self._process_event_callback(event_data)
+
+            # Mark processing stage complete
+            processing_stage.complete_success()
+
+            # Record successful completion
+            response_stage = pipeline.start_stage(
+                ProcessingStage.RESPONSE_SENT, {"status": "success"}
+            )
+            response_stage.complete_success()
+
+            # Mark entire pipeline complete
+            pipeline.complete_pipeline(success=True)
+
+            logger.info(f"Event processing completed successfully: {pipeline.correlation_id}")
+
+        except Exception as e:
+            # Record error and ensure it's visible
+            error_stage = pipeline.start_stage(
+                ProcessingStage.PIPELINE_FAILED, {"error_type": type(e).__name__}
+            )
+            error_stage.complete_failure(str(e))
+            pipeline.complete_pipeline(success=False, error_details=str(e))
+
+            logger.error(f"Event processing failed: {e}", exc_info=True)
+            logger.error(f"Pipeline metrics: {pipeline}")
+
+            # Re-raise to ensure task manager sees the failure
+            raise
+
     async def _process_event_callback(self, event_data: Dict[str, Any]) -> None:
         """Process Slack event callback with spatial mapping"""
 
@@ -541,9 +668,7 @@ class SlackWebhookRouter:
             # No need for additional store_mapping() call
 
             # Process through complete integration pipeline (high priority for mentions)
-            # Use asyncio.create_task() to make response processing non-blocking
-            import asyncio
-
+            # Use RobustTaskManager to make response processing non-blocking and observable
             async def process_response():
                 try:
                     response_result = await self.response_handler.handle_spatial_event(
@@ -557,9 +682,22 @@ class SlackWebhookRouter:
                         logger.warning("No response generated for mention event")
                 except Exception as response_error:
                     logger.error(f"Error processing response for mention event: {response_error}")
+                    raise  # Re-raise for task manager visibility
 
-            # Create task to process response asynchronously (don't await!)
-            asyncio.create_task(process_response())
+            # Create tracked task to process response asynchronously
+            try:
+                task = task_manager.create_tracked_task(
+                    process_response(),
+                    name=f"mention_response_{message_ts}",
+                    metadata={
+                        "correlation_id": correlation_id.get(),
+                        "message_ts": message_ts,
+                        "channel_id": channel_id,
+                    },
+                )
+                logger.info(f"Created tracked task {task} for mention response processing")
+            except Exception as task_error:
+                logger.error(f"Failed to create mention response task: {task_error}")
 
         except Exception as e:
             logger.error(f"Error processing mention event: {e}")

@@ -65,9 +65,8 @@ class SlackSpatialAdapter(BaseSpatialAdapter):
             # Store context for response routing
             self._store_context_for_routing(external_id, context)
 
-            # Store mapping with proper async/await and SpatialPosition type
-            # Fix: position is already a SpatialPosition object, need await for async call
-            await self.store_mapping(external_id, position)
+            # Store mapping in parent class _mappings (no deadlock)
+            self._mappings[external_id] = position
 
             logger.debug(f"Mapped Slack timestamp {external_id} to position {position.position}")
             return position

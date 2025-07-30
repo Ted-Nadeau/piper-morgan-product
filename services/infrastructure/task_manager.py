@@ -75,63 +75,6 @@ class RobustTaskManager:
 
         logger.info("RobustTaskManager initialized")
 
-    def add_task(self, task_name: str, task_data: Dict[str, Any]) -> str:
-        """
-        Add a task to the manager for tracking.
-
-        Args:
-            task_name: Name of the task
-            task_data: Data associated with the task
-
-        Returns:
-            Task ID for tracking
-        """
-        task_id = str(uuid.uuid4())
-        metrics = TaskMetrics(
-            task_id=task_id, name=task_name, created_at=datetime.utcnow(), context_data=task_data
-        )
-        self.task_metrics[task_id] = metrics
-        logger.debug(f"Added task {task_name} with ID {task_id}")
-        return task_id
-
-    def start_task(self, task_name: str) -> bool:
-        """
-        Mark a task as started.
-
-        Args:
-            task_name: Name of the task to start
-
-        Returns:
-            True if task was found and started, False otherwise
-        """
-        for task_id, metrics in self.task_metrics.items():
-            if metrics.name == task_name and metrics.started_at is None:
-                metrics.mark_started()
-                logger.debug(f"Started task {task_name} with ID {task_id}")
-                return True
-        logger.warning(f"Task {task_name} not found or already started")
-        return False
-
-    def complete_task(self, task_name: str, result: Dict[str, Any]) -> bool:
-        """
-        Mark a task as completed with result.
-
-        Args:
-            task_name: Name of the task to complete
-            result: Result data for the task
-
-        Returns:
-            True if task was found and completed, False otherwise
-        """
-        for task_id, metrics in self.task_metrics.items():
-            if metrics.name == task_name and metrics.completed_at is None:
-                metrics.mark_completed(success=True)
-                self.task_results[task_id] = result
-                logger.debug(f"Completed task {task_name} with ID {task_id}")
-                return True
-        logger.warning(f"Task {task_name} not found or already completed")
-        return False
-
     def create_tracked_task(
         self,
         coro: Awaitable[Any],
