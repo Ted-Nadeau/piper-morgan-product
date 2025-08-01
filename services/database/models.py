@@ -179,6 +179,7 @@ class Workflow(Base):
     context = Column(JSON)
     result = Column(JSON)  # Workflow execution result
     error = Column(Text)
+    intent_id = Column(String(255), nullable=True)  # Matches domain Optional[str]
 
     created_at = Column(DateTime, default=datetime.utcnow)
     started_at = Column(DateTime)

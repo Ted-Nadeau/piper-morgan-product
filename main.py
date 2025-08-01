@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from services.api.errors import APIError, TaskFailedError
 from services.api.middleware import ErrorHandlingMiddleware
+from services.api.query_response_formatter import QueryResponseFormatter
 from services.conversation.conversation_handler import ConversationHandler
 from services.database.connection import db
 from services.database.repositories import ProjectRepository, RepositoryFactory
@@ -327,6 +328,24 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                     # Route the query
                     query_result = await query_router.route_query(enriched_intent)
                     # Automatic session cleanup via context manager
+
+                    # PM-063: Format response using comprehensive formatter to handle all response types
+                    response_text = QueryResponseFormatter.format_query_response(
+                        query_result, enriched_intent.action
+                    )
+
+                    return IntentResponse(
+                        message=response_text,
+                        intent={
+                            "category": enriched_intent.category.value,
+                            "action": enriched_intent.action,
+                            "confidence": enriched_intent.confidence,
+                            "context": enriched_intent.context,
+                        },
+                        workflow_id=None,  # No workflow for queries
+                        requires_clarification=False,
+                        clarification_type=None,
+                    )
             except Exception as db_error:
                 logger.warning(f"Database unavailable for query processing: {db_error}")
                 # PM-063: Graceful degradation - create QueryRouter in test mode
@@ -339,20 +358,10 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                 )
                 query_result = await query_router.route_query(enriched_intent)
 
-                # Format response for query results
-                if enriched_intent.action == "list_projects":
-                    # PM-063: Handle both project objects and graceful degradation strings
-                    if isinstance(query_result, str):
-                        response_text = query_result  # Graceful degradation message
-                    else:
-                        project_list = [project.to_dict() for project in query_result]
-                        response_text = f"I found {len(project_list)} projects: " + ", ".join(
-                            [p["name"] for p in project_list]
-                        )
-                else:
-                    response_text = (
-                        f"Here's what I found for {enriched_intent.action}: {query_result}"
-                    )
+                # PM-063: Format response using comprehensive formatter to handle all response types
+                response_text = QueryResponseFormatter.format_query_response(
+                    query_result, enriched_intent.action
+                )
 
                 return IntentResponse(
                     message=response_text,

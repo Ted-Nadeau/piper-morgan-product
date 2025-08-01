@@ -196,6 +196,9 @@ python main.py
 
 # Run web UI (port 8081)
 cd web && python -m uvicorn app:app --reload --port 8081
+
+# Check graceful degradation status (PM-063)
+curl http://localhost:8001/api/v1/query-router/degradation-status
 ```
 
 ### Testing
@@ -226,6 +229,10 @@ PYTHONPATH=. ./scripts/tldr_runner.py --pattern validation
 
 # TLDR with Pattern Detection (compound learning)
 PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-patterns
+
+# PM-063: Graceful degradation system tests
+PYTHONPATH=. python -m pytest tests/integration/test_query_router_system_degradation.py -v
+PYTHONPATH=. python -m pytest tests/unit/test_query_response_formatter.py -v
 ```
 
 ### Common Testing Mistakes to Avoid
@@ -422,7 +429,9 @@ For comprehensive development methodology, see:
 
 - **Intent Service** (`services/intent_service/`): Classifies user messages into QUERY, EXECUTION, ANALYSIS, etc.
 - **Orchestration Engine** (`services/orchestration/engine.py`): Manages complex multi-step workflows
-- **Query Router** (`services/queries/query_router.py`): Handles all read operations with specialized query services
+- **Query Router** (`services/queries/query_router.py`): Handles all read operations with specialized query services and graceful degradation (PM-063)
+- **Query Degradation Handler** (`services/queries/degradation.py`): Circuit breaker patterns and intelligent fallbacks for system resilience
+- **Query Response Formatter** (`services/api/query_response_formatter.py`): Converts diverse response types to API-compatible messages
 - **Knowledge Base** (`services/knowledge_base/`): Vector storage with 85+ PM documents
 - **Analysis Services** (`services/analysis/`): Document and text analysis with file type detection
 

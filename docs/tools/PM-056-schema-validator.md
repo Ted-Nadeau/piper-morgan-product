@@ -13,24 +13,48 @@ This tool would have caught the `object_id` vs `object_position` mismatch that c
 ## Key Features
 
 ### ✅ Field Validation
+
 - **Missing Fields**: Detects fields present in domain but missing in database (and vice versa)
 - **Critical Detection**: Fields missing in database are marked as errors (could cause runtime crashes)
 - **Schema Drift**: Fields missing in domain are marked as warnings (inconsistency)
 
 ### ✅ Type Compatibility
+
 - **Type Mapping**: Validates domain types against SQLAlchemy column types
 - **Optional Handling**: Correctly handles `Optional[T]` and `Union[T, None]` types
 - **Comprehensive Coverage**: Supports `str`, `int`, `float`, `bool`, `datetime`, `dict`, `list`
 
 ### ✅ Enum Validation
+
 - **Consistency Checking**: Ensures enums are used consistently between domain and database
 - **Shared Types Integration**: Validates against enums in `services/shared_types.py`
 - **Migration Guidance**: Provides suggestions for enum alignment
 
 ### ✅ Relationship Validation
+
 - **SQLAlchemy Relationships**: Detects database relationships missing from domain models
 - **Informational Reporting**: Relationship mismatches reported as info (not errors)
 - **Consistency Guidance**: Suggests adding relationship fields for completeness
+
+## Usage Instructions
+
+### For Developers
+
+1. **Run validation** to check domain/database model alignment
+2. **Review domain models** (`docs/architecture/domain-models.md`) for field details
+3. **Check recent updates** (`docs/development/domain-model-updates-2025-07-31.md`) for changes
+
+### For Code Team
+
+1. **Address database issues** identified by validator
+2. **Resolve SQLAlchemy conflicts** (metadata field naming)
+3. **Add missing database fields** for complete alignment
+
+### For CI/CD Integration
+
+1. **Use --ci flag** for automated validation in pipelines
+2. **Check exit codes** (0 = success, 1 = critical issues)
+3. **Monitor validation results** for schema drift
 
 ## Usage
 
@@ -81,6 +105,20 @@ PYTHONPATH=. python tools/demonstrate_validator.py
 - **⚠️ WARNING**: Schema drift that should be addressed
 - **💡 INFO**: Informational items for consistency
 
+## Current Status (July 31, 2025)
+
+### Recent Improvements
+
+- **Domain Model Field Additions**: 17 high-priority fields added to Task, WorkItem, Workflow, Feature, and Intent models
+- **Relationship Consistency**: 9 relationship fields added to align domain models with database relationships
+- **Schema Alignment**: Major progress on domain/database schema consistency
+
+### Known Issues
+
+- **SQLAlchemy Metadata Conflict**: Database models have a naming conflict with the `metadata` field (reserved by SQLAlchemy)
+- **Validation Tool Limitation**: Schema validator currently fails due to database model conflicts
+- **Resolution Required**: Code needs to address the SQLAlchemy `metadata` field naming issue
+
 ### Example Output
 
 ```
@@ -106,6 +144,7 @@ PYTHONPATH=. python tools/demonstrate_validator.py
 ## Model Discovery
 
 ### Automatic Mapping
+
 The validator automatically discovers model pairs:
 
 ```python
@@ -121,7 +160,9 @@ UploadedFile → UploadedFileDB
 ```
 
 ### SQLAlchemy Introspection
+
 Uses SQLAlchemy's mapper system to accurately extract:
+
 - Column names and types
 - Nullable constraints
 - Primary key information
@@ -131,15 +172,18 @@ Uses SQLAlchemy's mapper system to accurately extract:
 ## Prevention Examples
 
 ### Object ID vs Position Issue
+
 **Problem from PM-078**: Spatial adapter used `object_id` (string) instead of `object_position` (integer)
 
 **How Validator Catches This**:
+
 ```
 [ERROR] SpatialModel.object_position: Field exists in domain but not database
 [ERROR] SpatialModel.object_id: Field exists in database but not domain
 ```
 
 ### Type Mismatch Detection
+
 ```python
 # Domain model
 class Task:
@@ -151,12 +195,14 @@ class Task(Base):
 ```
 
 **Validator Output**:
+
 ```
 [ERROR] Task.result: Type mismatch: domain expects dict, database has String
 Suggestion: Change database column to one of: ['JSON']
 ```
 
 ### Enum Consistency
+
 ```python
 # Domain uses enum
 class Task:
@@ -168,6 +214,7 @@ class Task(Base):
 ```
 
 **Validator Output**:
+
 ```
 [ERROR] Task.status: Domain model uses enum TaskStatus but database uses String
 Suggestion: Change database column to Enum(TaskStatus)
@@ -176,16 +223,19 @@ Suggestion: Change database column to Enum(TaskStatus)
 ## CI/CD Integration
 
 ### Exit Codes
+
 - **0**: No critical issues (warnings/info allowed)
 - **1**: Critical issues found (blocks deployment)
 
 ### GitHub Actions Example
+
 ```yaml
 - name: Validate Schema
   run: make ci-validate
 ```
 
 ### Pre-commit Hook
+
 ```bash
 #!/bin/sh
 PYTHONPATH=. python tools/schema_validator.py --ci
@@ -194,6 +244,7 @@ PYTHONPATH=. python tools/schema_validator.py --ci
 ## Architecture
 
 ### Class Structure
+
 ```python
 class SchemaValidator:
     def __init__(self):
@@ -207,6 +258,7 @@ class ValidationIssue:
 ```
 
 ### Validation Pipeline
+
 1. **Discovery**: Find all domain and database models
 2. **Mapping**: Create domain ↔ database model pairs
 3. **Field Extraction**: Get fields from both models using introspection
@@ -216,6 +268,7 @@ class ValidationIssue:
 ## Testing Strategy
 
 ### Unit Tests (`tests/test_schema_validator.py`)
+
 - ✅ Validator initialization
 - ✅ Model discovery and mapping
 - ✅ Field validation logic
@@ -224,12 +277,14 @@ class ValidationIssue:
 - ✅ CLI functionality
 
 ### Integration Tests
+
 - ✅ Full codebase validation
 - ✅ Regression test for object_id vs object_position type issues
 - ✅ CI mode validation
 - ✅ Makefile integration
 
 ### Performance Tests
+
 - ✅ Handles 26 domain models + 10 database models efficiently
 - ✅ SQLAlchemy introspection performance
 - ✅ Large codebase scalability
@@ -237,18 +292,21 @@ class ValidationIssue:
 ## Success Metrics
 
 ### Implementation Achievement
+
 - **🎯 15-minute implementation** of core validation logic
 - **🎯 Complete test coverage** with 16 passing tests
 - **🎯 Full CI/CD integration** with Makefile and exit codes
 - **🎯 Production-ready** with comprehensive error handling
 
 ### Prevention Capability
+
 - **🛡️ 15 critical issues** detected in current codebase
 - **🛡️ 24 schema drift warnings** identified for cleanup
 - **🛡️ Type mismatch prevention** for runtime error elimination
 - **🛡️ Enum consistency** enforcement across models
 
 ### Strategic Impact
+
 - **⚡ Prevents PM-078 type issues** from recurring
 - **⚡ Catches drift before deployment** via CI integration
 - **⚡ Accelerates debugging** with clear issue identification
@@ -257,12 +315,14 @@ class ValidationIssue:
 ## Future Enhancements
 
 ### Cursor's CI/CD Phase (Ready for Implementation)
+
 - GitHub Actions workflow integration
 - Pre-commit hook configuration
 - Automated issue reporting
 - Schema drift tracking over time
 
 ### Advanced Features (Phase 2)
+
 - Auto-fix capability for simple mismatches
 - Custom validation rules
 - Historical drift analysis

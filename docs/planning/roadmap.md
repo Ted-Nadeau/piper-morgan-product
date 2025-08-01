@@ -111,12 +111,21 @@ This roadmap details the phased implementation plan for Piper Morgan, organizing
 - Estimated effort: 2-3 hours, Medium priority
 - GitHub Issue: #69
 
+**PM-063: QueryRouter Graceful Degradation - Prevent Cascade Failures** - IN PROGRESS
+
+- Implement graceful degradation patterns for QueryRouter following Slack cascade failures
+- Circuit breaker patterns and degradation framework for all query operations
+- Comprehensive failure scenario testing and production monitoring integration
+- Estimated effort: 4 hours across 4 phases (Analysis → Framework → Testing → Integration)
+- GitHub Issue: #72
+
 ### 🎯 Phase Objective
 
 Refine production Slack integration for optimal user experience while maintaining systematic development velocity through proven TDD methodology and anti-silent-failure infrastructure.
 
 ### 📋 Current Focus
 
+- **PM-063**: QueryRouter graceful degradation implementation (HIGH PRIORITY)
 - **PM-079**: Slack workflow notification verbosity reduction
 - Learning mechanisms refinement
 - Production monitoring enhancement
@@ -380,9 +389,42 @@ These features directly support the evolution from task automation to analytical
 - 🆕 **Analytics Automation**: Dashboard integration for proactive insights (PM-029)
 - 🆕 **Knowledge Graph**: Advanced relationship mapping and discovery (PM-030)
 
-## Phase 3: Advanced Capabilities (October-December 2025)
+## Phase 3: Enhanced Intelligence & Task Orchestration (October-December 2025)
 
-### Sprint 7-8: Strategic Intelligence
+### Sprint 7: Task Management Foundation
+
+**Duration**: 2-3 weeks
+**Goal**: Implement to-do lists as core domain objects
+
+#### Tasks
+
+- [ ] **PM-081**: To-Do Lists as Core Domain Objects (21-34 points)
+  - Design TaskList and TaskItem domain models
+  - Implement repositories and queries
+  - Create basic CRUD operations
+  - Add AI task breakdown capabilities
+  - Integrate with existing Project model
+  - Create Slack commands for task management
+
+- [ ] **PM-082**: GitHub Task Synchronization (13 points)
+  - Bidirectional sync with GitHub issues
+  - Checklist item mapping
+  - Status synchronization
+  - Conflict resolution
+
+- [ ] **PM-083**: Task Analytics & Insights (8 points)
+  - Progress tracking
+  - Velocity calculations
+  - Blocking pattern detection
+  - AI-powered insights
+
+**Success Criteria**:
+- Task lists fully integrated with existing workflows
+- GitHub sync operational with 95%+ reliability
+- AI task breakdown accuracy >80%
+- User engagement metrics positive
+
+### Sprint 8-9: Strategic Intelligence
 
 **Duration**: 4 weeks
 **Goal**: Predictive analytics and insights
