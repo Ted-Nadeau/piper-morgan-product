@@ -40,6 +40,7 @@ class Product:
     features: List["Feature"] = field(default_factory=list)
     stakeholders: List["Stakeholder"] = field(default_factory=list)
     metrics: List["Metric"] = field(default_factory=list)
+    work_items: List["WorkItem"] = field(default_factory=list)
 
 
 @dataclass
@@ -52,12 +53,14 @@ class Feature:
     hypothesis: str = ""
     acceptance_criteria: List[str] = field(default_factory=list)
     status: str = "draft"
+    product_id: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
     # Relationships
     dependencies: List["Feature"] = field(default_factory=list)
     risks: List["Risk"] = field(default_factory=list)
+    work_items: List["WorkItem"] = field(default_factory=list)
 
 
 @dataclass
@@ -91,7 +94,16 @@ class WorkItem:
     external_id: str = ""
     external_url: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    updated_at: Optional[datetime] = None
+    feature_id: Optional[str] = None
+    external_refs: Optional[Dict[str, Any]] = None
+    product_id: Optional[str] = None
+    item_metadata: Optional[Dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.now)
+
+    # Relationships
+    feature: Optional["Feature"] = None
+    product: Optional["Product"] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -125,6 +137,9 @@ class ProjectIntegration:
     config: Dict[str, Any] = field(default_factory=dict)
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
+
+    # Relationships
+    project: Optional["Project"] = None
 
     def validate_config(self) -> bool:
         """Validate configuration based on integration type"""
@@ -215,7 +230,11 @@ class Intent:
     context: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.0
     original_message: str = ""
+    workflow_id: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
+
+    # Relationships
+    workflow: Optional["Workflow"] = None
 
 
 @dataclass
@@ -228,7 +247,16 @@ class Task:
     status: TaskStatus = TaskStatus.PENDING
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+    output_data: Optional[Dict[str, Any]] = None
+    updated_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    workflow_id: Optional[str] = None
+    input_data: Optional[Dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.now)
+
+    # Relationships
+    workflow: Optional["Workflow"] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -264,8 +292,15 @@ class Workflow:
     result: Optional[WorkflowResult] = None
     error: Optional[str] = None
     intent_id: Optional[str] = None
+    output_data: Optional[Dict[str, Any]] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    input_data: Optional[Dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+
+    # Relationships
+    intent: Optional["Intent"] = None
 
     def get_next_task(self) -> Optional[Task]:
         """Get the next pending task in the workflow"""

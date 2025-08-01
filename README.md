@@ -228,12 +228,14 @@ piper-morgan-product/
 
 - [x] Domain-driven backend and query API robust and fully tested (PM-009 complete)
 - [x] **PM-038 MCP Integration**: 642x performance improvement with connection pooling
+- [x] **PM-063 QueryRouter Degradation**: Comprehensive graceful degradation implementation (method level complete)
 - [x] **Production-Grade Staging**: Docker Compose with monitoring and rollback
 - [x] Architecture design and domain model definition
 - [x] Core infrastructure setup (Postgres, Redis, ChromaDB)
 - [x] Basic service scaffolding and orchestration engine
 - [x] Query intent pipeline with RESTful error handling and contract-driven tests
 - [x] Comprehensive health monitoring with Prometheus + Grafana
+- [ ] **PM-063 Production Deployment**: Critical integration fix needed (missing return statement)
 - [ ] CI/CD pipeline (in progress)
 - [ ] Web UI and advanced integrations (upcoming)
 

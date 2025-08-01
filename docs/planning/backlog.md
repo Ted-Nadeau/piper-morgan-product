@@ -333,6 +333,30 @@
 
 ## 🆕 NEW TICKETS
 
+### PM-063: QueryRouter Graceful Degradation - Prevent Cascade Failures
+
+**Story**: As a system operator, I need QueryRouter graceful degradation so the system remains operational during outages
+**Status**: In Progress | **Points**: 5 | **Priority**: High
+
+**Implementation Details**:
+- Implement circuit breaker patterns for QueryRouter operations
+- Create degradation framework with fallback responses
+- Apply graceful degradation to all query operations
+- Comprehensive testing for failure scenarios
+- Production monitoring and feature flag integration
+
+**Success Criteria**:
+- [ ] All QueryRouter operations have degradation handlers
+- [ ] Circuit breakers prevent cascade failures
+- [ ] No ungraceful crashes under any failure scenario
+- [ ] Helpful user messages instead of stack traces
+- [ ] System remains operational during database outages
+- [ ] Comprehensive test coverage for degradation scenarios
+
+**Estimated Effort**: 4 hours (Architecture analysis 30min → Degradation framework 2hrs → Testing 1hr → Production integration 30min)
+**GitHub Issue**: #72
+**Dependencies**: Analysis of yesterday's Slack cascade failures
+
 ### PM-079: Refine Slack Workflow Notifications - Reduce Verbosity
 
 **Story**: As a Slack user, I want concise workflow notifications so channel conversations remain clean and professional
@@ -522,6 +546,27 @@ _All P0 tickets completed - infrastructure foundation established_
 ---
 
 ## 📈 P2 - Extended Capabilities
+
+### PM-081: To-Do Lists as Core Domain Objects
+
+**Story**: As a PM, I want to-do lists as first-class domain objects for sophisticated task management
+**Description**: Elevate to-do lists from text to core domain objects with AI assistance and cross-platform integration
+**Estimate**: 21-34 points (MVP), 55+ points (full) | **Status**: Planned | **Dependencies**: Core architecture stability, GitHub/Slack integrations operational
+**Strategic Value**: Universal PM pattern + perfect agent guidance structure
+
+**Implementation Phases**:
+1. Domain model design and implementation
+2. Basic CRUD + repository layer
+3. AI-assisted task breakdown
+4. GitHub synchronization
+5. Slack command integration
+6. Analytics and insights
+
+**Success Metrics**:
+- Task creation/completion velocity increase
+- Cross-platform task sync reliability
+- AI breakdown accuracy
+- User engagement with task features
 
 ### PM-020: Bulk Operations Support
 

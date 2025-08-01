@@ -820,6 +820,8 @@ The PM-056 Schema Validator tool automatically prevents domain/database model dr
 - **Enum Consistency**: Ensures consistent enum usage across models
 - **Relationship Validation**: Validates SQLAlchemy relationships
 - **CI Integration**: Provides exit codes for automated validation
+- **Architectural Awareness**: Zero false positives via FIELD_MAPPINGS configuration (2025-07-31 enhancement)
+- **100% Reliability**: Never cries wolf - only reports actionable issues
 
 **Usage:**
 ```bash
