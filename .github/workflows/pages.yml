@@ -14,15 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Copy docs to a public directory for deployment
-      - name: Copy docs to public
-        run: |
-          mkdir public
-          cp -rL docs/* public/
-
+      # Deploy docs directly to main branch /docs folder
+      # This matches GitHub Pages setting: main branch /docs
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
+          publish_dir: ./docs
+          publish_branch: main
+          destination_dir: docs
+          keep_files: true
