@@ -14,13 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Deploy docs directly to main branch /docs folder
-      # This matches GitHub Pages setting: main branch /docs
+      # Deploy docs to gh-pages branch for GitHub Pages
+      # This will serve docs at pmorgan.tech from gh-pages branch
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
-          publish_branch: main
-          destination_dir: docs
-          keep_files: true
+          publish_branch: gh-pages
+          keep_files: false
