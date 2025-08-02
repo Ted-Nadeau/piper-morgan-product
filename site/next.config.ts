@@ -4,9 +4,8 @@ const nextConfig: NextConfig = {
   // Enable static exports for deployment to static hosting
   output: 'export',
 
-  // GitHub Pages deployment configuration
-  basePath: process.env.NODE_ENV === 'production' ? '/piper-morgan' : '',
-  assetPrefix: process.env.NODE_ENV === 'production' ? '/piper-morgan' : '',
+  // No basePath - deploy website to root of GitHub Pages
+  // (docs will be at /docs subdirectory)
 
   // Disable image optimization for static export
   images: {
