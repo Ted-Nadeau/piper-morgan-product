@@ -1,9 +1,8 @@
-name: Deploy Piper Morgan Website to GitHub Pages
+name: Deploy Website + Docs to GitHub Pages
 
 on:
   push:
     branches: [main]
-    paths: ['site/**']
   workflow_dispatch:
 
 jobs:
@@ -37,13 +36,28 @@ jobs:
         working-directory: ./site
         run: npm run build
 
+      - name: Combine website and docs
+        run: |
+          # Create deployment directory
+          mkdir -p deploy
+
+          # Copy website files to root
+          cp -r site/out/* deploy/
+
+          # Copy docs to /docs subdirectory
+          mkdir -p deploy/docs
+          cp -rL docs/* deploy/docs/
+
+          # Create index redirect for docs (optional)
+          echo '<meta http-equiv="refresh" content="0; url=/docs/">' > deploy/docs.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './site/out'
+          path: './deploy'
 
       - name: Deploy to GitHub Pages
         id: deployment
