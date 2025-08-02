@@ -25,6 +25,8 @@ from github import (
 from services.api.errors import GitHubAuthFailedError, GitHubRateLimitError
 from services.integrations.github.config_service import (
     GitHubClientConfig as ConfigServiceClientConfig,
+)
+from services.integrations.github.config_service import (
     GitHubConfigService,
 )
 
