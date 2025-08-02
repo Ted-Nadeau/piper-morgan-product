@@ -1,9 +1,10 @@
-name: Deploy Markdown Docs to GitHub Pages (DISABLED - Replaced by site-deploy.yml)
+name: Deploy Markdown Docs to GitHub Pages
 
-# Disabled to avoid conflicts with the main website deployment
-# The website deployment now handles both site and docs
 on:
-  workflow_dispatch: # Manual trigger only
+  push:
+    branches: [main]
+    paths: ['docs/**']
+  workflow_dispatch:
 
 jobs:
   deploy:
