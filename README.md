@@ -1,4 +1,4 @@
-# Piper Morgan Platform
+# Piper Morgan
 
 An intelligent product management assistant that evolves from automating routine tasks to providing strategic insights and recommendations.
 
