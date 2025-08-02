@@ -164,7 +164,6 @@ class MorningStandupTester:
                     json=payload,
                     headers={"Content-Type": "application/json"},
                 ) as response:
-
                     end_time = time.time()
                     response_time_ms = (end_time - start_time) * 1000
 
