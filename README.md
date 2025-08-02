@@ -53,4 +53,4 @@ npm run build  # Build for production
 
 This website was built using systematic methodology and AI-powered development practices.
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com> and @mediajunkie
