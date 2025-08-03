@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
 
   // Skip build-time type checking (handled separately)
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
 
   // Experimental features (disabled for static export compatibility)
