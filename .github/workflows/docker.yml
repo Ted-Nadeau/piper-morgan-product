@@ -19,7 +19,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t piper-morgan ./services/orchestration
+          docker build -t piper-morgan -f ./services/orchestration/Dockerfile .
 
       - name: Verify Python version in container
         run: |
