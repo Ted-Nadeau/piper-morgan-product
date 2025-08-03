@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from services.api.errors import APIError, TaskFailedError
-from services.api.middleware import ErrorHandlingMiddleware
+from services.api.middleware import ErrorHandlingMiddleware, EthicsBoundaryMiddleware
 from services.api.query_response_formatter import QueryResponseFormatter
 from services.conversation.conversation_handler import ConversationHandler
 from services.database.connection import db
@@ -150,7 +150,8 @@ app.add_middleware(
 )
 
 # Add middleware
-app.add_middleware(ErrorHandlingMiddleware)
+app.add_middleware(EthicsBoundaryMiddleware)  # Ethics boundary enforcement
+app.add_middleware(ErrorHandlingMiddleware)  # Error handling
 
 # Initialize and include Slack router
 slack_router = SlackWebhookRouter()
@@ -160,6 +161,11 @@ app.include_router(slack_router.get_router())
 from services.api.health.staging_health import staging_health_router
 
 app.include_router(staging_health_router)
+
+# Include transparency router (PM-087: User transparency)
+from services.api.transparency import transparency_router
+
+app.include_router(transparency_router)
 
 
 @app.get("/")
