@@ -24,16 +24,16 @@ export default function Home() {
     <main className="min-h-screen">
       {/* Hero Section */}
       <Hero
-        headline="AI Product Management"
-        highlightText="That Shows Its Work"
-        subheadline="Piper Morgan demonstrates systematic excellence through building-in-public. Watch AI-powered PM methodology evolve from routine automation to strategic insights."
+        headline="The PM methodology"
+        highlightText="that shows its work"
+        subheadline="AI-powered Product Management Assistant demonstrating systematic excellence through transparent, building-in-public development. Watch as we transform routine PM tasks into strategic intelligence."
         primaryCTA={{
-          text: "How It Works",
-          href: "/how-it-works"
+          text: "See How It Works",
+          href: "[SEE_HOW_IT_WORKS_URL]"
         }}
         secondaryCTA={{
-          text: "Get Updates",
-          href: "/newsletter"
+          text: "Follow the Journey",
+          href: "[FOLLOW_THE_JOURNEY_URL]"
         }}
       />
 
@@ -42,8 +42,16 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-text-dark text-center mb-12">
-              Systematic Excellence in Action
+              Systematic excellence through AI collaboration
             </h2>
+            <div className="text-center mb-12">
+              <p className="text-lg text-text-light max-w-4xl mx-auto">
+                Piper Morgan isn't another AI tool that promises to replace human judgment. It's a systematic approach to augmenting product management expertise through transparent AI collaboration. Every decision is documented, every pattern is captured, and every breakthrough is shared.
+              </p>
+              <p className="text-lg text-text-light max-w-4xl mx-auto mt-4">
+                Our most recent breakthroughs have been to embed spatial intelligence into Piper's model of the world as well as to bake ethical boundaries into the product at the architectural level: meaning it is functionally impossible for Piper to violate our basic principles.
+              </p>
+            </div>
 
             <div className="grid md:grid-cols-3 gap-8">
               <div className="bg-white p-8 rounded-lg shadow-sm">
@@ -95,11 +103,20 @@ export default function Home() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-text-dark mb-6">
-                Follow the Journey
+                Learning project that grew wings
               </h2>
               <p className="text-xl text-text-light mb-8">
-                Every breakthrough documented. Every pattern captured. Every decision explained.
+                What started as a systematic experiment in AI-assisted product management has evolved into a comprehensive methodology for PM excellence. Follow along as we build infrastructure, solve real problems, and share everything we learn.
               </p>
+              <div className="text-left max-w-3xl mx-auto mb-8">
+                <h3 className="text-lg font-semibold text-text-dark mb-4">Recent Highlights:</h3>
+                <ul className="space-y-2 text-text-light">
+                  <li>• Ethics-first architecture that makes inappropriate responses technically impossible</li>
+                  <li>• 15-minute implementation cycles (previously 2+ hours) through systematic verification</li>
+                  <li>• Zero architectural drift across 50+ feature implementations</li>
+                  <li>• 100% test coverage maintained during rapid development</li>
+                </ul>
+              </div>
             </div>
 
             {/* Recent Blog Posts */}
@@ -156,8 +173,8 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <NewsletterSignup
-              title="Stay on the Cutting Edge"
-              description="Get weekly insights on AI-powered PM methodology, systematic excellence patterns, and behind-the-scenes development updates."
+              title="Join the systematic excellence journey"
+              description="Get weekly insights into our methodology, behind-the-scenes development updates, and practical frameworks you can apply to your own PM work. No marketing fluff—just transparent documentation of what actually works."
               benefits={[
                 "Weekly methodology insights and breakthroughs",
                 "Behind-the-scenes development updates",
@@ -166,7 +183,7 @@ export default function Home() {
               ]}
               background="dark"
               compact={false}
-              privacyNotice="No spam, unsubscribe anytime. Join 500+ PM professionals."
+              privacyNotice="No spam, unsubscribe anytime. Join 576+ PM professionals."
             />
           </div>
         </div>
