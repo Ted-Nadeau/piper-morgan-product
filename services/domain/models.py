@@ -684,3 +684,54 @@ class SpatialContext:
         if self.object_position is not None:
             coords["object_position"] = self.object_position
         return coords
+
+
+# PM-087 Ethics Domain Models
+@dataclass
+class EthicalDecision:
+    """Domain model for ethics decisions"""
+
+    decision_id: str = field(default_factory=lambda: str(uuid4()))
+    boundary_type: str = ""
+    violation_detected: bool = False
+    explanation: str = ""
+    audit_data: Dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.now)
+    session_id: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "decision_id": self.decision_id,
+            "boundary_type": self.boundary_type,
+            "violation_detected": self.violation_detected,
+            "explanation": self.explanation,
+            "audit_data": self.audit_data,
+            "timestamp": self.timestamp.isoformat(),
+            "session_id": self.session_id,
+        }
+
+
+@dataclass
+class BoundaryViolation:
+    """Domain model for boundary violations"""
+
+    violation_id: str = field(default_factory=lambda: str(uuid4()))
+    violation_type: str = ""
+    context: str = ""
+    session_id: Optional[str] = None
+    timestamp: datetime = field(default_factory=datetime.now)
+    severity: str = "medium"  # low, medium, high, critical
+    audit_data: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "violation_id": self.violation_id,
+            "violation_type": self.violation_type,
+            "context": self.context,
+            "session_id": self.session_id,
+            "timestamp": self.timestamp.isoformat(),
+            "severity": self.severity,
+            "audit_data": self.audit_data,
+        }

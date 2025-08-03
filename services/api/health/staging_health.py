@@ -853,12 +853,40 @@ async def health_metrics():
                     f'piper_system_disk_percent{{environment="staging"}} {sys_res["disk_percent"]}'
                 )
 
-        # PM-087: Ethics metrics integration
+        # PM-087: Ethics metrics integration - Enhanced Phase 3
         try:
+            from services.ethics.adaptive_boundaries import adaptive_boundary_system
+            from services.ethics.audit_transparency import audit_transparency_system
             from services.infrastructure.monitoring.ethics_metrics import ethics_metrics
 
+            # Core ethics metrics
             ethics_prometheus_metrics = ethics_metrics.get_prometheus_metrics()
             metrics.extend(ethics_prometheus_metrics)
+
+            # Adaptive learning metrics
+            learning_stats = adaptive_boundary_system.get_learning_statistics()
+            metrics.append(
+                f'piper_ethics_adaptive_learning_total{{environment="staging"}} {learning_stats["total_adaptations"]}'
+            )
+            metrics.append(
+                f'piper_ethics_adaptive_success_rate{{environment="staging"}} {learning_stats["success_rate"]}'
+            )
+            metrics.append(
+                f'piper_ethics_learned_patterns{{environment="staging"}} {learning_stats["learned_patterns"]}'
+            )
+
+            # Audit transparency metrics
+            transparency_stats = audit_transparency_system.get_transparency_statistics()
+            metrics.append(
+                f'piper_ethics_transparency_requests{{environment="staging"}} {transparency_stats["transparency_statistics"]["transparency_requests"]}'
+            )
+            metrics.append(
+                f'piper_ethics_audit_entries{{environment="staging"}} {transparency_stats["transparency_statistics"]["total_audit_entries"]}'
+            )
+            metrics.append(
+                f'piper_ethics_redactions_made{{environment="staging"}} {transparency_stats["transparency_statistics"]["redactions_made"]}'
+            )
+
         except ImportError as e:
             logger.warning(f"Ethics metrics not available: {e}")
         except Exception as e:
@@ -876,12 +904,20 @@ async def health_metrics():
 
 @staging_health_router.get("/ethics-metrics")
 async def ethics_metrics_endpoint():
-    """PM-087: Dedicated ethics boundary metrics endpoint"""
+    """PM-087: Dedicated ethics boundary metrics endpoint - Enhanced Phase 3"""
     try:
+        from services.ethics.adaptive_boundaries import adaptive_boundary_system
+        from services.ethics.audit_transparency import audit_transparency_system
         from services.infrastructure.monitoring.ethics_metrics import ethics_metrics
 
         # Get comprehensive ethics metrics
         ethics_summary = ethics_metrics.get_metrics_summary()
+
+        # Get adaptive learning statistics
+        learning_stats = adaptive_boundary_system.get_learning_statistics()
+
+        # Get transparency statistics
+        transparency_stats = audit_transparency_system.get_transparency_statistics()
 
         # Return both Prometheus format and summary
         prometheus_metrics = ethics_metrics.get_prometheus_metrics()
@@ -889,6 +925,15 @@ async def ethics_metrics_endpoint():
         return {
             "prometheus_metrics": "\n".join(prometheus_metrics) + "\n",
             "summary": ethics_summary,
+            "adaptive_learning": learning_stats,
+            "audit_transparency": transparency_stats,
+            "phase_3_enhancements": {
+                "adaptive_boundaries_active": True,
+                "audit_transparency_active": True,
+                "enhanced_pattern_detection": True,
+                "metadata_only_learning": True,
+                "security_redactions_active": True,
+            },
             "timestamp": datetime.utcnow().isoformat(),
             "environment": "staging",
         }
@@ -904,4 +949,91 @@ async def ethics_metrics_endpoint():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ethics metrics failed: {str(e)}",
+        )
+
+
+@staging_health_router.get("/ethics-audit")
+async def ethics_audit_endpoint(session_id: Optional[str] = None, hours_back: int = 24):
+    """PM-087 Phase 3: User-accessible audit transparency endpoint"""
+    try:
+        from services.ethics.audit_transparency import audit_transparency_system
+
+        # Get user audit log with security redactions
+        audit_log = await audit_transparency_system.get_user_audit_log(
+            session_id=session_id, hours_back=hours_back, limit=50
+        )
+
+        return audit_log
+
+    except ImportError as e:
+        logger.warning(f"Audit transparency module not available: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Audit transparency system not available",
+        )
+    except Exception as e:
+        logger.error(f"Ethics audit endpoint failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ethics audit failed: {str(e)}",
+        )
+
+
+@staging_health_router.get("/ethics-summary")
+async def ethics_summary_endpoint(session_id: Optional[str] = None):
+    """PM-087 Phase 3: High-level ethics summary for users"""
+    try:
+        from services.ethics.audit_transparency import audit_transparency_system
+
+        # Get audit summary
+        summary = await audit_transparency_system.get_audit_summary(session_id=session_id)
+
+        return summary
+
+    except ImportError as e:
+        logger.warning(f"Audit transparency module not available: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Audit transparency system not available",
+        )
+    except Exception as e:
+        logger.error(f"Ethics summary endpoint failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ethics summary failed: {str(e)}",
+        )
+
+
+@staging_health_router.get("/ethics-learning")
+async def ethics_learning_endpoint():
+    """PM-087 Phase 3: Adaptive learning system status"""
+    try:
+        from services.ethics.adaptive_boundaries import adaptive_boundary_system
+
+        # Get learning statistics
+        learning_stats = adaptive_boundary_system.get_learning_statistics()
+
+        return {
+            "adaptive_learning_system": learning_stats,
+            "privacy_protection": {
+                "learns_from_metadata_only": True,
+                "no_personal_content_stored": True,
+                "privacy_preserving_patterns": True,
+                "secure_pattern_signatures": True,
+            },
+            "system_status": "operational",
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    except ImportError as e:
+        logger.warning(f"Adaptive boundaries module not available: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Adaptive learning system not available",
+        )
+    except Exception as e:
+        logger.error(f"Ethics learning endpoint failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ethics learning failed: {str(e)}",
         )

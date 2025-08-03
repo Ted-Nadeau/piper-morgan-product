@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from services.domain.models import Intent, Task, Workflow
-from services.orchestration.validation import workflow_validator
+from services.orchestration.validation import ContextValidationError, workflow_validator
 from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 
@@ -134,11 +134,25 @@ class WorkflowFactory:
     async def create_from_intent(
         self, intent: Intent, project_context: Optional[Dict[str, Any]] = None
     ) -> Optional[Workflow]:
+        """
+        Create workflow from intent with PM-057 context validation
+
+        Validates context before workflow creation to prevent execution failures.
+        Raises ContextValidationError with user-friendly messages on validation failure.
+        """
         """Create workflow from intent with context mapping"""
 
         print(f"🔍 WorkflowFactory.create_from_intent called")
         print(f"🔍 Intent: action='{intent.action}', category={intent.category}")
         print(f"🔍 Intent context: {intent.context}")
+
+        # PM-057: Pre-execution context validation
+        try:
+            self._validate_workflow_context(workflow_type, intent, project_context)
+            print(f"  ✅ Context validation passed")
+        except ContextValidationError as e:
+            print(f"  ❌ Context validation failed: {e.user_message}")
+            raise e
 
         # Determine workflow type from intent action
         workflow_type = self.workflow_registry.get(intent.action.lower())
@@ -337,3 +351,108 @@ class WorkflowFactory:
             workflow.tasks.append(task)
 
         return workflow
+
+    def _validate_workflow_context(
+        self,
+        workflow_type: WorkflowType,
+        intent: Intent,
+        project_context: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """
+        PM-057: Validate workflow context before execution
+
+        Performs pre-execution validation to prevent workflow failures.
+        Raises ContextValidationError with user-friendly messages.
+        """
+        if not workflow_type:
+            return  # Skip validation if no workflow type determined
+
+        # Get validation requirements for this workflow type
+        requirements = self.get_validation_requirements(workflow_type)
+        if not requirements:
+            return  # No validation requirements defined
+
+        # Merge context
+        context = dict(intent.context or {})
+        if project_context:
+            context.update(project_context)
+
+        # Validate critical fields
+        critical_fields = requirements.get("context_requirements", {}).get("critical", [])
+        missing_critical = []
+
+        for field in critical_fields:
+            if not self._field_exists_and_valid(context, field):
+                missing_critical.append(field)
+
+        # Validate important fields (warn but don't fail)
+        important_fields = requirements.get("context_requirements", {}).get("important", [])
+        missing_important = []
+
+        for field in important_fields:
+            if not self._field_exists_and_valid(context, field):
+                missing_important.append(field)
+
+        # Create suggestions for missing fields
+        suggestions = self._generate_field_suggestions(
+            workflow_type, missing_critical + missing_important
+        )
+
+        # Raise error if critical fields are missing
+        if missing_critical:
+            raise ContextValidationError(
+                workflow_type=workflow_type,
+                missing_fields=missing_critical,
+                suggestions=suggestions,
+                details={
+                    "missing_important": missing_important,
+                    "available_context": list(context.keys()),
+                    "intent_action": intent.action,
+                    "intent_category": intent.category.value,
+                },
+            )
+
+        # Log warnings for missing important fields
+        if missing_important:
+            print(f"  ⚠️  Missing important fields for {workflow_type.value}: {missing_important}")
+
+    def _field_exists_and_valid(self, context: Dict[str, Any], field: str) -> bool:
+        """Check if a field exists and has a valid value"""
+        if field not in context:
+            return False
+
+        value = context[field]
+
+        # Check for empty values
+        if value is None:
+            return False
+
+        if isinstance(value, str) and not value.strip():
+            return False
+
+        if isinstance(value, (list, dict)) and not value:
+            return False
+
+        return True
+
+    def _generate_field_suggestions(
+        self, workflow_type: WorkflowType, missing_fields: List[str]
+    ) -> List[str]:
+        """Generate helpful suggestions for missing fields"""
+        suggestions = []
+
+        for field in missing_fields:
+            if field == "original_message":
+                suggestions.append("Please provide more details about what you want me to do.")
+            elif field == "project_id":
+                suggestions.append("Please specify which project you're working with.")
+            elif field == "file_id":
+                suggestions.append("Please specify which file you want me to analyze.")
+            elif field == "repository":
+                suggestions.append("Please provide the repository name or URL.")
+            elif field == "github_url":
+                suggestions.append("Please provide a GitHub issue or pull request URL.")
+            else:
+                suggestions.append(f"Please provide the {field} information.")
+
+        return suggestions

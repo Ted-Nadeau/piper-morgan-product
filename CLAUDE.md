@@ -603,9 +603,19 @@ Based on git status, active development includes:
 - Architecture Decision Records (ADRs) for MCP integration
 - Enhanced document analysis capabilities
 
+### Development Tools
+
+- **Schema Validator** (`tools/check_domain_db_consistency.py`): Validates consistency between domain models and database schema
+  - Run with: `PYTHONPATH=. python tools/check_domain_db_consistency.py`
+  - Critical for maintaining Domain-Driven Design integrity
+  - Detects field mismatches, type inconsistencies, and missing models
+- **Pattern Sweep** (`scripts/pattern_sweep.py`): Automated pattern discovery
+- **TLDR Runner** (`scripts/tldr_runner.py`): Ultra-fast continuous testing
+
 ### Important Notes
 
 1. **Docker Volumes**: Uses named volume `piper_postgres_data_v1` to persist data across container restarts
 2. **Port Mappings**: PostgreSQL runs on 5433 (not default 5432) to avoid conflicts
 3. **Linting**: No specific linting configuration found - follow existing code style
 4. **File Uploads**: Stored in `uploads/` directory with timestamp prefixes
+5. **Schema Validation**: Always run schema validator after model changes to prevent drift
