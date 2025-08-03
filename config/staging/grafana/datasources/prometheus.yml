@@ -1,0 +1,20 @@
+# Grafana Datasource Configuration for Piper Morgan Staging
+# Connects to Prometheus for metrics visualization
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus-staging:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: "POST"
+      customQueryParameters: ""
+      manageAlerts: true
+      alertmanagerUid: ""
+    secureJsonData: {}

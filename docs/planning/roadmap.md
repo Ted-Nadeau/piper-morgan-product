@@ -262,31 +262,45 @@ Refine production Slack integration for optimal user experience while maintainin
 - Clarifying questions reduce errors by 30%
 - Learning metrics dashboard operational
 
-### Sprint 5: Workflow Enhancement
+### Sprint 5: Ethics-First Architecture & Workflow Enhancement
 
 **Duration**: 2 weeks
-**Goal**: Advanced workflow capabilities
+**Goal**: Establish ethical boundaries before advanced capabilities
 
 #### Tasks
 
-- [ ] **PM-045**: Multi-step workflows (13 points)
+- [ ] **PM-087**: Values & Principles Architecture - Ethics-First Foundation (13-21 points)
+  - BoundaryEnforcer service for request interception
+  - Professional boundary enforcement at infrastructure level
+  - Transparent audit trail for ethical decisions
+  - Pattern learning from metadata (not personal content)
+  - **Rationale**: Ethics architecture and learning systems must precede autonomous features
 
-  - Complex orchestration patterns
-  - Conditional logic
-  - Human-in-the-loop approvals
-  - Progress tracking
+- [ ] **PM-040**: Adaptive Learning from Project Metadata (8 points)
+  - Pattern recognition from project interactions
+  - Learning without storing personal content
+  - Privacy-preserving analytics
+  - Improvement tracking
 
-- [ ] **PM-046**: Bulk operations (8 points)
-  - Batch issue creation
-  - CSV import/export
-  - Progress indicators
-  - Error recovery
+- [ ] **PM-030**: Advanced Knowledge Graph (8 points)
+  - Dynamic relationship mapping
+  - Organizational learning
+  - Context-aware recommendations
+  - Privacy-first design
+
+- [ ] **PM-081**: To-Do Lists as Core Domain Objects (21-34 points)
+  - First-class task management
+  - GitHub/Jira integration
+  - AI-guided task breakdown
+  - **Dependencies**: PM-087, PM-040
 
 **Success Criteria**:
 
-- Complex workflows execute reliably
-- Bulk operations handle 100+ items
-- Clear progress visibility
+- Ethical boundaries architecturally enforced
+- Pattern learning respects privacy
+- Task management integrated with GitHub
+- Audit transparency for all decisions
+- Zero professional boundary violations possible
 
 ### Sprint 6: Integration Expansion
 

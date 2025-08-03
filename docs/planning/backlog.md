@@ -386,7 +386,36 @@
 
 ## 🔥 P0 - Critical Infrastructure & Core Loop
 
-_All P0 tickets completed - infrastructure foundation established_
+### PM-087: Values & Principles Architecture - Ethics-First Foundation
+**Story**: As a system, I must architecturally enforce ethical boundaries before any autonomous capabilities
+**Status**: 📋 PLANNED | **Priority**: P0 - Foundational | **Points**: 13-21
+
+**Ethics-First Development**: This foundational infrastructure establishes Piper's ethical boundaries and professional principles at the architecture level, ensuring they cannot be bypassed or overridden.
+
+**Acceptance Criteria**:
+- [ ] BoundaryEnforcer service intercepts all requests
+- [ ] Professional boundary violations architecturally impossible
+- [ ] Audit trail captures all principle-related decisions
+- [ ] Pattern learning from metadata (not personal content)
+- [ ] Transparent audit logs available to users
+- [ ] All forms of harassment/hostile behavior blocked
+- [ ] Graceful handling with explanations
+
+**Technical Components**:
+- `services/ethics/boundary_enforcer.py` - Core enforcement
+- `services/ethics/adaptive_boundaries.py` - Pattern learning
+- `services/ethics/audit_transparency.py` - User-visible logs
+- `services/domain/models.py` - Add EthicalDecision model
+- Integration with all request flows
+
+**Implementation Details**:
+- Boundary enforcement at infrastructure level
+- Pattern learning from interaction metadata
+- Witness vs participant protocols
+- Transparent audit logs with security redactions
+- Protection hierarchy: Human > System > Org > Project
+
+**Dependencies**: None - Must be implemented before autonomous features
 
 ---
 
@@ -551,7 +580,7 @@ _All P0 tickets completed - infrastructure foundation established_
 
 **Story**: As a PM, I want to-do lists as first-class domain objects for sophisticated task management
 **Description**: Elevate to-do lists from text to core domain objects with AI assistance and cross-platform integration
-**Estimate**: 21-34 points (MVP), 55+ points (full) | **Status**: Planned | **Dependencies**: Core architecture stability, GitHub/Slack integrations operational
+**Estimate**: 21-34 points (MVP), 55+ points (full) | **Status**: Planned | **Dependencies**: PM-087 (ethics architecture), PM-040 (adaptive learning), Core architecture stability, GitHub/Slack integrations operational
 **Strategic Value**: Universal PM pattern + perfect agent guidance structure
 
 **Implementation Phases**:

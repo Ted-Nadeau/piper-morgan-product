@@ -1,4 +1,4 @@
-# Session Log - Chief Architect
+# PM-015 Session Log - Chief Architect
 **Date:** Thursday, July 31, 2025
 **Session Type:** Technical Debt Sprint - Day 2
 **Start Time:** 11:13 AM PT
