@@ -3,8 +3,8 @@ import { generateSEOMetadata } from '@/lib/domain-utils';
 import { Hero, NewsletterSignup, CTAButton } from '@/components';
 
 const seoData = generateSEOMetadata(
-  'Newsletter Signup',
-  'Stay updated on Piper Morgan development and PM methodology insights',
+  'Join the Systematic Excellence Community - Newsletter',
+  'Get weekly insights into AI-powered PM methodology, behind-the-scenes development updates, and practical frameworks you can apply immediately',
   { canonical: 'https://pipermorgan.ai/newsletter' }
 );
 
@@ -24,14 +24,15 @@ export default function NewsletterPage() {
     <main>
       {/* Hero Section */}
       <Hero
-        headline="Stay Updated"
-        subheadline="Get insights on AI-powered product management methodology, building-in-public learnings, and systematic excellence patterns."
+        headline="Join the systematic excellence"
+        highlightText="community"
+        subheadline="Get weekly insights into our methodology breakthroughs, behind-the-scenes development updates, and practical frameworks you can apply to your own PM work. No marketing fluff—just transparent documentation of what actually works."
         primaryCTA={{
-          text: "How It Works",
+          text: "See Our Methodology",
           href: "/how-it-works"
         }}
         secondaryCTA={{
-          text: "Read the Blog",
+          text: "Read Building-in-Public Updates",
           href: "/blog"
         }}
         background="gradient"
@@ -42,19 +43,19 @@ export default function NewsletterPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <NewsletterSignup
-              title="Join 500+ PM Professionals"
-              description="Get weekly insights delivered to your inbox. No fluff, just actionable methodology and behind-the-scenes development updates."
+              title="Join 576+ PM professionals learning systematic excellence"
+              description="Get weekly insights into our methodology development, breakthrough discoveries, and practical frameworks you can apply to your own PM work. Watch as we transform AI-assisted product management from experiment to systematic practice."
               benefits={[
-                "Weekly methodology insights and breakthroughs",
-                "Behind-the-scenes development updates",
-                "Early access to new features and tools",
-                "Practical PM templates and frameworks",
-                "Exclusive case studies and learnings",
-                "Community access and networking"
+                "Weekly methodology insights and breakthrough discoveries",
+                "Behind-the-scenes development updates and decision rationale",
+                "Early access to new tools and systematic frameworks",
+                "Practical templates and patterns you can immediately apply",
+                "Direct insight into human-AI collaboration patterns that actually work",
+                "Exclusive case studies and implementation learnings"
               ]}
               background="surface"
               compact={false}
-              privacyNotice="No spam, unsubscribe anytime. We respect your privacy and will never share your email."
+              privacyNotice="No spam, unsubscribe anytime. Join the growing community of PM professionals learning systematic excellence."
             />
           </div>
         </div>
@@ -65,10 +66,10 @@ export default function NewsletterPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-text-dark mb-6">
-              Why Subscribe?
+              Why PM Professionals Choose Our Newsletter
             </h2>
             <p className="text-xl text-text-light mb-12">
-              Get exclusive access to our building-in-public methodology and systematic excellence patterns.
+              Get exclusive access to our building-in-public methodology, systematic excellence patterns, and practical frameworks you can apply immediately. This isn't just another PM newsletter—it's systematic methodology development you can learn from and apply.
             </p>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -77,11 +78,10 @@ export default function NewsletterPage() {
                   <span className="text-white font-bold text-xl">📊</span>
                 </div>
                 <h3 className="text-xl font-semibold text-text-dark mb-3">
-                  Methodology Insights
+                  Methodology Breakthroughs
                 </h3>
                 <p className="text-text-light">
-                  Deep dives into our systematic approach to product management,
-                  including patterns, frameworks, and decision-making processes.
+                  Deep dives into our systematic approach that delivers 15-minute ADR migrations, 100% test coverage during rapid development, and zero architectural drift across 50+ implementations.
                 </p>
               </div>
 
@@ -90,11 +90,10 @@ export default function NewsletterPage() {
                   <span className="text-white font-bold text-xl">🔍</span>
                 </div>
                 <h3 className="text-xl font-semibold text-text-dark mb-3">
-                  Behind the Scenes
+                  Building-in-Public Transparency
                 </h3>
                 <p className="text-text-light">
-                  Transparent look at our development process, including challenges,
-                  breakthroughs, and lessons learned building AI-powered PM tools.
+                  Complete transparency into our development process: decision rationale, breakthrough discoveries, failure analysis, and methodology evolution. Learn from our systematic approach to AI-assisted product management.
                 </p>
               </div>
 
@@ -103,11 +102,10 @@ export default function NewsletterPage() {
                   <span className="text-white font-bold text-xl">🚀</span>
                 </div>
                 <h3 className="text-xl font-semibold text-text-dark mb-3">
-                  Early Access
+                  Systematic Excellence Tools
                 </h3>
                 <p className="text-text-light">
-                  First access to new features, templates, and tools. Plus exclusive
-                  community access and networking opportunities.
+                  First access to new systematic frameworks, implementation templates, and proven patterns. Plus practical tools you can apply immediately to accelerate your own PM work and AI collaboration.
                 </p>
               </div>
             </div>

@@ -1,0 +1,54 @@
+name: Sync Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+  workflow_dispatch:
+
+jobs:
+  sync-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync README to docs
+        run: |
+          echo "📋 Syncing README.md from root to docs/"
+          cp README.md docs/README.md
+
+          # Check if there are changes to commit
+          if git diff --quiet docs/README.md; then
+            echo "✅ docs/README.md is already in sync"
+          else
+            echo "📝 Changes detected, committing sync"
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git add docs/README.md
+            git commit -m "Auto-sync README from root [skip ci]"
+            git push
+            echo "✅ README synced successfully"
+          fi
+
+      - name: Validate sync
+        run: |
+          echo "🔍 Validating sync..."
+          if diff README.md docs/README.md > /dev/null; then
+            echo "✅ README files are in sync"
+          else
+            echo "❌ README files are out of sync!"
+            diff README.md docs/README.md
+            exit 1
+          fi
+
+      - name: Sync summary
+        run: |
+          echo "## Documentation Sync Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ README.md synced from root to docs/" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Single source of truth maintained" >> $GITHUB_STEP_SUMMARY
+          echo "✅ GitHub Pages will serve updated documentation" >> $GITHUB_STEP_SUMMARY

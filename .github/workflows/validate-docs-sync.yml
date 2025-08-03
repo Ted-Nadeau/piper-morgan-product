@@ -1,0 +1,71 @@
+name: Validate Documentation Sync
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'docs/README.md'
+  push:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'docs/README.md'
+
+jobs:
+  validate-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate README sync
+        run: |
+          echo "🔍 Validating README sync..."
+
+          if [ ! -f "README.md" ]; then
+            echo "❌ Root README.md not found"
+            exit 1
+          fi
+
+          if [ ! -f "docs/README.md" ]; then
+            echo "❌ docs/README.md not found"
+            exit 1
+          fi
+
+          if diff README.md docs/README.md > /dev/null; then
+            echo "✅ README files are in sync"
+          else
+            echo "❌ README files are out of sync!"
+            echo "Differences found:"
+            diff README.md docs/README.md
+            echo ""
+            echo "💡 To fix: Run the sync-docs workflow or manually copy README.md to docs/README.md"
+            exit 1
+          fi
+
+      - name: Validate docs structure
+        run: |
+          echo "🔍 Validating docs structure..."
+
+          # Check for required files
+          required_files=("docs/.nojekyll" "docs/index.html" "docs/README.md")
+
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file exists"
+            else
+              echo "❌ $file missing"
+              exit 1
+            fi
+          done
+
+          echo "✅ All required docs files present"
+
+      - name: Validation summary
+        run: |
+          echo "## Documentation Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ README files are in sync" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All required docs files present" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Single source of truth maintained" >> $GITHUB_STEP_SUMMARY

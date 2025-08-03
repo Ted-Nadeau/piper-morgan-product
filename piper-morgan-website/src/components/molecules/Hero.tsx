@@ -1,4 +1,5 @@
 import { CTAButton } from '@/components/atoms/CTAButton';
+import Image from 'next/image';
 
 export interface HeroProps {
   /** Main headline text */
@@ -23,6 +24,8 @@ export interface HeroProps {
   background?: 'default' | 'gradient' | 'surface';
   /** Text alignment */
   align?: 'left' | 'center';
+  /** Show logo above headline */
+  showLogo?: boolean;
   /** Additional CSS classes */
   className?: string;
 }
@@ -41,6 +44,7 @@ export function Hero({
   secondaryCTA,
   background = 'default',
   align = 'center',
+  showLogo = false,
   className = '',
 }: HeroProps) {
   const containerClasses = [
@@ -58,6 +62,20 @@ export function Hero({
     <section className={containerClasses}>
       <div className={contentClasses}>
         <div className="max-w-4xl mx-auto">
+          {showLogo && (
+            <div className="mb-8 flex justify-center">
+              <div className="relative w-32 h-32 md:w-40 md:h-40">
+                <Image
+                  src="/assets/pm-logo.png"
+                  alt="Piper Morgan Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
+          )}
+
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-dark mb-6 leading-tight">
             {headline}
             {highlightText && (

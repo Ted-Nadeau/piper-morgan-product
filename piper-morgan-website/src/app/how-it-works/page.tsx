@@ -314,7 +314,7 @@ export default function HowItWorksPage() {
                 "Early access to new frameworks and tools"
               ]}
               background="dark"
-              privacyNotice="Join 500+ PM professionals learning systematic excellence."
+              privacyNotice="No spam, unsubscribe anytime. Join 576+ PM professionals learning systematic excellence."
             />
           </div>
         </div>
