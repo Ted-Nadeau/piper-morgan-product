@@ -50,11 +50,12 @@ from services.utils.serialization import serialize_dataclass
 load_dotenv()
 
 from services.domain.models import Feature, Intent, IntentCategory, Product
+
+# Configure structured logging
+from services.infrastructure.logging.config import get_ethics_logger, get_logger
 from services.intent_service import classifier
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Initialize session manager and conversation handler
 session_manager = SessionManager(ttl_minutes=30)
@@ -155,6 +156,11 @@ app.add_middleware(ErrorHandlingMiddleware)
 slack_router = SlackWebhookRouter()
 app.include_router(slack_router.get_router())
 
+# Include health monitoring router (PM-087: Ethics metrics)
+from services.api.health.staging_health import staging_health_router
+
+app.include_router(staging_health_router)
+
 
 @app.get("/")
 async def root():
@@ -188,6 +194,19 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         # Get or create session
         session_id = request.session_id or "default_session"
         session = session_manager.get_or_create_session(session_id)
+
+        # PM-087: Ethics tracking - Log intent processing for ethics analysis
+        ethics_logger = get_ethics_logger(name=__name__, session_id=session_id)
+
+        # Log intent for ethics analysis
+        ethics_logger.log_decision_point(
+            "intent_processing",
+            {
+                "message": request.message,
+                "session_id": session_id,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
 
         # NEW: Check if this is a disambiguation response
         if session.awaiting_clarification == "file_disambiguation":
@@ -236,6 +255,18 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
         print(f"🔍 Processing intent: {request.message}")
         intent = await classifier.classify(request.message)
         print(f"🔍 Intent classification result: {intent}")
+
+        # PM-087: Ethics tracking - Log intent classification for behavior analysis
+        ethics_logger.log_behavior_pattern(
+            "intent_classification",
+            {
+                "intent_category": intent.category.value,
+                "intent_action": intent.action,
+                "confidence": intent.confidence,
+                "session_id": session_id,
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+        )
 
         # Handle conversational intents immediately (minimal, pre-enrichment)
         if intent.category == IntentCategory.CONVERSATION:
@@ -334,6 +365,18 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                         query_result, enriched_intent.action
                     )
 
+                    # PM-087: Ethics tracking - Log query response for behavior analysis
+                    ethics_logger.log_behavior_pattern(
+                        "query_response",
+                        {
+                            "response_text": response_text,
+                            "intent_category": enriched_intent.category.value,
+                            "intent_action": enriched_intent.action,
+                            "session_id": session_id,
+                            "timestamp": datetime.utcnow().isoformat(),
+                        },
+                    )
+
                     return IntentResponse(
                         message=response_text,
                         intent={
@@ -414,6 +457,19 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                     response_text += " Let's think strategically about this."
                 else:
                     response_text += " I'll help you learn from this."
+            # PM-087: Ethics tracking - Log workflow response for behavior analysis
+            ethics_logger.log_behavior_pattern(
+                "workflow_response",
+                {
+                    "response_text": response_text,
+                    "intent_category": enriched_intent.category.value,
+                    "intent_action": enriched_intent.action,
+                    "workflow_id": workflow_id,
+                    "session_id": session_id,
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
+            )
+
             return IntentResponse(
                 message=response_text,
                 intent={

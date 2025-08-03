@@ -16,7 +16,7 @@ import psutil
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import text
 
-from services.database.connection import get_db_session
+from services.database.session_factory import AsyncSessionFactory
 from services.infrastructure.config.mcp_configuration import get_config
 from services.mcp.resources import MCPResourceManager
 
@@ -103,7 +103,7 @@ class StagingHealthChecker:
             start_time = time.time()
 
             # Test database connection and query
-            async with get_db_session() as session:
+            async with AsyncSessionFactory.session_scope() as session:
                 # Basic connectivity test
                 result = await session.execute(text("SELECT 1 as health_check"))
                 health_value = result.scalar()
@@ -730,7 +730,7 @@ async def readiness_probe():
     """Kubernetes-style readiness probe"""
     try:
         # Quick database connectivity check
-        async with get_db_session() as session:
+        async with AsyncSessionFactory.session_scope() as session:
             await session.execute(text("SELECT 1"))
 
         return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
@@ -853,6 +853,17 @@ async def health_metrics():
                     f'piper_system_disk_percent{{environment="staging"}} {sys_res["disk_percent"]}'
                 )
 
+        # PM-087: Ethics metrics integration
+        try:
+            from services.infrastructure.monitoring.ethics_metrics import ethics_metrics
+
+            ethics_prometheus_metrics = ethics_metrics.get_prometheus_metrics()
+            metrics.extend(ethics_prometheus_metrics)
+        except ImportError as e:
+            logger.warning(f"Ethics metrics not available: {e}")
+        except Exception as e:
+            logger.error(f"Ethics metrics collection failed: {e}")
+
         return "\n".join(metrics) + "\n"
 
     except Exception as e:
@@ -860,4 +871,37 @@ async def health_metrics():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Metrics generation failed: {str(e)}",
+        )
+
+
+@staging_health_router.get("/ethics-metrics")
+async def ethics_metrics_endpoint():
+    """PM-087: Dedicated ethics boundary metrics endpoint"""
+    try:
+        from services.infrastructure.monitoring.ethics_metrics import ethics_metrics
+
+        # Get comprehensive ethics metrics
+        ethics_summary = ethics_metrics.get_metrics_summary()
+
+        # Return both Prometheus format and summary
+        prometheus_metrics = ethics_metrics.get_prometheus_metrics()
+
+        return {
+            "prometheus_metrics": "\n".join(prometheus_metrics) + "\n",
+            "summary": ethics_summary,
+            "timestamp": datetime.utcnow().isoformat(),
+            "environment": "staging",
+        }
+
+    except ImportError as e:
+        logger.warning(f"Ethics metrics module not available: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Ethics metrics system not available",
+        )
+    except Exception as e:
+        logger.error(f"Ethics metrics endpoint failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ethics metrics failed: {str(e)}",
         )

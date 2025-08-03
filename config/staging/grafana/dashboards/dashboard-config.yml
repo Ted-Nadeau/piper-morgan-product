@@ -1,0 +1,27 @@
+# Grafana Dashboard Provisioning Configuration
+# Manages dashboard auto-loading for Piper Morgan monitoring
+
+apiVersion: 1
+
+providers:
+  # Ethics monitoring dashboard provider
+  - name: 'PM-087 Ethics Monitoring'
+    orgId: 1
+    folder: 'Piper Morgan Ethics'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+
+  # System health dashboard provider
+  - name: 'System Health Monitoring'
+    orgId: 1
+    folder: 'Piper Morgan Health'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

@@ -24,6 +24,65 @@ Before ANY work, read these in order:
 
 If you haven't read the methodology documents, STOP NOW and read them.
 
+## SESSION START PROTOCOL
+
+### Mandatory Session Initialization Sequence
+
+**CRITICAL: Every Claude Code session MUST begin with this protocol to ensure proper context and continuity.**
+
+#### 1. Time/Date/Location Confirmation
+```
+Acknowledge current time, date, and timezone from environment
+Example: "Good morning! It's Sun Aug 3 2025 at 7:46 AM Pacific time."
+```
+
+#### 2. Session Log Creation
+```
+Create session log following naming convention:
+- First session: YYYY-MM-DD-{agent}-log.md
+- Additional sessions: YYYY-MM-DDa-{agent}-log.md, YYYY-MM-DDb-{agent}-log.md
+- Optional descriptive suffix: YYYY-MM-DDa-{agent}-log-descriptive-name.md
+
+Required template structure documented in session logs section below.
+```
+
+#### 3. Context Review Protocol
+```
+Check for handoff documentation:
+- Look for handoff prompts in docs/development/prompts/
+- Review recent session logs for context
+- Identify incomplete tasks or ongoing work
+- Note any specific instructions or constraints
+```
+
+#### 4. Task Planning and Organization
+```
+For multi-step or complex tasks:
+- Use TodoWrite tool immediately to organize work
+- Break down tasks into specific, actionable items
+- Set appropriate priorities and dependencies
+- Track progress throughout session
+```
+
+#### 5. Verification-First Methodology
+```
+Before any implementation:
+- Always verify current state with appropriate tools
+- Check existing patterns and architecture
+- Understand context before making changes
+- Follow systematic verification approach
+```
+
+### Session Start Success Criteria
+
+- [ ] Time/date acknowledged
+- [ ] Session log created with proper naming
+- [ ] Context reviewed from handoffs/previous sessions
+- [ ] Tasks organized with TodoWrite (if complex)
+- [ ] Current state verified before proceeding
+
+This protocol ensures **systematic context transfer** and **continuity between sessions**, critical for maintaining the Excellence Flywheel methodology.
+
 ## Project Overview
 
 Piper Morgan is an AI-powered Product Management Assistant platform that evolves from automating routine PM tasks to providing strategic insights. It's built with domain-driven design where PM concepts (Product, Feature, Intent, WorkItem) drive the technical architecture.
@@ -167,6 +226,49 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 - **Context Preservation**: Seamless multi-session complex projects
 
 **Key Insight**: Verification is not overhead - it's the foundation of acceleration. Every minute spent on systematic pattern research saves hours of implementation time and prevents architectural drift.
+
+## CRITICAL: NO ASSUMPTION ZONE - VERIFICATION MANDATORY
+
+### For ALL Agent Deployments (Code + Cursor)
+
+**ZERO TOLERANCE for assumption-based development:**
+
+#### Code Agent Verification Requirements
+
+```bash
+# MANDATORY verification commands before ANY work:
+find . -name "*.py" | grep [pattern]      # Find existing patterns
+cat [file] | grep [search]                # Check implementations
+grep -r [pattern] services/ --include="*.py"  # Verify patterns exist
+ls -la [directory]                        # Confirm directory structure
+```
+
+#### Cursor Agent Verification Requirements
+
+```bash
+# MANDATORY verification commands before ANY implementation:
+grep -r "CategoryType\|IntentCategory\|enum" services/ --include="*.py"
+cat services/shared_types.py | head -20
+find . -name "*.py" -exec grep -l "class.*Enum\|@dataclass" {} \;
+```
+
+#### Methodology Violation Consequences
+
+- **Performance Impact**: Assumption-based development reduces velocity by 50-70%
+- **Quality Risk**: Breaks systematic architecture patterns
+- **Rework Required**: Failed implementations require complete restart
+- **Excellence Flywheel Broken**: Destroys compound productivity gains
+
+#### Enforcement Protocol
+
+If an agent shows signs of assumption-based development:
+
+1. **Immediate Reset**: Stop work and enforce verification-first
+2. **Methodology Reminder**: Review Four Pillars compliance
+3. **Verification Commands**: Require mandatory discovery before proceeding
+4. **Quality Gate**: No implementation without systematic verification
+
+**THE EXCELLENCE FLYWHEEL ONLY WORKS WITH SYSTEMATIC VERIFICATION FIRST**
 
 ## Requirements
 

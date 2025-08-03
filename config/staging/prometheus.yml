@@ -1,0 +1,141 @@
+# Prometheus Configuration for Piper Morgan Staging Environment
+# Aligned with ADR-009 Health Monitoring System Design
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: 'staging'
+    cluster: 'piper-morgan'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # TODO: Add alertmanager when configured
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'
+rule_files:
+  - "alert_rules.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Piper Morgan Main Application Health Metrics
+  - job_name: 'piper-morgan-health'
+    static_configs:
+      - targets: ['piper-api-staging:8000']
+    metrics_path: '/health/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: false
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: piper-api-staging:8000
+
+  # PM-087 Ethics Boundary Metrics
+  - job_name: 'piper-ethics-metrics'
+    static_configs:
+      - targets: ['piper-api-staging:8000']
+    metrics_path: '/health/ethics-metrics'
+    scrape_interval: 60s
+    scrape_timeout: 15s
+    honor_labels: false
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: piper-api-staging:8000
+
+  # Component Health Checks (Extended)
+  - job_name: 'piper-components'
+    static_configs:
+      - targets: ['piper-api-staging:8000']
+    metrics_path: '/health/comprehensive'
+    scrape_interval: 45s
+    scrape_timeout: 20s
+    honor_labels: false
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'piper_health_(.*)'
+        target_label: __name__
+        replacement: 'piper_component_${1}'
+
+  # Database Health Metrics
+  - job_name: 'piper-database'
+    static_configs:
+      - targets: ['postgres-staging:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    honor_labels: false
+
+  # Redis Health Metrics
+  - job_name: 'piper-redis'
+    static_configs:
+      - targets: ['redis-staging:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 10s
+    honor_labels: false
+
+  # ChromaDB Vector Database Metrics
+  - job_name: 'piper-chromadb'
+    static_configs:
+      - targets: ['chromadb-staging:8000']
+    metrics_path: '/api/v1/heartbeat'
+    scrape_interval: 90s
+    scrape_timeout: 15s
+    honor_labels: false
+
+  # MCP Integration Performance Metrics (PM-038)
+  - job_name: 'piper-mcp-performance'
+    static_configs:
+      - targets: ['piper-api-staging:8000']
+    metrics_path: '/health/mcp'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    honor_labels: false
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'piper_mcp_(.*)'
+        target_label: __name__
+        replacement: 'piper_mcp_${1}'
+
+  # System Resource Monitoring
+  - job_name: 'piper-system-resources'
+    static_configs:
+      - targets: ['piper-api-staging:8000']
+    metrics_path: '/health/system'
+    scrape_interval: 45s
+    scrape_timeout: 10s
+    honor_labels: false
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'piper_system_(.*)'
+        target_label: __name__
+        replacement: 'piper_system_${1}'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # Grafana monitoring
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana-staging:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 60s
+    scrape_timeout: 10s

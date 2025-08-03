@@ -81,6 +81,13 @@ class FileRepository(BaseRepository):
             )
         )
 
+        # Return the updated file
+        result = await self.session.execute(
+            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
+        )
+        db_file = result.scalar_one_or_none()
+        return db_file.to_domain() if db_file else None
+
     async def search_files_by_name(self, session_id: str, query: str) -> List[UploadedFile]:
         """Search files by name within a session (case-insensitive partial match)"""
         result = await self.session.execute(

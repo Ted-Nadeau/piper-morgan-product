@@ -1,0 +1,176 @@
+# Prometheus Alerting Rules for Piper Morgan Staging
+# PM-087 Ethics Monitoring & System Health Alerts
+
+groups:
+  # PM-087 Ethics Boundary Monitoring
+  - name: piper-ethics-critical
+    interval: 30s
+    rules:
+      - alert: EthicsBoundaryViolationDetected
+        expr: increase(piper_ethics_boundary_violations_total[5m]) > 0
+        for: 0m  # Immediate alert for any boundary violation
+        labels:
+          severity: critical
+          component: ethics
+          team: security
+        annotations:
+          summary: "Ethics boundary violation detected"
+          description: "{{ $value }} ethics boundary violations detected in the last 5 minutes. Immediate investigation required."
+          runbook_url: "https://docs.piper-morgan.ai/runbooks/ethics-violations"
+
+      - alert: EthicsAuditTrailFailure
+        expr: piper_ethics_audit_trail_failures_total > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: ethics
+          team: security
+        annotations:
+          summary: "Ethics audit trail recording failure"
+          description: "Audit trail recording has failed {{ $value }} times. Transparency requirements compromised."
+          runbook_url: "https://docs.piper-morgan.ai/runbooks/audit-failures"
+
+      - alert: EthicsPatternLearningAnomalous
+        expr: rate(piper_ethics_pattern_learning_operations_total[10m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: ethics
+          team: engineering
+        annotations:
+          summary: "Unusually high ethics pattern learning activity"
+          description: "Ethics pattern learning operations rate is {{ $value }}/min, which may indicate system stress or misuse."
+
+  # System Health Critical Alerts
+  - name: piper-health-critical
+    interval: 30s
+    rules:
+      - alert: PiperOverallHealthUnhealthy
+        expr: piper_health_overall{environment="staging"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+          team: engineering
+        annotations:
+          summary: "Piper Morgan overall health is unhealthy"
+          description: "Overall system health has been unhealthy for more than 2 minutes"
+          runbook_url: "https://docs.piper-morgan.ai/runbooks/system-health"
+
+      - alert: PiperComponentHealthDegraded
+        expr: piper_health_component{environment="staging"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          component: "{{ $labels.component }}"
+          team: engineering
+        annotations:
+          summary: "Component {{ $labels.component }} health degraded"
+          description: "Component {{ $labels.component }} has been unhealthy for 5 minutes"
+
+      - alert: PiperMCPPerformanceDegraded
+        expr: piper_mcp_search_response_time_ms{environment="staging"} > 500
+        for: 5m
+        labels:
+          severity: warning
+          component: mcp
+          team: engineering
+        annotations:
+          summary: "MCP search performance degraded"
+          description: "MCP search response time {{ $value }}ms has exceeded 500ms target for 5 minutes"
+
+      - alert: PiperSystemResourcesCritical
+        expr: |
+          piper_system_cpu_percent{environment="staging"} > 90 or
+          piper_system_memory_percent{environment="staging"} > 90 or
+          piper_system_disk_percent{environment="staging"} > 90
+        for: 2m
+        labels:
+          severity: critical
+          component: system
+          team: infrastructure
+        annotations:
+          summary: "System resources critically high"
+          description: "CPU, memory, or disk usage above 90% for 2 minutes"
+
+  # Database Health Monitoring
+  - name: piper-database-alerts
+    interval: 30s
+    rules:
+      - alert: DatabaseConnectionFailure
+        expr: piper_health_component{component="database",environment="staging"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+          team: infrastructure
+        annotations:
+          summary: "Database connection failure"
+          description: "Cannot connect to PostgreSQL database for over 1 minute"
+
+      - alert: DatabaseResponseTimeSlow
+        expr: piper_health_response_time_ms{component="database",environment="staging"} > 1000
+        for: 3m
+        labels:
+          severity: warning
+          component: database
+          team: engineering
+        annotations:
+          summary: "Database response time slow"
+          description: "Database response time {{ $value }}ms exceeds 1000ms threshold"
+
+  # Redis Cache Health
+  - name: piper-redis-alerts
+    interval: 30s
+    rules:
+      - alert: RedisConnectionFailure
+        expr: piper_health_component{component="redis",environment="staging"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          component: redis
+          team: infrastructure
+        annotations:
+          summary: "Redis connection failure"
+          description: "Cannot connect to Redis cache for over 1 minute"
+
+  # ChromaDB Vector Database
+  - name: piper-chromadb-alerts
+    interval: 60s
+    rules:
+      - alert: ChromaDBConnectionFailure
+        expr: piper_health_component{component="chromadb",environment="staging"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: chromadb
+          team: engineering
+        annotations:
+          summary: "ChromaDB connection failure"
+          description: "Cannot connect to ChromaDB vector database for over 2 minutes"
+
+  # API Performance Monitoring
+  - name: piper-api-performance
+    interval: 30s
+    rules:
+      - alert: APIResponseTimeHigh
+        expr: piper_health_response_time_ms{environment="staging"} > 3000
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+          team: engineering
+        annotations:
+          summary: "API response time high"
+          description: "API response time {{ $value }}ms exceeds 3000ms threshold for 5 minutes"
+
+      - alert: APIErrorRateHigh
+        expr: rate(piper_api_errors_total{environment="staging"}[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          component: api
+          team: engineering
+        annotations:
+          summary: "API error rate high"
+          description: "API error rate {{ $value }} exceeds 10% threshold"
