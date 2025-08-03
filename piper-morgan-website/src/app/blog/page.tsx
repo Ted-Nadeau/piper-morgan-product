@@ -3,8 +3,8 @@ import { generateSEOMetadata } from '@/lib/domain-utils';
 import { Hero, BlogPostCard, NewsletterSignup, CTAButton } from '@/components';
 
 const seoData = generateSEOMetadata(
-  'Blog - Building Piper Morgan',
-  'Follow our building-in-public journey and PM methodology development',
+  'Building-in-Public: AI-Powered PM Methodology Development',
+  'Follow our transparent journey developing systematic PM excellence through AI collaboration. Real insights, real breakthroughs, real learning.',
   { canonical: 'https://pipermorgan.ai/blog' }
 );
 
@@ -24,14 +24,15 @@ export default function BlogPage() {
     <main>
       {/* Hero Section */}
       <Hero
-        headline="Building Piper Morgan"
-        subheadline="Follow our building-in-public journey as we develop AI-powered PM methodology through systematic excellence and transparent processes."
+        headline="Building-in-public:"
+        highlightText="systematic PM excellence"
+        subheadline="Follow our transparent journey as we develop AI-powered product management methodology through verified patterns, breakthrough discoveries, and systematic excellence. Every decision documented, every pattern captured, every lesson shared."
         primaryCTA={{
-          text: "Latest Updates",
+          text: "Read Latest Updates",
           href: "#recent-posts"
         }}
         secondaryCTA={{
-          text: "Subscribe",
+          text: "Join the Journey",
           href: "/newsletter"
         }}
         background="surface"
@@ -44,10 +45,10 @@ export default function BlogPage() {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-text-dark mb-6">
-                Recent Posts
+                Building-in-Public Updates
               </h2>
               <p className="text-xl text-text-light">
-                Deep dives into our methodology, breakthroughs, and systematic approach to AI-powered product management.
+                Deep dives into our methodology breakthroughs, systematic excellence patterns, and transparent AI-powered product management development. Learn from our systematic approach as we build it.
               </p>
             </div>
 
@@ -117,11 +118,10 @@ export default function BlogPage() {
             {/* Medium Integration Notice */}
             <div className="bg-gradient-to-r from-primary-teal/5 to-primary-orange/5 p-8 rounded-card text-center mb-12">
               <h3 className="text-2xl font-semibold text-text-dark mb-4">
-                Read More on Medium
+                Full Building-in-Public Collection on Medium
               </h3>
               <p className="text-text-light mb-6">
-                All our building-in-public content is published on Medium for wider reach and engagement.
-                Future versions will include RSS integration to display posts directly here.
+                All our transparent development updates, methodology breakthroughs, and systematic excellence discoveries are published on Medium for wider community engagement. Join 576+ readers following our journey from experiment to systematic practice.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <CTAButton
@@ -151,16 +151,17 @@ export default function BlogPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto">
             <NewsletterSignup
-              title="Never Miss an Update"
-              description="Get weekly insights on our building-in-public journey, methodology breakthroughs, and behind-the-scenes development updates delivered directly to your inbox."
+              title="Get systematic excellence insights delivered weekly"
+              description="Never miss a breakthrough discovery, methodology insight, or behind-the-scenes development update. Join 576+ PM professionals learning systematic excellence through our transparent building-in-public approach."
               benefits={[
-                "Weekly methodology insights and breakthroughs",
-                "Behind-the-scenes development updates",
-                "Early access to new features and tools",
-                "Practical PM templates and frameworks"
+                "Weekly methodology insights and breakthrough discoveries",
+                "Behind-the-scenes development updates and decision rationale",
+                "Early access to new systematic frameworks and tools",
+                "Practical templates and patterns you can immediately apply",
+                "Direct insight into human-AI collaboration patterns that actually work"
               ]}
               background="dark"
-              privacyNotice="No spam, unsubscribe anytime. Join 500+ PM professionals following our journey."
+              privacyNotice="No spam, unsubscribe anytime. Join 576+ PM professionals learning systematic excellence."
             />
           </div>
         </div>

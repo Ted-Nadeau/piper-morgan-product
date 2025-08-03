@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface NavigationItem {
   label: string;
@@ -34,9 +35,15 @@ export default function Navigation() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-teal rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">PM</span>
+          <Link href="/" className="flex items-center space-x-3">
+            <div className="relative w-10 h-10">
+              <Image
+                src="/assets/pm-logo.png"
+                alt="Piper Morgan Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
             <span className="text-xl font-bold text-text-dark">
               Piper Morgan

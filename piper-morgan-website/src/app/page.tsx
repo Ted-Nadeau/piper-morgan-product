@@ -35,6 +35,7 @@ export default function Home() {
           text: "Follow the Journey",
           href: "[FOLLOW_THE_JOURNEY_URL]"
         }}
+        showLogo={true}
       />
 
       {/* Value Propositions */}
