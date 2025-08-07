@@ -951,3 +951,82 @@ class ListMembership:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return self._list_item.to_dict()
+
+
+# PM-034 Phase 1: Conversation Foundation Domain Models
+@dataclass
+class Conversation:
+    """Domain model for conversational interactions"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    user_id: str = ""
+    session_id: str = ""
+    title: str = ""  # Optional conversation title/summary
+    context: Dict[str, Any] = field(default_factory=dict)  # Conversation context
+    is_active: bool = True
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    last_activity_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "session_id": self.session_id,
+            "title": self.title,
+            "context": self.context,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "last_activity_at": (
+                self.last_activity_at.isoformat() if self.last_activity_at else None
+            ),
+        }
+
+
+@dataclass
+class ConversationTurn:
+    """Domain model for individual turns in a conversation"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    conversation_id: str = ""
+    turn_number: int = 0  # Sequential turn number within conversation
+
+    # Turn content
+    user_message: str = ""
+    assistant_response: str = ""
+    intent: Optional[str] = None  # Classified intent for this turn
+
+    # Context and entities
+    entities: List[str] = field(default_factory=list)  # Extracted entities
+    references: Dict[str, str] = field(default_factory=dict)  # Anaphoric references
+    context_used: Dict[str, Any] = field(default_factory=dict)  # Context used in response
+
+    # Metadata
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    processing_time: Optional[float] = None  # Response processing time in ms
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "conversation_id": self.conversation_id,
+            "turn_number": self.turn_number,
+            "user_message": self.user_message,
+            "assistant_response": self.assistant_response,
+            "intent": self.intent,
+            "entities": self.entities,
+            "references": self.references,
+            "context_used": self.context_used,
+            "metadata": self.metadata,
+            "processing_time": self.processing_time,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }

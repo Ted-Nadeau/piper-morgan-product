@@ -93,36 +93,86 @@ class QueryRouter:
         message: str,
         user_context: Optional[Dict[str, Any]] = None,
         session_id: Optional[str] = None,
+        conversation_manager=None,  # PM-034 Phase 3: ConversationManager integration
     ) -> Any:
         """
-        PM-034 Phase 2B: Classify message and route to appropriate service
+        PM-034 Phase 2B/3: Classify message and route to appropriate service with conversation context
 
         This method provides the enhanced classification and routing pipeline
-        with A/B testing and performance monitoring.
+        with A/B testing, performance monitoring, and anaphoric reference resolution.
         """
         start_time = time.time()
         self.performance_metrics["total_requests"] += 1
 
         try:
+            # PM-034 Phase 3: Resolve anaphoric references if ConversationManager available
+            resolved_message = message
+            resolved_references = []
+
+            if conversation_manager and session_id:
+                try:
+                    resolved_message, resolved_references = (
+                        await conversation_manager.resolve_references_in_message(
+                            message, session_id
+                        )
+                    )
+                    if resolved_references:
+                        logger.info(
+                            "References resolved in query",
+                            session_id=session_id,
+                            original=message,
+                            resolved=resolved_message,
+                            reference_count=len(resolved_references),
+                        )
+                except Exception as e:
+                    logger.warning(f"Reference resolution failed, using original message: {e}")
+                    resolved_message = message  # Graceful degradation
+
             # Determine classification method based on rollout percentage
             use_llm = self._should_use_llm_classification(session_id)
 
             if use_llm and self.enable_llm_classification and self.llm_classifier:
-                # Use LLM classification
-                return await self._classify_and_route_with_llm(
-                    message, user_context, session_id, start_time
+                # Use LLM classification with resolved message
+                result = await self._classify_and_route_with_llm(
+                    resolved_message, user_context, session_id, start_time
                 )
             else:
-                # Use rule-based classification (fast path)
-                return await self._classify_and_route_rule_based(
-                    message, user_context, session_id, start_time
+                # Use rule-based classification (fast path) with resolved message
+                result = await self._classify_and_route_rule_based(
+                    resolved_message, user_context, session_id, start_time
                 )
+
+            # PM-034 Phase 3: Enhance result with conversation context if references were resolved
+            if resolved_references:
+                conversation_context = {
+                    "original_message": message,
+                    "resolved_message": resolved_message,
+                    "resolved_references": [
+                        {
+                            "original": ref.original_text,
+                            "resolved": ref.resolved_entity,
+                            "type": ref.entity_type,
+                            "confidence": ref.confidence,
+                        }
+                        for ref in resolved_references
+                    ],
+                }
+
+                # Wrap result with conversation context
+                if isinstance(result, dict):
+                    result["conversation_context"] = conversation_context
+                else:
+                    # Wrap non-dict results to include conversation context
+                    result = {"query_result": result, "conversation_context": conversation_context}
+
+            return result
 
         except Exception as e:
             logger.error(f"Classification and routing failed: {e}")
-            # Fallback to rule-based classification
+            # Fallback to rule-based classification with original message if resolution failed
+            fallback_message = resolved_message if "resolved_message" in locals() else message
             return await self._classify_and_route_rule_based(
-                message, user_context, session_id, start_time
+                fallback_message, user_context, session_id, start_time
             )
 
     def _should_use_llm_classification(self, session_id: Optional[str] = None) -> bool:
