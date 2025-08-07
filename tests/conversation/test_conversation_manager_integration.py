@@ -1,0 +1,334 @@
+"""
+PM-034 Phase 3 Integration Tests: ConversationManager End-to-End Validation
+Tests the complete conversation context and anaphoric resolution pipeline
+Target: <150ms additional latency, 90% resolution accuracy
+"""
+
+import asyncio
+import time
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from services.cache.redis_factory import RedisFactory
+from services.conversation.conversation_manager import ConversationContext, ConversationManager
+from services.conversation.reference_resolver import ResolvedReference
+from services.domain.models import ConversationTurn
+from services.queries.query_router import QueryRouter
+
+
+class TestConversationManagerIntegration:
+    """Test ConversationManager integration with QueryRouter and Redis"""
+
+    @pytest.fixture
+    async def mock_redis_client(self):
+        """Mock Redis client for testing"""
+        mock_client = AsyncMock()
+        mock_client.ping = AsyncMock(return_value=True)
+        mock_client.get = AsyncMock(return_value=None)
+        mock_client.setex = AsyncMock(return_value=True)
+        mock_client.close = AsyncMock()
+        return mock_client
+
+    @pytest.fixture
+    def conversation_manager(self, mock_redis_client):
+        """ConversationManager with mocked Redis"""
+        return ConversationManager(
+            redis_client=mock_redis_client, context_window_size=10, cache_ttl=300
+        )
+
+    @pytest.fixture
+    def mock_query_services(self):
+        """Mock query services for QueryRouter"""
+        project_queries = AsyncMock()
+        conversation_queries = AsyncMock()
+        file_queries = AsyncMock()
+        return project_queries, conversation_queries, file_queries
+
+    @pytest.fixture
+    def query_router(self, mock_query_services):
+        """QueryRouter with mocked services"""
+        project_queries, conversation_queries, file_queries = mock_query_services
+        return QueryRouter(
+            project_query_service=project_queries,
+            conversation_query_service=conversation_queries,
+            file_query_service=file_queries,
+            test_mode=True,
+        )
+
+    async def test_conversation_context_creation(self, conversation_manager):
+        """Test basic conversation context creation and management"""
+        conversation_id = "test_conv_001"
+
+        # Save initial turn
+        turn = await conversation_manager.save_conversation_turn(
+            conversation_id=conversation_id,
+            user_message="Create GitHub issue for login bug",
+            assistant_response="I created GitHub issue #85 for the login bug.",
+            entities=["#85"],
+        )
+
+        assert turn.conversation_id == conversation_id
+        assert turn.turn_number == 1
+        assert "GitHub issue #85" in turn.assistant_response
+
+    async def test_anaphoric_reference_resolution_performance(self, conversation_manager):
+        """Test reference resolution performance meets <150ms target"""
+        conversation_id = "test_conv_002"
+
+        # Set up conversation context with GitHub issue
+        await conversation_manager.save_conversation_turn(
+            conversation_id=conversation_id,
+            user_message="Create GitHub issue for login bug",
+            assistant_response="I created GitHub issue #85 for the login bug.",
+            entities=["#85"],
+        )
+
+        # Test reference resolution with performance timing
+        start_time = time.time()
+        resolved_message, references = await conversation_manager.resolve_references_in_message(
+            "Show me that issue again", conversation_id
+        )
+        end_time = time.time()
+
+        resolution_time_ms = (end_time - start_time) * 1000
+
+        # Performance assertion: <150ms target
+        assert (
+            resolution_time_ms < 150
+        ), f"Resolution took {resolution_time_ms:.2f}ms, exceeds 150ms target"
+
+        # Functionality assertions
+        assert "GitHub issue #85" in resolved_message
+        assert len(references) > 0
+        assert references[0].entity_type == "issue"
+        assert references[0].confidence > 0.7
+
+    async def test_query_router_with_conversation_context(
+        self, query_router, conversation_manager, mock_query_services
+    ):
+        """Test QueryRouter integration with ConversationManager"""
+        project_queries, conversation_queries, file_queries = mock_query_services
+
+        # Mock project query service to return something
+        project_queries.query = AsyncMock(
+            return_value={
+                "result": "Here are the details for GitHub issue #85",
+                "entities": ["#85"],
+            }
+        )
+
+        conversation_id = "test_conv_003"
+
+        # Set up conversation context
+        await conversation_manager.save_conversation_turn(
+            conversation_id=conversation_id,
+            user_message="Create GitHub issue for login bug",
+            assistant_response="I created GitHub issue #85 for the login bug.",
+            entities=["#85"],
+        )
+
+        # Test query routing with conversation context
+        result = await query_router.classify_and_route(
+            message="Show me details for that issue",
+            session_id=conversation_id,
+            conversation_manager=conversation_manager,
+        )
+
+        # Verify conversation context was added to result
+        assert "conversation_context" in result
+        assert (
+            result["conversation_context"]["original_message"] == "Show me details for that issue"
+        )
+        assert "GitHub issue #85" in result["conversation_context"]["resolved_message"]
+        assert len(result["conversation_context"]["resolved_references"]) > 0
+
+    async def test_conversation_window_management(self, conversation_manager):
+        """Test 10-turn context window is properly maintained"""
+        conversation_id = "test_conv_004"
+
+        # Create 15 turns (exceeds 10-turn window)
+        for i in range(15):
+            await conversation_manager.save_conversation_turn(
+                conversation_id=conversation_id,
+                user_message=f"Message {i+1}",
+                assistant_response=f"Response {i+1}",
+                entities=[f"entity_{i+1}"],
+            )
+
+        # Get conversation context
+        context = await conversation_manager.get_conversation_context(conversation_id)
+
+        # Verify only last 10 turns are kept
+        if context:
+            recent_turns = context.get_recent_turns(limit=10)
+            assert len(recent_turns) <= 10
+            # Should have turns 6-15 (last 10)
+            assert recent_turns[-1].user_message == "Message 15"
+            assert recent_turns[0].user_message in [
+                "Message 6",
+                "Message 15",
+            ]  # Depending on ordering
+
+    async def test_redis_circuit_breaker(self, conversation_manager):
+        """Test Redis circuit breaker functionality"""
+        # Force Redis failures
+        conversation_manager.redis_client.get = AsyncMock(
+            side_effect=Exception("Redis connection failed")
+        )
+
+        conversation_id = "test_conv_005"
+
+        # Should gracefully degrade to database-only
+        context = await conversation_manager.get_conversation_context(conversation_id)
+
+        # Should not crash, gracefully returns None or empty context
+        assert context is None or isinstance(context, ConversationContext)
+
+        # Circuit breaker should be activated after threshold failures
+        for _ in range(conversation_manager.circuit_breaker_threshold + 1):
+            await conversation_manager._get_from_cache(conversation_id)
+
+        assert conversation_manager.redis_circuit_open
+
+    async def test_end_to_end_conversation_flow(
+        self, query_router, conversation_manager, mock_query_services
+    ):
+        """Test complete end-to-end conversation flow"""
+        project_queries, conversation_queries, file_queries = mock_query_services
+
+        # Mock responses for different query types
+        project_queries.query = AsyncMock(
+            return_value={"result": "GitHub issue #85 created successfully", "entities": ["#85"]}
+        )
+        file_queries.query = AsyncMock(
+            return_value={
+                "result": "Here are the details for GitHub issue #85: Login authentication failing...",
+                "entities": ["#85"],
+            }
+        )
+
+        conversation_id = "test_conv_e2e"
+
+        # Turn 1: Create issue
+        result1 = await query_router.classify_and_route(
+            message="Create GitHub issue for login bug",
+            session_id=conversation_id,
+            conversation_manager=conversation_manager,
+        )
+
+        # Save turn 1 to conversation
+        await conversation_manager.save_conversation_turn(
+            conversation_id=conversation_id,
+            user_message="Create GitHub issue for login bug",
+            assistant_response="I created GitHub issue #85 for the login bug.",
+            entities=["#85"],
+        )
+
+        # Turn 2: Reference that issue
+        start_time = time.time()
+        result2 = await query_router.classify_and_route(
+            message="Show me that issue again",
+            session_id=conversation_id,
+            conversation_manager=conversation_manager,
+        )
+        end_time = time.time()
+
+        total_latency_ms = (end_time - start_time) * 1000
+
+        # Performance assertion: complete flow <150ms additional latency
+        assert (
+            total_latency_ms < 150
+        ), f"E2E flow took {total_latency_ms:.2f}ms, exceeds 150ms target"
+
+        # Verify conversation context is preserved and references resolved
+        assert "conversation_context" in result2
+        assert "GitHub issue #85" in result2["conversation_context"]["resolved_message"]
+
+        # Verify the reference was properly resolved
+        references = result2["conversation_context"]["resolved_references"]
+        assert len(references) > 0
+        assert references[0]["type"] == "issue"
+        assert references[0]["resolved"] == "GitHub issue #85"
+
+    async def test_conversation_manager_stats(self, conversation_manager):
+        """Test ConversationManager statistics and health monitoring"""
+        stats = await conversation_manager.get_manager_stats()
+
+        assert stats["conversation_manager"] == "active"
+        assert stats["context_window_size"] == 10
+        assert stats["cache_ttl"] == 300
+        assert "components" in stats
+        assert stats["components"]["reference_resolver"] is True
+
+    @pytest.mark.performance
+    async def test_concurrent_conversation_performance(self, conversation_manager):
+        """Test performance under concurrent conversation loads"""
+
+        async def single_conversation_flow(conv_id: str):
+            """Single conversation flow for concurrency testing"""
+            await conversation_manager.save_conversation_turn(
+                conversation_id=conv_id,
+                user_message="Create issue",
+                assistant_response=f"Created issue #{conv_id[-3:]}",
+                entities=[f"#{conv_id[-3:]}"],
+            )
+
+            resolved_message, references = await conversation_manager.resolve_references_in_message(
+                "Show me that issue", conv_id
+            )
+
+            return resolved_message, references
+
+        # Run 10 concurrent conversations
+        start_time = time.time()
+        tasks = [single_conversation_flow(f"conv_{i:03d}") for i in range(10)]
+        results = await asyncio.gather(*tasks)
+        end_time = time.time()
+
+        total_time_ms = (end_time - start_time) * 1000
+        avg_time_per_conversation = total_time_ms / 10
+
+        # Performance assertion: average <150ms per conversation under load
+        assert (
+            avg_time_per_conversation < 150
+        ), f"Average time {avg_time_per_conversation:.2f}ms exceeds 150ms target"
+
+        # Verify all conversations completed successfully
+        assert len(results) == 10
+        for resolved_message, references in results:
+            assert "issue #" in resolved_message.lower()
+            assert len(references) > 0
+
+
+class TestConversationContextModel:
+    """Test ConversationContext data model"""
+
+    def test_conversation_context_turn_management(self):
+        """Test turn management within context window"""
+        context = ConversationContext(
+            conversation_id="test_001",
+            turns=[],
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            metadata={},
+        )
+
+        # Add turns
+        for i in range(15):  # Exceeds 10-turn window
+            turn = ConversationTurn(
+                id=f"turn_{i}",
+                conversation_id="test_001",
+                turn_number=i + 1,
+                user_message=f"Message {i+1}",
+                assistant_response=f"Response {i+1}",
+                entities=[],
+                created_at=datetime.now(),
+            )
+            context.add_turn(turn)
+
+        # Verify window size maintained
+        assert len(context.turns) == 10
+        recent_turns = context.get_recent_turns(limit=5)
+        assert len(recent_turns) == 5

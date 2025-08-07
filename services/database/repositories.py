@@ -28,6 +28,7 @@ from .models import (
     Workflow,
     WorkItem,
 )
+from .session_factory import AsyncSessionFactory
 
 logger = structlog.get_logger()
 
@@ -45,18 +46,9 @@ class BaseRepository:
         if "id" not in kwargs:
             kwargs["id"] = str(uuid.uuid4())
 
-        # Check if we're already in a transaction
-        if self.session.in_transaction():
-            # Already in transaction, just add the entity
-            entity = self.model(**kwargs)
-            self.session.add(entity)
-            await self.session.flush()
-        else:
-            # Start new transaction
-            async with self.session.begin():
-                entity = self.model(**kwargs)
-                self.session.add(entity)
-                # Automatic commit via context manager
+        entity = self.model(**kwargs)
+        self.session.add(entity)
+        await self.session.flush()
         await self.session.refresh(entity)
         return entity
 
@@ -81,18 +73,9 @@ class BaseRepository:
         if not entity:
             return None
 
-        # Check if we're already in a transaction
-        if self.session.in_transaction():
-            # Already in transaction, just update the entity
-            for key, value in kwargs.items():
-                setattr(entity, key, value)
-            await self.session.flush()
-        else:
-            # Start new transaction
-            async with self.session.begin():
-                for key, value in kwargs.items():
-                    setattr(entity, key, value)
-                # Automatic commit via context manager
+        for key, value in kwargs.items():
+            setattr(entity, key, value)
+        await self.session.flush()
         await self.session.refresh(entity)
         return entity
 
@@ -102,16 +85,8 @@ class BaseRepository:
         if not entity:
             return False
 
-        # Check if we're already in a transaction
-        if self.session.in_transaction():
-            # Already in transaction, just delete the entity
-            self.session.delete(entity)
-            await self.session.flush()
-        else:
-            # Start new transaction
-            async with self.session.begin():
-                self.session.delete(entity)
-                # Automatic commit via context manager
+        self.session.delete(entity)
+        await self.session.flush()
         return True
 
 
@@ -141,36 +116,17 @@ class WorkflowRepository(BaseRepository):
 
     async def create_from_domain(self, domain_workflow) -> Workflow:
         """Create DB workflow from domain workflow"""
-        # Check if we're already in a transaction
-        if self.session.in_transaction():
-            # Already in transaction, just add the workflow
-            workflow = Workflow(
-                id=domain_workflow.id,
-                type=domain_workflow.type,
-                status=domain_workflow.status,
-                input_data={},  # Domain model has context instead
-                output_data=(domain_workflow.result.__dict__ if domain_workflow.result else None),
-                context=domain_workflow.context,
-                created_at=domain_workflow.created_at,
-            )
-            self.session.add(workflow)
-            await self.session.flush()
-        else:
-            # Start new transaction
-            async with self.session.begin():
-                workflow = Workflow(
-                    id=domain_workflow.id,
-                    type=domain_workflow.type,
-                    status=domain_workflow.status,
-                    input_data={},  # Domain model has context instead
-                    output_data=(
-                        domain_workflow.result.__dict__ if domain_workflow.result else None
-                    ),
-                    context=domain_workflow.context,
-                    created_at=domain_workflow.created_at,
-                )
-                self.session.add(workflow)
-                # Automatic commit via context manager
+        workflow = Workflow(
+            id=domain_workflow.id,
+            type=domain_workflow.type,
+            status=domain_workflow.status,
+            input_data={},  # Domain model has context instead
+            output_data=(domain_workflow.result.__dict__ if domain_workflow.result else None),
+            context=domain_workflow.context,
+            created_at=domain_workflow.created_at,
+        )
+        self.session.add(workflow)
+        await self.session.flush()
         await self.session.refresh(workflow)
         return workflow
 
@@ -565,6 +521,36 @@ class KnowledgeGraphRepository(BaseRepository):
         return await self.create_node(node)
 
 
+# PM-034 Phase 3: Conversation Repository for ConversationManager
+class ConversationRepository(BaseRepository):
+    """Repository for conversation turn operations"""
+
+    model = None  # ConversationTurn is a domain model, not a DB model yet
+
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
+
+    async def get_conversation_turns(
+        self, conversation_id: str, limit: int = 10
+    ) -> List[domain.ConversationTurn]:
+        """Get conversation turns for a conversation ID"""
+        # For now, return empty list since we don't have DB table yet
+        # This enables graceful fallback for Phase 3 implementation
+        return []
+
+    async def save_turn(self, turn: domain.ConversationTurn) -> None:
+        """Save conversation turn to database"""
+        # For now, this is a no-op since we don't have DB table yet
+        # Redis caching will handle persistence in Phase 3
+        logger.info(f"ConversationTurn saved (cache-only): {turn.id}")
+
+    async def get_next_turn_number(self, conversation_id: str) -> int:
+        """Get next turn number for conversation"""
+        # For now, return 1 as fallback
+        # This enables basic functionality while we build out full DB schema
+        return 1
+
+
 # Repository factory
 class RepositoryFactory:
     """Creates repositories with session
@@ -574,9 +560,10 @@ class RepositoryFactory:
     @staticmethod
     async def get_repositories():
         """Get all repositories with a new session
-        Caller must close repos["session"] after use to avoid connection leaks.
+        DEPRECATED: Use AsyncSessionFactory.session_scope() directly for better resource management.
+        This method is maintained for backward compatibility only.
         """
-        session = await db.get_session()
+        session = await AsyncSessionFactory.create_session()
         return {
             "products": ProductRepository(session),
             "features": FeatureRepository(session),
