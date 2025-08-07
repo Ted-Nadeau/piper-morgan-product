@@ -8,7 +8,7 @@ PM-057 Context Validation Framework
 from datetime import datetime
 
 # 2025-06-14: Fixed imports and task creation to use correct enums and types
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from services.domain.models import Intent, Task, Workflow

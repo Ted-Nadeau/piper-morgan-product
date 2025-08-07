@@ -12,7 +12,8 @@ This handler processes spatial events through the complete Piper Morgan pipeline
 
 import logging
 import time
-from typing import Any, Dict, Optional, Set
+from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set
 
 from services.domain.models import Intent, SpatialEvent
 from services.integrations.slack.slack_client import SlackClient
@@ -31,7 +32,12 @@ LAST_CLEANUP = time.time()
 from collections import defaultdict
 
 WORKFLOW_RATE_LIMIT = defaultdict(list)  # user_id -> timestamps
-MAX_WORKFLOWS_PER_MINUTE = 3  # Conservative limit to prevent runaway
+MAX_WORKFLOWS_PER_MINUTE = 3
+
+# PM-079-SUB: Message consolidation tracking
+MESSAGE_CONSOLIDATION_BUFFER: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+CONSOLIDATION_TIMEOUT = 5.0  # seconds
+CONSOLIDATION_MAX_MESSAGES = 5
 
 
 async def is_duplicate_event(slack_context: Dict[str, Any]) -> bool:
@@ -125,6 +131,133 @@ class SlackResponseHandler:
         self.logger = logging.getLogger(__name__)
 
         self.logger.info("SlackResponseHandler initialized with complete integration pipeline")
+
+    def _get_consolidation_key(self, slack_context: Dict[str, Any]) -> str:
+        """Generate unique key for message consolidation based on channel and thread"""
+        channel_id = slack_context.get("channel_id", "unknown")
+        thread_ts = slack_context.get("thread_ts", "main")
+        return f"{channel_id}:{thread_ts}"
+
+    def _add_to_consolidation_buffer(
+        self, message_data: Dict[str, Any], slack_context: Dict[str, Any]
+    ) -> None:
+        """Add message to consolidation buffer for potential grouping"""
+        consolidation_key = self._get_consolidation_key(slack_context)
+        message_data["timestamp"] = time.time()
+        MESSAGE_CONSOLIDATION_BUFFER[consolidation_key].append(message_data)
+
+        # Limit buffer size
+        if len(MESSAGE_CONSOLIDATION_BUFFER[consolidation_key]) > CONSOLIDATION_MAX_MESSAGES:
+            MESSAGE_CONSOLIDATION_BUFFER[consolidation_key] = MESSAGE_CONSOLIDATION_BUFFER[
+                consolidation_key
+            ][-CONSOLIDATION_MAX_MESSAGES:]
+
+        self.logger.debug(f"Added message to consolidation buffer for {consolidation_key}")
+
+    def _should_consolidate_messages(self, consolidation_key: str) -> bool:
+        """Determine if messages should be consolidated based on timing and count"""
+        messages = MESSAGE_CONSOLIDATION_BUFFER.get(consolidation_key, [])
+        if len(messages) < 2:
+            return False
+
+        # Check if messages are within consolidation timeout
+        current_time = time.time()
+        recent_messages = [
+            msg for msg in messages if current_time - msg["timestamp"] <= CONSOLIDATION_TIMEOUT
+        ]
+
+        return len(recent_messages) >= 2
+
+    def _format_consolidated_message(
+        self, messages: List[Dict[str, Any]], slack_context: Dict[str, Any]
+    ) -> str:
+        """Format multiple messages into a single consolidated response"""
+        if not messages:
+            return ""
+
+        # Extract main workflow result (most recent or most important)
+        main_message = messages[-1]  # Most recent
+        main_content = main_message.get("content", "")
+
+        # Count different types of messages
+        workflow_results = [msg for msg in messages if msg.get("type") == "workflow_result"]
+        simple_responses = [
+            msg for msg in messages if msg.get("type") in ["simple_response", "query_response"]
+        ]
+
+        # Build consolidated message
+        consolidated_parts = []
+
+        # Main workflow completion message
+        if workflow_results:
+            main_workflow = workflow_results[-1]
+            workflow_content = main_workflow.get("content", "")
+            if workflow_content:
+                consolidated_parts.append(f"🤖 {workflow_content}")
+
+        # Add summary of additional actions
+        if len(messages) > 1:
+            additional_count = len(messages) - 1
+            if additional_count == 1:
+                consolidated_parts.append("   📋 1 additional action completed")
+            else:
+                consolidated_parts.append(f"   📋 {additional_count} additional actions completed")
+
+        # Add thread/reaction hint for detailed information
+        if len(messages) > 1:
+            consolidated_parts.append("   💬 Reply with 'details' for full breakdown")
+
+        return "\n".join(consolidated_parts)
+
+    def _clear_consolidation_buffer(self, consolidation_key: str) -> None:
+        """Clear consolidation buffer for a specific key"""
+        if consolidation_key in MESSAGE_CONSOLIDATION_BUFFER:
+            del MESSAGE_CONSOLIDATION_BUFFER[consolidation_key]
+            self.logger.debug(f"Cleared consolidation buffer for {consolidation_key}")
+
+    async def _send_consolidated_response(
+        self, slack_context: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Send consolidated response if conditions are met"""
+        consolidation_key = self._get_consolidation_key(slack_context)
+
+        if not self._should_consolidate_messages(consolidation_key):
+            return None
+
+        messages = MESSAGE_CONSOLIDATION_BUFFER[consolidation_key]
+        consolidated_content = self._format_consolidated_message(messages, slack_context)
+
+        if not consolidated_content:
+            return None
+
+        # Prepare Slack message parameters
+        message_params = {
+            "channel": slack_context.get("channel_id"),
+            "text": consolidated_content,
+        }
+
+        # Add thread targeting if in thread
+        thread_ts = slack_context.get("thread_ts")
+        if thread_ts:
+            message_params["thread_ts"] = thread_ts
+
+        # Send consolidated message
+        response = await self.slack_client.send_message(**message_params)
+
+        # Clear buffer after sending
+        self._clear_consolidation_buffer(consolidation_key)
+
+        self.logger.info(
+            f"Sent consolidated response ({len(messages)} messages) to channel {slack_context.get('channel_id')}"
+        )
+
+        return {
+            "slack_response": response,
+            "target_channel": slack_context.get("channel_id"),
+            "thread_ts": thread_ts,
+            "response_content": consolidated_content,
+            "consolidated_count": len(messages),
+        }
 
     async def handle_spatial_event(self, spatial_event: SpatialEvent) -> Optional[Dict[str, Any]]:
         """
@@ -403,10 +536,10 @@ class SlackResponseHandler:
         self, workflow_result: Dict[str, Any], slack_context: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """
-        Send response back to Slack with proper targeting.
+        Send response back to Slack with proper targeting and message consolidation.
 
         Uses preserved Slack context to route response to correct
-        channel/thread with spatial awareness.
+        channel/thread with spatial awareness and PM-079-SUB consolidation.
         """
         try:
             # Extract response content
@@ -419,6 +552,20 @@ class SlackResponseHandler:
                 f"SLACK_PIPELINE: Response generated: {response_content[:100]}{'...' if len(response_content) > 100 else ''}"
             )
 
+            # PM-079-SUB: Add message to consolidation buffer
+            message_data = {
+                "content": response_content,
+                "type": workflow_result.get("type", "unknown"),
+                "workflow_result": workflow_result,
+            }
+            self._add_to_consolidation_buffer(message_data, slack_context)
+
+            # Check if we should send consolidated response
+            consolidated_response = await self._send_consolidated_response(slack_context)
+            if consolidated_response:
+                return consolidated_response
+
+            # If no consolidation, send individual message
             # Prepare Slack message parameters with proper targeting
             message_params = {
                 "channel": slack_context.get("channel_id"),
@@ -434,7 +581,7 @@ class SlackResponseHandler:
             response = await self.slack_client.send_message(**message_params)
 
             self.logger.info(
-                f"Sent Slack response to channel {slack_context.get('channel_id')} "
+                f"Sent individual Slack response to channel {slack_context.get('channel_id')} "
                 f"{'in thread' if thread_ts else 'in channel'}"
             )
 
@@ -443,6 +590,7 @@ class SlackResponseHandler:
                 "target_channel": slack_context.get("channel_id"),
                 "thread_ts": thread_ts,
                 "response_content": response_content,
+                "consolidated_count": 1,
             }
 
         except Exception as e:
@@ -524,6 +672,12 @@ class SlackResponseHandler:
 
     async def get_handler_stats(self) -> Dict[str, Any]:
         """Get statistics about response handler performance"""
+        # Calculate consolidation statistics
+        total_buffered_messages = sum(
+            len(messages) for messages in MESSAGE_CONSOLIDATION_BUFFER.values()
+        )
+        active_consolidation_keys = len(MESSAGE_CONSOLIDATION_BUFFER)
+
         return {
             "handler_type": "SlackResponseHandler",
             "adapter_stats": await self.spatial_adapter.get_mapping_stats(),
@@ -533,4 +687,32 @@ class SlackResponseHandler:
                 "orchestration_engine": True,
                 "slack_client": True,
             },
+            "consolidation_stats": {
+                "active_buffers": active_consolidation_keys,
+                "total_buffered_messages": total_buffered_messages,
+                "consolidation_timeout": CONSOLIDATION_TIMEOUT,
+                "max_messages_per_buffer": CONSOLIDATION_MAX_MESSAGES,
+            },
         }
+
+    async def get_detailed_message_breakdown(self, slack_context: Dict[str, Any]) -> Optional[str]:
+        """Get detailed breakdown of consolidated messages for user request"""
+        consolidation_key = self._get_consolidation_key(slack_context)
+        messages = MESSAGE_CONSOLIDATION_BUFFER.get(consolidation_key, [])
+
+        if not messages:
+            return "No detailed information available."
+
+        breakdown_parts = ["📋 **Detailed Message Breakdown:**"]
+
+        for i, message in enumerate(messages, 1):
+            msg_type = message.get("type", "unknown")
+            content = message.get("content", "")
+            timestamp = message.get("timestamp", 0)
+
+            breakdown_parts.append(f"{i}. **{msg_type}**: {content}")
+            if timestamp:
+                time_str = time.strftime("%H:%M:%S", time.localtime(timestamp))
+                breakdown_parts.append(f"   ⏰ {time_str}")
+
+        return "\n".join(breakdown_parts)

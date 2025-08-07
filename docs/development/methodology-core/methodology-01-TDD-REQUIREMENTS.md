@@ -132,6 +132,57 @@ The Excellence Flywheel spins through **systematic quality**, not dogmatic proce
 
 **Default to Red Zone TDD**, but recognize when Yellow Zone Architecture-First or Green Zone rapid prototyping better serves our systematic excellence.
 
+## Empirical Validation Excellence (PM-034 Success Pattern)
+
+### Performance Claims Verification
+- **Never accept estimates**: All performance metrics must be measured
+- **Statistical rigor**: Mean, median, P95 percentiles with realistic load
+- **Evidence documentation**: Record actual measurements vs targets
+- **Confidence scoring**: Validate classification accuracy with real data
+
+### Example: PM-034 Extraordinary Claims → Empirical Evidence
+- **Claim**: <50ms rule-based classification
+- **Evidence**: 0.02ms achieved (2,500x better than target)
+- **Validation**: Direct measurement with concurrent load testing
+- **Documentation**: Performance results preserved in permanent documentation
+
+### Validation Protocol
+1. **Define measurable targets**: Specific, testable performance criteria
+2. **Create realistic test conditions**: Authentic load patterns and data
+3. **Measure systematically**: Automated benchmarking with statistics
+4. **Document evidence**: Permanent record of actual vs claimed performance
+
+### Empirical Testing Framework
+```python
+# PM-034 validation example
+async def test_single_classification_latency_claim():
+    """EMPIRICAL EVIDENCE: Single classification latency validation"""
+    # Target: <200ms mean, <300ms P95
+    latencies = []
+
+    for _ in range(5):  # Multiple measurements for statistics
+        start_time = time.time()
+        result = await classifier.classify_intent("complex query")
+        end_time = time.time()
+        latencies.append((end_time - start_time) * 1000)  # Convert to ms
+
+    mean_latency = statistics.mean(latencies)
+    p95_latency = statistics.quantiles(latencies, n=20)[18]  # 95th percentile
+
+    # EMPIRICAL EVIDENCE: Mean: 183.9ms, P95: 224.4ms
+    assert mean_latency < 200, f"Mean latency {mean_latency}ms exceeds 200ms target"
+    assert p95_latency < 300, f"P95 latency {p95_latency}ms exceeds 300ms target"
+
+    # Document results for permanent record
+    logger.info(f"✓ CLAIM VALIDATED: Mean: {mean_latency}ms, P95: {p95_latency}ms")
+```
+
+### Evidence Standards
+- **Concrete measurements**: Not estimates or theoretical calculations
+- **Statistical analysis**: Multiple runs with proper percentile calculations
+- **Realistic conditions**: Production-like load and data patterns
+- **Permanent documentation**: Results preserved in code and documentation
+
 ---
 
-*Updated: July 27, 2025 - Added pragmatic zones based on Slack integration success*
+*Updated: August 5, 2025 - Added empirical validation excellence patterns*

@@ -4,6 +4,8 @@ The heart of the system - these models drive everything else.
 Pure business logic with no persistence concerns.
 """
 
+from __future__ import annotations
+
 # 2025-06-14: Fixed Task type field and status enum to match database model and shared_types
 # 2025-06-15: Added Project and ProjectIntegration models for PM-009
 # 2025-06-17: Cleaned separation - removed SQLAlchemy code, fixed duplicate imports
@@ -15,10 +17,16 @@ from uuid import uuid4
 
 # Import shared types for consistency
 from services.shared_types import (
+    EdgeType,
     IntegrationType,
     IntentCategory,
+    ListType,
+    NodeType,
+    OrderingStrategy,
     TaskStatus,
     TaskType,
+    TodoPriority,
+    TodoStatus,
     WorkflowStatus,
     WorkflowType,
 )
@@ -724,14 +732,222 @@ class BoundaryViolation:
     severity: str = "medium"  # low, medium, high, critical
     audit_data: Dict[str, Any] = field(default_factory=dict)
 
+
+@dataclass
+class KnowledgeNode:
+    """Domain model for knowledge graph nodes"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    name: str = ""
+    node_type: NodeType = NodeType.CONCEPT
+    description: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    properties: Dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    session_id: Optional[str] = None
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
-            "violation_id": self.violation_id,
-            "violation_type": self.violation_type,
-            "context": self.context,
+            "id": self.id,
+            "name": self.name,
+            "node_type": self.node_type.value if self.node_type else None,
+            "description": self.description,
+            "metadata": self.metadata,
+            "properties": self.properties,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
             "session_id": self.session_id,
-            "timestamp": self.timestamp.isoformat(),
-            "severity": self.severity,
-            "audit_data": self.audit_data,
         }
+
+
+@dataclass
+class KnowledgeEdge:
+    """Domain model for knowledge graph edges"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    source_node_id: str = ""
+    target_node_id: str = ""
+    edge_type: EdgeType = EdgeType.REFERENCES
+    weight: float = 1.0
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    properties: Dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    session_id: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "source_node_id": self.source_node_id,
+            "target_node_id": self.target_node_id,
+            "edge_type": self.edge_type.value if self.edge_type else None,
+            "weight": self.weight,
+            "metadata": self.metadata,
+            "properties": self.properties,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "session_id": self.session_id,
+        }
+
+
+# PM-081: Universal List Architecture
+# Chief Architect's universal composition over specialization principle
+
+
+@dataclass
+class List:
+    """Universal List model for ANY item type (todo, feature, bug, attendee)"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    name: str = ""
+    description: str = ""
+    item_type: str = "todo"  # todo, feature, bug, attendee, etc.
+    list_type: str = "personal"  # personal, shared, project
+    ordering_strategy: str = "manual"  # manual, due_date, priority, created
+    color: Optional[str] = None  # Hex color for UI theming
+    emoji: Optional[str] = None  # Emoji for visual identification
+    is_archived: bool = False
+    is_default: bool = False  # Default list for new items of this type
+
+    # Metadata for PM-040 Knowledge Graph integration
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: List[str] = field(default_factory=list)
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "item_type": self.item_type,
+            "list_type": self.list_type,
+            "ordering_strategy": self.ordering_strategy,
+            "color": self.color,
+            "emoji": self.emoji,
+            "is_archived": self.is_archived,
+            "is_default": self.is_default,
+            "metadata": self.metadata,
+            "tags": self.tags,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+@dataclass
+class ListItem:
+    """Universal ListItem relationship - polymorphic with item_type discriminator"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    list_id: str = ""
+    item_id: str = ""
+    item_type: str = "todo"  # todo, feature, bug, attendee, etc.
+    position: int = 0  # Order within the list
+
+    # Membership metadata
+    added_at: datetime = field(default_factory=datetime.now)
+    added_by: str = ""  # User who added item to this list
+
+    # List-specific overrides (optional)
+    list_priority: Optional[str] = None  # Override item's default priority
+    list_due_date: Optional[datetime] = None  # Override item's default due date
+    list_notes: str = ""  # List-specific notes
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "list_id": self.list_id,
+            "item_id": self.item_id,
+            "item_type": self.item_type,
+            "position": self.position,
+            "added_at": self.added_at.isoformat() if self.added_at else None,
+            "added_by": self.added_by,
+            "list_priority": self.list_priority,
+            "list_due_date": self.list_due_date.isoformat() if self.list_due_date else None,
+            "list_notes": self.list_notes,
+        }
+
+
+# PM-081: Refactored Todo as standalone atomic domain object
+@dataclass
+class Todo:
+    """Standalone Todo domain object - no coupling to TodoList"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    title: str = ""
+    description: str = ""
+    priority: str = "medium"  # low, medium, high, urgent
+    status: str = "pending"  # pending, in_progress, completed, cancelled
+    due_date: Optional[datetime] = None
+    tags: List[str] = field(default_factory=list)
+    assignee_id: Optional[str] = None
+
+    # Metadata for PM-040 Knowledge Graph integration
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "priority": self.priority,
+            "status": self.status,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "tags": self.tags,
+            "assignee_id": self.assignee_id,
+            "metadata": self.metadata,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }
+
+
+# PM-081: Backward compatibility - TodoList as alias for List(item_type='todo')
+@dataclass
+class TodoList:
+    """Backward compatibility alias for List(item_type='todo')"""
+
+    def __init__(self, **kwargs):
+        # Convert TodoList to universal List with item_type='todo'
+        list_data = {**kwargs, "item_type": "todo"}
+        self._list = List(**list_data)
+
+    def __getattr__(self, name):
+        """Delegate to underlying List object"""
+        return getattr(self._list, name)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return self._list.to_dict()
+
+
+# PM-081: Backward compatibility - ListMembership as alias for ListItem(item_type='todo')
+@dataclass
+class ListMembership:
+    """Backward compatibility alias for ListItem(item_type='todo')"""
+
+    def __init__(self, **kwargs):
+        # Convert ListMembership to universal ListItem with item_type='todo'
+        item_data = {**kwargs, "item_type": "todo"}
+        self._list_item = ListItem(**item_data)
+
+    def __getattr__(self, name):
+        """Delegate to underlying ListItem object"""
+        return getattr(self._list_item, name)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return self._list_item.to_dict()

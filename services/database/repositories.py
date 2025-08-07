@@ -8,17 +8,19 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import structlog
-from sqlalchemy import func, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import services.domain.models as domain
-from services.shared_types import IntegrationType
+from services.shared_types import EdgeType, IntegrationType, NodeType
 
 from .connection import db
 from .models import (
     Feature,
     Intent,
+    KnowledgeEdgeDB,
+    KnowledgeNodeDB,
     Product,
     ProjectDB,
     ProjectIntegrationDB,
@@ -314,6 +316,255 @@ class ProjectIntegrationRepository(BaseRepository):
         return [db_integration.to_domain() for db_integration in result.scalars().all()]
 
 
+class KnowledgeGraphRepository(BaseRepository):
+    """Repository for knowledge graph operations"""
+
+    model = KnowledgeNodeDB  # Default to nodes, but we'll handle both
+
+    def __init__(self, session: AsyncSession):
+        super().__init__(session)
+
+    # Node operations
+    async def create_node(self, node: domain.KnowledgeNode) -> domain.KnowledgeNode:
+        """Create a knowledge node"""
+        db_node = KnowledgeNodeDB.from_domain(node)
+        return await self.create(**db_node.__dict__)
+
+    async def get_node_by_id(self, node_id: str) -> Optional[domain.KnowledgeNode]:
+        """Get node by ID"""
+        result = await self.session.execute(
+            select(KnowledgeNodeDB).where(KnowledgeNodeDB.id == node_id)
+        )
+        db_node = result.scalar_one_or_none()
+        return db_node.to_domain() if db_node else None
+
+    async def get_nodes_by_session(
+        self, session_id: str, limit: int = 100
+    ) -> List[domain.KnowledgeNode]:
+        """Get nodes for a session"""
+        result = await self.session.execute(
+            select(KnowledgeNodeDB).where(KnowledgeNodeDB.session_id == session_id).limit(limit)
+        )
+        db_nodes = result.scalars().all()
+        return [db_node.to_domain() for db_node in db_nodes]
+
+    async def get_nodes_by_type(
+        self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
+    ) -> List[domain.KnowledgeNode]:
+        """Get nodes by type, optionally filtered by session"""
+        query = select(KnowledgeNodeDB).where(KnowledgeNodeDB.node_type == node_type)
+        if session_id:
+            query = query.where(KnowledgeNodeDB.session_id == session_id)
+        query = query.limit(limit)
+
+        result = await self.session.execute(query)
+        db_nodes = result.scalars().all()
+        return [db_node.to_domain() for db_node in db_nodes]
+
+    # Edge operations
+    async def create_edge(self, edge: domain.KnowledgeEdge) -> domain.KnowledgeEdge:
+        """Create a knowledge edge"""
+        db_edge = KnowledgeEdgeDB.from_domain(edge)
+        return await self.create(**db_edge.__dict__)
+
+    async def get_edge_by_id(self, edge_id: str) -> Optional[domain.KnowledgeEdge]:
+        """Get edge by ID"""
+        result = await self.session.execute(
+            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.id == edge_id)
+        )
+        db_edge = result.scalar_one_or_none()
+        return db_edge.to_domain() if db_edge else None
+
+    async def get_edges_by_session(
+        self, session_id: str, limit: int = 100
+    ) -> List[domain.KnowledgeEdge]:
+        """Get edges for a session"""
+        result = await self.session.execute(
+            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.session_id == session_id).limit(limit)
+        )
+        db_edges = result.scalars().all()
+        return [db_edge.to_domain() for db_edge in db_edges]
+
+    # Graph-specific operations
+    async def find_neighbors(
+        self, node_id: str, edge_type: Optional[EdgeType] = None, direction: str = "both"
+    ) -> List[domain.KnowledgeNode]:
+        """Find neighboring nodes"""
+        if direction == "outgoing":
+            query = select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.source_node_id == node_id)
+        elif direction == "incoming":
+            query = select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.target_node_id == node_id)
+        else:  # both
+            query = select(KnowledgeEdgeDB).where(
+                or_(
+                    KnowledgeEdgeDB.source_node_id == node_id,
+                    KnowledgeEdgeDB.target_node_id == node_id,
+                )
+            )
+
+        if edge_type:
+            query = query.where(KnowledgeEdgeDB.edge_type == edge_type)
+
+        result = await self.session.execute(query)
+        edges = result.scalars().all()
+
+        # Get unique neighbor node IDs
+        neighbor_ids = set()
+        for edge in edges:
+            if edge.source_node_id == node_id:
+                neighbor_ids.add(edge.target_node_id)
+            else:
+                neighbor_ids.add(edge.source_node_id)
+
+        # Fetch neighbor nodes
+        if neighbor_ids:
+            result = await self.session.execute(
+                select(KnowledgeNodeDB).where(KnowledgeNodeDB.id.in_(neighbor_ids))
+            )
+            db_nodes = result.scalars().all()
+            return [db_node.to_domain() for db_node in db_nodes]
+
+        return []
+
+    async def get_subgraph(self, node_ids: List[str], max_depth: int = 2) -> Dict[str, Any]:
+        """Get a subgraph around specified nodes"""
+        nodes = {}
+        edges = []
+        visited_nodes = set()
+        nodes_to_visit = set(node_ids)
+
+        for depth in range(max_depth):
+            if not nodes_to_visit:
+                break
+
+            # Get nodes at current depth
+            result = await self.session.execute(
+                select(KnowledgeNodeDB).where(KnowledgeNodeDB.id.in_(nodes_to_visit))
+            )
+            db_nodes = result.scalars().all()
+
+            # Add nodes to result
+            for db_node in db_nodes:
+                nodes[db_node.id] = db_node.to_domain()
+                visited_nodes.add(db_node.id)
+
+            # Find edges connecting to these nodes
+            result = await self.session.execute(
+                select(KnowledgeEdgeDB).where(
+                    or_(
+                        KnowledgeEdgeDB.source_node_id.in_(nodes_to_visit),
+                        KnowledgeEdgeDB.target_node_id.in_(nodes_to_visit),
+                    )
+                )
+            )
+            db_edges = result.scalars().all()
+
+            # Add edges to result and collect next level nodes
+            next_level_nodes = set()
+            for db_edge in db_edges:
+                edges.append(db_edge.to_domain())
+                if (
+                    db_edge.source_node_id in nodes_to_visit
+                    and db_edge.target_node_id not in visited_nodes
+                ):
+                    next_level_nodes.add(db_edge.target_node_id)
+                elif (
+                    db_edge.target_node_id in nodes_to_visit
+                    and db_edge.source_node_id not in visited_nodes
+                ):
+                    next_level_nodes.add(db_edge.source_node_id)
+
+            nodes_to_visit = next_level_nodes
+
+        return {"nodes": list(nodes.values()), "edges": edges, "depth": max_depth}
+
+    async def find_paths(
+        self, source_id: str, target_id: str, max_paths: int = 5
+    ) -> List[List[domain.KnowledgeNode]]:
+        """Find paths between two nodes (simplified implementation)"""
+        # This is a simplified path finding - in production you'd want a more sophisticated algorithm
+        paths = []
+
+        # Get direct connections
+        result = await self.session.execute(
+            select(KnowledgeEdgeDB).where(
+                and_(
+                    KnowledgeEdgeDB.source_node_id == source_id,
+                    KnowledgeEdgeDB.target_node_id == target_id,
+                )
+            )
+        )
+        direct_edges = result.scalars().all()
+
+        if direct_edges:
+            # Direct path exists
+            source_node = await self.get_node_by_id(source_id)
+            target_node = await self.get_node_by_id(target_id)
+            if source_node and target_node:
+                paths.append([source_node, target_node])
+
+        # For simplicity, we'll limit to direct connections for now
+        # A full implementation would use recursive CTEs or graph algorithms
+        return paths[:max_paths]
+
+    # Bulk operations
+    async def create_nodes_bulk(
+        self, nodes: List[domain.KnowledgeNode]
+    ) -> List[domain.KnowledgeNode]:
+        """Create multiple nodes efficiently"""
+        db_nodes = [KnowledgeNodeDB.from_domain(node) for node in nodes]
+        self.session.add_all(db_nodes)
+        await self.session.flush()
+
+        # Refresh to get generated IDs
+        for db_node in db_nodes:
+            await self.session.refresh(db_node)
+
+        return [db_node.to_domain() for db_node in db_nodes]
+
+    async def create_edges_bulk(
+        self, edges: List[domain.KnowledgeEdge]
+    ) -> List[domain.KnowledgeEdge]:
+        """Create multiple edges efficiently"""
+        db_edges = [KnowledgeEdgeDB.from_domain(edge) for edge in edges]
+        self.session.add_all(db_edges)
+        await self.session.flush()
+
+        # Refresh to get generated IDs
+        for db_edge in db_edges:
+            await self.session.refresh(db_edge)
+
+        return [db_edge.to_domain() for db_edge in db_edges]
+
+    # Privacy-aware operations (ready for BoundaryEnforcer integration)
+    async def get_nodes_with_privacy_check(
+        self, session_id: str, privacy_level: str = "standard"
+    ) -> List[domain.KnowledgeNode]:
+        """Get nodes with privacy considerations"""
+        # This method is ready for BoundaryEnforcer integration
+        # For now, it's a simple wrapper around get_nodes_by_session
+        nodes = await self.get_nodes_by_session(session_id)
+
+        # Future: Add privacy filtering based on content analysis
+        # Future: Integrate with BoundaryEnforcer for content validation
+        # Future: Add redaction for sensitive information
+
+        return nodes
+
+    async def create_node_with_privacy_check(
+        self, node: domain.KnowledgeNode, privacy_level: str = "standard"
+    ) -> domain.KnowledgeNode:
+        """Create node with privacy validation"""
+        # This method is ready for BoundaryEnforcer integration
+        # For now, it's a simple wrapper around create_node
+
+        # Future: Add content validation before creation
+        # Future: Integrate with BoundaryEnforcer for boundary checking
+        # Future: Add automatic redaction of sensitive information
+
+        return await self.create_node(node)
+
+
 # Repository factory
 class RepositoryFactory:
     """Creates repositories with session
@@ -336,5 +587,8 @@ class RepositoryFactory:
             "project_integrations": ProjectIntegrationRepository(
                 session
             ),  # PM-009: Add integration repository
+            "knowledge_graph": KnowledgeGraphRepository(
+                session
+            ),  # PM-040: Add knowledge graph repository
             "session": session,
         }
