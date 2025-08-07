@@ -401,3 +401,81 @@ After next migration deployment to verify schema synchronization practices
 - 2025-08-06: Initial decision documented - Code Agent (Chief Architect DECISION-002 methodology)
 
 ---
+
+## [DECISION-006] Foundation Repair Before Phase 3 - Database & Slack Architecture
+
+**Date**: 2025-08-07 11:08 AM PT
+**Author**: Lead Developer (Code Agent)
+**GitHub Issue**: #85 (https://github.com/mediajunkie/piper-morgan-product/issues/85)
+**Severity**: ADR-Level (requires ADR-007)
+**Status**: Active
+
+### Context
+
+PM-034 Phase 3 integration work blocked by foundational architecture failures discovered through root cause analysis. System health at 50% (2/4 components working):
+
+- ✅ Query Response Formatter: 100% accuracy, 0.002ms
+- ✅ Type System: Clean domain models, zero coupling
+- ❌ Database Connection: Session pattern inconsistency, transaction conflicts
+- ❌ Slack Message Consolidation: Memory leaks, complex state management
+
+Root cause analysis identified three critical architecture failures that must be resolved before Phase 3 parallel execution can succeed.
+
+### Decision
+
+**Mandatory foundation repair before any PM-034 Phase 3 work:**
+
+1. **Database Session Unification** (ADR-007)
+   - Standardize on AsyncSessionFactory across all services
+   - Eliminate RepositoryFactory and db.get_session() competing patterns
+   - Remove transaction boundary conflict logic from BaseRepository
+
+2. **Slack Integration Simplification**
+   - Replace MESSAGE_CONSOLIDATION_BUFFER global state with immediate response
+   - Remove PROCESSED_EVENTS memory leak patterns
+   - Implement circuit breaker at integration boundaries
+
+3. **Integration Health Monitoring**
+   - Centralized error aggregation for component health tracking
+   - Graceful degradation strategies for failed components
+   - Clear separation of concerns between integration layers
+
+### Rationale
+
+- **Phase 3 Dependency**: ConversationManager cannot be built on unreliable database layer
+- **Integration Architecture**: Current 5-layer chain (SpatialEvent → SlackContext → Intent → Orchestration → Response) has silent failure modes
+- **System Reliability**: 50% health indicates architectural issues, not implementation bugs
+- **Evidence-Based**: Working components (Query Response Formatter, Type System) demonstrate excellence through simplicity
+- **Trust Protocol**: No Phase 3 implementation without solid foundation verification
+
+### Consequences
+
+**Positive**:
+
+- Database Connection component: 0% → 100% reliability target
+- Eliminates session leaks and connection pool exhaustion
+- Foundation stable for ConversationManager with Redis integration
+- Clear migration path from complex to simple integration patterns
+- Phase 3 parallel execution becomes feasible
+
+**Negative**:
+
+- PM-034 Phase 3 timeline delayed by foundation repair work
+- Requires systematic migration of existing services
+- Temporary disruption during session pattern unification
+
+**Risks**:
+
+- Service disruption during database session pattern migration
+- Slack integration simplification might affect existing workflows
+- Foundation repair scope might expand beyond initial estimates
+
+### Review Date
+
+After foundation repair completion and before PM-034 Phase 3 implementation
+
+### Change Log
+
+- 2025-08-07: Initial decision documented - Lead Developer (foundation repair mission)
+
+---
