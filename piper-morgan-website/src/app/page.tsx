@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { generateSEOMetadata } from '@/lib/domain-utils';
-import { Hero, NewsletterSignup, BlogPostCard, CTAButton } from '@/components';
+import { Hero, NewsletterSignup } from '@/components';
+import HomePageBlog from './HomePageBlog';
 
 const seoData = generateSEOMetadata(
   'Piper Morgan - AI Product Management Assistant',
@@ -98,76 +99,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Building in Public */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-text-dark mb-6">
-                Learning project that grew wings
-              </h2>
-              <p className="text-xl text-text-light mb-8">
-                What started as a systematic experiment in AI-assisted product management has evolved into a comprehensive methodology for PM excellence. Follow along as we build infrastructure, solve real problems, and share everything we learn.
-              </p>
-              <div className="text-left max-w-3xl mx-auto mb-8">
-                <h3 className="text-lg font-semibold text-text-dark mb-4">Recent Highlights:</h3>
-                <ul className="space-y-2 text-text-light">
-                  <li>• Ethics-first architecture that makes inappropriate responses technically impossible</li>
-                  <li>• 15-minute implementation cycles (previously 2+ hours) through systematic verification</li>
-                  <li>• Zero architectural drift across 50+ feature implementations</li>
-                  <li>• 100% test coverage maintained during rapid development</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Recent Blog Posts */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-              <BlogPostCard
-                title="Systematic Verification: The 15-Minute ADR Migration"
-                excerpt="How our verification-first methodology reduced implementation time from 2+ hours to 15 minutes, with zero architectural drift across 50+ implementations."
-                publishedAt="Dec 15, 2024"
-                readingTime="5 min read"
-                tags={["Methodology", "ADR", "Verification"]}
-                href="https://medium.com/building-piper-morgan/systematic-verification-15-minute-adr"
-                external
-                compact
-              />
-
-              <BlogPostCard
-                title="Multi-Agent Coordination: Building Value Systematically"
-                excerpt="Deep dive into our agent coordination patterns and how GitHub-first tracking enables systematic progress across complex implementations."
-                publishedAt="Dec 10, 2024"
-                readingTime="7 min read"
-                tags={["Coordination", "GitHub", "Process"]}
-                href="https://medium.com/building-piper-morgan/multi-agent-coordination"
-                external
-                compact
-              />
-
-              <BlogPostCard
-                title="Excellence Flywheel: From Pattern to Production"
-                excerpt="The systematic approach that turns each implementation into accelerated future work, creating a flywheel of continuous improvement."
-                publishedAt="Dec 5, 2024"
-                readingTime="6 min read"
-                tags={["Excellence", "Patterns", "Optimization"]}
-                href="https://medium.com/building-piper-morgan/excellence-flywheel"
-                external
-                compact
-              />
-            </div>
-
-            <div className="text-center">
-              <CTAButton
-                href="/blog"
-                variant="primary"
-                size="lg"
-              >
-                Read All Building-in-Public Updates
-              </CTAButton>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Building in Public - Now with Live RSS Posts! */}
+      <HomePageBlog />
 
       {/* Newsletter CTA */}
       <section className="bg-text-dark py-16">

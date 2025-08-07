@@ -3,9 +3,14 @@ Query Router - Routes QUERY intents to appropriate query services
 """
 
 import logging
+import random
+import time
 from typing import Any, Dict, List, Optional
 
 from services.domain.models import Intent
+from services.intent_service.llm_classifier import LLMIntentClassifier
+from services.knowledge.knowledge_graph_service import KnowledgeGraphService
+from services.knowledge.semantic_indexing_service import SemanticIndexingService
 from services.queries.conversation_queries import ConversationQueryService
 from services.queries.degradation import QueryDegradationHandler
 from services.queries.file_queries import FileQueryService
@@ -16,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class QueryRouter:
-    """Routes QUERY intents to appropriate query services"""
+    """Routes QUERY intents to appropriate query services with LLM enhancement"""
 
     def __init__(
         self,
@@ -25,6 +30,13 @@ class QueryRouter:
         file_query_service: FileQueryService,
         test_mode: bool = False,
         degradation_config: Optional[Dict] = None,
+        # PM-034 Phase 2B: LLM Intent Classification Integration
+        llm_classifier: Optional[LLMIntentClassifier] = None,
+        knowledge_graph_service: Optional[KnowledgeGraphService] = None,
+        semantic_indexing_service: Optional[SemanticIndexingService] = None,
+        enable_llm_classification: bool = False,
+        llm_rollout_percentage: float = 0.0,  # 0.0 = 0%, 1.0 = 100%
+        performance_targets: Optional[Dict[str, float]] = None,
     ):
         self.project_queries = project_query_service
         self.conversation_queries = conversation_query_service
@@ -33,6 +45,31 @@ class QueryRouter:
         self.degradation_handler = QueryDegradationHandler(
             degradation_config
         )  # PM-063: Comprehensive degradation framework
+
+        # PM-034 Phase 2B: LLM Intent Classification Integration
+        self.llm_classifier = llm_classifier
+        self.knowledge_graph_service = knowledge_graph_service
+        self.semantic_indexing_service = semantic_indexing_service
+        self.enable_llm_classification = enable_llm_classification
+        self.llm_rollout_percentage = llm_rollout_percentage
+
+        # Performance targets (in milliseconds)
+        self.performance_targets = performance_targets or {
+            "rule_based": 50.0,  # <50ms for rule-based classification
+            "llm_classification": 200.0,  # <200ms for LLM classification
+        }
+
+        # Performance monitoring
+        self.performance_metrics = {
+            "total_requests": 0,
+            "llm_classifications": 0,
+            "rule_based_classifications": 0,
+            "llm_success_rate": 0.0,
+            "rule_based_success_rate": 0.0,
+            "average_llm_latency_ms": 0.0,
+            "average_rule_based_latency_ms": 0.0,
+            "target_violations": 0,
+        }
 
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service with graceful degradation"""
@@ -50,6 +87,249 @@ class QueryRouter:
             # Determine service and apply appropriate degradation
             service = self._get_service_for_action(intent.action)
             return await self.degradation_handler.handle_service_failure(service, intent.action, e)
+
+    async def classify_and_route(
+        self,
+        message: str,
+        user_context: Optional[Dict[str, Any]] = None,
+        session_id: Optional[str] = None,
+    ) -> Any:
+        """
+        PM-034 Phase 2B: Classify message and route to appropriate service
+
+        This method provides the enhanced classification and routing pipeline
+        with A/B testing and performance monitoring.
+        """
+        start_time = time.time()
+        self.performance_metrics["total_requests"] += 1
+
+        try:
+            # Determine classification method based on rollout percentage
+            use_llm = self._should_use_llm_classification(session_id)
+
+            if use_llm and self.enable_llm_classification and self.llm_classifier:
+                # Use LLM classification
+                return await self._classify_and_route_with_llm(
+                    message, user_context, session_id, start_time
+                )
+            else:
+                # Use rule-based classification (fast path)
+                return await self._classify_and_route_rule_based(
+                    message, user_context, session_id, start_time
+                )
+
+        except Exception as e:
+            logger.error(f"Classification and routing failed: {e}")
+            # Fallback to rule-based classification
+            return await self._classify_and_route_rule_based(
+                message, user_context, session_id, start_time
+            )
+
+    def _should_use_llm_classification(self, session_id: Optional[str] = None) -> bool:
+        """
+        PM-034 Phase 2B: A/B Testing Logic
+
+        Determines whether to use LLM classification based on rollout percentage
+        and session-based consistency.
+        """
+        if not self.enable_llm_classification or self.llm_rollout_percentage <= 0.0:
+            return False
+
+        if self.llm_rollout_percentage >= 1.0:
+            return True
+
+        # Use session_id for consistent A/B testing per session
+        if session_id:
+            # Hash session_id to get consistent assignment
+            hash_value = hash(session_id) % 100
+            return hash_value < (self.llm_rollout_percentage * 100)
+        else:
+            # Random assignment for sessions without ID
+            return random.random() < self.llm_rollout_percentage
+
+    async def _classify_and_route_with_llm(
+        self,
+        message: str,
+        user_context: Optional[Dict[str, Any]],
+        session_id: Optional[str],
+        start_time: float,
+    ) -> Any:
+        """Classify and route using LLM with performance monitoring"""
+        try:
+            # LLM Classification
+            intent = await self.llm_classifier.classify(message, user_context, session_id)
+
+            # Calculate latency
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Update metrics
+            self.performance_metrics["llm_classifications"] += 1
+            self._update_llm_metrics(latency_ms, True)
+
+            # Check performance target
+            if latency_ms > self.performance_targets["llm_classification"]:
+                self.performance_metrics["target_violations"] += 1
+                logger.warning(
+                    f"LLM classification exceeded target: {latency_ms:.1f}ms > {self.performance_targets['llm_classification']}ms"
+                )
+
+            # Route the classified intent
+            return await self.route_query(intent)
+
+        except Exception as e:
+            # Update metrics for failure
+            latency_ms = (time.time() - start_time) * 1000
+            self._update_llm_metrics(latency_ms, False)
+            logger.error(f"LLM classification failed: {e}")
+            raise
+
+    async def _classify_and_route_rule_based(
+        self,
+        message: str,
+        user_context: Optional[Dict[str, Any]],
+        session_id: Optional[str],
+        start_time: float,
+    ) -> Any:
+        """Classify and route using rule-based patterns (fast path)"""
+        try:
+            # Rule-based classification (simplified for now)
+            intent = self._rule_based_classification(message, user_context, session_id)
+
+            # Calculate latency
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Update metrics
+            self.performance_metrics["rule_based_classifications"] += 1
+            self._update_rule_based_metrics(latency_ms, True)
+
+            # Check performance target
+            if latency_ms > self.performance_targets["rule_based"]:
+                self.performance_metrics["target_violations"] += 1
+                logger.warning(
+                    f"Rule-based classification exceeded target: {latency_ms:.1f}ms > {self.performance_targets['rule_based']}ms"
+                )
+
+            # Route the classified intent
+            return await self.route_query(intent)
+
+        except Exception as e:
+            # Update metrics for failure
+            latency_ms = (time.time() - start_time) * 1000
+            self._update_rule_based_metrics(latency_ms, False)
+            logger.error(f"Rule-based classification failed: {e}")
+            raise
+
+    def _rule_based_classification(
+        self, message: str, user_context: Optional[Dict[str, Any]], session_id: Optional[str]
+    ) -> Intent:
+        """
+        PM-034 Phase 2B: Fast rule-based classification
+
+        Provides fast path classification for common patterns
+        while preserving existing functionality.
+        """
+        message_lower = message.lower().strip()
+
+        # Project-related queries
+        if any(word in message_lower for word in ["list", "show", "get", "find"]) and any(
+            word in message_lower for word in ["project", "projects"]
+        ):
+            if "list" in message_lower or "show" in message_lower:
+                return Intent(
+                    category=IntentCategory.QUERY,
+                    action="list_projects",
+                    confidence=0.9,
+                    original_message=message,
+                    context={"rule_based": True, "session_id": session_id},
+                )
+            elif "find" in message_lower:
+                # Extract project name if possible
+                return Intent(
+                    category=IntentCategory.QUERY,
+                    action="find_project",
+                    confidence=0.8,
+                    original_message=message,
+                    context={"rule_based": True, "session_id": session_id},
+                )
+
+        # File-related queries
+        elif any(word in message_lower for word in ["file", "document", "content"]) and any(
+            word in message_lower for word in ["search", "find", "read"]
+        ):
+            if "search" in message_lower:
+                return Intent(
+                    category=IntentCategory.QUERY,
+                    action="search_files",
+                    confidence=0.85,
+                    original_message=message,
+                    context={"rule_based": True, "search_query": message, "session_id": session_id},
+                )
+            elif "read" in message_lower:
+                return Intent(
+                    category=IntentCategory.QUERY,
+                    action="read_file_contents",
+                    confidence=0.8,
+                    original_message=message,
+                    context={"rule_based": True, "session_id": session_id},
+                )
+
+        # Conversation queries
+        elif any(word in message_lower for word in ["hello", "hi", "greeting"]):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="get_greeting",
+                confidence=0.95,
+                original_message=message,
+                context={"rule_based": True, "session_id": session_id},
+            )
+        elif any(word in message_lower for word in ["help", "support", "assist"]):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="get_help",
+                confidence=0.9,
+                original_message=message,
+                context={"rule_based": True, "session_id": session_id},
+            )
+
+        # Default fallback
+        else:
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="get_help",  # Safe fallback
+                confidence=0.5,
+                original_message=message,
+                context={"rule_based": True, "fallback": True, "session_id": session_id},
+            )
+
+    def _update_llm_metrics(self, latency_ms: float, success: bool):
+        """Update LLM classification metrics"""
+        total = self.performance_metrics["llm_classifications"]
+        avg = self.performance_metrics["average_llm_latency_ms"]
+
+        # Update average latency
+        self.performance_metrics["average_llm_latency_ms"] = (
+            (avg * (total - 1) + latency_ms) / total if total > 0 else latency_ms
+        )
+
+        # Update success rate
+        if total > 0:
+            successful = sum(1 for i in range(total) if success)  # Simplified for now
+            self.performance_metrics["llm_success_rate"] = successful / total
+
+    def _update_rule_based_metrics(self, latency_ms: float, success: bool):
+        """Update rule-based classification metrics"""
+        total = self.performance_metrics["rule_based_classifications"]
+        avg = self.performance_metrics["average_rule_based_latency_ms"]
+
+        # Update average latency
+        self.performance_metrics["average_rule_based_latency_ms"] = (
+            (avg * (total - 1) + latency_ms) / total if total > 0 else latency_ms
+        )
+
+        # Update success rate
+        if total > 0:
+            successful = sum(1 for i in range(total) if success)  # Simplified for now
+            self.performance_metrics["rule_based_success_rate"] = successful / total
 
     async def _route_query_with_protection(self, intent: Intent) -> Any:
         """Internal routing with circuit breaker protection"""
@@ -290,3 +570,32 @@ class QueryRouter:
                 "conversation_queries": "available",
             },
         }
+
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """PM-034 Phase 2B: Get performance metrics for monitoring and A/B testing"""
+        metrics = self.performance_metrics.copy()
+
+        # Add rollout information
+        metrics.update(
+            {
+                "llm_rollout_percentage": self.llm_rollout_percentage,
+                "enable_llm_classification": self.enable_llm_classification,
+                "performance_targets": self.performance_targets,
+                "llm_classifier_available": self.llm_classifier is not None,
+            }
+        )
+
+        return metrics
+
+    def update_rollout_percentage(self, percentage: float) -> None:
+        """PM-034 Phase 2B: Update LLM rollout percentage for gradual deployment"""
+        if not 0.0 <= percentage <= 1.0:
+            raise ValueError("Rollout percentage must be between 0.0 and 1.0")
+
+        self.llm_rollout_percentage = percentage
+        logger.info(f"Updated LLM rollout percentage to {percentage:.1%}")
+
+    def set_llm_classification_enabled(self, enable: bool = True) -> None:
+        """PM-034 Phase 2B: Enable or disable LLM classification"""
+        self.enable_llm_classification = enable
+        logger.info(f"LLM classification {'enabled' if enable else 'disabled'}")

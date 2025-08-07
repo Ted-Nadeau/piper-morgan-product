@@ -1,0 +1,200 @@
+# QueryRouter Graceful Degradation - Alerting Rules
+# PM-063: Production monitoring and alerting configuration
+
+groups:
+  - name: query_router_degradation
+    rules:
+
+      # Critical Alerts
+      - alert: QueryRouterCircuitBreakerOpen
+        expr: query_router_circuit_breaker_state == 1
+        for: 5m
+        labels:
+          severity: critical
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "QueryRouter circuit breaker is open"
+          description: "QueryRouter circuit breaker has been open for {{ $value }} minutes, indicating persistent service failures"
+          runbook: "docs/operations/query-router-degradation-runbook.md#circuit-breaker-is-open"
+
+      - alert: QueryRouterHighDegradationRate
+        expr: (rate(query_router_degraded_responses_total[5m]) / rate(query_router_total_requests[5m])) > 0.1
+        for: 10m
+        labels:
+          severity: critical
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "High query degradation rate detected"
+          description: "{{ $value | humanizePercentage }} of QueryRouter requests are being degraded for the last 10 minutes"
+          runbook: "docs/operations/query-router-degradation-runbook.md#high-degradation-rate"
+
+      - alert: QueryRouterDegradationFailure
+        expr: increase(query_router_degradation_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "QueryRouter degradation system is failing"
+          description: "{{ $value }} degradation attempts have failed in the last 5 minutes"
+          runbook: "docs/operations/query-router-degradation-runbook.md#degradation-not-working"
+
+      # Warning Alerts
+      - alert: QueryRouterElevatedErrorRate
+        expr: (rate(query_router_errors_total[5m]) / rate(query_router_total_requests[5m])) > 0.02
+        for: 15m
+        labels:
+          severity: warning
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "Elevated QueryRouter error rate"
+          description: "QueryRouter error rate is {{ $value | humanizePercentage }} for the last 15 minutes"
+          runbook: "docs/operations/query-router-degradation-runbook.md#increased-error-rate"
+
+      - alert: QueryRouterSlowResponses
+        expr: histogram_quantile(0.95, rate(query_router_request_duration_seconds_bucket[5m])) > 1.0
+        for: 20m
+        labels:
+          severity: warning
+          component: query_router
+          feature: performance
+        annotations:
+          summary: "QueryRouter slow response times"
+          description: "95th percentile response time is {{ $value }}s for the last 20 minutes"
+          runbook: "docs/operations/query-router-degradation-runbook.md#response-time-degradation"
+
+      - alert: QueryRouterCircuitBreakerHalfOpen
+        expr: query_router_circuit_breaker_state == 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "QueryRouter circuit breaker is half-open"
+          description: "Circuit breaker is in half-open state, testing service recovery"
+          runbook: "docs/operations/query-router-degradation-runbook.md#circuit-breaker-recovery"
+
+      # Service-Specific Alerts
+      - alert: ProjectQueriesServiceDegraded
+        expr: query_router_service_degraded{service="project_queries"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: query_router
+          service: project_queries
+        annotations:
+          summary: "Project queries service is degraded"
+          description: "Project query operations are running in degraded mode"
+          runbook: "docs/operations/query-router-degradation-runbook.md#service-degradation"
+
+      - alert: FileQueriesServiceDegraded
+        expr: query_router_service_degraded{service="file_queries"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: query_router
+          service: file_queries
+        annotations:
+          summary: "File queries service is degraded"
+          description: "File query operations are running in degraded mode"
+          runbook: "docs/operations/query-router-degradation-runbook.md#service-degradation"
+
+      - alert: ConversationQueriesServiceDegraded
+        expr: query_router_service_degraded{service="conversation_queries"} == 1
+        for: 3m
+        labels:
+          severity: warning
+          component: query_router
+          service: conversation_queries
+        annotations:
+          summary: "Conversation queries service is degraded"
+          description: "Conversation query operations are running in degraded mode"
+          runbook: "docs/operations/query-router-degradation-runbook.md#service-degradation"
+
+      # Recovery Alerts
+      - alert: QueryRouterCircuitBreakerRecovered
+        expr: query_router_circuit_breaker_state == 0 and query_router_circuit_breaker_state offset 1m == 1
+        for: 1m
+        labels:
+          severity: info
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "QueryRouter circuit breaker has recovered"
+          description: "Circuit breaker state changed from open to closed, service has recovered"
+
+      - alert: QueryRouterDegradationRateNormalized
+        expr: (rate(query_router_degraded_responses_total[5m]) / rate(query_router_total_requests[5m])) < 0.01 and (rate(query_router_degraded_responses_total[5m]) / rate(query_router_total_requests[5m]) offset 10m) > 0.05
+        for: 5m
+        labels:
+          severity: info
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "QueryRouter degradation rate has normalized"
+          description: "Degradation rate has dropped to {{ $value | humanizePercentage }}, system appears to have recovered"
+
+  - name: query_router_business_impact
+    rules:
+
+      # Business Impact Alerts
+      - alert: QueryRouterUserExperienceDegraded
+        expr: |
+          (
+            (rate(query_router_degraded_responses_total[5m]) / rate(query_router_total_requests[5m])) > 0.05
+            and
+            rate(query_router_total_requests[5m]) > 10
+          )
+        for: 10m
+        labels:
+          severity: critical
+          component: query_router
+          impact: user_experience
+        annotations:
+          summary: "User experience significantly impacted by degradation"
+          description: "{{ $value | humanizePercentage }} of user requests are degraded with high traffic volume"
+          runbook: "docs/operations/query-router-degradation-runbook.md#user-experience-impact"
+
+      - alert: QueryRouterCascadeFailurePrevented
+        expr: increase(query_router_cascade_failures_prevented_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: info
+          component: query_router
+          feature: cascade_prevention
+        annotations:
+          summary: "Cascade failure prevented by degradation system"
+          description: "{{ $value }} cascade failures prevented in the last 5 minutes"
+
+  - name: query_router_operational
+    rules:
+
+      # Operational Health
+      - alert: QueryRouterDegradationSystemDown
+        expr: up{job="query_router_degradation"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: query_router
+          feature: degradation
+        annotations:
+          summary: "QueryRouter degradation monitoring is down"
+          description: "Cannot collect degradation metrics, monitoring system may be offline"
+          runbook: "docs/operations/query-router-degradation-runbook.md#monitoring-system-down"
+
+      - alert: QueryRouterConfigurationDrift
+        expr: query_router_config_version != query_router_expected_config_version
+        for: 5m
+        labels:
+          severity: warning
+          component: query_router
+          feature: configuration
+        annotations:
+          summary: "QueryRouter configuration drift detected"
+          description: "Running config version {{ $labels.current_version }} does not match expected {{ $labels.expected_version }}"
+          runbook: "docs/operations/query-router-degradation-runbook.md#configuration-drift"

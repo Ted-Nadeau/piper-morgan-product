@@ -89,3 +89,64 @@ class IntegrationType(Enum):
     JIRA = "jira"
     LINEAR = "linear"
     SLACK = "slack"
+
+
+# PM-081: Todo management system enums
+class TodoStatus(Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    BLOCKED = "blocked"
+
+
+class TodoPriority(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class ListType(Enum):
+    PERSONAL = "personal"
+    PROJECT = "project"
+    TEAM = "team"
+    TEMPLATE = "template"
+    ARCHIVE = "archive"
+
+
+class OrderingStrategy(Enum):
+    MANUAL = "manual"  # User-defined order
+    PRIORITY = "priority"  # Sort by priority
+    DUE_DATE = "due_date"  # Sort by due date
+    CREATED_DATE = "created_date"  # Sort by creation date
+    ALPHABETICAL = "alphabetical"  # Sort alphabetically
+    STATUS = "status"  # Group by status
+
+
+# PM-040: Knowledge graph node types
+class NodeType(Enum):
+    CONCEPT = "concept"
+    DOCUMENT = "document"
+    PERSON = "person"
+    ORGANIZATION = "organization"
+    TECHNOLOGY = "technology"
+    PROCESS = "process"
+    METRIC = "metric"
+    EVENT = "event"
+    RELATIONSHIP = "relationship"
+    CUSTOM = "custom"
+
+
+# PM-040: Knowledge graph edge types
+class EdgeType(Enum):
+    REFERENCES = "references"
+    DEPENDS_ON = "depends_on"
+    IMPLEMENTS = "implements"
+    MEASURES = "measures"
+    INVOLVES = "involves"
+    TRIGGERS = "triggers"
+    ENHANCES = "enhances"
+    REPLACES = "replaces"
+    SUPPORTS = "supports"
+    CUSTOM = "custom"

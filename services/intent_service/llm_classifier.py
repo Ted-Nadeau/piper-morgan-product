@@ -1,0 +1,455 @@
+"""
+PM-034: LLM-Based Intent Classification with Knowledge Graph Context
+
+This module implements an advanced intent classifier that leverages:
+1. LLM for natural language understanding
+2. PM-040 Knowledge Graph for context enrichment
+3. Multi-stage pipeline with confidence scoring
+4. Graceful degradation to rule-based patterns
+"""
+
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
+
+from services.api.errors import IntentClassificationFailedError, LowConfidenceIntentError
+from services.domain.models import Intent, IntentCategory, KnowledgeNode
+from services.intent_service.fuzzy_matcher import correct_common_typos
+from services.knowledge.knowledge_graph_service import KnowledgeGraphService
+from services.knowledge.semantic_indexing_service import SemanticIndexingService
+from services.llm.clients import llm_client
+from services.shared_types import NodeType
+
+logger = structlog.get_logger()
+
+
+class LLMIntentClassifier:
+    """
+    Advanced intent classifier using LLM with Knowledge Graph context
+
+    Features:
+    - Multi-stage classification pipeline
+    - Knowledge Graph context enrichment
+    - Confidence scoring and validation
+    - Performance tracking and learning
+    - Graceful degradation to rule-based fallback
+    """
+
+    def __init__(
+        self,
+        knowledge_graph_service: Optional[KnowledgeGraphService] = None,
+        semantic_indexing_service: Optional[SemanticIndexingService] = None,
+        confidence_threshold: float = 0.75,
+        enable_learning: bool = True,
+    ):
+        self.llm = llm_client
+        self.knowledge_graph = knowledge_graph_service
+        self.semantic_indexer = semantic_indexing_service
+        self.confidence_threshold = confidence_threshold
+        self.enable_learning = enable_learning
+
+        # Performance tracking
+        self.classification_metrics = {
+            "total_requests": 0,
+            "successful_classifications": 0,
+            "low_confidence_fallbacks": 0,
+            "average_latency_ms": 0,
+        }
+
+    async def classify(
+        self,
+        message: str,
+        user_context: Optional[Dict[str, Any]] = None,
+        session_id: Optional[str] = None,
+    ) -> Intent:
+        """
+        Classify user message into intent with multi-stage pipeline
+
+        Args:
+            message: User's natural language input
+            user_context: Optional context about user/session
+            session_id: Optional session identifier for context
+
+        Returns:
+            Intent with category, action, and confidence score
+        """
+        start_time = datetime.now()
+        self.classification_metrics["total_requests"] += 1
+
+        try:
+            # Stage 1: Pre-processing
+            processed_message = await self._preprocess_message(message)
+
+            # Stage 2: Knowledge Graph context enrichment
+            context = await self._enrich_with_knowledge_graph(
+                processed_message, user_context, session_id
+            )
+
+            # Stage 3: LLM classification
+            classification_result = await self._llm_classify(processed_message, context)
+
+            # Stage 4: Confidence validation
+            validated_intent = await self._validate_confidence(
+                classification_result, processed_message
+            )
+
+            # Stage 5: Performance tracking
+            if self.enable_learning:
+                await self._track_performance(validated_intent, start_time, success=True)
+
+            self.classification_metrics["successful_classifications"] += 1
+            return validated_intent
+
+        except LowConfidenceIntentError:
+            # Graceful degradation to rule-based fallback
+            self.classification_metrics["low_confidence_fallbacks"] += 1
+            logger.warning("Low confidence classification, using fallback")
+            raise
+
+        except Exception as e:
+            logger.error(f"Intent classification failed: {e}")
+            await self._track_performance(None, start_time, success=False)
+            raise IntentClassificationFailedError(str(e))
+
+    async def _preprocess_message(self, message: str) -> str:
+        """Stage 1: Pre-process and clean user message"""
+        # Remove extra whitespace
+        cleaned = " ".join(message.split())
+
+        # Correct common typos
+        corrected = correct_common_typos(cleaned)
+
+        logger.debug(f"Preprocessed message: '{message}' -> '{corrected}'")
+        return corrected
+
+    async def _enrich_with_knowledge_graph(
+        self,
+        message: str,
+        user_context: Optional[Dict[str, Any]],
+        session_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Stage 2: Enrich context using Knowledge Graph"""
+        context = {
+            "message": message,
+            "user_context": user_context or {},
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        if not self.knowledge_graph or not self.semantic_indexer:
+            logger.debug("Knowledge Graph not available, using basic context")
+            return context
+
+        try:
+            # Find similar intents from past interactions
+            similar_intents = await self._find_similar_intents(message, session_id)
+            context["similar_intents"] = similar_intents
+
+            # Get user's recent interaction patterns
+            if session_id:
+                user_patterns = await self._get_user_patterns(session_id)
+                context["user_patterns"] = user_patterns
+
+            # Extract relevant domain knowledge
+            domain_knowledge = await self._extract_domain_knowledge(message)
+            context["domain_knowledge"] = domain_knowledge
+
+            logger.debug(f"Enriched context with {len(similar_intents)} similar intents")
+
+        except Exception as e:
+            logger.warning(f"Knowledge Graph enrichment failed: {e}")
+            # Continue with basic context
+
+        return context
+
+    async def _find_similar_intents(
+        self, message: str, session_id: Optional[str]
+    ) -> List[Dict[str, Any]]:
+        """Find similar intents from Knowledge Graph"""
+        if not self.semantic_indexer:
+            return []
+
+        # Create a temporary node for the message
+        query_node = KnowledgeNode(
+            name=message[:50],  # Truncate for name
+            node_type=NodeType.CONCEPT,
+            metadata={"message": message, "type": "intent_query"},
+            session_id=session_id,
+        )
+
+        # Search for similar nodes
+        similar_nodes = await self.semantic_indexer.similarity_search(
+            query_node=query_node,
+            top_k=5,
+            threshold=0.7,
+            node_types=[NodeType.CONCEPT, NodeType.PROCESS],
+        )
+
+        # Extract intent patterns from similar nodes
+        similar_intents = []
+        for node, similarity in similar_nodes:
+            if "intent" in node.metadata:
+                similar_intents.append(
+                    {
+                        "intent": node.metadata["intent"],
+                        "confidence": node.metadata.get("confidence", 0.0),
+                        "similarity": similarity,
+                    }
+                )
+
+        return similar_intents
+
+    async def _get_user_patterns(self, session_id: str) -> Dict[str, Any]:
+        """Get user's interaction patterns from Knowledge Graph"""
+        if not self.knowledge_graph:
+            return {}
+
+        # Get recent nodes from this session
+        recent_nodes = await self.knowledge_graph.get_nodes_by_type(
+            node_type=NodeType.EVENT,
+            session_id=session_id,
+            limit=10,
+        )
+
+        # Analyze patterns
+        patterns = {
+            "recent_intents": [],
+            "common_actions": {},
+            "session_context": {},
+        }
+
+        for node in recent_nodes:
+            if "intent" in node.metadata:
+                patterns["recent_intents"].append(node.metadata["intent"])
+            if "action" in node.metadata:
+                action = node.metadata["action"]
+                patterns["common_actions"][action] = patterns["common_actions"].get(action, 0) + 1
+
+        return patterns
+
+    async def _extract_domain_knowledge(self, message: str) -> Dict[str, Any]:
+        """Extract relevant PM domain knowledge"""
+        # This is a simplified version - in production, this would
+        # query the Knowledge Graph for relevant PM concepts
+
+        domain_indicators = {
+            "project": ["timeline", "milestone", "deliverable"],
+            "task": ["todo", "action item", "assignment"],
+            "document": ["spec", "design", "requirements"],
+            "analysis": ["metrics", "performance", "trends"],
+        }
+
+        detected_domains = []
+        for domain, keywords in domain_indicators.items():
+            if any(keyword in message.lower() for keyword in keywords):
+                detected_domains.append(domain)
+
+        return {
+            "detected_domains": detected_domains,
+            "pm_context": len(detected_domains) > 0,
+        }
+
+    async def _llm_classify(self, message: str, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Stage 3: LLM-based classification with structured prompt"""
+
+        # Build structured prompt
+        prompt = self._build_classification_prompt(message, context)
+
+        # Call LLM
+        try:
+            response = await self.llm.complete(
+                prompt=prompt,
+                max_tokens=200,
+                temperature=0.3,  # Lower temperature for more consistent classification
+            )
+
+            # Parse structured response
+            result = self._parse_llm_response(response)
+
+            logger.debug(f"LLM classification result: {result}")
+            return result
+
+        except Exception as e:
+            logger.error(f"LLM classification failed: {e}")
+            raise
+
+    def _build_classification_prompt(self, message: str, context: Dict[str, Any]) -> str:
+        """Build structured prompt for LLM classification"""
+
+        prompt_parts = [
+            "You are an expert PM assistant classifying user intents.",
+            "\nClassify the following message into an intent category and action.",
+            f"\nMessage: {message}",
+        ]
+
+        # Add context if available
+        if context.get("similar_intents"):
+            prompt_parts.append("\nSimilar past intents:")
+            for intent in context["similar_intents"][:3]:
+                prompt_parts.append(
+                    f"- {intent['intent']['category']}/{intent['intent']['action']} "
+                    f"(confidence: {intent['confidence']:.2f})"
+                )
+
+        if context.get("domain_knowledge", {}).get("detected_domains"):
+            prompt_parts.append(
+                f"\nDetected PM domains: {', '.join(context['domain_knowledge']['detected_domains'])}"
+            )
+
+        # Add classification instructions
+        prompt_parts.extend(
+            [
+                "\n\nProvide your classification in JSON format:",
+                '{"category": "...", "action": "...", "confidence": 0.0-1.0, "reasoning": "..."}',
+                "\nCategories: execution, analysis, synthesis, strategy, learning, query, conversation, unknown",
+                "\nBe specific with the action name. Include confidence score and brief reasoning.",
+            ]
+        )
+
+        return "\n".join(prompt_parts)
+
+    def _parse_llm_response(self, response: str) -> Dict[str, Any]:
+        """Parse LLM response into structured classification"""
+        try:
+            # Extract JSON from response
+            json_start = response.find("{")
+            json_end = response.rfind("}") + 1
+
+            if json_start >= 0 and json_end > json_start:
+                json_str = response[json_start:json_end]
+                result = json.loads(json_str)
+
+                # Validate required fields
+                required_fields = ["category", "action", "confidence"]
+                if all(field in result for field in required_fields):
+                    return result
+
+            # Fallback parsing if JSON extraction fails
+            logger.warning("Failed to parse LLM response as JSON, using fallback")
+            return {
+                "category": "unknown",
+                "action": "unclear",
+                "confidence": 0.5,
+                "reasoning": "Failed to parse LLM response",
+            }
+
+        except Exception as e:
+            logger.error(f"Error parsing LLM response: {e}")
+            return {
+                "category": "unknown",
+                "action": "unclear",
+                "confidence": 0.0,
+                "reasoning": f"Parse error: {str(e)}",
+            }
+
+    async def _validate_confidence(
+        self, classification_result: Dict[str, Any], original_message: str
+    ) -> Intent:
+        """Stage 4: Validate classification confidence"""
+
+        confidence = classification_result.get("confidence", 0.0)
+
+        if confidence < self.confidence_threshold:
+            logger.warning(
+                f"Low confidence classification ({confidence:.2f}): "
+                f"{classification_result.get('category')}/{classification_result.get('action')}"
+            )
+            raise LowConfidenceIntentError(
+                f"Classification confidence {confidence:.2f} below threshold {self.confidence_threshold}"
+            )
+
+        # Create Intent object
+        try:
+            intent = Intent(
+                message=original_message,
+                category=IntentCategory(classification_result["category"].lower()),
+                action=classification_result["action"],
+                confidence=confidence,
+                context={
+                    "reasoning": classification_result.get("reasoning", ""),
+                    "llm_classified": True,
+                },
+            )
+
+            # Store in Knowledge Graph if available
+            if self.knowledge_graph and self.enable_learning:
+                await self._store_classification(intent, classification_result)
+
+            return intent
+
+        except ValueError as e:
+            logger.error(f"Invalid intent category: {classification_result.get('category')}")
+            raise IntentClassificationFailedError(str(e))
+
+    async def _store_classification(
+        self, intent: Intent, classification_result: Dict[str, Any]
+    ) -> None:
+        """Store successful classification in Knowledge Graph for learning"""
+        try:
+            # Create node for this classification
+            node = await self.knowledge_graph.create_node(
+                name=f"intent_classification_{datetime.now().isoformat()}",
+                node_type=NodeType.EVENT,
+                metadata={
+                    "intent": {
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    "message": intent.message,
+                    "reasoning": classification_result.get("reasoning", ""),
+                    "timestamp": datetime.now().isoformat(),
+                },
+                session_id=intent.session_id,
+            )
+
+            logger.debug(f"Stored classification in Knowledge Graph: {node.id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to store classification: {e}")
+            # Continue without storing
+
+    async def _track_performance(
+        self,
+        intent: Optional[Intent],
+        start_time: datetime,
+        success: bool,
+    ) -> None:
+        """Stage 5: Track classification performance"""
+
+        # Calculate latency
+        latency_ms = (datetime.now() - start_time).total_seconds() * 1000
+
+        # Update running average
+        total = self.classification_metrics["total_requests"]
+        avg = self.classification_metrics["average_latency_ms"]
+        self.classification_metrics["average_latency_ms"] = (avg * (total - 1) + latency_ms) / total
+
+        # Log performance
+        logger.info(
+            "intent_classification_performance",
+            success=success,
+            latency_ms=latency_ms,
+            category=intent.category.value if intent else None,
+            action=intent.action if intent else None,
+            confidence=intent.confidence if intent else None,
+        )
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get classification performance metrics"""
+        metrics = self.classification_metrics.copy()
+
+        # Calculate success rate
+        if metrics["total_requests"] > 0:
+            metrics["success_rate"] = (
+                metrics["successful_classifications"] / metrics["total_requests"]
+            )
+            metrics["fallback_rate"] = (
+                metrics["low_confidence_fallbacks"] / metrics["total_requests"]
+            )
+        else:
+            metrics["success_rate"] = 0.0
+            metrics["fallback_rate"] = 0.0
+
+        return metrics

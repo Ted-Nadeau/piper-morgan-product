@@ -7,12 +7,10 @@ import time
 from typing import Callable
 
 from fastapi import Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.base import RequestResponseEndpoint
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
-from services.api.errors import ERROR_MESSAGES
+from services.api.errors import ERROR_MESSAGES, APIError
 from services.ethics.boundary_enforcer import boundary_enforcer
-from services.infrastructure.errors import APIError
 from services.infrastructure.logging.config import generate_request_id, get_logger
 
 # Configure structured logger

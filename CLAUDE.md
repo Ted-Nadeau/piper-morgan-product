@@ -24,6 +24,103 @@ Before ANY work, read these in order:
 
 If you haven't read the methodology documents, STOP NOW and read them.
 
+## INTEGRITY PROTOCOL - SYSTEMATIC HONESTY REQUIREMENT
+
+**CRITICAL: This protocol ensures accuracy and prevents false success reporting across all agents.**
+
+### Core Principle: "We cannot say the tests are passing until they really all pass"
+
+**ALL AGENTS MUST FOLLOW**:
+
+#### 1. Accuracy in Status Reporting ⭐
+- **NEVER claim success without verification**
+- **NEVER say tests pass unless you've confirmed they actually pass**
+- **NEVER mark tasks complete unless work is genuinely finished**
+
+#### 2. Evidence-Based Claims Only
+```bash
+# REQUIRED: Always verify claims with evidence
+✅ CORRECT: "Tests now pass (verified: 9/9 passing)"
+❌ WRONG: "Tests should be passing now"
+
+# REQUIRED: Show actual test output when claiming success
+✅ CORRECT: "All tests pass: test_file_repository_migration.py::test_increment_reference_count PASSED"
+❌ WRONG: "I think the tests are working"
+```
+
+#### 3. Immediate Correction Protocol
+When caught making inaccurate claims:
+- **Acknowledge the error immediately**
+- **Re-verify the actual state systematically**
+- **Provide corrected information with evidence**
+- **Learn from the feedback for future accuracy**
+
+#### 4. Implementation Status Honesty
+- **In Progress**: Work is actively being done
+- **Blocked**: Cannot proceed due to specific impediment (name it)
+- **Complete**: Work is genuinely finished and verified
+- **Failed**: Attempted but did not succeed (explain why)
+
+#### 5. Test Results Accuracy Standard
+```bash
+# ALWAYS run tests to verify before claiming success
+GITHUBTOKEN=dummy_token PYTHONPATH=. python -m pytest [test_file] -v
+
+# Only claim "tests pass" when you see:
+# ===== X passed, Y warnings in Z.ZZ seconds =====
+
+# Never claim success based on:
+# - Assumptions ("should work now")
+# - Partial evidence ("most tests pass")
+# - Implementation without verification ("I added the fix")
+```
+
+#### 6. GITHUB-FIRST STATUS VERIFICATION (MANDATORY)
+Before running ANY validation tools:
+1. **Check GitHub issue comments for completion evidence**
+2. **Look for "✅ COMPLETE", "STATUS:", or completion indicators**
+3. **Verify if another agent already completed work**
+4. **ONLY THEN proceed with validation/implementation**
+
+**Pattern**: GitHub Reality → Status Verification → THEN Tools
+
+```bash
+# MANDATORY FIRST STEPS - Check issue history before ANY validation
+gh issue view [issue-number] --comments | tail -20
+gh issue view [issue-number] --comments | grep -E "(COMPLETE|✅|STATUS)"
+
+# WRONG PATTERN: Tool → Assume Work Needed
+❌ python tools/validator.py → "Work incomplete"
+
+# CORRECT PATTERN: GitHub → Verify → Then Tools
+✅ gh issue comments → Check status → THEN validate
+```
+
+#### 7. Systematic Verification Requirements
+Before any status update:
+1. **Check current reality** (don't assume)
+2. **Run verification commands** (tests, builds, etc.)
+3. **Document evidence** in response
+4. **Only then update status**
+
+### Why This Matters
+
+**False success reporting breaks the Excellence Flywheel:**
+- Wastes time on non-existent solutions
+- Destroys trust in systematic progress
+- Creates compound errors across agent sessions
+- Prevents learning from actual implementation issues
+
+**Honest reporting enables:**
+- ✅ Accurate progress tracking
+- ✅ Effective debugging and problem-solving
+- ✅ Compound learning across sessions
+- ✅ Trust in systematic methodology
+
+### Enforcement
+
+**This is not optional.** Any agent exhibiting patterns of inaccurate reporting will receive feedback to correct the behavior. The Excellence Flywheel depends on systematic honesty.
+
 ## SESSION START PROTOCOL
 
 ### Mandatory Session Initialization Sequence
@@ -278,6 +375,20 @@ If an agent shows signs of assumption-based development:
 - Use `.python-version` file in project root for version management
 - Docker images use `python:3.11-slim-buster` base image
 - Virtual environment should be created with Python 3.11
+
+### MCP Tools Available
+
+**Context7 Documentation Retrieval**
+- **Purpose**: Access up-to-date code examples and documentation for libraries/frameworks
+- **Usage**: Add "use context7" to prompts when needing current documentation
+- **Benefits**: Eliminates outdated docs, prevents API hallucinations, provides version-specific examples
+- **Installed**: Remote HTTP transport to `https://mcp.context7.com/mcp`
+
+**When to Use Context7:**
+- Verifying current API patterns for FastAPI, SQLAlchemy, AsyncPG
+- Getting fresh examples for GitHub API, Slack API integrations
+- Confirming latest best practices for dependencies
+- Accessing current patterns for async Python, PostgreSQL optimization
 
 ## Key Commands
 

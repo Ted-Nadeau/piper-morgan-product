@@ -1,0 +1,70 @@
+{
+  "timestamp": "20250726_161813",
+  "total_duration_ms": 21007.992029190063,
+  "success_rate": 20.0,
+  "average_response_time_ms": 2702.234983444214,
+  "ux_insights": [
+    "Reliability issues: Only 20.0% success rate",
+    "Good performance: Acceptable response times",
+    "Limited intent recognition: Single category detected",
+    "Error pattern: Other errors detected"
+  ],
+  "conversation_flow_patterns": [],
+  "query_results": [
+    {
+      "query": "What day is it?",
+      "query_type": "Temporal awareness",
+      "response_time_ms": 2092.2229290008545,
+      "success": false,
+      "response_text": "",
+      "intent_category": null,
+      "intent_action": null,
+      "confidence": null,
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}"
+    },
+    {
+      "query": "What did we accomplish yesterday?",
+      "query_type": "Continuity",
+      "response_time_ms": 2757.99298286438,
+      "success": false,
+      "response_text": "",
+      "intent_category": null,
+      "intent_action": null,
+      "confidence": null,
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}"
+    },
+    {
+      "query": "What's on my agenda today?",
+      "query_type": "Planning",
+      "response_time_ms": 3100.1930236816406,
+      "success": false,
+      "response_text": "",
+      "intent_category": null,
+      "intent_action": null,
+      "confidence": null,
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}"
+    },
+    {
+      "query": "What should I focus on first?",
+      "query_type": "Prioritization",
+      "response_time_ms": 2702.234983444214,
+      "success": true,
+      "response_text": "I understand you want to prioritization guidance. I've started a workflow to handle this.",
+      "intent_category": "strategy",
+      "intent_action": "prioritization_guidance",
+      "confidence": 0.75,
+      "error_message": null
+    },
+    {
+      "query": "Any blockers I should know about?",
+      "query_type": "Risk awareness",
+      "response_time_ms": 6349.552869796753,
+      "success": false,
+      "response_text": "",
+      "intent_category": null,
+      "intent_action": null,
+      "confidence": null,
+      "error_message": "API Error 500: {\"detail\":\"Failed to process intent\"}"
+    }
+  ]
+}

@@ -36,14 +36,15 @@ class DatabaseConnection:
         # Build connection URL from environment
         db_url = self._build_database_url()
 
-        # Create async engine with test-friendly settings
+        # Create async engine with test-friendly settings (PM-058 optimized)
         self.engine = create_async_engine(
             db_url,
             echo=os.getenv("APP_DEBUG", "false").lower() == "true",
-            pool_size=5,  # Multiple connections to handle concurrent test operations
-            max_overflow=10,  # Allow additional connections during peak usage
+            pool_size=10,  # PM-058: Increased for better concurrent test handling
+            max_overflow=20,  # PM-058: Increased buffer for batch test execution
             pool_pre_ping=False,  # Disable ping to avoid event loop conflicts
             pool_recycle=3600,  # Recycle connections every hour to prevent stale connections
+            pool_timeout=30,  # PM-058: Add timeout to prevent hanging on pool exhaustion
         )
 
         # Create session factory
