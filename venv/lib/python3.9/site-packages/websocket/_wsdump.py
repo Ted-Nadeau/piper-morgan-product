@@ -82,9 +82,7 @@ def parse_args() -> argparse.Namespace:
         help="set verbose mode. If set to 1, show opcode. "
         "If set to 2, enable to trace  websocket module",
     )
-    parser.add_argument(
-        "-n", "--nocert", action="store_true", help="Ignore invalid SSL cert"
-    )
+    parser.add_argument("-n", "--nocert", action="store_true", help="Ignore invalid SSL cert")
     parser.add_argument("-r", "--raw", action="store_true", help="raw output")
     parser.add_argument("-s", "--subprotocols", nargs="*", help="Set subprotocols")
     parser.add_argument("-o", "--origin", help="Set origin")
@@ -95,9 +93,7 @@ def parse_args() -> argparse.Namespace:
         help="wait time(second) after 'EOF' received.",
     )
     parser.add_argument("-t", "--text", help="Send initial text")
-    parser.add_argument(
-        "--timings", action="store_true", help="Print timings in seconds"
-    )
+    parser.add_argument("--timings", action="store_true", help="Print timings in seconds")
     parser.add_argument("--headers", help="Set custom headers. Use ',' as separator")
 
     return parser.parse_args()
@@ -187,18 +183,14 @@ def main() -> None:
             msg = None
             if opcode == websocket.ABNF.OPCODE_TEXT and isinstance(data, bytes):
                 data = str(data, "utf-8")
-            if (
-                isinstance(data, bytes) and len(data) > 2 and data[:2] == b"\037\213"
-            ):  # gzip magick
+            if isinstance(data, bytes) and len(data) > 2 and data[:2] == b"\037\213":  # gzip magick
                 try:
                     data = "[gzip] " + str(gzip.decompress(data), "utf-8")
                 except:
                     pass
             elif isinstance(data, bytes):
                 try:
-                    data = "[zlib] " + str(
-                        zlib.decompress(data, -zlib.MAX_WBITS), "utf-8"
-                    )
+                    data = "[zlib] " + str(zlib.decompress(data, -zlib.MAX_WBITS), "utf-8")
                 except:
                     pass
 

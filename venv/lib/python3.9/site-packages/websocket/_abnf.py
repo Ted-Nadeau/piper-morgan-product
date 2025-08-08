@@ -238,11 +238,7 @@ class ABNF:
             raise ValueError("data is too long")
 
         frame_header = chr(
-            self.fin << 7
-            | self.rsv1 << 6
-            | self.rsv2 << 5
-            | self.rsv3 << 4
-            | self.opcode
+            self.fin << 7 | self.rsv1 << 6 | self.rsv2 << 5 | self.rsv3 << 4 | self.opcode
         ).encode("latin-1")
         if length < ABNF.LENGTH_7:
             frame_header += chr(self.mask_value << 7 | length).encode("latin-1")
@@ -296,9 +292,7 @@ class frame_buffer:
     _HEADER_MASK_INDEX = 5
     _HEADER_LENGTH_INDEX = 6
 
-    def __init__(
-        self, recv_fn: Callable[[int], int], skip_utf8_validation: bool
-    ) -> None:
+    def __init__(self, recv_fn: Callable[[int], int], skip_utf8_validation: bool) -> None:
         self.recv = recv_fn
         self.skip_utf8_validation = skip_utf8_validation
         # Buffers over the packets from the layer beneath until desired amount

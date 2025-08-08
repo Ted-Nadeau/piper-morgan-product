@@ -99,9 +99,7 @@ class HttpTest(unittest.TestCase):
         self.assertEqual(status, 101)
         self.assertEqual(header["connection"], "Upgrade")
         # header02.txt is intentionally malformed
-        self.assertRaises(
-            WebSocketException, read_headers, HeaderSockMock("data/header02.txt")
-        )
+        self.assertRaises(WebSocketException, read_headers, HeaderSockMock("data/header02.txt"))
 
     def test_tunnel(self):
         self.assertRaises(
@@ -195,9 +193,7 @@ class HttpTest(unittest.TestCase):
             None,
             80,
             True,
-            proxy_info(
-                http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"
-            ),
+            proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"),
         )
         self.assertRaises(
             TypeError,
@@ -205,9 +201,7 @@ class HttpTest(unittest.TestCase):
             None,
             80,
             True,
-            proxy_info(
-                http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"
-            ),
+            proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="9999", proxy_type="http"),
         )
         self.assertRaises(
             socket.timeout,
@@ -226,9 +220,7 @@ class HttpTest(unittest.TestCase):
             connect(
                 "wss://google.com",
                 OptsList(),
-                proxy_info(
-                    http_proxy_host="8.8.8.8", http_proxy_port=8080, proxy_type="http"
-                ),
+                proxy_info(http_proxy_host="8.8.8.8", http_proxy_port=8080, proxy_type="http"),
                 True,
             ),
             (True, ("google.com", 443, "/")),
@@ -240,9 +232,7 @@ class HttpTest(unittest.TestCase):
     @unittest.skipUnless(
         TEST_WITH_PROXY, "This test requires a HTTP proxy to be running on port 8899"
     )
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def test_proxy_connect(self):
         ws = websocket.WebSocket()
         ws.connect(
@@ -267,9 +257,7 @@ class HttpTest(unittest.TestCase):
                 ),
             ),
             (
-                socket.getaddrinfo(
-                    "127.0.0.1", 8899, 0, socket.SOCK_STREAM, socket.SOL_TCP
-                ),
+                socket.getaddrinfo("127.0.0.1", 8899, 0, socket.SOCK_STREAM, socket.SOL_TCP),
                 True,
                 None,
             ),
@@ -278,9 +266,7 @@ class HttpTest(unittest.TestCase):
             connect(
                 "wss://api.bitfinex.com/ws/2",
                 OptsList(),
-                proxy_info(
-                    http_proxy_host="127.0.0.1", http_proxy_port=8899, proxy_type="http"
-                ),
+                proxy_info(http_proxy_host="127.0.0.1", http_proxy_port=8899, proxy_type="http"),
                 None,
             )[1],
             ("api.bitfinex.com", 443, "/ws/2"),
@@ -341,9 +327,7 @@ class HttpTest(unittest.TestCase):
             "8080",
         )
         self.assertEqual(
-            proxy_info(
-                http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http"
-            ).auth,
+            proxy_info(http_proxy_host="127.0.0.1", http_proxy_port="8080", proxy_type="http").auth,
             None,
         )
         self.assertEqual(

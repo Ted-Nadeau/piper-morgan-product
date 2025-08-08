@@ -141,17 +141,13 @@ class WebSocketTest(unittest.TestCase):
 
         header = required_header.copy()
         header["sec-websocket-protocol"] = "sub1"
-        self.assertEqual(
-            _validate_header(header, key, ["sub1", "sub2"]), (True, "sub1")
-        )
+        self.assertEqual(_validate_header(header, key, ["sub1", "sub2"]), (True, "sub1"))
         # This case will print out a logging error using the error() function, but that is expected
         self.assertEqual(_validate_header(header, key, ["sub2", "sub3"]), (False, None))
 
         header = required_header.copy()
         header["sec-websocket-protocol"] = "sUb1"
-        self.assertEqual(
-            _validate_header(header, key, ["Sub1", "suB2"]), (True, "sub1")
-        )
+        self.assertEqual(_validate_header(header, key, ["Sub1", "suB2"]), (True, "sub1"))
 
         header = required_header.copy()
         # This case will print out a logging error using the error() function, but that is expected
@@ -167,9 +163,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(header["connection"], "Upgrade, Keep-Alive")
 
         HeaderSockMock("data/header02.txt")
-        self.assertRaises(
-            ws.WebSocketException, read_headers, HeaderSockMock("data/header02.txt")
-        )
+        self.assertRaises(ws.WebSocketException, read_headers, HeaderSockMock("data/header02.txt"))
 
     def test_send(self):
         # TODO: add longer frame data
@@ -194,9 +188,7 @@ class WebSocketTest(unittest.TestCase):
         # TODO: add longer frame data
         sock = ws.WebSocket()
         s = sock.sock = SockMock()
-        something = (
-            b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"
-        )
+        something = b"\x81\x8fabcd\x82\xe3\xf0\x87\xe3\xf1\x80\xe5\xca\x81\xe2\xc5\x82\xe3\xcc"
         s.add_packet(something)
         data = sock.recv()
         self.assertEqual(data, "こんにちは")
@@ -341,13 +333,9 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(data, "Too much of a good thing")
         with self.assertRaises(ws.WebSocketConnectionClosedException):
             sock.recv()
-        self.assertEqual(
-            s.sent[0], b"\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17"
-        )
+        self.assertEqual(s.sent[0], b"\x8a\x90abcd1\x0e\x06\x05\x12\x07C4.,$D\x15\n\n\x17")
 
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def test_websocket(self):
         s = ws.create_connection(f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}")
         self.assertNotEqual(s, None)
@@ -362,9 +350,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertRaises(ValueError, s.send_close, -1, "")
         s.close()
 
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def test_ping_pong(self):
         s = ws.create_connection(f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}")
         self.assertNotEqual(s, None)
@@ -390,9 +376,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertEqual(s.getsubprotocol(), None)
         s.abort()
 
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def test_websocket_with_custom_header(self):
         s = ws.create_connection(
             f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}",
@@ -406,9 +390,7 @@ class WebSocketTest(unittest.TestCase):
         self.assertRaises(ValueError, s.close, -1, "")
         s.close()
 
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def test_after_close(self):
         s = ws.create_connection(f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}")
         self.assertNotEqual(s, None)
@@ -418,17 +400,11 @@ class WebSocketTest(unittest.TestCase):
 
 
 class SockOptTest(unittest.TestCase):
-    @unittest.skipUnless(
-        TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled"
-    )
+    @unittest.skipUnless(TEST_WITH_LOCAL_SERVER, "Tests using local websocket server are disabled")
     def test_sockopt(self):
         sockopt = ((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),)
-        s = ws.create_connection(
-            f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}", sockopt=sockopt
-        )
-        self.assertNotEqual(
-            s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0
-        )
+        s = ws.create_connection(f"ws://127.0.0.1:{LOCAL_WS_SERVER_PORT}", sockopt=sockopt)
+        self.assertNotEqual(s.sock.getsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY), 0)
         s.close()
 
 
@@ -436,9 +412,7 @@ class UtilsTest(unittest.TestCase):
     def test_utf8_validator(self):
         state = validate_utf8(b"\xf0\x90\x80\x80")
         self.assertEqual(state, True)
-        state = validate_utf8(
-            b"\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5\xed\xa0\x80edited"
-        )
+        state = validate_utf8(b"\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5\xed\xa0\x80edited")
         self.assertEqual(state, False)
         state = validate_utf8(b"")
         self.assertEqual(state, True)
@@ -453,9 +427,7 @@ class HandshakeTest(unittest.TestCase):
         )
         self.assertRaises(ValueError, websock1.connect, "wss://api.bitfinex.com/ws/2")
         websock2 = ws.WebSocket(sslopt={"certfile": "myNonexistentCertFile"})
-        self.assertRaises(
-            FileNotFoundError, websock2.connect, "wss://api.bitfinex.com/ws/2"
-        )
+        self.assertRaises(FileNotFoundError, websock2.connect, "wss://api.bitfinex.com/ws/2")
 
     @unittest.skipUnless(TEST_WITH_INTERNET, "Internet-requiring tests are disabled")
     def test_manual_headers(self):
