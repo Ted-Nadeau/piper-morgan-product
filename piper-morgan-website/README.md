@@ -1,4 +1,4 @@
-# Piper Morgan Website
+# BETA DEPRECATED Piper Morgan Website
 
 This repository contains the public-facing website for Piper Morgan AI Product Management Assistant.
 
