@@ -182,6 +182,60 @@ class Intent:
     created_at: datetime = field(default_factory=datetime.now)
 ```
 
+### Conversation System (PM-034 Phase 3)
+
+#### Conversation
+
+Represents a conversational interaction session with context management.
+
+```python
+@dataclass
+class Conversation:
+    """Domain model for conversational interactions"""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    user_id: str = ""
+    session_id: str = ""
+    title: str = ""  # Optional conversation title/summary
+    context: Dict[str, Any] = field(default_factory=dict)  # Conversation context
+    is_active: bool = True
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    last_activity_at: Optional[datetime] = None
+```
+
+#### ConversationTurn
+
+Individual turn within a conversation, supporting anaphoric reference resolution.
+
+```python
+@dataclass
+class ConversationTurn:
+    """Domain model for individual turns in a conversation"""
+    id: str = field(default_factory=lambda: str(uuid4()))
+    conversation_id: str = ""
+    turn_number: int = 0  # Sequential turn number within conversation
+
+    # Turn content
+    user_message: str = ""
+    assistant_response: str = ""
+    intent: Optional[str] = None  # Classified intent for this turn
+
+    # Context and entities for anaphoric reference resolution
+    entities: List[str] = field(default_factory=list)  # Extracted entities
+    references: Dict[str, str] = field(default_factory=dict)  # Anaphoric references
+    context_used: Dict[str, Any] = field(default_factory=dict)  # Context used in response
+
+    # Metadata
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    processing_time: Optional[float] = None  # Response processing time in ms
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+```
+
 ### Workflow System
 
 #### Workflow
