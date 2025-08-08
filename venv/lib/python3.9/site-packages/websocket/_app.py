@@ -555,12 +555,8 @@ class WebSocketApp:
 
         def check() -> bool:
             if self.ping_timeout:
-                has_timeout_expired = (
-                    time.time() - self.last_ping_tm > self.ping_timeout
-                )
-                has_pong_not_arrived_after_last_ping = (
-                    self.last_pong_tm - self.last_ping_tm < 0
-                )
+                has_timeout_expired = time.time() - self.last_ping_tm > self.ping_timeout
+                has_pong_not_arrived_after_last_ping = self.last_pong_tm - self.last_ping_tm < 0
                 has_pong_arrived_too_late = (
                     self.last_pong_tm - self.last_ping_tm > self.ping_timeout
                 )
@@ -568,10 +564,7 @@ class WebSocketApp:
                 if (
                     self.last_ping_tm
                     and has_timeout_expired
-                    and (
-                        has_pong_not_arrived_after_last_ping
-                        or has_pong_arrived_too_late
-                    )
+                    and (has_pong_not_arrived_after_last_ping or has_pong_arrived_too_late)
                 ):
                     raise WebSocketTimeoutException("ping/pong timed out")
             return True
@@ -608,9 +601,7 @@ class WebSocketApp:
                 teardown()
 
         custom_dispatcher = bool(dispatcher)
-        dispatcher = self.create_dispatcher(
-            ping_timeout, dispatcher, parse_url(self.url)[3]
-        )
+        dispatcher = self.create_dispatcher(ping_timeout, dispatcher, parse_url(self.url)[3])
 
         try:
             setSock()
@@ -655,9 +646,7 @@ class WebSocketApp:
 
         # Extract close frame status code
         if close_frame.data and len(close_frame.data) >= 2:
-            close_status_code = 256 * int(close_frame.data[0]) + int(
-                close_frame.data[1]
-            )
+            close_status_code = 256 * int(close_frame.data[0]) + int(close_frame.data[1])
             reason = close_frame.data[2:]
             if isinstance(reason, bytes):
                 reason = reason.decode("utf-8")

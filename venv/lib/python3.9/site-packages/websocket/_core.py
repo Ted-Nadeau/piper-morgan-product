@@ -269,9 +269,7 @@ class WebSocket:
                         proxy_info(**options),
                         options.pop("socket", None),
                     )
-                    self.handshake_response = handshake(
-                        self.sock, url, *addrs, **options
-                    )
+                    self.handshake_response = handshake(self.sock, url, *addrs, **options)
             self.connected = True
         except:
             if self.sock:

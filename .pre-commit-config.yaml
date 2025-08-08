@@ -4,10 +4,12 @@ repos:
     hooks:
       - id: isort
         args: ["--profile", "black"]
+        exclude: ^venv/
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
+        exclude: ^venv/
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
@@ -19,6 +21,7 @@ repos:
     rev: 24.3.0
     hooks:
       - id: black
+        exclude: ^venv/
   - repo: local
     hooks:
       - id: documentation-check

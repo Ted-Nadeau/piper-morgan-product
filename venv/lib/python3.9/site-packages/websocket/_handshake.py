@@ -16,6 +16,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
 import hashlib
 import hmac
 import os
@@ -79,9 +80,7 @@ def _pack_hostname(hostname: str) -> str:
     return hostname
 
 
-def _get_handshake_headers(
-    resource: str, url: str, host: str, port: int, options: dict
-) -> tuple:
+def _get_handshake_headers(resource: str, url: str, host: str, port: int, options: dict) -> tuple:
     headers = [f"GET {resource} HTTP/1.1", "Upgrade: websocket"]
     if port in [80, 443]:
         hostport = _pack_hostname(host)
