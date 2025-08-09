@@ -11,3 +11,10 @@ relative_links:
 
 exclude:
   - archive/
+  - development/session-logs/
+  - development/prompts/
+  - "*.log"
+  - "**/*log*.md"
+  - "**/*session*.md"
+  - "**/*handoff*.md"
+  - "**/*prompt*.md"
