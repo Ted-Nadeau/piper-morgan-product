@@ -1,4 +1,4 @@
-# 🎉 Piper Morgan - Conversational AI Product Management Assistant
+# Piper Morgan - Conversational AI Product Management Assistant
 
 **NEW: Conversational AI with Memory** - Your PM assistant now understands natural language and remembers context across conversations.
 
