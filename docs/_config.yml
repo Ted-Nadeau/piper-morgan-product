@@ -10,7 +10,9 @@ relative_links:
   collections: false
 
 exclude:
+  - archive
   - archive/
+  - archive/**
   - development/session-logs/
   - development/prompts/
   - "*.log"
