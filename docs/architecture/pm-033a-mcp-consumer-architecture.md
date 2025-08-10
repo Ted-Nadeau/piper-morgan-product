@@ -27,7 +27,7 @@ services/mcp/
 
 ### 2. Integration Points
 
-#### 2.1 JWT Authentication (ADR-011)
+#### 2.1 JWT Authentication (ADR-012)
 ```python
 # services/mcp/consumer/auth_integration.py
 class MCPAuthenticationBridge:
@@ -272,7 +272,7 @@ class TestMCPConsumerReality:
 ### Existing Infrastructure
 - ✅ MCP client base (11,377 lines)
 - ✅ Resource management (16,155 lines)
-- ✅ JWT authentication (ADR-011)
+- ✅ JWT authentication (ADR-012)
 - ✅ Workflow factory (fixed bug)
 
 ### External Requirements
