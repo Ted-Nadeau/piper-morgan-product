@@ -114,7 +114,7 @@
 - Intelligent workflow orchestration
 
 **Architecture Readiness**:
-- Stateless design with JWT authentication (ADR-011)
+- Stateless design with JWT authentication (ADR-012)
 - Protocol-compatible service architecture
 - Proven scalability and performance
 - Comprehensive testing discipline framework
