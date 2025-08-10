@@ -155,7 +155,7 @@ Federation Pattern:
 ## Related ADRs
 - **ADR-007**: Unified Session Management Architecture (superseded by JWT)
 - **ADR-010**: Configuration Patterns (supports JWT configuration)
-- **Future ADR-012**: MCP Protocol Integration Architecture
+- **Future ADR-013**: MCP Protocol Integration Architecture (will build on this JWT foundation)
 
 ## References
 - [RFC 7519: JSON Web Token (JWT)](https://tools.ietf.org/html/rfc7519)
