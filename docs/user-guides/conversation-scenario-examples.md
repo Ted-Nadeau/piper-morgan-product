@@ -389,24 +389,16 @@ Confidence: 0.0
 
 ---
 
-## Navigation & Cross-References
+## Next Steps
 
-### Related Documentation
-
-- **[Getting Started Guide](./getting-started-conversational-ai.md)** - 15-minute user journey
-- **[User Guide Templates](./user-guide-templates.md)** - Template structure for guides
-- **[PM-034 API Documentation](../development/PM-034-conversation-api-documentation.md)** - Technical reference
-- **[Performance Validation](../development/pm034-phase3-readiness-assessment.md)** - System readiness
-
-### Usage Guidelines
-
-- **User Testing**: Use scenarios for validation and comprehension testing
-- **Guide Development**: Reference examples in user guide implementation
-- **Training Materials**: Incorporate scenarios into team training
-- **Performance Validation**: Use metrics for system validation
+- [Getting Started with Conversational AI](./getting-started-conversational-ai.md)
+- [Understanding Anaphoric References](./understanding-anaphoric-references.md)
+- [Conversation Memory and Context](./conversation-memory-guide.md)
+- [Upgrading from Command Mode](./upgrading-from-command-mode.md)
+- [API Documentation](../development/PM-034-conversation-api-documentation.md)
+- [Report an Issue](https://github.com/your-repo/issues)
 
 ---
 
 **Status**: Comprehensive example collection complete
 **Validation**: Ready for user testing and comprehension validation
-**Next Steps**: Use examples for user guide development and training materials

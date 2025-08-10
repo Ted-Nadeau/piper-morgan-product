@@ -548,34 +548,27 @@ Piper: "Here are the details for GitHub issue #85"
 ### Advanced Learning
 
 1. **Read "Understanding Anaphoric References"**: Deep dive into reference resolution
-
-   - [Template Structure](../user-guides/user-guide-templates.md#template-1-understanding-anaphoric-references)
-   - [Real Examples](../user-guides/conversation-scenario-examples.md#performance-validation-examples)
-
 2. **Explore "Conversation Memory and Context"**: Learn about context window management
-
-   - [Template Structure](../user-guides/user-guide-templates.md#template-2-conversation-memory-and-context)
-   - [Context Examples](../user-guides/conversation-scenario-examples.md#context-maintenance)
-
-3. **Review "Advanced Conversation Features"**: Master complex conversation patterns
-
-   - [Real Scenarios](../user-guides/conversation-scenario-examples.md#scenario-1-issue-management-workflow)
-   - [Performance Validation](../user-guides/conversation-scenario-examples.md#performance-validation-examples)
-
-4. **Check "Upgrading from Command Mode"**: Complete migration guide
-   - [Template Structure](../user-guides/user-guide-templates.md#template-3-upgrading-from-command-mode)
-   - [Migration Examples](../user-guides/conversation-scenario-examples.md#before-after-examples)
+3. **Review "Upgrading from Command Mode"**: Complete migration guide
+4. **Practice with Real Examples**: Test conversation scenarios
 
 ### Support Resources
 
 - **API Documentation**: Complete conversation endpoint reference
-  - [PM-034 Conversation API](../development/PM-034-conversation-api-documentation.md)
-  - [Developer Integration Guide](../development/PM-034-developer-integration-quick-start.md)
 - **Performance Monitoring**: Real-time conversation metrics
-  - [Performance Examples](../user-guides/conversation-scenario-examples.md#performance-validation-examples)
 - **Troubleshooting Guide**: Common issues and solutions
-  - [Troubleshooting Section](#troubleshooting-guide)
 - **Community Forum**: Share tips and best practices
+
+---
+
+## Next Steps
+
+- [Understanding Anaphoric References](./understanding-anaphoric-references.md)
+- [Conversation Memory and Context](./conversation-memory-guide.md)
+- [Upgrading from Command Mode](./upgrading-from-command-mode.md)
+- [Conversation Examples](./conversation-scenario-examples.md)
+- [API Documentation](../development/PM-034-conversation-api-documentation.md)
+- [Report an Issue](https://github.com/your-repo/issues)
 
 ---
 

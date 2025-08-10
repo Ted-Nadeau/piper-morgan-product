@@ -997,20 +997,10 @@ class ListItemDB(Base):
 
     # Strategic indexes for many-to-many queries
     __table_args__ = (
-        # Ensure unique membership per list-item pair
-        Index("idx_unique_list_item", "list_id", "item_id", unique=True),
-        # Position-based ordering within lists
-        Index("idx_list_item_position", "list_id", "position"),
-        # Item-centric queries
-        Index("idx_list_item_by_item", "item_id", "item_type"),
-        # List-centric queries
-        Index("idx_list_item_by_list", "list_id"),
-        # User-added tracking
-        Index("idx_list_item_added_by", "added_by"),
-        Index("idx_list_item_added_at", "added_at"),
-        # List-specific overrides
-        Index("idx_list_item_priority", "list_id", "list_priority"),
-        Index("idx_list_item_due", "list_id", "list_due_date"),
+        Index("idx_list_items_list_id", "list_id"),
+        Index("idx_list_items_item_id_type", "item_id", "item_type"),
+        Index("idx_list_items_position", "list_id", "position"),
+        Index("idx_list_items_added_by", "added_by"),
     )
 
     def to_domain(self) -> domain.ListItem:
@@ -1042,4 +1032,93 @@ class ListItemDB(Base):
             list_priority=item.list_priority,
             list_due_date=item.list_due_date,
             list_notes=item.list_notes,
+        )
+
+
+class FeedbackDB(Base, TimestampMixin):
+    """Database model for user feedback tracking - PM-005"""
+
+    __tablename__ = "feedback"
+
+    # Primary key
+    id = Column(String, primary_key=True)
+
+    # Core feedback data
+    session_id = Column(String, nullable=False, index=True)
+    feedback_type = Column(String, nullable=False)  # "bug", "feature", "ux", "general"
+    rating = Column(Integer)  # 1-5 rating (optional)
+    comment = Column(Text, nullable=False)
+    context = Column(JSON, default=dict)  # Additional context data
+
+    # User and session context
+    user_id = Column(String, index=True)
+    conversation_context = Column(JSON, default=dict)  # Conversation context if available
+
+    # Feedback metadata
+    source = Column(String, default="api")  # "api", "ui", "conversation"
+    status = Column(String, default="new")  # "new", "reviewed", "addressed", "closed"
+    priority = Column(String, default="medium")  # "low", "medium", "high", "critical"
+
+    # Analysis and processing
+    sentiment_score = Column(Float)  # -1.0 to 1.0
+    categories = Column(JSON, default=list)  # Auto-detected categories
+    tags = Column(JSON, default=list)  # User or system tags
+
+    # Relationships (if needed)
+    # related_issues = Column(JSON, default=list)  # Links to related GitHub issues
+
+    # Strategic indexes for query performance
+    __table_args__ = (
+        Index("idx_feedback_session_id", "session_id"),
+        Index("idx_feedback_type", "feedback_type"),
+        Index("idx_feedback_rating", "rating"),
+        Index("idx_feedback_status", "status"),
+        Index("idx_feedback_created_at", "created_at"),
+        Index("idx_feedback_user_id", "user_id"),
+        Index("idx_feedback_source", "source"),
+    )
+
+    def to_domain(self) -> "Feedback":
+        """Convert to domain model"""
+        from services.feedback.models import Feedback
+
+        return Feedback(
+            id=self.id,
+            session_id=self.session_id,
+            feedback_type=self.feedback_type,
+            rating=self.rating,
+            comment=self.comment,
+            context=self.context,
+            user_id=self.user_id,
+            conversation_context=self.conversation_context,
+            source=self.source,
+            status=self.status,
+            priority=self.priority,
+            sentiment_score=self.sentiment_score,
+            categories=self.categories,
+            tags=self.tags,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+    @classmethod
+    def from_domain(cls, feedback: "Feedback") -> "FeedbackDB":
+        """Create from domain model"""
+        return cls(
+            id=feedback.id,
+            session_id=feedback.session_id,
+            feedback_type=feedback.feedback_type,
+            rating=feedback.rating,
+            comment=feedback.comment,
+            context=feedback.context,
+            user_id=feedback.user_id,
+            conversation_context=feedback.conversation_context,
+            source=feedback.source,
+            status=feedback.status,
+            priority=feedback.priority,
+            sentiment_score=feedback.sentiment_score,
+            categories=feedback.categories,
+            tags=feedback.tags,
+            created_at=feedback.created_at,
+            updated_at=feedback.updated_at,
         )

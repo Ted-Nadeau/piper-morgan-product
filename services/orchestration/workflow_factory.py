@@ -146,17 +146,17 @@ class WorkflowFactory:
         print(f"🔍 Intent: action='{intent.action}', category={intent.category}")
         print(f"🔍 Intent context: {intent.context}")
 
-        # PM-057: Pre-execution context validation
+        # Determine workflow type from intent action FIRST (Bug fix: PM-090)
+        workflow_type = self.workflow_registry.get(intent.action.lower())
+        print(f"🔍 Action '{intent.action.lower()}' mapped to workflow_type: {workflow_type}")
+
+        # PM-057: Pre-execution context validation (Now workflow_type is defined)
         try:
             self._validate_workflow_context(workflow_type, intent, project_context)
             print(f"  ✅ Context validation passed")
         except ContextValidationError as e:
             print(f"  ❌ Context validation failed: {e.user_message}")
             raise e
-
-        # Determine workflow type from intent action
-        workflow_type = self.workflow_registry.get(intent.action.lower())
-        print(f"🔍 Action '{intent.action.lower()}' mapped to workflow_type: {workflow_type}")
 
         if not workflow_type:
             # Default mapping based on intent category

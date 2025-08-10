@@ -84,6 +84,27 @@ Before running ANY validation tools:
 
 **Pattern**: GitHub Reality → Status Verification → THEN Tools
 
+#### 6a. GITHUB LABEL VERIFICATION (MANDATORY)
+**ALWAYS verify labels exist before using in gh issue commands:**
+
+```bash
+# REQUIRED: Check existing labels before ANY gh issue command
+gh label list --limit 100
+
+# SAFE: Use verified existing labels
+gh issue create --label "bug,enhancement"
+
+# CREATE: New labels when needed for better categorization
+gh label create "P0-critical" --color "d73a4a" --description "Critical priority issues"
+gh label create "workflow" --color "0075ca" --description "Workflow orchestration issues"
+```
+
+**Label Strategy (Verification-First):**
+1. **Verification First**: Always run `gh label list` before using labels
+2. **Existing Preferred**: Use existing labels when appropriate
+3. **Create When Needed**: Add new labels for better categorization
+4. **Ask When Uncertain**: Check with user for label naming/color decisions
+
 ```bash
 # MANDATORY FIRST STEPS - Check issue history before ANY validation
 gh issue view [issue-number] --comments | tail -20
@@ -500,6 +521,35 @@ PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
 
 ❌ WRONG: pytest tests/file.py
 ✅ CORRECT: PYTHONPATH=. python -m pytest tests/file.py
+
+### Testing Discipline Protocol (CRITICAL)
+
+**MANDATORY: Dual Testing Strategy**
+- **Unit Tests**: Fast feedback with strategic mocking
+- **Reality Tests**: Full execution paths without critical mocks
+
+**FORBIDDEN: Critical Path Over-Mocking**
+```bash
+# ❌ WRONG: Mock away the code you're testing
+@patch("services.orchestration.workflow_factory.WorkflowFactory._validate_workflow_context")
+def test_workflow_creation(mock_validate):
+    mock_validate.return_value = None  # Hides UnboundLocalError bugs
+
+# ✅ CORRECT: Test real execution paths
+def test_workflow_creation_reality():
+    workflow = await factory.create_from_intent(intent)  # Real execution
+```
+
+**REQUIRED: Production Reality Testing**
+```bash
+# Before any workflow-related commits
+PYTHONPATH=. python scripts/workflow_reality_check.py
+
+# Regular quality gates
+PYTHONPATH=. python scripts/workflow_reality_check.py --timeout 60
+```
+
+**Key Insight**: *Tests that pass ≠ Code that works. The difference is mocked vs real execution.*
 
 ### Pattern Detection & Learning
 

@@ -1,0 +1,314 @@
+"""
+Authentication Middleware - FastAPI Integration
+
+FastAPI middleware for JWT-based authentication with OAuth 2.0 integration.
+Provides secure authentication for API endpoints with flexible authorization.
+
+Features:
+- JWT token validation middleware
+- OAuth 2.0 bearer token support
+- Scope-based authorization
+- MCP protocol compatibility
+- Audit logging integration
+"""
+
+from typing import Any, Callable, List, Optional
+
+import structlog
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+
+from .jwt_service import JWTClaims, JWTService
+from .user_service import UserService
+
+logger = structlog.get_logger(__name__)
+
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    """
+    JWT Authentication middleware for FastAPI.
+
+    Validates JWT tokens and sets user context for authenticated requests.
+    Integrates with existing OAuth flows and provides audit logging.
+    """
+
+    def __init__(
+        self,
+        app,
+        jwt_service: JWTService,
+        user_service: UserService,
+        exclude_paths: Optional[List[str]] = None,
+    ):
+        """
+        Initialize authentication middleware.
+
+        Args:
+            app: FastAPI application instance
+            jwt_service: JWT service for token validation
+            user_service: User service for user context
+            exclude_paths: Paths to exclude from authentication
+        """
+        super().__init__(app)
+        self.jwt_service = jwt_service
+        self.user_service = user_service
+        self.exclude_paths = exclude_paths or [
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/health",
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/slack/oauth/callback",
+            "/github/oauth/callback",
+        ]
+
+        logger.info("AuthMiddleware initialized", exclude_paths=len(self.exclude_paths))
+
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """
+        Process request through authentication middleware.
+
+        Args:
+            request: Incoming HTTP request
+            call_next: Next middleware/handler in chain
+
+        Returns:
+            HTTP response
+        """
+        # Skip authentication for excluded paths
+        if self._should_exclude_path(request.url.path):
+            return await call_next(request)
+
+        # Extract and validate JWT token
+        try:
+            token = self._extract_token(request)
+            if token:
+                claims = self.jwt_service.validate_token(token)
+                if claims:
+                    # Set user context in request state
+                    request.state.user_claims = claims
+                    request.state.user_id = claims.user_id
+                    request.state.scopes = claims.scopes
+
+                    # Update session activity if session_id present
+                    if claims.session_id:
+                        session = self.user_service.get_session(claims.session_id)
+                        if session:
+                            request.state.session = session
+
+                    logger.debug(
+                        "Request authenticated",
+                        user_id=claims.user_id,
+                        scopes=claims.scopes,
+                        path=request.url.path,
+                    )
+                else:
+                    logger.warning(
+                        "Invalid token provided",
+                        path=request.url.path,
+                        client_ip=self._get_client_ip(request),
+                    )
+                    return self._unauthorized_response("Invalid or expired token")
+            else:
+                logger.warning("No authentication token provided", path=request.url.path)
+                return self._unauthorized_response("Authentication required")
+
+        except Exception as e:
+            logger.error("Authentication middleware error", error=str(e), path=request.url.path)
+            return self._unauthorized_response("Authentication error")
+
+        # Process request with authentication context
+        response = await call_next(request)
+
+        # Add security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        return response
+
+    def _should_exclude_path(self, path: str) -> bool:
+        """Check if path should be excluded from authentication"""
+        return any(path.startswith(exclude) for exclude in self.exclude_paths)
+
+    def _extract_token(self, request: Request) -> Optional[str]:
+        """
+        Extract JWT token from request.
+
+        Supports both Authorization header and query parameter.
+        """
+        # Try Authorization header first (standard OAuth 2.0)
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            return auth_header[7:]  # Remove "Bearer " prefix
+
+        # Try query parameter (for WebSocket or special cases)
+        token_param = request.query_params.get("token")
+        if token_param:
+            return token_param
+
+        return None
+
+    def _get_client_ip(self, request: Request) -> str:
+        """Get client IP address from request"""
+        # Check X-Forwarded-For header first (for proxied requests)
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+
+        # Fall back to direct client IP
+        return request.client.host if request.client else "unknown"
+
+    def _unauthorized_response(self, message: str) -> Response:
+        """Create unauthorized response"""
+        from fastapi.responses import JSONResponse
+
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={
+                "error": "authentication_required",
+                "message": message,
+                "type": "authentication_error",
+            },
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+# FastAPI dependency for route-level authentication
+security = HTTPBearer(auto_error=False)
+
+
+def get_current_user(
+    jwt_service: JWTService = Depends(),
+    user_service: UserService = Depends(),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> JWTClaims:
+    """
+    FastAPI dependency to get current authenticated user.
+
+    Usage:
+        @app.get("/protected")
+        async def protected_route(current_user: JWTClaims = Depends(get_current_user)):
+            return {"user_id": current_user.user_id}
+
+    Args:
+        jwt_service: JWT service dependency
+        user_service: User service dependency
+        credentials: HTTP bearer credentials
+
+    Returns:
+        JWT claims for authenticated user
+
+    Raises:
+        HTTPException: If authentication fails
+    """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    claims = jwt_service.validate_token(credentials.credentials)
+    if not claims:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return claims
+
+
+def require_scopes(required_scopes: List[str]):
+    """
+    FastAPI dependency to require specific scopes.
+
+    Usage:
+        @app.get("/admin")
+        async def admin_route(
+            current_user: JWTClaims = Depends(get_current_user),
+            _: None = Depends(require_scopes(["admin", "write"]))
+        ):
+            return {"message": "Admin access granted"}
+
+    Args:
+        required_scopes: List of required scopes
+
+    Returns:
+        Dependency function
+    """
+
+    def scope_checker(current_user: JWTClaims = Depends(get_current_user)):
+        user_scopes = set(current_user.scopes)
+        required_scope_set = set(required_scopes)
+
+        if not required_scope_set.issubset(user_scopes):
+            missing_scopes = required_scope_set - user_scopes
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Insufficient permissions. Missing scopes: {', '.join(missing_scopes)}",
+            )
+
+        return current_user
+
+    return scope_checker
+
+
+class MCPAuthAdapter:
+    """
+    MCP Protocol Authentication Adapter.
+
+    Provides authentication compatibility for MCP (Model Context Protocol)
+    integration with standardized token validation.
+    """
+
+    def __init__(self, jwt_service: JWTService):
+        """Initialize MCP auth adapter"""
+        self.jwt_service = jwt_service
+        logger.info("MCP authentication adapter initialized")
+
+    def validate_mcp_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """
+        Validate token for MCP protocol compatibility.
+
+        Args:
+            token: JWT token to validate
+
+        Returns:
+            MCP-compatible authentication info or None
+        """
+        claims = self.jwt_service.validate_token(token)
+        if not claims or not claims.mcp_compatible:
+            return None
+
+        return {
+            "user_id": claims.user_id,
+            "scopes": claims.scopes,
+            "session_id": claims.session_id,
+            "workspace_id": claims.workspace_id,
+            "valid": True,
+        }
+
+    def create_mcp_context(self, claims: JWTClaims) -> Dict[str, Any]:
+        """
+        Create MCP execution context from JWT claims.
+
+        Args:
+            claims: Validated JWT claims
+
+        Returns:
+            MCP execution context
+        """
+        return {
+            "user": {"id": claims.user_id, "email": claims.user_email, "scopes": claims.scopes},
+            "session": {"id": claims.session_id, "workspace_id": claims.workspace_id},
+            "auth": {
+                "method": "jwt",
+                "token_id": claims.jti,
+                "issued_at": claims.iat,
+                "expires_at": claims.exp,
+            },
+        }

@@ -84,7 +84,15 @@ async def get_user_audit_log(
             {"error": str(e), "session_id": session_id, "endpoint": "get_user_audit_log"},
         )
 
-        raise HTTPException(status_code=500, detail="Failed to retrieve audit log")
+        from services.api.errors import ServiceUnavailableError
+
+        raise ServiceUnavailableError(
+            service="audit log retrieval",
+            details={
+                "session_id": session_id,
+                "help": "Try again in a moment or contact support if this continues",
+            },
+        )
 
 
 @transparency_router.get("/audit-summary/{session_id}")
@@ -147,7 +155,15 @@ async def get_user_audit_summary(session_id: str) -> AuditSummaryResponse:
             {"error": str(e), "session_id": session_id, "endpoint": "get_user_audit_summary"},
         )
 
-        raise HTTPException(status_code=500, detail="Failed to generate audit summary")
+        from services.api.errors import ServiceUnavailableError
+
+        raise ServiceUnavailableError(
+            service="audit summary generation",
+            details={
+                "session_id": session_id,
+                "help": "Your audit data is safe - please try again in a moment",
+            },
+        )
 
 
 @transparency_router.get("/stats")
@@ -184,7 +200,12 @@ async def get_transparency_stats() -> TransparencyStatsResponse:
             "transparency_stats_error", {"error": str(e), "endpoint": "get_transparency_stats"}
         )
 
-        raise HTTPException(status_code=500, detail="Failed to retrieve transparency statistics")
+        from services.api.errors import ServiceUnavailableError
+
+        raise ServiceUnavailableError(
+            service="transparency statistics",
+            details={"help": "Statistics are temporarily unavailable - please try again shortly"},
+        )
 
 
 @transparency_router.get("/health")
@@ -252,4 +273,9 @@ async def trigger_audit_cleanup() -> Dict:
             "transparency_cleanup_error", {"error": str(e), "endpoint": "trigger_audit_cleanup"}
         )
 
-        raise HTTPException(status_code=500, detail="Failed to perform audit cleanup")
+        from services.api.errors import ServiceUnavailableError
+
+        raise ServiceUnavailableError(
+            service="audit cleanup",
+            details={"help": "Cleanup process temporarily unavailable - your data remains secure"},
+        )
