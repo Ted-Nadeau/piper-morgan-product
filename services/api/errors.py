@@ -80,21 +80,79 @@ class DocumentProcessingError(APIError):
         super().__init__(500, "DOCUMENT_PROCESSING_FAILED", details)
 
 
-# --- Centralized Error Messages ---
+# --- Enhanced User Experience Errors ---
+
+
+class FeedbackCaptureError(APIError):
+    def __init__(self, operation: str = "capturing feedback", details: Dict[str, Any] = None):
+        details = details or {}
+        details["operation"] = operation
+        super().__init__(500, "FEEDBACK_CAPTURE_FAILED", details)
+
+
+class ConfigurationError(APIError):
+    def __init__(self, config_item: str = "system settings", details: Dict[str, Any] = None):
+        details = details or {}
+        details["config_item"] = config_item
+        super().__init__(500, "CONFIGURATION_ERROR", details)
+
+
+class ValidationError(APIError):
+    def __init__(self, field: str = "input", details: Dict[str, Any] = None):
+        details = details or {}
+        details["field"] = field
+        super().__init__(422, "VALIDATION_ERROR", details)
+
+
+class AuthenticationRequiredError(APIError):
+    def __init__(self, details: Dict[str, Any] = None):
+        super().__init__(401, "AUTHENTICATION_REQUIRED", details)
+
+
+class PermissionDeniedError(APIError):
+    def __init__(self, resource: str = "this resource", details: Dict[str, Any] = None):
+        details = details or {}
+        details["resource"] = resource
+        super().__init__(403, "PERMISSION_DENIED", details)
+
+
+class ServiceUnavailableError(APIError):
+    def __init__(self, service: str = "the service", details: Dict[str, Any] = None):
+        details = details or {}
+        details["service"] = service
+        super().__init__(503, "SERVICE_UNAVAILABLE", details)
+
+
+class RateLimitError(APIError):
+    def __init__(self, retry_after: int = 60, details: Dict[str, Any] = None):
+        details = details or {}
+        details["retry_after"] = retry_after
+        super().__init__(429, "RATE_LIMIT_EXCEEDED", details)
+
+
+# --- Enhanced User-Friendly Error Messages ---
 
 ERROR_MESSAGES = {
-    # Intent errors
-    "INTENT_CLASSIFICATION_FAILED": "I couldn't understand that request. Could you rephrase it?",
-    "LOW_CONFIDENCE_INTENT": "I'm not so sure what you're asking for. Did you mean to '{suggestions}'?",
-    # Workflow errors
-    "WORKFLOW_TIMEOUT": "This is taking longer than expected. I'll keep working on it and notify you when done.",
-    "TASK_FAILED": "I encountered an issue with {task_description}. As a suggestion, {recovery_suggestion}.",
-    "CONTEXT_VALIDATION_FAILED": "{user_message}",
-    # Integration errors
-    "GITHUB_RATE_LIMIT": "GitHub is limiting our requests. Please try again in {retry_after} minutes.",
-    "GITHUB_AUTH_FAILED": "I couldn't authenticate with GitHub. Please check your access token.",
-    "SLACK_AUTH_FAILED": "I couldn't authenticate with Slack. Please check your access token.",
-    # Knowledge base errors
-    "NO_RELEVANT_KNOWLEDGE": "I don't have enough context about that. Could you provide more details?",
-    "DOCUMENT_PROCESSING_FAILED": "I couldn't process that document. Please check the file format and try again.",
+    # Intent errors with contextual help
+    "INTENT_CLASSIFICATION_FAILED": "I couldn't understand that request. Try using natural language like 'Show me that issue' or 'Update my tasks'. Need help? Check our conversation guide at /docs/user-guides/getting-started-conversational-ai.md",
+    "LOW_CONFIDENCE_INTENT": "I'm not sure what you're asking for. Did you mean to '{suggestions}'? For more examples, see our reference guide at /docs/user-guides/understanding-anaphoric-references.md",
+    # Workflow errors with recovery guidance
+    "WORKFLOW_TIMEOUT": "This task is taking longer than expected. I'll continue working on it in the background and notify you when complete. You can check status or try a simpler request in the meantime.",
+    "TASK_FAILED": "I encountered an issue while {task_description}. {recovery_suggestion}. If this persists, try breaking your request into smaller steps.",
+    "CONTEXT_VALIDATION_FAILED": "{user_message}. For help with context and references, see /docs/user-guides/conversation-memory-guide.md",
+    # Integration errors with troubleshooting
+    "GITHUB_RATE_LIMIT": "GitHub is temporarily limiting our requests. Please wait {retry_after} minutes before trying again. This helps ensure stable service for all users.",
+    "GITHUB_AUTH_FAILED": "I couldn't connect to GitHub. Please verify your access token in settings or check if it has the required permissions. Need help? See our GitHub integration guide.",
+    "SLACK_AUTH_FAILED": "I couldn't connect to Slack. Please check your bot token and app permissions. Ensure the Slack app is properly installed in your workspace.",
+    # Knowledge base errors with guidance
+    "NO_RELEVANT_KNOWLEDGE": "I don't have enough context about that topic. Try providing more details or uploading relevant documents. You can also reference specific files or projects for better context.",
+    "DOCUMENT_PROCESSING_FAILED": "I couldn't process that document. Please check the file format (supported: PDF, TXT, MD, DOCX) and try again. Large files may take a moment to process.",
+    # New user-friendly error categories
+    "FEEDBACK_CAPTURE_FAILED": "I couldn't save your feedback right now. Your input is valuable - please try again in a moment or contact support if this continues.",
+    "CONFIGURATION_ERROR": "There's an issue with the system configuration. Please check your settings or contact your administrator for assistance.",
+    "VALIDATION_ERROR": "Please check the information you provided. {field} is required and must be in the correct format.",
+    "AUTHENTICATION_REQUIRED": "You need to sign in to access this feature. Please check your authentication status and try again.",
+    "PERMISSION_DENIED": "You don't have permission to access this resource right now. Please check with your administrator if you need help with permissions.",
+    "SERVICE_UNAVAILABLE": "This service is temporarily unavailable. Please try again in a few minutes. If the problem persists, check our status page.",
+    "RATE_LIMIT_EXCEEDED": "You've made too many requests recently. Please wait a moment before trying again. This helps maintain stable performance for everyone.",
 }

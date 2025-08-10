@@ -167,6 +167,11 @@ from services.api.transparency import transparency_router
 
 app.include_router(transparency_router)
 
+# Include feedback router (PM-005: Feedback tracking)
+from services.api.feedback_api import feedback_router
+
+app.include_router(feedback_router)
+
 
 @app.get("/")
 async def root():
