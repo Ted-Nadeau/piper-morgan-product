@@ -36,7 +36,7 @@
 
 **Location**: `services/mcp/consumer/auth_integration.py`
 **Integrates With**:
-- JWT Service (ADR-011)
+- JWT Service (ADR-012)
 - MCP Protocol Authentication
 - User Context Management
 
