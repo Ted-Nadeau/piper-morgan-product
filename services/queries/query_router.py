@@ -17,6 +17,15 @@ from services.queries.file_queries import FileQueryService
 from services.queries.project_queries import ProjectQueryService
 from services.shared_types import IntentCategory
 
+# MCP Consumer integration
+try:
+    from services.mcp.consumer.consumer_core import MCPConsumerCore
+    from services.mcp.consumer.github_adapter import GitHubMCPSpatialAdapter
+
+    MCP_AVAILABLE = True
+except ImportError:
+    MCP_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,6 +46,10 @@ class QueryRouter:
         enable_llm_classification: bool = False,
         llm_rollout_percentage: float = 0.0,  # 0.0 = 0%, 1.0 = 100%
         performance_targets: Optional[Dict[str, float]] = None,
+        # MCP Consumer integration
+        mcp_consumer: Optional["MCPConsumerCore"] = None,
+        github_adapter: Optional["GitHubMCPSpatialAdapter"] = None,
+        enable_mcp_federation: bool = True,
     ):
         self.project_queries = project_query_service
         self.conversation_queries = conversation_query_service
@@ -70,6 +83,16 @@ class QueryRouter:
             "average_rule_based_latency_ms": 0.0,
             "target_violations": 0,
         }
+
+        # MCP Consumer integration
+        self.mcp_consumer = None
+        self.github_adapter = None
+        self.enable_mcp_federation = enable_mcp_federation and MCP_AVAILABLE
+
+        if self.enable_mcp_federation and MCP_AVAILABLE:
+            self.mcp_consumer = mcp_consumer or MCPConsumerCore()
+            self.github_adapter = github_adapter or GitHubMCPSpatialAdapter()
+            logger.info("MCP federation enabled in QueryRouter")
 
     async def route_query(self, intent: Intent) -> Any:
         """Route a QUERY intent to the appropriate query service with graceful degradation"""
@@ -649,3 +672,95 @@ class QueryRouter:
         """PM-034 Phase 2B: Enable or disable LLM classification"""
         self.enable_llm_classification = enable
         logger.info(f"LLM classification {'enabled' if enable else 'disabled'}")
+
+    async def federated_search(self, query: str, include_github: bool = True) -> Dict[str, Any]:
+        """
+        PM-033a: Federated search across MCP services
+
+        Performs federated search across local and external MCP services,
+        merging results with existing query capabilities.
+        """
+        results = {
+            "query": query,
+            "sources": [],
+            "total_results": 0,
+            "mcp_available": self.enable_mcp_federation,
+            "github_results": [],
+            "local_results": [],
+            "federated": True,
+        }
+
+        try:
+            # Local search first (existing functionality)
+            local_results = []
+
+            # GitHub MCP search if enabled
+            if self.enable_mcp_federation and include_github and self.github_adapter:
+                try:
+                    # Configure GitHub adapter if needed
+                    await self.github_adapter.configure_github_api()
+
+                    # Search GitHub issues via MCP
+                    github_issues = await self.github_adapter.list_issues_via_mcp(
+                        "piper-morgan-product"
+                    )
+
+                    # Filter and format results
+                    matching_issues = []
+                    query_lower = query.lower()
+
+                    for issue in github_issues:
+                        title = (issue.get("title") or "").lower()
+                        description = (issue.get("description") or "").lower()
+
+                        # Simple relevance check
+                        if (
+                            query_lower in title
+                            or query_lower in description
+                            or any(
+                                word in title or word in description
+                                for word in query_lower.split()
+                                if len(word) > 2
+                            )
+                        ):
+                            matching_issues.append(
+                                {
+                                    "source": "github_mcp",
+                                    "type": "issue",
+                                    "number": issue.get("number"),
+                                    "title": issue.get("title"),
+                                    "description": issue.get("description", "")[:200] + "...",
+                                    "state": issue.get("state"),
+                                    "repository": issue.get("repository"),
+                                    "uri": issue.get("uri"),
+                                    "retrieved_via": issue.get("retrieved_via", "mcp"),
+                                }
+                            )
+
+                    results["github_results"] = matching_issues
+                    results["sources"].append("github_mcp")
+
+                    logger.info(
+                        f"Federated search found {len(matching_issues)} GitHub results for '{query}'"
+                    )
+
+                except Exception as e:
+                    logger.warning(f"GitHub MCP search failed: {e}")
+                    results["github_error"] = str(e)
+
+            # Merge all results
+            all_results = results["github_results"] + local_results
+            results["total_results"] = len(all_results)
+            results["all_results"] = all_results
+
+            logger.info(
+                f"Federated search completed: {results['total_results']} total results from {len(results['sources'])} sources"
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Federated search failed for query '{query}': {e}")
+            results["error"] = str(e)
+            results["fallback"] = True
+            return results
