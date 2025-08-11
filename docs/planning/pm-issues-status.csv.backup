@@ -22,10 +22,6 @@ PM-029,58,Analytics Dashboard Integration,OPEN
 PM-030,59,Advanced Knowledge Graph Implementation,OPEN
 PM-032,43,Unified Response Rendering & DDD/TDD Web UI Refactor,CLOSED
 PM-033,60,MCP Integration Pilot,OPEN
-PM-033a,94,MCP Consumer Foundation - GitHub Integration,COMPLETED
-PM-033b,91,Tool Federation - External Development Tool Integration,OPEN
-PM-033c,92,Bridge Existing Agents - Slack Services MCP Conversion,OPEN
-PM-033d,93,MCP Server Mode - Transform Piper to Ecosystem Hub,OPEN
 PM-034,61,LLM-Based Intent Classification,CLOSED
 PM-034.1,80,LLM-Based Intent Classification with Knowledge Graph Context,CLOSED
 PM-036,62,Engineering Infrastructure Monitoring,CLOSED
@@ -68,17 +64,3 @@ PM-081,71,To-Do Lists based on Lists and To-Dos as Core Domain Objects,CLOSED
 PM-087,78,Values & Principles Architecture - Ethics-First Foundation,CLOSED
 PM-088,86,Phase 2: User Guide Implementation - Complete Conversational AI Documentation,CLOSED
 PM-089,88,Error Message Enhancement - User Experience Transformation,CLOSED
-UX-001,95,Standup Experience Excellence Epic,OPEN
-UX-001.1,96,Add Conversational Intent Categories,OPEN
-UX-001.2,97,Quick Context Loading via System Prompt,OPEN
-UX-001.3,98,Document Ingestion for Context,OPEN
-UX-001.4,99,Connect Knowledge Graph to Conversation,OPEN
-UX-001.5,100,Project Portfolio Awareness,OPEN
-UX-001.6,101,Temporal Context System,OPEN
-UX-001.7,102,Calendar Scanning on Greeting,OPEN
-UX-001.8,103,Priority Calculation Engine,OPEN
-UX-001.9,104,Time Allocation Analysis,OPEN
-UX-001.10,105,Response Personality Enhancement,OPEN
-UX-001.11,106,Strategic Recommendations,OPEN
-UX-001.12,107,Learning Integration,OPEN
-

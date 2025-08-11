@@ -95,9 +95,17 @@ class QueryRouter:
             logger.info("MCP federation enabled in QueryRouter")
 
     async def route_query(self, intent: Intent) -> Any:
-        """Route a QUERY intent to the appropriate query service with graceful degradation"""
-        if intent.category != IntentCategory.QUERY:
-            raise ValueError(f"QueryRouter can only handle QUERY intents, got {intent.category}")
+        """Route an intent to the appropriate query service with graceful degradation"""
+        # Support all intent categories for canonical queries (UX Quick Win - Phase 3)
+        if intent.category not in [
+            IntentCategory.QUERY,
+            IntentCategory.IDENTITY,
+            IntentCategory.TEMPORAL,
+            IntentCategory.STATUS,
+            IntentCategory.PRIORITY,
+            IntentCategory.GUIDANCE,
+        ]:
+            raise ValueError(f"QueryRouter cannot handle intent category: {intent.category}")
 
         # PM-063: Comprehensive degradation handling
         try:
@@ -303,8 +311,120 @@ class QueryRouter:
         """
         message_lower = message.lower().strip()
 
+        # Canonical Query Patterns (UX Quick Win - Phase 3)
+        # Identity queries
+        if any(
+            phrase in message_lower
+            for phrase in [
+                "what's your name",
+                "what is your name",
+                "who are you",
+                "your name",
+                "your role",
+            ]
+        ):
+            return Intent(
+                category=IntentCategory.IDENTITY,
+                action="get_identity",
+                confidence=0.95,
+                original_message=message,
+                context={
+                    "rule_based": True,
+                    "canonical_query": "identity",
+                    "session_id": session_id,
+                },
+            )
+
+        # Temporal queries
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                "what day is it",
+                "what time is it",
+                "current date",
+                "current time",
+                "today's date",
+            ]
+        ):
+            return Intent(
+                category=IntentCategory.TEMPORAL,
+                action="get_temporal_context",
+                confidence=0.95,
+                original_message=message,
+                context={
+                    "rule_based": True,
+                    "canonical_query": "temporal",
+                    "session_id": session_id,
+                },
+            )
+
+        # Status queries
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                "what am i working on",
+                "what am i doing",
+                "current work",
+                "my work",
+                "work status",
+            ]
+        ):
+            return Intent(
+                category=IntentCategory.STATUS,
+                action="get_project_status",
+                confidence=0.95,
+                original_message=message,
+                context={"rule_based": True, "canonical_query": "status", "session_id": session_id},
+            )
+
+        # Priority queries
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                "what's my top priority",
+                "what is my priority",
+                "my priority",
+                "top priority",
+                "highest priority",
+            ]
+        ):
+            return Intent(
+                category=IntentCategory.PRIORITY,
+                action="get_priorities",
+                confidence=0.95,
+                original_message=message,
+                context={
+                    "rule_based": True,
+                    "canonical_query": "priority",
+                    "session_id": session_id,
+                },
+            )
+
+        # Guidance queries
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                "what should i focus on",
+                "what should i do",
+                "focus today",
+                "guidance",
+                "recommendation",
+            ]
+        ):
+            return Intent(
+                category=IntentCategory.GUIDANCE,
+                action="get_guidance",
+                confidence=0.95,
+                original_message=message,
+                context={
+                    "rule_based": True,
+                    "canonical_query": "guidance",
+                    "session_id": session_id,
+                },
+            )
+
         # Project-related queries
-        if any(word in message_lower for word in ["list", "show", "get", "find"]) and any(
+        elif any(word in message_lower for word in ["list", "show", "get", "find"]) and any(
             word in message_lower for word in ["project", "projects"]
         ):
             if "list" in message_lower or "show" in message_lower:
@@ -482,6 +602,39 @@ class QueryRouter:
                 return await self.degradation_handler.handle_database_failure(intent.action)
             return await self._execute_with_circuit_breaker(
                 self.conversation_queries.get_initial_contact, "conversation_queries", intent.action
+            )
+        # Canonical Query Actions (UX Quick Win - Phase 3)
+        elif intent.action == "get_identity":
+            if self.test_mode:
+                return await self.degradation_handler.handle_database_failure(intent.action)
+            return await self._execute_with_circuit_breaker(
+                self.conversation_queries.get_identity, "conversation_queries", intent.action
+            )
+        elif intent.action == "get_temporal_context":
+            if self.test_mode:
+                return await self.degradation_handler.handle_database_failure(intent.action)
+            return await self._execute_with_circuit_breaker(
+                self.conversation_queries.get_temporal_context,
+                "conversation_queries",
+                intent.action,
+            )
+        elif intent.action == "get_project_status":
+            if self.test_mode:
+                return await self.degradation_handler.handle_database_failure(intent.action)
+            return await self._execute_with_circuit_breaker(
+                self.conversation_queries.get_project_status, "conversation_queries", intent.action
+            )
+        elif intent.action == "get_priorities":
+            if self.test_mode:
+                return await self.degradation_handler.handle_database_failure(intent.action)
+            return await self._execute_with_circuit_breaker(
+                self.conversation_queries.get_priorities, "conversation_queries", intent.action
+            )
+        elif intent.action == "get_guidance":
+            if self.test_mode:
+                return await self.degradation_handler.handle_database_failure(intent.action)
+            return await self._execute_with_circuit_breaker(
+                self.conversation_queries.get_guidance, "conversation_queries", intent.action
             )
         elif intent.action == "read_file_contents":
             file_id = intent.context.get("resolved_file_id")

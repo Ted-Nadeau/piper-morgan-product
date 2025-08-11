@@ -379,7 +379,7 @@ Currently, work is being done on the `main` branch. Feature branches will be use
 
 - [Architecture Overview](docs/architecture/architecture.md)
 - [Domain Model](docs/architecture/data-model.md)
-- [API Documentation](docs/api/api-reference.md)
+- [API Documentation](docs/architecture/api-reference.md)
 
 ### Architecture Decision Records (ADRs)
 
