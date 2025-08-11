@@ -548,7 +548,7 @@ Piper: "Here are the details for GitHub issue #85"
 ### Advanced Learning
 
 1. **Read "Understanding Anaphoric References"**: Deep dive into reference resolution
-2. **Explore "Conversation Memory and Context"**: Learn about context window management
+112. **Explore "Conversation Memory and Context"**: Learn about context window management
 3. **Review "Upgrading from Command Mode"**: Complete migration guide
 4. **Practice with Real Examples**: Test conversation scenarios
 

@@ -125,14 +125,14 @@ class BoundaryEnforcer:
             "day_of_week": datetime.utcnow().weekday(),
         }
 
+        # Perform enhanced boundary checks with adaptive patterns
+        violation_detected = False
+        boundary_type = None
+
         # Phase 3: Get adaptive learning enhancement
         adaptive_enhancement = await adaptive_boundaries.get_adaptive_patterns(
             boundary_type or "none"
         )
-
-        # Perform enhanced boundary checks with adaptive patterns
-        violation_detected = False
-        boundary_type = None
         explanation = ""
         confidence = 0.0
 
