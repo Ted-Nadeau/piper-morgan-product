@@ -40,6 +40,60 @@ class PreClassifier:
         r"\bmuch appreciated\b",
     ]
 
+    # Canonical query patterns for enhanced standup experience
+    IDENTITY_PATTERNS = [
+        r"\bwhat'?s your name\b",
+        r"\bwho are you\b",
+        r"\byour role\b",
+        r"\bwhat do you do\b",
+        r"\btell me about yourself\b",
+        r"\bintroduce yourself\b",
+        r"\bwhat are your capabilities\b",
+    ]
+
+    TEMPORAL_PATTERNS = [
+        r"\bwhat day is it\b",
+        r"\bwhat'?s the date\b",
+        r"\bwhat time is it\b",
+        r"\bcurrent date\b",
+        r"\btoday'?s date\b",
+        r"\bwhat'?s today\b",
+        r"\bdate and time\b",
+    ]
+
+    STATUS_PATTERNS = [
+        r"\bwhat am i working on\b",
+        r"\bwhat'?s my current project\b",
+        r"\bmy projects\b",
+        r"\bcurrent work\b",
+        r"\bwhat'?s on my plate\b",
+        r"\bmy portfolio\b",
+        r"\bwhat'?s my status\b",
+        r"\bproject status\b",
+    ]
+
+    PRIORITY_PATTERNS = [
+        r"\bwhat'?s my top priority\b",
+        r"\bhighest priority\b",
+        r"\bmost important task\b",
+        r"\bwhat should i do first\b",
+        r"\bmy priorities\b",
+        r"\btop priority\b",
+        r"\bpriority one\b",
+    ]
+
+    GUIDANCE_PATTERNS = [
+        r"\bwhat should i focus on\b",
+        r"\bwhere should i focus\b",
+        r"\bwhat'?s next\b",
+        r"\bguidance\b",
+        r"\brecommendation\b",
+        r"\badvice\b",
+        r"\bwhat now\b",
+        r"\bnext steps\b",
+        r"\bshould i focus\b",
+    ]
+
     # File reference patterns (with variations and typo tolerance)
     FILE_REFERENCE_PATTERNS = [
         # Direct references
@@ -126,6 +180,47 @@ class PreClassifier:
             return Intent(
                 category=IntentCategory.CONVERSATION,
                 action="thanks",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Check for canonical queries
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.IDENTITY_PATTERNS):
+            return Intent(
+                category=IntentCategory.IDENTITY,
+                action="get_identity",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.TEMPORAL_PATTERNS):
+            return Intent(
+                category=IntentCategory.TEMPORAL,
+                action="get_current_time",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.STATUS_PATTERNS):
+            return Intent(
+                category=IntentCategory.STATUS,
+                action="get_project_status",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.PRIORITY_PATTERNS):
+            return Intent(
+                category=IntentCategory.PRIORITY,
+                action="get_top_priority",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.GUIDANCE_PATTERNS):
+            return Intent(
+                category=IntentCategory.GUIDANCE,
+                action="get_contextual_guidance",
                 confidence=1.0,
                 context={"original_message": message},
             )

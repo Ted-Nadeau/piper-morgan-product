@@ -284,6 +284,14 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
             result = await conversation_handler.respond(intent, session_id)
             return IntentResponse(**result)
 
+        # Handle canonical queries with PIPER.md context
+        from services.intent_service.canonical_handlers import get_canonical_handlers
+        canonical_handlers = get_canonical_handlers()
+        
+        if canonical_handlers.can_handle(intent):
+            result = await canonical_handlers.handle(intent, session_id)
+            return IntentResponse(**result)
+
         # Add this debug line
         print(
             f"DEBUG: Intent classified as - Category: {intent.category}, Action: {intent.action}, Confidence: {intent.confidence}"
