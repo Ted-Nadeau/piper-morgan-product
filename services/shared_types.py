@@ -17,7 +17,7 @@ class IntentCategory(Enum):
     IDENTITY = "identity"  # For identity queries - "What's your name and role?"
     TEMPORAL = "temporal"  # For temporal queries - "What day is it?"
     STATUS = "status"  # For status queries - "What am I working on?"
-    PRIORITY = "priority"  # For priority queries - "What's my top priority?" 
+    PRIORITY = "priority"  # For priority queries - "What's my top priority?"
     GUIDANCE = "guidance"  # For guidance queries - "What should I focus on?"
     UNKNOWN = "unknown"  # For unclear or ambiguous requests
 

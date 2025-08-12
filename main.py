@@ -286,8 +286,9 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
 
         # Handle canonical queries with PIPER.md context
         from services.intent_service.canonical_handlers import get_canonical_handlers
+
         canonical_handlers = get_canonical_handlers()
-        
+
         if canonical_handlers.can_handle(intent):
             result = await canonical_handlers.handle(intent, session_id)
             return IntentResponse(**result)
