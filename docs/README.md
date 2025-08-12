@@ -8,6 +8,29 @@ An intelligent product management assistant that evolves from automating routine
 
 Piper Morgan aims to be more than a task automation tool. It's designed to grow from a helpful PM intern into a strategic thinking partner, handling everything from creating tickets to analyzing market trends and suggesting product strategies.
 
+## 🎯 Key Features
+
+### MCP Consumer Integration (PM-033a)
+Piper now integrates with external services through the Model Context Protocol (MCP), enabling:
+- **GitHub Integration**: Retrieve and manage 84+ issues via MCP protocol
+- **Federated Search**: Query across multiple services with <150ms latency
+- **Circuit Breaker Protection**: Graceful degradation when services unavailable
+- **Connection Pooling**: 642x performance improvement for external calls
+
+### PIPER.md Configuration System
+Personalized context configuration for enhanced user experience:
+- **User Context**: Define your role, projects, and priorities
+- **Calendar Patterns**: Specify your work schedule and meeting patterns
+- **Standing Priorities**: Set recurring tasks and focus areas
+- **Hot Reload**: Configuration updates without restart
+
+### Conversational Memory (PM-034)
+Advanced conversation context management:
+- **10-Turn Context Window**: Maintains conversation history
+- **Anaphoric Reference Resolution**: >90% accuracy resolving "that issue", "the document"
+- **Redis Caching**: 5-minute TTL with circuit breaker protection
+- **<150ms Additional Latency**: Minimal performance impact
+
 ## 🌟 Why Conversational AI Changes Everything
 
 | Traditional PM Tools                     | 🎉 **Piper Morgan with Conversational AI**  |
@@ -102,20 +125,20 @@ Piper: "Authentication progress comparison:
 
 **New to conversational AI?** Start with our complete user guide ecosystem:
 
-- **[📚 Complete User Guide Collection](docs/user-guides/README.md)** - Master index of all user documentation
-- **[🚀 Getting Started Guide](docs/user-guides/getting-started-conversational-ai.md)** - Transform from command mode to natural conversation
-- **[🎯 Understanding Anaphoric References](docs/user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document", "my task" patterns
-- **[🧠 Conversation Memory Guide](docs/user-guides/conversation-memory-guide.md)** - How Piper maintains context across 10+ interactions
-- **[🔄 Upgrading from Command Mode](docs/user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
-- **[📖 Real Conversation Examples](docs/user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
+- **[📚 Complete User Guide Collection](user-guides/README.md)** - Master index of all user documentation
+- **[🚀 Getting Started Guide](user-guides/getting-started-conversational-ai.md)** - Transform from command mode to natural conversation
+- **[🎯 Understanding Anaphoric References](user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document", "my task" patterns
+- **[🧠 Conversation Memory Guide](user-guides/conversation-memory-guide.md)** - How Piper maintains context across 10+ interactions
+- **[🔄 Upgrading from Command Mode](user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
+- **[📖 Real Conversation Examples](user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
 
 ### 💻 For Developers & Integrators
 
 **Implementing conversational AI?** Complete technical resources:
 
-- **[Conversation API Documentation](docs/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference with examples
-- **[Developer Integration Quick Start](docs/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
-- **[Implementation Guide](docs/development/PM-034-implementation-guide.md)** - Architecture patterns and best practices
+- **[Conversation API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference with examples
+- **[Developer Integration Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
+- **[Implementation Guide](development/PM-034-implementation-guide.md)** - Architecture patterns and best practices
 
 ### 🎯 Adoption Path
 
@@ -123,10 +146,10 @@ Piper: "Authentication progress comparison:
 
 | I want to...              | Start here                                                                         | Then                                                                              | Finally                  |
 | ------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------ |
-| **Try it out**            | [Getting Started Guide](docs/user-guides/getting-started-conversational-ai.md)     | [Real Examples](docs/user-guides/conversation-scenario-examples.md)               | Use Piper!               |
-| **Understand the magic**  | [Understanding References](docs/user-guides/understanding-anaphoric-references.md) | [Memory Guide](docs/user-guides/conversation-memory-guide.md)                     | Advanced features        |
-| **Upgrade from commands** | [Upgrading Guide](docs/user-guides/upgrading-from-command-mode.md)                 | [Getting Started](docs/user-guides/getting-started-conversational-ai.md)          | Conversational workflows |
-| **Build with APIs**       | [API Documentation](docs/development/PM-034-conversation-api-documentation.md)     | [Integration Guide](docs/development/PM-034-developer-integration-quick-start.md) | Production               |
+| **Try it out**            | [Getting Started Guide](user-guides/getting-started-conversational-ai.md)     | [Real Examples](user-guides/conversation-scenario-examples.md)               | Use Piper!               |
+| **Understand the magic**  | [Understanding References](user-guides/understanding-anaphoric-references.md) | [Memory Guide](user-guides/conversation-memory-guide.md)                     | Advanced features        |
+| **Upgrade from commands** | [Upgrading Guide](user-guides/upgrading-from-command-mode.md)                 | [Getting Started](user-guides/getting-started-conversational-ai.md)          | Conversational workflows |
+| **Build with APIs**       | [API Documentation](development/PM-034-conversation-api-documentation.md)     | [Integration Guide](development/PM-034-developer-integration-quick-start.md) | Production               |
 
 **Performance Promise**: <150ms response time, >90% reference accuracy, 10-turn context window.
 
@@ -161,7 +184,7 @@ This platform is built on a microservices architecture with the following core p
 
 ### Prerequisites
 
-- **Python 3.11+** (required)
+- **Python 3.11** (required - exactly 3.11, not 3.12+)
   - Docker with Python 3.11 base images
   - Git
 - Docker & Docker Compose
@@ -172,18 +195,18 @@ This platform is built on a microservices architecture with the following core p
 ### Local Development Setup
 
 ```bash
-# Verify Python version (must be 3.11+)
+# Verify Python version (must be 3.11 exactly)
 python --version  # Should show Python 3.11.x
 
 # Clone the repository
-git clone https://github.com/yourusername/piper-morgan-platform.git
-cd piper-morgan-platform
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
 
 # Verify .python-version file
 cat .python-version  # Should show 3.11
 
 # Set up Python virtual environment with Python 3.11
-python -m venv venv
+python3.11 -m venv venv  # Explicitly use Python 3.11
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Verify Python version in virtual environment
@@ -192,8 +215,8 @@ python --version  # Should show Python 3.11.x
 # Install dependencies
 pip install -r requirements.txt
 
-# Verify asyncio.timeout availability (key PM-055 feature)
-python -c "import asyncio; asyncio.timeout(1.0); print('✅ Python 3.11 ready')"
+# Verify asyncio.timeout availability (requires Python 3.11)
+python -c "import asyncio; asyncio.timeout(1.0); print('✅ Python 3.11 verified')"
 
 # Copy environment template
 cp .env.example .env
@@ -254,7 +277,7 @@ For testing PM-038 MCP integration and production readiness:
 - Circuit breaker pattern for fault tolerance
 - Real-time monitoring and alerting
 
-See [Staging Deployment Guide](docs/operations/staging-deployment-guide.md) for complete details.
+See [Staging Deployment Guide](operations/staging-deployment-guide.md) for complete details.
 
 ## 🧑‍💻 Testing
 
@@ -270,34 +293,44 @@ PYTHONPATH=. pytest tests/test_api_query_integration.py
 
 ## Test Suite Health
 
-### Known Issues
+### Current Status (August 2025)
 
-As of July 16, 2025, the test suite shows ~85% pass rate when run with `pytest tests/`, but this is misleading due to test isolation issues.
+The test suite has been significantly improved with systematic testing discipline and verification-first methodology.
 
-**True System Health**: ~98% when tests are run individually
+**Test Coverage**: Comprehensive unit, integration, and validation tests across all core services
 
-### Using the Health Check Tool
+### Running Tests Effectively
 
 ```bash
-python scripts/test-health-check.py
+# Run all tests with proper environment
+PYTHONPATH=. python -m pytest tests/ -v
+
+# Run specific test categories
+PYTHONPATH=. python -m pytest tests/unit/ -v
+PYTHONPATH=. python -m pytest tests/integration/ -v
+
+# Run with coverage reporting
+PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
+
+# Fast failure mode for development
+PYTHONPATH=. python -m pytest tests/ -x -v
+
+# Ultra-fast continuous testing
+PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
 ```
 
-This tool distinguishes between:
+### Testing Best Practices
 
-- Real failures (business logic issues)
-- Isolation failures (pass individually, fail in suite)
+- **Always use PYTHONPATH**: Required for proper module resolution
+- **Verification-First**: Always verify existing patterns before writing new tests
+- **Reality Testing**: Avoid over-mocking critical paths
+- **Test Isolation**: Each test should be independent and deterministic
 
-#### Common Patterns
+### Health Monitoring Tools
 
-- **Async Event Loop Warnings**: Cosmetic issues from pytest-asyncio + asyncpg
-- **Test Isolation**: Database state pollution between tests
-- **Business Logic Evolution**: Tests may fail when Piper's behavior improves
-
-#### Running Tests Effectively
-
-- For accurate results: `pytest tests/specific_test.py -v`
-- For isolation: `pytest --forked` (requires pytest-forked)
-- Use health check tool to identify real issues
+- **TLDR Runner**: Ultra-fast test feedback during development
+- **Pattern Sweep**: Automated pattern discovery and validation
+- **Integration Health Monitor**: Real-time component health tracking
 
 ## Pre-commit Hook Strategy
 
@@ -322,46 +355,65 @@ SKIP=end-of-file-fixer,trailing-whitespace git commit -m "Add background task an
 
 ```
 piper-morgan-product/
-├── services/                 # Microservices
-│   ├── domain/              # Core domain models and logic
-│   ├── intent_service/      # Intent recognition
-│   ├── orchestration/       # Workflow planning and execution
-│   ├── intelligence/        # AI-powered analysis
+├── services/                 # Core application services
+│   ├── domain/              # Domain models and business logic
+│   ├── api/                 # API endpoints and middleware
+│   ├── auth/                # Authentication services
+│   ├── cache/               # Redis caching layer
+│   ├── configuration/       # Configuration management (PIPER.md)
+│   ├── conversation/        # Conversational AI & memory
+│   ├── database/            # Database models and repositories
+│   ├── ethics/              # Ethics boundary enforcement
+│   ├── intent_service/      # Intent classification
+│   ├── integrations/        # External system integrations
+│   │   ├── github/          # GitHub API integration
+│   │   └── slack/           # Slack spatial integration
 │   ├── knowledge_graph/     # Knowledge management
-│   └── integrations/        # External system plugins
-│       ├── github/
-│       ├── jira/
-│       └── slack/
-├── infrastructure/          # Deployment and configuration
-│   ├── docker/             # Dockerfiles
-│   ├── k8s/                # Kubernetes manifests
-├── shared/                 # Shared libraries
-│   ├── contracts/          # Service contracts/interfaces
-│   ├── utils/              # Common utilities
-│   └── events/             # Event definitions
-├── docs/                   # Documentation
-│   ├── architecture/       # Architecture decisions
-│   ├── api/                # API documentation
-│   └── poc-reference/      # Lessons from POC
-├── scripts/                # Development and deployment scripts
-├── tests/                  # Test suite
-└── web/                    # Web application (UI)
+│   ├── mcp/                 # MCP consumer & protocols
+│   ├── orchestration/       # Workflow orchestration
+│   ├── queries/             # Query routing & degradation
+│   └── repositories/        # Data access patterns
+├── alembic/                 # Database migrations
+├── config/                  # Configuration files
+│   ├── PIPER.md            # User context configuration
+│   └── feature_flags/      # Feature flag configurations
+├── docs/                    # Documentation
+│   ├── architecture/        # Architecture & ADRs
+│   ├── development/         # Development guides
+│   ├── operations/          # Operations guides
+│   ├── patterns/            # Pattern index & catalog
+│   ├── planning/            # Roadmap & backlog
+│   └── user-guides/         # User documentation
+├── scripts/                 # Development & deployment scripts
+├── tests/                   # Test suite
+│   ├── unit/               # Unit tests
+│   ├── integration/        # Integration tests
+│   └── validation/         # Validation tests
+└── web/                     # Web UI application
 ```
 
 ## 📊 Current Status
 
+### Recently Completed (August 2025)
+- [x] **PM-033a MCP Consumer**: Working MCP integration retrieving 84+ GitHub issues
+- [x] **PIPER.md Configuration System**: Personalized context for enhanced standup experience
+- [x] **Conversational AI Memory**: 10-turn context window with <150ms latency
+- [x] **PM-034 Anaphoric References**: >90% accuracy resolving "that issue", "the document"
+- [x] **PM-063 QueryRouter Degradation**: Comprehensive graceful degradation implementation
+
+### Core Platform
 - [x] Domain-driven backend and query API robust and fully tested (PM-009 complete)
 - [x] **PM-038 MCP Integration**: 642x performance improvement with connection pooling
-- [x] **PM-063 QueryRouter Degradation**: Comprehensive graceful degradation implementation (method level complete)
 - [x] **Production-Grade Staging**: Docker Compose with monitoring and rollback
 - [x] Architecture design and domain model definition
 - [x] Core infrastructure setup (Postgres, Redis, ChromaDB)
-- [x] Basic service scaffolding and orchestration engine
-- [x] Query intent pipeline with RESTful error handling and contract-driven tests
+- [x] Query intent pipeline with RESTful error handling
 - [x] Comprehensive health monitoring with Prometheus + Grafana
-- [ ] **PM-063 Production Deployment**: Critical integration fix needed (missing return statement)
-- [ ] CI/CD pipeline (in progress)
-- [ ] Web UI and advanced integrations (upcoming)
+
+### In Progress
+- [ ] CI/CD pipeline implementation
+- [ ] Advanced Web UI features
+- [ ] Additional MCP service integrations
 
 ## 🤝 Contributing
 
@@ -377,17 +429,37 @@ Currently, work is being done on the `main` branch. Feature branches will be use
 
 ### Core Documentation
 
-- [Architecture Overview](docs/architecture/architecture.md)
-- [Domain Model](docs/architecture/data-model.md)
-- [API Documentation](docs/architecture/api-reference.md)
+- [Architecture Overview](architecture/architecture.md)
+- [Domain Model](architecture/data-model.md)
+- [API Documentation](architecture/api-reference.md)
+- **[📋 Pattern Index](patterns/PATTERN-INDEX.md)** - Comprehensive catalog of 25+ proven architectural and implementation patterns
 
 ### Architecture Decision Records (ADRs)
 
-- [ADR-007: Staging Environment Architecture](docs/architecture/adr/adr-007-staging-environment-architecture.md)
-- [ADR-008: MCP Connection Pooling Strategy](docs/architecture/adr/adr-008-mcp-connection-pooling-production.md)
-- [ADR-009: Health Monitoring System Design](docs/architecture/adr/adr-009-health-monitoring-system.md)
+Complete list of architectural decisions:
+
+- [ADR-001: MCP Integration](architecture/adr/adr-001-mcp-integration.md) - Model Context Protocol integration strategy
+- [ADR-002: Claude Code Integration](architecture/adr/adr-002-claude-code-integration.md) - AI assistant development workflow
+- [ADR-003: Intent Classifier Enhancement](architecture/adr/adr-003-intent-classifier-enhancement.md) - Intent recognition improvements
+- [ADR-004: Action Humanizer Integration](architecture/adr/adr-004-action-humanizer-integration.md) - User-friendly action descriptions
+- [ADR-005: Eliminate Dual Repository Implementations](architecture/adr/adr-005-eliminate-dual-repository-implementations.md) - Repository pattern consistency
+- [ADR-006: Standardize Async Session Management](architecture/adr/adr-006-standardize-async-session-management.md) - Database session handling
+- [ADR-007: Staging Environment Architecture](architecture/adr/adr-007-staging-environment-architecture.md) - Production-grade staging setup
+- [ADR-008: MCP Connection Pooling Strategy](architecture/adr/adr-008-mcp-connection-pooling-production.md) - Performance optimization
+- [ADR-009: Health Monitoring System Design](architecture/adr/adr-009-health-monitoring-system.md) - System observability
+- [ADR-010: Configuration Patterns](architecture/adr/adr-010-configuration-patterns.md) - Configuration management strategy
+- [ADR-011: Test Infrastructure Hanging Fixes](architecture/adr/adr-011-test-infrastructure-hanging-fixes.md) - Test reliability improvements
+- [ADR-012: Unified Session Management](architecture/adr/adr-012-unified-session-management.md) - Consolidated session handling
 
 ### Operations
 
-- [Staging Deployment Guide](docs/operations/staging-deployment-guide.md)
-- [Staging Rollback Procedures](docs/operations/staging-rollback-procedures.md)
+- [Staging Deployment Guide](operations/staging-deployment-guide.md)
+- [Staging Rollback Procedures](operations/staging-rollback-procedures.md)
+
+### Recent Feature Documentation
+
+- [MCP Consumer Architecture](architecture/pm-033a-mcp-consumer-architecture.md) - MCP integration design and implementation
+- [MCP Integration Patterns](architecture/mcp-integration-patterns.md) - Proven MCP integration patterns
+- [PIPER.md Configuration](config/PIPER.md) - User context configuration template
+- [Conversation Manager Guide](development/PM-034-implementation-guide.md) - Conversational AI implementation
+- [Query Router Degradation](operations/query-router-degradation-runbook.md) - Graceful degradation operations
