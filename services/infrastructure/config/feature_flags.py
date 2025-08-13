@@ -43,6 +43,46 @@ class FeatureFlags:
             logger.debug("Infrastructure debug info")
     """
 
+    # GitHub integration feature flags (PM-033b-deprecation)
+    @staticmethod
+    def should_use_spatial_github() -> bool:
+        """
+        Check if spatial GitHub integration should be used as primary.
+
+        Used by QueryRouter to determine whether to use GitHubSpatialIntelligence
+        (8-dimensional spatial analysis) or fall back to legacy GitHub integration.
+
+        Environment Variable: USE_SPATIAL_GITHUB
+        Default: True (spatial is the new default)
+        """
+        return FeatureFlags._get_boolean_flag("USE_SPATIAL_GITHUB", True)
+
+    @staticmethod
+    def is_legacy_github_allowed() -> bool:
+        """
+        Check if legacy GitHub integration is still allowed as fallback.
+
+        Used during deprecation period to maintain backward compatibility.
+        Will be disabled by default in Week 3 of deprecation timeline.
+
+        Environment Variable: ALLOW_LEGACY_GITHUB
+        Default: True (during Week 1-2 of deprecation)
+        """
+        return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_GITHUB", True)
+
+    @staticmethod
+    def should_warn_github_deprecation() -> bool:
+        """
+        Check if deprecation warnings should be shown for legacy GitHub usage.
+
+        Used to alert users when legacy GitHub integration is being used
+        during the deprecation period (Week 2-3).
+
+        Environment Variable: GITHUB_DEPRECATION_WARNINGS
+        Default: False (enabled in Week 2)
+        """
+        return FeatureFlags._get_boolean_flag("GITHUB_DEPRECATION_WARNINGS", False)
+
     # MCP-related feature flags
     @staticmethod
     def is_mcp_content_search_enabled() -> bool:
@@ -289,6 +329,11 @@ class FeatureFlags:
             Dictionary mapping feature names to their current values
         """
         features = {}
+
+        # GitHub integration features
+        features["spatial_github"] = cls.should_use_spatial_github()
+        features["legacy_github_allowed"] = cls.is_legacy_github_allowed()
+        features["github_deprecation_warnings"] = cls.should_warn_github_deprecation()
 
         # MCP features
         features["mcp_content_search"] = cls.is_mcp_content_search_enabled()
