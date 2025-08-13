@@ -17,6 +17,14 @@ from services.queries.file_queries import FileQueryService
 from services.queries.project_queries import ProjectQueryService
 from services.shared_types import IntentCategory
 
+# GitHub integration with deprecation support (PM-033b-deprecation)
+try:
+    from services.integrations.github.github_integration_router import GitHubIntegrationRouter
+
+    GITHUB_ROUTER_AVAILABLE = True
+except ImportError:
+    GITHUB_ROUTER_AVAILABLE = False
+
 # MCP Consumer integration
 try:
     from services.mcp.consumer.consumer_core import MCPConsumerCore
@@ -50,6 +58,8 @@ class QueryRouter:
         mcp_consumer: Optional["MCPConsumerCore"] = None,
         github_adapter: Optional["GitHubMCPSpatialAdapter"] = None,
         enable_mcp_federation: bool = True,
+        # GitHub integration with deprecation support (PM-033b-deprecation)
+        github_router: Optional["GitHubIntegrationRouter"] = None,
     ):
         self.project_queries = project_query_service
         self.conversation_queries = conversation_query_service
@@ -88,6 +98,12 @@ class QueryRouter:
         self.mcp_consumer = None
         self.github_adapter = None
         self.enable_mcp_federation = enable_mcp_federation and MCP_AVAILABLE
+
+        # GitHub integration with deprecation support (PM-033b-deprecation)
+        self.github_router = None
+        if GITHUB_ROUTER_AVAILABLE:
+            self.github_router = github_router or GitHubIntegrationRouter()
+            logger.info("GitHub integration router enabled with deprecation support")
 
         if self.enable_mcp_federation and MCP_AVAILABLE:
             self.mcp_consumer = mcp_consumer or MCPConsumerCore()

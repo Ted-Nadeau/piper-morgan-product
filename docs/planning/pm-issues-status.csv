@@ -24,6 +24,7 @@ PM-032,43,Unified Response Rendering & DDD/TDD Web UI Refactor,CLOSED
 PM-033,60,MCP Integration Pilot,OPEN
 PM-033a,94,MCP Consumer Foundation - GitHub Integration,COMPLETED
 PM-033b,91,Tool Federation - External Development Tool Integration,OPEN
+PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,COMPLETED
 PM-033c,92,Bridge Existing Agents - Slack Services MCP Conversion,OPEN
 PM-033d,93,MCP Server Mode - Transform Piper to Ecosystem Hub,OPEN
 PM-034,61,LLM-Based Intent Classification,CLOSED

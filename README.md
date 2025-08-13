@@ -42,6 +42,14 @@ python main.py
 
 **🎯 Ready to try?** Start with our [15-minute getting started guide](docs/user-guides/getting-started-conversational-ai.md)!
 
+### 🚀 **One-Click Startup**
+
+For daily standup routine:
+
+- **[Mac Dock Integration](./docs/setup/mac-dock-integration.md)** - Add Piper to your dock
+- **Start Script**: `./start-piper.sh` - One-command startup with health checks
+- **Requirements**: Docker Desktop running
+
 ## 💬 See It in Action
 
 ### Before (Command Mode)
