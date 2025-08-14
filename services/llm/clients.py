@@ -6,9 +6,9 @@ Handles connections to Anthropic and OpenAI
 import os
 from typing import Any, Dict, Optional
 
+import openai
 import structlog
 from anthropic import Anthropic
-from openai import OpenAI
 
 from .config import MODEL_CONFIGS, LLMModel, LLMProvider
 
@@ -34,7 +34,8 @@ class LLMClient:
 
         # OpenAI
         if openai_key := os.getenv("OPENAI_API_KEY"):
-            self.openai_client = OpenAI(api_key=openai_key)
+            openai.api_key = openai_key
+            self.openai_client = openai
             logger.info("OpenAI client initialized")
         else:
             logger.warning("No OPENAI_API_KEY found")
