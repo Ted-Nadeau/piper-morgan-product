@@ -84,6 +84,21 @@ Before running ANY validation tools:
 
 **Pattern**: GitHub Reality → Status Verification → THEN Tools
 
+#### 7. ACCEPTANCE CRITERIA COMPLETION INTEGRITY (PM-033b LESSON)
+**CRITICAL: Never mark GitHub issues complete without checking ALL acceptance criteria**
+
+```bash
+# MANDATORY before ANY issue completion claim:
+gh issue view [number] --json body | grep -E "\\[[ x]\\]|acceptance|criteria"
+
+# REQUIRED: ALL boxes must be checked with evidence
+# PROHIBITED: Closing issues with unchecked criteria
+# REQUIRED: Update descriptions to match reality, not just comments
+```
+
+**Root Cause from PM-033b**: Confused "technical achievement" with "acceptance criteria completion"
+**Prevention**: Always verify EVERY checkbox has concrete evidence before marking complete
+
 #### 6a. GITHUB LABEL VERIFICATION (MANDATORY)
 **ALWAYS verify labels exist before using in gh issue commands:**
 
@@ -387,6 +402,130 @@ If an agent shows signs of assumption-based development:
 4. **Quality Gate**: No implementation without systematic verification
 
 **THE EXCELLENCE FLYWHEEL ONLY WORKS WITH SYSTEMATIC VERIFICATION FIRST**
+
+## ACCEPTANCE CRITERIA VERIFICATION PROTOCOL ⭐
+
+### Mandatory GitHub Issue Completion Standards
+
+**CRITICAL: Following PM-033b retrospective analysis findings, ALL GitHub issues must follow systematic completion verification to prevent false success reporting.**
+
+#### 1. Session Start Protocol for GitHub Issues
+
+**MANDATORY for ANY GitHub issue work:**
+
+```bash
+# Step 1: ALWAYS read complete issue before starting
+gh issue view [issue-number] --comments
+
+# Step 2: Copy ALL acceptance criteria to session notes
+# Create explicit checklist in session log before ANY implementation
+
+# Step 3: Verify current completion state vs description
+gh issue view [issue-number] --json body,state
+```
+
+#### 2. Scope Drift Detection Protocol
+
+**MANDATORY checkpoint every 30 minutes during implementation:**
+
+```markdown
+## SCOPE CHECK [timestamp]
+- [ ] Original issue scope maintained
+- [ ] All acceptance criteria still addressable
+- [ ] No feature creep or adjacent work added
+- [ ] Implementation directly serves stated requirements
+```
+
+#### 3. Completion Verification Sequence (MANDATORY)
+
+**BEFORE marking ANY GitHub issue complete:**
+
+```bash
+# Step 1: Re-read original acceptance criteria
+gh issue view [issue-number] --json body
+
+# Step 2: Evidence verification for EACH checkbox
+# REQUIREMENT: Provide concrete evidence for each checked item:
+# ✅ [Criteria text] - EVIDENCE: [file path, command output, specific deliverable]
+
+# Step 3: PROHIBITED - Cannot close issue with unchecked criteria
+# If criteria remain unchecked, issue MUST remain OPEN or be updated to reflect partial completion
+
+# Step 4: Update description with checked boxes AND evidence
+gh issue edit [issue-number] --body "$(cat <<'EOF'
+[Updated description with checked boxes and evidence]
+EOF
+)"
+```
+
+#### 4. Evidence Standards for Issue Completion
+
+**REQUIRED evidence types for checked acceptance criteria:**
+
+- **File Creation**: Full file path, line count, functional verification
+- **Feature Implementation**: Working command/URL, test results, user validation
+- **Documentation**: File path, section coverage, accuracy verification
+- **Integration**: API calls working, service connections verified
+- **Testing**: Test file paths, passing status, coverage metrics
+
+#### 5. Partial Completion Protocol
+
+**When work is incomplete but session ends:**
+
+```markdown
+## HONEST PARTIAL COMPLETION
+- ✅ [Completed criteria] - EVIDENCE: [specific proof]
+- 🟡 [Partially completed] - STATUS: [what's done, what remains]
+- ❌ [Not started] - REMAINING: [clear description of work needed]
+
+COMPLETION STATUS: X/Y criteria complete (Z% overall)
+RECOMMENDATION: [Continue vs Split issue vs Close with partial success]
+```
+
+#### 6. Root Cause Prevention Measures
+
+**Addressing specific failure modes identified in PM-033b retro:**
+
+**Scope Drift Prevention:**
+- Copy original acceptance criteria to session notes at start
+- Reference original criteria in every status update
+- Flag when implementation differs from stated requirements
+
+**Success Metric Confusion Prevention:**
+- Distinguish between "technical achievement" and "acceptance criteria completion"
+- Require explicit mapping: "Technical work X addresses criteria Y"
+- Verify ALL criteria addressed before claiming completion
+
+**Verification Blind Spot Prevention:**
+- MANDATORY re-read of original issue before marking complete
+- Evidence required for EVERY checked box
+- Cannot close issue with unchecked acceptance criteria
+
+#### 7. Quality Gates (NON-NEGOTIABLE)
+
+**These gates CANNOT be bypassed:**
+
+1. **No Assumption Gate**: Must verify current issue state before starting
+2. **Evidence Gate**: Every checked box must have concrete evidence
+3. **Completeness Gate**: Cannot close issues with unchecked acceptance criteria
+4. **Scope Gate**: Work must address original requirements, not adjacent improvements
+5. **Documentation Gate**: All completion claims must be documented with proof
+
+### Enforcement and Learning
+
+**Violation Response Protocol:**
+1. **Immediate Correction**: Update inaccurate issue descriptions immediately
+2. **Root Cause Analysis**: Document what led to inaccurate reporting
+3. **Process Improvement**: Update this protocol based on new failure modes
+4. **Systematic Application**: Apply learnings to all future issue work
+
+**Success Metrics:**
+- Zero issues closed with unchecked acceptance criteria
+- All completion claims backed by concrete evidence
+- No false "COMPLETE" statuses in planning documents
+- Reduced rework due to incomplete understanding
+
+**Key Insight from PM-033b Retro**: "Technical achievement ≠ Acceptance criteria completion. The difference is systematic verification vs assumption-based reporting."
 
 ## Requirements
 

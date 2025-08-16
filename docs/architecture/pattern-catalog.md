@@ -1498,12 +1498,128 @@ class TestOAuthSpatialIntegration:
 
 Each pattern addresses specific architectural concerns while maintaining overall system coherence and enabling future evolution.
 
+## 22. MCP+Spatial Intelligence Integration Pattern
+
+### Purpose
+
+Enable external tool integration through MCP (Model Context Protocol) with 8-dimensional spatial intelligence analysis for enhanced context awareness and federated search capabilities.
+
+### Implementation
+
+```python
+class LinearSpatialIntelligence:
+    """MCP+Spatial pattern for Linear integration"""
+
+    def __init__(self):
+        """Initialize with MCP adapter and 8-dimensional analysis"""
+        self.mcp_adapter = LinearMCPSpatialAdapter()
+
+        # 8-dimensional analysis functions
+        self.dimensions = {
+            "HIERARCHY": self.analyze_issue_hierarchy,
+            "TEMPORAL": self.analyze_timeline,
+            "PRIORITY": self.analyze_priority_signals,
+            "COLLABORATIVE": self.analyze_team_activity,
+            "FLOW": self.analyze_workflow_state,
+            "QUANTITATIVE": self.analyze_metrics,
+            "CAUSAL": self.analyze_dependencies,
+            "CONTEXTUAL": self.analyze_project_context,
+        }
+
+    async def create_spatial_context(self, issue: Dict[str, Any]) -> SpatialContext:
+        """Create full 8-dimensional spatial context"""
+        # Run all dimensional analyses in parallel
+        dimension_results = await asyncio.gather(
+            *[func(issue) for func in self.dimensions.values()]
+        )
+
+        # Create spatial context with attention/valence/intent
+        return SpatialContext(
+            territory_id="linear",
+            room_id=contextual["team_key"],
+            path_id=f"issues/{issue['number']}",
+            attention_level=self._determine_attention(priority, temporal),
+            emotional_valence=self._determine_valence(priority, flow),
+            navigation_intent=self._determine_intent(priority, flow),
+            external_system="linear",
+            external_context=dimension_dict
+        )
+
+class LinearMCPSpatialAdapter(BaseSpatialAdapter):
+    """MCP adapter for Linear GraphQL API"""
+
+    async def search_issues(self, query: str, limit: int = 10) -> List[Dict]:
+        """Search Linear issues via GraphQL with spatial mapping"""
+        search_query = """
+        query SearchIssues($query: String!, $first: Int!) {
+            issues(filter: {or: [
+                {title: {containsIgnoreCase: $query}},
+                {description: {containsIgnoreCase: $query}}
+            ]}, first: $first, orderBy: updatedAt) {
+                nodes { /* full issue fields */ }
+            }
+        }"""
+
+        result = await self._call_linear_api(search_query, {"query": query, "first": limit})
+        return result.get("issues", {}).get("nodes", [])
+
+# QueryRouter Integration
+async def federated_search_with_spatial(self, query: str) -> Dict[str, Any]:
+    """Enhanced federated search with spatial intelligence"""
+    results = await self.query_router.federated_search(query)
+
+    # Add Linear search with spatial enhancement
+    if self.linear_spatial:
+        linear_results = await self._search_linear_with_spatial(query)
+        results["linear_results"] = linear_results
+        if linear_results:
+            results["sources"].append("linear_mcp")
+
+    return results
+```
+
+### 8-Dimensional Analysis Framework
+
+1. **HIERARCHY** - Issue/project relationships, team structures
+2. **TEMPORAL** - Created/updated patterns, cycle timelines
+3. **PRIORITY** - Priority levels, cycles, milestones
+4. **COLLABORATIVE** - Assignees, subscribers, comments
+5. **FLOW** - Status workflows, state transitions
+6. **QUANTITATIVE** - Counts, velocities, estimates, metrics
+7. **CAUSAL** - Dependencies, blocked issues, relations
+8. **CONTEXTUAL** - Project, team, workspace context
+
+### Usage Guidelines
+
+- Follow exact pattern structure for new tool integrations
+- Implement all 8 dimensions for consistent spatial intelligence
+- Use GraphQL for modern APIs, REST for legacy systems
+- Maintain <150ms performance target per tool
+- Include circuit breaker protection and graceful degradation
+- Comprehensive testing with mocked external APIs
+
+### Anti-patterns to Avoid
+
+- ❌ Skipping dimensional analysis for "simple" tools
+- ❌ Blocking federated search on single tool failure
+- ❌ Hard-coding tool-specific logic in QueryRouter
+- ❌ Missing performance monitoring and timeout handling
+
+### Evidence of Success
+
+- **LinearSpatialIntelligence**: 425 lines with complete 8-dimensional analysis
+- **LinearMCPSpatialAdapter**: 372 lines with GraphQL integration
+- **Test Coverage**: 448 lines covering all dimensions and performance targets
+- **QueryRouter Integration**: Multi-tool federated search operational
+- **Performance**: <150ms additional latency per tool validated
+
 ---
 
-_Last Updated: July 27, 2025_
+_Last Updated: August 13, 2025_
 
 ## Revision Log
 
+- **August 13, 2025**: Added MCP+Spatial Intelligence Integration Pattern (#22) for Linear integration with 8-dimensional analysis and federated search capabilities
 - **July 27, 2025**: Added Spatial Metaphor Integration Pattern (#20) and TDD Integration Testing Pattern (#21) for Slack integration with comprehensive spatial metaphor processing and 52 integration tests
 - **July 27, 2025**: Added LLM Placeholder Instruction Pattern (#19) to prevent hallucination in AI-generated content
 - **July 21, 2025**: Added Configuration Access Pattern (#18) implementing ADR-010 layer-appropriate configuration management
