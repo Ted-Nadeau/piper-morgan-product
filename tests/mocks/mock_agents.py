@@ -5,6 +5,7 @@ Provides configurable mock agents for testing multi-agent coordination scenarios
 
 import asyncio
 import random
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 from unittest.mock import Mock
@@ -341,3 +342,142 @@ def create_mock_agent(agent_type: str) -> MockAgent:
 def create_mock_agent_pool(agent_types: List[str]) -> List[MockAgent]:
     """Create a pool of mock agents for testing scenarios"""
     return [create_mock_agent(agent_type) for agent_type in agent_types]
+
+
+class MockAgentCoordinator:
+    """Mock coordinator that manages multiple agents and executes tasks"""
+
+    def __init__(self):
+        self.agents = []
+        self.workflows = {}
+        self.performance_monitor = None
+
+    def add_agent(self, agent: MockAgent):
+        """Add an agent to the coordinator"""
+        self.agents.append(agent)
+
+    def execute_task(self, task_name: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a task using available agents"""
+        if not self.agents:
+            return {"status": "error", "error_type": "no_agents_available"}
+
+        # Find the best agent for the task
+        best_agent = self.agents[0]  # Simple selection for now
+
+        # Create a mock task
+        task = AgentTask(
+            task_id=f"task_{int(time.time())}",
+            task_type="execution",
+            description=task_name,
+            estimated_duration_ms=50,
+        )
+
+        # Execute the task
+        try:
+            # Simulate task execution
+            time.sleep(0.05)  # 50ms execution time
+
+            return {
+                "status": "completed",
+                "task_name": task_name,
+                "agent_id": best_agent.agent_id,
+                "execution_time_ms": 50,
+                "result": f"Task {task_name} completed successfully",
+            }
+        except Exception as e:
+            return {"status": "error", "error_type": "execution_failed", "error_message": str(e)}
+
+    async def execute_task_async(self, task_name: str, task_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a task asynchronously"""
+        return self.execute_task(task_name, task_data)
+
+    def start_workflow(self, workflow_id: str, workflow_name: str) -> Dict[str, Any]:
+        """Start a new workflow"""
+        self.workflows[workflow_id] = {
+            "name": workflow_name,
+            "status": "started",
+            "start_time": time.time(),
+            "progress": 0,
+        }
+        return {"status": "started", "workflow_id": workflow_id}
+
+    def monitor_agent_health(self, agent_health_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Monitor the health of all agents"""
+        if not agent_health_data:
+            return {"overall_health": "unknown", "active_agents": 0, "health_score": 0}
+
+        total_health = sum(agent["health"] for agent in agent_health_data)
+        avg_health = total_health / len(agent_health_data)
+        active_count = len([a for a in agent_health_data if a["status"] == "active"])
+
+        if avg_health >= 95:
+            overall_health = "excellent"
+        elif avg_health >= 90:
+            overall_health = "good"
+        elif avg_health >= 80:
+            overall_health = "fair"
+        else:
+            overall_health = "poor"
+
+        return {
+            "overall_health": overall_health,
+            "active_agents": active_count,
+            "health_score": avg_health,
+        }
+
+    def handle_error_scenario(self, error_scenario: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle various error scenarios"""
+        error_type = error_scenario.get("type", "unknown")
+
+        if error_type == "agent_unavailable":
+            return {
+                "status": "handled",
+                "fallback_action": "use_backup_agent",
+                "user_message": "Agent temporarily unavailable, using backup agent",
+            }
+        elif error_type == "database_connection_failed":
+            return {
+                "status": "handled",
+                "fallback_action": "use_in_memory_storage",
+                "user_message": "Database connection failed, using in-memory storage",
+            }
+        elif error_type == "performance_degradation":
+            return {
+                "status": "handled",
+                "fallback_action": "enable_performance_mode",
+                "user_message": "Performance below target, enabling performance mode",
+            }
+        else:
+            return {
+                "status": "handled",
+                "fallback_action": "general_fallback",
+                "user_message": "Error handled with general fallback",
+            }
+
+    def validate_database_schema(self) -> Dict[str, Any]:
+        """Validate database schema for PM-033d tables"""
+        return {
+            "status": "valid",
+            "tables": ["agents", "workflows", "tasks", "coordination_logs"],
+            "schema_version": "1.0.0",
+        }
+
+    def check_migration_status(self) -> Dict[str, Any]:
+        """Check database migration status"""
+        return {"status": "up_to_date", "last_migration": "2025-08-15", "migration_count": 15}
+
+    def create_database_backup(self) -> Dict[str, Any]:
+        """Create database backup"""
+        return {
+            "status": "completed",
+            "backup_file": "backup_2025_08_15.sql",
+            "backup_size": "2.5MB",
+        }
+
+    def get_database_performance_metrics(self) -> Dict[str, Any]:
+        """Get database performance metrics"""
+        return {"status": "completed", "avg_latency": 150, "min_latency": 25, "max_latency": 75}
+
+    def test_ui_integration(self, integration_test: Dict[str, Any]) -> Dict[str, Any]:
+        """Test UI integration with coordination engine"""
+        return {"status": "integrated", "data_flow": "operational", "performance": "within_targets"}
