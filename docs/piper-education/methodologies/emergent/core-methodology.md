@@ -184,6 +184,22 @@ python scripts/test_system_reliability.py --production-simulation
 
 This methodology addition ensures systematic development includes complete user experience validation, preventing the gap between development claims and user reality.
 
+## Acceptance Criteria Discipline (MANDATORY)
+
+Before ANY implementation:
+1. Copy ALL acceptance criteria from GitHub issue
+2. Create checklist in session log
+3. Verify current completion state
+
+Every 30 minutes:
+- Check: "Am I building what was specified?"
+- If exciting tangent appears: Document it, but stay on target
+
+Before marking complete:
+- Every criterion has evidence
+- Screenshots/test results documented
+- No assumptions about "probably done"
+
 # Our Proven Patterns
 
 1. Multi-Agent Orchestration: Strategic division based on agent strengths
