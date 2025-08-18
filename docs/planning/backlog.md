@@ -802,6 +802,95 @@
 
 ---
 
+### PM-113: Migrate main.py from DatabasePool to AsyncSessionFactory
+
+**Story**: As a system, I need production code to follow AsyncSessionFactory standards so database session management is consistent
+**Status**: 🚨 CRITICAL | **Priority**: P0 - Architecture Compliance | **GitHub**: #113
+
+**Architecture Audit Finding**: Core application (`main.py`) uses deprecated DatabasePool pattern instead of standardized AsyncSessionFactory established in ADR-006 and ADR-012.
+
+**Critical Impact**:
+- Production database session management violates architectural standards
+- IntentEnricher uses anti-pattern dependency injection with raw `db` parameter
+- Creates inconsistency across codebase session management
+
+**Acceptance Criteria**:
+- [ ] Remove DatabasePool.get_pool() usage from main.py
+- [ ] Implement AsyncSessionFactory.session_scope() pattern
+- [ ] Update IntentEnricher to accept AsyncSession dependency injection
+- [ ] Verify proper session lifecycle management (auto-cleanup)
+- [ ] Ensure no regression in database functionality
+- [ ] Update any related tests to use new pattern
+
+**Technical Context**:
+- Files: `main.py`, `services/intent_service/intent_enricher.py`
+- Reference: ADR-006, ADR-012, `services/database/session_factory.py`
+- Risk: High - Core application database connectivity
+
+**Dependencies**: None - Can be implemented immediately
+**Discovered**: AsyncSessionFactory Architecture Audit (August 18, 2025)
+
+---
+
+### PM-114: Remove Legacy DatabasePool Class and Deprecated RepositoryFactory
+
+**Story**: As a developer, I need clean architecture with no deprecated session patterns so I cannot accidentally use anti-patterns
+**Status**: 🚨 CRITICAL | **Priority**: P0 - Architecture Cleanup | **GitHub**: #114
+
+**Architecture Audit Finding**: Legacy DatabasePool and deprecated RepositoryFactory classes provide anti-pattern implementations that bypass SQLAlchemy.
+
+**Anti-Pattern Elimination**:
+- `services/repositories/__init__.py` contains DatabasePool using direct asyncpg
+- `services/database/repositories.py` contains deprecated RepositoryFactory
+- `services/database/__init__.py` exports RepositoryFactory in module exports
+- These enable bypassing AsyncSessionFactory standards
+
+**Acceptance Criteria**:
+- [ ] Delete DatabasePool class from `services/repositories/__init__.py`
+- [ ] Delete RepositoryFactory class from `services/database/repositories.py`
+- [ ] Remove RepositoryFactory from `services/database/__init__.py` exports
+- [ ] Verify no active code imports these deprecated classes
+- [ ] Ensure tests don't rely on removed classes
+
+**Technical Context**:
+- DatabasePool bypasses SQLAlchemy ORM entirely
+- RepositoryFactory marked deprecated but still available for import
+- Cleanup enables pure AsyncSessionFactory architecture
+
+**Dependencies**: Should follow PM-113 main.py migration
+**Discovered**: AsyncSessionFactory Architecture Audit (August 18, 2025)
+
+---
+
+### PM-115: Fix IntentEnricher Dependency Injection Anti-Pattern
+
+**Story**: As a service component, I need proper AsyncSession dependency injection so I follow established patterns
+**Status**: 📋 PLANNED | **Priority**: P1 - High | **GitHub**: #115
+
+**Architecture Audit Finding**: IntentEnricher uses anti-pattern by accepting raw `db` parameter instead of AsyncSession dependency injection.
+
+**Dependency Injection Improvement**:
+- Current: Accepts raw `db` parameter (couples to legacy patterns)
+- Target: Accept AsyncSession via proper dependency injection
+- Benefit: Consistent with other service layer components
+
+**Acceptance Criteria**:
+- [ ] Update IntentEnricher constructor to accept AsyncSession parameter
+- [ ] Remove raw `db` parameter from IntentEnricher interface
+- [ ] Update all callers to pass AsyncSession instead of raw db connection
+- [ ] Ensure proper session management in calling code
+- [ ] Verify no regression in intent enrichment functionality
+
+**Technical Context**:
+- Files: `services/intent_service/intent_enricher.py`, calling code (likely main.py)
+- Pattern: Follow same dependency injection as other repository-using services
+- Enables: Proper transaction management and cleanup
+
+**Dependencies**: Should be completed after PM-113 main.py migration
+**Discovered**: AsyncSessionFactory Architecture Audit (August 18, 2025)
+
+---
+
 ### PM-087: Values & Principles Architecture - Ethics-First Foundation
 
 **Story**: As a system, I must architecturally enforce ethical boundaries before any autonomous capabilities

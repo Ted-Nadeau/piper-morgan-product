@@ -1613,12 +1613,500 @@ async def federated_search_with_spatial(self, query: str) -> Dict[str, Any]:
 - **QueryRouter Integration**: Multi-tool federated search operational
 - **Performance**: <150ms additional latency per tool validated
 
+## 23. Query Layer Patterns
+
+The Query Layer provides optimized read-only operations with graceful degradation, performance monitoring, and intelligent routing. These patterns demonstrate clean separation of concerns, effective error handling, and maintainable architecture.
+
+### 23.1 CQRS Query Router Pattern
+
+#### Purpose
+Route query intents to specialized query services with circuit breaker protection and graceful degradation for system resilience.
+
+#### Implementation
+```python
+class QueryRouter:
+    """Routes QUERY intents to appropriate query services with LLM enhancement"""
+
+    def __init__(
+        self,
+        project_query_service: ProjectQueryService,
+        conversation_query_service: ConversationQueryService,
+        file_query_service: FileQueryService,
+        degradation_config: Optional[Dict] = None,
+    ):
+        self.project_queries = project_query_service
+        self.conversation_queries = conversation_query_service
+        self.file_queries = file_query_service
+        self.degradation_handler = QueryDegradationHandler(degradation_config)
+
+    async def route_query(self, intent: Intent) -> Any:
+        """Route an intent to the appropriate query service with graceful degradation"""
+        if intent.category not in [
+            IntentCategory.QUERY, IntentCategory.IDENTITY,
+            IntentCategory.TEMPORAL, IntentCategory.STATUS
+        ]:
+            raise ValueError(f"QueryRouter cannot handle intent category: {intent.category}")
+
+        try:
+            return await self._route_query_with_protection(intent)
+        except Exception as e:
+            service = self._get_service_for_action(intent.action)
+            return await self.degradation_handler.handle_service_failure(service, intent.action, e)
+
+    async def _execute_with_circuit_breaker(self, func, service: str, action: str) -> Any:
+        """Execute function with circuit breaker protection"""
+        if self.degradation_handler.enabled and await self.degradation_handler.should_degrade(service):
+            return await self.degradation_handler.handle_service_failure(
+                service, action, Exception("Circuit breaker open")
+            )
+        return await self.degradation_handler.circuit_breaker.call(func)
+```
+
+#### Usage Guidelines
+- Route read-only operations through specialized query services
+- Apply circuit breaker protection to all service calls
+- Provide graceful degradation with meaningful fallback responses
+- Map actions to appropriate services for targeted error handling
+
+#### Benefits
+- **Performance**: Optimized read paths without workflow overhead
+- **Resilience**: Circuit breaker protection prevents cascade failures
+- **Separation**: Clear boundary between queries and commands
+- **Maintainability**: Centralized routing logic with service specialization
+
+### 23.2 Graceful Degradation Handler Pattern
+
+#### Purpose
+Provide intelligent fallback strategies for query failures with circuit breaker protection and user-friendly error messages.
+
+#### Implementation
+```python
+class QueryDegradationHandler:
+    """Graceful degradation handler for QueryRouter operations"""
+
+    def __init__(self, circuit_breaker_config: Optional[Dict] = None):
+        config = circuit_breaker_config or {}
+        self.circuit_breaker = QueryCircuitBreaker(
+            failure_threshold=config.get("failure_threshold", 5),
+            recovery_timeout=config.get("recovery_timeout", 60),
+        )
+        self.enabled = FeatureFlags.is_circuit_breaker_enabled()
+
+    async def handle_service_failure(self, service: str, action: str, error: Exception) -> Any:
+        """Handle service-specific failures with appropriate fallbacks"""
+        if service == "file_queries":
+            return await self._handle_file_service_failure(action, error)
+        elif service == "project_queries":
+            return await self._handle_project_service_failure(action, error)
+        elif service == "conversation_queries":
+            return await self._handle_conversation_service_failure(action, error)
+
+    async def _handle_file_service_failure(self, action: str, error: Exception) -> Dict[str, Any]:
+        """Handle file service failures with structured fallback responses"""
+        return {
+            "success": False,
+            "error": "Unable to search files. Search service temporarily unavailable.",
+            "suggestion": "File search is temporarily unavailable. Please try again shortly.",
+            "results": [],
+            "query": "search temporarily unavailable",
+        }
+
+class QueryCircuitBreaker:
+    """Circuit breaker for query operations"""
+
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60):
+        self.failure_count = 0
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.state = "closed"  # closed, open, half-open
+
+    async def call(self, func, *args, **kwargs):
+        """Execute function with circuit breaker protection"""
+        if self.state == "open":
+            if time.time() - self.last_failure_time > self.recovery_timeout:
+                self.state = "half-open"
+            else:
+                raise QueryCircuitBreakerOpenError("Query circuit breaker is open")
+
+        try:
+            result = await func(*args, **kwargs)
+            if self.state == "half-open":
+                self.state = "closed"
+                self.failure_count = 0
+            return result
+        except Exception as e:
+            self.failure_count += 1
+            if self.failure_count >= self.failure_threshold:
+                self.state = "open"
+            raise
+```
+
+#### Usage Guidelines
+- Provide service-specific fallback strategies for different failure types
+- Use structured error responses with actionable user guidance
+- Implement circuit breaker pattern to prevent cascade failures
+- Enable/disable degradation through feature flags for operational control
+
+#### Benefits
+- **Resilience**: Prevents system-wide failures from service outages
+- **User Experience**: Provides helpful error messages instead of technical failures
+- **Recovery**: Automatic circuit breaker recovery for transient issues
+- **Operational Control**: Feature flag control for emergency degradation
+
+### 23.3 A/B Testing Query Classification Pattern
+
+#### Purpose
+Enable gradual rollout of LLM-based classification with performance monitoring and session-consistent A/B testing.
+
+#### Implementation
+```python
+class QueryRouter:
+    def __init__(
+        self,
+        llm_classifier: Optional[LLMIntentClassifier] = None,
+        enable_llm_classification: bool = False,
+        llm_rollout_percentage: float = 0.0,  # 0.0 = 0%, 1.0 = 100%
+        performance_targets: Optional[Dict[str, float]] = None,
+    ):
+        self.llm_classifier = llm_classifier
+        self.enable_llm_classification = enable_llm_classification
+        self.llm_rollout_percentage = llm_rollout_percentage
+
+        # Performance targets (in milliseconds)
+        self.performance_targets = performance_targets or {
+            "rule_based": 50.0,  # <50ms for rule-based classification
+            "llm_classification": 200.0,  # <200ms for LLM classification
+        }
+
+        # Performance monitoring
+        self.performance_metrics = {
+            "total_requests": 0,
+            "llm_classifications": 0,
+            "rule_based_classifications": 0,
+            "average_llm_latency_ms": 0.0,
+            "average_rule_based_latency_ms": 0.0,
+            "target_violations": 0,
+        }
+
+    def _should_use_llm_classification(self, session_id: Optional[str] = None) -> bool:
+        """A/B Testing Logic - session-based consistency for user experience"""
+        if not self.enable_llm_classification or self.llm_rollout_percentage <= 0.0:
+            return False
+
+        if self.llm_rollout_percentage >= 1.0:
+            return True
+
+        # Use session_id for consistent A/B testing per session
+        if session_id:
+            hash_value = hash(session_id) % 100
+            return hash_value < (self.llm_rollout_percentage * 100)
+        else:
+            return random.random() < self.llm_rollout_percentage
+
+    async def _classify_and_route_with_llm(self, message: str, user_context: Optional[Dict],
+                                          session_id: Optional[str], start_time: float) -> Any:
+        """Classify and route using LLM with performance monitoring"""
+        try:
+            intent = await self.llm_classifier.classify(message, user_context, session_id)
+            latency_ms = (time.time() - start_time) * 1000
+
+            # Update metrics and check performance targets
+            self.performance_metrics["llm_classifications"] += 1
+            self._update_llm_metrics(latency_ms, True)
+
+            if latency_ms > self.performance_targets["llm_classification"]:
+                self.performance_metrics["target_violations"] += 1
+                logger.warning(f"LLM classification exceeded target: {latency_ms:.1f}ms")
+
+            return await self.route_query(intent)
+        except Exception as e:
+            self._update_llm_metrics(latency_ms, False)
+            raise
+```
+
+#### Usage Guidelines
+- Use session-based hashing for consistent A/B assignment per user
+- Monitor performance metrics for both classification methods
+- Set and enforce performance targets with violation tracking
+- Enable gradual rollout through percentage-based configuration
+
+#### Benefits
+- **Gradual Deployment**: Safe rollout of new classification methods
+- **Performance Monitoring**: Real-time latency and success rate tracking
+- **User Consistency**: Same classification method per session
+- **Operational Safety**: Performance target enforcement and rollback capability
+
+### 23.4 Specialized Query Service Pattern
+
+#### Purpose
+Provide focused, single-responsibility query services optimized for specific domain operations.
+
+#### Implementation
+```python
+class ProjectQueryService:
+    """Query service for read-only project operations"""
+
+    def __init__(self, project_repository: ProjectRepository):
+        self.repo = project_repository
+
+    async def list_active_projects(self) -> List[Project]:
+        """List all active projects"""
+        return await self.repo.list_active_projects()
+
+    async def get_project_details(self, project_id: str) -> Optional[dict]:
+        """Get detailed project information including integrations"""
+        project = await self.repo.get_by_id(project_id)
+        if not project:
+            return None
+
+        return {
+            "id": project.id,
+            "name": project.name,
+            "description": project.description,
+            "integrations": [
+                {
+                    "id": integration.id,
+                    "type": integration.type.value,
+                    "name": integration.name,
+                    "is_active": integration.is_active,
+                }
+                for integration in project.integrations
+            ],
+            "total_integrations": len(project.integrations),
+            "active_integrations": len([i for i in project.integrations if i.is_active]),
+        }
+
+class FileQueryService:
+    """Handles read-only file queries with MCP integration"""
+
+    async def search_files_with_content(self, session_id: str, query: str, limit: int = 10) -> Dict[str, Any]:
+        """Enhanced file search with content awareness and graceful degradation"""
+        try:
+            # Use enhanced search method from FileRepository
+            files = await self.file_repository.search_files_with_content(session_id, query, limit)
+
+            return {
+                "success": True,
+                "files": [self._convert_to_dict(file) for file in files],
+                "total_count": len(files),
+                "query": query,
+                "search_type": "enhanced" if self._is_mcp_enabled() else "filename_only",
+            }
+        except Exception as e:
+            logger.error(f"File search failed for query '{query}': {e}")
+            return {"success": False, "error": f"Search failed: {str(e)}", "query": query}
+
+class ConversationQueryService:
+    """Handles simple, stateless conversational queries with context awareness"""
+
+    async def get_greeting(self) -> str:
+        """Returns a context-aware greeting message"""
+        current_hour = datetime.now().hour
+        if 5 <= current_hour <= 7:
+            return "Good morning, Christian! Ready for our daily standup?"
+        elif 8 <= current_hour <= 11:
+            return "Good morning, Christian! How can I help you with today's development work?"
+        else:
+            return "Hello, Christian! How can I assist you today?"
+```
+
+#### Usage Guidelines
+- Keep services focused on single domain responsibility
+- Return domain models or structured dictionaries, not database objects
+- Implement graceful error handling with meaningful responses
+- Use repository pattern for data access abstraction
+
+#### Benefits
+- **Single Responsibility**: Each service handles one domain area
+- **Performance**: Direct repository access without workflow overhead
+- **Testability**: Easy to unit test focused functionality
+- **Maintainability**: Clear boundaries and minimal dependencies
+
+### 23.5 Rule-Based Fast Path Classification Pattern
+
+#### Purpose
+Provide high-performance classification for common query patterns with <50ms response times.
+
+#### Implementation
+```python
+def _rule_based_classification(self, message: str, user_context: Optional[Dict],
+                              session_id: Optional[str]) -> Intent:
+    """Fast rule-based classification for common patterns"""
+    message_lower = message.lower().strip()
+
+    # Identity queries
+    if any(phrase in message_lower for phrase in [
+        "what's your name", "what is your name", "who are you"
+    ]):
+        return Intent(
+            category=IntentCategory.IDENTITY,
+            action="get_identity",
+            confidence=0.95,
+            original_message=message,
+            context={"rule_based": True, "canonical_query": "identity", "session_id": session_id}
+        )
+
+    # Project-related queries
+    elif any(word in message_lower for word in ["list", "show"]) and \
+         any(word in message_lower for word in ["project", "projects"]):
+        return Intent(
+            category=IntentCategory.QUERY,
+            action="list_projects",
+            confidence=0.9,
+            original_message=message,
+            context={"rule_based": True, "session_id": session_id}
+        )
+
+    # File-related queries with search pattern detection
+    elif any(word in message_lower for word in ["file", "document"]) and \
+         "search" in message_lower:
+        return Intent(
+            category=IntentCategory.QUERY,
+            action="search_files",
+            confidence=0.85,
+            original_message=message,
+            context={"rule_based": True, "search_query": message, "session_id": session_id}
+        )
+
+    # Default fallback with explicit confidence scoring
+    else:
+        return Intent(
+            category=IntentCategory.QUERY,
+            action="get_help",
+            confidence=0.5,
+            original_message=message,
+            context={"rule_based": True, "fallback": True, "session_id": session_id}
+        )
+```
+
+#### Usage Guidelines
+- Use clear, readable pattern matching for common queries
+- Provide explicit confidence scores for classification quality
+- Include session context for tracking and debugging
+- Design for <50ms execution time with simple string operations
+
+#### Benefits
+- **Performance**: <50ms response time for common patterns
+- **Reliability**: Deterministic classification for known patterns
+- **Transparency**: Clear rule-based logic for debugging
+- **Fallback**: Safe default behavior for unmatched patterns
+
+### 23.6 Federated Search Integration Pattern
+
+#### Purpose
+Enable search across multiple systems (GitHub, Linear, local files) with unified result formatting and spatial intelligence.
+
+#### Implementation
+```python
+async def federated_search(self, query: str, include_github: bool = True) -> Dict[str, Any]:
+    """Federated search across MCP services with spatial context"""
+    results = {
+        "query": query,
+        "sources": [],
+        "total_results": 0,
+        "mcp_available": self.enable_mcp_federation,
+        "github_results": [],
+        "local_results": [],
+        "federated": True,
+    }
+
+    try:
+        # Local search first (existing functionality)
+        local_results = await self._search_local_files(query)
+        results["local_results"] = local_results
+
+        # GitHub MCP search if enabled
+        if self.enable_mcp_federation and include_github and self.github_adapter:
+            github_issues = await self.github_adapter.list_issues_via_mcp("piper-morgan-product")
+
+            # Filter and format results with relevance scoring
+            matching_issues = []
+            query_lower = query.lower()
+
+            for issue in github_issues:
+                title = (issue.get("title") or "").lower()
+                description = (issue.get("description") or "").lower()
+
+                # Simple relevance check with word matching
+                if (query_lower in title or query_lower in description or
+                    any(word in title or word in description
+                        for word in query_lower.split() if len(word) > 2)):
+
+                    matching_issues.append({
+                        "source": "github_mcp",
+                        "type": "issue",
+                        "number": issue.get("number"),
+                        "title": issue.get("title"),
+                        "description": issue.get("description", "")[:200] + "...",
+                        "state": issue.get("state"),
+                        "uri": issue.get("uri"),
+                        "retrieved_via": "mcp",
+                    })
+
+            results["github_results"] = matching_issues
+            results["sources"].append("github_mcp")
+
+        # Merge all results with source attribution
+        all_results = results["github_results"] + results["local_results"]
+        results["total_results"] = len(all_results)
+        results["all_results"] = all_results
+
+        return results
+
+    except Exception as e:
+        logger.error(f"Federated search failed for query '{query}': {e}")
+        results["error"] = str(e)
+        results["fallback"] = True
+        return results
+```
+
+#### Usage Guidelines
+- Implement parallel search across multiple sources for performance
+- Provide unified result format with source attribution
+- Include relevance scoring and filtering for result quality
+- Handle individual source failures gracefully without breaking entire search
+
+#### Benefits
+- **Comprehensive Results**: Search across multiple data sources simultaneously
+- **Source Attribution**: Clear indication of where results originate
+- **Fault Tolerance**: Individual source failures don't break entire search
+- **Extensibility**: Easy to add new search sources through MCP pattern
+
+### Decision Criteria: Query Service vs Workflow
+
+| Use Query Service When | Use Workflow When |
+|------------------------|-------------------|
+| Reading data only | Changing system state |
+| Single repository access | Multiple system coordination |
+| <200ms response required | Background processing acceptable |
+| No side effects | Side effects required |
+| Simple data transformation | Complex business logic |
+| Direct user response | Asynchronous completion |
+
+### Anti-patterns to Avoid
+
+- ❌ **Blocking Operations**: Using synchronous operations in async query methods
+- ❌ **Heavy Processing**: Complex business logic in query services
+- ❌ **State Mutations**: Changing data in read-only query operations
+- ❌ **Missing Degradation**: No fallback strategy for service failures
+- ❌ **Poor Performance**: Ignoring latency targets and metrics
+- ❌ **Inconsistent Routing**: Different error handling patterns per service
+
+### Performance Characteristics
+
+- **Rule-based Classification**: <50ms target, deterministic patterns
+- **LLM Classification**: <200ms target, higher accuracy for complex queries
+- **Circuit Breaker Recovery**: 60-second timeout with exponential backoff
+- **Federated Search**: <500ms combined across all sources
+- **Query Service Operations**: <100ms for single repository access
+
 ---
 
-_Last Updated: August 13, 2025_
+_Last Updated: August 18, 2025_
 
 ## Revision Log
 
+- **August 18, 2025**: Added Query Layer Patterns (#23) with 6 sub-patterns for CQRS routing, graceful degradation, A/B testing, specialized services, fast-path classification, and federated search
 - **August 13, 2025**: Added MCP+Spatial Intelligence Integration Pattern (#22) for Linear integration with 8-dimensional analysis and federated search capabilities
 - **July 27, 2025**: Added Spatial Metaphor Integration Pattern (#20) and TDD Integration Testing Pattern (#21) for Slack integration with comprehensive spatial metaphor processing and 52 integration tests
 - **July 27, 2025**: Added LLM Placeholder Instruction Pattern (#19) to prevent hallucination in AI-generated content
