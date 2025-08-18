@@ -6,16 +6,17 @@ Date: August 18, 2025
 
 - **Before**: 595 markdown files
 - **After**: 594 markdown files
-- **Freed**: 1 file removed, 2.4M session logs moved to archive
+- **Freed**: 1 file removed, 1.4M historical sessions moved to archive
 
 ## Files Consolidated
 
-### Session Logs ✅
+### Session Logs ✅ (CORRECTED)
 
-- **Moved to Archive**: All session logs from May-August 2025
-- **Archive Structure Created**: Organized by month (05, 06, 07, 08)
-- **Index Created**: `docs/archive/session-logs/INDEX.md` with retention policy
-- **Storage Impact**: 2.4M moved from active docs to archive
+- **Moved to Archive**: May-June 2025 sessions only (1.4M)
+- **Kept Active**: July-August 2025 sessions (current + previous month)
+- **Archive Structure Created**: Organized by month (05, 06)
+- **Retention Policy**: Current month + 1 previous month stay active
+- **Storage Impact**: 1.4M historical content archived, active sessions preserved
 
 ### Methodology Files ✅
 
@@ -39,13 +40,14 @@ Date: August 18, 2025
 
 ### Archive Organization
 
-- **Session Logs**: Organized by month in `docs/archive/session-logs/2025/`
+- **Session Logs**: Organized by month in `docs/archive/session-logs/2025/` (05, 06 only)
 - **Backup Files**: Already properly archived
 - **Historical Content**: Centralized in archive directory
 
 ### Active Documentation
 
 - **Development**: Cleaned of duplicate methodology files
+- **Session Logs**: July-August 2025 sessions remain active for ongoing work
 - **Planning**: Roadmap and backlog remain in active planning directory
 - **Architecture**: API documentation remains organized
 
@@ -54,6 +56,20 @@ Date: August 18, 2025
 - **Single Location**: All methodology files now in `methodology-core/`
 - **No Duplicates**: Eliminated file duplication
 - **Clear Structure**: README and organized methodology files
+
+## Retention Policy Implementation
+
+### Session Log Retention
+
+- **ACTIVE**: Current month (August 2025) + Previous month (July 2025)
+- **ARCHIVED**: Historical sessions (May-June 2025)
+- **Rationale**: Maintain ongoing work context while archiving historical content
+
+### Archive vs Active Separation
+
+- **Active**: Ongoing development and recent sessions
+- **Archive**: Historical reference and completed work
+- **Search**: Active docs focused on current work, archive for historical lookup
 
 ## Remaining Tasks
 
@@ -65,13 +81,14 @@ Date: August 18, 2025
 
 ### Process Improvements
 
-- **Session Log Management**: Implement monthly archiving process
+- **Session Log Management**: Implement monthly archiving process (archive month N-2)
 - **Methodology Updates**: Ensure all updates go to methodology-core
 - **Reference Maintenance**: Regular checks for broken file references
 
 ## Success Criteria Status
 
-- [x] **Session logs moved to archive** - 2.4M freed
+- [x] **Session logs properly archived** - 1.4M historical content archived
+- [x] **Active sessions preserved** - July-August 2025 remain active
 - [x] **Duplicate files consolidated** - 4 methodology duplicates removed
 - [x] **Methodology files in single location** - All moved to methodology-core
 - [x] **All references updated** - Fixed broken references
@@ -84,7 +101,7 @@ Date: August 18, 2025
 
 - **Active Documentation**: Reduced clutter by moving historical content
 - **Archive Organization**: Better long-term content management
-- **Search Efficiency**: Active docs now focused on current content
+- **Search Efficiency**: Active docs focused on current work
 
 ### Maintenance Improvement
 
@@ -101,10 +118,19 @@ Date: August 18, 2025
 ## Next Steps
 
 1. **Monitor**: Watch for any broken references or missing files
-2. **Process**: Implement monthly session log archiving
+2. **Process**: Implement monthly session log archiving (archive month N-2)
 3. **Review**: Quarterly archive cleanup and optimization
 4. **Maintain**: Keep methodology updates in consolidated location
 
+## Correction Note
+
+**IMPORTANT**: Initially archived current session logs by mistake. This was corrected to implement proper retention policy:
+
+- **Active**: Current month + 1 previous month (July-August 2025)
+- **Archived**: Historical sessions only (May-June 2025)
+
+This ensures ongoing development work remains accessible while historical content is properly organized.
+
 ---
 
-**Cleanup Mission Status**: ✅ **COMPLETE** - All objectives achieved successfully
+**Cleanup Mission Status**: ✅ **COMPLETE** - All objectives achieved successfully with proper retention policy
