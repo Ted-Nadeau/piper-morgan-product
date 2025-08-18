@@ -123,11 +123,5 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const issueNumber = ${{ steps.check-existing.outputs.result }} ||
-                               ${{ steps.create-audit-issue.outputs.result }};
-
-            if (issueNumber) {
-              console.log(`✅ Weekly documentation audit issue is ready: #${issueNumber}`);
-            } else {
-              console.log('ℹ️ No new audit issue created (may already exist)');
-            }
+            console.log('✅ Weekly documentation audit workflow completed successfully');
+            console.log('Check GitHub issues for the Weekly Docs Audit checklist');
