@@ -33,6 +33,12 @@ cat services/domain/models.py          # Verify domain models
 - Track progress in issue comments
 - Close with evidence of completion
 
+### 5. Agent-Driven Development
+- Use `/agent` command for complex multi-agent tasks
+- Specialized agents for focused execution
+- Systematic handoffs between agents
+- Compound expertise across interactions
+
 ## Daily Practice
 
 1. Start with verification commands

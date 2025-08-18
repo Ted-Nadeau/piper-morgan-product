@@ -1,0 +1,22 @@
+{
+  "cursor.cpp.disabledLanguages": ["plaintext", "markdown", "scminput"],
+  "github.copilot.enable": {
+    "*": false,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "python.terminal.shellIntegration.enabled": true,
+  "terminal.integrated.fontSize": 16,
+  "git.autofetch": true,
+  "git.openRepositoryInParentFolders": "always",
+  "workbench.colorTheme": "Solarized Light",
+  "files.autoSave": "onFocusChange",
+  "editor.rulers": [80, 120],
+  "editor.wordWrap": "bounded",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.formatting.provider": "black"
+}
