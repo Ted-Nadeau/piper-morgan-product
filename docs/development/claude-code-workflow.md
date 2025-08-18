@@ -77,6 +77,58 @@ find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
 6. DOCUMENT → update relevant ADRs/docs
 ```
 
+### /agent Integration
+
+For complex implementations requiring specialized expertise, Claude Code can leverage the `/agent` system:
+
+#### When to Use /agent
+
+1. **Architecture Design Tasks**: Complex system architecture requiring specialized planning expertise
+2. **Domain-Specific Implementation**: Areas requiring deep domain knowledge (security, performance, data science)
+3. **Quality Assurance**: Comprehensive testing strategies and validation frameworks
+4. **Documentation Creation**: Specialized technical writing and documentation structuring
+5. **Problem-Specific Solutions**: Tasks requiring focused expertise beyond general implementation
+
+#### Agent Handoff Protocol
+
+```markdown
+## Agent Handoff Template
+
+### Context Summary
+- **Current State**: [Implementation status]
+- **Objective**: [Specific goal for specialized agent]
+- **Scope**: [Boundaries and constraints]
+- **Success Criteria**: [Measurable outcomes]
+
+### Technical Context
+- **Relevant Files**: [Specific file paths]
+- **Patterns in Use**: [Architectural patterns established]
+- **Dependencies**: [External requirements]
+- **Test Requirements**: [Coverage and quality expectations]
+
+### Handoff Requirements
+- **Expected Deliverables**: [Specific outputs needed]
+- **Integration Points**: [How results integrate with existing work]
+- **Quality Standards**: [Enterprise-grade requirements]
+- **Timeline**: [Completion expectations]
+```
+
+#### Integration Workflow
+
+1. **Pre-Agent Setup**: Prepare comprehensive context using verification commands
+2. **Agent Selection**: Choose specialized agent based on task requirements
+3. **Clear Objectives**: Define specific, measurable outcomes expected
+4. **Context Transfer**: Provide complete technical context and constraints
+5. **Result Integration**: Systematically incorporate agent outputs into main workflow
+6. **Pattern Learning**: Document new approaches for future acceleration
+
+#### Quality Assurance
+
+- **Verification Requirements**: All agent deliverables must pass systematic verification
+- **Pattern Consistency**: Agent outputs must align with established architectural patterns
+- **Integration Testing**: Complete integration validation before accepting results
+- **Documentation Standards**: All agent work must include appropriate documentation updates
+
 ## 3. Typical Usage Patterns
 
 ### Infrastructure Excellence

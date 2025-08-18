@@ -1,921 +1,115 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code in this repository.
 
-## CRITICAL: Excellence Flywheel Methodology - READ FIRST
+## Core Requirements
 
-**WARNING**: Skipping this section will break our systematic excellence.
+**Excellence Flywheel**: Verify first → Implement second → Evidence-based progress → GitHub tracking
+**Python**: 3.11 required, venv activated
+**Testing**: PYTHONPATH=. python -m pytest (never bare pytest)
+**Evidence**: Never claim success without verification output
 
-### Mandatory Methodology Documents
-
-Before ANY work, read these in order:
-
-1. `docs/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md`
-2. `docs/development/methodology-core/methodology-01-TDD-REQUIREMENTS.md`
-3. `docs/development/methodology-core/methodology-02-AGENT-COORDINATION.md`
-4. `docs/development/methodology-core/methodology-03-COMMON-FAILURES.md`
-
-### The Four Pillars
-
-1. **Systematic Verification First** - Always check before acting
-2. **Test-Driven Development** - Tests before implementation
-3. **Multi-Agent Coordination** - Strategic deployment
-4. **GitHub-First Tracking** - All work tracked
-
-If you haven't read the methodology documents, STOP NOW and read them.
-
-## INTEGRITY PROTOCOL - SYSTEMATIC HONESTY REQUIREMENT
-
-**CRITICAL: This protocol ensures accuracy and prevents false success reporting across all agents.**
-
-### Core Principle: "We cannot say the tests are passing until they really all pass"
-
-**ALL AGENTS MUST FOLLOW**:
-
-#### 1. Accuracy in Status Reporting ⭐
-- **NEVER claim success without verification**
-- **NEVER say tests pass unless you've confirmed they actually pass**
-- **NEVER mark tasks complete unless work is genuinely finished**
-
-#### 2. Evidence-Based Claims Only
-```bash
-# REQUIRED: Always verify claims with evidence
-✅ CORRECT: "Tests now pass (verified: 9/9 passing)"
-❌ WRONG: "Tests should be passing now"
-
-# REQUIRED: Show actual test output when claiming success
-✅ CORRECT: "All tests pass: test_file_repository_migration.py::test_increment_reference_count PASSED"
-❌ WRONG: "I think the tests are working"
-```
-
-#### 3. Immediate Correction Protocol
-When caught making inaccurate claims:
-- **Acknowledge the error immediately**
-- **Re-verify the actual state systematically**
-- **Provide corrected information with evidence**
-- **Learn from the feedback for future accuracy**
-
-#### 4. Implementation Status Honesty
-- **In Progress**: Work is actively being done
-- **Blocked**: Cannot proceed due to specific impediment (name it)
-- **Complete**: Work is genuinely finished and verified
-- **Failed**: Attempted but did not succeed (explain why)
-
-#### 5. Test Results Accuracy Standard
-```bash
-# ALWAYS run tests to verify before claiming success
-GITHUBTOKEN=dummy_token PYTHONPATH=. python -m pytest [test_file] -v
-
-# Only claim "tests pass" when you see:
-# ===== X passed, Y warnings in Z.ZZ seconds =====
-
-# Never claim success based on:
-# - Assumptions ("should work now")
-# - Partial evidence ("most tests pass")
-# - Implementation without verification ("I added the fix")
-```
-
-#### 6. GITHUB-FIRST STATUS VERIFICATION (MANDATORY)
-Before running ANY validation tools:
-1. **Check GitHub issue comments for completion evidence**
-2. **Look for "✅ COMPLETE", "STATUS:", or completion indicators**
-3. **Verify if another agent already completed work**
-4. **ONLY THEN proceed with validation/implementation**
-
-**Pattern**: GitHub Reality → Status Verification → THEN Tools
-
-#### 7. ACCEPTANCE CRITERIA COMPLETION INTEGRITY (PM-033b LESSON)
-**CRITICAL: Never mark GitHub issues complete without checking ALL acceptance criteria**
+## Critical Commands
 
 ```bash
-# MANDATORY before ANY issue completion claim:
-gh issue view [number] --json body | grep -E "\\[[ x]\\]|acceptance|criteria"
-
-# REQUIRED: ALL boxes must be checked with evidence
-# PROHIBITED: Closing issues with unchecked criteria
-# REQUIRED: Update descriptions to match reality, not just comments
-```
-
-**Root Cause from PM-033b**: Confused "technical achievement" with "acceptance criteria completion"
-**Prevention**: Always verify EVERY checkbox has concrete evidence before marking complete
-
-#### 6a. GITHUB LABEL VERIFICATION (MANDATORY)
-**ALWAYS verify labels exist before using in gh issue commands:**
-
-```bash
-# REQUIRED: Check existing labels before ANY gh issue command
-gh label list --limit 100
-
-# SAFE: Use verified existing labels
-gh issue create --label "bug,enhancement"
-
-# CREATE: New labels when needed for better categorization
-gh label create "P0-critical" --color "d73a4a" --description "Critical priority issues"
-gh label create "workflow" --color "0075ca" --description "Workflow orchestration issues"
-```
-
-**Label Strategy (Verification-First):**
-1. **Verification First**: Always run `gh label list` before using labels
-2. **Existing Preferred**: Use existing labels when appropriate
-3. **Create When Needed**: Add new labels for better categorization
-4. **Ask When Uncertain**: Check with user for label naming/color decisions
-
-```bash
-# MANDATORY FIRST STEPS - Check issue history before ANY validation
-gh issue view [issue-number] --comments | tail -20
-gh issue view [issue-number] --comments | grep -E "(COMPLETE|✅|STATUS)"
-
-# WRONG PATTERN: Tool → Assume Work Needed
-❌ python tools/validator.py → "Work incomplete"
-
-# CORRECT PATTERN: GitHub → Verify → Then Tools
-✅ gh issue comments → Check status → THEN validate
-```
-
-#### 7. Systematic Verification Requirements
-Before any status update:
-1. **Check current reality** (don't assume)
-2. **Run verification commands** (tests, builds, etc.)
-3. **Document evidence** in response
-4. **Only then update status**
-
-### Why This Matters
-
-**False success reporting breaks the Excellence Flywheel:**
-- Wastes time on non-existent solutions
-- Destroys trust in systematic progress
-- Creates compound errors across agent sessions
-- Prevents learning from actual implementation issues
-
-**Honest reporting enables:**
-- ✅ Accurate progress tracking
-- ✅ Effective debugging and problem-solving
-- ✅ Compound learning across sessions
-- ✅ Trust in systematic methodology
-
-### Enforcement
-
-**This is not optional.** Any agent exhibiting patterns of inaccurate reporting will receive feedback to correct the behavior. The Excellence Flywheel depends on systematic honesty.
-
-## SESSION START PROTOCOL
-
-### Mandatory Session Initialization Sequence
-
-**CRITICAL: Every Claude Code session MUST begin with this protocol to ensure proper context and continuity.**
-
-#### 1. Time/Date/Location Confirmation
-```
-Acknowledge current time, date, and timezone from environment
-Example: "Good morning! It's Sun Aug 3 2025 at 7:46 AM Pacific time."
-```
-
-#### 2. Session Log Creation
-```
-Create session log following naming convention:
-- First session: YYYY-MM-DD-{agent}-log.md
-- Additional sessions: YYYY-MM-DDa-{agent}-log.md, YYYY-MM-DDb-{agent}-log.md
-- Optional descriptive suffix: YYYY-MM-DDa-{agent}-log-descriptive-name.md
-
-Required template structure documented in session logs section below.
-```
-
-#### 3. Context Review Protocol
-```
-Check for handoff documentation:
-- Look for handoff prompts in docs/development/prompts/
-- Review recent session logs for context
-- Identify incomplete tasks or ongoing work
-- Note any specific instructions or constraints
-```
-
-#### 4. Task Planning and Organization
-```
-For multi-step or complex tasks:
-- Use TodoWrite tool immediately to organize work
-- Break down tasks into specific, actionable items
-- Set appropriate priorities and dependencies
-- Track progress throughout session
-```
-
-#### 5. Verification-First Methodology
-```
-Before any implementation:
-- Always verify current state with appropriate tools
-- Check existing patterns and architecture
-- Understand context before making changes
-- Follow systematic verification approach
-```
-
-### Session Start Success Criteria
-
-- [ ] Time/date acknowledged
-- [ ] Session log created with proper naming
-- [ ] Context reviewed from handoffs/previous sessions
-- [ ] Tasks organized with TodoWrite (if complex)
-- [ ] Current state verified before proceeding
-
-This protocol ensures **systematic context transfer** and **continuity between sessions**, critical for maintaining the Excellence Flywheel methodology.
-
-## Project Overview
-
-Piper Morgan is an AI-powered Product Management Assistant platform that evolves from automating routine PM tasks to providing strategic insights. It's built with domain-driven design where PM concepts (Product, Feature, Intent, WorkItem) drive the technical architecture.
-
-## PM ISSUE IMPLEMENTATION PROTOCOL
-
-### GitHub-First Implementation Approach
-
-**CRITICAL: Before implementing any PM-XXX issue, ALWAYS:**
-
-1. **Review GitHub Issue Completely**
-
-   - Read the issue description and all comments
-   - Look for preparation reports from other agents (analysis, scouting, risk assessments)
-   - Check for implementation roadmaps or strategic guidance
-   - Verify current status and any recent updates
-
-2. **Coordinate with Preparation Work**
-
-   - Reference preparation findings in your implementation approach
-   - Follow recommended implementation sequences when provided
-   - Incorporate risk mitigation strategies from preparation reports
-   - Build on analysis work rather than duplicating effort
-
-3. **Verify Current Context**
-   - Confirm issue hasn't been updated since your assignment
-   - Check for dependencies or blockers mentioned in comments
-   - Look for related issues or cross-references
-   - Ensure you have the complete context before proceeding
-
-### Implementation Coordination Standards
-
-**For Critical Issues (PM-055, architectural work, etc.):**
-
-- **MANDATORY**: Review all GitHub issue comments before starting
-- **REQUIRED**: Reference preparation work in implementation strategy
-- **EXPECTED**: Coordinate findings and build on previous agent work
-- **DOCUMENT**: How preparation work influenced your implementation approach
-
-**For Standard Issues:**
-
-- **RECOMMENDED**: Quick GitHub issue review for context
-- **HELPFUL**: Look for related preparation or analysis work
-- **EFFICIENT**: Avoid duplicating research already completed
-
-**Quality Philosophy:**
-
-- GitHub issues are the **authoritative source of truth** for implementation context
-- Multi-agent coordination **builds value systematically** rather than working in isolation
-- **Preparation work accelerates implementation** rather than slowing it down
-- **Reading GitHub first saves time** and improves implementation quality
-
-### Success Examples from 2025-07-21
-
-**PM-015 Group 3 Implementation Success:**
-
-- Code reviewed ADR-010 documentation before implementing
-- Used fresh FeatureFlags utility from preparation work
-- Achieved 100% test success by building on architectural guidance
-- Implementation time minimized through preparation coordination
-
-**PM-055 Preparation Coordination:**
-
-- Cursor provided comprehensive implementation readiness report
-- Code's blocker mitigation work informed by preparation analysis
-- Wednesday implementation de-risked through systematic coordination
-- GitHub issue became central coordination point for multi-agent work
-
-These examples demonstrate how **GitHub-first coordination** amplifies agent effectiveness and accelerates systematic progress.
-
-## SYSTEMATIC VERIFICATION FIRST METHODOLOGY ⭐
-
-### Our Biggest Breakthrough: "Check First, Implement Second"
-
-The **Systematic Verification First** approach has proven to be our most transformative breakthrough, enabling 15-minute ADR migrations and 11-minute complete framework implementations.
-
-#### MANDATORY FIRST STEP - EXAMINE EXISTING PATTERNS
-
-**NEVER start implementation without verification.** This is non-negotiable and foundational to our extraordinary productivity.
-
-```bash
-# ALWAYS start with pattern discovery
-grep -r "ConfigService" services/ --include="*.py" -A 3 -B 3
-grep -r "class.*Repository" services/ --include="*.py"
-find . -name "*.py" -exec grep -l "ADR-010" {} \;
-```
-
-#### Standard Verification Commands Library
-
-```bash
-# Pattern Discovery
-grep -r "pattern_name" services/ --include="*.py" -A 5 -B 5
-find . -path "*/test*" -name "*.py" -exec grep -l "TestCase" {} \;
-
-# Architecture Analysis
-find services/ -name "*.py" -exec grep -l "class.*Service" {} \;
-grep -r "from services\." . --include="*.py" | head -20
-
-# Test Pattern Investigation
-find tests/ -name "*.py" -exec grep -l "async def test" {} \;
-grep -r "@pytest.fixture" tests/ --include="*.py"
-
-# Configuration Pattern Research
-grep -r "os\.getenv\|environment\|config" services/ --include="*.py"
-find . -name "*.py" -exec grep -l "ADR-[0-9]" {} \;
-```
-
-#### Pattern Library Reference
-
-1. **Repository Pattern**: `services/repositories/*.py` - Standard async repository implementation
-2. **Service Pattern**: `services/*/service.py` - Business logic encapsulation
-3. **ADR Patterns**: `docs/architecture/adr-*.md` - Architectural decision implementations
-4. **Test Patterns**: `tests/*/test_*.py` - Comprehensive test coverage approaches
-5. **Jekyll Liquid Escaping**: `{% raw %}...{% endraw %}` - Escape double braces in GitHub Pages documentation
-6. **Pattern Detection**: `scripts/pattern_sweep.py` - Automated pattern discovery and learning acceleration
-
-#### Implementation Workflow (MANDATORY)
-
-```
-1. VERIFY → grep/find existing patterns (2-3 minutes)
-2. ANALYZE → understand current architecture (3-5 minutes)
-3. DESIGN → adapt patterns to requirements (2-3 minutes)
-4. IMPLEMENT → follow established conventions (5-10 minutes)
-5. TEST → maintain coverage standards (3-5 minutes)
-6. DOCUMENT → update relevant ADRs/docs (2-3 minutes)
-```
-
-#### Why This Works (Empirically Proven)
-
-1. **Prevents Assumption-Based Development**: Eliminates "I think the pattern is..." → guarantees "I know the pattern is..."
-2. **Ensures Architectural Consistency**: Identifies established patterns before creating new ones
-3. **Accelerates Implementation**: Understanding existing structure eliminates false starts and rework
-4. **Maintains Quality**: Leverages proven patterns rather than inventing new approaches
-5. **Enables Excellence Flywheel**: Each implementation builds knowledge for accelerated future work
-
-#### Success Metrics Achieved
-
-- **Implementation Speed**: 15-minute ADR migrations (previously 2+ hours)
-- **Quality Maintenance**: 100% test coverage during rapid development
-- **Pattern Consistency**: Zero architectural drift across 50+ implementations
-- **Context Preservation**: Seamless multi-session complex projects
-
-**Key Insight**: Verification is not overhead - it's the foundation of acceleration. Every minute spent on systematic pattern research saves hours of implementation time and prevents architectural drift.
-
-## CRITICAL: NO ASSUMPTION ZONE - VERIFICATION MANDATORY
-
-### For ALL Agent Deployments (Code + Cursor)
-
-**ZERO TOLERANCE for assumption-based development:**
-
-#### Code Agent Verification Requirements
-
-```bash
-# MANDATORY verification commands before ANY work:
-find . -name "*.py" | grep [pattern]      # Find existing patterns
-cat [file] | grep [search]                # Check implementations
-grep -r [pattern] services/ --include="*.py"  # Verify patterns exist
-ls -la [directory]                        # Confirm directory structure
-```
-
-#### Cursor Agent Verification Requirements
-
-```bash
-# MANDATORY verification commands before ANY implementation:
-grep -r "CategoryType\|IntentCategory\|enum" services/ --include="*.py"
-cat services/shared_types.py | head -20
-find . -name "*.py" -exec grep -l "class.*Enum\|@dataclass" {} \;
-```
-
-#### Methodology Violation Consequences
-
-- **Performance Impact**: Assumption-based development reduces velocity by 50-70%
-- **Quality Risk**: Breaks systematic architecture patterns
-- **Rework Required**: Failed implementations require complete restart
-- **Excellence Flywheel Broken**: Destroys compound productivity gains
-
-#### Enforcement Protocol
-
-If an agent shows signs of assumption-based development:
-
-1. **Immediate Reset**: Stop work and enforce verification-first
-2. **Methodology Reminder**: Review Four Pillars compliance
-3. **Verification Commands**: Require mandatory discovery before proceeding
-4. **Quality Gate**: No implementation without systematic verification
-
-**THE EXCELLENCE FLYWHEEL ONLY WORKS WITH SYSTEMATIC VERIFICATION FIRST**
-
-## ACCEPTANCE CRITERIA VERIFICATION PROTOCOL ⭐
-
-### Mandatory GitHub Issue Completion Standards
-
-**CRITICAL: Following PM-033b retrospective analysis findings, ALL GitHub issues must follow systematic completion verification to prevent false success reporting.**
-
-#### 1. Session Start Protocol for GitHub Issues
-
-**MANDATORY for ANY GitHub issue work:**
-
-```bash
-# Step 1: ALWAYS read complete issue before starting
-gh issue view [issue-number] --comments
-
-# Step 2: Copy ALL acceptance criteria to session notes
-# Create explicit checklist in session log before ANY implementation
-
-# Step 3: Verify current completion state vs description
-gh issue view [issue-number] --json body,state
-```
-
-#### 2. Scope Drift Detection Protocol
-
-**MANDATORY checkpoint every 30 minutes during implementation:**
-
-```markdown
-## SCOPE CHECK [timestamp]
-- [ ] Original issue scope maintained
-- [ ] All acceptance criteria still addressable
-- [ ] No feature creep or adjacent work added
-- [ ] Implementation directly serves stated requirements
-```
-
-#### 3. Completion Verification Sequence (MANDATORY)
-
-**BEFORE marking ANY GitHub issue complete:**
-
-```bash
-# Step 1: Re-read original acceptance criteria
-gh issue view [issue-number] --json body
-
-# Step 2: Evidence verification for EACH checkbox
-# REQUIREMENT: Provide concrete evidence for each checked item:
-# ✅ [Criteria text] - EVIDENCE: [file path, command output, specific deliverable]
-
-# Step 3: PROHIBITED - Cannot close issue with unchecked criteria
-# If criteria remain unchecked, issue MUST remain OPEN or be updated to reflect partial completion
-
-# Step 4: Update description with checked boxes AND evidence
-gh issue edit [issue-number] --body "$(cat <<'EOF'
-[Updated description with checked boxes and evidence]
-EOF
-)"
-```
-
-#### 4. Evidence Standards for Issue Completion
-
-**REQUIRED evidence types for checked acceptance criteria:**
-
-- **File Creation**: Full file path, line count, functional verification
-- **Feature Implementation**: Working command/URL, test results, user validation
-- **Documentation**: File path, section coverage, accuracy verification
-- **Integration**: API calls working, service connections verified
-- **Testing**: Test file paths, passing status, coverage metrics
-
-#### 5. Partial Completion Protocol
-
-**When work is incomplete but session ends:**
-
-```markdown
-## HONEST PARTIAL COMPLETION
-- ✅ [Completed criteria] - EVIDENCE: [specific proof]
-- 🟡 [Partially completed] - STATUS: [what's done, what remains]
-- ❌ [Not started] - REMAINING: [clear description of work needed]
-
-COMPLETION STATUS: X/Y criteria complete (Z% overall)
-RECOMMENDATION: [Continue vs Split issue vs Close with partial success]
-```
-
-#### 6. Root Cause Prevention Measures
-
-**Addressing specific failure modes identified in PM-033b retro:**
-
-**Scope Drift Prevention:**
-- Copy original acceptance criteria to session notes at start
-- Reference original criteria in every status update
-- Flag when implementation differs from stated requirements
-
-**Success Metric Confusion Prevention:**
-- Distinguish between "technical achievement" and "acceptance criteria completion"
-- Require explicit mapping: "Technical work X addresses criteria Y"
-- Verify ALL criteria addressed before claiming completion
-
-**Verification Blind Spot Prevention:**
-- MANDATORY re-read of original issue before marking complete
-- Evidence required for EVERY checked box
-- Cannot close issue with unchecked acceptance criteria
-
-#### 7. Quality Gates (NON-NEGOTIABLE)
-
-**These gates CANNOT be bypassed:**
-
-1. **No Assumption Gate**: Must verify current issue state before starting
-2. **Evidence Gate**: Every checked box must have concrete evidence
-3. **Completeness Gate**: Cannot close issues with unchecked acceptance criteria
-4. **Scope Gate**: Work must address original requirements, not adjacent improvements
-5. **Documentation Gate**: All completion claims must be documented with proof
-
-### Enforcement and Learning
-
-**Violation Response Protocol:**
-1. **Immediate Correction**: Update inaccurate issue descriptions immediately
-2. **Root Cause Analysis**: Document what led to inaccurate reporting
-3. **Process Improvement**: Update this protocol based on new failure modes
-4. **Systematic Application**: Apply learnings to all future issue work
-
-**Success Metrics:**
-- Zero issues closed with unchecked acceptance criteria
-- All completion claims backed by concrete evidence
-- No false "COMPLETE" statuses in planning documents
-- Reduced rework due to incomplete understanding
-
-**Key Insight from PM-033b Retro**: "Technical achievement ≠ Acceptance criteria completion. The difference is systematic verification vs assumption-based reporting."
-
-## Requirements
-
-### Python Version
-
-- **Python 3.11** is required for all environments
-- Use `.python-version` file in project root for version management
-- Docker images use `python:3.11-slim-buster` base image
-- Virtual environment should be created with Python 3.11
-
-### MCP Tools Available
-
-**Context7 Documentation Retrieval**
-- **Purpose**: Access up-to-date code examples and documentation for libraries/frameworks
-- **Usage**: Add "use context7" to prompts when needing current documentation
-- **Benefits**: Eliminates outdated docs, prevents API hallucinations, provides version-specific examples
-- **Installed**: Remote HTTP transport to `https://mcp.context7.com/mcp`
-
-**When to Use Context7:**
-- Verifying current API patterns for FastAPI, SQLAlchemy, AsyncPG
-- Getting fresh examples for GitHub API, Slack API integrations
-- Confirming latest best practices for dependencies
-- Accessing current patterns for async Python, PostgreSQL optimization
-
-## Key Commands
-
-### Development Setup
-
-```bash
-# Activate virtual environment
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Start infrastructure (PostgreSQL, Redis, ChromaDB, Temporal, Traefik)
+# Setup
+source venv/bin/activate
 docker-compose up -d
 
-# Initialize database (only needed once)
-python scripts/init_db.py
+# Testing (ALWAYS with PYTHONPATH)
+PYTHONPATH=. python -m pytest tests/unit/ -v
+PYTHONPATH=. python -m pytest tests/integration/test_file.py::TestClass::test_method -v
 
-# Run main API server (port 8001)
-python main.py
-
-# Run web UI (port 8081)
+# Running
+python main.py  # API on 8001
 cd web && python -m uvicorn app:app --reload --port 8081
 
-# Check graceful degradation status (PM-063)
-curl http://localhost:8001/api/v1/query-router/degradation-status
-```
-
-### Testing
-
-## Essential Testing Commands for Code Agent
-
-**Always use these exact patterns for running tests:**
-
-```bash
-# Individual test files
-PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v
-
-# Test directories
-PYTHONPATH=. python -m pytest tests/unit/ -v
-
-# Specific test methods
-PYTHONPATH=. python -m pytest tests/unit/test_slack_components.py::TestSlackResponseHandler::test_monitoring_intent_bypass -v
-
-# With coverage
-PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
-
-# Fast failure mode
-PYTHONPATH=. python -m pytest tests/ -x -v
-
-# TLDR Continuous Verification (ultra-fast feedback)
-PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
-PYTHONPATH=. ./scripts/tldr_runner.py --pattern validation
-
-# TLDR with Pattern Detection (compound learning)
-PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-patterns
-
-# PM-063: Graceful degradation system tests
-PYTHONPATH=. python -m pytest tests/integration/test_query_router_system_degradation.py -v
-PYTHONPATH=. python -m pytest tests/unit/test_query_response_formatter.py -v
-```
-
-### Common Testing Mistakes to Avoid
-
-❌ **WRONG**: `pytest tests/integration/test_slack_e2e_pipeline.py -v`
-✅ **CORRECT**: `PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v`
-
-❌ **WRONG**: Assuming `pytest` command exists in PATH
-✅ **CORRECT**: Always use `python -m pytest` with PYTHONPATH
-
-### Test Environment Setup
-
-```bash
-# If tests fail with import errors, verify environment:
-python -c "import services.observability.slack_monitor; print('✅ Observability imports work')"
-python -c "import services.infrastructure.task_manager; print('✅ Task manager imports work')"
-
-# Check test structure
-find tests/ -name "*.py" -type f | head -10
-```
-
-### Test Status Verification
-
-```bash
-# Quick test status check
-PYTHONPATH=. python -m pytest tests/ --collect-only -q | tail -5
-
-# Test counts by category
-find tests/ -name "test_*.py" -exec basename {} \; | wc -l
-```
-
-**Why This Matters**: Code agent repeatedly forgets the PYTHONPATH requirement and tries `pytest` directly, causing "command not found" errors and wasted debugging time.
-
-## Testing Commands (Code Agent Reference)
-
-### Python Test Execution Patterns
-
-Always use these exact patterns:
-
-```bash
-# Individual test files
-PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v
-
-# Test directories
-PYTHONPATH=. python -m pytest tests/unit/ -v
-
-# With coverage
-PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
-```
-
-### Common Mistakes to Avoid
-
-❌ WRONG: pytest tests/file.py
-✅ CORRECT: PYTHONPATH=. python -m pytest tests/file.py
-
-### Testing Discipline Protocol (CRITICAL)
-
-**MANDATORY: Dual Testing Strategy**
-- **Unit Tests**: Fast feedback with strategic mocking
-- **Reality Tests**: Full execution paths without critical mocks
-
-**FORBIDDEN: Critical Path Over-Mocking**
-```bash
-# ❌ WRONG: Mock away the code you're testing
-@patch("services.orchestration.workflow_factory.WorkflowFactory._validate_workflow_context")
-def test_workflow_creation(mock_validate):
-    mock_validate.return_value = None  # Hides UnboundLocalError bugs
-
-# ✅ CORRECT: Test real execution paths
-def test_workflow_creation_reality():
-    workflow = await factory.create_from_intent(intent)  # Real execution
-```
-
-**REQUIRED: Production Reality Testing**
-```bash
-# Before any workflow-related commits
-PYTHONPATH=. python scripts/workflow_reality_check.py
-
-# Regular quality gates
-PYTHONPATH=. python scripts/workflow_reality_check.py --timeout 60
-```
-
-**Key Insight**: *Tests that pass ≠ Code that works. The difference is mocked vs real execution.*
-
-### Pattern Detection & Learning
-
-```bash
-# Run pattern sweep across codebase
-PYTHONPATH=. ./scripts/pattern_sweep.py --pattern-sweep-only --verbose
-
-# Full TLDR + Pattern Sweep integration
-PYTHONPATH=. ./scripts/pattern_sweep.py --tldr-integration --verbose
-
-# Pattern detection with usage learning
-PYTHONPATH=. ./scripts/pattern_sweep.py --with-pattern-detection --learn-usage-patterns
-```
-
-### Common Development Tasks
-
-```bash
-# Check database connection
-PYTHONPATH=. python -c "from services.database.connection import get_db_session; list(get_db_session())"
-
-# Access PostgreSQL directly
+# Database
 docker exec -it piper-postgres psql -U piper -d piper_morgan
-
-# View Redis cache
-docker exec -it piper-redis redis-cli
-
-# View logs
-docker-compose logs -f [service_name]
 ```
 
-### Session Logs
-
-When creating session logs in `docs/development/session-logs/`:
-
-**Naming Convention:**
-
-- First session of day: `YYYY-MM-DD-log.md`
-- Subsequent sessions: `YYYY-MM-DDa-log.md`, `YYYY-MM-DDb-log.md`, etc.
-- Optional descriptive suffix: `YYYY-MM-DDa-log-descriptive-name.md`
-
-**Required Template Structure:**
-
-```markdown
-# Session Log: [Brief Description]
-
-**Date:** YYYY-MM-DD
-**Duration:** ~X hours
-**Focus:** [Primary objective]
-**Status:** [Complete/In Progress/Blocked]
-
-## Summary
-
-[Brief overview of what was accomplished]
-
-## Problems Addressed
-
-[List of issues tackled]
-
-## Solutions Implemented
-
-[What was built/fixed]
-
-## Key Decisions Made
-
-[Important architectural or design choices]
-
-## Files Modified
-
-[List of changed files]
-
-## Next Steps
-
-[What should happen next]
-```
-
-## Development Approach
-
-### Core Principles
-
-- Question assumptions and explore alternatives
-- Catch antipatterns before they take root
-- Use decision points as teaching moments
-- Keep responses "concise but complete"
-- One actionable step at a time
-
-### Key Constraints
-
-- $0 software budget - use only free/open source tools
-- Single developer bandwidth - optimize for maintainability
-- Production-ready from start - no "we'll fix it later"
-
-### Critical Files to Review
-
-Always check these files when starting work:
-
-- `services/domain/models.py` - Canonical source of truth
-- `services/shared_types.py` - All enums defined here
-- `docs/architecture/architecture.md` - System design and patterns
-- `docs/architecture/pattern-catalog.md` - Approved implementation patterns
-- Session logs in `docs/development/session-logs/` - Current context
-
-### Detailed Guidelines
-
-For comprehensive development methodology, see:
-
-- **Working Method**: `docs/development/working-method.md` - Step-by-step execution patterns
-- **Architecture Guidelines**: `docs/development/architectural-guidelines.md` - Antipatterns and best practices
-- **Session Handoffs**: `docs/development/continuity-prompt-template.md` - Managing session transitions
-
-## Architecture & Code Structure
-
-### Core Design Patterns
-
-1. **Domain-Driven Design**: All business logic flows from domain models in `services/database/models.py`. The database schema is generated from SQLAlchemy models, not the other way around.
-
-   - **NO QUICK FIXES**: Always fix issues at the correct domain layer
-   - **Layered Architecture**: Domain → Application → Infrastructure → Presentation
-   - **Business logic belongs in domain services**, not UI or infrastructure layers
-
-2. **AsyncSessionFactory Pattern**: Standardized async session management across all components (2025-07-15 migration)
-
-   - **Session Scope**: `AsyncSessionFactory.session_scope()` for automatic session lifecycle management
-   - **Transaction Awareness**: Repository methods detect existing transactions to prevent double-scoping
-   - **Context Managers**: All database operations use async context managers for cleanup
-   - **Consistent Pattern**: Replaces legacy RepositoryFactory and direct session creation
-
-3. **CQRS-lite Pattern**:
-
-   - Read operations: `services/queries/` (QueryRouter handles all read-only operations)
-   - Write operations: `services/orchestration/` (workflows and commands)
-
-4. **Repository Pattern**: All data access through repositories in `services/repositories/`
-
-5. **Workflow Orchestration**:
-   - Uses internal task handler pattern in `OrchestrationEngine`
-   - Stateless `WorkflowFactory` with per-call context injection
-   - Automatic repository context enrichment for workflows
-
-### Key Service Components
-
-- **Intent Service** (`services/intent_service/`): Classifies user messages into QUERY, EXECUTION, ANALYSIS, etc.
-- **Orchestration Engine** (`services/orchestration/engine.py`): Manages complex multi-step workflows
-- **Query Router** (`services/queries/query_router.py`): Handles all read operations with specialized query services and graceful degradation (PM-063)
-- **Query Degradation Handler** (`services/queries/degradation.py`): Circuit breaker patterns and intelligent fallbacks for system resilience
-- **Query Response Formatter** (`services/api/query_response_formatter.py`): Converts diverse response types to API-compatible messages
-- **Knowledge Base** (`services/knowledge_base/`): Vector storage with 85+ PM documents
-- **Analysis Services** (`services/analysis/`): Document and text analysis with file type detection
-
-### API Endpoints
-
-Main API (`main.py`, port 8001):
-
-- `POST /api/v1/intent` - Process natural language messages
-- `GET /api/v1/workflows/{id}` - Check workflow status
-- `POST /api/v1/files/upload` - Upload documents for analysis
-
-Web UI (`web/app.py`, port 8081):
-
-- Chat interface for interacting with Piper Morgan
-- File upload and analysis
-- Real-time workflow status updates
-
-### Integration Points
-
-- **GitHub**: Fully functional issue creation and analysis (`services/integrations/github/`)
-- **Slack**: Complete spatial metaphor integration with OAuth, event processing, and workflow connection (`services/integrations/slack/`)
-- **Multi-LLM Strategy**: Claude for reasoning, OpenAI for embeddings
-- **Session Management**: Tracks user context and uploaded files
-
-### Environment Configuration
-
-Required environment variables in `.env`:
+## Project Structure
 
 ```
-ANTHROPIC_API_KEY=your_key_here
-OPENAI_API_KEY=your_key_here
+services/
+├── domain/models.py           # Source of truth - check first
+├── shared_types.py            # All enums here
+├── orchestration/             # Workflows, multi-agent coordination
+├── queries/                   # Read operations (CQRS)
+├── repositories/              # Data access only
+└── integrations/              # GitHub, Slack, external
+
+tests/
+├── unit/                      # Fast, mocked
+├── integration/               # Real DB (port 5433)
+└── conftest.py               # Fixtures: async_session, async_transaction
+
+docs/
+├── architecture/             # ADRs, patterns
+├── development/
+│   ├── methodology-core/     # Excellence Flywheel docs
+│   └── session-logs/         # Daily logs: YYYY-MM-DD-log.md
+└── planning/                 # Roadmap, backlog
+```
+
+## Verification Requirements
+
+**Before ANY implementation**:
+```bash
+grep -r "pattern" services/ --include="*.py" -A 3 -B 3  # Find existing patterns
+cat services/domain/models.py | grep "class"            # Check domain models
+find . -name "*.py" -exec grep -l "ADR-" {} \;         # Find architectural decisions
+```
+
+**Before claiming completion**:
+```bash
+gh issue view [number] --json body | grep "\\[[ x]\\]"  # Check acceptance criteria
+PYTHONPATH=. python -m pytest [test] -v                 # Run actual tests
+# See "X passed" before claiming success
+```
+
+## Session Protocol
+
+1. Create log: `docs/development/session-logs/YYYY-MM-DD-log.md`
+2. Check handoffs: `docs/development/prompts/*-handoff-*.md`
+3. Complex tasks: Use TodoWrite tool
+4. End session: Update GitHub issues with evidence
+
+## Don'ts
+
+- Never create test_*.py files outside tests/ directory
+- Never use bare pytest (always PYTHONPATH=. python -m pytest)
+- Never claim tests pass without running them
+- Never close GitHub issues with unchecked criteria
+- Never skip verification before implementation
+- Never mock critical execution paths in tests
+
+## Architecture Rules
+
+- Domain models (models.py) drive everything - DB follows models
+- AsyncSessionFactory.session_scope() for all DB operations
+- Repositories for data access only - no business logic
+- Services for business logic - no direct DB access
+- All enums in shared_types.py only
+
+## Environment Variables
+
+```
+ANTHROPIC_API_KEY=required
+OPENAI_API_KEY=required
 DATABASE_URL=postgresql://piper:dev_changeme_in_production@localhost:5433/piper_morgan
 REDIS_URL=redis://localhost:6379
+GITHUB_TOKEN=for_gh_commands
 ```
 
-### Testing Strategy
+## MCP Integration
 
-- Integration tests use real database connections (PostgreSQL on port 5433)
-- **AsyncSessionFactory Test Fixtures**: Use `async_session` and `async_transaction` fixtures for new tests
-- **Legacy Support**: `db_session` fixture maintained for backward compatibility
-- Tests automatically handle database cleanup between runs
-- Asyncpg warnings during teardown are benign and can be ignored
-- Always set `PYTHONPATH=.` when running tests
+Context7 available for library docs: "use context7" in prompts
 
-#### Async Session Test Patterns
+## Quick Patterns
 
-```python
-# Recommended pattern for new tests
-async def test_something(async_transaction):
-    async with async_transaction as session:
-        repo = SomeRepository(session)
-        await repo.operation()
-
-# Alternative for read-only operations
-async def test_query(async_session):
-    async with async_session as session:
-        repo = SomeRepository(session)
-        result = await repo.get_something()
-```
-
-### Current Development Focus
-
-Based on git status, active development includes:
-
-- Multi-project context resolution (PM-009)
-- File query routing and analysis
-- Architecture Decision Records (ADRs) for MCP integration
-- Enhanced document analysis capabilities
-
-### Development Tools
-
-- **Schema Validator** (`tools/check_domain_db_consistency.py`): Validates consistency between domain models and database schema
-  - Run with: `PYTHONPATH=. python tools/check_domain_db_consistency.py`
-  - Critical for maintaining Domain-Driven Design integrity
-  - Detects field mismatches, type inconsistencies, and missing models
-- **Pattern Sweep** (`scripts/pattern_sweep.py`): Automated pattern discovery
-- **TLDR Runner** (`scripts/tldr_runner.py`): Ultra-fast continuous testing
-
-### Important Notes
-
-1. **Docker Volumes**: Uses named volume `piper_postgres_data_v1` to persist data across container restarts
-2. **Port Mappings**: PostgreSQL runs on 5433 (not default 5432) to avoid conflicts
-3. **Linting**: No specific linting configuration found - follow existing code style
-4. **File Uploads**: Stored in `uploads/` directory with timestamp prefixes
-5. **Schema Validation**: Always run schema validator after model changes to prevent drift
+**New test**: Use async_transaction fixture
+**New repository**: Inherit from base, use AsyncSessionFactory
+**New service**: Business logic only, inject repositories
+**New enum**: Add to shared_types.py only
+**Session logs**: First of day: YYYY-MM-DD-log.md, then add a,b,c suffix

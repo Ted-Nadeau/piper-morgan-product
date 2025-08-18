@@ -1,10 +1,12 @@
 # Piper Morgan Pattern Index
-*Last Updated: August 11, 2025*
-*Total Patterns: 25+*
+
+_Last Updated: August 11, 2025_
+_Total Patterns: 25+_
 
 ## Architectural Patterns
 
 ### Repository Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/repositories/`, `services/database/repositories.py`
 - **Description**: Encapsulate data access logic with clean interface between domain models and database implementation
@@ -12,6 +14,7 @@
 - **Related ADR**: ADR-005 (repository pattern consistency)
 
 ### Service Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/*/service.py`
 - **Description**: Business logic encapsulation in dedicated service classes
@@ -19,6 +22,7 @@
 - **Related ADR**: None (core architectural principle)
 
 ### Factory Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/orchestration/workflow_factory.py`
 - **Description**: Stateless object creation for concurrency safety
@@ -26,6 +30,7 @@
 - **Related ADR**: None (core architectural principle)
 
 ### CQRS-lite Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/queries/`, `services/orchestration/`
 - **Description**: Separation of read operations (queries) from write operations (commands)
@@ -33,6 +38,7 @@
 - **Related ADR**: None (core architectural principle)
 
 ### Universal Composition Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/domain/models.py`, `services/database/models.py`
 - **Description**: Single universal class with discriminator field instead of specialized classes
@@ -40,6 +46,7 @@
 - **Related ADR**: Universal List Architecture Guide
 
 ### Backward Compatibility Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/domain/models.py`
 - **Description**: Compatibility layer that delegates to new architecture
@@ -47,6 +54,7 @@
 - **Related ADR**: Universal List Architecture Guide
 
 ### Performance Optimization Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/database/`
 - **Description**: Strategic indexing and caching for new patterns
@@ -54,6 +62,7 @@
 - **Related ADR**: Universal List Architecture Guide
 
 ### Integration Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/integrations/`
 - **Description**: Clear integration points and validation
@@ -63,6 +72,7 @@
 ## Implementation Patterns
 
 ### AsyncSession Constructor Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/database/`
 - **Description**: AsyncSession constructor for automatic resource lifecycle management
@@ -70,6 +80,7 @@
 - **Related ADR**: ADR-005 (repository pattern consistency)
 
 ### Context Manager Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/database/repositories.py`
 - **Description**: Context manager approach for automatic resource lifecycle
@@ -77,6 +88,7 @@
 - **Related ADR**: ADR-008 (MCP connection pooling)
 
 ### Feature Flag Safety Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/infrastructure/feature_flags/`
 - **Description**: Always test both old and new code paths during integration
@@ -84,6 +96,7 @@
 - **Related ADR**: ADR-010 (configuration management)
 
 ### Transaction Management Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/database/repositories.py`
 - **Description**: Consistent transaction handling with automatic commit/rollback
@@ -91,6 +104,7 @@
 - **Related ADR**: ADR-005 (repository pattern consistency)
 
 ### Error Handling Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/`
 - **Description**: Graceful degradation with specific error types
@@ -98,6 +112,7 @@
 - **Related ADR**: Error handling framework
 
 ### Configuration Management Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `services/infrastructure/config/`
 - **Description**: Hybrid configuration access with clean abstractions
@@ -107,6 +122,7 @@
 ## Testing Patterns
 
 ### Test-First Development Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/`, methodology documentation
 - **Description**: Write tests before implementation to drive design
@@ -114,6 +130,7 @@
 - **Related ADR**: TDD Requirements methodology
 
 ### Integration Testing Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/integration/`
 - **Description**: Component interactions with real dependencies
@@ -121,6 +138,7 @@
 - **Related ADR**: Test Strategy document
 
 ### Unit Testing Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/unit/`
 - **Description**: Isolated component testing with mocked dependencies
@@ -128,6 +146,7 @@
 - **Related ADR**: Test Strategy document
 
 ### End-to-End Testing Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/`
 - **Description**: Full workflow testing with real services
@@ -135,6 +154,7 @@
 - **Related ADR**: Test Strategy document
 
 ### Test Reliability Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/`
 - **Description**: Deterministic test execution with proper isolation
@@ -144,6 +164,7 @@
 ## Decision Patterns
 
 ### Verification-First Pattern
+
 - **Status**: ✅ **Proven** (Critical Strength: 15/16)
 - **Location**: `docs/piper-education/decision-patterns/emergent/verification-first-pattern.md`
 - **Description**: Ensure reliability by systematically verifying AI-generated solutions
@@ -151,6 +172,7 @@
 - **Related ADR**: Excellence Flywheel methodology
 
 ### Incremental Refactoring Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/development/universal-list-architecture-guide.md`
 - **Description**: Systematic transformation without compromising quality
@@ -158,13 +180,15 @@
 - **Related ADR**: Universal List Architecture Guide
 
 ### Risk-Based Decision Pattern
+
 - **Status**: ✅ **Proven**
-- **Location**: `docs/development/methodology-04-ARCHITECTURAL-AGILITY.md`
+- **Location**: `docs/development/methodology-core/methodology-04-ARCHITECTURAL-AGILITY.md`
 - **Description**: Evaluate technical, performance, maintenance, and integration risks
 - **Usage Example**: Architectural decision framework
 - **Related ADR**: Architectural Agility methodology
 
 ### Context-Driven Decision Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/piper-education/decision-patterns/`
 - **Description**: Decisions based on specific context and requirements
@@ -172,6 +196,7 @@
 - **Related ADR**: Context management framework
 
 ### AI-Assisted Decision Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/development/human-ai-architectural-collaboration.md`
 - **Description**: Human strategic vision + AI systematic execution
@@ -181,6 +206,7 @@
 ## Quality Assurance Patterns
 
 ### Excellence Flywheel Methodology
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/development/methodology-core/`
 - **Description**: Systematic approach to development quality and velocity
@@ -188,6 +214,7 @@
 - **Related ADR**: Core methodology documents
 
 ### Systematic Verification Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `CLAUDE.md`, methodology documentation
 - **Description**: Verify requirements and existing state before implementation
@@ -195,6 +222,7 @@
 - **Related ADR**: Excellence Flywheel methodology
 
 ### Quality Gate Enforcement Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/`, CI/CD pipeline
 - **Description**: Automated validation prevents testing regressions
@@ -202,6 +230,7 @@
 - **Related ADR**: Test Strategy document
 
 ### Regression Prevention Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `tests/`, automation tools
 - **Description**: Prevent over-mocking and testing regressions
@@ -211,6 +240,7 @@
 ## Process Patterns
 
 ### Multi-Agent Coordination Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/development/methodology-core/methodology-02-AGENT-COORDINATION.md`
 - **Description**: Strategic deployment of multiple AI agents for parallel work
@@ -218,6 +248,7 @@
 - **Related ADR**: Agent coordination methodology
 
 ### Handoff Protocol Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/development/prompts/`
 - **Description**: Systematic context transfer between agent sessions
@@ -225,6 +256,7 @@
 - **Related ADR**: Session management framework
 
 ### Session Management Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/development/session-logs/`
 - **Description**: Structured session logging and progress tracking
@@ -232,6 +264,7 @@
 - **Related ADR**: Session logging framework
 
 ### Documentation Pattern
+
 - **Status**: ✅ **Proven**
 - **Location**: `docs/`
 - **Description**: Comprehensive documentation with cross-references
@@ -241,21 +274,25 @@
 ## Discovered Patterns (Not Yet Documented)
 
 ### MCP Integration Patterns
+
 - **Pattern**: MCP connection pooling and circuit breaker patterns
 - **Found in**: `docs/architecture/adr-008-mcp-connection-pooling-production.md`
 - **Needs documentation**: Detailed MCP integration pattern guide
 
 ### Slack Integration Patterns
+
 - **Pattern**: Slack spatial metaphors and integration architecture
 - **Found in**: `services/integrations/slack/`
 - **Needs documentation**: Slack integration pattern catalog
 
 ### Workflow Orchestration Patterns
+
 - **Pattern**: Complex workflow coordination and state management
 - **Found in**: `services/orchestration/`
 - **Needs documentation**: Workflow orchestration pattern guide
 
 ### Knowledge Graph Patterns
+
 - **Pattern**: Semantic knowledge representation and querying
 - **Found in**: `services/knowledge_graph/`
 - **Needs documentation**: Knowledge graph pattern catalog
@@ -265,18 +302,21 @@
 ## Pattern Usage Guidelines
 
 ### Before Implementing New Features
+
 1. **Check Pattern Index**: Look for existing patterns that apply
 2. **Verify Implementation**: Use established patterns rather than creating new ones
 3. **Follow Conventions**: Maintain consistency with existing pattern usage
 4. **Document Deviations**: Explain why new patterns are needed
 
 ### Pattern Evolution
+
 1. **Proven Patterns**: Use as-is, maintain consistency
 2. **Experimental Patterns**: Test thoroughly, document learnings
 3. **Deprecated Patterns**: Avoid in new code, plan migration
 4. **New Patterns**: Document thoroughly, validate with team
 
 ### Quality Standards
+
 1. **Architectural Consistency**: All patterns must align with domain models
 2. **Test Coverage**: All patterns must have comprehensive test coverage
 3. **Documentation**: All patterns must be documented with examples
@@ -284,6 +324,6 @@
 
 ---
 
-*Pattern Index maintained by Cursor Agent - Last updated August 11, 2025*
-*Total patterns documented: 25+ architectural and implementation patterns*
-*Strategic value: Comprehensive pattern understanding for MCP Monday development*
+_Pattern Index maintained by Cursor Agent - Last updated August 11, 2025_
+_Total patterns documented: 25+ architectural and implementation patterns_
+_Strategic value: Comprehensive pattern understanding for MCP Monday development_

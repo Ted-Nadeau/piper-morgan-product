@@ -1,0 +1,133 @@
+name: Weekly Documentation Audit
+
+on:
+  schedule:
+    # Runs every Monday at 9:00 AM Pacific (PDT: UTC-7, PST: UTC-8)
+    # Using 4:00 PM UTC which is 9:00 AM PDT (summer) / 8:00 AM PST (winter)
+    - cron: '0 16 * * 1'
+  workflow_dispatch:  # Allows manual trigger for testing
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  create-audit-issue:
+    runs-on: ubuntu-latest
+    name: Create Weekly Documentation Audit Issue
+
+    steps:
+      - name: Check for existing audit issue
+        id: check-existing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const title = `Weekly Docs Audit - ${today}`;
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,maintenance'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Weekly Docs Audit') &&
+              issue.title.includes(today)
+            );
+
+            if (existingIssue) {
+              console.log(`Audit issue already exists: #${existingIssue.number}`);
+              return existingIssue.number;
+            }
+            return null;
+
+      - name: Create documentation audit issue
+        if: steps.check-existing.outputs.result == 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Weekly Docs Audit - ${today}`,
+              body: `## Weekly Documentation Audit Checklist
+
+              **Generated**: ${dayOfWeek}, ${today}
+
+              ### 🔍 Automated Audits (Claude Code /agent)
+
+              - [ ] Run: \`/agent Audit docs/ for stale content older than 30 days\`
+              - [ ] Run: \`/agent Find duplicate files in docs/ and list consolidation opportunities\`
+              - [ ] Run: \`/agent Verify all cross-references in docs/methodology-core/*.md\`
+              - [ ] Run: \`/agent Check for broken links in docs/**/*.md\`
+
+              ### 📁 Session Log Management
+
+              - [ ] Archive session logs older than 30 days to \`docs/archive/session-logs/\`
+              - [ ] Verify session log archive structure by month
+              - [ ] Update session log INDEX.md with new entries
+
+              ### 📊 GitHub Issues Sync
+
+              - [ ] Run: \`gh issue list --state all --json number,title,state --limit 200 > docs/planning/pm-issues-status.json\`
+              - [ ] Verify roadmap.md reflects current strategic priorities
+              - [ ] Verify backlog.md matches open GitHub issues
+              - [ ] Move completed issues to completed.md
+
+              ### 📚 Pattern & Knowledge Capture
+
+              - [ ] Update pattern-catalog.md with week's discovered patterns
+              - [ ] Review and integrate any stranded documentation from feature branches
+              - [ ] Update methodology documentation if new patterns emerged
+
+              ### 🎯 Quality Checks
+
+              - [ ] Verify no methodology files exist outside \`docs/development/methodology-core/\`
+              - [ ] Ensure all ADRs are in \`docs/architecture/adr/\` with proper numbering
+              - [ ] Check that no backup files (\`*.backup\`, \`*.old\`) are in active directories
+
+              ### 📈 Metrics Collection (Optional)
+
+              - [ ] Document count: \`find docs/ -name "*.md" | wc -l\`
+              - [ ] Archive size: \`du -sh docs/archive/\`
+              - [ ] Active docs size: \`du -sh docs/ --exclude=archive\`
+
+              ---
+
+              **Assigned to**: @mediajunkie
+              **Due**: End of day
+
+              ### Notes
+              - Focus on high-impact items first
+              - Create PM-* issues for any problems discovered
+              - Update this checklist template if new patterns emerge
+
+              ### References
+              - [Agent Methodology](../docs/development/methodology-core/methodology-05-AGENT-METHODOLOGY.md)
+              - [Documentation Structure Plan](../docs/STRUCTURE_PLAN.md)
+              - [Session Archive Guidelines](../docs/development/session-logs/archive-maintenance-guidelines.md)`,
+              labels: ['documentation', 'maintenance', 'weekly-audit'],
+              assignees: ['mediajunkie']
+            });
+
+            console.log(`Created documentation audit issue #${issue.data.number}`);
+            return issue.data.number;
+
+      - name: Post completion summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = ${{ steps.check-existing.outputs.result }} ||
+                               ${{ steps.create-audit-issue.outputs.result }};
+
+            if (issueNumber) {
+              console.log(`✅ Weekly documentation audit issue is ready: #${issueNumber}`);
+            } else {
+              console.log('ℹ️ No new audit issue created (may already exist)');
+            }
