@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Pattern Sweep - Compound Learning Acceleration Tool
-Standalone pattern detection and analysis for development workflow optimization.
+Pattern Sweep Process with TLDR Integration
+Systematic pattern detection and learning acceleration system.
 """
 
 import argparse
@@ -14,6 +14,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+from tldr_runner import TLDRRunner
 
 
 @dataclass
@@ -256,10 +258,11 @@ class PatternDetector:
 
 
 class PatternSweepRunner:
-    """Main Pattern Sweep orchestrator for standalone pattern detection"""
+    """Main Pattern Sweep orchestrator with TLDR integration"""
 
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.parent
+        self.tldr_runner = TLDRRunner()
         self.detector = PatternDetector()
         self.pattern_storage_path = self.project_root / "scripts" / "pattern_sweep_data.json"
 
@@ -276,7 +279,7 @@ class PatternSweepRunner:
         start_time = time.time()
 
         if verbose:
-            print("🔍 Starting Pattern Sweep Analysis...")
+            print("🔍 Starting Pattern Sweep with TLDR Integration...")
 
         # Determine file extensions to scan
         extensions = set()
@@ -398,35 +401,100 @@ class PatternSweepRunner:
                 f"   {i}. {pattern.description} ({pattern.occurrences} occurrences, {pattern.confidence:.2f} confidence)"
             )
 
+    async def run_with_tldr_integration(
+        self,
+        pattern_sweep: bool = True,
+        run_tests: bool = True,
+        test_pattern: Optional[str] = None,
+        verbose: bool = False,
+    ):
+        """Run pattern sweep integrated with TLDR testing"""
+
+        if verbose:
+            print("🚀 Starting TLDR + Pattern Sweep Integration...")
+
+        results = {}
+
+        # 1. Run pattern sweep first
+        if pattern_sweep:
+            if verbose:
+                print("🔍 Phase 1: Pattern Detection...")
+            pattern_result = await self.run_pattern_sweep(verbose=verbose)
+            results["pattern_sweep"] = pattern_result
+
+        # 2. Run TLDR tests to validate patterns
+        if run_tests:
+            if verbose:
+                print("🧪 Phase 2: TLDR Validation...")
+
+            # Get test files based on detected patterns
+            test_files = self.tldr_runner.discover_tests(pattern=test_pattern)
+
+            if test_files:
+                test_start = time.time()
+                test_results = await self.tldr_runner.run_multiple_tests(
+                    test_files[:10], timeout=0.1, verbose=verbose  # Limit to 10 tests for speed
+                )
+                test_duration = (time.time() - test_start) * 1000
+
+                results["tldr_tests"] = {
+                    "test_files": len(test_files),
+                    "duration_ms": test_duration,
+                    "results": test_results,
+                }
+
+                if verbose:
+                    success_count = sum(1 for result in test_results.values() if result[0] == 0)
+                    print(f"   ✅ Tests Passed: {success_count}/{len(test_results)}")
+                    print(f"   ⚡ Test Duration: {test_duration:.1f}ms")
+
+        return results
+
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="Pattern Sweep - Compound Learning Acceleration Tool",
+        description="Pattern Sweep Process with TLDR Integration",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   ./scripts/pattern_sweep.py --pattern-sweep-only
-  ./scripts/pattern_sweep.py --learn-usage-patterns --verbose
-  ./scripts/run_pattern_sweep.sh  # Simple runner
+  ./scripts/pattern_sweep.py --with-pattern-detection --learn-usage-patterns
+  ./scripts/pattern_sweep.py --tldr-integration --verbose
         """,
     )
 
     parser.add_argument(
-        "--pattern-sweep-only", action="store_true", help="Run pattern detection (default)"
+        "--pattern-sweep-only", action="store_true", help="Run only pattern detection"
+    )
+    parser.add_argument(
+        "--with-pattern-detection",
+        action="store_true",
+        help="Run pattern detection with TLDR tests",
     )
     parser.add_argument(
         "--learn-usage-patterns", action="store_true", help="Include session log pattern learning"
     )
+    parser.add_argument(
+        "--tldr-integration", action="store_true", help="Full TLDR + Pattern Sweep integration"
+    )
+    parser.add_argument("--test-pattern", type=str, help="Test file pattern to filter")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     runner = PatternSweepRunner()
 
-    # Always run pattern sweep (standalone tool)
-    result = await runner.run_pattern_sweep(
-        include_docs=args.learn_usage_patterns, verbose=args.verbose
-    )
+    if args.pattern_sweep_only:
+        result = await runner.run_pattern_sweep(
+            include_docs=args.learn_usage_patterns, verbose=args.verbose
+        )
+    elif args.with_pattern_detection or args.tldr_integration:
+        result = await runner.run_with_tldr_integration(
+            pattern_sweep=True, run_tests=True, test_pattern=args.test_pattern, verbose=args.verbose
+        )
+    else:
+        # Default: pattern sweep only
+        result = await runner.run_pattern_sweep(verbose=True)
 
     return result
 

@@ -1,11 +1,11 @@
-name: Weekly Documentation Audit
+2name: Weekly Documentation Audit
 
 on:
   schedule:
     # Runs every Monday at 9:00 AM Pacific (PDT: UTC-7, PST: UTC-8)
     # Using 4:00 PM UTC which is 9:00 AM PDT (summer) / 8:00 AM PST (winter)
-    - cron: '0 16 * * 1'
-  workflow_dispatch:  # Allows manual trigger for testing
+    - cron: "0 16 * * 1"
+  workflow_dispatch: # Allows manual trigger for testing
 
 permissions:
   issues: write

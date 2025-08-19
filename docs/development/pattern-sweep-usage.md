@@ -1,20 +1,22 @@
-# Pattern Sweep Process - Usage Guide
+# Pattern Sweep - Compound Learning Acceleration Tool
 
 ## Overview
 
-The Pattern Sweep Process is an automated pattern detection and learning acceleration system integrated with the TLDR Continuous Verification framework. It enables systematic discovery of code patterns, usage patterns, and coordination patterns across the entire codebase.
+The Pattern Sweep is a standalone automated pattern detection and learning acceleration system. It enables systematic discovery of code patterns, usage patterns, and coordination patterns across the entire codebase to accelerate development workflow optimization.
+
+**Note**: As of August 18, 2025, Pattern Sweep has been decoupled from TLDR and operates as an independent tool.
 
 ## Quick Start
 
 ```bash
-# Basic pattern sweep
-PYTHONPATH=. ./scripts/pattern_sweep.py --pattern-sweep-only --verbose
+# Simple runner (recommended)
+./scripts/run_pattern_sweep.sh --verbose
 
-# TLDR with pattern detection
-PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --verbose
+# Direct execution with session log learning
+./scripts/run_pattern_sweep.sh --learn-usage-patterns --verbose
 
-# Full integration with usage learning
-PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-patterns
+# Advanced usage
+PYTHONPATH=. python3 scripts/pattern_sweep.py --pattern-sweep-only --verbose
 ```
 
 ## Pattern Categories
@@ -47,22 +49,36 @@ Pattern data is stored in `scripts/pattern_sweep_data.json` with:
 - **History Tracking**: Sweep timeline and pattern evolution
 - **Learning Data**: New vs updated pattern detection
 
-## Integration with TLDR
+## Standalone Operation
 
-The Pattern Sweep integrates seamlessly with the existing TLDR runner:
+Pattern Sweep operates independently and can be run on-demand:
 
 ```bash
-# Enhanced TLDR commands
-./scripts/tldr_runner.py --with-pattern-detection --pattern "validation"
-./scripts/tldr_runner.py --learn-usage-patterns --verbose
+# Weekly pattern review (recommended)
+./scripts/run_pattern_sweep.sh --learn-usage-patterns --verbose
+
+# Quick pattern check
+./scripts/run_pattern_sweep.sh
+
+# Help and options
+./scripts/run_pattern_sweep.sh --help
 ```
 
 ## Performance
 
-- **Scan Scale**: 10,200+ Python files + 400+ documentation files
-- **Scan Duration**: ~21 seconds for full codebase
-- **Pattern Detection**: 15+ patterns across 4 categories
+- **Scan Scale**: 1,000+ Python files + 200+ documentation files (after venv exclusion)
+- **Scan Duration**: ~40 seconds for full codebase
+- **Pattern Detection**: 9+ patterns across 4 categories
 - **Storage**: ~500KB JSON with full pattern history
+
+## Weekly Pattern Review Process
+
+Recommended workflow for compound learning acceleration:
+
+1. **Weekly Sweep**: Run `./scripts/run_pattern_sweep.sh --learn-usage-patterns --verbose`
+2. **Review Results**: Analyze `scripts/pattern_sweep_data.json` for new patterns
+3. **Methodology Update**: Incorporate high-confidence patterns into development practices
+4. **Documentation**: Update process docs with discovered patterns
 
 ## Compound Learning
 
