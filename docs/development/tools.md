@@ -60,14 +60,13 @@ When adding new domain models or database tables:
 ## Other Tools
 
 ### Pattern Sweep (`scripts/pattern_sweep.py`)
-Automated pattern discovery and learning acceleration tool.
-
-### TLDR Runner (`scripts/tldr_runner.py`)
-Ultra-fast feedback loop for continuous testing during development.
+Standalone automated pattern discovery and learning acceleration tool.
+- Usage: `./scripts/run_pattern_sweep.sh --verbose`
+- Compound learning acceleration for development workflow optimization
 
 ### Database Initialization (`scripts/init_db.py`)
 Initialize the PostgreSQL database with proper schema.
 
 ---
 
-*Last updated: 2025-08-03*
+*Last updated: 2025-08-18* - TLDR deprecated, Pattern Sweep preserved as standalone tool

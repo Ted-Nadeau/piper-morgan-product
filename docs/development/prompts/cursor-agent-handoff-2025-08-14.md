@@ -80,7 +80,7 @@
 ### **Temporal Context Integration**
 
 - `docs/development/temporal-context-integration-guide.md` - Complete implementation guide
-- `docs/development/testing-methodology-validation-summary.md` - Testing methodology proof
+- `docs/development/methodology-core/methodology-11-TESTING-VALIDATION.md` - Testing methodology proof
 
 ### **Session Logs**
 

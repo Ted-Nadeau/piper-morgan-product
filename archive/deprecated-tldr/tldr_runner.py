@@ -108,16 +108,34 @@ class TLDRRunner:
         """Discover test files with optional pattern filtering"""
         test_files = []
 
-        # Standard test discovery
-        for test_dir in ["tests", "."]:
-            test_path = self.project_root / test_dir
-            if test_path.exists():
-                for test_file in test_path.rglob("test_*.py"):
+        # Directories to exclude from test discovery
+        exclude_dirs = {
+            "venv",
+            ".venv",
+            "env",
+            ".env",
+            "node_modules",
+            ".git",
+            "__pycache__",
+            "build",
+            "dist",
+            ".tox",
+            ".pytest_cache",
+            "data_backup",
+            "archive",
+        }
+
+        # Standard test discovery - only in tests directory
+        test_path = self.project_root / "tests"
+        if test_path.exists():
+            for test_file in test_path.rglob("test_*.py"):
+                # Check if file is in an excluded directory
+                if not any(excluded in test_file.parts for excluded in exclude_dirs):
                     if pattern is None or pattern in str(test_file):
                         test_files.append(str(test_file.relative_to(self.project_root)))
 
-        # Also check root level test files
-        for test_file in self.project_root.glob("*test*.py"):
+        # Also check root level test files (but be more selective)
+        for test_file in self.project_root.glob("test_*.py"):
             if pattern is None or pattern in str(test_file):
                 test_files.append(str(test_file.relative_to(self.project_root)))
 
