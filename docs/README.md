@@ -11,29 +11,36 @@ Piper Morgan aims to be more than a task automation tool. It's designed to grow 
 ## 🎯 Key Features
 
 ### MCP+Spatial Intelligence Integration (PM-033a/b)
+
 Piper now features revolutionary **8-dimensional spatial intelligence** through the Model Context Protocol:
 
 **Strategic Differentiator - Spatial Intelligence**:
+
 - **8-Dimensional Analysis**: HIERARCHY, TEMPORAL, PRIORITY, COLLABORATIVE, FLOW, QUANTITATIVE, CAUSAL, CONTEXTUAL
 - **Historic Performance**: Sub-1ms federated search (150x better than industry standards)
 - **Contextual Understanding**: Only AI agent with true multi-dimensional context analysis
 - **Competitive Moat**: Unmatched spatial intelligence across GitHub + Notion integrations
 
 **Technical Architecture**:
+
 - **GitHub Integration**: Retrieve and manage 84+ issues via MCP protocol with spatial context
 - **Federated Search**: Query across multiple services with spatial intelligence enhancement
 - **Circuit Breaker Protection**: Graceful degradation when services unavailable
 - **Connection Pooling**: 642x performance improvement for external calls
 
 ### PIPER.md Configuration System
+
 Personalized context configuration for enhanced user experience:
+
 - **User Context**: Define your role, projects, and priorities
 - **Calendar Patterns**: Specify your work schedule and meeting patterns
 - **Standing Priorities**: Set recurring tasks and focus areas
 - **Hot Reload**: Configuration updates without restart
 
 ### Conversational Memory (PM-034)
+
 Advanced conversation context management:
+
 - **10-Turn Context Window**: Maintains conversation history
 - **Anaphoric Reference Resolution**: >90% accuracy resolving "that issue", "the document"
 - **Redis Caching**: 5-minute TTL with circuit breaker protection
@@ -152,8 +159,8 @@ Piper: "Authentication progress comparison:
 
 **Choose your journey**:
 
-| I want to...              | Start here                                                                         | Then                                                                              | Finally                  |
-| ------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------ |
+| I want to...              | Start here                                                                    | Then                                                                         | Finally                  |
+| ------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------ |
 | **Try it out**            | [Getting Started Guide](user-guides/getting-started-conversational-ai.md)     | [Real Examples](user-guides/conversation-scenario-examples.md)               | Use Piper!               |
 | **Understand the magic**  | [Understanding References](user-guides/understanding-anaphoric-references.md) | [Memory Guide](user-guides/conversation-memory-guide.md)                     | Advanced features        |
 | **Upgrade from commands** | [Upgrading Guide](user-guides/upgrading-from-command-mode.md)                 | [Getting Started](user-guides/getting-started-conversational-ai.md)          | Conversational workflows |
@@ -403,6 +410,7 @@ piper-morgan-product/
 ## 📊 Current Status
 
 ### Recently Completed (August 2025)
+
 - [x] **PM-033a MCP Consumer**: Working MCP integration retrieving 84+ GitHub issues
 - [x] **PM-033b Tool Federation**: GitHub + Notion integrations with MCP+Spatial Intelligence
 - [x] **Architectural Signature**: 8-dimensional spatial analysis across all tool integrations
@@ -414,6 +422,7 @@ piper-morgan-product/
 - [x] **PM-063 QueryRouter Degradation**: Comprehensive graceful degradation implementation
 
 ### Core Platform
+
 - [x] Domain-driven backend and query API robust and fully tested (PM-009 complete)
 - [x] **PM-038 MCP Integration**: 642x performance improvement with connection pooling
 - [x] **Production-Grade Staging**: Docker Compose with monitoring and rollback
@@ -423,6 +432,7 @@ piper-morgan-product/
 - [x] Comprehensive health monitoring with Prometheus + Grafana
 
 ### In Progress
+
 - [ ] CI/CD pipeline implementation
 - [ ] Advanced Web UI features
 - [ ] Additional MCP service integrations
@@ -445,11 +455,13 @@ Currently, work is being done on the `main` branch. Feature branches will be use
 - [Domain Model](architecture/data-model.md)
 - [API Documentation](architecture/api-reference.md)
 - **[📋 Pattern Index](patterns/PATTERN-INDEX.md)** - Comprehensive catalog of 25+ proven architectural and implementation patterns
+- **[🎯 Multi-Agent Coordinator Guide](architecture/multi-agent-coordinator-pm-guide.md)** - Complete PM guide to our intelligent task orchestration engine
 
 ### Architecture Decision Records (ADRs)
 
 Complete list of architectural decisions:
 
+- [ADR-000: Meta-Platform Architecture](architecture/adr/adr-000-meta-platform.md) - Meta-platform design philosophy and principles
 - [ADR-001: MCP Integration](architecture/adr/adr-001-mcp-integration.md) - Model Context Protocol integration strategy
 - [ADR-002: Claude Code Integration](architecture/adr/adr-002-claude-code-integration.md) - AI assistant development workflow
 - [ADR-003: Intent Classifier Enhancement](architecture/adr/adr-003-intent-classifier-enhancement.md) - Intent recognition improvements
@@ -462,6 +474,16 @@ Complete list of architectural decisions:
 - [ADR-010: Configuration Patterns](architecture/adr/adr-010-configuration-patterns.md) - Configuration management strategy
 - [ADR-011: Test Infrastructure Hanging Fixes](architecture/adr/adr-011-test-infrastructure-hanging-fixes.md) - Test reliability improvements
 - [ADR-012: Unified Session Management](architecture/adr/adr-012-unified-session-management.md) - Consolidated session handling
+- [ADR-013: MCP Spatial Integration Pattern](architecture/adr/adr-013-mcp-spatial-integration-pattern.md) - Spatial intelligence integration patterns
+- [ADR-014: Attribution-First Design](architecture/adr/adr-014-attribution-first.md) - Attribution-driven design principles
+- [ADR-015: Wild Claim Architecture](architecture/adr/adr-015-wild-claim.md) - Bold architectural assertions and validation
+- [ADR-016: Ambiguity-Driven Development](architecture/adr/adr-016-ambiguity-driven.md) - Embracing uncertainty in development
+- [ADR-017: Spatial MCP Integration](architecture/adr/adr-017-spatial-mcp.md) - Advanced spatial intelligence with MCP
+- [ADR-018: Server Functionality Patterns](architecture/adr/adr-018-server-functionality.md) - Server-side architectural patterns
+- [ADR-019: Orchestration Commitment](architecture/adr/adr-019-orchestration-commitment.md) - Orchestration system design commitments
+- [ADR-020: Protocol Investment Strategy](architecture/adr/adr-020-protocol-investment.md) - Strategic protocol investment decisions
+- [ADR-021: Multi-Federation Architecture](architecture/adr/adr-021-multi-federation.md) - Multi-service federation patterns
+- [ADR-022: Autonomy Experimentation](architecture/adr/adr-022-autonomy-experimentation.md) - Autonomous system experimentation
 
 ### Operations
 
