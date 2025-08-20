@@ -1,4 +1,8 @@
 # test_github_flow_preservation.py
+import pytest
+
+
+@pytest.mark.smoke
 async def test_github_ticket_creation_still_works():
     # Existing flow should remain unchanged
     intent = await classifier.classify("Create a ticket for the login bug")

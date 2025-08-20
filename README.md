@@ -91,6 +91,25 @@ Piper: "✅ Assigned issue #1247 to Sarah. She's been notified."
 - **[🔌 API Documentation](docs/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
 - **[⚡ Developer Quick Start](docs/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
 
+## 🧪 Testing & Quality Assurance
+
+### ⚡ **Smoke Test Infrastructure**
+
+- **<5 Second Validation**: Complete test suite validation in under 5 seconds
+- **599+ Smoke Tests**: Comprehensive critical path coverage across all systems
+- **Performance Targets**: 100ms latency, memory limits, concurrent handling
+- **Replaces TLDR**: Modern pytest-based testing replaces deprecated systems
+
+**Quick Test Run:**
+
+```bash
+# Run complete smoke test suite
+python scripts/run_smoke_tests.py
+
+# Or use pytest directly
+pytest -m smoke --tb=short
+```
+
 ## 🏗️ Architecture Overview
 
 ```
