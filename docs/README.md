@@ -140,20 +140,20 @@ Piper: "Authentication progress comparison:
 
 **New to conversational AI?** Start with our complete user guide ecosystem:
 
-- **[📚 Complete User Guide Collection](user-guides/README.md)** - Master index of all user documentation
-- **[🚀 Getting Started Guide](user-guides/getting-started-conversational-ai.md)** - Transform from command mode to natural conversation
-- **[🎯 Understanding Anaphoric References](user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document", "my task" patterns
-- **[🧠 Conversation Memory Guide](user-guides/conversation-memory-guide.md)** - How Piper maintains context across 10+ interactions
-- **[🔄 Upgrading from Command Mode](user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
-- **[📖 Real Conversation Examples](user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
+- **[📚 Complete User Guide Collection](/user-guides/README.md)** - Master index of all user documentation
+- **[🚀 Getting Started Guide](/user-guides/getting-started-conversational-ai.md)** - Transform from command mode to natural conversation
+- **[🎯 Understanding Anaphoric References](/user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document", "my task" patterns
+- **[🧠 Conversation Memory Guide](/user-guides/conversation-memory-guide.md)** - How Piper maintains context across 10+ interactions
+- **[🔄 Upgrading from Command Mode](/user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
+- **[📖 Real Conversation Examples](/user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
 
 ### 💻 For Developers & Integrators
 
 **Implementing conversational AI?** Complete technical resources:
 
-- **[Conversation API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference with examples
-- **[Developer Integration Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
-- **[Implementation Guide](development/PM-034-implementation-guide.md)** - Architecture patterns and best practices
+- **[Conversation API Documentation](/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference with examples
+- **[Developer Integration Quick Start](/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
+- **[Implementation Guide](/development/PM-034-implementation-guide.md)** - Architecture patterns and best practices
 
 ### 🎯 Adoption Path
 
@@ -161,10 +161,10 @@ Piper: "Authentication progress comparison:
 
 | I want to...              | Start here                                                                    | Then                                                                         | Finally                  |
 | ------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------ |
-| **Try it out**            | [Getting Started Guide](user-guides/getting-started-conversational-ai.md)     | [Real Examples](user-guides/conversation-scenario-examples.md)               | Use Piper!               |
-| **Understand the magic**  | [Understanding References](user-guides/understanding-anaphoric-references.md) | [Memory Guide](user-guides/conversation-memory-guide.md)                     | Advanced features        |
-| **Upgrade from commands** | [Upgrading Guide](user-guides/upgrading-from-command-mode.md)                 | [Getting Started](user-guides/getting-started-conversational-ai.md)          | Conversational workflows |
-| **Build with APIs**       | [API Documentation](development/PM-034-conversation-api-documentation.md)     | [Integration Guide](development/PM-034-developer-integration-quick-start.md) | Production               |
+| **Try it out**            | [Getting Started Guide](/user-guides/getting-started-conversational-ai.md)     | [Real Examples](/user-guides/conversation-scenario-examples.md)               | Use Piper!               |
+| **Understand the magic**  | [Understanding References](/user-guides/understanding-anaphoric-references.md) | [Memory Guide](/user-guides/conversation-memory-guide.md)                     | Advanced features        |
+| **Upgrade from commands** | [Upgrading Guide](/user-guides/upgrading-from-command-mode.md)                 | [Getting Started](/user-guides/getting-started-conversational-ai.md)          | Conversational workflows |
+| **Build with APIs**       | [API Documentation](/development/PM-034-conversation-api-documentation.md)     | [Integration Guide](/development/PM-034-developer-integration-quick-start.md) | Production               |
 
 **Performance Promise**: <150ms response time, >90% reference accuracy, 10-turn context window.
 
@@ -317,7 +317,7 @@ For testing PM-038 MCP integration and production readiness:
 - Circuit breaker pattern for fault tolerance
 - Real-time monitoring and alerting
 
-See [Staging Deployment Guide](operations/staging-deployment-guide.md) for complete details.
+See [Staging Deployment Guide](/operations/staging-deployment-guide.md) for complete details.
 
 ## 🧑‍💻 Testing
 
@@ -372,12 +372,16 @@ python tests/orchestration/run_standalone_tests.py
 - **Reality Testing**: Avoid over-mocking critical paths
 - **Test Isolation**: Each test should be independent and deterministic
 
+**Development Methodology**: See [Methodology Core](/development/methodology-core/) for comprehensive development frameworks including Excellence Flywheel, Agent Coordination, and Enhanced Autonomy patterns.
+
 ### Health Monitoring Tools
 
 - **Smoke Test Infrastructure**: Chief Architect Phase 1 testing with <5 second execution targets
 - **Database-Free Testing**: Excellence Flywheel standalone test runner for core functionality
 - **Integration Health Monitor**: Real-time component health tracking with Prometheus + Grafana
 - **Comprehensive Test Suite**: Unit, integration, and validation tests across all services
+
+**Testing Documentation**: See [Orchestration Testing Methodology](/development/testing/orchestration-testing-methodology.md) for detailed testing patterns and infrastructure.
 
 ## Pre-commit Hook Strategy
 
@@ -490,49 +494,49 @@ Currently, work is being done on the `main` branch. Feature branches will be use
 
 ### Core Documentation
 
-- [Architecture Overview](architecture/architecture.md)
-- [Domain Model](architecture/data-model.md)
-- [API Documentation](architecture/api-reference.md)
-- **[📋 Pattern Index](patterns/PATTERN-INDEX.md)** - Comprehensive catalog of 25+ proven architectural and implementation patterns
-- **[🎯 Multi-Agent Coordinator Guide](architecture/multi-agent-coordinator-pm-guide.md)** - Complete PM guide to our intelligent task orchestration engine
+- [Architecture Overview](/architecture/architecture.md)
+- [Domain Model](/architecture/data-model.md)
+- [API Documentation](/architecture/api-reference.md)
+- **[📋 Pattern Index](/patterns/PATTERN-INDEX.md)** - Comprehensive catalog of 25+ proven architectural and implementation patterns
+- **[🎯 Multi-Agent Coordinator Guide](/architecture/multi-agent-coordinator-pm-guide.md)** - Complete PM guide to our intelligent task orchestration engine
 
 ### Architecture Decision Records (ADRs)
 
 Complete list of architectural decisions:
 
-- [ADR-000: Meta-Platform Architecture](architecture/adr/adr-000-meta-platform.md) - Meta-platform design philosophy and principles
-- [ADR-001: MCP Integration](architecture/adr/adr-001-mcp-integration.md) - Model Context Protocol integration strategy
-- [ADR-002: Claude Code Integration](architecture/adr/adr-002-claude-code-integration.md) - AI assistant development workflow
-- [ADR-003: Intent Classifier Enhancement](architecture/adr/adr-003-intent-classifier-enhancement.md) - Intent recognition improvements
-- [ADR-004: Action Humanizer Integration](architecture/adr/adr-004-action-humanizer-integration.md) - User-friendly action descriptions
-- [ADR-005: Eliminate Dual Repository Implementations](architecture/adr/adr-005-eliminate-dual-repository-implementations.md) - Repository pattern consistency
-- [ADR-006: Standardize Async Session Management](architecture/adr/adr-006-standardize-async-session-management.md) - Database session handling
-- [ADR-007: Staging Environment Architecture](architecture/adr/adr-007-staging-environment-architecture.md) - Production-grade staging setup
-- [ADR-008: MCP Connection Pooling Strategy](architecture/adr/adr-008-mcp-connection-pooling-production.md) - Performance optimization
-- [ADR-009: Health Monitoring System Design](architecture/adr/adr-009-health-monitoring-system.md) - System observability
-- [ADR-010: Configuration Patterns](architecture/adr/adr-010-configuration-patterns.md) - Configuration management strategy
-- [ADR-011: Test Infrastructure Hanging Fixes](architecture/adr/adr-011-test-infrastructure-hanging-fixes.md) - Test reliability improvements
-- [ADR-012: Unified Session Management](architecture/adr/adr-012-unified-session-management.md) - Consolidated session handling
-- [ADR-013: MCP Spatial Integration Pattern](architecture/adr/adr-013-mcp-spatial-integration-pattern.md) - Spatial intelligence integration patterns
-- [ADR-014: Attribution-First Design](architecture/adr/adr-014-attribution-first.md) - Attribution-driven design principles
-- [ADR-015: Wild Claim Architecture](architecture/adr/adr-015-wild-claim.md) - Bold architectural assertions and validation
-- [ADR-016: Ambiguity-Driven Development](architecture/adr/adr-016-ambiguity-driven.md) - Embracing uncertainty in development
-- [ADR-017: Spatial MCP Integration](architecture/adr/adr-017-spatial-mcp.md) - Advanced spatial intelligence with MCP
-- [ADR-018: Server Functionality Patterns](architecture/adr/adr-018-server-functionality.md) - Server-side architectural patterns
-- [ADR-019: Orchestration Commitment](architecture/adr/adr-019-orchestration-commitment.md) - Orchestration system design commitments
-- [ADR-020: Protocol Investment Strategy](architecture/adr/adr-020-protocol-investment.md) - Strategic protocol investment decisions
-- [ADR-021: Multi-Federation Architecture](architecture/adr/adr-021-multi-federation.md) - Multi-service federation patterns
-- [ADR-022: Autonomy Experimentation](architecture/adr/adr-022-autonomy-experimentation.md) - Autonomous system experimentation
+- [ADR-000: Meta-Platform Architecture](/architecture/adr/adr-000-meta-platform.md) - Meta-platform design philosophy and principles
+- [ADR-001: MCP Integration](/architecture/adr/adr-001-mcp-integration.md) - Model Context Protocol integration strategy
+- [ADR-002: Claude Code Integration](/architecture/adr/adr-002-claude-code-integration.md) - AI assistant development workflow
+- [ADR-003: Intent Classifier Enhancement](/architecture/adr/adr-003-intent-classifier-enhancement.md) - Intent recognition improvements
+- [ADR-004: Action Humanizer Integration](/architecture/adr/adr-004-action-humanizer-integration.md) - User-friendly action descriptions
+- [ADR-005: Eliminate Dual Repository Implementations](/architecture/adr/adr-005-eliminate-dual-repository-implementations.md) - Repository pattern consistency
+- [ADR-006: Standardize Async Session Management](/architecture/adr/adr-006-standardize-async-session-management.md) - Database session handling
+- [ADR-007: Staging Environment Architecture](/architecture/adr/adr-007-staging-environment-architecture.md) - Production-grade staging setup
+- [ADR-008: MCP Connection Pooling Strategy](/architecture/adr/adr-008-mcp-connection-pooling-production.md) - Performance optimization
+- [ADR-009: Health Monitoring System Design](/architecture/adr/adr-009-health-monitoring-system.md) - System observability
+- [ADR-010: Configuration Patterns](/architecture/adr/adr-010-configuration-patterns.md) - Configuration management strategy
+- [ADR-011: Test Infrastructure Hanging Fixes](/architecture/adr/adr-011-test-infrastructure-hanging-fixes.md) - Test reliability improvements
+- [ADR-012: Unified Session Management](/architecture/adr/adr-012-unified-session-management.md) - Consolidated session handling
+- [ADR-013: MCP Spatial Integration Pattern](/architecture/adr/adr-013-mcp-spatial-integration-pattern.md) - Spatial intelligence integration patterns
+- [ADR-014: Attribution-First Design](/architecture/adr/adr-014-attribution-first.md) - Attribution-driven design principles
+- [ADR-015: Wild Claim Architecture](/architecture/adr/adr-015-wild-claim.md) - Bold architectural assertions and validation
+- [ADR-016: Ambiguity-Driven Development](/architecture/adr/adr-016-ambiguity-driven.md) - Embracing uncertainty in development
+- [ADR-017: Spatial MCP Integration](/architecture/adr/adr-017-spatial-mcp.md) - Advanced spatial intelligence with MCP
+- [ADR-018: Server Functionality Patterns](/architecture/adr/adr-018-server-functionality.md) - Server-side architectural patterns
+- [ADR-019: Orchestration Commitment](/architecture/adr/adr-019-orchestration-commitment.md) - Orchestration system design commitments
+- [ADR-020: Protocol Investment Strategy](/architecture/adr/adr-020-protocol-investment.md) - Strategic protocol investment decisions
+- [ADR-021: Multi-Federation Architecture](/architecture/adr/adr-021-multi-federation.md) - Multi-service federation patterns
+- [ADR-022: Autonomy Experimentation](/architecture/adr/adr-022-autonomy-experimentation.md) - Autonomous system experimentation
 
 ### Operations
 
-- [Staging Deployment Guide](operations/staging-deployment-guide.md)
-- [Staging Rollback Procedures](operations/staging-rollback-procedures.md)
+- [Staging Deployment Guide](/operations/staging-deployment-guide.md)
+- [Staging Rollback Procedures](/operations/staging-rollback-procedures.md)
 
 ### Recent Feature Documentation
 
-- [MCP Consumer Architecture](architecture/pm-033a-mcp-consumer-architecture.md) - MCP integration design and implementation
-- [MCP Integration Patterns](architecture/mcp-integration-patterns.md) - Proven MCP integration patterns
-- [PIPER.md Configuration](../config/PIPER.md) - User context configuration template
-- [Conversation Manager Guide](development/PM-034-implementation-guide.md) - Conversational AI implementation
-- [Query Router Degradation](operations/query-router-degradation-runbook.md) - Graceful degradation operations
+- [MCP Consumer Architecture](/architecture/pm-033a-mcp-consumer-architecture.md) - MCP integration design and implementation
+- [MCP Integration Patterns](/architecture/mcp-integration-patterns.md) - Proven MCP integration patterns
+- [PIPER.md Configuration](/../config/PIPER.md) - User context configuration template
+- [Conversation Manager Guide](/development/PM-034-implementation-guide.md) - Conversational AI implementation
+- [Query Router Degradation](/operations/query-router-degradation-runbook.md) - Graceful degradation operations
