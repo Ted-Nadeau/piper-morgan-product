@@ -93,6 +93,7 @@ class TestSlackResponseHandler:
             significance_level="routine",
         )
 
+    @pytest.mark.smoke
     async def test_monitoring_intent_bypass(
         self, response_handler, mock_spatial_event, mock_dependencies
     ):
@@ -127,6 +128,7 @@ class TestSlackResponseHandler:
         # Assert: No orchestration for monitoring intents
         mock_dependencies["orchestration_engine"].create_workflow_from_intent.assert_not_called()
 
+    @pytest.mark.smoke
     async def test_response_handler_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
     ):
@@ -169,6 +171,7 @@ class TestSlackResponseHandler:
         # Assert: Slack message was sent
         mock_dependencies["slack_client"].send_message.assert_called_once()
 
+    @pytest.mark.smoke
     async def test_response_handler_error_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
     ):
@@ -208,6 +211,7 @@ class TestSlackAdapter:
         """Create spatial adapter instance"""
         return SlackSpatialAdapter()
 
+    @pytest.mark.smoke
     async def test_channel_id_preservation(self, spatial_adapter):
         """
         Test that channel IDs are preserved throughout spatial mapping.
@@ -236,6 +240,7 @@ class TestSlackAdapter:
         assert response_context is not None, "Response context should be available"
         assert response_context.get("channel_id") == "C1234567890", "Channel ID should be preserved"
 
+    @pytest.mark.smoke
     async def test_bidirectional_mapping_observability(self, spatial_adapter):
         """
         Test that bidirectional mapping is observable.
@@ -266,6 +271,7 @@ class TestSlackAdapter:
         stats = await spatial_adapter.get_mapping_stats()
         assert stats["timestamp_mappings"] > 0, "Mapping should be recorded in stats"
 
+    @pytest.mark.smoke
     async def test_context_storage_observability(self, spatial_adapter):
         """
         Test that context storage is observable.
@@ -304,6 +310,7 @@ class TestRobustTaskManager:
         """Create task manager instance"""
         return RobustTaskManager()
 
+    @pytest.mark.smoke
     async def test_context_preservation_across_async_boundaries(self, task_manager):
         """
         Test that context is preserved across async boundaries.
@@ -334,6 +341,7 @@ class TestRobustTaskManager:
         ), "Context should be preserved after async operation"
         assert result == "async_result", "Async operation should complete successfully"
 
+    @pytest.mark.smoke
     async def test_correlation_id_preservation(self, task_manager):
         """
         Test that correlation IDs are preserved throughout task execution.
@@ -367,6 +375,7 @@ class TestRobustTaskManager:
         assert result1 == "op1_result", "Operation 1 should complete"
         assert result2 == "op2_result", "Operation 2 should complete"
 
+    @pytest.mark.smoke
     async def test_task_manager_observability(self, task_manager):
         """
         Test that task manager operations are observable.
@@ -421,6 +430,7 @@ class TestSlackPipelineMetrics:
         """Create pipeline metrics instance"""
         return SlackPipelineMetrics()
 
+    @pytest.mark.smoke
     async def test_correlation_tracking(self, pipeline_metrics):
         """
         Test that correlation tracking works throughout the pipeline.
@@ -443,6 +453,7 @@ class TestSlackPipelineMetrics:
                 stage.correlation_id == correlation_id
             ), "Stage should have correct correlation_id"
 
+    @pytest.mark.smoke
     async def test_pipeline_timing_observability(self, pipeline_metrics):
         """
         Test that pipeline timing is observable.
@@ -469,6 +480,7 @@ class TestSlackPipelineMetrics:
         assert processing_time > 0, "Processing time should be positive"
         assert processing_time < 1.0, "Processing time should be reasonable"
 
+    @pytest.mark.smoke
     async def test_stage_recording_observability(self, pipeline_metrics):
         """
         Test that stage recording is observable.
@@ -504,6 +516,7 @@ class TestSlackPipelineMetrics:
             assert stage.name == stage_name, f"Stage {i} should have correct name"
             assert stage.data == stage_data, f"Stage {i} should have correct data"
 
+    @pytest.mark.smoke
     async def test_error_recording_observability(self, pipeline_metrics):
         """
         Test that errors are recorded with observability.
