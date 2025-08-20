@@ -181,28 +181,33 @@ This platform is built on a microservices architecture with the following core p
 ### Core Services
 
 **Orchestration & Workflow Management:**
+
 - **Multi-Agent Coordinator**: Intelligent task decomposition and agent assignment
 - **Excellence Flywheel**: Systematic verification and quality enforcement
 - **Workflow Factory**: Dynamic workflow creation and management
 
 **AI & Intelligence Services:**
+
 - **Intent Service**: Natural language intent classification and understanding
 - **Conversation Service**: Conversational AI with 10-turn memory
 - **Knowledge Services**: Semantic indexing, pattern recognition, and graph queries
 - **LLM Integration**: Large language model orchestration and reasoning
 
 **Integration & External Services:**
+
 - **GitHub Integration**: MCP-powered issue management and spatial intelligence
 - **Slack Integration**: Spatial-aware communication and notifications
 - **MCP Consumer**: Model Context Protocol integration with connection pooling
 
 **Data & Infrastructure:**
+
 - **Database Services**: Domain models, repositories, and data access patterns
 - **Cache Layer**: Redis-based caching and session management
 - **Health Monitoring**: Comprehensive system observability and metrics
 - **Authentication**: JWT-based user management and security
 
 **Query & Analysis:**
+
 - **Query Services**: Project, conversation, and file query capabilities
 - **Analysis Services**: Data analysis and pattern recognition
 - **File Context**: Document processing and context extraction
@@ -528,6 +533,6 @@ Complete list of architectural decisions:
 
 - [MCP Consumer Architecture](architecture/pm-033a-mcp-consumer-architecture.md) - MCP integration design and implementation
 - [MCP Integration Patterns](architecture/mcp-integration-patterns.md) - Proven MCP integration patterns
-- [PIPER.md Configuration](config/PIPER.md) - User context configuration template
+- [PIPER.md Configuration](../config/PIPER.md) - User context configuration template
 - [Conversation Manager Guide](development/PM-034-implementation-guide.md) - Conversational AI implementation
 - [Query Router Degradation](operations/query-router-degradation-runbook.md) - Graceful degradation operations
