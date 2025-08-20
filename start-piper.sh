@@ -98,6 +98,24 @@ echo "$FRONTEND_PID" > .piper-frontend.pid
 
 echo "🎉 Piper Morgan is ready!"
 echo "================================"
+
+# Branch management reminder
+echo ""
+echo "🌿 Branch Management Reminder:"
+echo "================================"
+CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ $? -eq 0 ]; then
+    echo "📍 Current Branch: $CURRENT_BRANCH"
+    if [ "$CURRENT_BRANCH" = "main" ]; then
+        echo "⚠️  Working on main branch - consider feature branch for development"
+        echo "📚 See: docs/development/BRANCH-MANAGEMENT.md"
+    elif [[ "$CURRENT_BRANCH" == feature/* ]]; then
+        echo "✅ Good! Working on feature branch"
+    elif [[ "$CURRENT_BRANCH" == dev/* ]]; then
+        echo "🔬 Development branch - experiments and research"
+    fi
+    echo "📋 Quick guidance: ./scripts/branch-guidance.sh"
+fi
 echo "🌐 Frontend: http://localhost:8081/"
 echo "🔧 Backend: http://localhost:8000/"
 echo "📊 Health: http://localhost:8081/health"
