@@ -90,6 +90,7 @@ Piper: "✅ Assigned issue #1247 to Sarah. She's been notified."
 - **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
 - **[🔌 API Documentation](docs/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
 - **[⚡ Developer Quick Start](docs/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
+- **[🌿 Branch Management](docs/development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
 
 ## 🧪 Testing & Quality Assurance
 
