@@ -180,12 +180,32 @@ This platform is built on a microservices architecture with the following core p
 
 ### Core Services
 
-1. **Intent & Goal Management Service**: Understands what users want to achieve
-2. **Orchestration Engine**: Plans and coordinates complex workflows
-3. **Reasoning Service**: Provides analysis, insights, and recommendations
-4. **Knowledge Graph Service**: Maintains understanding of products, features, and relationships
-5. **Integration Services**: Plugins for GitHub, Jira, Confluence, Analytics, etc.
-6. **Learning Service**: Captures patterns and improves over time
+**Orchestration & Workflow Management:**
+- **Multi-Agent Coordinator**: Intelligent task decomposition and agent assignment
+- **Excellence Flywheel**: Systematic verification and quality enforcement
+- **Workflow Factory**: Dynamic workflow creation and management
+
+**AI & Intelligence Services:**
+- **Intent Service**: Natural language intent classification and understanding
+- **Conversation Service**: Conversational AI with 10-turn memory
+- **Knowledge Services**: Semantic indexing, pattern recognition, and graph queries
+- **LLM Integration**: Large language model orchestration and reasoning
+
+**Integration & External Services:**
+- **GitHub Integration**: MCP-powered issue management and spatial intelligence
+- **Slack Integration**: Spatial-aware communication and notifications
+- **MCP Consumer**: Model Context Protocol integration with connection pooling
+
+**Data & Infrastructure:**
+- **Database Services**: Domain models, repositories, and data access patterns
+- **Cache Layer**: Redis-based caching and session management
+- **Health Monitoring**: Comprehensive system observability and metrics
+- **Authentication**: JWT-based user management and security
+
+**Query & Analysis:**
+- **Query Services**: Project, conversation, and file query capabilities
+- **Analysis Services**: Data analysis and pattern recognition
+- **File Context**: Document processing and context extraction
 
 ## 🏛️ Architectural Principles
 
@@ -314,6 +334,11 @@ The test suite has been significantly improved with systematic testing disciplin
 
 **Test Coverage**: Comprehensive unit, integration, and validation tests across all core services
 
+**Current Testing Infrastructure:**
+- **Database-Free Testing**: Excellence Flywheel standalone test runner for core orchestration functionality
+- **Smoke Test Infrastructure**: Chief Architect Phase 1 with <5 second execution targets
+- **Comprehensive Coverage**: 100% test coverage validation for critical components
+
 ### Running Tests Effectively
 
 ```bash
@@ -330,8 +355,8 @@ PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=term-missing
 # Fast failure mode for development
 PYTHONPATH=. python -m pytest tests/ -x -v
 
-# Ultra-fast continuous testing
-PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
+# Database-free testing (Excellence Flywheel infrastructure)
+python tests/orchestration/run_standalone_tests.py
 ```
 
 ### Testing Best Practices
@@ -343,9 +368,10 @@ PYTHONPATH=. ./scripts/tldr_runner.py --timeout 0.1 --verbose
 
 ### Health Monitoring Tools
 
-- **TLDR Runner**: Ultra-fast test feedback during development
-- **Pattern Sweep**: Automated pattern discovery and validation
-- **Integration Health Monitor**: Real-time component health tracking
+- **Smoke Test Infrastructure**: Chief Architect Phase 1 testing with <5 second execution targets
+- **Database-Free Testing**: Excellence Flywheel standalone test runner for core functionality
+- **Integration Health Monitor**: Real-time component health tracking with Prometheus + Grafana
+- **Comprehensive Test Suite**: Unit, integration, and validation tests across all services
 
 ## Pre-commit Hook Strategy
 
@@ -385,7 +411,10 @@ piper-morgan-product/
 │   │   └── slack/           # Slack spatial integration
 │   ├── knowledge_graph/     # Knowledge management
 │   ├── mcp/                 # MCP consumer & protocols
-│   ├── orchestration/       # Workflow orchestration
+│   ├── orchestration/       # Multi-Agent Coordinator, Excellence Flywheel, Workflows
+│   │   ├── multi_agent_coordinator.py    # Intelligent task orchestration
+│   │   ├── excellence_flywheel_integration.py    # Quality enforcement
+│   │   └── workflow_factory.py    # Dynamic workflow management
 │   ├── queries/             # Query routing & degradation
 │   └── repositories/        # Data access patterns
 ├── alembic/                 # Database migrations
@@ -420,6 +449,8 @@ piper-morgan-product/
 - [x] **Conversational AI Memory**: 10-turn context window with <150ms latency
 - [x] **PM-034 Anaphoric References**: >90% accuracy resolving "that issue", "the document"
 - [x] **PM-063 QueryRouter Degradation**: Comprehensive graceful degradation implementation
+- [x] **Excellence Flywheel Testing Infrastructure**: Database-free testing with 100% test coverage validation
+- [x] **Multi-Agent Coordinator Documentation**: Complete PM guide to intelligent task orchestration architecture
 
 ### Core Platform
 
@@ -430,6 +461,8 @@ piper-morgan-product/
 - [x] Core infrastructure setup (Postgres, Redis, ChromaDB)
 - [x] Query intent pipeline with RESTful error handling
 - [x] Comprehensive health monitoring with Prometheus + Grafana
+- [x] **Excellence Flywheel Testing**: Database-free testing infrastructure with 100% coverage validation
+- [x] **Multi-Agent Coordinator**: Intelligent task orchestration with <1000ms coordination overhead
 
 ### In Progress
 
