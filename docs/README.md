@@ -1,4 +1,4 @@
-!(../web/assets/pm-logo.png)
+!(pm-logo.png)
 
 # Piper Morgan - Conversational AI Product Management Assistant
 
