@@ -1,8 +1,8 @@
 # ADR-020: Protocol Development Investment
 
-**Date**: August 17, 2025  
-**Status**: Accepted  
-**Deciders**: Principal Architect, Chief Architect, Chief of Staff  
+**Date**: August 17, 2025
+**Status**: Accepted
+**Deciders**: Principal Architect, Chief Architect, Chief of Staff
 **Classification**: Strategic (Long-term Vision)
 
 ## Context
@@ -71,7 +71,7 @@ We will invest in developing PM-specific protocol extensions and, eventually, a 
 piper_protocol:
   extends: mcp
   version: 0.1.0
-  
+
   primitives:
     - workflow_state
     - approval_chain
@@ -79,14 +79,14 @@ piper_protocol:
     - dependency_graph
     - resource_allocation
     - risk_assessment
-    
+
   patterns:
     - sprint_transition
     - story_decomposition
     - stakeholder_notification
     - metric_aggregation
     - conflict_resolution
-    
+
   guarantees:
     - eventual_consistency
     - audit_trail

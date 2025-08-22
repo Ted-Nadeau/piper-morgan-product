@@ -1,8 +1,8 @@
 # ADR-021: Multi-Federation Achievement
 
-**Date**: August 17, 2025  
-**Status**: Accepted  
-**Deciders**: Principal Architect, Chief Architect, Chief of Staff  
+**Date**: August 17, 2025
+**Status**: Accepted
+**Deciders**: Principal Architect, Chief Architect, Chief of Staff
 **Classification**: Operational/Architectural (Hybrid)
 
 ## Context
@@ -42,22 +42,22 @@ federation_topology:
     primary: GitHub
     alternatives: [GitLab, Bitbucket]
     semantics: [commits, PRs, issues, branches]
-    
+
   enterprise_tracking:
     primary: Jira
     alternatives: [Azure DevOps]
     semantics: [epics, stories, workflows]
-    
+
   modern_tracking:
     primary: Linear
     alternatives: [Height, Shortcut]
     semantics: [cycles, projects, initiatives]
-    
+
   documentation:
     primary: Notion
     alternatives: [Confluence, Coda]
     semantics: [pages, databases, properties]
-    
+
   communication:
     primary: Slack
     alternatives: [Teams, Discord]
@@ -70,24 +70,24 @@ federation_topology:
 ```python
 class UniversalWorkItem:
     """The semantic bridge across all PM tools."""
-    
+
     # Core identity
     id: UUID  # Piper's universal ID
     source_ids: Dict[Platform, str]  # Native IDs in each system
-    
+
     # Semantic properties (tool-agnostic)
     intent: str
     status: WorkflowState
     stakeholders: List[Person]
     dependencies: List[UUID]
-    
+
     # Platform-specific extensions
     github_data: Optional[GitHubIssue]
     jira_data: Optional[JiraStory]
     linear_data: Optional[LinearIssue]
     notion_data: Optional[NotionPage]
     slack_context: Optional[SpatialContext]  # From PM-074
-    
+
     def translate_to(self, platform: Platform) -> PlatformSpecificItem:
         """Semantic translation to platform-native format."""
         return self.translators[platform].translate(self)
@@ -137,15 +137,15 @@ class UniversalWorkItem:
 ## Alternatives Considered
 
 ### Alternative 1: Single Source of Truth
-**Approach**: Force all data into one primary system  
+**Approach**: Force all data into one primary system
 **Why Rejected**: Teams won't abandon their preferred tools. Forcing consolidation creates resistance and shadow IT.
 
 ### Alternative 2: ETL/Data Warehouse
-**Approach**: Extract all data into central warehouse  
+**Approach**: Extract all data into central warehouse
 **Why Rejected**: Loses real-time nature. Creates stale data problems. Massive storage and sync overhead.
 
 ### Alternative 3: Point-to-Point Integrations
-**Approach**: Direct integrations between each tool pair  
+**Approach**: Direct integrations between each tool pair
 **Why Rejected**: N×N complexity explosion. Brittle. Inconsistent patterns.
 
 ## Implementation Evidence

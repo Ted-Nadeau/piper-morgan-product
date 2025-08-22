@@ -1,7 +1,7 @@
 # ADR-014: Attribution-First Development
 
-**Status**: Proposed  
-**Date**: August 17, 2025  
+**Status**: Proposed
+**Date**: August 17, 2025
 **Decision Makers**: PM, Chief Architect, Chief of Staff
 
 ## Context
@@ -93,13 +93,13 @@ We will adopt an **Attribution-First Development** methodology where acknowledgi
 4. **Legal Protection**: Reduces risk of plagiarism claims
 5. **Learning Acceleration**: The Attribution Flywheel:
    ```
-   Discover → Attribute → Share → Community Learns → 
+   Discover → Attribute → Share → Community Learns →
    → They Share Back → We Discover More
    ```
 
 ### Negative
 
-1. **Development Overhead**: ~5-10 minutes per PR for attribution review  
+1. **Development Overhead**: ~5-10 minutes per PR for attribution review
    *[Confidence: Medium - Estimated based on similar review processes, needs measurement]*
 2. **Initial Debt**: Need to retrofit existing code with attributions
 3. **Tooling Investment**: Time to build attribution infrastructure
@@ -172,11 +172,11 @@ The 5-10 minute overhead per PR is estimated based on:
 - 5 minutes: Add missing attributions (worst case)
 
 Success metrics:
-- 100% of external patterns attributed within 30 days  
+- 100% of external patterns attributed within 30 days
   *[Target: Aspirational but achievable with systematic review]*
-- Zero attribution debt growth after Month 1  
+- Zero attribution debt growth after Month 1
   *[Target: Requires disciplined process]*
-- Positive community feedback on attribution practices  
+- Positive community feedback on attribution practices
   *[Measure: Survey and social media sentiment]*
-- At least one upstream contribution based on attribution relationships  
+- At least one upstream contribution based on attribution relationships
   *[Target: Demonstrates reciprocal value]*

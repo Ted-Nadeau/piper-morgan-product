@@ -1,8 +1,8 @@
 # ADR-017: Spatial-MCP Refactoring
 
-**Status**: Implemented  
-**Date**: August 17, 2025 (Documenting August 12, 2025 decision)  
-**Decision Makers**: PM, Lead Developer, Chief Architect  
+**Status**: Implemented
+**Date**: August 17, 2025 (Documenting August 12, 2025 decision)
+**Decision Makers**: PM, Lead Developer, Chief Architect
 **Classification**: Architectural Refactoring
 
 ## Context
@@ -81,7 +81,7 @@ We will refactor spatial intelligence to operate as MCP services, making every s
 ```python
 class SpatialMCPService(MCPService):
     """Spatial intelligence exposed as MCP services"""
-    
+
     @mcp_method("spatial.analyze")
     async def analyze_spatial_context(self, entity_id: str, dimensions: List[str]):
         """Analyze entity across requested spatial dimensions"""
@@ -90,12 +90,12 @@ class SpatialMCPService(MCPService):
             analyzer = self.get_analyzer(dimension)
             results[dimension] = await analyzer.analyze(entity_id)
         return results
-    
+
     @mcp_method("spatial.hierarchy.traverse")
     async def traverse_hierarchy(self, start_id: str, direction: str = "up"):
         """Navigate organizational hierarchy"""
         return await self.hierarchy_analyzer.traverse(start_id, direction)
-    
+
     @mcp_method("spatial.temporal.timeline")
     async def get_timeline(self, entity_ids: List[str]):
         """Generate temporal timeline for entities"""

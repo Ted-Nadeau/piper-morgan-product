@@ -1,7 +1,7 @@
 # ADR-015: Wild Claim Verification Protocol
 
-**Status**: Proposed  
-**Date**: August 17, 2025  
+**Status**: Proposed
+**Date**: August 17, 2025
 **Decision Makers**: PM, Chief Architect, Chief of Staff
 
 ## Context
@@ -36,7 +36,7 @@ We will implement a **Wild Claim Verification Protocol** that requires mathemati
            "accuracy_improvement": 0.50,    # >50% improvement requires proof
            "time_savings": 0.90,            # >90% time saved requires proof
        }
-       
+
        def is_wild_claim(self, claim: Claim) -> bool:
            """Identify claims requiring extraordinary evidence"""
            return any(claim.exceeds_threshold(t) for t in self.WILD_CLAIM_THRESHOLDS)
@@ -54,24 +54,24 @@ We will implement a **Wild Claim Verification Protocol** that requires mathemati
    **Documentation Template**:
    ```markdown
    ## Claim: [Specific metric and improvement]
-   
+
    ### Baseline
    - Measurement: [Original performance]
    - Methodology: [How measured]
    - Date: [When established]
    - Environment: [Test/Production]
-   
+
    ### Improved Performance
    - Measurement: [New performance]
    - Methodology: [How measured, must match baseline]
    - Date: [When measured]
    - Environment: [Test/Production]
-   
+
    ### Calculation
    ```math
    Improvement = (New - Baseline) / Baseline × 100
    ```
-   
+
    ### Validation
    - [ ] Reproduced by independent party
    - [ ] Confirmed in production environment
@@ -130,7 +130,7 @@ We will implement a **Wild Claim Verification Protocol** that requires mathemati
 
 ### Negative
 
-1. **Velocity Impact**: ~1-2 hours to properly verify wild claims  
+1. **Velocity Impact**: ~1-2 hours to properly verify wild claims
    *[Confidence: Medium - Based on complexity of establishing baselines and running tests]*
 2. **Marketing Constraints**: Can't match competitors' inflated claims
 3. **Documentation Overhead**: Detailed proof requirements
@@ -198,7 +198,7 @@ We will implement a **Wild Claim Verification Protocol** that requires mathemati
 
 ## Notes
 
-The phrase "extraordinary claims require extraordinary evidence" (Carl Sagan, popularizing Laplace's principle) guides this protocol. 
+The phrase "extraordinary claims require extraordinary evidence" (Carl Sagan, popularizing Laplace's principle) guides this protocol.
 
 Example verification from our own claims:
 - ❌ "150x performance" was from mocked tests *[Status: Retracted - failed verification]*
