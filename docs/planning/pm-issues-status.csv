@@ -1,89 +1,91 @@
-PM_Number,Issue_Number,Title,Status
-PM-001,4,Database Schema Initialization,CLOSED
-PM-002,5,Workflow Factory Implementation,CLOSED
-PM-003,6,GitHub Issue Creation Workflow,CLOSED
-PM-003,9,Mobile app crashes when users upload photos,CLOSED
-PM-004,7,Basic Web User Interface,CLOSED
-PM-005,11,User Feedback Tracking,OPEN
-PM-006,12,Clarifying Questions System,CLOSED
-PM-007,13,Knowledge Hierarchy Enhancement,CLOSED
-PM-008,14,GitHub Issue Review & Improvement,CLOSED
-PM-009,15,Multi-Project/Repository Support,CLOSED
-PM-010,41,Comprehensive Error Handling System,CLOSED
-PM-011,42,Web Chat Interface + User Guide,CLOSED
-PM-012,28,GitHub Repository Integration within Projects,CLOSED
-PM-014,30,Documentation and Test Suite Health,CLOSED
-PM-015,29,Test Infrastructure Isolation Fix,CLOSED
-PM-021,21,LIST_PROJECTS Workflow,CLOSED
-PM-025,56,Message-Scoped Document Context,OPEN
-PM-026,44,Test Infrastructure Isolation Fix,CLOSED
-PM-028,57,Meeting Transcript Analysis & Visualization,OPEN
-PM-029,58,Analytics Dashboard Integration,OPEN
-PM-030,59,Advanced Knowledge Graph Implementation,OPEN
-PM-032,43,Unified Response Rendering & DDD/TDD Web UI Refactor,CLOSED
-PM-033,60,MCP Integration Pilot,OPEN
-PM-033a,94,MCP Consumer Foundation - GitHub Integration,COMPLETED
-PM-033b,91,Tool Federation - External Development Tool Integration,CLOSED
-PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,CLOSED
-PM-033c,92,Bridge Existing Agents - Slack Services MCP Conversion,CLOSED
-PM-033d,93,MCP Server Mode - Transform Piper to Ecosystem Hub,CLOSED
-PM-034,61,LLM-Based Intent Classification,CLOSED
-PM-034.1,80,LLM-Based Intent Classification with Knowledge Graph Context,CLOSED
-PM-036,62,Engineering Infrastructure Monitoring,CLOSED
-PM-038,31,MCP Real Content Search Implementation,CLOSED
-PM-038.1,32,Day 1 - Domain Models + Content Extraction Core,CLOSED
-PM-038.2,33,Day 2 - Connection Pooling + MCP Client Enhancement,CLOSED
-PM-038.3,34,Day 3 - FileRepository Integration + Real Content Search,CLOSED
-PM-038.4,35,Day 4 - Configuration Service + Error Handling,CLOSED
-PM-038.5,36,Day 5 - Performance Optimization + Monitoring,CLOSED
-PM-039,37,Intent Classification Coverage Improvements,CLOSED
-PM-040,79,Advanced Knowledge Graph Implementation,OPEN
-PM-051,63,Workflow Optimization,OPEN
-PM-052,64,Autonomous Workflow Management,OPEN
-PM-053,65,Visual Content Analysis Pipeline,OPEN
-PM-054,66,Predictive Project Analytics,OPEN
-PM-055,23,Enforce Python Version Consistency Across Environments,CLOSED
-PM-056,27,Create domain/database schema validator,OPEN
-PM-056,67,Domain/Database Schema Validator Tool,CLOSED
-PM-057,26,Implement Pre-execution Context Validation for Workflows,CLOSED
-PM-058,38,Resolve AsyncPG Connection Pool Concurrency in Test Suite,CLOSED
-PM-061,45,Implement TLDR Continuous Verification System,CLOSED
-PM-062,46,Systematic Workflow Completion Audit,CLOSED
-PM-063,72,QueryRouter Graceful Degradation - Prevent Cascade Failures,CLOSED
-PM-063-SUB,47,Extend Graceful Degradation to QueryRouter,CLOSED
-PM-069,51,GitHub Pages Documentation Publishing Fix,CLOSED
-PM-070,52,Canonical Queries Foundation Document,CLOSED
-PM-071,53,Morning Standup 5-Query Sequence Testing,CLOSED
-PM-072,54,README Modernization,OPEN
-PM-072-SUB,83,Modernize Main Repository README,CLOSED
-PM-073,55,Pattern Sweep Process with TLDR Integration,CLOSED
-PM-074,50,Slack Integration with Spatial Metaphors,CLOSED
-PM-075,48,Strategic Documentation Alignment,CLOSED
-PM-076,49,Excellence Flywheel Methodology Documentation System,CLOSED
-PM-078,68,Connect Slack Spatial Intelligence to Response Generation,CLOSED
-PM-079,69,Refine Slack Workflow Notifications - Reduce Verbosity,CLOSED
-PM-079-SUB,82,Implement Slack Message Consolidation,CLOSED
-PM-080,70,Schema Cleanup Phase 2 - Eliminate Remaining 29 Inconsistencies,CLOSED
-PM-080-SUB,81,Resolve Remaining Schema Inconsistencies,CLOSED
-PM-081,71,To-Do Lists based on Lists and To-Dos as Core Domain Objects,CLOSED
-PM-087,78,Values & Principles Architecture - Ethics-First Foundation,CLOSED
-PM-088,86,Phase 2: User Guide Implementation - Complete Conversational AI Documentation,CLOSED
-PM-089,88,Error Message Enhancement - User Experience Transformation,CLOSED
-UX-001,95,Standup Experience Excellence Epic,OPEN
-UX-001.1,96,Add Conversational Intent Categories,OPEN
-UX-001.2,97,Quick Context Loading via System Prompt,OPEN
-UX-001.3,98,Document Ingestion for Context,OPEN
-UX-001.4,99,Connect Knowledge Graph to Conversation,OPEN
-UX-001.5,100,Project Portfolio Awareness,OPEN
-UX-001.6,101,Temporal Context System,OPEN
-UX-001.7,102,Calendar Scanning on Greeting,OPEN
-UX-001.8,103,Priority Calculation Engine,OPEN
-UX-001.9,104,Time Allocation Analysis,OPEN
-UX-001.10,105,Response Personality Enhancement,OPEN
-UX-001.11,106,Strategic Recommendations,OPEN
-UX-001.12,107,Learning Integration,OPEN
-UX-001.13,110,Mac Dock Integration for One-Click Startup,CLOSED
-PM-113,113,Migrate main.py from DatabasePool to AsyncSessionFactory,OPEN
-PM-114,114,Remove Legacy DatabasePool Class and Deprecated RepositoryFactory,OPEN
-PM-115,115,Fix IntentEnricher Dependency Injection Anti-Pattern,OPEN
-PM-090,90,CRITICAL: Workflow Factory Bug Fix - UnboundLocalError,CLOSED
+PM_Number,Issue_Number,Title,Status,Issues tracked in documents inconsistently from GitHub
+PM-001,4,Database Schema Initialization,CLOSED,
+PM-002,5,Workflow Factory Implementation,CLOSED,
+PM-003,6,GitHub Issue Creation Workflow,CLOSED,
+PM-004,7,Basic Web User Interface,CLOSED,✅ PMP-004: Basic Workflow State Persistence (Issue #122 - RETROACTIVE)
+PM-005,11,User Feedback Tracking,CLOSED,⚠️ PMP-005 "Knowledge search improvements" appears to be PHANTOM WORK (never implemented)
+PM-006,12,Clarifying Questions System,CLOSED,
+PM-007,13,Knowledge Hierarchy Enhancement,CLOSED,
+PM-008,14,GitHub Issue Review & Improvement,CLOSED,
+PM-009,15,Multi-Project/Repository Support,CLOSED,
+PM-010,41,Comprehensive Error Handling System,CLOSED,
+PM-011,42,Web Chat Interface + User Guide,CLOSED,
+PM-012,28,GitHub Repository Integration within Projects,CLOSED,📝 SAME WORK - Docs called it "GitHub API Design + High-Impact Implementation"
+PM-014,30,Documentation and Test Suite Health,CLOSED,
+PM-015,29,Test Infrastructure Isolation Fix,CLOSED,
+PM-020,121,Bulk Operations Support [RETROACTIVE],CLOSED,✅ PM-020: Bulk Operations Support (Issue #121 - RETROACTIVE)
+PM-021,21,LIST_PROJECTS Workflow,CLOSED,
+PM-025,56,Message-Scoped Document Context,OPEN,
+PM-026,44,Test Infrastructure Isolation Fix,CLOSED,
+PM-028,57,Meeting Transcript Analysis & Visualization,OPEN,
+PM-029,58,Analytics Dashboard Integration,OPEN,
+PM-030,59,Advanced Knowledge Graph Implementation,OPEN,
+PM-032,43,Unified Response Rendering & DDD/TDD Web UI Refactor,CLOSED,
+PM-033,60,MCP Integration Pilot,OPEN,
+PM-033a,94,MCP Consumer Foundation - GitHub Integration,COMPLETED,
+PM-033b,91,Tool Federation - External Development Tool Integration,CLOSED,
+PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,CLOSED,
+PM-033c,92,Bridge Existing Agents - Slack Services MCP Conversion,CLOSED,
+PM-033d,93,MCP Server Mode - Transform Piper to Ecosystem Hub,CLOSED,
+PM-034,61,LLM-Based Intent Classification,CLOSED,
+PM-034.1,80,LLM-Based Intent Classification with Knowledge Graph Context,CLOSED,
+PM-036,62,Engineering Infrastructure Monitoring,CLOSED,
+PM-038,31,MCP Real Content Search Implementation,CLOSED,📝 Originally PM-013 in session logs - renumbered to PM-038 due to conflicts
+PM-038.1,32,Day 1 - Domain Models + Content Extraction Core,CLOSED,
+PM-038.2,33,Day 2 - Connection Pooling + MCP Client Enhancement,CLOSED,
+PM-038.3,34,Day 3 - FileRepository Integration + Real Content Search,CLOSED,
+PM-038.4,35,Day 4 - Configuration Service + Error Handling,CLOSED,
+PM-038.5,36,Day 5 - Performance Optimization + Monitoring,CLOSED,
+PM-039,37,Intent Classification Coverage Improvements,CLOSED,⚠️ DIFFERENT WORK - PM-039b (#123) created for "MCP Configuration Migration"
+PM-039b,123,MCP Configuration Migration [RETROACTIVE],CLOSED,✅ ADR-010 compliance work done July 24 2025
+PM-040,79,Advanced Knowledge Graph Implementation,OPEN,
+PM-051,63,Workflow Optimization,OPEN,
+PM-052,64,Autonomous Workflow Management,OPEN,
+PM-053,65,Visual Content Analysis Pipeline,OPEN,
+PM-054,66,Predictive Project Analytics,OPEN,
+PM-055,23,Enforce Python Version Consistency Across Environments,CLOSED,
+PM-056,27,Create domain/database schema validator,OPEN,
+PM-056,67,Domain/Database Schema Validator Tool,CLOSED,
+PM-057,26,Implement Pre-execution Context Validation for Workflows,CLOSED,📝 SAME WORK - Docs expanded to "Context Validation Framework"
+PM-058,38,Resolve AsyncPG Connection Pool Concurrency in Test Suite,CLOSED,
+PM-061,45,Implement TLDR Continuous Verification System,CLOSED,
+PM-062,46,Systematic Workflow Completion Audit,CLOSED,
+PM-063,72,QueryRouter Graceful Degradation - Prevent Cascade Failures,CLOSED,
+PM-063-SUB,47,Extend Graceful Degradation to QueryRouter,CLOSED,
+PM-069,51,GitHub Pages Documentation Publishing Fix,CLOSED,
+PM-070,52,Canonical Queries Foundation Document,CLOSED,
+PM-071,53,Morning Standup 5-Query Sequence Testing,CLOSED,
+PM-072,54,README Modernization,OPEN,
+PM-072-SUB,83,Modernize Main Repository README,CLOSED,
+PM-073,55,Pattern Sweep Process with TLDR Integration,CLOSED,
+PM-074,50,Slack Integration with Spatial Metaphors,CLOSED,
+PM-075,48,Strategic Documentation Alignment,CLOSED,
+PM-076,49,Excellence Flywheel Methodology Documentation System,CLOSED,
+PM-078,68,Connect Slack Spatial Intelligence to Response Generation,CLOSED,📝 SAME WORK - Docs describe TDD implementation details
+PM-079,69,Refine Slack Workflow Notifications - Reduce Verbosity,CLOSED,
+PM-079-SUB,82,Implement Slack Message Consolidation,CLOSED,
+PM-080,70,Schema Cleanup Phase 2 - Eliminate Remaining 29 Inconsistencies,CLOSED,
+PM-080-SUB,81,Resolve Remaining Schema Inconsistencies,CLOSED,
+PM-081,71,To-Do Lists based on Lists and To-Dos as Core Domain Objects,CLOSED,
+PM-087,78,Values & Principles Architecture - Ethics-First Foundation,CLOSED,
+PM-088,86,Phase 2: User Guide Implementation - Complete Conversational AI Documentation,CLOSED,
+PM-089,88,Error Message Enhancement - User Experience Transformation,CLOSED,
+UX-001,95,Standup Experience Excellence Epic,OPEN,
+UX-001.1,96,Add Conversational Intent Categories,OPEN,
+UX-001.2,97,Quick Context Loading via System Prompt,OPEN,
+UX-001.3,98,Document Ingestion for Context,OPEN,
+UX-001.4,99,Connect Knowledge Graph to Conversation,OPEN,
+UX-001.5,100,Project Portfolio Awareness,OPEN,
+UX-001.6,101,Temporal Context System,OPEN,
+UX-001.7,102,Calendar Scanning on Greeting,OPEN,
+UX-001.8,103,Priority Calculation Engine,OPEN,
+UX-001.9,104,Time Allocation Analysis,OPEN,
+UX-001.10,105,Response Personality Enhancement,OPEN,
+UX-001.11,106,Strategic Recommendations,OPEN,
+UX-001.12,107,Learning Integration,OPEN,
+UX-001.13,110,Mac Dock Integration for One-Click Startup,CLOSED,
+PM-113,113,Migrate main.py from DatabasePool to AsyncSessionFactory,OPEN,
+PM-114,114,Remove Legacy DatabasePool Class and Deprecated RepositoryFactory,OPEN,
+PM-115,115,Fix IntentEnricher Dependency Injection Anti-Pattern,OPEN,
+PM-090,90,CRITICAL: Workflow Factory Bug Fix - UnboundLocalError,CLOSED,
+,,,,"✅ ADR-010: Configuration Access Patterns (July 21, 2025)"

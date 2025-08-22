@@ -1,8 +1,8 @@
 # ADR-018: Server Functionality Architecture
 
-**Date**: August 17, 2025  
-**Status**: Accepted  
-**Deciders**: Principal Architect, Chief Architect, Chief of Staff  
+**Date**: August 17, 2025
+**Status**: Accepted
+**Deciders**: Principal Architect, Chief Architect, Chief of Staff
 **Classification**: Architectural (High Impact)
 
 ## Context
@@ -147,19 +147,19 @@ MCP Protocol Response
 ```python
 class MCPServerSecurity:
     """Security layer for MCP server exposure."""
-    
+
     authentication_methods = [
         "api_key",      # Simple for development
         "oauth2",       # Enterprise integration
         "mcp_native"    # Protocol-native auth
     ]
-    
+
     rate_limits = {
         "free_tier": "100 requests/hour",
         "standard": "1000 requests/hour",
         "enterprise": "unlimited with fair use"
     }
-    
+
     capability_tiers = {
         "basic": ["intent_classification", "workflow_routing"],
         "advanced": ["spatial_analysis", "orchestration"],

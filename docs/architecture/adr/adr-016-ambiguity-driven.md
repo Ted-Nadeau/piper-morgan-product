@@ -1,8 +1,8 @@
 # ADR-016: Ambiguity-Driven Architecture with Chain-of-Draft Integration
 
-**Status**: Proposed  
-**Date**: August 17, 2025  
-**Decision Makers**: PM, Chief Architect, Chief of Staff  
+**Status**: Proposed
+**Date**: August 17, 2025
+**Decision Makers**: PM, Chief Architect, Chief of Staff
 **Classification**: Revolutionary Bundle (includes Chain-of-Draft Integration, Ambiguity Assessment, Three-Tier Orchestration)
 
 ## Context
@@ -39,7 +39,7 @@ We will implement an **Ambiguity-Driven Architecture** that routes tasks based o
 ```python
 class AmbiguityAssessor:
     """Evaluates solution path clarity, not task complexity"""
-    
+
     def assess_solution_clarity(self, task: Task) -> float:
         """
         Returns clarity score 0.0-1.0 based on:
@@ -82,15 +82,15 @@ class AmbiguityAssessor:
 ```python
 class DebateDrivenCoD:
     """Enables rapid multi-agent consensus at 1/20th token cost"""
-    
+
     def compress_reasoning(self, agent_thought: str) -> str:
         """Compress to 5-word expressions per CoD methodology"""
         # Example:
-        # Original: "I believe we should prioritize the authentication 
+        # Original: "I believe we should prioritize the authentication
         #           feature because security is critical for enterprise..."
         # Compressed: "authentication→security→enterprise→critical→priority"
         return self.extract_semantic_core(agent_thought, max_words=5)
-    
+
     def orchestrate_debate(self, agents: List[Agent], problem: str):
         """Orchestrate compressed debate until consensus"""
         debate_rounds = []
@@ -100,7 +100,7 @@ class DebateDrivenCoD:
                 compressed = self.compress_reasoning(agent.reason(problem))
                 round_contributions.append(compressed)
             debate_rounds.append(round_contributions)
-            
+
         return self.synthesize_consensus(debate_rounds)
 ```
 
@@ -112,13 +112,13 @@ token_economics:
     tokens: 50000
     cost: $2.50
     time: 45s
-    
+
   debate_driven_cod:
     tokens: 2500  # 95% reduction [Verified: CoD paper]
     cost: $0.125  # 95% reduction [Calculated: Based on token reduction]
     time: 2.3s    # 95% reduction [Estimated: Needs measurement]
     quality_correlation: 0.96  # Only 4% quality loss [Source: CoD paper]
-    
+
   confidence_note: "Token reduction verified in research, cost/time extrapolated"
 ```
 
@@ -146,13 +146,13 @@ token_economics:
 
 ### Negative
 
-1. **Assessment Overhead**: Must evaluate ambiguity before routing (adds ~100ms)  
+1. **Assessment Overhead**: Must evaluate ambiguity before routing (adds ~100ms)
    *[Confidence: Medium - Estimated based on similar classification tasks]*
-2. **Training Required**: Team needs to understand ambiguity vs. complexity distinction  
+2. **Training Required**: Team needs to understand ambiguity vs. complexity distinction
    *[Confidence: High - Observed confusion in our own research process]*
-3. **Debugging Complexity**: Multi-agent debates harder to trace than single agent  
+3. **Debugging Complexity**: Multi-agent debates harder to trace than single agent
    *[Confidence: High - Known challenge from industry experience]*
-4. **Quality Risk**: 4% degradation from CoD compression  
+4. **Quality Risk**: 4% degradation from CoD compression
    *[Confidence: High - Measured in CoD paper, but our implementation may vary]*
 
 ### Neutral
@@ -219,11 +219,11 @@ This ADR represents a paradigm shift in our architectural thinking. The key insi
 The economic implications are staggering: what was a $2,500 quarterly PMF analysis becomes $125, making sophisticated multi-agent analysis accessible for routine PM work.
 
 Success metrics:
-- 90% accuracy in ambiguity assessment  
+- 90% accuracy in ambiguity assessment
   *[Target: Requires calibration through production usage]*
-- 92% token reduction achieved in practice  
+- 92% token reduction achieved in practice
   *[Target: Match research paper results]*
-- <5% quality degradation from compression  
+- <5% quality degradation from compression
   *[Target: Acceptable trade-off per paper]*
-- 10x increase in multi-agent usage due to economics  
+- 10x increase in multi-agent usage due to economics
   *[Aspirational: Depends on cost sensitivity of use cases]*

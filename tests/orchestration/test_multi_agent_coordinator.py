@@ -771,3 +771,111 @@ class TestMultiAgentCoordinator:
         # Should still complete successfully
         assert result.status == CoordinationStatus.ASSIGNED
         assert len(result.subtasks) == 1
+
+    async def test_agent_capabilities_initialization_coverage(self, coordinator):
+        """Test that _initialize_agent_capabilities is properly tested"""
+        decomposer = coordinator.task_decomposer
+        capabilities = decomposer.agent_capabilities
+
+        # Verify all agent types have capabilities
+        assert AgentType.CODE in capabilities
+        assert AgentType.CURSOR in capabilities
+
+        # Verify CODE agent has expected strengths
+        code_agent = capabilities[AgentType.CODE]
+        assert "infrastructure" in code_agent.strengths
+        assert "backend_services" in code_agent.strengths
+        assert "orchestration" in code_agent.domains
+
+        # Verify CURSOR agent has expected strengths
+        cursor_agent = capabilities[AgentType.CURSOR]
+        assert "testing" in cursor_agent.strengths
+        assert "ui_development" in cursor_agent.strengths
+
+    async def test_coordination_protocol_edge_cases(self, coordinator):
+        """Test _setup_coordination_protocol with various dependency patterns"""
+        # Test with circular dependency detection
+        subtasks = [
+            SubTask(
+                id="task_a",
+                description="Task A depends on B",
+                task_type="implementation",
+                estimated_duration=10,
+                required_capabilities={"general"},
+                dependencies=["task_b"],
+                assigned_agent=AgentType.CODE,
+            ),
+            SubTask(
+                id="task_b",
+                description="Task B depends on A",
+                task_type="implementation",
+                estimated_duration=10,
+                required_capabilities={"general"},
+                dependencies=["task_a"],
+                assigned_agent=AgentType.CURSOR,
+            ),
+        ]
+
+        protocol = await coordinator._setup_coordination_protocol(subtasks)
+
+        # Should handle circular dependencies gracefully
+        assert "dependency_graph" in protocol
+        assert "parallel_groups" in protocol
+        assert protocol["execution_strategy"] in ["sequential", "parallel"]
+
+    async def test_performance_metrics_accuracy(self, coordinator, test_intent):
+        """Test get_performance_metrics returns accurate timing data"""
+        # Coordinate a task to generate metrics
+        start_time = time.time()
+        result = await coordinator.coordinate_task(test_intent)
+        end_time = time.time()
+
+        # Get performance metrics
+        metrics = await coordinator.get_performance_metrics()
+
+        # Verify timing accuracy
+        assert "average_coordination_time" in metrics
+        assert "total_tasks_coordinated" in metrics
+        assert metrics["total_tasks_coordinated"] >= 1
+
+        # Performance assertion: coordination should be fast
+        coordination_time = end_time - start_time
+        assert coordination_time < 1.0, f"Coordination took {coordination_time}s, should be <1s"
+
+    async def test_large_task_decomposition_performance(self, coordinator):
+        """Test performance with large, complex tasks"""
+        large_intent = Intent(
+            id=f"large_intent_{uuid4().hex[:8]}",
+            category=IntentCategory.IMPLEMENTATION,
+            action="implement_large_system",
+            original_message="""Implement a comprehensive user management system with:
+            - User registration and authentication
+            - Role-based access control
+            - Profile management
+            - Account settings
+            - Password reset functionality
+            - Email verification
+            - OAuth integration
+            - Audit logging
+            - Performance monitoring
+            - API documentation
+            - Unit tests
+            - Integration tests
+            - E2E tests
+            - Security hardening""",
+            confidence=0.95,
+        )
+
+        start_time = time.time()
+        result = await coordinator.coordinate_task(large_intent)
+        end_time = time.time()
+
+        # Performance assertion: even large tasks should coordinate quickly
+        coordination_time = end_time - start_time
+        assert (
+            coordination_time < 5.0
+        ), f"Large task coordination took {coordination_time}s, should be <5s"
+
+        # Should decompose into multiple subtasks
+        assert result.status == CoordinationStatus.ASSIGNED
+        assert len(result.subtasks) >= 3, "Large task should decompose into multiple subtasks"

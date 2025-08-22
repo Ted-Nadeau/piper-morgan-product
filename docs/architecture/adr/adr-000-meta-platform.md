@@ -1,11 +1,11 @@
 # ADR-000: Piper Morgan as Meta-Platform Vision
 
-**Status**: Proposed  
-**Date**: August 17, 2025  
-**Decision Makers**: PM, Chief Architect, Chief of Staff  
+**Status**: Proposed
+**Date**: August 17, 2025
+**Decision Makers**: PM, Chief Architect, Chief of Staff
 **Classification**: Strategic Vision (Overarching ADR)
 
-> "Piper Morgan succeeds when Product Managers spend more time on strategic thinking and less time on mechanical work, while maintaining full control and understanding of their product decisions."  
+> "Piper Morgan succeeds when Product Managers spend more time on strategic thinking and less time on mechanical work, while maintaining full control and understanding of their product decisions."
 > — Agent Charter v1.0, North Star Principle
 
 ## Context
@@ -43,7 +43,7 @@ User Request → Piper Processes → Work Completed
 - Generating stakeholder reports
 - Coordinating cross-platform workflows
 
-**Value**: 30-50% reduction in mechanical PM work  
+**Value**: 30-50% reduction in mechanical PM work
 *[Confidence: Medium - Based on early user feedback, awaiting systematic measurement]*
 
 #### 2. Piper as Demonstrator
@@ -74,7 +74,7 @@ PM Defines Workflow → Piper Orchestrates Agents → PM Maintains Control
 - Custom orchestration patterns
 - Transparent decision processes
 
-**Value**: 10× productivity through PM-controlled orchestration  
+**Value**: 10× productivity through PM-controlled orchestration
 *[Confidence: Low - Theoretical projection, requires production validation]*
 
 ### The Meta-Platform Architecture

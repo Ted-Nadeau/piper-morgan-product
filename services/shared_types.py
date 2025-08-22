@@ -38,6 +38,8 @@ class WorkflowType(Enum):
     ANALYZE_FILE = "analyze_file"  # Add this line for file analysis workflows
     # PM-021: Project listing workflow type
     LIST_PROJECTS = "list_projects"
+    # Multi-Agent coordination workflow type
+    MULTI_AGENT = "multi_agent"
 
 
 class WorkflowStatus(Enum):

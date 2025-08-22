@@ -91,25 +91,74 @@ Piper: "✅ Assigned issue #1247 to Sarah. She's been notified."
 - **[🔌 API Documentation](docs/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
 - **[⚡ Developer Quick Start](docs/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
 - **[🌿 Branch Management](docs/development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
+- **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
 
 ## 🧪 Testing & Quality Assurance
 
-### ⚡ **Smoke Test Infrastructure**
+### ⚡ **Smart Test Infrastructure (Phase 1)**
 
-- **<5 Second Validation**: Complete test suite validation in under 5 seconds
-- **599+ Smoke Tests**: Comprehensive critical path coverage across all systems
-- **Performance Targets**: 100ms latency, memory limits, concurrent handling
-- **Replaces TLDR**: Modern pytest-based testing replaces deprecated systems
+Our test infrastructure provides **4 execution modes** optimized for development workflow:
 
-**Quick Test Run:**
+- **🚀 Smoke Tests (<5s)**: Rapid validation for pre-commit checks
+- **⚡ Fast Tests (<30s)**: Development workflow with unit tests + standalone orchestration
+- **🔄 Full Tests**: Comprehensive testing including integration tests with database
+- **📊 Coverage Analysis**: Detailed reporting with <80% coverage highlighting
+
+**Quick Test Commands:**
 
 ```bash
-# Run complete smoke test suite
-python scripts/run_smoke_tests.py
+# Smart test execution
+./scripts/run_tests.sh smoke     # <5s validation
+./scripts/run_tests.sh fast      # <30s development workflow
+./scripts/run_tests.sh full      # Complete test suite
+./scripts/run_tests.sh coverage  # Coverage analysis
 
-# Or use pytest directly
-pytest -m smoke --tb=short
+# Git integration (automated)
+git commit    # Runs smoke tests via pre-commit hook
+git push      # Runs fast tests via pre-push hook
 ```
+
+**Excellence Flywheel Integration**: All testing follows Verification First → Implementation → Evidence-based progress → GitHub tracking methodology.
+
+See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documentation.
+
+## 🚀 Recent Infrastructure Activations
+
+### 🧪 Test Infrastructure (August 20, 2025)
+- **Smart Test Execution**: `./scripts/run_tests.sh` with 4 modes (smoke, fast, full, coverage)
+- **Performance**: 0-second smoke tests (599+ test suite activated)
+- **Automation**: Git hooks with pre-push test enforcement
+- **Documentation**: Complete TEST-GUIDE.md for developers
+
+### 🔄 Multi-Agent Coordination (August 20, 2025)
+- **Operational Deployment**: Complete implementation plan ready ([Issue PM-118](https://github.com/mediajunkie/piper-morgan-product/issues/118))
+- **Automation Scripts**: Deployment and validation scripts created
+- **Quick Start**: [5-minute deployment guide](docs/development/MULTI_AGENT_QUICK_START.md) available
+- **Integration**: REST API design for coordination triggers
+
+### 💾 Persistent Context Foundation (August 20, 2025)
+- **MVP Foundation**: Complete user preference and session persistence ([Issue PM-119](https://github.com/mediajunkie/piper-morgan-product/issues/119))
+- **Performance**: <500ms operations supporting 1000+ concurrent users
+- **API Integration**: REST endpoints with validation and security
+- **Test Coverage**: 100% TDD methodology with comprehensive test suites
+
+## 📚 Enhanced Development Documentation
+
+### Core Methodology
+- **[Excellence Flywheel Methodology](docs/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
+- **[Multi-Agent Coordination Guide](docs/development/HOW_TO_USE_MULTI_AGENT.md)** - Intelligent task decomposition
+- **[Multi-Agent Quick Start](docs/development/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
+- **[Test Infrastructure Guide](docs/development/TEST-GUIDE.md)** - Smart test execution patterns
+
+### Implementation Guides
+- **[Multi-Agent Integration Plan](docs/development/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
+- **[Persistent Context Research](docs/development/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
+- **[Enhanced Autonomy Patterns](docs/development/enhanced-autonomy-patterns.md)** - Advanced development workflows
+
+### Operations & Automation
+- **[Smart Test Execution](scripts/run_tests.sh)** - 4-mode test infrastructure
+- **[Multi-Agent Deployment](scripts/deploy_multi_agent_coordinator.sh)** - Automated coordinator deployment
+- **[Operation Validation](scripts/validate_multi_agent_operation.sh)** - Production readiness validation
 
 ## 🏗️ Architecture Overview
 
