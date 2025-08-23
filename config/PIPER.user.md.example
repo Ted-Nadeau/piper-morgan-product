@@ -1,0 +1,164 @@
+# PIPER.user.md.example - User Configuration Template
+
+**Instructions**: Copy this file to `PIPER.user.md` and customize all sections
+**Status**: Template - customize before use
+**Privacy**: Your PIPER.user.md will be gitignored (not committed to repository)
+
+---
+
+## 👤 **User Context** *(CUSTOMIZE REQUIRED)*
+
+**Name**: [Your Name]
+**Role**: [Your Role - e.g., Product Manager, Developer, etc.]
+**Timezone**: [Your Timezone - e.g., Pacific Time (PT)]
+**Working Hours**: [Your Hours - e.g., 9:00 AM - 5:00 PM PT]
+**Location**: [Your Location - e.g., San Francisco, Remote, etc.]
+**Communication Style**: [Your Style - e.g., Direct, detailed, casual, etc.]
+
+**Key Characteristics** *(CUSTOMIZE WITH YOUR PREFERENCES)*:
+- [Your work approach - e.g., Values systematic approaches]
+- [Your preferences - e.g., Prefers quick wins and iteration]
+- [Your standards - e.g., Maintains high code quality]
+- [Your tools - e.g., Uses GitHub-first tracking]
+- [Your methodology - e.g., Emphasizes Excellence Flywheel]
+
+---
+
+## 🎯 **Current Focus** *(UPDATE REGULARLY)*
+
+**Primary Objective**: [Your main goal - e.g., Q4 project delivery]
+**Strategic Goal**: [Your strategic focus - e.g., Launch new system]
+**This Week's Priority**: [This week's focus - e.g., Feature implementation]
+
+**Key Initiatives** *(CUSTOMIZE WITH YOUR PROJECTS)*:
+- **[Project 1]**: 🚀 **ACTIVE** - [Description and status]
+- **[Project 2]**: 🚀 **ACTIVE** - [Description and status]
+- **[Project 3]**: ✅ **COMPLETE** - [Description and outcome]
+
+**Success Metrics** *(DEFINE YOUR MEASURES)*:
+- [Project 1] delivery: [Success criteria] 🚀
+- [Project 2] performance: [Target metrics] 🚀
+- [Project 3] effectiveness: [Quality measures] ✅
+
+---
+
+## 📊 **Project Portfolio** *(CUSTOMIZE ALLOCATIONS)*
+
+**[Primary Project Name] (70%)** - Primary project and main focus
+- **Status**: [Current status]
+- **Focus**: [What you're focusing on]
+- **Context**: [Company/team context]
+- **Allocation**: [Time/resource allocation]
+- **Next Milestone**: [Upcoming milestone]
+
+**[Secondary Project Name] (25%)** - Secondary focus
+- **Status**: [Current status]
+- **Current Phase**: [Development phase]
+- **Next Milestone**: [Upcoming milestone]
+- **Key Achievements**: [Recent wins]
+- **Allocation**: [Time allocation]
+
+**[Maintenance/Other] (5%)** - Ongoing work
+- **Status**: [Current status]
+- **Focus**: [What this covers]
+- **Output**: [What you produce]
+- **Allocation**: [Time allocation]
+
+---
+
+## 📅 **Calendar Patterns** *(CUSTOMIZE YOUR SCHEDULE)*
+
+**Daily Routines** *(ADJUST TO YOUR SCHEDULE)*:
+- **[Time]**: [Your morning routine - e.g., Daily standup]
+- **[Time]**: [Your focus time - e.g., Development work]
+- **[Time]**: [Your afternoon work - e.g., Meetings/reviews]
+- **[Time]**: [Your evening routine - e.g., Planning/docs]
+
+**Recurring Meetings** *(LIST YOUR REGULAR MEETINGS)*:
+- **Monday**: [Your Monday pattern - e.g., Sprint planning]
+- **Wednesday**: [Your Wednesday pattern - e.g., Reviews]
+- **Friday**: [Your Friday pattern - e.g., Retrospectives]
+
+**Key Dates** *(UPDATE WITH YOUR IMPORTANT DATES)*:
+- **[Date]**: [Important milestone or deadline]
+- **[Date]**: [Key event or deliverable]
+- **[Date]**: [Planning or review session]
+
+---
+
+## 🚀 **Standing Priorities** *(RANK YOUR PRIORITIES)*
+
+**Priority 1**: [Your top priority]
+- **Goal**: [What you want to achieve]
+- **Success**: [How you measure success]
+- **Timeline**: [When it's due]
+
+**Priority 2**: [Your second priority]
+- **Goal**: [What you want to achieve]
+- **Success**: [How you measure success]
+- **Timeline**: [When it's due]
+
+**Priority 3**: [Your third priority]
+- **Goal**: [What you want to achieve]
+- **Success**: [How you measure success]
+- **Timeline**: [When it's due]
+
+**Priority 4**: [Your fourth priority]
+- **Goal**: [What you want to achieve]
+- **Success**: [How you measure success]
+- **Timeline**: [When it's due]
+
+**Priority 5**: [Your fifth priority]
+- **Goal**: [What you want to achieve]
+- **Success**: [How you measure success]
+- **Timeline**: [When it's due]
+
+---
+
+## 📚 **Knowledge Sources** *(CUSTOMIZE WITH YOUR RESOURCES)*
+
+**Your Documentation** *(LIST YOUR KEY DOCS)*:
+- **[Doc Type]**: `[path/to/docs]` - [Description]
+- **[Doc Type]**: `[path/to/docs]` - [Description]
+- **[Doc Type]**: `[path/to/docs]` - [Description]
+- **[Doc Type]**: `[path/to/docs]` - [Description]
+
+**Your Key Resources** *(LIST YOUR TOOLS AND PROCESSES)*:
+- **[Resource 1]**: [Description and usage]
+- **[Resource 2]**: [Description and methodology]
+- **[Resource 3]**: [Description and patterns]
+- **[Resource 4]**: [Description and integration]
+
+**Your Recent Achievements** *(UPDATE WITH YOUR WINS)*:
+- **[Achievement 1]**: [Description and metrics]
+- **[Achievement 2]**: [Description and impact]
+- **[Achievement 3]**: [Description and outcomes]
+- **[Achievement 4]**: [Description and results]
+
+---
+
+## 📝 **Usage Examples** *(CUSTOMIZE RESPONSES)*
+
+**Piper will use your context to answer questions like**:
+- "What's my top priority today?" → Priority 1: [Your top priority]
+- "What am I working on?" → [Your project] ([%]), [Your project] ([%])
+- "What should I focus on?" → [Your current focus areas]
+- "What's my role?" → [Your name], [Your role]
+
+**Personal Context**: This information personalizes all conversations with Piper Morgan.
+
+---
+
+**Setup Instructions**:
+1. Copy this file: `cp PIPER.user.md.example PIPER.user.md`
+2. Edit PIPER.user.md with your personal information
+3. Save and start using Piper Morgan with your customized context
+4. Update regularly as your priorities and projects change
+
+**Privacy**: Your PIPER.user.md is gitignored and never committed to the repository.
+
+---
+
+**Status**: Template - Requires Customization
+**Last Updated**: Configuration separation implementation
+**Next Step**: Copy to PIPER.user.md and customize all sections

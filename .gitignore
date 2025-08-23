@@ -45,3 +45,8 @@ venv/
 
 # Archive directory for large files and historical assets
 docs/archive/
+
+# User configuration files (private, not committed)
+config/PIPER.user.md
+**/PIPER.user.md
+*.user.md
