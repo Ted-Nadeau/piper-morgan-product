@@ -83,16 +83,16 @@ Real-time GitHub issue analysis and intelligent prioritization:
 
 ```bash
 # Get project health overview
-python -m cli.commands.issues status
+python main.py issues status
 
 # Intelligent issue triage and prioritization
-python -m cli.commands.issues triage --limit 10
+python main.py issues triage --limit 10
 
 # Discover patterns and cross-feature insights
-python -m cli.commands.issues patterns
+python main.py issues patterns
 
 # Morning standup with issue context
-python -m cli.commands.standup
+python main.py standup
 ```
 
 **Features**:
