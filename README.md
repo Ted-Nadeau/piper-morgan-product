@@ -75,6 +75,34 @@ Piper: "✅ Assigned issue #1247 to Sarah. She's been notified."
 
 **Result**: 5x faster workflows, 90% less mental overhead, conversations that feel human.
 
+## 🖥️ CLI Commands
+
+### Issue Intelligence
+
+Real-time GitHub issue analysis and intelligent prioritization:
+
+```bash
+# Get project health overview
+python -m cli.commands.issues status
+
+# Intelligent issue triage and prioritization
+python -m cli.commands.issues triage --limit 10
+
+# Discover patterns and cross-feature insights
+python -m cli.commands.issues patterns
+
+# Morning standup with issue context
+python -m cli.commands.standup
+```
+
+**Features**:
+- **Smart Prioritization**: AI-driven issue priority scoring
+- **Beautiful CLI Output**: Color-coded, formatted displays
+- **Cross-Feature Learning**: Issue patterns enhance morning standups
+- **Real-time GitHub Data**: Live API integration with your repositories
+
+[📖 Full CLI Documentation](docs/features/issue-intelligence.md)
+
 ## 📚 Complete Documentation
 
 ### 🎯 User Guides

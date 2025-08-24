@@ -884,21 +884,44 @@ if __name__ == "__main__":
     import sys
 
     # Check if CLI command is requested
-    if len(sys.argv) > 1 and sys.argv[1] == "standup":
-        # Remove the "standup" argument so argparse doesn't conflict
-        sys.argv.pop(1)
-        # Import and run standup command
-        try:
-            from cli.commands.standup import main as standup_main
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
 
-            standup_main()
-        except ImportError as e:
-            print(f"❌ Error importing standup command: {e}")
-            print("💡 Make sure CLI commands are properly installed")
-            sys.exit(1)
-        except Exception as e:
-            print(f"❌ Standup command failed: {e}")
-            sys.exit(1)
+        if command == "standup":
+            # Remove the "standup" argument so argparse doesn't conflict
+            sys.argv.pop(1)
+            # Import and run standup command
+            try:
+                from cli.commands.standup import main as standup_main
+
+                standup_main()
+            except ImportError as e:
+                print(f"❌ Error importing standup command: {e}")
+                print("💡 Make sure CLI commands are properly installed")
+                sys.exit(1)
+            except Exception as e:
+                print(f"❌ Standup command failed: {e}")
+                sys.exit(1)
+
+        elif command == "issues":
+            # Remove the "issues" argument so argparse doesn't conflict
+            sys.argv.pop(1)
+            # Import and run issues command
+            try:
+                from cli.commands.issues import main as issues_main
+
+                issues_main()
+            except ImportError as e:
+                print(f"❌ Error importing issues command: {e}")
+                print("💡 Make sure CLI commands are properly installed")
+                sys.exit(1)
+            except Exception as e:
+                print(f"❌ Issues command failed: {e}")
+                sys.exit(1)
+
+        else:
+            # Run FastAPI server (default behavior)
+            uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True, log_level="info")
     else:
         # Run FastAPI server (default behavior)
         uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True, log_level="info")

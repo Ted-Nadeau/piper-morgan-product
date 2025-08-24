@@ -88,4 +88,7 @@ PM-113,113,Migrate main.py from DatabasePool to AsyncSessionFactory,OPEN,
 PM-114,114,Remove Legacy DatabasePool Class and Deprecated RepositoryFactory,OPEN,
 PM-115,115,Fix IntentEnricher Dependency Injection Anti-Pattern,OPEN,
 PM-090,90,CRITICAL: Workflow Factory Bug Fix - UnboundLocalError,CLOSED,
+PM-120,126,Configuration Separation Architecture,COMPLETED,✅ Configuration separation implemented for MVP shipping - Commit c1eb579f
+PM-121,127,Canonical Query Integration,OPEN,🎯 Query standardization and performance optimization
+PM-122,128,FTUX Wizard Implementation,OPEN,🎯 User onboarding and setup wizard implementation
 ,,,,"✅ ADR-010: Configuration Access Patterns (July 21, 2025)"
