@@ -201,6 +201,223 @@ class GitHubAgent:
         except Exception as e:
             raise ConnectionError(f"Failed to create GitHub issue from work item: {e}") from e
 
+    async def get_open_issues(
+        self, project: Optional[str] = None, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get open issues from GitHub repository"""
+        try:
+            # Default to the piper-morgan-product repo if no project specified
+            repo_name = project or "mediajunkie/piper-morgan-product"
+            repo = self.client.get_repo(repo_name)
+
+            issues = repo.get_issues(state="open", sort="updated", direction="desc")
+
+            result = []
+            count = 0
+            for issue in issues:
+                if count >= limit:
+                    break
+
+                # Skip pull requests (they appear as issues in GitHub API)
+                if issue.pull_request:
+                    continue
+
+                labels = [label.name for label in issue.labels]
+                assignee = (
+                    {"login": issue.assignee.login, "name": issue.assignee.name}
+                    if issue.assignee
+                    else None
+                )
+
+                result.append(
+                    {
+                        "number": issue.number,
+                        "title": issue.title,
+                        "state": issue.state,
+                        "labels": labels,
+                        "assignee": assignee,
+                        "created_at": issue.created_at.isoformat(),
+                        "updated_at": issue.updated_at.isoformat(),
+                        "url": issue.html_url,
+                        "body": issue.body or "",
+                    }
+                )
+                count += 1
+
+            return result
+
+        except Exception as e:
+            raise ConnectionError(f"Failed to get open issues: {e}") from e
+
+    async def get_recent_issues(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent issues (both open and closed) from GitHub repository"""
+        try:
+            repo_name = "mediajunkie/piper-morgan-product"
+            repo = self.client.get_repo(repo_name)
+
+            issues = repo.get_issues(state="all", sort="updated", direction="desc")
+
+            result = []
+            count = 0
+            for issue in issues:
+                if count >= limit:
+                    break
+
+                # Skip pull requests
+                if issue.pull_request:
+                    continue
+
+                labels = [label.name for label in issue.labels]
+                assignee = (
+                    {"login": issue.assignee.login, "name": issue.assignee.name}
+                    if issue.assignee
+                    else None
+                )
+
+                result.append(
+                    {
+                        "number": issue.number,
+                        "title": issue.title,
+                        "state": issue.state,
+                        "labels": labels,
+                        "assignee": assignee,
+                        "created_at": issue.created_at.isoformat(),
+                        "updated_at": issue.updated_at.isoformat(),
+                        "url": issue.html_url,
+                    }
+                )
+                count += 1
+
+            return result
+
+        except Exception as e:
+            raise ConnectionError(f"Failed to get recent issues: {e}") from e
+
+    async def get_issues_by_priority(self) -> List[Dict[str, Any]]:
+        """Get issues filtered by priority labels"""
+        try:
+            repo_name = "mediajunkie/piper-morgan-product"
+            repo = self.client.get_repo(repo_name)
+
+            # Get issues with priority labels
+            issues = repo.get_issues(
+                state="all",
+                labels=["P0-critical", "P1-high", "P2-medium"],
+                sort="updated",
+                direction="desc",
+            )
+
+            result = []
+            for issue in issues:
+                # Skip pull requests
+                if issue.pull_request:
+                    continue
+
+                labels = [label.name for label in issue.labels]
+                assignee = (
+                    {"login": issue.assignee.login, "name": issue.assignee.name}
+                    if issue.assignee
+                    else None
+                )
+
+                result.append(
+                    {
+                        "number": issue.number,
+                        "title": issue.title,
+                        "state": issue.state,
+                        "labels": labels,
+                        "assignee": assignee,
+                        "created_at": issue.created_at.isoformat(),
+                        "updated_at": issue.updated_at.isoformat(),
+                        "url": issue.html_url,
+                    }
+                )
+
+            return result
+
+        except Exception as e:
+            raise ConnectionError(f"Failed to get issues by priority: {e}") from e
+
+    async def get_development_context(self) -> Dict[str, Any]:
+        """Get development context including PRs, reviews, and commits"""
+        try:
+            repo_name = "mediajunkie/piper-morgan-product"
+            repo = self.client.get_repo(repo_name)
+
+            # Get open pull requests
+            open_prs = list(repo.get_pulls(state="open"))
+
+            # Get recent commits (last 10)
+            commits = list(repo.get_commits()[:10])
+
+            # Count pending reviews (approximate by open PRs without reviews)
+            pending_reviews = 0
+            for pr in open_prs:
+                reviews = list(pr.get_reviews())
+                if not reviews:
+                    pending_reviews += 1
+
+            return {
+                "active_prs": len(open_prs),
+                "pending_reviews": pending_reviews,
+                "recent_commits": len(commits),
+            }
+
+        except Exception as e:
+            return {
+                "active_prs": 0,
+                "pending_reviews": 0,
+                "recent_commits": 0,
+                "error": f"Failed to get development context: {e}",
+            }
+
+    async def get_closed_issues(
+        self, project: Optional[str] = None, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Get recently closed issues from GitHub repository"""
+        try:
+            repo_name = project or "mediajunkie/piper-morgan-product"
+            repo = self.client.get_repo(repo_name)
+
+            issues = repo.get_issues(state="closed", sort="updated", direction="desc")
+
+            result = []
+            count = 0
+            for issue in issues:
+                if count >= limit:
+                    break
+
+                # Skip pull requests
+                if issue.pull_request:
+                    continue
+
+                labels = [label.name for label in issue.labels]
+                assignee = (
+                    {"login": issue.assignee.login, "name": issue.assignee.name}
+                    if issue.assignee
+                    else None
+                )
+
+                result.append(
+                    {
+                        "number": issue.number,
+                        "title": issue.title,
+                        "state": issue.state,
+                        "labels": labels,
+                        "assignee": assignee,
+                        "created_at": issue.created_at.isoformat(),
+                        "updated_at": issue.updated_at.isoformat(),
+                        "closed_at": issue.closed_at.isoformat() if issue.closed_at else None,
+                        "url": issue.html_url,
+                    }
+                )
+                count += 1
+
+            return result
+
+        except Exception as e:
+            raise ConnectionError(f"Failed to get closed issues: {e}") from e
+
     def test_connection(self) -> Dict[str, Any]:
         """Test GitHub API connection, raising exceptions on failure."""
         try:

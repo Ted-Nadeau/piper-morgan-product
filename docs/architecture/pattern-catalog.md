@@ -1300,6 +1300,7 @@ class AttentionEvent:
 ### Advanced Components
 
 #### Spatial Memory with Pattern Learning
+
 ```python
 class SpatialMemoryStore:
     """Persistent spatial memory across sessions"""
@@ -1320,6 +1321,7 @@ class SpatialMemoryStore:
 ```
 
 #### Multi-Workspace Navigation
+
 ```python
 class WorkspaceNavigator:
     """Navigate across multiple territories with intelligence"""
@@ -1353,6 +1355,7 @@ class WorkspaceNavigator:
 ### Integration Pipeline
 
 #### Slack → Spatial → Workflow Flow
+
 ```python
 class SlackSpatialMapper:
     """Convert Slack events to spatial objects"""
@@ -1404,6 +1407,7 @@ class SpatialWorkflowIntegration:
 ### Quality Implementation Standards
 
 #### TDD Integration Testing
+
 ```python
 # Tests written FIRST, expected to FAIL initially
 async def test_slack_help_request_creates_piper_task_workflow(
@@ -1620,9 +1624,11 @@ The Query Layer provides optimized read-only operations with graceful degradatio
 ### 23.1 CQRS Query Router Pattern
 
 #### Purpose
+
 Route query intents to specialized query services with circuit breaker protection and graceful degradation for system resilience.
 
 #### Implementation
+
 ```python
 class QueryRouter:
     """Routes QUERY intents to appropriate query services with LLM enhancement"""
@@ -1663,12 +1669,14 @@ class QueryRouter:
 ```
 
 #### Usage Guidelines
+
 - Route read-only operations through specialized query services
 - Apply circuit breaker protection to all service calls
 - Provide graceful degradation with meaningful fallback responses
 - Map actions to appropriate services for targeted error handling
 
 #### Benefits
+
 - **Performance**: Optimized read paths without workflow overhead
 - **Resilience**: Circuit breaker protection prevents cascade failures
 - **Separation**: Clear boundary between queries and commands
@@ -1677,9 +1685,11 @@ class QueryRouter:
 ### 23.2 Graceful Degradation Handler Pattern
 
 #### Purpose
+
 Provide intelligent fallback strategies for query failures with circuit breaker protection and user-friendly error messages.
 
 #### Implementation
+
 ```python
 class QueryDegradationHandler:
     """Graceful degradation handler for QueryRouter operations"""
@@ -1742,12 +1752,14 @@ class QueryCircuitBreaker:
 ```
 
 #### Usage Guidelines
+
 - Provide service-specific fallback strategies for different failure types
 - Use structured error responses with actionable user guidance
 - Implement circuit breaker pattern to prevent cascade failures
 - Enable/disable degradation through feature flags for operational control
 
 #### Benefits
+
 - **Resilience**: Prevents system-wide failures from service outages
 - **User Experience**: Provides helpful error messages instead of technical failures
 - **Recovery**: Automatic circuit breaker recovery for transient issues
@@ -1756,9 +1768,11 @@ class QueryCircuitBreaker:
 ### 23.3 A/B Testing Query Classification Pattern
 
 #### Purpose
+
 Enable gradual rollout of LLM-based classification with performance monitoring and session-consistent A/B testing.
 
 #### Implementation
+
 ```python
 class QueryRouter:
     def __init__(
@@ -1825,12 +1839,14 @@ class QueryRouter:
 ```
 
 #### Usage Guidelines
+
 - Use session-based hashing for consistent A/B assignment per user
 - Monitor performance metrics for both classification methods
 - Set and enforce performance targets with violation tracking
 - Enable gradual rollout through percentage-based configuration
 
 #### Benefits
+
 - **Gradual Deployment**: Safe rollout of new classification methods
 - **Performance Monitoring**: Real-time latency and success rate tracking
 - **User Consistency**: Same classification method per session
@@ -1839,9 +1855,11 @@ class QueryRouter:
 ### 23.4 Specialized Query Service Pattern
 
 #### Purpose
+
 Provide focused, single-responsibility query services optimized for specific domain operations.
 
 #### Implementation
+
 ```python
 class ProjectQueryService:
     """Query service for read-only project operations"""
@@ -1911,12 +1929,14 @@ class ConversationQueryService:
 ```
 
 #### Usage Guidelines
+
 - Keep services focused on single domain responsibility
 - Return domain models or structured dictionaries, not database objects
 - Implement graceful error handling with meaningful responses
 - Use repository pattern for data access abstraction
 
 #### Benefits
+
 - **Single Responsibility**: Each service handles one domain area
 - **Performance**: Direct repository access without workflow overhead
 - **Testability**: Easy to unit test focused functionality
@@ -1925,9 +1945,11 @@ class ConversationQueryService:
 ### 23.5 Rule-Based Fast Path Classification Pattern
 
 #### Purpose
+
 Provide high-performance classification for common query patterns with <50ms response times.
 
 #### Implementation
+
 ```python
 def _rule_based_classification(self, message: str, user_context: Optional[Dict],
                               session_id: Optional[str]) -> Intent:
@@ -1980,12 +2002,14 @@ def _rule_based_classification(self, message: str, user_context: Optional[Dict],
 ```
 
 #### Usage Guidelines
+
 - Use clear, readable pattern matching for common queries
 - Provide explicit confidence scores for classification quality
 - Include session context for tracking and debugging
 - Design for <50ms execution time with simple string operations
 
 #### Benefits
+
 - **Performance**: <50ms response time for common patterns
 - **Reliability**: Deterministic classification for known patterns
 - **Transparency**: Clear rule-based logic for debugging
@@ -1994,9 +2018,11 @@ def _rule_based_classification(self, message: str, user_context: Optional[Dict],
 ### 23.6 Federated Search Integration Pattern
 
 #### Purpose
+
 Enable search across multiple systems (GitHub, Linear, local files) with unified result formatting and spatial intelligence.
 
 #### Implementation
+
 ```python
 async def federated_search(self, query: str, include_github: bool = True) -> Dict[str, Any]:
     """Federated search across MCP services with spatial context"""
@@ -2061,12 +2087,14 @@ async def federated_search(self, query: str, include_github: bool = True) -> Dic
 ```
 
 #### Usage Guidelines
+
 - Implement parallel search across multiple sources for performance
 - Provide unified result format with source attribution
 - Include relevance scoring and filtering for result quality
 - Handle individual source failures gracefully without breaking entire search
 
 #### Benefits
+
 - **Comprehensive Results**: Search across multiple data sources simultaneously
 - **Source Attribution**: Clear indication of where results originate
 - **Fault Tolerance**: Individual source failures don't break entire search
@@ -2074,14 +2102,14 @@ async def federated_search(self, query: str, include_github: bool = True) -> Dic
 
 ### Decision Criteria: Query Service vs Workflow
 
-| Use Query Service When | Use Workflow When |
-|------------------------|-------------------|
-| Reading data only | Changing system state |
-| Single repository access | Multiple system coordination |
-| <200ms response required | Background processing acceptable |
-| No side effects | Side effects required |
-| Simple data transformation | Complex business logic |
-| Direct user response | Asynchronous completion |
+| Use Query Service When     | Use Workflow When                |
+| -------------------------- | -------------------------------- |
+| Reading data only          | Changing system state            |
+| Single repository access   | Multiple system coordination     |
+| <200ms response required   | Background processing acceptable |
+| No side effects            | Side effects required            |
+| Simple data transformation | Complex business logic           |
+| Direct user response       | Asynchronous completion          |
 
 ### Anti-patterns to Avoid
 
@@ -2104,8 +2132,211 @@ async def federated_search(self, query: str, include_github: bool = True) -> Dic
 
 _Last Updated: August 18, 2025_
 
+## 24. Methodology Patterns
+
+### Overview
+
+These patterns represent the systematic application of development methodologies across the codebase, discovered through pattern sweep analysis on August 22, 2025. They demonstrate the deep integration of the Excellence Flywheel methodology and architectural consistency.
+
+### 24.1 Systematic Verification Methodology Pattern
+
+**Purpose**: Deep integration of systematic verification methodology across the codebase, demonstrating the Excellence Flywheel approach is working effectively.
+
+**Detection**: 1,074 occurrences across 1,000+ files with 0.90 confidence
+
+**Implementation**:
+
+- Systematic verification before implementation
+- Evidence-based progress tracking
+- Reality checking before claims
+- Verification-first approach in all development work
+
+**Usage Guidelines**:
+
+- Always verify existing patterns before creating new ones
+- Check domain models and implementations before starting work
+- Run verification commands before any implementation
+- Document verification results with evidence
+
+**Anti-patterns to Avoid**:
+
+- ❌ Implementing without verification
+- ❌ Claiming success without evidence
+- ❌ Skipping systematic verification steps
+- ❌ Assuming patterns exist without checking
+
+**Related Patterns**: Excellence Flywheel, Root Cause Identification, Evidence-Based Progress
+
+### 24.2 Root Cause Identification Pattern
+
+**Purpose**: Systematic approach to identifying and resolving root causes of issues, establishing strong debugging methodology.
+
+**Detection**: 1,036 occurrences with 0.80 confidence
+
+**Implementation**:
+
+- Systematic root cause analysis
+- Evidence-based problem solving
+- Verification of fixes before completion
+- Documentation of resolution patterns
+
+**Usage Guidelines**:
+
+- Always identify root cause before implementing fixes
+- Use systematic verification to validate solutions
+- Document resolution patterns for future reference
+- Verify fixes with evidence before marking complete
+
+**Anti-patterns to Avoid**:
+
+- ❌ Symptom-only fixes without root cause analysis
+- ❌ Implementing solutions without verification
+- ❌ Skipping systematic debugging steps
+- ❌ Assuming fixes work without testing
+
+**Related Patterns**: Systematic Verification, Error Handling, Testing Infrastructure
+
+### 24.3 Async Test Marker Pattern
+
+**Purpose**: Comprehensive async testing infrastructure with consistent `@pytest.mark.asyncio` usage across the test suite.
+
+**Detection**: 574 occurrences with 1.00 confidence
+
+**Implementation**:
+
+- Consistent async test marking
+- Comprehensive test coverage
+- AsyncSessionFactory integration
+- Async context manager usage
+
+**Usage Guidelines**:
+
+- Mark all async tests with `@pytest.mark.asyncio`
+- Use AsyncSessionFactory.session_scope() for database tests
+- Maintain consistent async testing patterns
+- Ensure proper async cleanup and error handling
+
+**Anti-patterns to Avoid**:
+
+- ❌ Missing async markers on async tests
+- ❌ Manual session management in tests
+- ❌ Inconsistent async testing patterns
+- ❌ Missing async context cleanup
+
+**Related Patterns**: Testing Infrastructure, AsyncSessionFactory, Repository Pattern
+
+### 24.4 Workflow Type Usage Pattern
+
+**Purpose**: Systematic implementation of workflow types across the codebase, ensuring consistent workflow architecture.
+
+**Detection**: 283 occurrences with 1.00 confidence
+
+**Implementation**:
+
+- Consistent WorkflowType enum usage
+- Workflow factory integration
+- Multi-agent coordination support
+- Workflow validation patterns
+
+**Usage Guidelines**:
+
+- Use WorkflowType enum for all workflow definitions
+- Implement workflow factory pattern consistently
+- Support multi-agent coordination workflows
+- Validate workflow types before execution
+
+**Anti-patterns to Avoid**:
+
+- ❌ Hardcoded workflow types
+- ❌ Inconsistent workflow implementation
+- ❌ Missing workflow validation
+- ❌ Workflow type mismatches
+
+**Related Patterns**: Workflow Factory, Multi-Agent Coordination, Domain Model Enums
+
+### 24.5 PM Ticket Resolution Pattern
+
+**Purpose**: Systematic approach to completing PM tickets with clear completion indicators and status tracking.
+
+**Detection**: 709 occurrences with 0.47 confidence
+
+**Implementation**:
+
+- Clear completion indicators
+- Status tracking and validation
+- Evidence-based completion
+- Systematic handoff protocols
+
+**Usage Guidelines**:
+
+- Always verify acceptance criteria before marking complete
+- Provide evidence of completion
+- Use systematic handoff protocols
+- Track status changes systematically
+
+**Anti-patterns to Avoid**:
+
+- ❌ Marking tickets complete without verification
+- ❌ Missing completion evidence
+- ❌ Inconsistent status tracking
+- ❌ Skipping handoff protocols
+
+**Related Patterns**: Project Management, Multi-Agent Coordination, Evidence-Based Progress
+
+### 24.6 Repository Constructor Pattern
+
+**Purpose**: Consistent implementation of repository pattern across different domains, ensuring architectural consistency.
+
+**Detection**: 111 occurrences with 0.888 confidence
+
+**Implementation**:
+
+- Standardized repository base classes
+- Consistent constructor patterns
+- Domain model integration
+- AsyncSessionFactory usage
+
+**Usage Guidelines**:
+
+- Inherit from BaseRepository for all repositories
+- Use consistent constructor patterns
+- Integrate with domain models properly
+- Use AsyncSessionFactory.session_scope()
+
+**Anti-patterns to Avoid**:
+
+- ❌ Inconsistent repository implementation
+- ❌ Missing base class inheritance
+- ❌ Manual session management
+- ❌ Domain model violations
+
+**Related Patterns**: Repository Pattern, Domain Models, AsyncSessionFactory
+
+### Methodology Pattern Benefits
+
+**Quality Assurance**:
+
+- Systematic verification prevents assumption errors
+- Evidence-based progress ensures accuracy
+- Consistent patterns reduce architectural drift
+
+**Development Velocity**:
+
+- Pattern reuse accelerates development
+- Systematic approaches prevent rework
+- Consistent implementation reduces debugging time
+
+**Team Coordination**:
+
+- Shared patterns enable multi-agent coordination
+- Systematic approaches support handoffs
+- Consistent implementation supports collaboration
+
+---
+
 ## Revision Log
 
+- **August 22, 2025**: Added Methodology Patterns (#24) with 6 sub-patterns discovered through pattern sweep analysis, documenting systematic verification, root cause identification, async testing, workflow types, PM ticket resolution, and repository constructor patterns
 - **August 18, 2025**: Added Query Layer Patterns (#23) with 6 sub-patterns for CQRS routing, graceful degradation, A/B testing, specialized services, fast-path classification, and federated search
 - **August 13, 2025**: Added MCP+Spatial Intelligence Integration Pattern (#22) for Linear integration with 8-dimensional analysis and federated search capabilities
 - **July 27, 2025**: Added Spatial Metaphor Integration Pattern (#20) and TDD Integration Testing Pattern (#21) for Slack integration with comprehensive spatial metaphor processing and 52 integration tests
