@@ -30,6 +30,7 @@ Start here for a complete 15-minute introduction:
 | Guide                                                                             | Purpose                                    | Time to Complete |
 | --------------------------------------------------------------------------------- | ------------------------------------------ | ---------------- |
 | **[Getting Started](./getting-started-conversational-ai.md)**                     | Complete introduction to conversational AI | 15 minutes       |
+| **[CLI Commands](./cli-commands.md)**                                             | Master command-line interface and Issue Intelligence | 20 minutes       |
 | **[Understanding Anaphoric References](./understanding-anaphoric-references.md)** | Deep dive into reference resolution        | 10 minutes       |
 | **[Conversation Memory and Context](./conversation-memory-guide.md)**             | Learn how Piper's memory works             | 10 minutes       |
 | **[Upgrading from Command Mode](./upgrading-from-command-mode.md)**               | Migration guide for existing users         | 15 minutes       |
@@ -49,9 +50,10 @@ Start here for a complete 15-minute introduction:
 ### For New Users
 
 1. **Getting Started Guide** - Complete introduction
-2. **Conversation Examples** - See real scenarios in action
-3. **Understanding Anaphoric References** - Master reference resolution
-4. **Conversation Memory Guide** - Learn about context management
+2. **CLI Commands Guide** - Master issue management and daily workflows
+3. **Conversation Examples** - See real scenarios in action
+4. **Understanding Anaphoric References** - Master reference resolution
+5. **Conversation Memory Guide** - Learn about context management
 
 ### For Existing Users
 
@@ -131,6 +133,7 @@ Start here for a complete 15-minute introduction:
 ### User Guide Ecosystem
 
 - [Getting Started with Conversational AI](./getting-started-conversational-ai.md)
+- [CLI Commands Guide](./cli-commands.md)
 - [Understanding Anaphoric References](./understanding-anaphoric-references.md)
 - [Conversation Memory and Context](./conversation-memory-guide.md)
 - [Upgrading from Command Mode](./upgrading-from-command-mode.md)

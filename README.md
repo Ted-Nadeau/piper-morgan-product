@@ -101,13 +101,14 @@ python main.py standup
 - **Cross-Feature Learning**: Issue patterns enhance morning standups
 - **Real-time GitHub Data**: Live API integration with your repositories
 
-[📖 Full CLI Documentation](docs/features/issue-intelligence.md)
+[📖 Full CLI Documentation](docs/user-guides/cli-commands.md) | [📊 Issue Intelligence Features](docs/features/issue-intelligence.md)
 
 ## 📚 Complete Documentation
 
 ### 🎯 User Guides
 
 - **[🚀 Getting Started](docs/user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
+- **[⌨️ CLI Commands](docs/user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
 - **[🎯 Understanding References](docs/user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
 - **[🧠 Conversation Memory](docs/user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
 - **[🔄 Upgrading from Commands](docs/user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
