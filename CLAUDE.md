@@ -84,6 +84,19 @@ PYTHONPATH=. python -m pytest [test] -v                 # Run actual tests
 - Never skip verification before implementation
 - Never mock critical execution paths in tests
 
+## Issue Tracking Protocol
+
+**CRITICAL**: Before creating any GitHub issue:
+1. **Verify existing PM numbers** with `gh issue list --state all --limit 50 | grep "PM-"`
+2. **Check CSV file** for highest PM number: `grep "PM-" docs/planning/pm-issues-status.csv | sort -V | tail -5`
+3. **Never guess or fabricate PM numbers** - always verify first
+4. **Use next sequential number only** after verification (current highest: PM-122, next: PM-123)
+5. **Reference methodology-08-ISSUE-TRACKING.md** for complete protocol
+6. **Update CSV file** when creating new PM numbers
+7. **Cross-reference backlog.md** for planning alignment
+
+**Current State**: Highest PM number is PM-122 (Issue #128), next valid is PM-123
+
 ## Architecture Rules
 
 - Domain models (models.py) drive everything - DB follows models

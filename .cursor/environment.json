@@ -1,3 +1,10 @@
 {
-  "agentCanUpdateSnapshot": true
+  "agentCanUpdateSnapshot": true,
+  "issueTrackingProtocol": {
+    "verifyBeforeCreate": true,
+    "checkSources": ["github", "csv", "backlog"],
+    "preventDuplicates": true,
+    "requireSequential": true,
+    "methodologyReference": "docs/development/methodology-core/methodology-08-ISSUE-TRACKING.md"
+  }
 }

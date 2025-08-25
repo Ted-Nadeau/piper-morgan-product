@@ -2334,8 +2334,224 @@ These patterns represent the systematic application of development methodologies
 
 ---
 
+## 25. Canonical Query Extension Pattern
+
+### Purpose
+
+Extend existing canonical query systems with additional intelligence while preserving original functionality and maintaining backward compatibility.
+
+### Implementation
+
+```python
+@dataclass
+class IssueIntelligenceResult:
+    """Enhanced result preserving original response"""
+    original_response: Dict[str, Any]      # From CanonicalHandlers
+    enhanced_message: str                  # With additional context
+    issue_intelligence: Dict[str, Any]     # Enhancement data
+    context_source: str = "github_integration"
+    enhancement_time_ms: Optional[int] = None
+
+class IssueIntelligenceCanonicalQueryEngine:
+    """Canonical query engine with GitHub issue intelligence"""
+
+    def __init__(self, github_integration, canonical_handlers, session_manager):
+        self.canonical_handlers = canonical_handlers  # Delegate target
+        self.github_integration = github_integration  # Enhancement source
+
+    async def enhance_canonical_query(self, intent, session_id) -> IssueIntelligenceResult:
+        # Step 1: Get original response (delegation)
+        original_response = await self.canonical_handlers.handle(intent, session_id)
+
+        # Step 2: Gather enhancement intelligence
+        issue_intelligence = await self._gather_issue_intelligence(intent)
+
+        # Step 3: Enhance message with additional context
+        enhanced_message = await self._enhance_message_with_issues(
+            original_response["message"], issue_intelligence, intent
+        )
+
+        # Step 4: Return enhanced result preserving original
+        return IssueIntelligenceResult(
+            original_response=original_response,      # Preserved
+            enhanced_message=enhanced_message,        # Enhanced
+            issue_intelligence=issue_intelligence     # Additional data
+        )
+```
+
+### Usage Guidelines
+
+**Extension Design**:
+- Always delegate to existing handlers first
+- Preserve original response structure exactly
+- Make enhancements additive, never subtractive
+- Implement graceful degradation for external service failures
+- Track enhancement performance separately
+
+**Integration Approach**:
+- Extend, don't replace existing functionality
+- Maintain compatibility with existing consumers
+- Use dependency injection for testability
+- Implement circuit breaker patterns for external services
+
+### Anti-patterns to Avoid
+
+- ❌ Replacing original handlers instead of delegating
+- ❌ Breaking original response structure
+- ❌ Failing when enhancements unavailable
+- ❌ Tight coupling to external services
+- ❌ Missing performance monitoring
+
+## 26. Cross-Feature Learning Pattern
+
+### Purpose
+
+Enable learning systems to share patterns and insights across different features while maintaining feature isolation and providing confidence-based recommendations.
+
+### Implementation
+
+```python
+class QueryLearningLoop:
+    """Learning system that captures and shares patterns across features"""
+
+    async def learn_pattern(
+        self,
+        pattern_type: PatternType,
+        source_feature: str,
+        pattern_data: Dict[str, Any],
+        initial_confidence: float = 0.5,
+        metadata: Optional[Dict] = None
+    ) -> LearnedPattern:
+        """Learn a new pattern from usage"""
+        pattern = LearnedPattern(
+            pattern_id=str(uuid.uuid4()),
+            pattern_type=pattern_type,
+            source_feature=source_feature,
+            pattern_data=pattern_data,
+            confidence=initial_confidence,
+            usage_count=1,
+            metadata=metadata or {},
+            created_at=datetime.now(),
+            last_used_at=datetime.now()
+        )
+
+        # Store pattern for cross-feature sharing
+        await self.pattern_repository.create_pattern(pattern)
+        return pattern
+
+    async def get_patterns_for_feature(
+        self,
+        feature_name: str,
+        pattern_type: Optional[PatternType] = None,
+        min_confidence: float = 0.3
+    ) -> List[LearnedPattern]:
+        """Get learned patterns for a specific feature"""
+        return await self.pattern_repository.get_patterns(
+            source_feature=feature_name,
+            pattern_type=pattern_type,
+            min_confidence=min_confidence
+        )
+```
+
+### Usage Guidelines
+
+**Learning Design**:
+- Capture patterns from actual usage, not assumptions
+- Use confidence scores to indicate pattern reliability
+- Enable cross-feature pattern sharing
+- Track usage metrics for pattern validation
+- Implement pattern decay for outdated learnings
+
+**Integration Approach**:
+- Learn from user actions, not just data
+- Provide confidence indicators with recommendations
+- Enable pattern discovery across feature boundaries
+- Support pattern refinement through feedback loops
+
+### Anti-patterns to Avoid
+
+- ❌ Learning from synthetic or test data
+- ❌ High confidence scores without sufficient usage data
+- ❌ Feature silos that prevent cross-learning
+- ❌ Patterns without confidence indicators
+- ❌ Missing feedback loops for pattern validation
+
+## 27. CLI Integration Pattern
+
+### Purpose
+
+Integrate command-line interfaces with underlying service architectures while providing beautiful output formatting and learning system integration.
+
+### Implementation
+
+```python
+class IssuesCommand:
+    """CLI command with beautiful formatting and learning integration"""
+
+    COLORS = {
+        "reset": "\033[0m",
+        "red": "\033[91m",
+        "green": "\033[92m",
+        "yellow": "\033[93m",
+        "blue": "\033[94m",
+        "magenta": "\033[95m",
+        "cyan": "\033[96m",
+        "white": "\033[97m",
+        "gray": "\033[90m",
+        "bold": "\033[1m"
+    }
+
+    def print_header(self, text: str) -> None:
+        """Print formatted section header"""
+        separator = "=" * 60
+        print(f"\n{self.COLORS['bold']}{self.COLORS['cyan']}{separator}{self.COLORS['reset']}")
+        print(f"{self.COLORS['bold']}{self.COLORS['cyan']}  {text}{self.COLORS['reset']}")
+        print(f"{self.COLORS['bold']}{self.COLORS['cyan']}{separator}{self.COLORS['reset']}\n")
+
+    async def triage_issues(self, project: Optional[str] = None, limit: int = 10):
+        """AI-powered issue triage with learning integration"""
+        await self._initialize_services()
+
+        # Get and analyze issues
+        issues = await self.github_agent.get_open_issues(project=project, limit=limit)
+
+        # Learn from triage decisions
+        for issue in issues:
+            priority = self._determine_priority(issue)
+            await self._learn_triage_pattern(issue, priority)
+
+        # Display results with beautiful formatting
+        self._display_triage_results(high_priority, medium_priority, low_priority)
+```
+
+### Usage Guidelines
+
+**CLI Design**:
+- Use consistent color coding for different message types
+- Provide clear section headers and separators
+- Include learning system integration where applicable
+- Support both human-readable and machine-parseable output
+- Implement progressive disclosure for complex data
+
+**Integration Approach**:
+- Connect to underlying service architectures
+- Maintain separation between CLI formatting and business logic
+- Support both interactive and scripted usage
+- Provide comprehensive error handling with user-friendly messages
+
+### Anti-patterns to Avoid
+
+- ❌ Business logic in CLI formatting code
+- ❌ Inconsistent color and formatting schemes
+- ❌ Poor error messages without actionable guidance
+- ❌ CLI-specific data processing instead of service delegation
+- ❌ Missing integration with learning systems
+
+---
+
 ## Revision Log
 
+- **August 24, 2025**: Added Issue Intelligence Patterns (#25-27): Canonical Query Extension Pattern for backward-compatible enhancements, Cross-Feature Learning Pattern for pattern sharing across features, and CLI Integration Pattern for beautiful command-line interfaces with learning integration
 - **August 22, 2025**: Added Methodology Patterns (#24) with 6 sub-patterns discovered through pattern sweep analysis, documenting systematic verification, root cause identification, async testing, workflow types, PM ticket resolution, and repository constructor patterns
 - **August 18, 2025**: Added Query Layer Patterns (#23) with 6 sub-patterns for CQRS routing, graceful degradation, A/B testing, specialized services, fast-path classification, and federated search
 - **August 13, 2025**: Added MCP+Spatial Intelligence Integration Pattern (#22) for Linear integration with 8-dimensional analysis and federated search capabilities
