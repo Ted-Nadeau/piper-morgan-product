@@ -131,6 +131,16 @@ class TestMorningStandupWorkflow:
         mock_preference_manager = AsyncMock()
         mock_session_manager = AsyncMock()
 
+        # Configure preference manager mocks to return empty values
+        mock_preference_manager.get_preference.side_effect = [
+            {},  # yesterday_context
+            ["piper-morgan"],  # active_repos
+            "2025-08-20T17:30:00",  # last_session_time
+        ]
+
+        # Configure session manager to return empty context
+        mock_session_manager.get_session_context.return_value = {}
+
         # Mock GitHub agent with realistic activity
         mock_github_agent = AsyncMock()
         mock_github_activity = {

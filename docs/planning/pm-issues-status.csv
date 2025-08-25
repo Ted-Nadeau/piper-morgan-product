@@ -89,7 +89,10 @@ PM-114,114,Remove Legacy DatabasePool Class and Deprecated RepositoryFactory,OPE
 PM-115,115,Fix IntentEnricher Dependency Injection Anti-Pattern,OPEN,
 PM-090,90,CRITICAL: Workflow Factory Bug Fix - UnboundLocalError,CLOSED,
 PM-120,120,Configuration Separation Architecture,COMPLETED,✅ Configuration separation implemented for MVP shipping - Commit c1eb579f
-PM-121,127,Canonical Query Integration,OPEN,🎯 Query standardization and performance optimization
+PM-121,127,Canonical Query Integration,COMPLETED,✅ Morning Standup + Issue Intelligence integration functional - CLI --with-issues flag operational
 PM-122,128,FTUX Wizard Implementation,OPEN,🎯 User onboarding and setup wizard implementation
 DOC-002,130,README Radical Restructure - Three-Tier Documentation Architecture,COMPLETED,✅ 72% reduction (609→167 lines) with three-tier architecture and role-based quick starts
+PM-123,129,Implement `piper issue create` Command with Verification,OPEN,🎯 Issue creation command implementation
+PM-124,,Issue Intelligence Initialization Fix (Monday Enhancement),OPEN,🎯 Fix initialization error in Morning Standup integration - 30 minute enhancement task
+PM-125,,Document Memory Integration Sprint,COMPLETED,✅ DocumentMemoryQueries canonical query foundation implemented - structural tests passing
 ,,,,"✅ ADR-010: Configuration Access Patterns (July 21, 2025)"
