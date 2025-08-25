@@ -919,6 +919,22 @@ if __name__ == "__main__":
                 print(f"❌ Issues command failed: {e}")
                 sys.exit(1)
 
+        elif command == "documents":
+            # Remove the "documents" argument so argparse doesn't conflict
+            sys.argv.pop(1)
+            # Import and run documents command
+            try:
+                from cli.commands.documents import main as documents_main
+
+                documents_main()
+            except ImportError as e:
+                print(f"❌ Error importing documents command: {e}")
+                print("💡 Make sure CLI commands are properly installed")
+                sys.exit(1)
+            except Exception as e:
+                print(f"❌ Documents command failed: {e}")
+                sys.exit(1)
+
         else:
             # Run FastAPI server (default behavior)
             uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True, log_level="info")
