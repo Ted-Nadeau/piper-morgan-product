@@ -13,7 +13,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from services.domain.user_preference_manager import UserPreferenceManager
+from services.features.document_memory import DocumentMemoryQueries
+from services.features.issue_intelligence import IssueIntelligenceCanonicalQueryEngine
 from services.integrations.github.github_agent import GitHubAgent
+from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
 
 
@@ -61,11 +64,38 @@ class MorningStandupWorkflow:
         session_manager: SessionPersistenceManager,
         github_agent: GitHubAgent,
         user_id: str = "xian",
+        canonical_handlers: Optional[CanonicalHandlers] = None,
     ):
         self.preference_manager = preference_manager
         self.session_manager = session_manager
         self.github_agent = github_agent
         self.user_id = user_id
+        self.canonical_handlers = canonical_handlers
+
+    async def canonical_query_integration(self, query: str, user_id: str) -> Dict[str, Any]:
+        """
+        Canonical query interface for integration with Issue Intelligence
+
+        Provides morning standup context to enhance canonical query responses
+        """
+        try:
+            standup_result = await self.generate_standup(user_id)
+            return {
+                "standup_context": {
+                    "yesterday_accomplishments": standup_result.yesterday_accomplishments,
+                    "today_priorities": standup_result.today_priorities,
+                    "blockers": standup_result.blockers,
+                    "github_activity": standup_result.github_activity,
+                },
+                "context_source": "morning_standup_canonical",
+                "integration_time_ms": standup_result.generation_time_ms,
+            }
+        except Exception as e:
+            return {
+                "standup_context": {},
+                "context_source": "morning_standup_error",
+                "error": str(e),
+            }
 
     async def generate_standup(self, user_id: str) -> StandupResult:
         """Generate morning standup for user using persistent context"""
@@ -266,3 +296,101 @@ class MorningStandupWorkflow:
             base_time += 5  # Complex activity review
 
         return max(base_time, 15)  # Minimum 15 minutes as per requirement
+
+    async def generate_with_documents(self, user_id: str) -> StandupResult:
+        """Generate standup with integrated document memory context."""
+
+        # Get base standup
+        base_standup = await self.generate_standup(user_id)
+
+        # NEW: Add document memory context
+        try:
+            doc_memory = DocumentMemoryQueries(user_id=user_id)
+
+            # Get yesterday's context and recent decisions
+            yesterday_context = await doc_memory.get_relevant_context("yesterday")
+            recent_decisions = await doc_memory.find_decisions(timeframe="yesterday")
+            learning_summary = await doc_memory.get_learning_summary("yesterday")
+
+            if yesterday_context.get("context_documents"):
+                # Add document context to today's priorities
+                doc_section = []
+                for doc in yesterday_context["context_documents"][:2]:  # Top 2 documents
+                    doc_section.append(f"📄 Review: {doc['title']}")
+
+                # Extend today's priorities with document context
+                base_standup.today_priorities.extend(doc_section)
+
+            if recent_decisions.get("decisions"):
+                # Add recent decisions to yesterday's accomplishments
+                decision_section = []
+                for decision in recent_decisions["decisions"][:2]:  # Top 2 decisions
+                    decision_section.append(f"🎯 Decision: {decision['decision']}")
+
+                base_standup.yesterday_accomplishments.extend(decision_section)
+
+            if learning_summary.get("learnings"):
+                # Add learnings to yesterday's accomplishments
+                learning_section = []
+                for learning in learning_summary["learnings"][:2]:  # Top 2 learnings
+                    learning_section.append(f"🧠 Learned: {learning}")
+
+                base_standup.yesterday_accomplishments.extend(learning_section)
+
+        except Exception as e:
+            # Graceful degradation - add error note but continue
+            base_standup.today_priorities.append(f"⚠️ Document memory unavailable: {str(e)[:50]}...")
+
+        return base_standup
+
+    async def generate_with_issues(self, user_id: str) -> StandupResult:
+        """Generate standup with integrated issue priorities."""
+
+        # Get base standup
+        base_standup = await self.generate_standup(user_id)
+
+        # NEW: Add issue context
+        try:
+            if hasattr(self, "canonical_handlers") and self.canonical_handlers:
+                issue_engine = IssueIntelligenceCanonicalQueryEngine(
+                    user_id=user_id, canonical_handlers=self.canonical_handlers
+                )
+
+                # Create minimal intent for issue intelligence
+                from services.domain.models import Intent
+                from services.shared_types import IntentCategory
+
+                intent = Intent(
+                    user_id=user_id,
+                    text="what needs attention",
+                    category=IntentCategory.PROJECT_MANAGEMENT,
+                    confidence_score=1.0,
+                )
+
+                # Get issue priorities
+                enhanced_result = await issue_engine.enhance_canonical_query(
+                    intent, f"session_{user_id}"
+                )
+
+                if enhanced_result and enhanced_result.issue_intelligence.get("priority_issues"):
+                    issue_priorities = enhanced_result.issue_intelligence["priority_issues"][
+                        :3
+                    ]  # Top 3
+
+                    # Add issue section to today's priorities
+                    issue_section = []
+                    for issue in issue_priorities:
+                        title = issue.get("title", "Unknown issue")
+                        number = issue.get("number", "?")
+                        issue_section.append(f"🎯 Issue #{number}: {title}")
+
+                    # Extend today's priorities with issues
+                    base_standup.today_priorities.extend(issue_section)
+
+        except Exception as e:
+            # Graceful degradation - add error note but continue
+            base_standup.today_priorities.append(
+                f"⚠️ Issue priorities unavailable: {str(e)[:50]}..."
+            )
+
+        return base_standup

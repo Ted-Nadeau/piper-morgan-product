@@ -20,6 +20,7 @@ from services.domain.user_preference_manager import UserPreferenceManager
 from services.features.morning_standup import MorningStandupWorkflow
 from services.integrations.github.github_agent import GitHubAgent
 from services.integrations.slack.response_handler import SlackResponseHandler
+from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
 
 
@@ -45,10 +46,12 @@ class StandupCommand:
         self.preference_manager = UserPreferenceManager()
         self.session_manager = SessionPersistenceManager(self.preference_manager)
         self.github_agent = GitHubAgent()
+        self.canonical_handlers = CanonicalHandlers()
         self.standup_workflow = MorningStandupWorkflow(
             preference_manager=self.preference_manager,
             session_manager=self.session_manager,
             github_agent=self.github_agent,
+            canonical_handlers=self.canonical_handlers,
         )
 
     def print_colored(self, text: str, color: str = "reset", bold: bool = False) -> None:
@@ -132,7 +135,7 @@ class StandupCommand:
             self.print_warning(f"Could not get status information: {e}")
             return "I'm operating normally. All systems are go!"
 
-    async def run_standup(self, user_id: str = "xian") -> Dict[str, str]:
+    async def run_standup(self, user_id: str = "xian", with_issues: bool = False) -> Dict[str, str]:
         """Run the MVP morning standup using persistent context infrastructure"""
         results = {}
 
@@ -144,9 +147,14 @@ class StandupCommand:
             start_time = datetime.now()
 
             # Generate standup using our MVP workflow
-            self.print_colored("⏱️  Generating standup (target: <2 seconds)...", "yellow")
-
-            standup_result = await self.standup_workflow.generate_standup(user_id)
+            if with_issues:
+                self.print_colored(
+                    "⏱️  Generating standup with issue priorities (target: <2 seconds)...", "yellow"
+                )
+                standup_result = await self.standup_workflow.generate_with_issues(user_id)
+            else:
+                self.print_colored("⏱️  Generating standup (target: <2 seconds)...", "yellow")
+                standup_result = await self.standup_workflow.generate_standup(user_id)
 
             # Display results
             self.print_colored(f"✅ Generated in {standup_result.generation_time_ms}ms", "green")
@@ -245,13 +253,13 @@ class StandupCommand:
 
         return "\n".join(slack_output)
 
-    async def execute(self, output_format: str = "cli") -> None:
+    async def execute(self, output_format: str = "cli", with_issues: bool = False) -> None:
         """Execute the standup command with specified output format"""
         try:
             self.print_header("🌅 Piper Morgan Morning Standup")
 
             # Run standup sequence
-            results = await self.run_standup()
+            results = await self.run_standup(with_issues=with_issues)
 
             # Generate output based on format
             if output_format == "slack":
@@ -283,12 +291,18 @@ def main():
     parser.add_argument(
         "--format", choices=["cli", "slack"], default="cli", help="Output format (default: cli)"
     )
+    parser.add_argument(
+        "--with-issues",
+        "--with_issues",
+        action="store_true",
+        help="Include issue priorities from Issue Intelligence",
+    )
 
     args = parser.parse_args()
 
     # Run standup command
     standup = StandupCommand()
-    asyncio.run(standup.execute(output_format=args.format))
+    asyncio.run(standup.execute(output_format=args.format, with_issues=args.with_issues))
 
 
 if __name__ == "__main__":

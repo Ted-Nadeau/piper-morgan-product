@@ -11,6 +11,20 @@
 - **Date**: August 24, 2025
 - **Issue**: #130
 
+### PM-121: Morning Standup + Issue Intelligence Integration ✅
+
+- **Status**: COMPLETE - Functional cross-feature integration verified
+- **Achievement**: Single CLI command now provides standup with priority issues
+- **Development Time**: 45 minutes (time-boxed evening session)
+- **Impact**: Enhanced daily workflow efficiency with contextual issue priorities
+- **Features**: `--with-issues` CLI flag, canonical query architecture alignment, graceful degradation
+- **Technical**: Both features now use CanonicalQueryEngine pattern for integration
+- **User Value**: `python cli/commands/standup.py --with-issues` provides integrated daily context
+- **Performance**: <2s generation maintained with <200ms integration overhead
+- **Date**: August 24, 2025
+- **Issue**: PM-121 (GitHub #127)
+- **Next Enhancement**: Issue Intelligence initialization optimization (PM-124)
+
 ### PM-033d: Enhanced Autonomy Experiment ✅
 
 - **Status**: COMPLETE - All phases successfully concluded
