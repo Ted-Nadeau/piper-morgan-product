@@ -164,8 +164,18 @@ Be specific and concise. Extract real concepts from the content."""
             if not chunk.strip():
                 continue
 
+            # Serialize list metadata for ChromaDB compatibility
+            serialized_metadata = {}
+            for key, value in enhanced_metadata.items():
+                if value is None:
+                    serialized_metadata[key] = ""  # Convert None to empty string
+                elif isinstance(value, list):
+                    serialized_metadata[key] = json.dumps(value)
+                else:
+                    serialized_metadata[key] = value
+
             chunk_metadata = {
-                **enhanced_metadata,  # Use enhanced metadata
+                **serialized_metadata,  # Use serialized enhanced metadata
                 "source": file_path,
                 "chunk_index": i,
                 "total_chunks": len(chunks),

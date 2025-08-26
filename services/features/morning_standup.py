@@ -13,10 +13,10 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from services.domain.user_preference_manager import UserPreferenceManager
-from services.features.document_memory import DocumentMemoryQueries
 from services.features.issue_intelligence import IssueIntelligenceCanonicalQueryEngine
 from services.integrations.github.github_agent import GitHubAgent
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.knowledge_graph.document_service import get_document_service
 from services.orchestration.session_persistence import SessionPersistenceManager
 
 
@@ -303,14 +303,15 @@ class MorningStandupWorkflow:
         # Get base standup
         base_standup = await self.generate_standup(user_id)
 
-        # NEW: Add document memory context
+        # FIXED: Use operational DocumentService instead of DocumentMemoryQueries
         try:
-            doc_memory = DocumentMemoryQueries(user_id=user_id)
+            # Connect to working DocumentService extensions
+            document_service = get_document_service()
 
-            # Get yesterday's context and recent decisions
-            yesterday_context = await doc_memory.get_relevant_context("yesterday")
-            recent_decisions = await doc_memory.find_decisions(timeframe="yesterday")
-            learning_summary = await doc_memory.get_learning_summary("yesterday")
+            # Get yesterday's context and recent decisions using working methods
+            yesterday_context = await document_service.get_relevant_context("yesterday")
+            recent_decisions = await document_service.find_decisions("", "yesterday")
+            suggestions = await document_service.suggest_documents("")
 
             if yesterday_context.get("context_documents"):
                 # Add document context to today's priorities
@@ -325,17 +326,19 @@ class MorningStandupWorkflow:
                 # Add recent decisions to yesterday's accomplishments
                 decision_section = []
                 for decision in recent_decisions["decisions"][:2]:  # Top 2 decisions
-                    decision_section.append(f"🎯 Decision: {decision['decision']}")
+                    decision_section.append(
+                        f"🎯 Decision: {decision.get('decision', 'Decision made')}"
+                    )
 
                 base_standup.yesterday_accomplishments.extend(decision_section)
 
-            if learning_summary.get("learnings"):
-                # Add learnings to yesterday's accomplishments
-                learning_section = []
-                for learning in learning_summary["learnings"][:2]:  # Top 2 learnings
-                    learning_section.append(f"🧠 Learned: {learning}")
+            if suggestions.get("suggestions"):
+                # Add document suggestions to today's priorities
+                suggestion_section = []
+                for suggestion in suggestions["suggestions"][:1]:  # Top 1 suggestion
+                    suggestion_section.append(f"💡 Consider: {suggestion['title']}")
 
-                base_standup.yesterday_accomplishments.extend(learning_section)
+                base_standup.today_priorities.extend(suggestion_section)
 
         except Exception as e:
             # Graceful degradation - add error note but continue
