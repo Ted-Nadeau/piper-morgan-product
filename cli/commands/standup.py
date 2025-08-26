@@ -135,7 +135,13 @@ class StandupCommand:
             self.print_warning(f"Could not get status information: {e}")
             return "I'm operating normally. All systems are go!"
 
-    async def run_standup(self, user_id: str = "xian", with_issues: bool = False) -> Dict[str, str]:
+    async def run_standup(
+        self,
+        user_id: str = "xian",
+        with_issues: bool = False,
+        with_documents: bool = False,
+        with_calendar: bool = False,
+    ) -> Dict[str, str]:
         """Run the MVP morning standup using persistent context infrastructure"""
         results = {}
 
@@ -146,8 +152,41 @@ class StandupCommand:
             # Performance tracking
             start_time = datetime.now()
 
-            # Generate standup using our MVP workflow
-            if with_issues:
+            # Generate standup using our MVP workflow - support combinations
+            intelligence_count = sum([with_issues, with_documents, with_calendar])
+
+            if intelligence_count > 1:
+                # Multiple intelligence sources - use trifecta method
+                intelligence_types = []
+                if with_issues:
+                    intelligence_types.append("issues")
+                if with_documents:
+                    intelligence_types.append("documents")
+                if with_calendar:
+                    intelligence_types.append("calendar")
+
+                self.print_colored(
+                    f"⏱️  Generating standup with {'+'.join(intelligence_types)} (target: <3 seconds)...",
+                    "yellow",
+                )
+                standup_result = await self.standup_workflow.generate_with_trifecta(
+                    user_id,
+                    with_issues=with_issues,
+                    with_documents=with_documents,
+                    with_calendar=with_calendar,
+                )
+
+            elif with_calendar:
+                self.print_colored(
+                    "⏱️  Generating standup with calendar context (target: <2 seconds)...", "yellow"
+                )
+                standup_result = await self.standup_workflow.generate_with_calendar(user_id)
+            elif with_documents:
+                self.print_colored(
+                    "⏱️  Generating standup with document context (target: <2 seconds)...", "yellow"
+                )
+                standup_result = await self.standup_workflow.generate_with_documents(user_id)
+            elif with_issues:
                 self.print_colored(
                     "⏱️  Generating standup with issue priorities (target: <2 seconds)...", "yellow"
                 )
@@ -253,13 +292,21 @@ class StandupCommand:
 
         return "\n".join(slack_output)
 
-    async def execute(self, output_format: str = "cli", with_issues: bool = False) -> None:
+    async def execute(
+        self,
+        output_format: str = "cli",
+        with_issues: bool = False,
+        with_documents: bool = False,
+        with_calendar: bool = False,
+    ) -> None:
         """Execute the standup command with specified output format"""
         try:
             self.print_header("🌅 Piper Morgan Morning Standup")
 
             # Run standup sequence
-            results = await self.run_standup(with_issues=with_issues)
+            results = await self.run_standup(
+                with_issues=with_issues, with_documents=with_documents, with_calendar=with_calendar
+            )
 
             # Generate output based on format
             if output_format == "slack":
@@ -297,12 +344,31 @@ def main():
         action="store_true",
         help="Include issue priorities from Issue Intelligence",
     )
+    parser.add_argument(
+        "--with-documents",
+        "--with_documents",
+        action="store_true",
+        help="Include document context from Document Memory",
+    )
+    parser.add_argument(
+        "--with-calendar",
+        "--with_calendar",
+        action="store_true",
+        help="Include calendar context from Google Calendar",
+    )
 
     args = parser.parse_args()
 
     # Run standup command
     standup = StandupCommand()
-    asyncio.run(standup.execute(output_format=args.format, with_issues=args.with_issues))
+    asyncio.run(
+        standup.execute(
+            output_format=args.format,
+            with_issues=args.with_issues,
+            with_documents=args.with_documents,
+            with_calendar=args.with_calendar,
+        )
+    )
 
 
 if __name__ == "__main__":

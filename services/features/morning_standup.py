@@ -356,7 +356,10 @@ class MorningStandupWorkflow:
         try:
             if hasattr(self, "canonical_handlers") and self.canonical_handlers:
                 issue_engine = IssueIntelligenceCanonicalQueryEngine(
-                    user_id=user_id, canonical_handlers=self.canonical_handlers
+                    github_integration=self.github_agent,
+                    canonical_handlers=self.canonical_handlers,
+                    session_manager=self.session_manager,
+                    user_id=user_id,
                 )
 
                 # Create minimal intent for issue intelligence
@@ -395,5 +398,208 @@ class MorningStandupWorkflow:
             base_standup.today_priorities.append(
                 f"⚠️ Issue priorities unavailable: {str(e)[:50]}..."
             )
+
+        return base_standup
+
+    async def generate_with_calendar(self, user_id: str) -> StandupResult:
+        """Generate standup with integrated calendar context."""
+
+        # Get base standup
+        base_standup = await self.generate_standup(user_id)
+
+        # Add calendar context
+        try:
+            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+            # Initialize calendar adapter
+            calendar_adapter = GoogleCalendarMCPAdapter()
+
+            # Get temporal summary including today's events and time blocks
+            temporal_summary = await calendar_adapter.get_temporal_summary()
+
+            # Add current meeting awareness if in a meeting
+            if temporal_summary.get("current_meeting"):
+                current = temporal_summary["current_meeting"]
+                base_standup.blockers.insert(
+                    0,
+                    f"🗓️ Currently in: {current.get('title', 'Meeting')} (ends {current.get('end_time', 'soon')})",
+                )
+
+            # Add today's calendar priorities
+            if temporal_summary.get("stats", {}).get("total_meetings_today", 0) > 0:
+                calendar_section = []
+
+                # Next meeting awareness
+                if temporal_summary.get("next_meeting"):
+                    next_meeting = temporal_summary["next_meeting"]
+                    calendar_section.append(
+                        f"📅 Next: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}"
+                    )
+
+                # Free time blocks for focused work
+                free_blocks = temporal_summary.get("free_blocks", [])
+                if free_blocks and len(free_blocks) > 0:
+                    longest_block = max(free_blocks, key=lambda x: x.get("duration_minutes", 0))
+                    if longest_block.get("duration_minutes", 0) >= 60:
+                        calendar_section.append(
+                            f"🎯 Focus time: {longest_block.get('duration_minutes', 0)} mins at {longest_block.get('start', 'TBD')}"
+                        )
+
+                # Meeting load awareness
+                meeting_time = temporal_summary.get("stats", {}).get(
+                    "total_meeting_time_minutes", 0
+                )
+                if meeting_time > 240:  # More than 4 hours of meetings
+                    calendar_section.append(
+                        f"⚠️ Heavy meeting day: {meeting_time // 60} hours scheduled"
+                    )
+
+                # Add calendar context to today's priorities
+                base_standup.today_priorities.extend(calendar_section)
+
+            # Add available focus time to performance metrics
+            if temporal_summary.get("stats"):
+                base_standup.performance_metrics["calendar_stats"] = {
+                    "meetings_today": temporal_summary["stats"].get("total_meetings_today", 0),
+                    "meeting_hours": temporal_summary["stats"].get("total_meeting_time_minutes", 0)
+                    / 60,
+                    "free_hours": temporal_summary["stats"].get("total_free_time_minutes", 0) / 60,
+                }
+
+        except Exception as e:
+            # Graceful degradation - add error note but continue
+            base_standup.today_priorities.append(f"⚠️ Calendar unavailable: {str(e)[:50]}...")
+
+        return base_standup
+
+    async def generate_with_trifecta(
+        self,
+        user_id: str,
+        with_issues: bool = True,
+        with_documents: bool = True,
+        with_calendar: bool = True,
+    ) -> StandupResult:
+        """Generate standup with full intelligence trifecta combination."""
+
+        # Get base standup
+        base_standup = await self.generate_standup(user_id)
+
+        # Add document context if requested
+        if with_documents:
+            try:
+                document_service = get_document_service()
+                yesterday_context = await document_service.get_relevant_context("yesterday")
+                recent_decisions = await document_service.find_decisions("", "yesterday")
+                suggestions = await document_service.suggest_documents("")
+
+                if yesterday_context.get("context_documents"):
+                    for doc in yesterday_context["context_documents"][:2]:
+                        base_standup.today_priorities.append(f"📄 Review: {doc['title']}")
+
+                if recent_decisions.get("decisions"):
+                    for decision in recent_decisions["decisions"][:2]:
+                        base_standup.yesterday_accomplishments.append(
+                            f"🎯 Decision: {decision.get('decision', 'Decision made')}"
+                        )
+
+                if suggestions.get("suggestions"):
+                    for suggestion in suggestions["suggestions"][:1]:
+                        base_standup.today_priorities.append(f"💡 Consider: {suggestion['title']}")
+
+            except Exception as e:
+                base_standup.today_priorities.append(
+                    f"⚠️ Document memory unavailable: {str(e)[:50]}..."
+                )
+
+        # Add issue context if requested
+        if with_issues:
+            try:
+                if hasattr(self, "canonical_handlers") and self.canonical_handlers:
+                    issue_engine = IssueIntelligenceCanonicalQueryEngine(
+                        github_integration=self.github_agent,
+                        canonical_handlers=self.canonical_handlers,
+                        session_manager=self.session_manager,
+                        user_id=user_id,
+                    )
+
+                    from services.domain.models import Intent
+                    from services.shared_types import IntentCategory
+
+                    intent = Intent(
+                        user_id=user_id,
+                        text="what needs attention",
+                        category=IntentCategory.PROJECT_MANAGEMENT,
+                        confidence_score=1.0,
+                    )
+
+                    enhanced_result = await issue_engine.enhance_canonical_query(
+                        intent, f"session_{user_id}"
+                    )
+
+                    if enhanced_result and enhanced_result.issue_intelligence.get(
+                        "priority_issues"
+                    ):
+                        issue_priorities = enhanced_result.issue_intelligence["priority_issues"][:3]
+                        for issue in issue_priorities:
+                            title = issue.get("title", "Unknown issue")
+                            number = issue.get("number", "?")
+                            base_standup.today_priorities.append(f"🎯 Issue #{number}: {title}")
+
+            except Exception as e:
+                base_standup.today_priorities.append(
+                    f"⚠️ Issue priorities unavailable: {str(e)[:50]}..."
+                )
+
+        # Add calendar context if requested
+        if with_calendar:
+            try:
+                from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+                calendar_adapter = GoogleCalendarMCPAdapter()
+                temporal_summary = await calendar_adapter.get_temporal_summary()
+
+                if temporal_summary.get("current_meeting"):
+                    current = temporal_summary["current_meeting"]
+                    base_standup.blockers.insert(
+                        0,
+                        f"🗓️ Currently in: {current.get('title', 'Meeting')} (ends {current.get('end_time', 'soon')})",
+                    )
+
+                if temporal_summary.get("stats", {}).get("total_meetings_today", 0) > 0:
+                    if temporal_summary.get("next_meeting"):
+                        next_meeting = temporal_summary["next_meeting"]
+                        base_standup.today_priorities.append(
+                            f"📅 Next: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}"
+                        )
+
+                    free_blocks = temporal_summary.get("free_blocks", [])
+                    if free_blocks and len(free_blocks) > 0:
+                        longest_block = max(free_blocks, key=lambda x: x.get("duration_minutes", 0))
+                        if longest_block.get("duration_minutes", 0) >= 60:
+                            base_standup.today_priorities.append(
+                                f"🎯 Focus time: {longest_block.get('duration_minutes', 0)} mins at {longest_block.get('start', 'TBD')}"
+                            )
+
+                    meeting_time = temporal_summary.get("stats", {}).get(
+                        "total_meeting_time_minutes", 0
+                    )
+                    if meeting_time > 240:
+                        base_standup.today_priorities.append(
+                            f"⚠️ Heavy meeting day: {meeting_time // 60} hours scheduled"
+                        )
+
+                if temporal_summary.get("stats"):
+                    base_standup.performance_metrics["calendar_stats"] = {
+                        "meetings_today": temporal_summary["stats"].get("total_meetings_today", 0),
+                        "meeting_hours": temporal_summary["stats"].get(
+                            "total_meeting_time_minutes", 0
+                        )
+                        / 60,
+                        "free_hours": temporal_summary["stats"].get("total_free_time_minutes", 0)
+                        / 60,
+                    }
+
+            except Exception as e:
+                base_standup.today_priorities.append(f"⚠️ Calendar unavailable: {str(e)[:50]}...")
 
         return base_standup

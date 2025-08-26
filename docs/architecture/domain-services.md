@@ -112,7 +112,98 @@ handleErrorResponse(error, element);
 ✅ **Domain Service**: Proper separation of concerns, follows project's DDD patterns
 
 ---
-*Last Updated: July 09, 2025*
+
+## DocumentService Domain Service (Document Memory Integration, 2025)
+
+**File**: `services/knowledge_graph/document_service.py`
+**Purpose**: Extended with document memory capabilities for decision search, context retrieval, and document recommendations
+**Domain**: Document Management & Memory Integration
+
+### Business Rules Enforced
+
+1. **Document Decision Search**: Find decisions on topics within timeframes using existing ChromaDB infrastructure
+2. **Context Retrieval**: Get relevant document context for specified time periods
+3. **Document Recommendations**: Suggest documents for review based on focus areas
+4. **Infrastructure Reuse**: Use existing PM-011 infrastructure exclusively (no parallel storage systems)
+
+### Extended Methods
+
+#### `find_decisions(topic: str, timeframe: str) -> Dict[str, Any]`
+
+Searches for decisions on specific topics within timeframes using existing ChromaDB collection.
+
+```python
+# Find architecture decisions from last week
+decisions = await service.find_decisions("architecture", "last_week")
+
+# Returns structured response with decisions, count, and source
+{
+    "decisions": [{"topic": str, "decision": str, "date": str, "confidence": float}],
+    "count": int,
+    "source": str
+}
+```
+
+#### `get_relevant_context(timeframe: str) -> Dict[str, Any]`
+
+Retrieves relevant document context for specified timeframes.
+
+```python
+# Get context from last 7 days
+context = await service.get_relevant_context("last_7_days")
+
+# Returns structured response with context documents
+{
+    "context_documents": [{"title": str, "summary": str, "date": str, "relevance": float}],
+    "count": int,
+    "source": str
+}
+```
+
+#### `suggest_documents(focus_area: str = "") -> Dict[str, Any]`
+
+Provides document recommendations for review based on focus areas.
+
+```python
+# Get general recommendations
+suggestions = await service.suggest_documents()
+
+# Get architecture-focused recommendations
+suggestions = await service.suggest_documents("architecture")
+```
+
+### Integration Points
+
+- **CLI Commands**: All document memory operations via `python main.py documents [command]`
+- **Morning Standup**: Document context integration ready via DocumentService extensions
+- **ChromaDB**: Uses existing `pm_knowledge` collection (8 documents accessible)
+- **PM-011 Infrastructure**: Fully integrated with existing document processing pipeline
+
+### Architecture Compliance
+
+1. **No Parallel Storage**: Uses existing DocumentService singleton and ChromaDB infrastructure
+2. **Method Extensions**: Adds new capabilities to existing service without breaking changes
+3. **Infrastructure Reuse**: Leverages existing PM-011 document processing workflow
+4. **Error Handling**: Graceful degradation with informative user feedback
+
+### Why This Approach
+
+1. **Infrastructure Reuse**: Extends existing DocumentService without creating new storage systems
+2. **Architectural Consistency**: Follows established service extension patterns
+3. **Performance**: Leverages existing ChromaDB collection and processing pipeline
+4. **Maintainability**: Single service handles all document memory operations
+5. **Integration Ready**: Enables Morning Standup and other features to access document context
+
+### Alternative Rejected
+
+❌ **New Storage Systems**: Would have violated architectural constraints and created maintenance overhead
+
+✅ **Service Extensions**: Proper extension of existing infrastructure, follows established patterns
+
+---
+
+*Last Updated: August 25, 2025*
 
 ## Revision Log
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
+- **August 25, 2025**: Added DocumentService extensions for document memory integration (PM-126)

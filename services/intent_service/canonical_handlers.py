@@ -94,30 +94,83 @@ class CanonicalHandlers:
         }
 
     async def _handle_temporal_query(self, intent: Intent, session_id: str) -> Dict:
-        """Handle 'What day is it?' and time-related queries"""
+        """Handle 'What day is it?' and time-related queries with real calendar data"""
         current_date = datetime.now().strftime("%A, %B %d, %Y")
         current_time = datetime.now().strftime("%I:%M %p PT")
 
-        # Get context from PIPER.md for calendar awareness
-        context_prompt = self.config_loader.get_system_prompt()
-
         message = f"Today is {current_date} at {current_time}."
+        calendar_context = {}
 
-        # Add calendar context if available
-        if "Key Dates" in context_prompt or "Calendar" in context_prompt:
-            message += " Based on your calendar patterns, this is a development focus day."
+        # Enhanced: Get real calendar data from GoogleCalendarMCPAdapter
+        try:
+            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+            calendar_adapter = GoogleCalendarMCPAdapter()
+            temporal_summary = await calendar_adapter.get_temporal_summary()
+
+            # Add current meeting awareness
+            if temporal_summary.get("current_meeting"):
+                current_meeting = temporal_summary["current_meeting"]
+                message += f" You're currently in: {current_meeting.get('title', 'a meeting')}"
+                calendar_context["current_meeting"] = current_meeting.get("title", "Meeting")
+
+            # Add next meeting information
+            elif temporal_summary.get("next_meeting"):
+                next_meeting = temporal_summary["next_meeting"]
+                message += f" Your next meeting is: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}"
+                calendar_context["next_meeting"] = {
+                    "title": next_meeting.get("title", "Meeting"),
+                    "time": next_meeting.get("start_time", "TBD"),
+                }
+
+            # Add focus time availability
+            free_blocks = temporal_summary.get("free_blocks", [])
+            if free_blocks:
+                longest_block = max(free_blocks, key=lambda x: x.get("duration_minutes", 0))
+                if longest_block.get("duration_minutes", 0) >= 60:
+                    message += f" You have {longest_block.get('duration_minutes', 0)} minutes free starting at {longest_block.get('start', 'now')} for focused work."
+                    calendar_context["focus_time"] = {
+                        "duration": longest_block.get("duration_minutes", 0),
+                        "start": longest_block.get("start", "now"),
+                    }
+
+            # Add meeting load context
+            stats = temporal_summary.get("stats", {})
+            if stats.get("total_meetings_today", 0) > 0:
+                meeting_count = stats["total_meetings_today"]
+                meeting_hours = stats.get("total_meeting_time_minutes", 0) / 60
+                if meeting_hours > 4:
+                    message += (
+                        f" (Heavy meeting day: {meeting_count} meetings, {meeting_hours:.1f} hours)"
+                    )
+                else:
+                    message += f" ({meeting_count} meetings scheduled today)"
+
+                calendar_context["meeting_load"] = {"count": meeting_count, "hours": meeting_hours}
+            else:
+                message += " (No meetings scheduled - great day for deep work!)"
+                calendar_context["calendar_status"] = "free_day"
+
+        except Exception as e:
+            # Graceful fallback to PIPER.md context
+            context_prompt = self.config_loader.get_system_prompt()
+            if "Key Dates" in context_prompt or "Calendar" in context_prompt:
+                message += " Based on your calendar patterns, this is a development focus day."
+                calendar_context["fallback"] = "piper_config"
+            else:
+                calendar_context["calendar_service"] = "unavailable"
 
         return {
             "message": message,
             "intent": {
                 "category": IntentCategoryEnum.TEMPORAL.value,
-                "action": "provide_current_time",
+                "action": "provide_current_time_with_calendar",
                 "confidence": 1.0,
                 "context": {
                     "current_date": current_date,
                     "current_time": current_time,
                     "timezone": "Pacific Time",
-                    "calendar_context": "development_focus_day",
+                    "calendar_context": calendar_context,
                 },
             },
             "requires_clarification": False,
