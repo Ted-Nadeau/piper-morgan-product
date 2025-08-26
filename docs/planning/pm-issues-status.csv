@@ -24,7 +24,7 @@ PM-032,43,Unified Response Rendering & DDD/TDD Web UI Refactor,CLOSED,
 PM-033,60,MCP Integration Pilot,OPEN,
 PM-033a,94,MCP Consumer Foundation - GitHub Integration,COMPLETED,
 PM-033b,91,Tool Federation - External Development Tool Integration,CLOSED,
-PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,CLOSED,
+PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,OPEN,🎯 Week 2 COMPLETE - 100% spatial adoption achieved, ready for Week 3 (disable legacy)
 PM-033c,92,Bridge Existing Agents - Slack Services MCP Conversion,CLOSED,
 PM-033d,93,MCP Server Mode - Transform Piper to Ecosystem Hub,CLOSED,
 PM-034,61,LLM-Based Intent Classification,CLOSED,
@@ -96,4 +96,5 @@ PM-123,129,Implement `piper issue create` Command with Verification,OPEN,🎯 Is
 PM-124,,Issue Intelligence Initialization Fix (Monday Enhancement),OPEN,🎯 Fix initialization error in Morning Standup integration - 30 minute enhancement task
 PM-125,,Document Memory Integration Sprint,COMPLETED,✅ DocumentMemoryQueries foundation (replaced by DocumentService extensions in PM-126 recovery)
 PM-126,132,Document Memory Content Implementation,COMPLETED,✅ DocumentService extensions with CLI integration and Morning Standup - real ChromaDB data operational
+PM-127,133,Calendar Integration for Morning Standup,COMPLETED,✅ Full trifecta integration + CanonicalHandlers temporal queries enhanced - 0.550s performance
 ,,,,"✅ ADR-010: Configuration Access Patterns (July 21, 2025)"

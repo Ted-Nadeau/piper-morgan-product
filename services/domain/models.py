@@ -462,6 +462,66 @@ class FileTypeInfo:
 
 
 @dataclass
+class Document:
+    """Core document entity for document memory system"""
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    title: str = ""
+    content: str = ""
+    document_type: str = "general"  # general, decision, meeting_notes, analysis
+
+    # Document classification
+    tags: List[str] = field(default_factory=list)
+    topics: List[str] = field(default_factory=list)
+    decisions: List[str] = field(default_factory=list)
+
+    # File information
+    file_path: Optional[str] = None
+    file_size: Optional[int] = None
+    mime_type: Optional[str] = None
+
+    # Processing metadata
+    summary: str = ""
+    key_findings: List[str] = field(default_factory=list)
+    analysis_metadata: Dict[str, Any] = field(default_factory=dict)
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    last_accessed: datetime = field(default_factory=datetime.now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to serializable dictionary"""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "content": self.content,
+            "document_type": self.document_type,
+            "tags": self.tags,
+            "topics": self.topics,
+            "decisions": self.decisions,
+            "file_path": self.file_path,
+            "file_size": self.file_size,
+            "mime_type": self.mime_type,
+            "summary": self.summary,
+            "key_findings": self.key_findings,
+            "analysis_metadata": self.analysis_metadata,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "last_accessed": self.last_accessed.isoformat(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Document":
+        """Create from dictionary with type conversion"""
+        # Convert ISO strings back to datetime objects
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
+        data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+        data["last_accessed"] = datetime.fromisoformat(data["last_accessed"])
+        return cls(**data)
+
+
+@dataclass
 class DocumentSample:
     """Smart content sampling result"""
 

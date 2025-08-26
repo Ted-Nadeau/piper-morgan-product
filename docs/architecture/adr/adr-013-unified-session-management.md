@@ -1,4 +1,4 @@
-# ADR-012: Unified Session Management Architecture
+# ADR-013: Unified Session Management Architecture
 
 **Status:** Accepted
 **Date:** 2025-08-07
@@ -17,10 +17,12 @@ Unify database session management across Piper Morgan services by standardizing 
 Root cause analysis revealed critical database integration failures:
 
 1. **Two Competing Patterns:**
+
    - Modern: `AsyncSessionFactory.session_scope()`
    - Legacy: `RepositoryFactory` + `db.get_session()`
 
 2. **Transaction Boundary Conflicts:**
+
    ```python
    # services/database/repositories.py:49-115
    if self.session.in_transaction():
@@ -38,6 +40,7 @@ Root cause analysis revealed critical database integration failures:
 ### Current State Analysis
 
 **Files with AsyncSessionFactory (Modern Pattern):**
+
 - `services/database/session_factory.py` - Core implementation
 - `services/intent_service/llm_classifier_factory.py`
 - `services/repositories/todo_repository.py`
@@ -45,6 +48,7 @@ Root cause analysis revealed critical database integration failures:
 - `services/api/health/staging_health.py`
 
 **Files with Legacy Patterns:**
+
 - `services/database/repositories.py` - BaseRepository (594 lines)
 - `services/database/connection.py` - Global `db` instance
 
@@ -57,6 +61,7 @@ Root cause analysis revealed critical database integration failures:
 ### Architectural Standards
 
 1. **Session Creation:**
+
    ```python
    # STANDARD PATTERN (Required)
    async with AsyncSessionFactory.session_scope() as session:
@@ -66,6 +71,7 @@ Root cause analysis revealed critical database integration failures:
    ```
 
 2. **Repository Pattern Update:**
+
    ```python
    # ELIMINATE transaction detection logic
    # SIMPLIFY to single-responsibility operations
@@ -91,16 +97,19 @@ Root cause analysis revealed critical database integration failures:
 ### Positive Outcomes
 
 1. **Elimination of Session Conflicts:**
+
    - Single session creation pattern
    - No nested transaction boundary issues
    - Predictable resource lifecycle management
 
 2. **Simplified Repository Pattern:**
+
    - Remove complex transaction detection logic
    - Single responsibility for each repository method
    - Clear separation between business logic and transaction management
 
 3. **Improved Integration Reliability:**
+
    - Database connection component becomes reliable
    - Foundation for Phase 3 ConversationManager implementation
    - Enables PM-034 parallel execution architecture
@@ -113,11 +122,13 @@ Root cause analysis revealed critical database integration failures:
 ### Migration Requirements
 
 1. **Immediate Actions:**
+
    - Update BaseRepository to remove transaction detection
    - Migrate RepositoryFactory usage to AsyncSessionFactory
    - Deprecate `db.get_session()` global pattern
 
 2. **Service Updates Required:**
+
    - All services using BaseRepository must wrap operations in session_scope()
    - Remove direct session creation outside AsyncSessionFactory
    - Update test fixtures to use unified patterns
@@ -130,16 +141,19 @@ Root cause analysis revealed critical database integration failures:
 ## Implementation Plan
 
 ### Phase 1: Core Pattern Implementation
+
 - [ ] Update BaseRepository to eliminate transaction detection
 - [ ] Create UnifiedSessionManager wrapper for complex operations
 - [ ] Update core services to use session_scope() consistently
 
 ### Phase 2: Service Migration
+
 - [ ] Migrate all RepositoryFactory usage
 - [ ] Update OrchestrationEngine session handling
 - [ ] Verify QueryRouter integration compatibility
 
 ### Phase 3: Validation & Cleanup
+
 - [ ] Remove deprecated db.get_session() patterns
 - [ ] Update documentation and examples
 - [ ] Confirm 100% reliability of database connection component
@@ -147,22 +161,27 @@ Root cause analysis revealed critical database integration failures:
 ## Risks and Mitigation
 
 ### Risk 1: Service Disruption During Migration
+
 **Mitigation:** Incremental migration with backward compatibility during transition
 
 ### Risk 2: Performance Impact of Session Scope Changes
+
 **Mitigation:** Performance testing at each migration step, optimization if needed
 
 ### Risk 3: Complex Services with Multiple Repository Operations
+
 **Mitigation:** UnifiedSessionManager for services requiring transaction coordination
 
 ## Success Criteria
 
 1. **Technical Metrics:**
+
    - Database Connection component: 0% → 100% reliability
    - Zero session leaks in integration tests
    - All services using single session creation pattern
 
 2. **Integration Health:**
+
    - Foundation stable for PM-034 Phase 3 implementation
    - ConversationManager can rely on consistent session management
    - Slack integration stability improved through reliable database layer
