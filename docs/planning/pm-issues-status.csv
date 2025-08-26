@@ -94,6 +94,6 @@ PM-122,128,FTUX Wizard Implementation,OPEN,🎯 User onboarding and setup wizard
 DOC-002,130,README Radical Restructure - Three-Tier Documentation Architecture,COMPLETED,✅ 72% reduction (609→167 lines) with three-tier architecture and role-based quick starts
 PM-123,129,Implement `piper issue create` Command with Verification,OPEN,🎯 Issue creation command implementation
 PM-124,,Issue Intelligence Initialization Fix (Monday Enhancement),OPEN,🎯 Fix initialization error in Morning Standup integration - 30 minute enhancement task
-PM-125,,Document Memory Integration Sprint,COMPLETED,✅ DocumentMemoryQueries canonical query foundation implemented - structural tests passing
-PM-126,132,Document Memory Content Implementation,OPEN,🎯 Real document storage, retrieval, and CLI functionality implementation
+PM-125,,Document Memory Integration Sprint,COMPLETED,✅ DocumentMemoryQueries foundation (replaced by DocumentService extensions in PM-126 recovery)
+PM-126,132,Document Memory Content Implementation,COMPLETED,✅ DocumentService extensions with CLI integration and Morning Standup - real ChromaDB data operational
 ,,,,"✅ ADR-010: Configuration Access Patterns (July 21, 2025)"
