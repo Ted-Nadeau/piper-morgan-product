@@ -120,3 +120,4 @@ pandas>=2.3.0
 alembic>=1.16.0
 psycopg2-binary>=2.9.0
 pre-commit>=4.2.0
+notion-client==2.2.1

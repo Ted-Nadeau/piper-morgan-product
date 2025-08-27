@@ -10,7 +10,10 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import aiohttp
+from notion_client import Client
+from notion_client.errors import APIResponseError, RequestTimeoutError
 
+from config.notion_config import NotionConfig
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -35,21 +38,46 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         self._position_to_page: Dict[int, str] = {}
         self._context_storage: Dict[str, Dict[str, Any]] = {}
 
-        # Notion API configuration
-        self._notion_token: Optional[str] = None
-        self._notion_api_base = "https://api.notion.com/v1"
+        # Notion client configuration
+        self.config = NotionConfig()
+        self._notion_client: Optional[Client] = None
         self._session: Optional[aiohttp.ClientSession] = None
+
+        # Initialize client if configuration is available
+        self._initialize_client()
 
         logger.info("NotionMCPAdapter initialized")
 
-    async def connect(self, integration_token: str) -> bool:
+    def _initialize_client(self):
+        """Initialize Notion client with configuration."""
+        try:
+            api_key = self.config.get_api_key()
+            if api_key:
+                self._notion_client = Client(auth=api_key)
+                logger.info("Notion client initialized with configuration")
+            else:
+                logger.warning("NOTION_API_KEY not set - client will be initialized later")
+        except Exception as e:
+            logger.error(f"Error initializing Notion client: {e}")
+
+    async def connect(self, integration_token: Optional[str] = None) -> bool:
         """Connect to Notion with integration token"""
         try:
-            result = await self.configure_notion_api(integration_token)
-            if result:
-                # Test connection immediately
-                return await self.test_connection()
-            return False
+            if integration_token:
+                # Initialize with provided token
+                self._notion_client = Client(auth=integration_token)
+            elif not self._notion_client:
+                # Try to initialize from configuration
+                api_key = self.config.get_api_key()
+                if api_key:
+                    self._notion_client = Client(auth=api_key)
+                else:
+                    logger.error("No Notion API key available")
+                    return False
+
+            # Test connection
+            return await self.test_connection()
+
         except Exception as e:
             logger.error(f"Error connecting to Notion: {e}")
             return False
@@ -137,22 +165,31 @@ class NotionMCPAdapter(BaseSpatialAdapter):
     async def test_connection(self) -> bool:
         """Test Notion API connection and authentication"""
         try:
-            if not self._notion_token:
-                logger.error("Notion token not configured")
+            if not self._notion_client:
+                logger.error("Notion client not initialized")
                 return False
 
             # Test with a simple API call to retrieve user info
-            response = await self._call_notion_api("users/me")
-            if response:
-                logger.info("Notion API connection successful")
+            try:
+                user_info = self._notion_client.users.me()
+                logger.info(
+                    f"Notion API connection successful - User: {user_info.get('name', 'Unknown')}"
+                )
                 return True
-            else:
-                logger.error("Notion API connection failed")
+            except APIResponseError as e:
+                logger.error(f"Notion API authentication failed: {e}")
+                return False
+            except RequestTimeoutError as e:
+                logger.error(f"Notion API request timeout: {e}")
                 return False
 
         except Exception as e:
             logger.error(f"Error testing Notion connection: {e}")
             return False
+
+    def is_configured(self) -> bool:
+        """Check if Notion adapter is properly configured."""
+        return self.config.validate_config() and self._notion_client is not None
 
     async def get_workspace_info(self) -> Optional[Dict[str, Any]]:
         """Get Notion workspace information"""
