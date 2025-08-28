@@ -24,8 +24,10 @@ class NotionConfig:
         if not api_key:
             print("WARNING: NOTION_API_KEY not set")
             return False
-        if not api_key.startswith("secret_"):
-            print("WARNING: NOTION_API_KEY format may be invalid")
+        if not (api_key.startswith("secret_") or api_key.startswith("ntn_")):
+            print(
+                "WARNING: NOTION_API_KEY format may be invalid (should start with 'secret_' or 'ntn_')"
+            )
             return False
         return True
 
@@ -37,7 +39,9 @@ class NotionConfig:
 
         return {
             "api_key_set": bool(api_key),
-            "api_key_format_valid": bool(api_key and api_key.startswith("secret_")),
+            "api_key_format_valid": bool(
+                api_key and (api_key.startswith("secret_") or api_key.startswith("ntn_"))
+            ),
             "workspace_id_set": bool(workspace_id),
-            "fully_configured": NotionConfig.validate_config() and bool(workspace_id),
+            "fully_configured": NotionConfig.validate_config(),
         }

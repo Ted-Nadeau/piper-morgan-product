@@ -225,10 +225,29 @@ class NotionCommand:
 
             self.print_info("Connected to Notion workspace")
 
-            # Placeholder for actual search functionality
-            # In a real implementation, this would use the Notion search API
-            self.print_warning("Search functionality coming soon")
-            self.print_info("Will search across pages, databases, and blocks")
+            # Perform the search
+            results = await self.adapter.search_notion(query)
+
+            if not results:
+                self.print_warning("No results found")
+                return
+
+            # Display results
+            self.print_section(f"Found {len(results)} results:", "green")
+
+            for i, result in enumerate(results[:10], 1):  # Show first 10
+                # Extract title
+                title = "Untitled"
+                if "properties" in result and "title" in result["properties"]:
+                    title_prop = result["properties"]["title"]
+                    if "title" in title_prop and len(title_prop["title"]) > 0:
+                        title = title_prop["title"][0]["text"]["content"]
+
+                # Display result
+                obj_type = result.get("object", "unknown")
+                result_id = result.get("id", "no-id")
+                self.print_info(f"{i}. [{obj_type}] {title}")
+                self.print_info(f"   ID: {result_id[:8]}...")
 
         except Exception as e:
             self.print_error(f"Search failed: {e}")
@@ -253,14 +272,65 @@ class NotionCommand:
 
             self.print_success("Connected to Notion workspace")
 
-            # Placeholder for actual pages listing
-            # In a real implementation, this would query recent pages
-            self.print_section("Recent Updates", "blue")
-            self.print_warning("Pages listing functionality coming soon")
-            self.print_info("Will show recent pages, databases, and modifications")
+            # Get all pages
+            results = await self.adapter.search_notion("", filter_type="page")
+
+            if not results:
+                self.print_warning("No pages found")
+                return
+
+            # Display pages
+            self.print_section(f"Found {len(results)} pages:", "green")
+
+            for i, page in enumerate(results[:20], 1):  # Show first 20
+                # Extract title
+                title = "Untitled"
+                if "properties" in page and "title" in page["properties"]:
+                    title_prop = page["properties"]["title"]
+                    if "title" in title_prop and len(title_prop["title"]) > 0:
+                        title = title_prop["title"][0]["text"]["content"]
+
+                # Display page
+                page_id = page.get("id", "no-id")
+                self.print_info(f"{i}. {title}")
+                self.print_info(f"   ID: {page_id[:8]}...")
+
+                # Show URL if available
+                if "url" in page:
+                    self.print_info(f"   URL: {page['url']}")
 
         except Exception as e:
             self.print_error(f"Failed to list pages: {e}")
+
+    async def cmd_create(self, title: str, parent_id: Optional[str] = None):
+        """Create a new Notion page"""
+        try:
+            # Use default parent if not specified
+            if not parent_id:
+                # Search for a default parent
+                pages = await self.adapter.search_notion("", filter_type="page")
+                if pages:
+                    parent_id = pages[0]["id"]
+                    self.print_warning("Using first available page as parent")
+                else:
+                    self.print_error("No pages found to use as parent")
+                    return
+
+            # Create the page
+            result = await self.adapter.create_page(
+                parent_id=parent_id, properties={"title": {"title": [{"text": {"content": title}}]}}
+            )
+
+            if result:
+                self.print_success("Page created successfully!")
+                self.print_info(f"Title: {title}")
+                self.print_info(f"ID: {result.get('id', 'unknown')}")
+                self.print_info(f"URL: {result.get('url', 'No URL')}")
+            else:
+                self.print_error("Failed to create page")
+
+        except Exception as e:
+            self.print_error(f"Error creating page: {e}")
 
     async def execute(self, command: str = "status", query: Optional[str] = None) -> None:
         """Execute the specified Notion command"""
@@ -273,9 +343,11 @@ class NotionCommand:
                 await self.cmd_search(query or "")
             elif command == "pages":
                 await self.cmd_pages()
+            elif command == "create":
+                await self.cmd_create(query or "")
             else:
                 self.print_error(f"Unknown command: {command}")
-                self.print_info("Available commands: status, test, search, pages")
+                self.print_info("Available commands: status, test, search, pages, create")
 
         except KeyboardInterrupt:
             self.print_warning("\nCommand interrupted by user")
@@ -300,6 +372,11 @@ async def main():
 
     subparsers.add_parser("pages", help="List recent pages and databases")
 
+    # Create command
+    create_parser = subparsers.add_parser("create", help="Create a new Notion page")
+    create_parser.add_argument("title", help="Title of the new page")
+    create_parser.add_argument("--parent-id", help="Parent page ID (optional)", default=None)
+
     args = parser.parse_args()
 
     # Execute command
@@ -307,6 +384,8 @@ async def main():
 
     if args.command == "search":
         await cmd.execute("search", args.query)
+    elif args.command == "create":
+        await cmd.execute("create", args.title)
     elif args.command:
         await cmd.execute(args.command)
     else:

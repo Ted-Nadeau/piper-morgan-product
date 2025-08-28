@@ -109,7 +109,14 @@
       "Bash(su:*)",
       "Bash(> /dev/:*)",
       "Bash(dd:*)",
-      "Bash(format:*)"
+      "Bash(format:*)",
+      "// NEVER ACCESS .env FILES",
+      "Read(.env*)",
+      "Read(*.env*)",
+      "Bash(cat .env*)",
+      "Bash(grep .env*)",
+      "Bash(head .env*)",
+      "Bash(tail .env*)"
     ]
   },
   "smart_permissions": {
