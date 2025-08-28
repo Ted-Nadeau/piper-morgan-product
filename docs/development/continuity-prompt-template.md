@@ -26,6 +26,10 @@ Please review these in order:
 3. **Architecture Guidelines**: `docs/development/architectural-guidelines.md` - Antipatterns and best practices
 4. **Project Instructions**: `CLAUDE.md` - Core approach and constraints
 
+## SECURITY RESTRICTIONS
+
+**NEVER ACCESS .env FILES**: Credentials must be provided through approved environment setup only. No access to .env, .env.*, or any environment credential files.
+
 ## CRITICAL CONTEXT
 
 [2-3 bullets of absolutely essential context that might not be in docs]

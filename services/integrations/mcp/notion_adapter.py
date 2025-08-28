@@ -82,86 +82,6 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             logger.error(f"Error connecting to Notion: {e}")
             return False
 
-    async def configure_notion_api(
-        self, token: Optional[str] = None, api_base: Optional[str] = None
-    ):
-        """Configure Notion API access"""
-        try:
-            self._notion_token = token
-            if api_base:
-                self._notion_api_base = api_base
-
-            # Create HTTP session for Notion API calls
-            if self._session is None:
-                headers = {}
-                if self._notion_token:
-                    headers["Authorization"] = f"Bearer {self._notion_token}"
-                headers["Notion-Version"] = "2022-06-28"  # Pin to stable version
-                headers["Content-Type"] = "application/json"
-
-                self._session = aiohttp.ClientSession(headers=headers)
-                logger.info("Notion API session created")
-
-            return True
-
-        except Exception as e:
-            logger.error(f"Error configuring Notion API: {e}")
-            return False
-
-    async def _call_notion_api(
-        self, endpoint: str, method: str = "GET", data: Optional[Dict[str, Any]] = None
-    ) -> Optional[Dict[str, Any]]:
-        """Make Notion API call with rate limiting"""
-        try:
-            if not self._session:
-                logger.warning("Notion API session not configured")
-                return None
-
-            url = f"{self._notion_api_base}/{endpoint}"
-
-            # Implement rate limiting (3 requests per second)
-            await asyncio.sleep(0.34)  # Ensure we don't exceed rate limit
-
-            if method == "GET":
-                async with self._session.get(url) as response:
-                    return await self._handle_response(response)
-            elif method == "POST":
-                async with self._session.post(url, json=data) as response:
-                    return await self._handle_response(response)
-            elif method == "PATCH":
-                async with self._session.patch(url, json=data) as response:
-                    return await self._handle_response(response)
-            else:
-                logger.error(f"Unsupported HTTP method: {method}")
-                return None
-
-        except Exception as e:
-            logger.error(f"Error calling Notion API: {e}")
-            return None
-
-    async def _handle_response(self, response: aiohttp.ClientResponse) -> Optional[Dict[str, Any]]:
-        """Handle Notion API response with proper error handling"""
-        try:
-            if response.status == 200:
-                return await response.json()
-            elif response.status == 401:
-                logger.error("Notion API authentication failed")
-                return None
-            elif response.status == 429:
-                logger.warning("Notion API rate limit exceeded, implementing backoff")
-                await asyncio.sleep(1)  # Simple backoff strategy
-                return None
-            elif response.status == 404:
-                logger.warning("Notion resource not found")
-                return None
-            else:
-                logger.error(f"Notion API error: {response.status}")
-                return None
-
-        except Exception as e:
-            logger.error(f"Error handling Notion API response: {e}")
-            return None
-
     async def test_connection(self) -> bool:
         """Test Notion API connection and authentication"""
         try:
@@ -192,11 +112,11 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         return self.config.validate_config() and self._notion_client is not None
 
     async def get_workspace_info(self) -> Optional[Dict[str, Any]]:
-        """Get Notion workspace information"""
+        """Get Notion workspace information using notion_client"""
         try:
             # Note: Notion doesn't have a direct workspace endpoint
             # We'll use the user info as a proxy for workspace access
-            user_info = await self._call_notion_api("users/me")
+            user_info = self._notion_client.users.me()
             if user_info:
                 return {
                     "workspace_id": user_info.get("bot", {}).get("workspace", {}).get("id"),
@@ -212,247 +132,199 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def fetch_databases(self, page_size: int = 100) -> List[Dict[str, Any]]:
-        """Fetch accessible Notion databases"""
-        try:
-            response = await self._call_notion_api(
-                "search",
-                method="POST",
-                data={
-                    "filter": {"property": "object", "value": "database"},
-                    "page_size": min(page_size, 100),  # Notion limit
-                },
-            )
-
-            if response and "results" in response:
-                databases = []
-                for db in response["results"]:
-                    databases.append(
-                        {
-                            "id": db["id"],
-                            "title": db["title"][0]["plain_text"] if db["title"] else "Untitled",
-                            "created_time": db["created_time"],
-                            "last_edited_time": db["last_edited_time"],
-                            "url": db["url"],
-                        }
-                    )
-                return databases
-            return []
-
-        except Exception as e:
-            logger.error(f"Error fetching databases: {e}")
-            return []
+        """Fetch accessible Notion databases (alias for list_databases)"""
+        return await self.list_databases(page_size)
 
     async def list_databases(self, page_size: int = 100) -> List[Dict[str, Any]]:
-        """List accessible Notion databases (alias for fetch_databases)"""
-        return await self.fetch_databases(page_size)
-
-    async def get_database(self, database_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific database details"""
+        """List all databases using notion_client"""
         try:
-            response = await self._call_notion_api(f"databases/{database_id}")
-            if response:
-                return {
-                    "id": response["id"],
-                    "title": (
-                        response["title"][0]["plain_text"] if response["title"] else "Untitled"
-                    ),
-                    "properties": response["properties"],
-                    "created_time": response["created_time"],
-                    "last_edited_time": response["last_edited_time"],
-                    "url": response["url"],
-                }
-            return None
+            # Search for all databases
+            response = self._notion_client.search(
+                filter={"property": "object", "value": "database"}, page_size=min(page_size, 100)
+            )
+
+            databases = []
+            if response and "results" in response:
+                databases = response["results"]
+
+            logger.info(f"Found {len(databases)} databases")
+            return databases
 
         except Exception as e:
-            logger.error(f"Error getting database {database_id}: {e}")
+            logger.error(f"Failed to list databases: {e}")
+            return []
+
+    async def get_database(self, database_id: str) -> Optional[Dict[str, Any]]:
+        """Get specific database using notion_client"""
+        try:
+            if not database_id:
+                logger.error("database_id is required")
+                return None
+
+            # Retrieve database using notion_client
+            response = self._notion_client.databases.retrieve(database_id=database_id)
+
+            logger.info(f"Retrieved database: {database_id}")
+            return response
+
+        except Exception as e:
+            logger.error(f"Failed to get database: {e}")
             return None
 
     async def query_database(
         self,
         database_id: str,
-        filter_criteria: Optional[Dict[str, Any]] = None,
+        filter_params: Optional[Dict] = None,
+        sorts: Optional[List] = None,
         page_size: int = 100,
     ) -> List[Dict[str, Any]]:
-        """Query database with optional filtering"""
+        """Query database using notion_client"""
         try:
-            query_data = {"page_size": min(page_size, 100)}
-            if filter_criteria:
-                query_data["filter"] = filter_criteria
+            if not database_id:
+                logger.error("database_id is required")
+                return []
 
-            response = await self._call_notion_api(
-                f"databases/{database_id}/query", method="POST", data=query_data
-            )
+            # Build query parameters
+            query_params = {"database_id": database_id, "page_size": min(page_size, 100)}
 
+            if filter_params:
+                query_params["filter"] = filter_params
+
+            if sorts:
+                query_params["sorts"] = sorts
+
+            # Query database using notion_client
+            response = self._notion_client.databases.query(**query_params)
+
+            results = []
             if response and "results" in response:
-                pages = []
-                for page in response["results"]:
-                    pages.append(
-                        {
-                            "id": page["id"],
-                            "title": page["properties"]
-                            .get("Title", {})
-                            .get("title", [{}])[0]
-                            .get("plain_text", "Untitled"),
-                            "created_time": page["created_time"],
-                            "last_edited_time": page["last_edited_time"],
-                            "url": page["url"],
-                            "properties": page["properties"],
-                        }
-                    )
-                return pages
-            return []
+                results = response["results"]
+
+            logger.info(f"Query returned {len(results)} results from database: {database_id}")
+            return results
 
         except Exception as e:
-            logger.error(f"Error querying database {database_id}: {e}")
+            logger.error(f"Failed to query database: {e}")
             return []
 
     async def get_page(self, page_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific page content and properties"""
+        """Get specific page content and properties using notion_client"""
         try:
-            response = await self._call_notion_api(f"pages/{page_id}")
-            if response:
-                return {
-                    "id": response["id"],
-                    "title": response["properties"]
-                    .get("title", {})
-                    .get("title", [{}])[0]
-                    .get("plain_text", "Untitled"),
-                    "created_time": response["created_time"],
-                    "last_edited_time": response["last_edited_time"],
-                    "url": response["url"],
-                    "properties": response["properties"],
-                }
-            return None
+            if not page_id:
+                logger.error("page_id is required for page retrieval")
+                return None
+
+            # Retrieve page using notion_client
+            response = self._notion_client.pages.retrieve(page_id=page_id)
+
+            # Extract title safely
+            title = "Untitled"
+            if "properties" in response and "title" in response["properties"]:
+                title_prop = response["properties"]["title"]
+                if "title" in title_prop and len(title_prop["title"]) > 0:
+                    title = title_prop["title"][0]["text"]["content"]
+
+            return {
+                "id": response["id"],
+                "title": title,
+                "url": response.get("url"),
+                "properties": response.get("properties", {}),
+                "created_time": response.get("created_time"),
+                "last_edited_time": response.get("last_edited_time"),
+            }
 
         except Exception as e:
-            logger.error(f"Error getting page {page_id}: {e}")
+            logger.error(f"Failed to get page: {e}")
             return None
 
     async def get_page_blocks(self, page_id: str, page_size: int = 100) -> List[Dict[str, Any]]:
-        """Get page content blocks"""
+        """Get page content blocks using notion_client"""
         try:
-            response = await self._call_notion_api(
-                f"blocks/{page_id}/children", data={"page_size": min(page_size, 100)}
+            if not page_id:
+                logger.error("page_id is required")
+                return []
+
+            # Get blocks using notion_client
+            response = self._notion_client.blocks.children.list(
+                block_id=page_id, page_size=min(page_size, 100)
             )
 
+            blocks = []
             if response and "results" in response:
-                blocks = []
                 for block in response["results"]:
-                    blocks.append(
-                        {
-                            "id": block["id"],
-                            "type": block["type"],
-                            "created_time": block["created_time"],
-                            "last_edited_time": block["last_edited_time"],
-                            "content": block.get(block["type"], {}),
-                        }
-                    )
-                return blocks
-            return []
+                    blocks.append(block)
+
+            return blocks
 
         except Exception as e:
-            logger.error(f"Error getting page blocks {page_id}: {e}")
+            logger.error(f"Failed to get blocks: {e}")
             return []
 
-    async def update_page(self, page_id: str, properties: Dict[str, Any]) -> bool:
-        """Update page properties"""
+    async def update_page(self, page_id: str, properties: Dict):
+        """Update a Notion page using notion_client"""
         try:
-            response = await self._call_notion_api(
-                f"pages/{page_id}", method="PATCH", data={"properties": properties}
-            )
-
-            if response:
-                logger.info(f"Successfully updated page {page_id}")
-                return True
-            else:
-                logger.error(f"Failed to update page {page_id}")
-                return False
-
-        except Exception as e:
-            logger.error(f"Error updating page {page_id}: {e}")
-            return False
-
-    async def create_page(
-        self,
-        parent_id: str,
-        properties: Dict[str, Any],
-        content: Optional[List[Dict[str, Any]]] = None,
-    ) -> Optional[Dict[str, Any]]:
-        """Create a new page"""
-        try:
-            page_data = {
-                "parent": (
-                    {"database_id": parent_id}
-                    if parent_id.startswith("db_")
-                    else {"page_id": parent_id}
-                ),
-                "properties": properties,
-            }
-
-            if content:
-                page_data["children"] = content
-
-            response = await self._call_notion_api("pages", method="POST", data=page_data)
-
-            if response:
-                logger.info(f"Successfully created page {response['id']}")
-                return {
-                    "id": response["id"],
-                    "title": response["properties"]
-                    .get("title", {})
-                    .get("title", [{}])[0]
-                    .get("plain_text", "Untitled"),
-                    "created_time": response["created_time"],
-                    "url": response["url"],
-                }
-            else:
-                logger.error("Failed to create page")
+            if not page_id:
+                logger.error("page_id is required for page update")
                 return None
 
+            # Update page using notion_client
+            response = self._notion_client.pages.update(page_id=page_id, properties=properties)
+
+            logger.info(f"Page updated successfully: {page_id}")
+            return response
+
         except Exception as e:
-            logger.error(f"Error creating page: {e}")
+            logger.error(f"Failed to update page: {e}")
+            return None
+
+    async def create_page(self, parent_id: str, properties: Dict, content: Optional[List] = None):
+        """Create a new Notion page using notion_client library"""
+        try:
+            # Build parent structure
+            parent = {"page_id": parent_id} if parent_id else None
+
+            # Create page
+            response = self._notion_client.pages.create(
+                parent=parent, properties=properties, children=content if content else []
+            )
+
+            return response
+        except Exception as e:
+            logger.error(f"Failed to create page: {e}")
             return None
 
     async def search_notion(
         self, query: str, filter_type: Optional[str] = None, page_size: int = 100
     ) -> List[Dict[str, Any]]:
-        """Search Notion workspace"""
+        """Search Notion workspace using notion_client"""
         try:
-            search_data = {"query": query, "page_size": min(page_size, 100)}
+            # Build search parameters
+            search_params = {"query": query, "page_size": min(page_size, 100)}
 
+            # Add filter if specified
             if filter_type:
-                search_data["filter"] = {"property": "object", "value": filter_type}
+                search_params["filter"] = {"property": "object", "value": filter_type}
 
-            response = await self._call_notion_api("search", method="POST", data=search_data)
+            # Search using notion_client
+            response = self._notion_client.search(**search_params)
 
+            # Extract results
+            results = []
             if response and "results" in response:
-                results = []
                 for item in response["results"]:
-                    results.append(
-                        {
-                            "id": item["id"],
-                            "type": item["type"],
-                            "title": (
-                                item.get("title", [{}])[0].get("plain_text", "Untitled")
-                                if item.get("title")
-                                else "Untitled"
-                            ),
-                            "created_time": item["created_time"],
-                            "last_edited_time": item["last_edited_time"],
-                            "url": item["url"],
-                        }
-                    )
-                return results
-            return []
+                    results.append(item)
+
+            logger.info(f"Search found {len(results)} results for query: {query}")
+            return results
 
         except Exception as e:
-            logger.error(f"Error searching Notion: {e}")
+            logger.error(f"Search failed: {e}")
             return []
 
     async def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Get user information"""
+        """Get user information using notion_client"""
         try:
-            response = await self._call_notion_api(f"users/{user_id}")
+            response = self._notion_client.users.retrieve(user_id=user_id)
             if response:
                 return {
                     "id": response["id"],
@@ -467,9 +339,9 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def list_users(self) -> List[Dict[str, Any]]:
-        """List workspace users"""
+        """List workspace users using notion_client"""
         try:
-            response = await self._call_notion_api("users")
+            response = self._notion_client.users.list()
             if response and "results" in response:
                 users = []
                 for user in response["results"]:

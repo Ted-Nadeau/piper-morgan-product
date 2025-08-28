@@ -8,6 +8,10 @@
 
 ---
 
+## 🚨 **SECURITY RESTRICTIONS**
+
+**NEVER ACCESS .env FILES**: Credentials must be provided through approved environment setup only. No access to .env, .env.*, or any environment credential files.
+
 ## 🎯 **MISSION CONTEXT**
 
 **Current Status**: 🚀 **DOCUMENT MEMORY SYSTEM FULLY OPERATIONAL**

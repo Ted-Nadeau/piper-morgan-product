@@ -4,6 +4,7 @@ Guidance for Claude Code in this repository.
 
 ## Core Requirements
 
+**SECURITY**: NEVER access .env files - credentials must be provided through approved environment setup only
 **Excellence Flywheel**: Verify first → Implement second → Evidence-based progress → GitHub tracking
 **Python**: 3.11 required, venv activated
 **Testing**: PYTHONPATH=. python -m pytest (never bare pytest)
@@ -77,6 +78,7 @@ PYTHONPATH=. python -m pytest [test] -v                 # Run actual tests
 
 ## Don'ts
 
+- **NEVER access .env files** - use approved environment setup only
 - Never create test_*.py files outside tests/ directory
 - Never use bare pytest (always PYTHONPATH=. python -m pytest)
 - Never claim tests pass without running them
