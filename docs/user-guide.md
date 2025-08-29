@@ -58,7 +58,43 @@ Piper Morgan can interpret PM requests like:
 
 **Quality Note**: Intent classification accuracy varies 60-85% depending on request clarity.
 
-### 2. Knowledge Base Integration
+### 2. Command Line Interface (CLI)
+
+Piper Morgan provides powerful CLI commands for content publishing and integration management:
+
+#### Notion Integration Commands
+
+```bash
+# Check Notion integration status
+python cli/commands/notion.py status
+
+# List available Notion pages
+python cli/commands/notion.py pages
+
+# Search Notion content
+python cli/commands/notion.py search --query "project planning"
+
+# Create new Notion page
+python cli/commands/notion.py create "New Project Page"
+```
+
+#### Content Publishing Commands
+
+```bash
+# Publish markdown file to Notion
+python cli/commands/publish.py publish README.md --to notion --location parent-page-id
+
+# Publish with custom format
+python cli/commands/publish.py publish docs/guide.md --to notion --location parent-id --format markdown
+```
+
+**Features**:
+- ✅ Automatic markdown to Notion conversion
+- ✅ Real-time URL return after publication
+- ✅ Comprehensive error handling with actionable guidance
+- ✅ Environment-aware configuration management
+
+### 3. Knowledge Base Integration
 
 The system can:
 
@@ -124,6 +160,7 @@ Piper Morgan's Slack integration uses advanced spatial metaphors to understand a
 - **Emotional Markers**: Reactions with valence and intensity tracking
 
 **Advanced Features**:
+
 - Multi-workspace navigation with intelligent territory switching
 - Attention algorithms with temporal decay models
 - Cross-session spatial memory and pattern learning
@@ -138,6 +175,88 @@ Piper Morgan's Slack integration uses advanced spatial metaphors to understand a
 # Query organizational knowledge
 curl "http://localhost:8001/api/v1/knowledge/search?q=mobile+login+architecture&k=3"
 ```
+
+## Command Line Interface (CLI)
+
+### Notion Integration
+
+Piper Morgan provides a comprehensive CLI for managing your Notion workspace directly from the command line:
+
+#### Getting Started with Notion CLI
+
+1. **Check Integration Status**:
+
+   ```bash
+   python cli/commands/notion.py status
+   ```
+
+   Verifies your Notion API key and workspace connection.
+
+2. **Test Connection**:
+
+   ```bash
+   python cli/commands/notion.py test
+   ```
+
+   Validates live connection to your Notion workspace.
+
+3. **List Your Pages**:
+
+   ```bash
+   python cli/commands/notion.py pages
+   ```
+
+   Displays up to 20 pages from your workspace with titles, IDs, and URLs.
+
+4. **Search Content**:
+
+   ```bash
+   python cli/commands/notion.py search --query "project requirements"
+   ```
+
+   Searches across your entire Notion workspace for relevant content.
+
+5. **Create New Pages**:
+
+   ```bash
+   python cli/commands/notion.py create "New Page Title"
+   ```
+
+   Creates a new page with automatic parent selection.
+
+   For specific parent pages:
+
+   ```bash
+   python cli/commands/notion.py create "Child Page" --parent-id "parent-page-id"
+   ```
+
+#### CLI Best Practices
+
+- **Use Descriptive Titles**: Clear, specific page titles improve searchability
+- **Verify Before Creating**: Use `status` and `test` commands to ensure connectivity
+- **Smart Parent Selection**: Let the system choose parents automatically unless you need specific hierarchy
+- **Error Handling**: The CLI provides clear error messages and troubleshooting guidance
+
+#### Example Workflow
+
+```bash
+# 1. Verify integration is working
+python cli/commands/notion.py status
+
+# 2. List existing pages to understand structure
+python cli/commands/notion.py pages
+
+# 3. Search for specific content
+python cli/commands/notion.py search --query "Q4 planning"
+
+# 4. Create a new page for Q4 planning
+python cli/commands/notion.py create "Q4 2025 Planning and Objectives"
+
+# 5. Verify the page was created
+python cli/commands/notion.py search --query "Q4 2025"
+```
+
+**Note**: The Notion CLI automatically handles authentication, rate limiting, and error scenarios, providing a robust interface for workspace management.
 
 ## Best Practices
 
