@@ -1,4 +1,4 @@
-# ADR-013: Unified Session Management Architecture
+# ADR-025: Unified Session Management Architecture
 
 **Status:** Accepted
 **Date:** 2025-08-07
