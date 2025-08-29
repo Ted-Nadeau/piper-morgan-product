@@ -11,6 +11,7 @@
 Piper Morgan is an intelligent product management assistant that transforms routine PM tasks into natural conversations while providing strategic insights through AI-powered analysis.
 
 **Core Capabilities:**
+
 - 🧠 **Issue Intelligence System** - AI-powered GitHub issue analysis with smart prioritization
 - 💬 **Conversational AI with Memory** - Natural language workflows with 10-turn context
 - ⚡ **CLI Commands** - Powerful command-line tools for daily PM workflows
@@ -42,14 +43,17 @@ piper issues status
 Choose your path based on your role:
 
 ### 🎯 Product Managers
+
 ```bash
 git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 ./scripts/quick-start.sh
 ```
-**Ready in 2 minutes** → [PM Quick Start Guide](getting-started/product-managers.md)
+
+**Ready in 2 minutes** → [PM Quick Start Guide](getting-started/product-managers.html)
 
 ### 💻 Developers
+
 ```bash
 git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
@@ -57,10 +61,12 @@ python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt && docker-compose up -d
 python main.py
 ```
-**Full dev environment** → [Developer Setup Guide](getting-started/developers.md)
+
+**Full dev environment** → [Developer Setup Guide](getting-started/developers.html)
 
 ### 🔧 System Administrators
-**Production deployment** → [Production Setup Guide](getting-started/production.md)
+
+**Production deployment** → [Production Setup Guide](getting-started/production.html)
 
 ## 🏗️ High-Level Architecture
 
@@ -92,27 +98,27 @@ Welcome to the comprehensive documentation hub for Piper Morgan - an advanced AI
 
 Role-based quick-start guides to help you begin using Piper Morgan effectively:
 
-- **[Product Managers](getting-started/product-managers.md)**: Fast-track setup for issue intelligence and project insights
-- **[Developers](getting-started/developers.md)**: Complete development environment setup with Docker, databases, and testing
-- **[API Integration](getting-started/api-integration.md)**: Integrate Piper Morgan's APIs into your existing workflows
-- **[Production Deployment](getting-started/production.md)**: Enterprise deployment guide for DevOps teams
+- **[Product Managers](getting-started/product-managers.html)**: Fast-track setup for issue intelligence and project insights
+- **[Developers](getting-started/developers.html)**: Complete development environment setup with Docker, databases, and testing
+- **[API Integration](getting-started/api-integration.html)**: Integrate Piper Morgan's APIs into your existing workflows
+- **[Production Deployment](getting-started/production.html)**: Enterprise deployment guide for DevOps teams
 
 ### 📊 [Status & Progress](status/)
 
 Real-time project health and development progress:
 
-- **[Status Dashboard](status/README.md)**: Current system health and development velocity
-- **[2025 Achievements](status/achievements-2025.md)**: Complete record of delivered features and improvements
-- **[Roadmap](status/roadmap.md)**: Strategic milestones and future development plans
-- **[Changelog](status/changelog.md)**: Detailed version history with technical specifications
+- **[Status Dashboard](status/README.html)**: Current system health and development velocity
+- **[2025 Achievements](status/achievements-2025.html)**: Complete record of delivered features and improvements
+- **[Roadmap](status/roadmap.html)**: Strategic milestones and future development plans
+- **[Changelog](status/achievements-2025.html)**: Recent achievements and version history
 
-### 🖥️ [CLI Commands](user-guides/cli-commands.md)
+### 🖥️ [CLI Commands](user-guides/cli-commands.html)
 
 - **Content Publishing**: `piper publish` with Notion integration
 - **Notion Management**: Workspace administration and content creation
 - **Integration Testing**: CLI validation and health checks
 
-### 📝 [Content Publishing](user-guides/cli-commands.md)
+### 📝 [Content Publishing](user-guides/cli-commands.html)
 
 - **Markdown to Notion**: Automatic conversion and publishing
 - **Error Handling**: User-friendly error messages and guidance
@@ -123,23 +129,23 @@ Real-time project health and development progress:
 ### 🏗️ Architecture & Technical Design
 
 - **[System Architecture](architecture/)**: Core system design, patterns, and architectural decisions
-- **[API Reference](architecture/api-reference.md)**: Comprehensive API documentation with examples
-- **[Domain Models](architecture/domain-models.md)**: Data models and business logic specifications
-- **[Integration Patterns](architecture/mcp-integration-patterns.md)**: MCP and external system integration guides
+- **[API Reference](architecture/api-reference.html)**: Comprehensive API documentation with examples
+- **[Domain Models](architecture/domain-models.html)**: Data models and business logic specifications
+- **[Integration Patterns](architecture/mcp-integration-patterns.html)**: MCP and external system integration guides
 
 ### 💻 Development Resources
 
 - **[Development Guidelines](development/)**: Coding standards, patterns, and best practices
-- **[Testing Strategy](development/TEST-GUIDE.md)**: Comprehensive testing framework and guidelines
-- **[Multi-Agent Coordination](development/HOW_TO_USE_MULTI_AGENT.md)**: Advanced AI-assisted development workflows
-- **[Session Management](development/session-management-protocols.md)**: Context preservation and continuity patterns
+- **[Testing Strategy](development/TEST-GUIDE.html)**: Comprehensive testing framework and guidelines
+- **[Multi-Agent Coordination](development/HOW_TO_USE_MULTI_AGENT.html)**: Advanced AI-assisted development workflows
+- **[Session Management](development/HOW_TO_USE_MULTI_AGENT.html)**: Multi-agent coordination and session management
 
 ### 👥 User Guides
 
 - **[User Guides](user-guides/)**: Feature explanations and usage instructions
-- **[CLI Commands](user-guides/cli-commands.md)**: Command-line interface reference
-- **[GitHub Integration](user-guides/github-issue-creation.md)**: GitHub workflow integration
-- **[Conversation Memory](user-guides/conversation-memory-guide.md)**: Context management and conversation continuity
+- **[CLI Commands](user-guides/cli-commands.html)**: Command-line interface reference
+- **[GitHub Integration](user-guides/github-issue-creation.html)**: GitHub workflow integration
+- **[Conversation Memory](user-guides/conversation-memory-guide.html)**: Context management and conversation continuity
 
 ### 🖥️ Command Line Interface (CLI)
 
@@ -174,7 +180,7 @@ python cli/commands/notion.py create "Project Planning"
 - **[Deployment Guides](deployment/)**: Production deployment and configuration
 - **[Operations Documentation](operations/)**: Monitoring, alerting, and maintenance procedures
 - **[Performance Documentation](performance/)**: Benchmarks, optimization guides, and scaling strategies
-- **[Troubleshooting](troubleshooting.md)**: Common issues and solutions
+- **[Troubleshooting](troubleshooting.html)**: Common issues and solutions
 
 ## Key Features Overview
 
@@ -285,7 +291,7 @@ Intelligent automation of development processes:
 2. **Check [Status Dashboard](status/README.md)** for current system health and recent updates
 3. **Use [Architecture Documentation](architecture/)** for technical deep-dives
 4. **Refer to [User Guides](user-guides/)** for specific feature usage
-5. **Consult [Troubleshooting](troubleshooting.md)** for common issues
+5. **Consult [Troubleshooting](troubleshooting.html)** for common issues
 
 ### Support Channels
 
@@ -296,9 +302,9 @@ Intelligent automation of development processes:
 
 ### Contributing
 
-- **[Development Guidelines](development/dev-guidelines.md)**: Contribution standards and processes
-- **[Architecture Patterns](architecture/pattern-catalog.md)**: Established patterns and practices
-- **[Testing Requirements](development/TEST-GUIDE.md)**: Testing standards and procedures
+- **[Development Guidelines](development/dev-guidelines.html)**: Contribution standards and processes
+- **[Architecture Patterns](architecture/api-reference.html)**: API documentation and integration patterns
+- **[Testing Requirements](development/TEST-GUIDE.html)**: Testing standards and procedures
 - **[Issue Templates](https://github.com/your-org/piper-morgan/issues/new/choose)**: Structured issue reporting
 
 ## Project Status
