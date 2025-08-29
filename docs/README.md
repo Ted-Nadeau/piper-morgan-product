@@ -1,4 +1,88 @@
-# Piper Morgan Documentation
+# Piper Morgan - AI Product Management Assistant
+
+[![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
+[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+
+> **NEW: Issue Intelligence & CLI System** - Transform GitHub issues into actionable insights with AI-powered triage, pattern discovery, and conversational workflows.
+
+## 🎯 What is Piper Morgan?
+
+Piper Morgan is an intelligent product management assistant that transforms routine PM tasks into natural conversations while providing strategic insights through AI-powered analysis.
+
+**Core Capabilities:**
+- 🧠 **Issue Intelligence System** - AI-powered GitHub issue analysis with smart prioritization
+- 💬 **Conversational AI with Memory** - Natural language workflows with 10-turn context
+- ⚡ **CLI Commands** - Powerful command-line tools for daily PM workflows
+- 📊 **Cross-Feature Learning** - Pattern discovery that improves over time
+- 🔄 **Real-time GitHub Integration** - Live repository data and intelligent recommendations
+
+## 🚀 Quick Demo - Issue Intelligence Workflow
+
+Transform overwhelming GitHub backlogs into actionable insights:
+
+```bash
+# Morning standup with AI-enhanced context
+piper standup
+
+# Intelligent issue triage with priority scoring
+piper issues triage --limit 15
+
+# Discover patterns across your project
+piper issues patterns
+
+# Get project health overview
+piper issues status
+```
+
+**Result**: Complete project visibility in under 30 seconds, with AI-powered recommendations for immediate actions.
+
+## 🛠️ Get Started Fast
+
+Choose your path based on your role:
+
+### 🎯 Product Managers
+```bash
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+./scripts/quick-start.sh
+```
+**Ready in 2 minutes** → [PM Quick Start Guide](getting-started/product-managers.md)
+
+### 💻 Developers
+```bash
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt && docker-compose up -d
+python main.py
+```
+**Full dev environment** → [Developer Setup Guide](getting-started/developers.md)
+
+### 🔧 System Administrators
+**Production deployment** → [Production Setup Guide](getting-started/production.md)
+
+## 🏗️ High-Level Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   CLI Commands  │    │  Issue           │    │  GitHub         │
+│   & Workflows   │◄──►│  Intelligence    │◄──►│  Integration    │
+│                 │    │  Engine          │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Conversational │    │  Learning Loop   │    │  Real-time      │
+│  AI Context     │    │  & Pattern       │    │  Data & API     │
+│  (10-turn)      │    │  Discovery       │    │  Orchestration  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+**Built on proven foundations:** PostgreSQL, Redis, Docker, with 599+ tests and 85%+ coverage.
+
+## 📚 Documentation Hub
 
 Welcome to the comprehensive documentation hub for Piper Morgan - an advanced AI-assisted development platform that revolutionizes how teams build, manage, and optimize software projects.
 
@@ -22,13 +106,13 @@ Real-time project health and development progress:
 - **[Roadmap](status/roadmap.md)**: Strategic milestones and future development plans
 - **[Changelog](status/changelog.md)**: Detailed version history with technical specifications
 
-### 🖥️ [CLI Commands](user-guide.md#command-line-interface-cli)
+### 🖥️ [CLI Commands](user-guides/cli-commands.md)
 
 - **Content Publishing**: `piper publish` with Notion integration
 - **Notion Management**: Workspace administration and content creation
 - **Integration Testing**: CLI validation and health checks
 
-### 📝 [Content Publishing](user-guide.md#content-publishing-commands)
+### 📝 [Content Publishing](user-guides/cli-commands.md)
 
 - **Markdown to Notion**: Automatic conversion and publishing
 - **Error Handling**: User-friendly error messages and guidance
