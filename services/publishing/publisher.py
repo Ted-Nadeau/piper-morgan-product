@@ -276,7 +276,7 @@ class Publisher:
             elif line.startswith("**Date:**") or line.startswith("Date:"):
                 date_str = line.split(":", 1)[1].strip().replace("*", "")
                 if date_str:
-                    metadata["date"] = date_str
+                    metadata["date"] = date_str.strip()
 
             # Extract author/decision maker
             elif (
@@ -287,6 +287,6 @@ class Publisher:
             ):
                 author = line.split(":", 1)[1].strip().replace("*", "")
                 if author:
-                    metadata["author"] = author
+                    metadata["author"] = author.strip()
 
         return metadata
