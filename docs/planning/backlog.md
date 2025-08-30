@@ -2,6 +2,20 @@
 
 ## Current Sprint: Multi-Agent Orchestration Implementation
 
+### PM-128: Implement core publish command for markdown to Notion - ✅ COMPLETE
+
+- **Priority**: P1 - Content Publishing Infrastructure
+- **Status**: In Progress - GitHub tracking setup complete
+- **Goal**: Build general-purpose `piper publish` command with proper TDD architecture
+- **Command Format**: `piper publish <file> --to notion --location <parent_id> [--format markdown]`
+- **Issue**: #135 - OPEN
+- **Anti-Patterns**: Prevent verification theater with real API validation
+- **Success Criteria**:
+  - Creates actual Notion pages with correct formatting
+  - Returns clickable URLs
+  - All tests use REAL API calls (no mocks for core functionality)
+  - Handles errors gracefully with user feedback
+
 ## Recently Completed (August 26, 2025)
 
 ### PM-127: Calendar Integration for Morning Standup ✅

@@ -41,6 +41,7 @@ class WorkflowEngine:
 ### 2.1 Workflow to Query Migration
 
 **Before**: Query operation as workflow
+
 ```python
 # ❌ Old pattern
 class ListProjectsWorkflow(Workflow):
@@ -57,6 +58,7 @@ if intent.action == "list_projects":
 ```
 
 **After**: Direct query service
+
 ```python
 # ✅ New pattern
 class ProjectQueryService:
@@ -74,6 +76,7 @@ if intent.category == IntentCategory.QUERY:
 ```
 
 **Migration Steps**:
+
 1. Create query service class
 2. Move logic from workflow to service
 3. Update intent routing
@@ -83,6 +86,7 @@ if intent.category == IntentCategory.QUERY:
 ### 2.2 Repository Pattern Adoption
 
 **Before**: Direct database access
+
 ```python
 # ❌ Old pattern
 class ProjectService:
@@ -98,6 +102,7 @@ class ProjectService:
 ```
 
 **After**: Repository pattern
+
 ```python
 # ✅ New pattern
 class ProjectRepository(BaseRepository):
@@ -121,6 +126,7 @@ class ProjectService:
 ```
 
 **Migration Steps**:
+
 1. Create repository class
 2. Move SQL to repository methods
 3. Implement domain model conversion
@@ -130,6 +136,7 @@ class ProjectService:
 ### 2.3 Domain Model Extraction
 
 **Before**: Mixed business and persistence logic
+
 ```python
 # ❌ Old pattern
 class ProjectDB(Base):
@@ -147,6 +154,7 @@ class ProjectDB(Base):
 ```
 
 **After**: Separate domain and database models
+
 ```python
 # ✅ New pattern
 # Domain model (pure business logic)
@@ -174,6 +182,7 @@ class ProjectDB(Base):
 ```
 
 **Migration Steps**:
+
 1. Create domain model class
 2. Move business methods to domain model
 3. Keep database model minimal
@@ -183,6 +192,7 @@ class ProjectDB(Base):
 ### 2.4 Event-Driven Decoupling
 
 **Before**: Direct service coupling
+
 ```python
 # ❌ Old pattern
 class WorkflowEngine:
@@ -197,6 +207,7 @@ class WorkflowEngine:
 ```
 
 **After**: Event-driven communication
+
 ```python
 # ✅ New pattern
 class WorkflowEngine:
@@ -222,6 +233,7 @@ class NotificationService:
 ```
 
 **Migration Steps**:
+
 1. Identify coupled services
 2. Define event types
 3. Implement event bus
@@ -232,6 +244,7 @@ class NotificationService:
 ## 3. CQRS Evolution Path
 
 ### Phase 1: Basic Separation (Current State)
+
 ```python
 # Simple query/command routing
 if intent.category == IntentCategory.QUERY:
@@ -241,6 +254,7 @@ else:
 ```
 
 ### Phase 2: Dedicated Read Models
+
 ```python
 # Optimized read models for queries
 class ProjectReadModel:
@@ -258,6 +272,7 @@ class ProjectQueryService:
 ```
 
 ### Phase 3: Event Sourcing
+
 ```python
 # Store events instead of state
 @dataclass
@@ -291,6 +306,7 @@ class ProjectAggregate:
 ```
 
 ### Phase 4: Full CQRS with Eventual Consistency
+
 ```python
 # Separate write and read databases
 class CommandHandler:
@@ -312,7 +328,7 @@ class ProjectionHandler:
 
 ### API Versioning Strategy
 
-```python
+````python
 # Support multiple API versions
 @app.post("/api/v1/intent")  # Current version
 async def process_intent_v1(request: IntentRequestV1):
@@ -332,8 +348,109 @@ class VersionAdapter:
             session_id=v1_request.session_id or str(uuid4()),
             confidence_threshold=0.8
         )
+## 5. External API Migration Patterns
+
+### 5.1 Notion API Client Migration
+
+**Context**: Migrating from custom HTTP implementations to official SDK libraries
+
+**Before**: Custom aiohttp implementation
+```python
+# ❌ Old pattern - Custom HTTP client
+class NotionMCPAdapter:
+    def __init__(self):
+        self.session = aiohttp.ClientSession()
+        self.base_url = "https://api.notion.com/v1"
+        self.headers = {
+            "Authorization": f"Bearer {os.getenv('NOTION_API_KEY')}",
+            "Notion-Version": "2022-06-28"
+        }
+
+    async def search_notion(self, query: str):
+        url = f"{self.base_url}/search"
+        async with self.session.post(url, headers=self.headers, json={"query": query}) as response:
+            if response.status == 200:
+                return await response.json()
+            else:
+                raise Exception(f"API error: {response.status}")
+````
+
+**After**: Official notion-client library
+
+```python
+# ✅ New pattern - Official SDK
+from notion_client import AsyncClient
+
+class NotionMCPAdapter:
+    def __init__(self):
+        self.client = AsyncClient(auth=os.getenv("NOTION_API_KEY"))
+
+    async def search_notion(self, query: str, filter_type: str = None):
+        filter_params = {"property": "object", "value": filter_type} if filter_type else {}
+        return await self.client.search(query=query, filter=filter_params)
+```
+
+**Migration Benefits**:
+
+1. **Improved Reliability**: Official library handles API changes automatically
+2. **Enhanced Features**: Access to all Notion API capabilities
+3. **Reduced Maintenance**: No custom HTTP code to maintain
+4. **Better Error Handling**: Standardized exception handling patterns
+
+**Migration Steps**:
+
+1. **Library Selection**: Choose official SDK with active maintenance
+2. **Client Refactoring**: Replace custom HTTP code with official client methods
+3. **API Method Migration**: Update all API calls to use official client interfaces
+4. **Error Handling Standardization**: Implement official exception handling patterns
+5. **Testing Validation**: Verify functionality with comprehensive end-to-end testing
+
+**CLI Enhancement Example**:
+
+```python
+# Enhanced CLI with new client capabilities
+async def cmd_create(self, title: str, parent_id: Optional[str] = None):
+    """Create a new Notion page"""
+    try:
+        # Smart parent selection if not specified
+        if not parent_id:
+            pages = await self.adapter.search_notion("", filter_type="page")
+            if pages:
+                parent_id = pages[0]["id"]
+                self.print_warning("Using first available page as parent")
+
+        # Create page using official client
+        result = await self.adapter.create_page(parent_id, properties={
+            "title": {"title": [{"text": {"content": title}}]}
+        })
+
+        if result:
+            self.print_success(f"Page created successfully!")
+            self.print_info(f"Title: {title}")
+            self.print_info(f"ID: {result.get('id', 'unknown')}")
+            self.print_info(f"URL: {result.get('url', 'No URL')}")
+    except Exception as e:
+        self.print_error(f"Error creating page: {e}")
+```
+
+**Testing Strategy**:
+
+```bash
+# Full CRUD cycle validation
+python cli/commands/notion.py status          # Verify connection
+python cli/commands/notion.py pages           # List existing pages
+python cli/commands/notion.py search --query "test"  # Search content
+python cli/commands/notion.py create "Test Page"     # Create new page
+python cli/commands/notion.py search --query "Test Page"  # Verify creation
+```
+
+**Breaking Changes**: None - all existing functionality preserved and enhanced.
+
 ---
-*Last Updated: June 21, 2025*
+
+_Last Updated: August 28, 2025_
 
 ## Revision Log
+
+- **August 28, 2025**: Added External API Migration Patterns section with Notion API client migration from custom aiohttp to official notion-client library, including CLI enhancement examples and testing strategy
 - **June 21, 2025**: Added systematic documentation dating and revision tracking

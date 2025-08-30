@@ -97,4 +97,5 @@ PM-124,,Issue Intelligence Initialization Fix (Monday Enhancement),OPEN,🎯 Fix
 PM-125,,Document Memory Integration Sprint,COMPLETED,✅ DocumentMemoryQueries foundation (replaced by DocumentService extensions in PM-126 recovery)
 PM-126,132,Document Memory Content Implementation,COMPLETED,✅ DocumentService extensions with CLI integration and Morning Standup - real ChromaDB data operational
 PM-127,133,Calendar Integration for Morning Standup,COMPLETED,✅ Full trifecta integration + CanonicalHandlers temporal queries enhanced - 0.550s performance
+PM-128,135,Implement core publish command for markdown to Notion,DONE,✅ Complete CLI functionality with URL display and error handling - validated end-to-end
 ,,,,"✅ ADR-010: Configuration Access Patterns (July 21, 2025)"

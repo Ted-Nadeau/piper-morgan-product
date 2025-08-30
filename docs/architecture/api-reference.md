@@ -201,13 +201,13 @@ Access the chat interface at: http://localhost:3000
 
 ## Intent Categories Reference
 
-| Category    | Purpose                | Example Actions                          |
-| ----------- | ---------------------- | ---------------------------------------- |
-| `execution` | Create, update, modify | create_github_issue, update_project      |
+| Category    | Purpose                | Example Actions                                                                                    |
+| ----------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `execution` | Create, update, modify | create_github_issue, update_project                                                                |
 | `query`     | Read, list, search     | list_projects, get_project, get_project_details, find_project, get_default_project, count_projects |
-| `analysis`  | Analyze, assess        | analyze_metrics, review_performance      |
-| `synthesis` | Generate, summarize    | create_report, summarize_meeting         |
-| `strategy`  | Plan, prioritize       | plan_roadmap, prioritize_features        |
+| `analysis`  | Analyze, assess        | analyze_metrics, review_performance                                                                |
+| `synthesis` | Generate, summarize    | create_report, summarize_meeting                                                                   |
+| `strategy`  | Plan, prioritize       | plan_roadmap, prioritize_features                                                                  |
 
 ## GitHub-Specific Examples
 
@@ -305,6 +305,66 @@ client = PiperMorganClient()
 result = client.send_message("Create a ticket for the login bug")
 ```
 
+## CLI Commands
+
+### Notion Integration
+
+The Notion integration provides a comprehensive CLI interface for managing your Notion workspace:
+
+```bash
+# Check integration status and configuration
+python cli/commands/notion.py status
+
+# Test connection to Notion workspace
+python cli/commands/notion.py test
+
+# Search across your Notion workspace
+python cli/commands/notion.py search --query "project requirements"
+
+# List pages in your workspace
+python cli/commands/notion.py pages
+
+# Create a new page
+python cli/commands/notion.py create "Page Title"
+
+# Create page with specific parent
+python cli/commands/notion.py create "Page Title" --parent-id "parent-page-id"
+```
+
+**CLI Response Examples:**
+
+```bash
+# Status check
+$ python cli/commands/notion.py status
+✅ Connected to Notion workspace
+📊 Workspace: Piper Morgan Development
+🔑 API Key: Configured
+🌐 Base URL: https://api.notion.com/v1
+
+# Page listing
+$ python cli/commands/notion.py pages
+Found 15 pages:
+1. Project Requirements
+   ID: abc12345...
+   URL: https://notion.so/abc12345
+
+# Page creation
+$ python cli/commands/notion.py create "Test Page"
+✅ Page created successfully!
+Title: Test Page
+ID: def67890
+URL: https://notion.so/def67890
+```
+
+### CLI Architecture
+
+The CLI commands follow a consistent pattern:
+
+1. **Command Parsing**: Uses `argparse` for structured argument handling
+2. **Adapter Integration**: Commands connect to underlying service adapters
+3. **Error Handling**: Graceful degradation with user-friendly error messages
+4. **Output Formatting**: Consistent formatting with color-coded status indicators
+
 ---
 
 **Next Steps:**
@@ -319,4 +379,5 @@ _Last Updated: June 28, 2025_
 
 ## Revision Log
 
+- **August 28, 2025**: Added CLI Commands section with Notion integration examples, CLI architecture patterns, and comprehensive command reference
 - **June 28, 2025**: Added notes and examples for automatic repository context enrichment and GitHub integration patterns
