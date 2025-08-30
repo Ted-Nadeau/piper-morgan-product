@@ -278,20 +278,157 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def create_page(self, parent_id: str, properties: Dict, content: Optional[List] = None):
-        """Create a new Notion page using notion_client library"""
+        """Create a new Notion page using notion_client"""
         try:
-            # Build parent structure
-            parent = {"page_id": parent_id} if parent_id else None
+            if not parent_id:
+                raise ValueError("parent_id is required for page creation")
 
-            # Create page
+            # Validate parent exists first
+            parent_validation = await self._validate_parent_exists(parent_id)
+
+            # Chunk content if too large (Notion limit is 100 blocks)
+            initial_content = []
+            remaining_content = []
+
+            if content and len(content) > 100:
+                initial_content = content[:100]
+                remaining_content = content[100:]
+                logger.info(
+                    f"Content chunked: {len(initial_content)} initial blocks, {len(remaining_content)} remaining"
+                )
+            else:
+                initial_content = content if content else []
+
+            # Create page with first 100 blocks
             response = self._notion_client.pages.create(
-                parent=parent, properties=properties, children=content if content else []
+                parent={"page_id": parent_id}, properties=properties, children=initial_content
             )
 
-            return response
+            # Add remaining blocks if any
+            if remaining_content and response:
+                page_id = response["id"]
+                # Notion requires adding additional blocks via the blocks endpoint
+                self._notion_client.blocks.children.append(
+                    block_id=page_id, children=remaining_content
+                )
+                logger.info(f"Added {len(remaining_content)} additional blocks to page {page_id}")
+
+            # CRITICAL: Ensure URL is in response for publisher consumption
+            if response and "id" in response:
+                # Notion API response already includes 'url' field, but ensure it's present
+                if "url" not in response or not response["url"]:
+                    # Fallback: construct URL from page ID if missing
+                    page_id = response["id"].replace("-", "")
+                    response["url"] = f"https://www.notion.so/{page_id}"
+
+                logger.info(f"Page created successfully: {response['url']}")
+            else:
+                logger.error(f"Notion API response missing required fields: {response}")
+                raise ValueError("Notion API did not return valid page response")
+
+            return response  # Must include 'url' field
+
         except Exception as e:
             logger.error(f"Failed to create page: {e}")
-            return None
+            raise
+
+    async def create_database_item(
+        self, database_id: str, properties: Dict, content: Optional[List] = None
+    ):
+        """Create a new database item using notion_client"""
+        try:
+            if not database_id:
+                raise ValueError("database_id is required for database item creation")
+
+            # Validate database exists first
+            try:
+                self._notion_client.databases.retrieve(database_id=database_id)
+            except Exception as e:
+                raise ValueError(
+                    f"Cannot create item in database '{database_id}': Database not found or not accessible\n"
+                    f"Error: {str(e)}\n"
+                    f"Options:\n"
+                    f"  1. Use 'piper notion databases' to see available databases\n"
+                    f"  2. Check database permissions in Notion\n"
+                    f"  3. Verify database ID is correct"
+                )
+
+            # Chunk content if too large (Notion limit is 100 blocks)
+            initial_content = []
+            remaining_content = []
+
+            if content and len(content) > 100:
+                initial_content = content[:100]
+                remaining_content = content[100:]
+                logger.info(
+                    f"Content chunked: {len(initial_content)} initial blocks, {len(remaining_content)} remaining"
+                )
+            else:
+                initial_content = content if content else []
+
+            # Create database item with first 100 blocks
+            response = self._notion_client.pages.create(
+                parent={"database_id": database_id}, properties=properties, children=initial_content
+            )
+
+            # Add remaining blocks if any
+            if remaining_content and response:
+                page_id = response["id"]
+                # Notion requires adding additional blocks via the blocks endpoint
+                self._notion_client.blocks.children.append(
+                    block_id=page_id, children=remaining_content
+                )
+                logger.info(
+                    f"Added {len(remaining_content)} additional blocks to database item {page_id}"
+                )
+
+            # CRITICAL: Ensure URL is in response for publisher consumption
+            if response and "id" in response:
+                # Notion API response already includes 'url' field, but ensure it's present
+                if "url" not in response or not response["url"]:
+                    # Fallback: construct URL from page ID if missing
+                    page_id = response["id"].replace("-", "")
+                    response["url"] = f"https://www.notion.so/{page_id}"
+
+                logger.info(f"Database item created successfully: {response['url']}")
+            else:
+                logger.error(f"Notion API response missing required fields: {response}")
+                raise ValueError("Notion API did not return valid database item response")
+
+            return response  # Must include 'url' field
+
+        except Exception as e:
+            logger.error(f"Failed to create database item: {e}")
+            raise
+
+    async def _validate_parent_exists(self, parent_id: str):
+        """Validate parent page exists before creation attempt"""
+        if not parent_id:
+            raise ValueError("Parent ID is required for page creation")
+
+        try:
+            # Try to retrieve the parent page to validate it exists
+            self._notion_client.pages.retrieve(parent_id)
+            return True
+        except APIResponseError as e:
+            # Provide helpful error message with options
+            error_msg = str(e)
+            if "Could not find page" in error_msg or "not found" in error_msg:
+                raise ValueError(
+                    f"Cannot create page under parent '{parent_id}': Parent page not found or not accessible\n"
+                    f"Options:\n"
+                    f"  1. Use 'piper notion pages' to see available parents\n"
+                    f"  2. Specify different parent with --location\n"
+                    f"  3. Check parent page permissions in Notion"
+                )
+            else:
+                raise ValueError(
+                    f"Cannot create page under parent '{parent_id}': {error_msg}\n"
+                    f"Options:\n"
+                    f"  1. Use 'piper notion pages' to see available parents\n"
+                    f"  2. Specify different parent with --location\n"
+                    f"  3. Check parent page permissions"
+                )
 
     async def search_notion(
         self, query: str, filter_type: Optional[str] = None, page_size: int = 100

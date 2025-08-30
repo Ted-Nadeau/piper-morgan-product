@@ -168,6 +168,184 @@ COLORS = {
 - **Import Errors**: Clear error messages with resolution hints
 - **Format Errors**: Robust Slack formatting with validation
 
+## 🔧 **CLI Implementation Patterns**
+
+### **Command Structure Pattern**
+
+**Standard CLI Command Structure**:
+
+```python
+#!/usr/bin/env python3
+"""
+Command description and purpose
+"""
+
+import asyncio
+import argparse
+from typing import Optional
+
+class CommandClass:
+    def __init__(self):
+        self.adapter = None  # Service adapter for operations
+
+    async def execute(self, command: str, query: str = None):
+        """Main command execution router"""
+        try:
+            if command == "status":
+                await self.cmd_status()
+            elif command == "test":
+                await self.cmd_test()
+            elif command == "search":
+                await self.cmd_search(query or "")
+            elif command == "pages":
+                await self.cmd_pages()
+            elif command == "create":
+                await self.cmd_create(query or "")
+            else:
+                self.print_error(f"Unknown command: {command}")
+                self.print_info("Available commands: status, test, search, pages, create")
+        except KeyboardInterrupt:
+            self.print_info("\nOperation cancelled by user")
+        except Exception as e:
+            self.print_error(f"Unexpected error: {e}")
+
+    async def cmd_status(self):
+        """Check integration status"""
+        # Implementation with proper error handling
+
+    async def cmd_test(self):
+        """Test connection"""
+        # Implementation with connection validation
+
+    async def cmd_search(self, query: str):
+        """Search functionality"""
+        # Implementation with query processing
+
+    async def cmd_pages(self):
+        """List pages"""
+        # Implementation with data retrieval
+
+    async def cmd_create(self, title: str, parent_id: Optional[str] = None):
+        """Create new item"""
+        # Implementation with smart defaults
+
+async def main():
+    """Main CLI entry point"""
+    parser = argparse.ArgumentParser(description="Command description")
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+
+    # Status command
+    subparsers.add_parser("status", help="Check integration status")
+
+    # Test command
+    subparsers.add_parser("test", help="Test connection")
+
+    # Search command
+    search_parser = subparsers.add_parser("search", help="Search functionality")
+    search_parser.add_argument("--query", help="Search query", default="")
+
+    # Pages command
+    subparsers.add_parser("pages", help="List items")
+
+    # Create command
+    create_parser = subparsers.add_parser("create", help="Create new item")
+    create_parser.add_argument("title", help="Item title")
+    create_parser.add_argument("--parent-id", help="Parent ID (optional)", default=None)
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return
+
+    # Execute command
+    cmd = CommandClass()
+    if args.command == "search":
+        await cmd.execute("search", args.query)
+    elif args.command == "create":
+        await cmd.execute("create", args.title)
+    else:
+        await cmd.execute(args.command)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### **Notion CLI Implementation Example**
+
+**Key Implementation Features**:
+
+1. **Smart Parent Selection**: Automatic fallback to first available page
+2. **Error Handling**: Graceful degradation with user-friendly messages
+3. **Output Formatting**: Consistent formatting with color-coded status indicators
+4. **Command Validation**: Proper argument parsing and validation
+
+**Implementation Highlights**:
+
+```python
+async def cmd_create(self, title: str, parent_id: Optional[str] = None):
+    """Create a new Notion page"""
+    try:
+        # Use default parent if not specified
+        if not parent_id:
+            # Search for a default parent
+            pages = await self.adapter.search_notion("", filter_type="page")
+            if pages:
+                parent_id = pages[0]["id"]
+                self.print_warning("Using first available page as parent")
+            else:
+                self.print_error("No pages found to use as parent")
+                return
+
+        # Create the page
+        result = await self.adapter.create_page(
+            parent_id=parent_id,
+            properties={
+                "title": {
+                    "title": [
+                        {
+                            "text": {
+                                "content": title
+                            }
+                        }
+                    ]
+                }
+            }
+        )
+
+        if result:
+            self.print_success(f"\nPage created successfully!")
+            self.print_info(f"Title: {title}")
+            self.print_info(f"ID: {result.get('id', 'unknown')}")
+            self.print_info(f"URL: {result.get('url', 'No URL')}")
+        else:
+            self.print_error("Failed to create page")
+
+    except Exception as e:
+        self.print_error(f"Error creating page: {e}")
+```
+
+### **CLI Testing Patterns**
+
+**End-to-End CRUD Validation**:
+
+```bash
+# Full CRUD cycle test
+python cli/commands/notion.py status          # Verify connection
+python cli/commands/notion.py pages           # List existing items
+python cli/commands/notion.py search --query "test"  # Search content
+python cli/commands/notion.py create "Test Item"     # Create new item
+python cli/commands/notion.py search --query "Test Item"  # Verify creation
+```
+
+**Error Handling Validation**:
+
+- Missing configuration scenarios
+- Network connectivity issues
+- Permission and authentication errors
+- Invalid input validation
+- Graceful degradation testing
+
 ### **Integration Quality**
 
 - **FastAPI Compatibility**: 100% preserved functionality

@@ -2641,10 +2641,43 @@ class IssuesCommand:
    **Example**: Document Memory CLI operational before storage implementation, enabling end-to-end testing
    **Application**: Feature development, integration testing, production readiness validation
 
+### Pattern #36: Official Library Migration Pattern
+
+**Context**: Custom API implementations requiring maintenance and lacking official support
+**Solution**: Migrate from custom HTTP client implementations to official SDK libraries
+**Evidence**: Notion integration migrated from custom aiohttp to official notion-client, enabling CLI enhancements and improved reliability
+**Implementation**:
+
+1. **Library Selection**: Choose official SDK with active maintenance and community support
+2. **Client Refactoring**: Replace custom HTTP code with official client methods
+3. **API Method Migration**: Update all API calls to use official client interfaces
+4. **Error Handling Standardization**: Implement official exception handling patterns
+5. **Testing Validation**: Verify functionality with comprehensive end-to-end testing
+   **Benefit**: Improved reliability, reduced maintenance burden, access to advanced features
+   **Example**: Notion integration now supports full CRUD operations with CLI interface
+   **Application**: External API integrations, custom HTTP client replacements, SDK upgrades
+
+### Pattern #37: End-to-End CRUD Validation Pattern
+
+**Context**: Integration features requiring verification of complete data lifecycle
+**Solution**: Implement comprehensive testing sequence covering Create, Read, Update, Delete operations
+**Evidence**: Notion CLI tested with full CRUD cycle: status → pages → search → create → search verification
+**Implementation**:
+
+1. **Connection Verification**: Test API connectivity and authentication
+2. **Read Operations**: Validate search and listing functionality
+3. **Write Operations**: Test creation with proper error handling
+4. **Content Retrieval**: Verify newly created content is searchable
+5. **Error Scenarios**: Test graceful degradation and user feedback
+   **Benefit**: Ensures integration is production-ready, identifies edge cases, validates user experience
+   **Example**: Notion integration verified functional from CLI to API with complete data flow
+   **Application**: Database integrations, external API connections, data persistence systems
+
 ---
 
 ## Revision Log
 
+- **August 28, 2025**: Added Integration Migration Patterns (#36-37): Official Library Migration Pattern for migrating from custom HTTP implementations to official SDKs, and End-to-End CRUD Validation Pattern for comprehensive integration testing, documenting Notion integration cleanup and CLI enhancement success
 - **August 26, 2025**: Added Recovery Methodology Patterns (#34-35): Systematic Recovery Methodology and CLI-First Integration Validation patterns from Document Memory recovery session, documenting 5x efficiency improvement through architecture-first design and incremental testing
 - **August 26, 2025**: Added Integration Sprint Patterns (#28-33): Dual Agent Parallel Deployment, Verification-First Foundation Repair, Functional Testing Requirements, Graceful Degradation First, Time-Box Evening Development, and Formal Pattern Sweep Integration patterns from weekend integration work and Monday morning methodology discovery
 - **August 24, 2025**: Added Issue Intelligence Patterns (#25-27): Canonical Query Extension Pattern for backward-compatible enhancements, Cross-Feature Learning Pattern for pattern sharing across features, and CLI Integration Pattern for beautiful command-line interfaces with learning integration
