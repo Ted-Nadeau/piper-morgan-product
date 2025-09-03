@@ -1,40 +1,25 @@
 # Piper Morgan 1.0 - Active Backlog
 
-## Current Sprint: Multi-Agent Orchestration Implementation
+## Current Sprint: Configuration Refactoring Implementation
 
-### PM-128: Implement core publish command for markdown to Notion - ✅ COMPLETE
+### PM-129: Refactor Notion hardcoded values to user configuration - 🎯 ACTIVE
 
-- **Priority**: P1 - Content Publishing Infrastructure
-- **Status**: In Progress - GitHub tracking setup complete
-- **Goal**: Build general-purpose `piper publish` command with proper TDD architecture
-- **Command Format**: `piper publish <file> --to notion --location <parent_id> [--format markdown]`
-- **Issue**: #135 - OPEN
-- **Anti-Patterns**: Prevent verification theater with real API validation
-- **Success Criteria**:
-  - Creates actual Notion pages with correct formatting
-  - Returns clickable URLs
-  - All tests use REAL API calls (no mocks for core functionality)
-  - Handles errors gracefully with user feedback
+- **Priority**: P1 - Multi-User Scalability Infrastructure
+- **Status**: ✅ Phase 0 Complete - GitHub issues created with proper tracking
+- **Goal**: Extract hardcoded Notion IDs to user configuration for multi-user adoption
+- **Issues**: #136 (parent), #137-141 (sub-issues)
+- **Phase Breakdown**:
+  - PM-130: Audit codebase for hardcoded values (#137)
+  - PM-131: Design configuration schema (#138)
+  - PM-132: Implement configuration loader (#139)
+  - PM-133: Refactor commands to use config (#140)
+  - PM-134: Testing and documentation (#141)
+  - PM-135: Fix enhanced validation API connectivity for NotionMCPAdapter (#142)
+  - PM-136: Establish performance benchmarking framework for configuration system (#143)
+- **Excellence Flywheel**: Complete front bookend with tracking synchronization
+- **Risk Mitigation**: Backup current state, test after each phase, maintain compatibility
 
 ## Recently Completed (August 26, 2025)
-
-### PM-127: Calendar Integration for Morning Standup ✅
-
-- **Priority**: P1 - Morning Standup Intelligence Trifecta
-- **Status**: ✅ **COMPLETE** - Full integration achieved
-- **Goal**: Connect GoogleCalendarMCPAdapter to Morning Standup workflow
-- **Development Time**: 17 minutes (7:25-7:42 AM) - 51% under 35 minute estimate
-- **Success Criteria**: All criteria met with additional enhancements
-- **Issue**: #133 - CLOSED
-- **Deliverables**:
-  - ✅ Morning Standup trifecta integration (Issues + Documents + Calendar)
-  - ✅ CLI --with-calendar flag with full combination support
-  - ✅ CanonicalHandlers temporal queries enhanced with real calendar data
-  - ✅ Performance excellence: 0.550s full trifecta (target <3s)
-  - ✅ Integration testing complete: All 7 scenarios validated
-  - ✅ Production ready for 6 AM standup demo
-- **Architecture**: Extended existing GoogleCalendarMCPAdapter, no new calendar code
-- **User Value**: Complete intelligence trifecta in Morning Standup workflow
 
 ### PM-033b-deprecation: GitHub Legacy Integration Deprecation (Week 2 Complete - Week 3 Ready)
 
@@ -94,43 +79,7 @@
 - **User Value**: Document context in standup summaries and CLI commands
 - **Next Enhancement**: Content integration and full workflow testing
 
-### PM-126: Document Memory Content Implementation ✅
-
-- **Priority**: P1 - Strategic Enhancement
-- **Status**: ✅ **COMPLETE** - Document Memory Integration Operational
-- **Goal**: Implement real document storage, retrieval, and CLI functionality
-- **Development Time**: Recovery session (2:35 PM - 3:25 PM)
-- **Success Criteria**: End-to-end workflow functional, real document persistence, CLI commands operational
-- **Deliverables**:
-  - ✅ DocumentService extended with find_decisions(), get_relevant_context(), suggest_documents()
-  - ✅ CLI commands: add, decide, context, review, status (all operational)
-  - ✅ End-to-end workflow testing with real ChromaDB data
-  - ✅ Integration with existing PM-011 infrastructure (no parallel storage)
-  - ✅ Morning Standup integration ready via DocumentService extensions
-- **Architecture**: Extends PM-125 foundation with DocumentService method extensions
-- **User Value**: Functional document memory system for daily operations via CLI
-- **Dependencies**: PM-125 completed ✅
-- **Recovery Success**: 65 minutes vs 2.5 hours (efficiency: 4.3x improvement)
-
 ## Recently Completed (August 24, 2025)
-
-### PM-121: Morning Standup + Issue Intelligence Integration ✅
-
-- **Priority**: P1 - Cross-Feature Integration
-- **Status**: ✅ **COMPLETE** - Functional Integration Verified
-- **Goal**: Integrate Morning Standup with Issue Intelligence for contextual issue priorities
-- **Development Time**: 45 minutes (time-boxed evening session)
-- **Success Criteria**: CLI `--with-issues` flag functional, graceful degradation, <2s performance maintained
-- **Deliverables**:
-  - ✅ Morning Standup enhanced with `generate_with_issues()` method
-  - ✅ CLI integration: `python cli/commands/standup.py --with-issues` functional
-  - ✅ Cross-feature canonical query architecture alignment
-  - ✅ Graceful degradation when Issue Intelligence unavailable
-  - ✅ Comprehensive documentation and integration guide
-  - ✅ Foundation tests passing, integration functionally verified
-- **Architecture**: Both features aligned with CanonicalQueryEngine pattern
-- **User Value**: Single command shows standup + priority issues
-- **Next Enhancement**: Issue Intelligence initialization optimization (PM-124)
 
 ## Next Sprint Priorities
 

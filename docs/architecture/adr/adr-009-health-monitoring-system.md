@@ -129,7 +129,7 @@ async def _check_database_health(self) -> Dict[str, Any]:
 
 ### MCP Integration Health Validation (PM-038 Specific)
 
-**1. MCP Performance and Pool Validation**
+**1. MCP Health Check - Initialization**
 ```python
 async def _check_mcp_health(self) -> Dict[str, Any]:
     """Comprehensive MCP integration health check"""
@@ -146,7 +146,10 @@ async def _check_mcp_health(self) -> Dict[str, Any]:
                 "error": "MCP initialization failed",
                 "timestamp": datetime.utcnow().isoformat(),
             }
+```
 
+**2. MCP Performance Tests**
+```python
         test_results = {}
 
         # Test 1: Resource availability
@@ -169,7 +172,10 @@ async def _check_mcp_health(self) -> Dict[str, Any]:
         test_results["performance_target_met"] = performance_ok
 
         await manager.cleanup()
+```
 
+**3. MCP Health Status Calculation**
+```python
         total_time = (time.time() - start_time) * 1000
 
         # Determine status based on performance and functionality
@@ -280,21 +286,22 @@ async def readiness_probe():
 
 ### Prometheus Metrics Integration
 
-**1. Health Metrics Endpoint**
-{% raw %}
+**1. Health Metrics Endpoint - Function Header**
 ```python
 @staging_health_router.get("/metrics")
 async def health_metrics():
     """Prometheus-compatible health metrics"""
     try:
         health_result = await health_checker.get_comprehensive_health()
-
         metrics = []
 
         # Overall health metric
         overall_healthy = 1 if health_result["overall_status"] == HealthStatus.HEALTHY else 0
         metrics.append(f'piper_health_overall{{environment="staging"}} {overall_healthy}')
+```
 
+**2. Component Metrics Collection**
+```python
         # Component health metrics
         for component, result in health_result["components"].items():
             component_healthy = 1 if result.get("status") == HealthStatus.HEALTHY else 0
@@ -308,7 +315,10 @@ async def health_metrics():
                 metrics.append(
                     f'piper_health_response_time_ms{{component="{component}",environment="staging"}} {response_time}'
                 )
+```
 
+**3. System Metrics & Error Handling**
+```python
         # System resource metrics
         if "system_resources" in health_result["components"]:
             sys_res = health_result["components"]["system_resources"]
@@ -328,7 +338,6 @@ async def health_metrics():
             detail=f"Metrics generation failed: {str(e)}"
         )
 ```
-{% endraw %}
 
 ### Performance Thresholds and Alerting
 

@@ -6,19 +6,26 @@ These tests MUST use real Notion API - no mocks for core functionality.
 import os
 import tempfile
 import time
+from pathlib import Path
 
 import pytest
 import requests
 from dotenv import load_dotenv
 
+from config.notion_user_config import ConfigurationError, NotionUserConfig
 from services.publishing.publisher import Publisher
 
 # Load real environment - CRITICAL for integration tests
 load_dotenv()
 
-# Test configuration - using valid parent from previous session
-# This is the Document Hub where previous tests worked
-TEST_PARENT_ID = os.getenv("TEST_PARENT_ID", "25d11704d8bf8135a3c9c732704c88a4")
+# Test configuration - Load from configuration with env variable fallback
+try:
+    config = NotionUserConfig.load_from_user_config(Path("config/PIPER.user.md"))
+    TEST_PARENT_ID = os.getenv("TEST_PARENT_ID", config.get_parent_id("test"))
+except (ConfigurationError, FileNotFoundError):
+    # Fallback to environment variable or hardcoded value for backward compatibility
+    TEST_PARENT_ID = os.getenv("TEST_PARENT_ID", "25d11704d8bf8135a3c9c732704c88a4")
+
 INVALID_PARENT_ID = "invalid_parent_xyz_123"
 
 
