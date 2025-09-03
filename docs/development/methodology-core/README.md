@@ -174,7 +174,7 @@ This index provides centralized access to all development methodologies used in 
 
 - **[CLAUDE.md](../../../CLAUDE.md)** - Agent rules and requirements
 - **[Session Logs](../session-logs/)** - Methodology usage examples
-- **[Architecture Docs](../architecture/)** - System architecture and patterns
+- **[Architecture Docs](../../architecture/)** - System architecture and patterns
 
 ### **External Resources**
 

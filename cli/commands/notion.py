@@ -332,7 +332,256 @@ class NotionCommand:
         except Exception as e:
             self.print_error(f"Error creating page: {e}")
 
-    async def execute(self, command: str = "status", query: Optional[str] = None) -> None:
+    async def cmd_validate(self, level: str = "basic", config_path: Optional[str] = None):
+        """Validate Notion configuration with specified validation level"""
+        self.print_header("NOTION CONFIGURATION VALIDATION")
+
+        try:
+            # Import configuration classes
+            from config.notion_user_config import (
+                ConfigurationError,
+                NotionUserConfig,
+                ValidationLevel,
+            )
+
+            # Load configuration from specified path or default
+            config_file = Path(config_path) if config_path else Path("config/PIPER.user.md")
+
+            if not config_file.exists():
+                self.print_error(f"Configuration file not found: {config_file}")
+                self.print_info("Create configuration file with: piper notion setup")
+                return
+
+            self.print_section(f"Validating Configuration: {config_file}", "blue")
+            self.print_info(f"Validation Level: {level}")
+
+            # Load configuration
+            config = NotionUserConfig.load_from_user_config(config_file)
+            self.print_success("Configuration loaded successfully")
+
+            # Perform validation
+            validation_level = ValidationLevel(level)
+            result = await config.validate_async(validation_level)
+
+            # Display validation results
+            self.print_section("Validation Results", "cyan")
+            self.print_info(f"Overall Valid: {'✅ Yes' if result.is_valid() else '❌ No'}")
+            self.print_info(f"Format Valid: {'✅ Yes' if result.format_valid else '❌ No'}")
+            self.print_info(
+                f"Environment Valid: {'✅ Yes' if result.environment_valid else '❌ No'}"
+            )
+
+            if level in ["enhanced", "full"]:
+                if result.connectivity_tested:
+                    self.print_info(
+                        f"API Connectivity: {'✅ Yes' if result.connectivity_result else '❌ No'}"
+                    )
+                else:
+                    self.print_info("API Connectivity: ⏳ Not tested")
+
+            if level == "full" and result.permission_checked:
+                self.print_info("Permission Check Results:")
+                for resource, accessible in result.permission_result.items():
+                    status = "✅" if accessible else "❌"
+                    self.print_info(f"  {status} {resource}")
+
+            # Display any errors or warnings
+            if result.errors:
+                self.print_section("Errors", "red")
+                for error in result.errors:
+                    self.print_error(error)
+
+            if result.warnings:
+                self.print_section("Warnings", "yellow")
+                for warning in result.warnings:
+                    self.print_warning(warning)
+
+            # Configuration summary
+            summary = config.get_summary()
+            self.print_section("Configuration Summary", "green")
+            self.print_info(f"ADR Database: {summary['adrs_database_id']}")
+            self.print_info(f"Default Parent: {summary['publishing_default_parent']}")
+            self.print_info(f"Validation Level: {summary['validation_level']}")
+            self.print_info(
+                f"Publishing Enabled: {'✅ Yes' if summary['publishing_enabled'] else '❌ No'}"
+            )
+            self.print_info(f"ADRs Enabled: {'✅ Yes' if summary['adrs_enabled'] else '❌ No'}")
+
+        except ConfigurationError as e:
+            self.print_error(f"Configuration Error: {e}")
+            # Display full resolution steps
+            if hasattr(e, "resolution_steps") and e.resolution_steps:
+                self.print_section("Resolution Steps", "yellow")
+                for i, step in enumerate(e.resolution_steps, 1):
+                    self.print_info(f"{i}. {step}")
+        except Exception as e:
+            self.print_error(f"Validation failed: {e}")
+            # For unexpected errors, show full details
+            self.print_error(f"Error details: {str(e)}")
+            import traceback
+
+            self.print_error("Full traceback:")
+            for line in traceback.format_exc().split("\n"):
+                if line.strip():
+                    self.print_error(f"  {line}")
+
+    async def cmd_setup(self, interactive: bool = False, config_path: Optional[str] = None):
+        """Guided setup for Notion configuration"""
+        self.print_header("NOTION CONFIGURATION SETUP")
+
+        try:
+            config_file = config_path or "config/PIPER.user.md"
+
+            if Path(config_file).exists():
+                self.print_warning(f"Configuration file already exists: {config_file}")
+                self.print_info("Use 'piper notion validate' to check configuration")
+                return
+
+            self.print_section("Configuration Setup", "blue")
+            self.print_info("Setting up Notion configuration for the first time")
+
+            # Create example configuration
+            example_config = """# Notion Integration Configuration
+# Instructions: Add this section to your PIPER.user.md file
+# Privacy: This configuration is gitignored (never committed)
+# Validation: Run 'piper notion validate' to test configuration
+
+```yaml
+notion:
+  # REQUIRED: Core Publishing Configuration
+  publishing:
+    default_parent: ""              # Required: Your default parent page for publishing
+    enabled: true                   # Enable/disable publishing features
+
+  # REQUIRED: ADR Database Configuration (HIGH PRIORITY from audit)
+  adrs:
+    database_id: ""                 # Required: Your ADR database ID
+    enabled: true                   # Enable/disable ADR publishing
+    auto_publish: true              # Auto-publish new ADRs
+
+  # OPTIONAL: Development & Testing Configuration
+  development:
+    test_parent: ""                 # Test page parent ID for integration tests
+    debug_parent: ""                # Debug page parent for development scripts
+    mock_mode: false                # Enable mock mode for testing
+
+  # OPTIONAL: Validation Settings
+  validation:
+    level: "basic"                  # Validation level: basic|enhanced|full
+    connectivity_check: true        # Test API connectivity on startup
+    cache_results: true             # Cache validation results
+```
+"""
+
+            # Create configuration file
+            Path(config_file).parent.mkdir(parents=True, exist_ok=True)
+            with open(config_file, "w") as f:
+                f.write(example_config)
+
+            self.print_success(f"Configuration file created: {config_file}")
+            self.print_section("Next Steps", "green")
+            self.print_info("1. Edit the configuration file with your Notion workspace details")
+            self.print_info("2. Add your ADR database ID and default parent page ID")
+            self.print_info("3. Run 'piper notion validate' to test your configuration")
+            self.print_info("4. Use 'piper notion test-config' to verify specific components")
+
+            if interactive:
+                self.print_section("Interactive Setup", "yellow")
+                self.print_info("Interactive setup not yet implemented")
+                self.print_info("Edit the configuration file manually for now")
+
+        except Exception as e:
+            self.print_error(f"Setup failed: {e}")
+
+    async def cmd_test_config(self, database: Optional[str] = None, parent: Optional[str] = None):
+        """Test specific configuration components"""
+        self.print_header("NOTION CONFIGURATION TESTING")
+
+        try:
+            # Import configuration classes
+            from config.notion_user_config import ConfigurationError, NotionUserConfig
+
+            config_file = Path("config/PIPER.user.md")
+
+            if not config_file.exists():
+                self.print_error(f"Configuration file not found: {config_file}")
+                self.print_info("Create configuration with: piper notion setup")
+                return
+
+            self.print_section("Configuration Testing", "blue")
+            self.print_info(f"Testing configuration file: {config_file}")
+
+            # Load configuration
+            config = NotionUserConfig.load_from_user_config(config_file)
+            self.print_success("Configuration loaded successfully")
+
+            # Test specific components
+            if database:
+                self.print_section(f"Database Testing: {database}", "cyan")
+                try:
+                    db_id = config.get_database_id(database)
+                    self.print_success(f"Database ID retrieved: {db_id[:8]}...")
+
+                    # Test database format validation
+                    if config.is_valid_format():
+                        self.print_success("Database ID format is valid")
+                    else:
+                        self.print_error("Database ID format is invalid")
+
+                except ConfigurationError as e:
+                    self.print_error(f"Database configuration error: {e}")
+
+            if parent:
+                self.print_section(f"Parent Page Testing: {parent}", "cyan")
+                try:
+                    parent_id = config.get_parent_id(parent)
+                    self.print_success(f"Parent ID retrieved: {parent_id[:8]}...")
+
+                    # Test parent format validation
+                    if config.is_valid_format():
+                        self.print_success("Parent ID format is valid")
+                    else:
+                        self.print_error("Parent ID format is invalid")
+
+                except ConfigurationError as e:
+                    self.print_error(f"Parent configuration error: {e}")
+
+            # Overall configuration status
+            self.print_section("Configuration Status", "green")
+            summary = config.get_summary()
+            self.print_info(f"ADR Database: {summary['adrs_database_id']}")
+            self.print_info(f"Default Parent: {summary['publishing_default_parent']}")
+            self.print_info(f"Validation Level: {summary['validation_level']}")
+            self.print_info(
+                f"Publishing Enabled: {'✅ Yes' if summary['publishing_enabled'] else '❌ No'}"
+            )
+            self.print_info(f"ADRs Enabled: {'✅ Yes' if summary['adrs_enabled'] else '❌ No'}")
+
+            # Format validation
+            if config.is_valid_format():
+                self.print_success("Configuration format is valid")
+            else:
+                self.print_error("Configuration format is invalid")
+
+        except ConfigurationError as e:
+            self.print_error(f"Configuration Error: {e}")
+            # Display full resolution steps
+            if hasattr(e, "resolution_steps") and e.resolution_steps:
+                self.print_section("Resolution Steps", "yellow")
+                for i, step in enumerate(e.resolution_steps, 1):
+                    self.print_info(f"{i}. {step}")
+        except Exception as e:
+            self.print_error(f"Configuration testing failed: {e}")
+            # For unexpected errors, show full details
+            self.print_error(f"Error details: {str(e)}")
+            import traceback
+
+            self.print_error("Full traceback:")
+            for line in traceback.format_exc().split("\n"):
+                if line.strip():
+                    self.print_error(f"  {line}")
+
+    async def execute(self, command: str = "status", query: Optional[str] = None, **kwargs) -> None:
         """Execute the specified Notion command"""
         try:
             if command == "status":
@@ -345,9 +594,23 @@ class NotionCommand:
                 await self.cmd_pages()
             elif command == "create":
                 await self.cmd_create(query or "")
+            elif command == "validate":
+                level = kwargs.get("level", "basic")
+                config_path = kwargs.get("config_path")
+                await self.cmd_validate(level=level, config_path=config_path)
+            elif command == "setup":
+                interactive = kwargs.get("interactive", False)
+                config_path = kwargs.get("config_path")
+                await self.cmd_setup(interactive=interactive, config_path=config_path)
+            elif command == "test-config":
+                database = kwargs.get("database")
+                parent = kwargs.get("parent")
+                await self.cmd_test_config(database=database, parent=parent)
             else:
                 self.print_error(f"Unknown command: {command}")
-                self.print_info("Available commands: status, test, search, pages, create")
+                self.print_info(
+                    "Available commands: status, test, search, pages, create, validate, setup, test-config"
+                )
 
         except KeyboardInterrupt:
             self.print_warning("\nCommand interrupted by user")
@@ -377,6 +640,34 @@ async def main():
     create_parser.add_argument("title", help="Title of the new page")
     create_parser.add_argument("--parent-id", help="Parent page ID (optional)", default=None)
 
+    # Validate command
+    validate_parser = subparsers.add_parser("validate", help="Validate Notion configuration")
+    validate_parser.add_argument(
+        "--level",
+        choices=["basic", "enhanced", "full"],
+        default="basic",
+        help="Validation level (default: basic)",
+    )
+    validate_parser.add_argument(
+        "--config", help="Path to configuration file (default: config/PIPER.user.md)"
+    )
+
+    # Setup command
+    setup_parser = subparsers.add_parser("setup", help="Guided setup for Notion configuration")
+    setup_parser.add_argument("--interactive", action="store_true", help="Interactive setup mode")
+    setup_parser.add_argument(
+        "--config", help="Path to configuration file (default: config/PIPER.user.md)"
+    )
+
+    # Test-config command
+    test_config_parser = subparsers.add_parser(
+        "test-config", help="Test specific configuration components"
+    )
+    test_config_parser.add_argument("--database", help="Test database configuration (e.g., adrs)")
+    test_config_parser.add_argument(
+        "--parent", help="Test parent page configuration (e.g., default, test)"
+    )
+
     args = parser.parse_args()
 
     # Execute command
@@ -386,6 +677,12 @@ async def main():
         await cmd.execute("search", args.query)
     elif args.command == "create":
         await cmd.execute("create", args.title)
+    elif args.command == "validate":
+        await cmd.execute("validate", config_path=args.config, level=args.level)
+    elif args.command == "setup":
+        await cmd.execute("setup", interactive=args.interactive, config_path=args.config)
+    elif args.command == "test-config":
+        await cmd.execute("test-config", database=args.database, parent=args.parent)
     elif args.command:
         await cmd.execute(args.command)
     else:

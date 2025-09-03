@@ -10,13 +10,22 @@ from pathlib import Path
 
 import pytest
 
+from config.notion_user_config import ConfigurationError, NotionUserConfig
+
 
 class TestPublishCommand:
     """Test suite for publish command with real functionality validation"""
 
-    # Test configuration - REAL workspace (using Test Page With Content)
-    TEST_PARENT_ID = "25d11704d8bf81dfb37acbdc143e6a80"
-    TEST_PREFIX = f"TEST_{int(time.time())}_"
+    # Test configuration - Load from configuration instead of hardcoded
+    def __init__(self):
+        try:
+            config = NotionUserConfig.load_from_user_config(Path("config/PIPER.user.md"))
+            self.TEST_PARENT_ID = config.get_parent_id("test")
+        except (ConfigurationError, FileNotFoundError):
+            # Fallback to old hardcoded value for backward compatibility during transition
+            self.TEST_PARENT_ID = "25d11704d8bf81dfb37acbdc143e6a80"
+
+        self.TEST_PREFIX = f"TEST_{int(time.time())}_"
 
     @pytest.mark.integration
     @pytest.mark.asyncio

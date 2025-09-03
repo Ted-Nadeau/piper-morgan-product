@@ -75,6 +75,12 @@ config/
 - [ ] **Current Projects**: List active work with allocations
 - [ ] **Priorities**: Rank your standing priorities
 
+### Notion Integration Setup
+- [ ] **ADR Database ID**: Configure database for Architecture Decision Records
+- [ ] **Default Parent Page**: Set default parent for published content
+- [ ] **Test Parent Page**: Set parent for testing scenarios
+- [ ] **Validation Level**: Choose basic, enhanced, or full validation
+
 ### Advanced Customizations
 - [ ] **Communication Style**: Define preferred interaction patterns
 - [ ] **Calendar Patterns**: Set up recurring meetings and routines
@@ -132,9 +138,85 @@ ls -la config/
 # Verify gitignore working
 git status | grep PIPER.user.md  # Should return nothing
 
-# Validate configuration loaded
-# (Configuration validation commands will be added)
+# Validate Notion configuration
+PYTHONPATH=. python -c "
+from config.notion_user_config import NotionUserConfig
+from pathlib import Path
+config = NotionUserConfig.load_from_user_config(Path('config/PIPER.user.md'))
+print('✅ Notion configuration loaded successfully')
+print(f'ADR Database: {config.get_database_id(\"adrs\")[:8]}...')
+print(f'Default Parent: {config.get_parent_id(\"default\")[:8]}...')
+"
 ```
+
+## 🔗 **Notion Integration Configuration**
+
+### Setup Requirements
+1. **Notion API Key**: Set `NOTION_API_KEY` environment variable
+2. **Database IDs**: Get 32-character Notion database/page IDs
+3. **Configuration File**: Add notion section to `config/PIPER.user.md`
+
+### Configuration Template
+Add this section to your `config/PIPER.user.md`:
+
+```yaml
+notion:
+  # REQUIRED: Core Publishing Configuration
+  publishing:
+    default_parent: "your-default-parent-page-id"
+    enabled: true
+
+  # REQUIRED: ADR Database Configuration
+  adrs:
+    database_id: "your-adr-database-id"
+    enabled: true
+    auto_publish: true
+
+  # OPTIONAL: Development & Testing
+  development:
+    test_parent: "your-test-parent-page-id"
+    debug_parent: "your-debug-parent-page-id"
+    mock_mode: false
+
+  # OPTIONAL: Validation Settings
+  validation:
+    level: "basic"  # basic|enhanced|full
+    connectivity_check: true
+    cache_results: true
+```
+
+### ID Format Requirements
+- **Notion IDs**: Must be 32-character hexadecimal strings
+- **Pattern**: `25[a-f0-9]{30}` (starts with '25', followed by 30 hex chars)
+- **Example**: `25e11704d8bf80deaac2f806390fe7da`
+- **Get IDs**: Use Notion share links or API tools
+
+### Error Handling
+Configuration system provides actionable error messages:
+- Missing required fields with resolution steps
+- Invalid ID format with pattern examples
+- File not found with setup instructions
+- API connectivity issues with troubleshooting
+
+### Troubleshooting Notion Configuration
+
+**Configuration not found:**
+```bash
+# Copy template and configure
+cp config/PIPER.user.md.example config/PIPER.user.md
+# Edit the notion section with your IDs
+```
+
+**Invalid Notion ID format:**
+- IDs must be exactly 32 characters
+- Must start with '25'
+- Only lowercase hex characters (0-9, a-f)
+- Get from Notion page/database share URLs
+
+**API connectivity issues:**
+- Check NOTION_API_KEY environment variable
+- Verify API key has access to specified databases/pages
+- Test with simple API call first
 
 ### Best Practices
 - Update configuration regularly as projects change

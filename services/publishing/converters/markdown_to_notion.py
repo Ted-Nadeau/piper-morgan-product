@@ -342,7 +342,7 @@ def convert_markdown_to_notion_blocks(markdown_content: str) -> Dict[str, Any]:
         # Detect code blocks BEFORE converting to paragraphs
         if line.startswith("```"):
             # Start of code block - collect all content until closing ```
-            language = line[3:].strip() or "plaintext"
+            language = line[3:].strip() or "plain text"
             code_content = []
             i += 1  # Move to next line
 

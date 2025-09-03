@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Fix Verification</title>
+</head>
+<body>
+    <h1>CORS Fix Verification Test</h1>
+    <button onclick="testCORS()">Test CORS to API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testCORS() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing CORS...';
+
+            try {
+                const response = await fetch('http://localhost:8001/api/v1/intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'test cors',
+                        session_id: 'cors-test'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ CORS SUCCESS! Response: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.style.color = 'green';
+                } else {
+                    resultDiv.innerHTML = `❌ HTTP Error: ${response.status} - ${response.statusText}`;
+                    resultDiv.style.color = 'orange';
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    resultDiv.innerHTML = `❌ CORS Error: ${error.message}`;
+                    resultDiv.style.color = 'red';
+                } else {
+                    resultDiv.innerHTML = `❌ Network Error: ${error.message}`;
+                    resultDiv.style.color = 'red';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
