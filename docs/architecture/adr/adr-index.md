@@ -36,6 +36,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-009: Health Monitoring System](adr-009-health-monitoring-system.md) - System health monitoring
 - [ADR-010: Configuration Patterns](adr-010-configuration-patterns.md) - Configuration management
 - [ADR-012: Protocol Ready JWT Authentication](adr-012-protocol-ready-jwt-authentication.md) - Authentication architecture
+- [ADR-027: Configuration Architecture: User vs. System Separation](adr-027-configuration-architecture-user-vs-system-separation.md) - Configuration architecture (may partly supersede ADR-010?)
 
 ### Testing & Quality Assurance
 - [ADR-011: Test Infrastructure Hanging Fixes](adr-011-test-infrastructure-hanging-fixes.md) - Test infrastructure reliability
@@ -55,6 +56,10 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 ### External Integrations
 - [ADR-026: Notion Client Migration](adr-026-notion-client-migration.md) - Migration to official Notion client library
 
+### Methodological Architecture
+- [ADR-028: Three-Tier Verification Pyramid\(adr-028-verification-pyramid.md)\
+- Foundational framework for all agent coordination, requiring systematic evidence at each level before proceeding
+
 ## ADR Status Summary
 
 - **Accepted**: 26 ADRs
@@ -64,7 +69,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 ## ADR Guidelines
 
 ### Creating New ADRs
-1. Use next sequential number (next: ADR-027)
+1. Use next sequential number (next: ADR-029)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
