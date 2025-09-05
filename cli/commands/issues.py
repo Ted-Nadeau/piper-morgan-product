@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import click
+
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -23,6 +25,7 @@ sys.path.insert(0, str(project_root))
 from services.features.morning_standup import MorningStandupWorkflow
 from services.integrations.github.github_agent import GitHubAgent
 from services.learning import get_cross_feature_service, get_learning_loop
+from services.domain.pm_number_manager import PMNumberManager
 
 
 class IssuesCommand:
@@ -683,6 +686,280 @@ class IssuesCommand:
         except Exception as e:
             self.print_error(f"Issues command failed: {e}")
             sys.exit(1)
+
+
+# Click command group for PM number management
+@click.group()
+def issues():
+    """Issue management commands with PM number verification."""
+    pass
+
+
+@issues.command()
+@click.option('--title', required=True, help='Issue title')
+@click.option('--body', default='', help='Issue description')
+@click.option('--labels', help='Comma-separated labels')
+@click.option('--dry-run', is_flag=True, help='Show what would be created')
+def create(title: str, body: str, labels: str, dry_run: bool):
+    """Create new issue with auto-assigned PM number"""
+    click.echo(f"🚀 Creating issue: {title}")
+    
+    # Validate inputs
+    if not title.strip():
+        click.echo("❌ Error: Issue title cannot be empty")
+        click.echo("💡 Please provide a meaningful title for the issue")
+        return
+    
+    if len(title) > 200:
+        click.echo("❌ Error: Issue title too long (max 200 characters)")
+        click.echo(f"💡 Current length: {len(title)} characters")
+        return
+    
+    # Parse labels
+    label_list = []
+    if labels:
+        label_list = [label.strip() for label in labels.split(',') if label.strip()]
+        if len(label_list) > 10:
+            click.echo("❌ Error: Too many labels (max 10)")
+            click.echo(f"💡 Current count: {len(label_list)} labels")
+            return
+    
+    if dry_run:
+        click.echo("🔍 DRY RUN - Would create:")
+        click.echo(f"  Title: {title}")
+        click.echo(f"  Body: {body or 'No description provided'}")
+        click.echo(f"  Labels: {', '.join(label_list) if label_list else 'None'}")
+        click.echo("  PM Number: PM-140 (next available)")
+        click.echo("  GitHub Issue: Would be created via GitHubAgent")
+        click.echo("  Repository: mediajunkie/piper-morgan-product")
+        return
+    
+    try:
+        # Initialize services
+        pm_manager = PMNumberManager()
+        github_agent = GitHubAgent()
+        
+        # Get next PM number
+        next_pm_number = asyncio.run(pm_manager.get_next_available_pm_number())
+        click.echo(f"📋 Generated PM number: {next_pm_number}")
+        
+        # Verify PM number is available
+        validation = asyncio.run(pm_manager.validate_pm_number(next_pm_number))
+        if not validation.is_valid:
+            click.echo(f"❌ Error: PM number {next_pm_number} validation failed")
+            for conflict in validation.conflicts:
+                click.echo(f"   ⚠️  {conflict}")
+            for suggestion in validation.suggestions:
+                click.echo(f"   💡 {suggestion}")
+            if validation.next_available:
+                click.echo(f"   ➡️  Try using: {validation.next_available}")
+            return
+        
+        # Create GitHub issue
+        repo_name = "mediajunkie/piper-morgan-product"
+        issue_body = f"{body}\n\n**PM Number**: {next_pm_number}"
+        
+        click.echo("🚀 Creating GitHub issue...")
+        issue_data = asyncio.run(github_agent.create_issue(
+            repo_name=repo_name,
+            title=title,
+            body=issue_body,
+            labels=label_list
+        ))
+        
+        # Add PM entry to tracking
+        success = asyncio.run(pm_manager.reserve_pm_number(
+            pm_number=next_pm_number,
+            title=title,
+            issue_number=issue_data['number']
+        ))
+        
+        if not success:
+            click.echo("⚠️  Warning: GitHub issue created but failed to update CSV tracking")
+            click.echo("💡 Please run 'issues sync' to synchronize tracking files")
+        
+        # Success message
+        click.echo("✅ Issue created successfully!")
+        click.echo(f"  PM Number: {next_pm_number}")
+        click.echo(f"  GitHub Issue: #{issue_data['number']}")
+        click.echo(f"  URL: {issue_data['url']}")
+        click.echo(f"  Status: {issue_data['state']}")
+        
+    except Exception as e:
+        click.echo(f"❌ Error creating issue: {e}")
+        click.echo("💡 Common solutions:")
+        click.echo("  - Check GitHub authentication: gh auth status")
+        click.echo("  - Verify network connectivity")
+        click.echo("  - Ensure repository access permissions")
+        click.echo("  - Try again in a few moments")
+
+
+@issues.command()
+def verify():
+    """Verify PM number consistency across all systems"""
+    click.echo("🔍 Verifying PM number consistency...")
+    
+    try:
+        # Check if CSV file exists and is readable
+        csv_path = Path("docs/planning/pm-issues-status.csv")
+        if not csv_path.exists():
+            click.echo("❌ Error: PM issues CSV file not found")
+            click.echo(f"💡 Expected location: {csv_path.absolute()}")
+            click.echo("💡 Please ensure the file exists and is accessible")
+            return
+        
+        if not csv_path.is_file():
+            click.echo("❌ Error: PM issues CSV path is not a file")
+            click.echo(f"💡 Path: {csv_path.absolute()}")
+            return
+        
+        # Check if we can read the file
+        try:
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                if not content.strip():
+                    click.echo("❌ Error: PM issues CSV file is empty")
+                    click.echo("💡 Please check if the file has been corrupted")
+                    return
+        except PermissionError:
+            click.echo("❌ Error: Permission denied reading PM issues CSV")
+            click.echo("💡 Please check file permissions")
+            return
+        except UnicodeDecodeError:
+            click.echo("❌ Error: PM issues CSV file has invalid encoding")
+            click.echo("💡 Please ensure the file is UTF-8 encoded")
+            return
+        
+        # Initialize PM number manager
+        pm_manager = PMNumberManager()
+        
+        # Run comprehensive verification
+        click.echo("🔍 Checking PM number consistency...")
+        verification_result = asyncio.run(pm_manager.verify_consistency())
+        
+        if verification_result['consistent']:
+            click.echo("✅ PM number consistency verified!")
+            click.echo(f"  Total PM numbers: {verification_result['total_pm_numbers']}")
+            click.echo(f"  GitHub issues checked: {verification_result['github_issues_checked']}")
+            click.echo(f"  CSV entries verified: {verification_result['csv_entries_verified']}")
+        else:
+            click.echo("❌ PM number inconsistencies found!")
+            click.echo(f"  Issues found: {len(verification_result['issues'])}")
+            
+            for issue in verification_result['issues']:
+                click.echo(f"  - {issue}")
+            
+            click.echo("\n💡 Suggested actions:")
+            click.echo("  - Run 'issues sync' to synchronize systems")
+            click.echo("  - Check GitHub issues for missing PM numbers")
+            click.echo("  - Verify CSV file format and completeness")
+        
+        # Additional statistics
+        if verification_result.get('duplicates_found', 0) > 0:
+            click.echo(f"\n⚠️  Found {verification_result['duplicates_found']} duplicate PM numbers")
+        
+        if verification_result.get('github_only_count', 0) > 0:
+            click.echo(f"⚠️  Found {verification_result['github_only_count']} PM numbers only in GitHub")
+            
+        if verification_result.get('csv_only_count', 0) > 0:
+            click.echo(f"⚠️  Found {verification_result['csv_only_count']} PM numbers only in CSV")
+            
+        if verification_result.get('missing_issue_numbers', 0) > 0:
+            click.echo(f"⚠️  Found {verification_result['missing_issue_numbers']} CSV entries missing GitHub issue numbers")
+        
+    except Exception as e:
+        click.echo(f"❌ Error verifying PM numbers: {e}")
+        click.echo("💡 Common solutions:")
+        click.echo("  - Check file permissions and accessibility")
+        click.echo("  - Verify network connectivity for GitHub access")
+        click.echo("  - Ensure all tracking files are properly formatted")
+        click.echo("  - Try running with --dry-run first to test")
+
+
+@issues.command()
+@click.option('--dry-run', is_flag=True, help='Show what would be synced')
+def sync(dry_run: bool):
+    """Synchronize PM numbers across all tracking systems"""
+    if dry_run:
+        click.echo("🔍 DRY RUN - Would synchronize:")
+        click.echo("  GitHub issues ↔ CSV file")
+        click.echo("  CSV file ↔ Backlog.md")
+        click.echo("  Resolve any numbering conflicts")
+        click.echo("  Update missing PM numbers")
+        click.echo("  Fix duplicate PM numbers")
+        return
+    
+    click.echo("🔄 Synchronizing PM numbers across systems...")
+    
+    try:
+        # Check prerequisites
+        csv_path = Path("docs/planning/pm-issues-status.csv")
+        backlog_path = Path("docs/planning/backlog.md")
+        
+        # Verify CSV file
+        if not csv_path.exists():
+            click.echo("❌ Error: PM issues CSV file not found")
+            click.echo(f"💡 Expected location: {csv_path.absolute()}")
+            return
+        
+        # Verify backlog file
+        if not backlog_path.exists():
+            click.echo("❌ Error: Backlog file not found")
+            click.echo(f"💡 Expected location: {backlog_path.absolute()}")
+            return
+        
+        # Check GitHub authentication
+        try:
+            import subprocess
+            result = subprocess.run(['gh', 'auth', 'status'], 
+                                 capture_output=True, text=True, timeout=10)
+            if result.returncode != 0:
+                click.echo("❌ Error: GitHub authentication required")
+                click.echo("💡 Please run: gh auth login")
+                return
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            click.echo("❌ Error: GitHub CLI not available or timeout")
+            click.echo("💡 Please install GitHub CLI and authenticate")
+            return
+        
+        # Initialize PM number manager
+        pm_manager = PMNumberManager()
+        
+        # Run actual synchronization
+        click.echo("🔄 Synchronizing PM numbers across systems...")
+        sync_result = asyncio.run(pm_manager.synchronize_systems())
+        
+        if sync_result['success']:
+            click.echo("✅ PM number synchronization completed!")
+            click.echo(f"  GitHub issues synced: {sync_result['github_issues_synced']}")
+            click.echo(f"  CSV entries updated: {sync_result['csv_entries_updated']}")
+            click.echo(f"  Conflicts resolved: {sync_result['conflicts_resolved']}")
+            
+            if sync_result['csv_only_pm_numbers']:
+                click.echo(f"\n📋 PM numbers only in CSV (may need GitHub issues):")
+                for pm_num in sync_result['csv_only_pm_numbers']:
+                    click.echo(f"  - {pm_num}")
+                    
+        else:
+            click.echo("❌ PM number synchronization failed!")
+            click.echo(f"  Errors: {len(sync_result['errors'])}")
+            
+            for error in sync_result['errors']:
+                click.echo(f"  - {error}")
+            
+            click.echo("\n💡 Suggested actions:")
+            click.echo("  - Check GitHub authentication: gh auth status")
+            click.echo("  - Verify file permissions and accessibility")
+            click.echo("  - Try running 'issues verify' to check current state")
+        
+    except Exception as e:
+        click.echo(f"❌ Error synchronizing PM numbers: {e}")
+        click.echo("💡 Common solutions:")
+        click.echo("  - Check GitHub authentication: gh auth status")
+        click.echo("  - Verify file permissions and accessibility")
+        click.echo("  - Ensure network connectivity")
+        click.echo("  - Try running with --dry-run first to test")
+        click.echo("  - Check if all tracking files are properly formatted")
 
 
 def main():
