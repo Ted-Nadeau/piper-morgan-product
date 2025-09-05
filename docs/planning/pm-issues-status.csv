@@ -1,19 +1,19 @@
-PM_Number,Issue_Number,Title,Status,Issues tracked in documents inconsistently from GitHub
+PM_Number,Issue_Number,Title,Status,Notes
 PM-001,4,Database Schema Initialization,CLOSED,
 PM-002,5,Workflow Factory Implementation,CLOSED,
 PM-003,6,GitHub Issue Creation Workflow,CLOSED,
-PM-004,7,Basic Web User Interface,CLOSED,✅ PMP-004: Basic Workflow State Persistence (Issue #122 - RETROACTIVE)
-PM-005,11,User Feedback Tracking,CLOSED,⚠️ PMP-005 "Knowledge search improvements" appears to be PHANTOM WORK (never implemented)
+PM-004,7,Basic Web User Interface,CLOSED,
+PM-005,11,User Feedback Tracking,CLOSED,
 PM-006,12,Clarifying Questions System,CLOSED,
 PM-007,13,Knowledge Hierarchy Enhancement,CLOSED,
 PM-008,14,GitHub Issue Review & Improvement,CLOSED,
 PM-009,15,Multi-Project/Repository Support,CLOSED,
 PM-010,41,Comprehensive Error Handling System,CLOSED,
 PM-011,42,Web Chat Interface + User Guide,CLOSED,
-PM-012,28,GitHub Repository Integration within Projects,CLOSED,📝 SAME WORK - Docs called it "GitHub API Design + High-Impact Implementation"
+PM-012,28,GitHub Repository Integration within Projects,CLOSED,
 PM-014,30,Documentation and Test Suite Health,CLOSED,
 PM-015,29,Test Infrastructure Isolation Fix,CLOSED,
-PM-020,121,Bulk Operations Support [RETROACTIVE],CLOSED,✅ PM-020: Bulk Operations Support (Issue #121 - RETROACTIVE)
+PM-020,121,Bulk Operations Support [RETROACTIVE],CLOSED,
 PM-021,21,LIST_PROJECTS Workflow,CLOSED,
 PM-025,56,Message-Scoped Document Context,OPEN,
 PM-026,44,Test Infrastructure Isolation Fix,CLOSED,
@@ -24,20 +24,20 @@ PM-032,43,Unified Response Rendering & DDD/TDD Web UI Refactor,CLOSED,
 PM-033,60,MCP Integration Pilot,OPEN,
 PM-033a,94,MCP Consumer Foundation - GitHub Integration,COMPLETED,
 PM-033b,91,Tool Federation - External Development Tool Integration,CLOSED,
-PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,OPEN,🎯 Week 2 COMPLETE - 100% spatial adoption achieved, ready for Week 3 (disable legacy)
+PM-033b-deprecation,109,GitHub Legacy Deprecation Infrastructure - Safe 4-week Migration,OPEN,
 PM-033c,92,Bridge Existing Agents - Slack Services MCP Conversion,CLOSED,
 PM-033d,93,MCP Server Mode - Transform Piper to Ecosystem Hub,CLOSED,
 PM-034,61,LLM-Based Intent Classification,CLOSED,
 PM-034.1,80,LLM-Based Intent Classification with Knowledge Graph Context,CLOSED,
 PM-036,62,Engineering Infrastructure Monitoring,CLOSED,
-PM-038,31,MCP Real Content Search Implementation,CLOSED,📝 Originally PM-013 in session logs - renumbered to PM-038 due to conflicts
+PM-038,31,MCP Real Content Search Implementation,CLOSED,
 PM-038.1,32,Day 1 - Domain Models + Content Extraction Core,CLOSED,
 PM-038.2,33,Day 2 - Connection Pooling + MCP Client Enhancement,CLOSED,
 PM-038.3,34,Day 3 - FileRepository Integration + Real Content Search,CLOSED,
 PM-038.4,35,Day 4 - Configuration Service + Error Handling,CLOSED,
 PM-038.5,36,Day 5 - Performance Optimization + Monitoring,CLOSED,
-PM-039,37,Intent Classification Coverage Improvements,CLOSED,⚠️ DIFFERENT WORK - PM-039b (#123) created for "MCP Configuration Migration"
-PM-039b,123,MCP Configuration Migration [RETROACTIVE],CLOSED,✅ ADR-010 compliance work done July 24 2025
+PM-039,37,Intent Classification Coverage Improvements,CLOSED,
+PM-039b,123,MCP Configuration Migration [RETROACTIVE],CLOSED,
 PM-040,79,Advanced Knowledge Graph Implementation,OPEN,
 PM-051,63,Workflow Optimization,OPEN,
 PM-052,64,Autonomous Workflow Management,OPEN,
@@ -46,7 +46,7 @@ PM-054,66,Predictive Project Analytics,OPEN,
 PM-055,23,Enforce Python Version Consistency Across Environments,CLOSED,
 PM-056,27,Create domain/database schema validator,OPEN,
 PM-056,67,Domain/Database Schema Validator Tool,CLOSED,
-PM-057,26,Implement Pre-execution Context Validation for Workflows,CLOSED,📝 SAME WORK - Docs expanded to "Context Validation Framework"
+PM-057,26,Implement Pre-execution Context Validation for Workflows,CLOSED,
 PM-058,38,Resolve AsyncPG Connection Pool Concurrency in Test Suite,CLOSED,
 PM-061,45,Implement TLDR Continuous Verification System,CLOSED,
 PM-062,46,Systematic Workflow Completion Audit,CLOSED,
@@ -61,7 +61,7 @@ PM-073,55,Pattern Sweep Process with TLDR Integration,CLOSED,
 PM-074,50,Slack Integration with Spatial Metaphors,CLOSED,
 PM-075,48,Strategic Documentation Alignment,CLOSED,
 PM-076,49,Excellence Flywheel Methodology Documentation System,CLOSED,
-PM-078,68,Connect Slack Spatial Intelligence to Response Generation,CLOSED,📝 SAME WORK - Docs describe TDD implementation details
+PM-078,68,Connect Slack Spatial Intelligence to Response Generation,CLOSED,
 PM-079,69,Refine Slack Workflow Notifications - Reduce Verbosity,CLOSED,
 PM-079-SUB,82,Implement Slack Message Consolidation,CLOSED,
 PM-080,70,Schema Cleanup Phase 2 - Eliminate Remaining 29 Inconsistencies,CLOSED,
@@ -87,27 +87,29 @@ UX-001.13,110,Mac Dock Integration for One-Click Startup,CLOSED,
 PM-113,113,Migrate main.py from DatabasePool to AsyncSessionFactory,OPEN,
 PM-114,114,Remove Legacy DatabasePool Class and Deprecated RepositoryFactory,OPEN,
 PM-115,115,Fix IntentEnricher Dependency Injection Anti-Pattern,OPEN,
-PM-116,116,Smoke Test Infrastructure - <5 Second Critical Path Testing,CLOSED,✅ Critical path testing infrastructure with <5 second execution time
-PM-117,117,Critical Coverage Enhancement - Multi-Agent Coordinator & Excellence Flywheel,CLOSED,✅ Enhanced test coverage for multi-agent coordination and methodology
-PM-118,118,Multi-Agent Coordinator Operational Deployment,OPEN,🎯 Deploy multi-agent coordination system for operational use
-PM-119,119,MVP Morning Standup Feature Implementation,OPEN,🎯 Complete MVP-level Morning Standup feature implementation
+PM-116,116,Smoke Test Infrastructure - <5 Second Critical Path Testing,CLOSED,
+PM-117,117,Critical Coverage Enhancement - Multi-Agent Coordinator & Excellence Flywheel,CLOSED,
+PM-118,118,Multi-Agent Coordinator Operational Deployment,OPEN,
+PM-119,119,MVP Morning Standup Feature Implementation,OPEN,
 PM-090,90,CRITICAL: Workflow Factory Bug Fix - UnboundLocalError,CLOSED,
-PM-120,120,Configuration Separation Architecture,CLOSED,✅ Configuration separation implemented for MVP shipping - Commit c1eb579f
-PM-121,127,Canonical Query Integration,CLOSED,✅ Morning Standup + Issue Intelligence integration functional - CLI --with-issues flag operational
-PM-122,128,FTUX Wizard Implementation,OPEN,🎯 User onboarding and setup wizard implementation
-DOC-002,130,README Radical Restructure - Three-Tier Documentation Architecture,CLOSED,✅ 72% reduction (609→167 lines) with three-tier architecture and role-based quick starts
-PM-123,129,Implement `piper issue create` Command with Verification,OPEN,🎯 Issue creation command implementation
-PM-124,,Issue Intelligence Initialization Fix (Monday Enhancement),OPEN,🎯 Fix initialization error in Morning Standup integration - 30 minute enhancement task
-PM-125,,Document Memory Integration Sprint,COMPLETED,✅ DocumentMemoryQueries foundation (replaced by DocumentService extensions in PM-126 recovery)
-PM-126,132,Document Memory Content Implementation,CLOSED,✅ DocumentService extensions with CLI integration and Morning Standup - real ChromaDB data operational
-PM-127,133,Calendar Integration for Morning Standup,CLOSED,✅ Full trifecta integration + CanonicalHandlers temporal queries enhanced - 0.550s performance
-PM-128,135,Implement core publish command for markdown to Notion,CLOSED,✅ Complete CLI functionality with URL display and error handling - validated end-to-end
-PM-129,136,Refactor Notion hardcoded values to user configuration,IN PROGRESS,🎯 Phase 0 complete - parent issue with 5 sub-issues created
-PM-130,137,Audit codebase for hardcoded Notion values,DONE,🔍 Sub-issue 1: Systematic discovery of all hardcoded Notion IDs
-PM-131,138,Design user configuration schema for Notion integration,IN PROGRESS,📐 Sub-issue 2: YAML configuration structure design
-PM-132,139,Implement Notion configuration loader,CLOSED,✅ Complete YAML configuration loader with 11/11 tests passing - technical debt tracked
-PM-133,140,Refactor commands to use configuration instead of hardcoded values,OPEN,🔄 Sub-issue 4: Replace hardcoded values with config lookups
-PM-134,141,Complete testing and documentation for configuration refactoring,OPEN,📋 Sub-issue 5: Testing and documentation completion
-PM-135,142,Fix enhanced validation API connectivity for NotionMCPAdapter,OPEN,🔧 Technical debt: Add get_current_user() method for enhanced validation
-PM-136,143,Establish performance benchmarking framework for configuration system,OPEN,📊 Technical debt: Systematic performance measurement framework needed
-PM-137,146,Implement Three-Tier Verification Pyramid,IN PROGRESS,🔄 Phase 0-1 Implementation of Three-Tier Verification Framework
+PM-120,120,Configuration Separation Architecture,CLOSED,
+PM-121,127,Canonical Query Integration,CLOSED,
+PM-122,128,FTUX Wizard Implementation,OPEN,
+DOC-002,130,README Radical Restructure - Three-Tier Documentation Architecture,CLOSED,
+PM-123,129,Implement `piper issue create` Command with Verification,OPEN,
+PM-124,,Issue Intelligence Initialization Fix (Monday Enhancement),OPEN,
+PM-125,,Document Memory Integration Sprint,COMPLETED,
+PM-126,132,Document Memory Content Implementation,CLOSED,
+PM-127,133,Calendar Integration for Morning Standup,CLOSED,
+PM-128,135,Implement core publish command for markdown to Notion,CLOSED,
+PM-129,136,Refactor Notion hardcoded values to user configuration,IN PROGRESS,
+PM-130,137,Audit codebase for hardcoded Notion values,DONE,
+PM-131,138,Design user configuration schema for Notion integration,OPEN,
+PM-132,139,Implement Notion configuration loader,CLOSED,
+PM-133,140,Refactor commands to use configuration instead of hardcoded values,OPEN,
+PM-134,141,Complete testing and documentation for configuration refactoring,OPEN,
+PM-135,142,Fix enhanced validation API connectivity for NotionMCPAdapter,OPEN,
+PM-136,143,Establish performance benchmarking framework for configuration system,OPEN,
+PM-137,146,Implement Three-Tier Verification Pyramid,OPEN,
+PM-138,147,Implement Mandatory Handoff Protocol with Verification,OPEN,
+PM-139,148,Extract Configuration Layer from Mandatory Handoff Protocol,OPEN,
