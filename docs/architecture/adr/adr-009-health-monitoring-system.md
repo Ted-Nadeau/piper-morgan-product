@@ -297,7 +297,7 @@ async def health_metrics():
 
         # Overall health metric
         overall_healthy = 1 if health_result["overall_status"] == HealthStatus.HEALTHY else 0
-        metrics.append(f'piper_health_overall{{environment="staging"}} {overall_healthy}')
+        metrics.append(f'piper_health_overall{{"{"}}environment="staging"{"}}"} {overall_healthy}')
 ```
 
 **2. Component Metrics Collection**
@@ -306,14 +306,14 @@ async def health_metrics():
         for component, result in health_result["components"].items():
             component_healthy = 1 if result.get("status") == HealthStatus.HEALTHY else 0
             metrics.append(
-                f'piper_health_component{{component="{component}",environment="staging"}} {component_healthy}'
+                f'piper_health_component{{"{"}}component="{component}",environment="staging"{"}}"} {component_healthy}'
             )
 
             # Response time metrics
             if "response_time_ms" in result:
                 response_time = result["response_time_ms"]
                 metrics.append(
-                    f'piper_health_response_time_ms{{component="{component}",environment="staging"}} {response_time}'
+                    f'piper_health_response_time_ms{{"{"}}component="{component}",environment="staging"{"}}"} {response_time}'
                 )
 ```
 
@@ -323,11 +323,11 @@ async def health_metrics():
         if "system_resources" in health_result["components"]:
             sys_res = health_result["components"]["system_resources"]
             if "cpu_percent" in sys_res:
-                metrics.append(f'piper_system_cpu_percent{{environment="staging"}} {sys_res["cpu_percent"]}')
+                metrics.append(f'piper_system_cpu_percent{{"{"}}environment="staging"{"}}"} {sys_res["cpu_percent"]}')
             if "memory_percent" in sys_res:
-                metrics.append(f'piper_system_memory_percent{{environment="staging"}} {sys_res["memory_percent"]}')
+                metrics.append(f'piper_system_memory_percent{{"{"}}environment="staging"{"}}"} {sys_res["memory_percent"]}')
             if "disk_percent" in sys_res:
-                metrics.append(f'piper_system_disk_percent{{environment="staging"}} {sys_res["disk_percent"]}')
+                metrics.append(f'piper_system_disk_percent{{"{"}}environment="staging"{"}}"} {sys_res["disk_percent"]}')
 
         return "\\n".join(metrics) + "\\n"
 
@@ -392,7 +392,7 @@ DISK_CRITICAL_THRESHOLD = 90     # Disk usage critical
         "type": "stat",
         "targets": [
           {
-            "expr": "piper_health_overall{environment=\"staging\"}"
+            "expr": "piper_health_overall{\"{\"}environment=\"staging\"{\"}\"}"
           }
         ]
       },
@@ -401,7 +401,7 @@ DISK_CRITICAL_THRESHOLD = 90     # Disk usage critical
         "type": "heatmap",
         "targets": [
           {
-            "expr": "piper_health_component{environment=\"staging\"}"
+            "expr": "piper_health_component{\"{\"}environment=\"staging\"{\"}\"}"
           }
         ]
       },
@@ -410,7 +410,7 @@ DISK_CRITICAL_THRESHOLD = 90     # Disk usage critical
         "type": "histogram",
         "targets": [
           {
-            "expr": "piper_health_response_time_ms{environment=\"staging\"}"
+            "expr": "piper_health_response_time_ms{\"{\"}environment=\"staging\"{\"}\"}"
           }
         ]
       }
@@ -430,7 +430,7 @@ DISK_CRITICAL_THRESHOLD = 90     # Disk usage critical
         "type": "graph",
         "targets": [
           {
-            "expr": "piper_mcp_search_response_time_ms{environment=\"staging\"}"
+            "expr": "piper_mcp_search_response_time_ms{\"{\"}environment=\"staging\"{\"}\"}"
           }
         ],
         "alert": {
