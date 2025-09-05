@@ -4,6 +4,15 @@
 
 This catalog documents the key architectural and design patterns used in Piper Morgan. Each pattern includes its purpose, implementation details, usage guidelines, and anti-patterns to avoid.
 
+## Methodology Patterns
+
+This catalog focuses on **implementation patterns** (WHAT we build). For **process methodology** (HOW we work), see:
+- **[Excellence Flywheel](../development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Core development methodology (authoritative)
+- **[Core Methodology](../development/methodology-core/)** - Complete methodology framework
+- **[Cascade Framework](../development/methodology-core/)** - Automatic methodology enforcement patterns
+
+**Note**: Implementation patterns below support but do not duplicate the core methodology.
+
 ## 1. Repository Pattern
 
 ### Purpose

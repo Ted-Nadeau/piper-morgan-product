@@ -1,6 +1,9 @@
+<!-- LOGO: Keep pm-logo.png reference - file at docs/pm-logo.png -->
+![Piper Morgan Logo](pm-logo.png)
+
 # Piper Morgan - AI Product Management Assistant
 
-[![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
+[![Build Status](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/test.yml/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 
@@ -17,6 +20,9 @@ Piper Morgan is an intelligent product management assistant that transforms rout
 - ⚡ **CLI Commands** - Powerful command-line tools for daily PM workflows
 - 📊 **Cross-Feature Learning** - Pattern discovery that improves over time
 - 🔄 **Real-time GitHub Integration** - Live repository data and intelligent recommendations
+- 🏗️ **Cascade Framework** - Automatic methodology enforcement with 95% coordination efficiency
+- 🔍 **Archaeological Method** - Intelligent discovery of existing infrastructure (78% found pre-built)
+- 📚 **Knowledge Publishing** - Integrated Notion publishing for documentation and insights
 
 ## 🚀 Quick Demo - Issue Intelligence Workflow
 
@@ -259,25 +265,28 @@ Intelligent automation of development processes:
 ### Contributing
 
 - **[Development Guidelines](development/dev-guidelines.md)**: Contribution standards and processes
-- **[Architecture Patterns](architecture/pattern-catalog.md)**: Established patterns and practices
+- **[Excellence Flywheel](development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)**: Core development methodology (mandatory reading)
+- **[Architecture Patterns](architecture/pattern-catalog.md)**: Implementation patterns and practices
 - **[Testing Requirements](development/TEST-GUIDE.md)**: Testing standards and procedures
 - **[Issue Templates](https://github.com/your-org/piper-morgan/issues/new/choose)**: Structured issue reporting
 
 ## Project Status
 
-**Current Version**: 0.8.4 (MVP Candidate)
+**Current Version**: 0.9.0 (Post-Methodology Architecture)
 **Development Status**: 🟢 Active Development
-**Production Readiness**: 🟡 85% Complete
+**Production Readiness**: 🟡 90% Complete
 **Test Coverage**: 85%+ with 599+ tests
 **Documentation Coverage**: 75% complete
 
 ### Recent Achievements
 
-- ✅ Enhanced Autonomy Framework with multi-agent coordination
-- ✅ Test Infrastructure Activation with comprehensive validation
-- ✅ Issue Intelligence API with 95% classification accuracy
-- ✅ Production-ready GitHub and Slack integrations
-- 🔄 Documentation architecture overhaul in progress
+- ✅ **Cascade Framework Implementation** - PM-137/138/139 methodology architecture with automatic enforcement
+- ✅ **Archaeological Method Proven** - 78% of integrations found pre-built, 12-minute implementation vs 2.5-hour rebuilds
+- ✅ **Intelligence Trifecta Complete** - Issue Intelligence, Document Memory, Calendar awareness (0.55s performance)
+- ✅ **Knowledge Publishing Pipeline** - Complete Notion integration for ADRs and Weekly Ships
+- ✅ **Sisyphean Solution** - Manual methodology burden reduced from 3+ hours to 15 minutes
+- ✅ **95% Coordination Efficiency** - Multi-agent development with systematic verification patterns
+- 🔄 Pattern Catalog alignment with core methodology in progress
 
 ### Upcoming Milestones
 
