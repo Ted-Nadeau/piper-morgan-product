@@ -6,7 +6,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Conversational AI with Memory** - Your PM assistant now understands natural language and remembers context across conversations. Transform from rigid commands to natural, human-like interactions.
+> **NEW: Multi-User Configuration System** - Teams can now customize their GitHub repositories, PM number formats, and integration settings. Each user maintains their own configuration while sharing the same Piper Morgan instance.
 
 ## 🎯 What is Piper Morgan?
 
@@ -153,6 +153,13 @@ git push      # Runs fast tests via pre-push hook
 See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documentation.
 
 ## 🚀 Recent Infrastructure Activations
+
+### 🔧 Multi-User Configuration System (September 6, 2025)
+- **PM-123 Complete**: Per-user GitHub repository and PM number format configuration ([Issue PM-123](https://github.com/mediajunkie/piper-morgan-product/issues/123))
+- **CLI Architecture Fix**: All 6 commands now accessible (create, verify, sync, triage, status, patterns)
+- **Configuration Integration**: GitHubConfiguration dataclass with YAML parsing in PIPER.user.md
+- **Auto-Detection**: Prefers user config, gracefully falls back to defaults
+- **Test Coverage**: 31 unit tests + 10 orchestration tests passing
 
 ### 📚 Notion Integration (August 26, 2025)
 - **Knowledge Management**: Complete Notion workspace integration activated ([Issue #134](https://github.com/mediajunkie/piper-morgan-product/issues/134))
