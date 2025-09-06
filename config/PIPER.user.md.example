@@ -86,6 +86,33 @@
 
 ---
 
+## 🔧 **GitHub Integration** *(REQUIRED FOR PM-123)*
+
+```yaml
+github:
+  # REQUIRED: Repository Settings
+  default_repository: "your-org/your-repo"    # Your default repository for PM numbers
+  owner: "your-username"                      # Your GitHub username
+
+  # OPTIONAL: PM Number Configuration
+  pm_numbers:
+    prefix: "PM-"                            # Number prefix (PM-, TASK-, ISSUE-, etc.)
+    start_number: 1                          # Starting number for new installs
+    padding: 3                               # Zero-padding (3=001, 2=01, 1=1)
+
+  # OPTIONAL: Integration Settings
+  api_base: "https://api.github.com"         # GitHub API endpoint (rarely changed)
+  default_labels: ["enhancement", "pm"]      # Default labels for new issues
+```
+
+**Configuration Instructions**:
+- Replace `your-org/your-repo` with your actual GitHub repository
+- Replace `your-username` with your GitHub username
+- Customize PM number prefix if you prefer different format
+- Add any default labels you want on new issues
+
+---
+
 ## 🚀 **Standing Priorities** *(RANK YOUR PRIORITIES)*
 
 **Priority 1**: [Your top priority]

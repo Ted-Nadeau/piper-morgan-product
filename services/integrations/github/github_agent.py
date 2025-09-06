@@ -17,6 +17,7 @@ from github.Issue import Issue as GitHubIssue
 from github.Repository import Repository
 
 from services.api.errors import GitHubAuthFailedError, GitHubRateLimitError
+from services.config.github_config import GitHubConfiguration
 
 
 class GitHubAgent:
@@ -206,8 +207,10 @@ class GitHubAgent:
     ) -> List[Dict[str, Any]]:
         """Get open issues from GitHub repository"""
         try:
-            # Default to the piper-morgan-product repo if no project specified
-            repo_name = project or "mediajunkie/piper-morgan-product"
+            # Default to configured repository if no project specified
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            repo_name = project or github_config.default_repository
             repo = self.client.get_repo(repo_name)
 
             issues = repo.get_issues(state="open", sort="updated", direction="desc")
@@ -252,7 +255,9 @@ class GitHubAgent:
     async def get_recent_issues(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent issues (both open and closed) from GitHub repository"""
         try:
-            repo_name = "mediajunkie/piper-morgan-product"
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            repo_name = github_config.default_repository
             repo = self.client.get_repo(repo_name)
 
             issues = repo.get_issues(state="all", sort="updated", direction="desc")
@@ -296,7 +301,9 @@ class GitHubAgent:
     async def get_issues_by_priority(self) -> List[Dict[str, Any]]:
         """Get issues filtered by priority labels"""
         try:
-            repo_name = "mediajunkie/piper-morgan-product"
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            repo_name = github_config.default_repository
             repo = self.client.get_repo(repo_name)
 
             # Get issues with priority labels
@@ -341,7 +348,9 @@ class GitHubAgent:
     async def get_development_context(self) -> Dict[str, Any]:
         """Get development context including PRs, reviews, and commits"""
         try:
-            repo_name = "mediajunkie/piper-morgan-product"
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            repo_name = github_config.default_repository
             repo = self.client.get_repo(repo_name)
 
             # Get open pull requests
@@ -376,7 +385,10 @@ class GitHubAgent:
     ) -> List[Dict[str, Any]]:
         """Get recently closed issues from GitHub repository"""
         try:
-            repo_name = project or "mediajunkie/piper-morgan-product"
+            # Default to configured repository if no project specified
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            repo_name = project or github_config.default_repository
             repo = self.client.get_repo(repo_name)
 
             issues = repo.get_issues(state="closed", sort="updated", direction="desc")
@@ -432,3 +444,64 @@ class GitHubAgent:
             raise GitHubAuthFailedError(details={"reason": str(e)}) from e
         except Exception as e:
             raise ConnectionError(f"GitHub connection test failed: {e}") from e
+
+    async def create_pm_issue(
+        self,
+        repo_name: str,
+        pm_number: str,
+        title: str,
+        body: str,
+        labels: Optional[List[str]] = None,
+        assignees: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create a GitHub issue with PM number integration.
+
+        This method creates an issue and returns both GitHub and PM tracking information.
+        The title should include the PM number (e.g., "PM-140: Feature Title").
+
+        Args:
+            repo_name: GitHub repository name (owner/repo)
+            pm_number: PM number (e.g., "PM-140")
+            title: Issue title including PM number
+            body: Issue description/body
+            labels: List of label names to apply
+            assignees: List of usernames to assign
+
+        Returns:
+            Dictionary with GitHub issue details and PM tracking info
+        """
+        try:
+            repo = self.client.get_repo(repo_name)
+
+            # Create the issue
+            issue = repo.create_issue(
+                title=title, body=body, labels=labels or [], assignees=assignees or []
+            )
+
+            # Return enhanced result with PM tracking information
+            return {
+                "id": issue.id,
+                "number": issue.number,
+                "title": issue.title,
+                "body": issue.body or "",
+                "url": issue.html_url,
+                "state": issue.state,
+                "labels": [label.name for label in issue.labels],
+                "assignees": [assignee.login for assignee in issue.assignees],
+                "created_at": issue.created_at.isoformat(),
+                "pm_number": pm_number,
+                "pm_tracking": {
+                    "pm_number": pm_number,
+                    "github_issue": issue.number,
+                    "title_includes_pm": pm_number in title,
+                    "created_via_pm_command": True,
+                },
+            }
+        except BadCredentialsException as e:
+            raise GitHubAuthFailedError() from e
+        except RateLimitExceededException as e:
+            retry_after = e.headers.get("Retry-After", 60)
+            raise GitHubRateLimitError(retry_after=int(retry_after) // 60) from e
+        except Exception as e:
+            raise ConnectionError(f"Failed to create PM issue {pm_number}: {e}") from e

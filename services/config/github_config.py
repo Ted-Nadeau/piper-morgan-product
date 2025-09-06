@@ -1,0 +1,88 @@
+"""
+GitHub Configuration Management for PM-123 Multi-User Support
+
+Provides type-safe configuration for GitHub integration with user-specific
+repository settings and PM number formatting.
+"""
+
+import os
+from dataclasses import dataclass
+from typing import List, Optional
+
+
+@dataclass
+class GitHubConfiguration:
+    """Type-safe GitHub configuration for multi-user PM-123 support"""
+
+    default_repository: str
+    owner: str
+    pm_prefix: str = "PM-"
+    pm_start: int = 1
+    pm_padding: int = 3
+    api_base: str = "https://api.github.com"
+    default_labels: Optional[List[str]] = None
+
+    def __post_init__(self):
+        """Initialize default values and validate configuration"""
+        if self.default_labels is None:
+            self.default_labels = []
+
+        # Validate repository format
+        if "/" not in self.default_repository:
+            raise ValueError(
+                f"Repository must be in 'owner/repo' format, got: {self.default_repository}"
+            )
+
+        # Validate PM prefix format
+        if not self.pm_prefix:
+            raise ValueError("PM prefix cannot be empty")
+
+    def format_pm_number(self, number: int) -> str:
+        """Format PM number according to user configuration
+
+        Args:
+            number: PM number to format (e.g., 140)
+
+        Returns:
+            Formatted PM number (e.g., "PM-140")
+        """
+        return f"{self.pm_prefix}{number:0{self.pm_padding}d}"
+
+    def get_repository_parts(self) -> tuple[str, str]:
+        """Get repository owner and name as separate values
+
+        Returns:
+            Tuple of (owner, repository_name)
+        """
+        if "/" in self.default_repository:
+            return tuple(self.default_repository.split("/", 1))
+        return self.owner, self.default_repository
+
+    def validate_environment(self) -> bool:
+        """Validate GitHub environment configuration
+
+        Returns:
+            True if environment is properly configured
+        """
+        # Check for GitHub token
+        token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
+        if not token:
+            return False
+
+        return True
+
+    @classmethod
+    def create_default(cls) -> "GitHubConfiguration":
+        """Create default configuration for backwards compatibility
+
+        Returns:
+            Default GitHub configuration matching legacy hardcoded values
+        """
+        return cls(
+            default_repository="mediajunkie/piper-morgan-product",
+            owner="mediajunkie",
+            pm_prefix="PM-",
+            pm_start=1,
+            pm_padding=3,
+            default_labels=["enhancement"],
+        )

@@ -15,6 +15,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Tuple
 
+from services.config.github_config import GitHubConfiguration
+from services.configuration.piper_config_loader import PiperConfigLoader
 from services.integrations.github.github_agent import GitHubAgent
 
 
@@ -168,23 +170,29 @@ class PMNumberManager:
         pm_entries = await self._load_pm_entries()
 
         # Extract all PM numbers and find highest
+        config_loader = PiperConfigLoader()
+        github_config = config_loader.load_github_config()
+        prefix = github_config.pm_prefix
         pm_numbers = set()
         for entry in pm_entries:
-            if entry.pm_number and entry.pm_number.startswith("PM-"):
+            if entry.pm_number and entry.pm_number.startswith(prefix):
                 try:
-                    number_part = int(entry.pm_number[3:])  # Remove "PM-" prefix
+                    number_part = int(entry.pm_number[len(prefix) :])  # Remove prefix
                     pm_numbers.add(number_part)
                 except ValueError:
                     continue  # Skip invalid format
 
-        # Find next available number
+        # Find next available number using configured format
+        config_loader = PiperConfigLoader()
+        github_config = config_loader.load_github_config()
+
         if not pm_numbers:
-            return "PM-001"
+            return github_config.format_pm_number(github_config.pm_start)
 
         highest = max(pm_numbers)
         next_number = highest + 1
 
-        return f"PM-{next_number:03d}"  # Zero-padded to 3 digits
+        return github_config.format_pm_number(next_number)
 
     async def reserve_pm_number(
         self, pm_number: str, title: str, issue_number: Optional[int] = None
@@ -307,11 +315,14 @@ class PMNumberManager:
         mapped_issues = sum(1 for entry in pm_entries if entry.issue_number)
 
         # Calculate ranges
+        config_loader = PiperConfigLoader()
+        github_config = config_loader.load_github_config()
+        prefix = github_config.pm_prefix
         pm_numbers = []
         for entry in pm_entries:
-            if entry.pm_number and entry.pm_number.startswith("PM-"):
+            if entry.pm_number and entry.pm_number.startswith(prefix):
                 try:
-                    pm_numbers.append(int(entry.pm_number[3:]))
+                    pm_numbers.append(int(entry.pm_number[len(prefix) :]))
                 except ValueError:
                     continue
 
@@ -352,8 +363,12 @@ class PMNumberManager:
             pm_numbers_in_github = set()
             for issue in github_issues:
                 title = issue.get("title", "")
-                # Look for PM-XXX pattern in title
-                pm_match = re.search(r"PM-\d{3}", title)
+                # Look for configured PM pattern in title
+                config_loader = PiperConfigLoader()
+                github_config = config_loader.load_github_config()
+                prefix = github_config.pm_prefix
+                pattern = rf"{re.escape(prefix)}\d{{{github_config.pm_padding}}}"
+                pm_match = re.search(pattern, title)
                 if pm_match:
                     pm_numbers_in_github.add(pm_match.group())
 
@@ -386,7 +401,11 @@ class PMNumberManager:
                         backlog_content = f.read()
 
                     # Find PM numbers referenced in backlog
-                    backlog_pm_numbers = set(re.findall(r"PM-\d{3}", backlog_content))
+                    config_loader = PiperConfigLoader()
+                    github_config = config_loader.load_github_config()
+                    prefix = github_config.pm_prefix
+                    pattern = rf"{re.escape(prefix)}\d{{{github_config.pm_padding}}}"
+                    backlog_pm_numbers = set(re.findall(pattern, backlog_content))
 
                     # Check if backlog PM numbers exist in CSV
                     for pm_num in backlog_pm_numbers:
@@ -441,9 +460,13 @@ class PMNumberManager:
             github_issue_map = {issue.get("number"): issue for issue in github_issues}
 
             # Find GitHub issues with PM numbers that aren't in CSV
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            prefix = github_config.pm_prefix
+            pattern = rf"{re.escape(prefix)}\d{{{github_config.pm_padding}}}"
             for issue in github_issues:
                 title = issue.get("title", "")
-                pm_match = re.search(r"PM-\d{3}", title)
+                pm_match = re.search(pattern, title)
 
                 if pm_match:
                     pm_number = pm_match.group()
@@ -495,9 +518,13 @@ class PMNumberManager:
             csv_pm_numbers = {entry.pm_number for entry in pm_entries if entry.pm_number}
             github_pm_numbers = set()
 
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            prefix = github_config.pm_prefix
+            pattern = rf"{re.escape(prefix)}\d{{{github_config.pm_padding}}}"
             for issue in github_issues:
                 title = issue.get("title", "")
-                pm_match = re.search(r"PM-\d{3}", title)
+                pm_match = re.search(pattern, title)
                 if pm_match:
                     github_pm_numbers.add(pm_match.group())
 
@@ -538,18 +565,21 @@ class PMNumberManager:
         # Remove whitespace and convert to uppercase
         clean = pm_number.strip().upper()
 
-        # Check if it matches PM-XXX pattern
-        pattern = r"^PM-(\d{1,3})$"
+        # Use configured PM pattern
+        config_loader = PiperConfigLoader()
+        github_config = config_loader.load_github_config()
+        prefix = github_config.pm_prefix
+        pattern = rf"^{re.escape(prefix)}(\d{{1,3}})$"
         match = re.match(pattern, clean)
 
         if match:
             number = int(match.group(1))
-            return f"PM-{number:03d}"  # Zero-pad to 3 digits
+            return github_config.format_pm_number(number)
 
         # Try to parse number-only format
         if clean.isdigit():
             number = int(clean)
-            return f"PM-{number:03d}"
+            return github_config.format_pm_number(number)
 
         return None
 

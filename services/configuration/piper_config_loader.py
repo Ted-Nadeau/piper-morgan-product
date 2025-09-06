@@ -9,11 +9,13 @@ This service provides:
 """
 
 import os
+import re
 import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 import structlog
+import yaml
 
 logger = structlog.get_logger()
 
@@ -29,7 +31,18 @@ class PiperConfigLoader:
     - Error handling and fallbacks
     """
 
-    def __init__(self, config_path: str = "config/PIPER.md"):
+    def __init__(self, config_path: str = None):
+        # Auto-detect user config with fallback to default
+        if config_path is None:
+            user_config = Path("config/PIPER.user.md")
+            default_config = Path("config/PIPER.md")
+            if user_config.exists():
+                config_path = str(user_config)
+                logger.debug("Using user configuration", path=config_path)
+            else:
+                config_path = str(default_config)
+                logger.debug("Using default configuration (no user config found)", path=config_path)
+
         self.config_path = Path(config_path)
         self.last_modified = 0
         self.cached_config = None
@@ -115,8 +128,16 @@ class PiperConfigLoader:
             current_section = None
             current_content = []
 
-            for line in content.split("\n"):
-                line = line.strip()
+            in_code_block = False
+            for original_line in content.split("\n"):
+                # Preserve indentation in code blocks, strip elsewhere
+                if original_line.strip().startswith("```"):
+                    in_code_block = not in_code_block
+                    line = original_line.strip()
+                elif in_code_block:
+                    line = original_line  # Preserve indentation in code blocks
+                else:
+                    line = original_line.strip()
 
                 # Check for section headers (## or ###)
                 if line.startswith("## "):
@@ -288,6 +309,97 @@ Enhanced conversational context, MCP deployment, pattern validation.
             "cache_age": time.time() - self.last_modified if self.last_modified else 0,
             "sections_count": len(self.cached_config) if self.cached_config else 0,
         }
+
+    def load_github_config(self):
+        """
+        Load GitHub configuration from PIPER.user.md
+
+        Extracts YAML configuration from GitHub Integration section.
+        Falls back to defaults if no configuration found.
+
+        Returns:
+            GitHubConfiguration instance with user settings or defaults
+        """
+        try:
+            # Load the markdown configuration
+            config = self.load_config()
+            if not config:
+                from services.config.github_config import GitHubConfiguration
+
+                logger.debug("No PIPER.md config found, using GitHub defaults")
+                return GitHubConfiguration.create_default()
+
+            # Look for GitHub Integration section
+            github_section_content = None
+            for section_name, content in config.items():
+                if "github" in section_name.lower() and "integration" in section_name.lower():
+                    github_section_content = content
+                    break
+
+            if not github_section_content:
+                from services.config.github_config import GitHubConfiguration
+
+                logger.debug("No GitHub Integration section found, using defaults")
+                return GitHubConfiguration.create_default()
+
+            # Extract YAML from markdown code blocks (more robust)
+            yaml_match = re.search(r"```yaml.*?```", github_section_content, re.DOTALL)
+            if not yaml_match:
+                from services.config.github_config import GitHubConfiguration
+
+                logger.debug("No YAML configuration found in GitHub section, using defaults")
+                return GitHubConfiguration.create_default()
+
+            # Extract YAML content by removing markdown markers
+            full_yaml_block = yaml_match.group(0)
+            yaml_content = full_yaml_block.replace("```yaml", "").replace("```", "").strip()
+            github_config_data = yaml.safe_load(yaml_content)
+
+            if not github_config_data or "github" not in github_config_data:
+                from services.config.github_config import GitHubConfiguration
+
+                logger.debug("No github section in YAML, using defaults")
+                return GitHubConfiguration.create_default()
+
+            github_section = github_config_data["github"]
+            if not isinstance(github_section, dict):
+                from services.config.github_config import GitHubConfiguration
+
+                logger.debug("GitHub section is not a dictionary, using defaults")
+                return GitHubConfiguration.create_default()
+
+            pm_numbers = github_section.get("pm_numbers", {})
+            if not isinstance(pm_numbers, dict):
+                pm_numbers = {}
+
+            # Create GitHubConfiguration from user settings
+            from services.config.github_config import GitHubConfiguration
+
+            github_config = GitHubConfiguration(
+                default_repository=github_section.get(
+                    "default_repository", "mediajunkie/piper-morgan-product"
+                ),
+                owner=github_section.get("owner", "mediajunkie"),
+                pm_prefix=pm_numbers.get("prefix", "PM-"),
+                pm_start=pm_numbers.get("start_number", 1),
+                pm_padding=pm_numbers.get("padding", 3),
+                api_base=github_section.get("api_base", "https://api.github.com"),
+                default_labels=github_section.get("default_labels", ["enhancement"]),
+            )
+
+            logger.info(
+                "GitHub configuration loaded from PIPER.user.md",
+                repository=github_config.default_repository,
+                pm_format=github_config.format_pm_number(1),
+            )
+
+            return github_config
+
+        except Exception as e:
+            from services.config.github_config import GitHubConfiguration
+
+            logger.error("Error loading GitHub configuration, using defaults", error=str(e))
+            return GitHubConfiguration.create_default()
 
 
 # Global instance for easy access
