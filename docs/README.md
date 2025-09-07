@@ -1,3 +1,6 @@
+<!-- LOGO: Keep pm-logo.png reference - file at docs/pm-logo.png -->
+![Piper Morgan Logo](pm-logo.png)
+
 # Piper Morgan - AI Product Management Assistant
 
 [![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions) <- why is this broken?

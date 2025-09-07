@@ -42,6 +42,9 @@
 ---
 
 ### Investigation Support
-**Problem Identified**: docs/README.md had old content while root README.md had updated content
-**Solution**: Copied root README.md to docs/README.md for GitHub Pages
-**Status**: Ready to commit and push to trigger deployment
+**Problem Identified**: docs/README.md had old content while root README.md had overly detailed content
+**Solution Applied**:
+1. ✅ Synced docs/README.md with updated content including "Multi-User Configuration System"
+2. ✅ Restored logo to docs/README.md (was missing after copy)
+3. ✅ Created concise evergreen root README.md pointing to full docs at pmorgan.tech
+**Status**: Ready to commit final fixes
