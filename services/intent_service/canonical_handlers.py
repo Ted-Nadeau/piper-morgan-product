@@ -95,8 +95,14 @@ class CanonicalHandlers:
 
     async def _handle_temporal_query(self, intent: Intent, session_id: str) -> Dict:
         """Handle 'What day is it?' and time-related queries with real calendar data"""
+        from services.configuration.piper_config_loader import piper_config_loader
+
         current_date = datetime.now().strftime("%A, %B %d, %Y")
-        current_time = datetime.now().strftime("%I:%M %p PT")
+        # Load timezone from configuration
+        standup_config = piper_config_loader.load_standup_config()
+        timezone = standup_config["timing"]["timezone"]
+        timezone_short = timezone.split("/")[-1].replace("_", " ")  # Convert to readable format
+        current_time = datetime.now().strftime(f"%I:%M %p {timezone_short}")
 
         message = f"Today is {current_date} at {current_time}."
         calendar_context = {}
@@ -403,13 +409,20 @@ This directly supports your strategic goal of transforming Piper Morgan into a s
 
 **Strategic Direction**: Deliver production-ready VA onramp system for Q4 2025 while maintaining Piper Morgan AI development (25%) and other projects (5%)."""
 
+            # Load timezone from configuration
+            from services.configuration.piper_config_loader import piper_config_loader
+
+            standup_config = piper_config_loader.load_standup_config()
+            timezone = standup_config["timing"]["timezone"]
+            timezone_short = timezone.split("/")[-1].replace("_", " ")
+
             guidance_context = {
                 "immediate_focus": focus,
                 "daily_goal": "VA Q4 Onramp system implementation",
                 "weekly_focus": "VA decision reviews and Kind Systems collaboration",
                 "strategic_direction": "VA Q4 onramp delivery",
                 "allocation": "70% VA, 25% Piper, 5% Other",
-                "time_context": f"{current_hour}:00 PT",
+                "time_context": f"{current_hour}:00 {timezone_short}",
             }
         else:
             # Fallback message
@@ -428,7 +441,7 @@ This directly supports your strategic goal of transforming Piper Morgan into a s
                 "daily_goal": "Complete PIPER.md configuration system",
                 "weekly_focus": "MCP Consumer and UX enhancement",
                 "strategic_direction": "Transform to strategic thinking partner",
-                "time_context": f"{current_hour}:00 PT",
+                "time_context": f"{current_hour}:00 {timezone_short}",
             }
 
         return {

@@ -110,7 +110,7 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                     flow = Flow.from_client_secrets_file(
                         self._client_secrets_file,
                         self._scopes,
-                        redirect_uri="http://localhost:8080",
+                        redirect_uri="http://localhost:8084",
                     )
 
                     # For now, return False to indicate manual OAuth setup needed

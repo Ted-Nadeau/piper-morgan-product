@@ -401,6 +401,157 @@ Enhanced conversational context, MCP deployment, pattern validation.
             logger.error("Error loading GitHub configuration, using defaults", error=str(e))
             return GitHubConfiguration.create_default()
 
+    def load_standup_config(self) -> Dict[str, any]:
+        """
+        Load standup configuration from PIPER.user.md
+
+        Returns:
+            Dictionary with standup configuration settings
+        """
+        try:
+            config = self.load_config()
+            if not config:
+                logger.warning("No configuration loaded, using default standup settings")
+                return self._get_default_standup_config()
+
+            # Look for standup section
+            standup_section = None
+            for section_name, section_content in config.items():
+                if "standup" in section_name.lower() or "morning" in section_name.lower():
+                    standup_section = section_content
+                    break
+
+            if not standup_section:
+                logger.debug("No standup configuration found, using defaults")
+                return self._get_default_standup_config()
+
+            # Extract YAML content from standup section
+            yaml_match = re.search(r"```yaml\s*(.*?)\s*```", standup_section, re.DOTALL)
+            if not yaml_match:
+                logger.debug("No YAML configuration found in standup section, using defaults")
+                return self._get_default_standup_config()
+
+            # Parse YAML content
+            yaml_content = yaml_match.group(1).strip()
+            standup_config_data = yaml.safe_load(yaml_content)
+
+            if not standup_config_data or "standup" not in standup_config_data:
+                logger.debug("No standup section in YAML, using defaults")
+                return self._get_default_standup_config()
+
+            standup_section = standup_config_data["standup"]
+            if not isinstance(standup_section, dict):
+                logger.debug("Standup section is not a dictionary, using defaults")
+                return self._get_default_standup_config()
+
+            # Build configuration with defaults
+            standup_config = {
+                "questions": standup_section.get(
+                    "questions",
+                    [
+                        "What's your name and role?",
+                        "What day is it?",
+                        "What should I focus on today?",
+                        "What am I working on?",
+                        "What's my top priority?",
+                    ],
+                ),
+                "timing": standup_section.get(
+                    "timing",
+                    {
+                        "preferred_time": "06:00",
+                        "timezone": "America/Los_Angeles",
+                        "duration_target": "3 seconds",
+                        "time_range_hours": 2,
+                    },
+                ),
+                "integrations": standup_section.get(
+                    "integrations",
+                    {
+                        "github": True,
+                        "calendar": True,
+                        "issue_intelligence": True,
+                        "document_memory": True,
+                    },
+                ),
+                "user_identity": standup_section.get(
+                    "user_identity",
+                    {
+                        "user_id": "default",
+                        "display_name": "User",
+                        "role": "Team Member",
+                        "context": "working on projects",
+                    },
+                ),
+                "content": standup_section.get(
+                    "content",
+                    {
+                        "include_github_activity": True,
+                        "include_calendar_events": True,
+                        "include_issue_updates": True,
+                        "include_document_insights": True,
+                        "fallback_priorities": [
+                            "Enhanced conversational context",
+                            "MCP deployment",
+                            "Pattern validation",
+                        ],
+                    },
+                ),
+            }
+
+            logger.info(
+                "Standup configuration loaded from PIPER.user.md",
+                questions_count=len(standup_config["questions"]),
+                user_id=standup_config["user_identity"]["user_id"],
+            )
+
+            return standup_config
+
+        except Exception as e:
+            logger.error("Error loading standup configuration, using defaults", error=str(e))
+            return self._get_default_standup_config()
+
+    def _get_default_standup_config(self) -> Dict[str, any]:
+        """Get default standup configuration when user config is not available"""
+        return {
+            "questions": [
+                "What's your name and role?",
+                "What day is it?",
+                "What should I focus on today?",
+                "What am I working on?",
+                "What's my top priority?",
+            ],
+            "timing": {
+                "preferred_time": "06:00",
+                "timezone": "America/Los_Angeles",
+                "duration_target": "3 seconds",
+                "time_range_hours": 2,
+            },
+            "integrations": {
+                "github": True,
+                "calendar": True,
+                "issue_intelligence": True,
+                "document_memory": True,
+            },
+            "user_identity": {
+                "user_id": "default",
+                "display_name": "User",
+                "role": "Team Member",
+                "context": "working on projects",
+            },
+            "content": {
+                "include_github_activity": True,
+                "include_calendar_events": True,
+                "include_issue_updates": True,
+                "include_document_insights": True,
+                "fallback_priorities": [
+                    "Enhanced conversational context",
+                    "MCP deployment",
+                    "Pattern validation",
+                ],
+            },
+        }
+
 
 # Global instance for easy access
 piper_config_loader = PiperConfigLoader()
