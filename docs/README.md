@@ -22,6 +22,7 @@ Piper Morgan is an intelligent product management assistant that evolves from au
 - 🎯 **Anaphoric Reference Resolution**: Automatically resolves "that issue" to the correct item
 - ⚡ **Sub-150ms Response Times**: Lightning-fast conversational AI
 - 🔄 **Seamless Context Switching**: Move between projects and topics naturally
+- 🌐 **Web Interface**: Dark mode UI with 4.6-5.1s generation (faster than CLI)
 - 📚 **Notion Integration**: Connect to your Notion workspace for knowledge management
 
 ## 🚀 Quick Start (30 seconds)
@@ -106,6 +107,40 @@ python main.py standup
 - **Real-time GitHub Data**: Live API integration with your repositories
 
 [📖 Full CLI Documentation](docs/user-guides/cli-commands.md) | [📊 Issue Intelligence Features](docs/features/issue-intelligence.md)
+
+## 🌅 Morning Standup Web Interface
+
+**Launch your daily standup with a professional dark mode web interface - faster than CLI with comprehensive GitHub integration.**
+
+### 🚀 Quick Start
+```bash
+# Start FastAPI server
+PYTHONPATH=. python web/app.py
+# or
+PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
+```
+
+### 🌐 Access Points
+- **Web UI**: http://localhost:8001/standup (dark mode, mobile responsive)
+- **API Endpoint**: http://localhost:8001/api/standup (JSON response)
+- **API Documentation**: http://localhost:8001/docs (FastAPI auto-docs)
+
+### ⚡ Performance & Features
+- **Generation Time**: 4.6-5.1 seconds (180ms faster than CLI baseline)
+- **Response Format**: JSON with comprehensive standup data and metadata
+- **UI Features**: Dark mode, mobile responsive, error handling, performance metrics
+- **Daily Usage**: Optimized for 6 AM daily standup routine
+
+### 📊 What You Get
+- ✅ **Yesterday's accomplishments** from all integrations
+- 🎯 **Today's priorities** with project context
+- 🚫 **Blockers identification** and resolution paths
+- 📈 **Performance metrics** and generation time tracking
+- 🐙 **GitHub activity** (commits, PRs, issues)
+- 📁 **Project context** and repository information
+- 🔄 **Multi-user support** with personalized configurations
+
+[📖 Technical Documentation](docs/features/morning-standup-web.md) | [📋 User Guide](docs/features/morning-standup-ui-guide.md)
 
 ## 📚 Complete Documentation
 
