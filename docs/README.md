@@ -1,306 +1,358 @@
-<!-- LOGO: Keep pm-logo.png reference - file at docs/pm-logo.png -->
-![Piper Morgan Logo](pm-logo.png)
-
 # Piper Morgan - AI Product Management Assistant
 
-[![Build Status](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/test.yml/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
+[![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions) <- why is this broken?
+[![Code Coverage](https://codecov.io/gh/mediajunkie/piper-morgan-product/branch/main/graph/badge.svg)](https://codecov.io/gh/mediajunkie/piper-morgan-product)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **NEW: Issue Intelligence & CLI System** - Transform GitHub issues into actionable insights with AI-powered triage, pattern discovery, and conversational workflows.
+> **NEW: Multi-User Configuration System** - Teams can now customize their GitHub repositories, PM number formats, and integration settings. Each user maintains their own configuration while sharing the same Piper Morgan instance.
 
 ## 🎯 What is Piper Morgan?
 
-Piper Morgan is an intelligent product management assistant that transforms routine PM tasks into natural conversations while providing strategic insights through AI-powered analysis.
+Piper Morgan is an intelligent product management assistant that evolves from automating routine tasks to providing strategic insights and recommendations **through natural conversation**.
 
-**Core Capabilities:**
+**Key Capabilities:**
 
-- 🧠 **Issue Intelligence System** - AI-powered GitHub issue analysis with smart prioritization
-- 💬 **Conversational AI with Memory** - Natural language workflows with 10-turn context
-- ⚡ **CLI Commands** - Powerful command-line tools for daily PM workflows
-- 📊 **Cross-Feature Learning** - Pattern discovery that improves over time
-- 🔄 **Real-time GitHub Integration** - Live repository data and intelligent recommendations
-- 🏗️ **Cascade Framework** - Automatic methodology enforcement with 95% coordination efficiency
-- 🔍 **Archaeological Method** - Intelligent discovery of existing infrastructure (78% found pre-built)
-- 📚 **Knowledge Publishing** - Integrated Notion publishing for documentation and insights
+- 🗣️ **Natural Language Processing**: Use "that issue", "the document", "my task"
+- 🧠 **10-Turn Context Memory**: Remembers your conversation across interactions
+- 🎯 **Anaphoric Reference Resolution**: Automatically resolves "that issue" to the correct item
+- ⚡ **Sub-150ms Response Times**: Lightning-fast conversational AI
+- 🔄 **Seamless Context Switching**: Move between projects and topics naturally
+- 📚 **Notion Integration**: Connect to your Notion workspace for knowledge management
 
-## 🚀 Quick Demo - Issue Intelligence Workflow
-
-Transform overwhelming GitHub backlogs into actionable insights:
+## 🚀 Quick Start (30 seconds)
 
 ```bash
-# Morning standup with AI-enhanced context
-piper standup
-
-# Intelligent issue triage with priority scoring
-piper issues triage --limit 15
-
-# Discover patterns across your project
-piper issues patterns
-
-# Get project health overview
-piper issues status
-```
-
-**Result**: Complete project visibility in under 30 seconds, with AI-powered recommendations for immediate actions.
-
-## 🛠️ Get Started Fast
-
-Choose your path based on your role:
-
-### 🎯 Product Managers
-
-```bash
+# 1. Clone and setup
 git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
-./scripts/quick-start.sh
-```
+python -m venv venv && source venv/bin/activate  # or `venv\Scripts\activate` on Windows
 
-**Ready in 2 minutes** → [PM Quick Start Guide](getting-started/product-managers.md)
+# 2. Install dependencies
+pip install -r requirements.txt
 
-### 💻 Developers
+# 3. Configure environment
+cp .env.example .env
+# Add your API keys (OpenAI, Anthropic, GitHub)
 
-```bash
-git clone https://github.com/mediajunkie/piper-morgan-product.git
-cd piper-morgan-product
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt && docker-compose up -d
+# 4. Start infrastructure and launch
+docker-compose up -d
 python main.py
 ```
 
-**Full dev environment** → [Developer Setup Guide](getting-started/developers.md)
+**🎯 Ready to try?** Start with our [15-minute getting started guide](docs/user-guides/getting-started-conversational-ai.md)!
 
-### 🔧 System Administrators
+### 🚀 **One-Click Startup**
 
-**Production deployment** → [Production Setup Guide](getting-started/production.md)
+For daily standup routine:
 
-## 🏗️ High-Level Architecture
+- **[Mac Dock Integration](./docs/setup/mac-dock-integration.md)** - Add Piper to your dock
+- **Start Script**: `./start-piper.sh` - One-command startup with health checks
+- **Requirements**: Docker Desktop running
+
+## 💬 See It in Action
+
+### Before (Command Mode)
+
+```
+You: "Update GitHub issue #1247 status:done"
+You: "Show me document requirements_v2.pdf"
+You: "Assign issue #1247 to:sarah"
+```
+
+### After (Conversational AI)
+
+```
+You: "Update that bug we discussed"
+Piper: "✅ Updated issue #1247 (login timeout) status to done"
+
+You: "Show me the latest requirements"
+Piper: "📄 Here's requirements_v2.pdf (47 pages, updated 2 days ago)"
+
+You: "Assign it to Sarah"
+Piper: "✅ Assigned issue #1247 to Sarah. She's been notified."
+```
+
+**Result**: 5x faster workflows, 90% less mental overhead, conversations that feel human.
+
+## 🖥️ CLI Commands
+
+### Issue Intelligence
+
+Real-time GitHub issue analysis and intelligent prioritization:
+
+```bash
+# Get project health overview
+python main.py issues status
+
+# Intelligent issue triage and prioritization
+python main.py issues triage --limit 10
+
+# Discover patterns and cross-feature insights
+python main.py issues patterns
+
+# Morning standup with issue context
+python main.py standup
+```
+
+**Features**:
+- **Smart Prioritization**: AI-driven issue priority scoring
+- **Beautiful CLI Output**: Color-coded, formatted displays
+- **Cross-Feature Learning**: Issue patterns enhance morning standups
+- **Real-time GitHub Data**: Live API integration with your repositories
+
+[📖 Full CLI Documentation](docs/user-guides/cli-commands.md) | [📊 Issue Intelligence Features](docs/features/issue-intelligence.md)
+
+## 📚 Complete Documentation
+
+### 🎯 User Guides
+
+- **[🚀 Getting Started](docs/user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
+- **[⌨️ CLI Commands](docs/user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
+- **[🎯 Understanding References](docs/user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
+- **[🧠 Conversation Memory](docs/user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
+- **[🔄 Upgrading from Commands](docs/user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
+- **[📖 Real Examples](docs/user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
+
+### 🔧 Developer Resources
+
+- **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
+- **[🔌 API Documentation](docs/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
+- **[⚡ Developer Quick Start](docs/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
+- **[🌿 Branch Management](docs/development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
+- **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
+
+## 🧪 Testing & Quality Assurance
+
+### ⚡ **Smart Test Infrastructure (Phase 1)**
+
+Our test infrastructure provides **4 execution modes** optimized for development workflow:
+
+- **🚀 Smoke Tests (<5s)**: Rapid validation for pre-commit checks
+- **⚡ Fast Tests (<30s)**: Development workflow with unit tests + standalone orchestration
+- **🔄 Full Tests**: Comprehensive testing including integration tests with database
+- **📊 Coverage Analysis**: Detailed reporting with <80% coverage highlighting
+
+**Quick Test Commands:**
+
+```bash
+# Smart test execution
+./scripts/run_tests.sh smoke     # <5s validation
+./scripts/run_tests.sh fast      # <30s development workflow
+./scripts/run_tests.sh full      # Complete test suite
+./scripts/run_tests.sh coverage  # Coverage analysis
+
+# Git integration (automated)
+git commit    # Runs smoke tests via pre-commit hook
+git push      # Runs fast tests via pre-push hook
+```
+
+**Excellence Flywheel Integration**: All testing follows Verification First → Implementation → Evidence-based progress → GitHub tracking methodology.
+
+See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documentation.
+
+## 🚀 Recent Infrastructure Activations
+
+### 🔧 Multi-User Configuration System (September 6, 2025)
+- **PM-123 Complete**: Per-user GitHub repository and PM number format configuration ([Issue PM-123](https://github.com/mediajunkie/piper-morgan-product/issues/123))
+- **CLI Architecture Fix**: All 6 commands now accessible (create, verify, sync, triage, status, patterns)
+- **Configuration Integration**: GitHubConfiguration dataclass with YAML parsing in PIPER.user.md
+- **Auto-Detection**: Prefers user config, gracefully falls back to defaults
+- **Test Coverage**: 31 unit tests + 10 orchestration tests passing
+
+### 📚 Notion Integration (August 26, 2025)
+- **Knowledge Management**: Complete Notion workspace integration activated ([Issue #134](https://github.com/mediajunkie/piper-morgan-product/issues/134))
+- **MCP+Spatial Intelligence**: 8-dimensional spatial analysis for Notion pages
+- **CLI Commands**: `piper notion status/test/search/pages` for workspace management
+- **Performance**: <200ms enhancement target exceeded (0.1ms actual)
+- **Test Coverage**: 652 lines of comprehensive test coverage activated
+
+### 🧪 Test Infrastructure (August 20, 2025)
+- **Smart Test Execution**: `./scripts/run_tests.sh` with 4 modes (smoke, fast, full, coverage)
+- **Performance**: 0-second smoke tests (599+ test suite activated)
+- **Automation**: Git hooks with pre-push test enforcement
+- **Documentation**: Complete TEST-GUIDE.md for developers
+
+### 🔄 Multi-Agent Coordination (August 20, 2025)
+- **Operational Deployment**: Complete implementation plan ready ([Issue PM-118](https://github.com/mediajunkie/piper-morgan-product/issues/118))
+- **Automation Scripts**: Deployment and validation scripts created
+- **Quick Start**: [5-minute deployment guide](docs/development/MULTI_AGENT_QUICK_START.md) available
+- **Integration**: REST API design for coordination triggers
+
+### 💾 Persistent Context Foundation (August 20, 2025)
+- **MVP Foundation**: Complete user preference and session persistence ([Issue PM-119](https://github.com/mediajunkie/piper-morgan-product/issues/119))
+- **Performance**: <500ms operations supporting 1000+ concurrent users
+- **API Integration**: REST endpoints with validation and security
+- **Test Coverage**: 100% TDD methodology with comprehensive test suites
+
+## 📚 Enhanced Development Documentation
+
+### Core Methodology
+- **[Excellence Flywheel Methodology](docs/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
+- **[Multi-Agent Coordination Guide](docs/development/HOW_TO_USE_MULTI_AGENT.md)** - Intelligent task decomposition
+- **[Multi-Agent Quick Start](docs/development/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
+- **[Test Infrastructure Guide](docs/development/TEST-GUIDE.md)** - Smart test execution patterns
+
+### Implementation Guides
+- **[Multi-Agent Integration Plan](docs/development/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
+- **[Persistent Context Research](docs/development/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
+- **[Enhanced Autonomy Patterns](docs/development/enhanced-autonomy-patterns.md)** - Advanced development workflows
+
+### Operations & Automation
+- **[Smart Test Execution](scripts/run_tests.sh)** - 4-mode test infrastructure
+- **[Multi-Agent Deployment](scripts/deploy_multi_agent_coordinator.sh)** - Automated coordinator deployment
+- **[Operation Validation](scripts/validate_multi_agent_operation.sh)** - Production readiness validation
+
+## 🏗️ Architecture Overview
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   CLI Commands  │    │  Issue           │    │  GitHub         │
-│   & Workflows   │◄──►│  Intelligence    │◄──►│  Integration    │
-│                 │    │  Engine          │    │                 │
+│   Conversation  │    │  Intent Service  │    │  Knowledge      │
+│   Manager       │◄──►│  & Orchestration │◄──►│  Graph Service  │
+│   (10-turn ctx) │    │  Engine          │    │  & Repositories │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
          │                       │                       │
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│  Conversational │    │  Learning Loop   │    │  Real-time      │
-│  AI Context     │    │  & Pattern       │    │  Data & API     │
-│  (10-turn)      │    │  Discovery       │    │  Orchestration  │
+│  Anaphoric      │    │  Integration     │    │  Learning       │
+│  Reference      │    │  Services        │    │  (GitHub, Jira)  │
+│  Resolution     │    │  (GitHub, Jira)  │    │  & Analytics    │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-**Built on proven foundations:** PostgreSQL, Redis, Docker, with 599+ tests and 85%+ coverage.
+**Core Services:**
 
-## 📚 Documentation Hub
+- **Conversation Manager**: 10-turn context window with Redis caching
+- **Intent Service**: Natural language understanding and goal management
+- **Knowledge Graph**: Entity tracking and relationship detection
+- **Integration Services**: Plugins for GitHub, Jira, Confluence, etc.
 
-Welcome to the comprehensive documentation hub for Piper Morgan - an advanced AI-assisted development platform that revolutionizes how teams build, manage, and optimize software projects.
+## 🎯 Key Features
 
-## Quick Navigation
+### Conversational AI Capabilities
 
-### 🚀 [Getting Started](getting-started/)
+- ✅ **Natural Language Processing**: Use "that issue", "the document"
+- ✅ **Anaphoric Reference Resolution**: Automatic reference resolution
+- ✅ **10-Turn Context Window**: Conversation memory across interactions
+- ✅ **Entity Tracking**: Automatic tracking of issues, documents, tasks
+- ✅ **Performance Optimization**: <150ms response times
 
-Role-based quick-start guides to help you begin using Piper Morgan effectively:
+### User Experience Benefits
 
-- **[Product Managers](getting-started/product-managers.md)**: Fast-track setup for issue intelligence and project insights
-- **[Developers](getting-started/developers.md)**: Complete development environment setup with Docker, databases, and testing
-- **[API Integration](getting-started/api-integration.md)**: Integrate Piper Morgan's APIs into your existing workflows
-- **[Production Deployment](getting-started/production.md)**: Enterprise deployment guide for DevOps teams
+- ✅ **Reduced Cognitive Load**: No need to remember exact identifiers
+- ✅ **Natural Workflow**: Human-like conversation patterns
+- ✅ **Context Awareness**: Seamless topic switching
+- ✅ **Error Recovery**: Graceful fallback to command mode
+- ✅ **Performance**: Sub-150ms response times
 
-### 📊 [Status & Progress](status/)
+## 📊 Performance Metrics
 
-Real-time project health and development progress:
+### Current System Performance (PM-034)
 
-- **[Status Dashboard](status/README.md)**: Current system health and development velocity
-- **[2025 Achievements](status/achievements-2025.md)**: Complete record of delivered features and improvements
-- **[Roadmap](status/roadmap.md)**: Strategic milestones and future development plans
-- **[Changelog](status/changelog.md)**: Detailed version history with technical specifications
+- **Reference Resolution**: 100% accuracy ✅
+- **Response Time**: 2.33ms average ✅
+- **Context Window**: 10 turns operational ✅
+- **Cache Hit Ratio**: >95% achieved ✅
+- **Memory Usage**: <1MB per conversation ✅
 
-### 🖥️ [CLI Commands](user-guides/cli-commands.md)
+### User Experience Metrics
 
-- **Content Publishing**: `piper publish` with Notion integration
-- **Notion Management**: Workspace administration and content creation
-- **Integration Testing**: CLI validation and health checks
+- **Natural Language Adoption**: 85% within 5 interactions
+- **Context Awareness**: 90% expect context preservation
+- **Workflow Completion**: 80% complete complex workflows conversationally
+- **User Satisfaction**: 4.6/5 rating for conversational experience
 
-### 📝 [Content Publishing](user-guides/cli-commands.md)
+## 🔧 Development
 
-- **Markdown to Notion**: Automatic conversion and publishing
-- **Error Handling**: User-friendly error messages and guidance
-- **URL Return**: Real-time Notion page URLs after publication
+### Prerequisites
 
-## Core Documentation Sections
+- **Python 3.11+** (required)
+- **Docker & Docker Compose**
+- **PostgreSQL 14+**
+- **Redis 7+**
+- **API Keys**: OpenAI, Anthropic, GitHub
 
-### 🏗️ Architecture & Technical Design
+### Local Development Setup
 
-- **[System Architecture](architecture/)**: Core system design, patterns, and architectural decisions
-- **[API Reference](architecture/api-reference.md)**: Comprehensive API documentation with examples
-- **[Domain Models](architecture/domain-models.md)**: Data models and business logic specifications
-- **[Integration Patterns](architecture/mcp-integration-patterns.md)**: MCP and external system integration guides
+```bash
+# Verify Python version (must be 3.11+)
+python --version  # Should show Python 3.11.x
 
-### 💻 Development Resources
+# Clone and setup
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
 
-- **[Development Guidelines](development/)**: Coding standards, patterns, and best practices
-- **[Testing Strategy](development/TEST-GUIDE.md)**: Comprehensive testing framework and guidelines
-- **[Multi-Agent Coordination](development/HOW_TO_USE_MULTI_AGENT.md)**: Advanced AI-assisted development workflows
-- **[Session Management](development/session-management-protocols.md)**: Context preservation and continuity patterns
+# Set up Python virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-### 👥 User Guides
+# Install dependencies
+pip install -r requirements.txt
 
-- **[User Guides](user-guides/)**: Feature explanations and usage instructions
-- **[CLI Commands](user-guides/cli-commands.md)**: Command-line interface reference
-- **[GitHub Integration](user-guides/github-issue-creation.md)**: GitHub workflow integration
-- **[Conversation Memory](user-guides/conversation-memory-guide.md)**: Context management and conversation continuity
+# Copy environment template
+cp .env.example .env
+# Edit .env with your API keys and configuration
 
-### 🔧 Operations & Deployment
+# Start infrastructure services
+docker-compose up -d postgres redis
 
-- **[Deployment Guides](deployment/)**: Production deployment and configuration
-- **[Operations Documentation](operations/)**: Monitoring, alerting, and maintenance procedures
-- **[Performance Documentation](performance/)**: Benchmarks, optimization guides, and scaling strategies
-- **[Troubleshooting](troubleshooting.md)**: Common issues and solutions
+# Initialize the database
+python scripts/init_db.py
 
-## Key Features Overview
+# Start the development server
+python main.py
+```
 
-### 🧠 Issue Intelligence
+### Testing
 
-Advanced AI-powered analysis of GitHub issues with:
+```bash
+# Run tests
+pytest
 
-- Automated classification and priority assignment (95% accuracy)
-- Pattern recognition across project backlogs
-- Intelligent routing and workflow automation
-- Predictive analytics for issue lifecycle management
+# Run with coverage
+pytest --cov=services
 
-### 🤖 Enhanced Autonomy Framework
+# Run specific test suite
+pytest tests/conversation/ -v
+```
 
-Revolutionary multi-agent development system featuring:
+## 🤝 Contributing
 
-- Persistent context across development sessions
-- Autonomous sprint execution capabilities
-- Advanced session management with conversation memory
-- AI agent coordination for complex development tasks
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-### 🔗 Universal Integration
+### Development Workflow
 
-Seamless integration with existing development tools:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- **GitHub**: Real-time webhook processing and repository analytics
-- **Slack**: Interactive commands and team notifications
-- **MCP Protocol**: Model Context Protocol for AI agent coordination
-- **Custom APIs**: Flexible integration patterns for any workflow
+## 📄 License
 
-### 📈 Workflow Orchestration
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Intelligent automation of development processes:
+## 🆘 Support
 
-- Multi-step workflow automation with error handling
-- Background task processing and queue management
-- Natural language query processing and routing
-- Automated testing and deployment pipelines
+- **📚 Documentation**: [Complete docs at pmorgan.tech](https://pmorgan.tech)
+- **🐛 Issues**: [GitHub Issues](https://github.com/mediajunkie/piper-morgan-product/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/mediajunkie/piper-morgan-product/discussions)
+- **📧 Email**: [Contact us](mailto:support@pmorgan.tech)
 
-## Architecture Highlights
+## 🎉 Ready to Get Started?
 
-### Domain-Driven Design
+Choose your path:
 
-- **Clean Architecture**: Separated concerns with domain models driving implementation
-- **CQRS Pattern**: Command Query Responsibility Segregation for optimal performance
-- **Repository Pattern**: Data access abstraction with business logic separation
-- **Event-Driven**: Scalable event processing for system integration
+**[🚀 New User? Start Here](docs/user-guides/getting-started-conversational-ai.md)**
 
-### Performance & Scalability
+**[🔄 Existing User? Upgrade Here](docs/user-guides/upgrading-from-command-mode.md)**
 
-- **Async/Await**: Full asynchronous architecture using FastAPI
-- **Connection Pooling**: Optimized database and Redis connection management
-- **Horizontal Scaling**: Microservices ready with container orchestration
-- **Sub-200ms Response**: Optimized API performance for real-time operations
+**[📖 Want Examples? See Scenarios](docs/user-guides/conversation-scenario-examples.md)**
 
-### Testing Excellence
-
-- **599+ Unit Tests**: Comprehensive test coverage with continuous validation
-- **Integration Testing**: Real database testing with async fixtures
-- **Performance Testing**: Load testing and benchmarking suite
-- **End-to-End Testing**: Complete workflow validation
-
-## Technology Stack
-
-### Core Technologies
-
-- **Python 3.11+**: Modern async/await patterns with type hints
-- **FastAPI**: High-performance web framework with automatic documentation
-- **PostgreSQL 14+**: Production-ready database with advanced features
-- **Redis 6+**: Caching and message queuing for scalability
-- **Docker**: Containerization for consistent deployment environments
-
-### AI & Machine Learning
-
-- **Anthropic Claude**: Advanced language model integration
-- **OpenAI GPT**: Multi-model AI capabilities
-- **Custom ML Models**: Domain-specific classification and prediction
-- **MCP Protocol**: Model Context Protocol for agent coordination
-
-### Development Tools
-
-- **pytest**: Comprehensive testing framework with async support
-- **Alembic**: Database migration management
-- **Pydantic**: Data validation and settings management
-- **GitHub Actions**: Continuous integration and deployment
-
-## Getting Help
-
-### Documentation Navigation Tips
-
-1. **Start with [Getting Started](getting-started/)** based on your role (PM, Developer, or API Consumer)
-2. **Check [Status Dashboard](status/README.md)** for current system health and recent updates
-3. **Use [Architecture Documentation](architecture/)** for technical deep-dives
-4. **Refer to [User Guides](user-guides/)** for specific feature usage
-5. **Consult [Troubleshooting](troubleshooting.md)** for common issues
-
-### Support Channels
-
-- **GitHub Issues**: Primary support for bugs and feature requests
-- **Documentation**: Comprehensive guides for all features and workflows
-- **Developer Discord**: Community support (coming soon)
-- **Enterprise Support**: Dedicated support for production deployments
-
-### Contributing
-
-- **[Development Guidelines](development/dev-guidelines.md)**: Contribution standards and processes
-- **[Excellence Flywheel](development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)**: Core development methodology (mandatory reading)
-- **[Architecture Patterns](architecture/pattern-catalog.md)**: Implementation patterns and practices
-- **[Testing Requirements](development/TEST-GUIDE.md)**: Testing standards and procedures
-- **[Issue Templates](https://github.com/your-org/piper-morgan/issues/new/choose)**: Structured issue reporting
-
-## Project Status
-
-**Current Version**: 0.9.0 (Post-Methodology Architecture)
-**Development Status**: 🟢 Active Development
-**Production Readiness**: 🟡 90% Complete
-**Test Coverage**: 85%+ with 599+ tests
-**Documentation Coverage**: 75% complete
-
-### Recent Achievements
-
-- ✅ **Cascade Framework Implementation** - PM-137/138/139 methodology architecture with automatic enforcement
-- ✅ **Archaeological Method Proven** - 78% of integrations found pre-built, 12-minute implementation vs 2.5-hour rebuilds
-- ✅ **Intelligence Trifecta Complete** - Issue Intelligence, Document Memory, Calendar awareness (0.55s performance)
-- ✅ **Knowledge Publishing Pipeline** - Complete Notion integration for ADRs and Weekly Ships
-- ✅ **Sisyphean Solution** - Manual methodology burden reduced from 3+ hours to 15 minutes
-- ✅ **95% Coordination Efficiency** - Multi-agent development with systematic verification patterns
-- 🔄 Pattern Catalog alignment with core methodology in progress
-
-### Upcoming Milestones
-
-- **September 2025**: MVP Production Launch
-- **Q4 2025**: Scale & Optimize for enterprise workloads
-- **Q1 2026**: Platform Ecosystem with plugin architecture
-- **Q2 2026**: Innovation Lab with emerging technologies
+**[🔧 Technical Details? API Docs](docs/development/PM-034-conversation-api-documentation.md)**
 
 ---
 
-## About Piper Morgan
-
-Piper Morgan represents the next evolution in AI-assisted development platforms. Built with a foundation of excellence, verification-first methodology, and intelligent automation, it empowers development teams to build software with unprecedented efficiency and quality.
-
-Our mission is to create the world's most advanced AI development platform, where intelligent agents work seamlessly alongside human developers to deliver exceptional software solutions.
-
-_This documentation follows a three-tier architecture designed for progressive disclosure, ensuring information is accessible at the right level of detail for your specific needs._
+**Made with ❤️ by the Piper Morgan team**
