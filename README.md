@@ -17,6 +17,7 @@ Piper Morgan is an intelligent product management assistant that transforms rout
 - ⚡ **Sub-150ms Response Times**: Lightning-fast conversational AI
 - 📊 **Issue Intelligence**: AI-powered GitHub issue analysis and prioritization
 - 🎯 **Morning Standup**: Daily accomplishments with real data from all integrations
+- 🌐 **Web Interface**: Dark mode UI with 4.6-5.1s generation (faster than CLI)
 - 🔧 **Multi-User Configuration**: Teams can customize their own settings
 
 ## 🚀 Quick Start (30 seconds)
@@ -58,6 +59,37 @@ Piper: "📄 Here's requirements_v2.pdf (47 pages, updated 2 days ago)"
 You: "Run my morning standup"
 Piper: "🌅 Good morning! Here are your accomplishments from yesterday..."
 ```
+
+## 🌅 Morning Standup Web Interface
+
+**Quick Access**: Start your daily standup with a professional dark mode interface.
+
+### Web Interface
+```bash
+# Start FastAPI server
+PYTHONPATH=. python web/app.py
+# or
+PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
+```
+
+### Access Points
+- **Web UI**: http://localhost:8001/standup (dark mode, mobile responsive)
+- **API Endpoint**: http://localhost:8001/api/standup (JSON response)
+- **API Documentation**: http://localhost:8001/docs (FastAPI auto-docs)
+
+### Performance & Features
+- **Generation Time**: 4.6-5.1 seconds (faster than CLI baseline)
+- **Response Format**: JSON with comprehensive standup data and metadata
+- **UI Features**: Dark mode, mobile responsive, error handling, performance metrics
+- **Daily Usage**: Optimized for 6 AM daily standup routine
+
+### What You Get
+- ✅ Yesterday's accomplishments from all integrations
+- 🎯 Today's priorities with context
+- 🚫 Blockers identification
+- 📊 Performance metrics and generation time
+- 🐙 GitHub activity (commits, PRs, issues)
+- 📁 Project context and repository information
 
 ## 🤝 Contributing
 

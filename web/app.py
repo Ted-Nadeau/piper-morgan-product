@@ -4,13 +4,29 @@ Simple FastAPI app for interacting with the main Piper Morgan Platform API
 """
 
 import os
+import sys
+from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-# Configuration - CORRECT PORT
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8001")
+# Add project root to path for imports (same as CLI)
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from services.configuration.piper_config_loader import piper_config_loader
+from services.domain.user_preference_manager import UserPreferenceManager
+from services.features.morning_standup import MorningStandupWorkflow
+from services.integrations.github.github_agent import GitHubAgent
+from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.orchestration.session_persistence import SessionPersistenceManager
+
+# Server Configuration
+# NOTE: Use port 8001 (not 8000) to avoid Docker conflicts on this system
+DEFAULT_PORT = 8001
+API_BASE_URL = os.getenv("API_BASE_URL", f"http://localhost:{DEFAULT_PORT}")
 
 # Create FastAPI app
 app = FastAPI(title="Piper Morgan UI", description="Web Interface for the Piper Morgan Platform")
@@ -412,3 +428,228 @@ async def home(request: Request):
     html_content = html_template.replace("API_BASE_URL_PLACEHOLDER", API_BASE_URL)
 
     return HTMLResponse(content=html_content)
+
+
+@app.get("/api/standup")
+async def morning_standup_api():
+    """API endpoint for morning standup data"""
+    try:
+        # Load configuration (same as CLI)
+        config = piper_config_loader.load_standup_config()
+        user_id = config.get("user_id", "default_user")
+
+        # Initialize dependencies (same as CLI)
+        preference_manager = UserPreferenceManager()
+        session_manager = SessionPersistenceManager(preference_manager)
+        github_agent = GitHubAgent()
+        canonical_handlers = CanonicalHandlers()
+
+        # Use same orchestrator as CLI
+        workflow = MorningStandupWorkflow(
+            preference_manager=preference_manager,
+            session_manager=session_manager,
+            github_agent=github_agent,
+            canonical_handlers=canonical_handlers,
+        )
+
+        # Execute standup (same logic as CLI)
+        result = await workflow.generate_standup(user_id)
+
+        return {
+            "status": "success",
+            "data": {
+                "generation_time_ms": result.generation_time_ms,
+                "time_saved_minutes": result.time_saved_minutes,
+                "yesterday_accomplishments": result.yesterday_accomplishments,
+                "today_priorities": result.today_priorities,
+                "blockers": result.blockers,
+                "context_source": result.context_source,
+                "github_activity": result.github_activity,
+                "user_id": user_id,
+            },
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "source": "api",
+                "version": "1.0",
+                "performance": {
+                    "target_ms": 10000,
+                    "status": "✅ FAST" if result.generation_time_ms < 6000 else "⚠️ SLOW",
+                    "vs_cli_baseline": "faster" if result.generation_time_ms < 5500 else "slower",
+                },
+                "project_context": {
+                    "name": "piper-morgan",
+                    "display_name": "Piper Morgan AI PM Assistant",
+                    "github_repo": result.github_activity.get(
+                        "repo", "mediajunkie/piper-morgan-product"
+                    ),
+                    "commit_count": len(result.github_activity.get("commits", [])),
+                    "branch": "main",
+                },
+                "daily_usage": {
+                    "recommended_time": "06:00 PT",
+                    "cache_expires": datetime.now()
+                    .replace(hour=6, minute=0, second=0, microsecond=0)
+                    .isoformat(),
+                    "next_refresh": "Tomorrow 06:00 PT",
+                },
+            },
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "source": "api",
+                "version": "1.0",
+                "error_type": type(e).__name__,
+                "recovery_suggestions": [
+                    "Check if all services are running (GitHub API, etc.)",
+                    "Verify configuration in config/PIPER.user.md",
+                    "Try again in a few moments",
+                    "Check server logs for detailed error information",
+                ],
+                "support": {
+                    "documentation": "https://pmorgan.tech",
+                    "github_issues": "https://github.com/mediajunkie/piper-morgan-product/issues",
+                },
+            },
+        }
+
+
+@app.get("/standup")
+async def standup_ui():
+    """Simple UI for standup display"""
+    return HTMLResponse(
+        content="""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Morning Standup - Piper Morgan</title>
+        <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+        <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+            .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { text-align: center; margin-bottom: 30px; }
+            .header h1 { color: #2c3e50; margin: 0; font-size: 2.5em; }
+            .loading { text-align: center; color: #7f8c8d; font-style: italic; }
+            .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .success { color: #2e7d32; }
+            .section { margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+            .section h2 { color: #34495e; margin-top: 0; }
+            .metrics { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
+            .metric { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            .metric-value { font-size: 2em; font-weight: bold; color: #27ae60; }
+            .metric-label { color: #7f8c8d; margin-top: 5px; }
+            pre { background: #2c3e50; color: white; padding: 15px; border-radius: 5px; overflow-x: auto; }
+            button { background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+            button:hover { background: #2980b9; }
+            button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🌅 Morning Standup</h1>
+                <p>Your daily accomplishments and priorities</p>
+                <button onclick="loadStandup()" id="loadBtn">Generate Standup</button>
+            </div>
+
+            <div id="results"></div>
+        </div>
+
+        <script>
+            async function loadStandup() {
+                const loadBtn = document.getElementById('loadBtn');
+                const results = document.getElementById('results');
+
+                // Show loading state
+                loadBtn.disabled = true;
+                loadBtn.textContent = 'Loading...';
+                results.innerHTML = '<div class="loading">⏱️ Generating your morning standup...</div>';
+
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch('/api/standup');
+                    const data = await response.json();
+                    const endTime = Date.now();
+
+                    if (data.status === 'success') {
+                        results.innerHTML = `
+                            <div class="success">✅ Standup generated successfully!</div>
+
+                            <div class="metrics">
+                                <div class="metric">
+                                    <div class="metric-value">${data.data.generation_time_ms || 'N/A'}ms</div>
+                                    <div class="metric-label">Generation Time</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">${data.data.time_saved_minutes || 'N/A'}</div>
+                                    <div class="metric-label">Minutes Saved</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">${endTime - startTime}ms</div>
+                                    <div class="metric-label">API Response Time</div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <h2>📋 Yesterday's Accomplishments</h2>
+                                <pre>${JSON.stringify(data.data.accomplishments || [], null, 2)}</pre>
+                            </div>
+
+                            <div class="section">
+                                <h2>🎯 Today's Priorities</h2>
+                                <pre>${JSON.stringify(data.data.priorities || [], null, 2)}</pre>
+                            </div>
+
+                            <div class="section">
+                                <h2>💡 Insights</h2>
+                                <pre>${JSON.stringify(data.data.insights || [], null, 2)}</pre>
+                            </div>
+
+                            <div class="section">
+                                <h2>📊 Full Response</h2>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </div>
+                        `;
+                    } else {
+                        results.innerHTML = `
+                            <div class="error">❌ Error generating standup: ${data.error}</div>
+                            <div class="section">
+                                <h2>Debug Information</h2>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    results.innerHTML = `
+                        <div class="error">❌ Network error: ${error.message}</div>
+                        <div class="section">
+                            <h2>Debug Information</h2>
+                            <pre>Error: ${error.toString()}</pre>
+                        </div>
+                    `;
+                } finally {
+                    loadBtn.disabled = false;
+                    loadBtn.textContent = 'Generate Standup';
+                }
+            }
+        </script>
+    </body>
+    </html>
+    """
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    print(f"🚀 Starting Piper Morgan Web Interface on http://localhost:{DEFAULT_PORT}")
+    print(f"📊 Standup API: http://localhost:{DEFAULT_PORT}/api/standup")
+    print(f"🌅 Standup UI: http://localhost:{DEFAULT_PORT}/standup")
+    print(f"📖 API Docs: http://localhost:{DEFAULT_PORT}/docs")
+    print(
+        f"\n🔧 Server Command: PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port {DEFAULT_PORT}"
+    )
+    uvicorn.run(app, host="127.0.0.1", port=DEFAULT_PORT)
