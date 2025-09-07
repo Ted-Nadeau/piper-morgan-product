@@ -18,6 +18,7 @@ from github.Repository import Repository
 
 from services.api.errors import GitHubAuthFailedError, GitHubRateLimitError
 from services.config.github_config import GitHubConfiguration
+from services.configuration.piper_config_loader import PiperConfigLoader
 
 
 class GitHubAgent:
@@ -505,3 +506,95 @@ class GitHubAgent:
             raise GitHubRateLimitError(retry_after=int(retry_after) // 60) from e
         except Exception as e:
             raise ConnectionError(f"Failed to create PM issue {pm_number}: {e}") from e
+
+    async def get_recent_activity(self, days: int = 7) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Get recent GitHub activity for standup (commits, PRs, issues)
+
+        Args:
+            days: Number of days to look back for activity
+
+        Returns:
+            Dict with keys: commits, prs, issues_closed, issues_created
+        """
+        try:
+            from datetime import datetime, timedelta
+
+            config_loader = PiperConfigLoader()
+            github_config = config_loader.load_github_config()
+            repo_name = github_config.default_repository
+            repo = self.client.get_repo(repo_name)
+
+            since = datetime.now() - timedelta(days=days)
+
+            # Get recent commits
+            commits = []
+            try:
+                recent_commits = repo.get_commits(since=since)
+                for commit in list(recent_commits)[:10]:  # Limit to 10 commits
+                    commits.append(
+                        {
+                            "sha": commit.sha[:8],
+                            "message": commit.commit.message.split("\n")[0],  # First line only
+                            "author": commit.commit.author.name,
+                            "date": commit.commit.author.date.isoformat(),
+                            "url": commit.html_url,
+                        }
+                    )
+            except Exception as e:
+                print(f"Warning: Could not fetch commits: {e}")
+
+            # Get recent pull requests
+            prs = []
+            try:
+                recent_prs = repo.get_pulls(state="all", sort="updated", direction="desc")
+                for pr in list(recent_prs)[:5]:  # Limit to 5 PRs
+                    if pr.updated_at >= since:
+                        prs.append(
+                            {
+                                "number": pr.number,
+                                "title": pr.title,
+                                "state": pr.state,
+                                "author": pr.user.login,
+                                "updated_at": pr.updated_at.isoformat(),
+                                "url": pr.html_url,
+                            }
+                        )
+            except Exception as e:
+                print(f"Warning: Could not fetch PRs: {e}")
+
+            # Get recent issues (created and closed)
+            issues_created = []
+            issues_closed = []
+            try:
+                recent_issues = repo.get_issues(state="all", sort="updated", direction="desc")
+                for issue in list(recent_issues)[:10]:  # Limit to 10 issues
+                    if issue.pull_request:  # Skip PRs (they appear as issues too)
+                        continue
+
+                    issue_data = {
+                        "number": issue.number,
+                        "title": issue.title,
+                        "state": issue.state,
+                        "author": issue.user.login,
+                        "created_at": issue.created_at.isoformat(),
+                        "url": issue.html_url,
+                    }
+
+                    if issue.created_at >= since:
+                        issues_created.append(issue_data)
+                    if issue.closed_at and issue.closed_at >= since:
+                        issues_closed.append(issue_data)
+            except Exception as e:
+                print(f"Warning: Could not fetch issues: {e}")
+
+            return {
+                "commits": commits,
+                "prs": prs,
+                "issues_closed": issues_closed,
+                "issues_created": issues_created,
+            }
+
+        except Exception as e:
+            print(f"GitHub activity error: {e}")
+            return {"commits": [], "prs": [], "issues_closed": [], "issues_created": []}

@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.features.issue_intelligence import IssueIntelligenceCanonicalQueryEngine
 from services.integrations.github.github_agent import GitHubAgent
@@ -63,13 +64,18 @@ class MorningStandupWorkflow:
         preference_manager: UserPreferenceManager,
         session_manager: SessionPersistenceManager,
         github_agent: GitHubAgent,
-        user_id: str = "xian",
+        user_id: str = None,
         canonical_handlers: Optional[CanonicalHandlers] = None,
     ):
         self.preference_manager = preference_manager
         self.session_manager = session_manager
         self.github_agent = github_agent
-        self.user_id = user_id
+        # Load user_id from configuration if not provided
+        if user_id is None:
+            standup_config = piper_config_loader.load_standup_config()
+            self.user_id = standup_config["user_identity"]["user_id"]
+        else:
+            self.user_id = user_id
         self.canonical_handlers = canonical_handlers
 
     async def canonical_query_integration(self, query: str, user_id: str) -> Dict[str, Any]:
@@ -189,6 +195,10 @@ class MorningStandupWorkflow:
         # Generate today's priorities
         today_priorities = []
 
+        # Load standup configuration for content preferences
+        standup_config = piper_config_loader.load_standup_config()
+        fallback_priorities = standup_config["content"]["fallback_priorities"]
+
         # From active repos and context
         active_repos = session_context.get("active_repos", ["piper-morgan"])
         for repo in active_repos:
@@ -200,13 +210,9 @@ class MorningStandupWorkflow:
             if status not in ["resolved", "complete"]:
                 today_priorities.append(f"🔄 Complete {area}: {status}")
 
-        # Default priorities if none found
+        # Default priorities if none found - use configuration
         if not today_priorities:
-            today_priorities = [
-                "🎯 Morning standup MVP completion",
-                "📊 Review project status",
-                "🚀 Plan next development sprint",
-            ]
+            today_priorities = [f"🎯 {priority}" for priority in fallback_priorities]
 
         # Check for blockers
         blockers = []
