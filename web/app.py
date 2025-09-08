@@ -18,7 +18,7 @@ sys.path.insert(0, str(project_root))
 
 from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.user_preference_manager import UserPreferenceManager
-from services.features.morning_standup import MorningStandupWorkflow
+from services.features.morning_standup import MorningStandupWorkflow, StandupIntegrationError
 from services.integrations.github.github_agent import GitHubAgent
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
