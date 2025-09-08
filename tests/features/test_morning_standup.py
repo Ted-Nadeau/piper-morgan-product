@@ -301,8 +301,10 @@ class TestStandupDataStructures:
 class TestStandupErrorHandling:
     """Test error handling and graceful degradation"""
 
-    async def test_github_api_failure_graceful_degradation(self):
-        """Test graceful degradation when GitHub API fails"""
+    async def test_github_api_failure_honest_error_reporting(self):
+        """Test honest error reporting when GitHub API fails"""
+        from services.features.morning_standup import StandupIntegrationError
+
         mock_preference_manager = AsyncMock()
         mock_session_manager = AsyncMock()
         mock_github_agent = AsyncMock()
@@ -321,13 +323,46 @@ class TestStandupErrorHandling:
             github_agent=mock_github_agent,
         )
 
-        # Should not fail, should gracefully degrade
-        result = await workflow.generate_standup("xian")
+        # Should fail with clear error instead of graceful degradation
+        with pytest.raises(StandupIntegrationError) as exc_info:
+            await workflow.generate_standup("xian")
 
-        assert isinstance(result, StandupResult)
-        assert result.github_activity == {}  # Empty due to API failure
-        assert len(result.yesterday_accomplishments) > 0  # Still has session context
-        assert "github-unavailable" in result.performance_metrics.get("warnings", [])
+        error = exc_info.value
+        assert error.service == "standup"
+        assert "API rate limit" in str(error)
+        assert "Check GitHub token in PIPER.user.md configuration" in error.suggestion
+
+    async def test_github_method_missing_error_reporting(self):
+        """Test honest error reporting when GitHub agent lacks get_recent_activity method"""
+        from services.features.morning_standup import StandupIntegrationError
+
+        mock_preference_manager = AsyncMock()
+        mock_session_manager = AsyncMock()
+        mock_github_agent = AsyncMock()
+
+        # Remove get_recent_activity method to simulate missing method
+        del mock_github_agent.get_recent_activity
+
+        # Should still have session context
+        mock_session_manager.get_session_context.return_value = {
+            "yesterday_work": ["database connectivity", "documentation audit"]
+        }
+
+        workflow = MorningStandupWorkflow(
+            preference_manager=mock_preference_manager,
+            session_manager=mock_session_manager,
+            github_agent=mock_github_agent,
+        )
+
+        # Should fail with clear error about missing method
+        with pytest.raises(StandupIntegrationError) as exc_info:
+            await workflow.generate_standup("xian")
+
+        error = exc_info.value
+        assert error.service == "standup"
+        assert "not fully implemented" in str(error)
+        assert "get_recent_activity method missing" in str(error)
+        assert "Check GitHub token in PIPER.user.md configuration" in error.suggestion
 
     async def test_empty_context_handling(self):
         """Test handling when no previous context exists"""
