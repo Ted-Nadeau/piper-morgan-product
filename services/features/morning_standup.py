@@ -21,6 +21,15 @@ from services.knowledge_graph.document_service import get_document_service
 from services.orchestration.session_persistence import SessionPersistenceManager
 
 
+class StandupIntegrationError(Exception):
+    """Raised when standup integrations fail and cannot provide real data"""
+
+    def __init__(self, message: str, service: str = None, suggestion: str = None):
+        self.service = service
+        self.suggestion = suggestion
+        super().__init__(message)
+
+
 @dataclass
 class StandupContext:
     """Context for generating morning standup"""
@@ -123,8 +132,18 @@ class MorningStandupWorkflow:
             return result
 
         except Exception as e:
-            # Graceful degradation
-            return await self._generate_fallback_standup(user_id, start_time, str(e))
+            # No fallbacks - fail honestly
+            error_msg = f"Morning standup generation failed: {str(e)}"
+            if "github" in str(e).lower():
+                suggestion = "Check GitHub token in PIPER.user.md configuration"
+            elif "session" in str(e).lower():
+                suggestion = "Verify session persistence service is running"
+            else:
+                suggestion = "Check service logs for integration details"
+
+            raise StandupIntegrationError(
+                f"{error_msg}\nSuggestion: {suggestion}", service="standup", suggestion=suggestion
+            )
 
     async def _get_session_context(self, user_id: str) -> Dict[str, Any]:
         """Get session context using SessionPersistenceManager"""
@@ -242,33 +261,6 @@ class MorningStandupWorkflow:
                 "content_generation_ms": generation_time_ms // 3,
             },
             time_saved_minutes=time_saved,
-        )
-
-    async def _generate_fallback_standup(
-        self, user_id: str, start_time: float, error: str
-    ) -> StandupResult:
-        """Generate fallback standup when errors occur"""
-
-        generation_time_ms = int((time.time() - start_time) * 1000)
-
-        return StandupResult(
-            user_id=user_id,
-            generated_at=datetime.now(),
-            generation_time_ms=generation_time_ms,
-            yesterday_accomplishments=["❌ Unable to retrieve full context"],
-            today_priorities=[
-                "🔧 Debug standup generation",
-                "📋 Review yesterday's work manually",
-                "🎯 Continue planned tasks",
-            ],
-            blockers=[f"⚠️ System error: {error}"],
-            context_source="default",
-            github_activity={},
-            performance_metrics={
-                "total_time_ms": generation_time_ms,
-                "warnings": ["github-unavailable", "context-unavailable"],
-            },
-            time_saved_minutes=5,  # Minimal savings in error case
         )
 
     def _calculate_time_savings(self, result: StandupResult) -> int:
