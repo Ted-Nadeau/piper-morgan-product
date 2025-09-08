@@ -595,17 +595,21 @@ async def standup_ui():
 
                             <div class="section">
                                 <h2>📋 Yesterday's Accomplishments</h2>
-                                <pre>${JSON.stringify(data.data.accomplishments || [], null, 2)}</pre>
+                                <ul>${(data.data.yesterday_accomplishments || []).map(item =>
+                                  `<li>${item}</li>`).join('')}</ul>
                             </div>
 
                             <div class="section">
                                 <h2>🎯 Today's Priorities</h2>
-                                <pre>${JSON.stringify(data.data.priorities || [], null, 2)}</pre>
+                                <ul>${(data.data.today_priorities || []).map(item =>
+                                  `<li>${item}</li>`).join('')}</ul>
                             </div>
 
                             <div class="section">
-                                <h2>💡 Insights</h2>
-                                <pre>${JSON.stringify(data.data.insights || [], null, 2)}</pre>
+                                <h2>⚠️ Blockers</h2>
+                                ${data.data.blockers && data.data.blockers.length > 0
+                                  ? `<ul>${data.data.blockers.map(item => `<li>${item}</li>`).join('')}</ul>`
+                                  : '<p>✅ No blockers identified</p>'}
                             </div>
 
                             <div class="section">
