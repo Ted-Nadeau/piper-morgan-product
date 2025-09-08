@@ -185,10 +185,19 @@ class MorningStandupWorkflow:
             if hasattr(self.github_agent, "get_recent_activity"):
                 return await self.github_agent.get_recent_activity()
             else:
-                # Mock for existing GitHubAgent that may not have this method
-                return {"commits": [], "prs": [], "issues_closed": [], "issues_created": []}
-        except Exception:
-            return {}
+                raise StandupIntegrationError(
+                    "GitHub integration not fully implemented - get_recent_activity method missing",
+                    service="github",
+                    suggestion="Update GitHubAgent to include get_recent_activity method",
+                )
+        except StandupIntegrationError:
+            raise  # Re-raise our own errors
+        except Exception as e:
+            raise StandupIntegrationError(
+                f"GitHub integration failed: {str(e)}",
+                service="github",
+                suggestion="Check GitHub token and network connectivity",
+            )
 
     async def _generate_standup_content(
         self,
