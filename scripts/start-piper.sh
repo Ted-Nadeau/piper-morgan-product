@@ -64,7 +64,7 @@ echo "⏳ Waiting for backend to start..."
 sleep 5
 
 # Check backend health
-if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+if curl -s http://localhost:8001/health > /dev/null 2>&1; then
     echo "✅ Backend is healthy"
 else
     echo "❌ Backend health check failed"
@@ -74,8 +74,10 @@ fi
 
 # Start frontend
 echo "🌐 Starting frontend..."
-echo "Starting web/app.py..."
-nohup python web/app.py > logs/frontend.log 2>&1 &
+echo "Starting web frontend with uvicorn..."
+# Export environment variables to ensure they're passed to subprocess
+export GITHUB_TOKEN="$GITHUB_TOKEN"
+nohup bash -c "export GITHUB_TOKEN='$GITHUB_TOKEN' && cd web && python -m uvicorn app:app --port 8081" > logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "Frontend PID: $FRONTEND_PID"
 
@@ -117,7 +119,7 @@ if [ $? -eq 0 ]; then
     echo "📋 Quick guidance: ./scripts/branch-guidance.sh"
 fi
 echo "🌐 Frontend: http://localhost:8081/"
-echo "🔧 Backend: http://localhost:8000/"
+echo "🔧 Backend: http://localhost:8001/"
 echo "📊 Health: http://localhost:8081/health"
 echo ""
 echo "💡 Tip: Bookmark http://localhost:8081/ for quick access"
