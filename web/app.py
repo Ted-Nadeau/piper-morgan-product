@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -22,6 +22,7 @@ from services.features.morning_standup import MorningStandupWorkflow, StandupInt
 from services.integrations.github.github_agent import GitHubAgent
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
+from services.utils.standup_formatting import format_standup_metrics
 
 # Server Configuration
 # NOTE: Use port 8001 (not 8000) to avoid Docker conflicts on this system
@@ -431,7 +432,9 @@ async def home(request: Request):
 
 
 @app.get("/api/standup")
-async def morning_standup_api():
+async def morning_standup_api(
+    format: str = Query("raw", description="Response format: 'raw' or 'human-readable'")
+):
     """API endpoint for morning standup data"""
     try:
         # Load configuration (same as CLI)
@@ -455,22 +458,36 @@ async def morning_standup_api():
         # Execute standup (same logic as CLI)
         result = await workflow.generate_standup(user_id)
 
+        # Prepare base data
+        base_data = {
+            "generation_time_ms": result.generation_time_ms,
+            "time_saved_minutes": result.time_saved_minutes,
+            "yesterday_accomplishments": result.yesterday_accomplishments,
+            "today_priorities": result.today_priorities,
+            "blockers": result.blockers,
+            "context_source": result.context_source,
+            "github_activity": result.github_activity,
+            "user_id": user_id,
+        }
+
+        # Add human-readable formatting if requested
+        if format == "human-readable":
+            formatted_metrics = format_standup_metrics(
+                {
+                    "generation_time_ms": result.generation_time_ms,
+                    "time_saved_minutes": result.time_saved_minutes,
+                }
+            )
+            base_data.update(formatted_metrics)
+
         return {
             "status": "success",
-            "data": {
-                "generation_time_ms": result.generation_time_ms,
-                "time_saved_minutes": result.time_saved_minutes,
-                "yesterday_accomplishments": result.yesterday_accomplishments,
-                "today_priorities": result.today_priorities,
-                "blockers": result.blockers,
-                "context_source": result.context_source,
-                "github_activity": result.github_activity,
-                "user_id": user_id,
-            },
+            "data": base_data,
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
                 "source": "api",
                 "version": "1.0",
+                "format": format,
                 "performance": {
                     "target_ms": 10000,
                     "status": "✅ FAST" if result.generation_time_ms < 6000 else "⚠️ SLOW",
@@ -570,7 +587,7 @@ async def standup_ui():
 
                 try {
                     const startTime = Date.now();
-                    const response = await fetch('/api/standup');
+                    const response = await fetch('/api/standup?format=human-readable');
                     const data = await response.json();
                     const endTime = Date.now();
 
@@ -580,12 +597,16 @@ async def standup_ui():
 
                             <div class="metrics">
                                 <div class="metric">
-                                    <div class="metric-value">${data.data.generation_time_ms || 'N/A'}ms</div>
+                                    <div class="metric-value">${data.data.generation_time_with_context || data.data.generation_time_formatted || (data.data.generation_time_ms + 'ms')}</div>
                                     <div class="metric-label">Generation Time</div>
                                 </div>
                                 <div class="metric">
-                                    <div class="metric-value">${data.data.time_saved_minutes || 'N/A'}</div>
-                                    <div class="metric-label">Minutes Saved</div>
+                                    <div class="metric-value">${data.data.time_saved_formatted || (data.data.time_saved_minutes + ' min')}</div>
+                                    <div class="metric-label">Time Saved</div>
+                                </div>
+                                <div class="metric">
+                                    <div class="metric-value">${data.data.efficiency_multiplier || 'N/A'}</div>
+                                    <div class="metric-label">Efficiency</div>
                                 </div>
                                 <div class="metric">
                                     <div class="metric-value">${endTime - startTime}ms</div>
