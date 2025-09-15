@@ -4,7 +4,7 @@
 
 ## Organization
 
-### **Established Decision Patterns** ([./established/](./established/))
+### **Established Decision Patterns** (Established (coming soon))
 
 Received wisdom and best practices for decision-making that we consciously adopted and applied.
 

@@ -127,10 +127,10 @@ docs/development/
 ## 🔗 **Related Documentation**
 
 - [Main README](/README.md) - Project overview and achievements
-- [CLI Standup Implementation](/development/CLI_STANDUP_IMPLEMENTATION.md) - Technical implementation
-- [Morning Standup MVP Guide](/development/MORNING_STANDUP_MVP_GUIDE.md) - User guide
-- [Multi-Agent Integration](/development/MULTI_AGENT_INTEGRATION_GUIDE.md) - Coordination guide
-- [Database Integration](/development/DATABASE_INTEGRATION_GUIDE.md) - Infrastructure guide
+- [CLI Standup Implementation](./CLI_STANDUP_IMPLEMENTATION.md) - Technical implementation
+- [Morning Standup MVP Guide](./MORNING_STANDUP_MVP_GUIDE.md) - User guide
+- [Multi-Agent Integration](./MULTI_AGENT_INTEGRATION_GUIDE.md) - Coordination guide
+- [Database Integration](./DATABASE_INTEGRATION_GUIDE.md) - Infrastructure guide
 
 ---
 

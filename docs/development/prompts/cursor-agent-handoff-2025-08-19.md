@@ -96,7 +96,7 @@ _Successor Agent: Cursor Agent (Next session)_
 
 ### Session Log
 
-- **Location**: `docs/development/session-logs/2025-08-19-cursor-log.md`
+- **Location**: `development/session-logs/2025-08-19-cursor-log.md`
 - **Status**: Updated with assessment findings and handoff note
 
 ### Assessment Results

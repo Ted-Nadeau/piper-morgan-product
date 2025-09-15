@@ -94,7 +94,7 @@ Slack Webhook → Spatial Adapter → Spatial Event → Response Handler → Int
 - `services/integrations/slack/webhook_router.py` - Spatial adapter integration
 - `services/intent_service/classifier.py` - Spatial context support
 - `services/orchestration/engine.py` - Response flow integration
-- `docs/development/session-logs/2025-07-28-cursor-log-2.md` - Session documentation
+- `development/session-logs/2025-07-28-cursor-log-2.md` - Session documentation
 
 ## Current Status
 
@@ -151,7 +151,7 @@ Slack Webhook → Spatial Adapter → Spatial Event → Response Handler → Int
 
 ## Session Logs
 
-- **Primary Log**: `docs/development/session-logs/2025-07-28-cursor-log-2.md`
+- **Primary Log**: `development/session-logs/2025-07-28-cursor-log-2.md`
 - **Detailed Progress**: All phases documented with implementation details
 - **Technical Decisions**: Architecture choices and rationale documented
 

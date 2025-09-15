@@ -137,7 +137,7 @@ python cli/commands/notion.py test-config --database adrs --parent default
 
 - **Technical Debt**: `docs/technical-debt/PM-132-known-issues.md`
 - **Child Issues**: PM-133, PM-134, PM-135, PM-136
-- **Session Log**: `docs/development/session-logs/2025-08-30-1029-cursor-log.md`
+- **Session Log**: `development/session-logs/2025-08-30-1029-cursor-log.md`
 
 ## 🎉 Conclusion
 

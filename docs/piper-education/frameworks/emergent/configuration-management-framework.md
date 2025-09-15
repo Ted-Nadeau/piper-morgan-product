@@ -661,4 +661,4 @@ The Configuration Management Framework is essential for building reliable, deplo
 
 ---
 
-**Related**: [Error Handling Framework](./error-handling-framework.md), [Verification-First Pattern](../decision-patterns/emergent/verification-first-pattern.md)
+**Related**: [Error Handling Framework](./error-handling-framework.md), [Verification-First Pattern](../../decision-patterns/emergent/verification-first-pattern.md)

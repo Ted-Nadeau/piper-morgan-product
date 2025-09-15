@@ -22,11 +22,11 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from config.notion_config import NotionConfig
+from services.domain.notion_domain_service import NotionDomainService
 from services.features.notion_queries import (
     NotionCanonicalQueryEngine,
     enhance_with_notion_intelligence,
 )
-from services.integrations.mcp.notion_adapter import NotionMCPAdapter
 from services.intelligence.spatial.notion_spatial import NotionSpatialIntelligence
 
 
@@ -50,7 +50,7 @@ class NotionCommand:
     def __init__(self):
         """Initialize the Notion command with required services"""
         self.config = NotionConfig()
-        self.adapter = NotionMCPAdapter()
+        self.notion_domain_service = NotionDomainService()
         self.spatial_intelligence = NotionSpatialIntelligence()
 
     def print_colored(self, text: str, color: str = "reset", bold: bool = False) -> None:
@@ -119,12 +119,12 @@ class NotionCommand:
 
         # Adapter Status
         self.print_section("Adapter Status", "blue")
-        if self.adapter.is_configured():
-            self.print_success("NotionMCPAdapter initialized")
+        if self.notion_domain_service.is_configured():
+            self.print_success("NotionDomainService initialized")
 
             # Test connection
             try:
-                connected = await self.adapter.connect()
+                connected = await self.notion_domain_service.connect()
                 if connected:
                     self.print_success("Connection test successful")
                 else:
@@ -132,7 +132,7 @@ class NotionCommand:
             except Exception as e:
                 self.print_error(f"Connection error: {e}")
         else:
-            self.print_warning("NotionMCPAdapter not configured")
+            self.print_warning("NotionDomainService not configured")
 
         # Setup Instructions
         if not config_status["fully_configured"]:

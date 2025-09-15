@@ -274,7 +274,7 @@ Continue with Deployment
 
 ```bash
 # Deploy with automatic database startup
-./scripts/deploy_multi_agent_coordinator.sh
+../scripts/deploy_multi_agent_coordinator.sh
 ```
 
 **Expected Output**:
@@ -300,7 +300,7 @@ Continue with Deployment
 
 ```bash
 # If database is already running
-./scripts/deploy_multi_agent_coordinator.sh
+../scripts/deploy_multi_agent_coordinator.sh
 ```
 
 **Expected Output**:
@@ -317,7 +317,7 @@ Continue with Deployment
 
 ```bash
 # If Docker is not available
-./scripts/deploy_multi_agent_coordinator.sh
+../scripts/deploy_multi_agent_coordinator.sh
 ```
 
 **Expected Output**:

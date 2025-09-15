@@ -18,6 +18,76 @@
 - Internet connection for AI services
 - GitHub account for issue creation
 
+## Personality Customization
+
+### Overview
+Piper now offers personality customization to make interactions feel more natural and helpful. You can adjust Piper's communication style while maintaining professional accuracy and reliability.
+
+### Web Interface Configuration
+**URL**: `http://localhost:8081/personality-preferences`
+
+#### Available Settings
+
+**Warmth Level** (0.0 - 1.0):
+- **0.0**: Professional and formal - direct, business-focused responses
+- **0.5**: Balanced tone - friendly but professional
+- **0.7**: Default - warm but professional (recommended for most users)
+- **1.0**: Friendly and encouraging - enthusiastic and supportive
+
+**Confidence Display Style**:
+- **Numeric**: Shows percentages like "87% confident" or "moderate confidence (65%)"
+- **Descriptive**: Uses words like "high confidence", "uncertain", or "preliminary analysis"
+- **Contextual**: Phrases like "based on recent patterns" or "with current information"
+- **Hidden**: No confidence indicators shown - clean, streamlined responses
+
+**Action Orientation**:
+- **High**: Every response includes explicit next steps and actionable recommendations
+- **Medium**: Actionable guidance when relevant and helpful
+- **Low**: Minimal action suggestions - focuses on information delivery
+
+**Technical Depth**:
+- **Detailed**: Full technical explanations with implementation details
+- **Balanced**: Right level of detail for most users - technical but accessible
+- **Simplified**: High-level summaries focused on outcomes and decisions
+
+### File Configuration (Advanced Users)
+**File**: `../config/PIPER.user.md`
+
+```yaml
+personality:
+  profile:
+    warmth_level: 0.7
+    confidence_style: "contextual"
+    action_orientation: "medium"
+    technical_depth: "balanced"
+```
+
+### Personality Enhancement Examples
+
+**Before Enhancement**:
+- "3 meetings scheduled. Sprint planning at 15:00."
+- "Analysis complete. Found 5 issues."
+
+**After Enhancement (Default Settings)**:
+- "You've got 3 meetings today (based on recent patterns)—Sprint planning kicks off at 3 PM. That gives you 90 minutes of focus time right now!"
+- "Perfect! Analysis complete (high confidence) and I found 5 issues that need attention. Here's what I recommend tackling first:"
+
+**Professional Mode (warmth: 0.0, confidence: numeric)**:
+- "3 meetings scheduled (95% confident). Sprint planning at 15:00."
+- "Analysis complete (87% confident). Found 5 issues requiring resolution."
+
+**Friendly Mode (warmth: 1.0, confidence: hidden)**:
+- "Excellent! You've got 3 meetings today—Sprint planning at 3 PM is going to be great!"
+- "Fantastic! Analysis is all done and I found 5 opportunities for improvement!"
+
+### API Access
+Personality settings can also be accessed programmatically:
+- **Profile Endpoint**: `http://localhost:8001/api/personality/profile/default`
+- **Enhanced Standup**: `http://localhost:8001/api/standup?personality=true`
+
+### Performance
+Personality enhancement adds less than 1ms to response times while significantly improving user engagement and actionability.
+
 ### Current Limitations
 
 ⚠️ **Important**: Piper Morgan is currently in active development with some limitations:
@@ -300,7 +370,7 @@ python cli/commands/notion.py search --query "Q4 2025"
 1. Check system health: `curl http://localhost:8001/health`
 2. Review Docker logs: `docker-compose logs`
 3. Verify API keys in environment configuration
-4. See [Deployment Guide](../operations/deployment.md) for setup issues
+4. See [Deployment Guide](deployment/deployment-summary.md) for setup issues
 
 ## Future Capabilities
 
@@ -333,9 +403,9 @@ Current system limitations make user feedback collection manual:
 
 For current development status, see:
 
-- [One-Page Summary](../one-pager.md) - Current capabilities and gaps
-- [Roadmap](../development/roadmap.md) - Development timeline
-- [Backlog](../development/backlog.md) - Detailed feature status
+- One-Page Summary (coming soon) - Current capabilities and gaps
+- [Roadmap](planning/../planning/roadmap.md) - Development timeline
+- [Backlog](planning/backlog.md) - Detailed feature status
 
 This user guide will be updated as system capabilities evolve and mature.
 

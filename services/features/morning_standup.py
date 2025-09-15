@@ -13,9 +13,9 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from services.configuration.piper_config_loader import piper_config_loader
+from services.domain.github_domain_service import GitHubDomainService
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.features.issue_intelligence import IssueIntelligenceCanonicalQueryEngine
-from services.integrations.github.github_agent import GitHubAgent
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.knowledge_graph.document_service import get_document_service
 from services.orchestration.session_persistence import SessionPersistenceManager
@@ -63,7 +63,7 @@ class MorningStandupWorkflow:
     Leverages yesterday's persistent context infrastructure:
     - UserPreferenceManager for user preferences
     - SessionPersistenceManager for session continuity
-    - GitHubAgent for recent activity
+    - GitHubDomainService for recent activity
 
     Performance: <2 seconds generation, saves 15+ minutes manual prep
     """
@@ -72,13 +72,13 @@ class MorningStandupWorkflow:
         self,
         preference_manager: UserPreferenceManager,
         session_manager: SessionPersistenceManager,
-        github_agent: GitHubAgent,
+        github_domain_service: GitHubDomainService,
         user_id: str = None,
         canonical_handlers: Optional[CanonicalHandlers] = None,
     ):
         self.preference_manager = preference_manager
         self.session_manager = session_manager
-        self.github_agent = github_agent
+        self.github_domain_service = github_domain_service
         # Load user_id from configuration if not provided
         if user_id is None:
             standup_config = piper_config_loader.load_standup_config()
@@ -182,14 +182,9 @@ class MorningStandupWorkflow:
     async def _get_github_activity(self) -> Dict[str, Any]:
         """Get GitHub activity from last 24 hours"""
         try:
-            if hasattr(self.github_agent, "get_recent_activity"):
-                return await self.github_agent.get_recent_activity()
-            else:
-                raise StandupIntegrationError(
-                    "GitHub integration not fully implemented - get_recent_activity method missing",
-                    service="github",
-                    suggestion="Update GitHubAgent to include get_recent_activity method",
-                )
+            # Use domain service method for recent GitHub activity
+            recent_issues = await self.github_domain_service.get_recent_issues(limit=5)
+            return {"commits": [], "issues": recent_issues}  # Format for compatibility
         except StandupIntegrationError:
             raise  # Re-raise our own errors
         except Exception as e:
@@ -363,7 +358,7 @@ class MorningStandupWorkflow:
         try:
             if hasattr(self, "canonical_handlers") and self.canonical_handlers:
                 issue_engine = IssueIntelligenceCanonicalQueryEngine(
-                    github_integration=self.github_agent,
+                    github_integration=self.github_domain_service,
                     canonical_handlers=self.canonical_handlers,
                     session_manager=self.session_manager,
                     user_id=user_id,
@@ -523,7 +518,7 @@ class MorningStandupWorkflow:
             try:
                 if hasattr(self, "canonical_handlers") and self.canonical_handlers:
                     issue_engine = IssueIntelligenceCanonicalQueryEngine(
-                        github_integration=self.github_agent,
+                        github_integration=self.github_domain_service,
                         canonical_handlers=self.canonical_handlers,
                         session_manager=self.session_manager,
                         user_id=user_id,

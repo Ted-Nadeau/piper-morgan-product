@@ -119,7 +119,7 @@ PYTHONPATH=. python -m pytest tests/integration/test_slack_e2e_pipeline.py -v
 ## Knowledge Preservation
 
 ### Session Logs
-- `docs/development/session-logs/2025-07-30-code-log.md` - Complete work log
+- `development/session-logs/2025-07-30-code-log.md` - Complete work log
 - All implementations documented with reasoning and examples
 - Git commit history provides detailed change tracking
 

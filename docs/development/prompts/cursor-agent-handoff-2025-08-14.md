@@ -84,7 +84,7 @@
 
 ### **Session Logs**
 
-- `docs/development/session-logs/2025-08-14-cursor-log.md` - Complete session record
+- `development/session-logs/2025-08-14-cursor-log.md` - Complete session record
 
 ## 🎯 **WHAT YOU NEED TO KNOW IMMEDIATELY**
 

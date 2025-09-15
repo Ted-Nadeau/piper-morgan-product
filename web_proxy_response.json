@@ -1,0 +1,20 @@
+{
+  "status": "error",
+  "error": "GitHub token required - set GITHUB_TOKEN environment variable",
+  "metadata": {
+    "generated_at": "2025-09-12T17:38:34.974496",
+    "source": "backend-api",
+    "version": "1.0",
+    "error_type": "ValueError",
+    "recovery_suggestions": [
+      "Check if all services are running (GitHub API, etc.)",
+      "Verify configuration in config/PIPER.user.md",
+      "Try again in a few moments",
+      "Check server logs for detailed error information"
+    ],
+    "support": {
+      "documentation": "https://pmorgan.tech",
+      "github_issues": "https://github.com/mediajunkie/piper-morgan-product/issues"
+    }
+  }
+}

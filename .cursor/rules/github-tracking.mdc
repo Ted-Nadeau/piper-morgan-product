@@ -1,0 +1,27 @@
+---
+description: GitHub issue tracking requirements
+globs:
+  - "**/*.py"
+  - "**/*.md"
+alwaysApply: false
+---
+
+# GitHub Issue Tracking
+
+## Before starting work
+```bash
+gh issue view PM-XXX  # Verify issue exists
+```
+
+## During work
+- Update issue descriptions (not comments)
+- Check boxes as tasks complete
+- Provide evidence links
+
+## Issue creation
+```bash
+# Check next number in CSV
+tail -5 docs/planning/pm-issues-status.csv
+```
+
+See github-guide.md for full operations.

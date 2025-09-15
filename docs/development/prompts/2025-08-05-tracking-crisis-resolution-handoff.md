@@ -2,7 +2,7 @@
 
 **Date**: August 5, 2025, 7:38 PM PDT
 **Context**: Continuation of systematic tracking integrity restoration
-**Session Log**: `docs/development/session-logs/2025-08-05-code-log.md`
+**Session Log**: `development/session-logs/2025-08-05-code-log.md`
 **Priority**: P1 - Critical tracking system integrity maintenance
 
 ## MISSION: Complete Systematic Checkbox Corrections
@@ -59,7 +59,7 @@ gh issue edit [NUMBER] --body "$(gh issue view [NUMBER] --json body -q .body | s
 ```
 
 ### 3. SESSION LOG MAINTENANCE
-Update `docs/development/session-logs/2025-08-05-code-log.md` as you complete each issue:
+Update `development/session-logs/2025-08-05-code-log.md` as you complete each issue:
 
 ```markdown
 #### Checkbox Updates Completed

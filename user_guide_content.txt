@@ -1,0 +1,48 @@
+=== USER GUIDE PERSONALITY SECTION ===
+## Personality Customization
+Configure how Piper responds to make interactions feel natural and helpful.
+
+### Quick Setup
+Add this section to your `PIPER.user.md` file:
+
+```yaml
+personality:
+  warmth_level: 0.7          # Professional but warm (recommended)
+  confidence_style: contextual # Show confidence with helpful context
+  action_orientation: high     # Always include clear next steps
+  technical_depth: balanced    # Right level of detail
+```
+
+### Warmth Level (0.0-1.0)
+Controls how friendly vs formal Piper's responses feel:
+- **0.0-0.3**: Professional and formal
+- **0.4-0.7**: Professional but warm (recommended for most users)
+- **0.8-1.0**: Friendly and encouraging
+
+### Confidence Display Style
+How Piper shows confidence in responses:
+- **numeric**: '87% confident in this recommendation'
+- **descriptive**: 'high confidence' or 'limited visibility'
+- **contextual**: 'Based on recent patterns...' (recommended)
+- **hidden**: No confidence indicators shown
+
+### Action Orientation
+How much guidance Piper provides:
+- **high**: Every response includes specific next steps
+- **medium**: Actionable guidance when relevant
+- **low**: Minimal action suggestions
+
+### Technical Depth
+Level of technical detail in responses:
+- **detailed**: Full technical explanations
+- **balanced**: Right level for most users (recommended)
+- **simplified**: High-level summaries only
+
+### Example Transformations
+See how personality enhances responses:
+
+**Before**: 'Task completed successfully'
+**After**: 'Perfect! Your task is complete and ready for the next step 🎯'
+
+**Before**: 'GitHub API request failed'
+**After**: 'I ran into a GitHub API issue, but let me try a different approach for you.'

@@ -86,7 +86,7 @@ async def test_complete_pipeline_with_observability(mock_slack_event, mock_slack
 ### Files to Reference
 - `docs/development/plans/pm078-tdd-implementation-plan.md` - Complete implementation plan
 - `docs/research/Mastering -Slack-Integration-Patterns-for-FastAPI-Applications.md` - Research findings
-- `docs/development/session-logs/2025-07-30-code-log.md` - Today's work log
+- `development/session-logs/2025-07-30-code-log.md` - Today's work log
 - `docs/development/prompts/2025-07-30-slack-background-processing-handoff.md` - Yesterday's findings
 
 ## Success Criteria for Phase 2

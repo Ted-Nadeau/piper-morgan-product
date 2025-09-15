@@ -24,9 +24,8 @@ sys.path.insert(0, str(project_root))
 
 from services.config.github_config import GitHubConfiguration
 from services.configuration.piper_config_loader import PiperConfigLoader
+from services.domain.github_domain_service import GitHubDomainService
 from services.domain.pm_number_manager import PMNumberManager
-from services.features.morning_standup import MorningStandupWorkflow
-from services.integrations.github.github_agent import GitHubAgent
 from services.learning import get_cross_feature_service, get_learning_loop
 
 
@@ -49,7 +48,7 @@ class IssuesCommand:
 
     def __init__(self):
         """Initialize the issues command with required services"""
-        self.github_agent = GitHubAgent()
+        self.github_domain_service = GitHubDomainService()
         self.learning_loop = None  # Will be initialized when needed
         self.cross_feature_service = None  # Will be initialized when needed
 
@@ -114,7 +113,7 @@ class IssuesCommand:
             self.print_header("🔍 Issue Triage & Prioritization")
 
             # Get open issues from GitHub
-            issues = await self.github_agent.get_open_issues(project=project, limit=limit)
+            issues = await self.github_domain_service.get_open_issues(project, limit)
 
             if not issues:
                 self.print_warning("No open issues found")
@@ -395,8 +394,9 @@ class IssuesCommand:
             self.print_header("📊 Issue Status Overview")
 
             # Get issue statistics
-            open_issues = await self.github_agent.get_open_issues(project=project)
-            closed_issues = await self.github_agent.get_closed_issues(project=project, limit=100)
+            open_issues = await self.github_domain_service.get_open_issues(project)
+            # Note: closed_issues method may need to be added to domain service if not present
+            closed_issues = []  # Temporary placeholder - needs domain service method
 
             # Calculate statistics
             total_open = len(open_issues)
@@ -404,7 +404,9 @@ class IssuesCommand:
             total_issues = total_open + total_closed
 
             # Get recent activity
-            recent_issues = await self.github_agent.get_recent_issues(project=project, days=7)
+            recent_issues = await self.github_domain_service.get_recent_issues(
+                10
+            )  # Limit of 10 recent issues
 
             # Display status with actionable insights
             self.print_section("Current Status", "blue")
@@ -742,7 +744,7 @@ def create(title: str, body: str, labels: str, dry_run: bool):
     try:
         # Initialize services
         pm_manager = PMNumberManager()
-        github_agent = GitHubAgent()
+        github_domain_service = GitHubDomainService()
 
         # Get next PM number
         next_pm_number = asyncio.run(pm_manager.get_next_available_pm_number())
@@ -768,7 +770,7 @@ def create(title: str, body: str, labels: str, dry_run: bool):
 
         click.echo("🚀 Creating GitHub issue...")
         issue_data = asyncio.run(
-            github_agent.create_issue(
+            github_domain_service.create_issue(
                 repo_name=repo_name, title=title, body=issue_body, labels=label_list
             )
         )

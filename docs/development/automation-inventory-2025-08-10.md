@@ -79,7 +79,7 @@ python scripts/generate_github_issues.py
 
 **Integration:** Already configured as Git pre-commit hook
 **Function:** Automated GitHub sync detection when planning docs change
-**Usage:** Runs automatically on `git commit` when backlog.md or roadmap.md modified
+**Usage:** Runs automatically on `git commit` when backlog.md or ../planning/roadmap.md modified
 
 **Strategic Value:** Ensures GitHub sync discipline during rapid MCP implementation
 **MCP Monday Integration:** Hook configuration ready for automated workflow coordination
@@ -134,7 +134,7 @@ python scripts/generate_github_issues.py
 
 **Integration:** Already configured as Git pre-commit hook
 **Function:** Automated GitHub sync detection when planning docs change
-**Usage:** Runs automatically on `git commit` when backlog.md or roadmap.md modified
+**Usage:** Runs automatically on `git commit` when backlog.md or ../planning/roadmap.md modified
 
 ---
 

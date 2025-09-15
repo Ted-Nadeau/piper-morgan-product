@@ -79,7 +79,7 @@ Today's session achieved **critical infrastructure restoration** and **architect
 4. **Continue Activation & Polish Week**: Foundation ready for user experience refinements
 
 **Context Available**:
-- **Session Log**: `docs/development/session-logs/2025-07-25-code-log.md` (comprehensive)
+- **Session Log**: `development/session-logs/2025-07-25-code-log.md` (comprehensive)
 - **Architecture Docs**: `architect-context-query-fallback.md`, enhancement specs
 - **GitHub Issues**: PM-061, PM-062, PM-063 fully documented and resolved
 - **Testing Infrastructure**: `test_cors_fix.html`, `scripts/tldr_runner.py`

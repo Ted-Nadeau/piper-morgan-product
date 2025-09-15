@@ -174,7 +174,7 @@ Agents don't need real-time communication. Instead:
 ### Information Architecture
 
 ```
-/docs/development/session-logs/
+/development/session-logs/
 ├── 2025-07-23-cursor-log.md    # Cursor's detailed work
 ├── 2025-07-23-code-log.md      # Code's detailed work
 └── 2025-07-23-handoff.md       # Coordination notes

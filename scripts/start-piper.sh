@@ -6,7 +6,15 @@
 
 set -e  # Exit on any error
 
+# Configuration - use environment variables with sensible defaults
+export ENVIRONMENT="${ENVIRONMENT:-development}"
+export BACKEND_PORT="${BACKEND_PORT:-8001}"
+export WEB_PORT="${WEB_PORT:-8081}"
+
 echo "🚀 Starting Piper Morgan..."
+echo "🔧 Environment: $ENVIRONMENT"
+echo "🔧 Backend Port: $BACKEND_PORT"
+echo "🌐 Web Port: $WEB_PORT"
 echo "================================"
 
 # Check if Docker Desktop is running
@@ -64,7 +72,7 @@ echo "⏳ Waiting for backend to start..."
 sleep 5
 
 # Check backend health
-if curl -s http://localhost:8001/health > /dev/null 2>&1; then
+if curl -s http://localhost:$BACKEND_PORT/health > /dev/null 2>&1; then
     echo "✅ Backend is healthy"
 else
     echo "❌ Backend health check failed"
@@ -77,7 +85,7 @@ echo "🌐 Starting frontend..."
 echo "Starting web frontend with uvicorn..."
 # Export environment variables to ensure they're passed to subprocess
 export GITHUB_TOKEN="$GITHUB_TOKEN"
-nohup bash -c "export GITHUB_TOKEN='$GITHUB_TOKEN' && cd web && python -m uvicorn app:app --port 8081" > logs/frontend.log 2>&1 &
+nohup bash -c "export GITHUB_TOKEN='$GITHUB_TOKEN' && export ENVIRONMENT='$ENVIRONMENT' && export WEB_PORT='$WEB_PORT' && export BACKEND_PORT='$BACKEND_PORT' && cd web && python -m uvicorn app:app" > logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "Frontend PID: $FRONTEND_PID"
 
@@ -86,7 +94,7 @@ echo "⏳ Waiting for frontend to start..."
 sleep 3
 
 # Check frontend health
-if curl -s http://localhost:8081/health > /dev/null 2>&1; then
+if curl -s http://localhost:$WEB_PORT/health > /dev/null 2>&1; then
     echo "✅ Frontend is healthy"
 else
     echo "❌ Frontend health check failed"
@@ -118,14 +126,14 @@ if [ $? -eq 0 ]; then
     fi
     echo "📋 Quick guidance: ./scripts/branch-guidance.sh"
 fi
-echo "🌐 Frontend: http://localhost:8081/"
-echo "🔧 Backend: http://localhost:8001/"
-echo "📊 Health: http://localhost:8081/health"
+echo "🌐 Frontend: http://localhost:$WEB_PORT/"
+echo "🔧 Backend: http://localhost:$BACKEND_PORT/"
+echo "📊 Health: http://localhost:$WEB_PORT/health"
 echo ""
-echo "💡 Tip: Bookmark http://localhost:8081/ for quick access"
+echo "💡 Tip: Bookmark http://localhost:$WEB_PORT/ for quick access"
 echo "🔄 To stop: ./stop-piper.sh"
 echo ""
 echo "🚀 Ready for your 6:00 AM PT standup!"
 
 # Open browser
-open http://localhost:8081/
+open http://localhost:$WEB_PORT/

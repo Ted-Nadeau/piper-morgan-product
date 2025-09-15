@@ -65,21 +65,27 @@ class SlackWebhookRouter:
         if response_handler:
             self.response_handler = response_handler
         else:
-            # Create dependencies for response handler
-            from services.integrations.slack.slack_client import SlackClient
-            from services.intent_service.classifier import IntentClassifier
-            from services.orchestration.engine import OrchestrationEngine
+            try:
+                # Create dependencies for response handler
+                from services.integrations.slack.slack_client import SlackClient
+                from services.intent_service.classifier import IntentClassifier
+                from services.orchestration.engine import OrchestrationEngine
 
-            intent_classifier = IntentClassifier()
-            orchestration_engine = OrchestrationEngine()
-            slack_client = SlackClient(self.config_service)
+                intent_classifier = IntentClassifier()
+                orchestration_engine = OrchestrationEngine()
+                slack_client = SlackClient(self.config_service)
 
-            self.response_handler = SlackResponseHandler(
-                spatial_adapter=self.spatial_adapter,
-                intent_classifier=intent_classifier,
-                orchestration_engine=orchestration_engine,
-                slack_client=slack_client,
-            )
+                self.response_handler = SlackResponseHandler(
+                    spatial_adapter=self.spatial_adapter,
+                    intent_classifier=intent_classifier,
+                    orchestration_engine=orchestration_engine,
+                    slack_client=slack_client,
+                )
+                logger.info("SlackWebhookRouter initialized with response handler")
+            except Exception as e:
+                logger.error(f"Failed to initialize SlackResponseHandler: {e}")
+                logger.warning("SlackWebhookRouter will operate without response handling")
+                self.response_handler = None
 
         # Create FastAPI router
         self.router = APIRouter(prefix="/slack", tags=["slack"])

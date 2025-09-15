@@ -42,7 +42,7 @@ python demo_mcp_consumer_github.py
 
 ### **3. Key Files to Review**
 
-- **`docs/deployment/mcp-consumer-deployment.md`**: Production deployment guide
+- **`docs/deployment/mcp-consumer-deployment/deployment-summary.md`**: Production deployment guide
 - **`docs/mcp/consumer-implementation.md`**: Complete implementation documentation
 - **`docs/development/methodology-core/methodology-08-AUTONOMOUS-SPRINT.md`**: Sprint methodology and patterns
 - **`test_github_integration.py`**: Comprehensive test suite
@@ -214,7 +214,7 @@ async def monitor_performance():
 
 ### **Primary Documentation**
 
-- **`docs/deployment/mcp-consumer-deployment.md`**: Production deployment
+- **`docs/deployment/mcp-consumer-deployment/deployment-summary.md`**: Production deployment
 - **`docs/mcp/consumer-implementation.md`**: Implementation details
 - **`docs/development/methodology-core/methodology-08-AUTONOMOUS-SPRINT.md`**: Sprint methodology
 - **`docs/patterns/PATTERN-INDEX.md`**: Architectural patterns
@@ -281,8 +281,8 @@ async def monitor_performance():
 
 ### **Session Logs**
 
-- **`docs/development/session-logs/2025-08-11-cursor-log.md`**: Complete sprint log
-- **`docs/development/session-logs/2025-08-11-code-log.md`**: Architecture phases
+- **`development/session-logs/2025-08-11-cursor-log.md`**: Complete sprint log
+- **`development/session-logs/2025-08-11-code-log.md`**: Architecture phases
 
 ### **Methodology**
 

@@ -6,27 +6,38 @@ Bootstrap version to prove the architecture
 import logging
 import os
 import shutil
+
+# Personality integration imports (for standup API)
+import sys
 import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+
+# Standup API imports
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from services.api.errors import APIError, TaskFailedError
 from services.api.middleware import ErrorHandlingMiddleware, EthicsBoundaryMiddleware
 from services.api.query_response_formatter import QueryResponseFormatter
+from services.configuration.piper_config_loader import piper_config_loader
 from services.conversation.conversation_handler import ConversationHandler
 from services.database.connection import db
 from services.database.repositories import ProjectRepository, RepositoryFactory
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import UploadedFile
+from services.domain.slack_domain_service import SlackDomainService
+from services.domain.standup_orchestration_service import (
+    StandupIntegrationError,
+    StandupOrchestrationService,
+)
 from services.file_context.storage import generate_session_id, save_file_to_storage
-from services.integrations.slack.webhook_router import SlackWebhookRouter
 from services.intent_service.intent_enricher import IntentEnricher
 from services.knowledge_graph import get_document_service
 from services.llm.clients import llm_client
@@ -43,6 +54,11 @@ from services.session.session_manager import ConversationSession, SessionManager
 from services.ui_messages.action_humanizer import ActionHumanizer
 from services.ui_messages.templates import TemplateRenderer, get_message_template
 from services.utils.serialization import serialize_dataclass
+from services.utils.standup_formatting import format_standup_metrics
+
+web_path = Path(__file__).parent / "web"
+sys.path.insert(0, str(web_path))
+from personality_integration import PersonalityResponseEnhancer, PiperConfigParser
 
 # from services.ingestion_service import get_ingester
 
@@ -153,9 +169,22 @@ app.add_middleware(
 # app.add_middleware(EthicsBoundaryMiddleware)  # Ethics boundary enforcement - temporarily disabled for environment setup
 app.add_middleware(ErrorHandlingMiddleware)  # Error handling
 
-# Initialize and include Slack router
-slack_router = SlackWebhookRouter()
-app.include_router(slack_router.get_router())
+# Initialize and include Slack router with error handling
+try:
+    logger.info("Initializing Slack domain service...")
+    slack_domain_service = SlackDomainService()
+    slack_router = slack_domain_service.get_webhook_router()
+    app.include_router(slack_router.get_router())
+    logger.info("✅ Slack integration initialized successfully")
+except Exception as e:
+    logger.error(f"Failed to initialize Slack integration: {e}")
+    logger.warning("🟡 Continuing startup without Slack integration")
+
+    # Add health endpoint to report degraded state
+    @app.get("/health/slack")
+    async def slack_health():
+        return {"status": "degraded", "reason": "Slack initialization failed", "error": str(e)}
+
 
 # Include health monitoring router (PM-087: Ethics metrics)
 from services.api.health.staging_health import staging_health_router
@@ -196,6 +225,136 @@ async def health():
             "orchestration": "ready",
         },
     }
+
+
+# Initialize personality components for standup API
+config_parser = PiperConfigParser()
+personality_enhancer = PersonalityResponseEnhancer()
+
+
+@app.get("/api/standup")
+async def morning_standup_api(
+    format: str = Query("raw", description="Response format: 'raw' or 'human-readable'"),
+    personality: bool = Query(False, description="Apply personality enhancement"),
+):
+    """API endpoint for morning standup data using domain service"""
+    try:
+        # Load configuration for user identification
+        config = piper_config_loader.load_standup_config()
+        user_id = config.get("user_identity", {}).get("user_id", "default_user")
+
+        # Use domain service for orchestration (DDD compliant)
+        orchestration_service = StandupOrchestrationService()
+        result = await orchestration_service.orchestrate_standup_workflow(user_id)
+
+        # Prepare base data
+        base_data = {
+            "generation_time_ms": result.generation_time_ms,
+            "time_saved_minutes": result.time_saved_minutes,
+            "yesterday_accomplishments": result.yesterday_accomplishments,
+            "today_priorities": result.today_priorities,
+            "blockers": result.blockers,
+            "context_source": result.context_source,
+            "github_activity": result.github_activity,
+            "user_id": user_id,
+        }
+
+        # Add human-readable formatting if requested
+        if format == "human-readable":
+            formatted_metrics = format_standup_metrics(
+                {
+                    "generation_time_ms": result.generation_time_ms,
+                    "time_saved_minutes": result.time_saved_minutes,
+                }
+            )
+            base_data.update(formatted_metrics)
+
+        # Apply personality enhancement if requested
+        if personality:
+            try:
+                # Load personality config
+                personality_config = config_parser.load_personality_config(user_id)
+
+                # Enhance accomplishments, priorities, and blockers
+                if base_data.get("yesterday_accomplishments"):
+                    enhanced_accomplishments = []
+                    for accomplishment in base_data["yesterday_accomplishments"]:
+                        enhanced = personality_enhancer.enhance_response(
+                            accomplishment, personality_config, confidence=0.8
+                        )
+                        enhanced_accomplishments.append(enhanced)
+                    base_data["yesterday_accomplishments"] = enhanced_accomplishments
+
+                if base_data.get("today_priorities"):
+                    enhanced_priorities = []
+                    for priority in base_data["today_priorities"]:
+                        enhanced = personality_enhancer.enhance_response(
+                            priority, personality_config, confidence=0.7
+                        )
+                        enhanced_priorities.append(enhanced)
+                    base_data["today_priorities"] = enhanced_priorities
+
+                # Add personality metadata
+                base_data["personality_enhanced"] = True
+                base_data["personality_config"] = personality_config.to_dict()
+
+            except Exception as e:
+                # Graceful degradation - log error but continue
+                print(f"Personality enhancement failed: {e}")
+                base_data["personality_enhanced"] = False
+
+        return {
+            "status": "success",
+            "data": base_data,
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "source": "backend-api",
+                "version": "1.0",
+                "format": format,
+                "performance": {
+                    "target_ms": 10000,
+                    "status": "✅ FAST" if result.generation_time_ms < 6000 else "⚠️ SLOW",
+                    "vs_cli_baseline": "faster" if result.generation_time_ms < 5500 else "slower",
+                },
+                "project_context": {
+                    "name": "piper-morgan",
+                    "display_name": "Piper Morgan AI PM Assistant",
+                    "github_repo": result.github_activity.get(
+                        "repo", "mediajunkie/piper-morgan-product"
+                    ),
+                    "commit_count": len(result.github_activity.get("commits", [])),
+                    "branch": "main",
+                },
+                "daily_usage": {
+                    "recommended_time": "06:00 PT",
+                    "cache_expires": datetime.now()
+                    .replace(hour=6, minute=0, second=0, microsecond=0)
+                    .isoformat(),
+                    "next_refresh": "Tomorrow 06:00 PT",
+                },
+            },
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "source": "backend-api",
+                "version": "1.0",
+                "error_type": type(e).__name__,
+                "recovery_suggestions": [
+                    "Check if all services are running (GitHub API, etc.)",
+                    "Verify configuration in config/PIPER.user.md",
+                    "Try again in a few moments",
+                    "Check server logs for detailed error information",
+                ],
+                "support": {
+                    "documentation": "https://pmorgan.tech",
+                    "github_issues": "https://github.com/mediajunkie/piper-morgan-product/issues",
+                },
+            },
+        }
 
 
 @app.post("/api/v1/intent", response_model=IntentResponse)
@@ -459,6 +618,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                     "I understand you want to {human_action}. I've started a workflow to handle this.",
                     intent_action=enriched_intent.action,
                     intent_category=enriched_intent.category.value,
+                    user_id="xian",  # Default user for personality enhancement
                 )
             else:
                 # No workflow needed, just respond
@@ -466,6 +626,7 @@ async def process_intent(request: IntentRequest, background_tasks: BackgroundTas
                     "I understand you want to {human_action}.",
                     intent_action=enriched_intent.action,
                     intent_category=enriched_intent.category.value,
+                    user_id="xian",  # Default user for personality enhancement
                 )
                 if enriched_intent.category == IntentCategory.EXECUTION:
                     response_text += " I'll help you execute that task."
@@ -628,6 +789,7 @@ async def get_workflow(workflow_id: str):
                     intent_action=workflow.context.get("intent_action", ""),
                     intent_category=workflow.context.get("intent_category", None),
                     issue_number=issue_number,
+                    user_id="xian",
                 )
                 if issue_url:
                     message += f"\n{issue_url}"
@@ -636,6 +798,7 @@ async def get_workflow(workflow_id: str):
                     template,
                     intent_action=workflow.context.get("intent_action", ""),
                     intent_category=workflow.context.get("intent_category", None),
+                    user_id="xian",
                 )
         elif workflow.type == WorkflowType.REVIEW_ITEM:
             analysis = (
@@ -663,6 +826,7 @@ async def get_workflow(workflow_id: str):
                     intent_action=workflow.context.get("intent_action", ""),
                     intent_category=workflow.context.get("intent_category", None),
                     filename=filename,
+                    user_id="xian",
                 )
                 message += f"\n\n{analysis['summary']}"
             else:

@@ -26,7 +26,7 @@ Today's session delivered **infrastructure excellence**, **development accelerat
 - Prevents fabricated technical details in GitHub issues (browser versions, error messages)
 
 **4. PM-075: Strategic Documentation Alignment ✅ (8 minutes)**
-- Evidence-based updates to roadmap.md and backlog.md using systematic verification
+- Evidence-based updates to ../planning/roadmap.md and backlog.md using systematic verification
 - All completed priorities properly reflected with accurate dates
 - Strategic alignment maintained document coherence
 

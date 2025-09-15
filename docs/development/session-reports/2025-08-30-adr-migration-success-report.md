@@ -146,4 +146,4 @@ The ADR database migration represents a significant milestone in the project's k
 
 **Report Prepared By**: Claude Code Agent
 **Database ID**: 25e11704d8bf80deaac2f806390fe7da
-**Session Log**: `docs/development/session-logs/2025-08-30-0729-code-log.md`
+**Session Log**: `development/session-logs/2025-08-30-0729-code-log.md`

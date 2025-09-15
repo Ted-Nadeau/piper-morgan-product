@@ -65,5 +65,5 @@
 
 - Session logs older than 30 days are automatically archived
 - Archive structure organized by year/month
-- Current logs remain in `docs/development/session-logs/`
+- Current logs remain in `development/session-logs/`
 - INDEX.md updated weekly during documentation audit

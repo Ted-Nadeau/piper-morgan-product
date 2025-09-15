@@ -640,4 +640,4 @@ The Human-AI Collaboration Referee Methodology is essential for effective AI-ass
 
 ---
 
-**Related**: [Session Log Pattern](../frameworks/emergent/session-log-framework.md), [Verification-First Pattern](../decision-patterns/emergent/verification-first-pattern.md)
+**Related**: [Session Log Pattern](../../../development/session-logs/session-log-framework.md), [Verification-First Pattern](../../decision-patterns/emergent/verification-first-pattern.md)

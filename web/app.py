@@ -16,21 +16,30 @@ from fastapi.staticfiles import StaticFiles
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from services.configuration.piper_config_loader import piper_config_loader
-from services.domain.user_preference_manager import UserPreferenceManager
-from services.features.morning_standup import MorningStandupWorkflow, StandupIntegrationError
-from services.integrations.github.github_agent import GitHubAgent
-from services.intent_service.canonical_handlers import CanonicalHandlers
-from services.orchestration.session_persistence import SessionPersistenceManager
-from services.utils.standup_formatting import format_standup_metrics
+# Import personality integration
+from personality_integration import (
+    PersonalityResponseEnhancer,
+    PiperConfigParser,
+    WebPersonalityConfig,
+)
 
-# Server Configuration
-# NOTE: Use port 8001 (not 8000) to avoid Docker conflicts on this system
-DEFAULT_PORT = 8001
-API_BASE_URL = os.getenv("API_BASE_URL", f"http://localhost:{DEFAULT_PORT}")
+# Standup API moved to backend - only config loader needed for legacy compatibility
+from services.configuration.piper_config_loader import piper_config_loader
+
+# Configuration service import - eliminates hardcoded values
+from services.configuration.port_configuration_service import get_port_configuration
+
+# Server Configuration - now using centralized configuration service
+port_config = get_port_configuration()
+DEFAULT_PORT = port_config.web_port
+API_BASE_URL = port_config.get_api_base_url()
 
 # Create FastAPI app
 app = FastAPI(title="Piper Morgan UI", description="Web Interface for the Piper Morgan Platform")
+
+# Initialize personality components
+config_parser = PiperConfigParser()
+personality_enhancer = PersonalityResponseEnhancer()
 
 # Mount static files
 app.mount(
@@ -431,105 +440,99 @@ async def home(request: Request):
     return HTMLResponse(content=html_content)
 
 
-@app.get("/api/standup")
-async def morning_standup_api(
-    format: str = Query("raw", description="Response format: 'raw' or 'human-readable'")
-):
-    """API endpoint for morning standup data"""
+# Personality Configuration Endpoints
+@app.get("/api/personality/profile/{user_id}")
+async def get_personality_profile(user_id: str = "default"):
+    """Get user's personality preferences"""
     try:
-        # Load configuration (same as CLI)
-        config = piper_config_loader.load_standup_config()
-        user_id = config.get("user_id", "default_user")
+        config = config_parser.load_personality_config(user_id)
+        return {"status": "success", "data": config.to_dict(), "user_id": user_id}
+    except Exception as e:
+        return {"status": "error", "error": str(e), "user_id": user_id}
 
-        # Initialize dependencies (same as CLI)
-        preference_manager = UserPreferenceManager()
-        session_manager = SessionPersistenceManager(preference_manager)
-        github_agent = GitHubAgent()
-        canonical_handlers = CanonicalHandlers()
 
-        # Use same orchestrator as CLI
-        workflow = MorningStandupWorkflow(
-            preference_manager=preference_manager,
-            session_manager=session_manager,
-            github_agent=github_agent,
-            canonical_handlers=canonical_handlers,
-        )
+@app.put("/api/personality/profile/{user_id}")
+async def update_personality_profile(user_id: str, request: Request):
+    """Update user's personality preferences"""
+    try:
+        data = await request.json()
+        config = WebPersonalityConfig.from_dict(data)
 
-        # Execute standup (same logic as CLI)
-        result = await workflow.generate_standup(user_id)
+        success = config_parser.save_personality_config(config, user_id)
 
-        # Prepare base data
-        base_data = {
-            "generation_time_ms": result.generation_time_ms,
-            "time_saved_minutes": result.time_saved_minutes,
-            "yesterday_accomplishments": result.yesterday_accomplishments,
-            "today_priorities": result.today_priorities,
-            "blockers": result.blockers,
-            "context_source": result.context_source,
-            "github_activity": result.github_activity,
-            "user_id": user_id,
-        }
+        if success:
+            return {
+                "status": "success",
+                "data": config.to_dict(),
+                "user_id": user_id,
+                "message": "Personality preferences updated successfully",
+            }
+        else:
+            return {
+                "status": "error",
+                "error": "Failed to save personality configuration",
+                "user_id": user_id,
+            }
+    except Exception as e:
+        return {"status": "error", "error": str(e), "user_id": user_id}
 
-        # Add human-readable formatting if requested
-        if format == "human-readable":
-            formatted_metrics = format_standup_metrics(
-                {
-                    "generation_time_ms": result.generation_time_ms,
-                    "time_saved_minutes": result.time_saved_minutes,
-                }
-            )
-            base_data.update(formatted_metrics)
+
+@app.post("/api/personality/enhance")
+async def enhance_response(request: Request):
+    """Enhance a response with personality"""
+    try:
+        data = await request.json()
+        content = data.get("content", "")
+        user_id = data.get("user_id", "default")
+        confidence = data.get("confidence", 0.5)
+
+        # Load personality config
+        config = config_parser.load_personality_config(user_id)
+
+        # Enhance response
+        enhanced_content = personality_enhancer.enhance_response(content, config, confidence)
 
         return {
             "status": "success",
-            "data": base_data,
-            "metadata": {
-                "generated_at": datetime.now().isoformat(),
-                "source": "api",
-                "version": "1.0",
-                "format": format,
-                "performance": {
-                    "target_ms": 10000,
-                    "status": "✅ FAST" if result.generation_time_ms < 6000 else "⚠️ SLOW",
-                    "vs_cli_baseline": "faster" if result.generation_time_ms < 5500 else "slower",
-                },
-                "project_context": {
-                    "name": "piper-morgan",
-                    "display_name": "Piper Morgan AI PM Assistant",
-                    "github_repo": result.github_activity.get(
-                        "repo", "mediajunkie/piper-morgan-product"
-                    ),
-                    "commit_count": len(result.github_activity.get("commits", [])),
-                    "branch": "main",
-                },
-                "daily_usage": {
-                    "recommended_time": "06:00 PT",
-                    "cache_expires": datetime.now()
-                    .replace(hour=6, minute=0, second=0, microsecond=0)
-                    .isoformat(),
-                    "next_refresh": "Tomorrow 06:00 PT",
-                },
+            "data": {
+                "original_content": content,
+                "enhanced_content": enhanced_content,
+                "personality_config": config.to_dict(),
+                "confidence": confidence,
             },
         }
     except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.get("/api/standup")
+async def standup_proxy(
+    format: str = Query("raw", description="Response format: 'raw' or 'human-readable'"),
+    personality: bool = Query(False, description="Apply personality enhancement"),
+):
+    """Proxy standup requests to backend API"""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{API_BASE_URL}/api/standup", params={"format": format, "personality": personality}
+            )
+            return response.json()
+    except Exception as e:
         return {
             "status": "error",
-            "error": str(e),
+            "error": f"Backend API unavailable: {str(e)}",
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
-                "source": "api",
+                "source": "web-proxy",
                 "version": "1.0",
-                "error_type": type(e).__name__,
+                "error_type": "ProxyError",
                 "recovery_suggestions": [
-                    "Check if all services are running (GitHub API, etc.)",
-                    "Verify configuration in config/PIPER.user.md",
+                    f"Check if backend API is running on port {port_config.backend_port}",
+                    "Verify main.py service is started",
                     "Try again in a few moments",
-                    "Check server logs for detailed error information",
                 ],
-                "support": {
-                    "documentation": "https://pmorgan.tech",
-                    "github_issues": "https://github.com/mediajunkie/piper-morgan-product/issues",
-                },
             },
         }
 
@@ -667,14 +670,25 @@ async def standup_ui():
     )
 
 
+@app.get("/personality-preferences")
+async def personality_preferences_ui():
+    """Serve the personality preferences interface"""
+    return HTMLResponse(
+        content=open(
+            os.path.join(os.path.dirname(__file__), "assets", "personality-preferences.html")
+        ).read()
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    print(f"🚀 Starting Piper Morgan Web Interface on http://localhost:{DEFAULT_PORT}")
-    print(f"📊 Standup API: http://localhost:{DEFAULT_PORT}/api/standup")
-    print(f"🌅 Standup UI: http://localhost:{DEFAULT_PORT}/standup")
-    print(f"📖 API Docs: http://localhost:{DEFAULT_PORT}/docs")
+    print(f"🚀 Starting Piper Morgan Web Interface on {port_config.get_web_url()}")
+    print(f"📊 Standup API: {port_config.get_web_url()}/api/standup")
+    print(f"🌅 Standup UI: {port_config.get_web_url()}/standup")
+    print(f"📖 API Docs: {port_config.get_web_url()}/docs")
+    print(f"🔗 Backend API: {port_config.get_backend_url()}")
     print(
-        f"\n🔧 Server Command: PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port {DEFAULT_PORT}"
+        f"\n🔧 Server Command: PYTHONPATH=. python -m uvicorn web.app:app --host {port_config.web_host} --port {port_config.web_port}"
     )
-    uvicorn.run(app, host="127.0.0.1", port=DEFAULT_PORT)
+    uvicorn.run(app, host=port_config.web_host, port=port_config.web_port)

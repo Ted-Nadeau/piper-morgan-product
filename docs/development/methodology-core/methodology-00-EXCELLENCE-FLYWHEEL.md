@@ -37,7 +37,7 @@ cat services/domain/models.py          # Verify domain models
 ### 4. GitHub-First Tracking & Test Activation
 
 - Create issue BEFORE starting
-- Update backlog.md and roadmap.md
+- Update backlog.md and ../planning/roadmap.md
 - Track progress in issue comments
 - Close with evidence of completion
 - **Test Infrastructure**: Activate our 599+ test suite before implementation

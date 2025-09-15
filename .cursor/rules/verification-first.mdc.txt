@@ -1,0 +1,54 @@
+---
+description: Verification-first methodology for Piper Morgan development
+globs:
+  - "**/*.py"
+  - "**/*.md"
+alwaysApply: true
+---
+
+# Verification-First Development
+
+MANDATORY: Read CLAUDE.md for full methodology.
+
+## INFRASTRUCTURE CHECK (MANDATORY FIRST)
+```bash
+# Verify infrastructure matches gameplan expectations
+ls -la web/ services/ cli/
+find . -name "*[feature]*" -type f
+
+# If mismatch found:
+# 1. STOP immediately
+# 2. Report discrepancy with evidence
+# 3. Wait for revised gameplan
+
+# Common mismatches to watch for:
+# - Gameplan says "no web UI" but web/app.py exists
+# - Gameplan says "create service" but service exists
+# - Gameplan says "add feature" but feature implemented
+```
+
+## Before ANY implementation
+```bash
+grep -r "pattern" services/ --include="*.py"  # Check if exists
+cat services/shared_types.py | grep "Enum"     # Check enums
+cat services/config.py | grep "setting"        # Check config
+```
+
+## STOP conditions
+- Infrastructure doesn't match → STOP and report
+- Configuration unclear → STOP and ask
+- Method names uncertain → STOP and verify
+- Pattern might exist → STOP and check
+- Tests failing → STOP and investigate
+- No GitHub issue → STOP and create
+
+## Testing discipline
+```bash
+PYTHONPATH=. python -m pytest tests/ -v  # Always with PYTHONPATH
+```
+
+## Evidence required
+- Terminal output for all claims
+- GitHub issue descriptions updated
+- No assumptions without verification
+- Infrastructure matches gameplan

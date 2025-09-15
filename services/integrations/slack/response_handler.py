@@ -15,6 +15,8 @@ import time
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set
 
+import structlog
+
 from services.domain.models import Intent, SpatialEvent
 from services.integrations.slack.slack_client import SlackClient
 from services.integrations.slack.spatial_adapter import SlackSpatialAdapter
@@ -119,18 +121,64 @@ class SlackResponseHandler:
 
     def __init__(
         self,
-        spatial_adapter: SlackSpatialAdapter,
-        intent_classifier: IntentClassifier,
-        orchestration_engine: OrchestrationEngine,
-        slack_client: SlackClient,
+        spatial_adapter: Optional[SlackSpatialAdapter] = None,
+        intent_classifier: Optional[IntentClassifier] = None,
+        orchestration_engine: Optional[OrchestrationEngine] = None,
+        slack_client: Optional[SlackClient] = None,
     ):
-        self.spatial_adapter = spatial_adapter
-        self.intent_classifier = intent_classifier
-        self.orchestration_engine = orchestration_engine
-        self.slack_client = slack_client
-        self.logger = logging.getLogger(__name__)
+        """Initialize SlackResponseHandler with dependency injection and graceful fallbacks"""
+        logger = structlog.get_logger()
 
-        self.logger.info("SlackResponseHandler initialized with complete integration pipeline")
+        try:
+            # Initialize spatial adapter with fallback
+            if spatial_adapter is None:
+                logger.info("Initializing SlackSpatialAdapter with defaults")
+                spatial_adapter = SlackSpatialAdapter()
+            self.spatial_adapter = spatial_adapter
+
+            # Initialize intent classifier with fallback
+            if intent_classifier is None:
+                logger.info("Initializing IntentClassifier with defaults")
+                intent_classifier = IntentClassifier()
+            self.intent_classifier = intent_classifier
+
+            # Initialize orchestration engine with fallback
+            if orchestration_engine is None:
+                logger.info("Initializing OrchestrationEngine with defaults")
+                orchestration_engine = OrchestrationEngine()
+            self.orchestration_engine = orchestration_engine
+
+            # Initialize Slack client with fallback
+            if slack_client is None:
+                logger.info("Initializing SlackClient with defaults")
+                from services.integrations.slack.config_service import SlackConfigService
+
+                config_service = SlackConfigService()
+                slack_client = SlackClient(config_service)
+            self.slack_client = slack_client
+
+            # Keep original logger for backward compatibility
+            self.logger = logging.getLogger(__name__)
+
+            logger.info("SlackResponseHandler initialized successfully with dependency injection")
+
+        except ImportError as e:
+            logger.error(f"Failed to import required Slack dependencies: {e}")
+            logger.warning("SlackResponseHandler will operate in degraded mode")
+            # Set minimal defaults to prevent hanging
+            self.spatial_adapter = None
+            self.intent_classifier = None
+            self.orchestration_engine = None
+            self.slack_client = None
+            self.logger = logging.getLogger(__name__)
+
+        except Exception as e:
+            logger.error(f"Failed to initialize SlackResponseHandler dependencies: {e}")
+            from services.api.errors import SlackInitializationError
+
+            raise SlackInitializationError(
+                f"SlackResponseHandler initialization failed: {e}"
+            ) from e
 
     def _get_consolidation_key(self, slack_context: Dict[str, Any]) -> str:
         """Generate unique key for message consolidation based on channel and thread"""

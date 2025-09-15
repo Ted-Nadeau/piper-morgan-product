@@ -192,7 +192,7 @@ User: "Show me that issue again" → Piper: [ConversationManager resolves + disp
 2. **Documentation Updates**:
 
    - Update GitHub issue with completion evidence
-   - Update roadmap.md and backlog.md
+   - Update ../planning/roadmap.md and backlog.md
    - Create implementation documentation
 
 3. **Handoff Preparation**:

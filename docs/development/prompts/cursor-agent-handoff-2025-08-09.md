@@ -85,7 +85,7 @@
 - `tests/test_error_message_enhancement.py` - Comprehensive testing framework
 - `scripts/run_error_message_tests.py` - Automated test runner
 - `docs/development/error-message-testing-framework.md` - Complete documentation
-- `docs/development/session-logs/session-archive-2025-08-part-2.md` - Session archive
+- `development/session-logs/session-archive-2025-08-part-2.md` - Session archive
 
 ### **Key System Files**
 
@@ -97,8 +97,8 @@
 
 ### **Session Logs**
 
-- `docs/development/session-logs/2025-08-09-cursor-log.md` - Today's complete session log
-- `docs/development/session-logs/session-archive-2025-08-part-2.md` - August 8th archive
+- `development/session-logs/2025-08-09-cursor-log.md` - Today's complete session log
+- `development/session-logs/session-archive-2025-08-part-2.md` - August 8th archive
 
 ---
 

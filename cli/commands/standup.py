@@ -16,10 +16,10 @@ from typing import Dict, List, Optional
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from services.domain.github_domain_service import GitHubDomainService
+from services.domain.slack_domain_service import SlackDomainService
+from services.domain.standup_orchestration_service import StandupOrchestrationService
 from services.domain.user_preference_manager import UserPreferenceManager
-from services.features.morning_standup import MorningStandupWorkflow
-from services.integrations.github.github_agent import GitHubAgent
-from services.integrations.slack.response_handler import SlackResponseHandler
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
 
@@ -42,17 +42,8 @@ class StandupCommand:
     }
 
     def __init__(self):
-        """Initialize the standup command with required services"""
-        self.preference_manager = UserPreferenceManager()
-        self.session_manager = SessionPersistenceManager(self.preference_manager)
-        self.github_agent = GitHubAgent()
-        self.canonical_handlers = CanonicalHandlers()
-        self.standup_workflow = MorningStandupWorkflow(
-            preference_manager=self.preference_manager,
-            session_manager=self.session_manager,
-            github_agent=self.github_agent,
-            canonical_handlers=self.canonical_handlers,
-        )
+        """Initialize the standup command with domain service"""
+        self.orchestration_service = StandupOrchestrationService()
 
     def print_colored(self, text: str, color: str = "reset", bold: bool = False) -> None:
         """Print colored and optionally bold text"""
@@ -169,31 +160,37 @@ class StandupCommand:
                     f"⏱️  Generating standup with {'+'.join(intelligence_types)} (target: <3 seconds)...",
                     "yellow",
                 )
-                standup_result = await self.standup_workflow.generate_with_trifecta(
-                    user_id,
-                    with_issues=with_issues,
-                    with_documents=with_documents,
-                    with_calendar=with_calendar,
+                # Use orchestration service for complex workflow
+                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
+                    user_id=user_id, workflow_type="trifecta"
                 )
 
             elif with_calendar:
                 self.print_colored(
                     "⏱️  Generating standup with calendar context (target: <2 seconds)...", "yellow"
                 )
-                standup_result = await self.standup_workflow.generate_with_calendar(user_id)
+                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
+                    user_id=user_id, workflow_type="with_calendar"
+                )
             elif with_documents:
                 self.print_colored(
                     "⏱️  Generating standup with document context (target: <2 seconds)...", "yellow"
                 )
-                standup_result = await self.standup_workflow.generate_with_documents(user_id)
+                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
+                    user_id=user_id, workflow_type="with_documents"
+                )
             elif with_issues:
                 self.print_colored(
                     "⏱️  Generating standup with issue priorities (target: <2 seconds)...", "yellow"
                 )
-                standup_result = await self.standup_workflow.generate_with_issues(user_id)
+                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
+                    user_id=user_id, workflow_type="with_issues"
+                )
             else:
                 self.print_colored("⏱️  Generating standup (target: <2 seconds)...", "yellow")
-                standup_result = await self.standup_workflow.generate_standup(user_id)
+                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
+                    user_id=user_id, workflow_type="standard"
+                )
 
             # Display results
             self.print_colored(f"✅ Generated in {standup_result.generation_time_ms}ms", "green")

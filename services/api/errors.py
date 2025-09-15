@@ -67,6 +67,13 @@ class SlackAuthFailedError(APIError):
         super().__init__(502, "SLACK_AUTH_FAILED", details)
 
 
+class SlackInitializationError(APIError):
+    """Raised when Slack service initialization fails"""
+
+    def __init__(self, details: str):
+        super().__init__(503, "SLACK_INIT_FAILED", {"message": details})
+
+
 # --- Knowledge Base Errors ---
 
 

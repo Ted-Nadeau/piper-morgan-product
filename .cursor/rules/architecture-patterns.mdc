@@ -1,0 +1,30 @@
+---
+description: Domain-driven design and repository patterns
+globs:
+  - "services/**/*.py"
+  - "tests/**/*.py"
+alwaysApply: false
+---
+
+# Architecture Patterns
+
+## Domain-Driven Design
+- Domain models in services/domain/models.py drive ALL decisions
+- Database schema generated from SQLAlchemy models
+
+## Repository Pattern
+- ALL data access through services/repositories/
+- Repositories return domain models, never database models
+- No business logic in repositories
+
+## CQRS Separation
+- Read: services/queries/ (QueryRouter)
+- Write: services/orchestration/ (workflows)
+- Never mix read/write in same service
+
+## Stateless Design
+- Factories remain stateless
+- Context passed as parameters
+- No request data in instances
+
+See ARCHITECTURE-RULES.md for complete details.

@@ -136,7 +136,7 @@ if metadata["date"]:
 
 ### Configuration & Testing
 
-- `docs/development/session-logs/2025-08-29-0959-cursor-log.md` - Complete session log
+- `development/session-logs/2025-08-29-0959-cursor-log.md` - Complete session log
 - `tests/publishing/` - Publishing-related tests
 - `docs/architecture/adr/` - ADR documents for testing
 

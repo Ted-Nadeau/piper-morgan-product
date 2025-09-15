@@ -326,4 +326,4 @@ The Verification-First Pattern is essential for reliable AI-assisted development
 
 ---
 
-**Related**: [Session Log Pattern](../frameworks/emergent/session-log-framework.md), [Human-AI Collaboration Referee](../methodologies/emergent/human-ai-collaboration-referee.md)
+**Related**: [Session Log Pattern](../../../development/session-logs/session-log-framework.md), [Human-AI Collaboration Referee](../../methodologies/emergent/human-ai-collaboration-referee.md)

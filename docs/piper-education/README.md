@@ -46,7 +46,7 @@ docs/piper-education/
 
 ### **By Source**
 
-- **Established Practices**: [Frameworks (Established)](./frameworks/established/), [Decision Patterns (Established)](./decision-patterns/established/), [Methodologies (Established)](./methodologies/established/)
+- **Established Practices**: Frameworks (Established) (coming soon), Decision Patterns (Established) (coming soon), Methodologies (Established) (coming soon)
 - **Emergent Practices**: [Frameworks (Emergent)](./frameworks/emergent/), [Decision Patterns (Emergent)](./decision-patterns/emergent/), [Methodologies (Emergent)](./methodologies/emergent/)
 
 ## Key Distinctions
@@ -86,7 +86,7 @@ docs/piper-education/
 ## Related Resources
 
 - **Analysis Documents**: [docs/analysis/](../analysis/) - Detailed pattern analysis
-- **Session Logs**: [docs/development/session-logs/](../development/session-logs/) - Development context
+- **Session Logs**: [development/session-logs/](../development/session-logs/) - Development context
 - **Architecture**: [docs/architecture/](../architecture/) - System architecture documentation
 
 ---

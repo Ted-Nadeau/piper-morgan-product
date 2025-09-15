@@ -31,10 +31,10 @@ Implement smart test execution with 4 execution modes (smoke, fast, full, covera
 
 ### Test Execution Modes
 ```bash
-./scripts/run_tests.sh smoke     # <5s validation (actual: 0s)
-./scripts/run_tests.sh fast      # <30s development workflow
-./scripts/run_tests.sh full      # Complete test suite
-./scripts/run_tests.sh coverage  # Coverage analysis
+./../../../../scripts/run_tests.sh smoke     # <5s validation (actual: 0s)
+./../../../../scripts/run_tests.sh fast      # <30s development workflow
+./../../../../scripts/run_tests.sh full      # Complete test suite
+./../../../../scripts/run_tests.sh coverage  # Coverage analysis
 ```
 
 ### Git Hook Integration
@@ -53,9 +53,9 @@ Implement smart test execution with 4 execution modes (smoke, fast, full, covera
 - **Excellence Flywheel Methodology**: Now fully operational with systematic verification
 
 ## References
-- [Test Infrastructure Guide](/development/TEST-GUIDE.md)
-- [Excellence Flywheel Methodology](/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)
-- [Smart Test Execution Script](/../scripts/run_tests.sh)
+- [Test Infrastructure Guide](../../development/TEST-GUIDE.md)
+- [Excellence Flywheel Methodology](../../development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)
+- [Smart Test Execution Script](../../../scripts/run_tests.sh)
 
 ---
 

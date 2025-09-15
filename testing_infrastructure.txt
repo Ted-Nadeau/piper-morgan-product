@@ -1,0 +1,112 @@
+=== TESTING INFRASTRUCTURE REVIEW ===
+1. TEST COVERAGE OVERVIEW:
+    4240
+Total test files found:
+./archive/20250810/async_patterns_test.py
+./methodology/integration/testing_interface.py
+./tests/publishing/test_publish_command.py
+./tests/ui/test_pm033d_ui_integration.py
+./tests/unit/test_slack_components.py
+./tests/unit/adapters/test_adapter_create.py
+./tests/unit/test_query_response_formatter.py
+./tests/conftest.py
+./tests/test_error_message_enhancement.py
+./tests/archive/test_file_repository.py
+
+2. TEST CATEGORIES:
+./archive/20250810/async_patterns_test.py:from unittest.mock import AsyncMock
+./archive/deprecated-tldr/tldr_runner.py:            ".pytest_cache",
+./archive/deprecated-tldr/tldr_runner.py:        # Use pytest with minimal output for speed
+./archive/deprecated-tldr/tldr_runner.py:            "pytest",
+./archive/deprecated-tldr/pattern_sweep.py:            "pytest_mark_asyncio": {
+./archive/deprecated-tldr/pattern_sweep.py:                "regex": r"@pytest\.mark\.asyncio",
+./methodology/integration/agent_bridge.py:                commands.append("PYTHONPATH=. python -m pytest relevant_tests/ -v --tb=short")
+./methodology/verification/patterns.py:            ".pytest_cache",
+./methodology/verification/advanced_evidence.py:            r"python -m pytest",  # Test command patterns
+./methodology/verification/advanced_evidence.py:        test_indicators = ["pytest", "test", "PASSED", "FAILED"]
+3. RESPONSE TESTING:
+./methodology/integration/testing_interface.py
+./tests/ui/test_pm033d_ui_integration.py
+./tests/unit/test_slack_components.py
+./tests/unit/test_query_response_formatter.py
+./tests/test_error_message_enhancement.py
+./tests/archive/test_github_integration_simple.py
+./tests/archive/test_api_flow.py
+./tests/archive/test_natural_language_search.py
+./tests/archive/test_github_integration_simple-no2.py
+./tests/archive/test_disambiguation_flow.py
+
+4. ACTIONHUMANIZER TESTS:
+./tests/integration/test_humanized_workflow_messages.py
+./tests/services/ui_messages/test_template_renderer.py
+
+5. PERSONALITY/TONE TESTS:
+./tests/test_error_message_enhancement.py
+./tests/integration/test_mcp_spatial_federation.py
+./tests/integration/test_pm034_e2e_validation.py
+./tests/integration/test_api_degradation_integration.py
+./tests/integration/test_github_integration.py
+./tests/integration/test_github_spatial.py
+./tests/integration/test_pm033c_mcp_server_config.py
+./tests/integration/test_slack_message_consolidation.py
+./tests/integration/test_cli_standup_integration.py
+./tests/orchestration/test_multi_agent_coordinator.py
+./tests/domain/mcp/test_content_extraction.py
+./tests/services/test_llm_intent_classifier.py
+./tests/validation/test_pm034_claims_validation.py
+./.venv/lib/python3.9/site-packages/aiohttp/pytest_plugin.py
+./.venv/lib/python3.9/site-packages/sympy/ntheory/primetest.py
+./.venv/lib/python3.9/site-packages/sympy/solvers/ode/tests/test_single.py
+./.venv/lib/python3.9/site-packages/sympy/codegen/tests/test_approximations.py
+./.venv/lib/python3.9/site-packages/sympy/testing/runtests.py
+./.venv/lib/python3.9/site-packages/humanfriendly/tests.py
+./.venv/lib/python3.9/site-packages/numpy/testing/tests/test_utils.py
+./.venv/lib/python3.9/site-packages/numpy/lib/tests/test_histograms.py
+./.venv/lib/python3.9/site-packages/greenlet/tests/test_greenlet.py
+./.venv/lib/python3.9/site-packages/pandas/tests/arrays/test_datetimelike.py
+./.venv/lib/python3.9/site-packages/pandas/tests/arithmetic/test_timedelta64.py
+./.venv/lib/python3.9/site-packages/pandas/tests/reductions/test_stat_reductions.py
+./.venv/lib/python3.9/site-packages/pandas/tests/indexes/datetimes/test_partial_slicing.py
+./scripts/phase4_integration_test.py
+./scripts/test_cli_standup.py
+./venv/lib/python3.9/site-packages/aiohttp/pytest_plugin.py
+./venv/lib/python3.9/site-packages/sympy/ntheory/primetest.py
+./venv/lib/python3.9/site-packages/sympy/solvers/ode/tests/test_single.py
+./venv/lib/python3.9/site-packages/sympy/codegen/tests/test_approximations.py
+./venv/lib/python3.9/site-packages/sympy/testing/runtests.py
+./venv/lib/python3.9/site-packages/humanfriendly/tests.py
+./venv/lib/python3.9/site-packages/numpy/testing/tests/test_utils.py
+./venv/lib/python3.9/site-packages/numpy/lib/tests/test_histograms.py
+./venv/lib/python3.9/site-packages/greenlet/tests/test_greenlet.py
+./venv/lib/python3.9/site-packages/pandas/tests/arrays/test_datetimelike.py
+./venv/lib/python3.9/site-packages/pandas/tests/arithmetic/test_timedelta64.py
+./venv/lib/python3.9/site-packages/pandas/tests/reductions/test_stat_reductions.py
+./venv/lib/python3.9/site-packages/pandas/tests/indexes/datetimes/test_partial_slicing.py
+6. PROJECT TESTS ONLY (excluding venv):
+./methodology/integration/testing_interface.py
+./tests/publishing/test_publish_command.py
+./tests/ui/test_pm033d_ui_integration.py
+./tests/unit/test_slack_components.py
+./tests/unit/adapters/test_adapter_create.py
+./tests/unit/test_query_response_formatter.py
+./tests/conftest.py
+./tests/test_error_message_enhancement.py
+./tests/archive/test_file_repository.py
+./tests/archive/test_complete_flow.py
+./tests/archive/test_github_integration_simple.py
+./tests/archive/test_intent_integration.py
+./tests/archive/test_fallback_classification.py
+./tests/archive/test_github.py
+./tests/archive/test_file_resolver.py
+
+7. TESTS DIRECTORY STRUCTURE:
+total 336
+drwxr-xr-x@  46 xian  staff   1472 Sep  2 21:06 .
+drwxr-xr-x  110 xian  staff   3520 Sep 11 08:42 ..
+-rw-r--r--@   1 xian  staff   6148 Aug  7 09:46 .DS_Store
+drwxr-xr-x@   6 xian  staff    192 Aug 22 14:07 api
+drwxr-xr-x@  25 xian  staff    800 Aug 20 05:01 archive
+drwxr-xr-x@   4 xian  staff    128 Sep  2 19:23 config
+-rw-r--r--@   1 xian  staff    581 Sep  2 17:22 conftest.py
+drwxr-xr-x@   4 xian  staff    128 Aug  7 12:25 conversation
+-rw-r--r--@   1 xian  staff   1721 Aug 28 10:37 debug_blocks.py

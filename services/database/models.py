@@ -19,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
 import services.domain.models as domain
@@ -1121,4 +1122,63 @@ class FeedbackDB(Base, TimestampMixin):
             tags=feedback.tags,
             created_at=feedback.created_at,
             updated_at=feedback.updated_at,
+        )
+
+
+class PersonalityProfileModel(Base, TimestampMixin):
+    """Database model for personality profiles"""
+
+    __tablename__ = "personality_profiles"
+
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True)
+    user_id = Column(String(255), nullable=False, unique=True)
+    warmth_level = Column(Float, nullable=False, default=0.6)
+    confidence_style = Column(String(50), nullable=False, default="contextual")
+    action_orientation = Column(String(50), nullable=False, default="medium")
+    technical_depth = Column(String(50), nullable=False, default="balanced")
+    is_active = Column(Boolean, nullable=False, default=True)
+
+    # Indexes are defined in the migration
+    __table_args__ = (
+        Index("idx_personality_profiles_user_id", "user_id", unique=True),
+        Index("idx_personality_profiles_active", "is_active"),
+        Index("idx_personality_profiles_user_active", "user_id", "is_active"),
+        Index("idx_personality_profiles_warmth", "warmth_level"),
+        Index("idx_personality_profiles_confidence", "confidence_style"),
+        Index("idx_personality_profiles_action", "action_orientation"),
+        Index("idx_personality_profiles_technical", "technical_depth"),
+    )
+
+    def to_domain(self) -> "domain.PersonalityProfile":
+        """Convert to domain model"""
+        # Import here to avoid circular imports
+        from services.personality.personality_profile import (
+            ActionLevel,
+            ConfidenceDisplayStyle,
+            PersonalityProfile,
+            TechnicalPreference,
+        )
+
+        return PersonalityProfile(
+            warmth_level=self.warmth_level,
+            confidence_style=ConfidenceDisplayStyle(self.confidence_style),
+            action_orientation=ActionLevel(self.action_orientation),
+            technical_depth=TechnicalPreference(self.technical_depth),
+        )
+
+    @classmethod
+    def from_domain(
+        cls, profile: "domain.PersonalityProfile", user_id: str
+    ) -> "PersonalityProfileModel":
+        """Create from domain model"""
+        import uuid
+
+        return cls(
+            id=uuid.uuid4(),
+            user_id=user_id,
+            warmth_level=profile.warmth_level,
+            confidence_style=profile.confidence_style.value,
+            action_orientation=profile.action_orientation.value,
+            technical_depth=profile.technical_depth.value,
+            is_active=True,
         )

@@ -94,7 +94,7 @@
 
 ### Documentation
 - `docs/development/decisions/decision-log-001.md` - Added DECISION-005 for SQLAlchemy fix
-- `docs/development/session-logs/2025-08-05-code-log.md` - Comprehensive session continuation
+- `development/session-logs/2025-08-05-code-log.md` - Comprehensive session continuation
 - `docs/development/session-updates/2025-08-06-infrastructure-fixes-documentation.md` - Documentation update summary
 
 ### Verified Complete (No Changes Needed)

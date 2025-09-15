@@ -4,7 +4,7 @@
 
 ## Organization
 
-### **Established Methodologies** ([./established/](./established/))
+### **Established Methodologies** (Established (coming soon))
 
 Received wisdom and best practices for development and project management that we consciously adopted and applied.
 

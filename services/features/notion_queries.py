@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from services.domain.models import Intent
-from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+from services.domain.notion_domain_service import NotionDomainService
 from services.intelligence.spatial.notion_spatial import NotionSpatialIntelligence
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.shared_types import IntentCategory
@@ -60,7 +60,7 @@ class NotionCanonicalQueryEngine:
         self.user_id = user_id
 
         # Initialize Notion integrations
-        self.notion_adapter = NotionMCPAdapter()
+        self.notion_domain_service = NotionDomainService()
         self.spatial_intelligence = NotionSpatialIntelligence()
 
         # Performance tracking
@@ -87,7 +87,7 @@ class NotionCanonicalQueryEngine:
             original_response = await self.canonical_handlers.handle_intent(intent, session_id)
 
             # Check if Notion is configured
-            if not self.notion_adapter.is_configured():
+            if not self.notion_domain_service.is_configured():
                 return NotionIntelligenceResult(
                     original_response=original_response,
                     enhanced_message=original_response.get("message", ""),
@@ -138,7 +138,7 @@ class NotionCanonicalQueryEngine:
         """Extract relevant Notion context based on user intent."""
         try:
             # Connect to Notion if not already connected
-            if not await self.notion_adapter.connect():
+            if not await self.notion_domain_service.connect():
                 return NotionContext(user_id=self.user_id)
 
             # Search for relevant pages based on intent text
@@ -161,7 +161,7 @@ class NotionCanonicalQueryEngine:
     async def _search_notion_pages(self, query: str) -> List[Dict[str, Any]]:
         """Search Notion pages relevant to the query."""
         try:
-            if not self.notion_adapter._notion_client:
+            if not self.notion_domain_service._notion_client:
                 return []
 
             # Use Notion search API to find relevant pages
@@ -207,7 +207,7 @@ class NotionCanonicalQueryEngine:
 
         enhanced_message = original_response.get("message", "")
         notion_intelligence = {
-            "workspace_connected": self.notion_adapter.is_configured(),
+            "workspace_connected": self.notion_domain_service.is_configured(),
             "relevant_pages_count": len(notion_context.relevant_pages),
             "recent_updates_count": len(notion_context.recent_updates),
             "knowledge_areas": notion_context.knowledge_areas,
@@ -236,7 +236,7 @@ class NotionCanonicalQueryEngine:
             "total_queries": self._query_count,
             "average_enhancement_time_ms": avg_time,
             "total_enhancement_time_ms": self._total_enhancement_time,
-            "adapter_configured": self.notion_adapter.is_configured(),
+            "adapter_configured": self.notion_domain_service.is_configured(),
         }
 
 

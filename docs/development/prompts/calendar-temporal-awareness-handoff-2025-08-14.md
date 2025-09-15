@@ -167,8 +167,8 @@ GOOGLE_TOKEN_FILE=token.json
 - `services/mcp/consumer/consumer_core.py` (UPDATED)
 
 **Documentation:**
-- `docs/development/session-logs/2025-08-14-code-log.md` (UPDATED)
-- `docs/planning/roadmap.md` (UPDATED)
+- `development/session-logs/2025-08-14-code-log.md` (UPDATED)
+- `docs/planning/../planning/roadmap.md` (UPDATED)
 - `docs/planning/pm-issues-status.csv` (UPDATED)
 
 ## 🎯 Success Criteria for Phase 2

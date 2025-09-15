@@ -99,7 +99,7 @@ python scripts/generate_github_issues.py
 
 **Integration**: Already configured as Git pre-commit hook
 **Function**: Automated GitHub sync detection when planning docs change
-**Usage**: Runs automatically on `git commit` when backlog.md or roadmap.md modified
+**Usage**: Runs automatically on `git commit` when backlog.md or ../planning/roadmap.md modified
 
 **Strategic Value**: Ensures GitHub sync discipline during rapid MCP implementation
 **MCP Monday Integration**: Hook configuration ready for automated workflow coordination
@@ -186,8 +186,8 @@ python scripts/generate_github_issues.py
 - **Pre-Commit Enhancement**: `scripts/check-backlog-sync.sh`
 
 ### **Session Documentation**
-- **Current Session Log**: `docs/development/session-logs/2025-08-10-cursor-log.md`
-- **Session Summary**: `docs/development/session-logs/2025-08-10-security-sunday-session-summary.md`
+- **Current Session Log**: `development/session-logs/2025-08-10-cursor-log.md`
+- **Session Summary**: `development/session-logs/2025-08-10-security-sunday-session-summary.md`
 - **Automation Inventory**: `docs/development/automation-inventory-2025-08-10.md`
 
 ---

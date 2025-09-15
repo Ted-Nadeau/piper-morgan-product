@@ -121,7 +121,7 @@ This should use the proper unittest method to create test instances.
 
 - ✅ `tests/orchestration/test_excellence_flywheel_standalone.py` (new)
 - ✅ `tests/orchestration/run_standalone_tests.py` (new)
-- ✅ `docs/development/session-logs/2025-08-20-cursor-log.md` (updated)
+- ✅ `development/session-logs/2025-08-20-cursor-log.md` (updated)
 
 ### **Dependencies**
 

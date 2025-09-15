@@ -224,6 +224,6 @@ PM-074 represents a breakthrough in embodied AI implementation, delivering the f
 
 ---
 
-**Previous Session Log**: `docs/development/session-logs/2025-07-27-code-log.md`
+**Previous Session Log**: `development/session-logs/2025-07-27-code-log.md`
 **Methodology Reference**: `docs/development/methodology-core/`
 **Architecture Documentation**: `docs/architecture/architecture.md`, `docs/architecture/pattern-catalog.md`

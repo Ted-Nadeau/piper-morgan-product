@@ -1,0 +1,100 @@
+=== COMPLETE PIPER CAPABILITIES CATALOG ===
+1. CLI CAPABILITIES:
+total 8
+-rw-r--r--@   1 xian  staff   162 Aug 22 14:07 __init__.py
+drwxr-xr-x@   4 xian  staff   128 Aug 22 14:07 .
+drwxr-xr-x  107 xian  staff  3424 Sep 11 08:41 ..
+drwxr-xr-x@  11 xian  staff   352 Sep  6 06:50 commands
+
+CLI Command Functions:
+cli/commands/issues.py:    def __init__(self):
+cli/commands/issues.py:    async def _initialize_services(self):
+cli/commands/issues.py:    def print_colored(self, text: str, color: str = "reset", bold: bool = False) -> None:
+cli/commands/issues.py:    def print_header(self, title: str) -> None:
+cli/commands/issues.py:    def print_section(self, title: str, color: str = "blue") -> None:
+cli/commands/issues.py:    def print_success(self, message: str) -> None:
+cli/commands/issues.py:    def print_info(self, message: str) -> None:
+cli/commands/issues.py:    def print_warning(self, message: str) -> None:
+cli/commands/issues.py:    def print_error(self, message: str) -> None:
+cli/commands/issues.py:    async def triage_issues(self, project: Optional[str] = None, limit: int = 10) -> Dict[str, Any]:
+cli/commands/issues.py:    def _determine_priority(self, issue: Dict[str, Any]) -> str:
+cli/commands/issues.py:    def _generate_triage_note(self, issue: Dict[str, Any], priority: str) -> str:
+cli/commands/issues.py:    def _display_triage_results(
+cli/commands/issues.py:    async def _learn_triage_pattern(
+cli/commands/issues.py:    def _extract_keywords(self, text: str) -> List[str]:
+2. WEB CAPABILITIES:
+web/app.py:@app.get("/debug-markdown", response_class=HTMLResponse)
+web/app.py:async def debug_markdown(request: Request):
+web/app.py:@app.get("/", response_class=HTMLResponse)
+web/app.py:async def home(request: Request):
+web/app.py:@app.get("/api/standup")
+web/app.py:async def morning_standup_api(
+web/app.py:@app.get("/standup")
+web/app.py:async def standup_ui():
+
+3. INTEGRATION CAPABILITIES:
+./.cursor/rules/github-tracking.mdc
+./pm155_github_update.txt
+./archive/20250810/2025-08-04-website-rss-integration-log.md
+./archive/piper-morgan-0.1.1/intelligent_github_v2.py
+./archive/piper-morgan-0.1.1/github_agent.py
+./archive/piper-morgan-0.1.1/github_reviewer.py
+./archive/piper-morgan-1.0/piper-morgan-b0rked/intelligent_github_v2.py
+./archive/piper-morgan-1.0/piper-morgan-b0rked/github_agent.py
+./archive/piper-morgan-1.0/piper-morgan-b0rked/github_reviewer.py
+./config/notion_config.py
+
+4. SERVICE LAYER CAPABILITIES:
+services/intent_service/llm_classifier.py:    async def _preprocess_message(self, message: str) -> str:
+services/knowledge_graph/ingestion.py:    async def _analyze_document_relationships(self, content: str, existing_metadata: Dict) -> Dict:
+services/knowledge_graph/document_service.py:class DocumentService:
+services/analysis/text_analyzer.py:    async def analyze(self, file_path: str, **kwargs) -> AnalysisResult:
+services/analysis/document_analyzer.py:    async def analyze(self, file_path: str, **kwargs) -> AnalysisResult:
+services/analysis/base_analyzer.py:    async def analyze(self, file_path: str, **kwargs) -> AnalysisResult:
+services/analysis/file_analyzer.py:    async def analyze_file(
+services/analysis/analyzer_factory.py:    def create_analyzer(self, analysis_type):
+services/analysis/csv_analyzer.py:    async def analyze(self, file_path: str, **kwargs) -> AnalysisResult:
+services/intelligence/clarifying_questions.py:    async def analyze_request(self, description: str) -> AmbiguityAnalysis:
+services/intelligence/conversation_aware.py:    async def analyze_request(
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_space_hierarchy(self, space_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_content_timeline(self, page_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_visibility_status(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_user_activity(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_content_workflow(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_content_metrics(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_content_relations(self, content_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/gitbook_spatial.py:    async def analyze_space_context(self, space_data: Dict[str, Any]) -> Dict[str, Any]:
+services/intelligence/spatial/notion_spatial.py:    async def _analyze_workspace_structure(self):
+5. SPECIFIC CLI COMMANDS:
+cli/commands/__init__.py
+cli/commands/cal.py
+cli/commands/documents.py
+cli/commands/issues.py
+cli/commands/notion.py
+cli/commands/publish.py
+cli/commands/standup.py
+cli/commands/test_issues_integration.py
+
+6. MAIN APPLICATION CAPABILITIES:
+45:from services.utils.serialization import serialize_dataclass
+56:from services.intent_service import classifier
+71:class IntentRequest(BaseModel):
+76:class ClarificationResponse(BaseModel):
+80:class IntentResponse(BaseModel):
+88:class WorkflowResponse(BaseModel):
+96:async def safe_execute_workflow(engine, workflow_id: str) -> None:
+109:async def lifespan(app: FastAPI):
+114:    logger.info("✅ Intent classifier ready")
+176:@app.get("/")
+177:async def root():
+186:@app.get("/health")
+187:async def health():
+201:@app.post("/api/v1/intent", response_model=IntentResponse)
+202:async def process_intent(request: IntentRequest, background_tasks: BackgroundTasks):
+206:        session_id = request.session_id or "default_session"
+265:        # Normal classification flow
+267:        intent = await classifier.classify(request.message)
+268:        print(f"🔍 Intent classification result: {intent}")
+270:        # PM-087: Ethics tracking - Log intent classification for behavior analysis
+
+7. README DOCUMENTED FEATURES:

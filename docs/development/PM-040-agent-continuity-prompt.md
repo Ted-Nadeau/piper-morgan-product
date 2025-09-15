@@ -239,7 +239,7 @@ Follow established patterns:
 
 ### Key Files
 
-- **Session Log**: `docs/development/session-logs/2025-08-04-cursor-log.md`
+- **Session Log**: `development/session-logs/2025-08-04-cursor-log.md`
 - **Technical Documentation**: `docs/development/PM-040-technical-implementation.md`
 - **Migration File**: `alembic/versions/8e4f2a3b9c5d_add_knowledge_graph_tables_pm_040.py`
 - **Core Services**: `services/knowledge/` directory

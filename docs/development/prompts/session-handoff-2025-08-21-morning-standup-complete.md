@@ -56,12 +56,12 @@ Successfully completed PM-119 Morning Standup MVP implementation using persisten
 - `services/features/morning_standup.py` - Core MorningStandupWorkflow implementation
 - `tests/features/test_morning_standup.py` - Comprehensive test suite
 - `services/features/__init__.py` - Features module initialization
-- `docs/development/session-logs/2025-08-21-16-30-morning-standup-mvp.md` - Session log
+- `development/session-logs/2025-08-21-16-30-morning-standup-mvp.md` - Session log
 
 ### Updated Files ✅
 - `cli/commands/standup.py` - Updated to use MorningStandupWorkflow
 - `services/shared_types.py` - Added WorkflowType.MULTI_AGENT enum
-- `scripts/deploy_multi_agent_coordinator.sh` - Fixed SQLAlchemy validation and workflow instantiation
+- `../../scripts/deploy_multi_agent_coordinator.sh` - Fixed SQLAlchemy validation and workflow instantiation
 
 ## Critical Information for Next Session
 
