@@ -123,7 +123,7 @@
 
 If starting fresh tomorrow:
 1. Review this handoff prompt for full context
-2. Check session log: `docs/development/session-logs/2025-08-18-evening-log.md`
+2. Check session log: `development/session-logs/2025-08-18-evening-log.md`
 3. TLDR is deprecated - use Pattern Sweep for compound learning acceleration
 4. All major infrastructure is working, focus on development tasks
 

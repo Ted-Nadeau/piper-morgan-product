@@ -131,7 +131,7 @@ python main.py standup
 
 ```python
 COLORS = {
-    "reset": "\033[0m",
+    "reset": "\033
     "bold": "\033[1m",
     "red": "\033[91m",
     "green": "\033[92m",
@@ -427,10 +427,10 @@ python scripts/test_cli_standup.py
 
 ## 🔗 **Related Documentation**
 
-- [Multi-Agent Coordinator Guide](/development/HOW_TO_USE_MULTI_AGENT.md)
-- [Excellence Flywheel Methodology](/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)
-- [Test Infrastructure Guide](/development/TEST-GUIDE.md)
-- [Session Logs](/development/session-logs/)
+- [Multi-Agent Coordinator Guide](./HOW_TO_USE_MULTI_AGENT.md)
+- [Excellence Flywheel Methodology](./methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)
+- [Test Infrastructure Guide](./TEST-GUIDE.md)
+- [Session Logs](../development/session-logs/)
 
 ---
 

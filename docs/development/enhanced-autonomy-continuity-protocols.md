@@ -55,7 +55,7 @@
 
 ### **Unified Session Log** ✅
 
-- **File**: `docs/development/session-logs/2025-08-15-cursor-log.md`
+- **File**: `development/session-logs/2025-08-15-cursor-log.md`
 - **Coverage**: Complete Enhanced Autonomy experiment (1:11 PM - 6:20 PM)
 - **Format**: Consistent phase documentation with timestamps
 - **Status**: ✅ **MAINTAINED** - All phases documented consistently

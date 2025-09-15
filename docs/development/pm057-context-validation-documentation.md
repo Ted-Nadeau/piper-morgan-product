@@ -293,7 +293,7 @@ workflow_factory.create_from_intent(intent)
 
 ## Related Documentation
 
-- [PM-057 Issue](link-to-pm057-issue)
-- [WorkflowFactory Documentation](link-to-workflow-factory)
-- [API Error Handling](link-to-api-errors)
-- [Intent Processing](link-to-intent-processing)
+- [PM-057 Issue](https://github.com/mediajunkie/piper-morgan-product/issues/26)
+- WorkflowFactory Documentation - needed
+- [API Reference](../architecture/api-reference.md)
+- [Intent Classification Patterns](../architecture/intent-patterns.md)

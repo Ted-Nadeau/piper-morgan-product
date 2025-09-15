@@ -94,7 +94,7 @@ tests/conversation/
 ### Documentation Updates
 ```
 docs/architecture/data-model.md (Conversation System section added)
-docs/planning/roadmap.md (PM-034 marked complete)
+docs/planning/../planning/roadmap.md (PM-034 marked complete)
 docs/development/decisions/decision-log-001.md (DECISION-006 added)
 ```
 
@@ -246,7 +246,7 @@ health = health_monitor.get_system_health()
 - [x] Domain models documented in data-model.md
 - [x] Novel testing patterns documented
 - [x] GitHub issue #61 updated with completion evidence
-- [x] Planning documents updated (roadmap.md marked complete)
+- [x] Planning documents updated (../planning/roadmap.md marked complete)
 - [x] Decision log synced with foundation repair context
 - [x] Repository committed with proper documentation
 - [x] Performance validation completed with evidence

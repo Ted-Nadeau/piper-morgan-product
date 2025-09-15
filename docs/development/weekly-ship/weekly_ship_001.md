@@ -41,7 +41,7 @@ Here's what the AI PM assistant project accomplished this week and what's coming
 
 ## 🧠 Learning Patterns Applied
 
-*Pattern strength ratings (1-16) based on systematic analysis of development session outcomes - see [pattern documentation](link) for methodology.*
+*Pattern strength ratings (1-16) based on systematic analysis of development session outcomes - see [pattern documentation](/docs/architecture/pattern-catalog.md) for methodology.*
 
 ### Session Log Pattern (16/16 Strength)
 
@@ -143,7 +143,7 @@ During our Foundation Sprint analysis, we discovered an emergent pattern where s
 **Thanks,**
 xian + Piper Morgan Development Team
 
-*P.S. Full session logs and technical details available in the [GitHub repository](link) and [project knowledge base](notion-link).*
+*P.S. Full session logs and technical details available in the [GitHub repository](https://github.com/mediajunkie/piper-morgan-product) and project knowledge base.*
 
 ---
 

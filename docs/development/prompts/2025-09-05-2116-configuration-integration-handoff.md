@@ -25,7 +25,7 @@
 - **Crisis**: User's PIPER.user.md file was missing (Notion integration lost)
 - **Recovery**: Restored from backup with user's database IDs preserved
 - **Enhancement**: Added auto-detection logic (prefers user config, falls back to defaults)
-- **Verification**: `[debug] Using user configuration path=config/PIPER.user.md`
+- **Verification**: `[debug] Using user configuration path=../../config/PIPER.user.md`
 
 ## TECHNICAL STATE
 
@@ -38,7 +38,7 @@ github_config = loader.load_github_config()  # Loads from PIPER.user.md
 ```
 
 ### User's Active Configuration:
-- **File**: `config/PIPER.user.md` (auto-detected)
+- **File**: `../../config/PIPER.user.md` (auto-detected)
 - **GitHub**: `mediajunkie/piper-morgan-product` + `PM-` format
 - **Notion**: Preserved database IDs + publishing settings
 - **Privacy**: File is gitignored, not committed
@@ -101,9 +101,9 @@ PYTHONPATH=. python cli/commands/issues.py --help
 **User Config Missing**:
 ```bash
 # Check files:
-ls -la config/PIPER.user.md*
+ls -la ../../config/PIPER.user.md*
 # If missing, restore from backup:
-cp config/PIPER.user.md.backup config/PIPER.user.md
+cp ../../config/PIPER.user.md.backup ../../config/PIPER.user.md
 ```
 
 ## CRITICAL SUCCESS FACTORS

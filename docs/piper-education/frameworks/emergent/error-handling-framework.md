@@ -584,4 +584,4 @@ The Error Handling Framework is essential for building reliable, user-friendly A
 
 ---
 
-**Related**: [Verification-First Pattern](../decision-patterns/emergent/verification-first-pattern.md), [Human-AI Collaboration Referee](../methodologies/emergent/human-ai-collaboration-referee.md)
+**Related**: [Verification-First Pattern](../../decision-patterns/emergent/verification-first-pattern.md), [Human-AI Collaboration Referee](../../methodologies/emergent/human-ai-collaboration-referee.md)

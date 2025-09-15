@@ -21,7 +21,7 @@ We're in the middle of [specific task] to fix [specific issue].
 ## REFERENCE DOCUMENTS
 
 Please review these in order:
-1. **Session Log**: `docs/development/session-logs/YYYY-MM-DD-log.md` - Current state and decisions
+1. **Session Log**: `development/session-logs/YYYY-MM-DD-log.md` - Current state and decisions
 2. **Working Method**: `docs/development/working-method.md` - Step-by-step execution patterns
 3. **Architecture Guidelines**: `docs/development/architectural-guidelines.md` - Antipatterns and best practices
 4. **Project Instructions**: `CLAUDE.md` - Core approach and constraints
@@ -94,7 +94,7 @@ We're in the middle of testing GitHub workflow integration to validate PM-011 co
 **Next Step**: Test GitHub issue creation workflow
 
 ## REFERENCE DOCUMENTS
-1. **Session Log**: `docs/development/session-logs/2025-07-09a-log-json-formatting-fix.md`
+1. **Session Log**: `development/session-logs/2025-07-09a-log-json-formatting-fix.md`
 2. **Working Method**: `docs/development/working-method.md`
 3. **Architecture Guidelines**: `docs/development/architectural-guidelines.md`
 4. **Project Instructions**: `CLAUDE.md`

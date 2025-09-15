@@ -142,7 +142,7 @@ GitHub issue creation: ~19 seconds total
 - `docs/development/pm-062-task-handler-completion-report.md` - Implementation report
 - `docs/development/pm-062-workflow-reality-check-report.md` - Reality check report
 - `docs/development/user-journey-polish-opportunities-report.md` - UX analysis
-- `docs/development/session-logs/2025-07-25-cursor.md` - Session log
+- `development/session-logs/2025-07-25-cursor.md` - Session log
 
 ---
 

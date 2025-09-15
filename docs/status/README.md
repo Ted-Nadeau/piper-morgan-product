@@ -29,7 +29,7 @@ Welcome to Piper Morgan's status dashboard. This section provides real-time insi
 ### 📊 [Achievements 2025](achievements-2025.md)
 Complete record of all features, fixes, and improvements delivered in 2025. Includes detailed implementation notes and impact metrics.
 
-### 🗺️ [Roadmap](roadmap.md)
+### 🗺️ [Roadmap](../planning/roadmap.md)
 Forward-looking milestones, planned features, and strategic objectives. Updated weekly with progress indicators and timeline adjustments.
 
 ### 📝 [Changelog](changelog.md)

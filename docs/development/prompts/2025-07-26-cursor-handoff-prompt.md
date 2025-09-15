@@ -149,8 +149,8 @@
 - ✅ `scripts/test_morning_standup_sequence.py`
 - ✅ `scripts/test_morning_standup_ui_experience.py`
 - ✅ `docs/index.md` (GitHub Pages main page)
-- ✅ `docs/development/session-logs/2025-07-26-cursor-log.md`
-- ✅ `docs/planning/roadmap.md` (updated with PM-070/071 completion)
+- ✅ `development/session-logs/2025-07-26-cursor-log.md`
+- ✅ `docs/planning/../planning/roadmap.md` (updated with PM-070/071 completion)
 - ✅ `docs/planning/backlog.md` (updated with PM-070/071 completion)
 
 ### **Systematic Verification Methodology**:
@@ -191,8 +191,8 @@
 
 ### **Documentation**:
 
-- `docs/development/session-logs/2025-07-26-cursor-log.md` - Complete session log
-- `docs/planning/roadmap.md` - Updated with current status
+- `development/session-logs/2025-07-26-cursor-log.md` - Complete session log
+- `docs/planning/../planning/roadmap.md` - Updated with current status
 - `docs/planning/backlog.md` - Updated with completed tasks
 - `docs/index.md` - GitHub Pages main page (modernized)
 

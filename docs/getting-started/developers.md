@@ -234,7 +234,7 @@ tests/
 
 ### Session Protocol
 
-1. Create session log: `docs/development/session-logs/YYYY-MM-DD-log.md`
+1. Create session log: `development/session-logs/YYYY-MM-DD-log.md`
 2. Check handoffs: `docs/development/prompts/*-handoff-*.md`
 3. Complex tasks: Use TodoWrite tool
 4. End session: Update GitHub issues with evidence

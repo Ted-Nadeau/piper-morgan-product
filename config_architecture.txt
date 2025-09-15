@@ -1,0 +1,45 @@
+=== PERSONALITY CONFIGURATION ARCHITECTURE ===
+
+1. DATABASE SCHEMA DESIGN:
+   PersonalityProfile table structure based on DDD model
+
+   Table: personality_profiles
+   - id: UUID (primary key)
+   - user_id: String (foreign key, unique)
+   - warmth_level: Float (0.0-1.0, default 0.6)
+   - confidence_style: Enum (CONTEXTUAL default)
+   - action_orientation: Enum (MEDIUM default)
+   - technical_depth: Enum (BALANCED default)
+   - created_at: DateTime
+   - updated_at: DateTime
+   - is_active: Boolean (default True)
+
+2. PIPER.USER.MD INTEGRATION:
+   YAML personality section structure and override mechanism
+
+   personality:
+     warmth_level: 0.7        # Overrides database value
+     confidence_style: "contextual"
+     action_orientation: "high"
+     technical_depth: "balanced"
+
+   Override Logic:
+   - Load database PersonalityProfile first
+   - Parse PIPER.user.md personality section
+   - Apply overrides to loaded profile
+   - Cache resulting profile for performance
+
+3. CACHING STRATEGY:
+   Profile caching for <100ms performance requirement
+
+   Cache Implementation:
+   - In-memory LRU cache (max 1000 profiles)
+   - Cache key: user_id
+   - TTL: 30 minutes (configurable)
+   - Cache invalidation on profile updates
+   - Cache warming for frequent users
+
+   Performance Targets:
+   - Cache hit: <5ms profile retrieval
+   - Cache miss: <50ms (database + PIPER.user.md)
+   - Total enhancement budget: 100ms

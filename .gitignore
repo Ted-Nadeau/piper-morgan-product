@@ -54,3 +54,7 @@ docs/archive/
 config/PIPER.user.md
 **/PIPER.user.md
 *.user.md
+docs/comms/blog/*.png
+docs/comms/blog/*.jpg
+docs/comms/blog/*.jpeg
+archive/

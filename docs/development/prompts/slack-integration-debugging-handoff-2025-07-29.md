@@ -72,7 +72,7 @@ SLACK_PIPELINE: SlackClient authentication: {status} - Team: {team}, User: {user
 - `services/integrations/slack/response_handler.py` - Intent and response logging
 - `services/integrations/slack/slack_client.py` - Enhanced posting and auth logging
 - `services/orchestration/engine.py` - Workflow creation logging
-- `docs/development/session-logs/2025-07-29-cursor-log.md` - Session documentation
+- `development/session-logs/2025-07-29-cursor-log.md` - Session documentation
 
 ## Next Steps for Tomorrow
 
@@ -147,7 +147,7 @@ SLACK_PIPELINE: SlackClient authentication: {status} - Team: {team}, User: {user
 
 ## Session Logs
 
-- **Primary Log**: `docs/development/session-logs/2025-07-29-cursor-log.md`
+- **Primary Log**: `development/session-logs/2025-07-29-cursor-log.md`
 - **Detailed Progress**: All phases documented with implementation details
 - **Technical Findings**: Root cause and validation results documented
 

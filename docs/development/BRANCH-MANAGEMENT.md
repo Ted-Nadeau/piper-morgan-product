@@ -235,10 +235,10 @@ git branch -d feature/new-work      # Clean up local
 ### **Manual Test Commands**
 
 ```bash
-./scripts/run_tests.sh smoke     # <5s validation before commits
-./scripts/run_tests.sh fast      # <30s validation before pushes
-./scripts/run_tests.sh full      # Complete test suite for releases
-./scripts/run_tests.sh coverage  # Coverage analysis for quality audits
+./../../scripts/run_tests.sh smoke     # <5s validation before commits
+./../../scripts/run_tests.sh fast      # <30s validation before pushes
+./../../scripts/run_tests.sh full      # Complete test suite for releases
+./../../scripts/run_tests.sh coverage  # Coverage analysis for quality audits
 ```
 
 ### **Emergency Fixes**

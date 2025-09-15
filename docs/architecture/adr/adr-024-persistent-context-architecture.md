@@ -82,10 +82,10 @@ class PreferenceAPI:
 - **Multi-Agent Coordinator**: Foundation for user preference coordination
 
 ## References
-- [Persistent Context Research](/development/PERSISTENT_CONTEXT_RESEARCH.md)
-- [User Preference Manager](/../services/domain/user_preference_manager.py)
-- [Session Persistence](/../services/orchestration/session_persistence.py)
-- [Preference API Endpoints](/../services/api/preference_endpoints.py)
+- [Persistent Context Research](../../development/PERSISTENT_CONTEXT_RESEARCH.md)
+- User Preference Manager (see codebase)
+- Session Persistence (see codebase)
+- Preference API Endpoints (see codebase)
 
 ---
 

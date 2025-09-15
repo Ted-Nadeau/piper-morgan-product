@@ -454,8 +454,8 @@ Piper: "Added bug #456 and task #457 to current sprint"
 - **[Developer Integration Guide](../development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
 
 ### Advanced Usage
-- **[Advanced Conversation Features](./advanced-conversation-features.md)** - Complex patterns and use cases *(coming soon)*
-- **[Team Migration Guide](./team-migration-guide.md)** - Rolling out conversational AI across teams *(coming soon)*
+- **Advanced Conversation Features** - Complex patterns and use cases *(coming soon)*
+- **[Team Migration Guide](../development/team-migration-guide.md)** - Rolling out conversational AI across teams *(coming soon)*
 
 ---
 

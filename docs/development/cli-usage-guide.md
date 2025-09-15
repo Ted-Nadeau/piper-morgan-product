@@ -11,17 +11,20 @@ The `piper issues` command provides comprehensive PM number management with auto
 Creates a new GitHub issue with an auto-assigned PM number.
 
 **Syntax:**
+
 ```bash
 python -c "from cli.commands.issues import issues; issues(['create', '--title', 'TITLE', '--body', 'DESCRIPTION', '--labels', 'LABELS', '--dry-run'])"
 ```
 
 **Options:**
+
 - `--title TEXT` (required): Issue title (max 200 characters)
 - `--body TEXT`: Issue description (optional)
 - `--labels TEXT`: Comma-separated labels (max 10 labels)
 - `--dry-run`: Show what would be created without actually creating
 
 **Examples:**
+
 ```bash
 # Create a new issue
 python -c "from cli.commands.issues import issues; issues(['create', '--title', 'Implement new feature', '--body', 'Add user authentication', '--labels', 'feature,enhancement'])"
@@ -31,6 +34,7 @@ python -c "from cli.commands.issues import issues; issues(['create', '--title', 
 ```
 
 **Features:**
+
 - Auto-assigns next available PM number (PM-140+)
 - Prevents duplicate PM numbers across all systems
 - Validates input (title length, label count)
@@ -42,11 +46,13 @@ python -c "from cli.commands.issues import issues; issues(['create', '--title', 
 Verifies PM number consistency across GitHub, CSV, and backlog systems.
 
 **Syntax:**
+
 ```bash
 python -c "from cli.commands.issues import issues; issues(['verify'])"
 ```
 
 **Output:**
+
 - Total PM numbers found
 - GitHub issues checked
 - CSV entries verified
@@ -54,6 +60,7 @@ python -c "from cli.commands.issues import issues; issues(['verify'])"
 - Suggested actions for resolution
 
 **Example Output:**
+
 ```
 🔍 Verifying PM number consistency...
 ❌ PM number inconsistencies found!
@@ -73,14 +80,17 @@ python -c "from cli.commands.issues import issues; issues(['verify'])"
 Synchronizes PM numbers across all tracking systems.
 
 **Syntax:**
+
 ```bash
 python -c "from cli.commands.issues import issues; issues(['sync', '--dry-run'])"
 ```
 
 **Options:**
+
 - `--dry-run`: Show what would be synced without making changes
 
 **Features:**
+
 - Syncs GitHub issues ↔ CSV file
 - Syncs CSV file ↔ Backlog.md
 - Resolves numbering conflicts
@@ -92,18 +102,21 @@ python -c "from cli.commands.issues import issues; issues(['sync', '--dry-run'])
 ### Input Validation Errors
 
 **Empty Title:**
+
 ```
 ❌ Error: Issue title cannot be empty
 💡 Please provide a meaningful title for the issue
 ```
 
 **Title Too Long:**
+
 ```
 ❌ Error: Issue title too long (max 200 characters)
 💡 Current length: 250 characters
 ```
 
 **Too Many Labels:**
+
 ```
 ❌ Error: Too many labels (max 10)
 💡 Current count: 15 labels
@@ -112,12 +125,14 @@ python -c "from cli.commands.issues import issues; issues(['sync', '--dry-run'])
 ### System Integration Errors
 
 **GitHub Authentication:**
+
 ```
 ❌ Error: GitHub authentication failed
 💡 Please run: gh auth login
 ```
 
 **PM Number Conflicts:**
+
 ```
 ❌ Error: PM number PM-140 validation failed
    ⚠️  PM number already exists in CSV
@@ -127,6 +142,7 @@ python -c "from cli.commands.issues import issues; issues(['sync', '--dry-run'])
 ## Common Workflows
 
 ### 1. Create New Issue
+
 ```bash
 # Step 1: Verify current system state
 python -c "from cli.commands.issues import issues; issues(['verify'])"
@@ -139,6 +155,7 @@ python -c "from cli.commands.issues import issues; issues(['create', '--title', 
 ```
 
 ### 2. Resolve System Inconsistencies
+
 ```bash
 # Step 1: Check for issues
 python -c "from cli.commands.issues import issues; issues(['verify'])"
@@ -151,6 +168,7 @@ python -c "from cli.commands.issues import issues; issues(['verify'])"
 ```
 
 ### 3. Bulk Issue Management
+
 ```bash
 # Check system status
 python -c "from cli.commands.issues import issues; issues(['verify'])"
@@ -168,21 +186,25 @@ python -c "from cli.commands.issues import issues; issues(['create', '--title', 
 ### Common Issues
 
 **1. Module Import Errors**
+
 - Ensure you're in the project root directory
 - Activate virtual environment: `source venv/bin/activate`
 - Check Python path: `PYTHONPATH=. python -c "..."`
 
 **2. GitHub Authentication Issues**
+
 - Check authentication: `gh auth status`
 - Re-authenticate if needed: `gh auth login`
 - Verify repository access: `gh repo view mediajunkie/piper-morgan-product`
 
 **3. CSV File Issues**
+
 - Check file permissions: `ls -la docs/planning/pm-issues-status.csv`
 - Verify file format: `head -5 docs/planning/pm-issues-status.csv`
 - Ensure file is writable: `chmod 644 docs/planning/pm-issues-status.csv`
 
 **4. PM Number Conflicts**
+
 - Run verification: `python -c "from cli.commands.issues import issues; issues(['verify'])"`
 - Check for duplicates in CSV
 - Use sync command to resolve conflicts
@@ -205,6 +227,7 @@ python -c "from cli.commands.issues import issues; issues(['create', '--title', 
 ## Integration with Code Agent Services
 
 The CLI integrates with:
+
 - **PMNumberManager**: PM number generation and validation
 - **GitHubAgent**: GitHub API integration
 - **CSV Tracking**: Automatic updates to pm-issues-status.csv

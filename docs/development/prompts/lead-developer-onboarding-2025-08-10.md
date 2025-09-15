@@ -233,7 +233,7 @@ PYTHONPATH=. python -m pytest tests/integration/ -v
 ### Strategic Context
 1. `docs/strategic/pm-033-mcp-ecosystem-hub-strategy.md` - Market opportunity
 2. `docs/strategic/security-sunday-strategic-impact-report.md` - Foundation achievements
-3. `docs/planning/roadmap.md` - Current development phase
+3. `docs/planning/../planning/roadmap.md` - Current development phase
 
 ---
 

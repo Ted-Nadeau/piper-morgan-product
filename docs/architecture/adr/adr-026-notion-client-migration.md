@@ -243,5 +243,5 @@ async def cmd_create(self, title: str, parent_id: Optional[str] = None):
 
 - [Notion API Documentation](https://developers.notion.com/)
 - [notion-client Python Library](https://github.com/ramnes/notion-sdk-py)
-- [ADR-017: Spatial MCP Integration](docs/architecture/adr/adr-017-spatial-mcp.md)
-- [Notion Integration Feature Documentation](docs/features/notion-integration.md)
+- [ADR-017: Spatial MCP Integration](./adr-017-spatial-mcp.md)
+- Notion Integration (coming soon)

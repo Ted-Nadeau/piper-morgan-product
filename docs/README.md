@@ -45,13 +45,13 @@ docker-compose up -d
 python main.py
 ```
 
-**🎯 Ready to try?** Start with our [15-minute getting started guide](docs/user-guides/getting-started-conversational-ai.md)!
+**🎯 Ready to try?** Start with our [15-minute getting started guide](user-guides/getting-started-conversational-ai.md)!
 
 ### 🚀 **One-Click Startup**
 
 For daily standup routine:
 
-- **[Mac Dock Integration](./docs/setup/mac-dock-integration.md)** - Add Piper to your dock
+- **[Mac Dock Integration](./setup/mac-dock-integration.md)** - Add Piper to your dock
 - **Start Script**: `./start-piper.sh` - One-command startup with health checks
 - **Requirements**: Docker Desktop running
 
@@ -106,7 +106,7 @@ python main.py standup
 - **Cross-Feature Learning**: Issue patterns enhance morning standups
 - **Real-time GitHub Data**: Live API integration with your repositories
 
-[📖 Full CLI Documentation](docs/user-guides/cli-commands.md) | [📊 Issue Intelligence Features](docs/features/issue-intelligence.md)
+[📖 Full CLI Documentation](user-guides/cli-commands.md) | [📊 Issue Intelligence Features](features/issue-intelligence.md)
 
 ## 🌅 Morning Standup Web Interface
 
@@ -140,26 +140,26 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 - 📁 **Project context** and repository information
 - 🔄 **Multi-user support** with personalized configurations
 
-[📖 Technical Documentation](docs/features/morning-standup-web.md) | [📋 User Guide](docs/features/morning-standup-ui-guide.md)
+[📖 Technical Documentation](features/morning-standup-web.md) | [📋 User Guide](features/morning-standup-ui-guide.md)
 
 ## 📚 Complete Documentation
 
 ### 🎯 User Guides
 
-- **[🚀 Getting Started](docs/user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
-- **[⌨️ CLI Commands](docs/user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
-- **[🎯 Understanding References](docs/user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
-- **[🧠 Conversation Memory](docs/user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
-- **[🔄 Upgrading from Commands](docs/user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
-- **[📖 Real Examples](docs/user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
+- **[🚀 Getting Started](user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
+- **[⌨️ CLI Commands](user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
+- **[🎯 Understanding References](user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
+- **[🧠 Conversation Memory](user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
+- **[🔄 Upgrading from Commands](user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
+- **[📖 Real Examples](user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
 
 ### 🔧 Developer Resources
 
 - **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
-- **[🔌 API Documentation](docs/development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
-- **[⚡ Developer Quick Start](docs/development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
-- **[🌿 Branch Management](docs/development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
-- **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
+- **[🔌 API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
+- **[⚡ Developer Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
+- **[🌿 Branch Management](development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
+- **[🧪 Test Guide](development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
 
 ## 🧪 Testing & Quality Assurance
 
@@ -176,10 +176,10 @@ Our test infrastructure provides **4 execution modes** optimized for development
 
 ```bash
 # Smart test execution
-./scripts/run_tests.sh smoke     # <5s validation
-./scripts/run_tests.sh fast      # <30s development workflow
-./scripts/run_tests.sh full      # Complete test suite
-./scripts/run_tests.sh coverage  # Coverage analysis
+./../scripts/run_tests.sh smoke     # <5s validation
+./../scripts/run_tests.sh fast      # <30s development workflow
+./../scripts/run_tests.sh full      # Complete test suite
+./../scripts/run_tests.sh coverage  # Coverage analysis
 
 # Git integration (automated)
 git commit    # Runs smoke tests via pre-commit hook
@@ -188,7 +188,7 @@ git push      # Runs fast tests via pre-push hook
 
 **Excellence Flywheel Integration**: All testing follows Verification First → Implementation → Evidence-based progress → GitHub tracking methodology.
 
-See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documentation.
+See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 
 ## 🚀 Recent Infrastructure Activations
 
@@ -207,7 +207,7 @@ See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documenta
 - **Test Coverage**: 652 lines of comprehensive test coverage activated
 
 ### 🧪 Test Infrastructure (August 20, 2025)
-- **Smart Test Execution**: `./scripts/run_tests.sh` with 4 modes (smoke, fast, full, coverage)
+- **Smart Test Execution**: ../scripts/run_tests.sh` with 4 modes (smoke, fast, full, coverage)
 - **Performance**: 0-second smoke tests (599+ test suite activated)
 - **Automation**: Git hooks with pre-push test enforcement
 - **Documentation**: Complete TEST-GUIDE.md for developers
@@ -215,7 +215,7 @@ See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documenta
 ### 🔄 Multi-Agent Coordination (August 20, 2025)
 - **Operational Deployment**: Complete implementation plan ready ([Issue PM-118](https://github.com/mediajunkie/piper-morgan-product/issues/118))
 - **Automation Scripts**: Deployment and validation scripts created
-- **Quick Start**: [5-minute deployment guide](docs/development/MULTI_AGENT_QUICK_START.md) available
+- **Quick Start**: [5-minute deployment guide](development/MULTI_AGENT_QUICK_START.md) available
 - **Integration**: REST API design for coordination triggers
 
 ### 💾 Persistent Context Foundation (August 20, 2025)
@@ -227,20 +227,20 @@ See **[🧪 Test Guide](docs/development/TEST-GUIDE.md)** for complete documenta
 ## 📚 Enhanced Development Documentation
 
 ### Core Methodology
-- **[Excellence Flywheel Methodology](docs/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
-- **[Multi-Agent Coordination Guide](docs/development/HOW_TO_USE_MULTI_AGENT.md)** - Intelligent task decomposition
-- **[Multi-Agent Quick Start](docs/development/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
-- **[Test Infrastructure Guide](docs/development/TEST-GUIDE.md)** - Smart test execution patterns
+- **[Excellence Flywheel Methodology](development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
+- **[Multi-Agent Coordination Guide](development/HOW_TO_USE_MULTI_AGENT.md)** - Intelligent task decomposition
+- **[Multi-Agent Quick Start](development/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
+- **[Test Infrastructure Guide](development/TEST-GUIDE.md)** - Smart test execution patterns
 
 ### Implementation Guides
-- **[Multi-Agent Integration Plan](docs/development/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
-- **[Persistent Context Research](docs/development/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
-- **[Enhanced Autonomy Patterns](docs/development/enhanced-autonomy-patterns.md)** - Advanced development workflows
+- **[Multi-Agent Integration Plan](development/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
+- **[Persistent Context Research](development/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
+- **Enhanced Autonomy Patterns** - (coming soon) - Advanced development workflows
 
 ### Operations & Automation
-- **[Smart Test Execution](scripts/run_tests.sh)** - 4-mode test infrastructure
-- **[Multi-Agent Deployment](scripts/deploy_multi_agent_coordinator.sh)** - Automated coordinator deployment
-- **[Operation Validation](scripts/validate_multi_agent_operation.sh)** - Production readiness validation
+- **[Smart Test Execution](../scripts/run_tests.sh)** - 4-mode test infrastructure
+- **[Multi-Agent Deployment](../scripts/deploy_multi_agent_coordinator.sh)** - Automated coordinator deployment
+- **[Operation Validation](../scripts/validate_multi_agent_operation.sh)** - Production readiness validation
 
 ## 🏗️ Architecture Overview
 
@@ -358,7 +358,7 @@ pytest tests/conversation/ -v
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](../CONTRIBUTING.md) for details.
 
 ### Development Workflow
 
@@ -370,7 +370,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE (coming soon) file for details.
 
 ## 🆘 Support
 
@@ -383,13 +383,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Choose your path:
 
-**[🚀 New User? Start Here](docs/user-guides/getting-started-conversational-ai.md)**
+**[🚀 New User? Start Here](user-guides/getting-started-conversational-ai.md)**
 
-**[🔄 Existing User? Upgrade Here](docs/user-guides/upgrading-from-command-mode.md)**
+**[🔄 Existing User? Upgrade Here](user-guides/upgrading-from-command-mode.md)**
 
-**[📖 Want Examples? See Scenarios](docs/user-guides/conversation-scenario-examples.md)**
+**[📖 Want Examples? See Scenarios](user-guides/conversation-scenario-examples.md)**
 
-**[🔧 Technical Details? API Docs](docs/development/PM-034-conversation-api-documentation.md)**
+**[🔧 Technical Details? API Docs](development/PM-034-conversation-api-documentation.md)**
 
 ---
 

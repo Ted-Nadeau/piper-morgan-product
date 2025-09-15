@@ -1,0 +1,110 @@
+=== TESTING FRAMEWORK DESIGN ===
+
+1. UNIT TESTS:
+   Test individual components in isolation
+
+   A. Transformation Accuracy Tests (tests/unit/personality/test_transformations.py):
+   - Warmth level application (0.0, 0.3, 0.6, 1.0 levels)
+   - Confidence injection by display style (numeric, descriptive, contextual, hidden)
+   - Action extraction by orientation (high, medium, low)
+   - Technical depth adaptation (detailed, balanced, simplified)
+   - Transformation preservation (data integrity, links, structure)
+
+   B. PersonalityProfile Tests (tests/unit/personality/test_personality_profile.py):
+   - Profile creation and validation
+   - adjust_for_context() method with various ResponseContext scenarios
+   - PIPER.user.md override logic
+   - Constraint validation (warmth 0.0-1.0, valid enums)
+   - Default profile generation
+
+   C. Cache Tests (tests/unit/personality/test_cache.py):
+   - LRU cache behavior and eviction
+   - Thread safety under concurrent access
+   - TTL expiration and background refresh
+   - Cache invalidation on profile updates
+   - Performance measurement (hit/miss timing)
+
+   D. Repository Tests (tests/unit/personality/test_repository.py):
+   - Database CRUD operations
+   - PIPER.user.md integration and error handling
+   - Default profile fallback behavior
+   - Async session management
+   - Error scenarios (db connection, file access)
+
+2. INTEGRATION TESTS:
+   Test component interactions and pipeline integration
+
+   A. Pipeline Integration (tests/integration/personality/test_pipeline_integration.py):
+   - Complete flow: Intent → Template → PersonalityEnhancer → ActionHumanizer
+   - Integration with existing TemplateRenderer
+   - Confidence threshold adaptation (0.3, 0.7, 0.8 boundaries)
+   - Multiple interface compatibility (CLI, Web, Slack)
+   - Error propagation and graceful degradation
+
+   B. Standup Bridge Tests (tests/integration/personality/test_standup_bridge.py):
+   - Standup metrics to chat format conversion
+   - Personality application to standup responses
+   - Data integrity preservation (metrics, issue numbers, URLs)
+   - Integration with existing standup_formatting.py
+   - Response consistency across interfaces
+
+   C. Database Integration (tests/integration/personality/test_database_integration.py):
+   - Migration script execution and rollback
+   - Profile persistence and retrieval
+   - Concurrent access handling
+   - Transaction management
+   - Database constraint enforcement
+
+   D. Configuration Integration (tests/integration/personality/test_config_integration.py):
+   - PIPER.user.md parsing and validation
+   - Override precedence (YAML over database)
+   - File watching and cache invalidation
+   - Error handling (missing file, parse errors)
+   - Performance under file system load
+
+3. PERFORMANCE TESTS:
+   Validate <100ms enhancement constraint and scalability
+
+   A. Latency Validation (tests/performance/personality/test_latency.py):
+   - Enhancement processing time measurement
+   - Cache hit vs miss performance comparison
+   - Profile loading time analysis
+   - Transformation step timing breakdown
+   - Circuit breaker trigger testing
+
+   B. Concurrent Load Tests (tests/performance/personality/test_concurrent_load.py):
+   - Multiple simultaneous enhancement requests
+   - Cache contention and thread safety
+   - Database connection pooling under load
+   - Memory usage growth patterns
+   - Performance degradation thresholds
+
+   C. Stress Tests (tests/performance/personality/test_stress.py):
+   - Enhancement with large response content
+   - High-frequency profile updates
+   - Cache invalidation storms
+   - Database connection exhaustion
+   - Recovery from performance failures
+
+Test Infrastructure:
+- Pytest framework (building on existing 4,240+ test suite)
+- Async test support with pytest-asyncio
+- Database test fixtures with test database isolation
+- Mock PIPER.user.md files for configuration testing
+- Performance assertion helpers (<100ms validation)
+- Test data factories for PersonalityProfile creation
+- Integration test containers for database testing
+
+Test Data Strategy:
+- Representative response content samples
+- Various confidence level scenarios (0.1, 0.4, 0.8, 0.95)
+- Different personality profile combinations
+- Edge cases (empty responses, malformed data)
+- Realistic user configuration scenarios
+
+Continuous Integration:
+- All tests run on every commit
+- Performance regression detection
+- Test coverage requirements (>90% for new code)
+- Integration with existing CI pipeline
+- Automated test environment provisioning

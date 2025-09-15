@@ -1,0 +1,86 @@
+=== DATABASE SCHEMA DESIGN ===
+
+1. PERSONALITYPROFILE TABLE:
+   SQLAlchemy model based on DDD PersonalityProfile entity
+
+   CREATE TABLE personality_profiles (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id VARCHAR(255) NOT NULL UNIQUE,
+       warmth_level FLOAT NOT NULL DEFAULT 0.6 CHECK (warmth_level >= 0.0 AND warmth_level <= 1.0),
+       confidence_style VARCHAR(50) NOT NULL DEFAULT 'contextual'
+           CHECK (confidence_style IN ('numeric', 'descriptive', 'contextual', 'hidden')),
+       action_orientation VARCHAR(50) NOT NULL DEFAULT 'medium'
+           CHECK (action_orientation IN ('high', 'medium', 'low')),
+       technical_depth VARCHAR(50) NOT NULL DEFAULT 'balanced'
+           CHECK (technical_depth IN ('detailed', 'balanced', 'simplified')),
+       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+       is_active BOOLEAN NOT NULL DEFAULT TRUE
+   );
+
+   -- Performance indexes
+   CREATE INDEX idx_personality_profiles_user_id ON personality_profiles(user_id);
+   CREATE INDEX idx_personality_profiles_active ON personality_profiles(is_active) WHERE is_active = TRUE;
+
+   -- Update trigger for updated_at
+   CREATE TRIGGER update_personality_profiles_updated_at
+       BEFORE UPDATE ON personality_profiles
+       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+2. MIGRATION STRATEGY:
+   SQLAlchemy Alembic migration approach
+
+   Migration Script Structure:
+   - Create personality_profiles table with constraints
+   - Insert default profile for existing users
+   - Add indexes for performance
+   - Set up foreign key constraints if user table exists
+
+   Default Profile Population:
+   INSERT INTO personality_profiles (user_id, warmth_level, confidence_style, action_orientation, technical_depth)
+   SELECT DISTINCT user_id, 0.6, 'contextual', 'medium', 'balanced'
+   FROM (
+       -- Collect user_ids from existing tables
+       SELECT user_id FROM uploaded_files
+       UNION
+       SELECT user_id FROM conversation_sessions
+       UNION
+       SELECT 'default_user'  -- Default fallback user
+   ) users;
+
+   Rollback Strategy:
+   - Drop personality_profiles table
+   - Remove related indexes and triggers
+   - No data loss (profiles can be recreated from defaults)
+
+3. PIPER.USER.MD INTEGRATION:
+   YAML parsing and override mechanism design
+
+   YAML Structure in PIPER.user.md:
+
+
+   Override Implementation:
+   1. Load PersonalityProfile from database
+   2. Parse PIPER.user.md YAML content
+   3. Apply overrides if personality section exists
+   4. Validate override values against constraints
+   5. Cache merged profile for performance
+
+   Validation Rules:
+   - warmth_level: 0.0 <= value <= 1.0
+   - confidence_style: valid enum values only
+   - action_orientation: valid enum values only
+   - technical_depth: valid enum values only
+   - Invalid values fall back to database defaults
+
+   Error Handling:
+   - YAML parse errors → use database profile only
+   - Invalid override values → log warning, use database value
+   - Missing PIPER.user.md → use database profile only
+   - File permission errors → graceful fallback to database
+
+   Performance Considerations:
+   - Cache parsed YAML for 5 minutes
+   - File modification time checking for cache invalidation
+   - Async file I/O to avoid blocking
+   - Timeout protection for file operations (100ms max)

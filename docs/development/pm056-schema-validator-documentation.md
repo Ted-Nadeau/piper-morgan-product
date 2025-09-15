@@ -233,7 +233,7 @@ validator.validate_all_models()
 
 ## Related Documentation
 
-- [PM-056 Issue](link-to-pm056-issue)
-- [Domain Models Documentation](link-to-domain-models)
-- [Database Models Documentation](link-to-database-models)
-- [CI/CD Pipeline Documentation](link-to-cicd-docs)
+- [PM-056 Issue](https://github.com/mediajunkie/piper-morgan-product/issues/67)
+- [Domain Models Documentation](../architecture/domain-models-index.md)
+- [Database Models Documentation](../architecture/data-model.md)
+- CI/CD Pipeline Documentation (to come)

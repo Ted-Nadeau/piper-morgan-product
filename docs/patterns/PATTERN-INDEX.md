@@ -258,7 +258,7 @@ _Total Patterns: 25+_
 ### Session Management Pattern
 
 - **Status**: ✅ **Proven**
-- **Location**: `docs/development/session-logs/`
+- **Location**: `development/session-logs/`
 - **Description**: Structured session logging and progress tracking
 - **Usage Example**: Daily session logs with mission tracking
 - **Related ADR**: Session logging framework

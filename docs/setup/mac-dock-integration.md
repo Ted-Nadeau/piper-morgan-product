@@ -102,7 +102,7 @@ echo "⏳ Waiting for backend to start..."
 sleep 5
 
 # Check backend health
-if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+if curl -s http://localhost:8001/health > /dev/null 2>&1; then
     echo "✅ Backend is healthy"
 else
     echo "❌ Backend health check failed"
@@ -137,7 +137,7 @@ echo "$FRONTEND_PID" > .piper-frontend.pid
 echo "🎉 Piper Morgan is ready!"
 echo "================================"
 echo "🌐 Frontend: http://localhost:8081/"
-echo "🔧 Backend: http://localhost:8000/"
+echo "🔧 Backend: http://localhost:8001/"
 echo "📊 Health: http://localhost:8081/health"
 echo ""
 echo "💡 Tip: Bookmark http://localhost:8081/ for quick access"
@@ -281,7 +281,7 @@ echo "✅ Application bundle created"
 
 # Verify services are running
 curl http://localhost:8081/health
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Test the stop script
 ./stop-piper.sh
@@ -375,14 +375,14 @@ tail -f /var/log/system.log | grep -i piper
 ```bash
 # Check service status
 curl http://localhost:8081/health
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Check process status
 ps aux | grep -E "(main.py|app.py)"
 
 # Check port usage
 lsof -i :8081
-lsof -i :8000
+lsof -i :8001
 ```
 
 ## 📱 **Daily Usage**
@@ -482,7 +482,7 @@ top -pid $(cat .piper-backend.pid) -pid $(cat .piper-frontend.pid)
 ## 🔗 **Related Documentation**
 
 - **[Getting Started Guide](../user-guides/getting-started-conversational-ai.md)** - Complete setup guide
-- **[Troubleshooting Guide](../user-guides/troubleshooting-guide.md)** - Common issues and solutions
+- **[Troubleshooting Guide](../troubleshooting.md)** - Common issues and solutions
 - **[Architecture Overview](../../README.md#architecture-overview)** - System design and components
 - **[API Documentation](../development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
 
@@ -503,6 +503,23 @@ top -pid $(cat .piper-backend.pid) -pid $(cat .piper-frontend.pid)
 ---
 
 **Status**: ✅ **Ready for Production Use**
-**Last Updated**: August 12, 2025
-**Version**: 1.0.0
-**Next Review**: August 19, 2025
+**Last Updated**: September 10, 2025
+**Version**: 2.0.0 - Enhanced for Issue #163 startup process changes
+**Next Review**: September 17, 2025
+
+## 🆕 **What's New in Version 2.0.0 (September 2025)**
+
+### **Updated for Issue #163 Fixes**
+
+- **Backend Port**: Updated from `8000` to `8001`
+- **Frontend Process**: Updated from `python web/app.py` to `uvicorn app:app --port 8081`
+- **Environment Handling**: Enhanced `GITHUB_TOKEN` preservation for subprocess inheritance
+- **Error Handling**: Robust validation and automatic permission management
+- **Terminal Integration**: Custom window titles and improved AppleScript launcher
+
+### **Enhanced Features**
+
+- **Automatic Cleanup**: Removes old app bundles before creating new ones
+- **Environment Preservation**: Maintains `GITHUB_TOKEN` and other critical environment variables
+- **Path Validation**: Verifies startup script location and permissions
+- **Improved Messaging**: Clear status updates and troubleshooting guidance

@@ -1,8 +1,13 @@
 # Architecture Overview
 
-## System Architecture Status - June 19, 2025
+## System Architecture Status - September 12, 2025
 
-```
+**🏆 ARCHITECTURAL EXCELLENCE MILESTONE ACHIEVED**
+**Date**: September 12, 2025
+**Status**: MVP Deployment Ready with Complete DDD Compliance
+**Validation**: Perfect 5/5 Steps Completed with Zero Regressions
+
+````
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           USER INTERFACE LAYER                             │
@@ -23,6 +28,21 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DOMAIN SERVICES LAYER                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ✅ GitHubDomainService     │  ✅ SlackDomainService      │  ✅ NotionDomainService │
+│  (Mediation Complete)       │  (Mediation Complete)      │  (Mediation Complete)  │
+│  • Issue operations         │  • Webhook handling         │  • Workspace mgmt      │
+│  • Repository mgmt          │  • Spatial events           │  • Database ops        │
+│  • Clean error handling     │  • Health monitoring        │  • Page operations     │
+│                             │                             │                        │
+│  ✅ StandupOrchestrationService  │  ✅ PortConfigurationService │  📋 Future Domain Services │
+│  (Workflow Coordination)    │  (Centralized Config)      │  (As Needed)          │
+│  • Domain workflow mgmt     │  • Environment-aware       │                       │
+│  • Integration orchestration│  • URL generation           │                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
 │                            SERVICE LAYER                                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  ✅ Domain Models           │  ✅ Workflow Service    │  📋 Feedback Service  │
@@ -35,6 +55,17 @@
 │  (Built & Working)          │  (Built & Working)      │  (Not Yet Designed)   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         RESPONSE ENHANCEMENT LAYER                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ✅ ResponsePersonalityEnhancer│  ✅ PersonalityProfile    │  ✅ TransformationService │
+│  (Production Ready)           │  (Database + YAML)       │  (Warmth + Confidence)    │
+│  • <70ms performance          │  • User preferences       │  • Action guidance        │
+│  • Circuit breaker           │  • LRU caching            │  • Context adaptation     │
+│  • Graceful degradation      │  • Config overrides       │  • Performance optimized  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                       │
+                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            UI MESSAGE LAYER                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
@@ -82,30 +113,230 @@
 │                             │                         │  - Google Analytics   │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-## Planned: MCP Integration Layer (Q3 2025)
+## Infrastructure Constants
+
+### Development Environment
+- **Port**: 8001 (all local development, NOT 8080)
+- **Web Pattern**: Single app.py (~750 lines as of Sept 2025)
+- **Database**: PostgreSQL with AsyncSessionFactory pattern
+- **Config**: PIPER.user.md in config/ directory
+- **Python**: 3.11+ required
+
+### API Patterns
+- **REST Response Structure**:
+  ```json
+  {
+    "status": "success",
+    "data": {
+      "field_name": "value",
+      "nested_fields": {...}
+    }
+  }
+````
+
+- **Error Format**:
+  ```json
+  {
+    "status": "error",
+    "error": "message",
+    "details": {}
+  }
+  ```
+- **Auth**: OAuth2 with token.json for Google services
+- **Headers**: Content-Type: application/json
+
+### File Structure Reality
+
+```
+piper-morgan/
+├── cli/
+│   └── commands/        # Standalone CLI scripts
+├── web/
+│   └── app.py          # Single file (NO routes/ directory)
+├── services/           # Domain-driven design
+│   ├── features/       # Feature services
+│   ├── infrastructure/ # Infrastructure services
+│   └── shared_types.py # Shared type definitions
+├── config/
+│   └── PIPER.user.md   # User configuration
+└── docs/
+    ├── architecture/   # Technical documentation
+    └── planning/       # Roadmaps, backlogs
+```
+
+### Refactoring Triggers
+
+- **app.py > 1000 lines** → Consider routes/ pattern migration
+- **Service > 500 lines** → Consider domain splitting
+- **Test file > 1000 lines** → Consider test grouping
+- **Performance < 200ms** → Consider optimization
+
+## Database Layer
+
+### Current Pattern: AsyncSessionFactory
+
+The database layer uses PostgreSQL with SQLAlchemy 2.0+ async patterns.
+
+```python
+# Current pattern in ALL services
+from services.infrastructure.database import AsyncSessionFactory
+
+async def get_data():
+    async with AsyncSessionFactory() as session:
+        result = await session.execute(query)
+        return result.scalars().all()
+```
+
+### Migration History
+
+- **July 2025**: DatabasePool pattern (DEPRECATED)
+- **August 2025**: Migrated to AsyncSessionFactory
+- **Current**: All services use AsyncSessionFactory
+
+### Connection Management
+
+- Connection pooling via SQLAlchemy engine
+- Async context managers for session lifecycle
+- Automatic rollback on exceptions
+- Connection limits: 20 concurrent
+
+### Common Patterns
+
+```python
+# Query pattern
+async with AsyncSessionFactory() as session:
+    stmt = select(Model).where(Model.field == value)
+    result = await session.execute(stmt)
+
+# Insert pattern
+async with AsyncSessionFactory() as session:
+    session.add(new_object)
+    await session.commit()
+```
+
+## Web Layer
+
+### Current Pattern: Single app.py
+
+The web layer uses a single FastAPI file (MVP pattern) with embedded HTML.
+
+**File**: `web/app.py` (~750 lines as of Sept 2025)
+
+### Architecture Decisions
+
+- **Single File**: Intentional simplicity for rapid iteration
+- **Embedded HTML**: JavaScript in Python strings (no templates yet)
+- **No routes/ directory**: Will refactor at 1000 lines
+- **FastAPI**: Modern async framework with future flexibility
+
+### Endpoint Patterns
+
+```python
+# API endpoint returning JSON
+@app.get("/api/standup")
+async def morning_standup_api():
+    return {
+        "status": "success",
+        "data": {
+            "yesterday_accomplishments": [...],
+            "today_priorities": [...],
+            "blockers": []
+        }
+    }
+
+# UI endpoint returning HTML
+@app.get("/standup")
+async def standup_ui():
+    return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
+        <!-- Embedded HTML with JavaScript -->
+        </html>
+    """)
+```
+
+### Common Issues
+
+- **Field name mismatches**: API returns `yesterday_accomplishments`, not `accomplishments`
+- **Nested data structure**: Access via `data.data.field_name` in JavaScript
+- **Port confusion**: Always use 8001, not 8080
+
+## MCP Integration Layer
 
 ### Overview
-Model Context Protocol (MCP) integration will enable Piper Morgan to discover and consume external tools and knowledge sources through a standardized protocol.
 
-### Integration Architecture
+Model Context Protocol (MCP) integration enables tool federation and spatial intelligence.
+
+### Architecture Pattern
+
+```python
+# MCP Consumer pattern
+from services.infrastructure.mcp_consumer import MCPConsumerCore
+
+async def fetch_github_issues():
+    consumer = MCPConsumerCore()
+    return await consumer.fetch_resources("github-issues")
 ```
 
-Current: API → Service → Agent → External System
-Future: API → Service → MCP Adapter → MCP Server → External System
+### Integrated Services
 
+- **GitHub**: Via MCP spatial adapter
+- **Google Calendar**: Via MCP calendar adapter
+- **Document Memory**: Via ChromaDB + MCP
+- **Notion**: Via MCP notion adapter
+
+### Spatial Intelligence
+
+8-dimensional analysis across:
+
+1. Temporal (when)
+2. Spatial (where)
+3. Conceptual (what)
+4. Social (who)
+5. Causal (why)
+6. Procedural (how)
+7. Emotional (feeling)
+8. Intentional (purpose)
+
+### Performance Metrics
+
+- MCP consumer: <1ms response time
+- Spatial analysis: <10ms for 8 dimensions
+- Tool federation: 642x improvement over direct APIs
+
+## Testing Strategy
+
+### Multi-Agent Verification Pattern
+
+#### Dual Agent Deployment
+
+```python
+# Always deploy both Code and Cursor for critical fixes
+# Phase 0: Investigation (both agents)
+# Phase 1: Implementation (agent-specific)
+# Phase 2: Cross-validation (verify each other)
 ```
 
-### Phased Approach
-- **Phase 1**: MCP Consumer (4-6 weeks) - Enable consumption of external MCP services
-- **Phase 2**: Hybrid Integration (2-3 weeks) - Bridge existing agents to MCP
-- **Phase 3**: MCP Provider (Future) - Expose Piper capabilities as MCP services
+#### Evidence Requirements
 
-### Target Use Cases
-- Federated knowledge base search
-- Multi-tool project context resolution
-- Dynamic tool discovery and integration
+- **No "done" without proof**: Terminal output, diffs, test results
+- **Layer-specific validation**: API testing ≠ UI testing
+- **Visual proof for UI**: Screenshots or DOM inspection required
+- **GitHub checklist discipline**: All checkboxes must be verified
 
-> **[TODO: Update the architecture diagram above to show the planned MCP layer, marked as "Planned Q3 2025"]**
+#### Common Validation Failures
+
+1. **Theater validation**: Claiming success without testing
+2. **Wrong layer testing**: Testing API, claiming UI works
+3. **Assumption cascade**: Each step assumes previous succeeded
+4. **Uncommitted changes**: Testing working directory, not deployed code
+
+### Performance Benchmarks
+
+- Morning standup: <6 seconds generation
+- Web response: <200ms API calls
+- Test execution: <5 seconds for smoke tests
+- Full test suite: <2 minutes
 
 ## Legend
 
@@ -151,17 +382,20 @@ The Slack integration implements a revolutionary spatial metaphor approach, enab
 ### Technical Implementation
 
 #### OAuth 2.0 Flow with Spatial Initialization
+
 - Automatic spatial territory creation upon successful OAuth
 - Workspace metadata extraction and spatial property assignment
 - State management with 15-minute expiration for security
 
 #### Advanced Attention Model
+
 - **Multi-factor scoring**: Proximity, urgency, relationships, emotional context
 - **Decay algorithms**: Linear, exponential, stepped, and contextual decay models
 - **Pattern learning**: Automatic behavior adaptation based on interaction history
 - **Focus management**: Intelligent attention switching with efficiency tracking
 
 #### Spatial Memory Persistence
+
 - **Cross-session memory**: JSON-based storage system preserving spatial awareness
 - **Pattern accumulation**: Learning from navigation and interaction patterns
 - **Relationship mapping**: Tracking connections between territories, rooms, and users
@@ -178,6 +412,7 @@ WebHook Event → Room/Territory → Attention Event → Priority Score → Pipe
 ```
 
 #### Supported Workflow Types
+
 - **Help Requests**: `@piper help with feature` → CREATE_FEATURE workflow
 - **Bug Reports**: Critical incidents → CREATE_TICKET workflow with emergency priority
 - **Feature Proposals**: Product planning → CREATE_FEATURE workflow with research context
@@ -211,7 +446,7 @@ User Intent → Intent Classifier → QUERY → Query Service → Repository →
 ↓
 Read-Only Results
 
-````
+```
 
 ### Decision Criteria
 
@@ -234,12 +469,14 @@ The Context Validation Framework provides pre-execution validation for all workf
 ### Architecture Components
 
 #### ValidationRegistry Pattern
+
 - **Location**: `services/orchestration/workflow_factory.py`
 - **Purpose**: Defines context requirements for each workflow type
 - **Structure**: Critical, Important, and Optional field classifications
 - **Performance**: 30-75ms thresholds per workflow type
 
 #### WorkflowContextValidator
+
 - **Location**: `services/orchestration/validation.py`
 - **Purpose**: Validates workflow context against defined rules
 - **Features**: User-friendly error messages, GitHub URL validation, field existence checking
@@ -298,7 +535,7 @@ else:
 # Route to WorkflowFactory for commands
     workflow = await workflow_factory.create_from_intent(intent)
 
-````
+```
 
 ### Query Router
 
@@ -1126,7 +1363,7 @@ async def get_connection_stats(self):
 
 ### Case Study Reference
 
-**Complete Technical Documentation**: [MCP Connection Pool - 642x Performance Improvement](../case-studies/mcp-connection-pool-642x.md)
+**Complete Technical Documentation**: [MCP Connection Pool - 642x Performance Improvement](../piper-education/case-studies/mcp-connection-pool-642x.md)
 
 **Comprehensive Analysis Including**:
 

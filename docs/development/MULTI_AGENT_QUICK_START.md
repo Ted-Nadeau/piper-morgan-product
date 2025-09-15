@@ -13,7 +13,7 @@
 cd /path/to/piper-morgan
 
 # Run the deployment script
-./scripts/deploy_multi_agent_coordinator.sh
+./../../scripts/deploy_multi_agent_coordinator.sh
 ```
 
 **What This Does**:
@@ -208,7 +208,7 @@ curl "http://localhost:8001/api/orchestration/multi-agent/metrics"
 
 ```bash
 # Run comprehensive validation
-./scripts/validate_multi_agent_operation.sh
+./../../scripts/validate_multi_agent_operation.sh
 
 # This will test all endpoints and generate a report
 ```
@@ -228,7 +228,7 @@ python main.py
 
 ```bash
 # Solution: Re-run deployment script
-./scripts/deploy_multi_agent_coordinator.sh
+./../../scripts/deploy_multi_agent_coordinator.sh
 ```
 
 #### **Issue 3: "Performance targets not met"**
@@ -305,14 +305,14 @@ curl -v "http://localhost:8001/api/orchestration/multi-agent/health"
 
 ### **Documentation**
 
-- **Integration Guide**: `docs/development/MULTI_AGENT_INTEGRATION_GUIDE.md`
+- **Integration Guide**: `docs/./MULTI_AGENT_INTEGRATION_GUIDE.md`
 - **Usage Guide**: `docs/development/HOW_TO_USE_MULTI_AGENT.md`
 - **Templates**: `docs/development/multi-agent-templates.md`
 
 ### **Scripts**
 
-- **Deployment**: `./scripts/deploy_multi_agent_coordinator.sh`
-- **Validation**: `./scripts/validate_multi_agent_operation.sh`
+- **Deployment**: `./../../scripts/deploy_multi_agent_coordinator.sh`
+- **Validation**: `./../../scripts/validate_multi_agent_operation.sh`
 
 ### **API Endpoints**
 

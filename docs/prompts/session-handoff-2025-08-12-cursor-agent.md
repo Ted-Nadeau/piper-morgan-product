@@ -118,7 +118,7 @@
 - **`docs/setup/mac-dock-integration.md`**: Complete Mac setup guide
 - **`start-piper.sh`**: One-click startup script
 - **`stop-piper.sh`**: Clean shutdown script
-- **`docs/deployment/mcp-spatial-federation-deployment.md`**: Production deployment guide
+- **`docs/deployment/mcp-spatial-federation-deployment/deployment-summary.md`**: Production deployment guide
 
 ### **Architecture Documentation** 🏗️
 
@@ -128,7 +128,7 @@
 
 ### **Session Logs** 📝
 
-- **`docs/development/session-logs/2025-08-12-cursor-log.md`**: Complete session history
+- **`development/session-logs/2025-08-12-cursor-log.md`**: Complete session history
 - **Emergency Fix Details**: Context integration repair and validation
 
 ## 🚨 **IMPORTANT NOTES**

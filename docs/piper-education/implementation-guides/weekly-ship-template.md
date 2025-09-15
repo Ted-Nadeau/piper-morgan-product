@@ -212,10 +212,10 @@ _[One key insight from session logs/development work that might be useful for ot
 **Thanks,**
 Christian + Piper Morgan Development Team
 
-_P.S. Full session logs and technical details available in the [GitHub repository](link) and [project knowledge base](notion-link)._
+_P.S. Full session logs and technical details available in the [GitHub repository](https://github.com/mediajunkie/piper-morgan-product) and project knowledge base._
 
 ---
 
-**Template Version**: 2.0
-**Last Updated**: July 23, 2025
+**Template Version**: 2.1
+**Last Updated**: Sep 14, 2025
 **Next Review**: [Date]

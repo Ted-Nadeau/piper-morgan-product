@@ -97,7 +97,7 @@ PYTHONPATH=. python -c "from services.integrations.spatial.gitbook_spatial impor
 
 ## Session Artifacts
 
-**Session Log**: `docs/development/session-logs/2025-08-13-code-log.md` (to be completed)
+**Session Log**: `development/session-logs/2025-08-13-code-log.md` (to be completed)
 **GitHub Issue**: PM-033b #91 fully documented with evidence
 **Testing**: All implementation validated through direct execution testing
 

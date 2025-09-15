@@ -275,7 +275,7 @@ The `scripts/run_smoke_tests.py` script provides comprehensive reporting:
 - **[Testing Discipline Framework](../testing-discipline-framework.md)**
 - **[Error Message Testing Framework](../error-message-testing-framework.md)**
 - **[PM-039 Test Scenarios](pm-039-test-scenarios.md)**
-- **[Orchestration Testing Methodology](orchestration-testing-methodology.md)**
+- **[Orchestration Testing Methodology](../orchestration-testing-methodology.md)**
 
 ## 🎯 Success Metrics
 

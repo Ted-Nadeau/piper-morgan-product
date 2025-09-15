@@ -48,7 +48,7 @@
 services/features/document_memory.py          # Current implementation
 services/features/document_memory_store.py   # Storage backend
 data/document_memory/                        # Storage directory
-docs/development/session-logs/               # Past implementation attempts
+development/session-logs/               # Past implementation attempts
 docs/architecture/                           # Document storage architecture
 ```
 
@@ -154,9 +154,9 @@ docs/architecture/                           # Document storage architecture
 ### **Documentation**
 
 - `docs/planning/backlog.md` - PM-126 status and requirements
-- `docs/planning/roadmap.md` - Document Memory in MVP roadmap
+- `docs/planning/../planning/roadmap.md` - Document Memory in MVP roadmap
 - `docs/development/CHANGELOG.md` - Recent development history
-- `docs/development/session-logs/` - Past implementation attempts
+- `development/session-logs/` - Past implementation attempts
 
 ### **GitHub Tracking**
 

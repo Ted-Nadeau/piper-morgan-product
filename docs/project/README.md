@@ -9,8 +9,8 @@ This folder contains project-level documentation including comprehensive reports
 - **[executive-summary.md](./executive-summary.md)** - Business-focused summary for stakeholders and investment decisions
 
 ### 🎯 Presentations
-- **[presentations/team-demo.html](./presentations/team-demo.html)** - Technical team demonstration with live demo flow
-- **[presentations/stakeholder-brief.html](./presentations/stakeholder-brief.html)** - Executive presentation for business stakeholders *(planned)*
+- **Team Demo (archived)** - Technical team demonstration with live demo flow
+- **Stakeholder Brief (archived)** - Executive presentation for business stakeholders *(planned)*
 
 ## 📈 Document Purposes
 

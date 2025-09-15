@@ -236,3 +236,133 @@ See [Morning Standup MVP Guide](../development/MORNING_STANDUP_MVP_GUIDE.md) for
 **Performance**: <2 second generation, 15+ minutes time savings
 **Integration**: Issue Intelligence via canonical query pattern
 **Next Enhancement**: Issue Intelligence initialization optimization (PM-124)
+
+
+# UI Guide Section
+
+# Morning Standup UI Guide
+
+## User Experience Features
+
+### Dark Mode Interface
+
+- High contrast design addressing readability concerns
+- Professional appearance suitable for daily use
+- Optimized typography and spacing
+
+### Mobile Responsiveness
+
+- Tablet optimization (768px breakpoint)
+- Phone optimization (480px breakpoint)
+- Touch-friendly button sizing
+
+### Performance Metrics Display
+
+- Badge-style performance indicators
+- Generation time, time saved, context source
+- Centered highlight section for visibility
+
+### Error Handling
+
+- Professional error state design
+- Helpful error messaging with user guidance
+- Connection error differentiation
+
+### Multi-Project Support
+
+- Clear project context display
+- Repository information and user identification
+- Detailed GitHub commit information (limited to 5 for readability)
+
+## Daily Usage Workflow
+
+1. Navigate to http://localhost:8001/assets/standup.html
+2. Click "Run Morning Standup" button
+3. View results with prominent performance metrics
+4. Review accomplishments, priorities, and GitHub activity
+
+## Browser Compatibility
+
+- Modern browsers with JavaScript enabled
+- Responsive design across device sizes
+- Dark mode with high contrast for accessibility
+
+## Technical Implementation
+
+### File Structure
+
+- **Location**: web/assets/standup.html
+- **Size**: ~14KB comprehensive UI component
+- **Dependencies**: Fetches from /api/standup endpoint
+
+### UI Components
+
+- Header with project branding
+- Action button for standup execution
+- Loading state with user feedback
+- Results display with structured sections
+- Performance metrics badge
+- Error handling with recovery guidance
+
+### Styling Architecture
+
+- CSS-in-HTML for single-file deployment
+- Dark theme with high contrast ratios
+- Responsive breakpoints for mobile/tablet
+- Professional typography and spacing
+
+### Integration Points
+
+- API: http://localhost:8001/api/standup
+- Static serving: FastAPI StaticFiles mount
+- Error handling: Graceful degradation on API failures
+
+### Performance Characteristics
+
+- UI Load: <100ms static file serving
+- API Integration: 4.6-5.1s generation time
+- Total Experience: ~5s end-to-end
+
+
+# Web Interface Section
+
+# Morning Standup Web Interface
+
+## Implementation
+
+- FastAPI backend with /api/standup endpoint
+- Dark mode UI at /assets/standup.html
+- Integrates with CLI orchestrator for consistency
+- Performance: 4.6-5.1s generation time
+
+## Configuration
+
+- Port: 8001 (documented to avoid Docker conflicts)
+- Server: uvicorn with 127.0.0.1 binding
+- Static assets: served via FastAPI StaticFiles
+
+## Usage
+
+Daily 6 AM standup with prominent performance metrics,
+project context, and GitHub activity display.
+
+## Quick Start
+
+```bash
+# Start FastAPI server
+PYTHONPATH=. python web/app.py
+# or
+PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
+```
+
+## Access Points
+
+- **Web UI**: http://localhost:8001/assets/standup.html
+- **API Endpoint**: http://localhost:8001/api/standup
+- **API Documentation**: http://localhost:8001/docs
+
+## Performance
+
+- Generation Time: 4.6-5.1 seconds
+- Response: JSON with comprehensive standup data
+- Features: Dark mode, mobile responsive, error handling

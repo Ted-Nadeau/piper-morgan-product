@@ -63,7 +63,7 @@
 
 - `docs/development/pm056-schema-validator-documentation.md` - Complete PM-056 documentation
 - `docs/development/pm057-context-validation-documentation.md` - Complete PM-057 documentation
-- `docs/development/session-logs/2025-08-03-cursor-log.md` - Updated session log
+- `development/session-logs/2025-08-03-cursor-log.md` - Updated session log
 
 ## Current System State
 
@@ -154,7 +154,7 @@
 
 ## Handoff Instructions
 
-1. **Review Session Log**: Check `docs/development/session-logs/2025-08-03-cursor-log.md` for complete details
+1. **Review Session Log**: Check `development/session-logs/2025-08-03-cursor-log.md` for complete details
 2. **Verify Implementations**: Run tests to ensure all components are working
 3. **Check Documentation**: Review new documentation files for completeness
 4. **Plan Next Session**: Choose from immediate tasks or potential next missions

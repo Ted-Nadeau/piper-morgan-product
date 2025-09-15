@@ -176,7 +176,7 @@ The markdown formatting issue requires architectural guidance and research beyon
 ---
 
 **Attachments**:
-- Session log: `docs/development/session-logs/2025-07-09-log.md`
+- Session log: `development/session-logs/2025-07-09-log.md`
 - Implementation files: `services/utils/markdown_formatter.py`, `services/prompts/summarization.py`
 - Test examples: Available in workflow logs
 ---

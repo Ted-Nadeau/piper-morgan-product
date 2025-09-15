@@ -56,7 +56,7 @@ ERROR:services.api.middleware:Unexpected Internal Server Error: 1 validation err
 - `docs/development/verification-first-methodology.md` - Verification-first methodology documentation
 
 ### Files Updated
-- `docs/development/session-logs/2025-08-01-cursor-log.md` - Session progress and findings
+- `development/session-logs/2025-08-01-cursor-log.md` - Session progress and findings
 - `services/queries/query_router.py` - Enhanced with comprehensive degradation handling
 - `services/queries/degradation.py` - Updated degradation messages for consistency
 

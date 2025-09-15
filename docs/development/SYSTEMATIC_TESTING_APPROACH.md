@@ -52,7 +52,7 @@
 
 ### **1. Infrastructure Health Check (5 minutes)**
 
-**Test Command**: `./scripts/run_tests.sh smoke`
+**Test Command**: `./../../scripts/run_tests.sh smoke`
 **Expected Result**: 0-second execution with all checks passing
 **Success Criteria**:
 
@@ -68,10 +68,10 @@
 
 ```bash
 # Run smoke tests
-./scripts/run_tests.sh smoke
+./../../scripts/run_tests.sh smoke
 
 # Verify results
-echo "Smoke test execution time: $(time ./scripts/run_tests.sh smoke)"
+echo "Smoke test execution time: $(time ./../../scripts/run_tests.sh smoke)"
 ```
 
 ### **2. Import Chain Validation (10 minutes)**
@@ -99,7 +99,7 @@ import main
 
 ### **3. Test Infrastructure Validation (15 minutes)**
 
-**Test Command**: `./scripts/run_tests.sh fast`
+**Test Command**: `./../../scripts/run_tests.sh fast`
 **Expected Result**: Test collection and execution without errors
 **Success Criteria**:
 
@@ -112,7 +112,7 @@ import main
 
 ```bash
 # Run fast test suite
-./scripts/run_tests.sh fast
+./../../scripts/run_tests.sh fast
 
 # Check test collection
 pytest --collect-only --tb=no
@@ -150,8 +150,8 @@ engine = OrchestrationEngine()
 
 | Test Category         | Command                        | Target Time | Success Criteria                |
 | --------------------- | ------------------------------ | ----------- | ------------------------------- |
-| **Smoke Tests**       | `./scripts/run_tests.sh smoke` | <5s         | All basic checks pass           |
-| **Fast Tests**        | `./scripts/run_tests.sh fast`  | <30s        | Test collection + execution     |
+| **Smoke Tests**       | `./../../scripts/run_tests.sh smoke` | <5s         | All basic checks pass           |
+| **Fast Tests**        | `./../../scripts/run_tests.sh fast`  | <30s        | Test collection + execution     |
 | **Import Validation** | Python import test             | <10s        | No import errors                |
 | **App Startup**       | Main app import                | <5s         | Application structure available |
 

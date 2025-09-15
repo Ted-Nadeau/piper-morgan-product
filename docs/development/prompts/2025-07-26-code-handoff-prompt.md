@@ -20,7 +20,7 @@ Today's session delivered **infrastructure excellence** and **development veloci
 - Pattern storage system with 506KB JSON database and compound learning acceleration
 
 **3. PM-075: Strategic Documentation Alignment ✅ (8 minutes)**
-- Evidence-based updates to roadmap.md and backlog.md using systematic verification
+- Evidence-based updates to ../planning/roadmap.md and backlog.md using systematic verification
 - All completed priorities properly reflected with accurate dates
 - Strategic alignment maintained document coherence
 
@@ -168,8 +168,8 @@ PYTHONPATH=. ./scripts/tldr_runner.py --with-pattern-detection --learn-usage-pat
 **Documentation Excellence**:
 - `CLAUDE.md` - Enhanced with Pattern Sweep commands and Jekyll patterns
 - `docs/development/pattern-sweep-usage.md` - Comprehensive usage guide
-- `docs/planning/roadmap.md` & `docs/planning/backlog.md` - Strategic alignment updates
-- `docs/development/session-logs/2025-07-26-code-log.md` - Complete session documentation
+- `docs/planning/../planning/roadmap.md` & `docs/planning/backlog.md` - Strategic alignment updates
+- `development/session-logs/2025-07-26-code-log.md` - Complete session documentation
 
 **Enhancement Specifications**:
 - `enhancement-issue-placeholders.md` - LLM hallucination prevention pattern

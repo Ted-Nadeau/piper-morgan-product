@@ -267,7 +267,7 @@ python -c "import cli.commands.standup; print('CLI import successful')"
 1. **`docs/development/CLI_STANDUP_IMPLEMENTATION.md`** - Technical implementation details
 2. **`docs/development/MORNING_STANDUP_MVP_GUIDE.md`** - User guide and usage examples
 3. **`docs/development/DOCUMENTATION_UPDATE_SUMMARY.md`** - Today's complete summary
-4. **`docs/development/session-logs/2025-08-21-cursor-log.md`** - Detailed session log
+4. **`development/session-logs/2025-08-21-cursor-log.md`** - Detailed session log
 
 ### **Related Documentation**
 

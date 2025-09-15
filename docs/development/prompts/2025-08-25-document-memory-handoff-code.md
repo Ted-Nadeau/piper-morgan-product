@@ -112,7 +112,7 @@ await doc_memory.discover_patterns(scope)
 - `test_search.txt` - Test file (can be cleaned up)
 
 ### Documentation
-- `docs/development/session-logs/2025-08-25-code-log.md` - Complete session log
+- `development/session-logs/2025-08-25-code-log.md` - Complete session log
 
 ## TESTING COMMANDS FOR VERIFICATION
 
@@ -148,7 +148,7 @@ asyncio.run(quick_test())
 
 ### For Code Agent Successor
 1. **Verify tests still pass** - Run testing commands above
-2. **Review session log** - `docs/development/session-logs/2025-08-25-code-log.md`
+2. **Review session log** - `development/session-logs/2025-08-25-code-log.md`
 3. **Check file persistence** - Ensure `data/document_memory/` exists with documents
 
 ### For Cursor Agent (CLI Phase)

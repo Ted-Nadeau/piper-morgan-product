@@ -41,7 +41,7 @@ A comprehensive record of all features, improvements, and milestones delivered i
 - Redis caching with circuit breaker protection
 - **Impact**: 5x faster workflows, 90% less mental overhead
 
-**PIPER.md Configuration System** ✅ *Completed August 18*
+**PIPER.user.md Configuration System** ✅ *Completed August 18*
 - Personalized context configuration for enhanced user experience
 - User context, calendar patterns, and standing priorities
 - Hot reload configuration updates without restart

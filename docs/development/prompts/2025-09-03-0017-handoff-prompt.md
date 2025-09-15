@@ -4,7 +4,7 @@
 **Previous Session**: September 2, 2025 (9:29 AM - 10:17 PM Pacific)
 **Agent**: Claude Code (Sonnet 4)
 **Duration**: ~13 hours of systematic development work
-**Session Log**: `docs/development/session-logs/2025-09-02-0929-code-log.md`
+**Session Log**: `development/session-logs/2025-09-02-0929-code-log.md`
 
 ## Mission Accomplished ✅
 
@@ -72,7 +72,7 @@ report = await validator.validate_evidence_collection(evidence_list)
 
 ### Updated Tracking Files
 - `docs/planning/pm-issues-status.csv` - PM-137 added and tracked
-- `docs/development/session-logs/2025-09-02-0929-code-log.md` - Complete session record
+- `development/session-logs/2025-09-02-0929-code-log.md` - Complete session record
 - Various documentation files cleaned and organized
 
 ## Excellence Flywheel Applied Successfully
@@ -112,7 +112,7 @@ report = await validator.validate_evidence_collection(evidence_list)
 ## Next Session Instructions
 
 ### If Continuing Development Work:
-1. **Check Session Log**: Review `docs/development/session-logs/2025-09-02-0929-code-log.md` for complete context
+1. **Check Session Log**: Review `development/session-logs/2025-09-02-0929-code-log.md` for complete context
 2. **Verify Environment**: Ensure `source venv/bin/activate` and `PYTHONPATH=. python -m pytest tests/methodology/` passes
 3. **Run Cross-Validation**: Execute the test in advanced_evidence.py to verify all requirements still met
 4. **Check Git Status**: Review any uncommitted changes and current branch state

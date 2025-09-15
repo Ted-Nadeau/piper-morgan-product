@@ -4,7 +4,7 @@
 
 ## Organization
 
-### **Established Frameworks** ([./established/](./established/))
+### **Established Frameworks** (Established (coming soon))
 
 Received wisdom and best practices that we consciously adopted and applied.
 
@@ -28,7 +28,7 @@ Frameworks that emerged organically through our development process.
 
 #### **Critical Emergent Frameworks**
 
-**Session Log Framework** ([./emergent/session-log-framework.md](./emergent/session-log-framework.md))
+**Session Log Framework** (Session Log Framework ([../../development/session-logs/session-log-framework.md](../../development/session-logs/session-log-framework.md)))
 
 - **Pattern Strength**: 16/16 (Maximum Strength)
 - **Purpose**: Maintain context, institutional memory, and effective handoffs

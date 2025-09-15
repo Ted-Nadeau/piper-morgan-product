@@ -1,6 +1,6 @@
 # Piper Morgan 1.0 - API Quick Reference
 
-> **Complete Documentation:** See [api-design-spec.md](./api-design-spec.md) for comprehensive API contracts, error handling, and authentication details.
+> **Complete Documentation:** For API details, see the implemented endpoints in this document.
 
 ## Base URL
 
@@ -243,7 +243,7 @@ print("Issue title:", workflow_context.get("title"))
 
 ## Error Handling
 
-All errors return structured JSON responses. For detailed error codes and handling patterns, see the [complete API specification](./api-design-spec.md#error-handling).
+All errors return structured JSON responses. For detailed error codes and handling patterns, see the error responses documented above.
 
 **Common Error Example:**
 
@@ -369,8 +369,8 @@ The CLI commands follow a consistent pattern:
 
 **Next Steps:**
 
-- See [api-design-spec.md](./api-design-spec.md) for complete API documentation
-- Check [dev-guide.md](../development/dev-guide.md) for setup instructions
+- See API specifications in this document for complete API documentation
+- Check Developer Guide (coming soon) for setup instructions
 - Review [architecture.md](./architecture.md) for system design details
 
 ---

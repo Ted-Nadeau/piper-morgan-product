@@ -39,7 +39,7 @@
 
 ### **Documentation Updates** ✅
 
-- Updated roadmap.md and backlog.md with Slack integration completion
+- Updated ../planning/roadmap.md and backlog.md with Slack integration completion
 - Added Spatial Metaphor Integration Pattern (#20) and TDD Integration Testing Pattern (#21) to pattern-catalog.md
 - Updated integration-targets.md with Slack COMPLETE status
 
@@ -149,7 +149,7 @@ services/integrations/slack/
 
 - `services/integrations/slack/` - Complete Slack integration foundation
 - `services/integrations/slack/tests/` - 52 integration tests with TDD methodology
-- `docs/planning/roadmap.md` - Updated with Slack integration completion
+- `docs/planning/../planning/roadmap.md` - Updated with Slack integration completion
 - `docs/planning/backlog.md` - Added Slack Integration Foundation as completed
 - `docs/architecture/pattern-catalog.md` - Added two new architectural patterns
 - `docs/integration-targets.md` - Updated Slack status to COMPLETE
@@ -190,11 +190,11 @@ services/integrations/slack/
 
 ### **Key Documents Updated**
 
-- `docs/planning/roadmap.md` - Slack integration added to completed section
+- `docs/planning/../planning/roadmap.md` - Slack integration added to completed section
 - `docs/planning/backlog.md` - Slack Integration Foundation marked complete
 - `docs/architecture/pattern-catalog.md` - Two new patterns documented
 - `docs/integration-targets.md` - Slack status updated to COMPLETE
-- `docs/development/session-logs/2025-07-27-cursor-log.md` - Complete session log
+- `development/session-logs/2025-07-27-cursor-log.md` - Complete session log
 
 ### **Architecture Documents**
 

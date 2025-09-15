@@ -7,16 +7,16 @@
 
 ```bash
 # Quick validation (<5s)
-./scripts/run_tests.sh smoke
+./../../scripts/run_tests.sh smoke
 
 # Development workflow (<30s)
-./scripts/run_tests.sh fast
+./../../scripts/run_tests.sh fast
 
 # Pre-merge comprehensive testing
-./scripts/run_tests.sh full
+./../../scripts/run_tests.sh full
 
 # Weekly coverage analysis
-./scripts/run_tests.sh coverage
+./../../scripts/run_tests.sh coverage
 ```
 
 ## Test Infrastructure Overview
@@ -83,16 +83,16 @@ source venv/bin/activate
 docker-compose up -d
 
 # 2. Before making changes
-./scripts/run_tests.sh smoke    # Baseline validation
+./../../scripts/run_tests.sh smoke    # Baseline validation
 
 # 3. After implementing feature
-./scripts/run_tests.sh fast     # Development validation
+./../../scripts/run_tests.sh fast     # Development validation
 
 # 4. Before committing
-./scripts/run_tests.sh smoke    # Pre-commit check (automated by git hook)
+./../../scripts/run_tests.sh smoke    # Pre-commit check (automated by git hook)
 
 # 5. Before pushing
-./scripts/run_tests.sh fast     # Pre-push check (automated by git hook)
+./../../scripts/run_tests.sh fast     # Pre-push check (automated by git hook)
 ```
 
 ### Git Integration
@@ -120,7 +120,7 @@ docker-compose up -d
 **Target**: Critical path validation only
 
 ```bash
-./scripts/run_tests.sh smoke
+./../../scripts/run_tests.sh smoke
 ```
 
 **What it tests**:
@@ -136,7 +136,7 @@ docker-compose up -d
 **Target**: Unit tests + standalone orchestration tests
 
 ```bash
-./scripts/run_tests.sh fast
+./../../scripts/run_tests.sh fast
 ```
 
 **What it tests**:
@@ -152,7 +152,7 @@ docker-compose up -d
 **Target**: All tests including integration tests
 
 ```bash
-./scripts/run_tests.sh full
+./../../scripts/run_tests.sh full
 ```
 
 **What it tests**:
@@ -172,7 +172,7 @@ docker-compose up -d
 **Target**: Comprehensive coverage reporting
 
 ```bash
-./scripts/run_tests.sh coverage
+./../../scripts/run_tests.sh coverage
 ```
 
 **What it generates**:
@@ -299,7 +299,7 @@ export PYTHONPATH=.
 PYTHONPATH=. python -m pytest tests/unit/ -v
 
 # Our test script handles this automatically
-./scripts/run_tests.sh smoke
+./../../scripts/run_tests.sh smoke
 ```
 
 #### "Import errors in tests"
@@ -318,14 +318,14 @@ python -c "import services; print('✅ Services package loads')"
 
 ```bash
 # Validate test infrastructure itself
-./scripts/run_tests.sh smoke   # Should complete in <5s
+./../../scripts/run_tests.sh smoke   # Should complete in <5s
 echo $?                        # Should return 0 for success
 
 # Check git hook integration
 .git/hooks/test-enforcement smoke  # Manual hook testing
 
 # Validate coverage infrastructure
-./scripts/run_tests.sh coverage    # Generate full coverage report
+./../../scripts/run_tests.sh coverage    # Generate full coverage report
 open htmlcov/index.html            # View coverage in browser
 ```
 
@@ -344,7 +344,7 @@ Before implementing new functionality:
 
 All development progress must be backed by:
 
-1. **Passing tests**: `./scripts/run_tests.sh fast` must pass
+1. **Passing tests**: `./../../scripts/run_tests.sh fast` must pass
 2. **Coverage validation**: New code should maintain >80% coverage
 3. **Performance requirements**: Smoke tests <5s, fast tests <30s
 4. **Integration validation**: Full test suite passes for releases
@@ -390,16 +390,16 @@ PYTHONPATH=. python -m pytest tests/unit/ -n auto -v
 ```yaml
 # .github/workflows/test.yml example
 - name: Run smoke tests
-  run: ./scripts/run_tests.sh smoke
+  run: ./../../scripts/run_tests.sh smoke
 
 - name: Run fast test suite
-  run: ./scripts/run_tests.sh fast
+  run: ./../../scripts/run_tests.sh fast
 
 - name: Run full test suite
-  run: ./scripts/run_tests.sh full
+  run: ./../../scripts/run_tests.sh full
 
 - name: Generate coverage report
-  run: ./scripts/run_tests.sh coverage
+  run: ./../../scripts/run_tests.sh coverage
 ```
 
 ---

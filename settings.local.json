@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(export PYTHONPATH=*)",
+      "Bash(export PATH=*)",
+      "Bash(source:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(pip:*)",
+      "Bash(pip3:*)",
+      "Bash(npm:*)",
+      "Bash(pytest:*)",
+      "Bash(PYTHONPATH=. python:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(echo:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(ln:*)",
+      "Bash(sed:*)",
+      "Bash(wc:*)",
+      "Bash(test:*)",
+      "Bash(time:*)",
+      "Bash(./start-piper.sh:*)",
+      "Bash(./stop-piper.sh:*)",
+      "Bash(./scripts/*:*)",
+      "Edit(**)",
+      "Write(**)",
+      "Read(/Users/xian/**)",
+      "Read(/private/tmp/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(sudo:*)",
+      "Bash(su:*)",
+      "Edit(.env)",
+      "Edit(.git/**)",
+      "Edit(/System/**)",
+      "Edit(/Library/**)",
+      "Delete(.git)",
+      "Delete(.env)",
+      "Bash(git push --force)"
+    ],
+    "ask": [],
+    "additionalDirectories": [
+      "/"
+    ]
+  },
+  "smart_permissions": {
+    "mode": "permissive",
+    "auto_allow_categories": [
+      "file_operations",
+      "test_execution",
+      "read_only_verification",
+      "file_inspection",
+      "safe_queries",
+      "repository_operations",
+      "development_tools"
+    ],
+    "require_permission_categories": [
+      "system_administration",
+      "dangerous_operations"
+    ],
+    "permission_request_template": "Permission requested for {command}: {reason}",
+    "log_permission_requests": false
+  },
+  "env": {
+    "PYTHONPATH": "/Users/xian/Development/piper-morgan",
+    "PROJECT_ROOT": "/Users/xian/Development/piper-morgan"
+  }
+}

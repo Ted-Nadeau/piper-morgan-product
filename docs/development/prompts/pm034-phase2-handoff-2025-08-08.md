@@ -22,7 +22,7 @@
 3. `docs/user-guides/conversation-scenario-examples.md` - 6 real conversation scenarios (395 lines)
 4. `docs/development/pm034-phase2-execution-checklist.md` - Weekend execution plan
 5. `docs/development/chief-architect-consultation-2025-08-08.md` - Consultation summary
-6. `docs/development/session-logs/2025-08-08-cursor-log.md` - Comprehensive session documentation
+6. `development/session-logs/2025-08-08-cursor-log.md` - Comprehensive session documentation
 
 #### **Cross-References Established** (15+ navigation links):
 
@@ -186,7 +186,7 @@
 
 #### Session Continuation
 
-- **Session Log**: `docs/development/session-logs/2025-08-08-cursor-log.md`
+- **Session Log**: `development/session-logs/2025-08-08-cursor-log.md`
 - **Foundation Status**: Complete user guide foundation ready
 - **Next Phase**: Phase 3 advanced conversation features
 - **Success Tracking**: Use defined metrics and benchmarks

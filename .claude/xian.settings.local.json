@@ -1,0 +1,29 @@
+```
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PYTHONPATH=*)",
+      "Bash(export PATH=*)",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(echo*)",
+      "Edit(src/**)",
+      "Write(docs/**)",
+      "Bash(source *)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Edit(**/*.py)",
+      "Write(**/*.py)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo:*)",
+      "Read(.env*)",
+      "Read(secrets/**)"
+    ]
+  },
+  "env": {
+    "PYTHONPATH": "/default/path",
+    "NODE_ENV": "development"
+  }
+}

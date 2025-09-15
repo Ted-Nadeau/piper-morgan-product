@@ -59,7 +59,7 @@
 - `docs/architecture/pm-033a-mcp-consumer-architecture.md` - Architecture documentation
 
 ### Documentation Updates
-- `docs/development/session-logs/2025-08-11-code-log.md` - Complete session record
+- `development/session-logs/2025-08-11-code-log.md` - Complete session record
 - `docs/planning/pm-issues-status.csv` - Updated with all 84 issues
 - `docs/mcp/foundation-audit.md` - MCP foundation verification
 
@@ -107,7 +107,7 @@ Tomorrow's session should be able to:
 
 ## Session Archive Reference
 
-Complete session details in: `docs/development/session-logs/2025-08-11-code-log.md`
+Complete session details in: `development/session-logs/2025-08-11-code-log.md`
 
 ---
 

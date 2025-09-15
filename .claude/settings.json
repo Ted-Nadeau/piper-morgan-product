@@ -1,0 +1,45 @@
+{
+  "env": {
+    "PYTHONPATH": "/default/path",
+    "NODE_ENV": "development"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(gh issue:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(python:*)",
+      "Read(//Users/xian/Downloads/**)",
+      "Bash(find:*)",
+      "Bash(kill:*)",
+      "Bash(curl:*)",
+      "Bash(sed:*)",
+      "Bash(grep:*)",
+      "Bash(timeout:*)",
+      "Bash(PYTHONPATH=/Users/xian/Development/piper-morgan timeout 10s python -m uvicorn web.app:app --port 8081 --host 127.0.0.1)",
+      "Read(//Users/xian/Development/**)",
+      "Bash(export PYTHONPATH=*)",
+      "Bash(export PATH=*)",
+      "Bash(git:*)",
+      "Bash(npm:*)",
+      "Bash(echo:*)",
+      "Edit(src/**)",
+      "Write(docs/**)",
+      "Bash(source *)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Edit(**/*.py)",
+      "Write(**/*.py)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo:*)",
+      "Read(.env*)",
+      "Read(secrets/**)"
+    ],
+    "ask": [gh push]
+  }
+}

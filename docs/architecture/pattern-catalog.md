@@ -2502,7 +2502,7 @@ class IssuesCommand:
     """CLI command with beautiful formatting and learning integration"""
 
     COLORS = {
-        "reset": "\033[0m",
+        "reset": "\033
         "red": "\033[91m",
         "green": "\033[92m",
         "yellow": "\033[93m",
