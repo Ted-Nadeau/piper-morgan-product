@@ -156,6 +156,7 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 ### 🔧 Developer Resources
 
 - **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
+- **[🏗️ Architecture Patterns](patterns/README.md)** - Comprehensive pattern library (27 consolidated patterns)
 - **[🔌 API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
 - **[⚡ Developer Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
 - **[🌿 Branch Management](development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
