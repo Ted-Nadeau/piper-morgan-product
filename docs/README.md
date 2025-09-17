@@ -3,14 +3,6 @@
 
 # Piper Morgan - AI Product Management Assistant
 
-[![Tests](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/Tests/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
-[![Code Coverage](https://codecov.io/gh/mediajunkie/piper-morgan-product/branch/main/graph/badge.svg)](https://codecov.io/gh/mediajunkie/piper-morgan-product)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
-[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-> **NEW: Multi-User Configuration System** - Teams can now customize their GitHub repositories, PM number formats, and integration settings. Each user maintains their own configuration while sharing the same Piper Morgan instance.
-
 ## 📋 Table of Contents
 
 - [🎯 What is Piper Morgan?](#-what-is-piper-morgan)
@@ -405,5 +397,12 @@ Choose your path:
 **[🔧 Technical Details? API Docs](development/PM-034-conversation-api-documentation.md)**
 
 ---
+[![Tests](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/Tests/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
+[![Code Coverage](https://codecov.io/gh/mediajunkie/piper-morgan-product/branch/main/graph/badge.svg)](https://codecov.io/gh/mediajunkie/piper-morgan-product)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
+[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Made with ❤️ by the Piper Morgan team**
+---
+
+**Made with ❤️ and Systematic Kindness by the Piper Morgan team**
