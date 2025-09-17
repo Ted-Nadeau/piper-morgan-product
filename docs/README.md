@@ -3,7 +3,7 @@
 
 # Piper Morgan - AI Product Management Assistant
 
-[![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions) <- why is this broken?
+[![Build Status](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/tests.yml/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
 [![Code Coverage](https://codecov.io/gh/mediajunkie/piper-morgan-product/branch/main/graph/badge.svg)](https://codecov.io/gh/mediajunkie/piper-morgan-product)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
@@ -13,47 +13,7 @@
 
 ## 🎯 What is Piper Morgan?
 
-Piper Morgan is an intelligent product management assistant that evolves from automating routine tasks to providing strategic insights and recommendations **through natural conversation**.
-
-**Key Capabilities:**
-
-- 🗣️ **Natural Language Processing**: Use "that issue", "the document", "my task"
-- 🧠 **10-Turn Context Memory**: Remembers your conversation across interactions
-- 🎯 **Anaphoric Reference Resolution**: Automatically resolves "that issue" to the correct item
-- ⚡ **Sub-150ms Response Times**: Lightning-fast conversational AI
-- 🔄 **Seamless Context Switching**: Move between projects and topics naturally
-- 🌐 **Web Interface**: Dark mode UI with 4.6-5.1s generation (faster than CLI)
-- 📚 **Notion Integration**: Connect to your Notion workspace for knowledge management
-
-## 🚀 Quick Start (30 seconds)
-
-```bash
-# 1. Clone and setup
-git clone https://github.com/mediajunkie/piper-morgan-product.git
-cd piper-morgan-product
-python -m venv venv && source venv/bin/activate  # or `venv\Scripts\activate` on Windows
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Configure environment
-cp .env.example .env
-# Add your API keys (OpenAI, Anthropic, GitHub)
-
-# 4. Start infrastructure and launch
-docker-compose up -d
-python main.py
-```
-
-**🎯 Ready to try?** Start with our [15-minute getting started guide](user-guides/getting-started-conversational-ai.md)!
-
-### 🚀 **One-Click Startup**
-
-For daily standup routine:
-
-- **[Mac Dock Integration](./setup/mac-dock-integration.md)** - Add Piper to your dock
-- **Start Script**: `./start-piper.sh` - One-command startup with health checks
-- **Requirements**: Docker Desktop running
+Piper Morgan demonstrates a **systematic methodology for human-AI collaboration** in product management. Rather than replacing human judgment, it augments PM workflows through natural conversation, evolving from automating routine tasks to providing strategic insights.
 
 ## 💬 See It in Action
 
@@ -79,6 +39,44 @@ Piper: "✅ Assigned issue #1247 to Sarah. She's been notified."
 ```
 
 **Result**: 5x faster workflows, 90% less mental overhead, conversations that feel human.
+
+## 🚀 Quick Start (30 seconds)
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+python -m venv venv && source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Configure environment
+cp .env.example .env
+# Add your API keys (OpenAI, Anthropic, GitHub)
+
+# 4. Start infrastructure and launch
+docker-compose up -d
+python main.py
+```
+
+## 🎯 Choose Your Path
+
+**🚀 New to Piper?** Start with our [15-minute getting started guide](user-guides/getting-started-conversational-ai.md)
+
+**👥 Team Lead or PM?** See [key capabilities](#-key-features) and [performance metrics](#-performance-metrics)
+
+**🔧 Developer or Architect?** Jump to [architecture documentation](#-architecture--design-documentation) and [developer resources](#-developer-resources)
+
+**⚡ Ready to deploy?** Try our [one-click startup](#-one-click-startup) or [web interface](#-morning-standup-web-interface)
+
+### 🚀 **One-Click Startup**
+
+For daily standup routine:
+
+- **[Mac Dock Integration](./setup/mac-dock-integration.md)** - Add Piper to your dock
+- **Start Script**: `./start-piper.sh` - One-command startup with health checks
+- **Requirements**: Docker Desktop running
 
 ## 🖥️ CLI Commands
 
@@ -156,11 +154,18 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 ### 🔧 Developer Resources
 
 - **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
-- **[🏗️ Architecture Patterns](patterns/README.md)** - Comprehensive pattern library (27 consolidated patterns)
 - **[🔌 API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
 - **[⚡ Developer Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
 - **[🌿 Branch Management](development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
 - **[🧪 Test Guide](development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
+
+### 🏗️ Architecture & Design Documentation
+
+#### **[Architecture Patterns](patterns/README.md)** - Implementation Patterns Library
+*30 proven patterns* organized by functional category: Infrastructure & Architecture (001-010), Context & Session Management (011-017), Integration & Adapters (018-022), Query & Data Patterns (023-027), and AI & Orchestration (028-030). Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
+
+#### **[Architectural Decision Records](architecture/adr/adr-index.md)** - Decision History & Rationale
+*34 architectural decisions* documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
 
 ## 🧪 Testing & Quality Assurance
 
@@ -344,18 +349,6 @@ python scripts/init_db.py
 python main.py
 ```
 
-### Testing
-
-```bash
-# Run tests
-pytest
-
-# Run with coverage
-pytest --cov=services
-
-# Run specific test suite
-pytest tests/conversation/ -v
-```
 
 ## 🤝 Contributing
 
