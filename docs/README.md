@@ -3,13 +3,32 @@
 
 # Piper Morgan - AI Product Management Assistant
 
-[![Build Status](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/tests.yml/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
+[![Tests](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/Tests/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
 [![Code Coverage](https://codecov.io/gh/mediajunkie/piper-morgan-product/branch/main/graph/badge.svg)](https://codecov.io/gh/mediajunkie/piper-morgan-product)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > **NEW: Multi-User Configuration System** - Teams can now customize their GitHub repositories, PM number formats, and integration settings. Each user maintains their own configuration while sharing the same Piper Morgan instance.
+
+## 📋 Table of Contents
+
+- [🎯 What is Piper Morgan?](#-what-is-piper-morgan)
+- [💬 See It in Action](#-see-it-in-action)
+- [🚀 Quick Start (30 seconds)](#-quick-start-30-seconds)
+- [🎯 Choose Your Path](#-choose-your-path)
+- [🖥️ CLI Commands](#️-cli-commands)
+- [🌅 Morning Standup Web Interface](#-morning-standup-web-interface)
+- [📚 Complete Documentation](#-complete-documentation)
+- [🏗️ Architecture & Design Documentation](#️-architecture--design-documentation)
+- [🧪 Testing & Quality Assurance](#-testing--quality-assurance)
+- [🚀 Recent Infrastructure Activations](#-recent-infrastructure-activations)
+- [🏗️ Architecture Overview](#️-architecture-overview)
+- [🎯 Key Features](#-key-features)
+- [📊 Performance Metrics](#-performance-metrics)
+- [🔧 Development](#-development)
+- [🤝 Contributing](#-contributing)
+- [🆘 Support](#-support)
 
 ## 🎯 What is Piper Morgan?
 
