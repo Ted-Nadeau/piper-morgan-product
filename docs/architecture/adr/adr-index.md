@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: September 12, 2025
-**Total ADRs**: 28
+**Last Updated**: September 16, 2025
+**Total ADRs**: 35
 **Status**: Active
 
 ## Overview
@@ -72,7 +72,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Accepted**: 26 ADRs
+- **Accepted**: 35 ADRs
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -80,7 +80,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-029)
+1. Use next sequential number (next: ADR-035)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -107,3 +107,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [Technical Specifications](../technical-spec.md)
 - [ADR-029: Domain Service Mediation Architecture](adr-029-domain-service-mediation-architecture.md) - Complete domain service mediation for external system access
 - [ADR-030: Configuration Service Centralization](adr-030-configuration-service-centralization.md) - Centralized configuration management through PortConfigurationService
+- [ADR-031: MVP Redefinition](adr-031-mvp-redefinition.md) - Core vs Feature MVP distinction for strategic development
+- [ADR-032: Intent Classification Universal Entry](adr-032-intent-classification-universal-entry.md) - Intent classification as universal conversation entry point
+- [ADR-033: Multi-Agent Deployment](adr-033-multi-agent-deployment.md) - Multi-agent coordination scripts deployment strategy
+- [ADR-034: Plugin Architecture](adr-034-plugin-architecture.md) - Extensible plugin architecture for PM tool integration
