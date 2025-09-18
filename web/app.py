@@ -16,18 +16,18 @@ from fastapi.staticfiles import StaticFiles
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import personality integration
-from personality_integration import (
-    PersonalityResponseEnhancer,
-    PiperConfigParser,
-    WebPersonalityConfig,
-)
-
 # Standup API moved to backend - only config loader needed for legacy compatibility
 from services.configuration.piper_config_loader import piper_config_loader
 
 # Configuration service import - eliminates hardcoded values
 from services.configuration.port_configuration_service import get_port_configuration
+
+# Import personality integration
+from web.personality_integration import (
+    PersonalityResponseEnhancer,
+    PiperConfigParser,
+    WebPersonalityConfig,
+)
 
 # Server Configuration - now using centralized configuration service
 port_config = get_port_configuration()
@@ -434,8 +434,10 @@ async def home(request: Request):
 </body>
 </html>"""
 
-    # Replace the placeholder with actual API URL
-    html_content = html_template.replace("API_BASE_URL_PLACEHOLDER", API_BASE_URL)
+    # Replace the placeholder with web proxy URL (self) instead of backend URL
+    # This ensures frontend routes through proxy, not directly to backend
+    web_proxy_url = ""  # Use relative URLs so requests go to current origin (8081)
+    html_content = html_template.replace("API_BASE_URL_PLACEHOLDER", web_proxy_url)
 
     return HTMLResponse(content=html_content)
 
@@ -533,6 +535,34 @@ async def standup_proxy(
                     "Verify main.py service is started",
                     "Try again in a few moments",
                 ],
+            },
+        }
+
+
+@app.post("/api/v1/intent")
+async def intent_proxy(request: Request):
+    """Proxy intent processing requests to backend API"""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # Forward the request body to the backend
+            request_data = await request.json()
+            response = await client.post(
+                f"{API_BASE_URL}/api/v1/intent",
+                json=request_data,
+                headers={"Content-Type": "application/json"},
+            )
+            return response.json()
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": f"Backend API unavailable: {str(e)}",
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "source": "web-proxy",
+                "version": "1.0",
+                "error_type": "ProxyError",
             },
         }
 
