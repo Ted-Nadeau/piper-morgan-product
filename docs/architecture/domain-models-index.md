@@ -1,26 +1,27 @@
 # Domain Models Documentation Index
 
-**Last Updated**: July 31, 2025
-**Status**: ✅ Complete and Current
+**Last Updated**: September 18, 2025
+**Status**: ✅ Complete and Current - **MIGRATED TO HUB-AND-SPOKE ARCHITECTURE**
 
-## Overview
+## 🚀 **NEW LOCATION** - Hub-and-Spoke Architecture
 
-This is the single entry point for all domain model documentation in the Piper Morgan system. All domain model information is consolidated here for easy access and maintenance.
+### 📋 [Models Architecture Hub](models-architecture.md)
 
-## Primary Documentation
+**Primary Entry Point** - Complete navigation hub for all 38 domain models with hub-and-spoke architecture.
 
-### 📋 [Domain Models Reference](domain-models.md)
+**New Structure**:
+- **Hub Document**: [models-architecture.md](models-architecture.md) - Navigation and summaries
+- **Pure Domain**: [models/pure-domain.md](models/pure-domain.md) - 8 core business models
+- **Supporting Domain**: [models/supporting-domain.md](models/supporting-domain.md) - 7 business models with data structures
+- **Integration & Transfer**: [models/integration.md](models/integration.md) - 16 external system models
+- **Infrastructure**: [models/infrastructure.md](models/infrastructure.md) - 8 system operation models
 
-**Main Reference Document** - Complete documentation of all domain models, their fields, relationships, and usage examples.
-
-**Contains**:
-
-- All domain model definitions with field details
-- Relationship mappings and patterns
-- Recent updates (July 31, 2025)
-- Architectural principles
-- Usage examples and code snippets
-- Validation and testing information
+**Migration Benefits**:
+- All 39 models now documented (vs. previous 20)
+- Organized by architectural layers with DDD purity warnings
+- Multiple navigation paths: technical, functional, alphabetical
+- Manageable file sizes with complete field definitions
+- Cross-references and relationships fully mapped
 
 ## Supporting Documentation
 
@@ -47,37 +48,50 @@ This is the single entry point for all domain model documentation in the Piper M
 - Next steps for Code team
 - Architectural impact analysis
 
-## Quick Access
+## 🔗 Quick Access to New Architecture
 
-### Core Models
+### By Technical Layer
+- **[Pure Domain Models](models/pure-domain.md)** - Core business concepts (8 models)
+- **[Supporting Domain Models](models/supporting-domain.md)** - Business with data structures (7 models)
+- **[Integration Models](models/integration.md)** - External system contracts (16 models)
+- **[Infrastructure Models](models/infrastructure.md)** - System mechanisms (8 models)
 
-- [Product](domain-models.md#product) - Products being managed
-- [Feature](domain-models.md#feature) - Features or capabilities
-- [WorkItem](domain-models.md#workitem) - Universal work items
-- [Workflow](domain-models.md#workflow) - Workflow definition and state
-- [Task](domain-models.md#task) - Individual tasks within workflows
-- [Intent](domain-models.md#intent) - User intent parsed from natural language
+### By Business Function
+- **#pm** - [Product Management](models-architecture.md#pm-models) (12 models)
+- **#workflow** - [Process Orchestration](models-architecture.md#workflow-models) (5 models)
+- **#knowledge** - [Information Management](models-architecture.md#knowledge-models) (9 models)
+- **#spatial** - [Spatial Intelligence](models-architecture.md#spatial-models) (5 models)
 
-### Project Management
+### Core Models (New Locations)
+- [Product](models/pure-domain.md#product) - Products being managed
+- [Feature](models/pure-domain.md#feature) - Features or capabilities
+- [WorkItem](models/integration.md#workitem) - Universal work items
+- [Workflow](models/pure-domain.md#workflow) - Workflow definition and state
+- [Task](models/pure-domain.md#task) - Individual tasks within workflows
+- [Intent](models/pure-domain.md#intent) - User intent parsed from natural language
 
-- [Project](domain-models.md#project) - PM projects with integrations
-- [ProjectIntegration](domain-models.md#projectintegration) - Integration configurations
+### Project Management (New Locations)
+- [Project](models/integration.md#project) - PM projects with integrations
+- [ProjectIntegration](models/integration.md#projectintegration) - Integration configurations
 
-### File & Analysis
-
-- [UploadedFile](domain-models.md#uploadedfile) - Uploaded files
-- [AnalysisResult](domain-models.md#analysisresult) - File analysis results
-- [DocumentSummary](domain-models.md#documentsummary) - Document summaries
-
-### Spatial Models
-
-- [SpatialEvent](domain-models.md#spatialevent) - Spatial metaphor events
-- [SpatialObject](domain-models.md#spatialobject) - Spatial environment objects
-- [SpatialContext](domain-models.md#spatialcontext) - Spatial context information
+### Infrastructure Models (New Locations)
+- [Event](models/infrastructure.md#event) - Base event class
+- [List](models/infrastructure.md#list) - Universal lists
+- [Todo](models/infrastructure.md#todo) - Task management
+- [Conversation](models/infrastructure.md#conversation) - User-AI conversations
 
 ## Recent Updates Summary
 
-### July 31, 2025 - Major Field Additions
+### September 18, 2025 - Hub-and-Spoke Migration
+
+- **Hub-and-spoke architecture implemented** - All 39 models organized by technical layers
+- **19 new models documented** that were previously undocumented
+- **Field accuracy verified** against actual `services/domain/models.py` source
+- **Multiple navigation paths** - By layer, function, and alphabetical
+- **DDD purity warnings** added for clear architectural boundaries
+- **Cross-references completed** between all models and layers
+
+### July 31, 2025 - Major Field Additions (Previous Update)
 
 - **26 fields added** across 7 models
 - **9 relationship fields** for database alignment
@@ -113,7 +127,7 @@ This is the single entry point for all domain model documentation in the Piper M
 
 ### For Developers
 
-1. **Start with** [Domain Models Reference](domain-models.md) for complete model information
+1. **Start with** [Models Architecture Hub](models-architecture.md) for complete model information
 2. **Check** [Schema Validator](../tools/PM-056-schema-validator.md) for validation status
 3. **Review** [Recent Updates](../development/domain-model-updates-2025-07-31.md) for latest changes
 
@@ -125,7 +139,7 @@ This is the single entry point for all domain model documentation in the Piper M
 
 ### For Architecture Reviews
 
-1. **Examine** [Domain Models Reference](domain-models.md) for architectural principles
+1. **Examine** [Models Architecture Hub](models-architecture.md) for architectural principles
 2. **Validate** against [Schema Validator](../tools/PM-056-schema-validator.md)
 3. **Consider** impact of recent changes in [Updates](../development/domain-model-updates-2025-07-31.md)
 
@@ -148,14 +162,14 @@ docs/development/
 
 ### When Adding New Models
 
-1. Update [Domain Models Reference](domain-models.md)
+1. Update [Models Architecture Hub](models-architecture.md) and appropriate spoke document
 2. Add to Quick Access section in this index
 3. Update schema validator if needed
 4. Document changes in development log
 
 ### When Modifying Existing Models
 
-1. Update [Domain Models Reference](domain-models.md)
+1. Update [Models Architecture Hub](models-architecture.md) and appropriate spoke document
 2. Run schema validation
 3. Document changes in development log
 4. Update this index if structure changes

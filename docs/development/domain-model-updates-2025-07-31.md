@@ -127,7 +127,7 @@ project: Optional["Project"] = None  # Relationship
 ### For Developers
 
 1. **Review this document** for recent changes and field additions
-2. **Check domain models** (`docs/architecture/domain-models.md`) for complete reference
+2. **Check domain models** (`docs/architecture/models-architecture.md`) for complete reference
 3. **Run schema validation** (`docs/tools/PM-056-schema-validator.md`) to verify alignment
 
 ### For Code Team

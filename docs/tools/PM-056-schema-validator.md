@@ -41,7 +41,7 @@ This tool would have caught the `object_id` vs `object_position` mismatch that c
 ### For Developers
 
 1. **Run validation** to check domain/database model alignment
-2. **Review domain models** (`docs/architecture/domain-models.md`) for field details
+2. **Review domain models** (`docs/architecture/models-architecture.md`) for field details
 3. **Check recent updates** (`docs/development/domain-model-updates-2025-07-31.md`) for changes
 
 ### For Code Team
