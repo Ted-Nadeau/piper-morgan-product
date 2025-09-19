@@ -4,6 +4,35 @@
 
 This document provides visual representations of Piper Morgan's architecture through various diagrams showing layers, dependencies, data flow, and component interactions. These diagrams serve as reference materials for understanding system structure and enforcing architectural boundaries.
 
+## 🚨 Quick Reference for Coding Agents
+
+### Critical Dependency Rules
+```python
+# ✅ ALLOWED: Lower purity → Higher purity
+Infrastructure → Integration → Supporting → Pure Domain
+
+# ❌ FORBIDDEN: Higher purity → Lower purity
+Pure Domain ↛ Supporting ↛ Integration ↛ Infrastructure
+
+# ✅ SAFE IMPORTS
+from services.domain.models import Product, Feature  # Always safe
+from services.shared_types import WorkflowType       # Always safe
+
+# ❌ DANGEROUS IMPORTS
+from services.repositories import ProductRepository  # In domain models
+from services.database.models import ProductDB      # In domain models
+```
+
+### Model Layer Quick Lookup
+| Layer | Models | Purity Level | Can Import From |
+|-------|--------|--------------|-----------------|
+| Pure Domain | 8 | ⚠️ HIGHEST | shared_types only |
+| Supporting Domain | 7 | ⚠️ HIGH | Pure Domain + shared_types |
+| Integration & Transfer | 16 | ⚠️ MEDIUM | Supporting + Pure + shared_types |
+| Infrastructure | 8 | ⚠️ LOW | All layers |
+
+**For Detailed Model Documentation**: See [Models Architecture Hub](models-architecture.md)
+
 ## 1. High-Level Layer Architecture
 
 ```
@@ -307,7 +336,335 @@ Slack Event
                                           └─────────────┘
 ```
 
-## 4. Module Dependency Tree
+## 4. Domain Model Dependencies
+
+> **📋 Complete Model Documentation**: See [Models Architecture Hub](models-architecture.md) for detailed field definitions, usage patterns, and cross-references for all 39 domain models.
+
+### 4.1 Visual Format Options
+
+**Choose your preferred visualization**:
+- **Mermaid Charts** (Interactive, GitHub-rendered, scalable) → [Primary format below](#42-domain-model-mermaid-diagrams)
+- **ASCII Diagrams** (Universal, terminal-friendly, lightweight) → [Alternative format](#43-ascii-format-diagrams)
+- **Hybrid Approach** (Mermaid for complex relationships + ASCII for quick reference) → [Both formats](#44-quick-reference-ascii)
+
+### 4.2 Domain Model Mermaid Diagrams
+
+#### 4.2.1 Primary Business Relationships
+
+```mermaid
+graph TD
+    %% Pure Domain Layer (8 models)
+    subgraph PD["Pure Domain Models"]
+        Product --> Feature
+        Product --> Stakeholder
+        Product --> WorkItem
+        Feature --> WorkItem
+        Feature --> Feature2["Feature Dependencies"]
+
+        Intent --> Workflow
+        Workflow --> Task
+        Workflow --> WorkflowResult
+        Task --> Workflow
+
+        EthicalDecision
+        BoundaryViolation
+    end
+
+    %% Supporting Domain Layer (7 models)
+    subgraph SD["Supporting Domain Models"]
+        Document --> KnowledgeNode
+        KnowledgeNode --> KnowledgeEdge
+        KnowledgeEdge --> KnowledgeNode
+
+        SpatialEvent --> SpatialObject
+        SpatialContext --> SpatialEvent
+
+        ActionHumanization
+    end
+
+    %% Integration Layer (16 models)
+    subgraph IL["Integration & Transfer Models"]
+        Project --> ProjectIntegration
+        Project --> WorkItem2["WorkItem"]
+        Project --> ProjectContext
+        ProjectContext --> Workflow2["Workflow"]
+
+        Document2["Document"] --> DocumentSample
+        DocumentSample --> ContentSample
+        ContentSample --> AnalysisResult
+        DocumentSummary --> SummarySection
+        Document3["Document"] --> DocumentSummary
+
+        UploadedFile --> ValidationResult
+        UploadedFile --> FileTypeInfo
+        AnalysisResult --> AnalysisType
+    end
+
+    %% Infrastructure Layer (8 models)
+    subgraph IF["Infrastructure Models"]
+        Event --> FeatureCreated
+        Event --> InsightGenerated
+        FeatureCreated --> Feature3["Feature"]
+
+        List --> ListItem
+        List --> ListMembership
+        TodoList --> Todo
+
+        Conversation --> ConversationTurn
+    end
+
+    %% Cross-layer dependencies (dashed lines)
+    WorkItem -.-> Feature
+    WorkItem -.-> Product
+    WorkItem2 -.-> Feature
+    Task -.-> ActionHumanization
+    FeatureCreated -.-> Feature
+```
+
+### 4.2 Layer Interaction Rules
+
+```mermaid
+graph TD
+    subgraph "Dependency Direction (Allowed)"
+        PD["Pure Domain<br/>8 models<br/>⚠️ HIGHEST Purity"]
+        SD["Supporting Domain<br/>7 models<br/>⚠️ HIGH Purity"]
+        IL["Integration & Transfer<br/>16 models<br/>⚠️ MEDIUM Purity"]
+        IF["Infrastructure<br/>8 models<br/>⚠️ LOW Purity"]
+
+        IF --> IL
+        IF --> SD
+        IF --> PD
+        IL --> SD
+        IL --> PD
+        SD --> PD
+    end
+```
+
+### 4.3 Critical Model Dependencies for Coding Agents
+
+#### Product Management Dependency Chain
+```mermaid
+graph LR
+    Product --> Feature
+    Feature --> WorkItem
+    WorkItem --> Task
+    Task --> Workflow
+    Workflow --> WorkflowResult
+
+    Product --> Stakeholder
+    Project --> ProjectIntegration
+    Project --> ProjectContext
+    ProjectContext --> Workflow
+```
+
+#### Knowledge Management Dependency Chain
+```mermaid
+graph LR
+    Document --> DocumentSample
+    DocumentSample --> ContentSample
+    ContentSample --> AnalysisResult
+    AnalysisResult --> AnalysisType
+
+    Document --> KnowledgeNode
+    KnowledgeNode --> KnowledgeEdge
+    KnowledgeEdge --> KnowledgeNode
+
+    Document --> DocumentSummary
+    DocumentSummary --> SummarySection
+```
+
+#### Spatial Intelligence Dependency Chain
+```mermaid
+graph LR
+    SpatialContext --> SpatialEvent
+    SpatialEvent --> SpatialObject
+    SpatialObject --> SpatialEvent
+```
+
+#### File Processing Dependency Chain
+```mermaid
+graph LR
+    UploadedFile --> ValidationResult
+    UploadedFile --> FileTypeInfo
+    UploadedFile --> DocumentSample
+    DocumentSample --> AnalysisResult
+    AnalysisResult --> AnalysisType
+```
+
+### 4.4 Dependency Resolution for Complex Scenarios
+
+#### Scenario 1: Feature Creation Workflow
+```
+User Request → Intent → Workflow → Task → Feature → WorkItem → Project
+                                      ↓
+                               FeatureCreated Event → Event Bus
+```
+
+#### Scenario 2: Document Analysis Pipeline
+```
+UploadedFile → ValidationResult → FileTypeInfo
+            ↓
+        DocumentSample → ContentSample → AnalysisResult → AnalysisType
+            ↓
+        Document → KnowledgeNode → KnowledgeEdge
+            ↓
+        DocumentSummary → SummarySection
+```
+
+#### Scenario 3: Spatial Event Processing
+```
+SpatialContext → SpatialEvent → SpatialObject
+                      ↓
+               ActionHumanization (for user-friendly descriptions)
+```
+
+### 4.3 ASCII Format Diagrams
+
+**Terminal-friendly lightweight format for quick reference**:
+
+#### 4.3.1 Core Business Relationships (ASCII)
+
+```
+Product Management Chain:
+Product ──┬── Feature ── WorkItem
+          ├── Stakeholder
+          └── work_items[]
+
+Workflow Orchestration:
+Intent ── Workflow ──┬── Task[] ── result
+                     └── WorkflowResult
+
+Project Integration:
+Project ──┬── ProjectIntegration[]
+          ├── WorkItem (via project_id)
+          └── ProjectContext ── Workflow
+```
+
+#### 4.3.2 Data Processing Chains (ASCII)
+
+```
+Knowledge Management:
+Document ──┬── DocumentSample ── ContentSample ── AnalysisResult
+           ├── KnowledgeNode ─── KnowledgeEdge ─── KnowledgeNode
+           └── DocumentSummary ── SummarySection[]
+
+File Processing:
+UploadedFile ──┬── ValidationResult
+               ├── FileTypeInfo
+               └── DocumentSample ── AnalysisResult ── AnalysisType
+
+Spatial Intelligence:
+SpatialContext ── SpatialEvent ── SpatialObject
+                      ↓
+               ActionHumanization (text enhancement)
+```
+
+#### 4.3.3 Infrastructure Events (ASCII)
+
+```
+Event System:
+Event (base) ──┬── FeatureCreated ── feature_id
+               └── InsightGenerated ── insight_data
+
+List Management:
+List ──┬── ListItem[]
+       └── ListMembership[] ── user permissions
+
+Task Tracking:
+TodoList ── Todo[] ── priority/status
+```
+
+### 4.4 Quick Reference ASCII
+
+**For rapid terminal lookup during coding**:
+
+```
+🏗️ LAYER HIERARCHY (Bottom-up dependencies allowed):
+Pure Domain (8) ──→ Supporting Domain (7) ──→ Integration (16) ──→ Infrastructure (8)
+
+🔗 KEY RELATIONSHIPS:
+Product ↔ Feature ↔ WorkItem    Intent → Workflow → Task
+Project → ProjectIntegration    Document → KnowledgeNode
+UploadedFile → ValidationResult SpatialContext → SpatialEvent
+
+⚠️ FORBIDDEN PATTERNS:
+Pure Domain → Infrastructure    Feature ↔ WorkItem (circular)
+Domain Models → Database ORM    Task ↔ Workflow (circular)
+```
+
+### 4.5 Format Comparison
+
+| Aspect | Mermaid Charts | ASCII Diagrams |
+|--------|----------------|----------------|
+| **Rendering** | GitHub, IDEs, documentation sites | Universal terminal/text |
+| **Interactivity** | Clickable, zoomable | Static but fast |
+| **Maintenance** | Complex syntax, better tooling | Simple, manual editing |
+| **Accessibility** | Visual, requires rendering | Text-based, screen readers |
+| **Performance** | Slower loading, needs JavaScript | Instant, no dependencies |
+| **Best For** | Complex relationships, documentation | Quick reference, coding |
+
+**Recommendation**: Use **both formats** - Mermaid for comprehensive documentation, ASCII for coding reference.
+
+### 4.6 Circular Dependency Prevention
+
+#### Avoided Circular Dependencies
+```
+❌ PREVENTED: Feature → WorkItem → Feature
+✅ SOLUTION: Feature → WorkItem (one-way only with optional back-reference)
+
+❌ PREVENTED: KnowledgeNode ↔ KnowledgeEdge
+✅ SOLUTION: Explicit edge direction with source_node_id/target_node_id
+
+❌ PREVENTED: Task ↔ Workflow
+✅ SOLUTION: Workflow contains Tasks, Tasks reference workflow_id
+```
+
+#### Cross-Layer Dependency Constraints
+```python
+# ✅ ALLOWED: Lower layers can use higher layers
+class FeatureCreated(Event):  # Infrastructure can reference Pure Domain
+    feature_id: str
+
+class WorkItem:  # Integration can reference Pure Domain
+    feature: Optional["Feature"] = None
+    product: Optional["Product"] = None
+
+# ❌ FORBIDDEN: Higher layers cannot use lower layers
+class Feature:
+    # database_record: FeatureDB  # FORBIDDEN: Pure Domain → Infrastructure
+    # repository: FeatureRepository  # FORBIDDEN: Pure Domain → Service layer
+```
+
+### 4.6 Import Patterns for Model Dependencies
+
+#### Correct Import Patterns
+```python
+# Within same layer - OK
+from services.domain.models import Product, Feature, WorkItem
+
+# Cross-layer - Infrastructure → Domain (OK)
+from services.domain.models import Feature  # In FeatureCreated event
+
+# Cross-layer - Integration → Domain (OK)
+from services.domain.models import Product, Feature  # In WorkItem model
+
+# Shared types - Always OK
+from services.shared_types import WorkflowType, TaskStatus
+```
+
+#### Forbidden Import Patterns
+```python
+# ❌ FORBIDDEN: Domain → Infrastructure
+from services.infrastructure.events import FeatureCreated  # In Feature model
+
+# ❌ FORBIDDEN: Domain → Integration
+from services.integration.github import GitHubWorkItem  # In Feature model
+
+# ❌ FORBIDDEN: Cross-cutting singleton imports
+from services.orchestration.engine import engine  # Breaks dependency isolation
+```
+
+## 5. Module Dependency Tree
 
 ```
 services/
