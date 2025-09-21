@@ -321,6 +321,8 @@ See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 
 ## 🔧 Development
 
+> **Internal Development Teams**: For comprehensive internal documentation navigation, see [NAVIGATION.md](NAVIGATION.md)
+
 ### Prerequisites
 
 - **Python 3.11+** (required)

@@ -4,6 +4,8 @@
 
 **Your success depends on reading this page completely before doing ANYTHING else.**
 
+🧭 **NEW**: For comprehensive **internal documentation navigation**, see [NAVIGATION.md](NAVIGATION.md) after reading this page.
+
 ## ⚠️ CRITICAL WARNING ⚠️
 
 If you skip this page and jump into work, you will:
