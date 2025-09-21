@@ -1,0 +1,16 @@
+# Asset Management - Git Ignore for Large Files
+# Files >500KB should be compressed or hosted externally
+
+# Large blog images (>500KB) - Consider compression
+images/blog/comms/rosenslides/*.png
+images/blog/comms/blog/robot-*.png
+
+# Temporary and working files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Large generated files
+diagrams/generated/*.png
+documents/exports/*.pdf
