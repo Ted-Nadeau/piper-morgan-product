@@ -76,31 +76,14 @@ class OrchestrationEngine:
 
         self.llm_client = llm_client
 
-        # TODO: QueryRouter initialization temporarily disabled due to complex dependency chain
-        # Initialize required query services for QueryRouter
-        # from services.queries.project_queries import ProjectQueryService
-        # from services.queries.conversation_queries import ConversationQueryService
-        # from services.queries.file_queries import FileQueryService
-        # from services.database.repositories import ProjectRepository
-        # from services.repositories.file_repository import FileRepository
-        #
-        # # Initialize repositories
-        # self.project_repository = ProjectRepository()
-        # self.file_repository = FileRepository()
-        #
-        # # Initialize query services with their dependencies
-        # self.project_query_service = ProjectQueryService(self.project_repository)
-        # self.conversation_query_service = ConversationQueryService()
-        # self.file_query_service = FileQueryService(self.file_repository)
-        #
-        # # Initialize QueryRouter with required services
-        # self.query_router = QueryRouter(
-        #     project_query_service=self.project_query_service,
-        #     conversation_query_service=self.conversation_query_service,
-        #         file_query_service=self.file_query_service
-        # )
+        # PM-039 Factory Pattern: Initialize WorkflowFactory and registry
+        from .workflow_factory import WorkflowFactory
 
-        # Temporary placeholder to prevent import errors
+        self.factory = WorkflowFactory()
+        self.workflows = {}
+
+        # QueryRouter will be initialized on-demand using async session pattern
+        # Following the AsyncSessionFactory pattern from lines 135-138
         self.query_router = None
 
         self.intent_enricher = IntentEnricher(llm_client)
@@ -110,6 +93,121 @@ class OrchestrationEngine:
         self.workflow_integration = WorkflowIntegration()
         self.session_integration = SessionIntegration()
         self.performance_monitor = PerformanceMonitor()
+
+    async def get_query_router(self) -> QueryRouter:
+        """Get QueryRouter, initializing on-demand with session-aware wrappers"""
+        if self.query_router is None:
+            from services.queries.conversation_queries import ConversationQueryService
+            from services.queries.session_aware_wrappers import (
+                SessionAwareFileQueryService,
+                SessionAwareProjectQueryService,
+            )
+
+            # Initialize QueryRouter with session-aware services
+            # These services handle their own session management per-operation
+            self.query_router = QueryRouter(
+                project_query_service=SessionAwareProjectQueryService(),
+                conversation_query_service=ConversationQueryService(),
+                file_query_service=SessionAwareFileQueryService(),
+            )
+            self.logger.info("QueryRouter initialized with session-aware wrappers")
+
+        return self.query_router
+
+    async def handle_query_intent(self, intent: Intent) -> Dict[str, Any]:
+        """Handle QUERY intents using QueryRouter integration (GREAT-1B bridge method)"""
+        try:
+            # Get QueryRouter with session-aware wrappers
+            query_router = await self.get_query_router()
+
+            # Route the query based on action
+            if intent.action in ["search_projects", "list_projects", "find_projects"]:
+                # Use project query service through QueryRouter
+                projects = await query_router.project_queries.list_active_projects()
+                return {
+                    "message": f"Found {len(projects)} active projects",
+                    "data": [
+                        {"id": p.id, "name": p.name, "description": p.description} for p in projects
+                    ],
+                    "intent_handled": True,
+                }
+
+            elif intent.action in ["search_files", "find_files", "list_files"]:
+                # Use file query service through QueryRouter
+                files = await query_router.file_queries.list_recent_files(limit=10)
+                return {
+                    "message": f"Found {len(files)} recent files",
+                    "data": files,
+                    "intent_handled": True,
+                }
+
+            elif intent.action in ["get_greeting", "hello", "help"]:
+                # Use conversation query service through QueryRouter
+                greeting = await query_router.conversation_queries.get_greeting()
+                return {"message": greeting, "data": {}, "intent_handled": True}
+
+            else:
+                return {
+                    "message": f"Query action '{intent.action}' not yet supported by QueryRouter",
+                    "data": {},
+                    "intent_handled": False,
+                }
+
+        except Exception as e:
+            self.logger.error(f"QueryRouter error: {e}")
+            return {
+                "message": f"Failed to process query: {str(e)}",
+                "data": {},
+                "intent_handled": False,
+                "error": str(e),
+            }
+
+    async def create_workflow_from_intent(self, intent: Intent) -> Optional[Workflow]:
+        """
+        Create appropriate workflow based on intent with database persistence
+
+        PM-039 Restoration: Authentic implementation using WorkflowFactory
+        Follows established DDD patterns with proper context validation and enrichment
+        """
+        try:
+            workflow = await self.factory.create_from_intent(intent)
+
+            # PM-039 Pattern: Enrich CREATE_TICKET workflows with repository from project
+            if workflow and workflow.type == WorkflowType.CREATE_TICKET:
+                project_id = intent.context.get("project_id")
+                if project_id:
+                    try:
+                        async with AsyncSessionFactory.session_scope() as session:
+                            from services.database.repositories import ProjectRepository
+
+                            project_repo = ProjectRepository(session)
+                            project = await project_repo.get_by_id(project_id)
+                            if project:
+                                repository = project.get_github_repository()
+                                if repository:
+                                    workflow.context["repository"] = repository
+                                    self.logger.info(
+                                        f"Enriched CREATE_TICKET workflow with repository: {repository}"
+                                    )
+                                else:
+                                    self.logger.warning(
+                                        f"Project {project_id} has no GitHub repository configured"
+                                    )
+                            else:
+                                self.logger.warning(f"Project {project_id} not found")
+                    except Exception as e:
+                        self.logger.error(f"Failed to enrich workflow with repository: {str(e)}")
+
+            # PM-039 Pattern: Store workflow in registry for tracking
+            if workflow:
+                self.workflows[workflow.id] = workflow
+                self.logger.info(f"Created workflow {workflow.id} for intent {intent.action}")
+
+            return workflow
+
+        except Exception as e:
+            self.logger.error(f"Failed to create workflow from intent: {str(e)}")
+            return None
 
     async def execute_workflow(self, workflow: Workflow) -> WorkflowResult:
         """
@@ -343,3 +441,12 @@ class OrchestrationEngine:
 
 # Global engine instance - will be initialized in main.py
 engine: Optional[OrchestrationEngine] = None
+
+
+def set_global_engine(engine_instance: OrchestrationEngine) -> None:
+    """
+    Set the global orchestration engine instance
+    Phase 3A: DDD-compliant dependency injection support
+    """
+    global engine
+    engine = engine_instance
