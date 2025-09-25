@@ -63,10 +63,15 @@ class TestQueryRouterLock:
         project_service = SessionAwareProjectQueryService()
         file_service = SessionAwareFileQueryService()
 
-        # Mock the session and repository layers
-        with patch("services.queries.session_aware_wrappers.AsyncSessionFactory") as mock_factory:
-            mock_session = AsyncMock()
-            mock_factory.session_scope.return_value.__aenter__.return_value = mock_session
+        # Mock the session and repository layers with proper async context manager
+        mock_session = AsyncMock()
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__.return_value = mock_session
+        mock_context_manager.__aexit__.return_value = None
+
+        with patch("services.database.session_factory.AsyncSessionFactory") as mock_factory:
+            mock_factory.create_session = AsyncMock(return_value=mock_session)
+            mock_factory.session_scope.return_value = mock_context_manager
 
             with patch(
                 "services.queries.session_aware_wrappers.ProjectRepository"
