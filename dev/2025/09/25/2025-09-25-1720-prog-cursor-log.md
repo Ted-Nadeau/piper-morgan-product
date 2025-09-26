@@ -273,3 +273,50 @@
 **Key Finding**: The existing `docs/internal/development/tools/setup.md` provides a solid foundation but has critical gaps that prevent full operational state. The missing `docs/guides/orchestration-setup-guide.md` represents a significant documentation debt that impacts developer onboarding.
 
 **Recommendation**: Address the 4 critical gaps before considering documentation complete. Current state would frustrate new developers and block productive work.
+
+---
+
+## SSL CERTIFICATE FIX SESSION (6:52 PM - 6:58 PM)
+
+### Problem Identified
+
+Fresh clone setup failed with SSL certificate errors:
+
+- `FileNotFoundError: [Errno 2] No such file or directory: '/path/to/certifi/cacert.pem'`
+- Blocked OrchestrationEngine imports and HTTPS requests
+
+### Root Cause
+
+Missing SSL certificate bundle (cacert.pem) in certifi package installation in fresh virtual environments.
+
+### Solution Implemented
+
+```bash
+pip install --upgrade --force-reinstall certifi
+```
+
+- Upgraded certifi from 2025.4.26 to 2025.8.3
+- Restored 287,634 byte certificate bundle
+
+### Results Achieved
+
+✅ SSL requests functional (HTTPS to httpbin.org and GitHub API)  
+✅ OrchestrationEngine imports successfully  
+✅ Fresh clone setup completes without SSL errors
+
+### 🎓 **CRITICAL LESSON LEARNED**
+
+**Mistake**: Made documentation changes in temporary test environment (`/tmp/fresh-clone-retest-*/`) and expected Code to know about them.
+
+**Reality**: Code has no visibility into temporary directories created during testing.
+
+**Correct Approach**:
+
+1. **Either** make changes in main repository where Code can see them
+2. **Or** provide Code with exact text to add/modify
+
+**What I Should Have Done**: Immediately provided Code with the exact SSL documentation text to append to `docs/guides/orchestration-setup-guide.md` instead of making changes in isolation.
+
+**Applied Fix**: Provided Code with complete SSL Certificate Requirements section text for integration into main repository.
+
+**Takeaway**: When testing reveals documentation needs, either work in main repo or immediately extract/communicate changes for integration. Temporary environment changes are invisible to other agents.

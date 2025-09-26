@@ -1,0 +1,73 @@
+# Performance Enforcement Documentation
+
+## Overview
+
+Performance enforcement prevents performance regressions by failing CI builds when components perform significantly slower than established baselines.
+
+## Philosophy
+
+- **Realistic baselines**: Based on actual measured performance, not aspirational targets
+- **Tolerance for variance**: 20% degradation tolerance to avoid false positives
+- **Meaningful regression detection**: Catches significant slowdowns that impact user experience
+- **Non-blocking development**: Thresholds set to catch real problems, not normal variance
+
+## Current Baselines
+
+Updated based on Phase 1A measurements (Sept 25, 2025):
+
+| Component | Baseline | Threshold (20% tolerance) | Notes |
+|-----------|----------|---------------------------|-------|
+| User Request | 4500ms | 5400ms | Complete request processing |
+| LLM Classification | 2500ms | 3000ms | External API bottleneck |
+| Orchestration | 72ms | 87ms | Our processing efficiency |
+| QueryRouter Init | 1ms | 5ms | Object access with caching |
+
+## Local Testing
+
+Run performance tests locally before pushing:
+
+```bash
+# Run all performance tests
+python scripts/run_performance_tests.py
+
+# Check specific component
+python scripts/performance_config.py queryrouter_init_ms 45.5
+```
+
+## CI Integration
+
+Performance tests run automatically in CI after regular tests pass. Build fails if:
+- Any component exceeds baseline threshold by >20%
+- Performance test encounters errors
+- Critical components become unresponsive
+
+## Updating Baselines
+
+When legitimate performance improvements are made:
+
+1. Measure new performance with local script
+2. Update baselines in `scripts/performance_config.py`
+3. Document improvement in commit message
+4. Update this documentation with new baselines
+
+## Troubleshooting
+
+### Build fails with performance regression:
+1. Check CI output for which component failed
+2. Run local performance tests to reproduce
+3. Investigate recent changes affecting performance
+4. If legitimate regression, fix before merging
+5. If measurement variance, re-run CI (rare)
+
+### Performance tests error:
+1. Check database connectivity
+2. Verify LLM service availability
+3. Review recent infrastructure changes
+4. Check component initialization
+
+## Monitoring
+
+Track performance trends over time:
+- CI logs include timing measurements
+- Baseline updates documented in commits
+- Performance improvements tracked in changelogs
