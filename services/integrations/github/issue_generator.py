@@ -31,7 +31,7 @@ class IssueContentGenerator:
         """Generate professional issue content from description"""
 
         # For now, use a simple template-based approach
-        # TODO: Replace with actual LLM call when API keys are properly loaded
+        # TODO(#TBD-LLM-01): Replace with actual LLM call when API keys are properly loaded
 
         # Extract key information
         repo = context.get("repository", "unknown-repo")

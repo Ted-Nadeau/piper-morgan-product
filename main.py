@@ -128,10 +128,38 @@ async def lifespan(app: FastAPI):
     logger.info("✅ Domain models loaded")
     logger.info("✅ LLM clients initialized")
     logger.info("✅ Intent classifier ready")
+
+    # Phase 3A: OrchestrationEngine dependency injection setup
+    try:
+        from services.llm.clients import llm_client
+        from services.orchestration.engine import OrchestrationEngine
+
+        logger.info("🔧 Initializing OrchestrationEngine with dependency injection...")
+
+        # Initialize OrchestrationEngine with proper DDD dependency injection
+        orchestration_engine = OrchestrationEngine(llm_client=llm_client)
+
+        # Store in app state for dependency injection (DDD-compliant)
+        app.state.orchestration_engine = orchestration_engine
+
+        logger.info("✅ OrchestrationEngine initialized successfully via dependency injection")
+
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize OrchestrationEngine: {e}")
+        # Continue startup but mark engine as unavailable
+        app.state.orchestration_engine = None
+        logger.warning("🟡 Continuing startup without OrchestrationEngine (degraded mode)")
+
     logger.info("✅ Orchestration engine ready")
     yield
+
     # Shutdown
     from services.database.connection import db
+
+    # Cleanup OrchestrationEngine if needed
+    if hasattr(app.state, "orchestration_engine") and app.state.orchestration_engine:
+        logger.info("🔄 Shutting down OrchestrationEngine...")
+        # Add cleanup if OrchestrationEngine needs it in the future
 
     await db.close()
     logger.info("Shutting down...")
@@ -880,7 +908,7 @@ async def list_workflows():
 @app.get("/api/v1/products")
 async def list_products():
     """List all products"""
-    # TODO: Real database integration
+    # TODO(#TBD-DATABASE-02): Real database integration
     sample_product = Product(
         name="Sample Product",
         vision="Make PMs more effective",

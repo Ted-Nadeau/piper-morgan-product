@@ -24,7 +24,7 @@ class TestAPIDegradationIntegration:
 
         # Mock database connection failure
         with patch(
-            "services.database.connection.AsyncSessionFactory.session_scope"
+            "services.database.session_factory.AsyncSessionFactory.session_scope"
         ) as mock_session:
             mock_session.side_effect = Exception("Database connection failed")
 
@@ -131,7 +131,7 @@ class TestAPIDegradationIntegration:
 
         for message, expected_action in degradation_scenarios:
             with patch(
-                "services.database.connection.AsyncSessionFactory.session_scope"
+                "services.database.session_factory.AsyncSessionFactory.session_scope"
             ) as mock_session:
                 mock_session.side_effect = Exception("Database connection failed")
 
@@ -188,7 +188,7 @@ class TestAPIDegradationIntegration:
 
         # First call fails, second call succeeds
         with patch(
-            "services.database.connection.AsyncSessionFactory.session_scope"
+            "services.database.session_factory.AsyncSessionFactory.session_scope"
         ) as mock_session:
             mock_session.side_effect = [
                 Exception("Temporary database failure"),
@@ -212,7 +212,7 @@ class TestAPIDegradationIntegration:
         """Test degradation messages are user-friendly and actionable"""
 
         with patch(
-            "services.database.connection.AsyncSessionFactory.session_scope"
+            "services.database.session_factory.AsyncSessionFactory.session_scope"
         ) as mock_session:
             mock_session.side_effect = Exception("Database connection failed")
 

@@ -27,4 +27,4 @@ alwaysApply: false
 - Context passed as parameters
 - No request data in instances
 
-See ARCHITECTURE-RULES.md for complete details.
+See docs/internal/architecture/current/architecture.md  for complete details.

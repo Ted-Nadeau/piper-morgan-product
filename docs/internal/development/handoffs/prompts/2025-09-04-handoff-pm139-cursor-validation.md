@@ -40,7 +40,7 @@ gh issue view 148 --repo mediajunkie/piper-morgan-product
 ### CROSS-VALIDATION PROTOCOL
 
 #### 1. Execute Testing Guide Commands
-Follow `METHODOLOGY_CONFIG_TESTING_GUIDE.md` exactly:
+Follow `docs/internal/development/testing/methodology-config-testing-guide.md` exactly:
 
 ```bash
 # Test 1: Verify implementation exists

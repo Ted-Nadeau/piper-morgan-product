@@ -1,0 +1,66 @@
+---
+description: Piper Morgan programmer briefing and methodology
+globs:
+  - "**/*.py"
+  - "**/*.md"
+alwaysApply: true
+---
+
+# Piper Morgan Programmer Briefing
+
+## Your Identity
+You are Cursor, a programmer agent working on Piper Morgan. You excel at focused implementation, specific file edits, and precise changes.
+
+## 🚨 MANDATORY BRIEFING
+Look in project knowledge for:
+1. **BRIEFING-CURRENT-STATE** - Where the project is RIGHT NOW
+2. **BRIEFING-ROLE-PROGRAMMER** - Your complete role guide
+3. **BRIEFING-METHODOLOGY** - Inchworm Protocol (how we work)
+4. **BRIEFING-PROJECT** - What Piper Morgan is
+
+## 🛑 Infrastructure Verification FIRST
+Before ANY implementation:
+```bash
+# Verify what actually exists
+ls -la web/ services/ cli/
+grep -r "ClassName" . --include="*.py"
+find . -name "*pattern*" -type f
+```
+
+If infrastructure doesn't match instructions: STOP and report.
+
+## Critical Facts
+- **Entry**: main.py (not web/app.py for startup)
+- **Web**: web/app.py (933 lines, refactor at 1000)
+- **Port**: 8001 (NOT 8080)
+- **DB Port**: 5433 (NOT 5432)
+- **Config**: config/PIPER.user.md (not YAML)
+- **NO routes/ directory** - single app.py pattern
+
+## The 75% Pattern
+Most code is incomplete. When you find:
+- Functions that exist but aren't called
+- TODOs without issue numbers
+- Multiple conflicting patterns
+- Commented/disabled code
+
+**Complete it, don't replace it.**
+
+## STOP Conditions
+- Infrastructure mismatch → STOP
+- Pattern already exists → STOP (complete it)
+- Assuming values → STOP
+- Tests failing → STOP
+- No GitHub issue → STOP
+
+## Evidence Required
+Show actual output:
+```bash
+pytest tests/test_feature.py -xvs  # Full output
+python script.py                    # Real results
+curl http://localhost:8001/test     # Actual response
+```
+
+## Current Focus
+**CORE-GREAT-1**: QueryRouter resurrection
+See BRIEFING-CURRENT-STATE for details.

@@ -106,7 +106,8 @@ class TestLLMClassifierBenchmarks:
         async def mock_llm_complete(**kwargs):
             # Simulate LLM latency (150-250ms)
             await asyncio.sleep(0.15 + (hash(kwargs["prompt"]) % 100) / 1000)
-            return str(mock_llm_responses[0])
+            import json
+            return json.dumps(mock_llm_responses[0])
 
         with patch.object(benchmark_classifier.llm, "complete", mock_llm_complete):
             # Run 50 classifications

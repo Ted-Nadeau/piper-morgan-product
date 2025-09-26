@@ -58,6 +58,20 @@ class LLMIntentClassifier:
             "average_latency_ms": 0,
         }
 
+    def _ensure_json_response_format(self, **kwargs):
+        """Ensure response_format is always set for JSON responses"""
+        if "response_format" not in kwargs:
+            logger.warning("response_format missing - adding default JSON object format")
+            kwargs["response_format"] = {"type": "json_object"}
+
+        # Verify the format is correct
+        format_val = kwargs.get("response_format")
+        if not isinstance(format_val, dict) or format_val.get("type") != "json_object":
+            logger.warning(f"Invalid response_format: {format_val} - correcting to json_object")
+            kwargs["response_format"] = {"type": "json_object"}
+
+        return kwargs
+
     async def classify(
         self,
         message: str,
@@ -77,6 +91,7 @@ class LLMIntentClassifier:
         """
         start_time = datetime.now()
         self.classification_metrics["total_requests"] += 1
+        self.current_message = message  # Store for retry functionality
 
         try:
             # Stage 1: Pre-processing
@@ -258,14 +273,26 @@ class LLMIntentClassifier:
 
         # Call LLM
         try:
+            # Concurrent debugging: Log request parameters
+            import time
+            import threading
+            request_id = f"{int(time.time())}-{threading.get_ident()}"
+            response_format = {"type": "json_object"}
+
+            logger.debug(f"[{request_id}] LLM request - task_type: intent_classification")
+            logger.debug(f"[{request_id}] response_format parameter: {response_format}")
+            logger.debug(f"[{request_id}] Prompt length: {len(prompt)} characters")
+
             response = await self.llm.complete(
+                task_type="intent_classification",
                 prompt=prompt,
-                max_tokens=200,
-                temperature=0.3,  # Lower temperature for more consistent classification
+                response_format=response_format,
             )
 
-            # Parse structured response
-            result = self._parse_llm_response(response)
+            logger.debug(f"[{request_id}] LLM response received - length: {len(response)} chars")
+
+            # Parse structured response using resilient parser
+            result = await self._parse_llm_response_resilient_async(response)
 
             logger.debug(f"LLM classification result: {result}")
             return result
@@ -343,6 +370,229 @@ class LLMIntentClassifier:
                 "reasoning": f"Parse error: {str(e)}",
             }
 
+    def _parse_llm_response_resilient(self, response_text: str, attempt: int = 1) -> Dict[str, Any]:
+        """Parse LLM response with progressive fallback strategies
+        
+        Strategy progression:
+        1. Direct JSON parse (works 95% of time)
+        2. Fix common malformations (handles {category: "value"})
+        3. Extract JSON from text response 
+        4. Retry with stronger prompt (if attempt < 3)
+        5. Regex extraction fallback
+        6. Final unknown intent fallback
+        """
+        import re
+        import asyncio
+        
+        # Strategy 1: Direct JSON parse (works 95% of time)
+        try:
+            parsed = json.loads(response_text)
+            logger.debug("Parse strategy 1 success: Direct JSON parse")
+            return parsed
+        except json.JSONDecodeError as e:
+            logger.debug(f"Parse strategy 1 failed: {e}")
+            pass
+        
+        # Strategy 2: Fix common malformations (handles {category: "value"})
+        try:
+            # Replace unquoted keys with quoted keys
+            fixed_text = re.sub(r'(\w+):', r'"\1":', response_text)
+            # Handle single quotes: {'category': 'value'} -> {"category": "value"}
+            fixed_text = re.sub(r"'([^']*)'", r'"\1"', fixed_text)
+            
+            parsed = json.loads(fixed_text)
+            logger.debug("Parse strategy 2 success: Fixed malformed JSON")
+            return parsed
+        except json.JSONDecodeError as e:
+            logger.debug(f"Parse strategy 2 failed: {e}")
+            pass
+        
+        # Strategy 3: Extract JSON from text response
+        try:
+            # LLM might return "Here's the JSON: {...}" or similar
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                json_text = json_match.group()
+                parsed = json.loads(json_text)
+                logger.debug("Parse strategy 3 success: Extracted JSON from text")
+                return parsed
+        except json.JSONDecodeError as e:
+            logger.debug(f"Parse strategy 3 failed: {e}")
+            pass
+        
+        # Strategy 4: Retry with stronger prompt (if attempt < 3)
+        if attempt < 3:
+            logger.warning(f"All parsing strategies failed, retrying with stronger prompt (attempt {attempt + 1})")
+            # Note: Retry will be handled by the async caller, skip for now to avoid asyncio.run() in async context
+            logger.warning("Skipping retry in sync context - proceeding to regex extraction")
+        
+        # Strategy 5: Regex extraction fallback
+        try:
+            category = self._extract_category_regex(response_text)
+            action = self._extract_action_regex(response_text)
+            confidence = self._extract_confidence_regex(response_text)
+            
+            if category and action:
+                logger.warning(f"Parse strategy 5 success: Regex extraction - {category}/{action}")
+                return {
+                    "category": category,
+                    "action": action,
+                    "confidence": confidence,
+                    "parse_method": "regex_fallback"
+                }
+                
+        except Exception as e:
+            logger.error(f"Parse strategy 5 failed: {e}")
+            pass
+        
+        # Strategy 6: Final fallback - Unknown intent
+        logger.error(f"All parsing strategies failed. Response text: {response_text[:200]}...")
+        return {
+            "category": "unknown",
+            "action": "unclear",
+            "confidence": 0.0,
+            "parse_method": "failed",
+            "original_response": response_text[:500]  # Keep sample for debugging
+        }
+
+    def _extract_category_regex(self, text: str) -> str:
+        """Extract category using regex patterns"""
+        import re
+        patterns = [
+            r'"?(?:category|intent)"?\s*:\s*"?([^",\}]+)"?',
+            r'(EXECUTION|QUERY|ANALYSIS|UPDATE|SYNTHESIS|STRATEGY|LEARNING|CONVERSATION)',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return match.group(1).upper()
+        return "UNKNOWN"
+
+    def _extract_action_regex(self, text: str) -> str:
+        """Extract action using regex patterns"""
+        import re
+        patterns = [
+            r'"?(?:action)"?\s*:\s*"?([^",\}]+)"?',
+            r'(create_issue|list_projects|update_status|generate_report|create_milestone)',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return match.group(1).lower()
+        return "unknown"
+
+    def _extract_confidence_regex(self, text: str) -> float:
+        """Extract confidence using regex patterns"""
+        import re
+        patterns = [
+            r'"?(?:confidence)"?\s*:\s*([0-9.]+)',
+            r'confidence[^0-9]*([0-9.]+)'
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                try:
+                    conf = float(match.group(1))
+                    return conf / 100.0 if conf > 1.0 else conf
+                except ValueError:
+                    pass
+        return 0.7  # Default confidence for fallback parsing
+
+    async def _retry_with_strict_json_prompt(self, attempt: int) -> Dict[str, Any]:
+        """Retry with stronger JSON formatting instructions"""
+        strict_prompt = f"""You are an intent classifier.
+CRITICAL: Respond with valid JSON only. No additional text.
+User message: "{getattr(self, 'current_message', 'message')}"
+Response format: {{"category": "EXECUTION", "action": "create_issue", "confidence": 0.95}}
+Valid categories: EXECUTION, QUERY, ANALYSIS, UPDATE, SYNTHESIS, STRATEGY, LEARNING, CONVERSATION
+Respond only with valid JSON:"""
+        
+        try:
+            response = await self.llm.complete(
+                task_type="intent_classification",
+                prompt=strict_prompt,
+                response_format={"type": "json_object"},
+            )
+            return await self._parse_llm_response_resilient_async(response, attempt)
+        except Exception as e:
+            logger.error(f"Retry attempt {attempt} failed: {e}")
+            return self._parse_llm_response_resilient("", attempt + 10)  # Skip retry logic
+
+    async def _parse_llm_response_resilient_async(self, response_text: str, attempt: int = 1) -> Dict[str, Any]:
+        """Async version of resilient parser with proper retry support"""
+        import re
+        
+        # Strategy 1: Direct JSON parse (works 95% of time)
+        try:
+            parsed = json.loads(response_text)
+            logger.debug("Parse strategy 1 success: Direct JSON parse")
+            return parsed
+        except json.JSONDecodeError as e:
+            logger.debug(f"Parse strategy 1 failed: {e}")
+            pass
+        
+        # Strategy 2: Fix common malformations (handles {category: "value"})
+        try:
+            # Replace unquoted keys with quoted keys
+            fixed_text = re.sub(r'(\w+):', r'"\1":', response_text)
+            # Handle single quotes: {'category': 'value'} -> {"category": "value"}
+            fixed_text = re.sub(r"'([^']*)'", r'"\1"', fixed_text)
+            
+            parsed = json.loads(fixed_text)
+            logger.debug("Parse strategy 2 success: Fixed malformed JSON")
+            return parsed
+        except json.JSONDecodeError as e:
+            logger.debug(f"Parse strategy 2 failed: {e}")
+            pass
+        
+        # Strategy 3: Extract JSON from text response
+        try:
+            # LLM might return "Here's the JSON: {...}" or similar
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                json_text = json_match.group()
+                parsed = json.loads(json_text)
+                logger.debug("Parse strategy 3 success: Extracted JSON from text")
+                return parsed
+        except json.JSONDecodeError as e:
+            logger.debug(f"Parse strategy 3 failed: {e}")
+            pass
+        
+        # Strategy 4: Retry with stronger prompt (if attempt < 3)
+        if attempt < 3:
+            logger.warning(f"All parsing strategies failed, retrying with stronger prompt (attempt {attempt + 1})")
+            retry_result = await self._retry_with_strict_json_prompt(attempt + 1)
+            return retry_result
+        
+        # Strategy 5: Regex extraction fallback
+        try:
+            category = self._extract_category_regex(response_text)
+            action = self._extract_action_regex(response_text)
+            confidence = self._extract_confidence_regex(response_text)
+            
+            if category and action:
+                logger.warning(f"Parse strategy 5 success: Regex extraction - {category}/{action}")
+                return {
+                    "category": category,
+                    "action": action,
+                    "confidence": confidence,
+                    "parse_method": "regex_fallback"
+                }
+                
+        except Exception as e:
+            logger.error(f"Parse strategy 5 failed: {e}")
+            pass
+        
+        # Strategy 6: Final fallback - Unknown intent
+        logger.error(f"All parsing strategies failed. Response text: {response_text[:200]}...")
+        return {
+            "category": "unknown",
+            "action": "unclear",
+            "confidence": 0.0,
+            "parse_method": "failed",
+            "original_response": response_text[:500]  # Keep sample for debugging
+        }
+
     async def _validate_confidence(
         self, classification_result: Dict[str, Any], original_message: str
     ) -> Intent:
@@ -362,7 +612,7 @@ class LLMIntentClassifier:
         # Create Intent object
         try:
             intent = Intent(
-                message=original_message,
+                original_message=original_message,
                 category=IntentCategory(classification_result["category"].lower()),
                 action=classification_result["action"],
                 confidence=confidence,

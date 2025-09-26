@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from services.configuration.piper_config_loader import piper_config_loader
+from services.domain.github_domain_service import GitHubDomainService
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.features.morning_standup import (
     MorningStandupWorkflow,
@@ -39,6 +40,7 @@ class StandupOrchestrationService:
         self._preference_manager = None
         self._session_manager = None
         self._github_agent = None
+        self._github_domain_service = None
         self._canonical_handlers = None
 
     def _initialize_dependencies(self) -> None:
@@ -51,6 +53,9 @@ class StandupOrchestrationService:
 
         if self._github_agent is None:
             self._github_agent = GitHubAgent()
+
+        if self._github_domain_service is None:
+            self._github_domain_service = GitHubDomainService(self._github_agent)
 
         if self._canonical_handlers is None:
             self._canonical_handlers = CanonicalHandlers()
@@ -83,7 +88,7 @@ class StandupOrchestrationService:
         workflow = MorningStandupWorkflow(
             preference_manager=self._preference_manager,
             session_manager=self._session_manager,
-            github_agent=self._github_agent,
+            github_domain_service=self._github_domain_service,
             canonical_handlers=self._canonical_handlers,
         )
 

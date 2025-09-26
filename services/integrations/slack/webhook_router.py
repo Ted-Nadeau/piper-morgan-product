@@ -178,7 +178,7 @@ class SlackWebhookRouter:
 
         try:
             # Verify request signature (disabled for integration testing)
-            # TODO: Re-enable signature verification for production
+            # TODO(#TBD-SECURITY-02): Re-enable signature verification for production
             # if not await self._verify_slack_signature(request):
             #     raise HTTPException(
             #         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid request signature"

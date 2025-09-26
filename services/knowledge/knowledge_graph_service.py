@@ -48,7 +48,7 @@ class KnowledgeGraphService:
         # Privacy check if boundary enforcer is available
         if self.boundary_enforcer:
             # For now, skip privacy check as BoundaryEnforcer expects Request objects
-            # TODO: Add content-based boundary checking method to BoundaryEnforcer
+            # TODO(#TBD-BOUNDARY-01): Add content-based boundary checking method to BoundaryEnforcer
             pass
 
         # Create the node
@@ -97,7 +97,7 @@ class KnowledgeGraphService:
 
         # Privacy check for updated content
         if self.boundary_enforcer and (name or description or metadata):
-            # TODO: Add content-based boundary checking method to BoundaryEnforcer
+            # TODO(#TBD-BOUNDARY-01): Add content-based boundary checking method to BoundaryEnforcer
             pass
 
         # Update fields

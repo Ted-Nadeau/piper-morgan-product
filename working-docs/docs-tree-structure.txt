@@ -1,0 +1,870 @@
+docs/
+├── _config.yml
+├── _includes
+│   └── favicon.html
+├── _layouts
+│   └── default.html
+├── _next
+│   └── gyH0du4Wd9Pz3oAMPjj_F
+├── 00-START-HERE-LEAD-DEV.md
+├── 2025-07-22-Piper Morgan editorial calendar.csv
+├── add-doc-footers.sh
+├── android-chrome-192x192.png
+├── api
+│   ├── issue-intelligence-api.md
+│   └── personality-enhancement-api.md
+├── apple-touch-icon.png
+├── architecture
+│   ├── adr
+│   │   ├── adr-000-meta-platform.md
+│   │   ├── adr-001-mcp-integration.md
+│   │   ├── adr-002-claude-code-integration.md
+│   │   ├── adr-003-intent-classifier-enhancement.md
+│   │   ├── adr-004-action-humanizer-integration.md
+│   │   ├── adr-005-eliminate-dual-repository-implementations.md
+│   │   ├── adr-006-standardize-async-session-management.md
+│   │   ├── adr-007-staging-environment-architecture.md
+│   │   ├── adr-008-mcp-connection-pooling-production.md
+│   │   ├── adr-009-health-monitoring-system.md
+│   │   ├── adr-010-configuration-patterns.md
+│   │   ├── adr-011-test-infrastructure-hanging-fixes.md
+│   │   ├── adr-012-protocol-ready-jwt-authentication.md
+│   │   ├── adr-013-mcp-spatial-integration-pattern.md
+│   │   ├── adr-014-attribution-first.md
+│   │   ├── adr-015-wild-claim.md
+│   │   ├── adr-016-ambiguity-driven.md
+│   │   ├── adr-017-spatial-mcp.md
+│   │   ├── adr-018-server-functionality.md
+│   │   ├── adr-019-orchestration-commitment.md
+│   │   ├── adr-020-protocol-investment.md
+│   │   ├── adr-021-multi-federation.md
+│   │   ├── adr-022-autonomy-experimentation.md
+│   │   ├── adr-023-test-infrastructure-activation.md
+│   │   ├── adr-024-persistent-context-architecture.md
+│   │   ├── adr-025-unified-session-management.md
+│   │   ├── adr-026-notion-client-migration.md
+│   │   ├── adr-027-configuration-architecture-user-vs-system-separation.md
+│   │   ├── adr-028-verification-pyramid.md
+│   │   ├── adr-029-domain-service-mediation-architecture.md
+│   │   ├── adr-030-configuration-service-centralization.md
+│   │   ├── adr-031-mvp-redefinition.md
+│   │   ├── adr-032-intent-classification-universal-entry.md
+│   │   ├── adr-033-multi-agent-deployment.md
+│   │   ├── adr-034-plugin-architecture.md
+│   │   ├── adr-field-mapping-report.md
+│   │   └── adr-index.md
+│   ├── api-reference.md
+│   ├── api-specification.md
+│   ├── architectural-excellence-milestone.md
+│   ├── architecture.md
+│   ├── architecture.md.backup-2025-09-08
+│   ├── data-model.md
+│   ├── dependency-diagrams.md
+│   ├── domain-models-index.md
+│   ├── domain-models.md
+│   ├── domain-services.md
+│   ├── file-scoring-algorithm.md
+│   ├── intent-patterns.md
+│   ├── markdown-formatting-analysis.md
+│   ├── mcp-integration-mapping.md
+│   ├── mcp-integration-patterns.md
+│   ├── mcp-integration-points.md
+│   ├── migration-guide.md
+│   ├── models
+│   │   ├── infrastructure.md
+│   │   ├── integration.md
+│   │   ├── pure-domain.md
+│   │   └── supporting-domain.md
+│   ├── models-architecture.md
+│   ├── multi-agent-coordinator-pm-guide.md
+│   ├── pattern-catalog.md
+│   ├── pm-033a-mcp-consumer-architecture.md
+│   ├── pm034-deployment-guide.md
+│   ├── proposals
+│   │   └── github-reporting-service-extension.md
+│   ├── python-environment-specifications.md
+│   ├── requirements.md
+│   ├── spatial-intelligence-competitive-advantage.md
+│   ├── technical-spec.md
+│   └── test-strategy.md
+├── assets
+│   ├── favicon-meta.html
+│   └── pm-logo.png
+├── audits
+│   └── github-audit-2025-08-06.md
+├── backups
+│   ├── multi_agent_deployment_20250821_115839
+│   │   ├── engine.py
+│   │   ├── main.py
+│   │   └── session_manager.py
+│   ├── multi_agent_deployment_20250821_121210
+│   │   ├── engine.py
+│   │   ├── main.py
+│   │   └── session_manager.py
+│   ├── multi_agent_deployment_20250821_130920
+│   │   ├── engine.py
+│   │   ├── main.py
+│   │   └── session_manager.py
+│   ├── multi_agent_deployment_20250821_160604
+│   │   ├── engine.py
+│   │   ├── main.py
+│   │   └── session_manager.py
+│   ├── multi_agent_deployment_20250821_161053
+│   │   ├── engine.py
+│   │   ├── main.py
+│   │   └── session_manager.py
+│   └── multi_agent_deployment_20250821_162059
+│       ├── engine.py
+│       ├── main.py
+│       └── session_manager.py
+├── CLEANUP_REPORT.md
+├── CNAME
+├── comms
+│   ├── blog
+│   │   ├── drafts
+│   │   │   ├── architectural-reckoning-post.md
+│   │   │   ├── bootstrap-stack-post.md
+│   │   │   └── two-fisted-blog-post.md
+│   │   ├── foundation.webp
+│   │   ├── Piper Morgan editorial calendar - Google Sheets.pdf
+│   │   ├── published
+│   │   │   └── 2025
+│   │   │       └── 07
+│   │   │           ├── 09
+│   │   │           │   └── rag-revelation.md
+│   │   │           ├── 10
+│   │   │           │   └── working-prototype.md
+│   │   │           └── 11
+│   │   │               └── robot-tv.webp
+│   │   ├── rediscovering-pm-features-blog.md
+│   │   ├── robo-ethics.png
+│   │   ├── robot-amnesiac.webp
+│   │   ├── robot-archaeologists.webp
+│   │   ├── robot-archer.webp
+│   │   ├── robot-architects.png
+│   │   ├── robot-ballet.png
+│   │   ├── robot-balloon.png
+│   │   ├── robot-balloon.webp
+│   │   ├── robot-bedroom.png
+│   │   ├── robot-bees.png
+│   │   ├── robot-bees.webp
+│   │   ├── robot-blind-curve.webp
+│   │   ├── robot-blog.png
+│   │   ├── robot-blueprints.webp
+│   │   ├── robot-boxers.webp
+│   │   ├── robot-brain.png
+│   │   ├── robot-bugs.webp
+│   │   ├── robot-build.png
+│   │   ├── robot-cards.webp
+│   │   ├── robot-champagne.webp
+│   │   ├── robot-cheat.png
+│   │   ├── robot-cherry-tree.webp
+│   │   ├── robot-cleanup.webp
+│   │   ├── robot-coach.webp
+│   │   ├── robot-complete.png
+│   │   ├── robot-conductor.webp
+│   │   ├── robot-dead.webp
+│   │   ├── robot-detectives.png
+│   │   ├── robot-dig.png
+│   │   ├── robot-discover.png
+│   │   ├── robot-discovery.png
+│   │   ├── robot-dispatcher.png
+│   │   ├── robot-docs.webp
+│   │   ├── robot-doctors.webp
+│   │   ├── robot-documents.png
+│   │   ├── robot-documents.webp
+│   │   ├── robot-dogsled.webp
+│   │   ├── robot-donuts.webp
+│   │   ├── robot-double-helix.png
+│   │   ├── robot-dr-evil.png
+│   │   ├── robot-driver.webp
+│   │   ├── robot-ea.png
+│   │   ├── robot-ea.webp
+│   │   ├── robot-easy.webp
+│   │   ├── robot-ethics.webp
+│   │   ├── robot-expert.webp
+│   │   ├── robot-extension.webp
+│   │   ├── robot-files.webp
+│   │   ├── robot-fledgling.webp
+│   │   ├── robot-flywheel.webp
+│   │   ├── robot-forget.webp
+│   │   ├── robot-found.webp
+│   │   ├── robot-foundation.png
+│   │   ├── robot-fractal copy.png
+│   │   ├── robot-fractal-chaos.png
+│   │   ├── robot-fractal.png
+│   │   ├── robot-greenhouse.png
+│   │   ├── robot-guggenheim.png
+│   │   ├── robot-guru.webp
+│   │   ├── robot-handoff.png
+│   │   ├── robot-help.png
+│   │   ├── robot-hero.webp
+│   │   ├── robot-hole.webp
+│   │   ├── robot-horses.png
+│   │   ├── robot-housekeeping.png
+│   │   ├── robot-hurricane.png
+│   │   ├── robot-hype.png
+│   │   ├── robot-inchworm.png
+│   │   ├── robot-inspector.png
+│   │   ├── robot-inspector.webp
+│   │   ├── robot-kitchen.png
+│   │   ├── robot-kitsugi.webp
+│   │   ├── robot-knight.webp
+│   │   ├── robot-landslide.webp
+│   │   ├── robot-lie-detector.png
+│   │   ├── robot-lock.png
+│   │   ├── robot-locomotive.png
+│   │   ├── robot-logs.webp
+│   │   ├── robot-massage-chair.png
+│   │   ├── robot-meta.png
+│   │   ├── robot-meta.webp
+│   │   ├── robot-mirror.png
+│   │   ├── robot-mirror.webp
+│   │   ├── robot-mobius.webp
+│   │   ├── robot-montage.png
+│   │   ├── robot-mosquito.webp
+│   │   ├── robot-mvp.png
+│   │   ├── robot-newsroom.png
+│   │   ├── robot-orchestra.webp
+│   │   ├── robot-outlaw.webp
+│   │   ├── robot-overhead.png
+│   │   ├── robot-overhead.webp
+│   │   ├── robot-pass-fail.webp
+│   │   ├── robot-patches.webp
+│   │   ├── robot-piano.png
+│   │   ├── robot-pottery.png
+│   │   ├── robot-prebuilt.webp
+│   │   ├── robot-prof.png
+│   │   ├── robot-prof.webp
+│   │   ├── robot-punchbowl.png
+│   │   ├── robot-pupil.webp
+│   │   ├── robot-purple-drank.png
+│   │   ├── robot-puzzle.png
+│   │   ├── robot-rabbits.webp
+│   │   ├── robot-recursive.png
+│   │   ├── robot-relay.webp
+│   │   ├── robot-report.webp
+│   │   ├── robot-rollercoaster.webp
+│   │   ├── robot-rooms.webp
+│   │   ├── robot-ropebridge.jpg
+│   │   ├── robot-sailboat.webp
+│   │   ├── robot-schoolbus.png
+│   │   ├── robot-self-build?.png
+│   │   ├── robot-sensation.png
+│   │   ├── robot-sensation.webp
+│   │   ├── robot-shopfloor.png
+│   │   ├── robot-shortcut.png
+│   │   ├── robot-skaters.webp
+│   │   ├── robot-speech.webp
+│   │   ├── robot-splosion.png
+│   │   ├── robot-stars.webp
+│   │   ├── robot-stories.png
+│   │   ├── robot-tablets.png
+│   │   ├── robot-tablets.webp
+│   │   ├── robot-tailor.png
+│   │   ├── robot-taxes.png
+│   │   ├── robot-taxes.webp
+│   │   ├── robot-test.png
+│   │   ├── robot-test.webp
+│   │   ├── robot-third-arm.webp
+│   │   ├── robot-time-travel.webp
+│   │   ├── robot-toy.webp
+│   │   ├── robot-trainer.png
+│   │   ├── robot-trapeze.png
+│   │   ├── robot-triple-play.png
+│   │   ├── robot-understudy.webp
+│   │   ├── robot-unprepared.webp
+│   │   ├── robot-victory.png
+│   │   ├── robot-victory.webp
+│   │   ├── robot-vision.png
+│   │   ├── robot-waterfall.png
+│   │   ├── robot-waterfall.webp
+│   │   ├── robot-weekend.png
+│   │   ├── robot-weekend.webp
+│   │   ├── robot-werewolf.png
+│   │   ├── robot-wolf.webp
+│   │   ├── robots-cranking.png
+│   │   └── robots-docs.png
+│   ├── growing-piper
+│   │   ├── comms-director-handoff.md
+│   │   ├── comms-specialist-brief.md
+│   │   └── growing-piper-book-structure.md
+│   ├── rosenslides
+│   │   ├── 00-fishin.png
+│   │   ├── 01-tangled.png
+│   │   ├── 02-crooked-house.png
+│   │   ├── 03-sandcastle.png
+│   │   ├── 04-fail.png
+│   │   ├── 05-blueprint.png
+│   │   ├── 06-flywheel.png
+│   │   ├── 07-calm.png
+│   │   ├── 08-assembly.png
+│   │   ├── 09-performance.png
+│   │   ├── 10-ux.png
+│   │   ├── 11-cardsort.png
+│   │   ├── 13-vibe.png
+│   │   ├── 14-yeoman.png
+│   │   ├── 15-birdhouse.webp
+│   │   ├── 16-career.png
+│   │   ├── 17-ice-cream.png
+│   │   ├── 18-kind.png
+│   │   ├── 18-questions.webp
+│   │   └── 19-questions.webp
+│   ├── shipping-news
+│   ├── xian-voice-tone-guide-2025-08-27.md
+│   └── xian-voice-tone-guide.md
+├── database
+│   └── personality-schema.md
+├── deployment
+│   ├── deployment-summary.md
+│   ├── mcp-consumer-deployment.md
+│   └── mcp-spatial-federation-deployment.md
+├── development
+│   ├── 2025-09-17-1023-lead-developer-sonnet-log.md
+│   ├── 2025-09-17-1635-lead-developer-sonnet-log.md
+│   ├── advisor-knowledge-deliverables-2025-07-28.md
+│   ├── architectural-guidelines.md
+│   ├── async-session-test-migration.md
+│   ├── automation-inventory-2025-08-10.md
+│   ├── blog-posts
+│   │   └── august-5-2025-architectural-revolution.md
+│   ├── BRANCH-MANAGEMENT.md
+│   ├── canonical-queries-architecture.md
+│   ├── CHANGELOG.md
+│   ├── chat-protocols.md
+│   ├── chats
+│   │   ├── pattern-architecture-proposal.md
+│   │   └── pattern-consolidation-completion-report.md
+│   ├── chief-architect-consultation-2025-08-08.md
+│   ├── claude-code-workflow.md
+│   ├── claude-md-archive.md
+│   ├── claude-smart-permissions.md
+│   ├── CLI_STANDUP_IMPLEMENTATION.md
+│   ├── cli-usage-guide.md
+│   ├── collaboration-patterns
+│   │   └── human-ai-architectural-collaboration.md
+│   ├── configuration-integration-validation-report.md
+│   ├── connection-cleanup-solution.md
+│   ├── continuity-prompt-template.md
+│   ├── cursor-agent-validation-report-2025-08-07.md
+│   ├── daily-startup-guide.md
+│   ├── DATABASE_INTEGRATION_GUIDE.md
+│   ├── decisions
+│   │   ├── chief-architect-decisions-log.md
+│   │   ├── decision-log-001.md
+│   │   └── decision-log-xxx-template.md
+│   ├── deprecation-plan.md
+│   ├── dev-guidelines.md
+│   ├── DEVELOPMENT-LINEAGE-LITANY.md
+│   ├── DOCUMENTATION_UPDATE_SUMMARY.md
+│   ├── documentation-alignment-reality-cleanup-report.md
+│   ├── documentation-gap-analysis-2025-08-08.md
+│   ├── domain-model-updates-2025-07-31.md
+│   ├── enhanced-autonomy-continuity-protocols.md
+│   ├── enhanced-autonomy-experiment-final-summary.md
+│   ├── error-message-enhancement-summary.md
+│   ├── error-message-testing-framework.md
+│   ├── gitbook-integration-plan.md
+│   ├── HOW_TO_USE_MULTI_AGENT.md
+│   ├── human-ai-architectural-collaboration.md
+│   ├── implementation-guides
+│   │   ├── PM-034-implementation-guide.md
+│   │   └── universal-list-architecture-guide.md
+│   ├── issue-generation-workflow.md
+│   ├── issue-intelligence-integration-examples.md
+│   ├── lessons.md
+│   ├── methodology-core
+│   │   ├── methodology-00-EXCELLENCE-FLYWHEEL.md
+│   │   ├── methodology-01-TDD-REQUIREMENTS.md
+│   │   ├── methodology-02-AGENT-COORDINATION.md
+│   │   ├── methodology-03-COMMON-FAILURES.md
+│   │   ├── methodology-04-ARCHITECTURAL-AGILITY.md
+│   │   ├── methodology-05-AGENT-METHODOLOGY.md
+│   │   ├── methodology-06-CORE-PATTERNS.md
+│   │   ├── methodology-07-VERIFICATION-FIRST.md
+│   │   ├── methodology-08-ISSUE-TRACKING.md
+│   │   ├── methodology-09-MCP-SPATIAL.md
+│   │   ├── methodology-10-SYSTEMATIC-BREAKTHROUGHS.md
+│   │   ├── methodology-11-ORCHESTRATION-TESTING-placeholder.md
+│   │   ├── methodology-11-ORCHESTRATION-TESTING.md
+│   │   ├── methodology-12-ENHANCED-AUTONOMY.md
+│   │   ├── methodology-13-REQUIREMENTS-FRAMEWORK.md
+│   │   ├── methodology-14-DOCUMENTATION-STANDARDS.md
+│   │   ├── methodology-15-TESTING-VALIDATION.md
+│   │   ├── methodology-16-STOP-CONDITIONS.md
+│   │   ├── methodology-17-CROSS-VALIDATION-PROTOCOL.md
+│   │   ├── methodology-18-CASCADE-PROTOCOL.md
+│   │   ├── methodology-19-INTEGRATION-POINTS.md
+│   │   ├── methodology-20-OMNIBUS-SESSION-LOGS.md
+│   │   ├── METHODOLOGY-DISCOVERY-GUIDE.md
+│   │   ├── README.md
+│   │   └── resource-map.md
+│   ├── MORNING_STANDUP_MVP_GUIDE.md
+│   ├── MULTI_AGENT_INTEGRATION_GUIDE.md
+│   ├── MULTI_AGENT_QUICK_START.md
+│   ├── multi-agent-templates.md
+│   ├── new-pm-logo 2
+│   │   ├── piper morgan logo.ai
+│   │   ├── pm-favicon-16-black.png
+│   │   ├── pm-favicon-16.png
+│   │   ├── pm-favicon-180.png
+│   │   ├── pm-favicon-192.png
+│   │   ├── pm-favicon-32.png
+│   │   ├── pm-favicon-48.png
+│   │   ├── pm-logo-black.png
+│   │   ├── pm-logo-black.svg
+│   │   ├── pm-logo-color.png
+│   │   ├── pm-logo-color.svg
+│   │   ├── pm-logo-greyscale.png
+│   │   ├── pm-logo-greyscale.svg
+│   │   ├── pm-logo-light.png
+│   │   ├── pm-logo-light.svg
+│   │   ├── pm-logo-white.png
+│   │   └── pm-logo-white.svg
+│   ├── onboarding.md
+│   ├── pattern-sweep-usage.md
+│   ├── PERSISTENT_CONTEXT_RESEARCH.md
+│   ├── personality-configuration.md
+│   ├── phase_2_schema_design_framework.md
+│   ├── phase-0-standup-investigation-report.md
+│   ├── phase-2b-configuration-analysis.md
+│   ├── phase0-browser-testing-template.md
+│   ├── phase0-evidence-matrix.md
+│   ├── phase0-investigation-status.md
+│   ├── plans
+│   │   ├── 179-phase0.sh
+│   │   ├── CORE-INTENT-QUALITY-layer4-gameplan.md
+│   │   ├── documentation-update-plan-2025-07-28.md
+│   │   ├── gameplan-core-ui-fix-v2.md
+│   │   ├── gameplan-core-ui-fix.md
+│   │   ├── pm078-tdd-implementation-plan.md
+│   │   └── ux-piper-105-phase0-gameplan.md
+│   ├── pm-033d-enhanced-autonomy-phase-4-validation-report.md
+│   ├── pm-033d-final-validation-report-enhanced-autonomy-complete.md
+│   ├── pm-033d-testing-infrastructure-assessment.md
+│   ├── PM-034-conversation-api-documentation.md
+│   ├── PM-034-developer-integration-quick-start.md
+│   ├── PM-034-handoff-verification.md
+│   ├── PM-034-integration-strategy.md
+│   ├── PM-034-queryrouter-integration.md
+│   ├── PM-034-user-guide.md
+│   ├── PM-040-agent-continuity-prompt.md
+│   ├── PM-040-technical-documentation.md
+│   ├── PM-040-technical-implementation.md
+│   ├── pm-055-step1-implementation-package.md
+│   ├── pm-055-step3-cicd-implementation-package.md
+│   ├── pm-055-step5-documentation-implementation-package.md
+│   ├── PM-058-testing-patterns-guide.md
+│   ├── pm-062-task-handler-completion-report.md
+│   ├── pm-062-workflow-reality-check-report.md
+│   ├── pm-070-canonical-queries-foundation.md
+│   ├── pm-071-morning-standup-test-report.md
+│   ├── pm-071-standup-test-results-20250726_161813.json
+│   ├── pm-071-ui-experience-test-results-20250726_162028.json
+│   ├── PM-081-api-documentation.md
+│   ├── PM-081-architecture-analysis.md
+│   ├── PM-081-todo-api-documentation.md
+│   ├── PM-081-universal-list-architecture.md
+│   ├── pm-verification-discipline-guide.md
+│   ├── pm033c-documentation-index.md
+│   ├── pm033c-github-issue-evidence.md
+│   ├── pm033c-testing-completion-report.md
+│   ├── pm033c-validation-report.md
+│   ├── pm034-phase2-execution-checklist.md
+│   ├── pm034-phase3-readiness-assessment.md
+│   ├── pm056-schema-validator-documentation.md
+│   ├── pm057-context-validation-documentation.md
+│   ├── pm058-closure-report.md
+│   ├── pm087-ethics-architecture-plan.md
+│   ├── pm123-cross-validation-report.md
+│   ├── pm123-re-testing-validation-report.md
+│   ├── port-configuration.md
+│   ├── prompt-templates
+│   │   └── lead-developer-onboarding.md
+│   ├── prompts
+│   │   ├── 2025-07-22-opus-handoff-prompt.md
+│   │   ├── 2025-07-25-code-handoff-prompt.md
+│   │   ├── 2025-07-25-cursor-handoff-prompt.md
+│   │   ├── 2025-07-25-devlead-sonnet-handoff-prompt.md
+│   │   ├── 2025-07-26-code-handoff-prompt.md
+│   │   ├── 2025-07-26-cursor-handoff-prompt.md
+│   │   ├── 2025-07-27-code-handoff-prompt.md
+│   │   ├── 2025-07-27-cursor-handoff-prompt.md
+│   │   ├── 2025-07-27-post-pm074-handoff.md
+│   │   ├── 2025-07-28-slack-response-debugging-handoff.md
+│   │   ├── 2025-07-29-slack-debugging-handoff.md
+│   │   ├── 2025-07-30-comprehensive-handoff.md
+│   │   ├── 2025-07-30-emergency-fix-handoff.md
+│   │   ├── 2025-07-30-phase-2-tdd-handoff.md
+│   │   ├── 2025-07-30-phase-4-tdd-handoff.md
+│   │   ├── 2025-07-30-slack-background-processing-handoff.md
+│   │   ├── 2025-08-01-cursor-handoff-prompt.md
+│   │   ├── 2025-08-02-claude-code-handoff-prompt.md
+│   │   ├── 2025-08-04-cursor-handoff-prompt.md
+│   │   ├── 2025-08-04-handoff-prompt.md
+│   │   ├── 2025-08-05-tracking-crisis-resolution-handoff.md
+│   │   ├── 2025-08-06-infrastructure-spring-cleaning-handoff.md
+│   │   ├── 2025-08-08-github-pages-handoff-prompt.md
+│   │   ├── 2025-08-08-pm034-phase3-handoff.md
+│   │   ├── 2025-08-21-cursor-handoff.md
+│   │   ├── 2025-08-25-cursor-handoff.md
+│   │   ├── 2025-08-25-document-memory-handoff-code.md
+│   │   ├── 2025-08-26-cursor-handoff.md
+│   │   ├── 2025-08-26-document-memory-handoff.md
+│   │   ├── 2025-08-29-2031-cursor-handoff.md
+│   │   ├── 2025-08-29-handoff-publish-complete.md
+│   │   ├── 2025-09-03-0017-handoff-prompt.md
+│   │   ├── 2025-09-04-handoff-pm139-cursor-validation.md
+│   │   ├── 2025-09-05-1840-cursor-handoff-prompt.md
+│   │   ├── 2025-09-05-2116-configuration-integration-handoff.md
+│   │   ├── 2025-09-08-1629-handoff-issue-158-complete.md
+│   │   ├── 2025-09-09-1530-handoff-issue-163-complete.md
+│   │   ├── calendar-temporal-awareness-handoff-2025-08-14.md
+│   │   ├── Chief-Architect-handoff-jul31.md
+│   │   ├── code-agent-prompt-pattern-sweep.md
+│   │   ├── cursor-agent-final-handoff-2025-08-10.md
+│   │   ├── cursor-agent-handoff-2025-08-09.md
+│   │   ├── cursor-agent-handoff-2025-08-13.md
+│   │   ├── cursor-agent-handoff-2025-08-14.md
+│   │   ├── cursor-agent-handoff-2025-08-19.md
+│   │   ├── cursor-agent-handoff-2025-08-20.md
+│   │   ├── cursor-agent-mcp-monday-handoff-2025-08-10.md
+│   │   ├── cursor-agent-prompt-pattern-sweep.md
+│   │   ├── enhanced-autonomy-handoff-2025-08-15.md
+│   │   ├── gitbook-completion-handoff-2025-08-13.md
+│   │   ├── lead-developer-onboarding-2025-08-10.md
+│   │   ├── mcp-monday-handoff-2025-08-11.md
+│   │   ├── mcp-tuesday-handoff-2025-08-11.md
+│   │   ├── pattern-sweep-thematic-analysis-prompt-v2.md
+│   │   ├── permission-system-handoff-2025-08-19.md
+│   │   ├── pm-034-successor-handoff-2025-08-07.md
+│   │   ├── pm-079-sub-handoff.md
+│   │   ├── pm034-phase2-handoff-2025-08-08.md
+│   │   ├── session-handoff-2025-08-12-cursor-agent.md
+│   │   ├── session-handoff-2025-08-13-code-agent.md
+│   │   ├── session-handoff-2025-08-18-evening.md
+│   │   ├── session-handoff-2025-08-21-morning-standup-complete.md
+│   │   ├── slack-integration-debugging-handoff-2025-07-29.md
+│   │   └── spatial-integration-handoff-2025-07-28.md
+│   ├── quick-start.md
+│   ├── schema-field-mappings.md
+│   ├── session-logs
+│   │   ├── 2025-08-31-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-02-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-03-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-04-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-05-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-06-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-07-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-08-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-09-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-10-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-11-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-12-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-13-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-14-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-15-OMNIBUS-chronological-log.md
+│   │   ├── 2025-09-16-0725-claude-code-terminal-log.md
+│   │   ├── 2025-09-16-0731-chief-architect-opus-log.md
+│   │   ├── 2025-09-16-0941-lead-developer-sonnet-log.md
+│   │   ├── 2025-09-16-0944-cursor-agent-log.md
+│   │   ├── 2025-09-16-0947-claude-code-log.md
+│   │   ├── 2025-09-16-1304-chief-architect-opus-log.md
+│   │   ├── 2025-09-16-omnibus-log.md
+│   │   ├── 2025-09-17-0742-lead-developer-sonnet-log.md
+│   │   ├── 2025-09-17-0818-chief-architect-opus-log.md
+│   │   ├── 2025-09-17-0831-claude-code-log.md
+│   │   ├── 2025-09-17-0831-cursor-agent-log.md
+│   │   ├── 2025-09-17-1211-claude-code-log.md
+│   │   ├── 2025-09-17-omnibus-log.md
+│   │   ├── 2025-09-18-0628-startup-advisor-opus-log.md
+│   │   ├── 2025-09-18-0831-lead-developer-sonnet-log.md
+│   │   ├── 2025-09-18-0931-claude-code-log.md
+│   │   ├── 2025-09-18-0940-chief-architect-opus-log.md
+│   │   ├── 2025-09-18-1110-code-agent-log.md
+│   │   ├── 2025-09-18-1113-cursor-agent-log.md
+│   │   ├── archive-maintenance-guidelines.md
+│   │   ├── INDEX.md
+│   │   ├── session-log-framework.md
+│   │   ├── session-log-instructions-update.md
+│   │   └── template-updates.md
+│   ├── session-management-protocols.md
+│   ├── session-reports
+│   │   └── 2025-08-30-adr-migration-success-report.md
+│   ├── setup.md
+│   ├── site
+│   │   ├── 2025-08-01-code-log.md
+│   │   ├── claude_code_deployment.md
+│   │   └── development_brief_claude_code.md
+│   ├── slack-integration-guide.md
+│   ├── structured-logging-enhancement-plan.md
+│   ├── SYSTEMATIC_TESTING_APPROACH.md
+│   ├── systematic-issue-management-rules.md
+│   ├── team-migration-guide.md
+│   ├── temporal-context-integration-guide.md
+│   ├── TEST-GUIDE.md
+│   ├── test-migration-template.md
+│   ├── test-strategy.md
+│   ├── testing
+│   │   ├── pm-039-test-scenarios.md
+│   │   ├── README.md
+│   │   └── ui-message-template-system-report.md
+│   ├── testing-discipline-framework.md
+│   ├── tools.md
+│   ├── universal-list-architecture-guide.md
+│   ├── updates
+│   │   └── dev-update-5-09pm.md
+│   ├── user-journey-polish-opportunities-report.md
+│   ├── ux-quick-win-test-report-2025-08-11.md
+│   ├── weekly-ship
+│   │   ├── weekly_ship_001.md
+│   │   ├── weekly-ship-004.md
+│   │   ├── weekly-ship-005.md
+│   │   ├── weekly-ship-006.md
+│   │   ├── weekly-ship-007.md
+│   │   └── weekly-ship-008.md
+│   └── working-method.md
+├── examples
+│   └── env-mcp.example
+├── favicon-16x16.png
+├── favicon-32x32.png
+├── favicon-48x48.png
+├── favicon.ico
+├── favicon.png
+├── features
+│   ├── document-memory.md
+│   ├── integration-guide.md
+│   ├── issue-intelligence.md
+│   ├── morning-standup.md
+│   └── notion-integration.md
+├── getting-started
+│   ├── api-integration.md
+│   ├── developers.md
+│   ├── product-managers.md
+│   ├── production.md
+│   └── README.md
+├── implementation
+│   ├── file-extraction-strategy.md
+│   ├── mcp-week1-plan.md
+│   └── personality-ddd-model.md
+├── integration_test_results.md
+├── integration-debugging-guide.md
+├── integration-targets.md
+├── issues
+│   ├── PM-132-completion-summary.md
+│   ├── PM-133-enhanced-validation-fix.md
+│   ├── PM-134-comprehensive-integration-testing.md
+│   └── PM-135-performance-benchmarking.md
+├── mcp
+│   ├── consumer-implementation.md
+│   ├── foundation-audit.md
+│   └── pm-033a-architecture-design.md
+├── meta
+│   ├── domain-models-rewrite-methodology.md
+│   ├── phase-2-categorization-results.md
+│   ├── phase-2-evidence-extraction.md
+│   ├── phase-2-systematic-execution-plan.md
+│   ├── phase-3-markdown-rendering-test.md
+│   ├── phase-3-step-1-trial-results.md
+│   ├── phase-3-step-2-results.md
+│   ├── phase-3-step-3-results.md
+│   ├── phase-3-step-4-structure-alternatives.md
+│   ├── phase-3-step-5-1-component-analysis.md
+│   ├── phase-3-step-5-2-data-mapping.md
+│   ├── phase-3-step-5-3-template-design.md
+│   ├── phase-3-step-5-4-navigation-templates.md
+│   ├── phase-3-step-5-5-validation-protocol.md
+│   ├── phase-3-step-5-6-template-testing.md
+│   ├── phase-3-step-5-execution-plan.md
+│   ├── phase-3-step-6-integration-planning.md
+│   └── phase-3-systematic-execution-plan.md
+├── migration
+│   └── notion-configuration-migration.md
+├── operations
+│   ├── query-router-alerting-rules.yaml
+│   ├── query-router-degradation-runbook.md
+│   ├── staging-deployment-guide.md
+│   └── staging-rollback-procedures.md
+├── patterns
+│   ├── archive
+│   │   └── PATTERN-INDEX-legacy.md
+│   ├── pattern-000-template.md
+│   ├── pattern-001-repository.md
+│   ├── pattern-002-service.md
+│   ├── pattern-003-factory.md
+│   ├── pattern-004-cqrs-lite.md
+│   ├── pattern-005-transaction-management.md
+│   ├── pattern-006-verification-first.md
+│   ├── pattern-007-async-error-handling.md
+│   ├── pattern-008-ddd-service-layer.md
+│   ├── pattern-009-github-issue-tracking.md
+│   ├── pattern-010-cross-validation-protocol.md
+│   ├── pattern-011-context-resolution.md
+│   ├── pattern-012-llm-adapter.md
+│   ├── pattern-013-session-management.md
+│   ├── pattern-014-error-handling-api-contract.md
+│   ├── pattern-015-internal-task-handler.md
+│   ├── pattern-016-repository-context-enrichment.md
+│   ├── pattern-017-background-task-error-handling.md
+│   ├── pattern-018-configuration-access.md
+│   ├── pattern-019-llm-placeholder-instruction.md
+│   ├── pattern-020-spatial-metaphor-integration.md
+│   ├── pattern-021-development-session-management.md
+│   ├── pattern-022-mcp-spatial-intelligence-integration.md
+│   ├── pattern-023-query-layer-patterns.md
+│   ├── pattern-024-methodology-patterns.md
+│   ├── pattern-025-canonical-query-extension.md
+│   ├── pattern-026-cross-feature-learning.md
+│   ├── pattern-027-cli-integration.md
+│   ├── pattern-028-intent-classification.md
+│   ├── pattern-029-multi-agent-coordination.md
+│   ├── pattern-030-plugin-interface.md
+│   └── README.md
+├── performance
+│   ├── mcp-baseline-metrics.md
+│   ├── mcp-pool-comparison.md
+│   ├── mcp-spatial-benchmarks.md
+│   └── pm034-performance-benchmarks.md
+├── piper-education
+│   ├── case-studies
+│   │   ├── mcp-connection-pool-642x.md
+│   │   └── pm-012-transformation.md
+│   ├── decision-patterns
+│   │   ├── emergent
+│   │   │   └── verification-first-pattern.md
+│   │   ├── established
+│   │   │   └── README.md
+│   │   └── README.md
+│   ├── frameworks
+│   │   ├── emergent
+│   │   │   ├── configuration-management-framework.md
+│   │   │   ├── error-handling-framework.md
+│   │   │   └── systematic-excellence.md
+│   │   ├── established
+│   │   │   └── domain-driven-design.md
+│   │   └── README.md
+│   ├── implementation-guides
+│   │   ├── pattern-adoption-metrics.md
+│   │   ├── README.md
+│   │   └── weekly-ship-template.md
+│   ├── methodologies
+│   │   ├── emergent
+│   │   │   ├── foundation-first.md
+│   │   │   ├── human-ai-collaboration-referee.md
+│   │   │   ├── multi-agent-patterns.md
+│   │   │   └── systematic-verification.md
+│   │   ├── established
+│   │   │   └── README.md
+│   │   ├── pm-methodologies
+│   │   │   └── pm-verification-discipline-guide.md
+│   │   └── README.md
+│   └── README.md
+├── piper-style-guide.md
+├── planning
+│   ├── backlog-deprecated-use-github.md
+│   ├── completed-deprecated-use-github.md
+│   ├── data
+│   │   └── p0-issues.json
+│   ├── draft-issues
+│   │   ├── FLY-ISOLATE-failure-isolation.md
+│   │   ├── FLY-LEARN-learning-capture-loops.md
+│   │   └── INFR-AGENT-claude-code-permission-optimization.md
+│   ├── integration
+│   │   └── notion-integration-plan.md
+│   ├── issues.csv
+│   ├── roadmap-v2.0.md
+│   ├── roadmap-v3.0 2.md
+│   ├── roadmap.md
+│   ├── templates
+│   │   └── enhancement-issue-placeholders.md
+│   └── vision.md
+├── pm-logo-co-38.png
+├── pm-logo-ico-36.png
+├── pm-logo-ico.png
+├── pm-logo.png
+├── production
+│   └── github-integration-setup.md
+├── project
+│   ├── executive-summary.md
+│   ├── presentations
+│   │   ├── team_demo.html
+│   │   └── team-all-hands-first-preso.html
+│   ├── project-report.md
+│   └── README.md
+├── prompts
+│   ├── mcp-monday-sprint-handoff-2025-08-11.md
+│   ├── session-handoff-2025-08-12-cursor-agent.md
+│   └── ux-quick-win-handoff-2025-08-11.md
+├── quick-reference
+│   └── ports.md
+├── README.md
+├── references
+│   └── CITATIONS.md
+├── reports
+│   ├── audits
+│   │   ├── error_message_audit_report.md
+│   │   └── verification-report.md
+│   ├── gaps
+│   │   └── CRITICAL_GAP_RESOLUTION_REPORT.md
+│   ├── pm-reports
+│   │   ├── notion_integration_test_report.md
+│   │   ├── PM-009-COMPLETION-SUMMARY.md
+│   │   ├── pm033c_execution_report.md
+│   │   └── workflow_reality_check_report.json
+│   ├── sites
+│   │   ├── SITE-001-COMPLETION-REPORT.md
+│   │   └── SITE-002-COMPLETION-REPORT.md
+│   └── tests
+│       ├── full_suite_results.txt
+│       ├── integration_test_results.md
+│       ├── large_doc_test.log
+│       ├── mcp_server_tcp_test_results.json
+│       ├── mcp_server_test_results.json
+│       ├── pm033c_test_results.json
+│       ├── pooled-test-output.txt
+│       ├── test_results.txt
+│       └── test-results-20250713.txt
+├── research
+│   ├── Mastering -Slack-Integration-Patterns-for-FastAPI-Applications.md
+│   ├── mcp-poc-plan.md
+│   └── mcp-technical-analysis.md
+├── sessions
+│   └── 2025-09-07-morning-standup-handoff.md
+├── setup
+│   └── mac-dock-integration.md
+├── status
+│   ├── achievements-2025.md
+│   ├── changelog.md
+│   └── README.md
+├── strategic
+│   ├── pm-033-mcp-ecosystem-hub-strategy.md
+│   └── security-sunday-strategic-impact-report.md
+├── strategy
+│   └── spatial-intelligence-differentiation.md
+├── STRUCTURE_PLAN.md
+├── technical-debt
+│   ├── ddd-fix-todo.md
+│   └── PM-132-known-issues.md
+├── testing
+│   ├── cli-testing-guide.md
+│   ├── emergency-context-fix-report.md
+│   ├── personality-manual-testing-guide.md
+│   ├── phase5-validation-report.md
+│   └── ui-message-template-system-report.md
+├── tools
+│   └── PM-056-schema-validator.md
+├── troubleshooting.md
+├── update-doc-footers.sh
+├── user-guide.md
+└── user-guides
+    ├── cli-commands.md
+    ├── conversation-memory-guide.md
+    ├── conversation-scenario-examples.md
+    ├── getting-started-conversational-ai.md
+    ├── github-issue-creation.md
+    ├── README.md
+    ├── understanding-anaphoric-references.md
+    ├── upgrading-from-command-mode.md
+    └── user-guide-templates.md
+
+102 directories, 766 files

@@ -1,0 +1,92 @@
+# Performance Enforcement Documentation
+
+## Overview
+
+Performance enforcement prevents performance regressions by failing CI builds when components perform significantly slower than established baselines.
+
+## Philosophy
+
+- **Realistic baselines**: Based on actual measured performance, not aspirational targets
+- **Tolerance for variance**: 20% degradation tolerance to avoid false positives
+- **Meaningful regression detection**: Catches significant slowdowns that impact user experience
+- **Non-blocking development**: Thresholds set to catch real problems, not normal variance
+
+## Current Baselines
+
+Updated based on Phase 1A measurements:
+
+| Component | Baseline | Threshold (20% tolerance) | Notes |
+|-----------|----------|---------------------------|-------|
+| QueryRouter Init | [TBD]ms | [TBD]ms | Database connection + initialization |
+| LLM Classification | [TBD]ms | [TBD]ms | Full intent classification with LLM |
+| Orchestration Flow | [TBD]ms | [TBD]ms | Complete request processing |
+
+## Local Testing
+
+Run performance tests locally before pushing:
+
+```bash
+# Run all performance tests
+python scripts/run_performance_tests.py
+
+# Check specific component
+python scripts/performance_config.py queryrouter_init_ms 45.5
+```
+
+## CI Integration
+
+Performance tests run automatically in CI after regular tests pass. Build fails if:
+- Any component exceeds baseline threshold by >20%
+- Performance test encounters errors
+- Critical components become unresponsive
+
+## Updating Baselines
+
+When legitimate performance improvements are made:
+
+1. Measure new performance with local script
+2. Update baselines in `scripts/performance_config.py`
+3. Document improvement in commit message
+4. Update this documentation with new baselines
+
+## Troubleshooting
+
+### Build fails with performance regression:
+1. Check CI output for which component failed
+2. Run local performance tests to reproduce
+3. Investigate recent changes affecting performance
+4. If legitimate regression, fix before merging
+5. If measurement variance, re-run CI (rare)
+
+### Performance tests error:
+1. Check database connectivity
+2. Verify LLM service availability
+3. Review recent infrastructure changes
+4. Check component initialization
+
+## Monitoring
+
+Track performance trends over time:
+- CI logs include timing measurements
+- Baseline updates documented in commits
+- Performance improvements tracked in changelogs
+
+## Implementation Details
+
+### CI Workflow Integration
+- **Location**: `.github/workflows/test.yml`
+- **Job**: `performance-regression-check`
+- **Dependency**: Runs after main `test` job passes
+- **Failure Mode**: Fails build on regression detection
+
+### Performance Configuration
+- **File**: `scripts/performance_config.py`
+- **Function**: `check_performance_regression(test_name, actual_ms)`
+- **Thresholds**: Stored in `PERFORMANCE_THRESHOLDS` dictionary
+- **Tolerance**: 20% above baseline before flagging regression
+
+### Local Testing Script
+- **File**: `scripts/run_performance_tests.py`
+- **Usage**: Run locally before pushing changes
+- **Features**: Multiple test runs, baseline comparison, clear reporting
+- **Output**: Pass/fail status with performance metrics

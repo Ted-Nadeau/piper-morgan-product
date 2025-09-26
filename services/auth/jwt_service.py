@@ -301,7 +301,7 @@ class JWTService:
         if not claims:
             return False
 
-        # TODO: Implement token blacklist storage (Redis recommended)
+        # TODO(#TBD-SECURITY-01): Implement token blacklist storage (Redis recommended)
         logger.info("Token revoked", jti=claims.jti, user_id=claims.user_id)
         return True
 

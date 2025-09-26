@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""
+Performance Baselines for GREAT-1C Enforcement
+Generated: 2025-09-25 10:15 AM - Phase 1A Assessment
+
+These baselines represent ACTUAL measured performance,
+not aspirational targets. Enforcement allows 20% degradation
+to catch significant regressions without blocking normal variance.
+"""
+
+import time
+from typing import Dict, Optional
+
+# Measured baselines from Phase 1A assessment (2025-09-25 10:15 AM)
+PERFORMANCE_THRESHOLDS = {
+    "queryrouter_init_ms": 1.1,        # QueryRouter initialization (max 0.9ms + 20%)
+    "llm_classification_ms": 3166,      # LLM intent classification (max 2639ms + 20%)
+    "orchestration_flow_ms": 89,        # Orchestration flow processing (max 74ms + 20%)
+}
+
+# Actual measured values for reference
+MEASURED_VALUES = {
+    "queryrouter_init_ms": {
+        "average": 0.1,
+        "maximum": 0.9,
+        "minimum": 0.0,
+        "note": "Cached QueryRouter access is sub-millisecond"
+    },
+    "llm_classification_ms": {
+        "average": 2538,
+        "maximum": 2639,
+        "minimum": 2474,
+        "note": "LLM API calls are the primary performance bottleneck"
+    },
+    "orchestration_flow_ms": {
+        "average": 37,
+        "maximum": 74,
+        "minimum": 0,
+        "note": "Varies by intent type, database queries add latency"
+    }
+}
+
+def check_performance_regression(test_name: str, actual_ms: float) -> bool:
+    """Check if performance represents a regression"""
+    threshold = PERFORMANCE_THRESHOLDS.get(test_name)
+    if threshold is None:
+        print(f"⚠️  Warning: No baseline for {test_name}, allowing by default")
+        return True
+
+    is_acceptable = actual_ms <= threshold
+
+    if not is_acceptable:
+        print(f"🚨 PERFORMANCE REGRESSION DETECTED:")
+        print(f"   Test: {test_name}")
+        print(f"   Threshold: {threshold}ms")
+        print(f"   Actual: {actual_ms:.1f}ms")
+
+        # Calculate regression percentage against original maximum
+        if test_name in MEASURED_VALUES:
+            original_max = MEASURED_VALUES[test_name]["maximum"]
+            regression_pct = ((actual_ms / original_max) - 1) * 100
+            print(f"   Regression: {regression_pct:.1f}% above original maximum")
+            print(f"   Original maximum: {original_max}ms")
+    else:
+        print(f"✅ {test_name}: {actual_ms:.1f}ms (within {threshold}ms threshold)")
+
+    return is_acceptable
+
+
+def get_baseline_info(test_name: str) -> Dict:
+    """Get detailed baseline information for a test"""
+    return {
+        "threshold": PERFORMANCE_THRESHOLDS.get(test_name),
+        "measured": MEASURED_VALUES.get(test_name, {}),
+    }
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) >= 3:
+        # Command line usage: python performance_config.py test_name actual_time
+        test_name = sys.argv[1]
+        actual_time = float(sys.argv[2])
+        result = check_performance_regression(test_name, actual_time)
+        sys.exit(0 if result else 1)
+    else:
+        # Show baseline information
+        print("=== Performance Baseline Configuration ===")
+        print("Tolerance: 20% degradation allowed")
+        print()
+
+        for test_name, threshold in PERFORMANCE_THRESHOLDS.items():
+            print(f"{test_name}:")
+            print(f"  Threshold: {threshold}ms")
+
+            if test_name in MEASURED_VALUES:
+                measured = MEASURED_VALUES[test_name]
+                print(f"  Original average: {measured['average']}ms")
+                print(f"  Original maximum: {measured['maximum']}ms")
+                print(f"  Note: {measured['note']}")
+            print()

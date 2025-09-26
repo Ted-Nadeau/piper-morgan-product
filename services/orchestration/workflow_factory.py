@@ -181,6 +181,10 @@ class WorkflowFactory:
                 # Spatial integration: Learning intents from Slack channel monitoring
                 # Map to report generation for pattern analysis and insights
                 workflow_type = WorkflowType.GENERATE_REPORT
+            elif intent.category == IntentCategory.QUERY:
+                # CQRS-lite: Read-only data retrieval operations (e.g., show_standup)
+                # Map to report generation for data presentation workflows
+                workflow_type = WorkflowType.GENERATE_REPORT
             else:
                 print(f"❌ No workflow type found for intent category: {intent.category}")
                 return None

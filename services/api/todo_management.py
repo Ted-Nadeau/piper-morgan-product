@@ -192,7 +192,7 @@ async def create_todo(
     - **metadata**: Additional todo metadata (optional)
     """
     try:
-        # TODO: Implement todo creation with TodoManagementService
+        # TODO(#TBD-API-01): Implement todo creation with TodoManagementService
         # TODO: Integrate with PM-040 Knowledge Graph for todo relationships
         # TODO: Add todo to knowledge graph with appropriate node type and metadata
 

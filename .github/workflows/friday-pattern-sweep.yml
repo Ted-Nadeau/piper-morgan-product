@@ -1,0 +1,163 @@
+name: Friday Pattern Sweep
+
+on:
+  schedule:
+    # Runs every Friday at 9:00 AM Pacific (PDT: UTC-7, PST: UTC-8)
+    # Using 4:00 PM UTC which is 9:00 AM PDT (summer) / 8:00 AM PST (winter)
+    - cron: "0 16 * * 5"
+  workflow_dispatch: # Allows manual trigger for testing
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  create-pattern-sweep-issue:
+    runs-on: ubuntu-latest
+    name: Create Friday Pattern Sweep Issue
+
+    steps:
+      - name: Check for existing pattern sweep issue
+        id: check-existing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const title = `PATTERN-SWEEP: Weekly Pattern Analysis - ${today}`;
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'patterns,documentation'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Pattern Analysis') &&
+              issue.title.includes(today)
+            );
+
+            if (existingIssue) {
+              console.log(`Pattern sweep issue already exists: #${existingIssue.number}`);
+              return existingIssue.number;
+            }
+            return null;
+
+      - name: Create pattern sweep issue
+        if: steps.check-existing.outputs.result == 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `PATTERN-SWEEP: Weekly Pattern Analysis - ${today}`,
+              body: `## Friday Pattern Sweep Checklist
+
+              **Generated**: ${dayOfWeek}, ${today}
+
+              ### 🔍 Phase 1: Automated Pattern Detection (30 min)
+
+              - [ ] Run pattern detection script:
+                \`\`\`bash
+                mkdir -p rag/pattern-sweeps/pattern-sweep-${today}
+                python methodology/verification/pattern_sweep.py > \\
+                  rag/pattern-sweeps/pattern-sweep-${today}/pattern_sweep_data.json
+                \`\`\`
+              - [ ] Verify output created and contains patterns
+              - [ ] Document pattern counts by category
+
+              ### 📊 Phase 2: Pattern Analysis (45 min)
+
+              Deploy dual agents for analysis:
+
+              #### Agent A (Claude Code) - Semantic/Network Analysis
+              - [ ] Analyze pattern relationships and dependencies
+              - [ ] Identify pattern clusters and themes
+              - [ ] Map patterns to development phases
+              - [ ] Output to: \`code-semantic-analysis.md\`
+
+              #### Agent B (Cursor) - Thematic/Evolution Analysis
+              - [ ] Track pattern evolution over time
+              - [ ] Identify emerging vs established patterns
+              - [ ] Compare with previous sweeps
+              - [ ] Output to: \`cursor-thematic-analysis.md\`
+
+              ### 🎯 Phase 3: Critical Review (30 min)
+
+              Both agents perform self-critique:
+              - [ ] Challenge overstatements and biases
+              - [ ] Apply skeptical lens to findings
+              - [ ] Identify what's genuinely valuable vs noise
+              - [ ] Confidence levels: HIGH/MEDIUM/LOW/SPECULATION
+
+              ### 📚 Phase 4: Pattern Catalog Integration (30 min)
+
+              - [ ] Compare detected patterns with existing catalog:
+                \`\`\`bash
+                ls -1 docs/patterns/pattern-*.md | wc -l  # Current count
+                \`\`\`
+              - [ ] Identify new patterns not yet documented
+              - [ ] Create new pattern files for valuable discoveries:
+                - [ ] Use next available pattern number
+                - [ ] Follow pattern-000-template.md format
+                - [ ] Include Benefits/Trade-offs sections
+              - [ ] Update patterns/README.md index
+
+              ### 📈 Metrics & Reporting
+
+              - [ ] Pattern counts by category:
+                - Code patterns: ___
+                - Methodology patterns: ___
+                - Coordination patterns: ___
+                - Performance patterns: ___
+              - [ ] New patterns discovered: ___
+              - [ ] Patterns added to catalog: ___
+              - [ ] Confidence assessment of findings
+
+              ### 🔄 Process Improvements
+
+              - [ ] What worked well in this sweep?
+              - [ ] What could be improved?
+              - [ ] Any methodology updates needed?
+              - [ ] Update prompt templates if needed
+
+              ---
+
+              **Assigned to**: @mediajunkie
+              **Due**: End of day Friday
+              **Priority**: Detection → Analysis → Integration
+
+              ### Key Reminders
+              - Apply built-in skepticism to avoid methodology evangelism
+              - Focus on genuinely valuable patterns, not pattern inflation
+              - Use confidence levels to qualify all claims
+              - Remember: Pattern count ≠ cultural change
+
+              ### Output Locations
+              - Pattern sweep data: \`rag/pattern-sweeps/pattern-sweep-${today}/\`
+              - New patterns: \`docs/patterns/pattern-XXX-name.md\`
+              - Analysis reports: In pattern sweep directory
+
+              ### References
+              - [Pattern Index](../docs/patterns/README.md)
+              - [Pattern Template](../docs/patterns/pattern-000-template.md)
+              - [Pattern Analysis Prompt v2](../docs/development/prompts/pattern-sweep-thematic-analysis-prompt-v2.md)`,
+              labels: ['patterns', 'documentation', 'PATTERN-SWEEP', 'analysis'],
+              assignees: ['mediajunkie']
+            });
+
+            console.log(`Created pattern sweep issue #${issue.data.number}`);
+            return issue.data.number;
+
+      - name: Post completion summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('✅ Friday pattern sweep workflow initiated');
+            console.log('Check GitHub issues for the PATTERN-SWEEP checklist');
+            console.log('Remember: Apply skepticism to avoid pattern inflation');

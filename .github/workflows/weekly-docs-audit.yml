@@ -65,95 +65,89 @@ jobs:
               - [ ] **ACTION FOR PM**: Update these files in Claude project knowledge:
                 - [ ] CLAUDE.md (if modified)
                 - [ ] architecture.md (if modified)
-                - [ ] pattern-catalog.md (if modified)
+                - [ ] **patterns/README.md** (NEW - replaces pattern-catalog.md)
                 - [ ] gameplan-template.md (if modified)
                 - [ ] agent-prompt-template.md (if modified)
                 - [ ] methodology files (if modified)
-                - [ ] roadmap.md and backlog.md (if modified)
                 - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
 
               ### 🔍 Automated Audits (Claude Code /agent)
 
-              - [ ] Run: \`/agent Audit docs/ for stale content older than 30 days\`
-              - [ ] Run: \`/agent Find duplicate files in docs/ and list consolidation opportunities\`
               - [ ] Run: \`/agent Check for broken links in docs/**/*.md\`
+              - [ ] Run: \`/agent Find duplicate files in docs/\`
+              - [ ] Run: \`/agent Check for stale content older than 30 days\`
               - [ ] Run: \`/agent Verify cross-references between methodology files\`
 
               ### 🔧 Infrastructure & Pattern Verification
 
-              - [ ] Check app.py line count: \`wc -l web/app.py\` (trigger refactor at 1000 lines, currently ~750)
-              - [ ] Verify port 8001 documented everywhere: \`grep -r "8080" docs/ --include="*.md"\` (should be empty)
-              - [ ] Check for mock fallbacks: \`grep -r "mock_\\|fallback" services/ --include="*.py"\`
-              - [ ] Verify AsyncSessionFactory pattern: \`grep -r "DatabasePool" services/ --include="*.py"\` (should be empty)
+              - [ ] Check app.py line count: \`wc -l web/app.py\` (trigger refactor at 1000 lines)
+              - [ ] Verify port 8001 documented: \`grep -r "8080" docs/ --include="*.md"\` (should be empty)
+              - [ ] Check pattern count: \`ls -1 docs/patterns/pattern-*.md | wc -l\` (currently 27)
+              - [ ] Verify AsyncSessionFactory pattern: \`grep -r "DatabasePool" services/\` (should be empty)
 
               ### 📁 Session Log Management
 
               - [ ] Archive session logs older than 30 days to \`docs/archive/session-logs/\`
-              - [ ] Verify session log archive structure by month
+              - [ ] Create OMNIBUS summary for archived logs (NEW process)
               - [ ] Update session log INDEX.md with new entries
-              - [ ] Check for stranded session logs outside main directory
+              - [ ] Check for stranded logs: \`find . -name "*log*.md" -not -path "./docs/*"\`
 
               ### 🎯 Sprint & Roadmap Alignment
 
-              - [ ] Update roadmap.md with completed items from current sprint
-              - [ ] Move completed sprint items to completed.md
-              - [ ] Verify backlog.md priorities match current sprint goals
-              - [ ] Check for new issues needing taxonomy labels (TRACK-EPIC format)
+              - [ ] Update roadmap.md with completed items
+              - [ ] Verify GitHub issues are source of truth (backlog.md deprecated)
+              - [ ] Check for issues needing TRACK-EPIC taxonomy
+              - [ ] Identify stale issues (no activity >30 days)
               - [ ] Update sprint goals in PIPER.user.md if new sprint started
 
               ### 📊 GitHub Issues Sync
 
               - [ ] Run: \`gh issue list --state all --json number,title,state,labels --limit 200 > docs/planning/pm-issues-status.json\`
               - [ ] Verify all open issues have TRACK-EPIC taxonomy
-              - [ ] Check for issues missing from backlog.md
-              - [ ] Identify stale issues (no activity >30 days)
-              - [ ] Update CSV if still in use: \`docs/planning/pmissuesstatus.csv\`
+              - [ ] Check CSV still needed: \`docs/planning/pmissuesstatus.csv\` (consider deprecating)
 
               ### 📚 Pattern & Knowledge Capture
 
-              - [ ] Update pattern-catalog.md with:
-                - [ ] New patterns discovered this week
-                - [ ] Infrastructure verification patterns
-                - [ ] Multi-agent coordination patterns
-                - [ ] Error handling patterns (no mock fallbacks!)
-              - [ ] Review session logs for patterns to document
-              - [ ] Check for methodology improvements to capture
+              - [ ] **Friday Pattern Sweep** (separate process):
+                - [ ] Run automated pattern detection
+                - [ ] Compare with existing patterns in \`docs/patterns/\`
+                - [ ] Add new patterns as numbered files
+                - [ ] Update patterns/README.md index
+              - [ ] Review session logs for methodology improvements
 
               ### 🎯 Quality Checks
 
-              - [ ] Verify methodology files are in \`docs/methodology/\` (not scattered)
-              - [ ] Ensure all ADRs are in \`docs/architecture/adr/\` with proper numbering
-              - [ ] Check that no backup files (\`*.backup\`, \`*.old\`) are in active directories
-              - [ ] Verify no test files in production directories
-              - [ ] Check for TODO/FIXME comments: \`grep -r "TODO\\|FIXME" services/ web/ cli/\`
+              - [ ] Verify no broken links: \`python check_links.py\` (should be 0)
+              - [ ] Ensure all ADRs numbered correctly in \`docs/architecture/adr/\`
+              - [ ] Check for backup files: \`find . -name "*.backup" -o -name "*.old"\`
+              - [ ] Verify no test files in production
+              - [ ] Check TODOs: \`grep -r "TODO\\|FIXME" services/ web/ cli/\`
 
-              ### 📈 Metrics Collection (Optional)
+              ### 📈 Metrics Collection
 
-              - [ ] Document count: \`find docs/ -name "*.md" | wc -l\`
+              - [ ] Pattern count: \`ls -1 docs/patterns/pattern-*.md | wc -l\`
+              - [ ] Documentation files: \`find docs/ -name "*.md" | wc -l\`
               - [ ] Archive size: \`du -sh docs/archive/\`
-              - [ ] Active docs size: \`du -sh docs/ --exclude=archive\`
-              - [ ] Code line count: \`find . -name "*.py" -type f -exec wc -l {} + | tail -1\`
-              - [ ] Test coverage if available: \`pytest --cov\`
+              - [ ] Broken links: Should be 0!
 
               ---
 
               **Assigned to**: @mediajunkie
-              **Due**: End of day
-              **Priority**: Focus on Knowledge Updates and Infrastructure Verification first
+              **Due**: End of day Monday
+              **Priority**: Knowledge Updates → Infrastructure → Quality Checks
 
-              ### Notes
-              - Knowledge sync prevents Claude drift - do this FIRST
-              - Infrastructure checks prevent assumption cascades
-              - Create PM-* issues for any problems discovered
-              - Update this checklist template if new patterns emerge
+              ### Process Changes This Week
+              - ✅ Pattern catalog consolidated (27 patterns in ADR-style)
+              - ✅ All broken links fixed (254 → 0)
+              - 🔄 Session logs → OMNIBUS summaries (new process)
+              - 🔄 GitHub as source of truth (backlog.md deprecated)
 
               ### References
-              - [CLAUDE.md Project Instructions](../CLAUDE.md)
+              - [Pattern Index](../docs/patterns/README.md)
               - [Architecture Documentation](../docs/architecture/architecture.md)
-              - [Pattern Catalog](../docs/methodology/pattern-catalog.md)
               - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md)`,
-              labels: ['documentation', 'maintenance', 'weekly-audit', 'fly-audit'],
+              labels: ['documentation', 'maintenance', 'weekly-audit', 'FLY-AUDIT'],
               assignees: ['mediajunkie']
             });
 

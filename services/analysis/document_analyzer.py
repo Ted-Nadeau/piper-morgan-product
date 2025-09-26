@@ -71,7 +71,7 @@ class DocumentAnalyzer(BaseAnalyzer):
                 summary = f"PDF with {page_count} pages and {len(text)} characters of text."
                 metadata["summary"] = summary
                 metadata["key_points"] = []
-            # TODO: Move key_points to the top-level key_findings field in AnalysisResult to match the domain model.
+            # TODO(#TBD-REFACTOR-01): Move key_points to the top-level key_findings field in AnalysisResult to match the domain model.
             # For now, key_points are kept in metadata for backward compatibility.
             return AnalysisResult(
                 file_id=file_path,
