@@ -351,42 +351,25 @@ print(result)
 For fresh environments, ensure SSL certificates are properly configured:
 
 ```bash
-# Install/upgrade certificate bundle
-pip3 install --upgrade --force-reinstall certifi
+# Install/upgrade certificate bundle (fixes missing cacert.pem)
+pip install --upgrade --force-reinstall certifi
 
 # Verify SSL functionality
 python3 -c "import certifi, requests; print('SSL ready:', requests.get('https://httpbin.org/get').status_code == 200)"
 ```
 
-If SSL errors persist, install system certificates:
+### Common SSL Issues
+
+**Problem**: `FileNotFoundError: cacert.pem`
+**Solution**: Reinstall certifi package with `pip install --upgrade --force-reinstall certifi`
+
+**Problem**: `NotOpenSSLWarning` about LibreSSL vs OpenSSL
+**Solution**: This is a warning only and does not affect functionality
+
+If SSL errors persist:
 - Ubuntu/Debian: `sudo apt-get install ca-certificates`
 - macOS: `brew install ca-certificates`
-- Manual: Ensure certifi package has valid certificate bundle
-
-### Common SSL Issues in Fresh Environments
-
-**Missing cacert.pem Error**:
-```bash
-# This fixes the certifi/cacert.pem missing error
-pip3 install --upgrade --force-reinstall certifi
-```
-
-**SSL Verification Errors**:
-```bash
-# Test SSL functionality
-python3 -c "
-import ssl
-import certifi
-import requests
-print('Certificate bundle:', certifi.where())
-print('Bundle exists:', __import__('os').path.exists(certifi.where()))
-try:
-    resp = requests.get('https://httpbin.org/get', timeout=10)
-    print('SSL test: SUCCESS')
-except Exception as e:
-    print('SSL test failed:', e)
-"
-```
+- Verify: `python3 -c "import certifi; print(certifi.where())"`
 
 ---
 
