@@ -346,6 +346,48 @@ result = await test_query("List recent files")
 print(result)
 ```
 
+## SSL Certificate Requirements
+
+For fresh environments, ensure SSL certificates are properly configured:
+
+```bash
+# Install/upgrade certificate bundle
+pip3 install --upgrade --force-reinstall certifi
+
+# Verify SSL functionality
+python3 -c "import certifi, requests; print('SSL ready:', requests.get('https://httpbin.org/get').status_code == 200)"
+```
+
+If SSL errors persist, install system certificates:
+- Ubuntu/Debian: `sudo apt-get install ca-certificates`
+- macOS: `brew install ca-certificates`
+- Manual: Ensure certifi package has valid certificate bundle
+
+### Common SSL Issues in Fresh Environments
+
+**Missing cacert.pem Error**:
+```bash
+# This fixes the certifi/cacert.pem missing error
+pip3 install --upgrade --force-reinstall certifi
+```
+
+**SSL Verification Errors**:
+```bash
+# Test SSL functionality
+python3 -c "
+import ssl
+import certifi
+import requests
+print('Certificate bundle:', certifi.where())
+print('Bundle exists:', __import__('os').path.exists(certifi.where()))
+try:
+    resp = requests.get('https://httpbin.org/get', timeout=10)
+    print('SSL test: SUCCESS')
+except Exception as e:
+    print('SSL test failed:', e)
+"
+```
+
 ---
 
 *For detailed initialization sequence, see [initialization-sequence.md](../architecture/initialization-sequence.md)*
