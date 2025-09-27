@@ -1,0 +1,128 @@
+=== ERROR HANDLING & PERFORMANCE WORKFLOW ===
+
+1. PERFORMANCE CONSTRAINT ENFORCEMENT (Technical):
+   <100ms enhancement timeout with circuit breaker protection
+
+   Timeout Enforcement Strategy:
+   - Master timer starts at TemplateRenderer.render_template() enhancement point
+   - Profile loading: 50ms timeout (database + PIPER.user.md + caching)
+   - Transformation processing: 40ms timeout (warmth + confidence + actions)
+   - Monitoring/logging overhead: 10ms budget
+   - Total enhancement budget: 100ms hard limit
+
+   Circuit Breaker Implementation:
+   - Circuit opens after 10 failures in 1 minute window
+   - Half-open state after 30 seconds for testing
+   - Closed after 5 consecutive successes
+   - Failure criteria: >100ms enhancement time OR enhancement exception
+
+   Degradation Levels:
+   1. Profile cache miss → Skip PIPER.user.md, use database default
+   2. Database slow → Use system default PersonalityProfile
+   3. Enhancement >100ms → Circuit breaker opens, return original response
+   4. Enhancement exception → Log error, return original response + error indicator
+
+   Performance Monitoring:
+   - Enhancement duration histograms per request
+   - Cache hit/miss ratio tracking
+   - Circuit breaker state logging
+   - Performance degradation alerts
+
+2. USER EXPERIENCE DURING DEGRADATION (UX):
+   How errors are presented with supportive tone
+
+   Graceful Degradation UX Strategy:
+   - Performance degradation: No user notification (seamless fallback to original response)
+   - Enhancement failures: Subtle error indicators without breaking experience
+   - PIPER.user.md parse errors: Default personality with config guidance
+   - Database connectivity issues: Fallback to system defaults with retry messaging
+
+   Error Message Enhancement:
+   - Apply personality to error messages themselves (warm, supportive tone)
+   - Low confidence situations get extra guidance and reassurance
+   - Technical errors explained in user-friendly language
+   - Clear next steps provided for configuration issues
+
+   User Feedback During Fallback:
+   - Profile loading errors: "Using default settings while we resolve a configuration issue"
+   - Enhancement timeouts: Silent fallback, metrics logged for improvement
+   - Database issues: "Temporarily using standard responses while reconnecting"
+   - Critical errors: "Something's not quite right - we're looking into it"
+
+3. CONFIDENCE INDICATORS DURING FALLBACK:
+   How confidence is displayed when enhancement unavailable
+
+   Fallback Confidence Strategy:
+   - System defaults to "contextual" confidence style during degradation
+   - Low confidence (<0.3) always shows supportive language regardless of enhancement status
+   - Medium confidence (0.3-0.7) shows descriptive confidence as fallback
+   - High confidence (>0.7) shows technical confidence with enhancement unavailable note
+
+   Error Confidence Display:
+   - Configuration errors: Always hide confidence scores (avoid confusing users)
+   - Database connectivity: Show intent confidence but note "standard formatting"
+   - Enhancement timeout: Full confidence display using system default style
+   - Critical failures: Hide confidence, focus on error resolution
+
+4. RECOVERY STRATEGY:
+   How system recovers from enhancement failures
+
+   Technical Recovery:
+   - Circuit breaker automatic retry with exponential backoff
+   - Profile cache auto-refresh on successful database reconnection
+   - PIPER.user.md file watcher for configuration fixes
+   - Database connection pool recovery with health checks
+
+   User Recovery Experience:
+   - Automatic enhancement restoration when systems recover (no user action needed)
+   - Configuration validation feedback for PIPER.user.md fixes
+   - Clear success notifications when preference changes take effect
+   - Performance improvement notifications when systems recover
+
+   Recovery Monitoring:
+   - Time to recovery tracking for different failure types
+   - Success rate monitoring post-recovery
+   - User satisfaction tracking during degraded periods
+   - Configuration fix success rates
+
+5. USER PREFERENCE HANDLING DURING DEGRADATION:
+   How personality preferences work when enhancement fails
+
+   Preference Degradation Strategy:
+   - Database PersonalityProfile unavailable → Use system defaults
+   - PIPER.user.md parse errors → Use database profile with validation warnings
+   - Enhancement timeouts → Cache last successful profile for next request
+   - Critical failures → Fall back to "medium" settings across all preferences
+
+   Configuration Error Handling:
+   - Invalid warmth_level (outside 0.0-1.0) → Default to 0.6 with validation error
+   - Invalid confidence_style → Default to "contextual" with enum options shown
+   - Invalid action_orientation → Default to "medium" with valid choices
+   - Invalid technical_depth → Default to "balanced" with preferences guide
+
+   Recovery Guidance:
+   - YAML syntax errors: Show corrected syntax example
+   - Invalid values: Display valid ranges and enum options
+   - File permissions: Provide file access resolution steps
+   - Database issues: System status and expected recovery time
+
+6. PERFORMANCE IMPACT ON USER EXPERIENCE:
+   How 100ms constraint affects response quality
+
+   Performance-Quality Trade-offs:
+   - Target: Full personality enhancement within 100ms
+   - Acceptable: Partial enhancement (warmth only) within 100ms
+   - Fallback: Original response when >100ms to maintain responsiveness
+   - Never: Compromise response accuracy or break functionality for personality
+
+   Quality Assurance During Constraints:
+   - Personality transformations preserve technical accuracy
+   - Data integrity (links, numbers, SHAs) always maintained
+   - Enhancement failure never breaks core response functionality
+   - User sees either enhanced response OR original response, never broken response
+
+   Performance Feedback Loop:
+   - Enhancement timing analysis for optimization opportunities
+   - User preference impact on performance (complex preferences get longer timeouts)
+   - Caching effectiveness measurement and optimization
+   - Circuit breaker threshold tuning based on actual performance characteristics

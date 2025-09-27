@@ -1,0 +1,46 @@
+=== CURRENT RESPONSE DISPLAY PATTERNS ===
+1. Morning Standup Display (building on PM-155):
+            .loading { text-align: center; color: #7f8c8d; font-style: italic; }
+            .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .success { color: #2e7d32; }
+            .section { margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+            .section h2 { color: #34495e; margin-top: 0; }
+            .metrics { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
+            .metric { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            .metric-value { font-size: 2em; font-weight: bold; color: #27ae60; }
+            .metric-label { color: #7f8c8d; margin-top: 5px; }
+            pre { background: #2c3e50; color: white; padding: 15px; border-radius: 5px; overflow-x: auto; }
+            button { background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+            button:hover { background: #2980b9; }
+            button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        </style>
+    </head>
+    <body>
+--
+                const results = document.getElementById('results');
+
+                // Show loading state
+
+2. JavaScript Response Handling in app.py:
+12:from fastapi.responses import HTMLResponse
+43:@app.get("/debug-markdown", response_class=HTMLResponse)
+85:            document.getElementById('test1').innerHTML = '✅ renderMarkdown function loaded successfully';
+88:            document.getElementById('test2').innerHTML = renderMarkdown('# Header 1');
+92:            document.getElementById('test3').innerHTML = renderMarkdown(failingText);
+95:            document.getElementById('test1').innerHTML = '❌ renderMarkdown function not loaded - check console for errors';
+104:@app.get("/", response_class=HTMLResponse)
+240:            // If it's a user message, use textContent; if bot message, use innerHTML for markdown
+242:                msgDiv.textContent = html;
+244:                msgDiv.innerHTML = html;
+
+3. HTML Response Containers:
+21:from services.features.morning_standup import MorningStandupWorkflow, StandupIntegrationError
+25:from services.utils.standup_formatting import format_standup_metrics
+182:             <div class="message-container">
+183:                <div class="message bot-message">
+288:                        <div class="result success">
+295:                        <div class="result error">
+308:                    <div class="result error">
+337:                        elementToUpdate.innerHTML = `<div class="result error">Error checking status.</div>`;
+359:                        elementToUpdate.innerHTML = `<div class="result error">Workflow status check timed out.</div>`;
+363:                    elementToUpdate.innerHTML = `<div class="result error">Could not connect to API to check status.</div>`;
