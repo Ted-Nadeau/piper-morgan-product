@@ -65,10 +65,10 @@ jobs:
               - [ ] **ACTION FOR PM**: Update these files in Claude project knowledge:
                 - [ ] CLAUDE.md (if modified)
                 - [ ] architecture.md (if modified)
-                - [ ] pattern-catalog.md (if modified)
-                - [ ] gameplan-template.md (if modified)
-                - [ ] agent-prompt-template.md (if modified)
-                - [ ] methodology files (if modified)
+                - [ ] docs/internal/architecture/current/patterns/README.md (if modified)
+                - [ ] docs/internal/development/methodology-core/ files (if modified)
+                - [ ] docs/briefing/METHODOLOGY.md (if modified)
+                - [ ] .cursorrules and docs/cursorrules/ files (if modified)
                 - [ ] roadmap.md and backlog.md (if modified)
                 - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
@@ -78,7 +78,10 @@ jobs:
               - [ ] Run: \`/agent Audit docs/ for stale content older than 30 days\`
               - [ ] Run: \`/agent Find duplicate files in docs/ and list consolidation opportunities\`
               - [ ] Run: \`/agent Check for broken links in docs/**/*.md\`
-              - [ ] Run: \`/agent Verify cross-references between methodology files\`
+              - [ ] Run: \`/agent Verify cross-references between methodology files in docs/internal/development/methodology-core/\`
+              - [ ] Run: \`/agent Check for missing cross-references between docs/NAVIGATION.md and docs/internal/development/methodology-core/INDEX.md\`
+              - [ ] Run: \`/agent Verify briefing documents completeness in docs/briefing/\`
+              - [ ] Run: \`/agent Check omnibus logs structure in docs/omnibus-logs/\`
 
               ### 🔧 Infrastructure & Pattern Verification
 
@@ -86,13 +89,18 @@ jobs:
               - [ ] Verify port 8001 documented everywhere: \`grep -r "8080" docs/ --include="*.md"\` (should be empty)
               - [ ] Check for mock fallbacks: \`grep -r "mock_\\|fallback" services/ --include="*.py"\`
               - [ ] Verify AsyncSessionFactory pattern: \`grep -r "DatabasePool" services/ --include="*.py"\` (should be empty)
+              - [ ] Check cursor rules synchronization: \`diff .cursorrules docs/cursorrules/active-rules.md\` (should be identical)
 
-              ### 📁 Session Log Management
+              ### 📁 Session Log Management & Omnibus Synthesis
 
-              - [ ] Archive session logs older than 30 days to \`docs/archive/session-logs/\`
-              - [ ] Verify session log archive structure by month
-              - [ ] Update session log INDEX.md with new entries
-              - [ ] Check for stranded session logs outside main directory
+              - [ ] Check for completed session logs in \`dev/2025/MM/DD/\` structure
+              - [ ] **Synthesis Identification** (evolving process - handle carefully):
+                - [ ] Review recent session logs for synthesis candidates
+                - [ ] Check if any sessions qualify for omnibus consolidation
+                - [ ] Identify cross-session patterns worth preserving
+                - [ ] Note: Synthesis practices still evolving - defer complex decisions to PM
+              - [ ] Verify no stranded session logs outside \`dev/\` directory structure
+              - [ ] Review \`docs/omnibus-logs/\` for completeness and organization
 
               ### 🎯 Sprint & Roadmap Alignment
 
@@ -108,21 +116,25 @@ jobs:
               - [ ] Verify all open issues have TRACK-EPIC taxonomy
               - [ ] Check for issues missing from backlog.md
               - [ ] Identify stale issues (no activity >30 days)
-              - [ ] Update CSV if still in use: \`docs/planning/pmissuesstatus.csv\`
+              - [ ] **Note**: CSV generation deprecated - GitHub is source of truth
 
               ### 📚 Pattern & Knowledge Capture
 
-              - [ ] Update pattern-catalog.md with:
+              - [ ] Update docs/internal/architecture/current/patterns/README.md with:
                 - [ ] New patterns discovered this week
                 - [ ] Infrastructure verification patterns
                 - [ ] Multi-agent coordination patterns
                 - [ ] Error handling patterns (no mock fallbacks!)
               - [ ] Review session logs for patterns to document
               - [ ] Check for methodology improvements to capture
+              - [ ] Verify template directories are current and organized:
+                - [ ] \`docs/internal/development/tools/session-log-templates/\`
+                - [ ] \`docs/internal/planning/current/templates/\`
+                - [ ] \`docs/internal/development/methodology-core/\` (multi-agent templates)
 
               ### 🎯 Quality Checks
 
-              - [ ] Verify methodology files are in \`docs/methodology/\` (not scattered)
+              - [ ] Verify methodology files are in \`docs/internal/development/methodology-core/\` (not scattered)
               - [ ] Ensure all ADRs are in \`docs/architecture/adr/\` with proper numbering
               - [ ] Check that no backup files (\`*.backup\`, \`*.old\`) are in active directories
               - [ ] Verify no test files in production directories
@@ -151,7 +163,7 @@ jobs:
               ### References
               - [CLAUDE.md Project Instructions](../CLAUDE.md)
               - [Architecture Documentation](../docs/architecture/architecture.md)
-              - [Pattern Catalog](../docs/methodology/pattern-catalog.md)
+              - [Pattern Catalog](../docs/internal/architecture/current/patterns/README.md)
               - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md)`,
               labels: ['documentation', 'maintenance', 'weekly-audit', 'fly-audit'],
               assignees: ['mediajunkie']

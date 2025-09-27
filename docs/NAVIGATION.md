@@ -32,6 +32,7 @@
 - **[Development Tools](internal/development/tools/)** - Setup guides and development workflows
 - **[Active Work](internal/development/active/)** - Current development status
 - **[Methodology](internal/development/methodology-core/)** - Development methodologies (20 core patterns)
+- **[Methodology Index](internal/development/methodology-core/INDEX.md)** - Comprehensive methodology navigation
 - **[Handoffs](internal/development/handoffs/)** - Agent coordination protocols
 - **[Session Templates](internal/development/tools/session-log-templates/)** - Session documentation
 
@@ -67,7 +68,7 @@
 │   ├── in-progress/          # Active development
 │   ├── pending-review/       # Files needing review
 │   └── ready-for-integration/ # Completed work
-├── methodology-core/         # 20 development methodologies
+├── methodology-core/         # 20 development methodologies (see INDEX.md)
 ├── tools/                    # Development tools and guides
 ├── handoffs/                 # Agent coordination prompts
 └── planning/                 # Current planning cycles
@@ -212,7 +213,7 @@
 - **[September 2025 Session Logs](archives/session-logs/2025/09/index.md)** - Current month activities
 - **[Active Development Work](internal/development/active/)** - What's happening now
 - **[Domain Models Hub](internal/architecture/current/models/models-architecture.md)** - Complete model reference
-- **[Methodology Core](internal/development/methodology-core/)** - Development patterns and processes
+- **[Methodology Core](internal/development/methodology-core/INDEX.md)** - Development patterns and processes
 
 ### For New Team Members
 - **[Public Getting Started](public/getting-started/)** - External onboarding
