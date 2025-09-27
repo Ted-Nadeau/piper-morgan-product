@@ -1,0 +1,200 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Verify Python version
+        run: |
+          python --version
+          python -c "import sys; assert sys.version_info >= (3, 11), f'Python {sys.version} < 3.11'"
+          echo "✅ Python 3.11+ confirmed in CI"
+          echo "Python version: $(python --version)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.11-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-3.11-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Environment consistency check
+        run: |
+          echo "=== Environment Verification ==="
+          echo "Python version: $(python --version)"
+          echo "Pip version: $(pip --version)"
+          echo "Installed packages:"
+          pip list | head -10
+          echo "=== Consistency with production requirements ==="
+          python -c "
+          import sys
+          required = (3, 11)
+          current = sys.version_info[:2]
+          assert current >= required, f'Python {current} < {required}'
+          print('✅ Version consistency verified')
+          "
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ --tb=short -v
+
+      - name: Test summary
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All tests completed with Python 3.11" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: Ubuntu Latest" >> $GITHUB_STEP_SUMMARY
+
+  performance-regression-check:
+    name: Performance Regression Detection
+    runs-on: ubuntu-latest
+    needs: [test]  # Run after regular tests pass
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt --break-system-packages
+
+    - name: Run Performance Regression Tests
+      run: |
+        echo "Running performance regression detection..."
+
+        # Run performance tests with timing capture
+        PYTHONPATH=. python3 << 'PYTHON_SCRIPT'
+import asyncio
+import sys
+import time
+
+# Import performance configuration
+sys.path.append('scripts')
+from performance_config import check_performance_regression
+
+async def test_queryrouter_performance():
+    """Test QueryRouter initialization performance"""
+    try:
+        # Import here to avoid dependency issues in CI
+        from services.orchestration.engine import OrchestrationEngine
+        from services.database.session_factory import AsyncSessionFactory
+
+        start = time.time()
+        async with AsyncSessionFactory.session_scope() as session:
+            engine = OrchestrationEngine()
+            # Test QueryRouter initialization
+            query_router = await engine.get_query_router()
+        duration_ms = (time.time() - start) * 1000
+
+        return check_performance_regression("queryrouter_init_ms", duration_ms)
+    except Exception as e:
+        print(f"QueryRouter performance test failed: {e}")
+        return False
+
+async def test_llm_performance():
+    """Test LLM classification performance"""
+    try:
+        from services.intent_service.llm_classifier import LLMIntentClassifier
+
+        classifier = LLMIntentClassifier()
+        start = time.time()
+        result = await classifier.classify("Create a GitHub issue")
+        duration_ms = (time.time() - start) * 1000
+
+        return check_performance_regression("llm_classification_ms", duration_ms)
+    except Exception as e:
+        print(f"LLM performance test failed: {e}")
+        return False
+
+async def test_orchestration_performance():
+    """Test full orchestration flow performance"""
+    try:
+        from services.orchestration.engine import OrchestrationEngine
+        from services.database.session_factory import AsyncSessionFactory
+
+        async with AsyncSessionFactory.session_scope() as session:
+            engine = OrchestrationEngine()
+            start = time.time()
+            # Test a simple orchestration flow
+            query_router = await engine.get_query_router()
+            duration_ms = (time.time() - start) * 1000
+
+            return check_performance_regression("orchestration_flow_ms", duration_ms)
+    except Exception as e:
+        print(f"Orchestration performance test failed: {e}")
+        return False
+
+async def main():
+    """Run all performance regression tests"""
+    print("=== Performance Regression Detection ===")
+
+    tests = [
+        ("QueryRouter Init", test_queryrouter_performance),
+        ("LLM Classification", test_llm_performance),
+        ("Orchestration Flow", test_orchestration_performance),
+    ]
+
+    all_passed = True
+    for test_name, test_func in tests:
+        print(f"\n--- {test_name} ---")
+        try:
+            result = await test_func()
+            if not result:
+                all_passed = False
+                print(f"❌ {test_name} FAILED performance regression check")
+            else:
+                print(f"✅ {test_name} passed performance check")
+        except Exception as e:
+            print(f"❌ {test_name} ERROR: {e}")
+            all_passed = False
+
+    if not all_passed:
+        print("\n🚨 PERFORMANCE REGRESSION DETECTED - Failing build")
+        sys.exit(1)
+    else:
+        print("\n✅ All performance tests passed - No regression detected")
+        sys.exit(0)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+PYTHON_SCRIPT
+
+    - name: Performance Test Summary
+      if: failure()
+      run: |
+        echo "❌ Performance regression detected!"
+        echo "This build failed because one or more components"
+        echo "performed significantly slower than baseline measurements."
+        echo ""
+        echo "To investigate:"
+        echo "1. Check the performance test output above"
+        echo "2. Compare with baseline measurements in scripts/performance_config.py"
+        echo "3. If this is a legitimate improvement, update baselines"
+        echo "4. If this is a regression, investigate recent changes"

@@ -1,6 +1,6 @@
 # Daily Report: September 25, 2025
-**To**: Chief of Staff  
-**From**: Chief Architect (Opus 4.1)  
+**To**: Chief of Staff
+**From**: Chief Architect (Opus 4.1)
 **Subject**: CORE-GREAT-1 Epic Completion
 
 ---

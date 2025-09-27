@@ -78,10 +78,10 @@ test('Create GitHub issue through chat', async ({ page }) => {
   await page.goto('http://localhost:8001');
   await page.fill('#message-input', 'Create issue: QueryRouter needs documentation');
   await page.click('#send-button');
-  
+
   // Wait for response
   await expect(page.locator('.response')).toContainText('Issue created');
-  
+
   // Verify in GitHub (mock or real)
   // ...
 });
