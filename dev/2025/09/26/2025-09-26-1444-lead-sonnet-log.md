@@ -1,4 +1,4 @@
-# Lead Developer Session Log - 2025-09-26-1444
+# Lead Developer Session Log - 2025-09-26-1444 (UPDATED)
 *Lead Developer managing agent coordination for CORE-GREAT-2A*
 
 ## Session Start
@@ -121,16 +121,12 @@ From attached CORE-GREAT-2A description:
 - ✅ **GitHub deprecation work**: PM was aware, confirms it's further along than gameplan assumed
 - ⚠️ **Spatial intelligence**: May be less complete than believed - **ACTUALLY MORE COMPLETE**
 - 🔍 **Slack spatial**: PM believes it exists but unsure of thoroughness - **CONFIRMED MISSING**
+
 ### PM Clarifications (3:18 PM)
 1. **Slack Spatial Work**: Done July 28-29, may be lost/regressed or in git history
 2. **Broken Links**: ~28 are from session logs (not actual doc links)
 3. **Excellence Flywheel + TODOs**: Need to prompt agents to check these
 4. **Action**: Review July 28-29 commits for Slack spatial work
-
-## Next Actions
-1. **Agent Investigation**: Deploy agent to review July 28-29 git commits for Slack spatial work
-2. **Complete verification**: Excellence Flywheel + TODO comments (via agents)
-3. **Report to Chief Architect**: With complete findings and commit analysis
 
 ## Agent Deployment - COMPLETE ✅
 - ✅ **Claude Code Agent**: `agent-prompt-slack-spatial-git-investigation.md` (git history analysis)
@@ -171,5 +167,57 @@ From attached CORE-GREAT-2A description:
 - ✅ **Strategic Flip**: Completing sophisticated work vs cleaning up messes
 - 🔍 **Critical Questions Raised**: OrchestrationEngine & Ethical Boundary investigation needed
 
-### Phase -1B: OrchestrationEngine Investigation (STARTING NOW)
-**Critical Question**: Is OrchestrationEngine initialized? This could explain service coordination gaps.
+### Phase -1B: OrchestrationEngine Investigation - CRITICAL FINDING ❌
+
+**Pattern Discovery**: Exactly like QueryRouter was!
+- **Import**: ✅ `from services.orchestration import engine` (line 50, main.py)
+- **Usage**: ✅ `workflow = await engine.create_workflow_from_intent(enriched_intent)` (line 600+)
+- **Global Definition**: ❌ `engine: Optional[OrchestrationEngine] = None` (services/orchestration/engine.py)
+- **set_global_engine() call**: ❌ **NOT FOUND** in main.py initialization
+
+**PM's CRITICAL QUESTION (4:27 PM)**: QueryRouter had lazy initialization that worked - could OrchestrationEngine be similar?
+
+**AGENT DEPLOYMENT (4:32-4:40 PM)**: Created `agent-prompt-orchestration-engine-lazy-init.md`
+- **Mission**: Check for lazy initialization patterns in OrchestrationEngine
+- **Comparison**: How does this compare to QueryRouter's working pattern?
+- **Evidence**: Code patterns showing initialization on first use vs broken None usage
+- **Status**: Deployed to Claude Code at 4:40 PM
+
+### Code Agent Results (4:43 PM) - PATTERN CLARIFIED ✅
+
+**PM's Question Answered**: ❌ OrchestrationEngine does NOT have lazy initialization like QueryRouter
+
+**Key Pattern Differences**:
+1. **QueryRouter**: Self-contained lazy initialization (creates itself on-demand)
+2. **OrchestrationEngine**: Global injection pattern (FastAPI startup → set_global_engine())
+
+**Why It Currently Works**:
+- ✅ **FastAPI Startup**: web/app.py creates OrchestrationEngine and calls set_global_engine()
+- ✅ **Global Assignment**: Sets the global engine variable
+- ✅ **Import Works**: main.py imports the now-initialized global variable
+- ✅ **Direct Usage**: No None checks needed because startup guarantees initialization
+
+**Risk Analysis**:
+- ✅ **Works**: When FastAPI app starts first (normal operation)
+- ❌ **Potential Risk**: If scripts import engine directly without web app startup
+
+**GREAT-2 Recommendation**: Consider adding lazy initialization for consistency and robustness
+
+## Token & Partnership Strategy
+- **Pattern Acknowledged**: "Burning through Lead Dev chats like fireflies" 🔥🪲
+- **Approach**: Butch and Cassidy partnership - quality over speed
+- **Handoff Created**: `lead-developer-handoff-phase-1b-continuation.md` (comprehensive)
+- **Continue**: As long as capacity allows, no rushing
+- **Filesystem Issue**: Lost access partway through, using sandbox/artifacts for logs
+
+## Phase -1 Status (4:40 PM)
+- **Phase -1A**: ✅ **COMPLETE** (Initial investigation + Chief Architect report)
+- **Phase -1B**: 🔄 **IN PROGRESS** (OrchestrationEngine lazy init investigation with Code Agent)
+- **Phase -1C**: ⏳ **PENDING** (Ethical Boundary Layer investigation)
+- **Phase -1D**: ⏳ **PENDING** (Final synthesis and gameplan revision)
+
+---
+
+**Current Status**: Awaiting Code Agent results on OrchestrationEngine lazy initialization patterns. PM's question about QueryRouter working despite similar pattern is excellent and could change our findings completely.
+
+**Partnership Mode**: Butch and Cassidy - steady investigation, quality over speed, trust the process.
