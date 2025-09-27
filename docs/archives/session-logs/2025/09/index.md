@@ -28,6 +28,9 @@
 ### September 20, 2025
 - `2025-09-20-0623-claude-code-doc-mgr-log.md` - Documentation restructuring implementation
 
+### September 22, 2025
+- `2025-09-22-claude-code-log.md` - Root cleanup and methodology reconciliation session
+
 ---
 
 ## Major Deliverables
