@@ -1,0 +1,64 @@
+=== PERSONALITY ENHANCEMENT API DOCUMENTATION ===
+# Personality Enhancement API
+
+Transform functional responses into warm, confident, actionable communication.
+
+## Base URL
+`http://localhost:8081/api/personality`
+
+## Endpoints
+
+### GET /api/personality/profile/{user_id}
+Retrieve user's personality preferences.
+
+**Response Example**:
+```json
+{
+  "user_id": "user123",
+  "warmth_level": 0.7,
+  "confidence_style": "contextual",
+  "action_orientation": "high",
+  "technical_depth": "balanced",
+  "created_at": "2025-09-11T11:39:00Z",
+  "updated_at": "2025-09-11T11:39:00Z"
+}
+```
+
+### PUT /api/personality/profile/{user_id}
+Update user's personality preferences.
+
+**Request Body**:
+```json
+{
+  "warmth_level": 0.8,
+  "confidence_style": "descriptive",
+  "action_orientation": "medium",
+  "technical_depth": "simplified"
+}
+```
+
+### POST /api/personality/enhance
+Enhance a response with personality based on user preferences.
+
+**Request Body**:
+```json
+{
+  "content": "Task completed successfully",
+  "user_id": "user123",
+  "context": {
+    "intent_confidence": 0.87,
+    "intent_category": "EXECUTION",
+    "response_type": "CLI"
+  }
+}
+```
+
+**Response Example**:
+```json
+{
+  "original_content": "Task completed successfully",
+  "enhanced_content": "Perfect! Your task is complete and ready for the next step 🎯",
+  "enhancements_applied": ["warmth_added", "action_extracted"],
+  "processing_time_ms": 45.2
+}
+```

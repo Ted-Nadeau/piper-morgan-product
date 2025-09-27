@@ -1,0 +1,52 @@
+=== PERFORMANCE IMPLEMENTATION STRATEGY ===
+
+1. PROFILE CACHING:
+   In-memory cache for PersonalityProfile entities
+
+   Implementation:
+   - Python LRU cache with threading.RLock for thread safety
+   - Cache size: 1000 profiles (estimated 100KB memory)
+   - Cache key: f'personality_profile_{user_id}'
+   - Invalidation triggers: profile updates, TTL expiration
+
+   Cache Strategy:
+   - Lazy loading on first request
+   - Pre-warming for active users (top 100 by activity)
+   - Write-through caching for profile updates
+   - Background refresh for frequently accessed profiles
+
+2. PERFORMANCE MONITORING:
+   Enhancement latency tracking and alerting
+
+   Metrics Collection:
+   - Enhancement duration per request (histogram)
+   - Cache hit/miss rates (counter)
+   - Transformation step timing (histogram)
+   - Profile loading time (histogram)
+   - Error rates by enhancement type (counter)
+
+   Monitoring Thresholds:
+   - ALERT: Enhancement >100ms (SLA violation)
+   - WARN: Enhancement >75ms (approaching limit)
+   - INFO: Cache hit rate <80% (optimization opportunity)
+   - ERROR: Enhancement failure rate >1%
+
+3. GRACEFUL DEGRADATION:
+   Fallback strategies when >100ms or errors occur
+
+   Circuit Breaker Pattern:
+   - Open circuit if enhancement fails >10 times in 1 minute
+   - Half-open after 30 seconds for testing
+   - Closed when 5 consecutive successes
+
+   Degradation Levels:
+   1. Cache miss → Database only (skip PIPER.user.md)
+   2. Database slow → Use default profile
+   3. Enhancement slow → Return original response
+   4. Enhancement error → Return original response + log
+
+   Performance Guardrails:
+   - 50ms timeout for profile loading
+   - 40ms timeout for transformation processing
+   - 10ms buffer for monitoring/logging
+   - Total: 100ms hard limit with circuit breaker

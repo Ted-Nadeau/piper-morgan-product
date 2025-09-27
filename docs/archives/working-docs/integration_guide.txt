@@ -1,0 +1,108 @@
+=== PERSONALITY INTEGRATION GUIDE ===
+# UX-105 Personality Enhancement Integration Guide
+
+Developer guide for integrating ResponsePersonalityEnhancer across Piper's capabilities.
+
+## Quick Start
+
+```python
+from services.personality.response_enhancer import ResponsePersonalityEnhancer
+from services.personality.personality_profile import ResponseContext
+
+# Initialize enhancer
+enhancer = ResponsePersonalityEnhancer()
+
+# Create context
+context = ResponseContext(
+    intent_confidence=0.87,
+    intent_category=IntentCategory.EXECUTION,
+    response_type=ResponseType.CLI
+)
+
+# Enhance response
+enhanced = await enhancer.enhance_response(
+    content='Task completed successfully',
+    context=context,
+    user_id='user123'
+)
+```
+
+## Integration Points
+Based on Extended Phase -1 capabilities investigation:
+
+### 1. CLI Commands (8 modules with 100+ response points)
+
+```python
+# In cli/commands/issues.py
+async def triage_issues(self):
+    # ... existing logic ...
+
+    # Original response
+    original = 'Analysis complete. 23 issues found.'
+
+    # Enhance with personality
+    context = ResponseContext(
+        intent_confidence=0.92,
+        intent_category=IntentCategory.ANALYSIS,
+        response_type=ResponseType.CLI
+    )
+    enhanced = await enhancer.enhance_response(original, context, user_id)
+
+    self.print_success(enhanced.enhanced_content)
+```
+
+### 2. Web API Endpoints
+
+```python
+# In web/app.py
+@app.post('/api/v1/intent')
+async def process_intent(request: IntentRequest):
+    # ... existing intent processing ...
+
+    # Enhance response with personality
+    context = ResponseContext(
+        intent_confidence=intent.confidence,
+        intent_category=intent.category,
+        response_type=ResponseType.WEB
+    )
+    enhanced = await enhancer.enhance_response(response_content, context, user_id)
+
+    return {'message': enhanced.enhanced_content}
+```
+
+### 3. Template System Integration (15+ templates)
+
+```python
+# In services/ui_messages/templates.py
+class TemplateRenderer:
+    async def render_template(self, template: str, **kwargs) -> str:
+        # Render template first
+        rendered = template.format(**kwargs)
+
+        # Then enhance with personality
+        context = ResponseContext(
+            intent_confidence=kwargs.get('confidence', 0.5),
+            intent_category=kwargs.get('category'),
+            response_type=ResponseType.CHAT
+        )
+        enhanced = await enhancer.enhance_response(rendered, context, user_id)
+        return enhanced.enhanced_content
+```
+
+### 4. Error Handling Enhancement
+
+```python
+# Supportive error message enhancement
+try:
+    # ... operation that might fail ...
+except Exception as e:
+    original_error = f'GitHub API request failed: {str(e)}'
+
+    context = ResponseContext(
+        intent_confidence=0.3,  # Low confidence due to error
+        intent_category=IntentCategory.STATUS,
+        response_type=ResponseType.ERROR
+    )
+    enhanced = await enhancer.enhance_response(original_error, context, user_id)
+    logger.error(enhanced.enhanced_content)
+```

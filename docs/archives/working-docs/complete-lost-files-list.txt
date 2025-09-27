@@ -1,0 +1,170 @@
+commit 48a7a36d51f67b0e6c9ad0b6cfe6d07f168664a8
+Merge: 272cb721 77d59395
+Author: mediajunkie <3227378+mediajunkie@users.noreply.github.com>
+Date:   Thu Sep 25 19:13:04 2025 -0700
+
+    On verification/ci-test-1758852617: SSL documentation for commit
+
+.cursor/rules/programmer-briefing.mdc
+.cursor/rules/verification-first.mdc
+.github/workflows/test.yml.coverage_backup
+.github/workflows/test.yml.integration_backup
+CLAUDE.md
+coverage.json
+dev/2025/09/21/2025-09-21-0828-chief-architect-opus-log.md
+dev/2025/09/21/AGENTS.md
+dev/2025/09/21/CLAUDE.md
+dev/2025/09/21/MINIMAL-PROJECT-INSTRUCTIONS.md
+dev/2025/09/21/chief-architect-prompt-template.md
+dev/2025/09/21/cursor-programmer-briefing.mdc
+dev/2025/09/21/cursor-verification-first.mdc
+dev/2025/09/21/preservation-plan.md
+dev/2025/09/21/programmer-briefing.mdc
+dev/2025/09/22/2025-09-22-0816-arch-opus-log.md
+dev/2025/09/22/2025-09-22-1046-lead-sonnet-log.md
+dev/2025/09/22/2025-09-22-1204-prog-cursor-log.md
+dev/2025/09/22/24-hour-test-blog-draft.md
+dev/2025/09/22/CORE-GREAT-1A-issue.md
+dev/2025/09/22/CORE-GREAT-1B-issue.md
+dev/2025/09/22/CORE-GREAT-1C-issue.md
+dev/2025/09/22/CORE-QUERY-1-issue.md
+dev/2025/09/22/agent-prompt-claude-code-1B-implementation.md
+dev/2025/09/22/agent-prompt-claude-code-1B-investigation.md
+dev/2025/09/22/agent-prompt-claude-code-1C-assessment.md
+dev/2025/09/22/agent-prompt-claude-code-implementation-phase 2.md
+dev/2025/09/22/agent-prompt-claude-code-implementation.md
+dev/2025/09/22/agent-prompt-claude-code-queryrouter-investigation.md
+dev/2025/09/22/agent-prompt-cursor-1B-analysis.md
+dev/2025/09/22/agent-prompt-cursor-1C-analysis.md
+dev/2025/09/22/agent-prompt-cursor-implementation-phase 2.md
+dev/2025/09/22/agent-prompt-cursor-implementation.md
+dev/2025/09/22/agent-prompt-cursor-queryrouter-analysis.md
+dev/2025/09/22/briefing-update-inventory.md
+dev/2025/09/22/briefing-update-plan.md
+dev/2025/09/22/chief-architect-update-CORE-GREAT-1-status.md
+dev/2025/09/22/continuity-prompt-architect.md
+dev/2025/09/22/final-session-report-CORE-GREAT-1-complete.md
+dev/2025/09/22/gameplan-GREAT-1A.md
+dev/2025/09/22/gameplan-template-v8.md
+dev/2025/09/22/methodology-improvements-comprehensive.md
+dev/2025/09/22/methodology-improvements.md
+dev/2025/09/22/remaining-items-tomorrow.md
+dev/2025/09/22/session-log-standard-v2.md
+dev/2025/09/22/update-guide-condensed.md
+dev/2025/09/23/2025-09-23-1033-arch-opus-log.md
+dev/2025/09/23/2025-09-23-1605-lead-sonnet-log.md
+dev/2025/09/23/2025-09-23-1617-prog-code-log.md
+dev/2025/09/23/2025-09-23-1624-prog-cursor-log.md
+dev/2025/09/23/2025-09-23-1653-lead-sonnet-log.md
+dev/2025/09/23/2025-09-23-1915-lead-sonnet-log.md
+dev/2025/09/23/2025-09-23-session-log-arch-WRONG-NAME-STILL-IN-SANDBOX.md
+dev/2025/09/23/GREAT-1C-COMPLETION-issue.md
+dev/2025/09/23/adr-032-correct-implementation-status.md
+dev/2025/09/23/adr-032-implementation-status-draft.md
+dev/2025/09/23/adr-032-update-specification.md
+dev/2025/09/23/agent-prompt-code-adr032-update.md
+dev/2025/09/23/agent-prompt-code-commit-great1.md
+dev/2025/09/23/agent-prompt-code-git-investigation.md
+dev/2025/09/23/agent-prompt-code-testing-assessment.md
+dev/2025/09/23/agent-prompt-code-todo-verification.md
+dev/2025/09/23/agent-prompt-cursor-adr032-review.md
+dev/2025/09/23/agent-prompt-cursor-diagnostics.md
+dev/2025/09/23/agent-prompt-cursor-phase1-fix-imports.md
+dev/2025/09/23/agent-prompt-cursor-phase2-verification.md
+dev/2025/09/23/chief-architect-eod-report-sept23.md
+dev/2025/09/23/chief-architect-report-great1c-status.md
+dev/2025/09/23/code-addendum-sonnet-version.md
+dev/2025/09/23/continuity-prompt-architect.md
+dev/2025/09/23/gameplan-GREAT-1C-evidence.md
+dev/2025/09/23/gameplan-GREAT-2A.md
+dev/2025/09/23/llm-real-fix-strategy.md
+dev/2025/09/23/methodology-improvements-comprehensive.md
+dev/2025/09/23/session-log-plumbing-solution.md
+dev/2025/09/24/2025-09-24-1336-arch-opus-log.md
+dev/2025/09/24/2025-09-24-1358-lead-sonnet-log.md
+dev/2025/09/24/chief-architect-consultation-load-testing.md
+dev/2025/09/24/final-report-chief-architect-great1c-status.md
+dev/2025/09/24/gameplan-llm-regression-fix.md
+dev/2025/09/24/phase-1a-current-state-analysis.md
+dev/2025/09/24/phase-1b-historical-investigation.md
+dev/2025/09/24/phase-2-json-prompt-fix.md
+dev/2025/09/24/phase-2a-current-debugging-code.md
+dev/2025/09/24/phase-2b-historical-analysis-cursor.md
+dev/2025/09/24/phase-3a-verify-codes-claims-cursor.md
+dev/2025/09/24/phase-3b-implement-response-format-code.md
+dev/2025/09/24/phase-4b-implement-resilient-parsing-code.md
+dev/2025/09/24/phase-5a-evidence-verification-code.md
+dev/2025/09/24/phase-5b-documentation-locking-cursor.md
+dev/2025/09/24/phase-6a-corrected-testing-verification-code.md
+dev/2025/09/24/phase-6a-systematic-content-verification-cursor.md
+dev/2025/09/24/phase-6b-architecture-update-cursor.md
+dev/2025/09/24/phase-7a-locking-verification-code.md
+dev/active/2025-09-25-0851-lead-sonnet-log.md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (1).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (2).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (3).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (4).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (5).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (6).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log (7).md
+dev/active/2025-09-25-0851-lead-sonnet-session-log.md
+dev/active/2025-09-25-1650-lead-sonnet-log (1).md
+dev/active/2025-09-25-1650-lead-sonnet-log (2).md
+dev/active/2025-09-25-1650-lead-sonnet-log (3).md
+dev/active/2025-09-25-1650-lead-sonnet-log (4).md
+dev/active/2025-09-25-1650-lead-sonnet-log (5).md
+dev/active/2025-09-25-1650-lead-sonnet-log (6).md
+dev/active/2025-09-25-1650-lead-sonnet-log.md
+dev/active/adr-analysis-plan-systematic-investigation-code (1).md
+dev/active/adr-analysis-plan-systematic-investigation-code.md
+dev/active/agent-prompt-final-verification-code.md
+dev/active/agent-prompt-final-verification-cursor.md
+dev/active/agent-prompt-infrastructure-code-yaml.md
+dev/active/agent-prompt-infrastructure-cursor-ssl.md
+dev/active/agent-prompt-phase15-code-commit-docs (1).md
+dev/active/agent-prompt-phase15-code-commit-docs.md
+dev/active/agent-prompt-phase1a-code-fresh-clone.md
+dev/active/agent-prompt-phase1b-cursor-retest.md
+dev/active/agent-prompt-phase1b-cursor-setup.md
+dev/active/doc-mgmt/2025-09-25-0826-know-code-log.md
+dev/active/documentation-navigation-updates-adr-caveat-cursor.md
+dev/active/documentation-phase-initialization-docs-cursor.md
+dev/active/documentation-phase-todo-cleanup-code.md
+dev/active/evidence-verification-performance-claims-code.md
+dev/active/great-1c-status-report-chief-architect.md
+dev/active/phase-1-integration-performance-thresholds-cursor.md
+dev/active/phase-1a-performance-reality-assessment-code.md
+dev/active/phase-1b-performance-enforcement-cursor.md
+dev/active/phase-2a-coverage-reality-analysis-code.md
+dev/active/phase-2b-tiered-coverage-enforcement-cursor.md
+dev/active/phase-3-complete-ci-integration-testing-both.md
+docs/architecture/initialization-sequence.md
+docs/internal/architecture/current/adrs/adr-index.md
+docs/omnibus-logs/2025-09-19-omnibus-log.md
+docs/omnibus-logs/2025-09-20-omnibus-log.md
+docs/omnibus-logs/2025-09-21-omnibus-log.md
+docs/omnibus-logs/2025-09-22-omnibus-log.md
+docs/omnibus-logs/2025-09-23-omnibus-log.md
+docs/omnibus-logs/2025-09-24-omnibus-log.md
+docs/testing/enforcement-system-overview.md
+knowledge/CLAUDE.ai-project-instructions-v4.0.md
+knowledge/CLAUDE.md
+knowledge/agent-prompt-template.md
+knowledge/gameplan-template.md
+knowledge/github-guide.md
+knowledge/lead-developer-prompt-template.md
+knowledge/session-log-instructions.md
+knowledge/tdd-pragmatic-approach.md
+knowledge/versions/CLAUDE.ai-project-instructions-v3.3.md
+knowledge/versions/MINIMAL-PROJECT-INSTRUCTIONS.md
+knowledge/versions/agent-prompt-template-v7.md
+knowledge/versions/gameplan-template-v9.md
+scripts/check_coverage_locally.py
+scripts/run_performance_tests.py
+services/intent_service/llm_classifier.py
+services/intent_service/llm_classifier_factory.py
+tests/mocks/__init__.py
+tests/mocks/mock_agents.py
+tests/performance/test_llm_classifier_benchmarks.py
+tests/utils/__init__.py
+tests/utils/performance_monitor.py
