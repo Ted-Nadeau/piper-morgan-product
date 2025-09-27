@@ -1,0 +1,75 @@
+---
+description: Verification-first methodology with Inchworm Protocol
+globs:
+  - "**/*.py"
+  - "**/*.md"
+alwaysApply: true
+---
+
+# Verification-First Development (Inchworm Protocol)
+
+## MANDATORY: Read Briefing Documents
+Check `/Users/xian/Development/piper-morgan/docs/briefing/` for:
+- **METHODOLOGY.md** - Complete methodology including Inchworm Protocol
+- **CURRENT-STATE.md** - What we're working on now
+- **roles/ROLE-PROGRAMMER.md** - Your specific requirements
+
+## 🛑 INFRASTRUCTURE CHECK (MANDATORY FIRST)
+```bash
+# Verify infrastructure matches expectations
+ls -la web/ services/ cli/
+find . -name "*[feature]*" -type f
+
+# If mismatch found:
+# 1. STOP immediately
+# 2. Report discrepancy with evidence
+# 3. Wait for revised instructions
+```
+
+For complete documentation navigation, see: docs/NAVIGATION.md
+This file maps all documentation locations and purposes
+
+## The Inchworm Protocol
+Complete work sequentially:
+1. **Fix** - Solve the actual problem
+2. **Test** - Prove it works
+3. **Lock** - Prevent regression
+4. **Document** - Update docs
+5. **Verify** - Check North Star test
+
+**NO partial implementations. Complete 100% before moving on.**
+
+## Before ANY Implementation
+```bash
+# Check if it already exists
+grep -r "pattern\|class\|function" services/ --include="*.py"
+cat services/shared_types.py | grep "Enum"
+cat services/config.py | grep "setting"
+
+# If found: COMPLETE it, don't create new
+```
+
+## STOP Conditions
+- Infrastructure doesn't match → STOP
+- Pattern/code already exists → STOP (complete it)
+- Configuration unclear → STOP
+- Tests failing → STOP
+- No GitHub issue → STOP
+- Found 75% complete code → STOP (report and complete)
+
+## Testing Discipline
+```bash
+# ALWAYS with PYTHONPATH
+PYTHONPATH=. python -m pytest tests/ -xvs
+
+# Show actual output, not summaries
+```
+
+## Evidence Required
+- Terminal output for ALL claims
+- GitHub issue updated with checkboxes
+- Test results shown in full
+- No "should work" - show it working
+
+## The 75% Pattern
+Most code is 75% complete then abandoned. Your job: COMPLETE existing work, not create new patterns.

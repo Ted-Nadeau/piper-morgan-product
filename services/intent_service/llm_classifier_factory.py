@@ -9,8 +9,8 @@ from typing import Optional
 
 import structlog
 
-from services.database.async_session_factory import AsyncSessionFactory
 from services.database.repositories import KnowledgeGraphRepository
+from services.database.session_factory import AsyncSessionFactory
 from services.intent_service.llm_classifier import LLMIntentClassifier
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
 from services.knowledge.semantic_indexing_service import SemanticIndexingService

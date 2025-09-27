@@ -14,7 +14,7 @@ QueryRouter functionality is complete and working. However, test suite has quali
 - [ ] Ensure all async tests properly await mocked operations
 - [ ] Document mock patterns for future test writing
 
-### Integration Test Alignment  
+### Integration Test Alignment
 - [ ] Update test assertions to match actual API behavior
 - [ ] Fix `assert 200 == 422` discrepancies
 - [ ] Align test expectations with implementation reality
