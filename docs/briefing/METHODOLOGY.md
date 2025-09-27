@@ -244,28 +244,53 @@ The goal is effective work, not perfect adherence to templates.
 > **🛠️ Templates**: [human-ai-collaboration-referee.md](../piper-education/methodologies/emergent/human-ai-collaboration-referee.md) - Implementation protocols
 
 ### Agent Strengths
-**Claude Code**:
-- Broad exploration
-- Pattern discovery
-- Creative solutions
-- Subagent deployment
 
-**Cursor**:
-- Focused implementation
-- Specific file edits
-- Precise changes
-- Performance optimization
+> **📍 Complete Reference**: [methodology-02-AGENT-COORDINATION.md](../internal/development/methodology-core/methodology-02-AGENT-COORDINATION.md#canonical-agent-strengths-single-source-of-truth) - Authoritative agent strengths
+
+**Quick Summary**:
+- **Claude Code**: Multi-file implementations, architecture design, subagent coordination
+- **Cursor**: API endpoints, testing, documentation, UI/UX implementation
 
 ### Deployment Patterns
-**Default**: Deploy both agents with cross-validation
-**Exception**: Single agent only with justification
 
-### Cross-Validation Protocol
-1. Both agents work same problem
-2. Different approaches expected
-3. Compare solutions
-4. Merge best elements
-5. Verify together
+> **🎯 Decision Guide**: [Validation Approaches](../internal/development/methodology-core/methodology-02-AGENT-COORDINATION.md#validation-approaches-when-to-use-each-method) - When to use cross-validation vs parallel separation
+
+**Cross-Validation Mode**: Both agents work same high-risk task, compare approaches
+**Parallel Separation Mode**: Agents work different domains, coordinate at interfaces
+**Single Agent**: Only with explicit justification for simple tasks
+
+### Quick Decision Framework
+- **High risk + complex** → Cross-validation
+- **Clear domains + time critical** → Parallel separation
+- **Uncertain territory** → Start cross-validation, evolve to parallel
+
+### Multi-Agent Quick Start Checklist
+
+**Pre-Deployment** (2 minutes):
+- [ ] Task complexity justifies multi-agent approach
+- [ ] Clear separation of concerns identified OR overlap planned for cross-validation
+- [ ] Integration points defined (API, domain models, test interfaces)
+
+**Deployment** (30 seconds):
+- [ ] Both agents briefed with agent-specific prompts
+- [ ] GitHub issue created for coordination
+- [ ] Initial sync point scheduled (15-30 minutes)
+
+**Execution** (ongoing):
+- [ ] Regular progress updates in shared GitHub issue
+- [ ] Coordination checkpoints every 15-30 minutes
+- [ ] Integration validation before completion claims
+
+**Quality Gates**:
+- [ ] Both agents verify final integration
+- [ ] Evidence provided for all claims
+- [ ] Cross-validation performed for critical components
+
+### Common Pitfalls to Avoid
+- **Duplicate work** without coordination
+- **Interface conflicts** from lack of upfront agreement
+- **Uneven progress** without sync checkpoints
+- **Integration debt** from deferred coordination
 
 ## Evidence Requirements
 
