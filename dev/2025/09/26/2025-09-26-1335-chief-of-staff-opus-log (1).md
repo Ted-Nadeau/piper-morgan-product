@@ -11,7 +11,7 @@
 
 ## Documents Received
 1. PRD Best Practices integration proposal
-2. Chrome DevTools MCP for UI validation 
+2. Chrome DevTools MCP for UI validation
 3. Multi-agent coordination enhancement analysis
 
 ---
@@ -134,10 +134,29 @@ Based on current state and upcoming work:
 
 3. **Evidence-Based Everything**: Chrome DevTools MCP directly supports your evidence-first methodology. No more "trust me, it works."
 
-4. **Interconnected Solutions**: 
+4. **Interconnected Solutions**:
    - PRD dynamic docs → Better agent briefing
    - Chrome DevTools → Evidence for handoffs
    - Multi-agent coordination → Orchestrates both
 
 5. **MVP vs Post-MVP**: Clear delineation between what enables MVP (coordination, basic validation) vs what enhances it (PRD generation, swarm deployment)
 
+---
+
+### 1:46 PM - PM Clarifications & Response
+
+**Key Corrections from PM**:
+- 75% pattern varies widely (40%-75% case by case) - not universal
+- QueryRouter confusion - was just fixed yesterday in GREAT-1, shouldn't be disabled
+- HandoffProtocol unclear - not recognized from GREAT-1 work
+- OrchestrationEngine connection unclear why not in GREAT-1
+- Scripts exist but operational knowledge missing
+- Chain-of-draft was planned but 0% implemented
+- Token optimization placement unclear (not Core/Refactor?)
+
+**PM Questions**:
+1. Chrome DevTools only if needed for GREAT-2
+2. OrchestrationEngine probably belongs in GREAT-2
+3. Token optimization might help but implementation path unclear
+
+**Action**: Prepare cover note for Chief Architect with clarified context

@@ -7,7 +7,7 @@ Based on GREAT-1 lessons and accounting for all integrations including Google Ca
 ---
 
 ## CORE-GREAT-2A: ADR Review & Pattern Discovery
-**Duration**: ~1 day  
+**Duration**: ~1 day
 **Type**: Investigation & Documentation
 
 ### Scope
@@ -45,7 +45,7 @@ Pure investigation work - no code changes. Sets foundation for cleanup. Must und
 ---
 
 ## CORE-GREAT-2B: GitHub Service Unification
-**Duration**: ~1 day  
+**Duration**: ~1 day
 **Type**: Code Cleanup
 
 ### Scope
@@ -73,7 +73,7 @@ Pure investigation work - no code changes. Sets foundation for cleanup. Must und
 ---
 
 ## CORE-GREAT-2C: Slack & Notion Service Unification
-**Duration**: ~1 day  
+**Duration**: ~1 day
 **Type**: Code Cleanup
 
 ### Scope
@@ -104,7 +104,7 @@ TBD-SECURITY-02 is HIGH priority - webhook verification must be re-enabled befor
 ---
 
 ## CORE-GREAT-2D: Google Calendar & Configuration Validation
-**Duration**: ~1 day  
+**Duration**: ~1 day
 **Type**: Code Cleanup & Infrastructure
 
 ### Scope
@@ -132,7 +132,7 @@ TBD-SECURITY-02 is HIGH priority - webhook verification must be re-enabled befor
 ---
 
 ## CORE-GREAT-2E: Documentation Cleanup & Final Verification
-**Duration**: ~1 day  
+**Duration**: ~1 day
 **Type**: Documentation & Testing
 
 ### Scope

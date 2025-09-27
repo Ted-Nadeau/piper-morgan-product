@@ -17,7 +17,7 @@ Six days earlier, on Friday afternoon, I'd felt that familiar anxiety creep in. 
 The Inchworm Protocol answered: break it down, work methodically, complete each piece before moving forward. Don't worry about the whole mountain. Focus on the next step.
 
 - **Step 1**: Investigate why QueryRouter was disabled (session management, not complexity)
-- **Step 2**: Connect the pipeline (Intent → Orchestration → QueryRouter)  
+- **Step 2**: Connect the pipeline (Intent → Orchestration → QueryRouter)
 - **Step 3**: Lock it against regression (9 tests preventing backslide)
 - **Step 4**: Document everything (architecture matches reality)
 - **Step 5**: Verify it actually works (evidence over claims)

@@ -334,7 +334,7 @@ def orchestrate(task):
 
 ### 8.1 Emerging Trends
 
-**Interaction-Centric Design**: 
+**Interaction-Centric Design**:
 Moving from agent-centric to interaction-pattern-centric architectures, as advocated by MIT Media Lab research.
 
 **Adaptive Orchestration**:

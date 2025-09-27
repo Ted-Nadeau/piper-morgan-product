@@ -1,8 +1,8 @@
 # ADR-037: Test-Driven Locking Strategy
 
-**Status**: Accepted  
-**Date**: September 26, 2025  
-**Deciders**: Christian Crumlish (PM), Claude Opus (Chief Architect)  
+**Status**: Accepted
+**Date**: September 26, 2025
+**Deciders**: Christian Crumlish (PM), Claude Opus (Chief Architect)
 **Category**: Testing, Quality, Methodology
 
 ## Context

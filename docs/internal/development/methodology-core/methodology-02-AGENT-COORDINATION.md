@@ -1,5 +1,11 @@
 # Agent Coordination Methodology
 
+> **Related Documentation**:
+> - **Quick Reference**: [METHODOLOGY.md](../../briefing/METHODOLOGY.md#multi-agent-coordination) - Operational overview
+> - **Educational Examples**: [multi-agent-patterns.md](../../piper-education/methodologies/emergent/multi-agent-patterns.md) - Real project narratives
+> - **Handoff Templates**: [human-ai-collaboration-referee.md](../../piper-education/methodologies/emergent/human-ai-collaboration-referee.md) - Implementation protocols
+> - **Python Implementation**: [/methodology/coordination/](../../../methodology/coordination/) - Live code
+
 ## Overview
 
 This document outlines the systematic approach for coordinating multiple AI agents on complex technical projects, ensuring parallel development while maintaining quality and integration coherence.
