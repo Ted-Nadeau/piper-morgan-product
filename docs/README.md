@@ -244,8 +244,11 @@ See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 ## 📚 Enhanced Development Documentation
 
 ### Core Methodology
-- **[Excellence Flywheel Methodology](development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
-- **[Multi-Agent Coordination Guide](development/HOW_TO_USE_MULTI_AGENT.md)** - Intelligent task decomposition
+> **🧭 Complete Methodology Index**: [methodology-core/INDEX.md](internal/development/methodology-core/INDEX.md) - Full navigation guide
+> **⚡ Quick Start**: [METHODOLOGY.md](briefing/METHODOLOGY.md) - Operational overview
+
+- **[Excellence Flywheel Methodology](internal/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
+- **[Multi-Agent Coordination](internal/development/methodology-core/methodology-02-AGENT-COORDINATION.md)** - Intelligent coordination patterns
 - **[Multi-Agent Quick Start](development/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
 - **[Test Infrastructure Guide](development/TEST-GUIDE.md)** - Smart test execution patterns
 

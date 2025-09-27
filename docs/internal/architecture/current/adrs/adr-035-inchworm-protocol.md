@@ -1,7 +1,7 @@
 # ADR-035: The Inchworm Protocol
 
-**Status**: Accepted  
-**Date**: September 20, 2025  
+**Status**: Accepted
+**Date**: September 20, 2025
 **Deciders**: Christian Crumlish (PM), Chief Architect
 
 ## Context
@@ -30,7 +30,7 @@ Historical evidence shows this pattern repeatedly:
 
 Each epic follows this rigid pattern:
 1. **Fix** the broken system
-2. **Test** comprehensively  
+2. **Test** comprehensively
 3. **Lock** with tests that prevent regression
 4. **Document** what was done and why
 5. **Verify** with core user story (GitHub issue creation)
@@ -120,15 +120,15 @@ If starting when not finished: **STOP**.
 ## Alternatives Considered
 
 ### Alternative 1: Parallel Refactors
-**Description**: Work on multiple refactors simultaneously  
+**Description**: Work on multiple refactors simultaneously
 **Rejected Because**: This is how we got into the current mess
 
 ### Alternative 2: Feature-First with Patches
-**Description**: Ship features with workarounds, fix foundations later  
+**Description**: Ship features with workarounds, fix foundations later
 **Rejected Because**: Workarounds become permanent, foundations never get fixed
 
 ### Alternative 3: Big Bang Rewrite
-**Description**: Throw everything away and start over  
+**Description**: Throw everything away and start over
 **Rejected Because**: Loses valuable existing work, repeats same mistakes
 
 ## Philosophical Foundation

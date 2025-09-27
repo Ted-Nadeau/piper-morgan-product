@@ -39,7 +39,7 @@ grep -r "excellence.*flywheel" . --include="*.md" --include="*.txt" --include="*
 ```bash
 # Search for the specific TBD items
 grep -r "TBD-API-01" . --include="*.py" --include="*.md" --include="*.txt"
-grep -r "TBD-LLM-01" . --include="*.py" --include="*.md" --include="*.txt"  
+grep -r "TBD-LLM-01" . --include="*.py" --include="*.md" --include="*.txt"
 grep -r "TBD-SECURITY-02" . --include="*.py" --include="*.md" --include="*.txt"
 
 # Search for general TBD pattern
@@ -88,13 +88,13 @@ ls -la docs/
 - **Context**: [surrounding code/description]
 - **Status**: [Active/Resolved/Deprecated]
 
-### TBD-LLM-01  
+### TBD-LLM-01
 - **Location**: [file:line]
 - **Context**: [surrounding code/description]
 - **Status**: [Active/Resolved/Deprecated]
 
 ### TBD-SECURITY-02
-- **Location**: [file:line] 
+- **Location**: [file:line]
 - **Context**: [surrounding code/description]
 - **Status**: [Active/Resolved/Deprecated]
 

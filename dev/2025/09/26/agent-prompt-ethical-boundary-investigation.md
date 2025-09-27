@@ -132,7 +132,7 @@ class EthicsBoundaryMiddleware:
 
 ## Coverage Analysis
 - GitHub Integration: [Covered/Not Covered/Partial]
-- Slack Integration: [Covered/Not Covered/Partial]  
+- Slack Integration: [Covered/Not Covered/Partial]
 - Notion Integration: [Covered/Not Covered/Partial]
 - Google Calendar: [Covered/Not Covered/Partial]
 - QueryRouter: [Covered/Not Covered/Partial]

@@ -1,5 +1,8 @@
 # Methodology Core Index
 
+> **🧭 Complete Navigation**: [INDEX.md](INDEX.md) - Full methodology index with quick decision tree
+> **⚡ Quick Start**: [METHODOLOGY.md](../../briefing/METHODOLOGY.md) - Operational overview
+
 ## Foundational (00-07)
 - **00**: Excellence Flywheel - Core systematic approach
 - **01**: TDD Requirements - Test-driven discipline

@@ -115,6 +115,10 @@ class PerformanceMonitor:
             "max_latency_ms": max(latencies),
             "avg_latency_ms": sum(latencies) / len(latencies),
             "target_latency_ms": self.target_latency_ms,
-            "within_target_count": sum(1 for l in latencies if l <= self.target_latency_ms),
-            "exceeded_target_count": sum(1 for l in latencies if l > self.target_latency_ms),
+            "within_target_count": sum(
+                1 for latency in latencies if latency <= self.target_latency_ms
+            ),
+            "exceeded_target_count": sum(
+                1 for latency in latencies if latency > self.target_latency_ms
+            ),
         }
