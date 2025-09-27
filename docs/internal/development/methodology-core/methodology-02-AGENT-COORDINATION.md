@@ -30,23 +30,32 @@ This document outlines the systematic approach for coordinating multiple AI agen
 - Integration testing validates combined work
 - Performance and reliability are preserved
 
-## Proven Parallel Deployment Patterns (August 5, 2025 Validation)
+## Canonical Agent Strengths (Single Source of Truth)
 
-### Claude Code Strengths (High Context)
+> **📍 Authoritative Reference**: This section is the single source of truth for agent strengths.
+> **Other documents should reference this section rather than duplicate this content.**
 
-- **Multi-file systematic implementations**: PM-034 LLM classifier (500+ lines)
-- **GitHub Actions management**: CI/CD pipeline deployment
-- **Domain model architecture**: Universal List refactoring (1,500+ lines)
+### Claude Code Strengths (High Context, Broad Scope)
+
+- **Multi-file systematic implementations**: Proven with PM-034 LLM classifier (500+ lines)
+- **GitHub Actions and CI/CD management**: Pipeline deployment and automation
+- **Domain model architecture**: Universal List refactoring (1,500+ lines), PM-040 Knowledge Graph
 - **Database schema design**: Strategic indexing and migration patterns
-- **Integration planning**: PM-040 Knowledge Graph connection architecture
+- **Subagent coordination**: Deploy `/agent` subagents for parallel investigation
+- **Integration planning**: Cross-system architecture and coordination
+- **Pattern discovery**: Broad codebase exploration and systematic analysis
 
-### Cursor Strengths (Implementation Focus)
+### Cursor Strengths (Implementation Focus, Precision)
 
-- **API endpoint development**: PM-034 API layer (600+ lines)
+- **API endpoint development**: PM-034 API layer implementation (600+ lines)
 - **Testing infrastructure**: Comprehensive test suites (800+ lines)
 - **Documentation creation**: Complete API documentation (1,000+ lines)
+- **UI/UX implementation**: Frontend components and user experience
 - **Performance validation**: Empirical testing and benchmarking
-- **User experience considerations**: Backward compatibility preservation
+- **Focused file editing**: Precise changes to specific components
+- **Backward compatibility**: User experience preservation and migration paths
+
+## Proven Parallel Deployment Patterns (August 5, 2025 Validation)
 
 ### Coordination Success Patterns
 
@@ -54,6 +63,44 @@ This document outlines the systematic approach for coordinating multiple AI agen
 - **Interface Agreement**: Align on domain models before implementation
 - **Progress Synchronization**: Regular coordination checkpoints
 - **Integration Validation**: Combined testing of parallel work streams
+
+## Validation Approaches: When to Use Each Method
+
+### Cross-Validation Mode (Both Agents, Same Task)
+
+**Use when**:
+- Task criticality is **HIGH** (production deployments, security features, core architecture)
+- Domain expertise overlap exists between agent strengths
+- Verification confidence needed for complex decisions
+- Time permits redundant work for quality assurance
+- Risk of single-point-of-failure is unacceptable
+
+**Example**: Both agents implement authentication system, compare approaches, merge best elements
+
+**Benefits**: Maximum quality assurance, multiple perspectives, reduced risk
+**Cost**: Higher time investment, potential coordination overhead
+
+### Parallel Separation Mode (Different Domains)
+
+**Use when**:
+- Domains are **clearly distinct** with minimal overlap
+- Time is critical or resources are constrained
+- Agent strengths clearly align with specific task requirements
+- Integration points are well-defined and stable
+- Teams are experienced with coordination patterns
+
+**Example**: Code handles backend/API, Cursor handles frontend/UI, coordinate at REST interface
+
+**Benefits**: Maximum velocity, efficient resource utilization, clear ownership
+**Cost**: Requires excellent coordination, integration risk
+
+### Decision Framework
+
+```
+High Risk + Complex Task → Cross-Validation Mode
+Clear Domains + Time Critical → Parallel Separation Mode
+Uncertain/New Territory → Start Cross-Validation, evolve to Parallel
+```
 
 ## Coordination Framework
 
