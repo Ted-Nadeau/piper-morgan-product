@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import structlog
 
 from services.api.errors import GitHubAuthFailedError, GitHubRateLimitError
-from services.integrations.github.github_agent import GitHubAgent
+from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 
 # Re-export exceptions for clean domain boundary
 __all__ = ["GitHubDomainService", "GitHubAuthFailedError", "GitHubRateLimitError"]
@@ -30,10 +30,10 @@ class GitHubDomainService:
     - Manages GitHub agent lifecycle and configuration
     """
 
-    def __init__(self, github_agent: Optional[GitHubAgent] = None):
+    def __init__(self, github_agent: Optional[GitHubIntegrationRouter] = None):
         """Initialize with optional GitHub agent injection"""
         try:
-            self._github_agent = github_agent or GitHubAgent()
+            self._github_agent = github_agent or GitHubIntegrationRouter()
             logger.info(
                 "GitHub domain service initialized", agent_type=type(self._github_agent).__name__
             )

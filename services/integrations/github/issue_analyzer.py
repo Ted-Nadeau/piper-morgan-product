@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # Local imports (adjust paths as needed)
-from services.integrations.github.github_agent import GitHubAgent
+from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 from services.integrations.github.issue_generator import IssueContentGenerator
 from services.knowledge_graph.ingestion import get_ingester
 from services.llm.clients import llm_client
@@ -30,8 +30,8 @@ class IssueAnalysis:
 class GitHubIssueAnalyzer:
     """Analyzes GitHub issues and provides improvement suggestions"""
 
-    def __init__(self, github_agent: Optional[GitHubAgent] = None):
-        self.github = github_agent or GitHubAgent()
+    def __init__(self, github_agent: Optional[GitHubIntegrationRouter] = None):
+        self.github = github_agent or GitHubIntegrationRouter()
         self.knowledge = get_ingester()
         self.ideal_generator = IssueContentGenerator()
 

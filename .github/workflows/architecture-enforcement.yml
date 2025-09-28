@@ -1,0 +1,176 @@
+name: Architecture Enforcement
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**/*.py'
+      - 'tests/test_architecture_enforcement.py'
+      - '.github/workflows/architecture-enforcement.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/**/*.py'
+      - 'tests/test_architecture_enforcement.py'
+      - '.github/workflows/architecture-enforcement.yml'
+
+jobs:
+  github-integration-architecture:
+    name: GitHub Integration Router Architecture
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.11-architecture-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-3.11-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🔍 Architecture Enforcement Tests
+        run: |
+          echo "🔒 GITHUB INTEGRATION ROUTER ARCHITECTURE ENFORCEMENT"
+          echo "=================================================="
+          echo
+          echo "Preventing regression to direct GitHubAgent imports"
+          echo "Ensuring router architecture compliance"
+          echo
+          PYTHONPATH=. python -m pytest tests/test_architecture_enforcement.py -v --tb=short
+
+      - name: 🚨 Direct Import Violation Check
+        run: |
+          echo
+          echo "🚨 DIRECT IMPORT VIOLATION SCAN"
+          echo "==============================="
+          echo
+          echo "Scanning for direct GitHubAgent imports in services..."
+
+          # Fast grep-based check for direct imports
+          if grep -r "from.*github_agent import GitHubAgent" services/ --include="*.py" --exclude-dir=integrations; then
+            echo "❌ CRITICAL: Direct GitHubAgent imports found!"
+            echo
+            echo "Services must use GitHubIntegrationRouter to maintain:"
+            echo "• Feature flag control (spatial vs legacy routing)"
+            echo "• Architectural integrity"
+            echo "• Spatial intelligence capabilities"
+            echo
+            echo "🔧 Fix by replacing:"
+            echo "  from services.integrations.github.github_agent import GitHubAgent"
+            echo "With:"
+            echo "  from services.integrations.github.github_integration_router import GitHubIntegrationRouter"
+            echo
+            echo "📖 See: docs/architecture/github-integration-router.md"
+            exit 1
+          else
+            echo "✅ No direct GitHubAgent imports found"
+          fi
+
+          # Additional patterns check
+          if grep -r "import.*github_agent" services/ --include="*.py" --exclude-dir=integrations | grep -v router; then
+            echo "❌ CRITICAL: Indirect GitHubAgent imports found!"
+            echo "Services must use GitHubIntegrationRouter pattern"
+            exit 1
+          else
+            echo "✅ No indirect GitHubAgent imports found"
+          fi
+
+      - name: ✅ Router Usage Verification
+        run: |
+          echo
+          echo "✅ ROUTER USAGE VERIFICATION"
+          echo "============================"
+          echo
+
+          # Count services using router
+          router_count=$(grep -r "GitHubIntegrationRouter" services/ --include="*.py" | grep -c "import GitHubIntegrationRouter" || echo "0")
+          echo "Router usage: $router_count services converted"
+
+          # List converted services
+          echo
+          echo "Converted services:"
+          grep -r "GitHubIntegrationRouter" services/ --include="*.py" | grep "import GitHubIntegrationRouter" | while read -r line; do
+            service_file=$(echo "$line" | cut -d: -f1)
+            service_name=$(basename "$service_file" .py)
+            echo "  ✅ $service_name ($service_file)"
+          done
+
+      - name: 🎯 Feature Flag System Check
+        run: |
+          echo
+          echo "🎯 FEATURE FLAG SYSTEM VERIFICATION"
+          echo "===================================="
+          echo
+
+          # Test feature flag system accessibility
+          PYTHONPATH=. python -c "
+          try:
+              from services.infrastructure.config.feature_flags import FeatureFlags
+              print('✅ FeatureFlags module accessible')
+              print(f'   Spatial preference: {FeatureFlags.should_use_spatial_github()}')
+              print(f'   Legacy allowed: {FeatureFlags.is_legacy_github_allowed()}')
+              print(f'   Deprecation warnings: {FeatureFlags.should_warn_github_deprecation()}')
+              print()
+              print('✅ Feature flag system operational')
+          except Exception as e:
+              print(f'❌ Feature flag system error: {e}')
+              exit(1)
+          "
+
+      - name: 📊 Architecture Compliance Summary
+        run: |
+          echo
+          echo "📊 ARCHITECTURE COMPLIANCE SUMMARY"
+          echo "==================================="
+          echo
+          echo "✅ Anti-pattern tests: ENFORCED"
+          echo "✅ Direct imports: BLOCKED"
+          echo "✅ Router usage: VERIFIED"
+          echo "✅ Feature flags: OPERATIONAL"
+          echo
+          echo "🔒 GitHub Integration Router Architecture: PROTECTED"
+          echo "🚀 Spatial intelligence capabilities: PRESERVED"
+          echo
+          echo "## Architecture Enforcement Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All architectural constraints enforced" >> $GITHUB_STEP_SUMMARY
+          echo "✅ No direct GitHubAgent import violations" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Router pattern compliance verified" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Feature flag system operational" >> $GITHUB_STEP_SUMMARY
+
+      - name: ⚠️ Architecture Violation Response
+        if: failure()
+        run: |
+          echo
+          echo "🚨 ARCHITECTURE VIOLATION DETECTED"
+          echo "=================================="
+          echo
+          echo "This build failed due to architectural policy violations."
+          echo "The GitHub Integration Router pattern must be maintained to:"
+          echo
+          echo "🎯 Enable spatial intelligence capabilities"
+          echo "🔄 Provide feature flag control (spatial vs legacy)"
+          echo "🔒 Maintain architectural integrity"
+          echo "🚀 Support future enhancements"
+          echo
+          echo "📋 TO FIX VIOLATIONS:"
+          echo "1. Review the test output above"
+          echo "2. Replace direct GitHubAgent imports with GitHubIntegrationRouter"
+          echo "3. Run tests locally: PYTHONPATH=. python -m pytest tests/test_architecture_enforcement.py"
+          echo "4. Verify compliance before committing"
+          echo
+          echo "📖 Architecture Guide: docs/architecture/github-integration-router.md"
+          echo "🐛 Issue Reference: GitHub #193 - CORE-GREAT-2B"

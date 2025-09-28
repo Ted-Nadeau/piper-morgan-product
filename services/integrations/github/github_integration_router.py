@@ -17,7 +17,7 @@ Architecture Decision: ADR-013 MCP+Spatial Integration Pattern
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from services.infrastructure.config.feature_flags import FeatureFlags
 from services.integrations.spatial.github_spatial import GitHubSpatialIntelligence
@@ -80,11 +80,14 @@ class GitHubIntegrationRouter:
 
     async def initialize(self):
         """Initialize the GitHub integrations asynchronously"""
-        if self.spatial_github:
-            await self.spatial_github.initialize()
-
-        if self.legacy_github and hasattr(self.legacy_github, "initialize"):
-            await self.legacy_github.initialize()
+        integration, is_legacy = self._get_preferred_integration("initialize")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("initialize", is_legacy)
+            if hasattr(integration, "initialize"):
+                await integration.initialize()
+        else:
+            raise RuntimeError("No GitHub integration available for initialize")
 
     def _warn_deprecation_if_needed(self, operation: str, used_legacy: bool):
         """Issue deprecation warnings when legacy integration is used"""
@@ -118,175 +121,78 @@ class GitHubIntegrationRouter:
             f"Legacy: {self.legacy_github is not None}"
         )
 
-    async def get_issue(self, repository: str, issue_number: int) -> Optional[Dict[str, Any]]:
+    async def get_issue(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
         """
-        Get GitHub issue with spatial intelligence or legacy fallback.
-
-        Args:
-            repository: Repository name (e.g., "piper-morgan-product")
-            issue_number: GitHub issue number
-
-        Returns:
-            Issue data with spatial intelligence if available, otherwise basic issue data
+        Get GitHub issue.
         """
         integration, is_legacy = self._get_preferred_integration("get_issue")
-        self._warn_deprecation_if_needed("get_issue", is_legacy)
-
-        try:
+        if integration:
             if is_legacy:
-                # Legacy integration - direct issue fetch
-                return await integration.get_issue(repository, issue_number)
-            else:
-                # Spatial integration - enhanced with 8-dimensional analysis
-                issue_data = await integration.get_issue(repository, issue_number)
-
-                # Add spatial intelligence if we got valid issue data
-                if issue_data:
-                    spatial_context = await integration.create_spatial_context(issue_data)
-                    issue_data["spatial_intelligence"] = {
-                        "attention_level": spatial_context.attention_level,
-                        "emotional_valence": spatial_context.emotional_valence,
-                        "navigation_intent": spatial_context.navigation_intent,
-                        "8_dimensional_analysis": spatial_context.external_context,
-                    }
-
-                return issue_data
-
-        except Exception as e:
-            logger.error(f"GitHub integration failed for get_issue: {e}")
-
-            # Try fallback if available and different from what we tried
-            if not is_legacy and self.allow_legacy and self.legacy_github:
-                logger.info("Attempting legacy fallback for get_issue")
-                self._warn_deprecation_if_needed("get_issue (fallback)", True)
-                return await self.legacy_github.get_issue(repository, issue_number)
-
-            raise
+                self._warn_deprecation_if_needed("get_issue", is_legacy)
+            return await integration.get_issue(repo_name, issue_number)
+        else:
+            raise RuntimeError("No GitHub integration available for get_issue")
 
     async def list_issues(self, repository: str, **kwargs) -> List[Dict[str, Any]]:
         """
-        List GitHub issues with spatial intelligence or legacy fallback.
-
-        Args:
-            repository: Repository name
-            **kwargs: Additional filtering parameters
-
-        Returns:
-            List of issues with spatial intelligence if available
+        List GitHub issues.
         """
         integration, is_legacy = self._get_preferred_integration("list_issues")
-        self._warn_deprecation_if_needed("list_issues", is_legacy)
-
-        try:
+        if integration:
             if is_legacy:
-                # Legacy integration - basic issue list
-                return await integration.list_issues(repository, **kwargs)
-            else:
-                # Spatial integration - enhanced with context analysis
-                issues = await integration.list_issues(repository, **kwargs)
-
-                # Add spatial intelligence to each issue
-                enhanced_issues = []
-                for issue in issues:
-                    try:
-                        spatial_context = await integration.create_spatial_context(issue)
-                        issue["spatial_intelligence"] = {
-                            "attention_level": spatial_context.attention_level,
-                            "emotional_valence": spatial_context.emotional_valence,
-                            "navigation_intent": spatial_context.navigation_intent,
-                        }
-                        enhanced_issues.append(issue)
-                    except Exception as spatial_error:
-                        logger.warning(
-                            f"Spatial analysis failed for issue {issue.get('number')}: {spatial_error}"
-                        )
-                        enhanced_issues.append(issue)  # Include without spatial intelligence
-
-                return enhanced_issues
-
-        except Exception as e:
-            logger.error(f"GitHub integration failed for list_issues: {e}")
-
-            # Try fallback if available
-            if not is_legacy and self.allow_legacy and self.legacy_github:
-                logger.info("Attempting legacy fallback for list_issues")
-                self._warn_deprecation_if_needed("list_issues (fallback)", True)
-                return await self.legacy_github.list_issues(repository, **kwargs)
-
-            raise
+                self._warn_deprecation_if_needed("list_issues", is_legacy)
+            return await integration.list_issues(repository, **kwargs)
+        else:
+            raise RuntimeError("No GitHub integration available for list_issues")
 
     async def create_issue(
-        self, repository: str, title: str, body: str, **kwargs
+        self, repo_name: str, title: str, body: str, labels: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
-        Create GitHub issue using available integration.
-
-        Args:
-            repository: Repository name
-            title: Issue title
-            body: Issue body
-            **kwargs: Additional issue parameters (labels, assignees, etc.)
-
-        Returns:
-            Created issue data
+        Create GitHub issue.
         """
         integration, is_legacy = self._get_preferred_integration("create_issue")
-        self._warn_deprecation_if_needed("create_issue", is_legacy)
-
-        try:
-            created_issue = await integration.create_issue(repository, title, body, **kwargs)
-
-            # Add spatial analysis for the newly created issue if using spatial integration
-            if not is_legacy and created_issue:
-                try:
-                    spatial_context = await integration.create_spatial_context(created_issue)
-                    created_issue["spatial_intelligence"] = {
-                        "attention_level": spatial_context.attention_level,
-                        "emotional_valence": spatial_context.emotional_valence,
-                        "navigation_intent": spatial_context.navigation_intent,
-                    }
-                except Exception as spatial_error:
-                    logger.warning(f"Spatial analysis failed for created issue: {spatial_error}")
-
-            return created_issue
-
-        except Exception as e:
-            logger.error(f"GitHub integration failed for create_issue: {e}")
-
-            # Try fallback if available
-            if not is_legacy and self.allow_legacy and self.legacy_github:
-                logger.info("Attempting legacy fallback for create_issue")
-                self._warn_deprecation_if_needed("create_issue (fallback)", True)
-                return await self.legacy_github.create_issue(repository, title, body, **kwargs)
-
-            raise
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("create_issue", is_legacy)
+            return await integration.create_issue(repo_name, title, body, labels)
+        else:
+            raise RuntimeError("No GitHub integration available for create_issue")
 
     def get_integration_status(self) -> Dict[str, Any]:
         """
         Get current integration status for monitoring and debugging.
-
-        Returns:
-            Status information about current GitHub integrations
         """
-        return {
-            "router_initialized": True,
-            "feature_flags": {
-                "use_spatial": self.use_spatial,
-                "allow_legacy": self.allow_legacy,
-                "warn_deprecation": self.warn_deprecation,
-            },
-            "integrations": {
-                "spatial_available": self.spatial_github is not None,
-                "legacy_available": self.legacy_github is not None,
-            },
-            "preferred_integration": (
-                "spatial" if self.use_spatial and self.spatial_github else "legacy"
-            ),
-            "deprecation_timeline": {
-                "week": self._get_deprecation_week(),
-                "legacy_removal_date": "2025-09-09",  # Week 4 target
-            },
-        }
+        integration, is_legacy = self._get_preferred_integration("get_integration_status")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_integration_status", is_legacy)
+            # Get status from integration if it supports it, otherwise return router status
+            if hasattr(integration, "get_integration_status"):
+                return integration.get_integration_status()
+            else:
+                # Fallback to router-level status
+                return {
+                    "router_initialized": True,
+                    "feature_flags": {
+                        "use_spatial": self.use_spatial,
+                        "allow_legacy": self.allow_legacy,
+                        "warn_deprecation": self.warn_deprecation,
+                    },
+                    "integrations": {
+                        "spatial_available": self.spatial_github is not None,
+                        "legacy_available": self.legacy_github is not None,
+                    },
+                    "preferred_integration": (
+                        "spatial" if self.use_spatial and self.spatial_github else "legacy"
+                    ),
+                    "deprecation_timeline": {
+                        "week": self._get_deprecation_week(),
+                        "legacy_removal_date": "2025-09-09",
+                    },
+                }
+        else:
+            raise RuntimeError("No GitHub integration available for get_integration_status")
 
     def _get_deprecation_week(self) -> int:
         """
@@ -312,6 +218,176 @@ class GitHubIntegrationRouter:
             return 4  # Week 4: Legacy removal
         else:
             return 5  # Post-deprecation
+
+    async def get_issue_by_url(self, url: str) -> Dict[str, Any]:
+        """
+        Fetch GitHub issue by URL, raising exceptions on failure.
+
+        Used by: domain/github_domain_service.py, integrations/github/issue_analyzer.py
+        """
+        integration, is_legacy = self._get_preferred_integration("get_issue_by_url")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_issue_by_url", is_legacy)
+            return await integration.get_issue_by_url(url)
+        else:
+            raise RuntimeError("No GitHub integration available for get_issue_by_url")
+
+    async def get_open_issues(
+        self, project: Optional[str] = None, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Get open issues from GitHub repository.
+
+        Used by: domain/github_domain_service.py, domain/pm_number_manager.py
+        """
+        integration, is_legacy = self._get_preferred_integration("get_open_issues")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_open_issues", is_legacy)
+            return await integration.get_open_issues(project, limit)
+        else:
+            raise RuntimeError("No GitHub integration available for get_open_issues")
+
+    async def get_recent_issues(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get recent issues (both open and closed) from GitHub repository.
+
+        Used by: domain/github_domain_service.py
+        """
+        integration, is_legacy = self._get_preferred_integration("get_recent_issues")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_recent_issues", is_legacy)
+            return await integration.get_recent_issues(limit)
+        else:
+            raise RuntimeError("No GitHub integration available for get_recent_issues")
+
+    async def get_recent_activity(self, days: int = 7) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Get recent GitHub activity for standup (commits, PRs, issues).
+
+        Used by: domain/standup_orchestration_service.py
+        """
+        integration, is_legacy = self._get_preferred_integration("get_recent_activity")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_recent_activity", is_legacy)
+            return await integration.get_recent_activity(days)
+        else:
+            raise RuntimeError("No GitHub integration available for get_recent_activity")
+
+    def list_repositories(self) -> List[Dict[str, Any]]:
+        """
+        List accessible repositories.
+
+        Used by: domain/github_domain_service.py
+        """
+        integration, is_legacy = self._get_preferred_integration("list_repositories")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("list_repositories", is_legacy)
+            return integration.list_repositories()
+        else:
+            raise RuntimeError("No GitHub integration available for list_repositories")
+
+    async def create_issue_from_work_item(
+        self, repo_name: str, work_item: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Create GitHub issue from work item data.
+        """
+        integration, is_legacy = self._get_preferred_integration("create_issue_from_work_item")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("create_issue_from_work_item", is_legacy)
+            return await integration.create_issue_from_work_item(repo_name, work_item)
+        else:
+            raise RuntimeError("No GitHub integration available for create_issue_from_work_item")
+
+    async def create_pm_issue(
+        self,
+        repo_name: str,
+        pm_number: str,
+        title: str,
+        body: str,
+        labels: Optional[List[str]] = None,
+        assignees: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create PM-specific GitHub issue.
+        """
+        integration, is_legacy = self._get_preferred_integration("create_pm_issue")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("create_pm_issue", is_legacy)
+            return await integration.create_pm_issue(
+                repo_name, pm_number, title, body, labels, assignees
+            )
+        else:
+            raise RuntimeError("No GitHub integration available for create_pm_issue")
+
+    async def get_closed_issues(
+        self, project: Optional[str] = None, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Get closed issues from GitHub repository.
+        """
+        integration, is_legacy = self._get_preferred_integration("get_closed_issues")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_closed_issues", is_legacy)
+            return await integration.get_closed_issues(project, limit)
+        else:
+            raise RuntimeError("No GitHub integration available for get_closed_issues")
+
+    async def get_issues_by_priority(self) -> List[Dict[str, Any]]:
+        """
+        Get GitHub issues organized by priority.
+        """
+        integration, is_legacy = self._get_preferred_integration("get_issues_by_priority")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_issues_by_priority", is_legacy)
+            return await integration.get_issues_by_priority()
+        else:
+            raise RuntimeError("No GitHub integration available for get_issues_by_priority")
+
+    async def get_development_context(self) -> Dict[str, Any]:
+        """
+        Get development context from GitHub.
+        """
+        integration, is_legacy = self._get_preferred_integration("get_development_context")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_development_context", is_legacy)
+            return await integration.get_development_context()
+        else:
+            raise RuntimeError("No GitHub integration available for get_development_context")
+
+    def parse_github_url(self, url: str) -> Optional[Tuple[str, str, int]]:
+        """
+        Parse GitHub issue URL to extract owner, repo, and issue number.
+        """
+        integration, is_legacy = self._get_preferred_integration("parse_github_url")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("parse_github_url", is_legacy)
+            return integration.parse_github_url(url)
+        else:
+            raise RuntimeError("No GitHub integration available for parse_github_url")
+
+    def test_connection(self) -> Dict[str, Any]:
+        """
+        Test GitHub connection and return status.
+        """
+        integration, is_legacy = self._get_preferred_integration("test_connection")
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("test_connection", is_legacy)
+            return integration.test_connection()
+        else:
+            raise RuntimeError("No GitHub integration available for test_connection")
 
 
 # Convenience factory function

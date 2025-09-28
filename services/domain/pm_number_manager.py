@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from services.config.github_config import GitHubConfiguration
 from services.configuration.piper_config_loader import PiperConfigLoader
-from services.integrations.github.github_agent import GitHubAgent
+from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 
 
 @dataclass
@@ -89,10 +89,10 @@ class PMNumberManager:
         self._cache_timestamp: Optional[datetime] = None
         self._cache_ttl_minutes = 5  # 5-minute cache TTL
 
-    async def get_github_agent(self) -> GitHubAgent:
+    async def get_github_agent(self) -> GitHubIntegrationRouter:
         """Get or create GitHub agent instance"""
         if self.github_agent is None:
-            self.github_agent = GitHubAgent()
+            self.github_agent = GitHubIntegrationRouter()
         return self.github_agent
 
     async def validate_pm_number(self, pm_number: str) -> PMNumberValidation:

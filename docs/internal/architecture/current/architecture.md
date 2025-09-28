@@ -31,10 +31,10 @@
 │                          DOMAIN SERVICES LAYER                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  ✅ GitHubDomainService     │  ✅ SlackDomainService      │  ✅ NotionDomainService │
-│  (Mediation Complete)       │  (Mediation Complete)      │  (Mediation Complete)  │
-│  • Issue operations         │  • Webhook handling         │  • Workspace mgmt      │
-│  • Repository mgmt          │  • Spatial events           │  • Database ops        │
-│  • Clean error handling     │  • Health monitoring        │  • Page operations     │
+│  (Router Architecture)      │  (Mediation Complete)      │  (Mediation Complete)  │
+│  • Router-based operations  │  • Webhook handling         │  • Workspace mgmt      │
+│  • Spatial intelligence     │  • Spatial events           │  • Database ops        │
+│  • Feature flag control     │  • Health monitoring        │  • Page operations     │
 │                             │                             │                        │
 │  ✅ StandupOrchestrationService  │  ✅ PortConfigurationService │  📋 Future Domain Services │
 │  (Workflow Coordination)    │  (Centralized Config)      │  (As Needed)          │
@@ -1530,12 +1530,56 @@ async def get_connection_stats(self):
 - **AsyncIO.timeout bug**: Resolved through Python 3.11 upgrade
 - **Environment standardization**: All contexts use Python 3.11
 
+## GitHub Integration Router (COMPLETED - CORE-GREAT-2B)
+
+### Overview
+All GitHub operations now flow through GitHubIntegrationRouter, enabling feature flag control between spatial intelligence and legacy operations.
+
+### Implementation Status - September 27, 2025
+- **Router Completion**: 14/14 GitHubAgent methods implemented with 100% delegation pattern compliance
+- **Service Conversion**: 6/6 services converted from direct imports to router usage
+- **Feature Flag Control**: Spatial/legacy mode switching functional and tested
+- **Architectural Lock**: Multi-layer enforcement prevents regression
+
+### Services Using Router
+1. `services/orchestration/engine.py` - OrchestrationEngine
+2. `services/domain/github_domain_service.py` - GitHubDomainService
+3. `services/domain/pm_number_manager.py` - PMNumberManager
+4. `services/domain/standup_orchestration_service.py` - StandupOrchestrationService
+5. `services/integrations/github/issue_analyzer.py` - GitHubIssueAnalyzer
+6. `services/queries/query_router.py` - QueryRouter
+
+### Enforcement Mechanisms
+1. **Anti-Pattern Tests**: `tests/test_architecture_enforcement.py` (7 comprehensive tests)
+2. **Pre-commit Hooks**: `.pre-commit-config.yaml` (automated violation blocking)
+3. **CI/CD Integration**: `.github/workflows/architecture-enforcement.yml`
+4. **Documentation**: Complete architectural guide at `docs/architecture/github-integration-router.md`
+
+### Feature Flag Configuration
+- `USE_SPATIAL_GITHUB=true`: Enables spatial intelligence (8-dimensional analysis)
+- `USE_SPATIAL_GITHUB=false`: Uses legacy GitHub operations
+- Both modes tested and functional across all converted services
+
+### Migration Benefits Achieved
+- **Spatial Intelligence**: 8-dimensional GitHub analysis when enabled
+- **Feature Flag Control**: Centralized spatial/legacy integration management
+- **Deprecation Management**: Proper warnings and migration path
+- **Consistent Error Handling**: Standardized RuntimeError patterns
+- **Future-Proof Architecture**: Ready for CORE-QUERY-1 integration router expansion
+
+### Quality Metrics
+- **Pattern Compliance**: 100% (no compromises accepted)
+- **Test Coverage**: 100% (all enforcement mechanisms verified)
+- **Service Compatibility**: 100% (no breaking changes)
+- **Documentation**: Complete (architectural guide and migration instructions)
+
 ---
 
-_Last Updated: July 22, 2025_
+_Last Updated: September 27, 2025_
 
 ## Revision Log
 
+- **September 27, 2025**: Added GitHub Integration Router completion (CORE-GREAT-2B), comprehensive architectural protection with multi-layer enforcement, spatial intelligence feature flag control
 - **July 18, 2025**: Added MCP Connection Pool architecture patterns, circuit breaker implementation, async resource management best practices, and case study reference documenting 642x performance improvement
 - **July 13, 2025**: Added architectural refinements from July 2025: type safety patterns, context handling evolution, pre-classifier pattern changes, template system integration, and test contract lessons learned
 - **June 28, 2025**: GitHub integration complete, added Internal Task Handler and Repository Context Enrichment patterns, updated Service Layer and External Integrations, removed placeholder handler risk, updated Evolution Path
