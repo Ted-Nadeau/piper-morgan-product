@@ -22,7 +22,7 @@ from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent, IntentCategory, Task, Workflow
 from services.integrations.github.config_service import GitHubConfigService
 from services.integrations.github.content_generator import GitHubIssueContentGenerator
-from services.integrations.github.github_agent import GitHubAgent
+from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
 from services.integrations.github.production_client import (
     GitHubClientConfig,
@@ -418,7 +418,7 @@ class OrchestrationEngine:
             )
         )
 
-        github_agent = GitHubAgent(github_client)
+        github_agent = GitHubIntegrationRouter()
 
         # Execute the GitHub action based on task input
         action_type = task.input_data.get("action_type", "create_issue")

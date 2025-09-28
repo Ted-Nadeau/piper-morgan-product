@@ -16,7 +16,7 @@ from services.features.morning_standup import (
     StandupIntegrationError,
     StandupResult,
 )
-from services.integrations.github.github_agent import GitHubAgent
+from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
 
@@ -50,7 +50,7 @@ class StandupOrchestrationService:
             self._session_manager = SessionPersistenceManager(self._preference_manager)
 
         if self._github_agent is None:
-            self._github_agent = GitHubAgent()
+            self._github_agent = GitHubIntegrationRouter()
 
         if self._canonical_handlers is None:
             self._canonical_handlers = CanonicalHandlers()

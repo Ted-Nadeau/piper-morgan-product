@@ -36,3 +36,26 @@ repos:
         language: script
         files: (backlog|roadmap)\.md$
         pass_filenames: false
+      - id: github-architecture-enforcement
+        name: GitHub Architecture Enforcement
+        entry: bash -c 'PYTHONPATH=. python3 -m pytest tests/test_architecture_enforcement.py -xvs'
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        types: [python]
+        files: '^(services/.*\.py|tests/test_architecture_enforcement\.py)$'
+        description: |
+          Prevents direct GitHubAgent imports and ensures router architecture compliance.
+          This hook fails if any service bypasses the GitHubIntegrationRouter pattern.
+      - id: direct-github-agent-check
+        name: Direct GitHubAgent Import Check
+        entry: bash
+        args: ['-c', 'if grep -r "from.*github_agent import GitHubAgent" services/ --include="*.py" --exclude="services/integrations/github/*"; then echo "ERROR: Direct GitHubAgent imports found!"; exit 1; fi']
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        types: [python]
+        files: '^services/.*\.py$'
+        description: |
+          Fast grep-based check for direct GitHubAgent imports.
+          Prevents bypassing the router architecture.
