@@ -109,6 +109,32 @@ class FeatureFlags:
         """
         return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_CALENDAR", False)
 
+    # Notion integration feature flags (CORE-QUERY-1)
+    @staticmethod
+    def should_use_spatial_notion() -> bool:
+        """
+        Check if spatial Notion integration should be used as primary.
+
+        Used by NotionIntegrationRouter to determine whether to use
+        NotionMCPAdapter (spatial intelligence) or legacy notion.
+
+        Environment Variable: USE_SPATIAL_NOTION
+        Default: True (spatial is the default)
+        """
+        return FeatureFlags._get_boolean_flag("USE_SPATIAL_NOTION", True)
+
+    @staticmethod
+    def is_legacy_notion_allowed() -> bool:
+        """
+        Check if legacy Notion integration is allowed as fallback.
+
+        Used during migration period to maintain backward compatibility.
+
+        Environment Variable: ALLOW_LEGACY_NOTION
+        Default: False (no legacy notion implementation exists yet)
+        """
+        return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_NOTION", False)
+
     # MCP-related feature flags
     @staticmethod
     def is_mcp_content_search_enabled() -> bool:

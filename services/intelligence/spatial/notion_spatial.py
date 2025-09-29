@@ -14,7 +14,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+from services.integrations.notion.notion_integration_router import NotionIntegrationRouter
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class NotionSpatialIntelligence:
     """
 
     def __init__(self):
-        self.mcp_adapter = NotionMCPAdapter()
+        self.mcp_adapter = NotionIntegrationRouter()
         self._workspace_cache: Dict[str, Any] = {}
         self._database_cache: Dict[str, Any] = {}
         self._page_cache: Dict[str, Any] = {}
