@@ -135,6 +135,32 @@ class FeatureFlags:
         """
         return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_NOTION", False)
 
+    # Slack integration feature flags (CORE-QUERY-1)
+    @staticmethod
+    def should_use_spatial_slack() -> bool:
+        """
+        Check if spatial Slack integration should be used as primary.
+
+        Used by SlackIntegrationRouter to determine whether to use
+        SlackSpatialAdapter (spatial intelligence) or legacy slack.
+
+        Environment Variable: USE_SPATIAL_SLACK
+        Default: True (spatial is the default)
+        """
+        return FeatureFlags._get_boolean_flag("USE_SPATIAL_SLACK", True)
+
+    @staticmethod
+    def is_legacy_slack_allowed() -> bool:
+        """
+        Check if legacy Slack integration is allowed as fallback.
+
+        Used during migration period to maintain backward compatibility.
+
+        Environment Variable: ALLOW_LEGACY_SLACK
+        Default: False (no legacy slack implementation exists yet)
+        """
+        return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_SLACK", False)
+
     # MCP-related feature flags
     @staticmethod
     def is_mcp_content_search_enabled() -> bool:
