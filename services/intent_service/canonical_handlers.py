@@ -107,11 +107,13 @@ class CanonicalHandlers:
         message = f"Today is {current_date} at {current_time}."
         calendar_context = {}
 
-        # Enhanced: Get real calendar data from GoogleCalendarMCPAdapter
+        # Enhanced: Get real calendar data from CalendarIntegrationRouter
         try:
-            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
 
-            calendar_adapter = GoogleCalendarMCPAdapter()
+            calendar_adapter = CalendarIntegrationRouter()
             temporal_summary = await calendar_adapter.get_temporal_summary()
 
             # Add current meeting awareness
