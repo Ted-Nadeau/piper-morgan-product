@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import structlog
 from notion_client.errors import APIResponseError, RequestTimeoutError
 
-from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+from services.integrations.notion.notion_integration_router import NotionIntegrationRouter
 
 # Re-export exceptions for clean domain boundary
 __all__ = ["NotionDomainService", "APIResponseError", "RequestTimeoutError"]
@@ -30,10 +30,10 @@ class NotionDomainService:
     - Manages Notion MCP adapter lifecycle and configuration
     """
 
-    def __init__(self, notion_adapter: Optional[NotionMCPAdapter] = None):
-        """Initialize with optional Notion MCP adapter injection"""
+    def __init__(self, notion_adapter: Optional[NotionIntegrationRouter] = None):
+        """Initialize with optional Notion integration router injection"""
         try:
-            self._notion_adapter = notion_adapter or NotionMCPAdapter()
+            self._notion_adapter = notion_adapter or NotionIntegrationRouter()
             logger.info(
                 "Notion domain service initialized",
                 adapter_type=type(self._notion_adapter).__name__,

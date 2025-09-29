@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+from services.integrations.notion.notion_integration_router import NotionIntegrationRouter
 from services.publishing.converters.markdown_to_notion import convert_markdown_to_notion_blocks
 
 
@@ -16,7 +16,7 @@ class Publisher:
 
     def __init__(self):
         """Initialize publisher with platform adapters"""
-        self.notion = NotionMCPAdapter()
+        self.notion = NotionIntegrationRouter()
 
     async def publish(
         self, file_path: str, platform: str, location: str, format: str = "markdown"
