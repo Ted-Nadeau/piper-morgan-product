@@ -1,0 +1,74 @@
+# Session Log: CORE-QUERY-1 - Router Infrastructure Completion
+
+**Date**: September 29, 2025
+**Start Time**: 9:37 AM Pacific
+**Lead Developer**: Claude Sonnet 4
+**Project**: CORE-QUERY-1 (GitHub Issue #199)
+**Epic**: GREAT-2: Integration Cleanup
+
+## Session Context
+
+**Previous Session**: September 28, 2025 (5:02 PM - 11:23 PM, 6h 21m)
+- Completed Phases -1, 0, 1, 2, 3
+- All three integration routers implemented and verified
+- Calendar, Notion, Slack routers complete (100% coverage each)
+
+**Today's Mission**: Complete CORE-QUERY-1
+- Phase 4: Service Migration (6 services)
+- Phase 5: Testing & Validation
+- Phase 6: Documentation & GitHub Issue Completion
+
+## Router Completion Summary
+
+| Router | Methods | Lines | Status |
+|--------|---------|-------|--------|
+| Calendar | 8 | 285 | ✅ Complete |
+| Notion | 23 | 637 | ✅ Complete |
+| Slack | 20 | 850+ | ✅ Complete |
+
+## Services Ready for Migration
+
+**Calendar (2 services)**:
+- services/intent_service/canonical_handlers.py
+- services/features/morning_standup.py
+
+**Notion (3 services)**:
+- services/domain/notion_domain_service.py
+- services/publishing/publisher.py
+- services/intelligence/spatial/notion_spatial.py
+
+**Slack (1 service)**:
+- services/integrations/slack/webhook_router.py
+
+**Total**: 6 services requiring import replacement
+
+## Estimated Remaining Work
+
+- Phase 4: Service Migration (~2 hours)
+- Phase 5: Testing & Validation (~2 hours)
+- Phase 6: Documentation & GitHub (~1 hour)
+- **Total**: ~5 hours
+
+---
+
+*Session begins at 9:37 AM - ready to discuss Phase 4 strategy*
+
+## Phase 4 Strategy Discussion (9:51 AM)
+
+**PM Correction on Time Units**: Abandoning Newtonian time estimates in favor of empirical effort units (mangos, hurons, digas, whales). Time estimates risk distorting priorities - focus is on thoroughness, not speed.
+
+**PM Preferences**:
+1. **One at a time** (inchworm methodology) - easier to detect gaps, less overwhelming, prevents shortcuts
+2. **Test after each** - TDD approach if applicable
+3. **Commit safety sufficient** - branches create management complexity and past issues (stranded logs, destructive merges)
+4. **Task-by-task checkbox discipline** - PM will check each box after evidence validated
+
+**Current Phase 4 from Gameplan** (needs revision):
+- [ ] Replace all direct Slack imports
+- [ ] Replace all direct Notion imports
+- [ ] Replace all direct Calendar imports
+- [ ] Verify no direct imports remain
+
+**Issue**: Current structure implies batch approach, contradicts inchworm methodology
+
+**Proposed Revision Needed**: Break into per-service tasks with individual verification
