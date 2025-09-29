@@ -34,7 +34,7 @@ from services.observability.slack_monitor import (
 from .config_service import SlackConfigService
 from .oauth_handler import SlackOAuthHandler
 from .response_handler import SlackResponseHandler
-from .spatial_adapter import SlackSpatialAdapter
+from .slack_integration_router import SlackIntegrationRouter
 from .spatial_mapper import SlackSpatialMapper
 
 logger = logging.getLogger(__name__)
@@ -53,35 +53,39 @@ class SlackWebhookRouter:
         config_service: Optional[SlackConfigService] = None,
         oauth_handler: Optional[SlackOAuthHandler] = None,
         spatial_mapper: Optional[SlackSpatialMapper] = None,
-        spatial_adapter: Optional[SlackSpatialAdapter] = None,
+        integration_router: Optional[SlackIntegrationRouter] = None,
         response_handler: Optional[SlackResponseHandler] = None,
     ):
         self.config_service = config_service or SlackConfigService()
         self.oauth_handler = oauth_handler or SlackOAuthHandler(self.config_service)
         self.spatial_mapper = spatial_mapper or SlackSpatialMapper()
-        self.spatial_adapter = spatial_adapter or SlackSpatialAdapter()
+        self.integration_router = integration_router or SlackIntegrationRouter(self.config_service)
+
+        # Provide unified access to both client and spatial adapter through router
+        self.spatial_adapter = self.integration_router.get_spatial_adapter()
 
         # Initialize response handler with dependencies
         if response_handler:
             self.response_handler = response_handler
         else:
             try:
-                # Create dependencies for response handler
-                from services.integrations.slack.slack_client import SlackClient
+                # Create dependencies for response handler using integration router
                 from services.intent_service.classifier import IntentClassifier
                 from services.orchestration.engine import OrchestrationEngine
 
                 intent_classifier = IntentClassifier()
                 orchestration_engine = OrchestrationEngine()
-                slack_client = SlackClient(self.config_service)
 
+                # Use integration router for unified client access
                 self.response_handler = SlackResponseHandler(
                     spatial_adapter=self.spatial_adapter,
                     intent_classifier=intent_classifier,
                     orchestration_engine=orchestration_engine,
-                    slack_client=slack_client,
+                    slack_client=self.integration_router,  # Router provides client methods
                 )
-                logger.info("SlackWebhookRouter initialized with response handler")
+                logger.info(
+                    "SlackWebhookRouter initialized with response handler via integration router"
+                )
             except Exception as e:
                 logger.error(f"Failed to initialize SlackResponseHandler: {e}")
                 logger.warning("SlackWebhookRouter will operate without response handling")
