@@ -105,8 +105,8 @@ jobs:
               ### 🎯 Sprint & Roadmap Alignment
 
               - [ ] Update roadmap.md with completed items from current sprint
-              - [ ] Move completed sprint items to completed.md
               - [ ] Verify backlog.md priorities match current sprint goals
+              - [ ] **Note**: completed.md deprecated - GitHub is source of truth
               - [ ] Check for new issues needing taxonomy labels (TRACK-EPIC format)
               - [ ] Update sprint goals in PIPER.user.md if new sprint started
 
