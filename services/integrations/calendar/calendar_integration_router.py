@@ -1,0 +1,397 @@
+"""
+CalendarIntegrationRouter - Feature flag controlled access to calendar integrations
+
+Provides unified interface for calendar operations with support for:
+- Spatial intelligence (MCP-based GoogleCalendarMCPAdapter)
+- Legacy basic calendar operations (if future implementation exists)
+- Feature flag control via USE_SPATIAL_CALENDAR
+
+Architecture Decision: ADR-037 Calendar Integration Router Pattern
+Following pattern established in CORE-GREAT-2B GitHubIntegrationRouter.
+"""
+
+import os
+import warnings
+from typing import Any, Dict, List, Optional, Tuple
+
+from services.infrastructure.config.feature_flags import FeatureFlags
+
+
+class CalendarIntegrationRouter:
+    """
+    Router for calendar integration with spatial/legacy delegation.
+
+    Follows pattern established in CORE-GREAT-2B GitHubIntegrationRouter.
+    Delegates to GoogleCalendarMCPAdapter (spatial) or future legacy implementation.
+
+    Examples:
+        # Basic usage with spatial intelligence
+        router = CalendarIntegrationRouter()
+        events = await router.get_todays_events()
+
+        # Feature flag control
+        # USE_SPATIAL_CALENDAR=true (default) - uses GoogleCalendarMCPAdapter
+        # USE_SPATIAL_CALENDAR=false - uses legacy if available, else raises error
+
+    Architecture:
+        - Spatial: GoogleCalendarMCPAdapter with OAuth2 and circuit breaker
+        - Legacy: Placeholder for future basic calendar implementation
+        - Feature Flags: USE_SPATIAL_CALENDAR, ALLOW_LEGACY_CALENDAR
+    """
+
+    def __init__(self):
+        """Initialize router with feature flag checking"""
+        # Use FeatureFlags service for consistency with GitHub router
+        self.use_spatial = FeatureFlags.should_use_spatial_calendar()
+        self.allow_legacy = FeatureFlags.is_legacy_calendar_allowed()
+
+        # Initialize spatial integration
+        self.spatial_calendar = None
+        if self.use_spatial:
+            try:
+                from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+
+                self.spatial_calendar = GoogleCalendarMCPAdapter()
+            except ImportError as e:
+                warnings.warn(f"Spatial calendar unavailable: {e}")
+
+        # Initialize legacy integration (placeholder for future)
+        self.legacy_calendar = None
+        if self.allow_legacy:
+            # Future: Import legacy calendar client if exists
+            # For now, no legacy implementation exists
+            pass
+
+    def _get_preferred_integration(self, operation: str) -> Tuple[Optional[Any], bool]:
+        """
+        Get preferred calendar integration based on feature flags and availability.
+
+        Args:
+            operation: Name of operation being performed
+
+        Returns:
+            Tuple of (integration_instance, is_legacy_used)
+        """
+        # Try spatial first if enabled
+        if self.use_spatial and self.spatial_calendar:
+            return self.spatial_calendar, False
+
+        # Fall back to legacy if allowed (future implementation)
+        elif self.allow_legacy and self.legacy_calendar:
+            return self.legacy_calendar, True
+
+        # No integration available
+        else:
+            return None, False
+
+    def _warn_deprecation_if_needed(self, operation: str, is_legacy: bool):
+        """Issue deprecation warnings when legacy integration is used"""
+        if is_legacy:
+            warnings.warn(
+                f"Using legacy calendar for {operation}. "
+                "Consider enabling USE_SPATIAL_CALENDAR=true for spatial intelligence.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+    # Calendar Operations (7 methods)
+
+    async def authenticate(self) -> bool:
+        """
+        Authenticate with Google Calendar via OAuth2.
+
+        Returns:
+            bool: True if authentication successful, False otherwise
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("authenticate")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("authenticate", is_legacy)
+            return await integration.authenticate()
+        else:
+            raise RuntimeError(
+                "No calendar integration available for authenticate. "
+                "Enable USE_SPATIAL_CALENDAR=true or check GoogleCalendarMCPAdapter setup."
+            )
+
+    async def get_todays_events(self) -> List[Dict[str, Any]]:
+        """
+        Get today's calendar events from Google Calendar.
+
+        Returns:
+            List[Dict[str, Any]]: List of today's calendar events
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_todays_events")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_todays_events", is_legacy)
+            return await integration.get_todays_events()
+        else:
+            raise RuntimeError("No calendar integration available for get_todays_events")
+
+    async def get_current_meeting(self) -> Optional[Dict[str, Any]]:
+        """
+        Get currently active meeting if any.
+
+        Returns:
+            Optional[Dict[str, Any]]: Current meeting details or None
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_current_meeting")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_current_meeting", is_legacy)
+            return await integration.get_current_meeting()
+        else:
+            raise RuntimeError("No calendar integration available for get_current_meeting")
+
+    async def get_next_meeting(self) -> Optional[Dict[str, Any]]:
+        """
+        Get next upcoming meeting today.
+
+        Returns:
+            Optional[Dict[str, Any]]: Next meeting details or None
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_next_meeting")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_next_meeting", is_legacy)
+            return await integration.get_next_meeting()
+        else:
+            raise RuntimeError("No calendar integration available for get_next_meeting")
+
+    async def get_free_time_blocks(self) -> List[Dict[str, Any]]:
+        """
+        Calculate free time blocks between meetings.
+
+        Returns:
+            List[Dict[str, Any]]: Available free time blocks
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_free_time_blocks")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_free_time_blocks", is_legacy)
+            return await integration.get_free_time_blocks()
+        else:
+            raise RuntimeError("No calendar integration available for get_free_time_blocks")
+
+    async def get_temporal_summary(self) -> Dict[str, Any]:
+        """
+        Get comprehensive temporal summary for standup integration.
+
+        Returns:
+            Dict[str, Any]: Temporal awareness summary with current meeting,
+                          next meeting, free blocks, and recommendations
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_temporal_summary")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_temporal_summary", is_legacy)
+            return await integration.get_temporal_summary()
+        else:
+            raise RuntimeError("No calendar integration available for get_temporal_summary")
+
+    async def health_check(self) -> Dict[str, Any]:
+        """
+        Check calendar integration health and authentication status.
+
+        Returns:
+            Dict[str, Any]: Health check results including authentication status,
+                          dependencies, and service availability
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("health_check")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("health_check", is_legacy)
+            return await integration.health_check()
+        else:
+            raise RuntimeError("No calendar integration available for health_check")
+
+    # Spatial Intelligence Methods (from BaseSpatialAdapter)
+
+    def get_context(self, external_id: str):
+        """
+        Get spatial context for external system identifier.
+
+        Args:
+            external_id: External system identifier (e.g., calendar event ID)
+
+        Returns:
+            Optional[SpatialContext]: Spatial context or None
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_context")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_context", is_legacy)
+            return integration.get_context(external_id)
+        else:
+            raise RuntimeError("No calendar integration available for get_context")
+
+    def get_mapping_stats(self) -> Dict[str, Any]:
+        """
+        Get statistics about current spatial mappings.
+
+        Returns:
+            Dict[str, Any]: Mapping statistics including counts and health
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_mapping_stats")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_mapping_stats", is_legacy)
+            return integration.get_mapping_stats()
+        else:
+            raise RuntimeError("No calendar integration available for get_mapping_stats")
+
+    def map_from_position(self, position):
+        """
+        Map spatial position back to external system identifier.
+
+        Args:
+            position: Spatial position to convert
+
+        Returns:
+            Optional[str]: External ID or None
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("map_from_position")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("map_from_position", is_legacy)
+            return integration.map_from_position(position)
+        else:
+            raise RuntimeError("No calendar integration available for map_from_position")
+
+    def map_to_position(self, external_id: str, context: Dict[str, Any]):
+        """
+        Map external system identifier to spatial position.
+
+        Args:
+            external_id: External system identifier
+            context: Additional context for mapping
+
+        Returns:
+            SpatialPosition: Mapped spatial position
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("map_to_position")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("map_to_position", is_legacy)
+            return integration.map_to_position(external_id, context)
+        else:
+            raise RuntimeError("No calendar integration available for map_to_position")
+
+    def store_mapping(self, external_id: str, position) -> bool:
+        """
+        Store mapping between external ID and spatial position.
+
+        Args:
+            external_id: External system identifier
+            position: Spatial position to map
+
+        Returns:
+            bool: True if stored successfully
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("store_mapping")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("store_mapping", is_legacy)
+            return integration.store_mapping(external_id, position)
+        else:
+            raise RuntimeError("No calendar integration available for store_mapping")
+
+    def get_integration_status(self) -> Dict[str, Any]:
+        """
+        Get current integration status for monitoring and debugging.
+
+        Returns:
+            Dict[str, Any]: Router status including feature flags and available integrations
+        """
+        integration, is_legacy = self._get_preferred_integration("get_integration_status")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_integration_status", is_legacy)
+            # Get status from integration if it supports it, otherwise return router status
+            if hasattr(integration, "get_integration_status"):
+                return integration.get_integration_status()
+            else:
+                # Fallback to router-level status
+                return {
+                    "router_initialized": True,
+                    "using_spatial": not is_legacy,
+                    "using_legacy": is_legacy,
+                    "integration_type": type(integration).__name__,
+                    "feature_flags": {
+                        "use_spatial": self.use_spatial,
+                        "allow_legacy": self.allow_legacy,
+                    },
+                }
+        else:
+            return {
+                "router_initialized": True,
+                "using_spatial": False,
+                "using_legacy": False,
+                "integration_type": None,
+                "error": "No calendar integration available",
+                "feature_flags": {
+                    "use_spatial": self.use_spatial,
+                    "allow_legacy": self.allow_legacy,
+                },
+            }
+
+
+# Convenience factory function
+def create_calendar_integration() -> CalendarIntegrationRouter:
+    """
+    Factory function to create CalendarIntegrationRouter instance.
+
+    Returns:
+        CalendarIntegrationRouter: Configured router instance
+    """
+    return CalendarIntegrationRouter()

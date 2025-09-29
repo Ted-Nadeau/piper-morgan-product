@@ -83,6 +83,32 @@ class FeatureFlags:
         """
         return FeatureFlags._get_boolean_flag("GITHUB_DEPRECATION_WARNINGS", False)
 
+    # Calendar integration feature flags (CORE-QUERY-1)
+    @staticmethod
+    def should_use_spatial_calendar() -> bool:
+        """
+        Check if spatial Calendar integration should be used as primary.
+
+        Used by CalendarIntegrationRouter to determine whether to use
+        GoogleCalendarMCPAdapter (spatial intelligence) or legacy calendar.
+
+        Environment Variable: USE_SPATIAL_CALENDAR
+        Default: True (spatial is the default)
+        """
+        return FeatureFlags._get_boolean_flag("USE_SPATIAL_CALENDAR", True)
+
+    @staticmethod
+    def is_legacy_calendar_allowed() -> bool:
+        """
+        Check if legacy Calendar integration is allowed as fallback.
+
+        Used during migration period to maintain backward compatibility.
+
+        Environment Variable: ALLOW_LEGACY_CALENDAR
+        Default: False (no legacy calendar implementation exists yet)
+        """
+        return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_CALENDAR", False)
+
     # MCP-related feature flags
     @staticmethod
     def is_mcp_content_search_enabled() -> bool:

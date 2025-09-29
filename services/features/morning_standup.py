@@ -411,10 +411,12 @@ class MorningStandupWorkflow:
 
         # Add calendar context
         try:
-            from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
 
             # Initialize calendar adapter
-            calendar_adapter = GoogleCalendarMCPAdapter()
+            calendar_adapter = CalendarIntegrationRouter()
 
             # Get temporal summary including today's events and time blocks
             temporal_summary = await calendar_adapter.get_temporal_summary()
@@ -555,9 +557,11 @@ class MorningStandupWorkflow:
         # Add calendar context if requested
         if with_calendar:
             try:
-                from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
+                from services.integrations.calendar.calendar_integration_router import (
+                    CalendarIntegrationRouter,
+                )
 
-                calendar_adapter = GoogleCalendarMCPAdapter()
+                calendar_adapter = CalendarIntegrationRouter()
                 temporal_summary = await calendar_adapter.get_temporal_summary()
 
                 if temporal_summary.get("current_meeting"):
