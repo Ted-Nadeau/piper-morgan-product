@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: September 16, 2025
-**Total ADRs**: 35
+**Last Updated**: September 30, 2025
+**Total ADRs**: 39
 **Status**: Active
 
 ## Overview
@@ -50,11 +50,13 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Spatial Intelligence & Advanced Features
 
+- [ADR-013: MCP + Spatial Intelligence Integration Pattern](adr-013-mcp-spatial-integration-pattern.md) - Spatial intelligence integration
 - [ADR-017: Spatial MCP](adr-017-spatial-mcp.md) - Spatial MCP implementation
 - [ADR-018: Server Functionality](adr-018-server-functionality.md) - Server capability architecture
 - [ADR-019: Orchestration Commitment](adr-019-orchestration-commitment.md) - Orchestration strategy
 - [ADR-020: Protocol Investment](adr-020-protocol-investment.md) - Protocol investment decisions
 - [ADR-021: Multi Federation](adr-021-multi-federation.md) - Multi-federation architecture
+- [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Two validated spatial patterns (Granular Adapter, Embedded Intelligence)
 
 ### Experimentation & Innovation
 
@@ -72,7 +74,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Accepted**: 35 ADRs
+- **Accepted**: 39 ADRs
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -80,7 +82,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-035)
+1. Use next sequential number (next: ADR-039)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -94,6 +96,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
+- **September 30, 2025**: Added ADR-038 (Spatial Intelligence Architecture Patterns) - Documents two validated spatial patterns from GREAT-2C verification
 - **August 29, 2025**: Fixed ADR numbering sequence (026→025, 027→026), removed duplicate ADR-013
 - **August 28, 2025**: Added ADR-026 (Notion Client Migration)
 - **August 26, 2025**: Added ADR-025 (Unified Session Management)
