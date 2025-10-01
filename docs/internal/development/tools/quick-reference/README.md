@@ -1,0 +1,19 @@
+# Quick Reference
+
+## Overview
+
+This directory contains internal documentation for quick reference, including team procedures, development guides, and private documentation.
+
+## Documentation Files
+
+- **[Ports](ports.md)** - Documentation and guidance
+
+## Navigation
+
+- **[← Back to Tools](../README.md)**
+- **[📚 Documentation Home](../../README.md)**
+---
+
+**Last Updated**: October 1, 2025
+**Maintained By**: Documentation Team
+**Related**: [Documentation Standards](../../standards/documentation-standards.md)

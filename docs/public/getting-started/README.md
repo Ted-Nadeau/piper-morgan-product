@@ -1,0 +1,20 @@
+# Getting Started
+
+## Overview
+
+This directory contains documentation for getting started in the Piper Morgan system.
+
+
+## Subdirectories
+
+- **[Legacy Getting Started](legacy-getting-started/README.md)** - Legacy Getting Started documentation
+- **[Setup](setup/README.md)** - Setup documentation
+
+## Navigation
+
+- **[📚 Documentation Home](../../README.md)**
+
+---
+
+**Last Updated**: October 1, 2025
+**Maintained By**: Documentation Team
