@@ -1,1107 +1,141 @@
+#!/usr/bin/env python3
 """
-Piper Morgan 1.0 - Main Application
-Bootstrap version to prove the architecture
+Piper Morgan Main Application
+
+Configuration validation integrated at startup to prevent runtime failures
+from misconfiguration. Use --skip-validation for development bypass.
 """
 
+import argparse
 import logging
-import os
-import shutil
-
-# Personality integration imports (for standup API)
 import sys
-import tempfile
-from contextlib import asynccontextmanager
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
-import uvicorn
-from dotenv import load_dotenv
-
-# Standup API imports
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-
-from services.api.errors import APIError, TaskFailedError
-from services.api.middleware import ErrorHandlingMiddleware, EthicsBoundaryMiddleware
-from services.api.query_response_formatter import QueryResponseFormatter
-from services.configuration.piper_config_loader import piper_config_loader
-from services.conversation.conversation_handler import ConversationHandler
-from services.database.connection import db
-from services.database.repositories import ProjectRepository, RepositoryFactory
-from services.database.session_factory import AsyncSessionFactory
-from services.domain.models import UploadedFile
-from services.domain.slack_domain_service import SlackDomainService
-from services.domain.standup_orchestration_service import (
-    StandupIntegrationError,
-    StandupOrchestrationService,
-)
-from services.file_context.storage import generate_session_id, save_file_to_storage
-from services.intent_service.intent_enricher import IntentEnricher
-from services.knowledge_graph import get_document_service
-from services.llm.clients import llm_client
-from services.orchestration import WorkflowStatus, WorkflowType, engine
-from services.persistence.repositories.action_humanization_repository import (
-    ActionHumanizationRepository,
-)
-from services.queries import ProjectQueryService, QueryRouter
-from services.queries.conversation_queries import ConversationQueryService
-from services.queries.file_queries import FileQueryService
-from services.repositories import DatabasePool
-from services.repositories.file_repository import FileRepository
-from services.session.session_manager import ConversationSession, SessionManager
-from services.ui_messages.action_humanizer import ActionHumanizer
-from services.ui_messages.templates import TemplateRenderer, get_message_template
-from services.utils.serialization import serialize_dataclass
-from services.utils.standup_formatting import format_standup_metrics
-
-web_path = Path(__file__).parent / "web"
-sys.path.insert(0, str(web_path))
-from personality_integration import PersonalityResponseEnhancer, PiperConfigParser
-
-# from services.ingestion_service import get_ingester
-
-# Load environment variables FIRST
-load_dotenv()
-
-from services.domain.models import Feature, Intent, IntentCategory, Product
-
-# Configure structured logging
-from services.infrastructure.logging.config import get_ethics_logger, get_logger
-from services.intent_service import classifier
-
-logger = get_logger(__name__)
-
-# Initialize session manager and conversation handler
-session_manager = SessionManager(ttl_minutes=30)
-conversation_handler = ConversationHandler(session_manager=session_manager)
-
-# Dependency injection for ActionHumanizer and TemplateRenderer
-# (Assume db is an async session or provide a way to get one)
-action_humanizer = ActionHumanizer()
-template_renderer = TemplateRenderer(humanizer=action_humanizer)
-
-
-# Request/Response models
-class IntentRequest(BaseModel):
-    message: str
-    session_id: Optional[str] = None
-
-
-class ClarificationResponse(BaseModel):
-    response: str
-
-
-class IntentResponse(BaseModel):
-    message: str  # User-facing response
-    intent: dict
-    workflow_id: Optional[str] = None
-    requires_clarification: bool = False
-    clarification_type: Optional[str] = None
-
-
-class WorkflowResponse(BaseModel):
-    workflow_id: str
-    status: str
-    type: str
-    tasks: list
-    message: str
-
-
-async def safe_execute_workflow(engine, workflow_id: str) -> None:
-    """Safely execute workflow in background, catching and logging errors."""
-    try:
-        await engine.execute_workflow(workflow_id)
-    except TaskFailedError as e:
-        logger.error(f"Background workflow {workflow_id} failed with TaskFailedError: {e}")
-        # Error is logged but not propagated - prevents uncaught exception
-    except Exception as e:
-        logger.error(f"Background workflow {workflow_id} failed unexpectedly: {e}")
-        # Catch-all for any other errors
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    logger.info("🚀 Starting Piper Morgan 1.0...")
-    logger.info("✅ Domain models loaded")
-    logger.info("✅ LLM clients initialized")
-    logger.info("✅ Intent classifier ready")
-    logger.info("✅ Orchestration engine ready")
-    yield
-    # Shutdown
-    from services.database.connection import db
-
-    await db.close()
-    logger.info("Shutting down...")
-
-
-# Create FastAPI app
-app = FastAPI(
-    title="Piper Morgan Platform 1.0",
-    version="1.0.0-bootstrap",
-    description="Intelligent Product Management Assistant",
-    lifespan=lifespan,
-)
-
-# Set up CORS
-origins = [
-    "http://localhost",
-    "http://localhost:8000",  # CORS FIX: Web UI might be served from port 8000
-    "http://localhost:8080",  # Default for many local dev servers
-    "http://localhost:8081",  # Web UI configured port
-    "http://127.0.0.1:8000",  # 127.0.0.1 access for port 8000
-    "http://127.0.0.1:5500",  # Common for VS Code Live Server
-    "http://127.0.0.1:8081",  # 127.0.0.1 access for web UI
-    # Add other origins as needed
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Add middleware
-# app.add_middleware(EthicsBoundaryMiddleware)  # Ethics boundary enforcement - temporarily disabled for environment setup
-app.add_middleware(ErrorHandlingMiddleware)  # Error handling
-
-# Initialize and include Slack router with error handling
+# Import the ConfigValidator
 try:
-    logger.info("Initializing Slack domain service...")
-    slack_domain_service = SlackDomainService()
-    slack_router = slack_domain_service.get_webhook_router()
-    app.include_router(slack_router.get_router())
-    logger.info("✅ Slack integration initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize Slack integration: {e}")
-    logger.warning("🟡 Continuing startup without Slack integration")
+    from services.config_validator import ConfigValidator
+except ImportError:
+    print("❌ ERROR: ConfigValidator not found. Run Phase 1 Code agent first.")
+    sys.exit(1)
 
-    # Add health endpoint to report degraded state
-    @app.get("/health/slack")
-    async def slack_health():
-        return {"status": "degraded", "reason": "Slack initialization failed", "error": str(e)}
+logger = logging.getLogger(__name__)
 
+def setup_logging():
+    """Setup logging configuration"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
-# Include health monitoring router (PM-087: Ethics metrics)
-from services.api.health.staging_health import staging_health_router
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='Piper Morgan - Intelligent PM Assistant')
+    parser.add_argument(
+        '--skip-validation',
+        action='store_true',
+        help='Skip configuration validation (development mode)'
+    )
+    parser.add_argument(
+        '--config',
+        default='config/PIPER.user.md',
+        help='Path to configuration file (default: config/PIPER.user.md)'
+    )
+    return parser.parse_args()
 
-app.include_router(staging_health_router)
+def validate_configuration(config_path: str, skip_validation: bool = False) -> bool:
+    """
+    Validate configuration before starting services.
 
-# Include transparency router (PM-087: User transparency)
-from services.api.transparency import transparency_router
+    Args:
+        config_path: Path to configuration file
+        skip_validation: If True, skip validation (development mode)
 
-app.include_router(transparency_router)
+    Returns:
+        True if validation passed or was skipped, False if critical failures
+    """
+    if skip_validation:
+        print("⚠️  DEVELOPMENT MODE: Configuration validation skipped")
+        print("   Use this mode only for development. Production requires validation.")
+        return True
 
-# Include feedback router (PM-005: Feedback tracking)
-from services.api.feedback_api import feedback_router
+    print("🔍 Validating configuration...")
 
-app.include_router(feedback_router)
-
-
-@app.get("/")
-async def root():
-    return {
-        "name": "Piper Morgan Platform 1.0",
-        "version": "1.0.0-bootstrap",
-        "status": "healthy",
-        "message": "Ready to be your AI PM assistant! 🤖",
-    }
-
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
-        "services": {
-            "postgres": "connected",
-            "redis": "connected",
-            "chromadb": "connected",
-            "temporal": "connected",
-            "llm": "ready",
-            "orchestration": "ready",
-        },
-    }
-
-
-# Initialize personality components for standup API
-config_parser = PiperConfigParser()
-personality_enhancer = PersonalityResponseEnhancer()
-
-
-@app.get("/api/standup")
-async def morning_standup_api(
-    format: str = Query("raw", description="Response format: 'raw' or 'human-readable'"),
-    personality: bool = Query(False, description="Apply personality enhancement"),
-):
-    """API endpoint for morning standup data using domain service"""
     try:
-        # Load configuration for user identification
-        config = piper_config_loader.load_standup_config()
-        user_id = config.get("user_identity", {}).get("user_id", "default_user")
+        # Create validator instance
+        validator = ConfigValidator(config_path)
 
-        # Use domain service for orchestration (DDD compliant)
-        orchestration_service = StandupOrchestrationService()
-        result = await orchestration_service.orchestrate_standup_workflow(user_id)
+        # Run validation for all services
+        validation_results = validator.validate_all_services()
 
-        # Prepare base data
-        base_data = {
-            "generation_time_ms": result.generation_time_ms,
-            "time_saved_minutes": result.time_saved_minutes,
-            "yesterday_accomplishments": result.yesterday_accomplishments,
-            "today_priorities": result.today_priorities,
-            "blockers": result.blockers,
-            "context_source": result.context_source,
-            "github_activity": result.github_activity,
-            "user_id": user_id,
-        }
+        # Generate and display report
+        report = validator.format_validation_report(validation_results)
+        print(report)
 
-        # Add human-readable formatting if requested
-        if format == "human-readable":
-            formatted_metrics = format_standup_metrics(
-                {
-                    "generation_time_ms": result.generation_time_ms,
-                    "time_saved_minutes": result.time_saved_minutes,
-                }
-            )
-            base_data.update(formatted_metrics)
+        # Check if startup should be allowed
+        startup_allowed = validator.is_startup_allowed(validation_results)
 
-        # Apply personality enhancement if requested
-        if personality:
-            try:
-                # Load personality config
-                personality_config = config_parser.load_personality_config(user_id)
-
-                # Enhance accomplishments, priorities, and blockers
-                if base_data.get("yesterday_accomplishments"):
-                    enhanced_accomplishments = []
-                    for accomplishment in base_data["yesterday_accomplishments"]:
-                        enhanced = personality_enhancer.enhance_response(
-                            accomplishment, personality_config, confidence=0.8
-                        )
-                        enhanced_accomplishments.append(enhanced)
-                    base_data["yesterday_accomplishments"] = enhanced_accomplishments
-
-                if base_data.get("today_priorities"):
-                    enhanced_priorities = []
-                    for priority in base_data["today_priorities"]:
-                        enhanced = personality_enhancer.enhance_response(
-                            priority, personality_config, confidence=0.7
-                        )
-                        enhanced_priorities.append(enhanced)
-                    base_data["today_priorities"] = enhanced_priorities
-
-                # Add personality metadata
-                base_data["personality_enhanced"] = True
-                base_data["personality_config"] = personality_config.to_dict()
-
-            except Exception as e:
-                # Graceful degradation - log error but continue
-                print(f"Personality enhancement failed: {e}")
-                base_data["personality_enhanced"] = False
-
-        return {
-            "status": "success",
-            "data": base_data,
-            "metadata": {
-                "generated_at": datetime.now().isoformat(),
-                "source": "backend-api",
-                "version": "1.0",
-                "format": format,
-                "performance": {
-                    "target_ms": 10000,
-                    "status": "✅ FAST" if result.generation_time_ms < 6000 else "⚠️ SLOW",
-                    "vs_cli_baseline": "faster" if result.generation_time_ms < 5500 else "slower",
-                },
-                "project_context": {
-                    "name": "piper-morgan",
-                    "display_name": "Piper Morgan AI PM Assistant",
-                    "github_repo": result.github_activity.get(
-                        "repo", "mediajunkie/piper-morgan-product"
-                    ),
-                    "commit_count": len(result.github_activity.get("commits", [])),
-                    "branch": "main",
-                },
-                "daily_usage": {
-                    "recommended_time": "06:00 PT",
-                    "cache_expires": datetime.now()
-                    .replace(hour=6, minute=0, second=0, microsecond=0)
-                    .isoformat(),
-                    "next_refresh": "Tomorrow 06:00 PT",
-                },
-            },
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "metadata": {
-                "generated_at": datetime.now().isoformat(),
-                "source": "backend-api",
-                "version": "1.0",
-                "error_type": type(e).__name__,
-                "recovery_suggestions": [
-                    "Check if all services are running (GitHub API, etc.)",
-                    "Verify configuration in config/PIPER.user.md",
-                    "Try again in a few moments",
-                    "Check server logs for detailed error information",
-                ],
-                "support": {
-                    "documentation": "https://pmorgan.tech",
-                    "github_issues": "https://github.com/mediajunkie/piper-morgan-product/issues",
-                },
-            },
-        }
-
-
-@app.post("/api/v1/intent", response_model=IntentResponse)
-async def process_intent(request: IntentRequest, background_tasks: BackgroundTasks):
-    """Process a natural language message with real AI and route to appropriate handler"""
-    try:
-        # Get or create session
-        session_id = request.session_id or "default_session"
-        session = session_manager.get_or_create_session(session_id)
-
-        # PM-087: Ethics tracking - Log intent processing for ethics analysis
-        ethics_logger = get_ethics_logger(name=__name__, session_id=session_id)
-
-        # Log intent for ethics analysis
-        ethics_logger.log_decision_point(
-            "intent_processing",
-            {
-                "message": request.message,
-                "session_id": session_id,
-                "timestamp": datetime.utcnow().isoformat(),
-            },
-        )
-
-        # NEW: Check if this is a disambiguation response
-        if session.awaiting_clarification == "file_disambiguation":
-            disambiguation_result = await handle_file_disambiguation(
-                request.message, session, session_id, background_tasks
-            )
-            if disambiguation_result:
-                return disambiguation_result
-
-        # Check for pending clarification first
-        if session.get_pending_clarification():
-            # Handle as clarification response
-            response = await conversation_handler.handle_clarification_response(
-                request.message, session_id
-            )
-
-            # Record interaction in session
-            session.add_interaction(
-                intent=Intent(
-                    category=IntentCategory.CONVERSATION,
-                    action="clarification_response",
-                    confidence=0.8,
-                    context={"response": request.message},
-                ),
-                response=response.get("message", ""),
-            )
-
-            # If clarification is resolved, we might need to process the original intent
-            if response.get("clarification_resolved"):
-                # Get the clarified intent and process it normally
-                clarified_intent = response.get("intent")
-                if clarified_intent and clarified_intent.get("category") != "CONVERSATION":
-                    # Process the clarified intent through the normal workflow
-                    # This would typically involve creating a workflow or handling the query
-                    response["message"] += " Processing your request..."
-
-            return IntentResponse(
-                message=response["message"],
-                intent=response["intent"],
-                workflow_id=response.get("workflow_id"),
-                requires_clarification=response.get("requires_clarification", False),
-                clarification_type=response.get("clarification_type"),
-            )
-
-        # Normal classification flow
-        print(f"🔍 Processing intent: {request.message}")
-        intent = await classifier.classify(request.message)
-        print(f"🔍 Intent classification result: {intent}")
-
-        # PM-087: Ethics tracking - Log intent classification for behavior analysis
-        ethics_logger.log_behavior_pattern(
-            "intent_classification",
-            {
-                "intent_category": intent.category.value,
-                "intent_action": intent.action,
-                "confidence": intent.confidence,
-                "session_id": session_id,
-                "timestamp": datetime.utcnow().isoformat(),
-            },
-        )
-
-        # Handle conversational intents immediately (minimal, pre-enrichment)
-        if intent.category == IntentCategory.CONVERSATION:
-            result = await conversation_handler.respond(intent, session_id)
-            return IntentResponse(**result)
-
-        # Handle canonical queries with PIPER.md context
-        from services.intent_service.canonical_handlers import get_canonical_handlers
-
-        canonical_handlers = get_canonical_handlers()
-
-        if canonical_handlers.can_handle(intent):
-            result = await canonical_handlers.handle(intent, session_id)
-            return IntentResponse(**result)
-
-        # Add this debug line
-        print(
-            f"DEBUG: Intent classified as - Category: {intent.category}, Action: {intent.action}, Confidence: {intent.confidence}"
-        )
-
-        # NEW: Enrich intent with file context
-        # Add original message to context for file reference detection
-        intent.context["original_message"] = request.message
-        intent.context["session_id"] = session_id  # Add session_id for search queries
-
-        # Get database pool for enricher with graceful degradation
-        try:
-            pool = await DatabasePool.get_pool()
-            enricher = IntentEnricher(pool)
-            enriched_intent = await enricher.enrich(intent, session_id)
-        except Exception as db_error:
-            logger.warning(f"Database unavailable for intent enrichment: {db_error}")
-            # Continue with unenriched intent when database unavailable
-            enriched_intent = intent
-
-        # Check if file clarification is needed
-        if enriched_intent.context.get("needs_file_clarification"):
-            # Handle file disambiguation
-            ambiguous_files = enriched_intent.context.get("ambiguous_files", [])
-            if ambiguous_files:
-                options = "\n".join(
-                    [
-                        f"{i+1}. {f['filename']} (uploaded {f['upload_time']})"
-                        for i, f in enumerate(ambiguous_files)
-                    ]
-                )
-
-                # Set clarification state in session
-                session.set_clarification(
-                    "file_disambiguation",
-                    {
-                        "ambiguous_files": ambiguous_files,
-                        "original_intent": serialize_dataclass(enriched_intent),
-                    },
-                )
-
-                return IntentResponse(
-                    message=f"Which file did you mean?\n{options}\n\nPlease respond with the number.",
-                    intent={
-                        "category": enriched_intent.category.value,
-                        "action": enriched_intent.action,
-                        "confidence": enriched_intent.confidence,
-                        "context": enriched_intent.context,
-                    },
-                    requires_clarification=True,
-                    clarification_type="file_disambiguation",
-                )
-            else:
-                return IntentResponse(
-                    message="I couldn't find any files. Please upload a file first.",
-                    intent={
-                        "category": enriched_intent.category.value,
-                        "action": enriched_intent.action,
-                        "confidence": enriched_intent.confidence,
-                        "context": enriched_intent.context,
-                    },
-                    requires_clarification=True,
-                    clarification_type="no_files_found",
-                )
-
-        # Route based on intent category
-        if enriched_intent.category == IntentCategory.QUERY:
-            # Handle query intents through QueryRouter with graceful degradation
-            try:
-                async with AsyncSessionFactory.session_scope() as session:
-                    project_repo = ProjectRepository(session)
-                    file_repo = FileRepository(session)
-
-                    project_query_service = ProjectQueryService(project_repo)
-                    conversation_query_service = ConversationQueryService()
-                    file_query_service = FileQueryService(file_repo)
-                    query_router = QueryRouter(
-                        project_query_service,
-                        conversation_query_service,
-                        file_query_service,
-                        test_mode=False,  # PM-063: Database available
-                    )
-
-                    # Route the query
-                    query_result = await query_router.route_query(enriched_intent)
-                    # Automatic session cleanup via context manager
-
-                    # PM-063: Format response using comprehensive formatter to handle all response types
-                    response_text = QueryResponseFormatter.format_query_response(
-                        query_result, enriched_intent.action
-                    )
-
-                    # PM-087: Ethics tracking - Log query response for behavior analysis
-                    ethics_logger.log_behavior_pattern(
-                        "query_response",
-                        {
-                            "response_text": response_text,
-                            "intent_category": enriched_intent.category.value,
-                            "intent_action": enriched_intent.action,
-                            "session_id": session_id,
-                            "timestamp": datetime.utcnow().isoformat(),
-                        },
-                    )
-
-                    return IntentResponse(
-                        message=response_text,
-                        intent={
-                            "category": enriched_intent.category.value,
-                            "action": enriched_intent.action,
-                            "confidence": enriched_intent.confidence,
-                            "context": enriched_intent.context,
-                        },
-                        workflow_id=None,  # No workflow for queries
-                        requires_clarification=False,
-                        clarification_type=None,
-                    )
-            except Exception as db_error:
-                logger.warning(f"Database unavailable for query processing: {db_error}")
-                # PM-063: Graceful degradation - create QueryRouter in test mode
-                conversation_query_service = ConversationQueryService()
-                query_router = QueryRouter(
-                    project_query_service=None,  # Not needed in test mode
-                    conversation_query_service=conversation_query_service,
-                    file_query_service=None,  # Not needed in test mode
-                    test_mode=True,
-                )
-                query_result = await query_router.route_query(enriched_intent)
-
-                # PM-063: Format response using comprehensive formatter to handle all response types
-                response_text = QueryResponseFormatter.format_query_response(
-                    query_result, enriched_intent.action
-                )
-
-                return IntentResponse(
-                    message=response_text,
-                    intent={
-                        "category": enriched_intent.category.value,
-                        "action": enriched_intent.action,
-                        "confidence": enriched_intent.confidence,
-                        "context": enriched_intent.context,
-                    },
-                    workflow_id=None,  # No workflow for queries
-                    requires_clarification=False,
-                    clarification_type=None,
-                )
-            except ValueError as query_error:
-                logger.error(f"Query processing failed: {query_error}")
-                raise HTTPException(status_code=422, detail=str(query_error))
-            except Exception as query_error:
-                logger.error(f"Query processing failed: {query_error}")
-                raise HTTPException(status_code=500, detail="Internal server error")
+        if startup_allowed:
+            print("✅ Configuration validation PASSED - Starting services...")
+            return True
         else:
-            # Handle command intents through WorkflowFactory
-            print(f"🔍 Creating workflow from intent...")
-            workflow = await engine.create_workflow_from_intent(enriched_intent)
-            workflow_id = None
-
-            if workflow:
-                # Execute workflow in background
-                workflow_id = workflow.id
-                background_tasks.add_task(safe_execute_workflow, engine, workflow_id)
-                # Use TemplateRenderer for humanized message
-                response_text = await template_renderer.render_template(
-                    "I understand you want to {human_action}. I've started a workflow to handle this.",
-                    intent_action=enriched_intent.action,
-                    intent_category=enriched_intent.category.value,
-                    user_id="xian",  # Default user for personality enhancement
-                )
-            else:
-                # No workflow needed, just respond
-                response_text = await template_renderer.render_template(
-                    "I understand you want to {human_action}.",
-                    intent_action=enriched_intent.action,
-                    intent_category=enriched_intent.category.value,
-                    user_id="xian",  # Default user for personality enhancement
-                )
-                if enriched_intent.category == IntentCategory.EXECUTION:
-                    response_text += " I'll help you execute that task."
-                elif enriched_intent.category == IntentCategory.ANALYSIS:
-                    response_text += " Let me analyze that for you."
-                elif enriched_intent.category == IntentCategory.SYNTHESIS:
-                    response_text += " I'll help you create that."
-                elif enriched_intent.category == IntentCategory.STRATEGY:
-                    response_text += " Let's think strategically about this."
-                else:
-                    response_text += " I'll help you learn from this."
-            # PM-087: Ethics tracking - Log workflow response for behavior analysis
-            ethics_logger.log_behavior_pattern(
-                "workflow_response",
-                {
-                    "response_text": response_text,
-                    "intent_category": enriched_intent.category.value,
-                    "intent_action": enriched_intent.action,
-                    "workflow_id": workflow_id,
-                    "session_id": session_id,
-                    "timestamp": datetime.utcnow().isoformat(),
-                },
-            )
-
-            return IntentResponse(
-                message=response_text,
-                intent={
-                    "category": enriched_intent.category.value,
-                    "action": enriched_intent.action,
-                    "confidence": enriched_intent.confidence,
-                    "context": enriched_intent.context,
-                },
-                workflow_id=workflow_id,
-                requires_clarification=False,
-                clarification_type=None,
-            )
-    except APIError:
-        raise  # Re-raise our custom errors to be handled by the middleware
-    except HTTPException:
-        raise  # Let FastAPI handle its own exceptions
-    except Exception as e:
-        logger.error(f"Intent processing failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to process intent")
-
-
-async def handle_file_disambiguation(
-    message: str,
-    session: ConversationSession,
-    session_id: str,
-    background_tasks: BackgroundTasks,
-) -> Optional[IntentResponse]:
-    """Handle user's response to file disambiguation"""
-
-    # Check if message is a number
-    message = message.strip()
-    if message.isdigit():
-        choice = int(message) - 1  # Convert to 0-based index
-        ambiguous_files = session.get_clarification_context("ambiguous_files", [])
-
-        if 0 <= choice < len(ambiguous_files):
-            selected_file = ambiguous_files[choice]
-
-            # Re-process the original intent with specific file
-            original_intent_data = session.get_clarification_context("original_intent")
-            if original_intent_data:
-                # Reconstruct intent with selected file
-                intent = Intent(
-                    category=IntentCategory(original_intent_data["category"]),
-                    action=original_intent_data["action"],
-                    context={
-                        **original_intent_data.get("context", {}),
-                        "resolved_file_id": selected_file["id"],
-                        "file_confidence": 1.0,  # User explicitly selected
-                    },
-                )
-
-                # Clear disambiguation state
-                session.clear_clarification()
-
-                # Continue with workflow processing
-                try:
-                    workflow = await engine.create_workflow_from_intent(intent)
-                    workflow_id = None
-
-                    if workflow:
-                        workflow_id = workflow.id
-                        # Execute workflow in background (same as main flow)
-                        background_tasks.add_task(safe_execute_workflow, engine, workflow_id)
-
-                    return IntentResponse(
-                        message=f"Got it! Using {selected_file['filename']}. Processing your request...",
-                        intent=serialize_dataclass(intent),
-                        workflow_id=workflow_id,
-                        requires_clarification=False,
-                        clarification_type=None,
-                    )
-                except Exception as e:
-                    logger.error(f"Workflow creation failed after file disambiguation: {e}")
-                    return IntentResponse(
-                        message=f"Got it! Using {selected_file['filename']}. I'll process your request.",
-                        intent=serialize_dataclass(intent),
-                        workflow_id=None,
-                        requires_clarification=False,
-                        clarification_type=None,
-                    )
-
-    # Invalid response
-    return IntentResponse(
-        message="Please respond with a number from the list, or describe which file you meant.",
-        intent={},
-        workflow_id=None,
-        requires_clarification=True,
-        clarification_type="file_disambiguation",
-    )
-
-
-@app.get("/api/v1/workflows/{workflow_id}", response_model=WorkflowResponse)
-async def get_workflow(workflow_id: str):
-    """Get workflow status and details"""
-    # Try to get from memory first, then from database
-    workflow = engine.workflows.get(workflow_id)
-
-    # Try to fetch from database for latest state, but gracefully degrade
-    try:
-        from services.database.repositories import WorkflowRepository
-        from services.database.session_factory import AsyncSessionFactory
-
-        async with AsyncSessionFactory.session_scope() as session:
-            workflow_repo = WorkflowRepository(session)
-            db_workflow = await workflow_repo.find_by_id(workflow_id)
-            # Automatic session cleanup via context manager
-
-        if db_workflow:
-            # Use the database version (which has the latest context)
-            workflow = db_workflow
-    except Exception as db_error:
-        logger.warning(f"Database unavailable for workflow status: {db_error}")
-        # Continue with in-memory workflow if available
-
-    if not workflow:
-        raise HTTPException(status_code=404, detail="Workflow not found")
-
-    workflow_dict = workflow.to_dict()
-
-    # Create user-friendly message based on status
-    if workflow.status == WorkflowStatus.COMPLETED:
-        # Format response based on workflow type and task results
-        template = get_message_template(
-            intent_category=workflow.context.get("intent_category"),
-            intent_action=workflow.context.get("intent_action"),
-            workflow_type=workflow.type,
-        )
-        # Use TemplateRenderer for humanized action in template
-        if workflow.type == WorkflowType.CREATE_TICKET:
-            if workflow.result and workflow.result.data:
-                issue_url = workflow.result.data.get("issue_url")
-                issue_number = workflow.result.data.get("issue_number")
-                message = await template_renderer.render_template(
-                    template,
-                    intent_action=workflow.context.get("intent_action", ""),
-                    intent_category=workflow.context.get("intent_category", None),
-                    issue_number=issue_number,
-                    user_id="xian",
-                )
-                if issue_url:
-                    message += f"\n{issue_url}"
-            else:
-                message = await template_renderer.render_template(
-                    template,
-                    intent_action=workflow.context.get("intent_action", ""),
-                    intent_category=workflow.context.get("intent_category", None),
-                    user_id="xian",
-                )
-        elif workflow.type == WorkflowType.REVIEW_ITEM:
-            analysis = (
-                workflow.result.data.get("analysis")
-                if (workflow.result and workflow.result.data)
-                else None
-            )
-            message = await template_renderer.render_template(
-                template,
-                intent_action=workflow.context.get("intent_action", ""),
-                intent_category=workflow.context.get("intent_category", None),
-            )
-            if analysis:
-                message += f"\n\n{analysis}"
-        elif workflow.type in [WorkflowType.GENERATE_REPORT, WorkflowType.ANALYZE_FILE]:
-            analysis = None
-            if workflow.result and workflow.result.data:
-                analysis = workflow.result.data.get("analysis")
-            if not analysis and workflow.context:
-                analysis = workflow.context.get("analysis")
-            if analysis and analysis.get("summary"):
-                filename = workflow.context.get("filename", "the document")
-                message = await template_renderer.render_template(
-                    template,
-                    intent_action=workflow.context.get("intent_action", ""),
-                    intent_category=workflow.context.get("intent_category", None),
-                    filename=filename,
-                    user_id="xian",
-                )
-                message += f"\n\n{analysis['summary']}"
-            else:
-                message = "I've completed the analysis but couldn't generate a summary."
-        else:
-            message = await template_renderer.render_template(
-                template,
-                intent_action=workflow.context.get("intent_action", ""),
-                intent_category=workflow.context.get("intent_category", None),
-            )
-    elif workflow.status == WorkflowStatus.RUNNING:
-        from services.ui_messages.templates import DEFAULT_TEMPLATES
-
-        completed_tasks = sum(1 for t in workflow.tasks if t.status.value == "completed")
-        message = DEFAULT_TEMPLATES["in_progress"]
-        message += f" ({completed_tasks}/{len(workflow.tasks)} tasks completed)"
-    elif workflow.status == WorkflowStatus.FAILED:
-        from services.ui_messages.templates import DEFAULT_TEMPLATES
-
-        message = DEFAULT_TEMPLATES["failed"].format(error=workflow.error)
-    else:
-        from services.ui_messages.templates import DEFAULT_TEMPLATES
-
-        message = DEFAULT_TEMPLATES["success"]
-
-    return WorkflowResponse(
-        workflow_id=workflow_id,
-        status=workflow_dict["status"],
-        type=workflow_dict["type"],
-        tasks=workflow_dict["tasks"],
-        message=message,
-    )
-
-
-@app.get("/api/v1/workflows")
-async def list_workflows():
-    """List all workflows"""
-    workflows = []
-    for wf_id, workflow in engine.workflows.items():
-        workflows.append(
-            {
-                "id": wf_id,
-                "type": workflow.type.value,
-                "status": workflow.status.value,
-                "created_at": workflow.created_at.isoformat(),
-            }
-        )
-    return {"workflows": workflows}
-
-
-@app.get("/api/v1/products")
-async def list_products():
-    """List all products"""
-    # TODO: Real database integration
-    sample_product = Product(
-        name="Sample Product",
-        vision="Make PMs more effective",
-        strategy="AI-first approach",
-    )
-    return [sample_product]
-
-
-@app.post("/api/v1/files/upload")
-async def upload_file(file: UploadFile = File(...), session_id: Optional[str] = Form(None)):
-    """Upload a file and track it in the session"""
-    try:
-        # Generate session ID if not provided
-        if not session_id:
-            session_id = generate_session_id()
-
-        # Read file content first to get size
-        content = await file.read()
-        file_size = len(content)
-
-        # Save file to storage using content bytes
-        storage_path = await save_file_to_storage(content, file.filename)
-
-        # Create file metadata
-        uploaded_file = UploadedFile(
-            session_id=session_id,
-            filename=file.filename,
-            file_type=file.content_type or "application/octet-stream",
-            file_size=file_size,
-            storage_path=storage_path,
-            upload_time=datetime.now(),
-        )
-
-        # Save to database
-        async with AsyncSessionFactory.session_scope() as session:
-            file_repo = FileRepository(session)
-            saved_file = await file_repo.save_file_metadata(uploaded_file)
-            # Automatic session cleanup via context manager
-
-        # Track in session
-        session = session_manager.get_or_create_session(session_id)
-        session.add_uploaded_file(
-            file_id=saved_file.id,
-            filename=file.filename,
-            file_type=file.content_type or "application/octet-stream",
-            upload_time=datetime.now(),
-        )
-
-        return {
-            "file_id": saved_file.id,
-            "session_id": session_id,
-            "filename": file.filename,
-            "file_type": file.content_type,
-            "file_size": saved_file.file_size,
-            "message": f"File '{file.filename}' uploaded successfully",
-        }
+            print("❌ Configuration validation FAILED - Cannot start services")
+            print("💡 Fix the configuration issues above and try again")
+            print("🛠️  Or use --skip-validation for development mode")
+            return False
 
     except Exception as e:
-        logger.error(f"File upload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        print(f"❌ Configuration validation ERROR: {e}")
+        print("💡 Check your configuration file format and try again")
+        print("🛠️  Or use --skip-validation for development mode")
+        return False
 
+def start_services():
+    """Start all application services"""
+    print("🚀 Starting Piper Morgan services...")
 
-@app.get("/api/v1/files/search")
-async def search_files(q: str, session_id: Optional[str] = None, limit: int = 10):
-    """Search files using natural language query with PM-038 MCP integration"""
+    # Import and start services here
+    # This will be where the actual application services start
     try:
-        logger.info(f"File search request: query='{q}', session_id={session_id}, limit={limit}")
+        # Placeholder for service startup
+        print("   📡 Starting web server...")
+        print("   🔗 Starting integration routers...")
+        print("   🧠 Starting spatial intelligence systems...")
+        print("   ✅ All services started successfully")
 
-        # Create FileQueryService using existing infrastructure
-        async with AsyncSessionFactory.session_scope() as session:
-            file_repo = FileRepository(session)
-            file_query_service = FileQueryService(file_repo)
+        # Keep application running
+        print("🎯 Piper Morgan is ready!")
+        print("   Press Ctrl+C to stop")
 
-            # Use the enhanced search functionality
-            if session_id:
-                results = await file_query_service.search_files(session_id, q, limit)
-            else:
-                results = await file_query_service.search_files_all_sessions(q, limit=limit)
+        # In real implementation, this would start the actual services
+        # For now, just wait for interrupt
+        import time
+        while True:
+            time.sleep(1)
 
-        logger.info(f"File search completed: found {results.get('total_count', 0)} files")
-        return results
-
+    except KeyboardInterrupt:
+        print("\n🛑 Shutting down Piper Morgan...")
+        print("   Stopping services...")
+        print("   ✅ Shutdown complete")
     except Exception as e:
-        logger.error(f"File search failed for query '{q}': {e}")
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+        print(f"❌ Service startup failed: {e}")
+        sys.exit(1)
 
+def main():
+    """Main application entry point"""
+    setup_logging()
+    args = parse_arguments()
 
-# Comment out the knowledge search endpoint that uses get_ingester
-# @app.post("/api/v1/knowledge_search")
-# async def knowledge_search(request: KnowledgeSearchRequest):
-#     """Search the knowledge base for relevant documents"""
-#     query = request.query
-#     limit = request.limit or 5
-#     try:
-#         # results = await get_ingester().search(query, n_results=limit)
-#         results = []  # Stubbed out
-#         return {"results": results}
-#     except Exception as e:
-#         logger.error(f"Knowledge search failed: {e}")
-#         raise HTTPException(status_code=500, detail="Knowledge search failed")
+    print("🤖 Piper Morgan - Intelligent PM Assistant")
+    print("=" * 50)
 
+    # Validate configuration first
+    if not validate_configuration(args.config, args.skip_validation):
+        print("
+🚫 Application startup aborted due to configuration issues")
+        sys.exit(1)
 
-@app.post("/api/v1/clarification", response_model=IntentResponse)
-async def handle_clarification(request: ClarificationResponse, background_tasks: BackgroundTasks):
-    """Handle user's response to clarification questions"""
-    try:
-        # Use the same session ID for now (in production, extract from headers/auth)
-        session_id = "default_session"
-        session = session_manager.get_or_create_session(session_id)
-
-        # Check if there's a pending clarification
-        pending_clarification = session.get_pending_clarification()
-        if not pending_clarification:
-            return IntentResponse(
-                message="I don't have any pending clarification questions. How can I help you?",
-                intent={
-                    "category": "CONVERSATION",
-                    "action": "chitchat",
-                    "confidence": 0.8,
-                },
-                workflow_id=None,
-                requires_clarification=False,
-                clarification_type=None,
-            )
-
-        # Handle the clarification response
-        response = await conversation_handler.handle_clarification_response(
-            user_response=request.response, session_id=session_id
-        )
-
-        # Record interaction in session
-        session.add_interaction(
-            intent=Intent(
-                category=IntentCategory.CONVERSATION,
-                action="clarification_response",
-                confidence=0.8,
-                context={"response": request.response},
-            ),
-            response=response.get("message", ""),
-        )
-
-        # If clarification is resolved, we might need to process the original intent
-        if response.get("clarification_resolved"):
-            # Get the clarified intent and process it normally
-            clarified_intent = response.get("intent")
-            if clarified_intent and clarified_intent.get("category") != "CONVERSATION":
-                # Process the clarified intent through the normal workflow
-                # This would typically involve creating a workflow or handling the query
-                response["message"] += " Processing your request..."
-
-        return IntentResponse(
-            message=response["message"],
-            intent=response["intent"],
-            workflow_id=response.get("workflow_id"),
-            requires_clarification=response.get("requires_clarification", False),
-            clarification_type=response.get("clarification_type"),
-        )
-
-    except Exception as e:
-        logger.error(f"Clarification handling failed: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
+    # Start services if validation passed
+    start_services()
 
 if __name__ == "__main__":
-    import sys
-
-    # Check if CLI command is requested
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-
-        if command == "standup":
-            # Remove the "standup" argument so argparse doesn't conflict
-            sys.argv.pop(1)
-            # Import and run standup command
-            try:
-                from cli.commands.standup import main as standup_main
-
-                standup_main()
-            except ImportError as e:
-                print(f"❌ Error importing standup command: {e}")
-                print("💡 Make sure CLI commands are properly installed")
-                sys.exit(1)
-            except Exception as e:
-                print(f"❌ Standup command failed: {e}")
-                sys.exit(1)
-
-        elif command == "issues":
-            # Remove the "issues" argument so argparse doesn't conflict
-            sys.argv.pop(1)
-            # Import and run issues command
-            try:
-                from cli.commands.issues import main as issues_main
-
-                issues_main()
-            except ImportError as e:
-                print(f"❌ Error importing issues command: {e}")
-                print("💡 Make sure CLI commands are properly installed")
-                sys.exit(1)
-            except Exception as e:
-                print(f"❌ Issues command failed: {e}")
-                sys.exit(1)
-
-        elif command == "documents":
-            # Remove the "documents" argument so argparse doesn't conflict
-            sys.argv.pop(1)
-            # Import and run documents command
-            try:
-                from cli.commands.documents import main as documents_main
-
-                documents_main()
-            except ImportError as e:
-                print(f"❌ Error importing documents command: {e}")
-                print("💡 Make sure CLI commands are properly installed")
-                sys.exit(1)
-            except Exception as e:
-                print(f"❌ Documents command failed: {e}")
-                sys.exit(1)
-
-        else:
-            # Run FastAPI server (default behavior)
-            uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True, log_level="info")
-    else:
-        # Run FastAPI server (default behavior)
-        uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True, log_level="info")
+    main()

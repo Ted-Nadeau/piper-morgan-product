@@ -1,7 +1,11 @@
-2025-09-13 21:20:41 [debug    ] Using user configuration       path=config/PIPER.user.md
-2025-09-13 21:20:41 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
-2025-09-13 21:20:41 [debug    ] PortConfigurationService initialized environment=development
-INFO:     Started server process [31987]
+2025-09-30 12:19:07 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-09-30 12:19:07 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-09-30 12:19:07 [debug    ] PortConfigurationService initialized environment=development
+INFO:     Started server process [82793]
 INFO:     Waiting for application startup.
+/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-09-30 12:19:08 [warning  ] No ANTHROPIC_API_KEY found
+2025-09-30 12:19:08 [warning  ] No OPENAI_API_KEY found
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)

@@ -17,7 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from services.database.async_session_factory import AsyncSessionFactory
+from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent, IntentCategory, KnowledgeNode
 from services.intent_service.llm_classifier_factory import LLMClassifierFactory
 from services.queries.query_router import QueryRouter
