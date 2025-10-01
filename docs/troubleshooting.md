@@ -269,10 +269,10 @@ async def proper_resource_usage():
 
 ### Resources
 
-- [Development Setup Guide](development/setup.md)
-- [Onboarding Checklist](development/onboarding.md)
-- [PM-055 Implementation Package](development/pm-055-step1-implementation-package.md)
 - [Contributing Guidelines](../CONTRIBUTING.md)
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [SQLAlchemy Async Guide](https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html)
+- [Docker Compose Troubleshooting](https://docs.docker.com/compose/troubleshooting/)
 
 ### Support Channels
 
