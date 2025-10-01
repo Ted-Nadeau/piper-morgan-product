@@ -1,8 +1,8 @@
 # ADR-038: Spatial Intelligence Architecture Patterns
 
-**Date**: September 30, 2025
+**Date**: September 30, 2025 (Updated: October 1, 2025)
 **Status**: Accepted
-**Context**: CORE-GREAT-2C Verification Work (GitHub Issue #194)
+**Context**: CORE-GREAT-2C Verification Work (GitHub Issue #194), CORE-GREAT-2D Discovery (GitHub Issue #195)
 **Supersedes**: None
 **Superseded by**: None
 
@@ -10,18 +10,21 @@
 
 ## Decision
 
-Piper Morgan will support **two distinct spatial intelligence patterns** optimized for different integration domains:
+Piper Morgan will support **three distinct spatial intelligence patterns** optimized for different integration domains:
 
 1. **Granular Adapter Pattern** for complex coordination scenarios
 2. **Embedded Intelligence Pattern** for streamlined knowledge management
+3. **Delegated MCP Pattern** for Model Context Protocol integrations (NEW - Oct 1, 2025)
 
-Both patterns are considered first-class architectural approaches, and new integrations should choose the pattern most appropriate for their domain.
+All patterns are considered first-class architectural approaches, and new integrations should choose the pattern most appropriate for their domain.
 
 ---
 
 ## Context
 
 During CORE-GREAT-2C verification work (Phases 1-2, September 30, 2025), we discovered that Slack and Notion integrations implement fundamentally different but equally valid spatial architecture approaches.
+
+During CORE-GREAT-2D investigation (Phase 0, October 1, 2025), we discovered Calendar implements a third distinct pattern using Model Context Protocol (MCP) delegation.
 
 ### Slack Implementation (Granular Adapter Pattern)
 - **Structure**: 11 files (6 core + 5 tests)
@@ -39,13 +42,22 @@ During CORE-GREAT-2C verification work (Phases 1-2, September 30, 2025), we disc
 - **Components**: Single comprehensive intelligence class
 - **Use Case**: Knowledge management and semantic analysis
 
+### Calendar Implementation (Delegated MCP Pattern) - NEW
+- **Structure**: 2 files (router + MCP adapter)
+- **Location**: Split between `services/integrations/calendar/` (router) and `services/mcp/consumer/` (adapter)
+- **Access**: `router.method()` delegates to MCP adapter
+- **Inheritance**: MCP adapter extends `BaseSpatialAdapter`
+- **Components**: Minimal router + comprehensive MCP adapter (499 lines)
+- **Use Case**: Temporal awareness and calendar operations via Model Context Protocol
+
 ### Verification Results
 - ✅ Slack spatial: 11 files, 100% operational, 66 test functions passing
 - ✅ Notion spatial: 1 file, 100% operational, 8-dimensional analysis working
-- ✅ Both patterns: Support 8-dimensional spatial metaphor
+- ✅ Calendar spatial: 2 files, 100% operational, MCP protocol integration
+- ✅ All patterns: Support 8-dimensional spatial metaphor
 - ✅ Zero conflicts: Patterns coexist successfully
-- ✅ Feature flags: Both support USE_SPATIAL_* control
-- ✅ Production-proven: Both operational in production codebase
+- ✅ Feature flags: All support USE_SPATIAL_* control
+- ✅ Production-proven: All operational in production codebase
 
 ---
 
@@ -75,13 +87,14 @@ Allow domain-optimized architectures based on integration characteristics.
 - Proven operational in production
 - Clear selection criteria
 - Flexibility for future integrations
+- Support for MCP-based integrations (Oct 2025 update)
 
 **Disadvantages**:
-- Multiple patterns to maintain
+- Multiple patterns to maintain (now 3 patterns as of Oct 2025)
 - Documentation overhead
 - Training requirement for developers
 
-**Decision**: CHOSEN - Benefits outweigh costs
+**Decision**: CHOSEN - Benefits outweigh costs. October 2025 update: Calendar's Delegated MCP Pattern confirms this approach scales well for protocol-based integrations.
 
 ### Option 3: Hybrid Approach (REJECTED)
 Combine both patterns in single implementation (e.g., granular components with embedded access).
@@ -150,26 +163,38 @@ New spatial integrations must choose pattern based on:
 1. **Domain Complexity**:
    - Many distinct capabilities (>5) → Granular
    - Few focused capabilities (≤5) → Embedded
+   - **MCP Protocol required** → Delegated MCP (Oct 2025)
 
 2. **Requirement Stability**:
    - Evolving requirements → Granular (easier to extend)
    - Stable requirements → Embedded (lower overhead)
+   - **Protocol-driven** → Delegated MCP
 
 3. **Performance Criticality**:
    - Performance critical → Embedded (minimal overhead)
    - Performance adequate → Either pattern
+   - **External service** → Delegated MCP (protocol overhead acceptable)
 
 4. **Testing Requirements**:
    - Component-level isolation needed → Granular
    - Integration-level testing sufficient → Embedded
+   - **Protocol compliance testing** → Delegated MCP
 
 5. **Team Structure**:
    - Multiple developers on feature → Granular (parallel work)
    - Single developer or small team → Embedded (simpler)
+   - **MCP team + integration team** → Delegated MCP (separation of concerns)
 
 6. **Domain Nature**:
    - Reactive coordination → Granular
    - Analytical intelligence → Embedded
+   - **Temporal/contextual awareness via protocol** → Delegated MCP
+
+7. **Integration Architecture** (NEW - Oct 2025):
+   - **Model Context Protocol (MCP) required** → Delegated MCP
+   - **Separate consumer layer exists** → Delegated MCP
+   - **Protocol-specific spatial logic** → Delegated MCP
+   - All other cases → Granular or Embedded
 
 ### Pattern Descriptions
 
@@ -228,6 +253,48 @@ await spatial.connect()
 analysis = await spatial.get_comprehensive_spatial_analysis(item_id)
 ```
 
+#### Delegated MCP Pattern (NEW - Oct 2025)
+
+**When to Use**:
+- Model Context Protocol (MCP) integrations
+- External service adapters requiring protocol compliance
+- Temporal or contextual awareness scenarios
+- Services with separate consumer layer architecture
+- Integrations where spatial logic is protocol-specific
+
+**Structure**:
+```
+services/integrations/{integration}/
+  {integration}_integration_router.py  # Minimal router (delegation only)
+
+services/mcp/consumer/
+  {integration}_adapter.py             # MCP adapter (inherits BaseSpatialAdapter)
+    # Spatial intelligence implementation
+    # MCP protocol compliance
+    # Custom spatial context extraction
+```
+
+**Access Pattern**:
+```python
+router = IntegrationRouter()
+# Router methods delegate to MCP adapter
+events = await router.get_todays_events()
+# Spatial methods also available
+context = router.get_context(external_id)
+```
+
+**Key Characteristics**:
+- Router is minimal (mostly pass-through methods)
+- Spatial intelligence in MCP consumer layer
+- MCP adapter inherits from `BaseSpatialAdapter`
+- Protocol-specific spatial context extraction
+- Clean separation: integration routing vs MCP protocol
+
+**Example**: Calendar integration
+- Router: `services/integrations/calendar/calendar_integration_router.py` (397 lines)
+- MCP Adapter: `services/mcp/consumer/google_calendar_adapter.py` (499 lines)
+- Custom spatial context for temporal awareness (meeting_type, duration, attendees, location)
+
 ### Common Requirements
 
 All spatial patterns **must**:
@@ -236,16 +303,19 @@ All spatial patterns **must**:
    - Use IntegrationRouter (directly or indirectly)
    - Support feature flag control (USE_SPATIAL_*)
    - Provide health check capabilities
+   - **Update Oct 2025**: Delegated MCP Pattern delegates through router to MCP adapter
 
 2. **8-Dimensional Spatial Metaphor**:
    - Implement relevant dimensions for domain
    - Use consistent naming (HIERARCHY, TEMPORAL, PRIORITY, COLLABORATIVE, FLOW, QUANTITATIVE, CAUSAL, CONTEXTUAL)
    - Document which dimensions supported
+   - **Update Oct 2025**: Calendar implements TEMPORAL dimension via temporal_summary
 
 3. **Backward Compatibility**:
    - Graceful degradation when spatial disabled
    - Don't break existing functionality
    - Support legacy mode via feature flags
+   - **Update Oct 2025**: All 3 patterns support feature flag control
 
 4. **Async Patterns**:
    - Use async/await for I/O operations
@@ -256,6 +326,7 @@ All spatial patterns **must**:
    - Log spatial operations appropriately
    - Track analytics/metrics
    - Support debugging and troubleshooting
+   - **Update Oct 2025**: Delegated MCP Pattern includes circuit breaker pattern for resilience
 
 ---
 

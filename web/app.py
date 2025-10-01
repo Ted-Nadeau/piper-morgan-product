@@ -46,7 +46,36 @@ async def lifespan(app: FastAPI):
     """
     FastAPI lifespan context manager for startup/shutdown events
     Phase 3A: OrchestrationEngine dependency injection setup
+    GREAT-2D: Configuration validation at startup
     """
+    # GREAT-2D: Configuration validation
+    print("\n" + "=" * 60)
+    print("🔍 CORE-GREAT-2D: Configuration Validation")
+    print("=" * 60)
+
+    try:
+        from services.infrastructure.config.config_validator import ConfigValidator
+
+        validator = ConfigValidator()
+        validator.validate_all()
+        validator.print_summary()
+
+        # Store validation results in app state
+        app.state.config_validation = validator.get_summary()
+
+        # Warning for invalid configurations (but don't fail startup)
+        if not validator.is_all_valid():
+            invalid_services = validator.get_invalid_services()
+            print("\n⚠️ WARNING: Some service configurations are invalid")
+            print("Services will operate in degraded mode\n")
+        else:
+            print("✅ All service configurations valid\n")
+
+    except Exception as e:
+        print(f"❌ Configuration validation failed: {e}")
+        print("⚠️ Continuing startup without validation\n")
+        app.state.config_validation = {"error": str(e)}
+
     # Phase 3A: OrchestrationEngine dependency injection setup
     try:
         from services.llm.clients import llm_client
@@ -985,6 +1014,28 @@ async def personality_preferences_ui():
             os.path.join(os.path.dirname(__file__), "assets", "personality-preferences.html")
         ).read()
     )
+
+
+@app.get("/health/config")
+async def health_config():
+    """
+    Configuration health check endpoint.
+
+    Returns validation status for all service configurations.
+    CORE-GREAT-2D: Configuration Validation
+    """
+    from services.infrastructure.config.config_validator import ConfigValidator
+
+    validator = ConfigValidator()
+    summary = validator.get_summary()
+
+    # Return 200 with summary (even if some services invalid)
+    # This is a health check endpoint, not a gate
+    return {
+        "status": "healthy" if summary["all_valid"] else "degraded",
+        "timestamp": datetime.utcnow().isoformat(),
+        "validation": summary,
+    }
 
 
 if __name__ == "__main__":
