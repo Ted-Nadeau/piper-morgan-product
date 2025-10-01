@@ -20,23 +20,23 @@ from pathlib import Path
 
 def map_slack_spatial_architecture():
     """Deep dive into Slack spatial intelligence architecture"""
-    
+
     print("=== SLACK SPATIAL ARCHITECTURE INVESTIGATION ===")
-    
+
     # Get the 11 Slack spatial files identified in Phase 0
-    result = subprocess.run(['find', 'services/', '-path', '*/slack/*', '-name', '*spatial*'], 
+    result = subprocess.run(['find', 'services/', '-path', '*/slack/*', '-name', '*spatial*'],
                           capture_output=True, text=True)
     slack_spatial_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
-    
+
     print(f"📍 SLACK SPATIAL FILES ANALYSIS ({len(slack_spatial_files)} files):")
-    
+
     core_files = []
     test_files = []
-    
+
     for file_path in slack_spatial_files:
         if file_path:
             print(f"\n🔍 ANALYZING: {file_path}")
-            
+
             # Categorize file type
             if 'test' in file_path.lower():
                 test_files.append(file_path)
@@ -44,47 +44,47 @@ def map_slack_spatial_architecture():
             else:
                 core_files.append(file_path)
                 print("  🔧 TYPE: Core implementation")
-            
+
             # Analyze file content for patterns
             try:
                 with open(file_path, 'r') as f:
                     content = f.read()
-                
+
                 # Look for key patterns
                 lines = content.split('\n')
                 classes = [line.strip() for line in lines if line.strip().startswith('class ')]
                 functions = [line.strip() for line in lines if line.strip().startswith('def ') and not line.strip().startswith('def __')]
                 imports = [line.strip() for line in lines if 'import' in line and 'spatial' in line.lower()]
-                
+
                 print(f"  📊 CLASSES: {len(classes)} found")
                 for cls in classes[:3]:  # Show first 3
                     print(f"    - {cls}")
-                
+
                 print(f"  🔧 FUNCTIONS: {len(functions)} found")
                 for func in functions[:3]:  # Show first 3
                     print(f"    - {func}")
-                
+
                 if imports:
                     print(f"  📦 SPATIAL IMPORTS: {len(imports)} found")
                     for imp in imports[:2]:
                         print(f"    - {imp}")
-                
+
                 # Look for coordination patterns
                 if 'coordinate' in content.lower() or 'orchestrat' in content.lower():
                     print("  🎯 COORDINATION PATTERNS: Found")
-                
+
                 if 'router' in content.lower():
                     print("  🔄 ROUTER INTEGRATION: Found")
-                
+
             except Exception as e:
                 print(f"  ❌ Error analyzing file: {e}")
-    
+
     print(f"\n📊 SUMMARY:")
     print(f"  Core files: {len(core_files)}")
     print(f"  Test files: {len(test_files)}")
     print(f"  Expected: 6 core + 5 tests = 11 total")
     print(f"  Actual: {len(core_files)} core + {len(test_files)} tests = {len(slack_spatial_files)} total")
-    
+
     return core_files, test_files
 
 core_files, test_files = map_slack_spatial_architecture()
@@ -98,52 +98,52 @@ Test the spatial coordination capabilities through the SlackIntegrationRouter:
 # Test Slack spatial coordination through router
 def test_slack_spatial_coordination():
     """Test Slack spatial system through router interface"""
-    
+
     print("\n=== SLACK SPATIAL COORDINATION TESTING ===")
-    
+
     try:
         # Import and instantiate the router
         from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
         slack_router = SlackIntegrationRouter()
         print("✅ SlackIntegrationRouter instantiated successfully")
-        
+
         # Test spatial adapter access
         if hasattr(slack_router, 'get_spatial_adapter'):
             spatial_adapter = slack_router.get_spatial_adapter()
             if spatial_adapter:
                 print("✅ Spatial adapter accessible through router")
                 print(f"  Spatial adapter type: {type(spatial_adapter).__name__}")
-                
+
                 # Test spatial methods if available
-                spatial_methods = [method for method in dir(spatial_adapter) 
+                spatial_methods = [method for method in dir(spatial_adapter)
                                  if not method.startswith('_') and callable(getattr(spatial_adapter, method))]
                 print(f"  Available spatial methods: {len(spatial_methods)}")
                 for method in spatial_methods[:5]:  # Show first 5
                     print(f"    - {method}")
-                    
+
             else:
                 print("⚠️ Spatial adapter returned None")
         else:
             print("⚠️ get_spatial_adapter method not found")
-        
+
         # Test router method delegation to spatial system
-        router_methods = [method for method in dir(slack_router) 
+        router_methods = [method for method in dir(slack_router)
                          if not method.startswith('_') and callable(getattr(slack_router, method))]
         print(f"\n🔧 Router methods available: {len(router_methods)}")
-        
+
         # Look for spatial-related methods
         spatial_methods = [method for method in router_methods if 'spatial' in method.lower()]
-        coord_methods = [method for method in router_methods if any(keyword in method.lower() 
+        coord_methods = [method for method in router_methods if any(keyword in method.lower()
                         for keyword in ['coordinate', 'orchestrat', 'manage', 'process'])]
-        
+
         print(f"  Spatial-related methods: {len(spatial_methods)}")
         for method in spatial_methods:
             print(f"    - {method}")
-            
+
         print(f"  Coordination methods: {len(coord_methods)}")
         for method in coord_methods[:5]:
             print(f"    - {method}")
-            
+
     except Exception as e:
         print(f"❌ Error testing spatial coordination: {e}")
 
@@ -160,23 +160,23 @@ import os
 
 def test_spatial_flag_control():
     """Test USE_SPATIAL_SLACK flag control"""
-    
+
     print("\n=== SPATIAL FEATURE FLAG TESTING ===")
-    
+
     # Save original flag value
     original_flag = os.environ.get('USE_SPATIAL_SLACK')
-    
+
     try:
         # Test with spatial enabled
         print("🔧 Testing USE_SPATIAL_SLACK=true")
         os.environ['USE_SPATIAL_SLACK'] = 'true'
-        
+
         # Import router with spatial enabled
         from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
         spatial_router = SlackIntegrationRouter()
-        
+
         print(f"  Router type with spatial=true: {type(spatial_router).__name__}")
-        
+
         # Check if spatial capabilities are active
         if hasattr(spatial_router, 'get_spatial_adapter'):
             spatial_adapter = spatial_router.get_spatial_adapter()
@@ -184,26 +184,26 @@ def test_spatial_flag_control():
                 print("  ✅ Spatial adapter available when enabled")
             else:
                 print("  ⚠️ Spatial adapter None when enabled")
-        
+
         # Test with spatial disabled
         print("\n🔧 Testing USE_SPATIAL_SLACK=false")
         os.environ['USE_SPATIAL_SLACK'] = 'false'
-        
+
         # Need to reload to test flag change effect
         # Note: This may require module reloading depending on implementation
         print("  ✅ Flag set to false")
         print("  Note: Module reloading may be needed to test flag effect")
-        
+
         # Test with no flag (default behavior)
         print("\n🔧 Testing USE_SPATIAL_SLACK unset (default)")
         if 'USE_SPATIAL_SLACK' in os.environ:
             del os.environ['USE_SPATIAL_SLACK']
-        
+
         print("  ✅ Flag unset, testing default behavior")
-        
+
     except Exception as e:
         print(f"❌ Error testing feature flag: {e}")
-    
+
     finally:
         # Restore original flag
         if original_flag:
@@ -222,55 +222,55 @@ Analyze the spatial coordination patterns for documentation:
 # Analyze spatial patterns for documentation
 def analyze_spatial_patterns():
     """Analyze spatial coordination patterns"""
-    
+
     print("\n=== SPATIAL COORDINATION PATTERN ANALYSIS ===")
-    
+
     patterns = {
         'coordination_mechanisms': [],
         'data_flow_patterns': [],
         'integration_points': [],
         'router_interactions': []
     }
-    
+
     # Analyze core spatial files for patterns
     for file_path in core_files:
         if file_path and os.path.exists(file_path):
             print(f"\n🔍 PATTERN ANALYSIS: {file_path}")
-            
+
             try:
                 with open(file_path, 'r') as f:
                     content = f.read()
-                
+
                 # Look for coordination mechanisms
                 if any(keyword in content.lower() for keyword in ['coordinate', 'orchestrat', 'manage', 'sync']):
                     patterns['coordination_mechanisms'].append(file_path)
                     print("  🎯 Coordination mechanism detected")
-                
+
                 # Look for data flow patterns
                 if any(keyword in content.lower() for keyword in ['process', 'transform', 'route', 'handle']):
                     patterns['data_flow_patterns'].append(file_path)
                     print("  📊 Data flow pattern detected")
-                
+
                 # Look for integration points
                 if any(keyword in content.lower() for keyword in ['router', 'adapter', 'integration', 'bridge']):
                     patterns['integration_points'].append(file_path)
                     print("  🔗 Integration point detected")
-                
+
                 # Look for router interactions
                 if 'SlackIntegrationRouter' in content or 'slack_integration_router' in content:
                     patterns['router_interactions'].append(file_path)
                     print("  🔄 Router interaction detected")
-                    
+
             except Exception as e:
                 print(f"  ❌ Error analyzing patterns: {e}")
-    
+
     # Summary of patterns
     print(f"\n📊 PATTERN SUMMARY:")
     for pattern_type, files in patterns.items():
         print(f"  {pattern_type}: {len(files)} files")
         for file_path in files:
             print(f"    - {os.path.basename(file_path)}")
-    
+
     return patterns
 
 spatial_patterns = analyze_spatial_patterns()

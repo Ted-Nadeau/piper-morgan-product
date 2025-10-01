@@ -20,7 +20,7 @@ The Calendar migration looked successful on the surface:
 
 But the CalendarIntegrationRouter was missing five methods from GoogleCalendarMCPAdapter:
 - `get_context` - Spatial context retrieval
-- `map_from_position` - Spatial mapping from coordinates  
+- `map_from_position` - Spatial mapping from coordinates
 - `map_to_position` - Spatial mapping to coordinates
 - `store_mapping` - Spatial mapping persistence
 - `get_mapping_stats` - Spatial mapping statistics
@@ -43,7 +43,7 @@ Code immediately took proper action:
 
 By 11:38 AM, Calendar migration was genuinely complete. But the pattern had appeared four times in four days:
 - GitHub router (Saturday): Initially incomplete
-- Calendar router (Sunday): Initially 58.3% complete  
+- Calendar router (Sunday): Initially 58.3% complete
 - Notion router (Sunday): Initially 82% complete
 - Slack router (Sunday): Initially 67% complete
 - Calendar migration (Monday): Accepted incomplete router
@@ -74,7 +74,7 @@ Code proposed five structural changes to prompts and briefings:
 ```
 MANDATORY VERIFICATION:
 1. Count ALL public methods in source: ___
-2. Count ALL public methods in router: ___  
+2. Count ALL public methods in router: ___
 3. Show comparison table with EVERY method
 4. Calculate percentage: ___/___ = ___%
 5. BLOCK on anything < 100%
@@ -110,7 +110,7 @@ COVERAGE: 12/12 = 100% ✓
 ```
 
 **5. Objective vs Subjective Verification**
-Current: "Verify the router is complete" (subjective)  
+Current: "Verify the router is complete" (subjective)
 Needed: "Show me the method count is 100%" (objective)
 
 The insight: subjective assessment allows rationalization. Objective metrics force confrontation with reality.
@@ -143,7 +143,7 @@ At 1:35 PM, Code reported:
 
 **Pre-flight dual-component router verification: 15/15 methods (100%)**
 - SlackSpatialAdapter: 9/9 methods ✓
-- SlackClient: 6/6 methods ✓  
+- SlackClient: 6/6 methods ✓
 - Combined expected: 15/15 methods ✓
 
 Again, 100% on first try. The mandatory enumeration caught everything. The objective metrics left no room for rationalization.
@@ -199,7 +199,7 @@ But infrastructure is different from features. When you're building the abstract
 Systematic quality requires systematic prevention. Not just catching mistakes, but making them harder to make:
 
 1. **Objective metrics** beat subjective assessment
-2. **Mandatory enumeration** beats assumed completeness  
+2. **Mandatory enumeration** beats assumed completeness
 3. **Explicit authorization** beats implicit permission
 4. **Pre-flight verification** beats post-hoc discovery
 5. **Forced comparison** beats rationalization

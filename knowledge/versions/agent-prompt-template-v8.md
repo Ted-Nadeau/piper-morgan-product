@@ -22,7 +22,7 @@ You are [Claude Code / Cursor Agent], a specialized development agent working on
 Read these briefing documents first in docs/briefing/:
 - PROJECT.md - What Piper Morgan is
 - CURRENT-STATE.md - Current epic and focus
-- role/PROGRAMMER.md - Your role requirements  
+- role/PROGRAMMER.md - Your role requirements
 - METHODOLOGY.md - Inchworm Protocol
 
 ## 🚨 INFRASTRUCTURE VERIFICATION (MANDATORY FIRST ACTION)
@@ -78,7 +78,7 @@ You have NO permission to:
 3. **Objective Completion Metric Required**
 Before claiming completion:
 - Show exact count: "17/17 methods = 100%"
-- Not subjective: "looks complete" 
+- Not subjective: "looks complete"
 - Not partial: "core functionality done"
 - Only acceptable: "X/X = 100% VERIFIED"
 

@@ -9,25 +9,25 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt || echo "No requirements.txt found"
-    
+
 
     - name: Configuration Validation Test
       run: |
         echo "🔍 Testing configuration validation system..."
-        
+
         # Create test configuration file
         mkdir -p config
         cat > config/PIPER.test.md << 'EOF'
@@ -35,21 +35,21 @@ jobs:
         - api_token: ghp_test_token_1234567890abcdef
         - organization: test-org
         - repository: test-repo
-        
-        ## Slack  
+
+        ## Slack
         - workspace_id: T1234567890
         - bot_token: xoxb-test-token-1234567890
         - signing_secret: test_signing_secret_32_characters
-        
+
         ## Notion
         - api_key: secret_test_notion_key_1234567890
         - database_ids: ["db1", "db2"]
-        
+
         ## Calendar
         - credentials_path: test_credentials.json
         - calendar_ids: ["primary"]
         EOF
-        
+
         # Create test credentials file
         cat > test_credentials.json << 'EOF'
         {
@@ -61,7 +61,7 @@ test
 "
         }
         EOF
-        
+
         # Test configuration validation (should work with test config)
         echo "✅ Testing valid configuration..."
         python -c "
@@ -73,17 +73,17 @@ test
         startup_allowed = validator.is_startup_allowed(results)
         print(f'Startup allowed: {startup_allowed}')
         "
-        
+
         # Test with invalid configuration
         echo "❌ Testing invalid configuration handling..."
         cat > config/PIPER.invalid.md << 'EOF'
         ## GitHub
         - api_token: invalid_token
-        
+
         ## Slack
         - bot_token: invalid_token
         EOF
-        
+
         python -c "
         from services.config_validator import ConfigValidator
         validator = ConfigValidator('config/PIPER.invalid.md')
@@ -95,17 +95,17 @@ test
             print('❌ Invalid configuration incorrectly accepted')
             exit(1)
         "
-        
+
         # Test main.py integration
         echo "🚀 Testing main.py startup integration..."
         timeout 10s python main.py --config config/PIPER.test.md --skip-validation || echo "✅ Startup test completed"
-        
+
         # Clean up test files
         rm -f config/PIPER.test.md config/PIPER.invalid.md test_credentials.json
-        
+
         echo "✅ Configuration validation CI tests completed"
 
-    
+
     - name: Run tests
       run: |
         python -m pytest tests/ || echo "No tests found"

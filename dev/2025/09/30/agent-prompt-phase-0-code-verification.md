@@ -37,7 +37,7 @@ echo "Expected: CalendarIntegrationRouter, NotionIntegrationRouter, SlackIntegra
 # Check router imports are working
 python -c "
 from services.integrations.calendar.calendar_integration_router import CalendarIntegrationRouter
-from services.integrations.notion.notion_integration_router import NotionIntegrationRouter  
+from services.integrations.notion.notion_integration_router import NotionIntegrationRouter
 from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
 print('✅ All routers import successfully')
 "
@@ -78,37 +78,37 @@ from pathlib import Path
 
 def map_spatial_systems():
     """Map all spatial intelligence systems"""
-    
+
     print("=== SPATIAL INTELLIGENCE ARCHITECTURE MAP ===")
-    
+
     # Find all spatial files
-    result = subprocess.run(['find', 'services/', '-name', '*spatial*', '-type', 'f'], 
+    result = subprocess.run(['find', 'services/', '-name', '*spatial*', '-type', 'f'],
                           capture_output=True, text=True)
     spatial_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
-    
+
     # Categorize by integration
     slack_spatial = [f for f in spatial_files if 'slack' in f.lower()]
     notion_spatial = [f for f in spatial_files if 'notion' in f.lower()]
     other_spatial = [f for f in spatial_files if f not in slack_spatial and f not in notion_spatial]
-    
+
     print(f"📍 SLACK SPATIAL FILES ({len(slack_spatial)} found):")
     for f in slack_spatial:
         print(f"  {f}")
-    
+
     print(f"\n📍 NOTION SPATIAL FILES ({len(notion_spatial)} found):")
     for f in notion_spatial:
         print(f"  {f}")
-    
+
     print(f"\n📍 OTHER SPATIAL FILES ({len(other_spatial)} found):")
     for f in other_spatial:
         print(f"  {f}")
-    
+
     # Check if meets gameplan expectations
     if len(slack_spatial) >= 20:
         print(f"\n✅ Slack spatial system matches expectation (20+ files)")
     else:
         print(f"\n⚠️ Slack spatial system may be smaller than expected ({len(slack_spatial)} < 20)")
-    
+
     return slack_spatial, notion_spatial, other_spatial
 
 slack_files, notion_files, other_files = map_spatial_systems()
@@ -148,20 +148,20 @@ grep -r "hmac\|signature" services/ --include="*.py" -A 2 -B 2
 # Analyze webhook security implementation
 def analyze_webhook_security():
     """Analyze current webhook security status"""
-    
+
     print("=== WEBHOOK SECURITY ANALYSIS ===")
-    
+
     # Find webhook-related files
     import subprocess
-    
-    result = subprocess.run(['grep', '-r', 'webhook', 'services/', '--include=*.py', '-l'], 
+
+    result = subprocess.run(['grep', '-r', 'webhook', 'services/', '--include=*.py', '-l'],
                           capture_output=True, text=True)
     webhook_files = result.stdout.strip().split('\n') if result.stdout.strip() else []
-    
+
     print(f"📁 WEBHOOK-RELATED FILES ({len(webhook_files)} found):")
     for f in webhook_files:
         print(f"  {f}")
-    
+
     # Look for security patterns in each file
     for file_path in webhook_files:
         if file_path and os.path.exists(file_path):
@@ -169,22 +169,22 @@ def analyze_webhook_security():
             try:
                 with open(file_path, 'r') as f:
                     content = f.read()
-                
+
                 # Check for security patterns
                 if 'verify_slack_request' in content:
                     print("  ✅ Found verify_slack_request function")
                 elif 'verify' in content.lower() and 'slack' in content.lower():
                     print("  ⚠️ Found slack verification patterns")
-                
+
                 if 'TBD-SECURITY-02' in content:
                     print("  🚨 Found TBD-SECURITY-02 marker")
-                
+
                 if 'FIXME' in content or 'TODO' in content:
                     print("  ⚠️ Found FIXME/TODO markers")
-                
+
                 if 'hmac' in content.lower() or 'signature' in content.lower():
                     print("  🔐 Found security-related code")
-                    
+
             except Exception as e:
                 print(f"  ❌ Error reading file: {e}")
 
@@ -245,7 +245,7 @@ gh issue comment 194 --body "## Phase 0 Infrastructure Verification Complete
 
 ### Spatial System Discovery
 - Slack spatial files found: [X files]
-- Notion spatial files found: [Y files] 
+- Notion spatial files found: [Y files]
 - [paste spatial file inventory]
 
 ### Security Status 🚨
@@ -271,7 +271,7 @@ gh issue comment 194 --body "## Phase 0 Infrastructure Verification Complete
 ```
 Infrastructure Component | Verified | Status
 ----------------------- | -------- | ------
-CalendarIntegrationRouter | [ ] | 
+CalendarIntegrationRouter | [ ] |
 NotionIntegrationRouter   | [ ] |
 SlackIntegrationRouter    | [ ] |
 Slack spatial files (20+) | [ ] |

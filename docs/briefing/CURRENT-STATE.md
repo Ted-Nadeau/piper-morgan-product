@@ -4,7 +4,7 @@
 
 ## 📊 STATUS BANNER
 
-**Current Position**: 1.1.2.5 (GREAT-2C complete, GREAT-2D next)  
+**Current Position**: 1.1.2.5 (GREAT-2C complete, GREAT-2D next)
 **Last Updated**: September 30, 2025, 4:35 PM PT
 
 ---
@@ -13,8 +13,8 @@
 
 1.1.2.5 = The Great Refactor → GREAT-2 → Post-GREAT-2C → Ready for GREAT-2D
 
-**Completed**: GREAT-1, GREAT-2A, GREAT-2B, CORE-QUERY-1, GREAT-2C  
-**Next**: GREAT-2D (Google Calendar & Config Validation)  
+**Completed**: GREAT-1, GREAT-2A, GREAT-2B, CORE-QUERY-1, GREAT-2C
+**Next**: GREAT-2D (Google Calendar & Config Validation)
 **Remaining**: GREAT-2E, GREAT-3, GREAT-4, GREAT-5
 
 ---
@@ -28,7 +28,7 @@
 - ADR-038 created
 
 ### Next: GREAT-2D (#195)
-**Scope**: Google Calendar spatial wrapper & configuration validation  
+**Scope**: Google Calendar spatial wrapper & configuration validation
 **Key Tasks**:
 - Unify Calendar calls through OrchestrationEngine
 - Implement startup configuration validation

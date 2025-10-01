@@ -15,7 +15,7 @@ Please provide concrete evidence for integration testing in the following areas:
 - Include performance or functionality validation
 
 **For Notion Spatial System:**
-- Provide test output showing Notion spatial integration tests  
+- Provide test output showing Notion spatial integration tests
 - Include evidence of tests passing with `USE_SPATIAL_NOTION=true`
 - Show any test results for embedded spatial methods
 - Include validation of 8-dimensional analysis functionality
