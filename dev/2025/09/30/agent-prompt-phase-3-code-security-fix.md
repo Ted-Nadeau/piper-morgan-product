@@ -16,44 +16,44 @@ Examine the webhook verification code and current security state:
 # Analyze current webhook security implementation
 def analyze_webhook_security_state():
     """Analyze current webhook verification implementation"""
-    
+
     print("=== TBD-SECURITY-02 ANALYSIS ===")
-    
+
     # Locate the webhook router file
     webhook_file = 'services/integrations/slack/webhook_router.py'
-    
+
     try:
         with open(webhook_file, 'r') as f:
             content = f.read()
             lines = content.split('\n')
-        
+
         print(f"📁 Analyzing: {webhook_file}")
         print(f"📊 Total lines: {len(lines)}")
-        
+
         # Focus on lines 180-195 (around the target area)
         print(f"\n🔍 EXAMINING LINES 180-195 (TARGET AREA):")
-        
+
         for i in range(179, min(195, len(lines))):  # 0-indexed, so 179 = line 180
             line_num = i + 1
             line_content = lines[i]
             is_commented = line_content.strip().startswith('#')
-            
+
             if 184 <= line_num <= 189:
                 marker = "🎯 TARGET" if is_commented else "✅ ACTIVE"
                 print(f"  {marker} Line {line_num}: {line_content}")
             else:
                 print(f"      Line {line_num}: {line_content}")
-        
+
         # Look for verification method signatures
         print(f"\n🔍 SEARCHING FOR VERIFICATION METHODS:")
         verification_patterns = [
             'verify_signature',
             'validate_webhook',
-            'check_signature', 
+            'check_signature',
             'authenticate_webhook',
             'verify_slack_signature'
         ]
-        
+
         for pattern in verification_patterns:
             if pattern in content:
                 print(f"  ✅ Found method pattern: {pattern}")
@@ -61,18 +61,18 @@ def analyze_webhook_security_state():
                 for i, line in enumerate(lines):
                     if pattern in line and ('def' in line or 'async def' in line):
                         print(f"    Line {i+1}: {line.strip()}")
-        
+
         # Check current webhook endpoints behavior
         print(f"\n🔍 ANALYZING CURRENT ENDPOINT BEHAVIOR:")
-        
+
         # Look for endpoint definitions
         endpoint_patterns = ['/webhooks/', '/slack/webhooks/', 'webhook']
         for pattern in endpoint_patterns:
             if pattern in content:
                 print(f"  📍 Found endpoint pattern: {pattern}")
-        
+
         return content, lines
-        
+
     except Exception as e:
         print(f"❌ Error analyzing webhook file: {e}")
         return None, None
@@ -88,33 +88,33 @@ Re-enable webhook verification by uncommenting the identified lines:
 # Implement TBD-SECURITY-02 fix
 def implement_webhook_security_fix():
     """Re-enable Slack webhook verification"""
-    
+
     print("\n=== IMPLEMENTING TBD-SECURITY-02 FIX ===")
-    
+
     webhook_file = 'services/integrations/slack/webhook_router.py'
     backup_file = f'{webhook_file}.backup'
-    
+
     try:
         # Create backup first
         import shutil
         shutil.copy2(webhook_file, backup_file)
         print(f"✅ Backup created: {backup_file}")
-        
+
         # Read current content
         with open(webhook_file, 'r') as f:
             content = f.read()
             lines = content.split('\n')
-        
+
         print(f"📝 Processing lines 184-189...")
-        
+
         # Track changes
         changes_made = []
-        
+
         # Uncomment lines 184-189 (convert to 0-indexed)
         for line_num in range(183, 189):  # 183-188 in 0-indexed = lines 184-189
             if line_num < len(lines):
                 original_line = lines[line_num]
-                
+
                 # Check if line is commented
                 if original_line.strip().startswith('#'):
                     # Uncomment the line
@@ -123,7 +123,7 @@ def implement_webhook_security_fix():
                     # Preserve original indentation
                     indent = len(original_line) - len(original_line.lstrip())
                     lines[line_num] = ' ' * indent + uncommented
-                    
+
                     changes_made.append({
                         'line_num': line_num + 1,
                         'original': original_line,
@@ -132,26 +132,26 @@ def implement_webhook_security_fix():
                     print(f"  ✅ Line {line_num + 1}: Uncommented")
                 else:
                     print(f"  ℹ️ Line {line_num + 1}: Already active")
-        
+
         if changes_made:
             # Write the modified content
             modified_content = '\n'.join(lines)
-            
+
             with open(webhook_file, 'w') as f:
                 f.write(modified_content)
-            
+
             print(f"\n📝 CHANGES APPLIED:")
             for change in changes_made:
                 print(f"  Line {change['line_num']}:")
                 print(f"    Before: {change['original']}")
                 print(f"    After:  {change['modified']}")
-            
+
             print(f"\n✅ TBD-SECURITY-02 fix applied ({len(changes_made)} lines modified)")
             return True, changes_made
         else:
             print(f"\n⚠️ No changes needed - verification may already be enabled")
             return False, []
-            
+
     except Exception as e:
         print(f"❌ Error implementing fix: {e}")
         print(f"🔄 Restoring backup...")
@@ -173,28 +173,28 @@ Verify the webhook verification is now active:
 # Test webhook security after fix
 def test_webhook_security_fix():
     """Test that webhook verification is now working"""
-    
+
     print("\n=== TESTING WEBHOOK SECURITY FIX ===")
-    
+
     try:
         # Import and test the webhook router
         from services.integrations.slack.webhook_router import SlackWebhookRouter
-        
+
         webhook_router = SlackWebhookRouter()
         print("✅ SlackWebhookRouter imported successfully")
-        
+
         # Check if verification methods are available
-        router_methods = [method for method in dir(webhook_router) 
+        router_methods = [method for method in dir(webhook_router)
                          if not method.startswith('_')]
-        
-        verification_methods = [method for method in router_methods 
-                               if any(keyword in method.lower() 
+
+        verification_methods = [method for method in router_methods
+                               if any(keyword in method.lower()
                                      for keyword in ['verify', 'validate', 'authenticate', 'signature'])]
-        
+
         print(f"🔧 Verification methods available: {len(verification_methods)}")
         for method in verification_methods:
             print(f"  - {method}")
-        
+
         # Test signature verification if method exists
         if hasattr(webhook_router, 'verify_signature'):
             print("\n🔐 Testing signature verification method...")
@@ -202,21 +202,21 @@ def test_webhook_security_fix():
                 # Test with invalid signature (should fail)
                 test_headers = {'X-Slack-Signature': 'invalid_signature'}
                 test_body = b'test_payload'
-                
+
                 # This should return False or raise an exception
                 result = webhook_router.verify_signature(test_headers, test_body)
                 print(f"  Invalid signature test: {result} (should be False)")
-                
+
                 if result is False:
                     print("  ✅ Signature verification correctly rejects invalid signatures")
                 else:
                     print("  ⚠️ Signature verification may not be working correctly")
-                    
+
             except Exception as e:
                 print(f"  ✅ Signature verification correctly raises exception: {type(e).__name__}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Error testing webhook security: {e}")
         return False
@@ -232,61 +232,61 @@ Ensure the security fix doesn't break spatial functionality:
 # Test spatial systems still work after security fix
 def test_spatial_compatibility_after_security_fix():
     """Ensure spatial systems still work after security fix"""
-    
+
     print("\n=== TESTING SPATIAL COMPATIBILITY AFTER FIX ===")
-    
+
     compatibility_results = []
-    
+
     # Test Slack spatial system
     print("🔧 Testing Slack spatial system compatibility...")
     try:
         import os
         os.environ['USE_SPATIAL_SLACK'] = 'true'
-        
+
         from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
-        
+
         slack_router = SlackIntegrationRouter()
         spatial_adapter = slack_router.get_spatial_adapter()
-        
+
         if spatial_adapter:
             print("  ✅ Slack spatial adapter still accessible")
             compatibility_results.append(('slack_spatial', True))
         else:
             print("  ❌ Slack spatial adapter not accessible")
             compatibility_results.append(('slack_spatial', False))
-            
+
     except Exception as e:
         print(f"  ❌ Slack spatial system error: {e}")
         compatibility_results.append(('slack_spatial', False))
-    
+
     # Test Notion spatial system
     print("\n🔧 Testing Notion spatial system compatibility...")
     try:
         os.environ['USE_SPATIAL_NOTION'] = 'true'
-        
+
         from services.integrations.notion.notion_integration_router import NotionIntegrationRouter
-        
+
         notion_router = NotionIntegrationRouter()
         print("  ✅ Notion router still functional")
         compatibility_results.append(('notion_spatial', True))
-        
+
     except Exception as e:
         print(f"  ❌ Notion spatial system error: {e}")
         compatibility_results.append(('notion_spatial', False))
-    
+
     # Test webhook router still works
     print("\n🔧 Testing webhook router functionality...")
     try:
         from services.integrations.slack.webhook_router import SlackWebhookRouter
-        
+
         webhook_router = SlackWebhookRouter()
         print("  ✅ Webhook router still functional")
         compatibility_results.append(('webhook_router', True))
-        
+
     except Exception as e:
         print(f"  ❌ Webhook router error: {e}")
         compatibility_results.append(('webhook_router', False))
-    
+
     # Summary
     print(f"\n📊 COMPATIBILITY TEST SUMMARY:")
     all_passed = True
@@ -295,12 +295,12 @@ def test_spatial_compatibility_after_security_fix():
         print(f"  {test_name}: {status}")
         if not passed:
             all_passed = False
-    
+
     if all_passed:
         print("\n🎉 All spatial systems compatible with security fix!")
     else:
         print("\n⚠️ Some compatibility issues detected - may need rollback")
-    
+
     return all_passed, compatibility_results
 
 compatibility_passed, compatibility_results = test_spatial_compatibility_after_security_fix()
@@ -328,7 +328,7 @@ curl -X POST http://localhost:8001/slack/webhooks/commands \
   -d '{"test": "command"}' \
   -w "Status: %{http_code}\n" || echo "Request failed as expected"
 
-# Test interactive endpoint  
+# Test interactive endpoint
 curl -X POST http://localhost:8001/slack/webhooks/interactive \
   -H "Content-Type: application/json" \
   -d '{"test": "interactive"}' \
@@ -358,7 +358,7 @@ gh issue comment 194 --body "## Phase 3: TBD-SECURITY-02 Security Fix Complete
 
 ### Spatial System Compatibility ✅
 - Slack spatial system: [COMPATIBLE/ISSUES]
-- Notion spatial system: [COMPATIBLE/ISSUES]  
+- Notion spatial system: [COMPATIBLE/ISSUES]
 - Webhook router: [FUNCTIONAL/ISSUES]
 
 ### Endpoint Security Verification ✅

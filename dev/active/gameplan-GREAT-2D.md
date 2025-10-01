@@ -1,8 +1,8 @@
 # Gameplan: GREAT-2D - Calendar Spatial & Configuration Validation
 
-**Date**: September 30, 2025  
-**Epic**: GREAT-2D (GitHub Issue #195)  
-**Chief Architect**: Claude Opus 4.1  
+**Date**: September 30, 2025
+**Epic**: GREAT-2D (GitHub Issue #195)
+**Chief Architect**: Claude Opus 4.1
 **Context**: Calendar is potentially the only integration WITHOUT an existing spatial system. Plus need configuration validation for all services.
 
 ## Mission
@@ -49,7 +49,7 @@ grep "validate.*config" .github/workflows/*.yml
 
 # 5. All 4 services validated
 python validate_config.py --service=github
-python validate_config.py --service=slack  
+python validate_config.py --service=slack
 python validate_config.py --service=notion
 python validate_config.py --service=calendar
 # All should report validation results
@@ -87,7 +87,7 @@ grep -r "TBD-API-01" services/
 ```python
 # Check Calendar operations
 # - Are they time-based? (temporal dimension)
-# - Are they priority-based? (priority dimension)  
+# - Are they priority-based? (priority dimension)
 # - Do they need coordination? (collaborative dimension)
 ```
 
@@ -133,7 +133,7 @@ class CalendarSpatialIntelligence:
 class CalendarIntegrationRouter:
     def __init__(self):
         self.spatial = CalendarSpatialIntelligence()
-    
+
     def get_spatial_events(self):
         return self.spatial.analyze_temporal(...)
 ```
@@ -156,19 +156,19 @@ TOTAL: 3/3 = 100% (or document why fewer needed)
 # services/config_validator.py
 class ConfigValidator:
     """Validates all service configurations"""
-    
+
     def validate_github(self, config):
         # Check: API token format, org/repo existence
-        
+
     def validate_slack(self, config):
         # Check: Workspace ID, bot token, signing secret
-        
+
     def validate_notion(self, config):
         # Check: API key, database IDs
-        
+
     def validate_calendar(self, config):
         # Check: Credentials, calendar IDs
-        
+
     def validate_all(self):
         # Run all validators, collect results
 ```
@@ -180,11 +180,11 @@ def startup():
     # FIRST: Validate configuration
     validator = ConfigValidator()
     validation_results = validator.validate_all()
-    
+
     if not validation_results.is_valid:
         logger.error(f"Configuration invalid: {validation_results.errors}")
         sys.exit(1)
-    
+
     # THEN: Start services
     start_services()
 ```
@@ -209,10 +209,10 @@ TOTAL: Must be 4/4 services
   run: |
     # Create test config
     cp config/PIPER.example.md config/PIPER.test.md
-    
+
     # Run validation
     python validate_config.py --config=config/PIPER.test.md
-    
+
     # Test invalid config handling
     echo "invalid" > config/PIPER.invalid.md
     python validate_config.py --config=config/PIPER.invalid.md && exit 1 || echo "Correctly rejected invalid config"
@@ -365,5 +365,5 @@ Total effort: Perhaps one huron, quality over speed as always.
 
 ---
 
-*Gameplan prepared by Chief Architect*  
+*Gameplan prepared by Chief Architect*
 *Ready for Lead Developer deployment*

@@ -16,61 +16,61 @@ Analyze the Calendar integration router to understand current capabilities:
 # Focused Calendar router analysis
 def analyze_calendar_router():
     """Analyze Calendar integration router implementation and capabilities"""
-    
+
     print("=== CALENDAR ROUTER ANALYSIS ===")
-    
+
     router_path = 'services/integrations/calendar/calendar_integration_router.py'
-    
+
     try:
         with open(router_path, 'r') as f:
             router_content = f.read()
-        
+
         print(f"✅ Calendar router found: {len(router_content)} characters")
-        
+
         # Analyze router structure
         lines = router_content.split('\n')
-        
+
         # Count methods and analyze complexity
         methods = [line.strip() for line in lines if line.strip().startswith('def ') or line.strip().startswith('async def ')]
         classes = [line.strip() for line in lines if line.strip().startswith('class ')]
         imports = [line.strip() for line in lines if line.strip().startswith('import ') or line.strip().startswith('from ')]
-        
+
         print(f"📊 Router Structure:")
         print(f"  Classes: {len(classes)}")
         print(f"  Methods: {len(methods)}")
         print(f"  Imports: {len(imports)}")
         print(f"  Total lines: {len(lines)}")
-        
+
         # List key methods
         print(f"\n🔧 Key Methods Found:")
         for method in methods[:10]:  # Show first 10 methods
             print(f"  - {method}")
-        
+
         # Check for spatial patterns
         spatial_indicators = ['spatial', 'dimension', 'coordinate', 'mapping', 'intelligence']
         spatial_found = []
-        
+
         for indicator in spatial_indicators:
             if indicator.lower() in router_content.lower():
                 spatial_found.append(indicator)
-        
+
         print(f"\n🔍 Spatial Indicators:")
         if spatial_found:
             print(f"  Found: {', '.join(spatial_found)}")
         else:
             print(f"  None found - likely no existing spatial system")
-        
+
         # Analyze method signatures for complexity
         calendar_operations = ['event', 'calendar', 'schedule', 'appointment', 'meeting']
         operations_found = []
-        
+
         for operation in calendar_operations:
             if operation.lower() in router_content.lower():
                 operations_found.append(operation)
-        
+
         print(f"\n📅 Calendar Operations:")
         print(f"  Found: {', '.join(operations_found) if operations_found else 'None detected'}")
-        
+
         return {
             'methods': len(methods),
             'classes': len(classes),
@@ -79,7 +79,7 @@ def analyze_calendar_router():
             'operations': operations_found,
             'complexity': 'High' if len(methods) > 15 else 'Medium' if len(methods) > 8 else 'Low'
         }
-        
+
     except Exception as e:
         print(f"❌ Could not analyze Calendar router: {e}")
         return {'error': str(e)}
@@ -95,14 +95,14 @@ Evaluate whether Calendar needs spatial intelligence based on its operations:
 # Assess Calendar spatial requirements
 def assess_calendar_spatial_needs():
     """Determine if Calendar operations require spatial intelligence"""
-    
+
     print("\n=== CALENDAR SPATIAL NEEDS ASSESSMENT ===")
-    
+
     # Analyze Calendar service files for complexity indicators
     import glob
-    
+
     calendar_files = glob.glob('services/integrations/calendar/**/*.py', recursive=True)
-    
+
     complexity_indicators = {
         'temporal': ['time', 'date', 'schedule', 'duration', 'when'],
         'priority': ['important', 'urgent', 'priority', 'critical'],
@@ -110,18 +110,18 @@ def assess_calendar_spatial_needs():
         'hierarchical': ['parent', 'child', 'nested', 'category', 'group'],
         'contextual': ['context', 'related', 'associated', 'linked']
     }
-    
+
     dimension_analysis = {}
-    
+
     for dimension, keywords in complexity_indicators.items():
         dimension_count = 0
         files_with_dimension = []
-        
+
         for file_path in calendar_files:
             try:
                 with open(file_path, 'r') as f:
                     content = f.read().lower()
-                
+
                 file_matches = sum(1 for keyword in keywords if keyword in content)
                 if file_matches > 0:
                     dimension_count += file_matches
@@ -129,26 +129,26 @@ def assess_calendar_spatial_needs():
                         'file': file_path,
                         'matches': file_matches
                     })
-            
+
             except Exception as e:
                 print(f"  Warning: Could not read {file_path}: {e}")
-        
+
         dimension_analysis[dimension] = {
             'total_matches': dimension_count,
             'files_affected': len(files_with_dimension),
             'strength': 'High' if dimension_count > 10 else 'Medium' if dimension_count > 3 else 'Low'
         }
-    
+
     print(f"📊 Spatial Dimension Analysis:")
     for dimension, analysis in dimension_analysis.items():
         print(f"  {dimension.upper()}: {analysis['strength']} ({analysis['total_matches']} matches in {analysis['files_affected']} files)")
-    
+
     # Determine spatial need based on dimensional complexity
     high_dimensions = [dim for dim, analysis in dimension_analysis.items() if analysis['strength'] == 'High']
     medium_dimensions = [dim for dim, analysis in dimension_analysis.items() if analysis['strength'] == 'Medium']
-    
+
     print(f"\n🎯 SPATIAL INTELLIGENCE RECOMMENDATION:")
-    
+
     if len(high_dimensions) >= 2:
         recommendation = "SPATIAL INTELLIGENCE NEEDED - Multiple high-complexity dimensions"
         pattern_suggestion = "Embedded Pattern (focused domain)"
@@ -158,10 +158,10 @@ def assess_calendar_spatial_needs():
     else:
         recommendation = "SPATIAL INTELLIGENCE NOT REQUIRED - Low complexity domain"
         pattern_suggestion = "No spatial wrapper needed"
-    
+
     print(f"  {recommendation}")
     print(f"  Pattern suggestion: {pattern_suggestion}")
-    
+
     return {
         'dimension_analysis': dimension_analysis,
         'recommendation': recommendation,
@@ -181,9 +181,9 @@ Design graceful configuration validation approach for all 4 services:
 # Design configuration validation system
 def design_configuration_validation():
     """Design graceful configuration validation system"""
-    
+
     print("\n=== CONFIGURATION VALIDATION DESIGN ===")
-    
+
     services = {
         'github': {
             'required_fields': ['api_token', 'organization', 'repository'],
@@ -206,14 +206,14 @@ def design_configuration_validation():
             'graceful_errors': ['Credentials invalid', 'Calendar access denied']
         }
     }
-    
+
     print(f"🔧 Service Configuration Requirements:")
     for service, config in services.items():
         print(f"\n  {service.upper()}:")
         print(f"    Required fields: {len(config['required_fields'])}")
         print(f"    Validation checks: {len(config['validation_checks'])}")
         print(f"    Error scenarios: {len(config['graceful_errors'])}")
-    
+
     # Design validation architecture
     validation_architecture = {
         'validator_class': 'ConfigValidator',
@@ -222,20 +222,20 @@ def design_configuration_validation():
         'startup_integration': 'pre_service_initialization',
         'ci_integration': 'automated_validation_step'
     }
-    
+
     print(f"\n🏗️ Validation Architecture Design:")
     print(f"  Main class: {validation_architecture['validator_class']}")
     print(f"  Service methods: {len(validation_architecture['validation_methods'])}")
     print(f"  Error handling: {validation_architecture['error_handling']}")
     print(f"  Startup integration: {validation_architecture['startup_integration']}")
     print(f"  CI integration: {validation_architecture['ci_integration']}")
-    
+
     # Design graceful error messages
     print(f"\n💬 Graceful Error Message Design:")
     print(f"  Format: Clear problem description + recovery suggestion")
     print(f"  Example: 'GitHub API token invalid. Please check your token in config/PIPER.user.md'")
     print(f"  Recovery: Provide specific steps to fix each configuration issue")
-    
+
     return {
         'services': services,
         'architecture': validation_architecture,
@@ -253,27 +253,27 @@ Identify what constitutes the missing 15% of Calendar integration:
 # Analyze Calendar integration gaps
 def analyze_calendar_gaps():
     """Identify specific gaps in Calendar integration completion"""
-    
+
     print("\n=== CALENDAR INTEGRATION GAP ANALYSIS ===")
-    
+
     # Check for incomplete implementations
     import re
-    
+
     calendar_path = 'services/integrations/calendar'
     gap_indicators = []
-    
+
     try:
         # Look for stub methods, TODOs, and incomplete implementations
         import glob
         calendar_files = glob.glob(f'{calendar_path}/**/*.py', recursive=True)
-        
+
         for file_path in calendar_files:
             with open(file_path, 'r') as f:
                 lines = f.readlines()
-            
+
             for i, line in enumerate(lines):
                 line_num = i + 1
-                
+
                 # Check for various gap indicators
                 if 'pass' in line and i > 0 and ('def ' in lines[i-1] or 'async def ' in lines[i-1]):
                     gap_indicators.append({
@@ -282,7 +282,7 @@ def analyze_calendar_gaps():
                         'line': line_num,
                         'context': f"{lines[i-1].strip()} -> {line.strip()}"
                     })
-                
+
                 if any(marker in line.upper() for marker in ['TODO', 'FIXME', 'XXX']):
                     gap_indicators.append({
                         'type': 'TODO/FIXME',
@@ -290,7 +290,7 @@ def analyze_calendar_gaps():
                         'line': line_num,
                         'context': line.strip()
                     })
-                
+
                 if 'NotImplemented' in line or 'not implemented' in line.lower():
                     gap_indicators.append({
                         'type': 'Not Implemented',
@@ -298,10 +298,10 @@ def analyze_calendar_gaps():
                         'line': line_num,
                         'context': line.strip()
                     })
-        
+
         print(f"📊 Gap Analysis Results:")
         print(f"  Total gaps found: {len(gap_indicators)}")
-        
+
         # Group by type
         gap_types = {}
         for gap in gap_indicators:
@@ -309,24 +309,24 @@ def analyze_calendar_gaps():
             if gap_type not in gap_types:
                 gap_types[gap_type] = []
             gap_types[gap_type].append(gap)
-        
+
         for gap_type, gaps in gap_types.items():
             print(f"\n  {gap_type}: {len(gaps)} instances")
             for gap in gaps[:3]:  # Show first 3 of each type
                 file_short = gap['file'].replace('services/integrations/calendar/', '')
                 print(f"    {file_short}:{gap['line']} - {gap['context'][:60]}...")
-        
+
         # Estimate completion percentage
         total_methods = sum(1 for gap in gap_indicators if gap['type'] == 'Stub Method')
         total_todos = sum(1 for gap in gap_indicators if gap['type'] == 'TODO/FIXME')
-        
+
         if total_methods + total_todos > 0:
             estimated_completion = max(85 - (total_methods * 5) - (total_todos * 2), 0)
             print(f"\n📈 Estimated Completion: {estimated_completion}%")
             print(f"  Missing: {100 - estimated_completion}% (matches ~15% claim)")
-        
+
         return gap_indicators
-        
+
     except Exception as e:
         print(f"❌ Gap analysis error: {e}")
         return []
@@ -342,9 +342,9 @@ Prepare validation framework for Code agent comparison:
 # Prepare cross-validation data
 def prepare_cross_validation():
     """Prepare findings for Code agent cross-validation"""
-    
+
     print("\n=== CROSS-VALIDATION PREPARATION ===")
-    
+
     validation_data = {
         'calendar_router_analysis': router_analysis,
         'spatial_needs_assessment': spatial_assessment,
@@ -352,10 +352,10 @@ def prepare_cross_validation():
         'integration_gaps': calendar_gaps,
         'recommendations': {}
     }
-    
+
     # Generate recommendations based on analysis
     recommendations = {}
-    
+
     # Calendar spatial recommendation
     if spatial_assessment.get('recommendation', '').startswith('SPATIAL INTELLIGENCE NEEDED'):
         recommendations['spatial'] = {
@@ -368,7 +368,7 @@ def prepare_cross_validation():
         recommendations['spatial'] = {
             'action': 'Consider spatial wrapper',
             'pattern': 'Embedded (single file)',
-            'priority': 'Medium', 
+            'priority': 'Medium',
             'rationale': 'Moderate complexity could benefit from spatial intelligence'
         }
     else:
@@ -378,7 +378,7 @@ def prepare_cross_validation():
             'priority': 'Low',
             'rationale': 'Low complexity domain, spatial intelligence not required'
         }
-    
+
     # Configuration validation recommendation
     recommendations['configuration'] = {
         'action': 'Implement comprehensive validation',
@@ -386,7 +386,7 @@ def prepare_cross_validation():
         'priority': 'High',
         'services': 4
     }
-    
+
     # Integration completion recommendation
     if len(calendar_gaps) > 0:
         recommendations['completion'] = {
@@ -395,16 +395,16 @@ def prepare_cross_validation():
             'priority': 'High',
             'estimated_effort': 'Medium'
         }
-    
+
     validation_data['recommendations'] = recommendations
-    
+
     print(f"📋 Cross-validation data prepared:")
     print(f"  Router analysis: {'✅ Complete' if 'methods' in router_analysis else '❌ Failed'}")
     print(f"  Spatial assessment: {'✅ Complete' if 'recommendation' in spatial_assessment else '❌ Failed'}")
     print(f"  Config design: {'✅ Complete' if 'total_validations' in validation_design else '❌ Failed'}")
     print(f"  Gap analysis: {'✅ Complete' if len(calendar_gaps) >= 0 else '❌ Failed'}")
     print(f"  Recommendations: {len(recommendations)} generated")
-    
+
     return validation_data
 
 cross_validation_data = prepare_cross_validation()

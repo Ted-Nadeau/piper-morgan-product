@@ -1,16 +1,16 @@
 # Piper Morgan Website UX Session Log - September 30, 2025
 
-**Project**: Piper Morgan AI-PM Assistant Website (pipermorgan.ai)  
-**Participants**: Christian Crumlish (xian), Claude (UX Unicorn)  
+**Project**: Piper Morgan AI-PM Assistant Website (pipermorgan.ai)
+**Participants**: Christian Crumlish (xian), Claude (UX Unicorn)
 **Repository**: mediajunkie/piper-morgan-website (GitHub Pages)
 
 ## Session 8: Tuesday, September 30, 2025 - 5:11 PM Pacific
 *Blog Content Navigation & Presentation Strategy*
 
 ### Session Context
-**Time Since Last Session**: 27 days (September 3)  
-**Site Status**: Stealth pre-soft-launch mode, "coming along quite well"  
-**Current Priority**: Blog posts integration and presentation  
+**Time Since Last Session**: 27 days (September 3)
+**Site Status**: Stealth pre-soft-launch mode, "coming along quite well"
+**Current Priority**: Blog posts integration and presentation
 
 ### Blog Implementation Status Review
 **Technical Foundation** (per dev report):
