@@ -29,8 +29,11 @@ def integration_config_service():
             module_path = f"services.integrations.{integration_name}.config_service"
             module = importlib.import_module(module_path)
             
-            # Look for {Name}ConfigService class
-            class_name = f"{integration_name.title()}ConfigService"
+            # Look for {Name}ConfigService class with special handling for GitHub
+            if integration_name == "github":
+                class_name = "GitHubConfigService"  # Special case for GitHub
+            else:
+                class_name = f"{integration_name.title()}ConfigService"
             return getattr(module, class_name, None)
         except ImportError:
             return None
@@ -46,8 +49,11 @@ def integration_router():
             module_path = f"services.integrations.{integration_name}.{integration_name}_integration_router"
             module = importlib.import_module(module_path)
             
-            # Look for {Name}IntegrationRouter class
-            class_name = f"{integration_name.title()}IntegrationRouter"
+            # Look for {Name}IntegrationRouter class with special handling for GitHub
+            if integration_name == "github":
+                class_name = "GitHubIntegrationRouter"  # Special case for GitHub
+            else:
+                class_name = f"{integration_name.title()}IntegrationRouter"
             return getattr(module, class_name, None)
         except ImportError:
             return None
