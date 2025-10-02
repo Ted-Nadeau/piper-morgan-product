@@ -16,7 +16,7 @@ Implement lychee link checker in GitHub Actions workflow:
 # Create comprehensive link checker workflow
 def create_link_checker_workflow():
     """Create automated link checker for CI pipeline"""
-    
+
     link_checker_workflow = """name: Documentation Link Checker
 
 on:
@@ -41,13 +41,13 @@ jobs:
   link-checker:
     runs-on: ubuntu-latest
     name: Check documentation links
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Setup lychee link checker
         uses: lycheeverse/lychee-action@v1.10.0
         with:
@@ -71,26 +71,26 @@ jobs:
             "*.md"
           format: detailed
           output: link-checker-results.md
-          
+
       - name: Create link checker summary
         if: always()
         run: |
           echo "## 📋 Link Checker Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ -f "link-checker-results.md" ]; then
             echo "### 🔗 Detailed Results" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             cat link-checker-results.md >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Count total links checked
           TOTAL_LINKS=$(grep -r "\](" docs/ *.md 2>/dev/null | wc -l || echo "0")
           echo "### 📊 Summary Statistics" >> $GITHUB_STEP_SUMMARY
           echo "- **Total links processed**: $TOTAL_LINKS" >> $GITHUB_STEP_SUMMARY
           echo "- **Check timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
           echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
-          
+
       - name: Upload link checker results
         if: always()
         uses: actions/upload-artifact@v3
@@ -100,16 +100,16 @@ jobs:
             link-checker-results.md
             lychee.log
           retention-days: 30
-          
+
       - name: Comment on PR with results
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            
+
             let comment = '## 🔗 Link Checker Results\\n\\n';
-            
+
             try {
               if (fs.existsSync('link-checker-results.md')) {
                 const results = fs.readFileSync('link-checker-results.md', 'utf8');
@@ -120,7 +120,7 @@ jobs:
             } catch (error) {
               comment += '⚠️ Unable to read link checker results\\n';
             }
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -128,16 +128,16 @@ jobs:
               body: comment
             });
 """
-    
+
     # Write workflow file
     import os
     os.makedirs('.github/workflows', exist_ok=True)
-    
+
     with open('.github/workflows/link-checker.yml', 'w') as f:
         f.write(link_checker_workflow)
-    
+
     print("✅ Link checker workflow created: .github/workflows/link-checker.yml")
-    
+
     return link_checker_workflow
 
 workflow_content = create_link_checker_workflow()
@@ -151,24 +151,24 @@ Fix the 3 broken links found in troubleshooting.md:
 # Fix broken links in troubleshooting documentation
 def fix_broken_links():
     """Fix identified broken links in documentation"""
-    
+
     print("=== FIXING BROKEN LINKS ===")
-    
+
     import os
     import re
-    
+
     # Target file from Phase 0 findings
     troubleshooting_file = "docs/troubleshooting.md"
-    
+
     if not os.path.exists(troubleshooting_file):
         # Check alternative locations
         alt_locations = [
             "docs/operations/troubleshooting.md",
-            "docs/guides/troubleshooting.md", 
+            "docs/guides/troubleshooting.md",
             "docs/internal/troubleshooting.md",
             "troubleshooting.md"
         ]
-        
+
         for alt_loc in alt_locations:
             if os.path.exists(alt_loc):
                 troubleshooting_file = alt_loc
@@ -176,50 +176,50 @@ def fix_broken_links():
                 break
         else:
             print("❌ Troubleshooting file not found - searching for broken links in all docs")
-            
+
             # Find files with broken links using basic checks
             import glob
-            
+
             broken_link_files = []
-            
+
             for md_file in glob.glob("docs/**/*.md", recursive=True):
                 try:
                     with open(md_file, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     # Look for obvious broken patterns
                     if "404" in content or "broken" in content.lower() or "not found" in content.lower():
                         broken_link_files.append(md_file)
-                        
+
                 except Exception:
                     continue
-            
+
             print(f"Files potentially containing broken links: {len(broken_link_files)}")
             for file in broken_link_files[:5]:
                 print(f"  - {file}")
-            
+
             if broken_link_files:
                 troubleshooting_file = broken_link_files[0]  # Use first found
             else:
                 print("No obvious broken link files found - creating link fix documentation")
                 return create_link_fix_documentation()
-    
+
     # Read and analyze troubleshooting file
     try:
         with open(troubleshooting_file, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         print(f"📄 Analyzing {troubleshooting_file}")
         print(f"File size: {len(content)} characters")
-        
+
         # Find all links in the file
         markdown_links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
-        
+
         print(f"🔗 Links found: {len(markdown_links)}")
-        
+
         # Check for suspicious link patterns
         suspicious_links = []
-        
+
         for link_text, link_url in markdown_links:
             # Check for broken link indicators
             if any(indicator in link_url.lower() for indicator in ['404', 'broken', 'notfound', 'error']):
@@ -230,17 +230,17 @@ def fix_broken_links():
             # Check for relative links that might be broken
             elif link_url.startswith('../') and link_url.count('../') > 2:
                 suspicious_links.append((link_text, link_url))
-        
+
         print(f"⚠️ Suspicious links: {len(suspicious_links)}")
-        
+
         if suspicious_links:
             print("Links to fix:")
             for text, url in suspicious_links:
                 print(f"  - [{text}]({url})")
-        
+
         # Create fixed version
         fixed_content = content
-        
+
         # Common link fixes
         link_fixes = {
             'http://localhost:8080': 'http://localhost:8001',  # Port correction
@@ -248,44 +248,44 @@ def fix_broken_links():
             'docs/docs/': 'docs/',  # Remove duplicate paths
             '.md.md': '.md',  # Remove duplicate extensions
         }
-        
+
         fixes_applied = 0
         for broken_pattern, fix_pattern in link_fixes.items():
             if broken_pattern in fixed_content:
                 fixed_content = fixed_content.replace(broken_pattern, fix_pattern)
                 fixes_applied += 1
                 print(f"✅ Fixed: {broken_pattern} → {fix_pattern}")
-        
+
         # Write fixed content if changes made
         if fixes_applied > 0:
             # Create backup
             backup_file = f"{troubleshooting_file}.backup"
             with open(backup_file, 'w', encoding='utf-8') as f:
                 f.write(content)
-            
+
             # Write fixed version
             with open(troubleshooting_file, 'w', encoding='utf-8') as f:
                 f.write(fixed_content)
-            
+
             print(f"✅ Applied {fixes_applied} fixes to {troubleshooting_file}")
             print(f"📋 Backup created: {backup_file}")
         else:
             print("ℹ️ No automatic fixes applied - manual review may be needed")
-        
+
         return {
             'file': troubleshooting_file,
             'total_links': len(markdown_links),
             'suspicious_links': len(suspicious_links),
             'fixes_applied': fixes_applied
         }
-        
+
     except Exception as e:
         print(f"❌ Error processing {troubleshooting_file}: {e}")
         return {'error': str(e)}
 
 def create_link_fix_documentation():
     """Create documentation for link fixing process"""
-    
+
     link_fix_doc = """# Link Maintenance Guide
 
 ## Automated Link Checking
@@ -391,15 +391,15 @@ grep -r "\]([^h]" docs/ | cut -d: -f3- | sort -u
 **Maintained By**: Documentation Team
 **Related**: CI/CD Pipeline, Documentation Standards
 """
-    
+
     import os
     os.makedirs('docs/operations', exist_ok=True)
-    
+
     with open('docs/operations/link-maintenance.md', 'w') as f:
         f.write(link_fix_doc)
-    
+
     print("✅ Created link maintenance documentation: docs/operations/link-maintenance.md")
-    
+
     return {'documentation_created': True}
 
 link_fix_results = fix_broken_links()
@@ -421,7 +421,7 @@ echo "🔍 Workflow content verification:"
 if [ -f ".github/workflows/link-checker.yml" ]; then
     echo "✅ Link checker workflow exists"
     echo "Workflow size: $(wc -l < .github/workflows/link-checker.yml) lines"
-    
+
     # Check for key components
     echo ""
     echo "🧪 Workflow component verification:"
@@ -429,7 +429,7 @@ if [ -f ".github/workflows/link-checker.yml" ]; then
     grep -q "schedule:" .github/workflows/link-checker.yml && echo "✅ Weekly schedule configured" || echo "❌ Schedule missing"
     grep -q "pull_request:" .github/workflows/link-checker.yml && echo "✅ PR trigger configured" || echo "❌ PR trigger missing"
     grep -q "upload-artifact" .github/workflows/link-checker.yml && echo "✅ Results upload configured" || echo "❌ Results upload missing"
-    
+
 else
     echo "❌ Link checker workflow not found"
 fi
@@ -466,10 +466,10 @@ Generate comprehensive summary of link checker implementation:
 # Create implementation summary
 def create_implementation_summary():
     """Create summary of GREAT-2E Phase 1 implementation"""
-    
+
     import os
     from datetime import datetime
-    
+
     summary = f"""# GREAT-2E Phase 1 Implementation Summary
 
 ## Overview
@@ -487,7 +487,7 @@ def create_implementation_summary():
 - **Tool**: lychee link checker (industry standard)
 - **Triggers**: Push to main/develop, PRs, weekly schedule, manual dispatch
 - **Scope**: All markdown files in docs/ and root directory
-- **Features**: 
+- **Features**:
   - Comprehensive link validation
   - PR comments with results
   - Artifact storage for results
@@ -568,7 +568,7 @@ def create_implementation_summary():
 ```yaml
 Triggers:
   - push: [main, develop] (docs changes only)
-  - pull_request: [main] (docs changes only)  
+  - pull_request: [main] (docs changes only)
   - schedule: Weekly (Sundays 2 AM UTC)
   - workflow_dispatch: Manual trigger
 
@@ -638,12 +638,12 @@ Retry Logic:
 **Next Steps**: Monitor weekly reports and address any identified issues
 **Maintenance**: Follow link maintenance guide for ongoing health
 """
-    
+
     with open('great_2e_phase_1_summary.md', 'w') as f:
         f.write(summary)
-    
+
     print("✅ Implementation summary created: great_2e_phase_1_summary.md")
-    
+
     return summary
 
 implementation_summary = create_implementation_summary()
