@@ -20,6 +20,11 @@ from services.integrations.spatial_adapter import (
     SpatialPosition,
 )
 
+# Import for service injection pattern
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from services.integrations.notion.config_service import NotionConfigService
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,22 +36,31 @@ class NotionMCPAdapter(BaseSpatialAdapter):
     for external service integration.
     """
 
-    def __init__(self):
+    def __init__(self, config_service: Optional["NotionConfigService"] = None):
         super().__init__("notion_mcp")
         self._lock = asyncio.Lock()
         self._page_to_position: Dict[str, int] = {}
         self._position_to_page: Dict[int, str] = {}
         self._context_storage: Dict[str, Dict[str, Any]] = {}
 
-        # Notion client configuration
-        self.config = NotionConfig()
+        # Notion client configuration with service injection pattern
+        if config_service:
+            # Use service injection pattern (preferred)
+            self.config_service = config_service
+            self.config = config_service.get_config()
+        else:
+            # Fallback to static config for backward compatibility
+            self.config_service = None
+            self.config = NotionConfig()
+            
         self._notion_client: Optional[Client] = None
         self._session: Optional[aiohttp.ClientSession] = None
 
         # Initialize client if configuration is available
         self._initialize_client()
 
-        logger.info("NotionMCPAdapter initialized")
+        logger.info("NotionMCPAdapter initialized with %s", 
+                   "service injection" if config_service else "static config")
 
     def _initialize_client(self):
         """Initialize Notion client with configuration."""
