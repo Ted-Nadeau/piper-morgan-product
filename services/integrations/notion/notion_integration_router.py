@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from services.infrastructure.config.feature_flags import FeatureFlags
 from services.integrations.spatial_adapter import SpatialContext, SpatialPosition
+from .config_service import NotionConfigService
 
 
 class NotionIntegrationRouter:
@@ -40,11 +41,14 @@ class NotionIntegrationRouter:
         - Feature Flags: USE_SPATIAL_NOTION, ALLOW_LEGACY_NOTION
     """
 
-    def __init__(self):
-        """Initialize router with feature flag checking"""
+    def __init__(self, config_service: Optional[NotionConfigService] = None):
+        """Initialize router with feature flag checking and config service"""
         # Use FeatureFlags service for consistency with Calendar router
         self.use_spatial = FeatureFlags.should_use_spatial_notion()
         self.allow_legacy = FeatureFlags.is_legacy_notion_allowed()
+
+        # Store config service for adapter initialization
+        self.config_service = config_service
 
         # Initialize spatial integration
         self.spatial_notion = None
@@ -52,7 +56,13 @@ class NotionIntegrationRouter:
             try:
                 from services.integrations.mcp.notion_adapter import NotionMCPAdapter
 
-                self.spatial_notion = NotionMCPAdapter()
+                # Pass config to adapter if available
+                if config_service:
+                    self.spatial_notion = NotionMCPAdapter(config_service)
+                else:
+                    # Graceful degradation - adapter handles missing config
+                    self.spatial_notion = NotionMCPAdapter()
+                    
             except ImportError as e:
                 warnings.warn(f"Spatial Notion unavailable: {e}")
 
