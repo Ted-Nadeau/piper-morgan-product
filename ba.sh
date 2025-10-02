@@ -1,15 +1,12 @@
-# Check how Piper loads environment
-python -c "
-from services.configuration.piper_config_loader import PiperConfigLoader
-import os
+# Check file sizes
+wc -l main.py web/app.py
 
-print('=== Piper Config Environment Check ===')
-loader = PiperConfigLoader()
+# Verify ConfigValidator exists
+find . -name "*config*valid*" -type f
 
-# Check if Piper has GitHub token
-token = os.getenv('GITHUB_TOKEN')
-print(f'GITHUB_TOKEN in environment: {token is not None}')
-if token:
-    print(f'Token length: {len(token)}')
-    print(f'Token format: {token[:4]}...')
-"
+# Check router architecture
+ls -la services/integration_routers/
+
+# See what's in the monoliths
+head -30 main.py
+head -30 web/app.py

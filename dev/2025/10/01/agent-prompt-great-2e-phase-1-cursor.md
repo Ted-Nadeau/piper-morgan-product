@@ -76,24 +76,24 @@ Create missing README files for directories lacking navigation:
 # Create missing directory navigation
 def create_directory_navigation():
     """Create README files for directories missing navigation"""
-    
+
     print("=== DIRECTORY NAVIGATION CREATION ===")
-    
+
     import os
     import glob
-    
+
     # Find directories missing README files
     missing_readme_dirs = []
-    
+
     for root, dirs, files in os.walk('docs'):
         # Skip hidden directories and specific exclusions
         dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['node_modules', '__pycache__']]
-        
+
         # Check if directory has README
         has_readme = any(f.lower().startswith('readme') for f in files)
         has_index = any(f.lower().startswith('index') for f in files)
         has_md_files = any(f.endswith('.md') for f in files)
-        
+
         # If directory has markdown files but no navigation, it needs a README
         if has_md_files and not (has_readme or has_index):
             # Skip if it's a leaf directory with only one file
@@ -105,39 +105,39 @@ def create_directory_navigation():
                     'subdirs': dirs.copy(),
                     'total_files': len(files)
                 })
-    
+
     print(f"📁 Directories needing navigation: {len(missing_readme_dirs)}")
-    
+
     for dir_info in missing_readme_dirs[:10]:  # Show first 10
         print(f"  - {dir_info['path']}: {len(dir_info['md_files'])} MD files, {len(dir_info['subdirs'])} subdirs")
-    
+
     # Create README files for missing directories
     created_readmes = []
-    
+
     for dir_info in missing_readme_dirs:
         dir_path = dir_info['path']
         readme_path = os.path.join(dir_path, 'README.md')
-        
+
         # Generate appropriate content based on directory
         dir_name = os.path.basename(dir_path)
         relative_path = dir_path.replace('docs/', '').replace('docs', 'root')
-        
+
         readme_content = generate_directory_readme(dir_info, dir_name, relative_path)
-        
+
         try:
             with open(readme_path, 'w', encoding='utf-8') as f:
                 f.write(readme_content)
-            
+
             created_readmes.append(readme_path)
             print(f"✅ Created: {readme_path}")
-            
+
         except Exception as e:
             print(f"❌ Error creating {readme_path}: {e}")
-    
+
     print(f"\n📊 Navigation creation summary:")
     print(f"  Directories analyzed: {len(missing_readme_dirs)}")
     print(f"  README files created: {len(created_readmes)}")
-    
+
     return {
         'missing_dirs': len(missing_readme_dirs),
         'created_readmes': len(created_readmes),
@@ -146,13 +146,13 @@ def create_directory_navigation():
 
 def generate_directory_readme(dir_info, dir_name, relative_path):
     """Generate appropriate README content for directory"""
-    
+
     md_files = dir_info['md_files']
     subdirs = dir_info['subdirs']
-    
+
     # Create title
     title = dir_name.replace('-', ' ').replace('_', ' ').title()
-    
+
     readme_content = f"""# {title}
 
 ## Overview
@@ -160,18 +160,18 @@ def generate_directory_readme(dir_info, dir_name, relative_path):
 This directory contains documentation for {title.lower()} in the Piper Morgan system.
 
 """
-    
+
     # Add file listings if there are markdown files
     if md_files:
         readme_content += f"""## Documentation Files
 
 """
-        
+
         for md_file in sorted(md_files):
             # Create readable name from filename
             file_title = md_file.replace('-', ' ').replace('_', ' ').replace('.md', '').title()
             readme_content += f"- **[{file_title}]({md_file})** - {generate_file_description(md_file)}\n"
-    
+
     # Add subdirectory listings if there are subdirectories
     if subdirs:
         readme_content += f"""
@@ -181,7 +181,7 @@ This directory contains documentation for {title.lower()} in the Piper Morgan sy
         for subdir in sorted(subdirs):
             subdir_title = subdir.replace('-', ' ').replace('_', ' ').title()
             readme_content += f"- **[{subdir_title}]({subdir}/README.md)** - {generate_subdir_description(subdir)}\n"
-    
+
     # Add navigation back to parent
     parent_path = os.path.dirname(relative_path)
     if parent_path and parent_path != '.':
@@ -199,20 +199,20 @@ This directory contains documentation for {title.lower()} in the Piper Morgan sy
 - **[📚 Documentation Home](../README.md)**
 
 """
-    
+
     # Add common footer
     readme_content += f"""---
 
-**Last Updated**: October 1, 2025  
-**Maintained By**: Documentation Team  
+**Last Updated**: October 1, 2025
+**Maintained By**: Documentation Team
 **Related**: [Documentation Standards](../../standards/documentation-standards.md)
 """
-    
+
     return readme_content
 
 def generate_file_description(filename):
     """Generate brief description based on filename"""
-    
+
     descriptions = {
         'readme': 'Directory overview and navigation',
         'index': 'Directory index and navigation',
@@ -233,18 +233,18 @@ def generate_file_description(filename):
         'monitoring': 'Monitoring and observability setup',
         'performance': 'Performance optimization guidelines'
     }
-    
+
     filename_lower = filename.lower()
-    
+
     for keyword, description in descriptions.items():
         if keyword in filename_lower:
             return description
-    
+
     return "Documentation and guidance"
 
 def generate_subdir_description(dirname):
     """Generate brief description based on directory name"""
-    
+
     descriptions = {
         'architecture': 'System architecture documentation',
         'patterns': 'Design patterns and best practices',
@@ -266,13 +266,13 @@ def generate_subdir_description(dirname):
         'archived': 'Archived historical documentation',
         'legacy': 'Legacy system documentation'
     }
-    
+
     dirname_lower = dirname.lower()
-    
+
     for keyword, description in descriptions.items():
         if keyword in dirname_lower:
             return description
-    
+
     return f"{dirname.replace('-', ' ').title()} documentation"
 
 navigation_results = create_directory_navigation()
@@ -349,13 +349,13 @@ Assess and improve content quality markers:
 # Content quality assessment and improvement
 def assess_content_quality():
     """Assess and improve documentation content quality"""
-    
+
     print("=== CONTENT QUALITY ASSESSMENT ===")
-    
+
     import os
     import glob
     import re
-    
+
     # Find files with quality markers
     quality_issues = {
         'todos': [],
@@ -363,48 +363,48 @@ def assess_content_quality():
         'incomplete': [],
         'outdated': []
     }
-    
+
     # Scan documentation files
     doc_files = glob.glob("docs/**/*.md", recursive=True)
-    
+
     print(f"📄 Scanning {len(doc_files)} documentation files for quality issues...")
-    
+
     for doc_file in doc_files:
         try:
             with open(doc_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             # Check for quality issues
             if re.search(r'\bTODO\b|\bFIXME\b|\bTBD\b', content, re.IGNORECASE):
                 quality_issues['todos'].append(doc_file)
-            
+
             if re.search(r'\bplaceholder\b|\bcoming soon\b|\bto be added\b', content, re.IGNORECASE):
                 quality_issues['placeholders'].append(doc_file)
-            
+
             if re.search(r'\bincomplete\b|\bunfinished\b|\bin progress\b', content, re.IGNORECASE):
                 quality_issues['incomplete'].append(doc_file)
-            
+
             if re.search(r'\boutdated\b|\blegacy\b|\bdeprec\w+\b', content, re.IGNORECASE):
                 quality_issues['outdated'].append(doc_file)
-                
+
         except Exception as e:
             print(f"⚠️ Error reading {doc_file}: {e}")
-    
+
     # Report quality issues
     print(f"\n📊 Content quality analysis:")
     for issue_type, files in quality_issues.items():
         print(f"  {issue_type.title()}: {len(files)} files")
-        
+
         # Show first few examples
         for file in files[:3]:
             print(f"    - {file}")
-        
+
         if len(files) > 3:
             print(f"    ... and {len(files) - 3} more")
-    
+
     # Create quality improvement recommendations
     recommendations = generate_quality_recommendations(quality_issues)
-    
+
     return {
         'quality_issues': quality_issues,
         'recommendations': recommendations,
@@ -413,9 +413,9 @@ def assess_content_quality():
 
 def generate_quality_recommendations(quality_issues):
     """Generate recommendations for quality improvement"""
-    
+
     recommendations = []
-    
+
     if quality_issues['todos']:
         recommendations.append({
             'type': 'TODOs',
@@ -424,7 +424,7 @@ def generate_quality_recommendations(quality_issues):
             'action': 'Review and resolve TODO items or convert to GitHub issues',
             'timeline': 'Next sprint'
         })
-    
+
     if quality_issues['placeholders']:
         recommendations.append({
             'type': 'Placeholders',
@@ -433,7 +433,7 @@ def generate_quality_recommendations(quality_issues):
             'action': 'Replace placeholder content with actual documentation',
             'timeline': 'This week'
         })
-    
+
     if quality_issues['incomplete']:
         recommendations.append({
             'type': 'Incomplete Content',
@@ -442,7 +442,7 @@ def generate_quality_recommendations(quality_issues):
             'action': 'Complete unfinished documentation sections',
             'timeline': 'Next two weeks'
         })
-    
+
     if quality_issues['outdated']:
         recommendations.append({
             'type': 'Outdated Content',
@@ -451,7 +451,7 @@ def generate_quality_recommendations(quality_issues):
             'action': 'Review and update or archive outdated documentation',
             'timeline': 'Next month'
         })
-    
+
     return recommendations
 
 quality_assessment = assess_content_quality()
@@ -465,9 +465,9 @@ Generate comprehensive summary of documentation organization improvements:
 # Create organization improvement summary
 def create_organization_summary():
     """Create comprehensive summary of organization improvements"""
-    
+
     from datetime import datetime
-    
+
     summary = f"""# GREAT-2E Phase 1 Organization Summary
 
 ## Overview
@@ -553,12 +553,12 @@ def create_organization_summary():
 
 ### Navigation Files Created
 """
-    
+
     # Add specific README files created
     for readme_file in navigation_results.get('readme_files', []):
         relative_path = readme_file.replace('docs/', '')
         summary += f"- `{relative_path}` - Directory navigation and file listings\n"
-    
+
     summary += f"""
 ### Navigation Standards Applied
 - **File Listings**: Descriptive links to all markdown files
@@ -570,7 +570,7 @@ def create_organization_summary():
 ## Quality Improvement Recommendations
 
 """
-    
+
     # Add quality recommendations
     for rec in quality_assessment.get('recommendations', []):
         summary += f"""### {rec['type']} ({rec['priority']} Priority)
@@ -579,7 +579,7 @@ def create_organization_summary():
 - **Timeline**: {rec['timeline']}
 
 """
-    
+
     summary += f"""## Archive Organization
 
 ### Archive Structure
@@ -646,12 +646,12 @@ archive/
 **Next Steps**: Monitor navigation usage, address quality recommendations
 **Maintenance**: Follow documentation standards for ongoing organization
 """
-    
+
     with open('great_2e_phase_1_organization_summary.md', 'w') as f:
         f.write(summary)
-    
+
     print("✅ Organization summary created: great_2e_phase_1_organization_summary.md")
-    
+
     return summary
 
 organization_summary = create_organization_summary()

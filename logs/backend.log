@@ -1,4 +1,4 @@
-/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
-  warnings.warn(
-INFO:     Will watch for changes in these directories: ['/Users/xian/Development/piper-morgan']
-ERROR:    [Errno 48] Address already in use
+  File "/Users/xian/Development/piper-morgan/main.py", line 133
+    print("
+           ^
+SyntaxError: EOL while scanning string literal
