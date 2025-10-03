@@ -1,0 +1,68 @@
+feat(plugins): Add dynamic discovery and config-based loading (GREAT-3B)
+
+Implements GREAT-3B epic: Plugin Infrastructure enhancement
+
+## Changes
+
+**Plugin System Enhancements:**
+- Dynamic plugin discovery from services/integrations/*/
+- Config-based plugin enabling/disabling via PIPER.user.md
+- Replaced static imports with dynamic loading in web/app.py
+- Enhanced startup logging with per-plugin status
+
+**Implementation:**
+- Added discover_plugins() to PluginRegistry (Phase 1)
+- Added load_plugin() with importlib support (Phase 2)
+- Added config parsing from PIPER.user.md (Phase 3)
+- Integrated dynamic loading into web/app.py (Phase 4)
+
+**Testing:**
+- 14 new tests added (34 → 48 total)
+- All tests passing (100%)
+- Verified config-based disabling for all plugins
+
+**Documentation:**
+- Updated services/plugins/README.md with GREAT-3B enhancements
+- Created comprehensive PLUGIN-SYSTEM-GUIDE.md
+- Added Plugin Configuration to PIPER.user.md
+- Created CHANGELOG.md with version history
+
+## Technical Details
+
+**Files Changed:** 14 files
+**Lines Added:** +4,439 insertions
+**Lines Removed:** -27 deletions
+**Net Change:** +4,412 lines
+
+**New Methods:**
+- PluginRegistry.discover_plugins() - Filesystem scanning
+- PluginRegistry.load_plugin() - Dynamic import with importlib
+- PluginRegistry.load_enabled_plugins() - Config-controlled loading
+- PluginRegistry.get_enabled_plugins() - Config reader
+- PluginRegistry._read_plugin_config() - YAML parser
+
+## Acceptance Criteria
+
+- [x] Plugin loader operational
+- [x] Configuration system working per-plugin
+- [x] Plugins can be enabled/disabled via config
+- [x] Core has no direct plugin imports
+- [x] All tests passing (48/48)
+- [x] Zero breaking changes
+
+## Backwards Compatibility
+
+Fully backwards compatible. All plugins enabled by default.
+Users without plugin config see no change in behavior.
+
+## Development Timeline
+
+**Total Duration:** ~90 minutes across 4 phases
+- Phase 0: Investigation (14 min) - Cursor
+- Phase 1: Discovery (20 min) - Code
+- Phase 2: Dynamic Loading (28 min) - Cursor
+- Phase 3: Config Integration (14 min) - Code
+- Phase 4: App Integration (14 min) - Cursor
+
+Issue: GREAT-3B Epic
+Related: GREAT-3A (Plugin Foundation)
