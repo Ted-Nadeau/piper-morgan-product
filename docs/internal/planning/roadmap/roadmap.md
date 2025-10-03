@@ -94,7 +94,7 @@ Critical infrastructure protected through automation, not discipline:
 **GitHub Issue**: #182
 **Expanded Scope** (includes monolith refactoring):
 \
-###### Configuration Repair 
+###### Configuration Repair
 - Per GREAT-2D findings
 - Three spatial patterns with guidelines in ADR-038
 

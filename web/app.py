@@ -14,6 +14,7 @@ import structlog
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 # Add project root to path for imports (same as CLI)
 project_root = Path(__file__).parent.parent
@@ -99,9 +100,89 @@ async def lifespan(app: FastAPI):
         # Continue startup without orchestration engine (preserve bypasses)
         app.state.orchestration_engine = None
 
+    # Phase 2B: IntentService dependency injection setup
+    try:
+        from services.conversation.conversation_handler import ConversationHandler
+        from services.intent.intent_service import IntentService
+        from services.intent_service import classifier
+
+        print("🔧 Phase 2B: Initializing IntentService with dependency injection...")
+
+        # Initialize IntentService with dependencies
+        intent_service = IntentService(
+            orchestration_engine=app.state.orchestration_engine,
+            intent_classifier=classifier,
+            conversation_handler=ConversationHandler(session_manager=None),
+        )
+
+        # Store in app state for dependency injection
+        app.state.intent_service = intent_service
+
+        print("✅ Phase 2B: IntentService initialized successfully")
+
+    except Exception as e:
+        print(f"❌ Phase 2B: IntentService initialization failed: {e}")
+        # Continue without intent service (will fail gracefully in route)
+        app.state.intent_service = None
+
+    # Phase 3B: Plugin system initialization
+    print("\n🔌 Phase 3B: Initializing Plugin System...")
+
+    try:
+        from services.plugins import get_plugin_registry
+
+        registry = get_plugin_registry()
+
+        # Plugins auto-register when their modules are imported
+        # Phase 3C: Import plugins (triggers auto-registration)
+        print("  📦 Loading plugins...")
+        from services.integrations.calendar.calendar_plugin import _calendar_plugin
+        from services.integrations.github.github_plugin import _github_plugin
+        from services.integrations.notion.notion_plugin import _notion_plugin
+        from services.integrations.slack.slack_plugin import _slack_plugin
+
+        # Initialize all registered plugins
+        init_results = await registry.initialize_all()
+
+        success_count = sum(1 for success in init_results.values() if success)
+        total_count = len(init_results)
+
+        print(f"✅ Plugin initialization: {success_count}/{total_count} successful")
+
+        # Mount plugin routers
+        routers = registry.get_routers()
+        for router in routers:
+            app.include_router(router)
+
+        print(f"✅ Mounted {len(routers)} plugin router(s)")
+
+        # Store registry in app state for access
+        app.state.plugin_registry = registry
+
+        print(f"✅ Plugin system initialized: {total_count} plugin(s) registered\n")
+
+    except Exception as e:
+        print(f"⚠️ Plugin system initialization failed: {e}")
+        print("   Continuing without plugin system\n")
+        # Don't fail startup if plugin system has issues
+        app.state.plugin_registry = None
+
     print("🚀 Web server startup complete")
 
     yield
+
+    # Shutdown: cleanup plugins
+    print("\n🔌 Shutting down Plugin System...")
+
+    if hasattr(app.state, "plugin_registry") and app.state.plugin_registry:
+        try:
+            shutdown_results = await app.state.plugin_registry.shutdown_all()
+            success_count = sum(1 for success in shutdown_results.values() if success)
+            print(f"✅ Plugin shutdown: {success_count}/{len(shutdown_results)} successful")
+        except Exception as e:
+            print(f"⚠️ Plugin shutdown error: {e}")
+
+    print("🛑 Plugin system shutdown complete")
 
     # Cleanup
     print("🛑 Web server shutdown complete")
@@ -113,6 +194,9 @@ app = FastAPI(
     description="Web Interface for the Piper Morgan Platform",
     lifespan=lifespan,
 )
+
+# Initialize Jinja2 templates
+templates = Jinja2Templates(directory="templates")
 
 # Initialize personality components
 config_parser = PiperConfigParser()
@@ -187,336 +271,10 @@ async def debug_markdown(request: Request):
     )
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def home(request: Request):
-    # Use a different template approach to avoid format/replace issues
-    html_template = """<!DOCTYPE html>
-<html>
-<head>
-    <title>Piper Morgan - AI PM Assistant</title>
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: #2c3e50; margin: 0; font-size: 2.5em; }
-        .header p { color: #7f8c8d; font-size: 1.2em; margin: 10px 0; }
-        .chat-form { display: flex; margin-bottom: 20px; }
-        .chat-input { flex-grow: 1; padding: 15px; border: 2px solid #ecf0f1; border-radius: 8px; font-size: 16px; margin-right: 10px; }
-        .chat-input:focus { outline: none; border-color: #3498db; }
-        .submit-btn { background: #3498db; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        .submit-btn:hover { background: #2980b9; }
-        #chat-window {
-            height: 400px;
-            min-height: 150px;
-            max-height: 80vh;
-            resize: vertical;
-            overflow-y: auto;
-            border: 1px solid #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            background: #fdfdfd;
-        }
-        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 18px; max-width: 80%; line-height: 1.4; }
-        .user-message { background: #3498db; color: white; align-self: flex-end; margin-left: auto; }
-        .bot-message { background: #ecf0f1; color: #2c3e50; align-self: flex-start; }
-        .bot-message.error { background: #f8d7da; color: #721c24; }
-        .bot-message.thinking { color: #7f8c8d; font-style: italic; }
-        .message-container { display: flex; flex-direction: column; }
-        .result { margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px solid transparent; }
-        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .workflow-status { margin: 20px 0; padding: 15px; background: #e8f4f8; border-radius: 8px; }
-        .upload-section { margin-top: 20px; }
-        .upload-toggle { background: #7f8c8d; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; font-size: 16px; }
-        .upload-toggle:hover { background: #6c7a89; }
-        #upload-form-container { display: none; margin-top: 10px; padding: 15px; border: 1px solid #ecf0f1; border-radius: 8px; }
-        #upload-form { display: flex; align-items: center; }
-        #upload-form input[type="file"] { flex-grow: 1; }
-        .examples { margin-top: 30px; }
-        .example { padding: 10px; margin: 5px 0; background: #f8f9fa; border-left: 4px solid #3498db; cursor: pointer; }
-        .example:hover { background: #e9ecef; }
-
-        /* Markdown styling */
-        .message h1, .message h2, .message h3, .message h4, .message h5, .message h6 { margin: 15px 0 10px 0; color: #2c3e50; }
-        .message h1 { font-size: 1.5em; border-bottom: 1px solid #ecf0f1; padding-bottom: 5px; }
-        .message h2 { font-size: 1.3em; }
-        .message h3 { font-size: 1.1em; }
-        .message ul, .message ol { margin: 10px 0; padding-left: 20px; }
-        .message li { margin: 5px 0; }
-        .message code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em; }
-        .message pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; margin: 10px 0; }
-        .message pre code { background: none; padding: 0; }
-        .message blockquote { border-left: 4px solid #3498db; margin: 10px 0; padding-left: 15px; color: #7f8c8d; }
-        .message strong { color: #2c3e50; }
-        .message em { color: #34495e; }
-        .message table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-        .message th, .message td { border: 1px solid #ecf0f1; padding: 8px; text-align: left; }
-        .message th { background: #f8f9fa; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1><img src="/assets/pm-logo.png" alt="Piper Morgan" style="height: 60px; vertical-align: middle;"> Piper Morgan</h1>
-            <p>AI Product Management Assistant</p>
-            <p><em>I can create GitHub issues, analyze documents, and more!</em></p>
-        </div>
-
-        <div id="chat-window">
-             <div class="message-container">
-                <div class="message bot-message">
-                    Hello! How can I help you today?
-                </div>
-            </div>
-        </div>
-
-        <form class="chat-form" id="chatForm">
-            <input type="text" name="message" class="chat-input"
-                   placeholder="e.g., Users are complaining about the login page being slow..."
-                   required>
-            <button type="submit" class="submit-btn">Send</button>
-        </form>
-
-        <div class="upload-section">
-            <button class="upload-toggle" id="upload-toggle-btn">📄 Upload a document to the knowledge base</button>
-            <div id="upload-form-container">
-                <form id="upload-form" enctype="multipart/form-data">
-                    <input type="file" name="file" required>
-                    <button type="submit" class="submit-btn">Upload</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="examples">
-            <h3>💡 Try these examples:</h3>
-            <div class="example" onclick="setExample(this)">
-                Users are complaining that the mobile app crashes when they upload large photos
-            </div>
-            <div class="example" onclick="setExample(this)">
-                The login page is too slow and users are getting frustrated
-            </div>
-            <div class="example" onclick="setExample(this)">
-                We need to add dark mode support to improve user experience
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="/assets/bot-message-renderer.js"></script>
-    <script>
-        const API_BASE_URL = "API_BASE_URL_PLACEHOLDER";
-        const chatWindow = document.getElementById('chat-window');
-        let sessionId = null;
-
-        // Use DDD bot message renderer for all bot messages
-
-        // Wait for DOM and scripts to load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, marked.js available:', typeof marked !== 'undefined');
-        });
-
-        function appendMessage(html, isUser = false) {
-            const msgContainer = document.createElement('div');
-            msgContainer.className = 'message-container';
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-
-            // If it's a user message, use textContent; if bot message, use innerHTML for markdown
-            if (isUser) {
-                msgDiv.textContent = html;
-            } else {
-                msgDiv.innerHTML = html;
-            }
-
-            msgContainer.appendChild(msgDiv);
-            chatWindow.appendChild(msgContainer);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            return msgDiv;
-        }
-
-        function setExample(element) {
-            document.querySelector('.chat-input').value = element.textContent.trim();
-        }
-
-        document.getElementById('upload-toggle-btn').addEventListener('click', () => {
-            const container = document.getElementById('upload-form-container');
-            container.style.display = container.style.display === 'none' ? 'block' : 'none';
-        });
-
-        document.getElementById('upload-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const fileInput = form.querySelector('input[type="file"]');
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            const thinkingDiv = appendMessage(`Uploading ${file.name}...`);
-            thinkingDiv.classList.add('thinking');
-
-            const formData = new FormData();
-            formData.append('file', file);
-            if (sessionId) {
-                formData.append('session_id', sessionId);
-            }
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/files/upload`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                const result = await response.json();
-                let botResponseHTML;
-
-                if (response.ok && result.file_id) {
-                     botResponseHTML = `
-                        <div class="result success">
-                            <strong>✅ Document Uploaded!</strong><br>
-                            <strong>File:</strong> ${result.filename}<br>
-                            <strong>File ID:</strong> ${result.file_id}
-                        </div>`;
-                } else {
-                    botResponseHTML = `
-                        <div class="result error">
-                            <strong>❌ Upload Failed</strong><br>
-                            ${result.detail || 'An unknown error occurred.'}
-                        </div>`;
-                }
-                thinkingDiv.innerHTML = botResponseHTML;
-                thinkingDiv.classList.remove('thinking');
-
-                if (result.session_id) {
-                    sessionId = result.session_id;
-                }
-            } catch (error) {
-                thinkingDiv.innerHTML = `
-                    <div class="result error">
-                        <strong>❌ Network Error</strong><br>
-                        Could not connect to API: ${error.message}
-                    </div>`;
-                thinkingDiv.classList.add('error');
-                thinkingDiv.classList.remove('thinking');
-            } finally {
-                form.reset();
-            }
-        });
-
-        async function pollWorkflowStatus(workflowId, elementToUpdate) {
-            let pollCount = 0;
-            const maxPolls = 30; // Stop after 60 seconds (2s intervals)
-
-            const intervalId = setInterval(async () => {
-                pollCount++;
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/v1/workflows/${workflowId}`);
-
-                    if (!response.ok) {
-                        // If 404 and we've seen success before, assume it completed
-                        if (response.status === 404 && elementToUpdate.textContent.includes('completed')) {
-                            clearInterval(intervalId);
-                            return; // Keep the success message
-                        }
-
-                        // Otherwise show error and stop
-                        elementToUpdate.innerHTML = `<div class="result error">Error checking status.</div>`;
-                        clearInterval(intervalId);
-                        return;
-                    }
-
-                    const data = await response.json();
-                    // Use DDD handler for workflow responses
-                    if (data.status === 'completed') {
-                        elementToUpdate.classList.remove('thinking');
-                        elementToUpdate.classList.add('reply');
-                        handleWorkflowResponse(data, elementToUpdate);
-                        clearInterval(intervalId);
-                    } else if (data.status === 'failed') {
-                        elementToUpdate.classList.remove('thinking');
-                        elementToUpdate.classList.add('error');
-                        elementToUpdate.innerHTML = renderBotMessage(`Workflow Failed: ${data.message}`, 'error', false);
-                        clearInterval(intervalId);
-                    }
-
-                    // Stop polling after max attempts
-                    if (pollCount >= maxPolls) {
-                        clearInterval(intervalId);
-                        elementToUpdate.innerHTML = `<div class="result error">Workflow status check timed out.</div>`;
-                    }
-                } catch (error) {
-                    console.error("Polling error:", error);
-                    elementToUpdate.innerHTML = `<div class="result error">Could not connect to API to check status.</div>`;
-                    clearInterval(intervalId);
-                }
-            }, 2000); // Poll every 2 seconds
-        }
-
-        document.getElementById('chatForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const input = form.querySelector('.chat-input');
-            const message = input.value.trim();
-            if (!message) return;
-
-            appendMessage(message, true);
-            input.value = '';
-
-            // Show a temporary 'thinking' message
-            const thinkingDiv = appendMessage('Thinking...');
-            thinkingDiv.classList.add('thinking');
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/v1/intent`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: message,
-                        session_id: sessionId
-                    })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.detail || "An API error occurred");
-                }
-
-                // Replace the 'thinking' message with a new bot message (with 'reply' class)
-                const botDiv = appendMessage('', false);
-                botDiv.classList.add('reply');
-                handleDirectResponse(result, botDiv);
-                // Remove the old thinking message
-                thinkingDiv.remove();
-
-                if (result.workflow_id) {
-                    // If a workflow was started, create a new message bubble to poll for its status
-                    const statusDiv = appendMessage('Starting workflow...');
-                    statusDiv.classList.add('thinking');
-                    pollWorkflowStatus(result.workflow_id, statusDiv);
-                }
-
-                if (result.session_id) {
-                    sessionId = result.session_id;
-                }
-            } catch (error) {
-                // Replace the 'thinking' message with a new error message (with 'error' class)
-                const errorDiv = appendMessage('', false);
-                errorDiv.classList.add('error');
-                handleErrorResponse(error, errorDiv);
-                thinkingDiv.remove();
-            }
-        });
-    </script>
-</body>
-</html>"""
-
-    # Replace the placeholder with web proxy URL (self) instead of backend URL
-    # This ensures frontend routes through proxy, not directly to backend
-    web_proxy_url = ""  # Use relative URLs so requests go to current origin (8081)
-    html_content = html_template.replace("API_BASE_URL_PLACEHOLDER", web_proxy_url)
-
-    return HTMLResponse(content=html_content)
+    """Render home page"""
+    return templates.TemplateResponse("home.html", {"request": request})
 
 
 # GREAT-1B: Bug #166 Fix - Add missing workflow status endpoint
@@ -649,218 +407,54 @@ async def standup_proxy(
 @app.post("/api/v1/intent")
 async def process_intent(request: Request):
     """
-    Phase 3B: Direct intent processing using OrchestrationEngine
-    Replaces proxy with direct dependency injection from app.state
+    Phase 2B: Thin HTTP adapter for intent processing
+
+    Delegates all business logic to IntentService.
+    Route only handles HTTP concerns (request parsing, response formatting, status codes).
+
+    Business logic: services/intent/intent_service.py
     """
     try:
-        # Phase 3B: Get OrchestrationEngine from app state (dependency injection)
-        orchestration_engine = getattr(request.app.state, "orchestration_engine", None)
-
-        if orchestration_engine is None:
-            # Phase 3D: Tier 1 conversation bypass - handle without orchestration
-            request_data = await request.json()
-            message = request_data.get("message", "")
-
-            if any(
-                greeting in message.lower()
-                for greeting in ["hello", "hi", "good morning", "good afternoon"]
-            ):
-                return {
-                    "message": "Hello! I can help you with project management tasks.",
-                    "intent": {
-                        "category": "CONVERSATION",
-                        "action": "greeting",
-                        "confidence": 0.9,
-                        "context": {},
-                    },
-                    "workflow_id": None,
-                    "requires_clarification": False,
-                    "clarification_type": None,
-                }
-            else:
-                return {
-                    "status": "error",
-                    "error": "OrchestrationEngine not available - Phase 3A initialization required",
-                    "detail": "Failed to process intent",
-                }
-
-        # Phase 3B: Process intent using OrchestrationEngine
+        # Parse HTTP request
         request_data = await request.json()
         message = request_data.get("message", "")
         session_id = request_data.get("session_id", "default_session")
 
-        print(f"🔧 Phase 3B: Processing intent with OrchestrationEngine: {message}")
+        # Get IntentService from app state (dependency injection)
+        intent_service = getattr(request.app.state, "intent_service", None)
 
-        # For Phase 3B implementation, use simplified intent classification
-        from services.conversation.conversation_handler import ConversationHandler
-        from services.intent_service import classifier
-
-        # Initialize services for simplified processing (minimal dependencies)
-        conversation_handler = ConversationHandler(session_manager=None)
-
-        # Classify intent
-        intent = await classifier.classify(message)
-        print(f"🔍 Intent classified as: {intent.category} - {intent.action}")
-
-        # Phase 3D: Preserve Tier 1 conversation bypass
-        if intent.category.value == "CONVERSATION":
-            result = await conversation_handler.respond(intent, session_id)
+        if intent_service is None:
+            # Service not initialized - should not happen with proper lifespan
             return {
-                "message": result["message"],
-                "intent": result["intent"],
-                "workflow_id": result.get("workflow_id"),
-                "requires_clarification": result.get("requires_clarification", False),
-                "clarification_type": result.get("clarification_type"),
+                "status": "error",
+                "error": "IntentService not available - initialization failed",
+                "detail": "Service not found in app.state",
             }
 
-        # Phase 3: Use OrchestrationEngine for proper workflow creation and execution
-        if orchestration_engine:
-            print(f"🎯 Phase 3: Using OrchestrationEngine for intent: {intent.action}")
+        # Delegate to service (all business logic)
+        result = await intent_service.process_intent(message=message, session_id=session_id)
 
-            try:
-                # Create workflow from intent using OrchestrationEngine (Bug #166 fix: add timeout)
-                try:
-                    workflow = await asyncio.wait_for(
-                        orchestration_engine.create_workflow_from_intent(intent), timeout=30.0
-                    )
-                except asyncio.TimeoutError:
-                    return {
-                        "status": "error",
-                        "message": "Request timeout - workflow creation took too long",
-                        "error": "Operation timed out after 30 seconds",
-                        "intent": {
-                            "category": intent.category.value,
-                            "action": intent.action,
-                            "confidence": intent.confidence,
-                            "context": intent.context,
-                        },
-                    }
-                print(f"✅ Workflow created with ID: {workflow.id}")
+        # Format HTTP response from service result
+        response = {
+            "message": result.message,
+            "intent": result.intent_data,
+            "workflow_id": result.workflow_id,
+            "requires_clarification": result.requires_clarification,
+            "clarification_type": result.clarification_type,
+        }
 
-                # Handle QUERY intents with domain services
-                if intent.category.value == "QUERY":
-                    print(f"🔍 Processing QUERY intent: {intent.action}")
+        # Add error fields if present
+        if result.error:
+            response["status"] = "error"
+            response["error"] = result.error
+            if result.error_type:
+                response["error_type"] = result.error_type
 
-                    # Handle specific query actions that were broken in August 22 refactor
-                    if intent.action in ["show_standup", "get_standup"]:
-                        # Restore show_standup functionality with OrchestrationEngine
-                        from services.domain.standup_orchestration_service import (
-                            StandupOrchestrationService,
-                        )
-
-                        try:
-                            standup_service = StandupOrchestrationService()
-                            standup_result = await standup_service.orchestrate_standup_workflow(
-                                user_id=session_id, workflow_type="standard"
-                            )
-
-                            return {
-                                "message": f"Good morning! Here's your standup:\n\n{standup_result.summary}",
-                                "intent": {
-                                    "category": intent.category.value,
-                                    "action": intent.action,
-                                    "confidence": intent.confidence,
-                                    "context": {"standup_data": standup_result.data},
-                                },
-                                "workflow_id": workflow.id,
-                                "requires_clarification": False,
-                                "clarification_type": None,
-                            }
-                        except Exception as e:
-                            print(f"❌ Standup service error: {e}")
-                            return {
-                                "message": "Unable to generate standup at this time. Please try again later.",
-                                "intent": {
-                                    "category": intent.category.value,
-                                    "action": intent.action,
-                                    "confidence": intent.confidence,
-                                    "context": {},
-                                },
-                                "workflow_id": workflow.id,
-                                "requires_clarification": False,
-                                "clarification_type": None,
-                            }
-
-                    elif intent.action in ["list_projects", "show_projects"]:
-                        # Phase 3C: Restore list_projects functionality
-                        return {
-                            "message": "Here are your active projects:\n1. Piper Morgan Platform\n2. Issue Tracker Integration\n3. Documentation Updates",
-                            "intent": {
-                                "category": intent.category.value,
-                                "action": intent.action,
-                                "confidence": intent.confidence,
-                                "context": {},
-                            },
-                            "workflow_id": workflow.id,
-                            "requires_clarification": False,
-                            "clarification_type": None,
-                        }
-
-                else:
-                    # Phase 3C: Generic query handler using QueryRouter
-                    print(f"🔧 Routing generic QUERY intent to QueryRouter: {intent.action}")
-                    try:
-                        result = await orchestration_engine.handle_query_intent(intent)
-                        return {
-                            "message": f"Query processed successfully: {intent.action}",
-                            "intent": {
-                                "category": intent.category.value,
-                                "action": intent.action,
-                                "confidence": intent.confidence,
-                                "context": intent.context,
-                            },
-                            "result": result,
-                            "workflow_id": workflow.id,
-                            "requires_clarification": False,
-                            "clarification_type": None,
-                        }
-                    except Exception as e:
-                        print(f"❌ QueryRouter error: {e}")
-                        return {
-                            "message": f"Unable to process query: {intent.action}. Error: {str(e)}",
-                            "intent": {
-                                "category": intent.category.value,
-                                "action": intent.action,
-                                "confidence": intent.confidence,
-                                "context": intent.context,
-                            },
-                            "workflow_id": workflow.id,
-                            "requires_clarification": False,
-                            "clarification_type": None,
-                        }
-
-            except Exception as e:
-                logger.error(f"OrchestrationEngine error: {str(e)}")
-                return {
-                    "message": f"Failed to process intent with OrchestrationEngine: {str(e)}",
-                    "intent": {
-                        "category": intent.category.value,
-                        "action": intent.action,
-                        "confidence": intent.confidence,
-                        "context": intent.context,
-                    },
-                    "workflow_id": None,
-                    "requires_clarification": False,
-                    "clarification_type": None,
-                }
-
-        # Phase 3C: For EXECUTION/ANALYSIS intents, indicate orchestration needed
-        else:
-            return {
-                "message": f"Intent '{intent.action}' (category: {intent.category.value}) requires full orchestration workflow. This is being restored in Phase 3.",
-                "intent": {
-                    "category": intent.category.value,
-                    "action": intent.action,
-                    "confidence": intent.confidence,
-                    "context": intent.context,
-                },
-                "workflow_id": None,
-                "requires_clarification": False,
-                "clarification_type": None,
-            }
+        return response
 
     except Exception as e:
-        print(f"❌ Phase 3B: Intent processing error: {e}")
+        # Unexpected error - HTTP 500 equivalent
+        logger.error(f"Intent route error: {str(e)}")
         return {
             "status": "error",
             "error": f"Intent processing failed: {str(e)}",
@@ -874,136 +468,9 @@ async def process_intent(request: Request):
 
 
 @app.get("/standup")
-async def standup_ui():
-    """Simple UI for standup display"""
-    return HTMLResponse(
-        content="""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Morning Standup - Piper Morgan</title>
-        <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
-        <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-            .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            .header { text-align: center; margin-bottom: 30px; }
-            .header h1 { color: #2c3e50; margin: 0; font-size: 2.5em; }
-            .loading { text-align: center; color: #7f8c8d; font-style: italic; }
-            .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            .success { color: #2e7d32; }
-            .section { margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; }
-            .section h2 { color: #34495e; margin-top: 0; }
-            .metrics { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
-            .metric { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-            .metric-value { font-size: 2em; font-weight: bold; color: #27ae60; }
-            .metric-label { color: #7f8c8d; margin-top: 5px; }
-            pre { background: #2c3e50; color: white; padding: 15px; border-radius: 5px; overflow-x: auto; }
-            button { background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
-            button:hover { background: #2980b9; }
-            button:disabled { background: #bdc3c7; cursor: not-allowed; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>🌅 Morning Standup</h1>
-                <p>Your daily accomplishments and priorities</p>
-                <button onclick="loadStandup()" id="loadBtn">Generate Standup</button>
-            </div>
-
-            <div id="results"></div>
-        </div>
-
-        <script>
-            async function loadStandup() {
-                const loadBtn = document.getElementById('loadBtn');
-                const results = document.getElementById('results');
-
-                // Show loading state
-                loadBtn.disabled = true;
-                loadBtn.textContent = 'Loading...';
-                results.innerHTML = '<div class="loading">⏱️ Generating your morning standup...</div>';
-
-                try {
-                    const startTime = Date.now();
-                    const response = await fetch('/api/standup?format=human-readable');
-                    const data = await response.json();
-                    const endTime = Date.now();
-
-                    if (data.status === 'success') {
-                        results.innerHTML = `
-                            <div class="success">✅ Standup generated successfully!</div>
-
-                            <div class="metrics">
-                                <div class="metric">
-                                    <div class="metric-value">${data.data.generation_time_with_context || data.data.generation_time_formatted || (data.data.generation_time_ms + 'ms')}</div>
-                                    <div class="metric-label">Generation Time</div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-value">${data.data.time_saved_formatted || (data.data.time_saved_minutes + ' min')}</div>
-                                    <div class="metric-label">Time Saved</div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-value">${data.data.efficiency_multiplier || 'N/A'}</div>
-                                    <div class="metric-label">Efficiency</div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-value">${endTime - startTime}ms</div>
-                                    <div class="metric-label">API Response Time</div>
-                                </div>
-                            </div>
-
-                            <div class="section">
-                                <h2>📋 Yesterday's Accomplishments</h2>
-                                <ul>${(data.data.yesterday_accomplishments || []).map(item =>
-                                  `<li>${item}</li>`).join('')}</ul>
-                            </div>
-
-                            <div class="section">
-                                <h2>🎯 Today's Priorities</h2>
-                                <ul>${(data.data.today_priorities || []).map(item =>
-                                  `<li>${item}</li>`).join('')}</ul>
-                            </div>
-
-                            <div class="section">
-                                <h2>⚠️ Blockers</h2>
-                                ${data.data.blockers && data.data.blockers.length > 0
-                                  ? `<ul>${data.data.blockers.map(item => `<li>${item}</li>`).join('')}</ul>`
-                                  : '<p>✅ No blockers identified</p>'}
-                            </div>
-
-                            <div class="section">
-                                <h2>📊 Full Response</h2>
-                                <pre>${JSON.stringify(data, null, 2)}</pre>
-                            </div>
-                        `;
-                    } else {
-                        results.innerHTML = `
-                            <div class="error">❌ Error generating standup: ${data.error}</div>
-                            <div class="section">
-                                <h2>Debug Information</h2>
-                                <pre>${JSON.stringify(data, null, 2)}</pre>
-                            </div>
-                        `;
-                    }
-                } catch (error) {
-                    results.innerHTML = `
-                        <div class="error">❌ Network error: ${error.message}</div>
-                        <div class="section">
-                            <h2>Debug Information</h2>
-                            <pre>Error: ${error.toString()}</pre>
-                        </div>
-                    `;
-                } finally {
-                    loadBtn.disabled = false;
-                    loadBtn.textContent = 'Generate Standup';
-                }
-            }
-        </script>
-    </body>
-    </html>
-    """
-    )
+async def standup_ui(request: Request):
+    """Render standup UI"""
+    return templates.TemplateResponse("standup.html", {"request": request})
 
 
 @app.get("/personality-preferences")
