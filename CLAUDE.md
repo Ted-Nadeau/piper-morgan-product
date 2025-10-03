@@ -149,5 +149,5 @@ Most code you'll find is 75% complete then abandoned. When you find:
 
 ---
 
-*Current Focus: CORE-GREAT-1 (QueryRouter resurrection)*
+*Current Focus: CORE-GREAT-3 (Plug-in integration)*
 *See docs/briefing/CURRENT-STATE.md for details*

@@ -180,3 +180,51 @@ jobs:
             console.log('✅ Weekly documentation audit workflow completed successfully');
             console.log('Check GitHub issues for the FLY-AUDIT Weekly Docs Audit checklist');
             console.log('PRIORITY: Update Claude project knowledge with any changed files');
+
+  update-essential-briefings:
+    runs-on: ubuntu-latest
+    name: Update Essential Briefings
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update Essential Briefings
+        run: |
+          # Extract current position from roadmap or current state
+          if [ -f "docs/planning/roadmap.md" ]; then
+            POSITION=$(grep -i "current position\|position:" docs/planning/roadmap.md | head -1 | cut -d: -f2 | xargs)
+          elif [ -f "knowledge/BRIEFING-CURRENT-STATE.md" ]; then
+            POSITION=$(grep -i "position:" knowledge/BRIEFING-CURRENT-STATE.md | head -1 | cut -d: -f2 | xargs)
+          else
+            POSITION="1.1.3.2"  # Default fallback
+          fi
+
+          echo "Updating essential briefings with position: $POSITION"
+
+          # Update all essential briefings with current position
+          for file in knowledge/BRIEFING-ESSENTIAL-*.md; do
+            if [ -f "$file" ]; then
+              # Update the position line in each briefing
+              sed -i "s/Position\*\*: [0-9.]*/Position**: $POSITION/" "$file"
+              echo "Updated $file with position $POSITION"
+            fi
+          done
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          if [[ `git status --porcelain` ]]; then
+            git add knowledge/BRIEFING-ESSENTIAL-*.md
+            git commit -m "chore: Update essential briefings position
+
+            🤖 Generated with [Claude Code](https://claude.ai/code)"
+            git push
+            echo "✅ Essential briefings updated and committed"
+          else
+            echo "ℹ️ No changes needed in essential briefings"
+          fi
