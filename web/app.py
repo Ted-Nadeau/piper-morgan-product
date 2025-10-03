@@ -133,13 +133,27 @@ async def lifespan(app: FastAPI):
 
         registry = get_plugin_registry()
 
-        # Plugins auto-register when their modules are imported
-        # Phase 3C: Import plugins (triggers auto-registration)
-        print("  📦 Loading plugins...")
-        from services.integrations.calendar.calendar_plugin import _calendar_plugin
-        from services.integrations.github.github_plugin import _github_plugin
-        from services.integrations.notion.notion_plugin import _notion_plugin
-        from services.integrations.slack.slack_plugin import _slack_plugin
+        # GREAT-3B Update: Replaced static imports with dynamic loading
+        # - Plugins discovered from services/integrations/*/
+        # - Config in PIPER.user.md controls what loads
+        # - Backwards compatible: all plugins enabled by default
+
+        # Phase 3B: Plugin System (Dynamic Loading - GREAT-3B)
+        print("\n🔌 Initializing Plugin System...")
+
+        # Discover and load enabled plugins from config
+        load_results = registry.load_enabled_plugins()
+
+        success_count = sum(1 for success in load_results.values() if success)
+        total_count = len(load_results)
+
+        if total_count == 0:
+            print("  ⚠️  No plugins enabled in configuration")
+        else:
+            print(f"  📦 Loaded {success_count}/{total_count} plugin(s)")
+            for name, success in load_results.items():
+                status = "✅" if success else "❌"
+                print(f"    {status} {name}")
 
         # Initialize all registered plugins
         init_results = await registry.initialize_all()
@@ -147,19 +161,19 @@ async def lifespan(app: FastAPI):
         success_count = sum(1 for success in init_results.values() if success)
         total_count = len(init_results)
 
-        print(f"✅ Plugin initialization: {success_count}/{total_count} successful")
+        print(f"  ✅ Initialized {success_count}/{total_count} plugin(s)")
 
         # Mount plugin routers
         routers = registry.get_routers()
         for router in routers:
             app.include_router(router)
 
-        print(f"✅ Mounted {len(routers)} plugin router(s)")
+        print(f"  ✅ Mounted {len(routers)} router(s)")
 
         # Store registry in app state for access
         app.state.plugin_registry = registry
 
-        print(f"✅ Plugin system initialized: {total_count} plugin(s) registered\n")
+        print(f"✅ Plugin system initialized\n")
 
     except Exception as e:
         print(f"⚠️ Plugin system initialization failed: {e}")

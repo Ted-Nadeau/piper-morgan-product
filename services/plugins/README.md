@@ -5,6 +5,25 @@
 The Piper plugin system enables integration plugins (Slack, Notion, GitHub, Calendar) to self-register as modular components with standardized interfaces.
 
 **Built**: October 2, 2025 (GREAT-3A Phase 3)
+**Enhanced**: October 3, 2025 (GREAT-3B)
+
+## GREAT-3B Enhancements
+
+As of October 2025 (GREAT-3B), the plugin system includes:
+
+- **Dynamic Discovery**: Automatic plugin detection from `services/integrations/*/`
+- **Config Control**: Enable/disable plugins via `config/PIPER.user.md`
+- **Backwards Compatible**: All plugins enabled by default
+- **Enhanced Logging**: Detailed startup status per plugin
+- **Graceful Degradation**: Plugin failures don't crash startup
+
+### Migration from GREAT-3A
+
+GREAT-3A introduced the plugin interface and registry. GREAT-3B adds:
+- Removed static imports from `web/app.py`
+- Added discovery and dynamic loading
+- Added configuration system
+- No breaking changes - existing code continues to work
 
 ## Architecture
 
@@ -25,12 +44,12 @@ The Piper plugin system enables integration plugins (Slack, Notion, GitHub, Cale
 
 ## Current Plugins
 
-| Plugin | Capabilities | Status |
-|--------|-------------|--------|
-| **Slack** | routes, webhooks, spatial | ✅ Active |
-| **GitHub** | routes, spatial | ✅ Active |
-| **Notion** | routes, mcp | ✅ Active |
-| **Calendar** | routes, spatial | ✅ Active |
+| Plugin       | Capabilities              | Status    |
+| ------------ | ------------------------- | --------- |
+| **Slack**    | routes, webhooks, spatial | ✅ Active |
+| **GitHub**   | routes, spatial           | ✅ Active |
+| **Notion**   | routes, mcp               | ✅ Active |
+| **Calendar** | routes, spatial           | ✅ Active |
 
 ## Adding New Plugins
 
@@ -85,6 +104,135 @@ get_plugin_registry().register(_plugin)
 3. Add auto-registration at module bottom
 4. Import plugin in `web/app.py` lifespan
 5. Plugin auto-loads at startup
+
+## Plugin Discovery
+
+The plugin system can automatically discover available plugins by scanning the integrations directory:
+
+```python
+from services.plugins import get_plugin_registry
+
+registry = get_plugin_registry()
+
+# Discover what's available
+available = registry.discover_plugins()
+print(f"Found {len(available)} plugins: {list(available.keys())}")
+# Output: Found 4 plugins: ['slack', 'github', 'notion', 'calendar']
+
+# See module paths
+for name, module_path in available.items():
+    print(f"  {name}: {module_path}")
+# Output:
+#   slack: services.integrations.slack.slack_plugin
+#   github: services.integrations.github.github_plugin
+#   notion: services.integrations.notion.notion_plugin
+#   calendar: services.integrations.calendar.calendar_plugin
+```
+
+**How Discovery Works**:
+
+- Scans `services/integrations/*/` for `*_plugin.py` files
+- Returns mapping of plugin name to module path
+- Does NOT load or register plugins (only identifies what's available)
+- Useful for dynamic loading and configuration-based plugin management
+
+**Discovery vs Registration**:
+
+- `discover_plugins()` - Finds available plugins (no imports)
+- `register()` - Adds plugin instance to registry (requires import)
+- Use discovery to decide which plugins to load dynamically
+
+## Dynamic Plugin Loading
+
+Plugins can be loaded dynamically without static imports:
+
+```python
+from services.plugins import get_plugin_registry
+
+registry = get_plugin_registry()
+
+# Discover available plugins
+available = registry.discover_plugins()
+
+# Load specific plugin
+success = registry.load_plugin("slack", available["slack"])
+if success:
+    print("Slack plugin loaded!")
+
+# Load all discovered plugins
+for name, module_path in available.items():
+    registry.load_plugin(name, module_path)
+```
+
+**Loading Process**:
+
+1. Plugin module is imported using `importlib`
+2. Import triggers auto-registration (plugin's `_plugin` instance registers itself)
+3. Plugin is immediately available via `get_plugin(name)`
+
+**Error Handling**:
+
+- Import errors are caught and logged
+- Failed loads return `False`
+- Existing plugins are not affected by failed loads
+- Safe to attempt loading invalid plugins
+
+**Re-registration Handling**:
+
+- If plugin already loaded, returns `True` immediately
+- Handles case where module imported but registry was reset
+- Automatically re-registers existing plugin instances
+
+## Plugin Configuration
+
+Configure which plugins are enabled in `config/PIPER.user.md`:
+
+````markdown
+## 🔌 Plugin Configuration
+
+Configure which integration plugins are enabled and their settings.
+
+```yaml
+plugins:
+  enabled:
+    - github
+    - slack
+    # - notion  # Disabled
+    # - calendar  # Disabled
+
+  settings:
+    github:
+      timeout: 30
+```
+````
+
+**Loading Enabled Plugins**:
+
+```python
+from services.plugins import get_plugin_registry
+
+registry = get_plugin_registry()
+
+# Load only enabled plugins from config
+results = registry.load_enabled_plugins()
+
+print(f"Loaded {len(results)} plugins")
+for name, success in results.items():
+    status = "✅" if success else "❌"
+    print(f"{status} {name}")
+```
+
+**Default Behavior**:
+
+- If no config section exists: all discovered plugins are loaded (backwards compatible)
+- If config exists with empty enabled list: no plugins are loaded
+- Maintains backwards compatibility (everything enabled by default)
+
+**Config Reading Methods**:
+
+- `get_enabled_plugins()` - Returns list of enabled plugin names from config
+- `load_enabled_plugins()` - Discovers and loads only enabled plugins
+- `_read_plugin_config()` - Internal method to parse config file
 
 ## Testing Plugins
 
@@ -149,6 +297,7 @@ Plugins declare capabilities in metadata:
 ## Architecture Decisions
 
 See ADRs for design rationale:
+
 - ADR-010: Configuration Access Patterns
 - ADR-038: Spatial Intelligence Patterns
 
@@ -171,6 +320,7 @@ tests/plugins/
 ## Future Enhancements
 
 Potential improvements:
+
 - Dynamic plugin loading from config
 - Plugin marketplace
 - Plugin dependencies resolution

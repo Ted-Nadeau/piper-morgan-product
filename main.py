@@ -20,27 +20,29 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 def setup_logging():
     """Setup logging configuration"""
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
+
 
 def parse_arguments():
     """Parse command line arguments"""
-    parser = argparse.ArgumentParser(description='Piper Morgan - Intelligent PM Assistant')
+    parser = argparse.ArgumentParser(description="Piper Morgan - Intelligent PM Assistant")
     parser.add_argument(
-        '--skip-validation',
-        action='store_true',
-        help='Skip configuration validation (development mode)'
+        "--skip-validation",
+        action="store_true",
+        help="Skip configuration validation (development mode)",
     )
     parser.add_argument(
-        '--config',
-        default='config/PIPER.user.md',
-        help='Path to configuration file (default: config/PIPER.user.md)'
+        "--config",
+        default="config/PIPER.user.md",
+        help="Path to configuration file (default: config/PIPER.user.md)",
     )
     return parser.parse_args()
+
 
 def validate_configuration(config_path: str, skip_validation: bool = False) -> bool:
     """
@@ -89,6 +91,7 @@ def validate_configuration(config_path: str, skip_validation: bool = False) -> b
         print("🛠️  Or use --skip-validation for development mode")
         return False
 
+
 def start_services():
     """Start all application services"""
     print("🚀 Starting Piper Morgan services...")
@@ -109,6 +112,7 @@ def start_services():
         # In real implementation, this would start the actual services
         # For now, just wait for interrupt
         import time
+
         while True:
             time.sleep(1)
 
@@ -120,6 +124,7 @@ def start_services():
         print(f"❌ Service startup failed: {e}")
         sys.exit(1)
 
+
 def main():
     """Main application entry point"""
     setup_logging()
@@ -130,12 +135,12 @@ def main():
 
     # Validate configuration first
     if not validate_configuration(args.config, args.skip_validation):
-        print("
-🚫 Application startup aborted due to configuration issues")
+        print("🚫 Application startup aborted due to configuration issues")
         sys.exit(1)
 
     # Start services if validation passed
     start_services()
+
 
 if __name__ == "__main__":
     main()
