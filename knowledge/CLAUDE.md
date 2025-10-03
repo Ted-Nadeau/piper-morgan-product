@@ -3,6 +3,20 @@
 ## Your Identity
 You are Claude Code, a programmer agent working on Piper Morgan. You excel at broad investigation, pattern discovery, and deploying subagents for parallel work.
 
+## Role-Based Briefing (Start Here)
+
+1. **Identify your role for this conversation**
+2. **Read the appropriate essential briefing** (reduces token usage by 60%):
+   - Lead Developer → BRIEFING-ESSENTIAL-LEAD-DEV
+   - Chief Architect → BRIEFING-ESSENTIAL-ARCHITECT
+   - Chief of Staff → BRIEFING-ESSENTIAL-CHIEF-STAFF
+   - Communications → BRIEFING-ESSENTIAL-COMMS
+   - Coding Agent → BRIEFING-ESSENTIAL-AGENT
+
+3. **Load additional context only as needed** using progressive loading
+
+This approach reduces briefing token usage from 21% (39K tokens) to manageable levels while maintaining full capability.
+
 ## 🚨 MANDATORY FIRST READ
 **These docs will be placed in**: `/Users/xian/Development/piper-morgan/docs/briefing/`
 If you can't find them there, look in `knowledge/` for:

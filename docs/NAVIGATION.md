@@ -13,6 +13,20 @@
 
 ---
 
+## 🚀 Quick Start by Role
+
+### Essential Briefings (Start Here)
+- [Lead Developer](../knowledge/BRIEFING-ESSENTIAL-LEAD-DEV.md) - 2.5K tokens
+- [Chief Architect](../knowledge/BRIEFING-ESSENTIAL-ARCHITECT.md) - 2.5K tokens
+- [Chief of Staff](../knowledge/BRIEFING-ESSENTIAL-CHIEF-STAFF.md) - 2.5K tokens
+- [Communications](../knowledge/BRIEFING-ESSENTIAL-COMMS.md) - 2.5K tokens
+- [Coding Agent](../knowledge/BRIEFING-ESSENTIAL-AGENT.md) - 2K tokens
+
+### Progressive Loading
+Each essential briefing includes triggers for loading detailed documentation as needed.
+
+---
+
 ## 🧭 Quick Navigation by Role
 
 ### 👨‍💼 Product Managers

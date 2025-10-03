@@ -1,5 +1,5 @@
-<!-- LOGO: Keep pm-logo.png reference - file at docs/pm-logo.png -->
-![Piper Morgan Logo](pm-logo.png)
+<!-- LOGO: Updated to correct location -->
+![Piper Morgan Logo](assets/images/pm-logo.png)
 
 # Piper Morgan - AI Product Management Assistant
 
@@ -209,6 +209,20 @@ See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 
 ## 🚀 Recent Infrastructure Activations
 
+### 🏗️ GREAT-3A: Plugin Architecture Foundation (October 2, 2025)
+- **GREAT-3A Complete**: Plugin foundation, config standardization, and app.py refactoring ([Issue #197-198](https://github.com/mediajunkie/piper-morgan-product/issues/197))
+- **Architecture Achievement**: web/app.py refactored from 1,052 to 467 lines (55% reduction)
+- **Plugin System**: 4 operational plugins (Slack, GitHub, Notion, Calendar) with standardized interfaces
+- **Config Services**: Unified configuration architecture across all integrations
+- **Quality Maintained**: 72/72 tests passing throughout refactoring
+
+### ✅ GREAT-2 Epic Completion (September 30, 2025)
+- **Spatial Intelligence**: Three patterns discovered and documented (Granular, Embedded, Delegated)
+- **Router Architecture**: 100% completion across all 4 integrations (Calendar, GitHub, Notion, Slack)
+- **CORE-QUERY-1**: Complete integration router infrastructure with feature flag control
+- **Security Resolution**: TBD-SECURITY-02 vulnerability fixed with zero functionality impact
+- **Documentation**: Comprehensive architectural guidance and ADR-038 spatial patterns
+
 ### 🔧 Multi-User Configuration System (September 6, 2025)
 - **PM-123 Complete**: Per-user GitHub repository and PM number format configuration ([Issue PM-123](https://github.com/mediajunkie/piper-morgan-product/issues/123))
 - **CLI Architecture Fix**: All 6 commands now accessible (create, verify, sync, triage, status, patterns)
@@ -261,6 +275,45 @@ See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 - **[Smart Test Execution](../scripts/run_tests.sh)** - 4-mode test infrastructure
 - **[Multi-Agent Deployment](../scripts/deploy_multi_agent_coordinator.sh)** - Automated coordinator deployment
 - **[Operation Validation](../scripts/validate_multi_agent_operation.sh)** - Production readiness validation
+
+## 📊 Roadmap Status
+
+### The Great Refactor Progress (~30% Complete)
+- **GREAT-1** ✅ Complete (Router Foundation)
+- **GREAT-2** ✅ Complete (all 6 sub-epics: 2A-2E, CORE-QUERY-1)
+- **GREAT-3** 🚧 In Progress (3A complete, 3B active)
+  - **GREAT-3A** ✅ Plugin foundation, config standardization, app.py refactoring
+  - **GREAT-3B** 🚧 Dynamic plugin loading and discovery (active)
+  - **GREAT-3C** ⏳ Integration migration to plugins (queued)
+  - **GREAT-3D** ⏳ Validation and documentation (queued)
+- **GREAT-4, GREAT-5** ⏳ Queued (workflow automation, learning systems)
+- **MVP** 🎯 Target: Production-ready system
+
+### Architecture Evolution
+- **Router Architecture**: Operational across all 4 integrations
+- **Three Spatial Patterns**: Documented and working (Granular, Embedded, Delegated)
+- **Plugin System**: Foundation complete, dynamic loading in progress
+- **Config Validation**: Infrastructure active and operational
+
+## 🎯 Current Capabilities (~80% Functional)
+
+### ✅ Working Systems
+- **All integrations working** via router architecture (Calendar, GitHub, Notion, Slack)
+- **Plugin architecture** operational (4 plugins with standardized interfaces)
+- **Config validation** active across all services
+- **Spatial intelligence** patterns documented and functional
+- **Test infrastructure** robust (72/72 tests passing)
+- **Documentation** comprehensive (98/98 directories covered)
+
+### 🚧 In Development (GREAT-3B)
+- **Dynamic plugin loading** system
+- **Plugin discovery** and lifecycle management
+- **Registry automation** for seamless plugin integration
+
+### ❌ Future Work
+- **Learning system** (adaptive behavior based on usage patterns)
+- **Complex workflow automation** (multi-step task coordination)
+- **Advanced AI coordination** (enhanced multi-agent collaboration)
 
 ## 🏗️ Architecture Overview
 
