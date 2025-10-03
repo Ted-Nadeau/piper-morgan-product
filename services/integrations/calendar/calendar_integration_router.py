@@ -16,6 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from services.infrastructure.config.feature_flags import FeatureFlags
 
+from .config_service import CalendarConfigService
+
 
 class CalendarIntegrationRouter:
     """
@@ -39,11 +41,14 @@ class CalendarIntegrationRouter:
         - Feature Flags: USE_SPATIAL_CALENDAR, ALLOW_LEGACY_CALENDAR
     """
 
-    def __init__(self):
-        """Initialize router with feature flag checking"""
+    def __init__(self, config_service: Optional[CalendarConfigService] = None):
+        """Initialize router with feature flag checking and config service"""
         # Use FeatureFlags service for consistency with GitHub router
         self.use_spatial = FeatureFlags.should_use_spatial_calendar()
         self.allow_legacy = FeatureFlags.is_legacy_calendar_allowed()
+
+        # Store config service (create default if not provided)
+        self.config_service = config_service or CalendarConfigService()
 
         # Initialize spatial integration
         self.spatial_calendar = None
@@ -51,7 +56,8 @@ class CalendarIntegrationRouter:
             try:
                 from services.mcp.consumer.google_calendar_adapter import GoogleCalendarMCPAdapter
 
-                self.spatial_calendar = GoogleCalendarMCPAdapter()
+                # Pass config service to adapter
+                self.spatial_calendar = GoogleCalendarMCPAdapter(self.config_service)
             except ImportError as e:
                 warnings.warn(f"Spatial calendar unavailable: {e}")
 

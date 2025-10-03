@@ -22,6 +22,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from services.infrastructure.config.feature_flags import FeatureFlags
 from services.integrations.spatial.github_spatial import GitHubSpatialIntelligence
 
+from .config_service import GitHubConfigService
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,10 +33,21 @@ class GitHubIntegrationRouter:
 
     Provides safe deprecation infrastructure during the 4-week migration timeline
     with comprehensive fallback support and deprecation warnings.
+
+    Follows service injection pattern (ADR-010) for configuration management.
     """
 
-    def __init__(self):
-        """Initialize GitHub integration router with feature flag detection"""
+    def __init__(self, config_service: Optional[GitHubConfigService] = None):
+        """
+        Initialize GitHub integration router with feature flag detection and config service.
+
+        Args:
+            config_service: Optional GitHubConfigService for dependency injection.
+                          If not provided, creates a default instance.
+        """
+        # Store config service (service injection pattern)
+        self.config_service = config_service or GitHubConfigService()
+
         self.spatial_github = None
         self.legacy_github = None
 

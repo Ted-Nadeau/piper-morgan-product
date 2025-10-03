@@ -30,6 +30,7 @@ except ImportError:
     Flow = None
     build = None
 
+from services.integrations.calendar.config_service import CalendarConfigService
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -49,28 +50,44 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
     for temporal awareness and standup enhancement.
     """
 
-    def __init__(self):
+    def __init__(self, config_service: Optional[CalendarConfigService] = None):
+        """
+        Initialize Google Calendar MCP adapter with config service.
+
+        Args:
+            config_service: Optional CalendarConfigService for dependency injection.
+                          If not provided, creates a default instance.
+        """
         super().__init__("google_calendar_mcp")
         self.mcp_consumer = MCPConsumerCore()
         self._lock = asyncio.Lock()
 
+        # Store config service (service injection pattern)
+        self.config_service = config_service or CalendarConfigService()
+
+        # Load configuration from service
+        config = self.config_service.get_config()
+
         # Google Calendar API configuration
         self._credentials: Optional[Credentials] = None
         self._service = None
-        self._calendar_id = "primary"  # User's primary calendar
+        self._calendar_id = config.calendar_id
 
-        # OAuth 2.0 configuration
-        self._client_secrets_file = os.getenv("GOOGLE_CLIENT_SECRETS_FILE", "credentials.json")
-        self._token_file = os.getenv("GOOGLE_TOKEN_FILE", "token.json")
-        self._scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
+        # OAuth 2.0 configuration (from config service, not direct env access)
+        self._client_secrets_file = config.client_secrets_file
+        self._token_file = config.token_file
+        self._scopes = config.scopes
 
         # Circuit breaker configuration
         self._last_error_time: Optional[datetime] = None
         self._error_count = 0
         self._circuit_open = False
-        self._circuit_timeout = 300  # 5 minutes
+        self._circuit_timeout = config.circuit_timeout
 
-        logger.info("GoogleCalendarMCPAdapter initialized")
+        logger.info(
+            "GoogleCalendarMCPAdapter initialized with %s",
+            "service injection" if config_service else "default config",
+        )
 
     async def authenticate(self) -> bool:
         """
