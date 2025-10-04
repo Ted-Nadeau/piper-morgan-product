@@ -1,317 +1,327 @@
-# Claude Code Agent Prompt: GREAT-3B Phase Z - Validation & Completion
+# Claude Code Agent Prompt: GREAT-3C Phase Z - Comprehensive Validation
 
 ## Session Log Management
-Continue session log: `dev/2025/10/03/2025-10-03-[timestamp]-code-log.md`
+Continue session log: `dev/2025/10/04/2025-10-04-[timestamp]-code-log.md`
 
 Update with timestamped entries for Phase Z work.
 
 ## Mission
-**Comprehensive Validation**: Verify all acceptance criteria met, run full test suite, validate functionality, and prepare completion documentation.
+**Comprehensive Validation**: Test all acceptance criteria, run full regression suite, validate demo plugin integration, verify documentation accuracy, and prepare completion artifacts.
 
 ## Context
 
-**GREAT-3B Phases 0-4 Complete**:
-- Discovery system operational
-- Dynamic loading working
-- Config integration complete
-- web/app.py updated and tested
-- 48 tests passing
+**GREAT-3C Phases 0-4 Complete**:
+- Phase 1: Pattern documentation with Mermaid diagrams
+- Phase 2: Developer guide (497 lines)
+- Phase 3: Demo plugin implementation (5 files, 380 lines)
+- Phase 4: Documentation integration + versioning policy
 
-**Phase Z Goal**: Final validation, acceptance criteria verification, and completion documentation.
+**Phase Z Goal**: Validate everything works, tests pass, documentation is accurate, and acceptance criteria met.
 
 ## Your Tasks
 
-### Task 1: Run Full Test Suite
+### Task 1: Regression Testing - Existing Plugins
 
-**Execute complete test suite**:
+**Verify no regressions from GREAT-3A/3B work**:
+
 ```bash
 cd ~/Development/piper-morgan
 
-# Plugin tests
+# Run full plugin test suite
 PYTHONPATH=. python3 -m pytest tests/plugins/ -v
 
-# Integration tests
-PYTHONPATH=. python3 -m pytest tests/integration/ -v
-
-# Unit tests
-PYTHONPATH=. python3 -m pytest tests/unit/ -v
+# Expected: 48/48 tests passing (baseline from GREAT-3B)
 ```
 
-**Document results**:
+**Document**:
 - Total tests executed
 - Pass/fail count
-- Any warnings or issues
-- Comparison to baseline (48 plugin tests expected)
+- Any warnings or failures
+- Comparison to GREAT-3B baseline (48 tests)
 
-### Task 2: Verify All 4 Plugins Work
+**If any tests fail**: Flag for Phase 3 revision.
 
-**Test each plugin individually**:
+### Task 2: Demo Plugin Unit Tests
 
-```python
-"""Test all 4 plugins are functional"""
+**Run demo plugin test suite**:
 
-from services.plugins import get_plugin_registry, reset_plugin_registry
-
-reset_plugin_registry()
-registry = get_plugin_registry()
-
-# Load all plugins
-results = registry.load_enabled_plugins()
-
-print("Plugin Loading Results:")
-for name, success in results.items():
-    status = "✅" if success else "❌"
-    print(f"{status} {name}: {'Loaded' if success else 'Failed'}")
-
-print(f"\nTotal: {len(results)} plugins")
-
-# Test each plugin's functionality
-print("\nPlugin Functionality Check:")
-
-for name in registry.list_plugins():
-    plugin = registry.get_plugin(name)
-
-    # Get metadata
-    metadata = plugin.get_metadata()
-    print(f"\n{name}:")
-    print(f"  Version: {metadata.version}")
-    print(f"  Capabilities: {metadata.capabilities}")
-
-    # Check configuration
-    is_configured = plugin.is_configured()
-    print(f"  Configured: {is_configured}")
-
-    # Get status
-    status = plugin.get_status()
-    print(f"  Status: {status}")
-
-    # Check router
-    if "routes" in metadata.capabilities:
-        router = plugin.get_router()
-        print(f"  Router: {router.prefix if router else 'None'}")
-
-print("\n✅ All plugin functionality verified!")
-```
-
-**Save as**: `test_all_plugins_functional.py`
-
-**Run and document output**.
-
-### Task 3: Verify Config-Based Disabling
-
-**Test disabling each plugin via config**:
-
-For each plugin (slack, github, notion, calendar):
-
-1. **Edit config/PIPER.user.md** to disable that plugin:
-```yaml
-plugins:
-  enabled:
-    - github
-    - notion
-    - calendar
-    # - slack  # DISABLED FOR TESTING
-```
-
-2. **Run loading test**:
-```python
-from services.plugins import get_plugin_registry, reset_plugin_registry
-
-reset_plugin_registry()
-registry = get_plugin_registry()
-results = registry.load_enabled_plugins()
-
-print(f"Enabled plugins: {list(results.keys())}")
-assert "slack" not in results, "Slack should be disabled"
-assert len(results) == 3, f"Should have 3 plugins, got {len(results)}"
-print("✅ Config-based disabling works!")
-```
-
-3. **Verify app starts without that plugin**:
 ```bash
-python3 main.py
-# Check startup logs show only 3 plugins
-# Ctrl+C to stop
+# Run demo plugin tests
+PYTHONPATH=. python3 -m pytest services/integrations/demo/tests/ -v
 ```
 
-4. **Restore config** (re-enable all 4 plugins)
+**Expected**: 9/9 tests passing
 
-**Document**: Each plugin can be successfully disabled via config.
+**Document**:
+- Test count
+- Pass/fail status
+- Execution time
+- Any warnings
 
-### Task 4: Verify Acceptance Criteria
+**If tests fail**: Phase 3 needs revision.
 
-Check each criterion from GREAT-3B issue:
+### Task 3: Demo Plugin Integration Test
 
-```markdown
-## GREAT-3B Acceptance Criteria Verification
+**Test demo plugin in running application**:
 
-- [ ] Plugin interface extended with lifecycle hooks
-  * Status:
-  * Evidence:
+```bash
+# Start application in background
+python3 main.py &
+APP_PID=$!
 
-- [ ] Plugin loader operational
-  * Status:
-  * Evidence:
+# Wait for startup
+sleep 3
 
-- [ ] Configuration system working per-plugin
-  * Status:
-  * Evidence:
+# Test health endpoint
+echo "Testing /health endpoint..."
+curl -s http://localhost:8001/api/integrations/demo/health | python3 -m json.tool
 
-- [ ] Plugins can be enabled/disabled
-  * Status:
-  * Evidence:
+# Test echo endpoint
+echo "Testing /echo endpoint..."
+curl -s "http://localhost:8001/api/integrations/demo/echo?message=Hello+World" | python3 -m json.tool
 
-- [ ] Core has no direct plugin imports
-  * Status:
-  * Evidence:
+# Test status endpoint
+echo "Testing /status endpoint..."
+curl -s http://localhost:8001/api/integrations/demo/status | python3 -m json.tool
 
-- [ ] All tests still passing
-  * Status:
-  * Evidence:
+# Cleanup
+kill $APP_PID
 ```
 
-Fill in Status (✅/❌) and Evidence (file/line references, test output, etc.)
+**Verify each endpoint returns**:
+- Valid JSON
+- Expected fields
+- No errors
 
-### Task 5: Documentation Review
+**Document**:
+- Each endpoint's response
+- HTTP status codes
+- Any errors or issues
 
-**Verify documentation is complete and accurate**:
+**If integration test fails**: Phase 3 needs revision.
 
-1. **services/plugins/README.md**:
-   - Discovery section accurate?
-   - Dynamic loading examples work?
-   - Config examples correct?
-   - All new features documented?
+### Task 4: Full Test Suite Run
 
-2. **config/PIPER.user.md**:
-   - Plugin Configuration section clear?
-   - Examples helpful?
-   - Default behavior explained?
+**Run complete test suite**:
 
-3. **Phase deliverables**:
-   - All phase deliverables created?
-   - Each contains required sections?
-   - Evidence provided for all claims?
+```bash
+# Run all tests
+PYTHONPATH=. python3 -m pytest tests/ -v
 
-**Create documentation checklist**:
-```markdown
-## Documentation Completeness
-
-- [ ] README.md updated with all Phase 1-4 features
-- [ ] PIPER.user.md has Plugin Configuration section
-- [ ] Phase 0 deliverable complete
-- [ ] Phase 1 deliverable complete
-- [ ] Phase 2 deliverable complete
-- [ ] Phase 3 deliverable complete
-- [ ] Phase 4 deliverable complete
-- [ ] All code has docstrings
-- [ ] All methods documented
+# Get summary
+PYTHONPATH=. python3 -m pytest tests/ --tb=short
 ```
 
-### Task 6: Create Completion Summary
+**Document**:
+- Total test count
+- Pass/fail breakdown
+- Any new failures vs GREAT-3B baseline
+- Execution time
 
-**File**: `dev/2025/10/03/GREAT-3B-COMPLETION-SUMMARY.md`
+### Task 5: Documentation Validation
 
-**Structure**:
+**Check all documentation files exist**:
+
+```bash
+# Pattern documentation
+ls -la docs/architecture/patterns/plugin-wrapper-pattern.md
+
+# Developer guides
+ls -la docs/guides/plugin-development-guide.md
+ls -la docs/guides/plugin-versioning-policy.md
+ls -la docs/guides/plugin-quick-reference.md
+
+# Demo plugin
+ls -la services/integrations/demo/*.py
+
+# Navigation
+ls -la docs/NAVIGATION.md
+```
+
+**Verify file sizes reasonable**:
+```bash
+wc -l docs/architecture/patterns/plugin-wrapper-pattern.md
+wc -l docs/guides/plugin-development-guide.md
+wc -l docs/guides/plugin-versioning-policy.md
+wc -l docs/guides/plugin-quick-reference.md
+```
+
+**Expected**:
+- Pattern doc: ~189 lines
+- Developer guide: ~497 lines
+- Versioning policy: ~202 lines
+- Quick reference: ~85 lines
+
+### Task 6: Verify Acceptance Criteria
+
+**From GREAT-3C.md**:
 
 ```markdown
-# GREAT-3B Completion Summary
+## GREAT-3C Acceptance Criteria Verification
 
-**Date**: October 3, 2025
-**Epic**: GREAT-3B - Plugin Infrastructure
+- [ ] Wrapper pattern documented as intentional architecture
+  * Status:
+  * Evidence: docs/architecture/patterns/plugin-wrapper-pattern.md exists
+
+- [ ] Developer guide complete with examples
+  * Status:
+  * Evidence: docs/guides/plugin-development-guide.md with 8-step tutorial
+
+- [ ] Template plugin created and tested
+  * Status:
+  * Evidence: services/integrations/demo/ with 9/9 tests passing
+
+- [ ] All 4 existing plugins have version metadata
+  * Status:
+  * Evidence: grep "version" services/integrations/*/[!test]*_plugin.py
+
+- [ ] Architecture diagram shows plugin-router relationship
+  * Status:
+  * Evidence: Mermaid diagrams in services/plugins/README.md
+
+- [ ] Migration path documented for future
+  * Status:
+  * Evidence: Migration section in plugin-wrapper-pattern.md
+```
+
+**For each criterion**:
+1. Check if met
+2. Provide file/line evidence
+3. Mark ✅ or ❌
+
+### Task 7: Plugin Version Verification
+
+**Verify all plugins have version metadata**:
+
+```bash
+# Check all plugins for version
+grep -n "version=" services/integrations/*/[!test]*_plugin.py
+```
+
+**Expected output**:
+- calendar_plugin.py: version="1.0.0"
+- github_plugin.py: version="1.0.0"
+- notion_plugin.py: version="1.0.0"
+- slack_plugin.py: version="1.0.0"
+- demo_plugin.py: version="1.0.0"
+
+### Task 8: Documentation Cross-Reference Check
+
+**Verify key cross-references exist**:
+
+```bash
+# Pattern doc links to developer guide
+grep -i "developer guide" docs/architecture/patterns/plugin-wrapper-pattern.md
+
+# Developer guide links to pattern doc
+grep -i "wrapper pattern" docs/guides/plugin-development-guide.md
+
+# Developer guide references demo plugin
+grep -i "demo" docs/guides/plugin-development-guide.md
+
+# README links to docs
+grep -i "docs/" services/plugins/README.md
+
+# Navigation has all entries
+grep -i "plugin" docs/NAVIGATION.md
+```
+
+### Task 9: Create Completion Summary
+
+**File**: `dev/2025/10/04/GREAT-3C-COMPLETION-SUMMARY.md`
+
+```markdown
+# GREAT-3C Completion Summary
+
+**Date**: October 4, 2025
+**Epic**: GREAT-3C - Plugin Pattern Documentation & Enhancement
 **Status**: ✅ COMPLETE
 
 ## Executive Summary
 
-[2-3 sentence summary of what was accomplished]
+[2-3 sentence summary of accomplishments]
 
 ## Phases Completed
 
-### Phase 0: Investigation
-- Duration: 14 minutes
-- Agents: Both
-- Deliverables: 2
-- Key Findings: [summary]
+### Phase 0: Investigation (21 min)
+- Both agents
+- Key finding: [summary]
 
-### Phase 1: Discovery System
-- Duration: 20 minutes
-- Agent: Code
-- Lines Added: [number]
-- Tests Added: 5
-- Key Achievement: [summary]
+### Phase 1: Pattern Documentation (8 min)
+- Cursor agent
+- Deliverable: plugin-wrapper-pattern.md + Mermaid diagrams
 
-### Phase 2: Dynamic Loading
-- Duration: 28 minutes
-- Agent: Cursor
-- Lines Added: [number]
-- Tests Added: 6
-- Key Achievement: [summary]
+### Phase 2: Developer Guide (9 min)
+- Cursor agent
+- Deliverable: 497-line step-by-step tutorial
 
-### Phase 3: Config Integration
-- Duration: 14 minutes
-- Agent: Code
-- Lines Added: 137
-- Tests Added: 3
-- Key Achievement: [summary]
+### Phase 3: Demo Plugin (8 min)
+- Code agent
+- Deliverable: 5 files, 380 lines, 9/9 tests passing
 
-### Phase 4: App Integration
-- Duration: 14 minutes
-- Agent: Cursor
-- Lines Changed: [number]
-- Tests: 48 passing
-- Key Achievement: [summary]
+### Phase 4: Documentation Integration (13 min)
+- Cursor agent
+- Deliverables: Versioning policy + quick reference + cross-linking
 
 ## Final Metrics
 
-**Code Changes**:
-- Files Modified: [count]
-- Lines Added: [count]
-- Lines Removed: [count]
-- Net Change: [count]
+**Documentation Created**:
+- Files Created: [count]
+- Total Lines: [count]
+- Cross-References: [count]
 
-**Test Coverage**:
-- Tests Before: 34
-- Tests After: 48
-- New Tests: 14
-- Pass Rate: 100%
+**Code Created**:
+- Demo Plugin Files: 5
+- Demo Plugin Lines: 380
+- Test Coverage: 9 unit tests
 
-**Plugin System**:
-- Discovery: ✅ Operational
-- Dynamic Loading: ✅ Operational
-- Config Control: ✅ Operational
-- Plugins Working: 4/4
+**Test Results**:
+- Regression Tests: 48/48 passing
+- Demo Tests: 9/9 passing
+- Integration Tests: 3/3 endpoints working
+- Full Suite: [count] passing
+
+**Documentation Files**:
+- Pattern documentation: 1
+- Developer guides: 3
+- Updated files: 3
 
 ## Acceptance Criteria
 
-[Copy verification from Task 4]
+[Copy verification from Task 6]
 
-## Documentation
+## Documentation Quality
 
-- [ ] All README files updated
-- [ ] Config examples provided
-- [ ] Phase deliverables complete
-- [ ] Code documented
+- [ ] All files created
+- [ ] Cross-references working
+- [ ] Code examples tested
+- [ ] Navigation updated
 
-## Breaking Changes
+## Testing Summary
 
-None. System maintains full backwards compatibility.
+- [ ] No regressions
+- [ ] Demo plugin works
+- [ ] Integration tests pass
+- [ ] Full suite green
 
 ## Next Steps
 
-Ready for GREAT-3C or other work as directed.
+GREAT-3C complete. Ready for:
+- GREAT-3D (if exists)
+- Other work as directed
 
 ---
 
 *Prepared by: Code Agent*
-*Date: October 3, 2025*
+*Date: October 4, 2025*
 ```
 
-### Task 7: Session Log Finalization
+### Task 10: Session Log Finalization
 
 **Review your session log**:
 - All phases documented?
 - Timestamps accurate?
 - Deliverables listed?
-- Issues noted?
 
 **Add final entries**:
 - Phase Z completion time
@@ -321,27 +331,42 @@ Ready for GREAT-3C or other work as directed.
 
 ## Deliverable
 
-Create: `dev/2025/10/03/phase-z-code-validation.md`
+Create: `dev/2025/10/04/phase-z-code-validation.md`
 
 Include:
-1. **Test Results**: Full suite execution output
-2. **Plugin Verification**: All 4 plugins functional
-3. **Config Testing**: Each plugin successfully disabled
-4. **Acceptance Criteria**: Complete verification with evidence
-5. **Documentation Review**: Completeness checklist
-6. **Completion Summary**: Location of GREAT-3B-COMPLETION-SUMMARY.md
-7. **Session Stats**: Total time, files changed, tests added
+1. **Regression Test Results**: 48/48 tests status
+2. **Demo Plugin Tests**: 9/9 tests status
+3. **Integration Tests**: 3 endpoint results with response samples
+4. **Full Suite Results**: Complete test execution summary
+5. **Documentation Validation**: All files exist and verified
+6. **Acceptance Criteria**: Complete verification with evidence
+7. **Version Verification**: All 5 plugins have version metadata
+8. **Cross-Reference Check**: All links verified
+9. **Completion Summary**: Location and summary stats
 
 ## Success Criteria
-- [ ] All tests passing (48+ total)
-- [ ] All 4 plugins verified functional
-- [ ] Config-based disabling confirmed for each plugin
-- [ ] All acceptance criteria verified with evidence
-- [ ] Documentation complete and accurate
+- [ ] All regression tests passing (48/48)
+- [ ] Demo plugin tests passing (9/9)
+- [ ] Integration tests successful (3/3 endpoints)
+- [ ] All documentation files exist
+- [ ] All acceptance criteria met with evidence
+- [ ] Version metadata verified on all plugins
+- [ ] Cross-references validated
 - [ ] Completion summary created
 - [ ] Session log finalized
-- [ ] Ready for commit
+- [ ] Ready for git commit
+
+## Important Notes
+
+**If ANY tests fail**:
+1. Document the failure clearly
+2. Flag need for Phase 3 revision
+3. Do NOT proceed with completion summary
+4. Report to PM for decision
+
+**Phase Z is the quality gate - be thorough.**
 
 ---
 
-**Phase Z is the final quality gate before marking GREAT-3B complete**
+**Deploy at 2:18 PM**
+**Final validation before GREAT-3C completion**

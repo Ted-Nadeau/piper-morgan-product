@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 30 patterns (001-030) + template (000)
+**Total Patterns**: 31 patterns (001-031) + template (000)
 
 ## Pattern Categories
 
@@ -50,12 +50,13 @@ _Format: ADR-style numbered patterns_
 - [Pattern-026: Cross-Feature Learning](pattern-026-cross-feature-learning.md) - Feature learning integration
 - [Pattern-027: CLI Integration](pattern-027-cli-integration.md) - Command-line interface patterns
 
-### AI & Orchestration Patterns (028-030)
+### AI & Orchestration Patterns (028-031)
 *AI coordination and plugin architecture patterns*
 
 - [Pattern-028: Intent Classification](pattern-028-intent-classification.md) - Natural language intent routing
 - [Pattern-029: Multi-Agent Coordination](pattern-029-multi-agent-coordination.md) - Specialized agent orchestration
 - [Pattern-030: Plugin Interface](pattern-030-plugin-interface.md) - Extensible integration architecture
+- [Pattern-031: Plugin Wrapper](pattern-031-plugin-wrapper.md) - Adapter pattern for integration routers
 
 ## Pattern Development
 
@@ -83,5 +84,5 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: September 16, 2025_
-_All 30 patterns now included with logical categorization_
+_Last updated: October 4, 2025_
+_All 31 patterns now included with logical categorization_

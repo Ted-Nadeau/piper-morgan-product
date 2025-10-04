@@ -1,236 +1,174 @@
-# Claude Code Agent Prompt: GREAT-3B Phase 0 - Investigation
+# Claude Code Agent Prompt: GREAT-3C Phase 0 - Investigation
 
 ## Session Log Management
-Create new session log: `dev/2025/10/03/2025-10-03-phase0-code-investigation.md`
+Create new session log: `dev/2025/10/04/2025-10-04-phase0-code-investigation.md`
 
 Update with timestamped entries for your work.
 
 ## Mission
-**Investigate Current Plugin System**: Understand auto-registration pattern, design discovery mechanism, and plan config structure.
+**Investigate Developer Guide Requirements**: Determine what developers need to add new integrations, what patterns to document, and what makes a good template plugin.
 
 ## Context
 
-**GREAT-3A Complete** (yesterday):
-- PiperPlugin interface with 6 methods
-- PluginRegistry operational (singleton)
-- 4 plugins at `services/integrations/{calendar,github,notion,slack}/[name]_plugin.py`
-- 34 tests passing
+**GREAT-3C Goal**: Document wrapper/adapter pattern and create developer resources.
 
-**GREAT-3B Goal** (today):
-Replace static imports with dynamic discovery and config-based loading.
-
-**Current Loading** (from verification):
-```python
-# web/app.py - Phase 3C section
-from services.integrations.calendar.calendar_plugin import _calendar_plugin
-from services.integrations.github.github_plugin import _github_plugin
-from services.integrations.notion.notion_plugin import _notion_plugin
-from services.integrations.slack.slack_plugin import _slack_plugin
-```
+**Current State** (from Phase -1):
+- 4 plugins exist as thin wrappers (96-111 lines each)
+- Routers contain business logic
+- 48/48 tests passing
+- No pattern documentation exists yet
+- services/plugins/README.md exists (8.8KB)
 
 ## Your Tasks
 
-### Task 1: Understand Auto-Registration Pattern
+### Task 1: Analyze Existing Plugin Structure
 
-**Examine one plugin file in detail**:
+**Pick one plugin to study in detail** (suggest Slack as most complete):
+
 ```bash
+# View complete plugin structure
+ls -la services/integrations/slack/
+
+# Read the plugin wrapper
 cat services/integrations/slack/slack_plugin.py
+
+# Read the router
+head -50 services/integrations/slack/slack_integration_router.py
+
+# Check config service
+cat services/integrations/slack/config_service.py
 ```
 
-**Questions to answer**:
-1. How does `_slack_plugin = SlackPlugin()` trigger registration?
-2. Where is `get_plugin_registry().register()` called?
-3. What happens on module import?
-4. Does the plugin class need modification for dynamic loading?
+**Questions to Answer**:
+1. What does the plugin wrapper actually do? (What are its responsibilities?)
+2. What does the router do? (Where is business logic?)
+3. How do they interact?
+4. What's the dependency flow? (Router → Plugin or Plugin → Router?)
+5. Why is this a good pattern? (What does separation provide?)
 
-**Document**:
-- Current auto-registration mechanism
-- Whether it works with dynamic imports
-- Any changes needed for importlib
+### Task 2: Examine services/plugins/README.md
 
-### Task 2: Design Discovery Mechanism
-
-**Analyze target directory structure**:
 ```bash
-# See what's in integrations
-ls -la services/integrations/
-
-# Find all plugin files
-find services/integrations -name "*_plugin.py" -type f
-
-# Check naming patterns
-ls -la services/integrations/*/[a-z]*_plugin.py
+cat services/plugins/README.md
 ```
 
-**Design Requirements**:
-- Scan `services/integrations/*/` for `*_plugin.py` files
-- Extract plugin name from filename (e.g., `slack_plugin.py` → "slack")
-- Return dict of available plugins: `{"slack": "services.integrations.slack.slack_plugin", ...}`
-- Handle missing/malformed files gracefully
+**Questions to Answer**:
+1. What's already documented?
+2. What's missing that developers would need?
+3. Does it explain the wrapper pattern?
+4. Does it show how to create a new integration?
+5. What sections should a developer guide have?
 
-**Create pseudocode**:
-```python
-def discover_plugins() -> Dict[str, str]:
-    """
-    Scan integrations directory for plugin files.
+### Task 3: Identify Template Plugin Requirements
 
-    Returns:
-        Dict mapping plugin name to module path
-        Example: {"slack": "services.integrations.slack.slack_plugin"}
-    """
-    # Your design here
-```
+**What would a template/example plugin need?**
 
-### Task 3: Analyze Dynamic Import Requirements
+Think about a developer who wants to add a new integration (e.g., "weather API"). What files would they need?
 
-**Test dynamic import with existing plugin**:
-```python
-# Try importing slack plugin dynamically
-import importlib
+**Required Files**:
+- `__init__.py` - What should be in it?
+- `example_integration_router.py` - What's the minimum viable router?
+- `example_plugin.py` - What's the minimum viable plugin wrapper?
+- `config_service.py` - Standard config pattern?
+- `test_example_plugin.py` - What tests are essential?
 
-module_path = "services.integrations.slack.slack_plugin"
-module = importlib.import_module(module_path)
+**Design Questions**:
+1. Should example be functional (real API) or stub/mock?
+2. What's the simplest useful example?
+3. What patterns should it demonstrate?
+4. Should it be copy-pasteable?
 
-# What's in the module?
-print(dir(module))
+### Task 4: Review Current Documentation Strategy
 
-# Is _slack_plugin accessible?
-print(hasattr(module, '_slack_plugin'))
-
-# Does import trigger auto-registration?
-from services.plugins import get_plugin_registry, reset_plugin_registry
-reset_plugin_registry()
-
-# Import should register plugin
-module = importlib.import_module("services.integrations.slack.slack_plugin")
-registry = get_plugin_registry()
-print("Plugins after import:", registry.list_plugins())
-```
-
-**Document**:
-- Does importlib work with current pattern?
-- Do we get the `_plugin` instance?
-- Does auto-registration still trigger?
-- Any issues to address?
-
-### Task 4: Design Config File Structure
-
-**Requirements** (from Chief Architect):
-- List of enabled plugins
-- Per-plugin settings (optional)
-- Clear, readable format
-
-**Proposed Structure**:
-```yaml
-# config/plugins.yaml
-plugins:
-  enabled:
-    - slack
-    - github
-    - notion
-    - calendar
-
-  settings:
-    slack:
-      # Plugin-specific config if needed
-      timeout: 30
-    github:
-      default_org: "myorg"
-```
-
-**Alternative Structure**:
-```yaml
-# config/plugins.yaml
-slack:
-  enabled: true
-  timeout: 30
-
-github:
-  enabled: true
-  default_org: "myorg"
-
-notion:
-  enabled: false  # Disabled plugin
-
-calendar:
-  enabled: true
-```
-
-**Evaluate**:
-- Which structure is clearer?
-- How to handle missing config (default to enabled/disabled)?
-- Where does this fit with existing config pattern?
-
-### Task 5: Check Existing Config System
-
-**Analyze current config setup**:
 ```bash
-# What config files exist?
-ls -la config/
+# Check docs structure
+ls -la docs/
 
-# How do services read config?
-grep -r "ConfigService" services/integrations/slack/ --include="*.py" -A 5 | head -30
+# Check for architecture docs
+ls -la docs/internal/architecture/
 
-# Is there a config loader pattern?
-ls -la config/*.py 2>/dev/null
+# See what's in STRUCTURE_PLAN
+grep -A 10 "developer guide" docs/STRUCTURE_PLAN.md
+```
+
+**Questions to Answer**:
+1. Where should plugin pattern docs live?
+2. Where should developer guide live?
+3. What's the existing documentation organization?
+4. How do these fit into current structure?
+
+### Task 5: Metadata Enhancement Planning
+
+**Current plugin metadata** (from GREAT-3A/3B):
+```python
+class PluginMetadata:
+    name: str
+    version: str  # Currently blank or minimal
+    description: str
+    author: str
+    capabilities: List[str]
+    # ... what else?
 ```
 
 **Questions**:
-- How do integration config services work?
-- Should plugin config use same pattern?
-- Where should plugin config live?
+1. What version format? (semver? 1.0.0?)
+2. Should all plugins start at 1.0.0?
+3. What other metadata might be useful?
+4. How to display versions to users?
 
-### Task 6: Implementation Planning
+### Task 6: Create Implementation Recommendations
 
-**Create implementation plan**:
+Based on investigation, recommend:
 
-1. **Discovery Function Design**:
-   - Function signature
-   - Algorithm for scanning
-   - Error handling approach
-   - Return format
+**For Pattern Documentation** (Phase 1):
+- File location and name
+- Key sections to include
+- Diagrams needed
+- Examples to show
 
-2. **Dynamic Loading Design**:
-   - Function signature
-   - Import mechanism
-   - Registration approach
-   - Error handling
+**For Developer Guide** (Phase 2):
+- File location and name
+- Table of contents
+- Step-by-step flow
+- Common patterns section
 
-3. **Config Integration Design**:
-   - Config file location and format
-   - Parser implementation
-   - Default behavior (all enabled? all disabled?)
-   - Integration with PluginRegistry
+**For Template Plugin** (Phase 3):
+- Example name (weather? demo? example?)
+- Minimal functionality needed
+- What to include in each file
+- Testing approach
 
-4. **Order of Implementation**:
-   - What to build first?
-   - Dependencies between components?
-   - Testing strategy?
+**For Metadata Enhancement** (Phase 4):
+- Version format
+- What to add to each existing plugin
+- How to validate
 
 ## Deliverable
 
-Create: `dev/2025/10/03/phase-0-code-investigation.md`
+Create: `dev/2025/10/04/phase-0-code-investigation.md`
 
 Include:
-1. **Auto-Registration Analysis**: How current pattern works
-2. **Discovery Design**: Pseudocode and algorithm
-3. **Dynamic Import Test**: Results from importlib testing
-4. **Config Structure Recommendation**: Preferred format with rationale
-5. **Integration Analysis**: How plugin config fits with existing patterns
-6. **Implementation Plan**: Step-by-step build order
+1. **Plugin Pattern Analysis**: How wrapper pattern works
+2. **Current Documentation Review**: What exists, what's missing
+3. **Template Requirements**: What a good example needs
+4. **Documentation Strategy**: Where docs should live
+5. **Metadata Plan**: Version format and additions
+6. **Implementation Recommendations**: Clear guidance for Phases 1-4
 
 ## Success Criteria
-- [ ] Auto-registration pattern understood
-- [ ] Discovery algorithm designed
-- [ ] Dynamic import verified working
-- [ ] Config structure recommended
-- [ ] Implementation plan clear
-- [ ] All questions answered
+- [ ] Wrapper pattern clearly understood
+- [ ] Documentation gaps identified
+- [ ] Template plugin requirements defined
+- [ ] Metadata enhancement plan clear
+- [ ] Implementation recommendations specific
 
-## Time Estimate
-30 minutes
+## Notes
+- Focus on what developers actually need
+- Keep recommendations practical and copy-pasteable
+- Consider maintenance burden of examples
+- Think about "future you" reading these docs
 
 ---
 
-**Deploy at 1:50 PM**
-**Coordinate with Cursor on complementary investigation**
+**Deploy at 12:25 PM**
+**Coordinate with Cursor on documentation organization**

@@ -3,13 +3,28 @@
 ## Your Identity
 You are Claude Code, a programmer agent working on Piper Morgan. You excel at broad investigation, pattern discovery, and deploying subagents for parallel work.
 
-## 🚨 MANDATORY FIRST READ
-**These docs will be placed in**: `/Users/xian/Development/piper-morgan/docs/briefing/`
-If you can't find them there, look in `knowledge/` for:
-1. **BRIEFING-CURRENT-STATE** - Where the project is RIGHT NOW
-2. **BRIEFING-ROLE-PROGRAMMER** - Your role and constraints
-3. **BRIEFING-METHODOLOGY** - How we work (Inchworm Protocol)
-4. **BRIEFING-PROJECT** - What Piper Morgan is
+## Role-Based Briefing (Start Here)
+
+1. **Identify your role for this conversation**
+2. **Read the appropriate essential briefing** (reduces token usage by 60%):
+   - Lead Developer → BRIEFING-ESSENTIAL-LEAD-DEV
+   - Chief Architect → BRIEFING-ESSENTIAL-ARCHITECT
+   - Chief of Staff → BRIEFING-ESSENTIAL-CHIEF-STAFF
+   - Communications → BRIEFING-ESSENTIAL-COMMS
+   - Coding Agent → BRIEFING-ESSENTIAL-AGENT
+
+3. **Load additional context only as needed** using progressive loading
+
+This approach reduces briefing token usage from 21% (39K tokens) to manageable levels while maintaining full capability.
+
+## Progressive Loading (Load Only As Needed)
+
+If you need additional context beyond your essential briefing, load these progressively:
+- **BRIEFING-CURRENT-STATE** - Current project position and status
+- **BRIEFING-METHODOLOGY** - How we work (Inchworm Protocol)
+- **Architecture docs** - docs/internal/architecture/current/patterns/
+- **ADRs** - For specific architectural decisions
+- **Navigation** - docs/NAVIGATION.md to find anything
 
 ## 🛑 INFRASTRUCTURE VERIFICATION FIRST
 Before following ANY gameplan, verify infrastructure matches assumptions:
@@ -33,7 +48,7 @@ grep -r "ClassName" . --include="*.py"
 ## CRITICAL PATHS - GROUND TRUTH
 ```
 main.py                      # Entry point (not web/app.py)
-web/app.py                   # FastAPI app (933 lines)
+web/app.py                   # FastAPI app (467 lines, refactored in GREAT-3A)
 services/domain/models.py    # Domain models truth source
 services/shared_types.py     # ALL enums go here
 services/config.py           # Settings

@@ -131,14 +131,15 @@ class TestPluginDiscovery:
     """Tests for plugin discovery mechanism"""
 
     def test_discover_plugins_finds_all(self, fresh_registry):
-        """Test discovery finds all 4 existing plugins"""
+        """Test discovery finds all 5 plugins (4 existing + demo)"""
         available = fresh_registry.discover_plugins()
 
-        assert len(available) == 4
+        assert len(available) == 5
         assert "slack" in available
         assert "github" in available
         assert "notion" in available
         assert "calendar" in available
+        assert "demo" in available
 
     def test_discover_plugins_returns_dict(self, fresh_registry):
         """Test discovery returns dict of name to module path"""
@@ -170,8 +171,8 @@ class TestPluginDiscovery:
 
         # Registry should still be empty
         assert fresh_registry.get_plugin_count() == 0
-        # But we found 4 available plugins
-        assert len(available) == 4
+        # But we found 5 available plugins (4 existing + demo)
+        assert len(available) == 5
 
     def test_discover_plugins_logs_results(self, fresh_registry, caplog):
         """Test discovery logs what it finds"""
