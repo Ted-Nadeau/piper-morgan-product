@@ -121,6 +121,10 @@ This directory contains documentation for omnibus logs in the Piper Morgan syste
 - **[2025 09 28 Omnibus Log](2025-09-28-omnibus-log.md)** - Documentation and guidance
 - **[2025 09 29 Omnibus Log](2025-09-29-omnibus-log.md)** - Documentation and guidance
 - **[2025 09 30 Omnibus Log](2025-09-30-omnibus-log.md)** - Documentation and guidance
+- **[2025 10 01 Omnibus Log](2025-10-01-omnibus-log.md)** - Documentation and guidance
+- **[2025 10 02 Omnibus Log](2025-10-02-omnibus-log.md)** - Documentation and guidance
+- **[2025 10 03 Omnibus Log](2025-10-03-omnibus-log.md)** - Documentation and guidance
+-
 
 ## Navigation
 
@@ -128,5 +132,5 @@ This directory contains documentation for omnibus logs in the Piper Morgan syste
 
 ---
 
-**Last Updated**: October 1, 2025
+**Last Updated**: October 4, 2025
 **Maintained By**: Documentation Team

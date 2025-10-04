@@ -6,6 +6,9 @@ The Piper plugin system enables integration plugins (Slack, Notion, GitHub, Cale
 
 **Built**: October 2, 2025 (GREAT-3A Phase 3)
 **Enhanced**: October 3, 2025 (GREAT-3B)
+**Documented**: October 4, 2025 (GREAT-3C)
+
+For architectural details, see [Pattern-031: Plugin Wrapper](../../docs/internal/architecture/current/patterns/pattern-031-plugin-wrapper.md).
 
 ## GREAT-3B Enhancements
 
@@ -20,12 +23,96 @@ As of October 2025 (GREAT-3B), the plugin system includes:
 ### Migration from GREAT-3A
 
 GREAT-3A introduced the plugin interface and registry. GREAT-3B adds:
+
 - Removed static imports from `web/app.py`
 - Added discovery and dynamic loading
 - Added configuration system
 - No breaking changes - existing code continues to work
 
 ## Architecture
+
+### Plugin System Overview
+
+```mermaid
+graph TB
+    subgraph "Application Startup"
+        App[web/app.py]
+        App -->|get_plugin_registry| Registry[PluginRegistry]
+    end
+
+    subgraph "Discovery & Loading"
+        Registry -->|discover_plugins| FS[File System Scan]
+        FS -->|finds| PF[Plugin Files]
+        Registry -->|load_enabled_plugins| Config[PIPER.user.md]
+        Config -->|enabled list| Registry
+    end
+
+    subgraph "Plugin Lifecycle"
+        Registry -->|import| Plugin[Plugin Module]
+        Plugin -->|auto-register| Registry
+        Registry -->|initialize| Plugin
+        Plugin -->|get_router| Router[FastAPI Router]
+        Router -->|mounted| App
+    end
+```
+
+### Wrapper Pattern
+
+```mermaid
+graph LR
+    subgraph "Plugin Wrapper"
+        P[SlackPlugin]
+    end
+
+    subgraph "Integration Router"
+        R[SlackIntegrationRouter]
+        R -->|routes| Routes["/webhook<br/>/events<br/>/status"]
+    end
+
+    subgraph "Configuration"
+        C[SlackConfigService]
+    end
+
+    P -->|wraps| R
+    R -->|uses| C
+```
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant App as web/app.py
+    participant Reg as PluginRegistry
+    participant Plug as Plugin
+    participant Rtr as Router
+
+    App->>Reg: load_enabled_plugins()
+    Reg->>Plug: import module
+    Plug->>Reg: auto-register(self)
+    App->>Reg: initialize_all()
+    Reg->>Plug: initialize()
+    Plug->>Rtr: setup routes
+    App->>Reg: get_routers()
+    Reg->>Plug: get_router()
+    Plug->>App: return router
+    App->>App: mount router
+```
+
+## Why the Wrapper Pattern?
+
+Piper Morgan uses a **two-file structure** for integrations:
+
+1. **Router File**: Contains business logic (300-500 lines)
+2. **Plugin File**: Thin wrapper implementing interface (100 lines)
+
+**Benefits**:
+
+- Clear separation between business logic and plugin protocol
+- Easy to test independently
+- Supports gradual migration if needed
+- Minimal coupling between layers
+
+See [Pattern-031: Plugin Wrapper](../../docs/internal/architecture/current/patterns/pattern-031-plugin-wrapper.md) for detailed explanation.
 
 ### Components
 
@@ -233,6 +320,36 @@ for name, success in results.items():
 - `get_enabled_plugins()` - Returns list of enabled plugin names from config
 - `load_enabled_plugins()` - Discovers and loads only enabled plugins
 - `_read_plugin_config()` - Internal method to parse config file
+
+## Example Plugin
+
+A complete example plugin is available at `services/integrations/demo/`:
+
+```bash
+# View the demo plugin code
+ls -la services/integrations/demo/
+
+# Run demo plugin tests
+PYTHONPATH=. pytest services/integrations/demo/tests/ -v
+
+# Try the demo endpoints
+python3 main.py
+curl http://localhost:8001/api/integrations/demo/health
+```
+
+The demo plugin demonstrates:
+
+- Standard file structure
+- Config service pattern
+- Router with multiple endpoints
+- Plugin wrapper implementation
+- Complete test coverage
+
+See the [Plugin Development Guide](../../docs/guides/plugin-development-guide.md) for how to create your own integration based on this example.
+
+## Versioning
+
+All plugins use [Semantic Versioning](https://semver.org/). See [Plugin Versioning Policy](../../docs/guides/plugin-versioning-policy.md) for details.
 
 ## Testing Plugins
 

@@ -1,200 +1,213 @@
-# Cursor Agent Prompt: GREAT-3B Phase 0 - Investigation
+# Cursor Agent Prompt: GREAT-3C Phase 0 - Investigation
 
 ## Session Log Management
-Create new session log: `dev/2025/10/03/2025-10-03-phase0-cursor-investigation.md`
+Create new session log: `dev/2025/10/04/2025-10-04-phase0-cursor-investigation.md`
 
 Update with timestamped entries for your work.
 
 ## Mission
-**Investigate web/app.py Integration**: Understand current plugin loading in lifespan, analyze what needs to change, and design new loading pattern.
+**Investigate Documentation Organization**: Determine best structure for pattern docs and developer guide, analyze what makes docs effective, and plan documentation deliverables.
 
 ## Context
 
-**GREAT-3A Complete** (yesterday):
-- 4 plugins with static imports in `web/app.py`
-- Plugins auto-register on import
-- Registry initializes and mounts routers
+**GREAT-3C Goal**: Document wrapper/adapter pattern and create developer resources.
 
-**GREAT-3B Goal** (today):
-Replace static imports with discovery-based dynamic loading controlled by config.
+**Current State** (from Phase -1):
+- 4 plugins exist as thin wrappers (96-111 lines each)
+- No pattern documentation exists
+- services/plugins/README.md exists but may need enhancement
+- STRUCTURE_PLAN mentions developer guides
 
 ## Your Tasks
 
-### Task 1: Analyze Current Loading Pattern
+### Task 1: Analyze Existing Documentation Structure
 
-**Examine web/app.py lifespan function**:
 ```bash
-# Find the lifespan function
-grep -B 5 -A 50 "@asynccontextmanager" web/app.py | grep -A 50 "async def lifespan"
+# See current docs organization
+tree docs/ -L 2
 
-# Focus on plugin section
-grep -B 2 -A 30 "Phase 3C: Import plugins" web/app.py
-```
+# Check what's in each major section
+ls -la docs/guides/ 2>/dev/null
+ls -la docs/internal/architecture/
 
-**Document Current Flow**:
-1. What happens at startup?
-2. When are plugins imported?
-3. When are plugins initialized?
-4. When are routers mounted?
-5. What happens at shutdown?
-
-**Current Code Analysis**:
-```python
-# Phase 3C: Import plugins (triggers auto-registration)
-print("  📦 Loading plugins...")
-from services.integrations.calendar.calendar_plugin import _calendar_plugin
-from services.integrations.github.github_plugin import _github_plugin
-from services.integrations.notion.notion_plugin import _notion_plugin
-from services.integrations.slack.slack_plugin import _slack_plugin
-
-# Initialize all registered plugins
-init_results = await registry.initialize_all()
-# ...
-# Mount plugin routers
-routers = registry.get_routers()
-for router in routers:
-    app.include_router(router)
+# Read structure plan
+cat docs/STRUCTURE_PLAN.md
 ```
 
 **Questions to Answer**:
-1. Can we replace imports with function calls?
-2. Where should discovery happen in this flow?
-3. How to handle plugins that fail to load?
-4. What order: discover → load → initialize → mount?
+1. Where do plugin docs fit in current structure?
+2. Is there a "patterns" or "architecture" section?
+3. Where should developer-facing guides live?
+4. What's the existing documentation style/format?
 
-### Task 2: Design New Loading Pattern
+### Task 2: Review services/plugins/README.md
 
-**Requirements**:
-- Replace 4 static imports with discovery
-- Only load plugins enabled in config
-- Handle missing/broken plugins gracefully
-- Maintain same initialization and mounting
-- Keep shutdown working
-
-**Proposed New Flow**:
-```python
-# Phase 3B: Plugin System (Dynamic Loading)
-print("\n🔌 Initializing Plugin System...")
-
-try:
-    from services.plugins import get_plugin_registry
-
-    registry = get_plugin_registry()
-
-    # Step 1: Discover available plugins
-    available = registry.discover_plugins()  # New method
-    print(f"  📦 Discovered {len(available)} plugin(s)")
-
-    # Step 2: Load enabled plugins from config
-    enabled = registry.load_enabled_plugins()  # New method
-    print(f"  ✅ Loaded {len(enabled)} plugin(s)")
-
-    # Step 3: Initialize loaded plugins
-    init_results = await registry.initialize_all()
-    success_count = sum(1 for success in init_results.values() if success)
-    print(f"  ✅ Initialized {success_count}/{len(init_results)} plugin(s)")
-
-    # Step 4: Mount plugin routers
-    routers = registry.get_routers()
-    for router in routers:
-        app.include_router(router)
-    print(f"  ✅ Mounted {len(routers)} router(s)")
-
-except Exception as e:
-    print(f"  ⚠️ Plugin system error: {e}")
-    # Don't fail startup if plugins have issues
-```
-
-**Evaluate**:
-- Is this flow clear?
-- Error handling adequate?
-- Backwards compatible?
-- Testable?
-
-### Task 3: Analyze Error Handling Needs
-
-**Current Behavior**:
-- What happens if plugin import fails?
-- Does app crash or continue?
-- Are errors logged?
-
-**Scenarios to Handle**:
-1. Plugin file missing
-2. Plugin has syntax error
-3. Plugin config invalid
-4. Plugin initialization fails
-5. No plugins available
-6. All plugins disabled
-
-**Design Error Handling**:
-- Which failures are fatal?
-- Which can be logged and skipped?
-- What's the user experience?
-
-### Task 4: Examine Shutdown Flow
-
-**Current Shutdown**:
 ```bash
-# Find shutdown section
-grep -A 20 "# Shutdown" web/app.py | grep -A 20 "plugin"
+cat services/plugins/README.md
 ```
+
+**Assess Current Content**:
+1. What topics are covered?
+2. Is it user-facing or developer-facing?
+3. Does it explain architecture?
+4. What's the tone and style?
+5. Should we enhance this file or create separate docs?
+
+**Compare to Best Practices**:
+- Is it scannable? (headers, lists, code examples)
+- Is it actionable? (clear steps, copy-paste friendly)
+- Is it complete? (all necessary info present)
+- Is it maintainable? (not too detailed, not too vague)
+
+### Task 3: Research Effective Documentation Patterns
+
+Think about documentation you've found helpful. What makes good technical docs?
+
+**Pattern Documentation Best Practices**:
+- Start with "why" before "how"
+- Use diagrams for architecture
+- Show before/after examples
+- Explain trade-offs
+- Document alternatives considered
+
+**Developer Guide Best Practices**:
+- Quick start at top
+- Step-by-step tutorials
+- Runnable code examples
+- Troubleshooting section
+- Links to related docs
+
+### Task 4: Plan Documentation Files
+
+**Recommendation Format**:
+```markdown
+## Proposed: Pattern Documentation
+
+**File**: `docs/internal/architecture/patterns/plugin-wrapper-pattern.md`
+**Purpose**: Explain architectural decision and pattern
+**Audience**: Architects, senior developers
+**Sections**:
+1. Overview
+2. Why this pattern
+3. Architecture diagram
+4. Examples
+5. Trade-offs
+6. Future considerations
+
+## Proposed: Developer Guide
+
+**File**: `docs/guides/adding-integrations.md`
+**Purpose**: Step-by-step guide for adding new integrations
+**Audience**: All developers
+**Sections**:
+1. Quick start
+2. File structure
+3. Creating your router
+4. Creating your plugin
+5. Configuration
+6. Testing
+7. Common patterns
+```
+
+### Task 5: Architecture Diagram Planning
+
+**What diagrams would help?**
+
+Think about what's hard to understand without visuals:
+
+1. **Plugin System Overview**
+   - Components: PluginRegistry, Plugins, Routers, Config
+   - Relationships and data flow
+
+2. **Wrapper Pattern Detail**
+   - Router ↔ Plugin relationship
+   - How config flows
+   - Auto-registration mechanism
+
+3. **Lifecycle Flow**
+   - Discovery → Config → Loading → Init → Operation → Shutdown
+
+**Diagram Formats**:
+- ASCII art (easy to maintain in markdown)
+- Mermaid (renders in GitHub)
+- Tool-generated (requires external tool)
+
+**Recommendation**: What format and what diagrams?
+
+### Task 6: Example Integration Design
+
+**What makes a good example?**
+
+Consider these options:
+
+**Option A: Functional Mock ("Weather")**
+- Simulates real API with mock data
+- Shows HTTP requests, error handling
+- More realistic but more complex
+
+**Option B: Minimal Stub ("Example")**
+- Bare minimum implementation
+- Focus on structure over functionality
+- Easier to understand and maintain
+
+**Option C: Echo/Demo Service**
+- Simple echo/status endpoints
+- Shows request/response patterns
+- Demonstrates plugin features
 
 **Questions**:
-1. How are plugins shut down now?
-2. Will dynamic loading affect shutdown?
-3. Need any changes to shutdown flow?
+1. Which option is best learning tool?
+2. What's the maintenance burden?
+3. Will developers copy-paste or read-and-adapt?
+4. Should we have multiple examples?
 
-### Task 5: Consider Backwards Compatibility
+### Task 7: Documentation Style Guide
 
-**Transition Plan**:
-- Can we support both patterns temporarily?
-- How to test new pattern without breaking current?
-- Migration strategy?
+**Analyze existing docs** to determine consistent style:
 
-**Fallback Behavior**:
-- If discovery fails, fall back to static imports?
-- If config missing, load all plugins?
-- If config malformed, what's default?
+```bash
+# Sample existing docs
+head -30 docs/README.md
+head -30 services/plugins/README.md
+```
 
-### Task 6: Integration Testing Strategy
+**Style Elements**:
+- Heading levels (when to use #, ##, ###)
+- Code block formatting
+- Command examples format
+- Link style
+- Table of contents usage
 
-**Test Scenarios Needed**:
-1. All plugins enabled (current behavior)
-2. Some plugins disabled
-3. Plugin missing but enabled in config
-4. Config file missing entirely
-5. Empty config file
-6. Invalid config format
-
-**Testing Approach**:
-- Unit tests for discovery?
-- Integration tests for loading?
-- How to test without breaking current system?
+**Recommendation**: Style guidelines for new docs to match existing.
 
 ## Deliverable
 
-Create: `dev/2025/10/03/phase-0-cursor-investigation.md`
+Create: `dev/2025/10/04/phase-0-cursor-investigation.md`
 
 Include:
-1. **Current Flow Analysis**: How loading works now
-2. **New Flow Design**: Proposed replacement pattern
-3. **Error Handling Strategy**: What to handle, how
-4. **Shutdown Analysis**: Any changes needed
-5. **Backwards Compatibility Plan**: Transition approach
-6. **Testing Strategy**: How to validate new pattern
+1. **Documentation Structure Analysis**: Current organization
+2. **README Assessment**: What exists, quality evaluation
+3. **Documentation Best Practices**: What makes docs effective
+4. **File Organization Plan**: Where each doc should live
+5. **Diagram Recommendations**: What diagrams, what format
+6. **Example Integration Design**: Which option and why
+7. **Style Guidelines**: Consistency recommendations
 
 ## Success Criteria
-- [ ] Current pattern understood
-- [ ] New pattern designed
-- [ ] Error scenarios identified
-- [ ] Shutdown flow analyzed
-- [ ] Migration plan clear
-- [ ] Testing approach defined
+- [ ] Current docs structure understood
+- [ ] Clear recommendations for file locations
+- [ ] Diagram plan defined
+- [ ] Example integration approach chosen
+- [ ] Style guidelines documented
+- [ ] All recommendations actionable
 
-## Time Estimate
-30 minutes
+## Notes
+- Focus on maintainability - docs rot quickly
+- Consider the reader's journey (novice → expert)
+- Balance completeness with conciseness
+- Think about searchability and navigation
 
 ---
 
-**Deploy at 1:50 PM**
-**Coordinate with Code on discovery mechanism design**
+**Deploy at 12:25 PM**
+**Coordinate with Code on content requirements**

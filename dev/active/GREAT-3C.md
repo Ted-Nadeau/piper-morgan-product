@@ -1,68 +1,61 @@
-# GREAT-3C: Integration Migration
+# GREAT-3C: Plugin Pattern Documentation & Enhancement - REVISED
 
 ## Context
-Third sub-epic of GREAT-3. Migrates all 4 integrations to plugin architecture while preserving spatial patterns.
+Third sub-epic of GREAT-3. Documents and enhances the wrapper pattern architecture established in 3A/3B.
+
+## Background
+Investigation revealed plugins are thin wrappers around routers (96 lines each). This Adapter Pattern is architecturally sound, providing plugin benefits while keeping business logic in routers. Decision made to polish this pattern rather than major refactoring.
 
 ## Scope
-1. **GitHub Plugin Migration**
-   - Move from integration to plugins/github/
-   - Implement plugin interface
-   - Preserve existing spatial pattern
-   - Maintain all current features
 
-2. **Slack Plugin Migration**
-   - Move from integration to plugins/slack/
-   - Implement plugin interface
-   - Preserve Granular spatial pattern (11 files)
-   - Maintain all current features
+1. **Pattern Documentation**
+   - Document wrapper/adapter pattern as architectural choice
+   - Explain router + plugin two-file structure
+   - Create architecture diagrams showing relationships
+   - Document migration path if future needs change
 
-3. **Notion Plugin Migration**
-   - Move from integration to plugins/notion/
-   - Implement plugin interface
-   - Preserve Embedded spatial pattern (1 file)
-   - Maintain all current features
+2. **Developer Guide**
+   - Step-by-step: "Adding Your First Integration"
+   - Template files for new plugins
+   - Configuration guide
+   - Testing patterns
 
-4. **Calendar Plugin Migration**
-   - Move from integration to plugins/calendar/
-   - Implement plugin interface
-   - Preserve Delegated MCP pattern
-   - Maintain all current features
+3. **Example Plugin Creation**
+   - Create "weather" or "demo" plugin as template
+   - Shows complete pattern implementation
+   - Includes tests and documentation
+   - Serves as copy-paste starting point
+
+4. **Minor Enhancement**
+   - Add version metadata to existing plugins
+   - Document hot-reload possibility (future)
+   - Add plugin health check endpoint
+   - Create plugin status dashboard (optional)
 
 ## Acceptance Criteria
-- [ ] All 4 integrations migrated to plugins/
-- [ ] Each plugin implements standard interface
-- [ ] Spatial patterns preserved and working
-- [ ] All existing features still work
-- [ ] No direct imports from core to plugins
-- [ ] Each plugin can be disabled
+- [ ] Wrapper pattern documented as intentional architecture
+- [ ] Developer guide complete with examples
+- [ ] Template plugin created and tested
+- [ ] All 4 existing plugins have version metadata
+- [ ] Architecture diagram shows plugin-router relationship
+- [ ] Migration path documented for future
 
 ## Success Validation
 ```bash
-# Plugins in place
-ls -la plugins/
-# Expected: github/ slack/ notion/ calendar/
+# Documentation exists
+ls -la docs/plugin-architecture-pattern.md
+ls -la docs/plugin-developer-guide.md
 
-# Each plugin can be disabled
-DISABLED_PLUGINS=github python main.py  # Works without GitHub
-DISABLED_PLUGINS=slack python main.py   # Works without Slack
-DISABLED_PLUGINS=notion python main.py  # Works without Notion
-DISABLED_PLUGINS=calendar python main.py # Works without Calendar
+# Example plugin works
+ls -la services/integrations/example/
+pytest services/integrations/example/test_example_plugin.py
 
-# All tests passing
-pytest tests/integrations/ -v  # Existing tests still work
-pytest tests/plugins/ -v  # New plugin tests pass
-```
+# Version metadata present
+grep "version" services/integrations/*/plugin.py
 
-## Anti-80% Check
-```
-Integration | Migrated | Interface | Spatial | Features | Tests
------------ | -------- | --------- | ------- | -------- | -----
-GitHub      | [ ]      | [ ]       | [ ]     | [ ]      | [ ]
-Slack       | [ ]      | [ ]       | [ ]     | [ ]      | [ ]
-Notion      | [ ]      | [ ]       | [ ]     | [ ]      | [ ]
-Calendar    | [ ]      | [ ]       | [ ]     | [ ]      | [ ]
-TOTAL: 0/20 checkmarks = 0% (Must reach 100%)
+# Still no regressions
+pytest tests/plugins/ -v  # All passing
 ```
 
 ## Time Estimate
-One to two hurons
+3-4 mangos (half day)

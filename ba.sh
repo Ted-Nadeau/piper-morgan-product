@@ -1,15 +1,16 @@
-# Check if pytest is installed in virtual environment
-which python
-python3 -m pytest --version
+# 1. Verify file structure (routers + plugins)
+cd ~/Development/piper-morgan
+ls -la services/integrations/*/[!test]*.py | wc -l
 
-# Check for test running scripts
-ls -la *.sh | grep test
+# 2. Check tests still passing
+PYTHONPATH=. python3 -m pytest tests/plugins/ -v | tail -5
 
-# Look for how tests were run in GREAT-3A
-grep -r "pytest" dev/2025/10/02/*.md | head -5
+# 3. Verify plugin file sizes (should be ~96 lines each)
+wc -l services/integrations/*/*_plugin.py
 
-# Check project structure for test configuration
-ls -la pytest.ini pyproject.toml setup.cfg 2>/dev/null
+# 4. Check what documentation currently exists
+ls -la docs/plugin*.md 2>/dev/null || echo "No plugin docs found"
+ls -la services/plugins/README.md
 
-# Try running tests the way they were run yesterday
-cd ~/Development/piper-morgan && python3 -m pytest tests/plugins/ -v --tb=line 2>&1 | tail -30
+# 5. Check for existing developer guide references
+grep -r "developer guide" docs/ 2>/dev/null || echo "No developer guide references"

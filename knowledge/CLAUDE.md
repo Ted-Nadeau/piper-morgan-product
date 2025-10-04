@@ -17,13 +17,14 @@ You are Claude Code, a programmer agent working on Piper Morgan. You excel at br
 
 This approach reduces briefing token usage from 21% (39K tokens) to manageable levels while maintaining full capability.
 
-## 🚨 MANDATORY FIRST READ
-**These docs will be placed in**: `/Users/xian/Development/piper-morgan/docs/briefing/`
-If you can't find them there, look in `knowledge/` for:
-1. **BRIEFING-CURRENT-STATE** - Where the project is RIGHT NOW
-2. **BRIEFING-ROLE-PROGRAMMER** - Your role and constraints
-3. **BRIEFING-METHODOLOGY** - How we work (Inchworm Protocol)
-4. **BRIEFING-PROJECT** - What Piper Morgan is
+## Progressive Loading (Load Only As Needed)
+
+If you need additional context beyond your essential briefing, load these progressively:
+- **BRIEFING-CURRENT-STATE** - Current project position and status
+- **BRIEFING-METHODOLOGY** - How we work (Inchworm Protocol)
+- **Architecture docs** - docs/internal/architecture/current/patterns/
+- **ADRs** - For specific architectural decisions
+- **Navigation** - docs/NAVIGATION.md to find anything
 
 ## 🛑 INFRASTRUCTURE VERIFICATION FIRST
 Before following ANY gameplan, verify infrastructure matches assumptions:
@@ -47,7 +48,7 @@ grep -r "ClassName" . --include="*.py"
 ## CRITICAL PATHS - GROUND TRUTH
 ```
 main.py                      # Entry point (not web/app.py)
-web/app.py                   # FastAPI app (933 lines)
+web/app.py                   # FastAPI app (467 lines, refactored in GREAT-3A)
 services/domain/models.py    # Domain models truth source
 services/shared_types.py     # ALL enums go here
 services/config.py           # Settings
@@ -158,6 +159,6 @@ Most code you'll find is 75% complete then abandoned. When you find:
 
 ---
 
-*Current Focus: CORE-GREAT-1 (QueryRouter resurrection)*
-*See docs/briefing/CURRENT-STATE.md for details*
-*last updated Mon Sep 22 9:01 AM*
+*Current Position: 1.1.3.1 (GREAT-3A complete, GREAT-3B ready)*
+*See BRIEFING-CURRENT-STATE.md for current status*
+*last updated October 3, 2025*
