@@ -27,6 +27,7 @@ During CORE-GREAT-2C verification work (Phases 1-2, September 30, 2025), we disc
 During CORE-GREAT-2D investigation (Phase 0, October 1, 2025), we discovered Calendar implements a third distinct pattern using Model Context Protocol (MCP) delegation.
 
 ### Slack Implementation (Granular Adapter Pattern)
+
 - **Structure**: 11 files (6 core + 5 tests)
 - **Location**: `services/integrations/slack/spatial_*.py`
 - **Access**: `router.get_spatial_adapter() → SlackSpatialAdapter`
@@ -35,6 +36,7 @@ During CORE-GREAT-2D investigation (Phase 0, October 1, 2025), we discovered Cal
 - **Use Case**: Real-time messaging coordination
 
 ### Notion Implementation (Embedded Intelligence Pattern)
+
 - **Structure**: 1 comprehensive file (632 lines)
 - **Location**: `services/intelligence/spatial/notion_spatial.py`
 - **Access**: Separate `NotionSpatialIntelligence` class using router internally
@@ -43,6 +45,7 @@ During CORE-GREAT-2D investigation (Phase 0, October 1, 2025), we discovered Cal
 - **Use Case**: Knowledge management and semantic analysis
 
 ### Calendar Implementation (Delegated MCP Pattern) - NEW
+
 - **Structure**: 2 files (router + MCP adapter)
 - **Location**: Split between `services/integrations/calendar/` (router) and `services/mcp/consumer/` (adapter)
 - **Access**: `router.method()` delegates to MCP adapter
@@ -51,12 +54,13 @@ During CORE-GREAT-2D investigation (Phase 0, October 1, 2025), we discovered Cal
 - **Use Case**: Temporal awareness and calendar operations via Model Context Protocol
 
 ### Verification Results
+
 - ✅ Slack spatial: 11 files, 100% operational, 66 test functions passing
 - ✅ Notion spatial: 1 file, 100% operational, 8-dimensional analysis working
 - ✅ Calendar spatial: 2 files, 100% operational, MCP protocol integration
 - ✅ All patterns: Support 8-dimensional spatial metaphor
 - ✅ Zero conflicts: Patterns coexist successfully
-- ✅ Feature flags: All support USE_SPATIAL_* control
+- ✅ Feature flags: All support USE*SPATIAL*\* control
 - ✅ Production-proven: All operational in production codebase
 
 ---
@@ -64,14 +68,17 @@ During CORE-GREAT-2D investigation (Phase 0, October 1, 2025), we discovered Cal
 ## Options Considered
 
 ### Option 1: Standardize on Single Pattern (REJECTED)
+
 Force all integrations to use the same architectural approach.
 
 **Advantages**:
+
 - Single pattern to learn and maintain
 - Consistent codebase structure
 - Easier onboarding for new developers
 
 **Disadvantages**:
+
 - Wrong tool for some domains (over-engineering or under-engineering)
 - Performance penalties for mismatched patterns
 - Maintenance burden (either too complex or too inflexible)
@@ -79,9 +86,11 @@ Force all integrations to use the same architectural approach.
 - **Rejected**: Both patterns are production-proven and domain-optimized
 
 ### Option 2: Support Multiple Patterns (CHOSEN)
+
 Allow domain-optimized architectures based on integration characteristics.
 
 **Advantages**:
+
 - Optimal performance for each domain
 - Appropriate complexity levels
 - Proven operational in production
@@ -90,6 +99,7 @@ Allow domain-optimized architectures based on integration characteristics.
 - Support for MCP-based integrations (Oct 2025 update)
 
 **Disadvantages**:
+
 - Multiple patterns to maintain (now 3 patterns as of Oct 2025)
 - Documentation overhead
 - Training requirement for developers
@@ -97,13 +107,16 @@ Allow domain-optimized architectures based on integration characteristics.
 **Decision**: CHOSEN - Benefits outweigh costs. October 2025 update: Calendar's Delegated MCP Pattern confirms this approach scales well for protocol-based integrations.
 
 ### Option 3: Hybrid Approach (REJECTED)
+
 Combine both patterns in single implementation (e.g., granular components with embedded access).
 
 **Advantages**:
+
 - Theoretically "best of both worlds"
 - Single architectural style
 
 **Disadvantages**:
+
 - Complexity without clear benefit
 - Unclear which pattern to follow
 - No production validation
@@ -121,6 +134,7 @@ Combine both patterns in single implementation (e.g., granular components with e
 Different integration domains have fundamentally different spatial requirements:
 
 **Reactive Coordination (Slack)**:
+
 - Real-time event processing
 - Multiple interaction types (messages, threads, reactions, etc.)
 - Complex state management across channels/workspaces
@@ -128,6 +142,7 @@ Different integration domains have fundamentally different spatial requirements:
 - **Solution**: Granular Adapter Pattern (11 files, component-based)
 
 **Analytical Intelligence (Notion)**:
+
 - Batch processing of knowledge structures
 - Single comprehensive analytical model
 - Stable domain with clear requirements
@@ -137,17 +152,20 @@ Different integration domains have fundamentally different spatial requirements:
 ### Evidence-Based Decision
 
 **Production Validation**:
+
 - Both patterns verified operational (GREAT-2C Phases 1-2)
 - Zero conflicts between patterns
 - 100% feature parity (8-dimensional spatial metaphor)
 - Complete test coverage (66 tests Slack, integration tests Notion)
 
 **Architectural Quality**:
+
 - Slack: Clean component separation, extensive test coverage
 - Notion: Consolidated design, lower overhead, direct access
 - Both: Feature flag control, async/await patterns, observability
 
 **Developer Experience**:
+
 - Clear selection criteria documented
 - Pattern choice based on objective factors
 - Both patterns have proven track record
@@ -161,31 +179,37 @@ Different integration domains have fundamentally different spatial requirements:
 New spatial integrations must choose pattern based on:
 
 1. **Domain Complexity**:
+
    - Many distinct capabilities (>5) → Granular
    - Few focused capabilities (≤5) → Embedded
    - **MCP Protocol required** → Delegated MCP (Oct 2025)
 
 2. **Requirement Stability**:
+
    - Evolving requirements → Granular (easier to extend)
    - Stable requirements → Embedded (lower overhead)
    - **Protocol-driven** → Delegated MCP
 
 3. **Performance Criticality**:
+
    - Performance critical → Embedded (minimal overhead)
    - Performance adequate → Either pattern
    - **External service** → Delegated MCP (protocol overhead acceptable)
 
 4. **Testing Requirements**:
+
    - Component-level isolation needed → Granular
    - Integration-level testing sufficient → Embedded
    - **Protocol compliance testing** → Delegated MCP
 
 5. **Team Structure**:
+
    - Multiple developers on feature → Granular (parallel work)
    - Single developer or small team → Embedded (simpler)
    - **MCP team + integration team** → Delegated MCP (separation of concerns)
 
 6. **Domain Nature**:
+
    - Reactive coordination → Granular
    - Analytical intelligence → Embedded
    - **Temporal/contextual awareness via protocol** → Delegated MCP
@@ -201,6 +225,7 @@ New spatial integrations must choose pattern based on:
 #### Granular Adapter Pattern
 
 **When to Use**:
+
 - Complex coordination scenarios
 - Real-time messaging and events
 - Multi-faceted spatial requirements
@@ -208,6 +233,7 @@ New spatial integrations must choose pattern based on:
 - Multiple developers working on spatial features
 
 **Structure**:
+
 ```
 services/integrations/{integration}/
   spatial_types.py          # Domain types and primitives
@@ -221,6 +247,7 @@ services/integrations/{integration}/
 ```
 
 **Access Pattern**:
+
 ```python
 router = IntegrationRouter()
 adapter = router.get_spatial_adapter()
@@ -230,6 +257,7 @@ result = await adapter.map_to_position(context)
 #### Embedded Intelligence Pattern
 
 **When to Use**:
+
 - Knowledge management scenarios
 - Semantic analysis and content processing
 - Streamlined spatial requirements
@@ -238,6 +266,7 @@ result = await adapter.map_to_position(context)
 - Single comprehensive model fits domain
 
 **Structure**:
+
 ```
 services/intelligence/spatial/{integration}_spatial.py
   # Single comprehensive class
@@ -247,6 +276,7 @@ services/intelligence/spatial/{integration}_spatial.py
 ```
 
 **Access Pattern**:
+
 ```python
 spatial = IntegrationSpatialIntelligence()
 await spatial.connect()
@@ -256,6 +286,7 @@ analysis = await spatial.get_comprehensive_spatial_analysis(item_id)
 #### Delegated MCP Pattern (NEW - Oct 2025)
 
 **When to Use**:
+
 - Model Context Protocol (MCP) integrations
 - External service adapters requiring protocol compliance
 - Temporal or contextual awareness scenarios
@@ -263,6 +294,7 @@ analysis = await spatial.get_comprehensive_spatial_analysis(item_id)
 - Integrations where spatial logic is protocol-specific
 
 **Structure**:
+
 ```
 services/integrations/{integration}/
   {integration}_integration_router.py  # Minimal router (delegation only)
@@ -275,6 +307,7 @@ services/mcp/consumer/
 ```
 
 **Access Pattern**:
+
 ```python
 router = IntegrationRouter()
 # Router methods delegate to MCP adapter
@@ -284,6 +317,7 @@ context = router.get_context(external_id)
 ```
 
 **Key Characteristics**:
+
 - Router is minimal (mostly pass-through methods)
 - Spatial intelligence in MCP consumer layer
 - MCP adapter inherits from `BaseSpatialAdapter`
@@ -291,6 +325,7 @@ context = router.get_context(external_id)
 - Clean separation: integration routing vs MCP protocol
 
 **Example**: Calendar integration
+
 - Router: `services/integrations/calendar/calendar_integration_router.py` (397 lines)
 - MCP Adapter: `services/mcp/consumer/google_calendar_adapter.py` (499 lines)
 - Custom spatial context for temporal awareness (meeting_type, duration, attendees, location)
@@ -300,24 +335,28 @@ context = router.get_context(external_id)
 All spatial patterns **must**:
 
 1. **Router Integration**:
+
    - Use IntegrationRouter (directly or indirectly)
-   - Support feature flag control (USE_SPATIAL_*)
+   - Support feature flag control (USE*SPATIAL*\*)
    - Provide health check capabilities
    - **Update Oct 2025**: Delegated MCP Pattern delegates through router to MCP adapter
 
 2. **8-Dimensional Spatial Metaphor**:
+
    - Implement relevant dimensions for domain
    - Use consistent naming (HIERARCHY, TEMPORAL, PRIORITY, COLLABORATIVE, FLOW, QUANTITATIVE, CAUSAL, CONTEXTUAL)
    - Document which dimensions supported
    - **Update Oct 2025**: Calendar implements TEMPORAL dimension via temporal_summary
 
 3. **Backward Compatibility**:
+
    - Graceful degradation when spatial disabled
    - Don't break existing functionality
    - Support legacy mode via feature flags
    - **Update Oct 2025**: All 3 patterns support feature flag control
 
 4. **Async Patterns**:
+
    - Use async/await for I/O operations
    - Support concurrent operations where appropriate
    - Handle cleanup properly
@@ -351,21 +390,25 @@ All spatial patterns **must**:
 ### Mitigation Strategies
 
 **For Multiple Patterns**:
+
 - Clear documentation of both patterns
 - Decision framework for pattern selection
 - Common requirements enforced across patterns
 
 **For Documentation Overhead**:
+
 - Comprehensive pattern guide created (`docs/architecture/spatial-intelligence-patterns.md`)
 - Pattern comparison table
 - Usage examples for both patterns
 
 **For Training**:
+
 - Selection criteria clearly documented
 - Decision framework provides objective guidance
 - Examples from production code (Slack, Notion)
 
 **For Consistency**:
+
 - Common requirements documented (router integration, 8-dimensional metaphor, etc.)
 - Feature flag system consistent across patterns
 - Observability standards apply to both
@@ -377,6 +420,7 @@ All spatial patterns **must**:
 ### For Existing Implementations
 
 **Slack (Granular Adapter Pattern)**:
+
 - ✅ Compliant: Follows all pattern requirements
 - ✅ Production operational
 - ✅ Feature flag control working
@@ -384,6 +428,7 @@ All spatial patterns **must**:
 - ✅ Comprehensive test coverage
 
 **Notion (Embedded Intelligence Pattern)**:
+
 - ✅ Compliant: Follows all pattern requirements
 - ✅ Production operational
 - ✅ Feature flag control working
@@ -397,7 +442,7 @@ New spatial integrations must:
 1. **Choose Pattern**: Use decision framework to select appropriate pattern
 2. **Document Choice**: Create brief rationale document explaining pattern choice
 3. **Follow Requirements**: Implement all common requirements
-4. **Feature Flags**: Support USE_SPATIAL_{INTEGRATION}=true/false
+4. **Feature Flags**: Support USE*SPATIAL*{INTEGRATION}=true/false
 5. **Router Integration**: Integrate with IntegrationRouter infrastructure
 6. **Dimensions**: Implement relevant 8-dimensional analysis
 7. **Testing**: Provide appropriate test coverage (component or integration)
@@ -406,6 +451,7 @@ New spatial integrations must:
 ### Review Process
 
 Pattern selection should be reviewed during:
+
 - Initial design phase
 - Architecture review
 - Code review (ensure pattern followed correctly)
@@ -415,15 +461,18 @@ Pattern selection should be reviewed during:
 ## References
 
 ### Documentation
+
 - [Spatial Intelligence Patterns Guide](../../../../architecture/spatial-intelligence-patterns.md) - Comprehensive pattern documentation
 - [Operational Guide](../../../../operations/operational-guide.md) - Feature flag usage and troubleshooting
 
 ### Source Code
+
 - Granular Pattern: `services/integrations/slack/spatial_*.py` (11 files)
 - Embedded Pattern: `services/intelligence/spatial/notion_spatial.py` (1 file)
 - Base Adapter: `services/integrations/spatial_adapter.py`
 
 ### Verification
+
 - GitHub Issue #194: CORE-GREAT-2C verification work
 - Session Log: `dev/2025/09/30/2025-09-30-1025-prog-code-log.md`
 - Phase 1: Slack spatial investigation (11 files analyzed)
@@ -433,9 +482,9 @@ Pattern selection should be reviewed during:
 
 ## Version History
 
-| Date | Version | Author | Changes |
-|------|---------|--------|---------|
-| 2025-09-30 | 1.0 | Claude Code | Initial ADR creation based on GREAT-2C verification |
+| Date       | Version | Author      | Changes                                             |
+| ---------- | ------- | ----------- | --------------------------------------------------- |
+| 2025-09-30 | 1.0     | Claude Code | Initial ADR creation based on GREAT-2C verification |
 
 ---
 
@@ -454,4 +503,17 @@ Pattern selection should be reviewed during:
 
 ---
 
-*This ADR documents the discovery and validation of two production spatial patterns during GREAT-2C verification work (September 30, 2025).*
+## Update October 2025
+
+See **ADR-034: Plugin Architecture Implementation** for the plugin system that now manages all spatial intelligence integrations. The three spatial patterns documented in this ADR are now implemented as plugins following the Wrapper/Adapter pattern, providing:
+
+- **Dynamic loading** and configuration control via `config/PIPER.user.md`
+- **Lifecycle management** through the `PluginRegistry`
+- **Performance validation** with <0.05ms overhead per spatial operation
+- **Contract testing** ensuring all spatial integrations comply with `PiperPlugin` interface
+
+All spatial intelligence patterns remain valid architectural choices, now enhanced with plugin capabilities.
+
+---
+
+_This ADR documents the discovery and validation of two production spatial patterns during GREAT-2C verification work (September 30, 2025)._
