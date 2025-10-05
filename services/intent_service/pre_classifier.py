@@ -59,6 +59,17 @@ class PreClassifier:
         r"\btoday'?s date\b",
         r"\bwhat'?s today\b",
         r"\bdate and time\b",
+        # GREAT-4A additions for canonical query coverage
+        r"\bday of the week\b",
+        r"\btell me the date\b",
+        r"\bwhat.*yesterday\b",
+        r"\bdid.*yesterday\b",
+        r"\bhappened yesterday\b",
+        r"\bagenda.*today\b",
+        r"\bwork on today\b",
+        r"\blast time.*worked\b",
+        r"\bhow long.*working\b",
+        r"\bhow long.*been working\b",
     ]
 
     STATUS_PATTERNS = [
@@ -70,6 +81,13 @@ class PreClassifier:
         r"\bmy portfolio\b",
         r"\bwhat'?s my status\b",
         r"\bproject status\b",
+        # GREAT-4A additions for canonical query coverage
+        r"\bshow.*projects\b",
+        r"\bcurrent projects\b",
+        r"\bproject overview\b",
+        r"\bproject landscape\b",
+        r"\blist.*projects\b",
+        r"\bprojects.*working on\b",
     ]
 
     PRIORITY_PATTERNS = [
@@ -80,10 +98,17 @@ class PreClassifier:
         r"\bmy priorities\b",
         r"\btop priority\b",
         r"\bpriority one\b",
+        # GREAT-4A additions for canonical query coverage
+        r"\bmost important\b",
+        r"\bneeds.*attention\b",
+        r"\bwhich project.*focus\b",
+        r"\bwhat should i focus on\b",  # Moved from GUIDANCE
+        r"\bshould i focus\b",  # Moved from GUIDANCE
+        r"\bwhat.*focus on\b",
     ]
 
     GUIDANCE_PATTERNS = [
-        r"\bwhat should i focus on\b",
+        # GREAT-4A: Removed focus patterns (moved to PRIORITY)
         r"\bwhere should i focus\b",
         r"\bwhat'?s next\b",
         r"\bguidance\b",
@@ -91,7 +116,6 @@ class PreClassifier:
         r"\badvice\b",
         r"\bwhat now\b",
         r"\bnext steps\b",
-        r"\bshould i focus\b",
     ]
 
     # File reference patterns (with variations and typo tolerance)
