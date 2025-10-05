@@ -1,3 +1,4 @@
+# xian's script shell - please do not move. Oct 4 2025.
 # 1. Verify file structure (routers + plugins)
 cd ~/Development/piper-morgan
 ls -la services/integrations/*/[!test]*.py | wc -l

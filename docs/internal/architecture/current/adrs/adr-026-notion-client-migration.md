@@ -239,6 +239,10 @@ async def cmd_create(self, title: str, parent_id: Optional[str] = None):
    - Error rate monitoring and alerting
    - Usage analytics and optimization
 
+## Update October 2025
+
+See **ADR-034: Plugin Architecture Implementation** for how the Notion integration is now managed as a plugin. The official `notion_client` library documented in this ADR is now wrapped in the `NotionPlugin` class, providing dynamic loading, configuration control, and lifecycle management while maintaining the reliability benefits of the official client.
+
 ## References
 
 - [Notion API Documentation](https://developers.notion.com/)

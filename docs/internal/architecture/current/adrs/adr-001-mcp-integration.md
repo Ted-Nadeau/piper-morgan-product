@@ -41,7 +41,15 @@ We will implement Model Context Protocol (MCP) support in a phased approach, sta
 Start date: After PM-011 closure (Week 4+)
 
 ---
-*Last Updated: July 09, 2025*
+
+## Update October 2025
+
+See **ADR-034: Plugin Architecture Implementation** for how MCP integrations are now managed as plugins. The Calendar integration implements the "Delegated MCP Pattern" documented in ADR-038, where MCP adapters are wrapped as plugins for unified lifecycle management and configuration control.
+
+---
+
+_Last Updated: July 09, 2025_
 
 ## Revision Log
+
 - **July 09, 2025**: Added vertical resize feature to chat window for improved usability
