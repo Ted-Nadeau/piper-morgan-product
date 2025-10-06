@@ -209,6 +209,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# GREAT-4B: Intent Enforcement Middleware
+from web.middleware.intent_enforcement import IntentEnforcementMiddleware
+
+app.add_middleware(IntentEnforcementMiddleware)
+logger.info("✅ IntentEnforcementMiddleware registered (GREAT-4B)")
+
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory="templates")
 
@@ -517,6 +523,17 @@ async def health_config():
         "timestamp": datetime.utcnow().isoformat(),
         "validation": summary,
     }
+
+
+@app.get("/api/admin/intent-monitoring")
+async def intent_monitoring():
+    """
+    Intent enforcement monitoring endpoint.
+
+    Returns current middleware configuration and monitoring status.
+    CORE-GREAT-4B: Intent Enforcement
+    """
+    return IntentEnforcementMiddleware.get_monitoring_status()
 
 
 if __name__ == "__main__":
