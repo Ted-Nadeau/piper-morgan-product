@@ -1,0 +1,368 @@
+# Intent Classification Developer Guide
+
+**Last Updated**: October 5, 2025  
+**Status**: Production Ready  
+**Epic**: GREAT-4B - Universal Intent Enforcement
+
+---
+
+## Overview
+
+This guide explains when and how to use intent classification in Piper Morgan. As of GREAT-4B completion, intent classification is **mandatory** for all natural language user input.
+
+---
+
+## When Intent Classification is Required
+
+### Required (Natural Language Input)
+
+Intent classification **MUST** be used for:
+
+✅ **User text messages** - Slack, chat, conversational UI  
+✅ **Free-text queries** - Unstructured user input  
+✅ **Ambiguous requests** - Need interpretation  
+✅ **Natural language commands** - "What's my schedule?", "Create an issue"
+
+### Not Required (Exempt)
+
+Intent classification is **NOT** needed for:
+
+❌ **Structured CLI commands** - `piper documents search --query X`
+
+- Structure already expresses intent
+- Argparse/click parameters are explicit
+
+❌ **Output processing** - Personality enhancement
+
+- Processes Piper's responses, not user input
+- Different pipeline direction
+
+❌ **Direct ID lookups** - `/api/workflows/12345`
+
+- No ambiguity, explicit resource access
+
+❌ **Static resources** - Health checks, docs, config
+
+- Infrastructure endpoints
+
+---
+
+## How to Add a New NL Endpoint
+
+### Step 1: Register in Middleware
+
+Edit `web/middleware/intent_enforcement.py`:
+
+```python
+NL_ENDPOINTS = [
+    '/api/v1/intent',
+    '/api/standup',
+    '/api/chat',
+    '/api/message',
+    '/api/your-new-endpoint'  # Add here
+]
+```
+
+### Step 2: Route Through Intent
+
+Your endpoint should call the intent classifier:
+
+```python
+@app.post("/api/your-new-endpoint")
+async def your_endpoint(request: Request):
+    user_text = request.json().get("text")
+
+    # Classify intent
+    from services.intent_service import classifier
+    intent = await classifier.classify(user_text)
+
+    # Route to appropriate handler
+    if intent.category == IntentCategory.TEMPORAL:
+        return await handle_temporal_query(intent)
+    elif intent.category == IntentCategory.STATUS:
+        return await handle_status_query(intent)
+    # ... etc
+```
+
+Or redirect to universal intent endpoint:
+
+```python
+@app.post("/api/your-new-endpoint")
+async def your_endpoint(request: Request):
+    # Redirect to universal handler
+    return await process_intent(request)
+```
+
+### Step 3: Add Tests
+
+Create test in `tests/intent/test_user_flows_complete.py`:
+
+```python
+def test_your_endpoint_flow(self):
+    response = client.post("/api/your-new-endpoint", json={
+        "text": "Sample query"
+    })
+    assert response.status_code in [200, 422]
+
+    # Verify intent was classified
+    if response.status_code == 200:
+        data = response.json()
+        assert "intent" in data or "category" in data
+```
+
+### Step 4: Validate
+
+```bash
+# Run bypass scanner
+python scripts/check_intent_bypasses.py
+
+# Run tests
+pytest tests/intent/ -v
+
+# Check middleware config
+curl http://localhost:8001/api/admin/intent-monitoring
+```
+
+---
+
+## Performance Considerations
+
+### Caching
+
+- **Common queries are cached** (1 hour TTL)
+- **Cache provides 95%+ performance improvement**
+- **Disable caching**: `classify(text, use_cache=False)`
+
+### Response Times
+
+- **Cache hit**: ~0.02ms (exceptional)
+- **Cache miss (pre-classifier)**: ~0.5ms (excellent)
+- **Cache miss (LLM fallback)**: ~1-3s (acceptable)
+
+### Monitoring
+
+Check cache performance:
+
+```bash
+curl http://localhost:8001/api/admin/intent-cache-metrics
+```
+
+Monitor middleware:
+
+```bash
+curl http://localhost:8001/api/admin/intent-monitoring
+```
+
+---
+
+## Common Patterns
+
+### Pattern 1: Simple Query
+
+```python
+intent = await classifier.classify("What's my schedule?")
+category = intent.category  # TEMPORAL, STATUS, PRIORITY, etc.
+confidence = intent.confidence  # 0.0-1.0
+action = intent.action  # get_current_time, get_project_status, etc.
+```
+
+### Pattern 2: With Context
+
+```python
+intent = await classifier.classify(
+    text="Create an issue",
+    context={"project": "piper-morgan"}
+)
+```
+
+### Pattern 3: Disable Cache
+
+```python
+intent = await classifier.classify(
+    text="Real-time query",
+    use_cache=False
+)
+```
+
+### Pattern 4: Handle All Categories
+
+```python
+intent = await classifier.classify(user_input)
+
+match intent.category:
+    case IntentCategory.TEMPORAL:
+        return await handle_temporal(intent)
+    case IntentCategory.STATUS:
+        return await handle_status(intent)
+    case IntentCategory.PRIORITY:
+        return await handle_priority(intent)
+    case IntentCategory.EXECUTION:
+        return await handle_execution(intent)
+    case _:
+        return await handle_unknown(intent)
+```
+
+---
+
+## Architecture Reference
+
+### Input vs Output Flow
+
+```
+User INPUT → Intent Classification (enforced here)
+     ↓
+Handler → Response Generation
+     ↓
+Piper OUTPUT → Personality Enhancement (separate concern)
+```
+
+### What Requires Intent
+
+- ✅ **Natural language user messages** (ambiguous input)
+- ✅ **Unstructured text queries**
+- ❌ **Structured CLI commands** (structure = intent)
+- ❌ **Output processing** (different flow)
+- ❌ **Static/health/config endpoints**
+
+### Enforcement Infrastructure
+
+1. **IntentEnforcementMiddleware**: Monitors all HTTP requests
+2. **Bypass Prevention Tests**: Prevents regressions
+3. **CI/CD Scanner**: Automated bypass detection
+4. **Cache Layer**: Performance optimization
+
+---
+
+## Troubleshooting
+
+### Cache Not Working
+
+- Check cache metrics endpoint - should show hits/misses
+- Verify `cache_enabled: true` in metrics response
+- Check for cache integration in classifier
+
+### Bypass Detection Failing
+
+- Run scanner: `python scripts/check_intent_bypasses.py`
+- Review NL_ENDPOINTS list in middleware
+- Check if new endpoint matches NL patterns
+
+### Performance Issues
+
+- Check if caching is enabled
+- Review cache hit rate (target >60%)
+- Consider increasing TTL for stable queries
+- Monitor with `/api/admin/intent-cache-metrics`
+
+### Middleware Not Enforcing
+
+- Verify middleware is registered in FastAPI app
+- Check `/api/admin/intent-monitoring` endpoint
+- Ensure NL endpoints are in middleware config
+
+### Classification Errors
+
+- Check confidence scores (low confidence may indicate edge cases)
+- Review pre-classifier patterns for common queries
+- Monitor LLM fallback usage and errors
+
+---
+
+## Testing Guidelines
+
+### Unit Tests
+
+```python
+# Test intent classification directly
+intent = await classifier.classify("What day is it?")
+assert intent.category == IntentCategory.TEMPORAL
+assert intent.confidence >= 0.8
+```
+
+### Integration Tests
+
+```python
+# Test full HTTP flow
+response = client.post("/api/v1/intent", json={"text": "What day is it?"})
+assert response.status_code == 200
+```
+
+### Performance Tests
+
+```python
+# Test caching behavior
+start = time.time()
+intent1 = await classifier.classify("What day is it?")
+time1 = time.time() - start
+
+start = time.time()
+intent2 = await classifier.classify("What day is it?")  # Should hit cache
+time2 = time.time() - start
+
+assert time2 < time1  # Cache should be faster
+```
+
+---
+
+## Configuration
+
+### Cache Settings
+
+```python
+# In services/intent_service/cache.py
+CACHE_TTL = 3600  # 1 hour
+MAX_CACHE_SIZE = 1000  # entries
+```
+
+### Middleware Settings
+
+```python
+# In web/middleware/intent_enforcement.py
+NL_ENDPOINTS = [...]  # Natural language endpoints
+EXEMPT_PATHS = [...]  # Paths that don't need intent
+```
+
+---
+
+## Monitoring and Metrics
+
+### Key Metrics to Track
+
+1. **Cache Performance**:
+
+   - Hit rate (target >60%)
+   - Average response time
+   - Cache size and memory usage
+
+2. **Classification Accuracy**:
+
+   - Confidence scores distribution
+   - Pre-classifier vs LLM usage
+   - Error rates by category
+
+3. **Middleware Enforcement**:
+   - NL endpoint coverage
+   - Bypass detection alerts
+   - Request volume by endpoint
+
+### Alerting Recommendations
+
+- Cache hit rate < 40%
+- Intent classification errors > 5%
+- Response time > 1000ms (uncached)
+- Bypass detection failures
+
+---
+
+## Related Documentation
+
+- **ADR-032**: Intent Classification Universal Entry
+- **Pattern-032**: Intent Pattern Catalog
+- **GREAT-4B Epic**: Complete implementation details
+- **Test Strategy**: `dev/2025/10/05/bypass-prevention-strategy.md`
+
+---
+
+**Status**: ✅ Production ready - All guidelines validated and tested
+
+**Last Validated**: October 5, 2025 (GREAT-4B completion)

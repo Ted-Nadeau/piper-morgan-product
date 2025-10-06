@@ -3,12 +3,13 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 31 patterns (001-031) + template (000)
+**Total Patterns**: 32 patterns (001-032) + template (000)
 
 ## Pattern Categories
 
 ### Infrastructure & Architecture (001-010)
-*Foundational patterns for system architecture*
+
+_Foundational patterns for system architecture_
 
 - [Pattern-001: Repository Pattern](pattern-001-repository.md) - Data access encapsulation
 - [Pattern-002: Service Pattern](pattern-002-service.md) - Business logic organization
@@ -22,7 +23,8 @@ _Format: ADR-style numbered patterns_
 - [Pattern-010: Cross-Validation Protocol](pattern-010-cross-validation-protocol.md) - Quality assurance
 
 ### Context & Session Management (011-017)
-*Runtime context and state management patterns*
+
+_Runtime context and state management patterns_
 
 - [Pattern-011: Context Resolution](pattern-011-context-resolution.md) - Implicit context resolution
 - [Pattern-012: LLM Adapter](pattern-012-llm-adapter.md) - Language model integration
@@ -33,7 +35,8 @@ _Format: ADR-style numbered patterns_
 - [Pattern-017: Background Task Error Handling](pattern-017-background-task-error-handling.md) - Async error management
 
 ### Integration & Adapters (018-022)
-*External system and service integration patterns*
+
+_External system and service integration patterns_
 
 - [Pattern-018: Configuration Access](pattern-018-configuration-access.md) - Configuration management
 - [Pattern-019: LLM Placeholder Instruction](pattern-019-llm-placeholder-instruction.md) - AI instruction patterns
@@ -42,7 +45,8 @@ _Format: ADR-style numbered patterns_
 - [Pattern-022: MCP+Spatial Intelligence Integration](pattern-022-mcp-spatial-intelligence-integration.md) - MCP spatial patterns
 
 ### Query & Data Patterns (023-027)
-*Data access and learning patterns*
+
+_Data access and learning patterns_
 
 - [Pattern-023: Query Layer Patterns](pattern-023-query-layer-patterns.md) - Query abstraction layers
 - [Pattern-024: Methodology Patterns](pattern-024-methodology-patterns.md) - Development methodology patterns
@@ -50,13 +54,17 @@ _Format: ADR-style numbered patterns_
 - [Pattern-026: Cross-Feature Learning](pattern-026-cross-feature-learning.md) - Feature learning integration
 - [Pattern-027: CLI Integration](pattern-027-cli-integration.md) - Command-line interface patterns
 
-### AI & Orchestration Patterns (028-031)
-*AI coordination and plugin architecture patterns*
+### AI & Orchestration Patterns (028-032)
+
+_AI coordination and plugin architecture patterns_
 
 - [Pattern-028: Intent Classification](pattern-028-intent-classification.md) - Natural language intent routing
 - [Pattern-029: Multi-Agent Coordination](pattern-029-multi-agent-coordination.md) - Specialized agent orchestration
 - [Pattern-030: Plugin Interface](pattern-030-plugin-interface.md) - Extensible integration architecture
 - [Pattern-031: Plugin Wrapper](pattern-031-plugin-wrapper.md) - Adapter pattern for integration routers
+- [Pattern-032: Intent Pattern Catalog](pattern-032-intent-pattern-catalog.md) - Regex pattern management for intent classification
+  - 44 total patterns across TEMPORAL (17), STATUS (14), PRIORITY (13)
+  - 92% canonical query coverage achieved (Phase 3 expansion)
 
 ## Pattern Development
 
@@ -84,5 +92,5 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: October 4, 2025_
-_All 31 patterns now included with logical categorization_
+_Last updated: October 5, 2025_
+_All 32 patterns now included with logical categorization_

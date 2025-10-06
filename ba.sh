@@ -1,17 +1,18 @@
-# xian's script shell - please do not move. Oct 4 2025.
-# 1. Verify file structure (routers + plugins)
-cd ~/Development/piper-morgan
-ls -la services/integrations/*/[!test]*.py | wc -l
+# Test if patterns are handled
+python3 -c "
+from services.intent_service import classifier
+import asyncio
 
-# 2. Check tests still passing
-PYTHONPATH=. python3 -m pytest tests/plugins/ -v | tail -5
+test_patterns = [
+    'create an issue about login bug',  # CREATE action
+    'update issue status',              # UPDATE action
+    'search for architecture docs',     # SEARCH action
+]
 
-# 3. Verify plugin file sizes (should be ~96 lines each)
-wc -l services/integrations/*/*_plugin.py
+async def test():
+    for pattern in test_patterns:
+        result = await classifier.classify(pattern)
+        print(f'{pattern} -> {result.get(\"category\", \"UNKNOWN\")}')
 
-# 4. Check what documentation currently exists
-ls -la docs/plugin*.md 2>/dev/null || echo "No plugin docs found"
-ls -la services/plugins/README.md
-
-# 5. Check for existing developer guide references
-grep -r "developer guide" docs/ 2>/dev/null || echo "No developer guide references"
+asyncio.run(test())
+"

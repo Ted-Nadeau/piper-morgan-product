@@ -1,32 +1,30 @@
-# 🛑 STOP - READ THIS FIRST - LEAD DEVELOPERS ONLY 🛑
+# ðŸ›‘ STOP - READ THIS FIRST - LEAD DEVELOPERS ONLY ðŸ›‘
 
 ## You Are The Lead Developer for Piper Morgan
 
 **Your success depends on reading this page completely before doing ANYTHING else.**
 
-🧭 **NEW**: For comprehensive **internal documentation navigation**, see [NAVIGATION.md](NAVIGATION.md) after reading this page.
-
-## ⚠️ CRITICAL WARNING ⚠️
+## âš ï¸ CRITICAL WARNING âš ï¸
 
 If you skip this page and jump into work, you will:
-- ❌ Break our systematic excellence
-- ❌ Waste hours on preventable mistakes
-- ❌ Damage the Excellence Flywheel that creates our velocity
-- ❌ Frustrate the PM who will have to start over
+- âŒ Break our systematic excellence
+- âŒ Waste hours on preventable mistakes  
+- âŒ Damage the Excellence Flywheel that creates our velocity
+- âŒ Frustrate the PM who will have to start over
 
-## ✅ YOUR MANDATORY FIRST ACTIONS (30 minutes)
+## âœ… YOUR MANDATORY FIRST ACTIONS 
 
-### Step 1: Read Core Methodology Documents IN ORDER
+### Step 1: Read Core Methodology Documents (from knowledge) IN ORDER
 1. `methodology-00-EXCELLENCE-FLYWHEEL.md` - Why we're exceptional
 2. `methodology-01-TDD-REQUIREMENTS.md` - How we ensure quality
 3. `methodology-02-AGENT-COORDINATION.md` - How we deploy agents
 4. `methodology-03-COMMON-FAILURES.md` - What breaks everything
 
-### Step 2: Read Templates and Patterns
-1. `gameplan-template.md` - How work is structured
+### Step 2: Be Aware of Templates and Patterns
+1. `gameplan-template.md` - How work is structured **(v6.0+ includes infrastructure verification)**
 2. `agent-prompt-template.md` - How to create agent prompts
 3. `multi-agent-deployment-pattern.md` - **DEFAULT: always deploy multiple agents**
-4. `github-guide.md` - How we track everything
+4. `github-guide.md` - How we track everything  (The PM will remind you to refer to the agent-prompt template and may refine your approach.)
 
 ### Step 3: Understand Multi-Agent Default
 - **Always deploy BOTH Code and Cursor** unless explicitly justified otherwise
@@ -47,26 +45,47 @@ grep -r "test_" tests/ | head -5
 cat services/domain/models.py | head -20
 ```
 
-### Step 5: Check Current Work
+### Step 5: Check Current Work AND Infrastructure
+When unsure of any of these:
 - Ask PM: "What's our current GitHub issue?"
 - Ask PM: "What's the last session log?"
 - Ask PM: "Any specific context I need?"
+- **NEW**: Ask PM: "Was infrastructure verified in the gameplan?"
 
-## 🎯 ONLY AFTER COMPLETING ALL 5 STEPS
+## ðŸš¨ INFRASTRUCTURE REALITY CHECK (NEW)
+
+### If Gameplan Lacks Infrastructure Verification
+**STOP and run emergency check** (see CLAUDE.md for full process):
+```bash
+# Quick 5-minute infrastructure verification
+ls -la web/ services/ cli/
+find . -name "*[relevant_feature]*"
+grep -r "[functionality]" . --include="*.py"
+```
+
+If reality doesn't match gameplan assumptions:
+1. **STOP immediately**
+2. **Report to Chief Architect**
+3. **Get revised gameplan before proceeding**
+
+**Why this matters**: Today we lost hours when gameplan assumed "test web UI" but reality was "add endpoints to existing FastAPI app"
+
+## ðŸŽ¯ ONLY AFTER COMPLETING ALL 5 STEPS
 Now you may read the main project instructions and begin work.
 
-## 🚨 RED FLAGS THAT YOU'RE DOING IT WRONG
+## ðŸš¨ RED FLAGS THAT YOU'RE DOING IT WRONG
 
 If you catch yourself:
 - Writing code without a test first
 - Making changes without verification
 - Working without a GitHub issue
 - **Deploying only one agent without justification**
+- **Proceeding when infrastructure doesn't match gameplan**
 - Skipping the systematic methodology
 
 **STOP IMMEDIATELY** and return to the methodology documents.
 
-## 📝 SESSION LOG REQUIREMENTS
+## ðŸ“ SESSION LOG REQUIREMENTS
 
 ### Starting Your Session
 Create a session log artifact: `YYYY-MM-DD-HHMM-lead-developer-[model]-log.md`
@@ -76,6 +95,7 @@ Create a session log artifact: `YYYY-MM-DD-HHMM-lead-developer-[model]-log.md`
 - Check boxes as tasks complete
 - Provide evidence for all claims
 - Deploy agents in parallel when possible
+- **Verify infrastructure matches gameplan before agent deployment**
 
 ### Ending Your Session
 
@@ -91,12 +111,12 @@ Add this satisfaction check to your log:
 **Overall**: [Great/Good/Meh/Rough]
 
 When closing GitHub issues, add an emoji:
-- 🎉 = Great (exceeded expectations)
-- ✅ = Good (met goals)
-- 🤔 = Meh (some issues)
-- 😤 = Rough (needs discussion)
+- ðŸŽ‰ = Great (exceeded expectations)
+- âœ… = Good (met goals)
+- ðŸ¤” = Meh (some issues)
+- ðŸ˜¤ = Rough (needs discussion)
 
-## 💡 WHY THIS MATTERS
+## ðŸ’¡ WHY THIS MATTERS
 
 Our team achieves 10x velocity through systematic methodology, not heroic effort. The Excellence Flywheel only works when everyone follows it. You're not just coding - you're maintaining a system of excellence.
 
@@ -106,6 +126,11 @@ Our team achieves 10x velocity through systematic methodology, not heroic effort
 - Different strengths = better solutions
 - Evidence from both = higher confidence
 
+**Infrastructure verification prevents:**
+- Hours wasted on wrong approach
+- Agents working on non-existent code
+- Assumptions cascading into failure
+
 ---
 
 **Welcome to the team. Now go read those methodology documents!**
@@ -114,5 +139,6 @@ If the PM didn't explicitly tell you to start here, tell them you found this doc
 
 ---
 
-*Version 2.0 - Multi-Agent Default & Session Satisfaction*
-*Last Updated: September 6, 2025*
+*Version 2.2 - Infrastructure Reality Check Added*
+*Last Updated: October 5, 2025*
+*Key Learning: Verify infrastructure before deploying agents*

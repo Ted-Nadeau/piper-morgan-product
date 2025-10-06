@@ -24,6 +24,9 @@ class UserContextService:
 
     def __init__(self):
         self.cache = {}
+        # Cache metrics (GREAT-4C Phase 3)
+        self.cache_hits = 0
+        self.cache_misses = 0
         logger.info("UserContextService initialized")
 
     async def get_user_context(self, session_id: str) -> UserContext:
@@ -38,11 +41,15 @@ class UserContextService:
         """
         # Check cache first
         if session_id in self.cache:
-            logger.debug("user_context_cache_hit", session_id=session_id)
+            self.cache_hits += 1  # GREAT-4C Phase 3: Track cache hit
+            logger.debug("user_context_cache_hit", session_id=session_id, cache_hits=self.cache_hits)
             return self.cache[session_id]
 
-        # Load from session/database
-        # For now, load from PIPER.md based on session
+        # Cache miss - load from session/database
+        self.cache_misses += 1  # GREAT-4C Phase 3: Track cache miss
+        logger.debug("user_context_cache_miss", session_id=session_id, cache_misses=self.cache_misses)
+
+        # Load from PIPER.md based on session
         context = await self._load_context_from_config(session_id)
 
         # Cache it
@@ -160,6 +167,37 @@ class UserContextService:
         else:
             self.cache.clear()
             logger.debug("user_context_cache_cleared")
+
+    def get_cache_metrics(self) -> Dict[str, Any]:
+        """
+        Get cache performance metrics.
+
+        Returns:
+            Dictionary with cache hits, misses, hit rate, and cache size
+
+        Added in GREAT-4C Phase 3 for cache monitoring.
+        """
+        total = self.cache_hits + self.cache_misses
+        hit_rate = (self.cache_hits / total * 100) if total > 0 else 0
+
+        return {
+            "hits": self.cache_hits,
+            "misses": self.cache_misses,
+            "total_requests": total,
+            "hit_rate_percent": round(hit_rate, 2),
+            "cache_size": len(self.cache),
+            "cached_sessions": list(self.cache.keys()) if len(self.cache) <= 10 else f"{len(self.cache)} sessions",
+        }
+
+    def clear_metrics(self):
+        """
+        Reset cache metrics without clearing cache.
+
+        Added in GREAT-4C Phase 3 for metrics management.
+        """
+        self.cache_hits = 0
+        self.cache_misses = 0
+        logger.debug("user_context_metrics_cleared")
 
 
 # Singleton instance

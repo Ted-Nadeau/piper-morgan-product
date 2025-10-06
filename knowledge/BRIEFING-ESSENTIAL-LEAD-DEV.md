@@ -17,10 +17,10 @@
 - Escalate architectural decisions to Chief Architect
 
 **Key Methodologies**:
-- **Inchworm Protocol**: Phase -1 verification before any work
-- **Time Lord Philosophy**: Quality over arbitrary deadlines
-- **Excellence Flywheel**: Verify → Implement → Evidence → Track
-- **Cathedral Building**: Systematic excellence for foundational systems
+- **Inchworm Protocol**: Phase -1 verification before any work, finish steps completely before moving on, no shortcuts
+- **Time Lord Philosophy**: Quality over arbitrary deadlines - time is fluid
+- **Excellence Flywheel**: Verify â†’ Implement â†’ Evidence â†’ Track
+- **Cathedral Building**: Systematic excellence for foundational systems, provide agents sufficient context to understand the goals, not just the tasks
 
 ## Key Patterns
 **Router Architecture** (complete):
@@ -30,7 +30,7 @@
 
 **Spatial Intelligence** (3 patterns):
 - Granular (Slack): 11 files, component-based coordination
-- Embedded (Notion): 1 file, consolidated intelligence
+- Embedded (Notion): 1 file, consolidated intelligence  
 - Delegated (Calendar): Router + MCP consumer pattern
 
 **Config Services** (standardized):
@@ -43,26 +43,18 @@
 - 4 operational plugins: Slack, GitHub, Notion, Calendar
 - Dynamic loading ready for 3B implementation
 
-## Current Focus: GREAT-3B
-**Objective**: Complete dynamic plugin loading and discovery
-**Key Tasks**:
-- Implement plugin discovery system
-- Add lifecycle management
-- Complete registration automation
-- Maintain 100% backward compatibility
+## Current Focus: CORE-GREAT-4
+**Objective**: Transform intent classification from optional feature to mandatory universal entry point for ALL user interactions. No bypasses allowed. Remove all direct endpoint access.
 
-**Quality Gates**:
-- All tests must pass (currently 72/72)
-- Zero regression in existing functionality
-- Evidence-based completion verification
-- Cross-agent validation required
+### Foundation & Categories (4A)
+- Add missing intent categories per #96
+- Fix pattern loading and classification accuracy
+- Establish comprehensive test coverage
+- Baseline performance metrics
+- Document all intent patterns
 
 ## Progressive Loading
-Request "Loading [topic] details" for:
-- **Full methodology** → BRIEFING-METHODOLOGY
-- **Templates** → knowledge/gameplan-template-v9.md, agent-prompt-template-v3.md
-- **Architecture** → ADR-038 (spatial patterns), ADR-034 (plugin architecture)
-- **Current work** → GitHub issues #197-200
+Seek key files in knowledge, ask PM if unable to find references
 
 ## Critical Rules
 1. **Phase -1 Always**: Verify infrastructure matches assumptions before starting
@@ -92,7 +84,10 @@ Tests: 72/72 passing
 
 ## References
 - **Current state**: BRIEFING-CURRENT-STATE
-- **Full role guide**: BRIEFING-ROLE-LEAD-DEVELOPER (if exists)
-- **Active issues**: GitHub #197-200
+- **Full role guide**: BRIEFING-ESSENTIAL-LEAD-DEV (if exists)  
+- **Active issues**: GitHub #183, #205, #206, #207, #208
 - **Architecture**: docs/NAVIGATION.md
-- **Templates**: knowledge/[template-name].md
+- **Templates**: in project knowledge
+---
+
+*Last Updated: October 5, 2025*

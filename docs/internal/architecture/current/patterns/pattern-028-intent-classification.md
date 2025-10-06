@@ -1,14 +1,17 @@
 # Pattern-028: Intent Classification
 
 ## Status
-Experimental (Original vision from May 28, 2025)
+
+Proven (Updated October 5, 2025 - GREAT-4A validation complete)
 
 ## Context
+
 When users interact with Piper Morgan through natural language, their intent needs to be classified to route to appropriate handlers. This pattern transforms ambiguous natural language into actionable intent types.
 
 ## Pattern
 
 ### Core Intent Types (May 28 Vision)
+
 ```python
 class IntentType(Enum):
     CREATE_ISSUE = "create_issue"      # User wants to create a new GitHub issue
@@ -20,6 +23,7 @@ class IntentType(Enum):
 ```
 
 ### Simple Classification Approach
+
 ```python
 class IntentClassifier:
     """
@@ -51,6 +55,7 @@ class IntentClassifier:
 ```
 
 ### Integration with Workflow Router
+
 ```python
 # In services/queries/router.py
 async def route_query(self, query: QueryModel) -> QueryResponse:
@@ -66,12 +71,14 @@ async def route_query(self, query: QueryModel) -> QueryResponse:
 ```
 
 ## Benefits
+
 - **Natural interaction**: Users don't need to learn commands
 - **Progressive enhancement**: Start simple, evolve to sophisticated
 - **Universal entry point**: All interactions flow through intent classification
 - **Learning opportunity**: Every classification can improve the model
 
 ## Trade-offs
+
 - **Initial accuracy**: Keyword-based approach has limitations
 - **Context loss**: Single-turn classification misses conversation history
 - **Training data**: Needs accumulated interactions to improve
@@ -80,26 +87,86 @@ async def route_query(self, query: QueryModel) -> QueryResponse:
 ## Implementation Strategy
 
 ### Phase 1: Basic Classification (Week 1)
+
 - Implement keyword-based classifier
 - Log all classifications for training data
 - Add to query router
 
 ### Phase 2: LLM Enhancement (Week 2)
+
 - Use Claude for classification
 - Compare with keyword approach
 - A/B test for accuracy
 
 ### Phase 3: Learning Integration (Week 3)
+
 - Store classification results
 - Build training dataset
 - Implement feedback loop
 
 ## Related Patterns
+
 - [Pattern-006: Query Router](pattern-006-query-router.md)
 - [Pattern-017: Multi-Agent Coordination](pattern-017-multi-agent-coordination.md)
 - [Pattern-029: Plugin Interface](pattern-029-plugin-interface.md)
 
+## Current Implementation (October 2025)
+
+### Production Architecture
+
+The intent classification system now uses a two-stage approach:
+
+1. **Pre-classifier Stage**: Fast regex pattern matching for canonical queries
+2. **LLM Classifier Stage**: Fallback to LLM for complex queries
+
+```python
+# services/intent_service/classifier.py
+class IntentClassifier:
+    async def classify(self, message: str) -> Intent:
+        # Stage 1: Pre-classification (regex patterns)
+        pre_intent = PreClassifier.pre_classify(message)
+        if pre_intent:
+            return pre_intent
+
+        # Stage 2: LLM classification (fallback)
+        return await self._classify_with_reasoning(message)
+```
+
+### Validated Categories (GREAT-4A Results)
+
+- **TEMPORAL**: Time/date queries (7 patterns, 0.17ms avg, 100% success)
+- **STATUS**: Project/work status (8 patterns, 0.14ms avg, 100% success)
+- **PRIORITY**: Priority/focus queries (7 patterns, 0.10ms avg, 100% success)
+- **IDENTITY**: Assistant identity queries
+- **GUIDANCE**: Contextual guidance requests
+- **CONVERSATION**: Greetings, thanks, farewells
+
+### Performance Metrics (Baseline)
+
+- **Sub-millisecond response**: 0.10-0.17ms average for pattern matches
+- **Perfect confidence**: 1.0 confidence for all regex matches
+- **100% success rate**: All canonical queries successfully classified
+- **Deterministic behavior**: Consistent regex-based classification
+
+### Handler Integration
+
+```python
+# services/intent_service/canonical_handlers.py
+class CanonicalHandlers:
+    async def handle(self, intent: Intent, session_id: str) -> Dict:
+        if intent.category == IntentCategory.TEMPORAL:
+            return await self._handle_temporal_query(intent, session_id)
+        elif intent.category == IntentCategory.STATUS:
+            return await self._handle_status_query(intent, session_id)
+        elif intent.category == IntentCategory.PRIORITY:
+            return await self._handle_priority_query(intent, session_id)
+```
+
 ## References
-- Original vision: May 28, 2025 genesis documents
-- Related issue: #96 (FEAT-INTENT)
-- Implementation location: services/queries/intent_classifier.py (to be created)
+
+- **Original vision**: May 28, 2025 genesis documents
+- **GREAT-4A validation**: October 5, 2025 baseline metrics established
+- **Related issues**: #96 (FEAT-INTENT), #205 (CORE-GREAT-4A)
+- **Implementation**: `services/intent_service/` (complete)
+- **Pattern catalog**: [Pattern-032: Intent Pattern Catalog](pattern-032-intent-pattern-catalog.md)
+- **Baseline metrics**: `dev/2025/10/05/intent-baseline-metrics.md`
