@@ -536,6 +536,42 @@ async def intent_monitoring():
     return IntentEnforcementMiddleware.get_monitoring_status()
 
 
+@app.get("/api/admin/intent-cache-metrics")
+async def intent_cache_metrics(request: Request):
+    """
+    Intent cache performance metrics endpoint.
+
+    Returns cache hit rate, size, and performance statistics.
+    CORE-GREAT-4B Phase 3: Intent Caching
+    """
+    # Get IntentService from app state
+    intent_service = getattr(request.app.state, "intent_service", None)
+
+    if intent_service and hasattr(intent_service.classifier, "cache"):
+        metrics = intent_service.classifier.cache.get_metrics()
+        return {"cache_enabled": True, "metrics": metrics, "status": "operational"}
+    else:
+        return {"cache_enabled": False, "status": "not_configured"}
+
+
+@app.post("/api/admin/intent-cache-clear")
+async def clear_intent_cache(request: Request):
+    """
+    Clear the intent cache (admin only).
+
+    Removes all cached intent classifications and resets metrics.
+    CORE-GREAT-4B Phase 3: Intent Caching
+    """
+    # Get IntentService from app state
+    intent_service = getattr(request.app.state, "intent_service", None)
+
+    if intent_service and hasattr(intent_service.classifier, "cache"):
+        intent_service.classifier.cache.clear()
+        return {"status": "cache_cleared", "message": "Intent cache cleared successfully"}
+    else:
+        return {"status": "cache_not_configured", "message": "Intent cache not available"}
+
+
 if __name__ == "__main__":
     import uvicorn
 

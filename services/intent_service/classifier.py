@@ -23,6 +23,9 @@ from services.api.errors import (
 from services.api.serializers import intent_to_dict
 from services.domain.models import Intent, IntentCategory
 
+# GREAT-4B Phase 3: Intent caching
+from services.intent_service.cache import IntentCache
+
 # --- Add fuzzy matcher import ---
 from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_match
 from services.intent_service.pre_classifier import PreClassifier
@@ -44,6 +47,9 @@ class IntentClassifier:
             "product_context",  # Specific product details
             "task_context",  # Current task specifics
         ]
+        # GREAT-4B Phase 3: Initialize cache with 1-hour TTL
+        self.cache = IntentCache(ttl=3600)
+        logger.info("IntentCache integrated with classifier", ttl_seconds=3600)
 
     async def classify(
         self,
@@ -51,7 +57,49 @@ class IntentClassifier:
         context: Optional[Dict] = None,
         session: Optional[Any] = None,
         spatial_context: Optional[Dict] = None,
+        use_cache: bool = True,
     ) -> Intent:
+        """
+        Classify user intent with optional caching.
+
+        Args:
+            message: User input text
+            context: Optional context dict
+            session: Optional session object
+            spatial_context: Optional spatial context
+            use_cache: Whether to use cache (default True). Caching only applies
+                      to simple message-only classifications without context.
+
+        Returns:
+            Intent object with classification results
+        """
+        # GREAT-4B Phase 3: Check cache for simple message-only queries
+        # Only cache when no context/session/spatial_context (to keep cache simple)
+        cache_eligible = use_cache and not context and not session and not spatial_context
+
+        if cache_eligible:
+            # Try cache first
+            cached_result = self.cache.get(message)
+            if cached_result is not None:
+                logger.info(
+                    "intent_from_cache",
+                    message_preview=message[:50],
+                    action=cached_result.get("action"),
+                )
+                # Reconstruct Intent object from cached dict
+                intent_obj = Intent(
+                    category=IntentCategory(cached_result["category"]),
+                    action=cached_result["action"],
+                    confidence=cached_result.get("confidence", 1.0),
+                    context=cached_result.get("context", {}),
+                )
+                # Add optional attributes if they exist
+                if "entities" in cached_result:
+                    intent_obj.entities = cached_result["entities"]
+                if "learning_signals" in cached_result:
+                    intent_obj.learning_signals = cached_result["learning_signals"]
+                return intent_obj
+
         # Stage 1: Pre-classification
         pre_intent = PreClassifier.pre_classify(message)
         if pre_intent:
@@ -62,6 +110,20 @@ class IntentClassifier:
                 message_length=len(message),
                 message_preview=message[:50],
             )  # First 50 chars for debugging
+
+            # GREAT-4B Phase 3: Cache pre-classifier results too
+            if cache_eligible:
+                cache_data = {
+                    "category": pre_intent.category.value,
+                    "action": pre_intent.action,
+                    "confidence": pre_intent.confidence,
+                    "context": pre_intent.context or {},
+                    "entities": getattr(pre_intent, "entities", {}),
+                    "learning_signals": getattr(pre_intent, "learning_signals", []),
+                }
+                self.cache.set(message, cache_data)
+                logger.debug("intent_cached_preclassifier", message_preview=message[:50])
+
             return pre_intent
 
         # Stage 2: LLM classification
@@ -164,6 +226,19 @@ class IntentClassifier:
                 message_length=len(message),
                 confidence=intent.confidence,
             )
+
+            # GREAT-4B Phase 3: Cache the result if cache-eligible
+            if cache_eligible:
+                cache_data = {
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "context": intent.context or {},
+                    "entities": getattr(intent, "entities", {}),
+                    "learning_signals": getattr(intent, "learning_signals", []),
+                }
+                self.cache.set(message, cache_data)
+                logger.debug("intent_cached", message_preview=message[:50])
 
             return intent
 
