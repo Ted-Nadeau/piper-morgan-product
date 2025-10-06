@@ -12,6 +12,7 @@ import structlog
 from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.models import Intent, IntentCategory
 from services.shared_types import IntentCategory as IntentCategoryEnum
+from services.user_context_service import user_context_service
 
 logger = structlog.get_logger()
 
@@ -373,78 +374,86 @@ This directly supports your strategic goal of transforming Piper Morgan into a s
         current_time = datetime.now()
         current_hour = current_time.hour
 
-        # Load current context from PIPER.md
-        config = self.config_loader.load_config()
+        # Get user-specific context (GREAT-4C Phase 0: Multi-user support)
+        user_context = await user_context_service.get_user_context(session_id)
 
-        # Time-based guidance with VA/Kind context
+        # Time-based guidance using user's organization/projects
         if 6 <= current_hour < 9:
-            if config and "VA" in str(config.values()):
-                focus = "Morning development work - perfect time for deep focus on VA Q4 onramp implementation and DRAGONS team coordination."
-            else:
-                focus = "Morning development work - perfect time for deep focus on MCP integration and UX improvements."
-        elif 9 <= current_hour < 14:
-            if config and "VA" in str(config.values()):
-                focus = "Collaboration time - coordinate with Kind Systems team on VA decision review system implementation."
-            else:
-                focus = "Collaboration and implementation time - continue with PIPER.md system integration."
-        elif 14 <= current_hour < 17:
-            if config and "VA" in str(config.values()):
-                focus = "VA project execution - work on Q4 onramp questionnaire and form maintenance tasks."
+            if user_context.organization:
+                focus = f"Morning development work - perfect time for deep focus on {user_context.organization} implementation and coordination."
             else:
                 focus = (
-                    "UX enhancement work - test the canonical queries and document improvements."
+                    "Morning development work - perfect time for deep focus on your key projects."
                 )
+        elif 9 <= current_hour < 14:
+            if user_context.organization:
+                focus = f"Collaboration time - coordinate with your team on {user_context.organization} implementation."
+            else:
+                focus = "Collaboration and implementation time - continue with your key priorities."
+        elif 14 <= current_hour < 17:
+            if user_context.projects:
+                top_project = user_context.projects[0]
+                focus = f"Project execution - work on {top_project} tasks."
+            else:
+                focus = "Execution time - work on your current tasks and deliverables."
         elif 17 <= current_hour < 18:
             focus = "Documentation and handoff preparation - wrap up today's work and prepare for tomorrow."
         else:
             focus = "Flexible time - consider strategic planning or methodology refinement."
 
-        # Build message with VA/Kind context if available
-        if config and ("VA" in str(config.values()) or "Kind" in str(config.values())):
+        # Build message with user's context
+        if user_context.organization or user_context.priorities:
+            # Use user's actual priorities
+            priority_text = (
+                user_context.priorities[0] if user_context.priorities else "your key priorities"
+            )
+            org_text = user_context.organization if user_context.organization else "your projects"
+
             message = f"""Based on your current priorities and the time of day:
 
 **Right Now**: {focus}
 
-**Today's Key Focus**: VA Q4 Onramp system implementation with DRAGONS team coordination (70% allocation)
+**Today's Key Focus**: {priority_text}
 
-**This Week**: VA decision review system development and Kind Systems collaboration
+**This Week**: Continue work on {org_text}
 
-**Strategic Direction**: Deliver production-ready VA onramp system for Q4 2025 while maintaining Piper Morgan AI development (25%) and other projects (5%)."""
+**Strategic Direction**: Deliver on your priorities while maintaining progress across all projects."""
 
-            # Load timezone from configuration
-            from services.configuration.piper_config_loader import piper_config_loader
-
-            standup_config = piper_config_loader.load_standup_config()
-            timezone = standup_config["timing"]["timezone"]
-            timezone_short = timezone.split("/")[-1].replace("_", " ")
-
-            guidance_context = {
-                "immediate_focus": focus,
-                "daily_goal": "VA Q4 Onramp system implementation",
-                "weekly_focus": "VA decision reviews and Kind Systems collaboration",
-                "strategic_direction": "VA Q4 onramp delivery",
-                "allocation": "70% VA, 25% Piper, 5% Other",
-                "time_context": f"{current_hour}:00 {timezone_short}",
-            }
+            daily_goal = priority_text
+            weekly_focus = f"Continue work on {org_text}"
+            strategic_dir = (
+                "Deliver on your priorities while maintaining progress across all projects"
+            )
         else:
             # Fallback message
             message = f"""Based on your current priorities and the time of day:
 
 **Right Now**: {focus}
 
-**Today's Key Focus**: Complete the PIPER.md configuration system to improve tomorrow's 6 AM standup experience.
+**Today's Key Focus**: Work on your current priorities and deliverables.
 
-**This Week**: MCP Consumer implementation and UX enhancement
+**This Week**: Continue with your key priorities
 
-**Strategic Direction**: Transform Piper Morgan from task automation to strategic thinking partner through enhanced conversational AI."""
+**Strategic Direction**: Make steady progress on your goals while maintaining quality and focus."""
 
-            guidance_context = {
-                "immediate_focus": focus,
-                "daily_goal": "Complete PIPER.md configuration system",
-                "weekly_focus": "MCP Consumer and UX enhancement",
-                "strategic_direction": "Transform to strategic thinking partner",
-                "time_context": f"{current_hour}:00 {timezone_short}",
-            }
+            daily_goal = "Work on your current priorities"
+            weekly_focus = "Continue with your key priorities"
+            strategic_dir = "Make steady progress on your goals"
+
+        # Load timezone from configuration (same for all users)
+        from services.configuration.piper_config_loader import piper_config_loader
+
+        standup_config = piper_config_loader.load_standup_config()
+        timezone = standup_config["timing"]["timezone"]
+        timezone_short = timezone.split("/")[-1].replace("_", " ")
+
+        guidance_context = {
+            "immediate_focus": focus,
+            "daily_goal": daily_goal,
+            "weekly_focus": weekly_focus,
+            "strategic_direction": strategic_dir,
+            "time_context": f"{current_hour}:00 {timezone_short}",
+        }
 
         return {
             "message": message,
