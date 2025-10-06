@@ -1,4 +1,5 @@
 <!-- LOGO: Updated to correct location -->
+<!-- Testing GitHub Pages rebuild after broken image reference fix - October 5, 2025 3:59 PM -->
 ![Piper Morgan Logo](assets/images/pm-logo.png)
 
 # Piper Morgan - AI Product Management Assistant
@@ -73,7 +74,7 @@ python main.py
 
 ## 🎯 Choose Your Path
 
-**🚀 New to Piper?** Start with our [15-minute getting started guide](user-guides/getting-started-conversational-ai.md)
+**🚀 New to Piper?** Start with our [15-minute getting started guide](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)
 
 **👥 Team Lead or PM?** See [key capabilities](#-key-features) and [performance metrics](#-performance-metrics)
 
@@ -85,7 +86,7 @@ python main.py
 
 For daily standup routine:
 
-- **[Mac Dock Integration](./setup/mac-dock-integration.md)** - Add Piper to your dock
+- **[Mac Dock Integration](public/getting-started/setup/mac-dock-integration.md)** - Add Piper to your dock
 - **Start Script**: `./start-piper.sh` - One-command startup with health checks
 - **Requirements**: Docker Desktop running
 
@@ -115,7 +116,7 @@ python main.py standup
 - **Cross-Feature Learning**: Issue patterns enhance morning standups
 - **Real-time GitHub Data**: Live API integration with your repositories
 
-[📖 Full CLI Documentation](user-guides/cli-commands.md) | [📊 Issue Intelligence Features](features/issue-intelligence.md)
+[📖 Full CLI Documentation](public/user-guides/legacy-user-guides/cli-commands.md) | [📊 Issue Intelligence Features](public/user-guides/features/issue-intelligence.md)
 
 ## 🌅 Morning Standup Web Interface
 
@@ -149,33 +150,33 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 - 📁 **Project context** and repository information
 - 🔄 **Multi-user support** with personalized configurations
 
-[📖 Technical Documentation](features/morning-standup-web.md) | [📋 User Guide](features/morning-standup-ui-guide.md)
+[📖 Technical Documentation](public/user-guides/features/morning-standup-web.md) | [📋 User Guide](public/user-guides/features/morning-standup-ui-guide.md)
 
 ## 📚 Complete Documentation
 
 ### 🎯 User Guides
 
-- **[🚀 Getting Started](user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
-- **[⌨️ CLI Commands](user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
-- **[🎯 Understanding References](user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
-- **[🧠 Conversation Memory](user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
-- **[🔄 Upgrading from Commands](user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
-- **[📖 Real Examples](user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
+- **[🚀 Getting Started](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
+- **[⌨️ CLI Commands](public/user-guides/legacy-user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
+- **[🎯 Understanding References](public/user-guides/legacy-user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
+- **[🧠 Conversation Memory](public/user-guides/legacy-user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
+- **[🔄 Upgrading from Commands](public/user-guides/legacy-user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
+- **[📖 Real Examples](public/user-guides/legacy-user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
 
 ### 🔧 Developer Resources
 
 - **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
-- **[🔌 API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
-- **[⚡ Developer Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
-- **[🌿 Branch Management](development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
-- **[🧪 Test Guide](development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
+- **[🔌 API Documentation](internal/development/tools/implementation-guides/PM-034-implementation-guide.md)** - Complete endpoint reference
+- **[⚡ Developer Quick Start](internal/development/tools/implementation-guides/PM-034-implementation-guide.md)** - 15-minute setup guide
+- **[🌿 Branch Management](internal/development/tools/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
+- **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
 
 ### 🏗️ Architecture & Design Documentation
 
-#### **[Architecture Patterns](patterns/README.md)** - Implementation Patterns Library
+#### **[Architecture Patterns](internal/architecture/current/patterns/README.md)** - Implementation Patterns Library
 *30 proven patterns* organized by functional category: Infrastructure & Architecture (001-010), Context & Session Management (011-017), Integration & Adapters (018-022), Query & Data Patterns (023-027), and AI & Orchestration (028-030). Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
 
-#### **[Architectural Decision Records](architecture/adr/adr-index.md)** - Decision History & Rationale
+#### **[Architectural Decision Records](internal/architecture/current/adrs/adr-index.md)** - Decision History & Rationale
 *34 architectural decisions* documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
 
 ## 🧪 Testing & Quality Assurance
@@ -205,7 +206,7 @@ git push      # Runs fast tests via pre-push hook
 
 **Excellence Flywheel Integration**: All testing follows Verification First → Implementation → Evidence-based progress → GitHub tracking methodology.
 
-See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
+See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md)** for complete documentation.
 
 ## 🚀 Recent Infrastructure Activations
 
@@ -246,7 +247,7 @@ See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 ### 🔄 Multi-Agent Coordination (August 20, 2025)
 - **Operational Deployment**: Complete implementation plan ready ([Issue PM-118](https://github.com/mediajunkie/piper-morgan-product/issues/118))
 - **Automation Scripts**: Deployment and validation scripts created
-- **Quick Start**: [5-minute deployment guide](development/MULTI_AGENT_QUICK_START.md) available
+- **Quick Start**: [5-minute deployment guide](internal/development/methodology-core/MULTI_AGENT_QUICK_START.md) available
 - **Integration**: REST API design for coordination triggers
 
 ### 💾 Persistent Context Foundation (August 20, 2025)
