@@ -1,7 +1,7 @@
 # Intent Classification Developer Guide
 
-**Last Updated**: October 5, 2025  
-**Status**: Production Ready  
+**Last Updated**: October 5, 2025
+**Status**: Production Ready
 **Epic**: GREAT-4B - Universal Intent Enforcement
 
 ---
@@ -18,9 +18,9 @@ This guide explains when and how to use intent classification in Piper Morgan. A
 
 Intent classification **MUST** be used for:
 
-✅ **User text messages** - Slack, chat, conversational UI  
-✅ **Free-text queries** - Unstructured user input  
-✅ **Ambiguous requests** - Need interpretation  
+✅ **User text messages** - Slack, chat, conversational UI
+✅ **Free-text queries** - Unstructured user input
+✅ **Ambiguous requests** - Need interpretation
 ✅ **Natural language commands** - "What's my schedule?", "Create an issue"
 
 ### Not Required (Exempt)

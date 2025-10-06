@@ -9,8 +9,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from services.user_context_service import user_context_service
 from services.configuration.piper_config_loader import piper_config_loader
+from services.user_context_service import user_context_service
 
 
 async def test_cache_performance():
@@ -160,7 +160,9 @@ async def test_cache_performance():
 
     print(f"\n**Two-Layer Caching Architecture**:")
     print(f"  1. File-level (PiperConfigLoader): {config_metrics['hit_rate_percent']}% hit rate")
-    print(f"  2. Session-level (UserContextService): {context_metrics['hit_rate_percent']}% hit rate")
+    print(
+        f"  2. Session-level (UserContextService): {context_metrics['hit_rate_percent']}% hit rate"
+    )
 
     overall_success = (
         config_metrics["hit_rate_percent"] >= 60 and context_metrics["hit_rate_percent"] >= 50

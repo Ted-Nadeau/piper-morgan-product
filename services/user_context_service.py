@@ -42,12 +42,16 @@ class UserContextService:
         # Check cache first
         if session_id in self.cache:
             self.cache_hits += 1  # GREAT-4C Phase 3: Track cache hit
-            logger.debug("user_context_cache_hit", session_id=session_id, cache_hits=self.cache_hits)
+            logger.debug(
+                "user_context_cache_hit", session_id=session_id, cache_hits=self.cache_hits
+            )
             return self.cache[session_id]
 
         # Cache miss - load from session/database
         self.cache_misses += 1  # GREAT-4C Phase 3: Track cache miss
-        logger.debug("user_context_cache_miss", session_id=session_id, cache_misses=self.cache_misses)
+        logger.debug(
+            "user_context_cache_miss", session_id=session_id, cache_misses=self.cache_misses
+        )
 
         # Load from PIPER.md based on session
         context = await self._load_context_from_config(session_id)
@@ -186,7 +190,9 @@ class UserContextService:
             "total_requests": total,
             "hit_rate_percent": round(hit_rate, 2),
             "cache_size": len(self.cache),
-            "cached_sessions": list(self.cache.keys()) if len(self.cache) <= 10 else f"{len(self.cache)} sessions",
+            "cached_sessions": (
+                list(self.cache.keys()) if len(self.cache) <= 10 else f"{len(self.cache)} sessions"
+            ),
         }
 
     def clear_metrics(self):

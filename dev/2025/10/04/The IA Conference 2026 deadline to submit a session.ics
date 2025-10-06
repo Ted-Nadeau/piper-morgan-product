@@ -1,0 +1,24 @@
+BEGIN:VCALENDAR
+PRODID:-//github.com/ical-org/ical.net//NONSGML ical.net 4.0//EN
+VERSION:2.0
+BEGIN:VEVENT
+CREATED:20251005T001308Z
+DESCRIPTION:This is a reminder to submit a session to The IA Conference 20
+ 26.\nSet the alarm/notification to ensure you don't miss it!\nSessions ca
+ n be submitted at https://sessionize.com/IAC26/
+DTEND:20251006T035900Z
+DTSTAMP:20251005T001308Z
+DTSTART:20251006T035900Z
+LAST-MODIFIED:20251005T001308Z
+LOCATION:https://sessionize.com/IAC26
+SEQUENCE:0
+SUMMARY:The IA Conference 2026: deadline to submit a session
+UID:2aca12a3-7a64-4ada-ab8b-f52e93fed1dd
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Reminder
+SUMMARY:The IA Conference 2026: deadline to submit a session
+TRIGGER:-P2D
+END:VALARM
+END:VEVENT
+END:VCALENDAR
