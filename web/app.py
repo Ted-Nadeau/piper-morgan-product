@@ -572,6 +572,82 @@ async def clear_intent_cache(request: Request):
         return {"status": "cache_not_configured", "message": "Intent cache not available"}
 
 
+@app.get("/api/admin/piper-config-cache-metrics")
+async def piper_config_cache_metrics():
+    """
+    PIPER.md config cache performance metrics endpoint.
+
+    Returns cache hit rate, age, and performance statistics for PIPER configuration caching.
+    GREAT-4C Phase 3: PIPER Config Caching
+    """
+    from services.configuration.piper_config_loader import piper_config_loader
+
+    metrics = piper_config_loader.get_cache_metrics()
+    return {"cache_enabled": True, "metrics": metrics, "status": "operational"}
+
+
+@app.post("/api/admin/piper-config-cache-clear")
+async def clear_piper_config_cache():
+    """
+    Clear the PIPER.md config cache (admin only).
+
+    Forces next PIPER.md load to read from disk.
+    GREAT-4C Phase 3: PIPER Config Caching
+    """
+    from services.configuration.piper_config_loader import piper_config_loader
+
+    piper_config_loader.clear_cache()
+    return {"status": "cache_cleared", "message": "PIPER config cache cleared successfully"}
+
+
+@app.get("/api/admin/user-context-cache-metrics")
+async def user_context_cache_metrics():
+    """
+    User context cache performance metrics endpoint.
+
+    Returns cache hit rate and session-level cache statistics.
+    GREAT-4C Phase 3: PIPER Config Caching
+    """
+    from services.user_context_service import user_context_service
+
+    metrics = user_context_service.get_cache_metrics()
+    return {"cache_enabled": True, "metrics": metrics, "status": "operational"}
+
+
+@app.post("/api/admin/user-context-cache-clear")
+async def clear_user_context_cache():
+    """
+    Clear the user context cache (admin only).
+
+    Removes all cached user contexts. Next request will reload from PIPER.md.
+    GREAT-4C Phase 3: PIPER Config Caching
+    """
+    from services.user_context_service import user_context_service
+
+    user_context_service.invalidate_cache()  # No session_id = clear all
+    return {"status": "cache_cleared", "message": "User context cache cleared successfully"}
+
+
+@app.post("/api/admin/user-context-cache-invalidate/{session_id}")
+async def invalidate_user_context(session_id: str):
+    """
+    Invalidate specific user's cached context (admin only).
+
+    Args:
+        session_id: Session identifier to invalidate
+
+    GREAT-4C Phase 3: PIPER Config Caching
+    """
+    from services.user_context_service import user_context_service
+
+    user_context_service.invalidate_cache(session_id)
+    return {
+        "status": "invalidated",
+        "session_id": session_id,
+        "message": f"User context for session {session_id} invalidated",
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 

@@ -74,9 +74,26 @@ class CanonicalHandlers:
             }
 
     async def _handle_identity_query(self, intent: Intent, session_id: str) -> Dict:
-        """Handle 'What's your name and role?' queries"""
+        """
+        Handle 'What's your name and role?' queries with spatial awareness.
+
+        GREAT-4C Phase 1: Minimal spatial intelligence (identity is fixed).
+        """
+        # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Adjust response detail based on spatial pattern
+        if spatial_pattern == "GRANULAR":
+            message = self._format_detailed_identity()
+        elif spatial_pattern == "EMBEDDED":
+            message = self._format_consolidated_identity()
+        else:
+            message = self._format_standard_identity()
+
         return {
-            "message": "I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as your intelligent PM partner!",
+            "message": message,
             "intent": {
                 "category": IntentCategoryEnum.IDENTITY.value,
                 "action": "provide_identity",
@@ -91,21 +108,60 @@ class CanonicalHandlers:
                     ],
                 },
             },
+            "spatial_pattern": spatial_pattern,
             "requires_clarification": False,
         }
 
+    def _format_detailed_identity(self) -> str:
+        """GRANULAR: Full identity with comprehensive capabilities."""
+        details = ["I'm **Piper Morgan**, your AI Product Management assistant.\n"]
+        details.append("**Core Capabilities**:")
+        details.append("  - Development coordination and team synchronization")
+        details.append("  - Issue tracking and GitHub integration")
+        details.append("  - Strategic planning and roadmap management")
+        details.append("  - Calendar integration for meeting coordination")
+        details.append("  - Notion integration for documentation management")
+        details.append("  - Slack integration for team communication\n")
+        details.append("**Role**: I serve as your intelligent PM partner, helping you stay")
+        details.append("organized, focused, and productive across all your development work.")
+        return "\n".join(details)
+
+    def _format_consolidated_identity(self) -> str:
+        """EMBEDDED: Brief identity for embedded context."""
+        return "Piper Morgan, AI PM Assistant"
+
+    def _format_standard_identity(self) -> str:
+        """DEFAULT: Moderate detail for standard identity queries."""
+        return "I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as your intelligent PM partner!"
+
     async def _handle_temporal_query(self, intent: Intent, session_id: str) -> Dict:
-        """Handle 'What day is it?' and time-related queries with real calendar data"""
+        """
+        Handle 'What day is it?' and time-related queries with spatial awareness.
+
+        GREAT-4C Phase 1: Adds spatial intelligence for calendar detail level.
+        """
         from services.configuration.piper_config_loader import piper_config_loader
+
+        # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
 
         current_date = datetime.now().strftime("%A, %B %d, %Y")
         # Load timezone from configuration
         standup_config = piper_config_loader.load_standup_config()
         timezone = standup_config["timing"]["timezone"]
-        timezone_short = timezone.split("/")[-1].replace("_", " ")  # Convert to readable format
+        timezone_short = timezone.split("/")[-1].replace("_", " ")
         current_time = datetime.now().strftime(f"%I:%M %p {timezone_short}")
 
-        message = f"Today is {current_date} at {current_time}."
+        # Base message
+        if spatial_pattern == "EMBEDDED":
+            # Brief: Just date/time
+            message = f"{current_date}"
+        else:
+            # Standard/Granular: Include time
+            message = f"Today is {current_date} at {current_time}."
+
         calendar_context = {}
 
         # Enhanced: Get real calendar data from CalendarIntegrationRouter
@@ -117,57 +173,78 @@ class CanonicalHandlers:
             calendar_adapter = CalendarIntegrationRouter()
             temporal_summary = await calendar_adapter.get_temporal_summary()
 
-            # Add current meeting awareness
-            if temporal_summary.get("current_meeting"):
-                current_meeting = temporal_summary["current_meeting"]
-                message += f" You're currently in: {current_meeting.get('title', 'a meeting')}"
-                calendar_context["current_meeting"] = current_meeting.get("title", "Meeting")
+            # Adjust calendar detail based on spatial pattern
+            if spatial_pattern == "EMBEDDED":
+                # EMBEDDED: Minimal - just current/next meeting
+                if temporal_summary.get("current_meeting"):
+                    current_meeting = temporal_summary["current_meeting"]
+                    message += f" (in meeting)"
+                    calendar_context["current_meeting"] = current_meeting.get("title", "Meeting")
+                elif temporal_summary.get("next_meeting"):
+                    next_meeting = temporal_summary["next_meeting"]
+                    message += f" (next: {next_meeting.get('start_time', 'TBD')})"
+                    calendar_context["next_meeting"] = {"time": next_meeting.get("start_time", "TBD")}
 
-            # Add next meeting information
-            elif temporal_summary.get("next_meeting"):
-                next_meeting = temporal_summary["next_meeting"]
-                message += f" Your next meeting is: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}"
-                calendar_context["next_meeting"] = {
-                    "title": next_meeting.get("title", "Meeting"),
-                    "time": next_meeting.get("start_time", "TBD"),
-                }
+            elif spatial_pattern == "GRANULAR":
+                # GRANULAR: Comprehensive calendar breakdown
+                if temporal_summary.get("current_meeting"):
+                    current_meeting = temporal_summary["current_meeting"]
+                    message += f"\n\n**Current Meeting**: {current_meeting.get('title', 'Meeting')}"
+                    message += f"\n- Duration: {current_meeting.get('duration', 'Unknown')}"
+                    calendar_context["current_meeting"] = current_meeting.get("title", "Meeting")
 
-            # Add focus time availability
-            free_blocks = temporal_summary.get("free_blocks", [])
-            if free_blocks:
-                longest_block = max(free_blocks, key=lambda x: x.get("duration_minutes", 0))
-                if longest_block.get("duration_minutes", 0) >= 60:
-                    message += f" You have {longest_block.get('duration_minutes', 0)} minutes free starting at {longest_block.get('start', 'now')} for focused work."
-                    calendar_context["focus_time"] = {
-                        "duration": longest_block.get("duration_minutes", 0),
-                        "start": longest_block.get("start", "now"),
+                if temporal_summary.get("next_meeting"):
+                    next_meeting = temporal_summary["next_meeting"]
+                    message += f"\n\n**Next Meeting**: {next_meeting.get('title', 'Meeting')}"
+                    message += f"\n- Time: {next_meeting.get('start_time', 'TBD')}"
+                    calendar_context["next_meeting"] = {
+                        "title": next_meeting.get("title", "Meeting"),
+                        "time": next_meeting.get("start_time", "TBD"),
                     }
 
-            # Add meeting load context
-            stats = temporal_summary.get("stats", {})
-            if stats.get("total_meetings_today", 0) > 0:
-                meeting_count = stats["total_meetings_today"]
-                meeting_hours = stats.get("total_meeting_time_minutes", 0) / 60
-                if meeting_hours > 4:
-                    message += (
-                        f" (Heavy meeting day: {meeting_count} meetings, {meeting_hours:.1f} hours)"
-                    )
-                else:
-                    message += f" ({meeting_count} meetings scheduled today)"
+                free_blocks = temporal_summary.get("free_blocks", [])
+                if free_blocks:
+                    message += f"\n\n**Focus Time Available**: {len(free_blocks)} blocks"
+                    for block in free_blocks[:3]:  # Top 3
+                        message += f"\n- {block.get('duration_minutes', 0)} min at {block.get('start', 'TBD')}"
 
-                calendar_context["meeting_load"] = {"count": meeting_count, "hours": meeting_hours}
+                stats = temporal_summary.get("stats", {})
+                if stats.get("total_meetings_today", 0) > 0:
+                    meeting_count = stats["total_meetings_today"]
+                    meeting_hours = stats.get("total_meeting_time_minutes", 0) / 60
+                    message += f"\n\n**Meeting Load**: {meeting_count} meetings ({meeting_hours:.1f} hours)"
+                    calendar_context["meeting_load"] = {"count": meeting_count, "hours": meeting_hours}
+
             else:
-                message += " (No meetings scheduled - great day for deep work!)"
-                calendar_context["calendar_status"] = "free_day"
+                # DEFAULT: Standard detail
+                if temporal_summary.get("current_meeting"):
+                    current_meeting = temporal_summary["current_meeting"]
+                    message += f" You're currently in: {current_meeting.get('title', 'a meeting')}"
+                    calendar_context["current_meeting"] = current_meeting.get("title", "Meeting")
+                elif temporal_summary.get("next_meeting"):
+                    next_meeting = temporal_summary["next_meeting"]
+                    message += f" Your next meeting is: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}"
+                    calendar_context["next_meeting"] = {
+                        "title": next_meeting.get("title", "Meeting"),
+                        "time": next_meeting.get("start_time", "TBD"),
+                    }
+
+                stats = temporal_summary.get("stats", {})
+                if stats.get("total_meetings_today", 0) > 0:
+                    meeting_count = stats["total_meetings_today"]
+                    message += f" ({meeting_count} meetings scheduled today)"
+                    calendar_context["meeting_load"] = {"count": meeting_count}
+                else:
+                    message += " (No meetings - great day for deep work!)"
+                    calendar_context["calendar_status"] = "free_day"
 
         except Exception as e:
-            # Graceful fallback to PIPER.md context
-            context_prompt = self.config_loader.get_system_prompt()
-            if "Key Dates" in context_prompt or "Calendar" in context_prompt:
-                message += " Based on your calendar patterns, this is a development focus day."
-                calendar_context["fallback"] = "piper_config"
-            else:
-                calendar_context["calendar_service"] = "unavailable"
+            # Calendar unavailable - log but continue with helpful message
+            logger.warning(f"Calendar service unavailable: {e}")
+            if spatial_pattern != "EMBEDDED":
+                message += "\n\nNote: I couldn't access your calendar right now. The calendar service may be unavailable."
+            calendar_context["calendar_service"] = "unavailable"
+            calendar_context["fallback_used"] = True
 
         return {
             "message": message,
@@ -182,104 +259,72 @@ class CanonicalHandlers:
                     "calendar_context": calendar_context,
                 },
             },
+            "spatial_pattern": spatial_pattern,
             "requires_clarification": False,
         }
 
     async def _handle_status_query(self, intent: Intent, session_id: str) -> Dict:
-        """Handle 'What am I working on?' queries"""
-        # Load current context from PIPER.md
-        config = self.config_loader.load_config()
+        """
+        Handle 'What am I working on?' queries with spatial awareness.
 
-        # Handle emoji prefixes in PIPER.md section headers
-        project_portfolio_key = None
-        for key in config.keys() if config else []:
-            if "Project Portfolio" in key:
-                project_portfolio_key = key
-                break
-
-        if config and project_portfolio_key:
-            # Extract project information from PIPER.md
-            portfolio_section = config[project_portfolio_key]
-
-            # Build message from actual PIPER.md content
-            message = "Based on your current project portfolio:\n\n"
-
-            # Look for VA/Decision Reviews mention
-            if (
-                "VA/Decision Reviews" in portfolio_section
-                or "Decision Reviews" in portfolio_section
-            ):
-                message += "**VA/Decision Reviews Q4 Onramp (70%)** - Primary project and strategic priority\n"
-                message += "- Status: Active development and implementation\n"
-                message += "- Focus: VA decision review system onramp for Q4 2025\n"
-                message += "- Company Context: Kind Systems company initiative\n"
-                message += "- Team Context: DRAGONS team collaboration\n\n"
-
-            # Add Piper Morgan project
-            if "Piper Morgan" in portfolio_section:
-                message += "**Piper Morgan AI Assistant (25%)** - Secondary project and AI development focus\n"
-                message += "- Status: Production-ready MCP Consumer with real GitHub integration\n"
-                message += "- Current Phase: UX enhancement and conversational AI improvement\n"
-                message += (
-                    "- Key Achievements: Enhanced standup experience with PIPER.md context\n\n"
-                )
-
-            # Add other projects
-            if "OneJob" in portfolio_section or "Other" in portfolio_section:
-                message += (
-                    "**OneJob/Content/Other (5%)** - Tertiary projects and knowledge management\n"
-                )
-                message += "- Status: Ongoing maintenance and development\n"
-                message += (
-                    "- Focus: Core functionality, technical writing, pattern documentation\n\n"
-                )
-
-            # Add current focus from PIPER.md
-            current_focus_key = None
-            for key in config.keys():
-                if "Current Focus" in key:
-                    current_focus_key = key
-                    break
-
-            if current_focus_key:
-                focus_section = config[current_focus_key]
-                if "VA Q4 Onramp" in focus_section:
-                    message += (
-                        "Your current focus this week is VA Q4 Onramp implementation and delivery."
-                    )
-                else:
-                    message += (
-                        "Your current focus this week is system implementation and UX enhancement."
-                    )
-
-            project_context = {
-                "primary_project": "VA/Decision Reviews (70%)",
-                "secondary_projects": ["Piper Morgan AI (25%)", "OneJob/Other (5%)"],
-                "current_phase": "Q4 onramp implementation",
-                "status": "Active development with DRAGONS team",
+        GREAT-4C Phase 1: Adds spatial intelligence for response granularity.
+        GREAT-4C Phase 2: Adds error handling for missing configuration.
+        """
+        # Try to get user context with error handling
+        try:
+            user_context = await user_context_service.get_user_context(session_id)
+        except Exception as e:
+            logger.error(f"Failed to load user context: {e}")
+            return {
+                "message": "I'm having trouble accessing your configuration right now. "
+                           "Your PIPER.md file may be missing or unreadable. "
+                           "Would you like help setting it up?",
+                "error": "config_unavailable",
+                "action_required": "setup_piper_config",
+                "intent": {
+                    "category": IntentCategoryEnum.STATUS.value,
+                    "action": "provide_status",
+                    "confidence": 1.0
+                }
             }
 
+        # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
+        spatial_pattern = None
+        if hasattr(intent, 'spatial_context') and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get('pattern')
+
+        # Get projects from user context
+        projects = user_context.projects
+
+        # Check if we have project data
+        if not projects:
+            return {
+                "message": "You don't have any active projects configured in your PIPER.md yet. "
+                           "Would you like me to help you set up your project portfolio?",
+                "action_required": "configure_projects",
+                "intent": {
+                    "category": IntentCategoryEnum.STATUS.value,
+                    "action": "provide_status",
+                    "confidence": 1.0
+                }
+            }
+
+        # Adjust response detail based on spatial pattern
+        if spatial_pattern == "GRANULAR":
+            # Detailed status with full project breakdown
+            message = self._format_detailed_status(projects, user_context)
+        elif spatial_pattern == "EMBEDDED":
+            # Brief consolidated status
+            message = self._format_consolidated_status(projects, user_context)
         else:
-            # Fallback if PIPER.md not available
-            message = """Based on your current project portfolio:
+            # Standard moderate detail
+            message = self._format_standard_status(projects, user_context)
 
-**Piper Morgan (60%)**: Active MCP integration phase
-- Status: Production-ready MCP Consumer completed ✅
-- Current Phase: UX enhancement and conversational AI improvement
-- Next: Enhanced standup experience with PIPER.md context
-
-**OneJob (20%)**: Secondary project in active development
-
-**Content Creation (20%)**: Technical writing and methodology documentation
-
-Your current focus this week is MCP Consumer implementation and UX enhancement."""
-
-            project_context = {
-                "primary_project": "Piper Morgan (60%)",
-                "secondary_projects": ["OneJob (20%)", "Content Creation (20%)"],
-                "current_phase": "UX enhancement",
-                "status": "MCP Consumer completed",
-            }
+        project_context = {
+            "projects": projects,
+            "spatial_pattern": spatial_pattern,
+            "organization": user_context.organization,
+        }
 
         return {
             "message": message,
@@ -289,74 +334,118 @@ Your current focus this week is MCP Consumer implementation and UX enhancement."
                 "confidence": 1.0,
                 "context": project_context,
             },
+            "spatial_pattern": spatial_pattern,
             "requires_clarification": False,
         }
 
-    async def _handle_priority_query(self, intent: Intent, session_id: str) -> Dict:
-        """Handle 'What's my top priority?' queries"""
-        # Load current context from PIPER.md
-        config = self.config_loader.load_config()
+    def _format_detailed_status(self, projects: list, user_context) -> str:
+        """GRANULAR: Full project details with comprehensive breakdown."""
+        if not projects:
+            return "No active projects configured in your PIPER.md."
 
-        # Handle emoji prefixes in PIPER.md section headers
-        priorities_key = None
-        for key in config.keys() if config else []:
-            if "Standing Priorities" in key:
-                priorities_key = key
-                break
+        details = ["Here's your detailed project status:\n"]
+        for i, project in enumerate(projects, 1):
+            details.append(f"\n**{i}. {project}**")
+            details.append(f"  - Status: Active development")
+            details.append(f"  - Organization: {user_context.organization or 'Not specified'}")
+            details.append(f"  - Next steps: Continue implementation")
 
-        if config and priorities_key:
-            priorities_section = config[priorities_key]
+        if user_context.priorities:
+            details.append(f"\n\nCurrent priorities: {', '.join(user_context.priorities[:3])}")
 
-            # Extract VA/Kind priority if mentioned
-            if "VA Q4 Onramp" in priorities_section or "Decision Reviews" in priorities_section:
-                message = """Your top priority today is **VA Q4 Onramp system implementation and delivery**.
+        return "\n".join(details)
 
-**Primary Focus**: Complete VA decision review system for Q4 2025
-**Company Context**: Kind Systems company initiative with DRAGONS team
-**Success Metrics**: System operational and validated for production use
-**Timeline**: Q4 2025 completion
+    def _format_consolidated_status(self, projects: list, user_context) -> str:
+        """EMBEDDED: Brief overview suitable for embedded context."""
+        if not projects:
+            return "No active projects."
 
-This aligns with your 70% allocation to VA/Decision Reviews work and Kind Systems collaboration priorities."""
-
-                priority_context = {
-                    "top_priority": "VA Q4 Onramp system implementation",
-                    "goal": "Complete VA decision review system for Q4 2025",
-                    "timeline": "Q4 2025 completion",
-                    "allocation": "70% of time and resources",
-                    "team_context": "Kind Systems and DRAGONS team collaboration",
-                }
-            else:
-                # Fallback to Piper Morgan priority
-                message = """Your top priority today is **Enhanced conversational context for daily standups**.
-
-Goal: Transform standup from command mode to natural conversation
-Success: At least 3/5 canonical queries working better
-Timeline: Complete by 5:00 PM today for tomorrow's improved standup
-
-This directly supports your strategic goal of transforming Piper Morgan into a strategic thinking partner."""
-
-                priority_context = {
-                    "top_priority": "Enhanced conversational context for daily standups",
-                    "goal": "Transform standup experience",
-                    "timeline": "Complete by 5:00 PM today",
-                    "success_metric": "3/5 canonical queries working better",
-                }
+        if len(projects) == 1:
+            return f"Working on: {projects[0]}"
+        elif len(projects) <= 3:
+            return f"Working on {len(projects)} projects: {', '.join(projects)}"
         else:
-            # Fallback if PIPER.md not available
-            message = """Your top priority today is **Enhanced conversational context for daily standups**.
+            return f"Working on {len(projects)} projects: {', '.join(projects[:3])} + {len(projects)-3} more"
 
-Goal: Transform standup from command mode to natural conversation
-Success: At least 3/5 canonical queries working better
-Timeline: Complete by 5:00 PM today for tomorrow's improved standup
+    def _format_standard_status(self, projects: list, user_context) -> str:
+        """DEFAULT: Moderate detail level for standard queries."""
+        if not projects:
+            return "No active projects configured in your PIPER.md. Add projects to the 'Projects' section to see them here."
 
-This directly supports your strategic goal of transforming Piper Morgan into a strategic thinking partner."""
+        summary = [f"You're working on {len(projects)} active project{'s' if len(projects) != 1 else ''}:\n"]
+        for project in projects[:5]:  # Top 5
+            summary.append(f"- {project}")
 
-            priority_context = {
-                "top_priority": "Enhanced conversational context for daily standups",
-                "goal": "Transform standup experience",
-                "timeline": "Complete by 5:00 PM today",
-                "success_metric": "3/5 canonical queries working better",
+        if len(projects) > 5:
+            summary.append(f"- ... and {len(projects) - 5} more")
+
+        if user_context.organization:
+            summary.append(f"\nOrganization: {user_context.organization}")
+
+        return "\n".join(summary)
+
+    async def _handle_priority_query(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Handle 'What's my top priority?' queries with spatial awareness.
+
+        GREAT-4C Phase 1: Adds spatial intelligence for response granularity.
+        GREAT-4C Phase 2: Adds error handling for missing configuration.
+        """
+        # Try to get user context with error handling
+        try:
+            user_context = await user_context_service.get_user_context(session_id)
+        except Exception as e:
+            logger.error(f"Failed to load user context: {e}")
+            return {
+                "message": "I'm having trouble accessing your configuration right now. "
+                           "Your PIPER.md file may be missing or unreadable. "
+                           "Would you like help setting it up?",
+                "error": "config_unavailable",
+                "action_required": "setup_piper_config",
+                "intent": {
+                    "category": IntentCategoryEnum.PRIORITY.value,
+                    "action": "provide_priority",
+                    "confidence": 1.0
+                }
             }
+
+        # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Get priorities from user context
+        priorities = user_context.priorities
+
+        # Check if we have priority data
+        if not priorities:
+            return {
+                "message": "You don't have any priorities configured in your PIPER.md yet. "
+                           "Would you like me to help you set up your priority list?",
+                "action_required": "configure_priorities",
+                "intent": {
+                    "category": IntentCategoryEnum.PRIORITY.value,
+                    "action": "provide_priority",
+                    "confidence": 1.0
+                }
+            }
+
+        # Adjust response detail based on spatial pattern
+        if spatial_pattern == "GRANULAR":
+            # Detailed priorities with breakdown
+            message = self._format_detailed_priorities(priorities, user_context)
+        elif spatial_pattern == "EMBEDDED":
+            # Brief priority statement
+            message = self._format_consolidated_priorities(priorities, user_context)
+        else:
+            # Standard moderate detail
+            message = self._format_standard_priorities(priorities, user_context)
+
+        priority_context = {
+            "priorities": priorities,
+            "spatial_pattern": spatial_pattern,
+            "organization": user_context.organization,
+        }
 
         return {
             "message": message,
@@ -366,79 +455,175 @@ This directly supports your strategic goal of transforming Piper Morgan into a s
                 "confidence": 1.0,
                 "context": priority_context,
             },
+            "spatial_pattern": spatial_pattern,
             "requires_clarification": False,
         }
 
+    def _format_detailed_priorities(self, priorities: list, user_context) -> str:
+        """GRANULAR: Detailed priority breakdown."""
+        if not priorities:
+            return "No priorities configured in your PIPER.md."
+
+        details = ["Here are your priorities in detail:\n"]
+        for i, priority in enumerate(priorities, 1):
+            details.append(f"\n**Priority {i}: {priority}**")
+            details.append(f"  - Status: Active")
+            details.append(f"  - Focus area: Implementation and delivery")
+
+        if user_context.organization:
+            details.append(f"\n\nOrganization context: {user_context.organization}")
+
+        return "\n".join(details)
+
+    def _format_consolidated_priorities(self, priorities: list, user_context) -> str:
+        """EMBEDDED: Brief priority summary."""
+        if not priorities:
+            return "No priorities set."
+
+        if len(priorities) == 1:
+            return f"Top priority: {priorities[0]}"
+        else:
+            return f"Top priority: {priorities[0]} ({len(priorities)} total)"
+
+    def _format_standard_priorities(self, priorities: list, user_context) -> str:
+        """DEFAULT: Moderate detail for priorities."""
+        if not priorities:
+            return "No priorities configured in your PIPER.md. Add priorities to the 'Priorities' section to see them here."
+
+        message = [f"Your top priority today is: **{priorities[0]}**\n"]
+
+        if len(priorities) > 1:
+            message.append("\nOther priorities:")
+            for priority in priorities[1:4]:  # Show up to 3 more
+                message.append(f"- {priority}")
+
+            if len(priorities) > 4:
+                message.append(f"- ... and {len(priorities) - 4} more")
+
+        if user_context.organization:
+            message.append(f"\n\nOrganization: {user_context.organization}")
+
+        return "\n".join(message)
+
+    def _get_immediate_focus(self, current_hour: int, user_context) -> str:
+        """Get time-based immediate focus suggestion with fallback for missing context."""
+        if 6 <= current_hour < 9:
+            if user_context and user_context.organization:
+                return f"Morning development work - perfect time for deep focus on {user_context.organization} implementation and coordination."
+            else:
+                return "Morning development work - perfect time for deep focus and complex problem-solving."
+        elif 9 <= current_hour < 14:
+            if user_context and user_context.organization:
+                return f"Collaboration time - coordinate with your team on {user_context.organization} implementation."
+            else:
+                return "Collaboration time - good for meetings and team coordination."
+        elif 14 <= current_hour < 17:
+            if user_context and user_context.projects:
+                top_project = user_context.projects[0]
+                return f"Project execution - work on {top_project} tasks."
+            else:
+                return "Execution time - work on your current tasks and deliverables."
+        elif 17 <= current_hour < 18:
+            return "Documentation and handoff preparation - wrap up today's work and prepare for tomorrow."
+        else:
+            return "Flexible time - consider strategic planning or methodology refinement."
+
+    def _format_detailed_guidance(self, current_hour: int, user_context) -> str:
+        """GRANULAR: Comprehensive guidance with all timeframes and context."""
+        focus = self._get_immediate_focus(current_hour, user_context)
+        priority_text = (
+            user_context.priorities[0] if user_context and user_context.priorities else "your key priorities"
+        )
+        org_text = user_context.organization if user_context and user_context.organization else "your projects"
+
+        details = ["Here's comprehensive guidance for your focus:\n"]
+        details.append(f"**Immediate Focus (Right Now)**:")
+        details.append(f"  {focus}\n")
+
+        details.append(f"**Today's Key Focus**:")
+        details.append(f"  - Primary priority: {priority_text}")
+        if user_context and user_context.priorities and len(user_context.priorities) > 1:
+            details.append(f"  - Secondary priorities:")
+            for priority in user_context.priorities[1:3]:
+                details.append(f"    • {priority}")
+
+        details.append(f"\n**This Week**:")
+        details.append(f"  - Continue work on {org_text}")
+        if user_context.projects:
+            details.append(f"  - Active projects:")
+            for project in user_context.projects[:3]:
+                details.append(f"    • {project}")
+
+        details.append(f"\n**Strategic Direction**:")
+        details.append(f"  - Deliver on your priorities while maintaining progress across all projects")
+        details.append(f"  - Balance deep focus work with collaboration and coordination")
+        details.append(f"  - Maintain quality standards throughout implementation")
+
+        return "\n".join(details)
+
+    def _format_consolidated_guidance(self, current_hour: int, user_context) -> str:
+        """EMBEDDED: Brief guidance suitable for embedded context."""
+        focus = self._get_immediate_focus(current_hour, user_context)
+
+        # Extract just the key action from the focus
+        if "Morning development" in focus:
+            return "Focus: Deep work"
+        elif "Collaboration" in focus:
+            return "Focus: Team coordination"
+        elif "Project execution" in focus or "Execution time" in focus:
+            return "Focus: Task execution"
+        elif "Documentation" in focus:
+            return "Focus: Wrap-up and handoff"
+        else:
+            return "Focus: Strategic planning"
+
+    def _format_standard_guidance(self, current_hour: int, user_context) -> str:
+        """DEFAULT: Moderate detail for standard guidance queries."""
+        focus = self._get_immediate_focus(current_hour, user_context)
+        priority_text = (
+            user_context.priorities[0] if user_context and user_context.priorities else "your key priorities"
+        )
+        org_text = user_context.organization if user_context and user_context.organization else "your projects"
+
+        message = [f"Based on your current priorities and the time of day:\n"]
+        message.append(f"**Right Now**: {focus}\n")
+        message.append(f"**Today's Key Focus**: {priority_text}\n")
+        message.append(f"**This Week**: Continue work on {org_text}\n")
+        message.append(
+            f"**Strategic Direction**: Deliver on your priorities while maintaining progress across all projects."
+        )
+
+        return "\n".join(message)
+
     async def _handle_guidance_query(self, intent: Intent, session_id: str) -> Dict:
-        """Handle 'What should I focus on?' queries"""
+        """
+        Handle 'What should I focus on?' queries with spatial awareness.
+
+        GREAT-4C Phase 1: Adds spatial intelligence for guidance granularity.
+        GREAT-4C Phase 2: Adds error handling with fallback guidance.
+        """
         current_time = datetime.now()
         current_hour = current_time.hour
 
-        # Get user-specific context (GREAT-4C Phase 0: Multi-user support)
-        user_context = await user_context_service.get_user_context(session_id)
+        # Try to get user-specific context with fallback to generic guidance
+        user_context = None
+        try:
+            user_context = await user_context_service.get_user_context(session_id)
+        except Exception as e:
+            logger.warning(f"Using generic guidance, user context unavailable: {e}")
 
-        # Time-based guidance using user's organization/projects
-        if 6 <= current_hour < 9:
-            if user_context.organization:
-                focus = f"Morning development work - perfect time for deep focus on {user_context.organization} implementation and coordination."
-            else:
-                focus = (
-                    "Morning development work - perfect time for deep focus on your key projects."
-                )
-        elif 9 <= current_hour < 14:
-            if user_context.organization:
-                focus = f"Collaboration time - coordinate with your team on {user_context.organization} implementation."
-            else:
-                focus = "Collaboration and implementation time - continue with your key priorities."
-        elif 14 <= current_hour < 17:
-            if user_context.projects:
-                top_project = user_context.projects[0]
-                focus = f"Project execution - work on {top_project} tasks."
-            else:
-                focus = "Execution time - work on your current tasks and deliverables."
-        elif 17 <= current_hour < 18:
-            focus = "Documentation and handoff preparation - wrap up today's work and prepare for tomorrow."
+        # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Adjust response detail based on spatial pattern
+        if spatial_pattern == "GRANULAR":
+            message = self._format_detailed_guidance(current_hour, user_context)
+        elif spatial_pattern == "EMBEDDED":
+            message = self._format_consolidated_guidance(current_hour, user_context)
         else:
-            focus = "Flexible time - consider strategic planning or methodology refinement."
-
-        # Build message with user's context
-        if user_context.organization or user_context.priorities:
-            # Use user's actual priorities
-            priority_text = (
-                user_context.priorities[0] if user_context.priorities else "your key priorities"
-            )
-            org_text = user_context.organization if user_context.organization else "your projects"
-
-            message = f"""Based on your current priorities and the time of day:
-
-**Right Now**: {focus}
-
-**Today's Key Focus**: {priority_text}
-
-**This Week**: Continue work on {org_text}
-
-**Strategic Direction**: Deliver on your priorities while maintaining progress across all projects."""
-
-            daily_goal = priority_text
-            weekly_focus = f"Continue work on {org_text}"
-            strategic_dir = (
-                "Deliver on your priorities while maintaining progress across all projects"
-            )
-        else:
-            # Fallback message
-            message = f"""Based on your current priorities and the time of day:
-
-**Right Now**: {focus}
-
-**Today's Key Focus**: Work on your current priorities and deliverables.
-
-**This Week**: Continue with your key priorities
-
-**Strategic Direction**: Make steady progress on your goals while maintaining quality and focus."""
-
-            daily_goal = "Work on your current priorities"
-            weekly_focus = "Continue with your key priorities"
-            strategic_dir = "Make steady progress on your goals"
+            message = self._format_standard_guidance(current_hour, user_context)
 
         # Load timezone from configuration (same for all users)
         from services.configuration.piper_config_loader import piper_config_loader
@@ -447,11 +632,18 @@ This directly supports your strategic goal of transforming Piper Morgan into a s
         timezone = standup_config["timing"]["timezone"]
         timezone_short = timezone.split("/")[-1].replace("_", " ")
 
+        # Extract guidance context components for API response
+        focus = self._get_immediate_focus(current_hour, user_context)
+        priority_text = (
+            user_context.priorities[0] if user_context and user_context.priorities else "your key priorities"
+        )
+        org_text = user_context.organization if user_context and user_context.organization else "your projects"
+
         guidance_context = {
             "immediate_focus": focus,
-            "daily_goal": daily_goal,
-            "weekly_focus": weekly_focus,
-            "strategic_direction": strategic_dir,
+            "daily_goal": priority_text,
+            "weekly_focus": f"Continue work on {org_text}",
+            "strategic_direction": "Deliver on your priorities while maintaining progress across all projects",
             "time_context": f"{current_hour}:00 {timezone_short}",
         }
 
@@ -463,6 +655,9 @@ This directly supports your strategic goal of transforming Piper Morgan into a s
                 "confidence": 1.0,
                 "context": guidance_context,
             },
+            "spatial_pattern": spatial_pattern,
+            "personalized": bool(user_context),
+            "fallback_guidance": not user_context,
             "requires_clarification": False,
         }
 

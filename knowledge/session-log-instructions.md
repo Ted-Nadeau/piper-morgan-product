@@ -1,5 +1,6 @@
-# Session Log Standard v2.0
-**Last Updated**: September 23, 2025
+
+# Session Log Standard v2.1
+**Last Updated**: October 5, 2025
 
 ## Purpose
 Session logs maintain context, institutional memory, and enable effective handoffs between development sessions. They are critical for the Excellence Flywheel methodology.
@@ -133,27 +134,24 @@ with open(logfile, 'r') as f:
         print("WARNING: Write failed")
 ```
 
-## Backup Strategy
+## Session Satisfaction Review Process
 
-### Manual Snapshots
-When downloading for backup, add timestamp:
-```
-Original: 2025-09-22-0816-arch-opus-log.md
-Backup:   2025-09-22-0816-arch-opus-log-1430.md
-                                         ^^^^
-                                    backup time
-```
+Conduct the satisfaction review using this process:
 
-## Session Satisfaction Metrics
+1. **Privately formulate** your answer to each question (don't share yet)
+2. **Ask me** the question
+3. **Record my answer** without revealing yours
+4. **Repeat** for all 5 questions
+5. **Then share** your answers and we'll compare/contrast
 
-At the end of EVERY session, complete the satisfaction check:
+Questions:
+- Value: What got shipped today?
+- Process: Did methodology work smoothly? 
+- Feel: How was the cognitive load?
+- Learned: Any key insights?
+- Tomorrow: Clear next steps?
 
-- **Value**: What got shipped? (feature/bug/process/learning)
-- **Process**: Did methodology work smoothly? (Y/N + specifics)
-- **Feel**: How was the cognitive load? (Energizing/OK/Draining)
-- **Learned**: Any key discoveries?
-- **Tomorrow**: Are next steps clear? (Y/N)
-- **Overall**: Choose emoji (😊 / 🙂 / 😐 / 😕 / 😞)
+This independent assessment prevents anchoring bias.
 
 ## GitHub Integration
 
@@ -201,9 +199,4 @@ Templates can be found in project knowledge or the `knowledge/` directory on the
 - `agent-prompt-template-v6.md` - For deploying agents
 
 ### End of Session
-Always download/save final version to filesystem
-
-
----
-
-*This standard prioritizes reliability over any specific location*
+Always download/save final version to filesystem if possible

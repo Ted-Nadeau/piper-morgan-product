@@ -120,6 +120,9 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - [Plugin Development Guide](guides/plugin-development-guide.md) - Step-by-step tutorial for adding integrations
 - [Plugin Versioning Policy](guides/plugin-versioning-policy.md) - Semantic versioning guidelines for plugins
 - [Plugin Quick Reference](guides/plugin-quick-reference.md) - Cheat sheet for common tasks
+- [Intent Classification Guide](guides/intent-classification-guide.md) - Universal intent enforcement developer guide
+- [User Context Service](guides/user-context-service.md) - Multi-user context architecture guide
+- [Canonical Handlers Architecture](guides/canonical-handlers-architecture.md) - Handler design and capabilities
 
 ## Examples
 

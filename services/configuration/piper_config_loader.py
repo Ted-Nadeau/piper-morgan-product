@@ -44,10 +44,15 @@ class PiperConfigLoader:
                 logger.debug("Using default configuration (no user config found)", path=config_path)
 
         self.config_path = Path(config_path)
-        self.last_modified = 0
+        self.last_modified = 0  # File modification time
+        self.cache_time = 0  # When config was cached (GREAT-4C Phase 3)
         self.cached_config = None
         self.cached_system_prompt = None
         self.cache_ttl = 300  # 5 minutes
+
+        # Cache metrics (GREAT-4C Phase 3)
+        self.cache_hits = 0
+        self.cache_misses = 0
 
         # Ensure config directory exists
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -68,21 +73,31 @@ class PiperConfigLoader:
                 )
                 return self._get_default_config()
 
-            # Check if file has been modified
+            # Check if cache is valid
             current_mtime = self.config_path.stat().st_mtime
-            if (
-                self.cached_config
-                and current_mtime <= self.last_modified
-                and time.time() - self.last_modified < self.cache_ttl
-            ):
-                logger.debug("Using cached PIPER.md configuration")
+            current_time = time.time()
+
+            cache_valid = (
+                self.cached_config is not None
+                and current_mtime <= self.last_modified  # File hasn't been modified
+                and (current_time - self.cache_time) < self.cache_ttl  # Within TTL
+            )
+
+            if cache_valid:
+                self.cache_hits += 1  # GREAT-4C Phase 3: Track cache hit
+                logger.debug("Using cached PIPER.md configuration", cache_hits=self.cache_hits)
                 return self.cached_config
+
+            # Cache miss - need to read from disk
+            self.cache_misses += 1  # GREAT-4C Phase 3: Track cache miss
+            logger.debug("Cache miss - loading PIPER.md from disk", cache_misses=self.cache_misses)
 
             # Parse the markdown file
             config = self._parse_piper_md()
             if config:
                 self.cached_config = config
-                self.last_modified = current_mtime
+                self.last_modified = current_mtime  # File modification time
+                self.cache_time = current_time  # When we cached it
                 logger.info("PIPER.md configuration loaded successfully", sections=len(config))
                 return config
             else:
@@ -551,6 +566,51 @@ Enhanced conversational context, MCP deployment, pattern validation.
                 ],
             },
         }
+
+    def get_cache_metrics(self) -> Dict[str, any]:
+        """
+        Get cache performance metrics.
+
+        Returns:
+            Dictionary with cache hits, misses, hit rate, and cache status
+
+        Added in GREAT-4C Phase 3 for cache monitoring.
+        """
+        total = self.cache_hits + self.cache_misses
+        hit_rate = (self.cache_hits / total * 100) if total > 0 else 0
+
+        # Check if cache is currently populated
+        cache_populated = self.cached_config is not None
+
+        # Calculate cache age (time since config was cached)
+        cache_age_seconds = time.time() - self.cache_time if self.cache_time > 0 else None
+
+        return {
+            "hits": self.cache_hits,
+            "misses": self.cache_misses,
+            "total_requests": total,
+            "hit_rate_percent": round(hit_rate, 2),
+            "cache_populated": cache_populated,
+            "cache_age_seconds": round(cache_age_seconds, 2) if cache_age_seconds is not None else None,
+            "ttl_seconds": self.cache_ttl,
+            "config_path": str(self.config_path),
+        }
+
+    def clear_cache(self) -> None:
+        """
+        Clear cached configuration and reset metrics.
+
+        Forces next load_config() call to read from disk.
+
+        Added in GREAT-4C Phase 3 for cache management.
+        """
+        self.cached_config = None
+        self.cached_system_prompt = None
+        self.last_modified = 0
+        self.cache_time = 0
+        self.cache_hits = 0
+        self.cache_misses = 0
+        logger.info("Cache cleared for PiperConfigLoader")
 
 
 # Global instance for easy access

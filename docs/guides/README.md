@@ -2,17 +2,31 @@
 
 ## Overview
 
-This directory contains documentation for guides in the Piper Morgan system.
+This directory contains developer guides and implementation documentation for the Piper Morgan system.
 
 ## Documentation Files
 
-- **[Orchestration Setup Guide](orchestration-setup-guide.md)** - Documentation and guidance
+### Core System Guides
+- **[Intent Classification Guide](intent-classification-guide.md)** - Universal intent enforcement developer guide
+- **[User Context Service](user-context-service.md)** - Multi-user context architecture guide
+- **[Orchestration Setup Guide](orchestration-setup-guide.md)** - Orchestration configuration and setup
+
+### Plugin Development
+- **[Plugin Development Guide](plugin-development-guide.md)** - Step-by-step tutorial for adding integrations
+- **[Plugin Quick Reference](plugin-quick-reference.md)** - Cheat sheet for common plugin tasks
+- **[Plugin Versioning Policy](plugin-versioning-policy.md)** - Semantic versioning guidelines for plugins
+
+### Handler Implementation (GREAT-4C)
+- **[Spatial Intelligence Implementation](spatial-intelligence-implementation.md)** - GREAT-4C Phase 1: Spatial patterns for response granularity
+- **[Error Handling Implementation](error-handling-implementation.md)** - GREAT-4C Phase 2: Graceful degradation for handler failures
+- **[PIPER Cache Guide](piper-cache-guide.md)** - GREAT-4C Phase 3: Two-layer caching architecture and monitoring
 
 ## Navigation
 
 - **[📚 Documentation Home](../../README.md)**
+- **[🧭 Navigation Hub](../NAVIGATION.md)**
 
 ---
 
-**Last Updated**: October 1, 2025
+**Last Updated**: October 6, 2025
 **Maintained By**: Documentation Team

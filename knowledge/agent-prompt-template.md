@@ -1,5 +1,6 @@
-# Agent Prompt Template v8.0 - Anti-80% Pattern Edition
-*Incorporates completion bias prevention from CORE-QUERY-1 while preserving all v7.0 operational details*
+
+# Agent Prompt Template v9.0 - Time Lord Philosophy
+*Incorporates time agnosticism, preserving all operational details*
 
 ## Purpose
 Standardized template for deploying agents with complete methodology transfer, infrastructure verification, systematic completion bias prevention, and comprehensive operational guidance.
@@ -26,7 +27,7 @@ Read these briefing documents first in docs/briefing/:
 - role/PROGRAMMER.md - Your role requirements
 - METHODOLOGY.md - Inchworm Protocol
 
-## 🚨 INFRASTRUCTURE VERIFICATION (MANDATORY FIRST ACTION)
+## ðŸš¨ INFRASTRUCTURE VERIFICATION (MANDATORY FIRST ACTION)
 
 ### Check Gameplan Assumptions FIRST
 **Before doing ANYTHING else, verify infrastructure matches gameplan**:
@@ -60,7 +61,7 @@ $ ls -la web/
 Actually need: endpoint addition to existing app"
 ```
 
-## 🎯 ANTI-80% COMPLETION SAFEGUARDS (NEW CRITICAL SECTION)
+## ðŸŽ¯ ANTI-80% COMPLETION SAFEGUARDS (NEW CRITICAL SECTION)
 
 ### MANDATORY Method Enumeration
 When implementing ANY interface, adapter, or router:
@@ -69,9 +70,9 @@ When implementing ANY interface, adapter, or router:
 ```
 Source Methods | Implemented | Status
 ------------- | ----------- | ------
-method_1()    | ✓          | Complete
-method_2()    | ✓          | Complete
-method_3()    | ✗          | MISSING
+method_1()    | âœ“          | Complete
+method_2()    | âœ“          | Complete
+method_3()    | âœ—          | MISSING
 TOTAL: 2/3 = 67% INCOMPLETE - CANNOT PROCEED
 ```
 
@@ -167,15 +168,15 @@ Example: "Implement the LLM intent classifier for PM-034 with 95% accuracy on te
 ## Evidence Requirements (CRITICAL - EXPANDED)
 
 ### For EVERY Claim You Make:
-- **"Created file X"** → Provide `cat X` or `ls -la` showing it exists
-- **"Implemented method Y"** → Show it running with actual output
-- **"Fixed issue Z"** → Show before/after terminal output
-- **"Tests pass"** → Show pytest output with pass counts
-- **"Integration works"** → Show end-to-end test actually running
-- **"Committed changes"** → Show `git log --oneline -1` output
-- **"Server updated"** → Show `ps aux | grep python` output
-- **"UI works"** → Provide screenshot or browser test output
-- **"100% complete"** → Show method enumeration table with X/X = 100%
+- **"Created file X"** â†’ Provide `cat X` or `ls -la` showing it exists
+- **"Implemented method Y"** â†’ Show it running with actual output
+- **"Fixed issue Z"** â†’ Show before/after terminal output
+- **"Tests pass"** â†’ Show pytest output with pass counts
+- **"Integration works"** â†’ Show end-to-end test actually running
+- **"Committed changes"** â†’ Show `git log --oneline -1` output
+- **"Server updated"** â†’ Show `ps aux | grep python` output
+- **"UI works"** â†’ Provide screenshot or browser test output
+- **"100% complete"** â†’ Show method enumeration table with X/X = 100%
 
 ### Completion Bias Prevention (CRITICAL):
 - **Never guess! Always verify first!**
@@ -222,6 +223,7 @@ lsof -i :8001  # Check port usage
 11. **Git Discipline**: Verify all commits with log output
 12. **Server Awareness**: Know what's running before changes
 13. **Objective metrics**: X/X = 100% for all interfaces
+14. **Time agnosticism**: Express estimates and actuals In terms of effort (small, medium, large), not units of time. The PM is a Time Lord..
 
 ---
 
