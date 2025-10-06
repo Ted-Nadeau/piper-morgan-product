@@ -183,7 +183,9 @@ class CanonicalHandlers:
                 elif temporal_summary.get("next_meeting"):
                     next_meeting = temporal_summary["next_meeting"]
                     message += f" (next: {next_meeting.get('start_time', 'TBD')})"
-                    calendar_context["next_meeting"] = {"time": next_meeting.get("start_time", "TBD")}
+                    calendar_context["next_meeting"] = {
+                        "time": next_meeting.get("start_time", "TBD")
+                    }
 
             elif spatial_pattern == "GRANULAR":
                 # GRANULAR: Comprehensive calendar breakdown
@@ -213,7 +215,10 @@ class CanonicalHandlers:
                     meeting_count = stats["total_meetings_today"]
                     meeting_hours = stats.get("total_meeting_time_minutes", 0) / 60
                     message += f"\n\n**Meeting Load**: {meeting_count} meetings ({meeting_hours:.1f} hours)"
-                    calendar_context["meeting_load"] = {"count": meeting_count, "hours": meeting_hours}
+                    calendar_context["meeting_load"] = {
+                        "count": meeting_count,
+                        "hours": meeting_hours,
+                    }
 
             else:
                 # DEFAULT: Standard detail
@@ -277,21 +282,21 @@ class CanonicalHandlers:
             logger.error(f"Failed to load user context: {e}")
             return {
                 "message": "I'm having trouble accessing your configuration right now. "
-                           "Your PIPER.md file may be missing or unreadable. "
-                           "Would you like help setting it up?",
+                "Your PIPER.md file may be missing or unreadable. "
+                "Would you like help setting it up?",
                 "error": "config_unavailable",
                 "action_required": "setup_piper_config",
                 "intent": {
                     "category": IntentCategoryEnum.STATUS.value,
                     "action": "provide_status",
-                    "confidence": 1.0
-                }
+                    "confidence": 1.0,
+                },
             }
 
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
         spatial_pattern = None
-        if hasattr(intent, 'spatial_context') and intent.spatial_context:
-            spatial_pattern = intent.spatial_context.get('pattern')
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
 
         # Get projects from user context
         projects = user_context.projects
@@ -300,13 +305,13 @@ class CanonicalHandlers:
         if not projects:
             return {
                 "message": "You don't have any active projects configured in your PIPER.md yet. "
-                           "Would you like me to help you set up your project portfolio?",
+                "Would you like me to help you set up your project portfolio?",
                 "action_required": "configure_projects",
                 "intent": {
                     "category": IntentCategoryEnum.STATUS.value,
                     "action": "provide_status",
-                    "confidence": 1.0
-                }
+                    "confidence": 1.0,
+                },
             }
 
         # Adjust response detail based on spatial pattern
@@ -372,7 +377,9 @@ class CanonicalHandlers:
         if not projects:
             return "No active projects configured in your PIPER.md. Add projects to the 'Projects' section to see them here."
 
-        summary = [f"You're working on {len(projects)} active project{'s' if len(projects) != 1 else ''}:\n"]
+        summary = [
+            f"You're working on {len(projects)} active project{'s' if len(projects) != 1 else ''}:\n"
+        ]
         for project in projects[:5]:  # Top 5
             summary.append(f"- {project}")
 
@@ -398,15 +405,15 @@ class CanonicalHandlers:
             logger.error(f"Failed to load user context: {e}")
             return {
                 "message": "I'm having trouble accessing your configuration right now. "
-                           "Your PIPER.md file may be missing or unreadable. "
-                           "Would you like help setting it up?",
+                "Your PIPER.md file may be missing or unreadable. "
+                "Would you like help setting it up?",
                 "error": "config_unavailable",
                 "action_required": "setup_piper_config",
                 "intent": {
                     "category": IntentCategoryEnum.PRIORITY.value,
                     "action": "provide_priority",
-                    "confidence": 1.0
-                }
+                    "confidence": 1.0,
+                },
             }
 
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
@@ -421,13 +428,13 @@ class CanonicalHandlers:
         if not priorities:
             return {
                 "message": "You don't have any priorities configured in your PIPER.md yet. "
-                           "Would you like me to help you set up your priority list?",
+                "Would you like me to help you set up your priority list?",
                 "action_required": "configure_priorities",
                 "intent": {
                     "category": IntentCategoryEnum.PRIORITY.value,
                     "action": "provide_priority",
-                    "confidence": 1.0
-                }
+                    "confidence": 1.0,
+                },
             }
 
         # Adjust response detail based on spatial pattern
@@ -532,9 +539,15 @@ class CanonicalHandlers:
         """GRANULAR: Comprehensive guidance with all timeframes and context."""
         focus = self._get_immediate_focus(current_hour, user_context)
         priority_text = (
-            user_context.priorities[0] if user_context and user_context.priorities else "your key priorities"
+            user_context.priorities[0]
+            if user_context and user_context.priorities
+            else "your key priorities"
         )
-        org_text = user_context.organization if user_context and user_context.organization else "your projects"
+        org_text = (
+            user_context.organization
+            if user_context and user_context.organization
+            else "your projects"
+        )
 
         details = ["Here's comprehensive guidance for your focus:\n"]
         details.append(f"**Immediate Focus (Right Now)**:")
@@ -555,7 +568,9 @@ class CanonicalHandlers:
                 details.append(f"    • {project}")
 
         details.append(f"\n**Strategic Direction**:")
-        details.append(f"  - Deliver on your priorities while maintaining progress across all projects")
+        details.append(
+            f"  - Deliver on your priorities while maintaining progress across all projects"
+        )
         details.append(f"  - Balance deep focus work with collaboration and coordination")
         details.append(f"  - Maintain quality standards throughout implementation")
 
@@ -581,9 +596,15 @@ class CanonicalHandlers:
         """DEFAULT: Moderate detail for standard guidance queries."""
         focus = self._get_immediate_focus(current_hour, user_context)
         priority_text = (
-            user_context.priorities[0] if user_context and user_context.priorities else "your key priorities"
+            user_context.priorities[0]
+            if user_context and user_context.priorities
+            else "your key priorities"
         )
-        org_text = user_context.organization if user_context and user_context.organization else "your projects"
+        org_text = (
+            user_context.organization
+            if user_context and user_context.organization
+            else "your projects"
+        )
 
         message = [f"Based on your current priorities and the time of day:\n"]
         message.append(f"**Right Now**: {focus}\n")
@@ -635,9 +656,15 @@ class CanonicalHandlers:
         # Extract guidance context components for API response
         focus = self._get_immediate_focus(current_hour, user_context)
         priority_text = (
-            user_context.priorities[0] if user_context and user_context.priorities else "your key priorities"
+            user_context.priorities[0]
+            if user_context and user_context.priorities
+            else "your key priorities"
         )
-        org_text = user_context.organization if user_context and user_context.organization else "your projects"
+        org_text = (
+            user_context.organization
+            if user_context and user_context.organization
+            else "your projects"
+        )
 
         guidance_context = {
             "immediate_focus": focus,

@@ -591,7 +591,9 @@ Enhanced conversational context, MCP deployment, pattern validation.
             "total_requests": total,
             "hit_rate_percent": round(hit_rate, 2),
             "cache_populated": cache_populated,
-            "cache_age_seconds": round(cache_age_seconds, 2) if cache_age_seconds is not None else None,
+            "cache_age_seconds": (
+                round(cache_age_seconds, 2) if cache_age_seconds is not None else None
+            ),
             "ttl_seconds": self.cache_ttl,
             "config_path": str(self.config_path),
         }

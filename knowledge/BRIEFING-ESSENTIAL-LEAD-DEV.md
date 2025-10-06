@@ -30,7 +30,7 @@
 
 **Spatial Intelligence** (3 patterns):
 - Granular (Slack): 11 files, component-based coordination
-- Embedded (Notion): 1 file, consolidated intelligence  
+- Embedded (Notion): 1 file, consolidated intelligence
 - Delegated (Calendar): Router + MCP consumer pattern
 
 **Config Services** (standardized):
@@ -84,7 +84,7 @@ Tests: 72/72 passing
 
 ## References
 - **Current state**: BRIEFING-CURRENT-STATE
-- **Full role guide**: BRIEFING-ESSENTIAL-LEAD-DEV (if exists)  
+- **Full role guide**: BRIEFING-ESSENTIAL-LEAD-DEV (if exists)
 - **Active issues**: GitHub #183, #205, #206, #207, #208
 - **Architecture**: docs/NAVIGATION.md
 - **Templates**: in project knowledge

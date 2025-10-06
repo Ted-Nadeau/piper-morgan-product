@@ -1,7 +1,7 @@
 # Error Handling Implementation
 
-**Date**: October 6, 2025  
-**Epic**: GREAT-4C Phase 2  
+**Date**: October 6, 2025
+**Epic**: GREAT-4C Phase 2
 **Author**: Cursor Agent
 
 ---
@@ -16,9 +16,9 @@ Canonical handlers now gracefully handle service failures and missing data, prov
 
 ### 1. Calendar Service Unavailable
 
-**Handler**: `_handle_temporal_query`  
-**Triggers**: Network timeout, API credentials invalid, service down  
-**Fallback**: Return date/time without calendar events  
+**Handler**: `_handle_temporal_query`
+**Triggers**: Network timeout, API credentials invalid, service down
+**Fallback**: Return date/time without calendar events
 **User message**: "Note: I couldn't access your calendar right now. The calendar service may be unavailable."
 
 **Implementation**:
@@ -39,9 +39,9 @@ except Exception as e:
 
 ### 2. PIPER.md Missing or Unreadable
 
-**Handlers**: `_handle_status_query`, `_handle_priority_query`  
-**Triggers**: File not found, parse errors, empty/invalid format  
-**Fallback**: Offer to help set up configuration  
+**Handlers**: `_handle_status_query`, `_handle_priority_query`
+**Triggers**: File not found, parse errors, empty/invalid format
+**Fallback**: Offer to help set up configuration
 **User message**: "Your PIPER.md file may be missing or unreadable. Would you like help setting it up?"
 
 **Implementation**:
@@ -67,9 +67,9 @@ except Exception as e:
 
 ### 3. Empty Configuration Data
 
-**Handlers**: `_handle_status_query`, `_handle_priority_query`  
-**Triggers**: PIPER.md exists but has no projects/priorities configured  
-**Fallback**: Offer to help configure the missing data  
+**Handlers**: `_handle_status_query`, `_handle_priority_query`
+**Triggers**: PIPER.md exists but has no projects/priorities configured
+**Fallback**: Offer to help configure the missing data
 **User message**: "You don't have any [projects/priorities] configured in your PIPER.md yet. Would you like me to help you set up your [project portfolio/priority list]?"
 
 **Implementation**:
@@ -91,9 +91,9 @@ if not projects:
 
 ### 4. User Context Unavailable
 
-**Handler**: `_handle_guidance_query`  
-**Triggers**: Session expired, user not found, config load failure  
-**Fallback**: Provide generic responses without personalization  
+**Handler**: `_handle_guidance_query`
+**Triggers**: Session expired, user not found, config load failure
+**Fallback**: Provide generic responses without personalization
 **User message**: Time-based guidance without user-specific context
 
 **Implementation**:

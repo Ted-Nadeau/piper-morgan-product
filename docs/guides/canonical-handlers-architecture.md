@@ -1,7 +1,7 @@
 # Canonical Handlers Architecture
 
-**Last Updated**: October 6, 2025  
-**Epic**: GREAT-4C - Remove Hardcoded User Context  
+**Last Updated**: October 6, 2025
+**Epic**: GREAT-4C - Remove Hardcoded User Context
 **Status**: Production Ready
 
 ---
@@ -16,9 +16,9 @@ The 5 canonical handlers provide natural language query responses for standup/ba
 
 ### 1. Identity Handler (\_handle_identity_query)
 
-**Purpose**: "Who are you?" queries  
-**Spatial patterns**: EMBEDDED (brief) to GRANULAR (full capabilities)  
-**Data source**: Static identity info  
+**Purpose**: "Who are you?" queries
+**Spatial patterns**: EMBEDDED (brief) to GRANULAR (full capabilities)
+**Data source**: Static identity info
 **Error handling**: Always available (no external dependencies)
 
 **Response Examples**:
@@ -29,9 +29,9 @@ The 5 canonical handlers provide natural language query responses for standup/ba
 
 ### 2. Temporal Handler (\_handle_temporal_query)
 
-**Purpose**: "What day is it?" / time queries  
-**Spatial patterns**: Date only (EMBEDDED) to full calendar (GRANULAR)  
-**Data sources**: System time + calendar integration  
+**Purpose**: "What day is it?" / time queries
+**Spatial patterns**: Date only (EMBEDDED) to full calendar (GRANULAR)
+**Data sources**: System time + calendar integration
 **Error handling**: Works without calendar service
 
 **Response Examples**:
@@ -54,9 +54,9 @@ except Exception as e:
 
 ### 3. Status Handler (\_handle_status_query)
 
-**Purpose**: "What am I working on?" queries  
-**Spatial patterns**: Brief list (EMBEDDED) to detailed status (GRANULAR)  
-**Data source**: User's PIPER.md projects  
+**Purpose**: "What am I working on?" queries
+**Spatial patterns**: Brief list (EMBEDDED) to detailed status (GRANULAR)
+**Data source**: User's PIPER.md projects
 **Error handling**: Graceful fallback if PIPER.md missing
 
 **Response Examples**:
@@ -82,9 +82,9 @@ except Exception as e:
 
 ### 4. Priority Handler (\_handle_priority_query)
 
-**Purpose**: "What's my top priority?" queries  
-**Spatial patterns**: Single priority (EMBEDDED) to full breakdown (GRANULAR)  
-**Data source**: User's PIPER.md priorities  
+**Purpose**: "What's my top priority?" queries
+**Spatial patterns**: Single priority (EMBEDDED) to full breakdown (GRANULAR)
+**Data source**: User's PIPER.md priorities
 **Error handling**: Offers to help configure if empty
 
 **Response Examples**:
@@ -106,9 +106,9 @@ if not priorities:
 
 ### 5. Guidance Handler (\_handle_guidance_query)
 
-**Purpose**: "What should I focus on?" queries  
-**Spatial patterns**: Brief (EMBEDDED) to comprehensive guidance (GRANULAR)  
-**Data sources**: Time of day + user context  
+**Purpose**: "What should I focus on?" queries
+**Spatial patterns**: Brief (EMBEDDED) to comprehensive guidance (GRANULAR)
+**Data sources**: Time of day + user context
 **Error handling**: Falls back to generic time-based guidance
 
 **Response Examples**:

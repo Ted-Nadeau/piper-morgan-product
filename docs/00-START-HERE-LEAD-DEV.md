@@ -8,11 +8,11 @@
 
 If you skip this page and jump into work, you will:
 - âŒ Break our systematic excellence
-- âŒ Waste hours on preventable mistakes  
+- âŒ Waste hours on preventable mistakes
 - âŒ Damage the Excellence Flywheel that creates our velocity
 - âŒ Frustrate the PM who will have to start over
 
-## âœ… YOUR MANDATORY FIRST ACTIONS 
+## âœ… YOUR MANDATORY FIRST ACTIONS
 
 ### Step 1: Read Core Methodology Documents (from knowledge) IN ORDER
 1. `methodology-00-EXCELLENCE-FLYWHEEL.md` - Why we're exceptional

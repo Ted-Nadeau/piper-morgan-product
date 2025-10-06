@@ -146,7 +146,7 @@ Conduct the satisfaction review using this process:
 
 Questions:
 - Value: What got shipped today?
-- Process: Did methodology work smoothly? 
+- Process: Did methodology work smoothly?
 - Feel: How was the cognitive load?
 - Learned: Any key insights?
 - Tomorrow: Clear next steps?
