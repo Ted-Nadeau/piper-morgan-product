@@ -123,6 +123,7 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - [Intent Classification Guide](guides/intent-classification-guide.md) - Universal intent enforcement developer guide
 - [User Context Service](guides/user-context-service.md) - Multi-user context architecture guide
 - [Canonical Handlers Architecture](guides/canonical-handlers-architecture.md) - Handler design and capabilities
+- [EXECUTION/ANALYSIS Handlers](guides/execution-analysis-handlers.md) - Intent routing to domain services
 
 ## Examples
 

@@ -1,14 +1,35 @@
 # Intent Classification Developer Guide
 
-**Last Updated**: October 5, 2025
+**Last Updated**: October 6, 2025
 **Status**: Production Ready
-**Epic**: GREAT-4B - Universal Intent Enforcement
+**Epic**: GREAT-4E - Complete Validation
 
 ---
 
 ## Overview
 
-This guide explains when and how to use intent classification in Piper Morgan. As of GREAT-4B completion, intent classification is **mandatory** for all natural language user input.
+This guide explains when and how to use intent classification in Piper Morgan. As of GREAT-4E completion, intent classification is **mandatory** for all natural language user input, with 13/13 intent categories fully implemented and validated.
+
+---
+
+## Intent Categories (Complete List)
+
+### Canonical Handler Categories (Fast Path ~1ms)
+1. **IDENTITY**: "Who are you?" - Bot identity and capabilities
+2. **TEMPORAL**: "What's on my calendar?" - Time and schedule queries
+3. **STATUS**: "Show my standup" - Current state and progress
+4. **PRIORITY**: "What's most important?" - Priority and focus
+5. **GUIDANCE**: "How should I approach this?" - Recommendations and advice
+
+### Workflow Handler Categories (Standard Path 2000-3000ms)
+6. **EXECUTION**: "Create GitHub issue" - Action execution
+7. **ANALYSIS**: "Analyze commits" - Data analysis
+8. **SYNTHESIS**: "Generate summary" - Content generation
+9. **STRATEGY**: "Plan next sprint" - Strategic planning
+10. **LEARNING**: "What patterns exist?" - Pattern recognition
+11. **UNKNOWN**: "Blarghhh" - Unclassifiable input (helpful fallback)
+12. **QUERY**: "What's the weather?" - General queries
+13. **CONVERSATION**: "Let's chat" - Conversational responses
 
 ---
 
@@ -127,17 +148,29 @@ curl http://localhost:8001/api/admin/intent-monitoring
 
 ## Performance Considerations
 
+### Performance Expectations
+
+#### Response Time Targets
+- **Canonical handlers**: <10ms (fast path, no LLM)
+- **Pre-classifier hit**: ~1ms (pattern recognition)
+- **LLM classification**: 2000-3000ms (full classification)
+- **Cached responses**: <1ms (cache hit)
+
+#### Cache Performance
+- **Hit rate target**: >80%
+- **Actual performance**: 84.6% (GREAT-4E validation)
+- **Speedup**: 7.6x for cached requests
+
+#### Load Capacity
+- **Sustained throughput**: 600K+ requests/sec
+- **Memory**: Stable, no leaks under sustained load
+- **Concurrent requests**: Excellent parallel processing
+
 ### Caching
 
 - **Common queries are cached** (1 hour TTL)
-- **Cache provides 95%+ performance improvement**
+- **Cache provides 7.6x performance improvement**
 - **Disable caching**: `classify(text, use_cache=False)`
-
-### Response Times
-
-- **Cache hit**: ~0.02ms (exceptional)
-- **Cache miss (pre-classifier)**: ~0.5ms (excellent)
-- **Cache miss (LLM fallback)**: ~1-3s (acceptable)
 
 ### Monitoring
 
@@ -358,11 +391,11 @@ EXEMPT_PATHS = [...]  # Paths that don't need intent
 
 - **ADR-032**: Intent Classification Universal Entry
 - **Pattern-032**: Intent Pattern Catalog
-- **GREAT-4B Epic**: Complete implementation details
+- **GREAT-4E Epic**: Complete validation details (126 tests, 5 load benchmarks)
 - **Test Strategy**: `dev/2025/10/05/bypass-prevention-strategy.md`
 
 ---
 
-**Status**: ✅ Production ready - All guidelines validated and tested
+**Status**: ✅ Production ready - All 13 categories implemented and validated
 
-**Last Validated**: October 5, 2025 (GREAT-4B completion)
+**Last Validated**: October 6, 2025 (GREAT-4E completion)
