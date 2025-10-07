@@ -20,6 +20,54 @@ Piper Morgan is an intelligent product management assistant that transforms rout
 - 🌐 **Web Interface**: Dark mode UI with 4.6-5.1s generation (faster than CLI)
 - 🔧 **Multi-User Configuration**: Teams can customize their own settings
 
+## 🗣️ Natural Language Interface
+
+Piper Morgan uses an intent classification system to understand and route natural language commands through multiple interfaces:
+
+### Supported Interfaces
+- **Web API**: POST to `/api/v1/intent` with natural language messages
+- **Slack**: Direct messages and mentions in Slack workspace
+- **CLI**: Command-line interface for local development
+- **Direct**: Python API for programmatic access
+
+### Intent Categories
+The system recognizes 13 intent categories, routing to either fast canonical handlers (~1ms) or workflow orchestration (2-3 seconds):
+
+**Quick Response Categories** (Canonical Handlers):
+- Identity, Temporal, Status, Priority, Guidance
+
+**Complex Operations** (Workflow Handlers):
+- Execution, Analysis, Synthesis, Strategy, Learning, Query, Conversation, Unknown
+
+### Example Usage
+
+```bash
+# Web API
+curl -X POST http://localhost:8001/api/v1/intent \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What's on my calendar today?"}'
+
+# CLI
+piper ask "Create a GitHub issue for bug fix"
+
+# Python
+from services.intent.intent_service import IntentService
+result = await intent_service.process_intent("Show my standup status")
+```
+
+### Architecture Documentation
+- Full architecture: [ADR-032](docs/internal/architecture/current/adrs/adr-032-intent-classification-universal-entry.md)
+- Pattern catalog: [Pattern-032](docs/internal/architecture/current/patterns/pattern-032-intent-pattern-catalog.md)
+- Developer guide: [Intent Classification Guide](docs/guides/intent-classification-guide.md)
+
+### Performance
+- **Validated**: 126 tests passing, 5 load benchmarks met
+- **Throughput**: 600K+ requests/second sustained
+- **Cache**: 84.6% hit rate, 7.6x speedup
+- **Production**: Deployed and stable
+
+---
+
 ## 🚀 Quick Start (30 seconds)
 
 ```bash

@@ -17,6 +17,7 @@ import structlog
 from services.conversation.conversation_handler import ConversationHandler
 from services.domain.models import Intent
 from services.intent_service import classifier
+from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.engine import OrchestrationEngine
 
 
@@ -79,6 +80,7 @@ class IntentService:
         self.orchestration_engine = orchestration_engine
         self.intent_classifier = intent_classifier or classifier
         self.conversation_handler = conversation_handler
+        self.canonical_handlers = CanonicalHandlers()
         self.logger = structlog.get_logger()
 
     async def process_intent(
@@ -117,6 +119,16 @@ class IntentService:
             # Phase 3D: Preserve Tier 1 conversation bypass
             if intent.category.value == "CONVERSATION":
                 return await self._handle_conversation_intent(intent, session_id)
+
+            # Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
+            if self.canonical_handlers.can_handle(intent):
+                canonical_result = await self.canonical_handlers.handle(intent, session_id)
+                return IntentProcessingResult(
+                    success=True,
+                    message=canonical_result["message"],
+                    intent_data=canonical_result["intent"],
+                    requires_clarification=canonical_result.get("requires_clarification", False),
+                )
 
             # Create workflow with timeout protection (Bug #166)
             workflow = await self._create_workflow_with_timeout(intent)

@@ -56,6 +56,42 @@ jobs:
           print('✅ Version consistency verified')
           "
 
+      - name: Run Intent Interface Tests
+        run: |
+          echo "🔍 Running Intent Interface Tests (GREAT-4E)"
+          python -m pytest tests/intent/test_web_interface.py tests/intent/test_slack_interface.py tests/intent/test_cli_interface.py -v --tb=short
+          echo "✅ Interface tests completed"
+
+      - name: Run Intent Contract Tests
+        run: |
+          echo "🔍 Running Intent Contract Tests (GREAT-4E)"
+          python -m pytest tests/intent/contracts/ -v --tb=short
+          echo "✅ Contract tests completed"
+
+      - name: Verify Intent Bypass Prevention
+        run: |
+          echo "🔍 Running Intent Bypass Prevention Tests (Critical Security)"
+          python -m pytest tests/intent/test_no_web_bypasses.py tests/intent/test_no_cli_bypasses.py tests/intent/test_no_slack_bypasses.py -v --tb=short
+          echo "✅ Bypass prevention verified"
+
+      - name: Intent System Coverage Gate
+        run: |
+          echo "🔍 Verifying Intent Test Coverage..."
+          TEST_COUNT=$(find tests/intent/ -name "test_*.py" | wc -l | tr -d ' ')
+          echo "Found $TEST_COUNT intent test files"
+          if [ "$TEST_COUNT" -lt 20 ]; then
+            echo "❌ Error: Expected at least 20 intent test files, found $TEST_COUNT"
+            exit 1
+          fi
+          echo "✅ Intent coverage verified: $TEST_COUNT test files"
+
+      - name: Classification Accuracy Gate
+        run: |
+          echo "🔍 Running Classification Accuracy Tests..."
+          python -m pytest tests/intent/contracts/test_accuracy_contracts.py -v --tb=short
+          echo "✅ Classification accuracy verified"
+        continue-on-error: false
+
       - name: Run tests
         run: |
           python -m pytest tests/ --tb=short -v

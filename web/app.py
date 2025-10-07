@@ -20,18 +20,18 @@ from fastapi.templating import Jinja2Templates
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# Import personality integration
-from personality_integration import (
-    PersonalityResponseEnhancer,
-    PiperConfigParser,
-    WebPersonalityConfig,
-)
-
 # Standup API moved to backend - only config loader needed for legacy compatibility
 from services.configuration.piper_config_loader import piper_config_loader
 
 # Configuration service import - eliminates hardcoded values
 from services.configuration.port_configuration_service import get_port_configuration
+
+# Import personality integration
+from web.personality_integration import (
+    PersonalityResponseEnhancer,
+    PiperConfigParser,
+    WebPersonalityConfig,
+)
 
 # Server Configuration - now using centralized configuration service
 port_config = get_port_configuration()
@@ -626,6 +626,21 @@ async def clear_user_context_cache():
 
     user_context_service.invalidate_cache()  # No session_id = clear all
     return {"status": "cache_cleared", "message": "User context cache cleared successfully"}
+
+
+@app.get("/health")
+async def health():
+    """
+    Health check endpoint - exempt from intent enforcement.
+
+    Returns basic service status for monitoring and load balancers.
+    """
+    return {
+        "status": "healthy",
+        "message": "Piper Morgan web service is running",
+        "timestamp": datetime.now().isoformat(),
+        "services": {"web": "healthy", "intent_enforcement": "active"},
+    }
 
 
 @app.post("/api/admin/user-context-cache-invalidate/{session_id}")
