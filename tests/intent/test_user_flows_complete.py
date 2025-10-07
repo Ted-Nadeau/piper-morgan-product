@@ -147,7 +147,8 @@ class TestMiddlewareEnforcement:
 
     def test_exempt_paths_work(self):
         """Exempt paths should be accessible."""
-        exempt_paths = [("/health", [200, 404]), ("/docs", [200, 404]), ("/", [200])]
+        # GREAT-4F: /health MUST return 200 (critical for monitoring/load balancers)
+        exempt_paths = [("/health", [200]), ("/docs", [200, 404]), ("/", [200])]
 
         for path, expected_codes in exempt_paths:
             response = client.get(path)

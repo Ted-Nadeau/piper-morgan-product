@@ -188,6 +188,34 @@ curl http://localhost:8001/api/admin/intent-monitoring
 
 ---
 
+## Classification Accuracy
+
+As of October 7, 2025 (GREAT-4F), the intent classifier achieves the following accuracy:
+
+### High-Confidence Categories (95%+ accuracy)
+- **PRIORITY**: 100% accuracy - "what should I focus on", "my priorities"
+- **TEMPORAL**: 96.7% accuracy - "show my calendar", "what's my schedule"
+- **STATUS**: 96.7% accuracy - "show my standup", "what am I working on"
+
+### Moderate-Confidence Categories (75-85% accuracy)
+- **GUIDANCE**: 76.7% accuracy - advice and recommendation requests
+- **IDENTITY**: 76.0% accuracy - bot identity and capability queries
+
+### Classification Tips for Developers
+
+**To maximize accuracy**:
+1. **Use personal pronouns**: "my calendar" vs "the calendar"
+2. **Be specific**: "show my standup" vs "show status"
+3. **Use category keywords**: calendar, schedule, priorities, focus
+
+**If classification seems wrong**:
+1. Check if query uses personal pronouns (I, my, our)
+2. Verify category keywords are present
+3. Consider if query might legitimately fit multiple categories
+4. Review disambiguation rules in classifier prompt
+
+---
+
 ## Common Patterns
 
 ### Pattern 1: Simple Query
