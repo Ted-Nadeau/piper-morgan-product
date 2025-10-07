@@ -3,8 +3,10 @@ Workflow Factory - Creates workflows from intents
 PM-002 Implementation
 PM-008 Github integration
 PM-057 Context Validation Framework
+GREAT-4F: QUERY fallback for mis-classified intents
 """
 
+import logging
 from datetime import datetime
 
 # 2025-06-14: Fixed imports and task creation to use correct enums and types
@@ -14,6 +16,8 @@ from uuid import uuid4
 from services.domain.models import Intent, Task, Workflow
 from services.orchestration.validation import ContextValidationError, workflow_validator
 from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowStatus, WorkflowType
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowFactory:
@@ -181,6 +185,84 @@ class WorkflowFactory:
                 # Spatial integration: Learning intents from Slack channel monitoring
                 # Map to report generation for pattern analysis and insights
                 workflow_type = WorkflowType.GENERATE_REPORT
+            elif intent.category == IntentCategory.QUERY:
+                # GREAT-4F: Smart fallback for likely mis-classified canonical intents
+                text_lower = (intent.context or {}).get("original_message", intent.action).lower()
+
+                # TEMPORAL patterns: calendar, schedule, time-related
+                temporal_patterns = [
+                    "calendar",
+                    "schedule",
+                    "meeting",
+                    "appointment",
+                    "today",
+                    "tomorrow",
+                    "yesterday",
+                    "next week",
+                    "this week",
+                    "what time",
+                    "when is",
+                    "what day",
+                    "what date",
+                ]
+
+                # STATUS patterns: work status, standup, current tasks
+                status_patterns = [
+                    "status",
+                    "standup",
+                    "working on",
+                    "current",
+                    "progress",
+                    "what am i",
+                    "what's my",
+                    "my work",
+                ]
+
+                # PRIORITY patterns: importance, focus, priorities
+                priority_patterns = [
+                    "priority",
+                    "priorities",
+                    "important",
+                    "focus",
+                    "urgent",
+                    "critical",
+                    "top",
+                    "most important",
+                ]
+
+                # Check for canonical patterns
+                if any(pattern in text_lower for pattern in temporal_patterns):
+                    # Likely mis-classified TEMPORAL
+                    logger.warning(
+                        f"QUERY intent likely mis-classified TEMPORAL: {text_lower[:50]}",
+                        extra={"intent_id": intent.id, "category": "QUERY", "likely": "TEMPORAL"},
+                    )
+                    # Route to GENERATE_REPORT for temporal queries (canonical handlers handle this via intent service)
+                    workflow_type = WorkflowType.GENERATE_REPORT
+
+                elif any(pattern in text_lower for pattern in status_patterns):
+                    # Likely mis-classified STATUS
+                    logger.warning(
+                        f"QUERY intent likely mis-classified STATUS: {text_lower[:50]}",
+                        extra={"intent_id": intent.id, "category": "QUERY", "likely": "STATUS"},
+                    )
+                    workflow_type = WorkflowType.GENERATE_REPORT
+
+                elif any(pattern in text_lower for pattern in priority_patterns):
+                    # Likely mis-classified PRIORITY
+                    logger.warning(
+                        f"QUERY intent likely mis-classified PRIORITY: {text_lower[:50]}",
+                        extra={"intent_id": intent.id, "category": "QUERY", "likely": "PRIORITY"},
+                    )
+                    workflow_type = WorkflowType.GENERATE_REPORT
+
+                else:
+                    # True generic query - use GENERATE_REPORT workflow
+                    logger.info(
+                        f"QUERY intent routed to GENERATE_REPORT: {text_lower[:50]}",
+                        extra={"intent_id": intent.id, "category": "QUERY"},
+                    )
+                    workflow_type = WorkflowType.GENERATE_REPORT
             else:
                 print(f"❌ No workflow type found for intent category: {intent.category}")
                 return None

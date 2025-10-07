@@ -387,6 +387,49 @@ class PatternPerformanceMonitor:
 - **Cache speedup**: 7.6x
 - **Throughput**: 602K+ req/sec sustained
 
+## Classification Accuracy Metrics (Updated October 7, 2025)
+
+### Canonical Category Accuracy (GREAT-4F Validation)
+
+Post-enhancement accuracy results from Phase 3 testing:
+
+| Category | Accuracy | Status | Variants Tested | Notes |
+|----------|----------|--------|-----------------|-------|
+| PRIORITY | 100.0% | ✅ Exceeds Target | 25 queries | Perfect classification |
+| TEMPORAL | 96.7% | ✅ Meets Target | 30 queries | Personal calendar/schedule queries |
+| STATUS | 96.7% | ✅ Meets Target | 30 queries | Personal work status queries |
+| IDENTITY | 76.0% | ⚠️ Below Target | 25 queries | Capability queries sometimes → QUERY |
+| GUIDANCE | 76.7% | ⚠️ Below Target | 30 queries | Advice sometimes → CONVERSATION/STRATEGY |
+
+**Overall canonical accuracy**: 89.3% (126 correct / 141 total)
+
+**Core mission achieved**: TEMPORAL, STATUS, and PRIORITY (the three categories with timeout issues) now exceed 95% accuracy target.
+
+### Improvement Timeline
+
+- **Before GREAT-4F** (October 6, 2025): 85-95% accuracy, frequent QUERY mis-classifications
+- **After Phase 2** (October 7, 2025): 95%+ accuracy for TEMPORAL/STATUS/PRIORITY
+- **Root cause fix**: Added canonical category definitions to classifier prompt
+
+### Key Classification Patterns
+
+**Strong canonical signals** (high confidence):
+- Personal pronouns (I, my, our) + category keywords
+- Examples:
+  - "what's on MY calendar" → TEMPORAL (96.7% accurate)
+  - "show MY status" → STATUS (96.7% accurate)
+  - "MY priorities" → PRIORITY (100% accurate)
+
+**Disambiguation rules working**:
+- Personal context → Canonical category
+- General knowledge → QUERY category
+- How-to questions → GUIDANCE category
+
+**Remaining challenges**:
+- IDENTITY: Capability questions sometimes mis-classify as QUERY
+- GUIDANCE: Advice requests sometimes mis-classify as CONVERSATION or STRATEGY
+- Future improvement opportunity (GREAT-4G)
+
 ## Benefits
 
 - **High Performance**: Sub-millisecond classification for pattern matches

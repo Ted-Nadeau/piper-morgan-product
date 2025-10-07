@@ -44,8 +44,8 @@ class TestWebIntentEnforcement:
     def test_health_endpoint_allowed(self):
         """Health checks are explicitly allowed to bypass."""
         response = client.get("/health")
-        # Health should work (200) or not exist (404)
-        assert response.status_code in [200, 404]
+        # GREAT-4F: Health endpoint MUST return 200 (critical for monitoring/load balancers)
+        assert response.status_code == 200, "/health endpoint MUST return 200 for monitoring"
 
     def test_docs_endpoint_allowed(self):
         """Documentation is explicitly allowed to bypass."""

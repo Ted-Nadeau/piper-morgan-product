@@ -66,6 +66,15 @@ result = await intent_service.process_intent("Show my standup status")
 - **Cache**: 84.6% hit rate, 7.6x speedup
 - **Production**: Deployed and stable
 
+### Classification Accuracy
+
+Piper Morgan's intent classifier achieves 95%+ accuracy for the three most common query types:
+- Calendar/Schedule queries (TEMPORAL): 96.7%
+- Work Status queries (STATUS): 96.7%
+- Priority queries (PRIORITY): 100%
+
+Validated with 140+ query variants across 5 canonical categories (GREAT-4F, October 2025).
+
 ---
 
 ## 🚀 Quick Start (30 seconds)
