@@ -1,7 +1,7 @@
-# Sprint: Example Integration Sprint
+# Sprint: Demo Documentation Sprint
 
 **Date**: 2025-10-08
-**Created**: 2025-10-08-2144
+**Created**: 2025-10-08-2146
 
 ## Quick Start
 1. Review `sprint-planning.md` for objectives

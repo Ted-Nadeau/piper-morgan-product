@@ -7,7 +7,7 @@ You are working on Piper Morgan, an intelligent PM assistant. The project uses:
 - Domain-Driven Design
 - Port 8001 for web (not 8080)
 
-## Sprint: Example Integration Sprint
+## Sprint: Demo Documentation Sprint
 **Date**: 2025-10-08
 **Objectives**: [TO BE DEFINED IN sprint-planning.md]
 
@@ -38,7 +38,7 @@ docker exec -it piper-postgres psql -U piper -d piper_morgan
 ```
 
 ## Current Focus
-**Example Integration Sprint**: [DEFINE SPECIFIC FOCUS IN sprint-planning.md]
+**Demo Documentation Sprint**: [DEFINE SPECIFIC FOCUS IN sprint-planning.md]
 
 ## Critical: The 75% Pattern
 Most code is 75% complete then abandoned. Complete existing work, don't create new patterns.
