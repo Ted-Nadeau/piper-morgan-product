@@ -1,23 +1,28 @@
 """
 Integration tests for complete intent system.
+
+GREAT-5 Phase 1.5: Updated to use client_with_intent fixture for proper
+IntentService initialization in test environment.
 """
 
 import pytest
-from fastapi.testclient import TestClient
 
-from web.app import app
 
-client = TestClient(app)
+@pytest.fixture
+def client(client_with_intent):
+    """Use the properly initialized client from conftest."""
+    return client_with_intent
 
 
 class TestIntentSystemIntegration:
     """Full system integration tests."""
 
-    def test_complete_pipeline_exists(self):
+    def test_complete_pipeline_exists(self, client):
         """Verify all pipeline components exist."""
         # 1. Intent endpoint exists
         response = client.post("/api/v1/intent", json={"text": "test"})
-        assert response.status_code in [200, 422, 500]
+        # GREAT-5: Intent endpoint must work reliably - no server crashes (500)
+        assert response.status_code in [200, 422]
 
         # 2. Middleware monitoring exists
         response = client.get("/api/admin/intent-monitoring")
@@ -27,7 +32,7 @@ class TestIntentSystemIntegration:
         response = client.get("/api/admin/intent-cache-metrics")
         assert response.status_code == 200
 
-    def test_nl_endpoints_configured(self):
+    def test_nl_endpoints_configured(self, client):
         """All NL endpoints should be in middleware config."""
         response = client.get("/api/admin/intent-monitoring")
         assert response.status_code == 200
@@ -39,7 +44,7 @@ class TestIntentSystemIntegration:
         assert "/api/v1/intent" in nl_endpoints
         assert "/api/standup" in nl_endpoints
 
-    def test_cache_operational(self):
+    def test_cache_operational(self, client):
         """Cache should be operational."""
         response = client.get("/api/admin/intent-cache-metrics")
         assert response.status_code == 200

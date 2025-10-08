@@ -8,9 +8,10 @@ for failures. Created in response to testing blind spots investigation
 IMPORTANT: These tests use NO mocks - they test real functionality.
 """
 
-import pytest
 import importlib
 import sys
+
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -21,8 +22,9 @@ class TestCriticalImports:
         """web.app must import successfully."""
         try:
             from web.app import app
+
             assert app is not None
-            assert hasattr(app, 'routes')
+            assert hasattr(app, "routes")
         except ImportError as e:
             pytest.fail(f"Critical import failed: web.app - {e}")
 
@@ -30,6 +32,7 @@ class TestCriticalImports:
         """Intent service must import successfully."""
         try:
             from services.intent.intent_service import IntentService
+
             assert IntentService is not None
         except ImportError as e:
             pytest.fail(f"Critical import failed: services.intent.intent_service - {e}")
@@ -37,10 +40,13 @@ class TestCriticalImports:
     def test_orchestration_engine_imports(self):
         """Orchestration engine must import successfully."""
         try:
-            from services.orchestration import engine
-            assert engine is not None
+            from services.orchestration.engine import OrchestrationEngine
+
+            assert OrchestrationEngine is not None
         except ImportError as e:
-            pytest.fail(f"Critical import failed: services.orchestration.engine - {e}")
+            pytest.fail(
+                f"Critical import failed: services.orchestration.engine.OrchestrationEngine - {e}"
+            )
 
     def test_all_critical_modules_importable(self):
         """All critical modules must be importable."""
@@ -74,6 +80,7 @@ class TestCriticalEndpoints:
         NO allowing 404! Health check is critical for load balancers.
         """
         from web.app import app
+
         client = TestClient(app)
 
         response = client.get("/health")
@@ -97,7 +104,7 @@ class TestCriticalEndpoints:
             ("/health", "GET"),
             ("/health/config", "GET"),
             ("/api/v1/intent", "POST"),
-            ("/api/standup", "POST"),
+            ("/api/standup", "GET"),  # GREAT-5: Fixed - standup is GET not POST
             ("/api/admin/intent-monitoring", "GET"),
             ("/api/admin/intent-cache-metrics", "GET"),
         ]
@@ -105,7 +112,7 @@ class TestCriticalEndpoints:
         # Get actual routes
         actual_routes = {}
         for route in app.routes:
-            if hasattr(route, 'path') and hasattr(route, 'methods'):
+            if hasattr(route, "path") and hasattr(route, "methods"):
                 for method in route.methods:
                     actual_routes[(route.path, method)] = True
 
@@ -119,20 +126,19 @@ class TestCriticalEndpoints:
     def test_intent_endpoint_returns_valid_response(self):
         """Intent endpoint must process requests and return valid responses."""
         from web.app import app
+
         client = TestClient(app)
 
         response = client.post("/api/v1/intent", json={"text": "What day is it?"})
 
-        # Must succeed (200) or return proper error (422 for validation, 500 for server error)
-        # But NOT 404 - endpoint must exist
-        assert response.status_code in [200, 422, 500], (
+        # GREAT-5: STRICT - no accepting 500 (server crash)
+        # Must succeed (200) or return proper validation error (422)
+        # But NOT 404 (doesn't exist) or 500 (server crash)
+        assert response.status_code in [200, 422], (
             f"Intent endpoint returned {response.status_code}. "
-            "404 means endpoint doesn't exist - that's a failure!"
+            "Expected 200 (success) or 422 (validation error). "
+            "404 means endpoint doesn't exist, 500 means server crash - both failures!"
         )
-
-        # If 404, fail explicitly
-        if response.status_code == 404:
-            pytest.fail("/api/v1/intent endpoint does not exist (404)")
 
 
 class TestNoSilentFailures:
@@ -145,14 +151,14 @@ class TestNoSilentFailures:
         canonical_handlers_path = Path("services/intent_service/canonical_handlers.py")
 
         assert canonical_handlers_path.exists(), (
-            "Canonical handlers file is missing! "
-            "This should FAIL, not skip silently."
+            "Canonical handlers file is missing! " "This should FAIL, not skip silently."
         )
 
     def test_intent_test_constants_exist(self):
         """Intent test constants must exist - tests depend on them."""
         try:
-            from tests.intent.test_constants import INTENT_CATEGORIES, CATEGORY_EXAMPLES
+            from tests.intent.test_constants import CATEGORY_EXAMPLES, INTENT_CATEGORIES
+
             assert len(INTENT_CATEGORIES) == 13, "Should have 13 intent categories"
             assert len(CATEGORY_EXAMPLES) == 13, "Should have 13 category examples"
         except ImportError as e:
@@ -166,8 +172,8 @@ class TestIntentServiceEndToEnd:
     async def test_intent_service_processes_temporal_query(self):
         """Intent service must process TEMPORAL queries successfully."""
         from services.intent.intent_service import IntentService
-        from services.orchestration import OrchestrationEngine
         from services.llm.clients import llm_client
+        from services.orchestration import OrchestrationEngine
 
         # Real components, no mocks
         orchestration_engine = OrchestrationEngine(llm_client=llm_client)
@@ -175,13 +181,12 @@ class TestIntentServiceEndToEnd:
 
         # Process real query
         result = await intent_service.process_intent(
-            "What day is it?",
-            session_id="regression_test"
+            "What day is it?", session_id="regression_test"
         )
 
         # Must succeed
         assert result is not None
-        assert hasattr(result, 'success')
+        assert hasattr(result, "success")
         # Note: success might be True or False, but result must exist
 
 

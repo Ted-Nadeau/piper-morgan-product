@@ -547,8 +547,9 @@ async def intent_cache_metrics(request: Request):
     # Get IntentService from app state
     intent_service = getattr(request.app.state, "intent_service", None)
 
-    if intent_service and hasattr(intent_service.classifier, "cache"):
-        metrics = intent_service.classifier.cache.get_metrics()
+    # GREAT-5 Phase 1.5: Fix attribute name (intent_classifier not classifier)
+    if intent_service and hasattr(intent_service.intent_classifier, "cache"):
+        metrics = intent_service.intent_classifier.cache.get_metrics()
         return {"cache_enabled": True, "metrics": metrics, "status": "operational"}
     else:
         return {"cache_enabled": False, "status": "not_configured"}
@@ -565,8 +566,9 @@ async def clear_intent_cache(request: Request):
     # Get IntentService from app state
     intent_service = getattr(request.app.state, "intent_service", None)
 
-    if intent_service and hasattr(intent_service.classifier, "cache"):
-        intent_service.classifier.cache.clear()
+    # GREAT-5 Phase 1.5: Fix attribute name (intent_classifier not classifier)
+    if intent_service and hasattr(intent_service.intent_classifier, "cache"):
+        intent_service.intent_classifier.cache.clear()
         return {"status": "cache_cleared", "message": "Intent cache cleared successfully"}
     else:
         return {"status": "cache_not_configured", "message": "Intent cache not available"}
