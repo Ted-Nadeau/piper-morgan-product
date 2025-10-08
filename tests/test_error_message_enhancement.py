@@ -287,8 +287,8 @@ class TestIntegrationErrorScenarios:
             "/api/v1/intent", json={"message": "test", "context": invalid_context}
         )
 
-        # Should handle gracefully
-        assert response.status_code in [400, 422, 500]
+        # GREAT-5: Graceful handling means validation error (400/422), NOT crash (500)
+        assert response.status_code in [400, 422]
 
     def test_rate_limiting_error_handling(self, test_client):
         """Test handling of rate limiting errors"""
