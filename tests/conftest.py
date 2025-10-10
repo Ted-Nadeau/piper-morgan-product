@@ -26,22 +26,32 @@ def mock_async_session():
 
 
 # GREAT-5 Phase 1.5: IntentService test fixtures
+# Updated in #212 Phase 0 to add ServiceRegistry initialization (required after #217 refactoring)
 @pytest.fixture
 async def intent_service():
     """
     Provide properly initialized IntentService for testing.
 
     This fixture ensures IntentService is available with all required dependencies:
+    - ServiceRegistry with LLM service (#217 refactoring requirement)
     - OrchestrationEngine (None for tests)
     - Intent classifier
     - Conversation handler
 
     Created in GREAT-5 Phase 1.5 to fix initialization issues revealed by
     stricter test assertions in Phase 1.
+    Updated in #212 Phase 0 for #217 ServiceRegistry pattern.
     """
     from services.conversation.conversation_handler import ConversationHandler
+    from services.domain.llm_domain_service import LLMDomainService
     from services.intent.intent_service import IntentService
     from services.intent_service import classifier
+    from services.service_registry import ServiceRegistry
+
+    # Initialize ServiceRegistry with LLM domain service (required after #217)
+    llm_domain_service = LLMDomainService()
+    await llm_domain_service.initialize()  # Must initialize before use
+    ServiceRegistry.register("llm", llm_domain_service)
 
     # Initialize IntentService with test configuration
     service = IntentService(
@@ -52,8 +62,8 @@ async def intent_service():
 
     yield service
 
-    # Cleanup if needed
-    # await service.cleanup() if service has cleanup method
+    # Cleanup ServiceRegistry
+    ServiceRegistry._services.clear()
 
 
 @pytest.fixture
