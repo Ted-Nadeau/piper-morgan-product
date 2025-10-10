@@ -68,11 +68,11 @@ class OrchestrationEngine:
     """
 
     def __init__(self, llm_client: Optional[LLMClient] = None):
-        # Use global llm_client if none provided
+        # Use ServiceRegistry if none provided
         if llm_client is None:
-            from services.llm.clients import llm_client as global_llm_client
+            from services.service_registry import ServiceRegistry
 
-            llm_client = global_llm_client
+            llm_client = ServiceRegistry.get_llm()
 
         self.llm_client = llm_client
 

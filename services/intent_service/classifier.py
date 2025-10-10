@@ -31,7 +31,7 @@ from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_ma
 from services.intent_service.pre_classifier import PreClassifier
 from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
 from services.knowledge_graph import get_ingester
-from services.llm.clients import llm_client
+from services.service_registry import ServiceRegistry
 from shared.events import EventBus
 
 logger = structlog.get_logger()
@@ -39,7 +39,7 @@ logger = structlog.get_logger()
 
 class IntentClassifier:
     def __init__(self, event_bus: Optional[EventBus] = None):
-        self.llm = llm_client  # Use your global client instance
+        self._llm = None  # Lazy initialization via property
         self.event_bus = event_bus
         self.knowledge_hierarchy = [
             "pm_fundamentals",  # Your book, PM best practices
@@ -50,6 +50,13 @@ class IntentClassifier:
         # GREAT-4B Phase 3: Initialize cache with 1-hour TTL
         self.cache = IntentCache(ttl=3600)
         logger.info("IntentCache integrated with classifier", ttl_seconds=3600)
+
+    @property
+    def llm(self):
+        """Lazy-load LLM service from ServiceRegistry"""
+        if self._llm is None:
+            self._llm = ServiceRegistry.get_llm()
+        return self._llm
 
     async def classify(
         self,

@@ -19,7 +19,7 @@ from services.domain.models import Intent, IntentCategory, KnowledgeNode
 from services.intent_service.fuzzy_matcher import correct_common_typos
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
 from services.knowledge.semantic_indexing_service import SemanticIndexingService
-from services.llm.clients import llm_client
+from services.service_registry import ServiceRegistry
 from services.shared_types import NodeType
 
 logger = structlog.get_logger()
@@ -44,7 +44,7 @@ class LLMIntentClassifier:
         confidence_threshold: float = 0.75,
         enable_learning: bool = True,
     ):
-        self.llm = llm_client
+        self._llm = None  # Lazy initialization via property
         self.knowledge_graph = knowledge_graph_service
         self.semantic_indexer = semantic_indexing_service
         self.confidence_threshold = confidence_threshold
@@ -57,6 +57,13 @@ class LLMIntentClassifier:
             "low_confidence_fallbacks": 0,
             "average_latency_ms": 0,
         }
+
+    @property
+    def llm(self):
+        """Lazy-load LLM service from ServiceRegistry"""
+        if self._llm is None:
+            self._llm = ServiceRegistry.get_llm()
+        return self._llm
 
     def _ensure_json_response_format(self, **kwargs):
         """Ensure response_format is always set for JSON responses"""
