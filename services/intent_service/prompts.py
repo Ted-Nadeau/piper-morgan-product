@@ -86,13 +86,29 @@ Key indicators for PRIORITY:
 ### IDENTITY vs QUERY
 If the query is asking about:
 - Personal information, role, identity → IDENTITY
+- Assistant capabilities, features, abilities → IDENTITY
 - General information about people → QUERY
 
 Examples:
 - ✅ "who am I?" → IDENTITY (personal identity)
 - ✅ "what's my role?" → IDENTITY (personal role)
 - ✅ "show my profile" → IDENTITY (personal information)
+- ✅ "what can you do?" → IDENTITY (assistant capabilities)
+- ✅ "what are you capable of?" → IDENTITY (assistant abilities)
+- ✅ "tell me about your features" → IDENTITY (assistant features)
+- ✅ "bot capabilities" → IDENTITY (assistant capabilities)
+- ✅ "your abilities" → IDENTITY (assistant abilities)
+- ✅ "what do you do?" → IDENTITY (assistant function)
+- ✅ "assistant features" → IDENTITY (assistant features)
+- ✅ "what kind of assistant are you?" → IDENTITY (assistant identity)
 - ❌ "who is the CEO?" → QUERY (general information)
+- ❌ "what is an assistant?" → QUERY (general knowledge)
+
+Key indicators for IDENTITY:
+- Questions about the assistant itself (you, your, bot, assistant)
+- Capability queries (can you, features, abilities, capabilities)
+- Identity questions (who are you, what are you, your role)
+- Personal pronouns referring to the user (I, my, me) + identity words
 
 ### GUIDANCE vs QUERY
 If the query is asking about:
@@ -102,7 +118,57 @@ If the query is asking about:
 Examples:
 - ✅ "how do I create a ticket?" → GUIDANCE (how-to advice)
 - ✅ "what's the best way to prioritize?" → GUIDANCE (best practices)
+- ✅ "how should I approach this?" → GUIDANCE (advice request)
+- ✅ "recommend an approach" → GUIDANCE (recommendation)
+- ✅ "what's the process for" → GUIDANCE (process guidance)
 - ❌ "what is a ticket?" → QUERY (factual information)
+- ❌ "definition of priority" → QUERY (general knowledge)
+
+### GUIDANCE vs CONVERSATION
+If the query is asking about:
+- How to do something, advice, recommendations, approaches → GUIDANCE
+- Incomplete queries with advice-seeking intent → GUIDANCE
+- Greetings, chitchat, acknowledgments → CONVERSATION
+
+Examples:
+- ✅ "what's the best way to" → GUIDANCE (incomplete but advice-seeking)
+- ✅ "how do I handle" → GUIDANCE (incomplete how-to)
+- ✅ "suggestions for" → GUIDANCE (incomplete recommendation request)
+- ✅ "what should I do about" → GUIDANCE (incomplete advice request)
+- ✅ "how to proceed with" → GUIDANCE (incomplete process question)
+- ✅ "advice on handling" → GUIDANCE (advice request)
+- ✅ "guide me through" → GUIDANCE (guidance request)
+- ❌ "hello" → CONVERSATION (greeting)
+- ❌ "thanks" → CONVERSATION (acknowledgment)
+- ❌ "got it" → CONVERSATION (acknowledgment)
+
+Key indicator: Incomplete queries ending with prepositions (to, for, about, with)
+that start with advice-seeking words (how, what's the best, suggest, recommend)
+should be GUIDANCE, not CONVERSATION.
+
+### GUIDANCE vs STRATEGY
+If the query is asking about:
+- Tactical advice, how-to steps, best practices → GUIDANCE
+- Strategic planning, roadmapping, high-level decisions → STRATEGY
+
+Examples:
+- ✅ "suggest a strategy" → GUIDANCE (requesting tactical advice, not planning)
+- ✅ "recommend a solution" → GUIDANCE (tactical recommendation)
+- ✅ "what would you recommend" → GUIDANCE (advice request)
+- ✅ "how should I prioritize" → GUIDANCE (tactical prioritization advice)
+- ❌ "create a product strategy" → STRATEGY (strategic planning)
+- ❌ "plan our Q4 roadmap" → STRATEGY (strategic roadmap)
+- ❌ "define our market position" → STRATEGY (strategic decision)
+
+Key distinction: GUIDANCE is about HOW to do something (tactical),
+STRATEGY is about WHAT direction to take (strategic planning).
+
+Key indicators for GUIDANCE:
+- How-to questions (how do I, how should I, how to)
+- Best practice queries (what's the best way, best practices for)
+- Advice requests (recommend, suggest, advise, guidance)
+- Incomplete advice-seeking queries ending with prepositions
+- Process questions (what's the process, how does this work)
 
 ### General Disambiguation Rule
 If in doubt between canonical (TEMPORAL/STATUS/PRIORITY/IDENTITY/GUIDANCE) and QUERY:
