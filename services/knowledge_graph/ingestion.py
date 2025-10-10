@@ -21,7 +21,7 @@ import PyPDF2
 import structlog
 from chromadb.utils import embedding_functions
 
-from services.llm.clients import llm_client
+from services.service_registry import ServiceRegistry
 
 logger = structlog.get_logger()
 
@@ -46,6 +46,13 @@ class DocumentIngester:
         )
 
         logger.info(f"Knowledge collection initialized with {self.collection.count()} documents")
+
+    @property
+    def llm(self):
+        """Lazy-load LLM service from ServiceRegistry"""
+        if not hasattr(self, "_llm") or self._llm is None:
+            self._llm = ServiceRegistry.get_llm()
+        return self._llm
 
     async def _analyze_document_relationships(self, content: str, existing_metadata: Dict) -> Dict:
         """Use LLM to analyze document relationships and hierarchy"""
@@ -76,7 +83,7 @@ Hierarchy levels:
 Be specific and concise. Extract real concepts from the content."""
 
         try:
-            response = await llm_client.complete(
+            response = await self.llm.complete(
                 task_type="relationship_analysis",
                 prompt=prompt,
                 context=existing_metadata,

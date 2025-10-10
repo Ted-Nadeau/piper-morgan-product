@@ -7,6 +7,7 @@ from misconfiguration. Use --skip-validation for development bypass.
 """
 
 import argparse
+import asyncio
 import logging
 import sys
 from typing import Optional
@@ -92,6 +93,31 @@ def validate_configuration(config_path: str, skip_validation: bool = False) -> b
         return False
 
 
+async def initialize_domain_services():
+    """Initialize domain services at application startup"""
+    from services.domain.llm_domain_service import LLMDomainService
+    from services.service_registry import ServiceRegistry
+
+    try:
+        logger.info("Initializing domain services...")
+
+        # Initialize LLM service
+        llm_service = LLMDomainService()
+        await llm_service.initialize()
+
+        # Register in global registry
+        ServiceRegistry.register("llm", llm_service)
+
+        # Mark registry as initialized
+        ServiceRegistry.mark_initialized()
+
+        logger.info("Domain services initialized successfully")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize domain services: {e}")
+        raise
+
+
 def start_services():
     """Start all application services"""
     print("🚀 Starting Piper Morgan services...")
@@ -136,6 +162,13 @@ def main():
     # Validate configuration first
     if not validate_configuration(args.config, args.skip_validation):
         print("🚫 Application startup aborted due to configuration issues")
+        sys.exit(1)
+
+    # Initialize domain services
+    try:
+        asyncio.run(initialize_domain_services())
+    except Exception as e:
+        print(f"❌ Failed to initialize domain services: {e}")
         sys.exit(1)
 
     # Start services if validation passed

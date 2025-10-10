@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 from services.integrations.github.issue_generator import IssueContentGenerator
 from services.knowledge_graph.ingestion import get_ingester
-from services.llm.clients import llm_client
+from services.service_registry import ServiceRegistry
 
 
 @dataclass
@@ -34,6 +34,13 @@ class GitHubIssueAnalyzer:
         self.github = github_agent or GitHubIntegrationRouter()
         self.knowledge = get_ingester()
         self.ideal_generator = IssueContentGenerator()
+
+    @property
+    def llm(self):
+        """Lazy-load LLM service from ServiceRegistry"""
+        if not hasattr(self, "_llm") or self._llm is None:
+            self._llm = ServiceRegistry.get_llm()
+        return self._llm
 
     async def analyze_issue_by_url(self, url: str) -> Dict[str, Any]:
         """
@@ -99,7 +106,7 @@ class GitHubIssueAnalyzer:
         # Step 3: Perform LLM-based analysis
         analysis_prompt = self._build_analysis_prompt(issue_data, ideal_issue, knowledge_results)
 
-        analysis_response = await llm_client.complete(
+        analysis_response = await self.llm.complete(
             task_type="issue_analysis",
             prompt=analysis_prompt,
             context={
