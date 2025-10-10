@@ -57,13 +57,36 @@ class TestLLMConfigServiceInit:
             assert "openai" in providers
 
     def test_service_handles_missing_env_vars(self):
-        """Service handles missing environment variables gracefully"""
+        """Service handles missing environment variables and keychain gracefully"""
         with patch.dict(os.environ, {}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return no keys
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            # Should not crash, just have no configured providers
-            providers = service.get_configured_providers()
-            assert providers == []
+                service = LLMConfigService()
+
+                # Should not crash, just have no configured providers
+                providers = service.get_configured_providers()
+                assert providers == []
+
+    def test_service_loads_from_keychain_first(self):
+        """Service prioritizes keychain over environment variables"""
+        # Set environment variable
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "env-key-123"}):
+            # Mock keychain service to return keychain key
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = "keychain-key-456"
+
+                service = LLMConfigService()
+
+                # Should return keychain key, not environment key
+                key = service.get_api_key("openai")
+                assert key == "keychain-key-456"
+
+                # Verify keychain was called
+                mock_keychain.get_api_key.assert_called_with("openai")
 
     def test_service_loads_all_supported_providers(self):
         """Service knows about all supported providers"""
@@ -89,18 +112,28 @@ class TestProviderConfiguration:
             },
             clear=True,
         ):
-            service = LLMConfigService()
-            providers = service.get_configured_providers()
+            # Mock keychain service to return None for all providers
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            assert "openai" in providers
-            assert "anthropic" in providers
-            assert "gemini" not in providers
-            assert "perplexity" not in providers
+                service = LLMConfigService()
+                providers = service.get_configured_providers()
+
+                assert "openai" in providers
+                assert "anthropic" in providers
+                assert "gemini" not in providers
+                assert "perplexity" not in providers
 
     def test_get_provider_config(self):
         """Returns config for specific provider"""
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
+
+                service = LLMConfigService()
 
             config = service._providers["openai"]
             assert config.name == "openai"
@@ -111,10 +144,15 @@ class TestProviderConfiguration:
     def test_get_api_key_success(self):
         """Returns API key for configured provider"""
         with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key-123"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            key = service.get_api_key("openai")
-            assert key == "test-key-123"
+                service = LLMConfigService()
+
+                key = service.get_api_key("openai")
+                assert key == "test-key-123"
 
     def test_get_api_key_missing_provider_returns_none(self):
         """Requesting unconfigured provider returns None"""
@@ -126,10 +164,15 @@ class TestProviderConfiguration:
     def test_get_api_key_no_key_set_returns_none(self):
         """Missing key returns None"""
         with patch.dict(os.environ, {}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            result = service.get_api_key("openai")
-            assert result is None
+                service = LLMConfigService()
+
+                result = service.get_api_key("openai")
+                assert result is None
 
 
 class TestProviderValidation:
@@ -151,14 +194,21 @@ class TestProviderValidation:
     async def test_validate_openai_key_invalid(self):
         """Invalid OpenAI key fails validation with clear error"""
         with patch.dict(os.environ, {"OPENAI_API_KEY": "invalid-key-123"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            result = await service.validate_provider("openai")
+                service = LLMConfigService()
 
-            assert result.provider == "openai"
-            assert result.is_valid is False
-            assert result.error_message is not None
-            assert "401" in result.error_message or "unauthorized" in result.error_message.lower()
+                result = await service.validate_provider("openai")
+
+                assert result.provider == "openai"
+                assert result.is_valid is False
+                assert result.error_message is not None
+                assert (
+                    "401" in result.error_message or "unauthorized" in result.error_message.lower()
+                )
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="ANTHROPIC_API_KEY not set")
@@ -211,13 +261,18 @@ class TestProviderValidation:
     async def test_validate_missing_key_returns_error(self):
         """Validating provider without key returns clear error"""
         with patch.dict(os.environ, {}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            result = await service.validate_provider("openai")
+                service = LLMConfigService()
 
-            assert result.provider == "openai"
-            assert result.is_valid is False
-            assert "not set" in result.error_message or "not found" in result.error_message
+                result = await service.validate_provider("openai")
+
+                assert result.provider == "openai"
+                assert result.is_valid is False
+                assert "not set" in result.error_message or "not found" in result.error_message
 
 
 class TestStartupValidation:
@@ -251,19 +306,24 @@ class TestStartupValidation:
     async def test_validation_failure_provides_clear_error(self):
         """Failed validation gives actionable error message"""
         with patch.dict(os.environ, {"GEMINI_API_KEY": "invalid-key"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            # Mock to return failure for non-required provider
-            async def mock_validate_fail(provider):
-                return ValidationResult(
-                    provider=provider,
-                    is_valid=False,
-                    error_message="Invalid API key: 401 Unauthorized",
-                )
+                service = LLMConfigService()
 
-            service.validate_provider = mock_validate_fail
+                # Mock to return failure for non-required provider
+                async def mock_validate_fail(provider):
+                    return ValidationResult(
+                        provider=provider,
+                        is_valid=False,
+                        error_message="Invalid API key: 401 Unauthorized",
+                    )
 
-            results = await service.validate_all_providers()
+                service.validate_provider = mock_validate_fail
+
+                results = await service.validate_all_providers()
 
             assert "gemini" in results
             assert results["gemini"].is_valid is False
@@ -273,34 +333,42 @@ class TestStartupValidation:
     async def test_validation_handles_network_errors(self):
         """Network errors during validation handled gracefully"""
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test-key"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            # Mock to raise network error for non-required provider
-            async def mock_validate_network_error(provider):
-                return ValidationResult(
-                    provider=provider,
-                    is_valid=False,
-                    error_message="Network error: Connection timeout",
-                    error_code="NETWORK_ERROR",
-                )
+                service = LLMConfigService()
 
-            service.validate_provider = mock_validate_network_error
+                # Mock to raise network error for non-required provider
+                async def mock_validate_network_error(provider):
+                    return ValidationResult(
+                        provider=provider,
+                        is_valid=False,
+                        error_message="Network error: Connection timeout",
+                        error_code="NETWORK_ERROR",
+                    )
 
-            results = await service.validate_all_providers()
+                service.validate_provider = mock_validate_network_error
 
-            assert "gemini" in results
-            assert results["gemini"].is_valid is False
-            assert "Network error" in results["gemini"].error_message
+                results = await service.validate_all_providers()
+
+                assert "gemini" in results
+                assert results["gemini"].is_valid is False
+                assert "Network error" in results["gemini"].error_message
 
     @pytest.mark.asyncio
     async def test_required_provider_failure_raises_exception(self):
         """Required provider validation failure raises exception"""
-        with patch.dict(os.environ, {}, clear=True):
-            service = LLMConfigService()
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "fake-key"}, clear=True):
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            # Mock OpenAI as configured but invalid (OpenAI is required)
-            service._providers["openai"].api_key = "fake-key"
+                service = LLMConfigService()
 
+            # Mock OpenAI validation to fail (OpenAI is required)
             async def mock_validate_fail(provider):
                 return ValidationResult(
                     provider=provider, is_valid=False, error_message="Invalid key"
@@ -318,26 +386,36 @@ class TestErrorMessages:
     def test_missing_key_returns_none_gracefully(self):
         """Missing key returns None gracefully (keychain migration behavior)"""
         with patch.dict(os.environ, {}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            result = service.get_api_key("openai")
-            assert result is None
+                service = LLMConfigService()
+
+                result = service.get_api_key("openai")
+                assert result is None
 
     @pytest.mark.asyncio
     async def test_invalid_key_error_message_includes_status(self):
         """Invalid key error includes HTTP status for debugging"""
         with patch.dict(os.environ, {"OPENAI_API_KEY": "invalid-key"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
 
-            result = await service.validate_provider("openai")
+                service = LLMConfigService()
 
-            assert result.is_valid is False
-            # Should include status code for debugging
-            assert (
-                "401" in result.error_message
-                or "403" in result.error_message
-                or "unauthorized" in result.error_message.lower()
-            )
+                result = await service.validate_provider("openai")
+
+                assert result.is_valid is False
+                # Should include status code for debugging
+                assert (
+                    "401" in result.error_message
+                    or "403" in result.error_message
+                    or "unauthorized" in result.error_message.lower()
+                )
 
     @pytest.mark.asyncio
     async def test_network_error_message_distinguishes_from_auth_error(self):
@@ -515,7 +593,12 @@ class TestProviderSelection:
     def test_get_environment(self):
         """Can get current environment"""
         with patch.dict(os.environ, {"PIPER_ENVIRONMENT": "production"}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
+
+                service = LLMConfigService()
             from services.config.llm_config_service import Environment
 
             assert service.get_environment() == Environment.PRODUCTION
@@ -523,7 +606,12 @@ class TestProviderSelection:
     def test_environment_defaults_to_development(self):
         """Environment defaults to development if not set"""
         with patch.dict(os.environ, {}, clear=True):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
+
+                service = LLMConfigService()
             from services.config.llm_config_service import Environment
 
             assert service.get_environment() == Environment.DEVELOPMENT
@@ -533,7 +621,12 @@ class TestProviderSelection:
         with patch.dict(
             os.environ, {"OPENAI_API_KEY": "test-key", "PIPER_EXCLUDED_PROVIDERS": ""}, clear=True
         ):
-            service = LLMConfigService()
+            # Mock keychain service to return None (so it falls back to env var)
+            with patch("services.config.llm_config_service.KeychainService") as mock_keychain_class:
+                mock_keychain = mock_keychain_class.return_value
+                mock_keychain.get_api_key.return_value = None
+
+                service = LLMConfigService()
             available = service.get_available_providers()
             # Only OpenAI should be available (others don't have keys)
             assert "openai" in available
