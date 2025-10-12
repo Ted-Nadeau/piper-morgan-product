@@ -140,6 +140,37 @@ class GitHubDomainService:
             logger.error("GitHub issue creation failed", repo=repo_name, title=title, error=str(e))
             raise
 
+    async def update_issue(
+        self,
+        repo_name: str,
+        issue_number: int,
+        title: Optional[str] = None,
+        body: Optional[str] = None,
+        state: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+        assignees: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Update existing GitHub issue for domain consumption"""
+        try:
+            return await self._github_agent.update_issue(
+                repo_name, issue_number, title, body, state, labels, assignees
+            )
+        except GitHubAuthFailedError:
+            logger.error(
+                "GitHub authentication failed for issue update", repo=repo_name, issue=issue_number
+            )
+            raise
+        except GitHubRateLimitError:
+            logger.warning(
+                "GitHub rate limit exceeded for issue update", repo=repo_name, issue=issue_number
+            )
+            raise
+        except Exception as e:
+            logger.error(
+                "GitHub issue update failed", repo=repo_name, issue=issue_number, error=str(e)
+            )
+            raise
+
     # Utility Operations
 
     def parse_github_url(self, url: str) -> Optional[Tuple[str, str, int]]:
