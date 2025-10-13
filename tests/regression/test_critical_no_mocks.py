@@ -168,6 +168,7 @@ class TestNoSilentFailures:
 class TestIntentServiceEndToEnd:
     """End-to-end tests with real IntentService - no mocks."""
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_intent_service_processes_temporal_query(self):
         """Intent service must process TEMPORAL queries successfully."""
