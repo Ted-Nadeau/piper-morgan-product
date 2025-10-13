@@ -209,17 +209,26 @@ async def get_query_router(self) -> QueryRouter:
 ```
 
 ### Performance Verification
-**GREAT-1C Performance Testing Results** (September 25, 2025):
+**GREAT-1C Performance Testing Results** (September 25, 2025 - Historical Baseline):
 - QueryRouter object access: ~0.1ms (sub-millisecond performance)
 - LLM classification: ~2500ms (external API dependency)
 - Full user request processing: ~4500ms (end-to-end pipeline)
 - Orchestration flow: ~72ms (database queries)
 
+*Note: Performance metrics from September 25, 2025 testing session. Not re-verified but documented in session logs.*
+
 ### Integration Achievements
 1. **Intent Classification → QueryRouter Pipeline**: Functional end-to-end flow
 2. **Bug #166 Resolution**: Fixed UI hang with timeout protection for concurrent requests
-3. **Comprehensive Testing**: 8 regression lock tests prevent future disabling
+3. **Comprehensive Testing**: 9 regression lock tests (296 lines, `tests/regression/test_queryrouter_lock.py`) prevent future disabling
 4. **Documentation**: Complete session logs and architecture updates
+
+### Verification (October 13, 2025)
+**Metrics Verified via Serena MCP Symbolic Analysis**:
+- QueryRouter: 935 lines total, class definition lines 39-934 (896 lines)
+- Structure: 18 methods, 16 instance variables
+- Lock tests: 9 comprehensive tests confirmed (test count updated from 8 in original docs)
+- Evidence package: `dev/2025/10/13/proof-1-great-1-evidence.md`
 
 ### Evidence of Completion
 - **Session Log**: `dev/2025/09/22/2025-09-22-1649-prog-code-log.md`
@@ -232,7 +241,7 @@ async def get_query_router(self) -> QueryRouter:
 ✅ **Functional**: GitHub issue creation works through chat (demonstrated in testing)
 ✅ **Performance**: Sub-millisecond QueryRouter access, full pipeline operational
 ✅ **No Workarounds**: Clean implementation using proper session management
-✅ **Tested**: 8 regression tests prevent future disabling
+✅ **Tested**: 9 regression tests (verified October 2025) prevent future disabling
 ✅ **Documented**: Complete explanation of blocker and fix provided
 
 ### The North Star Test Results
