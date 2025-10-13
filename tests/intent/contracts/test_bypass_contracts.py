@@ -80,9 +80,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ GUIDANCE no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_execution_no_bypass(self, intent_service):
-        """BYPASS 6/13: EXECUTION requires classification."""
+        """BYPASS 6/13: EXECUTION requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["EXECUTION"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -93,9 +94,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ EXECUTION no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_analysis_no_bypass(self, intent_service):
-        """BYPASS 7/13: ANALYSIS requires classification."""
+        """BYPASS 7/13: ANALYSIS requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["ANALYSIS"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -106,9 +108,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ ANALYSIS no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_synthesis_no_bypass(self, intent_service):
-        """BYPASS 8/13: SYNTHESIS requires classification."""
+        """BYPASS 8/13: SYNTHESIS requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["SYNTHESIS"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -119,9 +122,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ SYNTHESIS no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_strategy_no_bypass(self, intent_service):
-        """BYPASS 9/13: STRATEGY requires classification."""
+        """BYPASS 9/13: STRATEGY requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["STRATEGY"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -132,9 +136,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ STRATEGY no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_learning_no_bypass(self, intent_service):
-        """BYPASS 10/13: LEARNING requires classification."""
+        """BYPASS 10/13: LEARNING requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["LEARNING"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -145,9 +150,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ LEARNING no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_unknown_no_bypass(self, intent_service):
-        """BYPASS 11/13: UNKNOWN requires classification."""
+        """BYPASS 11/13: UNKNOWN requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["UNKNOWN"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -158,9 +164,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ UNKNOWN no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_query_no_bypass(self, intent_service):
-        """BYPASS 12/13: QUERY requires classification."""
+        """BYPASS 12/13: QUERY requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["QUERY"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
@@ -171,9 +178,10 @@ class TestBypassContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ QUERY no bypass: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_conversation_no_bypass(self, intent_service):
-        """BYPASS 13/13: CONVERSATION requires classification."""
+        """BYPASS 13/13: CONVERSATION requires classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["CONVERSATION"]
         result = await intent_service.process_intent(message, session_id="bypass_test")
 
