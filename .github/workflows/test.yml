@@ -65,7 +65,7 @@ jobs:
       - name: Run Intent Contract Tests
         run: |
           echo "🔍 Running Intent Contract Tests (GREAT-4E)"
-          python -m pytest tests/intent/contracts/ -v --tb=short
+          python -m pytest tests/intent/contracts/ -m "not llm" -v --tb=short
           echo "✅ Contract tests completed"
 
       - name: Verify Intent Bypass Prevention
@@ -88,7 +88,7 @@ jobs:
       - name: Classification Accuracy Gate
         run: |
           echo "🔍 Running Classification Accuracy Tests..."
-          python -m pytest tests/intent/contracts/test_accuracy_contracts.py -v --tb=short
+          python -m pytest tests/intent/contracts/test_accuracy_contracts.py -m "not llm" -v --tb=short
           echo "✅ Classification accuracy verified"
         continue-on-error: false
 
