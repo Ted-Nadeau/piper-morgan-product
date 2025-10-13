@@ -63,7 +63,6 @@ jobs:
 
               - [ ] List all docs modified this week: \`git log --since="1 week ago" --name-only --pretty=format: | grep "\\.md$" | sort -u\`
               - [ ] **ACTION FOR PM**: Update these files in Claude project knowledge:
-                - [ ] CLAUDE.md (if modified)
                 - [ ] architecture.md (if modified)
                 - [ ] docs/internal/architecture/current/patterns/README.md (if modified)
                 - [ ] docs/internal/development/methodology-core/ files (if modified)
@@ -129,6 +128,11 @@ jobs:
                 - [ ] Development & Process Patterns (methodology/workflow)
               - [ ] Review session logs for patterns to document
               - [ ] Check for methodology improvements to capture
+              - [ ] **Review ATTRIBUTION.md for completeness**:
+                - [ ] Verify all architectural patterns have proper attribution (DDD, MCP, spatial intelligence)
+                - [ ] Verify all tooling decisions are attributed (Serena workflow, etc.)
+                - [ ] Only credit unique additions as our own
+                - [ ] Note any unclear attributions to ask PM
               - [ ] Verify template directories are current and organized:
                 - [ ] \`docs/internal/development/tools/session-log-templates/\`
                 - [ ] \`docs/internal/planning/current/templates/\`
@@ -141,6 +145,11 @@ jobs:
               - [ ] Check that no backup files (\`*.backup\`, \`*.old\`) are in active directories
               - [ ] Verify no test files in production directories
               - [ ] Check for TODO/FIXME comments: \`grep -r "TODO\\|FIXME" services/ web/ cli/\`
+              - [ ] **Review root README.md (repository view)**:
+                - [ ] Check for outdated "new" claims (weeks-old items)
+                - [ ] Verify links are current and working
+                - [ ] Ensure content is brief and evergreen
+                - [ ] Note: This is separate from docs/README.md (pmorgan.tech homepage)
 
               ### 📈 Metrics Collection (Optional)
 
@@ -149,6 +158,14 @@ jobs:
               - [ ] Active docs size: \`du -sh docs/ --exclude=archive\`
               - [ ] Code line count: \`find . -name "*.py" -type f -exec wc -l {} + | tail -1\`
               - [ ] Test coverage if available: \`pytest --cov\`
+
+              ### 🔄 Workflow Improvement (Meta/Recursive)
+
+              - [ ] Review this week's sweep for process improvements
+              - [ ] Check if PM provided feedback on sweep workflow
+              - [ ] Update \`.github/workflows/weekly-docs-audit.yml\` with improvements if needed
+              - [ ] Document improvement ideas for next iteration
+              - [ ] Note: OK if no updates needed this week
 
               ---
 
