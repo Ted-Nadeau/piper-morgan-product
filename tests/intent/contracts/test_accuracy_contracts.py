@@ -88,9 +88,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ EXECUTION accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_analysis_accuracy(self, intent_service):
-        """ACC 7/13: ANALYSIS classification."""
+        """ACC 7/13: ANALYSIS classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["ANALYSIS"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
@@ -100,9 +101,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ ANALYSIS accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_synthesis_accuracy(self, intent_service):
-        """ACC 8/13: SYNTHESIS classification."""
+        """ACC 8/13: SYNTHESIS classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["SYNTHESIS"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
@@ -112,9 +114,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ SYNTHESIS accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_strategy_accuracy(self, intent_service):
-        """ACC 9/13: STRATEGY classification."""
+        """ACC 9/13: STRATEGY classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["STRATEGY"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
@@ -124,9 +127,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ STRATEGY accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_learning_accuracy(self, intent_service):
-        """ACC 10/13: LEARNING classification."""
+        """ACC 10/13: LEARNING classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["LEARNING"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
@@ -136,9 +140,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ LEARNING accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_unknown_accuracy(self, intent_service):
-        """ACC 11/13: UNKNOWN classification."""
+        """ACC 11/13: UNKNOWN classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["UNKNOWN"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
@@ -148,9 +153,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ UNKNOWN accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_query_accuracy(self, intent_service):
-        """ACC 12/13: QUERY classification."""
+        """ACC 12/13: QUERY classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["QUERY"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
@@ -160,9 +166,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ QUERY accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_conversation_accuracy(self, intent_service):
-        """ACC 13/13: CONVERSATION classification."""
+        """ACC 13/13: CONVERSATION classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["CONVERSATION"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
