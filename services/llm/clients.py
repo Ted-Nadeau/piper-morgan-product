@@ -7,9 +7,9 @@ Uses LLMConfigService for secure key management and validation.
 
 from typing import Any, Dict, Optional
 
-import openai
 import structlog
 from anthropic import Anthropic
+from openai import OpenAI
 
 from services.config.llm_config_service import LLMConfigService
 
@@ -47,8 +47,7 @@ class LLMClient:
         if "openai" in configured_providers:
             try:
                 openai_key = self._config_service.get_api_key("openai")
-                openai.api_key = openai_key
-                self.openai_client = openai
+                self.openai_client = OpenAI(api_key=openai_key)
                 logger.info("OpenAI client initialized")
             except ValueError as e:
                 logger.warning(f"OpenAI client initialization skipped: {e}")
