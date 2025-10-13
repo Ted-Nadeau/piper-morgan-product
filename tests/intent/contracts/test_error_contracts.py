@@ -10,6 +10,7 @@ from tests.intent.test_constants import CATEGORY_EXAMPLES
 class TestErrorContracts(BaseValidationTest):
     """Verify error handling for all categories."""
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_temporal_error_handling(self, intent_service):
         """ERROR 1/13: TEMPORAL error handling."""
@@ -33,6 +34,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"TEMPORAL handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_status_error_handling(self, intent_service):
         """ERROR 2/13: STATUS error handling."""
@@ -56,6 +58,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"STATUS handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_priority_error_handling(self, intent_service):
         """ERROR 3/13: PRIORITY error handling."""
@@ -79,6 +82,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"PRIORITY handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_identity_error_handling(self, intent_service):
         """ERROR 4/13: IDENTITY error handling."""
@@ -102,6 +106,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"IDENTITY handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_guidance_error_handling(self, intent_service):
         """ERROR 5/13: GUIDANCE error handling."""

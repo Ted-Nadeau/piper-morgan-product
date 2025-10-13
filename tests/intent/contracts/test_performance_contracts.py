@@ -12,6 +12,7 @@ from tests.intent.test_constants import CATEGORY_EXAMPLES
 class TestPerformanceContracts(BaseValidationTest):
     """Verify all categories meet performance requirements (<3000ms)."""
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_temporal_performance(self, intent_service):
         """PERF 1/13: TEMPORAL response time."""
@@ -29,6 +30,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ TEMPORAL performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_status_performance(self, intent_service):
         """PERF 2/13: STATUS response time."""
@@ -46,6 +48,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ STATUS performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_priority_performance(self, intent_service):
         """PERF 3/13: PRIORITY response time."""
@@ -63,6 +66,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ PRIORITY performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_identity_performance(self, intent_service):
         """PERF 4/13: IDENTITY response time."""
@@ -80,6 +84,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ IDENTITY performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_guidance_performance(self, intent_service):
         """PERF 5/13: GUIDANCE response time."""
