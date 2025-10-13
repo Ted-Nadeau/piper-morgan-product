@@ -13,7 +13,8 @@ from typing import Any, Dict, List, Optional
 
 from services.domain.models import Workflow, WorkflowResult
 from services.integrations.slack.config_service import SlackConfigService
-from services.integrations.slack.slack_client import SlackClient, SlackResponse
+from services.integrations.slack.slack_client import SlackResponse
+from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +184,7 @@ class ResponseFlowIntegration:
         """Send response to Slack with retry logic"""
         for attempt in range(self._max_retries):
             try:
-                async with SlackClient(self.config_service) as slack_client:
+                async with SlackIntegrationRouter(self.config_service) as slack_client:
                     # Prepare message parameters
                     message_params = {
                         "channel": response_target.channel_id,
