@@ -55,10 +55,7 @@ jobs:
         {
           "type": "service_account",
           "client_email": "test@test.iam.gserviceaccount.com",
-          "private_key": "-----BEGIN PRIVATE KEY-----
-test
------END PRIVATE KEY-----
-"
+          "private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n"
         }
         EOF
 
