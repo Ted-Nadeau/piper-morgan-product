@@ -92,9 +92,11 @@ jobs:
           echo "✅ Classification accuracy verified"
         continue-on-error: false
 
-      - name: Run tests
+      - name: Run tests (excluding LLM tests)
         run: |
-          python -m pytest tests/ --tb=short -v
+          # Skip LLM tests in CI (no API keys configured)
+          # LLM tests run locally when keys available
+          python -m pytest tests/ --tb=short -v -m "not llm"
 
       - name: Test summary
         run: |

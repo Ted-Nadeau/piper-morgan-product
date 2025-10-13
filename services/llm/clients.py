@@ -27,6 +27,11 @@ class LLMClient:
         self._config_service = LLMConfigService()
         self._init_clients()
 
+    @property
+    def providers_initialized(self) -> bool:
+        """Check if at least one LLM provider is initialized and available"""
+        return self.anthropic_client is not None or self.openai_client is not None
+
     def _init_clients(self):
         """Initialize API clients using LLMConfigService"""
         # Get configured providers from config service

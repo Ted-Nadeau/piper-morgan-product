@@ -36,6 +36,7 @@ async def intent_service():
     ServiceRegistry._services.clear()
 
 
+@pytest.mark.llm
 class TestQueryFallback:
     """Test QUERY intent fallback handling."""
 
