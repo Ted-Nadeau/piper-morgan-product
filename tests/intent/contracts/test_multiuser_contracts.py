@@ -10,6 +10,7 @@ from tests.intent.test_constants import CATEGORY_EXAMPLES
 class TestMultiUserContracts(BaseValidationTest):
     """Verify multi-user support for all categories."""
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_temporal_multiuser(self, intent_service):
         """MULTI 1/13: TEMPORAL user isolation."""
@@ -32,6 +33,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ TEMPORAL multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_status_multiuser(self, intent_service):
         """MULTI 2/13: STATUS user isolation."""
@@ -54,6 +56,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ STATUS multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_priority_multiuser(self, intent_service):
         """MULTI 3/13: PRIORITY user isolation."""
@@ -76,6 +79,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ PRIORITY multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_identity_multiuser(self, intent_service):
         """MULTI 4/13: IDENTITY user isolation."""
@@ -98,6 +102,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ IDENTITY multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_guidance_multiuser(self, intent_service):
         """MULTI 5/13: GUIDANCE user isolation."""
