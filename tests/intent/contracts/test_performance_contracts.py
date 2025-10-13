@@ -97,6 +97,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ GUIDANCE performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_execution_performance(self, intent_service):
         """PERF 6/13: EXECUTION response time."""
@@ -114,6 +115,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ EXECUTION performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_analysis_performance(self, intent_service):
         """PERF 7/13: ANALYSIS response time."""
@@ -131,6 +133,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ ANALYSIS performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_synthesis_performance(self, intent_service):
         """PERF 8/13: SYNTHESIS response time."""
@@ -148,6 +151,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ SYNTHESIS performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_strategy_performance(self, intent_service):
         """PERF 9/13: STRATEGY response time."""
@@ -165,6 +169,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ STRATEGY performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_learning_performance(self, intent_service):
         """PERF 10/13: LEARNING response time."""
@@ -182,6 +187,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ LEARNING performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_unknown_performance(self, intent_service):
         """PERF 11/13: UNKNOWN response time."""
@@ -199,6 +205,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ UNKNOWN performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_query_performance(self, intent_service):
         """PERF 12/13: QUERY response time."""
@@ -216,6 +223,7 @@ class TestPerformanceContracts(BaseValidationTest):
 
         print(f"✓ QUERY performance: {duration_ms:.1f}ms")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_conversation_performance(self, intent_service):
         """PERF 13/13: CONVERSATION response time."""

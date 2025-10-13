@@ -125,6 +125,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"GUIDANCE handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_execution_error_handling(self, intent_service):
         """ERROR 6/13: EXECUTION error handling."""
@@ -148,6 +149,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"EXECUTION handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_analysis_error_handling(self, intent_service):
         """ERROR 7/13: ANALYSIS error handling."""
@@ -171,6 +173,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"ANALYSIS handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_synthesis_error_handling(self, intent_service):
         """ERROR 8/13: SYNTHESIS error handling."""
@@ -194,6 +197,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"SYNTHESIS handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_strategy_error_handling(self, intent_service):
         """ERROR 9/13: STRATEGY error handling."""
@@ -217,6 +221,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"STRATEGY handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_learning_error_handling(self, intent_service):
         """ERROR 10/13: LEARNING error handling."""
@@ -240,6 +245,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"LEARNING handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_unknown_error_handling(self, intent_service):
         """ERROR 11/13: UNKNOWN error handling."""
@@ -263,6 +269,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"UNKNOWN handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_query_error_handling(self, intent_service):
         """ERROR 12/13: QUERY error handling."""
@@ -286,6 +293,7 @@ class TestErrorContracts(BaseValidationTest):
         except Exception as e:
             pytest.fail(f"QUERY handler crashed on error: {e}")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_conversation_error_handling(self, intent_service):
         """ERROR 13/13: CONVERSATION error handling."""
