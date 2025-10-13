@@ -90,7 +90,7 @@ grep -r "ClassName" . --include="*.py"
 ## CRITICAL PATHS - GROUND TRUTH
 ```
 main.py                      # Entry point (not web/app.py)
-web/app.py                   # FastAPI app (467 lines, refactored in GREAT-3A)
+web/app.py                   # FastAPI app (678 lines, refactored in GREAT-3A)
 services/domain/models.py    # Domain models truth source
 services/shared_types.py     # ALL enums go here
 services/config.py           # Settings
