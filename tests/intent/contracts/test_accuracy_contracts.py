@@ -75,9 +75,10 @@ class TestAccuracyContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print("✓ GUIDANCE accuracy: verified")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_execution_accuracy(self, intent_service):
-        """ACC 6/13: EXECUTION classification."""
+        """ACC 6/13: EXECUTION classification (requires LLM)."""
         message = CATEGORY_EXAMPLES["EXECUTION"]
         result = await intent_service.process_intent(message, session_id="acc_test")
 
