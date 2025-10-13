@@ -244,6 +244,10 @@ class PreClassifier:
         r"\badvice\b",
         r"\bwhat now\b",
         r"\bnext steps\b",
+        # GAP-3 Phase 2: Added October 13, 2025 - Edge case patterns for GUIDANCE disambiguation
+        r"\bwhat should (i|we) do (about|with)\b",  # Advice-seeking questions
+        r"\badvise (me|us) on\b",  # Direct advice requests
+        r"\bwhat('?s| is) the process for\b",  # Process/how-to questions
     ]
 
     # File reference patterns (with variations and typo tolerance)
