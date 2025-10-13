@@ -1,7 +1,7 @@
 # CITATIONS.md
 
 **Project**: Piper Morgan - AI-Powered Product Management Assistant
-**Last Updated**: August 16, 2025
+**Last Updated**: October 13, 2025
 **Purpose**: Comprehensive attribution of ideas, frameworks, and research that inform our work
 
 > "We proudly acknowledge we build on the work of others while trying to contribute what we can to the common weal."
@@ -238,6 +238,13 @@
 - **GitHub Actions** - CI/CD automation
 - **pre-commit hooks** - Code quality enforcement
 - **pytest-asyncio** - Asynchronous test support
+- **Serena MCP Server** (jamescalam/serena) - Symbolic code analysis via MCP
+  - Language Server Protocol (LSP) integration for semantic code understanding
+  - Supports: find_symbol, search_for_pattern, get_symbols_overview operations
+  - *Recommended by: John Phamvan (Kind Systems CEO)*
+  - *Integrated: October 2025*
+  - *Used in: Token-efficient project briefings (79% reduction), symbolic code navigation*
+  - *Enables: Live codebase queries replacing static documentation*
 - *Enables: Consistent development environment*
 
 ---
@@ -261,6 +268,7 @@
 ### Direct Collaborators
 - Chief Architect sessions providing strategic guidance
 - Lead Developer implementing core features
+- **John Phamvan** (Kind Systems CEO) - Tool recommendations and technical guidance
 - Community feedback shaping requirements
 
 ### Indirect Influences
