@@ -74,7 +74,7 @@ class SerenaBriefingExperiment:
                 "_handle_synthesis_intent",
                 "_handle_strategy_intent",
                 "_handle_learning_intent",
-                "_handle_unknown_intent"
+                "_handle_unknown_intent",
             ],
             "canonical_handlers": [
                 "_handle_standup_query",
@@ -89,10 +89,10 @@ class SerenaBriefingExperiment:
                 "_handle_summarize",
                 "_handle_strategic_planning",
                 "_handle_prioritization",
-                "_handle_learn_pattern"
+                "_handle_learn_pattern",
             ],
             "total_handlers": 21,
-            "intent_categories_count": 8
+            "intent_categories_count": 8,
         }
 
         return result
@@ -122,15 +122,15 @@ class SerenaBriefingExperiment:
                 "github": "services/integrations/github/github_plugin.py",
                 "notion": "services/integrations/notion/notion_plugin.py",
                 "calendar": "services/integrations/calendar/calendar_plugin.py",
-                "demo": "services/integrations/demo/demo_plugin.py"
+                "demo": "services/integrations/demo/demo_plugin.py",
             },
             "plugin_count": 5,
             "capabilities": {
                 "routes": ["slack", "github", "notion", "calendar"],
                 "webhooks": ["slack", "github"],
                 "spatial": ["slack", "github", "notion"],
-                "mcp": ["slack", "github"]
-            }
+                "mcp": ["slack", "github"],
+            },
         }
 
         return result
@@ -160,13 +160,13 @@ class SerenaBriefingExperiment:
                 "Data & Query": 5,
                 "AI & Intelligence": 7,
                 "Integration & Platform": 5,
-                "Development & Process": 6
+                "Development & Process": 6,
             },
             "recent_patterns": [
                 "pattern-033-notion-publishing.md",
                 "pattern-032-intent-pattern-catalog.md",
-                "pattern-031-plugin-wrapper.md"
-            ]
+                "pattern-031-plugin-wrapper.md",
+            ],
         }
 
         return result
@@ -186,7 +186,7 @@ class SerenaBriefingExperiment:
         # Query 1: Intent Categories
         print("📊 Querying Intent Categories (Symbolic)...")
         intent_data = self.get_intent_categories_live()
-        self.results['intent_categories'] = intent_data
+        self.results["intent_categories"] = intent_data
         print(f"   Found {intent_data['intent_categories_count']} categories")
         print(f"   Found {intent_data['total_handlers']} total handlers")
         print()
@@ -194,7 +194,7 @@ class SerenaBriefingExperiment:
         # Query 2: Plugins
         print("🔌 Querying Plugin Registry (Symbolic)...")
         plugin_data = self.get_plugin_list_live()
-        self.results['plugins'] = plugin_data
+        self.results["plugins"] = plugin_data
         print(f"   Found {plugin_data['plugin_count']} plugins")
         print(f"   Capabilities: {list(plugin_data['capabilities'].keys())}")
         print()
@@ -202,7 +202,7 @@ class SerenaBriefingExperiment:
         # Query 3: Patterns
         print("📐 Querying Pattern Catalog (Symbolic)...")
         pattern_data = self.get_pattern_count_live()
-        self.results['patterns'] = pattern_data
+        self.results["patterns"] = pattern_data
         print(f"   Found {pattern_data['pattern_files_count']} patterns")
         print(f"   Categories: {list(pattern_data['categories'].keys())}")
         print()
@@ -223,35 +223,35 @@ class SerenaBriefingExperiment:
         briefing.append("")
 
         # Intent System
-        intent_data = self.results.get('intent_categories', {})
+        intent_data = self.results.get("intent_categories", {})
         briefing.append("## Intent Classification System")
         briefing.append("")
         briefing.append(f"**Categories**: {intent_data.get('intent_categories_count', 'N/A')}")
         briefing.append(f"**Total Handlers**: {intent_data.get('total_handlers', 'N/A')}")
         briefing.append("")
         briefing.append("**Intent Categories**:")
-        for handler in intent_data.get('intent_handlers', []):
-            category = handler.replace('_handle_', '').replace('_intent', '').title()
+        for handler in intent_data.get("intent_handlers", []):
+            category = handler.replace("_handle_", "").replace("_intent", "").title()
             briefing.append(f"- {category}")
         briefing.append("")
 
         # Plugin System
-        plugin_data = self.results.get('plugins', {})
+        plugin_data = self.results.get("plugins", {})
         briefing.append("## Plugin System")
         briefing.append("")
         briefing.append(f"**Active Plugins**: {plugin_data.get('plugin_count', 'N/A')}")
         briefing.append("")
-        for name, path in plugin_data.get('discovered_plugins', {}).items():
+        for name, path in plugin_data.get("discovered_plugins", {}).items():
             briefing.append(f"- **{name}**: {path}")
         briefing.append("")
 
         # Architecture
-        pattern_data = self.results.get('patterns', {})
+        pattern_data = self.results.get("patterns", {})
         briefing.append("## Architecture Patterns")
         briefing.append("")
         briefing.append(f"**Total Patterns**: {pattern_data.get('pattern_files_count', 'N/A')}")
         briefing.append("")
-        for category, count in pattern_data.get('categories', {}).items():
+        for category, count in pattern_data.get("categories", {}).items():
             briefing.append(f"- **{category}**: {count} patterns")
         briefing.append("")
 
@@ -278,9 +278,7 @@ class SerenaBriefingExperiment:
             "static_size_lines": len(static_content.splitlines()),
             "live_size_chars": len(live_briefing),
             "live_size_lines": len(live_briefing.splitlines()),
-            "reduction_percent": round(
-                (1 - len(live_briefing) / len(static_content)) * 100, 1
-            )
+            "reduction_percent": round((1 - len(live_briefing) / len(static_content)) * 100, 1),
         }
 
         return comparison
@@ -303,7 +301,7 @@ class SerenaBriefingExperiment:
             "static_tokens_estimate": comparison["static_size_chars"] // 4,
             "live_tokens_estimate": comparison["live_size_chars"] // 4,
             "token_savings": (comparison["static_size_chars"] - comparison["live_size_chars"]) // 4,
-            "savings_percent": comparison["reduction_percent"]
+            "savings_percent": comparison["reduction_percent"],
         }
 
         return tokens
@@ -355,12 +353,8 @@ def main():
 
     # Save results
     output_path = Path(__file__).parent / "briefing-experiment-results.json"
-    with open(output_path, 'w') as f:
-        json.dump({
-            "results": results,
-            "comparison": comparison,
-            "tokens": tokens
-        }, f, indent=2)
+    with open(output_path, "w") as f:
+        json.dump({"results": results, "comparison": comparison, "tokens": tokens}, f, indent=2)
 
     print(f"✅ Results saved to: {output_path}")
     print()
