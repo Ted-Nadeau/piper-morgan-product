@@ -120,6 +120,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ GUIDANCE multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_execution_multiuser(self, intent_service):
         """MULTI 6/13: EXECUTION user isolation."""
@@ -142,6 +143,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ EXECUTION multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_analysis_multiuser(self, intent_service):
         """MULTI 7/13: ANALYSIS user isolation."""
@@ -164,6 +166,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ ANALYSIS multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_synthesis_multiuser(self, intent_service):
         """MULTI 8/13: SYNTHESIS user isolation."""
@@ -186,6 +189,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ SYNTHESIS multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_strategy_multiuser(self, intent_service):
         """MULTI 9/13: STRATEGY user isolation."""
@@ -208,6 +212,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ STRATEGY multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_learning_multiuser(self, intent_service):
         """MULTI 10/13: LEARNING user isolation."""
@@ -230,6 +235,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ LEARNING multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_unknown_multiuser(self, intent_service):
         """MULTI 11/13: UNKNOWN user isolation."""
@@ -252,6 +258,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ UNKNOWN multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_query_multiuser(self, intent_service):
         """MULTI 12/13: QUERY user isolation."""
@@ -274,6 +281,7 @@ class TestMultiUserContracts(BaseValidationTest):
         coverage.contract_tests_passed += 1
         print(f"✓ QUERY multi-user: isolated")
 
+    @pytest.mark.llm
     @pytest.mark.asyncio
     async def test_conversation_multiuser(self, intent_service):
         """MULTI 13/13: CONVERSATION user isolation."""
