@@ -61,7 +61,7 @@ repos:
           Prevents bypassing the router architecture.
       - id: prevent-direct-adapter-imports
         name: Prevent Direct Adapter Imports (Calendar, Notion, Slack)
-        entry: python scripts/check_direct_imports.py
+        entry: python3 scripts/check_direct_imports.py
         language: system
         pass_filenames: true
         types: [python]
