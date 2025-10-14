@@ -156,6 +156,22 @@ python script.py                    # Actual results
 curl http://localhost:8001/test     # Real response
 ```
 
+## COMMITTING CHANGES
+
+**BEFORE EVERY COMMIT** - Run the newline fixer to prevent pre-commit hook failures:
+```bash
+# Fix end-of-file newlines (prevents double commits)
+./scripts/fix-newlines.sh
+
+# Then proceed with commit
+git add .
+git commit -m "your message"
+```
+
+**Why**: Pre-commit hooks will fail if files lack final newlines, requiring a second commit. Running `fix-newlines.sh` first ensures commits succeed on the first try.
+
+**See**: `docs/dev-tips/preventing-pre-commit-failures.md` for details.
+
 ## TECHNICAL SPECIFICS
 ```bash
 # Run pytest (pytest.ini configured - no PYTHONPATH needed)
