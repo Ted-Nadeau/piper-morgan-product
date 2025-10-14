@@ -1,15 +1,12 @@
-# 1. How are canonical queries currently passing tests?
-python3 -c "
-import asyncio
-from services.intent_service import IntentService
-intent = 'What is my priority today?'  # PRIORITY canonical
-result = await IntentService().process_intent(intent, 'test-session')
-print(f'Result: {result}')
-print(f'Does it error? Does it return something?')
-"
+# 1. Serena operational?
+serena --version
 
-# 2. Is there another routing path we're missing?
-grep -r "TEMPORAL\|STATUS\|PRIORITY" services/ --include="*.py" | grep -v "test"
+# 2. Documentation accessible?
+ls -la docs/architecture/
+ls -la docs/adrs/
 
-# 3. Are canonical handlers being called from somewhere else?
-grep -r "canonical_handlers" services/ --include="*.py"
+# 3. CI/CD status visible?
+gh workflow list
+
+# 4. Test baseline known?
+pytest --collect-only

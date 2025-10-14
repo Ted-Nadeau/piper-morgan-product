@@ -11,6 +11,7 @@
       "Write(docs/**)",
       "Bash(source *)",
       "Bash(python:*)",
+      "Bash(cd:*)",
       "Bash(pip:*)",
       "Edit(**/*.py)",
       "Write(**/*.py)"
