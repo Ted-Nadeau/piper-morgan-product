@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: September 30, 2025
-**Total ADRs**: 39
+**Last Updated**: October 13, 2025
+**Total ADRs**: 42
 **Status**: Active
 
 ## Overview
@@ -74,7 +74,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Accepted**: 39 ADRs
+- **Total**: 42 ADRs
+- **Accepted**: 42 ADRs (all current ADRs are accepted/implemented)
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -82,7 +83,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-039)
+1. Use next sequential number (next: ADR-040)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -96,11 +97,11 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
-- **September 30, 2025**: Added ADR-038 (Spatial Intelligence Architecture Patterns) - Documents two validated spatial patterns from GREAT-2C verification
-- **August 29, 2025**: Fixed ADR numbering sequence (026→025, 027→026), removed duplicate ADR-013
-- **August 28, 2025**: Added ADR-026 (Notion Client Migration)
-- **August 26, 2025**: Added ADR-025 (Unified Session Management)
-- **August 22, 2025**: Added ADR-024 (Persistent Context Architecture)
+- **October 13, 2025**: Updated index with ADR-037, ADR-038, ADR-039 (PROOF-8 audit) - Total now 42 ADRs
+- **October 7, 2025**: Added ADR-039 (Canonical Handler Fast-Path Pattern) - Dual-path intent architecture from GREAT-4
+- **October 2-4, 2025**: Updated ADR-034 (Plugin Architecture) with implementation verification (GREAT-3)
+- **September 30, 2025**: Added ADR-038 (Spatial Intelligence Architecture Patterns) - Three validated spatial patterns from GREAT-2
+- **September 22, 2025**: Added ADR-037 (Test-Driven Locking Strategy) and ADR-036 (QueryRouter Resurrection) from GREAT-1
 
 ## Related Documentation
 
@@ -116,3 +117,6 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-034: Plugin Architecture](adr-034-plugin-architecture.md) - Extensible plugin architecture for PM tool integration
 - [ADR-035: Inchworm Protocol](adr-035-inchworm-protocol.md) - Sequential execution methodology
 - [ADR-036: QueryRouter Resurrection Strategy](adr-036-queryrouter-resurrection.md) - Complete and reenable QueryRouter
+- [ADR-037: Test-Driven Locking Strategy](adr-037-test-driven-locking.md) - Lock critical infrastructure with tests
+- [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Three validated spatial patterns (Granular, Embedded, Delegated MCP)
+- [ADR-039: Canonical Handler Fast-Path Pattern](adr-039-canonical-handler-pattern.md) - Dual-path architecture for intent classification
