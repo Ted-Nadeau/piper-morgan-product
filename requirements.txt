@@ -96,7 +96,7 @@ mypy_extensions==1.1.0
 narwhals==1.42.1
 networkx==3.2.1
 nodeenv==1.9.1
-notion-client==2.2.1
+notion-client==2.5.0
 numpy==1.26.4
 oauthlib==3.2.2
 onnxruntime==1.19.2
