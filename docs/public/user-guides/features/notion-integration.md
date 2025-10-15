@@ -81,8 +81,9 @@ If no parent is specified, the system will automatically select the first availa
 1. **NotionMCPAdapter** (`services/integrations/mcp/notion_adapter.py`)
 
    - MCP spatial adapter for Notion API
-   - 481 lines of comprehensive integration
+   - 544 lines of comprehensive integration
    - Handles authentication, API calls, rate limiting
+   - Key methods: `connect()`, `get_current_user()`, `search()`, `create_page()`, `get_page()`, `list_pages()`
 
 2. **NotionSpatialIntelligence** (`services/intelligence/spatial/notion_spatial.py`)
 
