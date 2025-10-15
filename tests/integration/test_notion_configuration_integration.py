@@ -357,3 +357,165 @@ class TestNotionConfigurationIntegration:
             assert "id" in result
             assert "name" in result
             assert result["id"] == "test-123"
+
+    @pytest.mark.asyncio
+    async def test_enhanced_validation_calls_get_current_user(self):
+        """
+        End-to-end test that enhanced validation successfully calls adapter.get_current_user().
+
+        This is the comprehensive test that verifies CORE-NOTN #142 is fully resolved.
+        The original error was AttributeError at config/notion_user_config.py:373.
+        """
+        from unittest.mock import AsyncMock
+
+        from config.notion_user_config import NotionUserConfig, ValidationLevel
+        from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+
+        # Create a mock adapter with get_current_user method
+        mock_adapter = AsyncMock(spec=NotionMCPAdapter)
+        mock_adapter.get_current_user = AsyncMock(
+            return_value={
+                "id": "test-user-123",
+                "name": "Test User",
+                "email": "test@example.com",
+                "type": "person",
+            }
+        )
+        mock_adapter.connect = AsyncMock()
+
+        # Create config with enhanced validation level
+        config_dict = {
+            "notion": {
+                "adrs": {"database_id": "25e11704d8bf80deaac2f806390fe7da"},
+                "publishing": {"default_parent": "25d11704d8bf80c8a71ddbe7aba51f55"},
+                "validation": {"level": "enhanced", "connectivity_check": True},
+            }
+        }
+
+        # Mock NotionMCPAdapter instantiation in validate_async
+        # Need to patch at the actual source, not where it's imported
+        # Also need to mock environment variable check
+        with (
+            patch(
+                "services.integrations.mcp.notion_adapter.NotionMCPAdapter",
+                return_value=mock_adapter,
+            ),
+            patch.dict(os.environ, {"NOTION_API_KEY": "test-key"}),
+        ):
+            config = NotionUserConfig(config_dict)
+
+            # Run validation - this should NOT raise AttributeError anymore
+            try:
+                result = await config.validate_async(level=ValidationLevel.ENHANCED)
+
+                # Verify get_current_user() was called
+                mock_adapter.get_current_user.assert_called_once()
+
+                # Validation should succeed
+                assert result.connectivity_tested is True
+                assert result.connectivity_result is True
+
+                print("✅ Enhanced validation successfully called get_current_user()")
+                print(f"✅ Original issue CORE-NOTN #142 is RESOLVED")
+
+            except AttributeError as e:
+                if "get_current_user" in str(e):
+                    pytest.fail(f"FAILED: get_current_user() still missing! Error: {e}")
+                else:
+                    raise
+
+    @pytest.mark.asyncio
+    async def test_full_validation_calls_get_current_user(self):
+        """
+        Test that full validation also calls get_current_user().
+
+        Full validation should include everything from enhanced validation.
+        """
+        import os
+        from unittest.mock import AsyncMock
+
+        from config.notion_user_config import NotionUserConfig, ValidationLevel
+        from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+
+        mock_adapter = AsyncMock(spec=NotionMCPAdapter)
+        mock_adapter.get_current_user = AsyncMock(
+            return_value={"id": "bot-456", "name": "Piper Morgan", "type": "bot"}
+        )
+        mock_adapter.connect = AsyncMock()
+
+        # Mock database and page retrieval for permission checks
+        mock_adapter.notion_client = MagicMock()
+        mock_adapter.notion_client.databases.retrieve = AsyncMock(return_value={"id": "test-db"})
+        mock_adapter.get_page = AsyncMock(return_value={"id": "test-page"})
+
+        config_dict = {
+            "notion": {
+                "adrs": {"database_id": "25e11704d8bf80deaac2f806390fe7da"},
+                "publishing": {"default_parent": "25d11704d8bf80c8a71ddbe7aba51f55"},
+                "validation": {
+                    "level": "full",
+                    "connectivity_check": True,
+                    "permission_check": True,
+                },
+            }
+        }
+
+        with (
+            patch(
+                "services.integrations.mcp.notion_adapter.NotionMCPAdapter",
+                return_value=mock_adapter,
+            ),
+            patch.dict(os.environ, {"NOTION_API_KEY": "test-key"}),
+        ):
+            config = NotionUserConfig(config_dict)
+            result = await config.validate_async(level=ValidationLevel.FULL)
+
+            # Should call get_current_user() for connectivity
+            mock_adapter.get_current_user.assert_called()
+
+            # Full validation should also test permissions
+            assert result.permission_checked is True
+
+            print("✅ Full validation successfully called get_current_user()")
+
+    @pytest.mark.asyncio
+    async def test_enhanced_validation_handles_connectivity_failure(self):
+        """
+        Test that enhanced validation gracefully handles API connectivity failures.
+        """
+        import os
+        from unittest.mock import AsyncMock
+
+        from config.notion_user_config import NotionUserConfig, ValidationLevel
+        from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+
+        # Create a mock adapter that fails get_current_user
+        mock_adapter = AsyncMock(spec=NotionMCPAdapter)
+        mock_adapter.get_current_user = AsyncMock(side_effect=Exception("API connection failed"))
+        mock_adapter.connect = AsyncMock()
+
+        config_dict = {
+            "notion": {
+                "adrs": {"database_id": "25e11704d8bf80deaac2f806390fe7da"},
+                "publishing": {"default_parent": "25d11704d8bf80c8a71ddbe7aba51f55"},
+                "validation": {"level": "enhanced", "connectivity_check": True},
+            }
+        }
+
+        with (
+            patch(
+                "services.integrations.mcp.notion_adapter.NotionMCPAdapter",
+                return_value=mock_adapter,
+            ),
+            patch.dict(os.environ, {"NOTION_API_KEY": "test-key"}),
+        ):
+            config = NotionUserConfig(config_dict)
+            result = await config.validate_async(level=ValidationLevel.ENHANCED)
+
+            # Should handle error gracefully
+            assert result.connectivity_tested is True
+            assert result.connectivity_result is False
+            assert len(result.errors) > 0
+            assert "API connectivity failed" in result.errors[0]
+
+            print("✅ Enhanced validation gracefully handles connectivity failures")
