@@ -147,6 +147,81 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             logger.error(f"Error getting workspace info: {e}")
             return None
 
+    async def get_current_user(self) -> Optional[Dict[str, Any]]:
+        """
+        Get current authenticated Notion user.
+
+        Retrieves information about the user associated with the API token.
+        Used by enhanced validation in configuration loader to verify API connectivity.
+
+        Returns:
+            Dict with user information:
+            {
+                "id": str,          # User ID
+                "name": str,        # User name
+                "email": str,       # User email (if person)
+                "type": str,        # "person" or "bot"
+                "workspace": {      # Workspace info (if bot)
+                    "id": str,
+                    "name": str
+                }
+            }
+            Returns None if not authenticated or connection fails.
+
+        Raises:
+            APIResponseError: If Notion API returns an error
+            RequestTimeoutError: If API request times out
+
+        Example:
+            >>> adapter = NotionMCPAdapter()
+            >>> await adapter.connect()
+            >>> user = await adapter.get_current_user()
+            >>> print(f"Authenticated as: {user['name']}")
+        """
+        try:
+            if not self._notion_client:
+                logger.error("Notion client not initialized")
+                return None
+
+            # Get current user info from Notion API
+            # Uses same pattern as test_connection() and get_workspace_info()
+            user_info = self._notion_client.users.me()
+
+            if not user_info:
+                logger.warning("Notion API returned empty user info")
+                return None
+
+            # Extract and normalize user information
+            result = {
+                "id": user_info.get("id"),
+                "name": user_info.get("name"),
+                "type": user_info.get("type"),
+            }
+
+            # Add email for person users
+            if user_info.get("person"):
+                result["email"] = user_info.get("person", {}).get("email")
+
+            # Add workspace info for bot users
+            if user_info.get("bot"):
+                result["workspace"] = {
+                    "id": user_info.get("bot", {}).get("workspace", {}).get("id"),
+                    "name": user_info.get("bot", {}).get("workspace", {}).get("name"),
+                }
+
+            logger.info(f"Retrieved current user: {result.get('name')} ({result.get('id')})")
+            return result
+
+        except APIResponseError as e:
+            logger.error(f"Notion API error getting current user: {e}")
+            raise
+        except RequestTimeoutError as e:
+            logger.error(f"Notion API timeout getting current user: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error getting current user: {e}")
+            return None
+
     async def fetch_databases(self, page_size: int = 100) -> List[Dict[str, Any]]:
         """Fetch accessible Notion databases (alias for list_databases)"""
         return await self.list_databases(page_size)
