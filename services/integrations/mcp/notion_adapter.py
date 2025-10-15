@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import aiohttp
 from notion_client import Client
+from notion_client.client import ClientOptions
 from notion_client.errors import APIResponseError, RequestTimeoutError
 
 from config.notion_config import NotionConfig
@@ -69,8 +70,10 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         try:
             api_key = self.config.get_api_key()
             if api_key:
-                self._notion_client = Client(auth=api_key)
-                logger.info("Notion client initialized with configuration")
+                # Use API version 2025-09-03 with ClientOptions
+                options = ClientOptions(auth=api_key, notion_version="2025-09-03")
+                self._notion_client = Client(options=options)
+                logger.info("Notion client initialized with API version 2025-09-03")
             else:
                 logger.warning("NOTION_API_KEY not set - client will be initialized later")
         except Exception as e:
@@ -80,13 +83,15 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         """Connect to Notion with integration token"""
         try:
             if integration_token:
-                # Initialize with provided token
-                self._notion_client = Client(auth=integration_token)
+                # Initialize with provided token using API version 2025-09-03
+                options = ClientOptions(auth=integration_token, notion_version="2025-09-03")
+                self._notion_client = Client(options=options)
             elif not self._notion_client:
                 # Try to initialize from configuration
                 api_key = self.config.get_api_key()
                 if api_key:
-                    self._notion_client = Client(auth=api_key)
+                    options = ClientOptions(auth=api_key, notion_version="2025-09-03")
+                    self._notion_client = Client(options=options)
                 else:
                     logger.error("No Notion API key available")
                     return False
@@ -262,6 +267,93 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             logger.error(f"Failed to get database: {e}")
             return None
 
+    async def get_data_source_id(self, database_id: str) -> Optional[str]:
+        """
+        Get the primary data_source_id for a Notion database.
+
+        Required for Notion API version 2025-09-03 which separates databases from data sources.
+        For single-source databases, returns the first (and only) data source ID.
+        For multi-source databases, returns the primary data source ID.
+
+        Args:
+            database_id: The Notion database ID to get the data source for
+
+        Returns:
+            str: The data_source_id if found
+            None: If database not found or has no data sources
+
+        Raises:
+            ValueError: If database_id is empty or database not found
+            APIResponseError: If Notion API returns an error
+            RequestTimeoutError: If API request times out
+
+        Example:
+            >>> adapter = NotionMCPAdapter()
+            >>> await adapter.connect()
+            >>> data_source_id = await adapter.get_data_source_id("25e11704d8bf80deaac2f806390fe7da")
+            >>> print(f"Data source: {data_source_id}")
+
+        Note:
+            This method is required for API version 2025-09-03 which requires data_source_id
+            instead of database_id for certain operations like creating pages in databases.
+        """
+        try:
+            if not database_id:
+                raise ValueError("database_id is required")
+
+            if not self._notion_client:
+                logger.error("Notion client not initialized")
+                return None
+
+            # Retrieve database metadata to get data_sources list
+            try:
+                db_info = self._notion_client.databases.retrieve(database_id=database_id)
+            except APIResponseError as e:
+                logger.error(f"Failed to retrieve database {database_id}: {e}")
+                raise ValueError(
+                    f"Cannot get data_source_id for database '{database_id}': Database not found or not accessible\n"
+                    f"Error: {str(e)}\n"
+                    f"Options:\n"
+                    f"  1. Use 'piper notion databases' to see available databases\n"
+                    f"  2. Check database permissions in Notion\n"
+                    f"  3. Verify database ID is correct"
+                )
+            except RequestTimeoutError as e:
+                logger.error(f"Timeout retrieving database {database_id}: {e}")
+                raise
+
+            # Extract data_sources list from database info
+            data_sources = db_info.get("data_sources", [])
+
+            if not data_sources:
+                logger.warning(
+                    f"Database {database_id} has no data sources listed. "
+                    f"This may indicate the workspace hasn't migrated to API version 2025-09-03 yet."
+                )
+                return None
+
+            # For single-source databases (most common), return the first data source
+            # For multi-source databases, return the first (primary) data source
+            primary_data_source = data_sources[0]
+            data_source_id = primary_data_source.get("id")
+
+            if not data_source_id:
+                logger.error(f"Data source entry missing 'id' field: {primary_data_source}")
+                return None
+
+            logger.info(
+                f"Retrieved data_source_id for database {database_id}: {data_source_id} "
+                f"({len(data_sources)} total data sources)"
+            )
+            return data_source_id
+
+        except (ValueError, APIResponseError, RequestTimeoutError):
+            # Re-raise expected exceptions
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error getting data_source_id: {e}")
+            return None
+
     async def query_database(
         self,
         database_id: str,
@@ -426,12 +518,12 @@ class NotionMCPAdapter(BaseSpatialAdapter):
     async def create_database_item(
         self, database_id: str, properties: Dict, content: Optional[List] = None
     ):
-        """Create a new database item using notion_client"""
+        """Create a new database item using notion_client with API version 2025-09-03 support"""
         try:
             if not database_id:
                 raise ValueError("database_id is required for database item creation")
 
-            # Validate database exists first
+            # Validate database exists and get data_source_id for API 2025-09-03
             try:
                 self._notion_client.databases.retrieve(database_id=database_id)
             except Exception as e:
@@ -443,6 +535,24 @@ class NotionMCPAdapter(BaseSpatialAdapter):
                     f"  2. Check database permissions in Notion\n"
                     f"  3. Verify database ID is correct"
                 )
+
+            # Get data_source_id for API version 2025-09-03
+            # This is required for the new API format that separates databases from data sources
+            try:
+                data_source_id = await self.get_data_source_id(database_id)
+                if data_source_id:
+                    logger.info(
+                        f"Using data_source_id: {data_source_id} for database: {database_id}"
+                    )
+                else:
+                    # Fallback: workspace may not have multi-source enabled yet
+                    # API will accept database_id format for backward compatibility
+                    logger.info(f"No data_source_id available, using database_id format")
+                    data_source_id = None
+            except Exception as e:
+                # If get_data_source_id fails, log warning and continue with database_id format
+                logger.warning(f"Could not get data_source_id: {e}. Using database_id format.")
+                data_source_id = None
 
             # Chunk content if too large (Notion limit is 100 blocks)
             initial_content = []
@@ -458,8 +568,18 @@ class NotionMCPAdapter(BaseSpatialAdapter):
                 initial_content = content if content else []
 
             # Create database item with first 100 blocks
+            # Use data_source_id if available (API 2025-09-03), otherwise use database_id (backward compat)
+            if data_source_id:
+                # New format for API 2025-09-03: use data_source_id
+                parent_param = {"type": "data_source_id", "data_source_id": data_source_id}
+                logger.debug(f"Creating database item with data_source_id: {data_source_id}")
+            else:
+                # Legacy format: use database_id
+                parent_param = {"database_id": database_id}
+                logger.debug(f"Creating database item with database_id: {database_id}")
+
             response = self._notion_client.pages.create(
-                parent={"database_id": database_id}, properties=properties, children=initial_content
+                parent=parent_param, properties=properties, children=initial_content
             )
 
             # Add remaining blocks if any
