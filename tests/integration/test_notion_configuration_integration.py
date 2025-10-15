@@ -8,7 +8,7 @@ Prevents verification theater by testing actual configuration behavior.
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import yaml
@@ -314,3 +314,46 @@ class TestNotionConfigurationIntegration:
         # assert config.development.debug_parent == "25d11704d8bf80c8a71ddbe7aba51f55"
         # assert config.development.cache_enabled is True
         # assert config.development.verbose_logging is True
+
+    @pytest.mark.asyncio
+    async def test_enhanced_validation_get_current_user_exists(self):
+        """
+        Test that NotionMCPAdapter now has get_current_user() method.
+
+        This test verifies the fix for CORE-NOTN #142 where enhanced validation
+        was calling adapter.get_current_user() but the method didn't exist.
+
+        This is a simple existence check to ensure the method is available
+        when config validation needs it.
+        """
+        from services.integrations.mcp.notion_adapter import NotionMCPAdapter
+
+        # Verify the method exists
+        assert hasattr(NotionMCPAdapter, "get_current_user")
+
+        # Verify it's callable and async
+        import inspect
+
+        method = getattr(NotionMCPAdapter, "get_current_user")
+        assert callable(method)
+        assert inspect.iscoroutinefunction(method)
+
+        # Test that it can be called without errors (with mocked client)
+        with patch("services.integrations.mcp.notion_adapter.NotionConfig"):
+            adapter = NotionMCPAdapter()
+            adapter._notion_client = MagicMock()
+            adapter._notion_client.users.me.return_value = {
+                "id": "test-123",
+                "name": "Test User",
+                "type": "person",
+                "person": {"email": "test@example.com"},
+            }
+
+            # Call the method - should not raise AttributeError
+            result = await adapter.get_current_user()
+
+            # Verify it returns expected structure
+            assert result is not None
+            assert "id" in result
+            assert "name" in result
+            assert result["id"] == "test-123"
