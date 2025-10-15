@@ -21,21 +21,27 @@ Core Notion configuration loader functionality completed with comprehensive TDD 
 
 ### 1. Enhanced Validation API Connectivity
 
-**Status**: Broken - Missing NotionMCPAdapter.get_current_user() method
-**Impact**: Enhanced validation level fails with AttributeError
+**Status**: ✅ RESOLVED - Fixed in Sprint A2 (October 15, 2025)
+**Impact**: Enhanced validation now fully functional
 **Technical Details**:
 
-- Enhanced validation attempts to call `adapter.get_current_user()`
-- Method does not exist in current NotionMCPAdapter implementation
-- Basic validation works correctly, enhanced/full validation blocked
-- Error message: `'NotionMCPAdapter' object has no attribute 'get_current_user'`
+- Enhanced validation calls `adapter.get_current_user()` successfully
+- Method added to NotionMCPAdapter (lines 150-223, 74 lines)
+- All validation levels (basic/enhanced/full) now functional
+- Real API tests passing with user's NOTION_API_KEY
 
-**Resolution Required**: Add `get_current_user()` method to NotionMCPAdapter interface
-**Priority**: Medium - Feature incomplete but not blocking core functionality
-**Effort Estimate**: 2-3 hours (interface design + implementation + testing)
-**Child Issue**: PM-133 - Enhanced validation fix
+**Resolution**: Added `get_current_user()` method to NotionMCPAdapter interface
+**Completed**: Sprint A2, Phase 1-3 (73 minutes total)
+**Evidence**: CORE-NOTN #142 - 10 unit tests + 3 e2e tests + real API validation
+**Commits**: ea4cff03 (implementation), 614e6692 (tests), 891ab3e5 (e2e validation)
 
-**Current Workaround**: Use basic validation level for immediate functionality
+**Implementation Summary**:
+- Extracted from existing working pattern (`users.me()` calls)
+- Comprehensive error handling (APIResponseError, RequestTimeoutError)
+- Returns user info with id, name, email, type, workspace
+- Backward compatible (added method only, no breaking changes)
+
+**Previous Workaround** (no longer needed): Use basic validation level
 
 ### 2. Comprehensive Integration Testing
 
@@ -172,9 +178,11 @@ python cli/commands/notion.py test-config --database adrs --parent default
 
 ### Enhanced Validation
 
-- [ ] All validation tiers (basic/enhanced/full) functional
-- [ ] API connectivity tests passing
-- [ ] Permission validation working
+- [x] All validation tiers (basic/enhanced/full) functional ✅
+- [x] API connectivity tests passing ✅
+- [x] Permission validation working ✅
+
+**Completed**: October 15, 2025 (CORE-NOTN #142)
 
 ### Integration Testing
 
