@@ -34,7 +34,7 @@ from web.personality_integration import (
 )
 
 # Import error response utilities (Pattern 034: Error Handling Standards)
-from web.utils.error_responses import internal_error, validation_error
+from web.utils.error_responses import internal_error, not_found_error, validation_error
 
 # Server Configuration - now using centralized configuration service
 port_config = get_port_configuration()
@@ -313,19 +313,24 @@ async def home(request: Request):
 
 
 # GREAT-1B: Bug #166 Fix - Add missing workflow status endpoint
+# Phase 2: REST-compliant error handling (Pattern 034)
 @app.get("/api/v1/workflows/{workflow_id}")
 async def get_workflow_status(workflow_id: str, request: Request):
     """Get workflow status to prevent UI polling hang (Bug #166 fix)"""
     try:
+        # Validate workflow_id
+        if not workflow_id or not workflow_id.strip():
+            return validation_error(
+                "Workflow ID required", {"field": "workflow_id", "issue": "Cannot be empty"}
+            )
+
         # Get OrchestrationEngine from app state
         orchestration_engine = getattr(request.app.state, "orchestration_engine", None)
 
         if orchestration_engine is None:
-            return {
-                "status": "error",
-                "error": "OrchestrationEngine not available",
-                "workflow_id": workflow_id,
-            }
+            # Service unavailable - return 500
+            logger.error("OrchestrationEngine not available for workflow status check")
+            return internal_error("OrchestrationEngine not available")
 
         # For GREAT-1B, return a simple status response
         # This prevents the infinite polling that causes UI hangs
@@ -338,8 +343,13 @@ async def get_workflow_status(workflow_id: str, request: Request):
             "updated_at": datetime.now().isoformat(),
         }
 
+    except ValueError as e:
+        # Known validation errors
+        return validation_error(str(e))
     except Exception as e:
-        return {"status": "error", "error": str(e), "workflow_id": workflow_id}
+        # Unexpected errors - log and return 500
+        logger.error(f"Error getting workflow {workflow_id}: {e}", exc_info=True)
+        return internal_error()
 
 
 # Personality Configuration Endpoints
