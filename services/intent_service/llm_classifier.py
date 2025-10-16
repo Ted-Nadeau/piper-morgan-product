@@ -19,7 +19,6 @@ from services.domain.models import Intent, IntentCategory, KnowledgeNode
 from services.intent_service.fuzzy_matcher import correct_common_typos
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
 from services.knowledge.semantic_indexing_service import SemanticIndexingService
-from services.service_registry import ServiceRegistry
 from services.shared_types import NodeType
 
 logger = structlog.get_logger()
@@ -39,30 +38,45 @@ class LLMIntentClassifier:
 
     def __init__(
         self,
+        llm_service=None,
         knowledge_graph_service: Optional[KnowledgeGraphService] = None,
         semantic_indexing_service: Optional[SemanticIndexingService] = None,
         confidence_threshold: float = 0.75,
         enable_learning: bool = True,
     ):
-        self._llm = None  # Lazy initialization via property
-        self.knowledge_graph = knowledge_graph_service
-        self.semantic_indexer = semantic_indexing_service
-        self.confidence_threshold = confidence_threshold
-        self.enable_learning = enable_learning
+        """
+            Initialize LLMIntentClassifier.
 
-        # Performance tracking
-        self.classification_metrics = {
-            "total_requests": 0,
-            "successful_classifications": 0,
-            "low_confidence_fallbacks": 0,
-            "average_latency_ms": 0,
-        }
+        Args:
+            llm_service: LLM service instance (optional, will get from container if not provided)
+            knowledge_graph_service: Optional Knowledge Graph service
+            semantic_indexing_service: Optional Semantic Indexing service
+            confidence_threshold: Minimum confidence score for classification
+            enable_learning: Enable performance tracking and learning
+        """
+
+    self._llm = llm_service  # Accept via dependency injection
+    self.knowledge_graph = knowledge_graph_service
+    self.semantic_indexer = semantic_indexing_service
+    self.confidence_threshold = confidence_threshold
+    self.enable_learning = enable_learning
+
+    # Performance tracking
+    self.classification_metrics = {
+        "total_requests": 0,
+        "successful_classifications": 0,
+        "low_confidence_fallbacks": 0,
+        "average_latency_ms": 0,
+    }
 
     @property
     def llm(self):
-        """Lazy-load LLM service from ServiceRegistry"""
+        """Lazy-load LLM service from ServiceContainer if not injected"""
         if self._llm is None:
-            self._llm = ServiceRegistry.get_llm()
+            from services.container import ServiceContainer
+
+            container = ServiceContainer()
+            self._llm = container.get_service("llm")
         return self._llm
 
     def _ensure_json_response_format(self, **kwargs):

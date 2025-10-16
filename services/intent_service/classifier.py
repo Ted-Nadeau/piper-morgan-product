@@ -31,15 +31,21 @@ from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_ma
 from services.intent_service.pre_classifier import PreClassifier
 from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
 from services.knowledge_graph import get_ingester
-from services.service_registry import ServiceRegistry
 from shared.events import EventBus
 
 logger = structlog.get_logger()
 
 
 class IntentClassifier:
-    def __init__(self, event_bus: Optional[EventBus] = None):
-        self._llm = None  # Lazy initialization via property
+    def __init__(self, llm_service=None, event_bus: Optional[EventBus] = None):
+        """
+        Initialize IntentClassifier.
+
+        Args:
+            llm_service: LLM service instance (optional, will get from container if not provided)
+            event_bus: Event bus for classifier events
+        """
+        self._llm = llm_service  # Accept via dependency injection
         self.event_bus = event_bus
         self.knowledge_hierarchy = [
             "pm_fundamentals",  # Your book, PM best practices
@@ -53,9 +59,12 @@ class IntentClassifier:
 
     @property
     def llm(self):
-        """Lazy-load LLM service from ServiceRegistry"""
+        """Lazy-load LLM service from ServiceContainer if not injected"""
         if self._llm is None:
-            self._llm = ServiceRegistry.get_llm()
+            from services.container import ServiceContainer
+
+            container = ServiceContainer()
+            self._llm = container.get_service("llm")
         return self._llm
 
     async def classify(

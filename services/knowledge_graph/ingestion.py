@@ -21,8 +21,6 @@ import PyPDF2
 import structlog
 from chromadb.utils import embedding_functions
 
-from services.service_registry import ServiceRegistry
-
 logger = structlog.get_logger()
 
 
@@ -49,9 +47,12 @@ class DocumentIngester:
 
     @property
     def llm(self):
-        """Lazy-load LLM service from ServiceRegistry"""
+        """Lazy-load LLM service from ServiceContainer if not injected"""
         if not hasattr(self, "_llm") or self._llm is None:
-            self._llm = ServiceRegistry.get_llm()
+            from services.container import ServiceContainer
+
+            container = ServiceContainer()
+            self._llm = container.get_service("llm")
         return self._llm
 
     async def _analyze_document_relationships(self, content: str, existing_metadata: Dict) -> Dict:

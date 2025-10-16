@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from services.container.service_registry import ServiceRegistry
 from services.domain.llm_domain_service import LLMDomainService
-from services.service_registry import ServiceRegistry
 
 
 class TestLLMDomainService:
@@ -146,63 +146,53 @@ class TestLLMDomainService:
 
 
 class TestServiceRegistry:
-    """Test ServiceRegistry"""
+    """Test ServiceRegistry (Phase 1.6: Updated to instance-based API)"""
 
-    def setup_method(self):
-        """Clear registry before each test"""
-        ServiceRegistry.clear()
+    @pytest.fixture
+    def registry(self):
+        """Create fresh registry for each test"""
+        reg = ServiceRegistry()
+        yield reg
+        reg.clear()
 
-    def test_register_service(self):
+    def test_register_service(self, registry):
         """Can register service"""
         mock_service = Mock()
-        ServiceRegistry.register("test", mock_service)
+        registry.register("test", mock_service)
 
-        assert ServiceRegistry.is_registered("test")
-        assert ServiceRegistry.get("test") == mock_service
+        assert registry.has("test")
+        assert registry.get("test") == mock_service
 
-    def test_get_unregistered_service(self):
+    def test_get_unregistered_service(self, registry):
         """Raises error for unregistered service"""
-        with pytest.raises(RuntimeError, match="not registered"):
-            ServiceRegistry.get("nonexistent")
+        with pytest.raises(KeyError):
+            registry.get("nonexistent")
 
-    def test_register_duplicate(self):
-        """Raises error for duplicate registration"""
-        ServiceRegistry.register("test", Mock())
+    def test_register_allows_overwrite(self, registry):
+        """Registry allows overwriting services (Phase 1.6 behavior)"""
+        service1 = Mock()
+        service2 = Mock()
 
-        with pytest.raises(ValueError, match="already registered"):
-            ServiceRegistry.register("test", Mock())
+        registry.register("test", service1)
+        assert registry.get("test") == service1
 
-    def test_list_services(self):
+        # New registry allows overwriting
+        registry.register("test", service2)
+        assert registry.get("test") == service2
+
+    def test_list_services(self, registry):
         """Lists registered services"""
-        ServiceRegistry.register("svc1", Mock())
-        ServiceRegistry.register("svc2", Mock())
+        registry.register("svc1", Mock())
+        registry.register("svc2", Mock())
 
-        services = ServiceRegistry.list_services()
+        services = registry.list_services()
         assert "svc1" in services
         assert "svc2" in services
 
-    def test_get_llm_convenience(self):
-        """Convenience method for LLM access"""
-        mock_llm = Mock()
-        ServiceRegistry.register("llm", mock_llm)
-
-        assert ServiceRegistry.get_llm() == mock_llm
-
-    def test_clear_registry(self):
+    def test_clear_registry(self, registry):
         """Clear removes all services"""
-        ServiceRegistry.register("test", Mock())
-        assert ServiceRegistry.is_registered("test")
+        registry.register("test", Mock())
+        assert registry.has("test")
 
-        ServiceRegistry.clear()
-        assert not ServiceRegistry.is_registered("test")
-        assert not ServiceRegistry.is_initialized()
-
-    def test_mark_initialized(self):
-        """Can mark registry as initialized"""
-        assert not ServiceRegistry.is_initialized()
-
-        ServiceRegistry.mark_initialized()
-        assert ServiceRegistry.is_initialized()
-
-        ServiceRegistry.clear()
-        assert not ServiceRegistry.is_initialized()
+        registry.clear()
+        assert not registry.has("test")
