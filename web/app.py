@@ -49,9 +49,32 @@ logger = structlog.get_logger()
 async def lifespan(app: FastAPI):
     """
     FastAPI lifespan context manager for startup/shutdown events
+    Phase 1.5: ServiceContainer initialization (DDD pattern)
     Phase 3A: OrchestrationEngine dependency injection setup
     GREAT-2D: Configuration validation at startup
     """
+    # Phase 1.5: ServiceContainer initialization (DDD pattern)
+    print("\n" + "=" * 60)
+    print("🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)")
+    print("=" * 60)
+
+    from services.container import ServiceContainer
+
+    container = ServiceContainer()
+
+    if not container.is_initialized():
+        logger.info("Container not initialized, initializing now...")
+        await container.initialize()
+        print("✅ Phase 1.5: ServiceContainer initialized successfully")
+        print(f"   Services available: {container.list_services()}")
+    else:
+        logger.info("Container already initialized (started via main.py)")
+        print("✅ Phase 1.5: ServiceContainer already initialized")
+        print(f"   Services available: {container.list_services()}")
+
+    # Store container in app state for access
+    app.state.service_container = container
+
     # GREAT-2D: Configuration validation
     print("\n" + "=" * 60)
     print("🔍 CORE-GREAT-2D: Configuration Validation")
@@ -80,52 +103,33 @@ async def lifespan(app: FastAPI):
         print("⚠️ Continuing startup without validation\n")
         app.state.config_validation = {"error": str(e)}
 
-    # Phase 3A: OrchestrationEngine dependency injection setup
+    # Phase 1.5: Get services from ServiceContainer (replaces old Phase 2B/3A)
     try:
-        from services.orchestration.engine import OrchestrationEngine, set_global_engine
+        print("\n🔧 Phase 1.5: Getting services from ServiceContainer...")
 
-        print("🔧 Phase 3A: Initializing OrchestrationEngine with dependency injection...")
-
-        # Initialize OrchestrationEngine (uses ServiceRegistry internally)
-        orchestration_engine = OrchestrationEngine()
-
-        # Store in app state for dependency injection (DDD-compliant)
-        app.state.orchestration_engine = orchestration_engine
-
-        # Also set global engine for backward compatibility with main.py pattern
-        set_global_engine(orchestration_engine)
-
-        print("✅ Phase 3A: OrchestrationEngine initialized successfully via dependency injection")
-
-    except Exception as e:
-        print(f"❌ Phase 3A: OrchestrationEngine initialization failed: {e}")
-        # Continue startup without orchestration engine (preserve bypasses)
-        app.state.orchestration_engine = None
-
-    # Phase 2B: IntentService dependency injection setup
-    try:
-        from services.conversation.conversation_handler import ConversationHandler
-        from services.intent.intent_service import IntentService
-        from services.intent_service import classifier
-
-        print("🔧 Phase 2B: Initializing IntentService with dependency injection...")
-
-        # Initialize IntentService with dependencies
-        intent_service = IntentService(
-            orchestration_engine=app.state.orchestration_engine,
-            intent_classifier=classifier,
-            conversation_handler=ConversationHandler(session_manager=None),
-        )
-
-        # Store in app state for dependency injection
+        # Get IntentService from container
+        intent_service = container.get_service("intent")
         app.state.intent_service = intent_service
+        print(f"✅ IntentService retrieved from container")
 
-        print("✅ Phase 2B: IntentService initialized successfully")
+        # Get LLM service from container (for backward compatibility)
+        llm_service = container.get_service("llm")
+        app.state.llm_service = llm_service
+        print(f"✅ LLM service retrieved from container")
+
+        # Get OrchestrationEngine from container
+        orchestration_engine = container.get_service("orchestration")
+        app.state.orchestration_engine = orchestration_engine
+        print(f"✅ OrchestrationEngine retrieved from container")
+
+        print("✅ Phase 1.5: All services retrieved from ServiceContainer\n")
 
     except Exception as e:
-        print(f"❌ Phase 2B: IntentService initialization failed: {e}")
-        # Continue without intent service (will fail gracefully in route)
+        print(f"❌ Phase 1.5: Failed to get services from container: {e}")
+        print("⚠️ Continuing with degraded service availability\n")
         app.state.intent_service = None
+        app.state.llm_service = None
+        app.state.orchestration_engine = None
 
     # Phase 3B: Plugin system initialization
     print("\n🔌 Phase 3B: Initializing Plugin System...")
@@ -199,6 +203,15 @@ async def lifespan(app: FastAPI):
             print(f"⚠️ Plugin shutdown error: {e}")
 
     print("🛑 Plugin system shutdown complete")
+
+    # Phase 1.5: ServiceContainer shutdown
+    print("\n🔧 Shutting down ServiceContainer...")
+    if hasattr(app.state, "service_container") and app.state.service_container:
+        try:
+            app.state.service_container.shutdown()
+            print("✅ ServiceContainer shutdown successful")
+        except Exception as e:
+            print(f"⚠️ ServiceContainer shutdown error: {e}")
 
     # Cleanup
     print("🛑 Web server shutdown complete")
