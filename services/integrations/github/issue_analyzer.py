@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 from services.integrations.github.issue_generator import IssueContentGenerator
 from services.knowledge_graph.ingestion import get_ingester
-from services.service_registry import ServiceRegistry
 
 
 @dataclass
@@ -37,9 +36,12 @@ class GitHubIssueAnalyzer:
 
     @property
     def llm(self):
-        """Lazy-load LLM service from ServiceRegistry"""
+        """Lazy-load LLM service from ServiceContainer if not injected"""
         if not hasattr(self, "_llm") or self._llm is None:
-            self._llm = ServiceRegistry.get_llm()
+            from services.container import ServiceContainer
+
+            container = ServiceContainer()
+            self._llm = container.get_service("llm")
         return self._llm
 
     async def analyze_issue_by_url(self, url: str) -> Dict[str, Any]:
