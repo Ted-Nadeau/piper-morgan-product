@@ -20,6 +20,25 @@
 - Maintain existing code quality and test coverage
 - Follow Phase -1 verification before any implementation
 
+## 🚨 CRITICAL: Pre-Commit Routine
+
+**ALWAYS RUN BEFORE EVERY COMMIT** (prevents double-commit failures):
+
+```bash
+# Step 1: Fix end-of-file newlines (REQUIRED)
+./scripts/fix-newlines.sh
+
+# Step 2: Stage changes
+git add -u
+
+# Step 3: Commit
+git commit -m "your message"
+```
+
+**Why**: Pre-commit hooks (trailing-whitespace, end-of-file-fixer, black, isort) will auto-fix files, causing commit to fail and requiring re-stage + re-commit. Running `fix-newlines.sh` first prevents this cycle.
+
+**See**: `docs/dev-tips/preventing-pre-commit-failures.md` for details.
+
 ## Key Patterns (Follow These)
 
 **Router Architecture**:
