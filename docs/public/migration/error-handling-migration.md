@@ -124,13 +124,13 @@ if not response.ok:  # Checks status_code >= 400
 # 1. Valid request (should return 200)
 curl -X POST /api/v1/intent \
   -H "Content-Type: application/json" \
-  -d '{"intent": "show me standup"}' \
+  -d '{"message": "show me standup"}' \
   -w "\n%{http_code}\n"
 
 # 2. Invalid request (should return 422)
 curl -X POST /api/v1/intent \
   -H "Content-Type: application/json" \
-  -d '{"intent": ""}' \
+  -d '{"message": ""}' \
   -w "\n%{http_code}\n"
 
 # 3. Not found (should return 404)
