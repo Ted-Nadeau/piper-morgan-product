@@ -33,6 +33,9 @@ from web.personality_integration import (
     WebPersonalityConfig,
 )
 
+# Import error response utilities (Pattern 034: Error Handling Standards)
+from web.utils.error_responses import internal_error, validation_error
+
 # Server Configuration - now using centralized configuration service
 port_config = get_port_configuration()
 DEFAULT_PORT = port_config.web_port
@@ -444,11 +447,10 @@ async def process_intent(request: Request):
 
         if intent_service is None:
             # Service not initialized - should not happen with proper lifespan
-            return {
-                "status": "error",
-                "error": "IntentService not available - initialization failed",
-                "detail": "Service not found in app.state",
-            }
+            return internal_error(
+                "IntentService not available - initialization failed",
+                error_id="intent-service-unavailable",
+            )
 
         # Delegate to service (all business logic)
         result = await intent_service.process_intent(message=message, session_id=session_id)
@@ -462,28 +464,18 @@ async def process_intent(request: Request):
             "clarification_type": result.clarification_type,
         }
 
-        # Add error fields if present
+        # Add error fields if present (semantic/validation errors from service)
         if result.error:
-            response["status"] = "error"
-            response["error"] = result.error
-            if result.error_type:
-                response["error_type"] = result.error_type
+            return validation_error(
+                result.error, {"error_type": result.error_type} if result.error_type else None
+            )
 
         return response
 
     except Exception as e:
-        # Unexpected error - HTTP 500 equivalent
-        logger.error(f"Intent route error: {str(e)}")
-        return {
-            "status": "error",
-            "error": f"Intent processing failed: {str(e)}",
-            "metadata": {
-                "generated_at": datetime.now().isoformat(),
-                "source": "web-direct",
-                "version": "1.0",
-                "error_type": "ProcessingError",
-            },
-        }
+        # Unexpected error - HTTP 500
+        logger.error(f"Intent route error: {str(e)}", exc_info=True)
+        return internal_error("Intent processing failed")
 
 
 @app.get("/standup")
