@@ -15,7 +15,7 @@ async def execute_workflow(self, workflow_type: str):
 ## Scope
 
 ### GAP-1: Handler Implementations (GREAT-4D)
-**Duration**: 20-30 hours  
+**Duration**: 20-30 hours
 **Gap**: 70% (sophisticated placeholders)
 
 Replace placeholders with real implementations:
@@ -31,7 +31,7 @@ Replace placeholders with real implementations:
 - Generic handlers for SYNTHESIS, STRATEGY, LEARNING
 
 ### GAP-2: Interface Validation (GREAT-4B)
-**Duration**: 2-3 hours  
+**Duration**: 2-3 hours
 **Gap**: 5%
 
 - Verify intent enforcement in CLI interface
@@ -40,7 +40,7 @@ Replace placeholders with real implementations:
 - Verify cache performance claims (7.6x speedup)
 
 ### GAP-3: Accuracy Polish (GREAT-4F)
-**Duration**: 6-8 hours  
+**Duration**: 6-8 hours
 **Gap**: 25% (post-#212 remaining work)
 
 - Address any classification issues not fixed by #212

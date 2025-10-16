@@ -71,3 +71,14 @@ repos:
           Prevents direct imports of GoogleCalendarMCPAdapter, NotionMCPAdapter,
           SlackSpatialAdapter, and SlackClient in favor of integration routers.
           Established in CORE-QUERY-1 Phase 4-6.
+      - id: validate-numbering
+        name: Validate Pattern and ADR Numbering
+        entry: scripts/validate-numbering.sh
+        language: script
+        pass_filenames: false
+        stages: [commit]
+        files: '^docs/internal/architecture/current/(patterns/pattern-|adrs/adr-).*\.md$'
+        description: |
+          Validates that new patterns and ADRs have consecutive numbering.
+          Prevents duplicate or skipped numbers in pattern/ADR sequences.
+          Use ./scripts/new-pattern.sh or ./scripts/new-adr.sh for auto-numbering.

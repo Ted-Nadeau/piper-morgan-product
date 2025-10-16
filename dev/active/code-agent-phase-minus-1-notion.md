@@ -200,10 +200,10 @@ Create a summary document: `/tmp/phase-minus-1-notion-investigation.md`
 async def get_current_user(self) -> Dict[str, Any]:
     """
     Get current authenticated Notion user.
-    
+
     Returns:
         Dict with user information (id, name, email, etc.)
-        
+
     Raises:
         NotionAPIError: If API call fails
         AuthenticationError: If credentials invalid
@@ -280,7 +280,7 @@ async def get_current_user(self) -> Dict[str, Any]:
 
 ## Context
 
-**Why Phase -1 Matters**: 
+**Why Phase -1 Matters**:
 - Notion integration is "partly done work" (per PM)
 - Need to understand current state before adding
 - Enhanced validation depends on this method

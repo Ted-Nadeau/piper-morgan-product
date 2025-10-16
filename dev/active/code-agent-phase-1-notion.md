@@ -32,10 +32,10 @@ Based on investigation findings, add this method after the existing connection-r
 async def get_current_user(self) -> Dict[str, Any]:
     """
     Get the current authenticated Notion user.
-    
+
     Retrieves information about the user associated with the API token.
     Used by enhanced validation in configuration loader.
-    
+
     Returns:
         Dict containing user information with keys:
             - id (str): User's Notion ID
@@ -43,10 +43,10 @@ async def get_current_user(self) -> Dict[str, Any]:
             - avatar_url (str): URL to user's avatar
             - type (str): User type (person/bot)
             - email (str, optional): User's email if available
-    
+
     Raises:
         NotionConnectionError: If API call fails
-        
+
     Example:
         >>> adapter = NotionMCPAdapter(token="secret")
         >>> user = await adapter.get_current_user()
@@ -56,7 +56,7 @@ async def get_current_user(self) -> Dict[str, Any]:
     try:
         # Use existing working pattern from test_connection() and get_workspace_info()
         user = self._notion_client.users.me()
-        
+
         return {
             "id": user.id,
             "name": user.name if hasattr(user, 'name') else "Unknown",
@@ -64,7 +64,7 @@ async def get_current_user(self) -> Dict[str, Any]:
             "type": user.type if hasattr(user, 'type') else "unknown",
             "email": getattr(user, 'email', None),
         }
-        
+
     except Exception as e:
         raise NotionConnectionError(
             f"Failed to get current user: {str(e)}"

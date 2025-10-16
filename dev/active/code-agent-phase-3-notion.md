@@ -13,7 +13,7 @@
 
 Verify that enhanced validation in the Notion configuration loader now works end-to-end with the new `get_current_user()` method.
 
-**Context**: 
+**Context**:
 - Phase 1 implemented the method ✅
 - Phase 2 tested comprehensively (including real API) ✅
 - Phase 3: Confirm the original issue is resolved ✅
@@ -65,7 +65,7 @@ from services.integrations.mcp.notion_adapter import NotionMCPAdapter
 async def test_enhanced_validation_calls_get_current_user():
     """
     Test that enhanced validation successfully calls adapter.get_current_user().
-    
+
     This is the end-to-end test that verifies CORE-NOTN #142 is fixed.
     The original error was AttributeError at line 373 (approx).
     """
@@ -78,27 +78,27 @@ async def test_enhanced_validation_calls_get_current_user():
         "email": "test@example.com",
         "type": "person"
     })
-    
+
     # Create config with enhanced validation level
     config = NotionUserConfig(
         api_token="test-token-123",
         validation_level="enhanced"  # This triggers get_current_user() call
     )
-    
+
     # Run validation - this should NOT raise AttributeError anymore
     try:
         # If there's a validate() method that takes an adapter
         result = await config.validate(adapter=mock_adapter)
-        
+
         # Verify get_current_user() was called
         mock_adapter.get_current_user.assert_called_once()
-        
+
         # Validation should succeed
         assert result is True or result.get("valid") is True
-        
+
         print("✅ Enhanced validation successfully called get_current_user()")
         print(f"✅ Original issue CORE-NOTN #142 is RESOLVED")
-        
+
     except AttributeError as e:
         if "get_current_user" in str(e):
             pytest.fail(f"FAILED: get_current_user() still missing! Error: {e}")
@@ -110,7 +110,7 @@ async def test_enhanced_validation_calls_get_current_user():
 async def test_full_validation_calls_get_current_user():
     """
     Test that full validation also calls get_current_user().
-    
+
     Full validation should include everything from enhanced validation.
     """
     mock_adapter = AsyncMock(spec=NotionMCPAdapter)
@@ -119,17 +119,17 @@ async def test_full_validation_calls_get_current_user():
         "name": "Piper Morgan",
         "type": "bot"
     })
-    
+
     config = NotionUserConfig(
         api_token="test-token-456",
         validation_level="full"  # Full validation should also work
     )
-    
+
     result = await config.validate(adapter=mock_adapter)
-    
+
     # Should call get_current_user()
     mock_adapter.get_current_user.assert_called()
-    
+
     print("✅ Full validation successfully called get_current_user()")
 ```
 
@@ -163,19 +163,19 @@ If we can safely test with real Notion API:
 async def test_enhanced_validation_with_real_api():
     """Test enhanced validation with real Notion API."""
     api_key = os.getenv("NOTION_API_KEY")
-    
+
     # Create real adapter
     adapter = NotionMCPAdapter(api_token=api_key)
-    
+
     # Create config with enhanced validation
     config = NotionUserConfig(
         api_token=api_key,
         validation_level="enhanced"
     )
-    
+
     # This should work without errors
     result = await config.validate(adapter=adapter)
-    
+
     print(f"✅ Real API enhanced validation successful!")
     print(f"✅ User authenticated: {result.get('user_name', 'N/A')}")
 ```

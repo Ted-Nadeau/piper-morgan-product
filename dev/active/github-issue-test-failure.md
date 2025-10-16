@@ -1,8 +1,8 @@
 # Technical Debt: Fix test_error_handling_with_invalid_config
 
-**Labels**: `technical-debt`, `tests`, `notion`, `low-priority`  
-**Priority**: Low  
-**Effort**: 1-2 hours  
+**Labels**: `technical-debt`, `tests`, `notion`, `low-priority`
+**Priority**: Low
+**Effort**: 1-2 hours
 **Discovered**: October 15, 2025 during CORE-NOTN-UP #165
 
 ---
@@ -11,8 +11,8 @@
 
 Pre-existing test failure in Notion integration tests that needs investigation and fixing.
 
-**Test**: `test_error_handling_with_invalid_config`  
-**File**: `tests/integration/test_notion_configuration_integration.py:197`  
+**Test**: `test_error_handling_with_invalid_config`
+**File**: `tests/integration/test_notion_configuration_integration.py:197`
 **Failure**: `Failed: DID NOT RAISE <class 'Exception'>`
 
 **Status**: Pre-existing (not caused by SDK upgrade work)
@@ -31,9 +31,9 @@ The test expects an exception to be raised when invalid Notion configuration is 
 
 ## Impact Assessment
 
-**User Impact**: None (test infrastructure only)  
-**Developer Impact**: Low (other tests cover configuration validation)  
-**Urgency**: Low (can be addressed in dedicated technical debt sprint)  
+**User Impact**: None (test infrastructure only)
+**Developer Impact**: Low (other tests cover configuration validation)
+**Urgency**: Low (can be addressed in dedicated technical debt sprint)
 **Effort**: 1-2 hours (investigate + fix + verify)
 
 ---
@@ -134,7 +134,7 @@ While testing the notion-client SDK upgrade from 2.2.1 to 2.5.0, we ran the full
 
 ## Related Issues
 
-**Related to**: #165 (CORE-NOTN-UP: Notion API Upgrade)  
+**Related to**: #165 (CORE-NOTN-UP: Notion API Upgrade)
 **Discovered in**: Phase 1-Quick SDK upgrade testing
 
 ---
@@ -163,8 +163,8 @@ Key sections:
 
 ---
 
-**Created**: October 15, 2025  
-**Discovered By**: Code Agent during SDK upgrade testing  
+**Created**: October 15, 2025
+**Discovered By**: Code Agent during SDK upgrade testing
 **Status**: Ready for investigation
 
 ---

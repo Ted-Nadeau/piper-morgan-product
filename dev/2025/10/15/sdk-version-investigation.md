@@ -7,7 +7,7 @@
 
 ## CRITICAL DISCREPANCY DISCOVERED
 
-**Issue Description Says**: 
+**Issue Description Says**:
 - "Required SDK: notion-client>=5.0.0"
 - "Must upgrade: notion-client==2.2.1 → >=5.0.0"
 
