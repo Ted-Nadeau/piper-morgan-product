@@ -86,6 +86,31 @@ echo "Verifying log update..." && tail -5 [logfile]
 cat [logfile] | grep -c "latest entry"
 ```
 
+## 🚨 CRITICAL: Pre-Commit Checklist
+
+**ALWAYS RUN BEFORE EVERY COMMIT** (prevents double-commit failures):
+
+```bash
+# Quick method: Use the commit wrapper
+./scripts/commit.sh "your commit message"
+
+# OR Manual method:
+./scripts/fix-newlines.sh  # Step 1: Fix newlines
+git add -u                  # Step 2: Stage changes
+git commit -m "message"     # Step 3: Commit
+```
+
+**Why This Matters**:
+- Pre-commit hooks (isort, black, trailing-whitespace, end-of-file-fixer) auto-fix files
+- If files lack final newlines or have formatting issues, commit will fail
+- Hooks will fix the issues but require re-staging and re-committing
+- Running `fix-newlines.sh` first prevents this entire cycle
+- Saves time and reduces frustration
+
+**See**: `docs/dev-tips/preventing-pre-commit-failures.md` for full details.
+
+**Remember**: Document in your session log when you commit (include this checklist in your completion notes).
+
 ## Commands for Each Role
 
 ### Chief Architect (opus)
