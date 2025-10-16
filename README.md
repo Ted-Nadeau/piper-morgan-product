@@ -77,6 +77,59 @@ Validated with 140+ query variants across 5 canonical categories (GREAT-4F, Octo
 
 ---
 
+## ⚠️ API Error Handling
+
+Piper Morgan follows REST principles for error responses with proper HTTP status codes:
+
+- **200 OK**: Request succeeded
+- **422 Unprocessable Entity**: Validation error (invalid input)
+- **404 Not Found**: Resource not found
+- **500 Internal Server Error**: Unexpected server error
+
+### Example Error Handling
+
+```python
+import requests
+
+response = requests.post("/api/v1/intent", json={"message": "test"})
+
+if response.status_code == 200:
+    # Success
+    data = response.json()
+elif response.status_code == 422:
+    # Validation error
+    error = response.json()
+    print(f"Validation failed: {error['message']}")
+elif response.status_code == 404:
+    # Not found
+    error = response.json()
+    print(f"Resource not found: {error['message']}")
+elif response.status_code == 500:
+    # Internal error
+    error = response.json()
+    error_id = error.get("details", {}).get("error_id")
+    print(f"Server error (ID: {error_id})")
+```
+
+### Error Response Format
+
+All errors follow this structure:
+```json
+{
+  "status": "error",
+  "code": "VALIDATION_ERROR",
+  "message": "User-friendly error message",
+  "details": { /* Optional context */ }
+}
+```
+
+**Documentation**:
+- [Complete Error Handling Guide](docs/public/api-reference/api/error-handling.md)
+- [Migration Guide](docs/public/migration/error-handling-migration.md)
+- [Pattern 034 Reference](docs/internal/architecture/current/patterns/pattern-034-error-handling-standards.md)
+
+---
+
 ## 🚀 Quick Start (30 seconds)
 
 ```bash
@@ -121,13 +174,15 @@ Piper: "🌅 Good morning! Here are your accomplishments from yesterday..."
 
 **Quick Access**: Start your daily standup with a professional dark mode interface.
 
-### Web Interface
+### Starting the Server
 ```bash
-# Start FastAPI server
-PYTHONPATH=. python web/app.py
-# or
-PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
+# Recommended: Use main.py (initializes services)
+python main.py
+
+# Server will start on http://127.0.0.1:8001
 ```
+
+**Note**: Use `python main.py` instead of `uvicorn` directly. This ensures proper service initialization and dependency injection.
 
 ### Access Points
 - **Web UI**: http://localhost:8001/standup (dark mode, mobile responsive)
