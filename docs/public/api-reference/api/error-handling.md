@@ -31,7 +31,7 @@ Piper Morgan API follows REST principles for error handling. All errors return a
 ```bash
 curl -X POST /api/v1/intent \
   -H "Content-Type: application/json" \
-  -d '{"intent": "show me the standup"}'
+  -d '{"message": "show me the standup"}'
 # → HTTP 200
 ```
 
@@ -62,13 +62,13 @@ curl -X POST /api/v1/intent \
 ```bash
 curl -X POST /api/v1/intent \
   -H "Content-Type: application/json" \
-  -d '{"intent": ""}'
+  -d '{"message": ""}'
 # → HTTP 422
 # {
 #   "status": "error",
 #   "code": "VALIDATION_ERROR",
 #   "message": "Validation failed",
-#   "details": {"field": "intent", "issue": "Cannot be empty"}
+#   "details": {"field": "message", "issue": "Cannot be empty"}
 # }
 ```
 
@@ -168,7 +168,7 @@ import requests
 
 response = requests.post(
     "https://api.piper-morgan.ai/api/v1/intent",
-    json={"intent": "show me standup"}
+    json={"message": "show me standup"}
 )
 
 # Check HTTP status code FIRST
@@ -207,7 +207,7 @@ try {
   const response = await fetch('/api/v1/intent', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({intent: 'show me standup'})
+    body: JSON.stringify({message: 'show me standup'})
   });
 
   const data = await response.json();
@@ -257,8 +257,8 @@ try {
 
 ```bash
 # Empty field
-POST /api/v1/intent {"intent": ""}
-→ 422 {"code": "VALIDATION_ERROR", "details": {"field": "intent"}}
+POST /api/v1/intent {"message": ""}
+→ 422 {"code": "VALIDATION_ERROR", "details": {"field": "message"}}
 
 # Invalid type
 POST /api/v1/workflows {"name": 123}
@@ -277,7 +277,7 @@ GET /api/v1/workflows/invalid-id
 
 ```bash
 # Service unavailable
-POST /api/v1/intent {"intent": "test"}
+POST /api/v1/intent {"message": "test"}
 → 500 {"code": "INTERNAL_ERROR", "details": {"error_id": "abc-123"}}
 ```
 
