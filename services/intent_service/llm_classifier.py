@@ -45,7 +45,7 @@ class LLMIntentClassifier:
         enable_learning: bool = True,
     ):
         """
-            Initialize LLMIntentClassifier.
+        Initialize LLMIntentClassifier.
 
         Args:
             llm_service: LLM service instance (optional, will get from container if not provided)
@@ -54,20 +54,19 @@ class LLMIntentClassifier:
             confidence_threshold: Minimum confidence score for classification
             enable_learning: Enable performance tracking and learning
         """
+        self._llm = llm_service  # Accept via dependency injection
+        self.knowledge_graph = knowledge_graph_service
+        self.semantic_indexer = semantic_indexing_service
+        self.confidence_threshold = confidence_threshold
+        self.enable_learning = enable_learning
 
-    self._llm = llm_service  # Accept via dependency injection
-    self.knowledge_graph = knowledge_graph_service
-    self.semantic_indexer = semantic_indexing_service
-    self.confidence_threshold = confidence_threshold
-    self.enable_learning = enable_learning
-
-    # Performance tracking
-    self.classification_metrics = {
-        "total_requests": 0,
-        "successful_classifications": 0,
-        "low_confidence_fallbacks": 0,
-        "average_latency_ms": 0,
-    }
+        # Performance tracking
+        self.classification_metrics = {
+            "total_requests": 0,
+            "successful_classifications": 0,
+            "low_confidence_fallbacks": 0,
+            "average_latency_ms": 0,
+        }
 
     @property
     def llm(self):
