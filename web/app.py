@@ -353,14 +353,23 @@ async def get_workflow_status(workflow_id: str, request: Request):
 
 
 # Personality Configuration Endpoints
+# Phase 2: REST-compliant error handling (Pattern 034)
 @app.get("/api/personality/profile/{user_id}")
 async def get_personality_profile(user_id: str = "default"):
     """Get user's personality preferences"""
     try:
         config = config_parser.load_personality_config(user_id)
         return {"status": "success", "data": config.to_dict(), "user_id": user_id}
+    except FileNotFoundError:
+        # Profile not found - return 404
+        return not_found_error(
+            f"Personality profile not found for user: {user_id}",
+            {"resource": "personality_profile", "user_id": user_id},
+        )
     except Exception as e:
-        return {"status": "error", "error": str(e), "user_id": user_id}
+        # Load failure - return 500
+        logger.error(f"Failed to load personality profile for {user_id}: {e}", exc_info=True)
+        return internal_error("Failed to load personality profile")
 
 
 @app.put("/api/personality/profile/{user_id}")
@@ -380,13 +389,19 @@ async def update_personality_profile(user_id: str, request: Request):
                 "message": "Personality preferences updated successfully",
             }
         else:
-            return {
-                "status": "error",
-                "error": "Failed to save personality configuration",
-                "user_id": user_id,
-            }
+            # Save failed - return 500
+            logger.error(f"Failed to save personality config for {user_id}")
+            return internal_error("Failed to save personality configuration")
+    except (ValueError, KeyError, TypeError) as e:
+        # Invalid data - return 422
+        return validation_error(
+            f"Invalid personality configuration data: {str(e)}",
+            {"user_id": user_id, "error": str(e)},
+        )
     except Exception as e:
-        return {"status": "error", "error": str(e), "user_id": user_id}
+        # Unexpected error - return 500
+        logger.error(f"Error updating personality profile for {user_id}: {e}", exc_info=True)
+        return internal_error("Failed to update personality profile")
 
 
 @app.post("/api/personality/enhance")
@@ -397,6 +412,13 @@ async def enhance_response(request: Request):
         content = data.get("content", "")
         user_id = data.get("user_id", "default")
         confidence = data.get("confidence", 0.5)
+
+        # Validate required fields
+        if not content or not isinstance(content, str):
+            return validation_error(
+                "Content is required and must be a string",
+                {"field": "content", "issue": "Required field missing or invalid type"},
+            )
 
         # Load personality config
         config = config_parser.load_personality_config(user_id)
@@ -413,8 +435,13 @@ async def enhance_response(request: Request):
                 "confidence": confidence,
             },
         }
+    except (ValueError, TypeError) as e:
+        # Validation errors - return 422
+        return validation_error(f"Invalid enhancement request: {str(e)}", {"error": str(e)})
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        # Processing errors - return 500
+        logger.error(f"Error enhancing response: {e}", exc_info=True)
+        return internal_error("Failed to enhance response")
 
 
 @app.get("/api/standup")
@@ -431,22 +458,14 @@ async def standup_proxy(
                 f"{API_BASE_URL}/api/standup", params={"format": format, "personality": personality}
             )
             return response.json()
+    except httpx.ConnectError as e:
+        # Backend service unavailable - return 500
+        logger.error(f"Backend API connection failed: {e}")
+        return internal_error("Backend API unavailable")
     except Exception as e:
-        return {
-            "status": "error",
-            "error": f"Backend API unavailable: {str(e)}",
-            "metadata": {
-                "generated_at": datetime.now().isoformat(),
-                "source": "web-proxy",
-                "version": "1.0",
-                "error_type": "ProxyError",
-                "recovery_suggestions": [
-                    f"Check if backend API is running on port {port_config.backend_port}",
-                    "Verify main.py service is started",
-                    "Try again in a few moments",
-                ],
-            },
-        }
+        # Unexpected error - return 500
+        logger.error(f"Standup proxy error: {e}", exc_info=True)
+        return internal_error("Failed to proxy standup request")
 
 
 @app.post("/api/v1/intent")
