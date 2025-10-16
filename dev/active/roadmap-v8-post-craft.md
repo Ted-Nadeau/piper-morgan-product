@@ -1,7 +1,7 @@
 # Piper Morgan Roadmap - Post-CRAFT Update
 
-**Version**: 8.0  
-**Last Updated**: October 14, 2025  
+**Version**: 8.0
+**Last Updated**: October 14, 2025
 **Key Change**: Incorporating CRAFT discoveries while maintaining Alpha plan integrity
 
 ## Vision Statement
@@ -28,7 +28,7 @@ All GREAT epics complete with 99%+ verification
 #### Phase 2: Complete the Build of CORE
 **Sprint A1**: Critical Infrastructure ✅ (Oct 8-11)
 - Database migration
-- Test cache fixes  
+- Test cache fixes
 - LLM configuration architecture
 - Intent classification enhancement (98.62% accuracy achieved)
 
@@ -267,6 +267,6 @@ The handlers existing means sprints might go faster, not that we skip verificati
 
 _This roadmap respects the careful Alpha planning while incorporating CRAFT discoveries. Quality and completeness determine pace, not arbitrary deadlines._
 
-**Version**: 8.0  
-**Last Updated**: October 14, 2025  
+**Version**: 8.0
+**Last Updated**: October 14, 2025
 **Next Update**: After Sprint A2 completion

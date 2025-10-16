@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 33 patterns (001-033) + template (000)
+**Total Patterns**: 34 patterns (001-034) + template (000)
 
 ## Pattern Categories
 
@@ -21,6 +21,7 @@ _Foundational patterns for system architecture and infrastructure_
 - [Pattern-014: Error Handling API Contract](pattern-014-error-handling-api-contract.md) - API error contracts
 - [Pattern-015: Internal Task Handler](pattern-015-internal-task-handler.md) - Task processing patterns
 - [Pattern-017: Background Task Error Handling](pattern-017-background-task-error-handling.md) - Async error management
+- [Pattern-034: Error Handling Standards](pattern-034-error-handling-standards.md) - REST-compliant HTTP status codes and error responses
 
 ### Data & Query Patterns
 
@@ -93,5 +94,5 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: October 5, 2025_
-_All 32 patterns now included with logical categorization_
+_Last updated: October 15, 2025_
+_All 34 patterns now included with logical categorization_

@@ -1,9 +1,9 @@
 # Gameplan: Sprint A2 - Notion & Errors
 
-**Sprint**: A2  
-**Duration**: 2 days  
-**Start**: October 15, 2025  
-**Context**: CRAFT complete, following established Alpha roadmap  
+**Sprint**: A2
+**Duration**: 2 days
+**Start**: October 15, 2025
+**Context**: CRAFT complete, following established Alpha roadmap
 **Mission**: Complete Notion fixes and error standardization per plan
 
 ## Background
@@ -12,7 +12,7 @@ CRAFT discovered production handlers exist, but we're following our Alpha plan s
 
 Sprint A2 items from the roadmap:
 - CORE-NOTN #142 (5h) - API connectivity fix
-- CORE-NOTN #136 (1d) - Remove hardcoding  
+- CORE-NOTN #136 (1d) - Remove hardcoding
 - CORE-NOTN #165 (1d) - Database API upgrade
 - CORE-INT #109 (5h) - Legacy deprecation verification
 - MVP-ERROR-STANDARDS (1-2d) - Standardize errors
@@ -21,7 +21,7 @@ Sprint A2 items from the roadmap:
 ## Day 1: Notion Focus (Oct 15)
 
 ### Phase 1: CORE-NOTN #142 - API Connectivity
-**Duration**: 5 hours  
+**Duration**: 5 hours
 **Issue**: Notion API connectivity problems
 
 Tasks:
@@ -32,7 +32,7 @@ Tasks:
 - Document configuration requirements
 
 ### Phase 2: CORE-NOTN #136 - Remove Hardcoding
-**Duration**: Remainder of day  
+**Duration**: Remainder of day
 **Issue**: Hardcoded values in Notion integration
 
 Tasks:
@@ -45,7 +45,7 @@ Tasks:
 ## Day 2: Notion Completion + Errors (Oct 16)
 
 ### Phase 3: CORE-NOTN #165 - Database API Upgrade
-**Duration**: 4 hours  
+**Duration**: 4 hours
 **Issue**: Notion database API needs upgrade
 
 Tasks:
@@ -56,7 +56,7 @@ Tasks:
 - Document breaking changes
 
 ### Phase 4: CORE-INT #109 - Legacy Deprecation
-**Duration**: 5 hours  
+**Duration**: 5 hours
 **Issue**: Verify legacy code properly deprecated
 
 Tasks:
@@ -67,7 +67,7 @@ Tasks:
 - Document removals
 
 ### Phase 5: MVP-ERROR-STANDARDS
-**Duration**: Remainder of day (start, continue in A3 if needed)  
+**Duration**: Remainder of day (start, continue in A3 if needed)
 **Issue**: Standardize error responses
 
 Tasks:

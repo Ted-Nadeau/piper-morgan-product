@@ -1,19 +1,19 @@
 # CORE-NOTN-UP: Upgrade Notion API to version 2025-09-03
 
-**Status**: 🟡 Planning (Phase -1 Investigation Complete)  
-**Priority**: MEDIUM-HIGH  
-**Effort**: 12-17 hours (14-20 hours with 20% buffer)  
+**Status**: 🟡 Planning (Phase -1 Investigation Complete)
+**Priority**: MEDIUM-HIGH
+**Effort**: 12-17 hours (14-20 hours with 20% buffer)
 **Sprint**: A2 (Phase 1), A3 (Phases 2-6)
 
 ---
 
 ## Executive Summary
 
-**Migration Required**: ✅ YES - Notion API version 2025-09-03 introduces breaking changes  
-**Risk Level**: 🟡 MEDIUM  
-**Urgency**: 🟡 MODERATE - Works now, breaks when multi-source databases added  
-**Current SDK**: notion-client==2.2.1 (2+ years old)  
-**Required SDK**: notion-client>=5.0.0  
+**Migration Required**: ✅ YES - Notion API version 2025-09-03 introduces breaking changes
+**Risk Level**: 🟡 MEDIUM
+**Urgency**: 🟡 MODERATE - Works now, breaks when multi-source databases added
+**Current SDK**: notion-client==2.2.1 (2+ years old)
+**Required SDK**: notion-client>=5.0.0
 
 **Critical Impact**: ADR publishing uses `create_database_item()` which will break when databases have multiple data sources.
 
@@ -187,8 +187,8 @@ notion:
 ## Implementation Plan
 
 ### Phase 1: SDK Upgrade & Compatibility Testing
-**Duration**: 2-3 hours  
-**Sprint**: A2  
+**Duration**: 2-3 hours
+**Sprint**: A2
 **Risk**: 🟡 MEDIUM
 
 **Tasks**:
@@ -204,8 +204,8 @@ notion:
 ---
 
 ### Phase 2: Configuration Schema Update
-**Duration**: 2-3 hours  
-**Sprint**: A2 or A3  
+**Duration**: 2-3 hours
+**Sprint**: A2 or A3
 **Risk**: 🟢 LOW
 
 **Tasks**:
@@ -221,8 +221,8 @@ notion:
 ---
 
 ### Phase 3: Implement data_source_id Fetching
-**Duration**: 1-2 hours  
-**Sprint**: A3  
+**Duration**: 1-2 hours
+**Sprint**: A3
 **Risk**: 🟢 LOW
 
 **New Method Required**:
@@ -230,22 +230,22 @@ notion:
 async def get_data_source_id(self, database_id: str) -> str:
     """
     Get the primary data_source_id for a database.
-    
+
     For single-source databases, returns the single data source.
     For multi-source databases, returns the first/primary source.
     """
     try:
         db_info = self._notion_client.databases.retrieve(database_id=database_id)
-        
+
         # API 2025-09-03 returns data_sources list
         data_sources = db_info.get("data_sources", [])
-        
+
         if not data_sources:
             raise ValueError(f"No data sources found for database {database_id}")
-        
+
         # Use first data source (primary)
         return data_sources[0]["id"]
-        
+
     except Exception as e:
         logger.error(f"Failed to get data_source_id: {e}")
         raise
@@ -256,8 +256,8 @@ async def get_data_source_id(self, database_id: str) -> str:
 ---
 
 ### Phase 4: Update Database Operations
-**Duration**: 3-4 hours  
-**Sprint**: A3  
+**Duration**: 3-4 hours
+**Sprint**: A3
 **Risk**: 🟡 MEDIUM
 
 **Tasks**:
@@ -285,8 +285,8 @@ response = self._notion_client.pages.create(
 ---
 
 ### Phase 5: Testing & Validation
-**Duration**: 2-3 hours  
-**Sprint**: A3  
+**Duration**: 2-3 hours
+**Sprint**: A3
 **Risk**: 🟢 LOW
 
 **Tasks**:
@@ -302,8 +302,8 @@ response = self._notion_client.pages.create(
 ---
 
 ### Phase 6: Documentation & Migration Guide
-**Duration**: 1-2 hours  
-**Sprint**: A3  
+**Duration**: 1-2 hours
+**Sprint**: A3
 **Risk**: 🟢 LOW
 
 **Tasks**:
@@ -459,7 +459,7 @@ Issues to be created for tracking:
 
 ## Timeline & Milestones
 
-**Recommended Start**: Sprint A2 (Phase 1 - SDK upgrade)  
+**Recommended Start**: Sprint A2 (Phase 1 - SDK upgrade)
 **Target Completion**: End of Sprint A3 (all phases)
 
 **Milestones**:
@@ -468,7 +468,7 @@ Issues to be created for tracking:
 - **Week 3 (A3)**: Database operations update + validation
 - **Week 4 (A3)**: Documentation + final testing
 
-**Total Effort**: 12-17 hours  
+**Total Effort**: 12-17 hours
 **With Buffer**: 14-20 hours (20% buffer for unknowns)
 
 ---
@@ -506,21 +506,21 @@ Issues to be created for tracking:
 
 ## Related Issues
 
-**Parent**: None (this is the parent epic)  
-**Children**: 6 implementation issues (to be created)  
-**Related**: 
+**Parent**: None (this is the parent epic)
+**Children**: 6 implementation issues (to be created)
+**Related**:
 - #142 (CORE-NOTN: Enhanced validation) - Recently completed ✅
 - #136 (CORE-NOTN: Remove hardcoding) - Verified complete ✅
 
 ---
 
-**Issue Created**: October 15, 2025  
-**Investigation**: Phase -1 complete  
-**Status**: Ready for implementation planning  
-**Priority**: MEDIUM-HIGH  
+**Issue Created**: October 15, 2025
+**Investigation**: Phase -1 complete
+**Status**: Ready for implementation planning
+**Priority**: MEDIUM-HIGH
 **Sprint**: A2 (Phase 1), A3 (Phases 2-6)
 
 ---
 
-*"External API changes require systematic investigation and phased migration."*  
+*"External API changes require systematic investigation and phased migration."*
 *- API Migration Philosophy*

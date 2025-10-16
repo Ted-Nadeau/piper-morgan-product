@@ -57,7 +57,7 @@ Client(options=options)
 - **Status**: ✅ ALL PASSING
 
 ### Integration Tests (test_notion_configuration_integration.py)
-- **Tests run**: 5  
+- **Tests run**: 5
 - **Passed**: 3
 - **Skipped**: 1
 - **Failed**: 1 (pre-existing issue, unrelated to changes)

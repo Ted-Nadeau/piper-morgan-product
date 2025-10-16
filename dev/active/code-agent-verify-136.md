@@ -1,7 +1,7 @@
 # Code Agent Prompt: Phase -1 - Quick Verification of Issue #136
 
 **Date**: October 15, 2025, 10:43 AM
-**Sprint**: A2 - Notion & Errors  
+**Sprint**: A2 - Notion & Errors
 **Issue**: CORE-NOTN #136 - Refactor Notion hardcoded values
 **Phase**: -1 (Quick Verification)
 **Duration**: 15 minutes
@@ -86,7 +86,7 @@ grep -A 20 "notion:" config/PIPER.user.md
 # fields.py
 grep -n "get_database_id\|get_parent_id" services/integrations/notion/fields.py
 
-# adr.py  
+# adr.py
 grep -n "get_database_id\|get_parent_id" services/integrations/notion/adr.py
 
 # debug_parent.py
@@ -167,15 +167,15 @@ Create: `/tmp/issue-136-verification.md`
 ```markdown
 # Issue #136 Verification Results
 
-**Date**: October 15, 2025, 10:45 AM  
-**Duration**: 15 minutes  
+**Date**: October 15, 2025, 10:45 AM
+**Duration**: 15 minutes
 **Mission**: Verify completion of Issue #136
 
 ## Acceptance Criteria Status
 
 ### ✅/❌ Criterion 1: All hardcoded Notion IDs identified and documented
 **Status**: [✅ Complete / ❌ Gap Found / ⚠️ Partial]
-**Evidence**: 
+**Evidence**:
 - Files checked: [list]
 - Hardcoded IDs found: [list or "none"]
 - Assessment: [brief note]
@@ -303,8 +303,8 @@ Create: `/tmp/issue-136-verification.md`
 
 ---
 
-**Phase -1 Start Time**: 10:45 AM  
-**Expected Completion**: ~11:00 AM (15 minutes)  
+**Phase -1 Start Time**: 10:45 AM
+**Expected Completion**: ~11:00 AM (15 minutes)
 **Status**: Ready for quick verification
 
 **LET'S VERIFY!** ✅

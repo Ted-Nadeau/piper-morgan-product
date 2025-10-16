@@ -50,12 +50,12 @@ async def test_get_current_user_success(self):
     mock_user.type = "person"
     mock_user.person = MagicMock()
     mock_user.person.email = "test@example.com"
-    
+
     self.adapter._notion_client.users.me.return_value = mock_user
-    
+
     # Call the method
     result = await self.adapter.get_current_user()
-    
+
     # Assertions
     assert result is not None
     assert result["id"] == "user-123"
@@ -78,11 +78,11 @@ async def test_get_current_user_bot_type(self):
     mock_user.type = "bot"
     mock_user.bot = MagicMock()
     mock_user.bot.workspace_name = "Test Workspace"
-    
+
     self.adapter._notion_client.users.me.return_value = mock_user
-    
+
     result = await self.adapter.get_current_user()
-    
+
     assert result is not None
     assert result["id"] == "bot-456"
     assert result["type"] == "bot"
@@ -96,14 +96,14 @@ async def test_get_current_user_bot_type(self):
 async def test_get_current_user_api_error(self):
     """Test handling of Notion API errors."""
     from notion_client.errors import APIResponseError
-    
+
     # Mock API error
     self.adapter._notion_client.users.me.side_effect = APIResponseError(
         response=MagicMock(status_code=401),
         message="Unauthorized",
         code="unauthorized"
     )
-    
+
     # Should raise APIResponseError
     with pytest.raises(APIResponseError):
         await self.adapter.get_current_user()
@@ -116,10 +116,10 @@ async def test_get_current_user_api_error(self):
 async def test_get_current_user_timeout(self):
     """Test handling of request timeout."""
     from notion_client.errors import RequestTimeoutError
-    
+
     # Mock timeout
     self.adapter._notion_client.users.me.side_effect = RequestTimeoutError()
-    
+
     # Should raise RequestTimeoutError
     with pytest.raises(RequestTimeoutError):
         await self.adapter.get_current_user()
@@ -137,11 +137,11 @@ async def test_get_current_user_missing_email(self):
     mock_user.type = "person"
     # No person.email attribute
     del mock_user.person
-    
+
     self.adapter._notion_client.users.me.return_value = mock_user
-    
+
     result = await self.adapter.get_current_user()
-    
+
     assert result is not None
     assert result["id"] == "user-789"
     assert result.get("email") is None  # Should handle missing email gracefully
@@ -167,16 +167,16 @@ async def test_enhanced_validation_with_get_current_user(self):
         "email": "test@example.com",
         "type": "person"
     }
-    
+
     # Create config with enhanced validation
     config = NotionUserConfig(
         api_token="test-token",
         validation_level="enhanced"
     )
-    
+
     # This should now work without AttributeError
     result = await config.validate_with_adapter(mock_adapter)
-    
+
     assert result is True
     mock_adapter.get_current_user.assert_called_once()
 ```
@@ -212,13 +212,13 @@ from notion_client.errors import APIResponseError, RequestTimeoutError
 
 class TestNotionAdapterGetCurrentUser:
     """Test suite for get_current_user() method."""
-    
+
     def setup_method(self):
         """Set up test fixtures."""
         self.adapter = NotionMCPAdapter(api_token="test-token")
         # Mock the Notion client
         self.adapter._notion_client = MagicMock()
-    
+
     # Add all test methods here...
 ```
 

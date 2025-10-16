@@ -122,7 +122,7 @@ response = self._notion_client.pages.create(
 )
 ```
 
-**Impact**: 
+**Impact**:
 - ✅ Works with single-source databases (current state)
 - ❌ Breaks when user adds second data source to database
 - 🔴 **CRITICAL** for ADR publishing

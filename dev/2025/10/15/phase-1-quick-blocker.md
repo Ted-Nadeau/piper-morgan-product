@@ -74,7 +74,7 @@ The Notion documentation says tokens should remain valid, but our token is being
 4. Investigate token/integration issue separately
 5. Add API version back once resolved
 
-**Why**: 
+**Why**:
 - SDK upgrade is valuable on its own (security, bug fixes)
 - Unblocks Sprint A2 progress
 - API version can be added later (just parameter change)

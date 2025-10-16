@@ -76,4 +76,3 @@ DriverNameWin32=pdc40n.dll
 [EncRC5-56]
 DriverNameWin16=pdc56w.dll
 DriverNameWin32=pdc56n.dll
-

@@ -1,6 +1,6 @@
 # Roadmap Update: Post-CRAFT Synthesis
 
-**Date**: October 14, 2025, 6:00 PM  
+**Date**: October 14, 2025, 6:00 PM
 **Context**: CORE-CRAFT superepic complete, reconciling with October 28 roadmap
 
 ## Current Reality Check
@@ -35,7 +35,7 @@ Shows we're at position 2.0 "Complete the build of CORE" with:
 
 **Unknown Scope** (mentioned in briefing):
 - Complex workflow orchestration
-- Learning system integration  
+- Learning system integration
 - Full standup automation
 
 ### New Discovery from CRAFT
@@ -146,7 +146,7 @@ If handlers exist for learning and standup, remaining CORE might just be:
 1. Fix CORE-TEST-CACHE (30 min)
 2. Start MVP-ERROR-STANDARDS (4 hours)
 
-### Day 2: Handler Verification  
+### Day 2: Handler Verification
 1. Test all 22 handlers with mocks
 2. Document what works vs needs config
 3. Create configuration checklist
@@ -180,7 +180,7 @@ If handlers exist for learning and standup, remaining CORE might just be:
 - Handler verification (read-only)
 - API configuration (standard work)
 
-### Medium Risk  
+### Medium Risk
 - OAuth complexity
 - E2E testing surprises
 - User readiness for MVP

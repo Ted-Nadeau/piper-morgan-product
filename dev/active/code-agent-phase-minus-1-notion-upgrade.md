@@ -183,8 +183,8 @@ Create: `/tmp/phase-minus-1-notion-api-upgrade.md`
 ```markdown
 # Phase -1: Notion API Upgrade Investigation
 
-**Date**: October 15, 2025  
-**Issue**: CORE-NOTN-UP #165  
+**Date**: October 15, 2025
+**Issue**: CORE-NOTN-UP #165
 **API Version**: Old → 2025-09-03
 
 ---
@@ -246,7 +246,7 @@ Create: `/tmp/phase-minus-1-notion-api-upgrade.md`
    ```python
    # Current:
    [current code]
-   
+
    # Required:
    headers = {"Notion-Version": "2025-09-03"}
    ```
@@ -440,8 +440,8 @@ Create: `/tmp/phase-minus-1-notion-api-upgrade.md`
 
 ---
 
-**Phase -1 Start Time**: 11:10 AM  
-**Expected Completion**: ~11:40-11:55 AM (30-45 minutes)  
+**Phase -1 Start Time**: 11:10 AM
+**Expected Completion**: ~11:40-11:55 AM (30-45 minutes)
 **Status**: Ready for investigation
 
 **LET'S INVESTIGATE!** 🔍
