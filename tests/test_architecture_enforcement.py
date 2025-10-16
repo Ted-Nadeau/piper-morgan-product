@@ -121,10 +121,10 @@ class TestGitHubArchitectureEnforcement:
 
     def test_router_architectural_integrity(self):
         """
-        CRITICAL: Verify router itself maintains proper delegation pattern.
+        CRITICAL: Verify router maintains spatial-only architecture.
 
-        The router must delegate to spatial/legacy integrations correctly
-        and maintain the 100% delegation pattern compliance achieved in Phase 1A.
+        Week 4 Complete (CORE-INT #109): Legacy code removed, router simplified.
+        The router now delegates exclusively to GitHubSpatialIntelligence.
         """
 
         router_file = "services/integrations/github/github_integration_router.py"
@@ -135,13 +135,19 @@ class TestGitHubArchitectureEnforcement:
         with open(router_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Critical patterns that must exist in router
+        # Critical patterns for Week 4 (spatial-only architecture)
         required_patterns = [
-            "_get_preferred_integration",  # Core delegation method
-            "FeatureFlags.should_use_spatial_github",  # Feature flag integration
-            "GitHubSpatialIntelligence",  # Spatial integration
-            "GitHubAgent",  # Legacy integration fallback
-            "raise RuntimeError",  # Proper error handling
+            "_get_integration",  # Simplified delegation method (Week 4)
+            "FeatureFlags.should_use_spatial_github",  # Still used for compatibility
+            "GitHubSpatialIntelligence",  # Spatial-only integration
+            "raise RuntimeError",  # Proper error handling preserved
+        ]
+
+        # Patterns that MUST NOT exist after Week 4
+        forbidden_patterns = [
+            "_get_preferred_integration",  # Old delegation method (removed Week 4)
+            "GitHubAgent",  # Legacy integration (removed Week 4)
+            "_warn_deprecation_if_needed",  # Deprecation warnings (no longer needed)
         ]
 
         missing_patterns = []
@@ -149,9 +155,20 @@ class TestGitHubArchitectureEnforcement:
             if pattern not in content:
                 missing_patterns.append(pattern)
 
+        present_forbidden = []
+        for pattern in forbidden_patterns:
+            if pattern in content:
+                present_forbidden.append(pattern)
+
+        errors = []
         if missing_patterns:
+            errors.append(f"Missing required patterns: {missing_patterns}")
+        if present_forbidden:
+            errors.append(f"Legacy patterns still present (should be removed): {present_forbidden}")
+
+        if errors:
             pytest.fail(
-                f"Router architectural integrity violated. Missing patterns: {missing_patterns}"
+                f"Router architectural integrity violated. {' | '.join(errors)}"
             )
 
     def test_critical_methods_preserved(self):
@@ -323,10 +340,11 @@ class TestArchitecturalRegression:
 
     def test_router_delegation_pattern_preserved(self):
         """
-        Verify router maintains the exact delegation pattern from Phase 1A.
+        Verify router maintains simplified spatial-only delegation pattern.
 
-        The router achieved 100% delegation pattern compliance and this must
-        be preserved to maintain architectural integrity.
+        Week 4 (CORE-INT #109): Simplified from complex spatial/legacy routing
+        to direct spatial delegation. Methods now use _get_integration() for
+        clean, straightforward delegation to GitHubSpatialIntelligence.
         """
 
         router_file = "services/integrations/github/github_integration_router.py"
@@ -343,13 +361,14 @@ class TestArchitecturalRegression:
 
         # Exclude router-specific methods and module-level functions
         excluded_methods = [
-            "get_integration_status",
-            "get_deprecation_week",
-            "create_github_integration",
+            "get_integration_status",  # Special status method
+            "get_deprecation_week",  # Timeline helper
+            "create_github_integration",  # Factory function
+            "get_integration",  # Internal delegation method itself
         ]
         delegation_methods = [m for m in method_matches if m not in excluded_methods]
 
-        # Each delegation method should have the required pattern
+        # Week 4 pattern: Simple delegation to spatial via _get_integration()
         pattern_violations = []
         for method in delegation_methods:
             method_pattern = rf"def {re.escape(method)}\([^)]*\).*?(?=def|\Z)"
@@ -357,17 +376,23 @@ class TestArchitecturalRegression:
 
             if method_match:
                 method_body = method_match.group(0)
-                required_patterns = [
-                    "_get_preferred_integration(",
-                    "if integration:",
-                    "if is_legacy:",
-                    "_warn_deprecation_if_needed(",
-                    "raise RuntimeError(",
-                ]
 
-                missing_patterns = [p for p in required_patterns if p not in method_body]
-                if missing_patterns:
-                    pattern_violations.append(f"Method {method} missing: {missing_patterns}")
+                # Week 4 requires: _get_integration() call (simplified pattern)
+                if "_get_integration(" not in method_body:
+                    pattern_violations.append(
+                        f"Method {method} missing _get_integration() call (Week 4 pattern)"
+                    )
+
+                # Week 4 forbids: Old complex routing patterns
+                forbidden_patterns = [
+                    "_get_preferred_integration(",  # Old pattern
+                    "_warn_deprecation_if_needed(",  # No longer needed
+                ]
+                for forbidden in forbidden_patterns:
+                    if forbidden in method_body:
+                        pattern_violations.append(
+                            f"Method {method} contains legacy pattern: {forbidden}"
+                        )
 
         if pattern_violations:
             pytest.fail(f"Router delegation pattern violations: {pattern_violations}")

@@ -63,12 +63,12 @@ class FeatureFlags:
         Check if legacy GitHub integration is still allowed as fallback.
 
         Used during deprecation period to maintain backward compatibility.
-        Will be disabled by default in Week 3 of deprecation timeline.
+        Disabled by default in Week 3 of deprecation timeline.
 
         Environment Variable: ALLOW_LEGACY_GITHUB
-        Default: True (during Week 1-2 of deprecation)
+        Default: False (Week 3+: legacy disabled by default)
         """
-        return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_GITHUB", True)
+        return FeatureFlags._get_boolean_flag("ALLOW_LEGACY_GITHUB", False)
 
     @staticmethod
     def should_warn_github_deprecation() -> bool:
@@ -76,12 +76,12 @@ class FeatureFlags:
         Check if deprecation warnings should be shown for legacy GitHub usage.
 
         Used to alert users when legacy GitHub integration is being used
-        during the deprecation period (Week 2-3).
+        during the deprecation period (Week 2+).
 
         Environment Variable: GITHUB_DEPRECATION_WARNINGS
-        Default: False (enabled in Week 2)
+        Default: True (enabled from Week 2 onward)
         """
-        return FeatureFlags._get_boolean_flag("GITHUB_DEPRECATION_WARNINGS", False)
+        return FeatureFlags._get_boolean_flag("GITHUB_DEPRECATION_WARNINGS", True)
 
     # Calendar integration feature flags (CORE-QUERY-1)
     @staticmethod
