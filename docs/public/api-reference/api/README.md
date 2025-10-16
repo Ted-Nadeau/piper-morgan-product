@@ -6,7 +6,14 @@ This directory contains detailed API documentation, including technical specific
 
 ## Documentation Files
 
-This directory contains 2 documentation files with comprehensive information about api.
+### Core API
+- **[Error Handling](error-handling.md)** - REST-compliant error responses and status codes
+- **[Issue Intelligence API](issue-intelligence-api.md)** - AI-powered GitHub issue analysis
+- **[Personality Enhancement API](personality-enhancement-api.md)** - Personality profiling and enhancement
+- **[Plugin API Reference](plugin-api-reference.md)** - Plugin development and integration
+
+### Migration & Support
+- **[Error Handling Migration Guide](../../migration/error-handling-migration.md)** - Updating clients for new error codes
 
 ## Navigation
 
@@ -15,6 +22,6 @@ This directory contains 2 documentation files with comprehensive information abo
 
 ---
 
-**Last Updated**: October 1, 2025
+**Last Updated**: October 16, 2025
 **Maintained By**: Documentation Team
 **Purpose**: Directory navigation and content overview
