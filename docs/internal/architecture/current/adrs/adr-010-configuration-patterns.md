@@ -619,14 +619,124 @@ calendar:
    - Remove markdown markers before yaml.safe_load()
    - Look for service key in parsed dict (e.g., "calendar")
 
+### Slack Configuration Service
+
+**Location**: `services/integrations/slack/config_service.py`
+
+**Pattern**: Service injection with PIPER.user.md YAML parsing
+
+**Architecture Note**: Slack uses direct spatial (ADR-039), NOT tool-based MCP
+
+**Configuration Priority**:
+1. Environment variables (highest priority)
+   - `SLACK_BOT_TOKEN`
+   - `SLACK_APP_TOKEN`
+   - `SLACK_SIGNING_SECRET`
+   - `SLACK_API_BASE_URL`
+   - `SLACK_TIMEOUT_SECONDS`
+   - `SLACK_MAX_RETRIES`
+   - `SLACK_ENVIRONMENT`
+   - `SLACK_DEFAULT_CHANNEL`
+   - `SLACK_RATE_LIMIT_RPM`
+   - `SLACK_BURST_LIMIT`
+   - `SLACK_WEBHOOK_URL`
+   - `SLACK_CLIENT_ID`
+   - `SLACK_CLIENT_SECRET`
+   - `SLACK_REDIRECT_URI`
+
+2. PIPER.user.md configuration (middle priority)
+   ```yaml
+   slack:
+     authentication:
+       bot_token: "xoxb-..."
+       app_token: "xapp-..."
+       signing_secret: "..."
+
+     api:
+       base_url: "https://slack.com/api"
+       timeout_seconds: 30
+       max_retries: 3
+       environment: "development"  # development|staging|production
+
+     behavior:
+       default_channel: "general"
+       rate_limit_per_minute: 60
+       burst_limit: 10
+       webhook_url: "https://hooks.slack.com/..."
+
+     features:
+       enable_webhooks: true
+       enable_socket_mode: false
+       enable_spatial_mapping: true
+
+     oauth:
+       client_id: "..."
+       client_secret: "..."
+       redirect_uri: "..."
+   ```
+
+3. Hardcoded defaults (lowest priority)
+   - Empty tokens
+   - Default behavior settings
+   - 60/min rate limit
+   - 3 retries
+   - 30s timeout
+
+**Implementation**:
+```python
+class SlackConfigService:
+    def _load_from_user_config(self) -> Dict[str, Any]:
+        """Load Slack configuration from PIPER.user.md"""
+        # Parse YAML from markdown
+        # Supports two patterns: ## 💬 Slack Integration and slack:
+        # Return slack: section configuration
+
+    def _load_config(self) -> SlackConfig:
+        """Load with 3-layer priority"""
+        user_config = self._load_from_user_config()
+        auth = user_config.get("authentication", {})
+        api = user_config.get("api", {})
+        behavior = user_config.get("behavior", {})
+        features = user_config.get("features", {})
+        oauth = user_config.get("oauth", {})
+
+        return SlackConfig(
+            bot_token=os.getenv("SLACK_BOT_TOKEN", auth.get("bot_token", "")),
+            app_token=os.getenv("SLACK_APP_TOKEN", api.get("app_token", "")),
+            # ... other fields with same 3-layer pattern
+        )
+```
+
+**Test Coverage**: 36 comprehensive tests:
+- 20 config loading tests in `tests/integration/test_slack_config_loading.py`
+- 16 unit tests in `tests/services/integrations/slack/test_slack_config.py`
+
+**Status**: ✅ Implemented (October 2025, Phase 3)
+
+**Architectural Difference**: Unlike Calendar/Notion (tool-based MCP), Slack uses direct spatial architecture per ADR-039.
+
 ### Integrations Using This Pattern
 
 - ✅ **Calendar** (services/integrations/calendar/config_service.py) - Reference implementation
+  - **Status**: 100% complete (Phase 1, October 17, 2025)
+  - **Test Coverage**: 8 comprehensive tests
+  - **Pattern**: PIPER.user.md YAML parsing with 3-layer priority
 - ✅ **GitHub** (services/configuration/piper_config_loader.py::load_github_config) - PiperConfigLoader
   - **MCP Integration** (October 17, 2025): GitHubIntegrationRouter now supports GitHubMCPSpatialAdapter with USE_MCP_GITHUB feature flag
+  - **Status**: 95% complete (Phase 1, October 17, 2025)
+  - **Test Coverage**: 16 comprehensive tests
+- ✅ **Notion** (services/integrations/notion/config_service.py) - ConfigService with PIPER.user.md support
+  - **Status**: 100% complete (Phase 2, October 18, 2025)
+  - **Test Coverage**: 19 comprehensive tests
+  - **Pattern**: Follows Calendar implementation exactly (tool-based MCP per ADR-037)
+  - **Implementation**: `_load_from_user_config()` with authentication section parsing
 - ✅ **Standup** (services/configuration/piper_config_loader.py::load_standup_config) - PiperConfigLoader
-- 🔄 **Notion** - Planned migration
-- 🔄 **Slack** - Planned migration
+- ✅ **Slack** (services/integrations/slack/config_service.py) - ConfigService with PIPER.user.md support
+  - **Status**: 100% complete (Phase 3, October 18, 2025)
+  - **Test Coverage**: 36 comprehensive tests (20 config loading + 16 unit)
+  - **Pattern**: Follows Calendar/Notion config pattern exactly
+  - **Architecture**: Direct Spatial (ADR-039) - NOT tool-based MCP like Calendar/Notion
+  - **Implementation**: `_load_from_user_config()` with 5 configuration sections (authentication, api, behavior, features, oauth)
 
 ### Benefits
 
@@ -645,6 +755,61 @@ calendar:
 - Consistent pattern across all integrations
 - Reference implementation (Calendar) for new integrations
 - Clear documentation in PIPER.user.md itself
+
+## Configuration Pattern Summary
+
+| Integration | Config Service | PIPER.user.md | Env Vars | Tests | Architecture | Status |
+|-------------|----------------|---------------|----------|-------|--------------|--------|
+| Calendar    | ✅ Yes         | ✅ Yes        | ✅ Yes   | 8     | Tool-based   | 100%   |
+| GitHub      | ✅ Yes         | ✅ Yes        | ✅ Yes   | 16    | Delegated    | 100%   |
+| Notion      | ✅ Yes         | ✅ Yes        | ✅ Yes   | 19    | Tool-based   | 100%   |
+| Slack       | ✅ Yes         | ✅ Yes        | ✅ Yes   | 36    | Direct       | 100%   |
+
+**Pattern Consistency**: All MCP integrations follow the same configuration approach:
+- Service injection with dedicated ConfigService
+- PIPER.user.md YAML parsing for user configuration
+- Environment variable overrides for sensitive data
+- Three-layer priority (env > user > defaults)
+- Comprehensive test coverage for all scenarios
+
+**Architectural Diversity**: While configuration patterns are consistent, integration architectures vary based on requirements:
+- Calendar/Notion: Tool-based MCP (ADR-037)
+- GitHub: Delegated MCP (ADR-038)
+- Slack: Direct Spatial (ADR-039)
+
+## Implementation History
+
+### Phase 1: Calendar (October 17, 2025)
+- Added PIPER.user.md configuration loading
+- Established 3-layer priority pattern
+- Created 8 comprehensive tests
+- Architecture: Tool-based MCP
+- **Status**: ✅ Complete
+
+### Phase 1: GitHub (October 17, 2025)
+- Verified existing PIPER.user.md support
+- Wired MCP adapter following Delegated MCP Pattern (ADR-038)
+- Added 16 comprehensive tests
+- Architecture: Delegated MCP (primary + fallback)
+- **Status**: ✅ Complete
+
+### Phase 2: Notion (October 18, 2025)
+- Added PIPER.user.md configuration loading
+- Followed Calendar pattern exactly
+- Created 19 comprehensive tests (most thorough config coverage)
+- Architecture: Tool-based MCP
+- **Status**: ✅ Complete
+
+### Phase 3: Slack (October 18, 2025)
+- Added PIPER.user.md configuration loading
+- Followed Calendar/Notion pattern
+- Created 20 config loading tests + 16 unit tests (36 total)
+- Architecture: Direct Spatial (ADR-039) - NOT tool-based MCP
+- Fixed pre-existing test isolation issue
+- **Time**: 25 minutes (investigation + implementation + testing + docs)
+- **Status**: ✅ Complete
+
+**Pattern Evolution**: Configuration approach proven across 4 integrations with 3 different architectural patterns (tool-based, delegated, direct spatial).
 
 ## Related Documents
 

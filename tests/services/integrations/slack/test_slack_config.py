@@ -119,7 +119,15 @@ class TestSlackConfigService:
 
     def test_is_configured_valid(self):
         """Test is_configured with valid configuration"""
-        with patch.dict(os.environ, {"SLACK_BOT_TOKEN": "xoxb-test-token"}):
+        # Set all required env vars for valid configuration
+        # Note: SLACK_WEBHOOK_URL required because PIPER.user.md may have enable_webhooks: true
+        with patch.dict(
+            os.environ,
+            {
+                "SLACK_BOT_TOKEN": "xoxb-test-token",
+                "SLACK_WEBHOOK_URL": "https://hooks.slack.com/services/test",
+            },
+        ):
             service = SlackConfigService()
             assert service.is_configured() is True
 
