@@ -9,12 +9,19 @@ Provides centralized configuration management for Slack operations including:
 - Environment-specific settings
 """
 
+import logging
 import os
+import re
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import yaml
+
 from services.infrastructure.config.feature_flags import FeatureFlags
+
+logger = logging.getLogger(__name__)
 
 
 class SlackEnvironment(Enum):
@@ -82,26 +89,141 @@ class SlackConfigService:
             self._config = self._load_config()
         return self._config
 
+    def _load_from_user_config(self) -> Dict[str, Any]:
+        """
+        Load Slack configuration from PIPER.user.md.
+
+        Parses YAML blocks from the markdown file and extracts the slack section.
+        Follows the same pattern as Calendar and Notion config loading.
+
+        Returns:
+            Dict with Slack configuration, or empty dict if not found/invalid
+        """
+        try:
+            user_config_path = Path("config/PIPER.user.md")
+            if not user_config_path.exists():
+                logger.debug("PIPER.user.md not found")
+                return {}
+
+            # Read the markdown file
+            content = user_config_path.read_text()
+
+            # Find the Slack Integration section
+            # Look for heading pattern: ## 💬 Slack Integration or ## slack:
+            slack_section_match = re.search(
+                r"##\s+💬\s+Slack Integration(.*?)(?=##\s+|$)", content, re.DOTALL
+            )
+
+            if not slack_section_match:
+                # Try alternate pattern: slack: followed by YAML block
+                slack_section_match = re.search(
+                    r"slack:\s*```yaml(.*?)```", content, re.DOTALL | re.IGNORECASE
+                )
+                if not slack_section_match:
+                    logger.debug("No slack: section found in PIPER.user.md")
+                    return {}
+
+                # Extract YAML content directly
+                yaml_content = slack_section_match.group(1).strip()
+                config_data = yaml.safe_load(yaml_content)
+                logger.info(
+                    f"Loaded Slack config from PIPER.user.md: {list(config_data.keys()) if config_data else []}"
+                )
+                return config_data or {}
+
+            section_content = slack_section_match.group(1)
+
+            # Extract YAML from markdown code blocks
+            yaml_match = re.search(r"```yaml.*?```", section_content, re.DOTALL)
+            if not yaml_match:
+                logger.debug("No YAML block found in slack section")
+                return {}
+
+            # Extract YAML content by removing markdown markers
+            full_yaml_block = yaml_match.group(0)
+            yaml_content = full_yaml_block.replace("```yaml", "").replace("```", "").strip()
+            config_data = yaml.safe_load(yaml_content)
+
+            if config_data and "slack" in config_data:
+                logger.info(
+                    f"Loaded Slack config from PIPER.user.md: {list(config_data['slack'].keys())}"
+                )
+                return config_data["slack"]
+
+            logger.info(
+                f"Loaded Slack config from PIPER.user.md: {list(config_data.keys()) if config_data else []}"
+            )
+            return config_data or {}
+
+        except Exception as e:
+            # Log error but don't crash - graceful fallback
+            logger.error(f"Error loading Slack config from PIPER.user.md: {e}")
+            return {}
+
     def _load_config(self) -> SlackConfig:
-        """Load configuration from environment variables"""
+        """
+        Load configuration with 3-layer priority: env vars > user config > defaults.
+
+        Priority order:
+        1. Environment variables (highest)
+        2. PIPER.user.md configuration (middle)
+        3. Hardcoded defaults (lowest)
+        """
+        # Load user configuration from PIPER.user.md
+        user_config = self._load_from_user_config()
+
+        # Extract subsections (with empty dict fallback)
+        auth_config = user_config.get("authentication", {})
+        api_config = user_config.get("api", {})
+        behavior_config = user_config.get("behavior", {})
+        features_config = user_config.get("features", {})
+        oauth_config = user_config.get("oauth", {})
+
         return SlackConfig(
-            bot_token=os.getenv("SLACK_BOT_TOKEN", ""),
-            app_token=os.getenv("SLACK_APP_TOKEN", ""),
-            signing_secret=os.getenv("SLACK_SIGNING_SECRET", ""),
-            api_base_url=os.getenv("SLACK_API_BASE_URL", "https://slack.com/api"),
-            timeout_seconds=int(os.getenv("SLACK_TIMEOUT_SECONDS", "30")),
-            max_retries=int(os.getenv("SLACK_MAX_RETRIES", "3")),
-            requests_per_minute=int(os.getenv("SLACK_RATE_LIMIT_RPM", "50")),
-            burst_limit=int(os.getenv("SLACK_BURST_LIMIT", "10")),
-            enable_webhooks=self.feature_flags.is_enabled("slack_webhooks"),
-            enable_socket_mode=self.feature_flags.is_enabled("slack_socket_mode"),
-            enable_spatial_mapping=self.feature_flags.is_enabled("slack_spatial_mapping"),
-            environment=SlackEnvironment(os.getenv("SLACK_ENVIRONMENT", "development")),
-            client_id=os.getenv("SLACK_CLIENT_ID", ""),
-            client_secret=os.getenv("SLACK_CLIENT_SECRET", ""),
-            redirect_uri=os.getenv("SLACK_REDIRECT_URI", ""),
-            webhook_url=os.getenv("SLACK_WEBHOOK_URL", ""),
-            default_channel=os.getenv("SLACK_DEFAULT_CHANNEL", ""),
+            # Authentication (3-layer priority for each field)
+            bot_token=os.getenv("SLACK_BOT_TOKEN", auth_config.get("bot_token", "")),
+            app_token=os.getenv("SLACK_APP_TOKEN", auth_config.get("app_token", "")),
+            signing_secret=os.getenv("SLACK_SIGNING_SECRET", auth_config.get("signing_secret", "")),
+            # API Configuration
+            api_base_url=os.getenv(
+                "SLACK_API_BASE_URL", api_config.get("base_url", "https://slack.com/api")
+            ),
+            timeout_seconds=int(
+                os.getenv("SLACK_TIMEOUT_SECONDS", str(api_config.get("timeout_seconds", 30)))
+            ),
+            max_retries=int(os.getenv("SLACK_MAX_RETRIES", str(api_config.get("max_retries", 3)))),
+            # Rate Limiting
+            requests_per_minute=int(
+                os.getenv(
+                    "SLACK_RATE_LIMIT_RPM", str(behavior_config.get("rate_limit_per_minute", 50))
+                )
+            ),
+            burst_limit=int(
+                os.getenv("SLACK_BURST_LIMIT", str(behavior_config.get("burst_limit", 10)))
+            ),
+            # Feature Flags (prefer user config over feature flags service)
+            enable_webhooks=features_config.get(
+                "enable_webhooks", self.feature_flags.is_enabled("slack_webhooks")
+            ),
+            enable_socket_mode=features_config.get(
+                "enable_socket_mode", self.feature_flags.is_enabled("slack_socket_mode")
+            ),
+            enable_spatial_mapping=features_config.get(
+                "enable_spatial_mapping", self.feature_flags.is_enabled("slack_spatial_mapping")
+            ),
+            # Environment
+            environment=SlackEnvironment(
+                os.getenv("SLACK_ENVIRONMENT", api_config.get("environment", "development"))
+            ),
+            # OAuth Settings
+            client_id=os.getenv("SLACK_CLIENT_ID", oauth_config.get("client_id", "")),
+            client_secret=os.getenv("SLACK_CLIENT_SECRET", oauth_config.get("client_secret", "")),
+            redirect_uri=os.getenv("SLACK_REDIRECT_URI", oauth_config.get("redirect_uri", "")),
+            # Webhook Configuration
+            webhook_url=os.getenv("SLACK_WEBHOOK_URL", behavior_config.get("webhook_url", "")),
+            default_channel=os.getenv(
+                "SLACK_DEFAULT_CHANNEL", behavior_config.get("default_channel", "")
+            ),
         )
 
     def is_configured(self) -> bool:
