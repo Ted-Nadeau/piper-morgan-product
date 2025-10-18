@@ -5,10 +5,12 @@ Extracts business logic from web/app.py /api/v1/intent route.
 Handles intent classification, orchestration coordination, and response formatting.
 
 Phase 2B: Service layer extraction for clean architecture
+Phase 2B (Issue #197): Ethics enforcement integration at universal entry point
 """
 
 import asyncio
 import json
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -18,6 +20,7 @@ import structlog
 
 from services.conversation.conversation_handler import ConversationHandler
 from services.domain.models import Intent
+from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
 from services.intent_service import classifier
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.engine import OrchestrationEngine
@@ -94,6 +97,7 @@ class IntentService:
         Process user intent and return formatted response.
 
         Handles:
+        - Ethics boundary enforcement (Issue #197 - Phase 2B)
         - Tier 1 conversation bypass (Phase 3D)
         - Intent classification
         - Workflow creation with timeout protection
@@ -111,6 +115,40 @@ class IntentService:
             IntentProcessingError: If processing fails
         """
         try:
+            # Issue #197 Phase 2B: Ethics enforcement at universal entry point
+            # Check ENABLE_ETHICS_ENFORCEMENT environment variable (default: False for gradual rollout)
+            ethics_enabled = os.getenv("ENABLE_ETHICS_ENFORCEMENT", "false").lower() == "true"
+
+            if ethics_enabled:
+                self.logger.info("Ethics enforcement enabled - checking boundaries")
+                ethics_decision = await boundary_enforcer_refactored.enforce_boundaries(
+                    message=message,
+                    session_id=session_id,
+                    context={
+                        "source": "intent_service",
+                        "timestamp": datetime.utcnow(),
+                    },
+                )
+
+                if ethics_decision.violation_detected:
+                    self.logger.warning(
+                        f"Ethics violation detected: {ethics_decision.boundary_type} - {ethics_decision.explanation}"
+                    )
+                    return IntentProcessingResult(
+                        success=False,
+                        message=f"Request blocked due to ethics policy: {ethics_decision.explanation}",
+                        intent_data={
+                            "blocked_by_ethics": True,
+                            "boundary_type": ethics_decision.boundary_type,
+                            "violation_detected": True,
+                            "audit_data": ethics_decision.audit_data,
+                        },
+                        error="Ethics boundary violation",
+                        error_type="EthicsBoundaryViolation",
+                    )
+
+                self.logger.info("Ethics check passed - proceeding with intent processing")
+
             # Phase 3D: Tier 1 conversation bypass - handle without orchestration
             if self.orchestration_engine is None:
                 return await self._handle_missing_engine(message)
