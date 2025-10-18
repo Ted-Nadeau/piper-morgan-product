@@ -10,7 +10,9 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from services.api.errors import ERROR_MESSAGES, APIError
-from services.ethics.boundary_enforcer import boundary_enforcer
+from services.ethics.boundary_enforcer import (
+    boundary_enforcer,  # DEPRECATED: Use boundary_enforcer_refactored
+)
 from services.infrastructure.logging.config import generate_request_id, get_logger
 
 # Configure structured logger
@@ -83,7 +85,27 @@ class CorrelationMiddleware(BaseHTTPMiddleware):
 
 
 class EthicsBoundaryMiddleware(BaseHTTPMiddleware):
-    """Middleware for ethics boundary enforcement"""
+    """
+    DEPRECATED (Issue #197, Phase 2D - October 18, 2025)
+
+    This HTTP middleware approach has been superseded by service-layer enforcement.
+    Ethics are now enforced at IntentService.process_intent() for universal coverage.
+
+    Reasons for deprecation:
+    - HTTP middleware only covers web API (30-40% coverage)
+    - Bypasses CLI, Slack webhooks, direct service calls
+    - Violates ADR-029 (domain service mediation)
+    - Violates ADR-032 (universal entry point)
+
+    Replacement:
+    - services/ethics/boundary_enforcer_refactored.py (domain layer)
+    - services/intent/intent_service.py:118-150 (integration point)
+    - Coverage: 95-100% (all entry points)
+
+    Feature Flag: ENABLE_ETHICS_ENFORCEMENT (environment variable)
+
+    Status: Never activated, safe to remove in future cleanup
+    """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Skip ethics check for health endpoints and static files
