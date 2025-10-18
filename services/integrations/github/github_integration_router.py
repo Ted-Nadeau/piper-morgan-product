@@ -1,9 +1,16 @@
 """
-GitHub Integration Router - Spatial-Only Integration
+GitHub Integration Router - MCP + Spatial Integration
 PM-033b-deprecation: Week 4 Complete - Legacy Removed (CORE-INT #109)
+CORE-MCP-MIGRATION #198: MCP Adapter Integration (October 17, 2025)
 
-This router provides GitHub integration exclusively through:
-- GitHubSpatialIntelligence (8-dimensional spatial analysis)
+This router provides GitHub integration through:
+- GitHubMCPSpatialAdapter (MCP protocol + spatial intelligence) - DEFAULT
+- GitHubSpatialIntelligence (direct API + spatial intelligence) - FALLBACK
+
+MCP Migration (CORE-MCP-MIGRATION #198):
+- MCP adapter provides tool-based integration following Calendar pattern
+- Feature flag USE_MCP_GITHUB controls MCP adapter usage (default: true)
+- Graceful fallback to GitHubSpatialIntelligence if MCP unavailable
 
 Deprecation timeline completed:
 Week 1: ✅ Both integrations available, spatial default
@@ -15,6 +22,7 @@ Architecture Decision: ADR-013 MCP+Spatial Integration Pattern
 """
 
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -28,17 +36,21 @@ logger = logging.getLogger(__name__)
 
 class GitHubIntegrationRouter:
     """
-    Routes GitHub operations to GitHubSpatialIntelligence (spatial-only, Week 4).
+    Routes GitHub operations to MCP adapter or spatial intelligence.
 
-    Week 4 Complete (CORE-INT #109): Legacy code removed, simplified to spatial-only.
-    Previously provided feature flag-based switching during 4-week deprecation.
+    CORE-MCP-MIGRATION #198: Now supports GitHubMCPSpatialAdapter (tool-based MCP).
+    Week 4 Complete (CORE-INT #109): Legacy code removed, spatial-only.
+
+    Integration priority:
+    1. GitHubMCPSpatialAdapter (if USE_MCP_GITHUB=true, default)
+    2. GitHubSpatialIntelligence (fallback if MCP unavailable)
 
     Follows service injection pattern (ADR-010) for configuration management.
     """
 
     def __init__(self, config_service: Optional[GitHubConfigService] = None):
         """
-        Initialize GitHub integration router with feature flag detection and config service.
+        Initialize GitHub integration router with MCP adapter support and config service.
 
         Args:
             config_service: Optional GitHubConfigService for dependency injection.
@@ -47,24 +59,51 @@ class GitHubIntegrationRouter:
         # Store config service (service injection pattern)
         self.config_service = config_service or GitHubConfigService()
 
+        # MCP adapter (tool-based integration, CORE-MCP-MIGRATION #198)
+        self.mcp_adapter = None
+
+        # Spatial intelligence (fallback)
         self.spatial_github = None
 
-        # Feature flag state (legacy flags kept for backward compatibility with tests)
+        # Feature flags
+        self.use_mcp = self._get_boolean_flag("USE_MCP_GITHUB", True)
         self.use_spatial = FeatureFlags.should_use_spatial_github()
 
-        # Initialize spatial integration
+        # Initialize integrations (MCP preferred, spatial fallback)
         self._initialize_integrations()
 
-        logger.info("GitHubIntegrationRouter initialized - Spatial GitHub only")
+        logger.info(
+            f"GitHubIntegrationRouter initialized - MCP: {self.mcp_adapter is not None}, Spatial: {self.spatial_github is not None}"
+        )
 
     def _initialize_integrations(self):
-        """Initialize GitHubSpatialIntelligence (legacy code removed in Week 4)"""
+        """
+        Initialize GitHub integrations with MCP adapter priority.
+
+        CORE-MCP-MIGRATION #198: Try MCP adapter first, fall back to spatial.
+        """
+        # Try MCP adapter first (if enabled)
+        if self.use_mcp:
+            try:
+                from services.mcp.consumer.github_adapter import GitHubMCPSpatialAdapter
+
+                self.mcp_adapter = GitHubMCPSpatialAdapter()
+                logger.info("GitHubMCPSpatialAdapter initialized successfully")
+            except Exception as e:
+                logger.warning(
+                    f"Failed to initialize GitHubMCPSpatialAdapter: {e}, falling back to GitHubSpatialIntelligence"
+                )
+                self.mcp_adapter = None
+
+        # Initialize spatial as fallback or primary (if MCP disabled)
         try:
             self.spatial_github = GitHubSpatialIntelligence()
             logger.info("GitHubSpatialIntelligence initialized successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize GitHubSpatialIntelligence: {e}")
-            raise RuntimeError("Spatial GitHub initialization failed") from e
+            if not self.mcp_adapter:
+                logger.error(f"Failed to initialize GitHubSpatialIntelligence: {e}")
+                raise RuntimeError("No GitHub integration available") from e
+            logger.warning(f"GitHubSpatialIntelligence failed, using MCP adapter only: {e}")
 
     async def initialize(self):
         """Initialize the GitHub integration asynchronously"""
@@ -73,20 +112,28 @@ class GitHubIntegrationRouter:
 
     def _get_integration(self, operation: str) -> Any:
         """
-        Get the spatial GitHub integration.
+        Get the GitHub integration (MCP adapter preferred, spatial fallback).
+
+        CORE-MCP-MIGRATION #198: Prefers MCP adapter when available.
 
         Args:
             operation: Operation name (for error messages)
 
         Returns:
-            GitHubSpatialIntelligence instance
+            GitHubMCPSpatialAdapter or GitHubSpatialIntelligence instance
 
         Raises:
-            RuntimeError: If spatial integration not available
+            RuntimeError: If no integration available
         """
-        if not self.spatial_github:
-            raise RuntimeError(f"GitHub integration not available for {operation}")
-        return self.spatial_github
+        # Prefer MCP adapter if available
+        if self.mcp_adapter:
+            return self.mcp_adapter
+
+        # Fall back to spatial intelligence
+        if self.spatial_github:
+            return self.spatial_github
+
+        raise RuntimeError(f"No GitHub integration available for {operation}")
 
     async def get_issue(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
         """Get GitHub issue."""
@@ -131,15 +178,37 @@ class GitHubIntegrationRouter:
         # Fallback status if integration doesn't support status method
         return {
             "router_initialized": True,
+            "mcp_adapter_available": self.mcp_adapter is not None,
             "spatial_available": self.spatial_github is not None,
-            "using_spatial_only": True,
+            "using_mcp": self.mcp_adapter is not None,
+            "mcp_migration_complete": self.mcp_adapter is not None,
             "legacy_removed": True,
             "deprecation_timeline": {
                 "week": self._get_deprecation_week(),
-                "status": "Week 4 Complete - Legacy removed",
-                "legacy_removal_date": "2025-10-15",  # Today!
+                "status": "Week 4 Complete - Legacy removed, MCP integrated",
+                "legacy_removal_date": "2025-10-15",
+                "mcp_integration_date": "2025-10-17",  # Today!
             },
         }
+
+    def _get_boolean_flag(self, flag_name: str, default: bool = False) -> bool:
+        """
+        Get boolean environment variable with safe parsing.
+
+        Supports: true/false, 1/0, yes/no, on/off
+
+        Args:
+            flag_name: Environment variable name
+            default: Default value if not set
+
+        Returns:
+            Boolean value
+        """
+        try:
+            value = os.getenv(flag_name, str(default)).lower().strip()
+            return value in ("true", "1", "yes", "on", "enabled")
+        except Exception:
+            return default
 
     def _get_deprecation_week(self) -> int:
         """
