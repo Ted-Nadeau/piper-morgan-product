@@ -389,6 +389,263 @@ For each service requiring configuration updates:
 - Foundation for advanced configuration features (hot reload, environment-specific overrides)
 - Technical debt elimination and prevention
 
+## PIPER.user.md Configuration Loading Pattern
+
+**Status:** ✅ IMPLEMENTED (October 17, 2025)
+**Reference Implementation:** CalendarConfigService (CORE-MCP-MIGRATION #198)
+
+### Pattern Description
+
+Integration services support user-specific configuration via `config/PIPER.user.md`, a gitignored markdown file containing YAML configuration blocks. This enables per-user customization without committing credentials or personal preferences to the repository.
+
+### Configuration Priority Order
+
+All integrations following this pattern implement three-layer configuration:
+
+1. **Environment variables** (highest priority) - Overrides everything
+2. **PIPER.user.md** (middle priority) - User-specific defaults
+3. **Hardcoded defaults** (lowest priority) - Fallback values
+
+### Implementation Pattern
+
+```python
+# ✅ APPROVED: Integration config service with PIPER.user.md loading
+# File: services/integrations/calendar/config_service.py
+
+import os
+import re
+import yaml
+from pathlib import Path
+from typing import Any, Dict
+
+class CalendarConfigService:
+    """
+    Calendar configuration service with PIPER.user.md support.
+
+    Implements three-layer configuration priority:
+    1. Environment variables (highest)
+    2. PIPER.user.md calendar section (middle)
+    3. Hardcoded defaults (lowest)
+    """
+
+    def _load_from_user_config(self) -> Dict[str, Any]:
+        """
+        Load calendar configuration from PIPER.user.md.
+
+        Returns:
+            Dict with calendar configuration, or empty dict if not found/invalid
+        """
+        try:
+            user_config_path = Path("config/PIPER.user.md")
+            if not user_config_path.exists():
+                return {}
+
+            # Read markdown file
+            content = user_config_path.read_text()
+
+            # Find Calendar Integration section by heading
+            calendar_section_match = re.search(
+                r"##\s+📅\s+Calendar Integration(.*?)(?=##\s+|$)",
+                content,
+                re.DOTALL
+            )
+
+            if not calendar_section_match:
+                return {}
+
+            section_content = calendar_section_match.group(1)
+
+            # Extract YAML from markdown code blocks
+            yaml_match = re.search(r"```yaml.*?```", section_content, re.DOTALL)
+            if not yaml_match:
+                return {}
+
+            # Parse YAML content
+            full_yaml_block = yaml_match.group(0)
+            yaml_content = (
+                full_yaml_block.replace("```yaml", "")
+                              .replace("```", "")
+                              .strip()
+            )
+            config_data = yaml.safe_load(yaml_content)
+
+            if config_data and "calendar" in config_data:
+                return config_data["calendar"]
+
+            return {}
+
+        except Exception as e:
+            # Graceful fallback - don't crash on config errors
+            print(f"Warning: Could not load calendar config from PIPER.user.md: {e}")
+            return {}
+
+    def _load_config(self) -> CalendarConfig:
+        """
+        Load configuration with priority: env vars > PIPER.user.md > defaults.
+
+        Returns:
+            CalendarConfig: Configuration with priority order applied
+        """
+        # Load from PIPER.user.md first (base layer)
+        user_config = self._load_from_user_config()
+
+        # Environment variables override user config
+        return CalendarConfig(
+            client_secrets_file=os.getenv(
+                "GOOGLE_CLIENT_SECRETS_FILE",
+                user_config.get("client_secrets_file", "credentials.json"),
+            ),
+            token_file=os.getenv(
+                "GOOGLE_TOKEN_FILE",
+                user_config.get("token_file", "token.json")
+            ),
+            calendar_id=os.getenv(
+                "GOOGLE_CALENDAR_ID",
+                user_config.get("calendar_id", "primary")
+            ),
+            timeout_seconds=int(
+                os.getenv(
+                    "GOOGLE_CALENDAR_TIMEOUT",
+                    str(user_config.get("timeout_seconds", 30))
+                )
+            ),
+            # ... additional config fields
+        )
+```
+
+### PIPER.user.md Format
+
+```markdown
+## 📅 Calendar Integration
+
+Configure Google Calendar integration with OAuth 2.0 credentials.
+
+```yaml
+calendar:
+  # OAuth 2.0 Configuration
+  client_secrets_file: "credentials.json"
+  token_file: "token.json"
+
+  # API Configuration
+  calendar_id: "primary"
+  scopes:
+    - "https://www.googleapis.com/auth/calendar.readonly"
+
+  # Timeouts & Circuit Breaker
+  timeout_seconds: 30
+  circuit_timeout: 300
+  error_threshold: 5
+
+  # Feature Flags
+  enable_spatial_mapping: true
+```
+
+**Configuration Priority:**
+1. Environment variables (highest - overrides everything)
+2. PIPER.user.md (middle - overrides defaults)
+3. Hardcoded defaults (lowest - fallback)
+```
+
+### Testing Pattern
+
+```python
+# ✅ APPROVED: Test PIPER.user.md loading with Path mocking
+def test_loads_from_piper_user_md(tmp_path):
+    """Test that config loads from PIPER.user.md when present."""
+    piper_config = tmp_path / "PIPER.user.md"
+    piper_config.write_text("""
+## 📅 Calendar Integration
+
+```yaml
+calendar:
+  client_secrets_file: "test_credentials.json"
+  calendar_id: "test@calendar.com"
+  timeout_seconds: 60
+```
+    """)
+
+    with patch.object(Path, "exists", return_value=True):
+        with patch.object(Path, "read_text", return_value=piper_config.read_text()):
+            service = CalendarConfigService()
+            config = service.get_config()
+
+            # Verify values from PIPER.user.md
+            assert config.client_secrets_file == "test_credentials.json"
+            assert config.calendar_id == "test@calendar.com"
+            assert config.timeout_seconds == 60
+
+def test_env_vars_override_user_config(tmp_path):
+    """Test that environment variables override PIPER.user.md."""
+    piper_config = tmp_path / "PIPER.user.md"
+    piper_config.write_text("""
+```yaml
+calendar:
+  calendar_id: "user_config@calendar.com"
+```
+    """)
+
+    os.environ["GOOGLE_CALENDAR_ID"] = "env_override@calendar.com"
+
+    try:
+        with patch.object(Path, "exists", return_value=True):
+            with patch.object(Path, "read_text", return_value=piper_config.read_text()):
+                service = CalendarConfigService()
+                config = service.get_config()
+
+                # Env var wins over user config
+                assert config.calendar_id == "env_override@calendar.com"
+    finally:
+        os.environ.pop("GOOGLE_CALENDAR_ID", None)
+```
+
+### Implementation Requirements
+
+1. **Graceful Fallback**: Config loading must never crash the application
+   - Missing PIPER.user.md → Return empty dict
+   - Malformed YAML → Return empty dict and log warning
+   - Missing section → Return empty dict
+
+2. **Priority Order Enforcement**: Environment variables ALWAYS override PIPER.user.md
+   - Check `if ENV_VAR in os.environ` for explicit override detection
+   - Use `os.getenv(ENV_VAR, user_config.get(key, default))` pattern
+
+3. **Section Identification**: Use regex to find service-specific sections
+   - Pattern: `r"##\s+📅\s+Calendar Integration(.*?)(?=##\s+|$)"`
+   - Emoji markers provide visual organization in PIPER.user.md
+   - DOTALL flag to capture multiline content
+
+4. **YAML Extraction**: Parse YAML from markdown code blocks
+   - Pattern: `r"```yaml.*?```"` with DOTALL flag
+   - Remove markdown markers before yaml.safe_load()
+   - Look for service key in parsed dict (e.g., "calendar")
+
+### Integrations Using This Pattern
+
+- ✅ **Calendar** (services/integrations/calendar/config_service.py) - Reference implementation
+- ✅ **GitHub** (services/configuration/piper_config_loader.py::load_github_config) - PiperConfigLoader
+  - **MCP Integration** (October 17, 2025): GitHubIntegrationRouter now supports GitHubMCPSpatialAdapter with USE_MCP_GITHUB feature flag
+- ✅ **Standup** (services/configuration/piper_config_loader.py::load_standup_config) - PiperConfigLoader
+- 🔄 **Notion** - Planned migration
+- 🔄 **Slack** - Planned migration
+
+### Benefits
+
+**User Experience:**
+- Per-user customization without repository commits
+- Credentials and personal preferences stay local (gitignored)
+- Visual organization with emoji section headers
+- Self-documenting YAML format
+
+**Testing:**
+- Clean test isolation with Path mocking
+- No environment variable pollution
+- Comprehensive priority order validation
+
+**Maintenance:**
+- Consistent pattern across all integrations
+- Reference implementation (Calendar) for new integrations
+- Clear documentation in PIPER.user.md itself
+
 ## Related Documents
 
 - **GitHub Issues**: #39 (MCPResourceManager), #40 (FileRepository)
