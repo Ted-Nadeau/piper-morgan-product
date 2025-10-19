@@ -148,7 +148,8 @@ class JWTService:
 
         # Convert dataclass to dict for JWT encoding
         claims_dict = {
-            field.name: getattr(claims, field.name) for field in claims.__dataclass_fields__
+            field.name: getattr(claims, field.name)
+            for field in claims.__dataclass_fields__.values()
         }
 
         token = jwt.encode(claims_dict, self.secret_key, algorithm=self.algorithm)
@@ -191,7 +192,8 @@ class JWTService:
         )
 
         claims_dict = {
-            field.name: getattr(claims, field.name) for field in claims.__dataclass_fields__
+            field.name: getattr(claims, field.name)
+            for field in claims.__dataclass_fields__.values()
         }
 
         token = jwt.encode(claims_dict, self.secret_key, algorithm=self.algorithm)
