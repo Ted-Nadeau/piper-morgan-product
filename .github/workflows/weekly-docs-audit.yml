@@ -69,8 +69,11 @@ jobs:
                 - [ ] docs/briefing/METHODOLOGY.md (if modified)
                 - [ ] .cursorrules and docs/cursorrules/ files (if modified)
                 - [ ] roadmap.md and backlog.md (if modified)
+                - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
                 - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
+              - [ ] **Verify knowledge/ symlinks**: `ls -lah knowledge/BRIEFING-*.md` (should show symlinks)
+              - [ ] **Check for stale knowledge/ files**: No duplicates, only symlinks and unique files
 
               ### 🔍 Automated Audits (Claude Code /agent)
 
