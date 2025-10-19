@@ -125,10 +125,13 @@ class TestGitHubArchitectureEnforcement:
 
     def test_router_architectural_integrity(self):
         """
-        CRITICAL: Verify router maintains spatial-only architecture.
+        CRITICAL: Verify router maintains proper architectural patterns.
 
-        Week 4 Complete (CORE-INT #109): Legacy code removed, router simplified.
-        The router now delegates exclusively to GitHubSpatialIntelligence.
+        UPDATED (Sprint A4): Supports two architectures:
+        - Week 4: Spatial-only with _get_integration() delegation
+        - ADR-013 Phase 2: MCP+Spatial with adapter methods
+
+        Both patterns maintain spatial intelligence and proper error handling.
         """
 
         router_file = "services/integrations/github/github_integration_router.py"
@@ -139,15 +142,30 @@ class TestGitHubArchitectureEnforcement:
         with open(router_file, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Critical patterns for Week 4 (spatial-only architecture)
-        required_patterns = [
-            "_get_integration",  # Simplified delegation method (Week 4)
-            "FeatureFlags.should_use_spatial_github",  # Still used for compatibility
-            "GitHubSpatialIntelligence",  # Spatial-only integration
-            "raise RuntimeError",  # Proper error handling preserved
-        ]
+        # Check if router is in ADR-013 Phase 2 migration
+        is_mcp_phase2 = self._is_mcp_migration_phase2(content)
 
-        # Patterns that MUST NOT exist after Week 4
+        if is_mcp_phase2:
+            # ADR-013 Phase 2 required patterns
+            required_patterns = [
+                "GitHubMCPSpatialAdapter",  # MCP integration
+                "GitHubSpatialIntelligence",  # Spatial fallback
+                "self.mcp_adapter",  # MCP adapter instance
+                "self.spatial_github",  # Spatial instance
+                "async def initialize(",  # Async initialization
+                "self._initialized",  # Lazy init flag
+                "raise RuntimeError",  # Proper error handling
+            ]
+        else:
+            # Week 4 spatial-only patterns
+            required_patterns = [
+                "_get_integration",  # Simplified delegation method
+                "FeatureFlags.should_use_spatial_github",  # Feature flags
+                "GitHubSpatialIntelligence",  # Spatial integration
+                "raise RuntimeError",  # Proper error handling
+            ]
+
+        # Patterns that MUST NOT exist (both architectures)
         forbidden_patterns = [
             "_get_preferred_integration",  # Old delegation method (removed Week 4)
             "GitHubAgent",  # Legacy integration (removed Week 4)
@@ -165,8 +183,12 @@ class TestGitHubArchitectureEnforcement:
                 present_forbidden.append(pattern)
 
         errors = []
+        architecture_type = (
+            "ADR-013 Phase 2 (MCP+Spatial)" if is_mcp_phase2 else "Week 4 (Spatial-only)"
+        )
+
         if missing_patterns:
-            errors.append(f"Missing required patterns: {missing_patterns}")
+            errors.append(f"Missing required patterns for {architecture_type}: {missing_patterns}")
         if present_forbidden:
             errors.append(f"Legacy patterns still present (should be removed): {present_forbidden}")
 
@@ -284,6 +306,24 @@ class TestGitHubArchitectureEnforcement:
             ]
         )
 
+    def _is_mcp_migration_phase2(self, content: str) -> bool:
+        """
+        Check if router is in ADR-013 Phase 2 migration.
+
+        Phase 2 indicators:
+        - Has MCP spatial adapter (GitHubMCPSpatialAdapter, mcp_adapter)
+        - Has lazy initialization pattern (self._initialized, initialize())
+        - Adapter methods that delegate directly to MCP
+        """
+        mcp_indicators = [
+            "MCPSpatialAdapter",
+            "self.mcp_adapter",
+            "self._initialized",
+            "async def initialize(",
+        ]
+
+        return any(indicator in content for indicator in mcp_indicators)
+
 
 class TestArchitecturalRegression:
     """
@@ -342,17 +382,26 @@ class TestArchitecturalRegression:
 
     def test_router_delegation_pattern_preserved(self):
         """
-        Verify router maintains simplified spatial-only delegation pattern.
+        Verify router maintains proper delegation pattern.
 
-        Week 4 (CORE-INT #109): Simplified from complex spatial/legacy routing
-        to direct spatial delegation. Methods now use _get_integration() for
-        clean, straightforward delegation to GitHubSpatialIntelligence.
+        UPDATED (Sprint A4): Supports two patterns:
+        - Week 4 pattern: _get_integration() for spatial-only delegation
+        - ADR-013 Phase 2: Adapter methods that delegate to mcp_adapter
+
+        ADR-013 Phase 2 Migration Pattern:
+        - Router has adapter methods (get_recent_issues, get_issue, etc.)
+        - Methods delegate directly to self.mcp_adapter or self.spatial_github
+        - Uses lazy initialization (await self.initialize())
+        - Backward-compatible interface with MCP+Spatial implementation
         """
 
         router_file = "services/integrations/github/github_integration_router.py"
 
         with open(router_file, "r", encoding="utf-8") as f:
             content = f.read()
+
+        # Check if router is in ADR-013 Phase 2 migration
+        is_mcp_phase2 = self._is_mcp_migration_phase2(content)
 
         # Count methods that should follow delegation pattern
         import re
@@ -367,10 +416,11 @@ class TestArchitecturalRegression:
             "get_deprecation_week",  # Timeline helper
             "create_github_integration",  # Factory function
             "get_integration",  # Internal delegation method itself
+            "get_boolean_flag",  # Helper method
+            "get_authentication_token",  # Config method
         ]
         delegation_methods = [m for m in method_matches if m not in excluded_methods]
 
-        # Week 4 pattern: Simple delegation to spatial via _get_integration()
         pattern_violations = []
         for method in delegation_methods:
             method_pattern = rf"def {re.escape(method)}\([^)]*\).*?(?=def|\Z)"
@@ -379,13 +429,26 @@ class TestArchitecturalRegression:
             if method_match:
                 method_body = method_match.group(0)
 
-                # Week 4 requires: _get_integration() call (simplified pattern)
-                if "_get_integration(" not in method_body:
-                    pattern_violations.append(
-                        f"Method {method} missing _get_integration() call (Week 4 pattern)"
+                if is_mcp_phase2:
+                    # ADR-013 Phase 2: Allow adapter methods OR _get_integration pattern
+                    has_adapter_delegation = (
+                        "self.mcp_adapter" in method_body or "self.spatial_github" in method_body
                     )
+                    has_get_integration = "_get_integration(" in method_body
 
-                # Week 4 forbids: Old complex routing patterns
+                    if not (has_adapter_delegation or has_get_integration):
+                        pattern_violations.append(
+                            f"Method {method} missing delegation (Phase 2 requires: "
+                            "self.mcp_adapter/self.spatial_github OR _get_integration)"
+                        )
+                else:
+                    # Week 4 pattern: Requires _get_integration() call
+                    if "_get_integration(" not in method_body:
+                        pattern_violations.append(
+                            f"Method {method} missing _get_integration() call (Week 4 pattern)"
+                        )
+
+                # Forbid old complex routing patterns (both patterns)
                 forbidden_patterns = [
                     "_get_preferred_integration(",  # Old pattern
                     "_warn_deprecation_if_needed(",  # No longer needed
@@ -398,6 +461,24 @@ class TestArchitecturalRegression:
 
         if pattern_violations:
             pytest.fail(f"Router delegation pattern violations: {pattern_violations}")
+
+    def _is_mcp_migration_phase2(self, content: str) -> bool:
+        """
+        Check if router is in ADR-013 Phase 2 migration.
+
+        Phase 2 indicators:
+        - Has MCP spatial adapter (GitHubMCPSpatialAdapter, mcp_adapter)
+        - Has lazy initialization pattern (self._initialized, initialize())
+        - Adapter methods that delegate directly to MCP
+        """
+        mcp_indicators = [
+            "MCPSpatialAdapter",
+            "self.mcp_adapter",
+            "self._initialized",
+            "async def initialize(",
+        ]
+
+        return any(indicator in content for indicator in mcp_indicators)
 
 
 if __name__ == "__main__":
