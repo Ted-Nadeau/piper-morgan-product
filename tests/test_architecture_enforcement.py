@@ -75,18 +75,22 @@ class TestGitHubArchitectureEnforcement:
 
     def test_services_use_router(self):
         """
-        CRITICAL: Verify converted services use GitHubIntegrationRouter.
+        CRITICAL: Verify domain layer services use GitHubIntegrationRouter.
 
-        All services that need GitHub functionality must use the router
+        Domain services that need GitHub functionality must use the router
         to ensure feature flag control and spatial intelligence work correctly.
+
+        Per ADR-029: Orchestration/feature layers use domain services, not routers.
         """
 
         # Services that were converted in Phase 2A and must use router
+        # NOTE: Orchestration services (like standup_orchestration_service.py) use
+        # GitHubDomainService per ADR-029, not the router directly
         required_router_services = [
             "services/orchestration/engine.py",
             "services/domain/github_domain_service.py",
             "services/domain/pm_number_manager.py",
-            "services/domain/standup_orchestration_service.py",
+            # REMOVED: "services/domain/standup_orchestration_service.py" - uses GitHubDomainService per ADR-029
             "services/integrations/github/issue_analyzer.py",
         ]
 
@@ -167,9 +171,7 @@ class TestGitHubArchitectureEnforcement:
             errors.append(f"Legacy patterns still present (should be removed): {present_forbidden}")
 
         if errors:
-            pytest.fail(
-                f"Router architectural integrity violated. {' | '.join(errors)}"
-            )
+            pytest.fail(f"Router architectural integrity violated. {' | '.join(errors)}")
 
     def test_critical_methods_preserved(self):
         """
