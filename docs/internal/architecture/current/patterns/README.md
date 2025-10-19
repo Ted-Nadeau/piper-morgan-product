@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 34 patterns (001-034) + template (000)
+**Total Patterns**: 35 patterns (001-035) + template (000)
 
 ## Pattern Categories
 
@@ -56,6 +56,7 @@ _External system integration, plugin architecture, and platform connectivity pat
 - [Pattern-030: Plugin Interface](pattern-030-plugin-interface.md) - Extensible integration architecture
 - [Pattern-031: Plugin Wrapper](pattern-031-plugin-wrapper.md) - Adapter pattern for integration routers
 - [Pattern-033: Notion Publishing](pattern-033-notion-publishing.md) - Knowledge management publishing
+- [Pattern-035: MCP Adapter Methods](pattern-035-mcp-adapter-methods.md) - Backward-compatible MCP migration pattern (ADR-013 Phase 2)
 
 ### Development & Process Patterns
 
@@ -94,5 +95,5 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: October 15, 2025_
-_All 34 patterns now included with logical categorization_
+_Last updated: October 19, 2025_
+_All 35 patterns now included with logical categorization_
