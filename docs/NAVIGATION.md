@@ -141,6 +141,29 @@ Each essential briefing includes triggers for loading detailed documentation as 
 └── historical/               # Previous planning cycles
 ```
 
+### 📚 Knowledge Base (`knowledge/`)
+
+**Staging area for claude.ai project knowledge**
+
+Files optimized for RAG search in the claude.ai project knowledge base:
+- **BRIEFING-*** files use prefix for context in flat namespace
+- **Symlinked canonical sources** from docs/briefing/ (zero duplication)
+- **Workflow**: Update files in docs/briefing/ → automatically syncs to knowledge/ → PM updates claude.ai
+
+```
+knowledge/
+├── BRIEFING-CURRENT-STATE.md        → Symlink to docs/briefing/
+├── BRIEFING-ESSENTIAL-LEAD-DEV.md   → Symlink to docs/briefing/
+├── BRIEFING-ESSENTIAL-ARCHITECT.md  → Symlink to docs/briefing/
+├── BRIEFING-ESSENTIAL-AGENT.md      → Symlink to docs/briefing/
+├── BRIEFING-ESSENTIAL-*.md          → Symlinks to docs/briefing/
+├── CLAUDE.md                        # Agent entry point
+├── serena-briefing-queries.md       # Live system state queries
+└── README.md                        # Knowledge base workflow guide
+```
+
+**See**: `knowledge/README.md` for complete workflow documentation
+
 ### 📦 Archives (`archives/`)
 
 **Historical preservation and archaeological research**

@@ -1,0 +1,62 @@
+/Users/xian/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2025-10-19 11:32:45 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-10-19 11:32:45 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-10-19 11:32:45 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-10-19 11:32:45 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-10-19 11:32:45 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-10-19 11:32:45 [debug    ] Selection config loaded: env=development, excluded=['anthropic'], default=openai
+2025-10-19 11:32:45 [debug    ] Retrieved API key for openai from keychain
+2025-10-19 11:32:45 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-19 11:32:45 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-19 11:32:45 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-19 11:32:45 [debug    ] Retrieved API key for gemini from keychain
+2025-10-19 11:32:45 [debug    ] Retrieved gemini key from keychain (secure)
+2025-10-19 11:32:45 [debug    ] Retrieved API key for perplexity from keychain
+2025-10-19 11:32:45 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-10-19 11:32:45 [debug    ] Retrieved API key for anthropic from keychain
+2025-10-19 11:32:45 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-10-19 11:32:45 [info     ] Anthropic client initialized
+2025-10-19 11:32:45 [debug    ] Retrieved API key for openai from keychain
+2025-10-19 11:32:45 [debug    ] Retrieved openai key from keychain (secure)
+2025-10-19 11:32:45 [info     ] OpenAI client initialized
+GitHub API session not configured
+No GitHub issues data received
+
+[1m[96m============================================================[0m
+[1m[96m  🌅 Piper Morgan Morning Standup[0m
+[1m[96m============================================================[0m
+
+[1m[95m🚀 Morning Standup MVP[0m
+[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+[93m⏱️  Generating standup (target: <2 seconds)...[0m
+[92m✅ Generated in 2ms[0m
+[96m💰 Saved 15 minutes of manual prep[0m
+[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[1m[92m📋 📋 Yesterday's Accomplishments[0m
+[92m----------------------------------------[0m
+[94mℹ️    No specific accomplishments found[0m
+
+[1m[94m📋 🎯 Today's Priorities[0m
+[94m----------------------------------------[0m
+[94mℹ️    🎯 Continue work on piper-morgan[0m
+
+[1m[91m📋 ⚠️  Blockers[0m
+[91m----------------------------------------[0m
+[93m⚠️    ⚠️ No recent GitHub activity detected[0m
+[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m
+
+[1m[96m📋 📊 Performance Summary[0m
+[96m----------------------------------------[0m
+[94mℹ️    Context Source: default[0m
+[94mℹ️    GitHub Activity: 0 commits[0m
+[94mℹ️    Generation Time: 2ms[0m
+[94mℹ️    Performance Target: ✅ MET[0m
+
+[1m[96m============================================================[0m
+[1m[96m  🎯 Standup Complete[0m
+[1m[96m============================================================[0m
+
+[92m✅ Morning standup completed successfully![0m
+[94mℹ️  Use --format slack for Slack-ready output[0m

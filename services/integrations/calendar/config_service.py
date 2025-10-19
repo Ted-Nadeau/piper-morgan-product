@@ -6,8 +6,12 @@ Provides centralized configuration management for Google Calendar operations.
 """
 
 import os
+import re
 from dataclasses import dataclass, field
-from typing import List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 from services.infrastructure.config.feature_flags import FeatureFlags
 
@@ -74,30 +78,108 @@ class CalendarConfigService:
             self._config = self._load_config()
         return self._config
 
-    def _load_config(self) -> CalendarConfig:
+    def _load_from_user_config(self) -> Dict[str, Any]:
         """
-        Load configuration from environment variables.
+        Load calendar configuration from PIPER.user.md.
 
-        Implements standard config service interface for plugin architecture.
-        Reads configuration from environment variables with sensible defaults.
+        Parses YAML blocks from the markdown file and extracts the calendar section.
+        Follows the same pattern as GitHub and Standup config loading.
 
         Returns:
-            CalendarConfig: Configuration loaded from environment
+            Dict with calendar configuration, or empty dict if not found/invalid
         """
-        # Parse scopes from comma-separated env var
-        scopes_env = os.getenv(
-            "GOOGLE_CALENDAR_SCOPES", "https://www.googleapis.com/auth/calendar.readonly"
-        )
-        scopes = [s.strip() for s in scopes_env.split(",") if s.strip()]
+        try:
+            user_config_path = Path("config/PIPER.user.md")
+            if not user_config_path.exists():
+                return {}
 
+            # Read the markdown file
+            content = user_config_path.read_text()
+
+            # Find the Calendar Integration section
+            # Look for heading pattern: ## 📅 Calendar Integration
+            calendar_section_match = re.search(
+                r"##\s+📅\s+Calendar Integration(.*?)(?=##\s+|$)", content, re.DOTALL
+            )
+
+            if not calendar_section_match:
+                return {}
+
+            section_content = calendar_section_match.group(1)
+
+            # Extract YAML from markdown code blocks (more robust)
+            yaml_match = re.search(r"```yaml.*?```", section_content, re.DOTALL)
+            if not yaml_match:
+                return {}
+
+            # Extract YAML content by removing markdown markers
+            full_yaml_block = yaml_match.group(0)
+            yaml_content = full_yaml_block.replace("```yaml", "").replace("```", "").strip()
+            config_data = yaml.safe_load(yaml_content)
+
+            if config_data and "calendar" in config_data:
+                return config_data["calendar"]
+
+            return {}
+
+        except Exception as e:
+            # Log error but don't crash - graceful fallback
+            print(f"Warning: Could not load calendar config from PIPER.user.md: {e}")
+            return {}
+
+    def _load_config(self) -> CalendarConfig:
+        """
+        Load calendar configuration with priority: env vars > PIPER.user.md > defaults.
+
+        Configuration Priority Order:
+        1. Environment variables (highest priority - overrides everything)
+        2. PIPER.user.md calendar section (middle priority)
+        3. Hardcoded defaults (lowest priority - fallback)
+
+        Implements standard config service interface for plugin architecture.
+
+        Returns:
+            CalendarConfig: Configuration loaded with priority order applied
+        """
+        # Load from PIPER.user.md first (base layer)
+        user_config = self._load_from_user_config()
+
+        # Parse scopes with priority order
+        if "GOOGLE_CALENDAR_SCOPES" in os.environ:
+            # Environment variable present - use it
+            scopes_env = os.getenv("GOOGLE_CALENDAR_SCOPES")
+            scopes = [s.strip() for s in scopes_env.split(",") if s.strip()]
+        elif "scopes" in user_config:
+            # Use PIPER.user.md scopes
+            scopes = user_config["scopes"]
+        else:
+            # Use default
+            scopes = ["https://www.googleapis.com/auth/calendar.readonly"]
+
+        # Environment variables override user config for all other settings
         return CalendarConfig(
-            client_secrets_file=os.getenv("GOOGLE_CLIENT_SECRETS_FILE", "credentials.json"),
-            token_file=os.getenv("GOOGLE_TOKEN_FILE", "token.json"),
-            calendar_id=os.getenv("GOOGLE_CALENDAR_ID", "primary"),
+            client_secrets_file=os.getenv(
+                "GOOGLE_CLIENT_SECRETS_FILE",
+                user_config.get("client_secrets_file", "credentials.json"),
+            ),
+            token_file=os.getenv("GOOGLE_TOKEN_FILE", user_config.get("token_file", "token.json")),
+            calendar_id=os.getenv("GOOGLE_CALENDAR_ID", user_config.get("calendar_id", "primary")),
             scopes=scopes,
-            timeout_seconds=int(os.getenv("GOOGLE_CALENDAR_TIMEOUT", "30")),
-            circuit_timeout=int(os.getenv("GOOGLE_CALENDAR_CIRCUIT_TIMEOUT", "300")),
-            error_threshold=int(os.getenv("GOOGLE_CALENDAR_ERROR_THRESHOLD", "5")),
+            timeout_seconds=int(
+                os.getenv("GOOGLE_CALENDAR_TIMEOUT", str(user_config.get("timeout_seconds", 30)))
+            ),
+            circuit_timeout=int(
+                os.getenv(
+                    "GOOGLE_CALENDAR_CIRCUIT_TIMEOUT",
+                    str(user_config.get("circuit_timeout", 300)),
+                )
+            ),
+            error_threshold=int(
+                os.getenv(
+                    "GOOGLE_CALENDAR_ERROR_THRESHOLD",
+                    str(user_config.get("error_threshold", 5)),
+                )
+            ),
             enable_spatial_mapping=self.feature_flags.is_enabled("calendar_spatial_mapping"),
         )
 
