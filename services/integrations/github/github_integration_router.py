@@ -45,6 +45,13 @@ class GitHubIntegrationRouter:
     1. GitHubMCPSpatialAdapter (if USE_MCP_GITHUB=true, default)
     2. GitHubSpatialIntelligence (fallback if MCP unavailable)
 
+    ADAPTER PATTERN (ADR-013 Phase 2):
+    - Router provides stable interface for consumers (get_recent_issues, get_issue, etc.)
+    - Router delegates to MCP adapter using adapter methods
+    - MCP adapter has different method names (list_github_issues_direct, get_github_issue_direct)
+    - Adapter methods translate interface during migration period
+    - Spatial intelligence used as fallback with direct method calls
+
     Follows service injection pattern (ADR-010) for configuration management.
     """
 
@@ -64,6 +71,10 @@ class GitHubIntegrationRouter:
 
         # Spatial intelligence (fallback)
         self.spatial_github = None
+
+        # Initialization tracking (for lazy initialization)
+        self._initialized = False
+        self._initialization_lock = None  # Will be set in async context
 
         # Feature flags
         self.use_mcp = self._get_boolean_flag("USE_MCP_GITHUB", True)
@@ -88,7 +99,7 @@ class GitHubIntegrationRouter:
                 from services.mcp.consumer.github_adapter import GitHubMCPSpatialAdapter
 
                 self.mcp_adapter = GitHubMCPSpatialAdapter()
-                logger.info("GitHubMCPSpatialAdapter initialized successfully")
+                logger.info("GitHubMCPSpatialAdapter initialized (token config pending)")
             except Exception as e:
                 logger.warning(
                     f"Failed to initialize GitHubMCPSpatialAdapter: {e}, falling back to GitHubSpatialIntelligence"
@@ -106,9 +117,43 @@ class GitHubIntegrationRouter:
             logger.warning(f"GitHubSpatialIntelligence failed, using MCP adapter only: {e}")
 
     async def initialize(self):
-        """Initialize the GitHub integration asynchronously"""
-        if self.spatial_github and hasattr(self.spatial_github, "initialize"):
-            await self.spatial_github.initialize()
+        """
+        Initialize the GitHub integration asynchronously.
+
+        Idempotent - safe to call multiple times (uses initialization lock).
+        """
+        # Skip if already initialized
+        if self._initialized:
+            return
+
+        # Create lock if it doesn't exist (first async call)
+        if self._initialization_lock is None:
+            import asyncio
+
+            self._initialization_lock = asyncio.Lock()
+
+        # Use lock to prevent concurrent initialization
+        async with self._initialization_lock:
+            # Double-check after acquiring lock
+            if self._initialized:
+                return
+
+            # Configure MCP adapter with GitHub token (async operation)
+            if self.mcp_adapter:
+                token = self.config_service.get_authentication_token()
+                if token:
+                    await self.mcp_adapter.configure_github_api(token)
+                    logger.info("GitHubMCPSpatialAdapter configured with authentication token")
+                else:
+                    logger.warning("No GitHub authentication token available for MCP adapter")
+
+            # Initialize spatial intelligence if available
+            if self.spatial_github and hasattr(self.spatial_github, "initialize"):
+                await self.spatial_github.initialize()
+
+            # Mark as initialized
+            self._initialized = True
+            logger.info("GitHubIntegrationRouter initialization complete")
 
     def _get_integration(self, operation: str) -> Any:
         """
@@ -136,8 +181,24 @@ class GitHubIntegrationRouter:
         raise RuntimeError(f"No GitHub integration available for {operation}")
 
     async def get_issue(self, repo_name: str, issue_number: int) -> Dict[str, Any]:
-        """Get GitHub issue."""
-        return await self._get_integration("get_issue").get_issue(repo_name, issue_number)
+        """
+        Get GitHub issue by repository and number.
+
+        ADAPTER METHOD (ADR-013 Phase 2): Translates interface for MCP adapter.
+        Uses lazy initialization to ensure GitHub token is loaded.
+        """
+        # Lazy initialization (ensures token loaded on first use)
+        if not self._initialized:
+            await self.initialize()
+
+        # MCP adapter uses different method name and parameters
+        if self.mcp_adapter:
+            return await self.mcp_adapter.get_github_issue_direct(
+                issue_number=str(issue_number),  # MCP adapter expects string
+                repo=repo_name or "piper-morgan-product",
+            )
+        # Spatial fallback
+        return await self.spatial_github.get_issue(repo_name, issue_number)
 
     async def list_issues(self, repository: str, **kwargs) -> List[Dict[str, Any]]:
         """
@@ -250,16 +311,43 @@ class GitHubIntegrationRouter:
         Get open issues from GitHub repository.
 
         Used by: domain/github_domain_service.py, domain/pm_number_manager.py
+
+        ADAPTER METHOD (ADR-013 Phase 2): Translates interface for MCP adapter.
+        Uses lazy initialization to ensure GitHub token is loaded.
         """
-        return await self._get_integration("get_open_issues").get_open_issues(project, limit)
+        # Lazy initialization (ensures token loaded on first use)
+        if not self._initialized:
+            await self.initialize()
+
+        # MCP adapter uses different method name and parameters
+        if self.mcp_adapter:
+            all_issues = await self.mcp_adapter.list_github_issues_direct()
+            # Filter for open issues only and limit
+            open_issues = [issue for issue in all_issues if issue.get("state") == "open"]
+            return open_issues[:limit] if open_issues else []
+        # Spatial fallback
+        return await self.spatial_github.get_open_issues(project, limit)
 
     async def get_recent_issues(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get recent issues (both open and closed) from GitHub repository.
 
         Used by: domain/github_domain_service.py
+
+        ADAPTER METHOD (ADR-013 Phase 2): Translates interface for MCP adapter.
+        Uses lazy initialization to ensure GitHub token is loaded.
         """
-        return await self._get_integration("get_recent_issues").get_recent_issues(limit)
+        # Lazy initialization (ensures token loaded on first use)
+        if not self._initialized:
+            await self.initialize()
+
+        # MCP adapter uses different method name and parameters
+        if self.mcp_adapter:
+            issues = await self.mcp_adapter.list_github_issues_direct()
+            # Filter to limit (MCP adapter returns all, we limit here)
+            return issues[:limit] if issues else []
+        # Spatial fallback
+        return await self.spatial_github.get_recent_issues(limit)
 
     async def get_recent_activity(self, days: int = 7) -> Dict[str, List[Dict[str, Any]]]:
         """
