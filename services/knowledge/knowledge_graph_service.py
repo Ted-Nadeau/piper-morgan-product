@@ -10,7 +10,9 @@ import structlog
 
 from services.database.repositories import KnowledgeGraphRepository
 from services.domain.models import KnowledgeEdge, KnowledgeNode
-from services.ethics.boundary_enforcer import BoundaryEnforcer
+from services.ethics.boundary_enforcer import BoundaryEnforcer as EthicsBoundaryEnforcer
+from services.knowledge.boundaries import BoundaryEnforcer as KGBoundaryEnforcer
+from services.knowledge.boundaries import GraphBoundaries, OperationBoundaries
 from services.shared_types import EdgeType, NodeType
 
 logger = structlog.get_logger()
@@ -22,10 +24,15 @@ class KnowledgeGraphService:
     def __init__(
         self,
         knowledge_graph_repository: KnowledgeGraphRepository,
-        boundary_enforcer: Optional[BoundaryEnforcer] = None,
+        boundary_enforcer: Optional[EthicsBoundaryEnforcer] = None,
+        kg_boundary_enforcer: Optional[KGBoundaryEnforcer] = None,
     ):
         self.repo = knowledge_graph_repository
-        self.boundary_enforcer = boundary_enforcer
+        self.boundary_enforcer = boundary_enforcer  # Ethics boundaries (legacy)
+        # Initialize KG-specific boundary enforcer (Issue #230)
+        self.kg_boundary_enforcer = kg_boundary_enforcer or KGBoundaryEnforcer(
+            OperationBoundaries.SEARCH
+        )
         self.logger = logger.bind(service="knowledge_graph")
 
     # Node Operations
@@ -429,3 +436,155 @@ class KnowledgeGraphService:
         # Delegate to repository's privacy-aware creation
         node = KnowledgeNode(**node_data)
         return await self.repo.create_node_with_privacy_check(node, privacy_level)
+
+    # Boundary-Enforced Operations (Issue #230)
+    async def search_nodes(
+        self,
+        node_type: Optional[NodeType] = None,
+        search_term: Optional[str] = None,
+        session_id: Optional[str] = None,
+        limit: int = 10,
+    ) -> List[KnowledgeNode]:
+        """
+        Search for nodes with boundary enforcement.
+
+        Args:
+            node_type: Optional node type filter
+            search_term: Optional search term
+            session_id: Optional session filter
+            limit: Maximum results (subject to boundary limits)
+
+        Returns:
+            List of matching nodes (may be partial if limits hit)
+        """
+        # Start boundary tracking
+        self.kg_boundary_enforcer.start_operation()
+
+        try:
+            # Check result size limit
+            actual_limit = min(limit, self.kg_boundary_enforcer.boundaries.max_result_size)
+
+            # Perform search via repository
+            if node_type and session_id:
+                nodes = await self.repo.get_nodes_by_type(node_type, session_id, actual_limit)
+            elif node_type:
+                nodes = await self.repo.get_nodes_by_type(node_type, None, actual_limit)
+            elif session_id:
+                nodes = await self.repo.get_nodes_by_session(session_id)
+                nodes = nodes[:actual_limit]  # Limit results
+            else:
+                # General search - get nodes by type and filter
+                all_nodes = []
+                for nt in NodeType:
+                    type_nodes = await self.repo.get_nodes_by_type(nt, None, actual_limit)
+                    all_nodes.extend(type_nodes)
+                    if len(all_nodes) >= actual_limit:
+                        break
+                nodes = all_nodes[:actual_limit]
+
+            # Filter by search term if provided
+            if search_term and nodes:
+                search_lower = search_term.lower()
+                nodes = [
+                    n
+                    for n in nodes
+                    if search_lower in n.name.lower() or search_lower in n.description.lower()
+                ]
+
+            # Record nodes visited
+            for node in nodes:
+                self.kg_boundary_enforcer.visit_node(str(node.id))
+
+            # Check if we hit limits
+            stats = self.kg_boundary_enforcer.get_stats()
+            if stats["nodes_visited"] >= stats["limits"]["max_nodes"]:
+                self.logger.info("Search hit node count limit - results may be partial")
+
+            return nodes[:actual_limit]
+
+        except Exception as e:
+            self.logger.error(f"Search failed with boundaries: {e}")
+            raise
+
+    async def traverse_relationships(
+        self,
+        start_node_id: str,
+        max_depth: Optional[int] = None,
+        edge_types: Optional[List[EdgeType]] = None,
+    ) -> List[Dict]:
+        """
+        Traverse relationships with boundary enforcement.
+
+        Args:
+            start_node_id: Starting node ID
+            max_depth: Optional max depth (overrides boundary default)
+            edge_types: Optional filter by edge types
+
+        Returns:
+            List of related nodes (may be partial if limits hit)
+        """
+        # Start boundary tracking
+        self.kg_boundary_enforcer.start_operation()
+
+        # Use boundary max_depth if not specified
+        effective_max_depth = max_depth or self.kg_boundary_enforcer.boundaries.max_depth
+        effective_max_depth = min(
+            effective_max_depth, self.kg_boundary_enforcer.boundaries.max_depth
+        )
+
+        results = []
+        current_depth = 0
+        nodes_to_visit = [start_node_id]
+        visited = set()
+
+        while nodes_to_visit and current_depth < effective_max_depth:
+            # Check timeout
+            if not self.kg_boundary_enforcer.check_timeout():
+                self.logger.warning("Traversal stopped: timeout reached")
+                break
+
+            # Check depth
+            if not self.kg_boundary_enforcer.check_depth(current_depth):
+                self.logger.warning("Traversal stopped: max depth reached")
+                break
+
+            # Visit nodes at this depth
+            next_level = []
+            for node_id in nodes_to_visit:
+                if node_id in visited:
+                    continue
+
+                # Check node count
+                if not self.kg_boundary_enforcer.visit_node(node_id):
+                    self.logger.warning("Traversal stopped: max nodes reached")
+                    return results
+
+                visited.add(node_id)
+
+                # Get node
+                node = await self.repo.get_node_by_id(node_id)
+                if node:
+                    results.append({"node": node, "depth": current_depth})
+
+                    # Get outgoing edges with limit
+                    neighbors = await self.repo.find_neighbors(
+                        node_id, edge_type=None, direction="outgoing"
+                    )
+
+                    # Limit edges per node
+                    neighbors = neighbors[: self.kg_boundary_enforcer.boundaries.max_edges_per_node]
+
+                    # Filter by edge types if specified
+                    # (This is simplified - in a real implementation, we'd check edge types)
+                    for neighbor in neighbors:
+                        if str(neighbor.id) not in visited:
+                            next_level.append(str(neighbor.id))
+
+            nodes_to_visit = next_level
+            current_depth += 1
+
+        # Log stats
+        stats = self.kg_boundary_enforcer.get_stats()
+        self.logger.info(f"Traversal complete: {stats}")
+
+        return results

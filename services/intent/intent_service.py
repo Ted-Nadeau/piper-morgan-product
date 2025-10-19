@@ -23,6 +23,7 @@ from services.domain.models import Intent
 from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
 from services.intent_service import classifier
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.orchestration.engine import OrchestrationEngine
 from services.shared_types import IntentCategory
 
@@ -88,6 +89,7 @@ class IntentService:
         self.intent_classifier = intent_classifier or classifier
         self.conversation_handler = conversation_handler
         self.canonical_handlers = CanonicalHandlers()
+        self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.logger = structlog.get_logger()
 
     async def process_intent(
@@ -148,6 +150,41 @@ class IntentService:
                     )
 
                 self.logger.info("Ethics check passed - proceeding with intent processing")
+
+            # Issue #99 CORE-KNOW Phase 2: Knowledge Graph context enhancement
+            # Check ENABLE_KNOWLEDGE_GRAPH environment variable (default: False for gradual rollout)
+            kg_enabled = os.getenv("ENABLE_KNOWLEDGE_GRAPH", "false").lower() == "true"
+            conversation_context = {}
+
+            if kg_enabled:
+                try:
+                    self.logger.info("Knowledge Graph enhancement enabled - enriching context")
+                    conversation_context = await self.kg_integration.enhance_conversation_context(
+                        message=message,
+                        session_id=session_id,
+                        base_context={
+                            "source": "intent_service",
+                            "timestamp": datetime.utcnow(),
+                        },
+                    )
+                    self.logger.info(
+                        "Knowledge Graph context enhancement successful",
+                        extra={
+                            "kg_concepts": len(
+                                conversation_context.get("knowledge_graph", {}).get("concepts", [])
+                            ),
+                            "kg_patterns": len(
+                                conversation_context.get("knowledge_graph", {}).get("patterns", [])
+                            ),
+                            "kg_entities": len(
+                                conversation_context.get("knowledge_graph", {}).get("entities", [])
+                            ),
+                        },
+                    )
+                except Exception as e:
+                    # Graceful degradation - log error but continue
+                    self.logger.error(f"Knowledge Graph enhancement failed: {e}", exc_info=True)
+                    conversation_context = {}
 
             # Phase 3D: Tier 1 conversation bypass - handle without orchestration
             if self.orchestration_engine is None:
