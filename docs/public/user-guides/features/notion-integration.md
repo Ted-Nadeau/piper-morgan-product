@@ -186,6 +186,71 @@ The Notion integration is **fully functional** with complete CRUD operations:
 - ✅ **CLI Interface**: Comprehensive command-line interface for all operations
 - ✅ **Error Handling**: Graceful degradation and user-friendly error messages
 
+## API Version 2025-09-03 Upgrade
+
+**Status**: ✅ Complete (October 15, 2025)
+
+Piper Morgan's Notion integration has been upgraded to Notion API version **2025-09-03**, which introduces important changes to how databases and data sources are handled.
+
+### What Changed
+
+Notion API 2025-09-03 separates the concepts of "databases" and "data sources":
+
+- **Database** = container that can have one or more data sources
+- **Data Source** = has properties (schema) and rows (pages)
+
+This enables databases to combine multiple data sources, but requires using `data_source_id` instead of `database_id` for certain operations.
+
+### Automatic Handling (No User Action Required)
+
+**Good news**: The upgrade is completely automatic! The integration handles `data_source_id` behind the scenes:
+
+1. **Dynamic Fetching**: When creating pages in databases, the integration automatically:
+   - Fetches the `data_source_id` from the database metadata
+   - Uses it for API calls that require it
+   - Falls back to `database_id` format for backward compatibility
+
+2. **Backward Compatibility**: The integration works with:
+   - ✅ Databases on API 2025-09-03 (using `data_source_id`)
+   - ✅ Databases not yet migrated (using `database_id`)
+   - ✅ Single-source databases (most common case)
+   - ✅ Multi-source databases (uses primary source)
+
+3. **Zero Configuration**: No changes needed to your:
+   - Environment variables
+   - PIPER.user.md configuration
+   - Existing workflows or commands
+
+### Technical Details
+
+**SDK Version**: `notion-client==2.5.0` (upgraded from 2.2.1)
+
+**API Version Header**: All requests include `Notion-Version: 2025-09-03`
+
+**Implementation**:
+- `get_data_source_id()` - Fetches primary data source for a database
+- `create_database_item()` - Uses `data_source_id` automatically
+- Graceful error handling for edge cases
+
+**For more details**, see:
+- Official Upgrade Guide: https://developers.notion.com/docs/upgrade-guide-2025-09-03
+- Issue #165: CORE-NOTN-UP
+- ADR-026: Notion Client Migration
+
+### Verification
+
+To verify the upgrade is working:
+
+```bash
+# Check SDK version
+pip show notion-client
+# Should show: Version: 2.5.0
+
+# Test database operations
+python cli/commands/notion.py test
+# Should succeed with no errors
+```
+
 ## Future Enhancements
 
 - Real-time page synchronization
