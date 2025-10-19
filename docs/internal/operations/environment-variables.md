@@ -50,6 +50,53 @@ ENABLE_ETHICS_ENFORCEMENT=false python dev/2025/10/18/test-ethics-integration.py
 
 ---
 
+### `ENABLE_KNOWLEDGE_GRAPH`
+
+**Purpose**: Enable/disable Knowledge Graph context enhancement
+
+**Type**: Boolean (string "true" or "false")
+
+**Default**: `false` (disabled for gradual rollout)
+
+**Added**: October 18, 2025 (Issue #99 - CORE-KNOW)
+
+**Usage**:
+```bash
+# Enable Knowledge Graph enhancement
+export ENABLE_KNOWLEDGE_GRAPH=true
+
+# Disable Knowledge Graph enhancement (default)
+export ENABLE_KNOWLEDGE_GRAPH=false
+```
+
+**Behavior**:
+- **`true`**: All requests through IntentService are enhanced with Knowledge Graph context
+  - Conversation history analyzed for relevant concepts
+  - Related entities identified and included in context
+  - Session patterns extracted and provided
+  - Context enrichment logged for monitoring
+- **`false`**: Knowledge Graph queries skipped, standard processing continues
+
+**Coverage**: 100% (all entry points through IntentService)
+
+**Documentation**: Issue #99 - CORE-KNOW Sprint A3
+
+**Testing**:
+```bash
+# Test with Knowledge Graph enabled
+ENABLE_KNOWLEDGE_GRAPH=true python dev/2025/10/18/test-knowledge-graph-integration.py
+
+# Test with Knowledge Graph disabled
+ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integration.py
+```
+
+**Performance**:
+- Target: <100ms for context enhancement
+- Graceful degradation on failures
+- No impact when disabled
+
+---
+
 ## Integration Configuration
 
 ### Slack
@@ -264,6 +311,7 @@ LOG_LEVEL=DEBUG python -m uvicorn web.app:app
 # Minimal development setup
 export PYTHONPATH=/Users/xian/Development/piper-morgan
 export ENABLE_ETHICS_ENFORCEMENT=false  # Start disabled
+export ENABLE_KNOWLEDGE_GRAPH=false     # Start disabled
 
 # With integrations
 export GITHUB_TOKEN="ghp_..."
@@ -281,7 +329,8 @@ python -m uvicorn web.app:app --port 8001 --reload
 
 ```bash
 # Production environment variables
-export ENABLE_ETHICS_ENFORCEMENT=true  # Enable ethics
+export ENABLE_ETHICS_ENFORCEMENT=true   # Enable ethics
+export ENABLE_KNOWLEDGE_GRAPH=true      # Enable Knowledge Graph
 export LOG_LEVEL=INFO
 export PORT=8001
 export DATABASE_URL="postgresql://piper:${DB_PASSWORD}@db:5433/piper_morgan"
@@ -300,6 +349,7 @@ python -m uvicorn web.app:app --port 8001 --workers 4
 ```bash
 # Test with ethics enabled
 export ENABLE_ETHICS_ENFORCEMENT=true
+export ENABLE_KNOWLEDGE_GRAPH=true
 export PYTHONPATH=/Users/xian/Development/piper-morgan
 pytest tests/ethics/ -v
 
