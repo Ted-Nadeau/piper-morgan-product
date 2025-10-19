@@ -19,15 +19,17 @@ Pattern-034: Error Handling Standards (REST-compliant)
 Performance: <2s end-to-end target
 """
 
+import os
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
 from services.auth import get_current_user
-from services.auth.jwt_service import JWTClaims
+from services.auth.jwt_service import JWTClaims, JWTService
 from services.domain.standup_orchestration_service import (
     StandupIntegrationError,
     StandupOrchestrationService,
@@ -38,6 +40,11 @@ from web.utils.error_responses import internal_error, not_found_error, validatio
 
 # Create router with prefix and tags for OpenAPI
 router = APIRouter(prefix="/api/v1/standup", tags=["standup"])
+
+# Auth enabled by default (Task 3 complete)
+# Set REQUIRE_AUTH=false for testing only
+# See: dev/active/code-auth-testing-guidance.md
+REQUIRE_AUTH = os.getenv("REQUIRE_AUTH", "true").lower() == "true"
 
 
 # ============================================================================
@@ -204,10 +211,53 @@ def get_standup_service(request: Request) -> StandupOrchestrationService:
     return StandupOrchestrationService()
 
 
-# Authentication is handled by services.auth.get_current_user (imported above)
-# This validates JWT tokens from Authorization: Bearer <token> headers
-# Returns JWTClaims with user_id, user_email, scopes, etc.
-# See services/auth/auth_middleware.py:183 and ADR-012
+security = HTTPBearer(auto_error=False)
+
+
+async def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[JWTClaims]:
+    """
+    Authentication dependency with optional bypass for testing.
+
+    When REQUIRE_AUTH=true (DEFAULT/PRODUCTION - Task 3):
+    - JWT auth required via Authorization: Bearer header
+    - Full JWT validation per ADR-012
+    - Returns JWTClaims with user_id, user_email, scopes, etc.
+    - Raises 401 Unauthorized if token missing or invalid
+
+    When REQUIRE_AUTH=false (testing only):
+    - Auth bypassed, returns None
+    - For development/testing purposes only
+    - Not for production use
+
+    See: dev/active/code-auth-testing-guidance.md
+    See: ADR-012: Protocol-Ready JWT Authentication
+    """
+    if not REQUIRE_AUTH:
+        # Auth disabled for testing only (not for production)
+        return None
+
+    # Auth enabled (production default) - validate JWT token
+    if not credentials:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Validate token
+    jwt_service = JWTService()
+    claims = jwt_service.validate_token(credentials.credentials)
+
+    if not claims:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return claims
 
 
 # ============================================================================
@@ -453,7 +503,7 @@ def format_standup(result: StandupResult, output_format: str) -> Any:
 async def generate_standup(
     request: StandupRequest,
     service: StandupOrchestrationService = Depends(get_standup_service),
-    current_user: JWTClaims = Depends(get_current_user),
+    current_user: Optional[JWTClaims] = Depends(get_current_user_optional),
 ):
     """
     Generate standup in specified mode and format.
@@ -473,18 +523,20 @@ async def generate_standup(
 
     Performance target: <2s end-to-end
 
-    Authentication: Requires valid JWT token in Authorization: Bearer header
+    Authentication (Task 2 vs Task 3):
+    - Task 2 (REQUIRE_AUTH=false): Auth optional, uses request.user_id or "default"
+    - Task 3+ (REQUIRE_AUTH=true): JWT required via Authorization: Bearer header
 
     Args:
         request: StandupRequest with mode, format, and optional user_id
         service: Injected StandupOrchestrationService
-        current_user: Authenticated user JWT claims (from Bearer token)
+        current_user: Optional JWT claims (None if auth disabled, JWTClaims if enabled)
 
     Returns:
         StandupResponse with generated standup and metadata
 
     Raises:
-        401: Unauthorized (missing or invalid JWT token)
+        401: Unauthorized (missing or invalid JWT token when REQUIRE_AUTH=true)
         422: Validation error (invalid mode/format)
         500: Internal error (service failure)
     """
@@ -517,8 +569,14 @@ async def generate_standup(
                 {"field": "format", "valid_values": valid_formats},
             )
 
-        # Resolve user_id (priority: request > JWT claims > service default)
-        user_id = request.user_id or current_user.user_id or None
+        # Resolve user_id based on auth status
+        # Priority: request > JWT claims (if auth enabled) > None (service will use default)
+        if current_user:
+            # Auth enabled - use JWT claims
+            user_id = request.user_id or current_user.user_id
+        else:
+            # Auth disabled (Task 2 testing) - use request or None (service default)
+            user_id = request.user_id or None
 
         # Generate standup via service
         result: StandupResult = await service.orchestrate_standup_workflow(
