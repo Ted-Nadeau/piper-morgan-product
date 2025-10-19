@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Literal, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from services.auth import get_current_user
+from services.auth.jwt_service import JWTClaims
 from services.domain.standup_orchestration_service import (
     StandupIntegrationError,
     StandupOrchestrationService,
@@ -202,25 +204,10 @@ def get_standup_service(request: Request) -> StandupOrchestrationService:
     return StandupOrchestrationService()
 
 
-async def get_current_user(
-    x_api_key: Optional[str] = Header(None, description="Optional API key for authentication")
-) -> Optional[str]:
-    """
-    Simple authentication dependency (optional for Phase 2).
-
-    Returns user_id if authenticated, None otherwise.
-    For now, this is a placeholder - auth can be enhanced later.
-
-    Args:
-        x_api_key: Optional API key from X-API-Key header
-
-    Returns:
-        User identifier or None
-    """
-    # For Phase 2: Authentication is optional
-    # Future enhancement: Validate API key and return user_id
-    # For now, we'll rely on user_id in request body or config resolution
-    return None
+# Authentication is handled by services.auth.get_current_user (imported above)
+# This validates JWT tokens from Authorization: Bearer <token> headers
+# Returns JWTClaims with user_id, user_email, scopes, etc.
+# See services/auth/auth_middleware.py:183 and ADR-012
 
 
 # ============================================================================
@@ -466,7 +453,7 @@ def format_standup(result: StandupResult, output_format: str) -> Any:
 async def generate_standup(
     request: StandupRequest,
     service: StandupOrchestrationService = Depends(get_standup_service),
-    current_user: Optional[str] = Depends(get_current_user),
+    current_user: JWTClaims = Depends(get_current_user),
 ):
     """
     Generate standup in specified mode and format.
@@ -486,15 +473,18 @@ async def generate_standup(
 
     Performance target: <2s end-to-end
 
+    Authentication: Requires valid JWT token in Authorization: Bearer header
+
     Args:
         request: StandupRequest with mode, format, and optional user_id
         service: Injected StandupOrchestrationService
-        current_user: Optional authenticated user (from API key)
+        current_user: Authenticated user JWT claims (from Bearer token)
 
     Returns:
         StandupResponse with generated standup and metadata
 
     Raises:
+        401: Unauthorized (missing or invalid JWT token)
         422: Validation error (invalid mode/format)
         500: Internal error (service failure)
     """
@@ -527,8 +517,8 @@ async def generate_standup(
                 {"field": "format", "valid_values": valid_formats},
             )
 
-        # Resolve user_id (priority: request > current_user > service default)
-        user_id = request.user_id or current_user or None
+        # Resolve user_id (priority: request > JWT claims > service default)
+        user_id = request.user_id or current_user.user_id or None
 
         # Generate standup via service
         result: StandupResult = await service.orchestrate_standup_workflow(

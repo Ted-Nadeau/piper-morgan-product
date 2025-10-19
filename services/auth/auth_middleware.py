@@ -12,7 +12,7 @@ Features:
 - Audit logging integration
 """
 
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from fastapi import Depends, HTTPException, Request, status

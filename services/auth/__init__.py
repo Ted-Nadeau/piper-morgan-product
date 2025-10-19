@@ -16,7 +16,7 @@ Components:
 __version__ = "1.0.0"
 __author__ = "Piper Morgan Security Team"
 
-from .auth_middleware import AuthMiddleware
+from .auth_middleware import AuthMiddleware, get_current_user
 from .jwt_service import JWTService
 from .user_service import UserService
 
@@ -24,4 +24,5 @@ __all__ = [
     "JWTService",
     "UserService",
     "AuthMiddleware",
+    "get_current_user",
 ]
