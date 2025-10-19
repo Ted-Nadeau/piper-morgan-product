@@ -369,10 +369,10 @@ class MorningStandupWorkflow:
                 from services.shared_types import IntentCategory
 
                 intent = Intent(
-                    user_id=user_id,
-                    text="what needs attention",
-                    category=IntentCategory.PROJECT_MANAGEMENT,
-                    confidence_score=1.0,
+                    category=IntentCategory.PRIORITY,
+                    action="get_priority_issues",
+                    original_message="what needs attention",
+                    confidence=1.0,
                 )
 
                 # Get issue priorities
@@ -380,8 +380,8 @@ class MorningStandupWorkflow:
                     intent, f"session_{user_id}"
                 )
 
-                if enhanced_result and enhanced_result.issue_intelligence.get("priority_issues"):
-                    issue_priorities = enhanced_result.issue_intelligence["priority_issues"][
+                if enhanced_result and enhanced_result.issue_intelligence.get("recent_issues"):
+                    issue_priorities = enhanced_result.issue_intelligence["recent_issues"][
                         :3
                     ]  # Top 3
 
@@ -530,20 +530,18 @@ class MorningStandupWorkflow:
                     from services.shared_types import IntentCategory
 
                     intent = Intent(
-                        user_id=user_id,
-                        text="what needs attention",
-                        category=IntentCategory.PROJECT_MANAGEMENT,
-                        confidence_score=1.0,
+                        category=IntentCategory.PRIORITY,
+                        action="get_priority_issues",
+                        original_message="what needs attention",
+                        confidence=1.0,
                     )
 
                     enhanced_result = await issue_engine.enhance_canonical_query(
                         intent, f"session_{user_id}"
                     )
 
-                    if enhanced_result and enhanced_result.issue_intelligence.get(
-                        "priority_issues"
-                    ):
-                        issue_priorities = enhanced_result.issue_intelligence["priority_issues"][:3]
+                    if enhanced_result and enhanced_result.issue_intelligence.get("recent_issues"):
+                        issue_priorities = enhanced_result.issue_intelligence["recent_issues"][:3]
                         for issue in issue_priorities:
                             title = issue.get("title", "Unknown issue")
                             number = issue.get("number", "?")

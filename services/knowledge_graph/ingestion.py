@@ -21,6 +21,8 @@ import PyPDF2
 import structlog
 from chromadb.utils import embedding_functions
 
+from services.infrastructure.keychain_service import KeychainService
+
 logger = structlog.get_logger()
 
 
@@ -31,9 +33,13 @@ class DocumentIngester:
         self.chroma_path = chroma_path
         self.client = chromadb.PersistentClient(path=chroma_path)
 
+        # Get OpenAI API key from keychain (not environment variables)
+        keychain = KeychainService()
+        api_key = keychain.get_api_key("openai")
+
         # Use OpenAI embeddings
         self.embedding_function = embedding_functions.OpenAIEmbeddingFunction(
-            api_key=os.getenv("OPENAI_API_KEY"), model_name="text-embedding-ada-002"
+            api_key=api_key, model_name="text-embedding-ada-002"
         )
 
         # Create or get the PM knowledge collection
