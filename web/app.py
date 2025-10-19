@@ -187,6 +187,22 @@ async def lifespan(app: FastAPI):
         # Don't fail startup if plugin system has issues
         app.state.plugin_registry = None
 
+    # Mount standup API router (Issue #162 - CORE-STAND-MODES-API)
+    print("\n🎯 Mounting Standup API Router...")
+    try:
+        from web.api.routes.standup import router as standup_router
+
+        app.include_router(standup_router)
+        print("✅ Standup API router mounted at /api/v1/standup")
+        print("   Endpoints:")
+        print("   - POST /api/v1/standup/generate")
+        print("   - GET /api/v1/standup/modes")
+        print("   - GET /api/v1/standup/formats")
+        print("   - GET /api/v1/standup/health")
+    except Exception as e:
+        print(f"⚠️ Failed to mount standup API router: {e}")
+        print("   Continuing without standup API\n")
+
     print("🚀 Web server startup complete")
 
     yield
