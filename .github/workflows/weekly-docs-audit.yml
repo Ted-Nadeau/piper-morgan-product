@@ -55,139 +55,138 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `FLY-AUDIT: Weekly Docs Audit - ${today}`,
-              body: |
-                ## Weekly Documentation Audit Checklist
+              body: `## Weekly Documentation Audit Checklist
 
-                **Generated**: ${dayOfWeek}, ${today}
+              **Generated**: ${dayOfWeek}, ${today}
 
-                ### 📚 Claude Project Knowledge Updates (PRIORITY)
+              ### 📚 Claude Project Knowledge Updates (PRIORITY)
 
-                - [ ] List all docs modified this week: `git log --since="1 week ago" --name-only --pretty=format: | grep "\\.md$" | sort -u`
-                - [ ] **ACTION FOR PM**: Update these files in Claude project knowledge:
-                  - [ ] architecture.md (if modified)
-                  - [ ] docs/internal/architecture/current/patterns/README.md (if modified)
-                  - [ ] docs/internal/development/methodology-core/ files (if modified)
-                  - [ ] docs/briefing/METHODOLOGY.md (if modified)
-                  - [ ] .cursorrules and docs/cursorrules/ files (if modified)
-                  - [ ] roadmap.md and backlog.md (if modified)
-                  - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
-                  - [ ] [List other changed files here after running command]
-                - [ ] Verify knowledge base matches current docs version
-                - [ ] **Verify knowledge/ symlinks**: `ls -lah knowledge/BRIEFING-*.md` (should show symlinks)
-                - [ ] **Check for stale knowledge/ files**: No duplicates, only symlinks and unique files
+              - [ ] List all docs modified this week: \`git log --since="1 week ago" --name-only --pretty=format: | grep "\\.md$" | sort -u\`
+              - [ ] **ACTION FOR PM**: Update these files in Claude project knowledge:
+                - [ ] architecture.md (if modified)
+                - [ ] docs/internal/architecture/current/patterns/README.md (if modified)
+                - [ ] docs/internal/development/methodology-core/ files (if modified)
+                - [ ] docs/briefing/METHODOLOGY.md (if modified)
+                - [ ] .cursorrules and docs/cursorrules/ files (if modified)
+                - [ ] roadmap.md and backlog.md (if modified)
+                - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
+                - [ ] [List other changed files here after running command]
+              - [ ] Verify knowledge base matches current docs version
+              - [ ] **Verify knowledge/ symlinks**: \`ls -lah knowledge/BRIEFING-*.md\` (should show symlinks)
+              - [ ] **Check for stale knowledge/ files**: No duplicates, only symlinks and unique files
 
-                ### 🔍 Automated Audits (Claude Code /agent)
+              ### 🔍 Automated Audits (Claude Code /agent)
 
-                - [ ] Run: `/agent Audit docs/ for stale content older than 30 days`
-                - [ ] Run: `/agent Find duplicate files in docs/ and list consolidation opportunities`
-                - [ ] Run: `/agent Check for broken links in docs/**/*.md`
-                - [ ] Run: `/agent Verify cross-references between methodology files in docs/internal/development/methodology-core/`
-                - [ ] Run: `/agent Check for missing cross-references between docs/NAVIGATION.md and docs/internal/development/methodology-core/INDEX.md`
-                - [ ] Run: `/agent Verify briefing documents completeness in docs/briefing/`
-                - [ ] Run: `/agent Check omnibus logs structure in docs/omnibus-logs/`
+              - [ ] Run: \`/agent Audit docs/ for stale content older than 30 days\`
+              - [ ] Run: \`/agent Find duplicate files in docs/ and list consolidation opportunities\`
+              - [ ] Run: \`/agent Check for broken links in docs/**/*.md\`
+              - [ ] Run: \`/agent Verify cross-references between methodology files in docs/internal/development/methodology-core/\`
+              - [ ] Run: \`/agent Check for missing cross-references between docs/NAVIGATION.md and docs/internal/development/methodology-core/INDEX.md\`
+              - [ ] Run: \`/agent Verify briefing documents completeness in docs/briefing/\`
+              - [ ] Run: \`/agent Check omnibus logs structure in docs/omnibus-logs/\`
 
-                ### 🔧 Infrastructure & Pattern Verification
+              ### 🔧 Infrastructure & Pattern Verification
 
-                - [ ] Check app.py line count: `wc -l web/app.py` (trigger refactor at 1000 lines, currently ~750)
-                - [ ] Verify port 8001 documented everywhere: `grep -r "8080" docs/ --include="*.md"` (should be empty)
-                - [ ] Check for mock fallbacks: `grep -r "mock_\\|fallback" services/ --include="*.py"`
-                - [ ] Verify AsyncSessionFactory pattern: `grep -r "DatabasePool" services/ --include="*.py"` (should be empty)
-                - [ ] Check cursor rules synchronization: `diff .cursor/rules/ docs/cursorrules/active-rules.md` (should be identical)
+              - [ ] Check app.py line count: \`wc -l web/app.py\` (trigger refactor at 1000 lines, currently ~750)
+              - [ ] Verify port 8001 documented everywhere: \`grep -r "8080" docs/ --include="*.md"\` (should be empty)
+              - [ ] Check for mock fallbacks: \`grep -r "mock_\\|fallback" services/ --include="*.py"\`
+              - [ ] Verify AsyncSessionFactory pattern: \`grep -r "DatabasePool" services/ --include="*.py"\` (should be empty)
+              - [ ] Check cursor rules synchronization: \`diff .cursor/rules/ docs/cursorrules/active-rules.md\` (should be identical)
 
-                ### 📁 Session Log Management & Omnibus Synthesis
+              ### 📁 Session Log Management & Omnibus Synthesis
 
-                - [ ] Check for completed session logs in `dev/2025/MM/DD/` structure
-                - [ ] **Synthesis Identification** (evolving process - handle carefully):
-                  - [ ] Review recent session logs for synthesis candidates
-                  - [ ] Check if any sessions qualify for omnibus consolidation
-                  - [ ] Identify cross-session patterns worth preserving
-                  - [ ] Note: Synthesis practices still evolving - defer complex decisions to PM
-                - [ ] Verify no stranded session logs outside `dev/` directory structure
-                - [ ] Review `docs/omnibus-logs/` for completeness and organization
+              - [ ] Check for completed session logs in \`dev/2025/MM/DD/\` structure
+              - [ ] **Synthesis Identification** (evolving process - handle carefully):
+                - [ ] Review recent session logs for synthesis candidates
+                - [ ] Check if any sessions qualify for omnibus consolidation
+                - [ ] Identify cross-session patterns worth preserving
+                - [ ] Note: Synthesis practices still evolving - defer complex decisions to PM
+              - [ ] Verify no stranded session logs outside \`dev/\` directory structure
+              - [ ] Review \`docs/omnibus-logs/\` for completeness and organization
 
-                ### 🎯 Sprint & Roadmap Alignment
+              ### 🎯 Sprint & Roadmap Alignment
 
-                - [ ] Update roadmap.md with completed items from current sprint
-                - [ ] **Note**: backlog.md deprecated (moved to trash) - GitHub is source of truth
-                - [ ] **Note**: completed.md deprecated - GitHub is source of truth
-                - [ ] Check for new issues needing taxonomy labels (TRACK-EPIC format)
-                - [ ] Update sprint goals in PIPER.user.md if new sprint started
+              - [ ] Update roadmap.md with completed items from current sprint
+              - [ ] **Note**: backlog.md deprecated (moved to trash) - GitHub is source of truth
+              - [ ] **Note**: completed.md deprecated - GitHub is source of truth
+              - [ ] Check for new issues needing taxonomy labels (TRACK-EPIC format)
+              - [ ] Update sprint goals in PIPER.user.md if new sprint started
 
-                ### 📊 GitHub Issues Sync
+              ### 📊 GitHub Issues Sync
 
-                - [ ] Run: `gh issue list --state all --json number,title,state,labels --limit 200 > docs/planning/pm-issues-status.json`
-                - [ ] Verify all open issues have TRACK-EPIC taxonomy
-                - [ ] **Note**: backlog.md deprecated - use GitHub Projects for planning
-                - [ ] Identify stale issues (no activity >30 days)
-                - [ ] **Note**: CSV generation deprecated - GitHub is source of truth
+              - [ ] Run: \`gh issue list --state all --json number,title,state,labels --limit 200 > docs/planning/pm-issues-status.json\`
+              - [ ] Verify all open issues have TRACK-EPIC taxonomy
+              - [ ] **Note**: backlog.md deprecated - use GitHub Projects for planning
+              - [ ] Identify stale issues (no activity >30 days)
+              - [ ] **Note**: CSV generation deprecated - GitHub is source of truth
 
-                ### 📚 Pattern & Knowledge Capture
+              ### 📚 Pattern & Knowledge Capture
 
-                - [ ] Update docs/internal/architecture/current/patterns/README.md with:
-                  - [ ] New patterns discovered this week (33 total patterns in 5 categories)
-                  - [ ] Core Architecture Patterns (infrastructure/error handling)
-                  - [ ] Data & Query Patterns (sessions/queries)
-                  - [ ] AI & Intelligence Patterns (LLM/spatial/intent/multi-agent)
-                  - [ ] Integration & Platform Patterns (config/CLI/plugins)
-                  - [ ] Development & Process Patterns (methodology/workflow)
-                - [ ] Review session logs for patterns to document
-                - [ ] Check for methodology improvements to capture
-                - [ ] **Review CITATIONS.md (`docs/references/CITATIONS.md`) for completeness**:
-                  - [ ] Verify all architectural patterns have proper attribution (DDD, MCP, spatial intelligence)
-                  - [ ] Verify all tooling decisions are attributed (Serena workflow, etc.)
-                  - [ ] Only credit unique additions as our own
-                  - [ ] Note any unclear attributions to ask PM
-                - [ ] Verify template directories are current and organized:
-                  - [ ] `docs/internal/development/tools/session-log-templates/`
-                  - [ ] `docs/internal/planning/current/templates/`
-                  - [ ] `docs/internal/development/methodology-core/` (multi-agent templates)
+              - [ ] Update docs/internal/architecture/current/patterns/README.md with:
+                - [ ] New patterns discovered this week (33 total patterns in 5 categories)
+                - [ ] Core Architecture Patterns (infrastructure/error handling)
+                - [ ] Data & Query Patterns (sessions/queries)
+                - [ ] AI & Intelligence Patterns (LLM/spatial/intent/multi-agent)
+                - [ ] Integration & Platform Patterns (config/CLI/plugins)
+                - [ ] Development & Process Patterns (methodology/workflow)
+              - [ ] Review session logs for patterns to document
+              - [ ] Check for methodology improvements to capture
+              - [ ] **Review CITATIONS.md (\`docs/references/CITATIONS.md\`) for completeness**:
+                - [ ] Verify all architectural patterns have proper attribution (DDD, MCP, spatial intelligence)
+                - [ ] Verify all tooling decisions are attributed (Serena workflow, etc.)
+                - [ ] Only credit unique additions as our own
+                - [ ] Note any unclear attributions to ask PM
+              - [ ] Verify template directories are current and organized:
+                - [ ] \`docs/internal/development/tools/session-log-templates/\`
+                - [ ] \`docs/internal/planning/current/templates/\`
+                - [ ] \`docs/internal/development/methodology-core/\` (multi-agent templates)
 
-                ### 🎯 Quality Checks
+              ### 🎯 Quality Checks
 
-                - [ ] Verify methodology files are in `docs/internal/development/methodology-core/` (not scattered)
-                - [ ] Ensure all ADRs are in `docs/internal/architecture/current/adrs/` with proper numbering
-                - [ ] Check that no backup files (`*.backup`, `*.old`) are in active directories
-                - [ ] Verify no test files in production directories
-                - [ ] Check for TODO/FIXME comments: `grep -r "TODO\\|FIXME" services/ web/ cli/`
-                - [ ] **Review root README.md (repository view)**:
-                  - [ ] Check for outdated "new" claims (weeks-old items)
-                  - [ ] Verify links are current and working
-                  - [ ] Ensure content is brief and evergreen
-                  - [ ] Note: This is separate from docs/README.md (pmorgan.tech homepage)
+              - [ ] Verify methodology files are in \`docs/internal/development/methodology-core/\` (not scattered)
+              - [ ] Ensure all ADRs are in \`docs/internal/architecture/current/adrs/\` with proper numbering
+              - [ ] Check that no backup files (\`*.backup\`, \`*.old\`) are in active directories
+              - [ ] Verify no test files in production directories
+              - [ ] Check for TODO/FIXME comments: \`grep -r "TODO\\|FIXME" services/ web/ cli/\`
+              - [ ] **Review root README.md (repository view)**:
+                - [ ] Check for outdated "new" claims (weeks-old items)
+                - [ ] Verify links are current and working
+                - [ ] Ensure content is brief and evergreen
+                - [ ] Note: This is separate from docs/README.md (pmorgan.tech homepage)
 
-                ### 📈 Metrics Collection (Optional)
+              ### 📈 Metrics Collection (Optional)
 
-                - [ ] Document count: `find docs/ -name "*.md" | wc -l`
-                - [ ] Archive size: `du -sh docs/archive/`
-                - [ ] Active docs size: `du -sh docs/ --exclude=archive`
-                - [ ] Code line count: `find . -name "*.py" -type f -exec wc -l {} + | tail -1`
-                - [ ] Test coverage if available: `pytest --cov`
+              - [ ] Document count: \`find docs/ -name "*.md" | wc -l\`
+              - [ ] Archive size: \`du -sh docs/archive/\`
+              - [ ] Active docs size: \`du -sh docs/ --exclude=archive\`
+              - [ ] Code line count: \`find . -name "*.py" -type f -exec wc -l {} + | tail -1\`
+              - [ ] Test coverage if available: \`pytest --cov\`
 
-                ### 🔄 Workflow Improvement (Meta/Recursive)
+              ### 🔄 Workflow Improvement (Meta/Recursive)
 
-                - [ ] Review this week's sweep for process improvements
-                - [ ] Check if PM provided feedback on sweep workflow
-                - [ ] Update `.github/workflows/weekly-docs-audit.yml` with improvements if needed
-                - [ ] Document improvement ideas for next iteration
-                - [ ] Note: OK if no updates needed this week
+              - [ ] Review this week's sweep for process improvements
+              - [ ] Check if PM provided feedback on sweep workflow
+              - [ ] Update \`.github/workflows/weekly-docs-audit.yml\` with improvements if needed
+              - [ ] Document improvement ideas for next iteration
+              - [ ] Note: OK if no updates needed this week
 
-                ---
+              ---
 
-                **Assigned to**: @mediajunkie
-                **Due**: End of day
-                **Priority**: Focus on Knowledge Updates and Infrastructure Verification first
+              **Assigned to**: @mediajunkie
+              **Due**: End of day
+              **Priority**: Focus on Knowledge Updates and Infrastructure Verification first
 
-                ### Notes
-                - Knowledge sync prevents Claude drift - do this FIRST
-                - Infrastructure checks prevent assumption cascades
-                - Create PM-* issues for any problems discovered
-                - Update this checklist template if new patterns emerge
+              ### Notes
+              - Knowledge sync prevents Claude drift - do this FIRST
+              - Infrastructure checks prevent assumption cascades
+              - Create PM-* issues for any problems discovered
+              - Update this checklist template if new patterns emerge
 
-                ### References
-                - [CLAUDE.md Project Instructions](../CLAUDE.md)
-                - [Architecture Documentation](../docs/architecture/architecture.md)
-                - [Pattern Catalog](../docs/internal/architecture/current/patterns/README.md)
-                - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md),
+              ### References
+              - [CLAUDE.md Project Instructions](../CLAUDE.md)
+              - [Architecture Documentation](../docs/architecture/architecture.md)
+              - [Pattern Catalog](../docs/internal/architecture/current/patterns/README.md)
+              - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md)`,
               labels: ['documentation', 'maintenance', 'weekly-audit', 'fly-audit'],
               assignees: ['mediajunkie']
             });
