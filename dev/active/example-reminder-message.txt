@@ -1,0 +1,8 @@
+🌅 Good morning! Time for your daily standup.
+
+Generate your standup:
+• Web: https://piper-morgan.com/standup
+• CLI: `piper standup`
+• API: POST /api/v1/standup/generate
+
+Disable reminders: Reply "STOP" or update preferences
