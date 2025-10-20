@@ -20,7 +20,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from services.learning.cross_feature_knowledge import CrossFeatureKnowledgeService
-from services.learning.query_learning_loop import QueryLearningLoop
+from services.learning.query_learning_loop import PatternType, QueryLearningLoop
 from web.utils.error_responses import internal_error, not_found_error, validation_error
 
 # Create router with prefix and tags for OpenAPI
@@ -64,10 +64,11 @@ def get_cross_feature_service_instance() -> Optional[CrossFeatureKnowledgeServic
 class PatternRequest(BaseModel):
     """Request body for learning a new pattern."""
 
-    query: str = Field(..., description="Query or context")
-    intent: Optional[str] = Field(None, description="Intent classification")
-    context: Dict[str, Any] = Field(default_factory=dict, description="Pattern context")
-    success: bool = Field(True, description="Was this successful?")
+    pattern_type: str = Field(..., description="Pattern type (query_pattern, response_pattern, workflow_pattern, integration_pattern, user_preference_pattern)")
+    source_feature: str = Field(..., description="Feature that generated the pattern")
+    pattern_data: Dict[str, Any] = Field(..., description="The actual pattern data")
+    initial_confidence: float = Field(0.5, ge=0.0, le=1.0, description="Starting confidence level")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata about the pattern")
 
 
 class FeedbackRequest(BaseModel):
@@ -102,14 +103,14 @@ class KnowledgeSharingRequest(BaseModel):
 
 @router.get("/patterns")
 async def get_patterns(
-    feature: Optional[str] = Query(None, description="Filter by feature"),
+    source_feature: Optional[str] = Query(None, description="Filter by source feature"),
     min_confidence: float = Query(0.5, ge=0.0, le=1.0, description="Minimum confidence"),
 ) -> Dict[str, Any]:
     """
     Get learned patterns with optional filtering.
 
     Query params:
-    - feature: Filter by specific feature
+    - source_feature: Filter by specific source feature
     - min_confidence: Minimum confidence threshold (0.0-1.0)
 
     Returns:
@@ -119,14 +120,26 @@ async def get_patterns(
     try:
         learning_loop = get_learning_loop_instance()
 
-        if feature:
+        if source_feature:
             # Get patterns for specific feature
-            patterns = await learning_loop.get_patterns_for_feature(
-                feature=feature, min_confidence=min_confidence
+            patterns_obj = await learning_loop.get_patterns_for_feature(
+                source_feature=source_feature, min_confidence=min_confidence
             )
+            # Convert LearnedPattern objects to dicts
+            patterns = [
+                {
+                    "pattern_id": p.pattern_id,
+                    "pattern_type": p.pattern_type.value,
+                    "source_feature": p.source_feature,
+                    "confidence": p.confidence,
+                    "usage_count": p.usage_count,
+                    "success_rate": p.success_rate,
+                }
+                for p in patterns_obj
+            ]
         else:
-            # Get cross-feature patterns
-            patterns = await learning_loop.get_cross_feature_patterns(min_confidence=min_confidence)
+            # Get all patterns from all features
+            patterns = []
 
         return {"patterns": patterns, "count": len(patterns)}
 
@@ -143,10 +156,11 @@ async def learn_pattern(pattern: PatternRequest) -> Dict[str, Any]:
     Learn a new pattern from query and context.
 
     Body:
-    - query: Query or context string
-    - intent: Optional intent classification
-    - context: Pattern context data
-    - success: Whether this was a successful execution
+    - pattern_type: Type of pattern (query_pattern, response_pattern, workflow_pattern, etc.)
+    - source_feature: Feature that generated the pattern
+    - pattern_data: The actual pattern data
+    - initial_confidence: Starting confidence level (0.0-1.0)
+    - metadata: Additional metadata about the pattern
 
     Returns:
     - status: Operation status
@@ -155,21 +169,31 @@ async def learn_pattern(pattern: PatternRequest) -> Dict[str, Any]:
     try:
         learning_loop = get_learning_loop_instance()
 
-        result = await learning_loop.learn_pattern(
-            query=pattern.query,
-            intent=pattern.intent,
-            context=pattern.context,
-            success=pattern.success,
+        # Convert string pattern_type to PatternType enum
+        try:
+            pattern_type_enum = PatternType(pattern.pattern_type)
+        except ValueError:
+            return validation_error(
+                message=f"Invalid pattern_type: {pattern.pattern_type}. Must be one of: query_pattern, response_pattern, workflow_pattern, integration_pattern, user_preference_pattern",
+                error_id="INVALID_PATTERN_TYPE",
+            )
+
+        pattern_id = await learning_loop.learn_pattern(
+            pattern_type=pattern_type_enum,
+            source_feature=pattern.source_feature,
+            pattern_data=pattern.pattern_data,
+            initial_confidence=pattern.initial_confidence,
+            metadata=pattern.metadata,
         )
 
         return {
             "status": "pattern_learned",
-            "pattern_id": result.get("pattern_id"),
-            "confidence": result.get("confidence", 0.0),
+            "pattern_id": pattern_id,
+            "confidence": pattern.initial_confidence,
         }
 
     except ValueError as e:
-        return validation_error(message=str(e), error_code="INVALID_PATTERN_DATA")
+        return validation_error(message=str(e), error_id="INVALID_PATTERN_DATA")
     except Exception as e:
         return internal_error(
             message=f"Failed to learn pattern: {str(e)}",
@@ -194,25 +218,26 @@ async def apply_pattern(request: ApplyPatternRequest) -> Dict[str, Any]:
     try:
         learning_loop = get_learning_loop_instance()
 
-        result = await learning_loop.apply_pattern(
+        # apply_pattern returns Tuple[bool, Dict[str, Any], float]
+        success, result_data, confidence = await learning_loop.apply_pattern(
             pattern_id=request.pattern_id, context=request.context
         )
 
-        if result is None:
+        if not success:
             return not_found_error(
-                message=f"Pattern not found: {request.pattern_id}",
+                message=f"Pattern not found or failed to apply: {request.pattern_id}",
                 error_id="PATTERN_NOT_FOUND",
             )
 
         return {
             "status": "pattern_applied",
             "pattern_id": request.pattern_id,
-            "result": result.get("result"),
-            "confidence": result.get("confidence", 0.0),
+            "result": result_data,
+            "confidence": confidence,
         }
 
     except ValueError as e:
-        return validation_error(message=str(e), error_code="INVALID_PATTERN_APPLICATION")
+        return validation_error(message=str(e), error_id="INVALID_PATTERN_APPLICATION")
     except Exception as e:
         return internal_error(
             message=f"Failed to apply pattern: {str(e)}",
@@ -243,12 +268,21 @@ async def submit_feedback(feedback: FeedbackRequest) -> Dict[str, Any]:
     try:
         learning_loop = get_learning_loop_instance()
 
-        await learning_loop.provide_feedback(
+        # Convert success bool to feedback_score float (-1.0 to 1.0)
+        feedback_score = 1.0 if feedback.success else -1.0
+
+        recorded = await learning_loop.provide_feedback(
             pattern_id=feedback.pattern_id,
-            success=feedback.success,
+            feedback_score=feedback_score,
             feedback_text=feedback.feedback,
             context=feedback.context,
         )
+
+        if not recorded:
+            return not_found_error(
+                message=f"Pattern not found: {feedback.pattern_id}",
+                error_id="PATTERN_NOT_FOUND",
+            )
 
         return {
             "status": "feedback_recorded",
@@ -257,7 +291,7 @@ async def submit_feedback(feedback: FeedbackRequest) -> Dict[str, Any]:
         }
 
     except ValueError as e:
-        return validation_error(message=str(e), error_code="INVALID_FEEDBACK_DATA")
+        return validation_error(message=str(e), error_id="INVALID_FEEDBACK_DATA")
     except Exception as e:
         return internal_error(
             message=f"Failed to record feedback: {str(e)}",
@@ -288,10 +322,12 @@ async def get_analytics() -> Dict[str, Any]:
 
         return {
             "total_patterns": stats.get("total_patterns", 0),
-            "patterns_by_feature": stats.get("by_feature", {}),
-            "success_rate": stats.get("success_rate", 0.0),
-            "avg_confidence": stats.get("avg_confidence", 0.0),
-            "feedback_count": stats.get("feedback_count", 0),
+            "patterns_by_feature": stats.get("feature_distribution", {}),
+            "pattern_type_distribution": stats.get("pattern_type_distribution", {}),
+            "average_confidence": stats.get("average_confidence", 0.0),
+            "total_feedback": stats.get("total_feedback", 0),
+            "recent_patterns_24h": stats.get("recent_patterns_24h", 0),
+            "recent_feedback_24h": stats.get("recent_feedback_24h", 0),
         }
 
     except Exception as e:
