@@ -203,6 +203,24 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ Failed to mount standup API router: {e}")
         print("   Continuing without standup API\n")
 
+    # Mount learning API router (Issue #221 - CORE-LEARN-A)
+    print("\n🧠 Mounting Learning API Router...")
+    try:
+        from web.api.routes.learning import router as learning_router
+
+        app.include_router(learning_router)
+        print("✅ Learning API router mounted at /api/v1/learning")
+        print("   Endpoints:")
+        print("   - GET /api/v1/learning/patterns")
+        print("   - POST /api/v1/learning/patterns")
+        print("   - POST /api/v1/learning/feedback")
+        print("   - GET /api/v1/learning/analytics")
+        print("   - GET /api/v1/learning/knowledge/shared")
+        print("   - GET /api/v1/learning/health")
+    except Exception as e:
+        print(f"⚠️ Failed to mount learning API router: {e}")
+        print("   Continuing without learning API\n")
+
     print("🚀 Web server startup complete")
 
     yield

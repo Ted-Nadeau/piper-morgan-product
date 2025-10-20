@@ -95,6 +95,12 @@ class OrchestrationEngine:
         self.session_integration = SessionIntegration()
         self.performance_monitor = PerformanceMonitor()
 
+        # Initialize Learning System (Issue #221 - CORE-LEARN-A)
+        from services.learning.query_learning_loop import QueryLearningLoop
+
+        self.learning_loop = QueryLearningLoop()
+        self.logger.info("Learning system initialized in OrchestrationEngine")
+
     async def get_query_router(self) -> QueryRouter:
         """Get QueryRouter, initializing on-demand with session-aware wrappers"""
         if self.query_router is None:
@@ -122,10 +128,11 @@ class OrchestrationEngine:
             query_router = await self.get_query_router()
 
             # Route the query based on action
+            result = None
             if intent.action in ["search_projects", "list_projects", "find_projects"]:
                 # Use project query service through QueryRouter
                 projects = await query_router.project_queries.list_active_projects()
-                return {
+                result = {
                     "message": f"Found {len(projects)} active projects",
                     "data": [
                         {"id": p.id, "name": p.name, "description": p.description} for p in projects
@@ -136,7 +143,7 @@ class OrchestrationEngine:
             elif intent.action in ["search_files", "find_files", "list_files"]:
                 # Use file query service through QueryRouter
                 files = await query_router.file_queries.list_recent_files(limit=10)
-                return {
+                result = {
                     "message": f"Found {len(files)} recent files",
                     "data": files,
                     "intent_handled": True,
@@ -145,14 +152,34 @@ class OrchestrationEngine:
             elif intent.action in ["get_greeting", "hello", "help"]:
                 # Use conversation query service through QueryRouter
                 greeting = await query_router.conversation_queries.get_greeting()
-                return {"message": greeting, "data": {}, "intent_handled": True}
+                result = {"message": greeting, "data": {}, "intent_handled": True}
 
             else:
-                return {
+                result = {
                     "message": f"Query action '{intent.action}' not yet supported by QueryRouter",
                     "data": {},
                     "intent_handled": False,
                 }
+
+            # Learning System Integration (Issue #221 - CORE-LEARN-A)
+            # Record successful patterns for future optimization
+            if result and result.get("intent_handled"):
+                try:
+                    await self.learning_loop.learn_pattern(
+                        query=intent.original_query or intent.action,
+                        intent=intent.category,
+                        context={
+                            "action": intent.action,
+                            "entity": intent.entity,
+                            "success": True,
+                        },
+                        success=True,
+                    )
+                except Exception as learning_error:
+                    # Learning failures should not impact query handling
+                    self.logger.debug(f"Learning pattern recording failed: {learning_error}")
+
+            return result
 
         except Exception as e:
             self.logger.error(f"QueryRouter error: {e}")
