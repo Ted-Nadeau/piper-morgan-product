@@ -19,6 +19,7 @@ This document lists all environment variables used by Piper Morgan for configura
 **Added**: October 18, 2025 (Issue #197)
 
 **Usage**:
+
 ```bash
 # Enable ethics enforcement
 export ENABLE_ETHICS_ENFORCEMENT=true
@@ -28,6 +29,7 @@ export ENABLE_ETHICS_ENFORCEMENT=false
 ```
 
 **Behavior**:
+
 - **`true`**: All requests through IntentService are checked for ethics violations
   - Harassment content blocked (HTTP 422)
   - Professional boundary violations blocked (HTTP 422)
@@ -40,6 +42,7 @@ export ENABLE_ETHICS_ENFORCEMENT=false
 **Documentation**: `docs/internal/architecture/current/ethics-architecture.md`
 
 **Testing**:
+
 ```bash
 # Test with ethics enabled
 ENABLE_ETHICS_ENFORCEMENT=true python dev/2025/10/18/test-ethics-integration.py
@@ -61,6 +64,7 @@ ENABLE_ETHICS_ENFORCEMENT=false python dev/2025/10/18/test-ethics-integration.py
 **Added**: October 18, 2025 (Issue #99 - CORE-KNOW)
 
 **Usage**:
+
 ```bash
 # Enable Knowledge Graph enhancement
 export ENABLE_KNOWLEDGE_GRAPH=true
@@ -70,6 +74,7 @@ export ENABLE_KNOWLEDGE_GRAPH=false
 ```
 
 **Behavior**:
+
 - **`true`**: All requests through IntentService are enhanced with Knowledge Graph context
   - Conversation history analyzed for relevant concepts
   - Related entities identified and included in context
@@ -82,6 +87,7 @@ export ENABLE_KNOWLEDGE_GRAPH=false
 **Documentation**: Issue #99 - CORE-KNOW Sprint A3
 
 **Testing**:
+
 ```bash
 # Test with Knowledge Graph enabled
 ENABLE_KNOWLEDGE_GRAPH=true python dev/2025/10/18/test-knowledge-graph-integration.py
@@ -91,6 +97,7 @@ ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integrat
 ```
 
 **Performance**:
+
 - Target: <100ms for context enhancement
 - Graceful degradation on failures
 - No impact when disabled
@@ -102,18 +109,21 @@ ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integrat
 ### Slack
 
 #### `SLACK_BOT_TOKEN`
+
 **Purpose**: Slack bot OAuth token
 **Type**: String (starts with `xoxb-`)
 **Required**: Yes (for Slack integration)
 **Example**: `xoxb-YOUR-BOT-TOKEN-HERE`
 
 #### `SLACK_APP_TOKEN`
+
 **Purpose**: Slack app-level token
 **Type**: String (starts with `xapp-`)
 **Required**: Yes (for Socket Mode)
 **Example**: `xapp-YOUR-APP-TOKEN-HERE`
 
 #### `SLACK_SIGNING_SECRET`
+
 **Purpose**: Slack request verification secret
 **Type**: String
 **Required**: Yes (for webhook verification)
@@ -122,6 +132,7 @@ ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integrat
 ### GitHub
 
 #### `GITHUB_TOKEN`
+
 **Purpose**: GitHub personal access token
 **Type**: String (starts with `ghp_` or `github_pat_`)
 **Required**: Yes (for GitHub integration)
@@ -131,18 +142,21 @@ ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integrat
 ### Notion
 
 #### `NOTION_API_KEY`
+
 **Purpose**: Notion integration token
 **Type**: String (starts with `secret_`)
 **Required**: Yes (for Notion integration)
 **Example**: `secret_YOUR_NOTION_API_KEY_HERE`
 
 #### `NOTION_WORKSPACE_ID`
+
 **Purpose**: Notion workspace/page ID
 **Type**: String (UUID format)
 **Required**: Optional
 **Example**: `12345678-1234-1234-1234-123456789012`
 
 #### `NOTION_TIMEOUT_SECONDS`
+
 **Purpose**: Notion API request timeout
 **Type**: Integer
 **Default**: `30`
@@ -151,12 +165,14 @@ ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integrat
 ### Google Calendar
 
 #### `GOOGLE_CALENDAR_ID`
+
 **Purpose**: Google Calendar ID
 **Type**: String (email format)
 **Required**: Yes (for Calendar integration)
 **Example**: `your-calendar@group.calendar.google.com`
 
 #### `GOOGLE_CALENDAR_TIMEOUT`
+
 **Purpose**: Google Calendar API timeout
 **Type**: Integer (seconds)
 **Default**: `30`
@@ -174,6 +190,7 @@ ENABLE_KNOWLEDGE_GRAPH=false python dev/2025/10/18/test-knowledge-graph-integrat
 **Example**: `PYTHONPATH=/Users/xian/Development/piper-morgan`
 
 **Usage**:
+
 ```bash
 # Run tests
 PYTHONPATH=/Users/xian/Development/piper-morgan pytest tests/
@@ -189,17 +206,20 @@ PYTHONPATH=/Users/xian/Development/piper-morgan python scripts/some_script.py
 ### Spatial Intelligence
 
 #### `USE_SPATIAL_SLACK`
+
 **Purpose**: Enable Slack spatial intelligence adapter
 **Type**: Boolean
 **Default**: `true`
 **Added**: Recent (Slack spatial integration)
 
 #### `USE_SPATIAL_CALENDAR`
+
 **Purpose**: Enable Calendar spatial intelligence
 **Type**: Boolean
 **Default**: `true`
 
 #### `USE_SPATIAL_NOTION`
+
 **Purpose**: Enable Notion spatial intelligence
 **Type**: Boolean
 **Default**: `true`
@@ -207,6 +227,7 @@ PYTHONPATH=/Users/xian/Development/piper-morgan python scripts/some_script.py
 ### MCP (Model Context Protocol)
 
 #### `ENABLE_MCP_FILE_SEARCH`
+
 **Purpose**: Enable MCP file search functionality
 **Type**: Boolean
 **Default**: `false`
@@ -217,18 +238,23 @@ PYTHONPATH=/Users/xian/Development/piper-morgan python scripts/some_script.py
 ## Server Configuration
 
 ### `PORT`
+
 **Purpose**: Web server port
 **Type**: Integer
 **Default**: `8001`
 **Example**: `8001`
 
 **Usage**:
+
 ```bash
-# Start server on custom port
-PORT=8080 python -m uvicorn web.app:app --port 8080
+# Start server on custom port (example using 9000)
+PORT=9000 python -m uvicorn web.app:app --port 9000
 ```
 
+**Note**: Default is 8001. Only change if you have port conflicts.
+
 ### `HOST`
+
 **Purpose**: Web server host
 **Type**: String
 **Default**: `127.0.0.1`
@@ -239,6 +265,7 @@ PORT=8080 python -m uvicorn web.app:app --port 8080
 ## Database Configuration
 
 ### `DATABASE_URL`
+
 **Purpose**: PostgreSQL connection string
 **Type**: String (URL format)
 **Default**: `postgresql://piper:piper@localhost:5433/piper_morgan`
@@ -253,6 +280,7 @@ PORT=8080 python -m uvicorn web.app:app --port 8080
 ### OpenAI
 
 #### `OPENAI_API_KEY`
+
 **Purpose**: OpenAI API key
 **Type**: String (starts with `sk-`)
 **Required**: Yes (for OpenAI provider)
@@ -262,6 +290,7 @@ PORT=8080 python -m uvicorn web.app:app --port 8080
 ### Anthropic (Claude)
 
 #### `ANTHROPIC_API_KEY`
+
 **Purpose**: Anthropic API key
 **Type**: String (starts with `sk-ant-`)
 **Required**: Yes (for Anthropic provider)
@@ -271,6 +300,7 @@ PORT=8080 python -m uvicorn web.app:app --port 8080
 ### Google (Gemini)
 
 #### `GEMINI_API_KEY`
+
 **Purpose**: Google Gemini API key
 **Type**: String
 **Required**: Yes (for Gemini provider)
@@ -279,6 +309,7 @@ PORT=8080 python -m uvicorn web.app:app --port 8080
 ### Perplexity
 
 #### `PERPLEXITY_API_KEY`
+
 **Purpose**: Perplexity API key
 **Type**: String (starts with `pplx-`)
 **Required**: Yes (for Perplexity provider)
@@ -290,12 +321,14 @@ PORT=8080 python -m uvicorn web.app:app --port 8080
 ## Logging & Monitoring
 
 ### `LOG_LEVEL`
+
 **Purpose**: Application log level
 **Type**: String (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 **Default**: `INFO`
 **Example**: `DEBUG`
 
 **Usage**:
+
 ```bash
 # Enable debug logging
 LOG_LEVEL=DEBUG python -m uvicorn web.app:app
@@ -391,6 +424,7 @@ The following variables contain sensitive data and should **NEVER** be committed
 **Problem**: Changed environment variable but application still uses old value
 
 **Solution**:
+
 ```bash
 # Verify variable is set
 echo $ENABLE_ETHICS_ENFORCEMENT
@@ -405,6 +439,7 @@ python -m uvicorn web.app:app --port 8001
 **Problem**: Integration shows as "missing" or "invalid"
 
 **Solution**:
+
 1. Check variable is set: `echo $SLACK_BOT_TOKEN`
 2. Verify format: Slack tokens start with `xoxb-`
 3. Check server logs for configuration errors
