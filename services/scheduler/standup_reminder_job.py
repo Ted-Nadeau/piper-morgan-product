@@ -281,10 +281,10 @@ class StandupReminderJob:
 
     async def _get_user_reminder_preferences(self, user_id: str) -> Dict[str, Any]:
         """
-        Get reminder preferences for user.
+        Get reminder preferences for user from UserPreferenceManager.
 
-        NOTE: Placeholder implementation for Task 1.
-        Task 2 will implement actual preference querying from UserPreferenceManager.
+        Uses the preference_manager.get_reminder_preferences() method which
+        returns defaults if not explicitly set.
 
         Args:
             user_id: Slack user ID
@@ -298,15 +298,5 @@ class StandupReminderJob:
                 "days": List[int] (0=Mon, 6=Sun)
             }
         """
-        # TODO (Task 2): Query actual preferences from UserPreferenceManager
-        # prefs = await self.preference_manager.get_preference(
-        #     user_id, "standup_reminder_enabled"
-        # )
-
-        # Placeholder defaults for Task 1
-        return {
-            "enabled": True,
-            "time": "06:00",  # 6:00 AM
-            "timezone": "America/Los_Angeles",  # PT
-            "days": [0, 1, 2, 3, 4],  # Monday-Friday
-        }
+        # Query actual preferences from UserPreferenceManager (Task 2 implementation)
+        return await self.preference_manager.get_reminder_preferences(user_id)
