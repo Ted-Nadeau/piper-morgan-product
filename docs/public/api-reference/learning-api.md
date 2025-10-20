@@ -1,8 +1,8 @@
 # Learning System API Reference
 
-**Version**: 1.0
+**Version**: 1.1
 **Base URL**: `/api/v1/learning`
-**Issue**: #221 (CORE-LEARN-A)
+**Issues**: #221 (CORE-LEARN-A), #222 (CORE-LEARN-B)
 **Status**: Production Ready ✅
 
 ---
@@ -31,6 +31,26 @@ Authorization: Bearer <jwt_token>
 ```
 
 See [Authentication API](./authentication-api.md) for token generation.
+
+---
+
+## Pattern Types
+
+The system supports 8 pattern types for comprehensive learning across different domains:
+
+**Core Patterns** (Issue #221):
+- **`query_pattern`** - User query optimization and intent learning
+- **`response_pattern`** - Response format and content preferences
+- **`workflow_pattern`** - Command sequence and workflow learning
+- **`integration_pattern`** - Tool and service integration patterns
+- **`user_preference_pattern`** - User-specific behavior patterns
+
+**Extended Patterns** (Issue #222 - CORE-LEARN-B):
+- **`temporal_pattern`** - Time-based trends and recurring patterns
+- **`communication_pattern`** - Communication style and format preferences
+- **`error_pattern`** - Error detection and recovery patterns
+
+Each pattern type uses the same confidence scoring, feedback, and analytics infrastructure.
 
 ---
 
@@ -103,7 +123,7 @@ Record a new pattern from successful operations.
 **Fields:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `pattern_type` | string | Yes | Pattern type: `query_pattern`, `response_pattern`, `workflow_pattern`, `integration_pattern`, `user_preference_pattern` |
+| `pattern_type` | string | Yes | Pattern type: `query_pattern`, `response_pattern`, `workflow_pattern`, `integration_pattern`, `user_preference_pattern`, `temporal_pattern`, `communication_pattern`, `error_pattern` |
 | `source_feature` | string | Yes | Feature that generated the pattern |
 | `pattern_data` | object | Yes | The actual pattern data |
 | `initial_confidence` | float | No | Starting confidence (0.0-1.0, default: 0.5) |
@@ -530,6 +550,13 @@ Exceeding rate limits returns `429 Too Many Requests`.
 ---
 
 ## Changelog
+
+### Version 1.1 (October 20, 2025)
+- **CORE-LEARN-B**: Extended pattern recognition
+- Added 3 new pattern types: `temporal_pattern`, `communication_pattern`, `error_pattern`
+- 8 total pattern types (60% overachievement vs 5 required)
+- Pattern Types documentation section added
+- All existing functionality preserved (backward compatible)
 
 ### Version 1.0 (October 20, 2025)
 - Initial release
