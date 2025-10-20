@@ -1,8 +1,8 @@
 # Learning System API Reference
 
-**Version**: 1.2
+**Version**: 1.3
 **Base URL**: `/api/v1/learning`
-**Issues**: #221 (CORE-LEARN-A), #222 (CORE-LEARN-B), #223 (CORE-LEARN-C)
+**Issues**: #221 (CORE-LEARN-A), #222 (CORE-LEARN-B), #223 (CORE-LEARN-C), #224 (CORE-LEARN-D)
 **Status**: Production Ready ✅
 
 ---
@@ -664,6 +664,19 @@ Exceeding rate limits returns `429 Too Many Requests`.
 ---
 
 ## Changelog
+
+### Version 1.3 (October 20, 2025)
+- **CORE-LEARN-D**: Workflow Optimization System (Sprint A5 Finale)
+- Wired Chain-of-Draft experiment system as workflow optimizer
+- Added `optimize_workflow_via_experiments()` method for A/B testing
+- Added `create_workflow_template_from_pattern()` for template creation
+- Automatic pattern learning from workflows with ≥5% improvement
+- Template creation from high-confidence patterns (≥0.8)
+- Quality assessment: multi-factor scoring (performance, success, decomposition, distribution)
+- Created 5 integration tests for workflow optimization
+- Added comprehensive Workflow Optimization documentation section
+- All existing functionality preserved (backward compatible)
+- 96% leverage ratio (3,579 lines existing / 150 lines new)
 
 ### Version 1.2 (October 20, 2025)
 - **CORE-LEARN-C**: Preference Learning System
