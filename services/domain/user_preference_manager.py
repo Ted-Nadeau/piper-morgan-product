@@ -10,9 +10,26 @@ import asyncio
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
+from zoneinfo import ZoneInfo, available_timezones
 
 from services.session.session_manager import ConversationSession
+
+# ============================================================================
+# Reminder Preference Keys (Issue #161 Task 2)
+# ============================================================================
+
+STANDUP_REMINDER_ENABLED = "standup_reminder_enabled"
+"""Whether daily standup reminders are enabled for this user (bool, default: True)"""
+
+STANDUP_REMINDER_TIME = "standup_reminder_time"
+"""Time of day to send reminder in HH:MM format (str, default: "06:00")"""
+
+STANDUP_REMINDER_TIMEZONE = "standup_reminder_timezone"
+"""IANA timezone name for reminder time (str, default: "America/Los_Angeles")"""
+
+STANDUP_REMINDER_DAYS = "standup_reminder_days"
+"""Days of week to send reminders, 0=Monday, 6=Sunday (List[int], default: [0,1,2,3,4])"""
 
 
 @dataclass
@@ -432,6 +449,190 @@ class UserPreferenceManager:
 
         except Exception:
             return False
+
+    # ========================================================================
+    # Reminder Preference Methods (Issue #161 Task 2)
+    # ========================================================================
+
+    def _validate_reminder_time(self, time_str: str) -> bool:
+        """
+        Validate reminder time format (HH:MM).
+
+        Args:
+            time_str: Time string in HH:MM format
+
+        Returns:
+            True if valid
+
+        Raises:
+            ValueError: If format is invalid
+        """
+        try:
+            # Parse HH:MM format
+            parts = time_str.split(":")
+            if len(parts) != 2:
+                raise ValueError("Time must be in HH:MM format")
+
+            hour = int(parts[0])
+            minute = int(parts[1])
+
+            # Validate ranges
+            if hour < 0 or hour > 23:
+                raise ValueError("Hour must be 0-23")
+            if minute < 0 or minute > 59:
+                raise ValueError("Minute must be 0-59")
+
+            return True
+
+        except (ValueError, AttributeError) as e:
+            raise ValueError(f"Invalid time format: {time_str}") from e
+
+    def _validate_timezone(self, tz_str: str) -> bool:
+        """
+        Validate timezone string (IANA timezone name).
+
+        Args:
+            tz_str: Timezone string (e.g., "America/Los_Angeles")
+
+        Returns:
+            True if valid
+
+        Raises:
+            ValueError: If timezone is invalid
+        """
+        try:
+            # Check if timezone is valid
+            if tz_str not in available_timezones():
+                raise ValueError(f"Invalid timezone: {tz_str}")
+
+            # Try to create ZoneInfo to ensure it works
+            ZoneInfo(tz_str)
+
+            return True
+
+        except Exception as e:
+            raise ValueError(f"Invalid timezone: {tz_str}") from e
+
+    def _validate_reminder_days(self, days: List[int]) -> bool:
+        """
+        Validate reminder days list.
+
+        Args:
+            days: List of weekday integers (0=Monday, 6=Sunday)
+
+        Returns:
+            True if valid
+
+        Raises:
+            ValueError: If days list is invalid
+        """
+        if not isinstance(days, list):
+            raise ValueError("Reminder days must be a list")
+
+        if not days:
+            raise ValueError("Reminder days list cannot be empty")
+
+        # Check all values are integers 0-6
+        for day in days:
+            if not isinstance(day, int):
+                raise ValueError("Reminder days must be integers")
+            if day < 0 or day > 6:
+                raise ValueError("Reminder days must be 0-6 (0=Monday, 6=Sunday)")
+
+        # Check for duplicates
+        if len(days) != len(set(days)):
+            raise ValueError("Reminder days list contains duplicates")
+
+        return True
+
+    async def get_reminder_enabled(self, user_id: str) -> bool:
+        """Get whether reminders are enabled for user."""
+        return await self.get_preference(STANDUP_REMINDER_ENABLED, user_id=user_id, default=True)
+
+    async def set_reminder_enabled(self, user_id: str, enabled: bool):
+        """Set whether reminders are enabled for user."""
+        await self.set_preference(STANDUP_REMINDER_ENABLED, enabled, user_id=user_id)
+
+    async def get_reminder_time(self, user_id: str) -> str:
+        """Get reminder time for user (HH:MM format)."""
+        return await self.get_preference(STANDUP_REMINDER_TIME, user_id=user_id, default="06:00")
+
+    async def set_reminder_time(self, user_id: str, time_str: str):
+        """
+        Set reminder time for user.
+
+        Args:
+            user_id: User ID
+            time_str: Time in HH:MM format
+
+        Raises:
+            ValueError: If time format is invalid
+        """
+        # Validate time format
+        self._validate_reminder_time(time_str)
+
+        await self.set_preference(STANDUP_REMINDER_TIME, time_str, user_id=user_id)
+
+    async def get_reminder_timezone(self, user_id: str) -> str:
+        """Get reminder timezone for user."""
+        return await self.get_preference(
+            STANDUP_REMINDER_TIMEZONE, user_id=user_id, default="America/Los_Angeles"
+        )
+
+    async def set_reminder_timezone(self, user_id: str, timezone: str):
+        """
+        Set reminder timezone for user.
+
+        Args:
+            user_id: User ID
+            timezone: IANA timezone name
+
+        Raises:
+            ValueError: If timezone is invalid
+        """
+        # Validate timezone
+        self._validate_timezone(timezone)
+
+        await self.set_preference(STANDUP_REMINDER_TIMEZONE, timezone, user_id=user_id)
+
+    async def get_reminder_days(self, user_id: str) -> List[int]:
+        """Get reminder days for user."""
+        return await self.get_preference(
+            STANDUP_REMINDER_DAYS, user_id=user_id, default=[0, 1, 2, 3, 4]
+        )
+
+    async def set_reminder_days(self, user_id: str, days: List[int]):
+        """
+        Set reminder days for user.
+
+        Args:
+            user_id: User ID
+            days: List of weekday integers (0=Monday, 6=Sunday)
+
+        Raises:
+            ValueError: If days list is invalid
+        """
+        # Validate days list
+        self._validate_reminder_days(days)
+
+        await self.set_preference(STANDUP_REMINDER_DAYS, days, user_id=user_id)
+
+    async def get_reminder_preferences(self, user_id: str) -> dict:
+        """
+        Get all reminder preferences for user.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Dict with keys: enabled, time, timezone, days
+        """
+        return {
+            "enabled": await self.get_reminder_enabled(user_id),
+            "time": await self.get_reminder_time(user_id),
+            "timezone": await self.get_reminder_timezone(user_id),
+            "days": await self.get_reminder_days(user_id),
+        }
 
     async def _cleanup_expired_preferences(self):
         """Clean up expired preferences across all scopes"""
