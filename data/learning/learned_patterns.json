@@ -1695,5 +1695,201 @@
     "metadata": {
       "test": true
     }
+  },
+  {
+    "pattern_id": "user_preference_pattern_test_feature_20251020_164922",
+    "pattern_type": "user_preference_pattern",
+    "source_feature": "test_feature",
+    "pattern_data": {
+      "preference_key": "test_preference",
+      "preference_value": "test_value"
+    },
+    "confidence": 1.0,
+    "usage_count": 1,
+    "success_rate": 1.0,
+    "first_seen": "2025-10-20T16:49:22.619516",
+    "last_used": "2025-10-20T16:49:22.623476",
+    "feedback_score": 0.0,
+    "metadata": {
+      "test": true
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_test_workflow_20251020_164922",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "test_workflow",
+    "pattern_data": {
+      "workflow_steps": [
+        {
+          "step": 1,
+          "subtask_description": "Parse user requirements",
+          "assigned_agent": "CODE"
+        },
+        {
+          "step": 2,
+          "subtask_description": "Implement API endpoints",
+          "assigned_agent": "CODE"
+        },
+        {
+          "step": 3,
+          "subtask_description": "Add authentication layer",
+          "assigned_agent": "CURSOR"
+        }
+      ],
+      "quality_score": 0.85,
+      "execution_time_ms": 1500,
+      "improvement_achieved": 12.5
+    },
+    "confidence": 0.75,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T16:49:22.647603",
+    "last_used": "2025-10-20T16:49:22.647603",
+    "feedback_score": 0.0,
+    "metadata": {
+      "test": true
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_test_template_20251020_164922",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "test_template",
+    "pattern_data": {
+      "workflow_steps": [
+        {
+          "step": 1,
+          "subtask_description": "Design database schema",
+          "assigned_agent": "CURSOR"
+        },
+        {
+          "step": 2,
+          "subtask_description": "Implement models and migrations",
+          "assigned_agent": "CODE"
+        }
+      ],
+      "quality_score": 0.92,
+      "execution_time_ms": 800,
+      "improvement_achieved": 15.0
+    },
+    "confidence": 0.85,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T16:49:22.652960",
+    "last_used": "2025-10-20T16:49:22.652960",
+    "feedback_score": 0.0,
+    "metadata": {
+      "test": true
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_workflow_templates_20251020_164922",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "workflow_templates",
+    "pattern_data": {
+      "template": {
+        "template_name": "database_optimization_template",
+        "template_id": "wf_template_1761004162657",
+        "based_on_pattern": "workflow_pattern_test_template_20251020_164922",
+        "confidence": 0.85,
+        "steps": [
+          {
+            "step_number": 1,
+            "description_template": "Design database schema",
+            "agent_preference": "CURSOR",
+            "parameters": []
+          },
+          {
+            "step_number": 2,
+            "description_template": "Implement models and migrations",
+            "agent_preference": "CODE",
+            "parameters": []
+          }
+        ],
+        "expected_quality": 0.92,
+        "expected_time_ms": 800,
+        "optimization_insights": {},
+        "created_at": "2025-10-20T16:49:22.657676",
+        "usage_count": 0
+      },
+      "source_pattern_id": "workflow_pattern_test_template_20251020_164922",
+      "template_type": "workflow_optimization"
+    },
+    "confidence": 0.85,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T16:49:22.657686",
+    "last_used": "2025-10-20T16:49:22.657686",
+    "feedback_score": 0.0,
+    "metadata": {
+      "template_name": "database_optimization_template",
+      "is_template": true,
+      "source_pattern": "workflow_pattern_test_template_20251020_164922"
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_test_low_confidence_20251020_164922",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "test_low_confidence",
+    "pattern_data": {
+      "workflow_steps": [
+        {
+          "step": 1,
+          "subtask_description": "Do something",
+          "assigned_agent": "CODE"
+        }
+      ],
+      "quality_score": 0.5,
+      "execution_time_ms": 2000
+    },
+    "confidence": 0.6,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T16:49:22.662662",
+    "last_used": "2025-10-20T16:49:22.662662",
+    "feedback_score": 0.0,
+    "metadata": {
+      "test": true
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_test_metrics_20251020_164922",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "test_metrics",
+    "pattern_data": {
+      "workflow_steps": [
+        {
+          "step": 1,
+          "subtask_description": "Step 1",
+          "assigned_agent": "CODE"
+        }
+      ],
+      "quality_score": 0.88,
+      "execution_time_ms": 1200,
+      "improvement_achieved": 8.5,
+      "optimization_insights": {
+        "best_draft_quality": 0.88,
+        "improvement_percentage": 8.5,
+        "improvement_types": [
+          "performance",
+          "accuracy"
+        ],
+        "learning_insights": [
+          "Draft 2 showed 8.5% quality improvement",
+          "Performance improvement: 50ms faster"
+        ],
+        "recommendations": [
+          "Continue with context variation approaches"
+        ]
+      }
+    },
+    "confidence": 0.8,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T16:49:22.674871",
+    "last_used": "2025-10-20T16:49:22.674871",
+    "feedback_score": 0.0,
+    "metadata": {
+      "test": true
+    }
   }
 ]
