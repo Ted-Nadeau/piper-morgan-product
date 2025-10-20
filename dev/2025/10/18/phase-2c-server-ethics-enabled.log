@@ -172,3 +172,18 @@ INFO:     127.0.0.1:57423 - "GET /health HTTP/1.1" 200 OK
 {"event": "Ethics violation detected: harassment - Content contains potential harassment patterns (matched: 2 patterns)", "logger": "services.intent.intent_service", "level": "warning", "timestamp": "2025-10-18T20:18:07.432624Z"}
 Validation error: Ethics boundary violation - {'error_type': 'EthicsBoundaryViolation'}
 INFO:     127.0.0.1:57454 - "POST /api/v1/intent HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:64262 - "POST /api/v1/standup/generate HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64275 - "GET /api/v1/standup/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64285 - "GET /api/v1/standup/modes HTTP/1.1" 404 Not Found
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [99896]
+
+🔌 Shutting down Plugin System...
+✅ Plugin shutdown: 4/4 successful
+🛑 Plugin system shutdown complete
+
+🔧 Shutting down ServiceContainer...
+✅ ServiceContainer shutdown successful
+🛑 Web server shutdown complete
