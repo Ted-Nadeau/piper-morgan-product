@@ -168,6 +168,208 @@ style = await preference_manager.get_preference(
 
 ---
 
+## Workflow Optimization
+
+**Issue**: #224 (CORE-LEARN-D - Sprint A5 Finale)
+
+The system provides workflow optimization through A/B testing via the Chain-of-Draft experiment system. This enables automatic identification of workflow improvements and creation of reusable templates.
+
+### How It Works
+
+1. **Experiment Execution**: Chain-of-Draft runs 2-draft A/B tests on workflows
+2. **Quality Assessment**: Multi-factor scoring (performance, success rate, task decomposition)
+3. **Pattern Learning**: Workflows with ≥5% improvement automatically become learned patterns
+4. **Template Creation**: High-confidence patterns (≥0.8) can be converted to reusable templates
+
+### A/B Testing Framework
+
+**Chain-of-Draft Capabilities**:
+- **2-Draft Experiments**: Execute workflow twice with slight variations
+- **Quality Scoring**: Weighted assessment (performance 30%, success 30%, decomposition 20%, distribution 20%)
+- **Improvement Detection**: Identifies performance, accuracy, completeness, efficiency, and clarity improvements
+- **Learning Insights**: Automatic recommendations for workflow optimization
+
+**Optimization Metrics**:
+- **Time to Completion**: Total experiment time and per-draft execution time
+- **Quality Score**: 0.0-1.0 weighted score (POOR < 0.5, ACCEPTABLE 0.5-0.7, GOOD 0.7-0.9, EXCELLENT ≥0.9)
+- **Success Rate**: Percentage of successful subtask completions
+- **Improvement Percentage**: Quality improvement from Draft 1 to Draft 2
+
+### Running Workflow Experiments
+
+**Python API**:
+```python
+from services.learning.query_learning_loop import QueryLearningLoop
+from services.domain.models import Intent
+from services.shared_types import IntentCategory
+
+# Create intent for workflow to optimize
+intent = Intent(
+    category=IntentCategory.EXECUTION,
+    action="implement_rest_api",
+    original_message="Implement REST API with auth and validation",
+    confidence=0.95
+)
+
+# Run optimization experiment
+learning_loop = QueryLearningLoop()
+result = await learning_loop.optimize_workflow_via_experiments(
+    intent=intent,
+    context={"user_id": "user123"}
+)
+
+# Check results
+if result["success"]:
+    optimization = result["optimization"]
+    print(f"Best Quality: {optimization['best_draft_quality']}")
+    print(f"Improvement: {optimization['improvement_percentage']}%")
+    print(f"Insights: {optimization['learning_insights']}")
+
+    if optimization.get("pattern_learned"):
+        print(f"Pattern ID: {optimization['learned_pattern_id']}")
+```
+
+**Response Structure**:
+```json
+{
+  "success": true,
+  "experiment_id": "exp_intent_12345_1729442890123",
+  "optimization": {
+    "best_draft_quality": 0.88,
+    "improvement_percentage": 12.5,
+    "improvement_types": ["performance", "accuracy"],
+    "learning_insights": [
+      "Draft 2 showed 12.5% quality improvement",
+      "Significant performance improvement: 75ms faster"
+    ],
+    "recommendations": [
+      "Continue with context variation approaches"
+    ],
+    "total_experiment_time_ms": 1850,
+    "pattern_learned": true,
+    "learned_pattern_id": "workflow_pattern_chain_of_draft_optimization_20251020_142500"
+  }
+}
+```
+
+### Creating Workflow Templates
+
+High-confidence workflow patterns (≥0.8) can be converted to reusable templates for similar workflows.
+
+**Python API**:
+```python
+# Create template from learned pattern
+template_result = await learning_loop.create_workflow_template_from_pattern(
+    pattern_id="workflow_pattern_chain_of_draft_optimization_20251020_142500",
+    template_name="rest_api_optimization_template"
+)
+
+if template_result["success"]:
+    template = template_result["template"]
+    print(f"Template: {template['template_name']}")
+    print(f"Confidence: {template['confidence']}")
+    print(f"Expected Quality: {template['expected_quality']}")
+    print(f"Steps: {len(template['steps'])}")
+```
+
+**Template Structure**:
+```json
+{
+  "success": true,
+  "template": {
+    "template_name": "rest_api_optimization_template",
+    "template_id": "wf_template_1729442950000",
+    "based_on_pattern": "workflow_pattern_chain_of_draft_optimization_20251020_142500",
+    "confidence": 0.85,
+    "steps": [
+      {
+        "step_number": 1,
+        "description_template": "Parse user requirements and define API schema",
+        "agent_preference": "CODE",
+        "parameters": []
+      },
+      {
+        "step_number": 2,
+        "description_template": "Implement API endpoints with validation",
+        "agent_preference": "CODE",
+        "parameters": []
+      },
+      {
+        "step_number": 3,
+        "description_template": "Add authentication and authorization layer",
+        "agent_preference": "CURSOR",
+        "parameters": []
+      }
+    ],
+    "expected_quality": 0.88,
+    "expected_time_ms": 1200,
+    "created_at": "2025-10-20T14:25:50.000000",
+    "usage_count": 0
+  },
+  "template_pattern_id": "workflow_pattern_workflow_templates_20251020_142551",
+  "message": "Template 'rest_api_optimization_template' created from pattern workflow_pattern_chain_of_draft_optimization_20251020_142500"
+}
+```
+
+### Template Requirements
+
+**Minimum Confidence**: Templates can only be created from patterns with confidence ≥ 0.8
+**Pattern Learning**: Workflows must show ≥5% improvement to be learned as patterns
+**Pattern Type**: Only WORKFLOW_PATTERN types support template creation
+
+**Error Handling**:
+```python
+# Low confidence pattern (< 0.8)
+result = await learning_loop.create_workflow_template_from_pattern(
+    pattern_id="low_confidence_pattern",
+    template_name="will_fail"
+)
+# Returns: {"success": false, "error": "Pattern confidence 0.6 below 0.8 threshold"}
+
+# Pattern not found
+result = await learning_loop.create_workflow_template_from_pattern(
+    pattern_id="nonexistent",
+    template_name="will_fail"
+)
+# Returns: {"success": false, "error": "Pattern nonexistent not found"}
+```
+
+### Integration with Learning System
+
+**Automatic Pattern Learning**:
+- Experiments with ≥5% improvement automatically learn WORKFLOW_PATTERN
+- Pattern confidence based on improvement percentage (capped at 0.95)
+- Pattern includes workflow steps, quality score, execution time, and insights
+
+**Cross-Feature Knowledge**:
+- Workflow patterns can be shared via CrossFeatureKnowledgeService
+- Templates enable knowledge transfer across different features
+- Optimization insights inform future workflow decisions
+
+### Use Cases
+
+1. **Multi-Agent Coordination**: Optimize task decomposition and agent assignment
+2. **REST API Development**: Learn optimal implementation workflows
+3. **Database Refactoring**: Capture proven refactoring sequences
+4. **Testing Workflows**: Optimize test creation and execution patterns
+5. **Code Review Processes**: Learn efficient review and feedback cycles
+
+### Dashboard Integration
+
+Workflow optimization metrics are available through the analytics endpoint:
+
+```python
+# Get learning analytics
+analytics = await learning_loop.get_learning_stats()
+
+# Workflow-specific metrics
+workflow_patterns = [p for p in analytics["patterns_by_type"]["workflow_pattern"]]
+avg_quality = sum(p["quality_score"] for p in workflow_patterns) / len(workflow_patterns)
+avg_improvement = sum(p["pattern_data"]["improvement_achieved"] for p in workflow_patterns) / len(workflow_patterns)
+```
+
+---
+
 ## Pattern Management
 
 ### Get Patterns
