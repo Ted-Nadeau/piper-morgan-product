@@ -248,6 +248,9 @@ class QueryLearningLoop:
                 result = await self._apply_response_pattern(pattern, context)
             elif pattern.pattern_type == PatternType.WORKFLOW_PATTERN:
                 result = await self._apply_workflow_pattern(pattern, context)
+            elif pattern.pattern_type == PatternType.USER_PREFERENCE_PATTERN:
+                # CORE-LEARN-C: Apply preference patterns to UserPreferenceManager
+                result = await self._apply_user_preference_pattern(pattern, context)
             else:
                 result = {"success": False, "error": "Unknown pattern type"}
 
@@ -362,6 +365,92 @@ class QueryLearningLoop:
                 "success": False,
                 "error": f"Failed to apply workflow pattern: {e}",
                 "pattern_id": pattern.pattern_id,
+            }
+
+    # ========================================================================
+    # CORE-LEARN-C: Preference Pattern Application (Issue #223)
+    # ========================================================================
+
+    async def _apply_user_preference_pattern(
+        self, pattern: LearnedPattern, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Apply user preference pattern by setting it as an explicit preference.
+        
+        This converts implicit preferences (learned from behavior) to explicit
+        preferences (stored in UserPreferenceManager).
+        
+        Args:
+            pattern: The learned USER_PREFERENCE_PATTERN
+            context: Application context with user_id and optional session_id
+        
+        Returns:
+            Dict with success status and details
+        
+        Example:
+            pattern = LearnedPattern(
+                pattern_type=PatternType.USER_PREFERENCE_PATTERN,
+                pattern_data={
+                    "preference_key": "response_style",
+                    "preference_value": "concise"
+                },
+                confidence=0.85
+            )
+            result = await loop._apply_user_preference_pattern(pattern, {"user_id": "user123"})
+        """
+        # Get user_id from context
+        user_id = context.get("user_id")
+        session_id = context.get("session_id")
+        
+        if not user_id:
+            return {
+                "success": False,
+                "error": "user_id required in context for preference pattern application"
+            }
+        
+        try:
+            # Get UserPreferenceManager instance
+            from services.domain.user_preference_manager import UserPreferenceManager
+            preference_manager = UserPreferenceManager()
+            
+            # Convert LearnedPattern to dict for apply_preference_pattern
+            pattern_dict = {
+                "confidence": pattern.confidence,
+                "pattern_data": pattern.pattern_data,
+                "pattern_type": pattern.pattern_type.value if hasattr(pattern.pattern_type, "value") else str(pattern.pattern_type),
+                "pattern_id": pattern.pattern_id
+            }
+            
+            # Apply the pattern as an explicit preference
+            success = await preference_manager.apply_preference_pattern(
+                pattern=pattern_dict,
+                user_id=user_id,
+                session_id=session_id,
+                scope="user" if not session_id else "session"
+            )
+            
+            if success:
+                preference_key = pattern.pattern_data.get("preference_key", "unknown")
+                preference_value = pattern.pattern_data.get("preference_value", "unknown")
+                
+                return {
+                    "success": True,
+                    "preference_key": preference_key,
+                    "preference_value": preference_value,
+                    "applied_scope": "session" if session_id else "user",
+                    "confidence": pattern.confidence
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Pattern confidence too low or preference data invalid"
+                }
+        
+        except Exception as e:
+            logger.error(f"Failed to apply user preference pattern: {e}")
+            return {
+                "success": False,
+                "error": str(e)
             }
 
     async def provide_feedback(

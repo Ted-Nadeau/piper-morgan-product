@@ -741,6 +741,71 @@ class UserPreferenceManager:
             "features": await self.get_learning_features(user_id),
         }
 
+    # ========================================================================
+    # CORE-LEARN-C: Preference Learning from Patterns (Issue #223)
+    # ========================================================================
+
+    async def apply_preference_pattern(
+        self,
+        pattern: Dict[str, Any],
+        user_id: str,
+        session_id: Optional[str] = None,
+        scope: str = "user"
+    ) -> bool:
+        """
+        Apply a learned preference pattern to user preferences.
+        
+        Converts implicit preferences (learned patterns) to explicit preferences.
+        Only applies patterns with confidence >= 0.7 (high confidence threshold).
+        
+        Args:
+            pattern: The learned pattern dict (or LearnedPattern object converted to dict)
+            user_id: User ID to set preference for
+            session_id: Optional session ID for session-scoped preferences
+            scope: Preference scope ('user' or 'session')
+        
+        Returns:
+            bool: True if preference was set, False if pattern confidence too low
+        
+        Example:
+            pattern = {
+                "confidence": 0.85,
+                "pattern_data": {
+                    "preference_key": "response_style",
+                    "preference_value": "concise"
+                }
+            }
+            success = await pm.apply_preference_pattern(pattern, "user123")
+        """
+        # Extract confidence - handle both dict and object
+        confidence = pattern.get("confidence", 0.0) if isinstance(pattern, dict) else getattr(pattern, "confidence", 0.0)
+        
+        # Only apply high-confidence patterns to preferences
+        if confidence < 0.7:
+            return False
+        
+        # Extract pattern data - handle both dict and object
+        pattern_data = pattern.get("pattern_data", {}) if isinstance(pattern, dict) else getattr(pattern, "pattern_data", {})
+        
+        # Pattern data should contain preference information
+        if "preference_key" not in pattern_data or "preference_value" not in pattern_data:
+            return False
+        
+        preference_key = pattern_data["preference_key"]
+        preference_value = pattern_data["preference_value"]
+        
+        # Set the preference using existing mechanism
+        # This respects all existing validation, hierarchy, etc.
+        success = await self.set_preference(
+            key=preference_key,
+            value=preference_value,
+            user_id=user_id,
+            session_id=session_id,
+            scope=scope
+        )
+        
+        return success
+
     async def _cleanup_expired_preferences(self):
         """Clean up expired preferences across all scopes"""
         current_time = datetime.now()

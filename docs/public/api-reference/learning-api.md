@@ -1,8 +1,8 @@
 # Learning System API Reference
 
-**Version**: 1.1
+**Version**: 1.2
 **Base URL**: `/api/v1/learning`
-**Issues**: #221 (CORE-LEARN-A), #222 (CORE-LEARN-B)
+**Issues**: #221 (CORE-LEARN-A), #222 (CORE-LEARN-B), #223 (CORE-LEARN-C)
 **Status**: Production Ready ✅
 
 ---
@@ -51,6 +51,120 @@ The system supports 8 pattern types for comprehensive learning across different 
 - **`error_pattern`** - Error detection and recovery patterns
 
 Each pattern type uses the same confidence scoring, feedback, and analytics infrastructure.
+
+---
+
+## Preference Learning
+
+**Issue**: #223 (CORE-LEARN-C)
+
+The system learns user preferences both **explicitly** (stated) and **implicitly** (inferred from behavior patterns).
+
+### How It Works
+
+1. **Pattern Detection**: User behavior creates patterns through repeated actions
+2. **Confidence Building**: Patterns gain confidence as they're observed multiple times
+3. **Automatic Application**: High-confidence patterns (≥ 0.7) automatically become explicit preferences
+4. **Hierarchical Storage**: Preferences follow Session > User > Global precedence
+
+### Explicit vs Implicit Preferences
+
+**Explicit Preferences**:
+- Directly stated by user through configuration or commands
+- Set via API endpoints or preference management
+- Take precedence over learned preferences
+
+**Implicit Preferences**:
+- Derived from `USER_PREFERENCE_PATTERN` observations
+- Automatically applied when confidence ≥ 0.7
+- Converted to explicit preferences in UserPreferenceManager
+
+**Example Flow**:
+```
+User Action (15x): Chooses "concise" response format
+    ↓
+Pattern Detected: USER_PREFERENCE_PATTERN (confidence: 0.85)
+    ↓
+Auto-Applied: preference "response_format" = "concise"
+    ↓
+Future Interactions: Automatically use concise format
+```
+
+### Confidence Threshold
+
+Only high-confidence patterns become preferences:
+- **Confidence ≥ 0.7**: Pattern applied as explicit preference
+- **Confidence < 0.7**: Pattern observed but not applied
+- **Rationale**: Prevents false positives from limited observations
+
+### Conflict Resolution
+
+When preferences conflict, hierarchy determines precedence:
+
+1. **Session > User > Global**: More specific scopes win
+2. **Explicit > Implicit**: Stated preferences override learned patterns
+3. **Recent > Historical**: Newer preferences override older (via versioning)
+
+**Example**:
+```python
+# User explicitly sets preference
+POST /api/v1/preferences
+{"key": "format", "value": "json", "user_id": "user123"}
+
+# System learns different preference from behavior
+# Pattern: "format" = "markdown" (confidence: 0.8)
+
+# Result: Explicit preference ("json") takes precedence
+```
+
+### Privacy & Safety
+
+- **Confidence Gating**: Only high-confidence patterns (≥ 0.7) applied
+- **JSON Validation**: Prevents PII leakage through serialization checks
+- **TTL Expiration**: Session preferences auto-expire
+- **Scope Isolation**: User/session/global separation prevents cross-contamination
+
+### Integration with Pattern System
+
+**Learning Flow**:
+```python
+# 1. Pattern is learned through QueryLearningLoop
+pattern_id = await learning_loop.learn_pattern(
+    pattern_type=PatternType.USER_PREFERENCE_PATTERN,
+    source_feature="user_interaction",
+    pattern_data={
+        "preference_key": "response_style",
+        "preference_value": "concise"
+    },
+    initial_confidence=0.85
+)
+
+# 2. Pattern is automatically applied to preferences
+success, result, confidence = await learning_loop.apply_pattern(
+    pattern_id=pattern_id,
+    context={"user_id": "user123"}
+)
+
+# 3. Preference is now available for all features
+style = await preference_manager.get_preference(
+    key="response_style",
+    user_id="user123"
+)
+# Returns: "concise"
+```
+
+### Supported Preference Categories
+
+**Reminder Preferences** (Sprint A4):
+- `standup_reminder_enabled`, `standup_reminder_time`
+- `standup_reminder_timezone`, `standup_reminder_days`
+
+**Learning Preferences** (CORE-LEARN-A):
+- `learning_enabled`, `learning_min_confidence`, `learning_features`
+
+**Custom Preferences**:
+- Any preference learned through USER_PREFERENCE_PATTERN
+- Stored with same validation and hierarchy as specialized preferences
 
 ---
 
@@ -550,6 +664,17 @@ Exceeding rate limits returns `429 Too Many Requests`.
 ---
 
 ## Changelog
+
+### Version 1.2 (October 20, 2025)
+- **CORE-LEARN-C**: Preference Learning System
+- Wired USER_PREFERENCE_PATTERN to UserPreferenceManager
+- Added `apply_preference_pattern()` for automatic preference application
+- Implemented implicit→explicit preference conversion (confidence ≥ 0.7)
+- Added preference hierarchy (Session > User > Global)
+- Added conflict resolution (Explicit > Implicit > Historical)
+- Created 5 integration tests for preference learning
+- Added comprehensive Preference Learning documentation section
+- All existing functionality preserved (backward compatible)
 
 ### Version 1.1 (October 20, 2025)
 - **CORE-LEARN-B**: Extended pattern recognition
