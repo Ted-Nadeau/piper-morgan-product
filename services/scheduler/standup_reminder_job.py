@@ -229,8 +229,8 @@ class StandupReminderJob:
         """
         Send reminder DM to user via SlackIntegrationRouter.
 
-        NOTE: Uses placeholder message for Task 1.
-        Task 3 will implement ReminderMessageFormatter with full links.
+        Uses ReminderMessageFormatter to create personalized, timezone-aware
+        reminder with web/CLI/API access methods.
 
         Args:
             user_id: Slack user ID (used as channel for DM)
@@ -239,18 +239,14 @@ class StandupReminderJob:
             True if message sent successfully, False otherwise
         """
         try:
-            # Placeholder message for Task 1
-            # Task 3 will implement ReminderMessageFormatter with:
-            # - Web link: https://piper-morgan.com/standup
-            # - CLI command: `piper standup`
-            # - API endpoint: POST /api/v1/standup/generate
-            # - Opt-out instructions
+            # Get user's timezone for personalized greeting
+            user_tz = await self.preference_manager.get_reminder_timezone(user_id)
 
-            message = (
-                "🌅 Good morning! Time for your daily standup.\n\n"
-                "Generate your standup using the Piper Morgan CLI or API.\n\n"
-                "_This is a test message from the standup reminder system._"
-            )
+            # Format message using ReminderMessageFormatter
+            from services.integrations.slack.reminder_formatter import get_reminder_formatter
+
+            formatter = get_reminder_formatter()
+            message = formatter.format_reminder_message(user_id, user_tz)
 
             # Send DM via SlackIntegrationRouter
             # User ID as channel = Direct Message
@@ -261,7 +257,7 @@ class StandupReminderJob:
             success = response.success if hasattr(response, "success") else False
 
             if success:
-                logger.info("Reminder DM sent successfully", user_id=user_id)
+                logger.info("Reminder DM sent successfully", user_id=user_id, timezone=user_tz)
             else:
                 logger.warning(
                     "Reminder DM failed",
