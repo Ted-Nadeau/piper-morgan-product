@@ -31,6 +31,19 @@ STANDUP_REMINDER_TIMEZONE = "standup_reminder_timezone"
 STANDUP_REMINDER_DAYS = "standup_reminder_days"
 """Days of week to send reminders, 0=Monday, 6=Sunday (List[int], default: [0,1,2,3,4])"""
 
+# ============================================================================
+# Learning Preference Keys (Issue #221 CORE-LEARN-A)
+# ============================================================================
+
+LEARNING_ENABLED = "learning_enabled"
+"""Whether pattern learning is enabled for this user (bool, default: True)"""
+
+LEARNING_MIN_CONFIDENCE = "learning_min_confidence"
+"""Minimum confidence threshold for pattern application (float 0.0-1.0, default: 0.5)"""
+
+LEARNING_FEATURES = "learning_features"
+"""List of features enabled for learning (List[str], default: [])"""
+
 
 @dataclass
 class PreferenceItem:
@@ -632,6 +645,100 @@ class UserPreferenceManager:
             "time": await self.get_reminder_time(user_id),
             "timezone": await self.get_reminder_timezone(user_id),
             "days": await self.get_reminder_days(user_id),
+        }
+
+    # ========================================================================
+    # Learning Preference Methods (Issue #221 CORE-LEARN-A)
+    # ========================================================================
+
+    def _validate_learning_confidence(self, confidence: float) -> bool:
+        """
+        Validate learning confidence threshold.
+
+        Args:
+            confidence: Confidence value (0.0-1.0)
+
+        Returns:
+            True if valid
+
+        Raises:
+            ValueError: If confidence is out of range
+        """
+        if not isinstance(confidence, (int, float)):
+            raise ValueError("Confidence must be a number")
+
+        if confidence < 0.0 or confidence > 1.0:
+            raise ValueError("Confidence must be between 0.0 and 1.0")
+
+        return True
+
+    async def get_learning_enabled(self, user_id: str) -> bool:
+        """Get whether pattern learning is enabled for user."""
+        return await self.get_preference(LEARNING_ENABLED, user_id=user_id, default=True)
+
+    async def set_learning_enabled(self, user_id: str, enabled: bool):
+        """Set whether pattern learning is enabled for user."""
+        await self.set_preference(LEARNING_ENABLED, enabled, user_id=user_id)
+
+    async def get_learning_min_confidence(self, user_id: str) -> float:
+        """Get minimum confidence threshold for pattern application."""
+        return await self.get_preference(LEARNING_MIN_CONFIDENCE, user_id=user_id, default=0.5)
+
+    async def set_learning_min_confidence(self, user_id: str, confidence: float):
+        """
+        Set minimum confidence threshold for pattern application.
+
+        Args:
+            user_id: User ID
+            confidence: Confidence threshold (0.0-1.0)
+
+        Raises:
+            ValueError: If confidence is out of range
+        """
+        # Validate confidence
+        self._validate_learning_confidence(confidence)
+
+        await self.set_preference(LEARNING_MIN_CONFIDENCE, confidence, user_id=user_id)
+
+    async def get_learning_features(self, user_id: str) -> List[str]:
+        """Get list of features enabled for learning."""
+        return await self.get_preference(LEARNING_FEATURES, user_id=user_id, default=[])
+
+    async def set_learning_features(self, user_id: str, features: List[str]):
+        """
+        Set list of features enabled for learning.
+
+        Args:
+            user_id: User ID
+            features: List of feature names
+
+        Raises:
+            ValueError: If features list is invalid
+        """
+        if not isinstance(features, list):
+            raise ValueError("Learning features must be a list")
+
+        # Validate all features are strings
+        for feature in features:
+            if not isinstance(feature, str):
+                raise ValueError("Learning features must be strings")
+
+        await self.set_preference(LEARNING_FEATURES, features, user_id=user_id)
+
+    async def get_learning_preferences(self, user_id: str) -> dict:
+        """
+        Get all learning preferences for user.
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            Dict with keys: enabled, min_confidence, features
+        """
+        return {
+            "enabled": await self.get_learning_enabled(user_id),
+            "min_confidence": await self.get_learning_min_confidence(user_id),
+            "features": await self.get_learning_features(user_id),
         }
 
     async def _cleanup_expired_preferences(self):
