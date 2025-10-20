@@ -70,7 +70,7 @@ jobs:
                 - [ ] .cursorrules and docs/cursorrules/ files (if modified)
                 - [ ] roadmap.md and backlog.md (if modified)
                 - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
-                - [ ] [List other changed files here after running command]
+              - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
               - [ ] **Verify knowledge/ symlinks**: \`ls -lah knowledge/BRIEFING-*.md\` (should show symlinks)
               - [ ] **Check for stale knowledge/ files**: No duplicates, only symlinks and unique files
@@ -131,7 +131,7 @@ jobs:
                 - [ ] Development & Process Patterns (methodology/workflow)
               - [ ] Review session logs for patterns to document
               - [ ] Check for methodology improvements to capture
-              - [ ] **Review CITATIONS.md (\`docs/references/CITATIONS.md\`) for completeness**:
+              - [ ] **Review CITATIONS.md (`docs/references/CITATIONS.md`) for completeness**:
                 - [ ] Verify all architectural patterns have proper attribution (DDD, MCP, spatial intelligence)
                 - [ ] Verify all tooling decisions are attributed (Serena workflow, etc.)
                 - [ ] Only credit unique additions as our own
