@@ -11,6 +11,7 @@ Performance: Real-time pattern learning and sharing
 import asyncio
 import json
 import logging
+import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -376,17 +377,17 @@ class QueryLearningLoop:
     ) -> Dict[str, Any]:
         """
         Apply user preference pattern by setting it as an explicit preference.
-        
+
         This converts implicit preferences (learned from behavior) to explicit
         preferences (stored in UserPreferenceManager).
-        
+
         Args:
             pattern: The learned USER_PREFERENCE_PATTERN
             context: Application context with user_id and optional session_id
-        
+
         Returns:
             Dict with success status and details
-        
+
         Example:
             pattern = LearnedPattern(
                 pattern_type=PatternType.USER_PREFERENCE_PATTERN,
@@ -401,57 +402,259 @@ class QueryLearningLoop:
         # Get user_id from context
         user_id = context.get("user_id")
         session_id = context.get("session_id")
-        
+
         if not user_id:
             return {
                 "success": False,
-                "error": "user_id required in context for preference pattern application"
+                "error": "user_id required in context for preference pattern application",
             }
-        
+
         try:
             # Get UserPreferenceManager instance
             from services.domain.user_preference_manager import UserPreferenceManager
+
             preference_manager = UserPreferenceManager()
-            
+
             # Convert LearnedPattern to dict for apply_preference_pattern
             pattern_dict = {
                 "confidence": pattern.confidence,
                 "pattern_data": pattern.pattern_data,
-                "pattern_type": pattern.pattern_type.value if hasattr(pattern.pattern_type, "value") else str(pattern.pattern_type),
-                "pattern_id": pattern.pattern_id
+                "pattern_type": (
+                    pattern.pattern_type.value
+                    if hasattr(pattern.pattern_type, "value")
+                    else str(pattern.pattern_type)
+                ),
+                "pattern_id": pattern.pattern_id,
             }
-            
+
             # Apply the pattern as an explicit preference
             success = await preference_manager.apply_preference_pattern(
                 pattern=pattern_dict,
                 user_id=user_id,
                 session_id=session_id,
-                scope="user" if not session_id else "session"
+                scope="user" if not session_id else "session",
             )
-            
+
             if success:
                 preference_key = pattern.pattern_data.get("preference_key", "unknown")
                 preference_value = pattern.pattern_data.get("preference_value", "unknown")
-                
+
                 return {
                     "success": True,
                     "preference_key": preference_key,
                     "preference_value": preference_value,
                     "applied_scope": "session" if session_id else "user",
-                    "confidence": pattern.confidence
+                    "confidence": pattern.confidence,
                 }
             else:
                 return {
                     "success": False,
-                    "error": "Pattern confidence too low or preference data invalid"
+                    "error": "Pattern confidence too low or preference data invalid",
                 }
-        
+
         except Exception as e:
             logger.error(f"Failed to apply user preference pattern: {e}")
-            return {
-                "success": False,
-                "error": str(e)
+            return {"success": False, "error": str(e)}
+
+    # CORE-LEARN-D: Workflow Optimization (Issue #224)
+    async def optimize_workflow_via_experiments(
+        self, intent: "Intent", context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Run Chain-of-Draft experiment to optimize workflow execution.
+
+        Uses A/B testing to identify workflow improvements and create
+        learned patterns from high-quality experiments.
+
+        Args:
+            intent: Intent to optimize
+            context: Execution context
+
+        Returns:
+            Dict with experiment results, best workflow, and learning insights
+        """
+        try:
+            from services.domain.models import Intent
+            from services.orchestration.chain_of_draft import ChainOfDraftExperiment
+
+            # Create experiment instance
+            experiment = ChainOfDraftExperiment()
+
+            # Run 2-draft experiment
+            result = await experiment.run_draft_experiment(intent)
+
+            if not result.success:
+                return {
+                    "success": False,
+                    "error": result.learning_summary.get("error", "Experiment failed"),
+                }
+
+            # Extract optimization insights
+            optimization_data = {
+                "best_draft_quality": result.best_draft.quality_score,
+                "improvement_percentage": (
+                    result.draft_comparison.improvement_percentage
+                    if result.draft_comparison
+                    else 0.0
+                ),
+                "improvement_types": (
+                    [t.value for t in result.draft_comparison.improvement_types]
+                    if result.draft_comparison
+                    else []
+                ),
+                "learning_insights": result.learning_summary.get("key_insights", []),
+                "recommendations": result.learning_summary.get("recommendations", []),
+                "total_experiment_time_ms": result.total_experiment_time_ms,
             }
+
+            # If experiment showed significant improvement (>= 5%), learn pattern
+            if result.draft_comparison and result.draft_comparison.improvement_percentage >= 5.0:
+                # Create workflow pattern from best draft
+                pattern_data = {
+                    "workflow_steps": [
+                        {
+                            "step": i + 1,
+                            "subtask_description": (
+                                st.description if hasattr(st, "description") else str(st)
+                            ),
+                            "assigned_agent": (
+                                str(st.assigned_agent)
+                                if hasattr(st, "assigned_agent")
+                                else "unknown"
+                            ),
+                        }
+                        for i, st in enumerate(result.best_draft.coordination_result.subtasks)
+                    ],
+                    "quality_score": result.best_draft.quality_score,
+                    "execution_time_ms": result.best_draft.execution_time_ms,
+                    "improvement_achieved": result.draft_comparison.improvement_percentage,
+                    "optimization_insights": optimization_data,
+                }
+
+                # Learn the workflow pattern
+                pattern_id = await self.learn_pattern(
+                    pattern_type=PatternType.WORKFLOW_PATTERN,
+                    source_feature="chain_of_draft_optimization",
+                    pattern_data=pattern_data,
+                    initial_confidence=min(
+                        0.5 + (result.draft_comparison.improvement_percentage / 100), 0.95
+                    ),
+                    metadata={
+                        "experiment_id": result.experiment_id,
+                        "intent_action": intent.action,
+                        "improvement_types": optimization_data["improvement_types"],
+                    },
+                )
+
+                optimization_data["learned_pattern_id"] = pattern_id
+                optimization_data["pattern_learned"] = True
+            else:
+                optimization_data["pattern_learned"] = False
+                optimization_data["reason"] = "Improvement below 5% threshold"
+
+            return {
+                "success": True,
+                "experiment_id": result.experiment_id,
+                "optimization": optimization_data,
+            }
+
+        except Exception as e:
+            logger.error(f"Workflow optimization failed: {e}")
+            return {"success": False, "error": str(e)}
+
+    async def create_workflow_template_from_pattern(
+        self, pattern_id: str, template_name: str
+    ) -> Dict[str, Any]:
+        """
+        Create reusable workflow template from learned pattern.
+
+        Converts high-confidence workflow patterns (>= 0.8) into parameterized
+        templates that can be applied to similar workflows.
+
+        Args:
+            pattern_id: ID of workflow pattern to convert
+            template_name: Name for the template
+
+        Returns:
+            Dict with template data and application instructions
+        """
+        try:
+            # Retrieve the pattern - search through all patterns
+            pattern = None
+            for p in self.patterns.values():
+                if p.pattern_id == pattern_id and p.pattern_type == PatternType.WORKFLOW_PATTERN:
+                    pattern = p
+                    break
+
+            if not pattern:
+                return {"success": False, "error": f"Pattern {pattern_id} not found"}
+
+            # Only create templates from high-confidence patterns
+            if pattern.confidence < 0.8:
+                return {
+                    "success": False,
+                    "error": f"Pattern confidence {pattern.confidence} below 0.8 threshold",
+                }
+
+            # Extract template structure from pattern data
+            workflow_steps = pattern.pattern_data.get("workflow_steps", [])
+
+            if not workflow_steps:
+                return {"success": False, "error": "Pattern has no workflow steps"}
+
+            # Create parameterized template
+            template = {
+                "template_name": template_name,
+                "template_id": f"wf_template_{int(time.time() * 1000)}",
+                "based_on_pattern": pattern_id,
+                "confidence": pattern.confidence,
+                "steps": [
+                    {
+                        "step_number": step["step"],
+                        "description_template": step.get("subtask_description", ""),
+                        "agent_preference": step.get("assigned_agent", "auto"),
+                        "parameters": [],  # Placeholder for parameterization
+                    }
+                    for step in workflow_steps
+                ],
+                "expected_quality": pattern.pattern_data.get("quality_score", 0.0),
+                "expected_time_ms": pattern.pattern_data.get("execution_time_ms", 0),
+                "optimization_insights": pattern.pattern_data.get("optimization_insights", {}),
+                "created_at": datetime.now().isoformat(),
+                "usage_count": 0,
+            }
+
+            # Store template in pattern data for future retrieval
+            # (In production, this would go to a template storage system)
+            template_pattern_data = {
+                "template": template,
+                "source_pattern_id": pattern_id,
+                "template_type": "workflow_optimization",
+            }
+
+            # Learn as a new pattern for template storage
+            template_pattern_id = await self.learn_pattern(
+                pattern_type=PatternType.WORKFLOW_PATTERN,
+                source_feature="workflow_templates",
+                pattern_data=template_pattern_data,
+                initial_confidence=pattern.confidence,
+                metadata={
+                    "template_name": template_name,
+                    "is_template": True,
+                    "source_pattern": pattern_id,
+                },
+            )
+
+            return {
+                "success": True,
+                "template": template,
+                "template_pattern_id": template_pattern_id,
+                "message": f"Template '{template_name}' created from pattern {pattern_id}",
+            }
+
+        except Exception as e:
+            logger.error(f"Template creation failed: {e}")
+            return {"success": False, "error": str(e)}
 
     async def provide_feedback(
         self,
