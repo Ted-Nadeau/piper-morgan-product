@@ -165,15 +165,22 @@ class OrchestrationEngine:
             # Record successful patterns for future optimization
             if result and result.get("intent_handled"):
                 try:
+                    from services.learning.query_learning_loop import PatternType
+
                     await self.learning_loop.learn_pattern(
-                        query=intent.original_query or intent.action,
-                        intent=intent.category,
-                        context={
+                        pattern_type=PatternType.QUERY_PATTERN,
+                        source_feature=f"orchestration_{intent.category}",
+                        pattern_data={
+                            "query": intent.original_message or intent.action,
                             "action": intent.action,
-                            "entity": intent.entity,
+                            "entity": intent.context.get("entity"),
+                            "category": str(intent.category),
+                        },
+                        initial_confidence=intent.confidence if intent.confidence else 0.8,
+                        metadata={
+                            "timestamp": datetime.now().isoformat(),
                             "success": True,
                         },
-                        success=True,
                     )
                 except Exception as learning_error:
                     # Learning failures should not impact query handling
