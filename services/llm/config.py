@@ -10,6 +10,8 @@ from typing import Any, Dict
 class LLMProvider(Enum):
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
+    GEMINI = "gemini"
+    PERPLEXITY = "perplexity"
 
 
 class LLMModel(Enum):
