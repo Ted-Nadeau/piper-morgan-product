@@ -2087,5 +2087,69 @@
     "metadata": {
       "test": true
     }
+  },
+  {
+    "pattern_id": "query_pattern_test_feature_20251020_183007",
+    "pattern_type": "query_pattern",
+    "source_feature": "test_feature",
+    "pattern_data": {
+      "query": "search for project management tools",
+      "action": "search_projects",
+      "entity": "project"
+    },
+    "confidence": 1.0,
+    "usage_count": 1,
+    "success_rate": 1.0,
+    "first_seen": "2025-10-20T18:30:07.267032",
+    "last_used": "2025-10-20T18:30:07.270224",
+    "feedback_score": 1.0,
+    "metadata": {
+      "test": true
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_CREATE_TICKET_20251020_183007",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "CREATE_TICKET",
+    "pattern_data": {
+      "action": "create_issue"
+    },
+    "confidence": 0.9,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T18:30:07.305717",
+    "last_used": "2025-10-20T18:30:07.305717",
+    "feedback_score": 0.0,
+    "metadata": {}
+  },
+  {
+    "pattern_id": "query_pattern_QUERY_20251020_183007",
+    "pattern_type": "query_pattern",
+    "source_feature": "QUERY",
+    "pattern_data": {
+      "action": "search_files"
+    },
+    "confidence": 0.8,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T18:30:07.308877",
+    "last_used": "2025-10-20T18:30:07.308877",
+    "feedback_score": 0.0,
+    "metadata": {}
+  },
+  {
+    "pattern_id": "query_pattern_test_analytics_20251020_183007",
+    "pattern_type": "query_pattern",
+    "source_feature": "test_analytics",
+    "pattern_data": {
+      "query": "test query 2"
+    },
+    "confidence": 0.7,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2025-10-20T18:30:07.321520",
+    "last_used": "2025-10-20T18:30:07.321520",
+    "feedback_score": 0.0,
+    "metadata": {}
   }
 ]
