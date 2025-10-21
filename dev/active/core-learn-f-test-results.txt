@@ -1,0 +1,70 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-7.4.3, pluggy-1.6.0 -- /Library/Developer/CommandLineTools/usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pytest.ini
+plugins: asyncio-0.21.1, anyio-3.7.1, langsmith-0.3.45, cov-7.0.0
+asyncio: mode=auto
+collecting ... collected 48 items
+
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_end_to_end_safe_automation PASSED [  2%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_destructive_action_never_executes PASSED [  4%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_low_confidence_requires_approval PASSED [  6%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_emergency_stop_blocks_all_automation PASSED [  8%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_approval_workflow PASSED [ 10%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_action_classification PASSED [ 12%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_auto_execution_safety_threshold PASSED [ 14%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_rollback_capability PASSED [ 16%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_audit_trail_completeness PASSED [ 18%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_prediction_integration PASSED [ 20%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_concurrent_safety PASSED [ 22%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_user_approval_preferences PASSED [ 25%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_emergency_stop_recovery PASSED [ 27%]
+tests/integration/test_intelligent_automation.py::TestIntelligentAutomationIntegration::test_approval_statistics PASSED [ 29%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_handler_exists PASSED [ 31%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_not_placeholder PASSED [ 33%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_missing_type PASSED [ 35%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_missing_source PASSED [ 37%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_unknown_type PASSED [ 39%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_issue_similarity_success PASSED [ 41%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_with_examples PASSED [ 43%]
+tests/intent/test_learning_handlers.py::TestHandleLearnPattern::test_learn_pattern_no_data_graceful PASSED [ 45%]
+tests/integration/test_preference_learning.py::TestPreferenceLearning::test_pattern_to_preference_flow PASSED [ 47%]
+tests/integration/test_preference_learning.py::TestPreferenceLearning::test_low_confidence_pattern_ignored PASSED [ 50%]
+tests/integration/test_preference_learning.py::TestPreferenceLearning::test_preference_hierarchy_preserved PASSED [ 52%]
+tests/integration/test_preference_learning.py::TestPreferenceLearning::test_learning_loop_integration PASSED [ 54%]
+tests/integration/test_preference_learning.py::TestPreferenceLearning::test_invalid_pattern_data PASSED [ 56%]
+tests/integration/test_workflow_optimization.py::TestWorkflowOptimization::test_complete_workflow_optimization_flow PASSED [ 58%]
+tests/integration/test_workflow_optimization.py::TestWorkflowOptimization::test_workflow_pattern_learning PASSED [ 60%]
+tests/integration/test_workflow_optimization.py::TestWorkflowOptimization::test_template_creation_from_pattern PASSED [ 62%]
+tests/integration/test_workflow_optimization.py::TestWorkflowOptimization::test_template_rejection_low_confidence PASSED [ 64%]
+tests/integration/test_workflow_optimization.py::TestWorkflowOptimization::test_optimization_metrics_collection PASSED [ 66%]
+tests/integration/test_user_controls.py::TestLearningControls::test_enable_learning PASSED [ 68%]
+tests/integration/test_user_controls.py::TestLearningControls::test_disable_learning PASSED [ 70%]
+tests/integration/test_user_controls.py::TestLearningControls::test_get_learning_status_default PASSED [ 72%]
+tests/integration/test_user_controls.py::TestLearningControls::test_learning_enable_disable_flow XFAIL [ 75%]
+tests/integration/test_user_controls.py::TestDataManagement::test_clear_all_data PASSED [ 77%]
+tests/integration/test_user_controls.py::TestDataManagement::test_clear_patterns_only PASSED [ 79%]
+tests/integration/test_user_controls.py::TestDataManagement::test_clear_preferences_only PASSED [ 81%]
+tests/integration/test_user_controls.py::TestDataManagement::test_export_preferences_json PASSED [ 83%]
+tests/integration/test_user_controls.py::TestDataManagement::test_export_preferences_csv_fallback PASSED [ 85%]
+tests/integration/test_user_controls.py::TestDataManagement::test_export_invalid_format XFAIL [ 87%]
+tests/integration/test_user_controls.py::TestPrivacySettings::test_set_privacy_settings PASSED [ 89%]
+tests/integration/test_user_controls.py::TestPrivacySettings::test_get_privacy_settings_defaults PASSED [ 91%]
+tests/integration/test_user_controls.py::TestPrivacySettings::test_invalid_privacy_setting XFAIL [ 93%]
+tests/integration/test_user_controls.py::TestPrivacySettings::test_privacy_settings_roundtrip XFAIL [ 95%]
+tests/integration/test_user_controls.py::TestUserControlsIntegration::test_disable_learning_then_export XFAIL [ 97%]
+tests/integration/test_user_controls.py::TestUserControlsIntegration::test_privacy_settings_in_export XFAIL [100%]
+
+=============================== warnings summary ===============================
+../../Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373
+  /Users/xian/Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../Library/Python/3.9/lib/python/site-packages/PyPDF2/__init__.py:21
+  /Users/xian/Library/Python/3.9/lib/python/site-packages/PyPDF2/__init__.py:21: DeprecationWarning: PyPDF2 is deprecated. Please move to the pypdf library instead.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 42 passed, 6 xfailed, 2 warnings in 1.46s ===================
