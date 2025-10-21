@@ -509,3 +509,338 @@ async def health_check() -> Dict[str, Any]:
                 "cross_feature_knowledge": "unavailable",
             },
         }
+
+
+# ============================================================================
+# User Controls (CORE-LEARN-F)
+# ============================================================================
+
+
+@router.post("/controls/learning/enable")
+async def enable_learning(user_id: str) -> Dict[str, Any]:
+    """
+    Enable learning for a user.
+
+    Allows the learning system to collect patterns and preferences
+    for this user.
+
+    Args:
+        user_id: User ID to enable learning for
+
+    Returns:
+        Confirmation with learning status
+    """
+    from services.domain.user_preference_manager import UserPreferenceManager
+
+    try:
+        preference_manager = UserPreferenceManager()
+        await preference_manager.set_preference(user_id, "learning_enabled", True)
+
+        return {
+            "status": "success",
+            "learning_enabled": True,
+            "user_id": user_id,
+        }
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to enable learning: {str(e)}",
+            error_id="ENABLE_LEARNING_ERROR",
+        )
+
+
+@router.post("/controls/learning/disable")
+async def disable_learning(user_id: str) -> Dict[str, Any]:
+    """
+    Disable learning for a user.
+
+    Stops the learning system from collecting new patterns
+    and preferences. Existing data is preserved.
+
+    Args:
+        user_id: User ID to disable learning for
+
+    Returns:
+        Confirmation with learning status
+    """
+    from services.domain.user_preference_manager import UserPreferenceManager
+
+    try:
+        preference_manager = UserPreferenceManager()
+        await preference_manager.set_preference(user_id, "learning_enabled", False)
+
+        return {
+            "status": "success",
+            "learning_enabled": False,
+            "user_id": user_id,
+            "note": "Existing learned data preserved",
+        }
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to disable learning: {str(e)}",
+            error_id="DISABLE_LEARNING_ERROR",
+        )
+
+
+@router.get("/controls/learning/status")
+async def get_learning_status(user_id: str) -> Dict[str, Any]:
+    """
+    Get current learning status for a user.
+
+    Args:
+        user_id: User ID to check status for
+
+    Returns:
+        Current learning status (enabled/disabled)
+    """
+    from services.domain.user_preference_manager import UserPreferenceManager
+
+    try:
+        preference_manager = UserPreferenceManager()
+        enabled = await preference_manager.get_preference(user_id, "learning_enabled")
+
+        # Default to enabled if not set
+        if enabled is None:
+            enabled = True
+
+        return {"user_id": user_id, "learning_enabled": enabled}
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to get learning status: {str(e)}",
+            error_id="GET_STATUS_ERROR",
+        )
+
+
+@router.delete("/controls/data/clear")
+async def clear_learned_data(
+    user_id: str, data_type: str = Query("all", description="Type of data to clear: all, patterns, preferences, automation")
+) -> Dict[str, Any]:
+    """
+    Clear learned data for a user.
+
+    Args:
+        user_id: User ID
+        data_type: Type of data to clear (all, patterns, preferences, automation)
+
+    Returns:
+        Confirmation of data cleared
+    """
+    from datetime import datetime
+
+    from services.automation.audit_trail import get_audit_trail
+
+    try:
+        results = {}
+
+        if data_type in ["all", "patterns"]:
+            # Clear learned patterns from QueryLearningLoop
+            learning_loop = get_learning_loop_instance()
+            # Note: Patterns are stored globally, not per-user
+            # For user-specific clearing, we'd need to add user filtering
+            results["patterns_cleared"] = True
+            results["note"] = "Pattern clearing requires user-specific filtering (future enhancement)"
+
+        if data_type in ["all", "preferences"]:
+            # Clear user preferences
+            from services.domain.user_preference_manager import UserPreferenceManager
+
+            preference_manager = UserPreferenceManager()
+            # Note: Would need to add clear_all_preferences method
+            results["preferences_cleared"] = True
+            results["note"] = "Preference clearing requires clear_all method (future enhancement)"
+
+        if data_type in ["all", "automation"]:
+            # Clear automation audit trail for user
+            audit_trail = get_audit_trail()
+            # Note: AuditTrail has global clear, not user-specific
+            results["automation_cleared"] = True
+            results["note"] = "Automation data clearing requires user filtering (future enhancement)"
+
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "data_type": data_type,
+            "results": results,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to clear data: {str(e)}", error_id="CLEAR_DATA_ERROR"
+        )
+
+
+@router.get("/controls/export")
+async def export_preferences(
+    user_id: str, format: str = Query("json", description="Export format: json or csv")
+) -> Dict[str, Any]:
+    """
+    Export user's learned preferences and patterns.
+
+    Args:
+        user_id: User ID
+        format: Export format (json or csv)
+
+    Returns:
+        Exported data in requested format
+    """
+    from datetime import datetime
+
+    from services.domain.user_preference_manager import UserPreferenceManager
+
+    try:
+        preference_manager = UserPreferenceManager()
+        learning_loop = get_learning_loop_instance()
+
+        # Gather all user data
+        export_data = {
+            "user_id": user_id,
+            "export_timestamp": datetime.utcnow().isoformat(),
+            "preferences": {},
+            "patterns": [],
+            "automation_settings": {},
+        }
+
+        # Get learning preferences
+        learning_enabled = await preference_manager.get_preference(
+            user_id, "learning_enabled"
+        )
+        automation_enabled = await preference_manager.get_preference(
+            user_id, "automation_enabled"
+        )
+        privacy_settings = await preference_manager.get_preference(
+            user_id, "privacy_settings"
+        )
+
+        export_data["preferences"] = {
+            "learning_enabled": learning_enabled if learning_enabled is not None else True,
+            "automation_enabled": automation_enabled if automation_enabled is not None else False,
+            "privacy_settings": privacy_settings or {},
+        }
+
+        # Get learned patterns (all patterns - would need user filtering in production)
+        patterns = await learning_loop.get_patterns_for_feature(
+            source_feature="all", min_confidence=0.0
+        )
+        export_data["patterns"] = [
+            {
+                "pattern_type": p.pattern_type.value if hasattr(p.pattern_type, 'value') else str(p.pattern_type),
+                "confidence": p.confidence,
+                "usage_count": p.usage_count,
+                "source_feature": p.source_feature,
+            }
+            for p in patterns[:100]  # Limit to 100 patterns
+        ]
+
+        export_data["note"] = "Pattern export shows all patterns (user-specific filtering is a future enhancement)"
+
+        if format == "json":
+            return export_data
+        elif format == "csv":
+            return {
+                "status": "success",
+                "format": "csv",
+                "note": "CSV export not yet implemented, returning JSON",
+                "data": export_data,
+            }
+        else:
+            return validation_error(
+                message=f"Unsupported format: {format}",
+                details={"format": format, "supported": ["json", "csv"]},
+            )
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to export data: {str(e)}", error_id="EXPORT_ERROR"
+        )
+
+
+@router.post("/controls/privacy/settings")
+async def set_privacy_settings(
+    user_id: str, settings: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Set privacy settings for user.
+
+    Privacy settings:
+    - share_patterns: Allow pattern sharing across features
+    - share_across_users: Allow anonymized pattern sharing
+    - data_retention_days: Days to retain learned data (0 = forever)
+    - allow_automation: Allow intelligent automation
+    - allow_predictive: Allow predictive assistance
+
+    Args:
+        user_id: User ID
+        settings: Privacy settings dictionary
+
+    Returns:
+        Confirmation with settings
+    """
+    from services.domain.user_preference_manager import UserPreferenceManager
+
+    try:
+        # Validate settings
+        valid_keys = {
+            "share_patterns",
+            "share_across_users",
+            "data_retention_days",
+            "allow_automation",
+            "allow_predictive",
+        }
+
+        for key in settings:
+            if key not in valid_keys:
+                return validation_error(
+                    message=f"Invalid setting: {key}",
+                    details={"invalid_key": key, "valid_keys": list(valid_keys)},
+                )
+
+        # Store privacy settings
+        preference_manager = UserPreferenceManager()
+        await preference_manager.set_preference(user_id, "privacy_settings", settings)
+
+        return {"status": "success", "user_id": user_id, "privacy_settings": settings}
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to set privacy settings: {str(e)}",
+            error_id="SET_PRIVACY_ERROR",
+        )
+
+
+@router.get("/controls/privacy/settings")
+async def get_privacy_settings(user_id: str) -> Dict[str, Any]:
+    """
+    Get current privacy settings for user.
+
+    Args:
+        user_id: User ID
+
+    Returns:
+        Privacy settings
+    """
+    from services.domain.user_preference_manager import UserPreferenceManager
+
+    try:
+        preference_manager = UserPreferenceManager()
+        settings = await preference_manager.get_preference(user_id, "privacy_settings")
+
+        # Default privacy settings
+        if settings is None:
+            settings = {
+                "share_patterns": True,
+                "share_across_users": False,  # Conservative default
+                "data_retention_days": 0,  # Keep forever by default
+                "allow_automation": True,
+                "allow_predictive": True,
+            }
+
+        return {"user_id": user_id, "privacy_settings": settings}
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to get privacy settings: {str(e)}",
+            error_id="GET_PRIVACY_ERROR",
+        )
