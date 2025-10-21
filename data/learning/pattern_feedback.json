@@ -86,5 +86,13 @@
     "feedback_text": "Pattern worked great!",
     "timestamp": "2025-10-20T13:43:27.347919",
     "context": {}
+  },
+  {
+    "pattern_id": "query_pattern_test_feature_20251020_183007",
+    "user_id": null,
+    "feedback_score": 1.0,
+    "feedback_text": "Pattern worked great!",
+    "timestamp": "2025-10-20T18:30:07.273235",
+    "context": {}
   }
 ]
