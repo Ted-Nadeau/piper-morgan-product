@@ -1,9 +1,9 @@
 # CORE-LEARN-F Implementation: Integration & Polish (SPRINT A5 FINALE!)
 
-**Agent**: Claude Code (Programmer)  
-**Issue**: #226 CORE-LEARN-F - Integration & Polish  
-**Sprint**: A5 - Learning System (Extended - Issue 6 of 6 - FINAL!)  
-**Date**: October 20, 2025, 5:10 PM  
+**Agent**: Claude Code (Programmer)
+**Issue**: #226 CORE-LEARN-F - Integration & Polish
+**Sprint**: A5 - Learning System (Extended - Issue 6 of 6 - FINAL!)
+**Date**: October 20, 2025, 5:10 PM
 **Duration**: 4.5 hours estimated (based on discovery)
 
 ---
@@ -76,7 +76,7 @@ Discovery found 90% complete (~7,500 lines). **We need ~850 lines of work**:
 
 **Order matters**: User controls first (most important!), then dashboard!
 
-**NOT in scope**: 
+**NOT in scope**:
 - Machine learning (use existing!)
 - Complex analytics (use existing API!)
 - Extensive documentation (already complete!)
@@ -155,18 +155,18 @@ async def enable_learning(
 ):
     """
     Enable learning for a user.
-    
+
     Allows the learning system to collect patterns and preferences
     for this user.
     """
     preference_manager = UserPreferenceManager(session)
-    
+
     await preference_manager.set_preference(
         key="learning_enabled",
         value=True,
         user_id=user_id
     )
-    
+
     return {
         "status": "success",
         "learning_enabled": True,
@@ -181,18 +181,18 @@ async def disable_learning(
 ):
     """
     Disable learning for a user.
-    
+
     Stops the learning system from collecting new patterns
     and preferences. Existing data is preserved.
     """
     preference_manager = UserPreferenceManager(session)
-    
+
     await preference_manager.set_preference(
         key="learning_enabled",
         value=False,
         user_id=user_id
     )
-    
+
     return {
         "status": "success",
         "learning_enabled": False,
@@ -208,16 +208,16 @@ async def get_learning_status(
 ):
     """Get current learning status for a user."""
     preference_manager = UserPreferenceManager(session)
-    
+
     enabled = await preference_manager.get_preference(
         key="learning_enabled",
         user_id=user_id
     )
-    
+
     # Default to enabled if not set
     if enabled is None:
         enabled = True
-    
+
     return {
         "user_id": user_id,
         "learning_enabled": enabled
@@ -237,40 +237,40 @@ async def clear_learned_data(
 ):
     """
     Clear learned data for a user.
-    
+
     Args:
         user_id: User ID
         data_type: Type of data to clear (all, patterns, preferences, automation)
-    
+
     Returns:
         Confirmation of data cleared
     """
     from services.learning.query_learning_loop import QueryLearningLoop
     from services.domain.user_preference_manager import UserPreferenceManager
     from services.automation.audit_trail import get_audit_trail
-    
+
     results = {}
-    
+
     if data_type in ["all", "patterns"]:
         # Clear learned patterns
         learning_loop = QueryLearningLoop(session)
         # Implementation: Clear patterns for user
         # This would require a method in QueryLearningLoop
         results["patterns_cleared"] = True
-    
+
     if data_type in ["all", "preferences"]:
         # Clear user preferences
         preference_manager = UserPreferenceManager(session)
         # Implementation: Clear preferences for user
         # This would require a method in UserPreferenceManager
         results["preferences_cleared"] = True
-    
+
     if data_type in ["all", "automation"]:
         # Clear automation audit trail for user
         audit_trail = get_audit_trail()
         # Implementation: Clear audit events for user
         results["automation_cleared"] = True
-    
+
     return {
         "status": "success",
         "user_id": user_id,
@@ -293,20 +293,20 @@ async def export_preferences(
 ):
     """
     Export user's learned preferences and patterns.
-    
+
     Args:
         user_id: User ID
         format: Export format (json or csv)
-    
+
     Returns:
         Exported data in requested format
     """
     from services.domain.user_preference_manager import UserPreferenceManager
     from services.learning.query_learning_loop import QueryLearningLoop
-    
+
     preference_manager = UserPreferenceManager(session)
     learning_loop = QueryLearningLoop(session)
-    
+
     # Gather all user data
     export_data = {
         "user_id": user_id,
@@ -315,11 +315,11 @@ async def export_preferences(
         "patterns": [],
         "automation_settings": {}
     }
-    
+
     # Get all preferences
     # Implementation: Get all preferences for user
     export_data["preferences"] = await preference_manager.get_all_preferences(user_id)
-    
+
     # Get learned patterns
     # Implementation: Get patterns for user
     patterns = await learning_loop.get_user_patterns(user_id)
@@ -332,7 +332,7 @@ async def export_preferences(
         }
         for p in patterns
     ]
-    
+
     if format == "json":
         return export_data
     elif format == "csv":
@@ -360,7 +360,7 @@ async def set_privacy_settings(
 ):
     """
     Set privacy settings for user.
-    
+
     Privacy settings:
     - share_patterns: Allow pattern sharing across features
     - share_across_users: Allow anonymized pattern sharing
@@ -369,7 +369,7 @@ async def set_privacy_settings(
     - allow_predictive: Allow predictive assistance
     """
     preference_manager = UserPreferenceManager(session)
-    
+
     # Validate settings
     valid_keys = {
         "share_patterns",
@@ -378,18 +378,18 @@ async def set_privacy_settings(
         "allow_automation",
         "allow_predictive"
     }
-    
+
     for key in settings:
         if key not in valid_keys:
             raise HTTPException(status_code=400, detail=f"Invalid setting: {key}")
-    
+
     # Store privacy settings
     await preference_manager.set_preference(
         key="privacy_settings",
         value=settings,
         user_id=user_id
     )
-    
+
     return {
         "status": "success",
         "user_id": user_id,
@@ -404,12 +404,12 @@ async def get_privacy_settings(
 ):
     """Get current privacy settings for user."""
     preference_manager = UserPreferenceManager(session)
-    
+
     settings = await preference_manager.get_preference(
         key="privacy_settings",
         user_id=user_id
     )
-    
+
     # Default privacy settings
     if settings is None:
         settings = {
@@ -419,7 +419,7 @@ async def get_privacy_settings(
             "allow_automation": True,
             "allow_predictive": True
         }
-    
+
     return {
         "user_id": user_id,
         "privacy_settings": settings
@@ -445,12 +445,12 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
             margin: 20px;
             background-color: #f5f5f5;
         }
-        
+
         .dashboard {
             max-width: 1200px;
             margin: 0 auto;
         }
-        
+
         .card {
             background: white;
             padding: 20px;
@@ -458,35 +458,35 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        
+
         .metric {
             display: inline-block;
             margin-right: 30px;
         }
-        
+
         .metric-value {
             font-size: 32px;
             font-weight: bold;
             color: #2c3e50;
         }
-        
+
         .metric-label {
             font-size: 14px;
             color: #7f8c8d;
             margin-top: 5px;
         }
-        
+
         .chart {
             height: 300px;
             background: #ecf0f1;
             border-radius: 4px;
             margin-top: 20px;
         }
-        
+
         .controls {
             margin-top: 10px;
         }
-        
+
         button {
             padding: 10px 20px;
             margin-right: 10px;
@@ -495,22 +495,22 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
             cursor: pointer;
             font-size: 14px;
         }
-        
+
         .btn-primary {
             background: #3498db;
             color: white;
         }
-        
+
         .btn-danger {
             background: #e74c3c;
             color: white;
         }
-        
+
         .btn-success {
             background: #2ecc71;
             color: white;
         }
-        
+
         .status {
             display: inline-block;
             padding: 5px 10px;
@@ -518,12 +518,12 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
             font-size: 12px;
             font-weight: bold;
         }
-        
+
         .status-enabled {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .status-disabled {
             background: #f8d7da;
             color: #721c24;
@@ -533,7 +533,7 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
 <body>
     <div class="dashboard">
         <h1>Learning System Dashboard</h1>
-        
+
         <!-- Learning Status Card -->
         <div class="card">
             <h2>Learning Status</h2>
@@ -546,7 +546,7 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                 <button class="btn-danger" onclick="clearData()">Clear Data</button>
             </div>
         </div>
-        
+
         <!-- Metrics Card -->
         <div class="card">
             <h2>Learning Metrics</h2>
@@ -569,7 +569,7 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                 </div>
             </div>
         </div>
-        
+
         <!-- Pattern Types Card -->
         <div class="card">
             <h2>Pattern Distribution</h2>
@@ -580,7 +580,7 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                 </p>
             </div>
         </div>
-        
+
         <!-- Privacy Settings Card -->
         <div class="card">
             <h2>Privacy Settings</h2>
@@ -605,22 +605,22 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
             </div>
         </div>
     </div>
-    
+
     <script>
         const API_BASE = '/api/v1/learning';
         const USER_ID = 'current_user';  // Replace with actual user ID
-        
+
         // Load dashboard data on page load
         window.addEventListener('load', async () => {
             await loadLearningStatus();
             await loadMetrics();
             await loadPrivacySettings();
         });
-        
+
         async function loadLearningStatus() {
             const response = await fetch(`${API_BASE}/controls/learning/status?user_id=${USER_ID}`);
             const data = await response.json();
-            
+
             const statusEl = document.getElementById('learning-status');
             if (data.learning_enabled) {
                 statusEl.innerHTML = '<span class="status status-enabled">Enabled</span>';
@@ -628,37 +628,37 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                 statusEl.innerHTML = '<span class="status status-disabled">Disabled</span>';
             }
         }
-        
+
         async function loadMetrics() {
             const response = await fetch(`${API_BASE}/analytics`);
             const data = await response.json();
-            
+
             document.getElementById('total-patterns').textContent = data.total_patterns || 0;
-            document.getElementById('success-rate').textContent = 
+            document.getElementById('success-rate').textContent =
                 Math.round((data.success_rate || 0) * 100) + '%';
-            document.getElementById('avg-confidence').textContent = 
+            document.getElementById('avg-confidence').textContent =
                 (data.avg_confidence || 0).toFixed(2);
-            document.getElementById('recent-patterns').textContent = 
+            document.getElementById('recent-patterns').textContent =
                 data.recent_patterns_24h || 0;
         }
-        
+
         async function loadPrivacySettings() {
             const response = await fetch(`${API_BASE}/controls/privacy/settings?user_id=${USER_ID}`);
             const data = await response.json();
-            
+
             const settings = data.privacy_settings;
             document.getElementById('share-patterns').checked = settings.share_patterns;
             document.getElementById('share-users').checked = settings.share_across_users;
             document.getElementById('allow-automation').checked = settings.allow_automation;
             document.getElementById('allow-predictive').checked = settings.allow_predictive;
         }
-        
+
         async function toggleLearning() {
             const statusResponse = await fetch(
                 `${API_BASE}/controls/learning/status?user_id=${USER_ID}`
             );
             const statusData = await statusResponse.json();
-            
+
             const endpoint = statusData.learning_enabled ? 'disable' : 'enable';
             const response = await fetch(
                 `${API_BASE}/controls/learning/${endpoint}`,
@@ -668,16 +668,16 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                     body: JSON.stringify({user_id: USER_ID})
                 }
             );
-            
+
             await loadLearningStatus();
         }
-        
+
         async function exportData() {
             const response = await fetch(
                 `${API_BASE}/controls/export?user_id=${USER_ID}&format=json`
             );
             const data = await response.json();
-            
+
             // Download as JSON file
             const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -686,22 +686,22 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
             a.download = `learning-data-${USER_ID}-${Date.now()}.json`;
             a.click();
         }
-        
+
         async function clearData() {
             if (!confirm('Are you sure you want to clear all learned data? This cannot be undone.')) {
                 return;
             }
-            
+
             const response = await fetch(
                 `${API_BASE}/controls/data/clear?user_id=${USER_ID}&data_type=all`,
                 {method: 'DELETE'}
             );
             const data = await response.json();
-            
+
             alert('Learned data cleared successfully');
             await loadMetrics();
         }
-        
+
         async function savePrivacySettings() {
             const settings = {
                 share_patterns: document.getElementById('share-patterns').checked,
@@ -710,7 +710,7 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                 allow_automation: document.getElementById('allow-automation').checked,
                 allow_predictive: document.getElementById('allow-predictive').checked
             };
-            
+
             const response = await fetch(
                 `${API_BASE}/controls/privacy/settings`,
                 {
@@ -722,7 +722,7 @@ Create `web/ui/learning_dashboard.html` (or React component if using React):
                     })
                 }
             );
-            
+
             alert('Privacy settings saved successfully');
         }
     </script>
@@ -751,12 +751,12 @@ from services.domain.user_preference_manager import UserPreferenceManager
 
 class TestUserControls:
     """Test user control endpoints."""
-    
+
     @pytest.mark.asyncio
     async def test_enable_disable_learning(self, client, db_session):
         """Test enabling and disabling learning."""
         user_id = "test_user"
-        
+
         # Enable learning
         response = await client.post(
             "/api/v1/learning/controls/learning/enable",
@@ -765,7 +765,7 @@ class TestUserControls:
         assert response.status_code == 200
         data = response.json()
         assert data["learning_enabled"] is True
-        
+
         # Check status
         response = await client.get(
             f"/api/v1/learning/controls/learning/status?user_id={user_id}"
@@ -773,7 +773,7 @@ class TestUserControls:
         assert response.status_code == 200
         data = response.json()
         assert data["learning_enabled"] is True
-        
+
         # Disable learning
         response = await client.post(
             "/api/v1/learning/controls/learning/disable",
@@ -782,7 +782,7 @@ class TestUserControls:
         assert response.status_code == 200
         data = response.json()
         assert data["learning_enabled"] is False
-        
+
         # Check status again
         response = await client.get(
             f"/api/v1/learning/controls/learning/status?user_id={user_id}"
@@ -790,12 +790,12 @@ class TestUserControls:
         assert response.status_code == 200
         data = response.json()
         assert data["learning_enabled"] is False
-    
+
     @pytest.mark.asyncio
     async def test_clear_learned_data(self, client, db_session):
         """Test clearing learned data."""
         user_id = "test_user"
-        
+
         # Clear all data
         response = await client.delete(
             f"/api/v1/learning/controls/data/clear?user_id={user_id}&data_type=all"
@@ -804,7 +804,7 @@ class TestUserControls:
         data = response.json()
         assert data["status"] == "success"
         assert data["data_type"] == "all"
-        
+
         # Clear patterns only
         response = await client.delete(
             f"/api/v1/learning/controls/data/clear?user_id={user_id}&data_type=patterns"
@@ -812,12 +812,12 @@ class TestUserControls:
         assert response.status_code == 200
         data = response.json()
         assert data["data_type"] == "patterns"
-    
+
     @pytest.mark.asyncio
     async def test_export_preferences(self, client, db_session):
         """Test exporting user preferences."""
         user_id = "test_user"
-        
+
         # Export as JSON
         response = await client.get(
             f"/api/v1/learning/controls/export?user_id={user_id}&format=json"
@@ -832,12 +832,12 @@ class TestUserControls:
 
 class TestPrivacySettings:
     """Test privacy settings."""
-    
+
     @pytest.mark.asyncio
     async def test_set_privacy_settings(self, client, db_session):
         """Test setting privacy settings."""
         user_id = "test_user"
-        
+
         settings = {
             "share_patterns": True,
             "share_across_users": False,
@@ -845,7 +845,7 @@ class TestPrivacySettings:
             "allow_automation": True,
             "allow_predictive": True
         }
-        
+
         response = await client.post(
             "/api/v1/learning/controls/privacy/settings",
             json={"user_id": user_id, "settings": settings}
@@ -854,12 +854,12 @@ class TestPrivacySettings:
         data = response.json()
         assert data["status"] == "success"
         assert data["privacy_settings"] == settings
-    
+
     @pytest.mark.asyncio
     async def test_get_privacy_settings(self, client, db_session):
         """Test getting privacy settings."""
         user_id = "test_user"
-        
+
         response = await client.get(
             f"/api/v1/learning/controls/privacy/settings?user_id={user_id}"
         )
@@ -867,16 +867,16 @@ class TestPrivacySettings:
         data = response.json()
         assert "privacy_settings" in data
         assert "share_patterns" in data["privacy_settings"]
-    
+
     @pytest.mark.asyncio
     async def test_invalid_privacy_setting(self, client, db_session):
         """Test invalid privacy setting rejected."""
         user_id = "test_user"
-        
+
         settings = {
             "invalid_key": True
         }
-        
+
         response = await client.post(
             "/api/v1/learning/controls/privacy/settings",
             json={"user_id": user_id, "settings": settings}
@@ -886,24 +886,24 @@ class TestPrivacySettings:
 
 class TestDashboardIntegration:
     """Test dashboard integration."""
-    
+
     @pytest.mark.asyncio
     async def test_dashboard_loads_metrics(self, client, db_session):
         """Test dashboard can load metrics from analytics API."""
         response = await client.get("/api/v1/learning/analytics")
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify required metrics exist
         assert "total_patterns" in data
         assert "success_rate" in data
         assert "avg_confidence" in data
-    
+
     @pytest.mark.asyncio
     async def test_dashboard_loads_status(self, client, db_session):
         """Test dashboard can load learning status."""
         user_id = "test_user"
-        
+
         response = await client.get(
             f"/api/v1/learning/controls/learning/status?user_id={user_id}"
         )

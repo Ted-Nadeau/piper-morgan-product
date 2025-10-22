@@ -17,7 +17,8 @@ __version__ = "1.0.0"
 __author__ = "Piper Morgan Security Team"
 
 from .auth_middleware import AuthMiddleware, get_current_user
-from .jwt_service import JWTService
+from .jwt_service import JWTService, TokenExpired, TokenInvalid, TokenRevoked
+from .token_blacklist import TokenBlacklist
 from .user_service import UserService
 
 __all__ = [
@@ -25,4 +26,8 @@ __all__ = [
     "UserService",
     "AuthMiddleware",
     "get_current_user",
+    "TokenBlacklist",
+    "TokenExpired",
+    "TokenInvalid",
+    "TokenRevoked",
 ]

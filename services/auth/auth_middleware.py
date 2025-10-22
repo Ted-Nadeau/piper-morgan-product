@@ -85,32 +85,59 @@ class AuthMiddleware(BaseHTTPMiddleware):
         try:
             token = self._extract_token(request)
             if token:
-                claims = self.jwt_service.validate_token(token)
-                if claims:
-                    # Set user context in request state
-                    request.state.user_claims = claims
-                    request.state.user_id = claims.user_id
-                    request.state.scopes = claims.scopes
+                # Import exceptions for specific handling
+                from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
-                    # Update session activity if session_id present
-                    if claims.session_id:
-                        session = self.user_service.get_session(claims.session_id)
-                        if session:
-                            request.state.session = session
+                try:
+                    claims = await self.jwt_service.validate_token(token)
+                    if claims:
+                        # Set user context in request state
+                        request.state.user_claims = claims
+                        request.state.user_id = claims.user_id
+                        request.state.scopes = claims.scopes
 
-                    logger.debug(
-                        "Request authenticated",
-                        user_id=claims.user_id,
-                        scopes=claims.scopes,
-                        path=request.url.path,
-                    )
-                else:
+                        # Update session activity if session_id present
+                        if claims.session_id:
+                            session = self.user_service.get_session(claims.session_id)
+                            if session:
+                                request.state.session = session
+
+                        logger.debug(
+                            "Request authenticated",
+                            user_id=claims.user_id,
+                            scopes=claims.scopes,
+                            path=request.url.path,
+                        )
+                    else:
+                        logger.warning(
+                            "Invalid token provided",
+                            path=request.url.path,
+                            client_ip=self._get_client_ip(request),
+                        )
+                        return self._unauthorized_response("Invalid or expired token")
+
+                except TokenRevoked:
                     logger.warning(
-                        "Invalid token provided",
+                        "Revoked token rejected",
                         path=request.url.path,
                         client_ip=self._get_client_ip(request),
                     )
-                    return self._unauthorized_response("Invalid or expired token")
+                    return self._unauthorized_response("Token has been revoked")
+                except TokenExpired:
+                    logger.warning(
+                        "Expired token rejected",
+                        path=request.url.path,
+                        client_ip=self._get_client_ip(request),
+                    )
+                    return self._unauthorized_response("Token has expired")
+                except TokenInvalid as e:
+                    logger.warning(
+                        "Invalid token rejected",
+                        path=request.url.path,
+                        client_ip=self._get_client_ip(request),
+                        error=str(e),
+                    )
+                    return self._unauthorized_response("Invalid token")
             else:
                 logger.warning("No authentication token provided", path=request.url.path)
                 return self._unauthorized_response("Authentication required")
@@ -180,7 +207,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 security = HTTPBearer(auto_error=False)
 
 
-def get_current_user(
+async def get_current_user(
     jwt_service: JWTService = Depends(),
     user_service: UserService = Depends(),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
@@ -204,6 +231,8 @@ def get_current_user(
     Raises:
         HTTPException: If authentication fails
     """
+    from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
+
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -211,15 +240,35 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    claims = jwt_service.validate_token(credentials.credentials)
-    if not claims:
+    try:
+        claims = await jwt_service.validate_token(credentials.credentials)
+        if not claims:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return claims
+
+    except TokenRevoked:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail="Token has been revoked",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    return claims
+    except TokenExpired:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except TokenInvalid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def require_scopes(required_scopes: List[str]):
@@ -270,7 +319,7 @@ class MCPAuthAdapter:
         self.jwt_service = jwt_service
         logger.info("MCP authentication adapter initialized")
 
-    def validate_mcp_token(self, token: str) -> Optional[Dict[str, Any]]:
+    async def validate_mcp_token(self, token: str) -> Optional[Dict[str, Any]]:
         """
         Validate token for MCP protocol compatibility.
 
@@ -280,17 +329,22 @@ class MCPAuthAdapter:
         Returns:
             MCP-compatible authentication info or None
         """
-        claims = self.jwt_service.validate_token(token)
-        if not claims or not claims.mcp_compatible:
-            return None
+        from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
-        return {
-            "user_id": claims.user_id,
-            "scopes": claims.scopes,
-            "session_id": claims.session_id,
-            "workspace_id": claims.workspace_id,
-            "valid": True,
-        }
+        try:
+            claims = await self.jwt_service.validate_token(token)
+            if not claims or not claims.mcp_compatible:
+                return None
+
+            return {
+                "user_id": claims.user_id,
+                "scopes": claims.scopes,
+                "session_id": claims.session_id,
+                "workspace_id": claims.workspace_id,
+                "valid": True,
+            }
+        except (TokenRevoked, TokenExpired, TokenInvalid):
+            return None
 
     def create_mcp_context(self, claims: JWTClaims) -> Dict[str, Any]:
         """

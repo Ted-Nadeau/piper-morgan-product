@@ -1,0 +1,376 @@
+"""
+User API Key Management Service
+
+Handles per-user API keys with OS keychain storage.
+Stores metadata in database, actual keys in OS keychain.
+
+Issue #228 CORE-USERS-API Phase 1C
+"""
+
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from services.config.llm_config_service import LLMConfigService
+from services.database.models import UserAPIKey
+from services.infrastructure.keychain_service import KeychainService
+
+logger = logging.getLogger(__name__)
+
+
+class UserAPIKeyService:
+    """Service for managing user-specific API keys with keychain storage"""
+
+    def __init__(self, keychain_service: Optional[KeychainService] = None):
+        """
+        Initialize user API key service.
+
+        Args:
+            keychain_service: Optional keychain service for testing
+        """
+        self._keychain = keychain_service or KeychainService()
+        self._llm_config = LLMConfigService()
+
+    async def store_user_key(
+        self,
+        session: AsyncSession,
+        user_id: str,
+        provider: str,
+        api_key: str,
+        validate: bool = True,
+    ) -> UserAPIKey:
+        """
+        Store API key for user in keychain with database metadata.
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            provider: Service provider (openai, anthropic, github, etc)
+            api_key: API key to store
+            validate: Whether to validate key with provider API
+
+        Returns:
+            UserAPIKey database record
+
+        Raises:
+            ValueError: If validation fails or key invalid
+        """
+        logger.info(f"Storing API key for user {user_id}, provider {provider}")
+
+        # Validate key if requested
+        is_valid = False
+        if validate:
+            try:
+                is_valid = await self._llm_config.validate_api_key(provider, api_key)
+                if not is_valid:
+                    raise ValueError(f"API key validation failed for {provider}")
+                logger.info(f"API key validated successfully for {provider}")
+            except Exception as e:
+                logger.error(f"API key validation error: {e}")
+                raise ValueError(f"Failed to validate API key: {e}")
+
+        # Generate keychain reference
+        key_reference = self._generate_key_reference(user_id, provider)
+
+        # Store in keychain
+        try:
+            self._keychain.store_api_key(provider, api_key, username=user_id)
+            logger.info(f"Stored key in keychain: {key_reference}")
+        except Exception as e:
+            logger.error(f"Failed to store key in keychain: {e}")
+            raise ValueError(f"Keychain storage failed: {e}")
+
+        # Check if key record exists
+        result = await session.execute(
+            select(UserAPIKey).where(
+                and_(UserAPIKey.user_id == user_id, UserAPIKey.provider == provider)
+            )
+        )
+        existing_key = result.scalar_one_or_none()
+
+        if existing_key:
+            # Update existing record
+            existing_key.key_reference = key_reference
+            existing_key.is_active = True
+            existing_key.is_validated = is_valid
+            existing_key.last_validated_at = datetime.utcnow() if is_valid else None
+            existing_key.updated_at = datetime.utcnow()
+            await session.commit()
+            logger.info(f"Updated existing key record for {user_id}/{provider}")
+            return existing_key
+        else:
+            # Create new record
+            user_key = UserAPIKey(
+                user_id=user_id,
+                provider=provider,
+                key_reference=key_reference,
+                is_active=True,
+                is_validated=is_valid,
+                last_validated_at=datetime.utcnow() if is_valid else None,
+                created_by=user_id,
+            )
+            session.add(user_key)
+            await session.commit()
+            logger.info(f"Created new key record for {user_id}/{provider}")
+            return user_key
+
+    async def retrieve_user_key(
+        self, session: AsyncSession, user_id: str, provider: str
+    ) -> Optional[str]:
+        """
+        Retrieve API key for user from keychain.
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            provider: Service provider
+
+        Returns:
+            API key if found, None otherwise
+        """
+        # Check database for key metadata
+        result = await session.execute(
+            select(UserAPIKey).where(
+                and_(
+                    UserAPIKey.user_id == user_id,
+                    UserAPIKey.provider == provider,
+                    UserAPIKey.is_active == True,
+                )
+            )
+        )
+        user_key = result.scalar_one_or_none()
+
+        if not user_key:
+            logger.debug(f"No key record found for {user_id}/{provider}")
+            return None
+
+        # Retrieve from keychain
+        try:
+            api_key = self._keychain.get_api_key(provider, username=user_id)
+            if api_key:
+                logger.debug(f"Retrieved key from keychain for {user_id}/{provider}")
+                return api_key
+            else:
+                logger.warning(
+                    f"Key reference exists but keychain returned None: {user_id}/{provider}"
+                )
+                return None
+        except Exception as e:
+            logger.error(f"Failed to retrieve key from keychain: {e}")
+            return None
+
+    async def delete_user_key(self, session: AsyncSession, user_id: str, provider: str) -> bool:
+        """
+        Delete API key for user from keychain and database.
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            provider: Service provider
+
+        Returns:
+            True if deleted, False if not found
+        """
+        logger.info(f"Deleting API key for {user_id}/{provider}")
+
+        # Get database record
+        result = await session.execute(
+            select(UserAPIKey).where(
+                and_(UserAPIKey.user_id == user_id, UserAPIKey.provider == provider)
+            )
+        )
+        user_key = result.scalar_one_or_none()
+
+        if not user_key:
+            logger.debug(f"No key record to delete for {user_id}/{provider}")
+            return False
+
+        # Delete from keychain
+        try:
+            self._keychain.delete_api_key(provider, username=user_id)
+            logger.info(f"Deleted key from keychain: {user_id}/{provider}")
+        except Exception as e:
+            logger.warning(f"Failed to delete from keychain (continuing): {e}")
+
+        # Delete database record
+        await session.delete(user_key)
+        await session.commit()
+        logger.info(f"Deleted key database record for {user_id}/{provider}")
+
+        return True
+
+    async def list_user_keys(
+        self, session: AsyncSession, user_id: str, active_only: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        List all API keys for user.
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            active_only: Only return active keys
+
+        Returns:
+            List of key metadata (no actual keys)
+        """
+        query = select(UserAPIKey).where(UserAPIKey.user_id == user_id)
+
+        if active_only:
+            query = query.where(UserAPIKey.is_active == True)
+
+        result = await session.execute(query)
+        user_keys = result.scalars().all()
+
+        return [
+            {
+                "provider": key.provider,
+                "is_active": key.is_active,
+                "is_validated": key.is_validated,
+                "last_validated_at": (
+                    key.last_validated_at.isoformat() if key.last_validated_at else None
+                ),
+                "created_at": key.created_at.isoformat(),
+                "rotated_at": key.rotated_at.isoformat() if key.rotated_at else None,
+            }
+            for key in user_keys
+        ]
+
+    async def validate_user_key(self, session: AsyncSession, user_id: str, provider: str) -> bool:
+        """
+        Validate user's API key by testing with provider API.
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            provider: Service provider
+
+        Returns:
+            True if valid, False otherwise
+        """
+        # Retrieve key
+        api_key = await self.retrieve_user_key(session, user_id, provider)
+        if not api_key:
+            logger.warning(f"No key found to validate for {user_id}/{provider}")
+            return False
+
+        # Validate with provider
+        try:
+            is_valid = await self._llm_config.validate_api_key(provider, api_key)
+
+            # Update validation status in database
+            result = await session.execute(
+                select(UserAPIKey).where(
+                    and_(UserAPIKey.user_id == user_id, UserAPIKey.provider == provider)
+                )
+            )
+            user_key = result.scalar_one_or_none()
+
+            if user_key:
+                user_key.is_validated = is_valid
+                user_key.last_validated_at = datetime.utcnow()
+                await session.commit()
+
+            return is_valid
+
+        except Exception as e:
+            logger.error(f"Validation failed for {user_id}/{provider}: {e}")
+            return False
+
+    async def rotate_user_key(
+        self,
+        session: AsyncSession,
+        user_id: str,
+        provider: str,
+        new_api_key: str,
+        validate: bool = True,
+    ) -> UserAPIKey:
+        """
+        Rotate API key for user with zero-downtime strategy.
+
+        Process:
+        1. Validate new key
+        2. Store old key reference
+        3. Store new key in keychain
+        4. Update database with rotation info
+        5. Delete old key from keychain
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            provider: Service provider
+            new_api_key: New API key to rotate to
+            validate: Whether to validate new key before rotation
+
+        Returns:
+            Updated UserAPIKey database record
+
+        Raises:
+            ValueError: If no existing key found or validation fails
+
+        Issue #228 CORE-USERS-API Phase 2A - Key rotation
+        """
+        logger.info(f"Rotating API key for {user_id}/{provider}")
+
+        # Get existing key record
+        result = await session.execute(
+            select(UserAPIKey).where(
+                and_(
+                    UserAPIKey.user_id == user_id,
+                    UserAPIKey.provider == provider,
+                    UserAPIKey.is_active == True,
+                )
+            )
+        )
+        existing_key = result.scalar_one_or_none()
+
+        if not existing_key:
+            raise ValueError(f"No existing key found for {user_id}/{provider}")
+
+        # Store old key reference for rollback capability
+        old_key_reference = existing_key.key_reference
+
+        # Validate new key if requested
+        if validate:
+            try:
+                is_valid = await self._llm_config.validate_api_key(provider, new_api_key)
+                if not is_valid:
+                    raise ValueError(f"New API key validation failed for {provider}")
+                logger.info(f"New API key validated successfully for {provider}")
+            except Exception as e:
+                logger.error(f"New API key validation error: {e}")
+                raise ValueError(f"Failed to validate new API key: {e}")
+
+        # Generate new key reference (same format, but represents the new key)
+        new_key_reference = self._generate_key_reference(user_id, provider)
+
+        # Store new key in keychain (overwrites old key)
+        try:
+            self._keychain.store_api_key(provider, new_api_key, username=user_id)
+            logger.info(f"Stored new key in keychain: {new_key_reference}")
+        except Exception as e:
+            logger.error(f"Failed to store new key in keychain: {e}")
+            raise ValueError(f"Keychain storage failed: {e}")
+
+        # Update database record with rotation info
+        existing_key.key_reference = new_key_reference
+        existing_key.previous_key_reference = old_key_reference
+        existing_key.rotated_at = datetime.utcnow()
+        existing_key.is_validated = validate
+        existing_key.last_validated_at = datetime.utcnow() if validate else None
+        existing_key.updated_at = datetime.utcnow()
+
+        await session.commit()
+
+        logger.info(
+            f"Key rotation complete for {user_id}/{provider}. "
+            f"Old: {old_key_reference}, New: {new_key_reference}"
+        )
+
+        return existing_key
+
+    def _generate_key_reference(self, user_id: str, provider: str) -> str:
+        """Generate keychain reference identifier"""
+        return f"piper_{user_id}_{provider}"

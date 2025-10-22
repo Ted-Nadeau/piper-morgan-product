@@ -25,6 +25,25 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
+# Custom exceptions for token errors
+class TokenRevoked(Exception):
+    """Token has been revoked and is no longer valid"""
+
+    pass
+
+
+class TokenExpired(Exception):
+    """Token has expired"""
+
+    pass
+
+
+class TokenInvalid(Exception):
+    """Token is invalid"""
+
+    pass
+
+
 class TokenType(Enum):
     """JWT token types for different use cases"""
 
@@ -72,6 +91,9 @@ class JWTService:
         refresh_token_expire_days: int = 7,
         issuer: str = "piper-morgan",
         audience: str = "piper-morgan-api",
+        blacklist: Optional[
+            Any
+        ] = None,  # TokenBlacklist instance (using Any to avoid Pydantic issues)
     ):
         """
         Initialize JWT service with security configuration.
@@ -83,6 +105,7 @@ class JWTService:
             refresh_token_expire_days: Refresh token expiration in days
             issuer: JWT issuer claim
             audience: JWT audience claim
+            blacklist: Optional TokenBlacklist for token revocation
         """
         self.secret_key = secret_key or self._get_secret_key()
         self.algorithm = algorithm
@@ -90,12 +113,14 @@ class JWTService:
         self.refresh_token_expire_days = refresh_token_expire_days
         self.issuer = issuer
         self.audience = audience
+        self.blacklist = blacklist
 
         logger.info(
             "JWTService initialized",
             algorithm=algorithm,
             access_expire_min=access_token_expire_minutes,
             refresh_expire_days=refresh_token_expire_days,
+            blacklist_enabled=blacklist is not None,
         )
 
     def _get_secret_key(self) -> str:
@@ -202,15 +227,22 @@ class JWTService:
 
         return token
 
-    def validate_token(self, token: str) -> Optional[JWTClaims]:
+    async def validate_token(self, token: str) -> Optional[JWTClaims]:
         """
         Validate JWT token and return claims if valid.
+
+        Checks token signature, expiration, and blacklist status.
 
         Args:
             token: JWT token string to validate
 
         Returns:
             JWTClaims object if token is valid, None otherwise
+
+        Raises:
+            TokenRevoked: If token has been revoked
+            TokenExpired: If token has expired
+            TokenInvalid: If token is invalid
         """
         try:
             # Decode and validate token
@@ -239,6 +271,17 @@ class JWTService:
                 mcp_compatible=payload.get("mcp_compatible", True),
             )
 
+            # NEW: Check blacklist if enabled
+            if self.blacklist:
+                token_id = claims.jti
+                if await self.blacklist.is_blacklisted(token_id):
+                    logger.warning(
+                        "Token validation failed: revoked",
+                        jti=token_id,
+                        user_id=claims.user_id,
+                    )
+                    raise TokenRevoked(f"Token {token_id} has been revoked")
+
             logger.debug(
                 "Token validated successfully",
                 user_id=claims.user_id,
@@ -250,15 +293,18 @@ class JWTService:
 
         except jwt.ExpiredSignatureError:
             logger.warning("Token validation failed: expired")
-            return None
+            raise TokenExpired("Token has expired")
+        except TokenRevoked:
+            # Re-raise TokenRevoked as-is
+            raise
         except jwt.InvalidTokenError as e:
             logger.warning("Token validation failed: invalid", error=str(e))
-            return None
+            raise TokenInvalid(f"Invalid token: {e}")
         except Exception as e:
             logger.error("Token validation error", error=str(e))
-            return None
+            raise TokenInvalid(f"Token validation error: {e}")
 
-    def refresh_access_token(self, refresh_token: str) -> Optional[str]:
+    async def refresh_access_token(self, refresh_token: str) -> Optional[str]:
         """
         Generate new access token from valid refresh token.
 
@@ -268,46 +314,93 @@ class JWTService:
         Returns:
             New access token string if refresh token is valid, None otherwise
         """
-        claims = self.validate_token(refresh_token)
-        if not claims or claims.token_type != TokenType.REFRESH.value:
-            logger.warning("Invalid refresh token provided")
+        try:
+            claims = await self.validate_token(refresh_token)
+            if not claims or claims.token_type != TokenType.REFRESH.value:
+                logger.warning("Invalid refresh token provided")
+                return None
+
+            # Generate new access token with same user info
+            # Note: Scopes would typically be fetched from user service
+            new_access_token = self.generate_access_token(
+                user_id=claims.user_id,
+                user_email=claims.user_email,
+                scopes=["read", "write"],  # Default scopes - should be user-specific
+                session_id=claims.session_id,
+                workspace_id=claims.workspace_id,
+            )
+
+            logger.info("Access token refreshed", user_id=claims.user_id)
+            return new_access_token
+        except (TokenRevoked, TokenExpired, TokenInvalid):
+            logger.warning("Refresh token validation failed")
             return None
 
-        # Generate new access token with same user info
-        # Note: Scopes would typically be fetched from user service
-        new_access_token = self.generate_access_token(
-            user_id=claims.user_id,
-            user_email=claims.user_email,
-            scopes=["read", "write"],  # Default scopes - should be user-specific
-            session_id=claims.session_id,
-            workspace_id=claims.workspace_id,
-        )
-
-        logger.info("Access token refreshed", user_id=claims.user_id)
-        return new_access_token
-
-    def revoke_token(self, token: str) -> bool:
+    async def revoke_token(
+        self, token: str, reason: str = "logout", user_id: Optional[str] = None
+    ) -> bool:
         """
-        Revoke JWT token (add to blacklist).
-
-        Note: This is a placeholder for token revocation logic.
-        In production, this would add the token JTI to a blacklist/revocation list.
+        Revoke JWT token by adding to blacklist.
 
         Args:
             token: JWT token to revoke
+            reason: Reason for revocation (logout, security, admin)
+            user_id: Optional user ID for audit trail
 
         Returns:
             True if token was successfully revoked, False otherwise
         """
-        claims = self.validate_token(token)
-        if not claims:
+        if not self.blacklist:
+            logger.warning("Blacklist not configured, cannot revoke token")
             return False
 
-        # TODO: Implement token blacklist storage (Redis recommended)
-        logger.info("Token revoked", jti=claims.jti, user_id=claims.user_id)
-        return True
+        try:
+            # Decode token to get JTI and expiration
+            # Don't validate fully - we want to revoke even if expired/invalid
+            payload = jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=[self.algorithm],
+                options={
+                    "verify_exp": False,  # Don't fail on expired tokens
+                    "verify_aud": False,  # Don't validate audience
+                    "verify_iss": False,  # Don't validate issuer
+                },
+            )
 
-    def get_token_info(self, token: str) -> Optional[Dict[str, Any]]:
+            token_id = payload.get("jti")
+            exp_timestamp = payload.get("exp", 0)
+            expires_at = datetime.utcfromtimestamp(exp_timestamp)
+
+            if not token_id:
+                logger.warning("Token missing JTI claim, cannot blacklist")
+                return False
+
+            # Add to blacklist
+            success = await self.blacklist.add(
+                token_id=token_id,
+                reason=reason,
+                expires_at=expires_at,
+                user_id=user_id or payload.get("user_id"),
+            )
+
+            if success:
+                logger.info(
+                    "Token revoked successfully",
+                    jti=token_id,
+                    user_id=user_id or payload.get("user_id"),
+                    reason=reason,
+                )
+            else:
+                logger.error("Failed to add token to blacklist", jti=token_id)
+
+            return success
+
+        except Exception as e:
+            logger.error("Token revocation failed", error=str(e))
+            return False
+
+    async def get_token_info(self, token: str) -> Optional[Dict[str, Any]]:
         """
         Get token information for introspection (OAuth 2.0 style).
 
@@ -317,22 +410,25 @@ class JWTService:
         Returns:
             Token information dict if valid, None otherwise
         """
-        claims = self.validate_token(token)
-        if not claims:
-            return None
+        try:
+            claims = await self.validate_token(token)
+            if not claims:
+                return None
 
-        return {
-            "active": True,
-            "user_id": claims.user_id,
-            "user_email": claims.user_email,
-            "scopes": claims.scopes,
-            "token_type": claims.token_type,
-            "exp": claims.exp,
-            "iat": claims.iat,
-            "iss": claims.iss,
-            "aud": claims.aud,
-            "jti": claims.jti,
-            "session_id": claims.session_id,
-            "workspace_id": claims.workspace_id,
-            "mcp_compatible": claims.mcp_compatible,
-        }
+            return {
+                "active": True,
+                "user_id": claims.user_id,
+                "user_email": claims.user_email,
+                "scopes": claims.scopes,
+                "token_type": claims.token_type,
+                "exp": claims.exp,
+                "iat": claims.iat,
+                "iss": claims.iss,
+                "aud": claims.aud,
+                "jti": claims.jti,
+                "session_id": claims.session_id,
+                "workspace_id": claims.workspace_id,
+                "mcp_compatible": claims.mcp_compatible,
+            }
+        except (TokenRevoked, TokenExpired, TokenInvalid):
+            return {"active": False}
