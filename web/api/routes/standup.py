@@ -247,17 +247,40 @@ async def get_current_user_optional(
         )
 
     # Validate token
-    jwt_service = JWTService()
-    claims = jwt_service.validate_token(credentials.credentials)
+    from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
-    if not claims:
+    jwt_service = JWTService()
+
+    try:
+        claims = await jwt_service.validate_token(credentials.credentials)
+
+        if not claims:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        return claims
+
+    except TokenRevoked:
         raise HTTPException(
             status_code=401,
-            detail="Invalid or expired token",
+            detail="Token has been revoked",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    return claims
+    except TokenExpired:
+        raise HTTPException(
+            status_code=401,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except TokenInvalid:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 # ============================================================================

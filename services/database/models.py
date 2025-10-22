@@ -18,6 +18,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
@@ -46,6 +47,106 @@ class TimestampMixin:
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class User(Base):
+    """
+    User account model.
+
+    Represents authenticated users in the system. Initially populated from
+    existing user_id values in PersonalityProfile, TokenBlacklist, and Feedback.
+
+    For Alpha: Uses user_id pattern from existing data (concurrent_X).
+    For Beta: Will include full authentication with username/email/password.
+
+    Issue #228 CORE-USERS-API
+    """
+
+    __tablename__ = "users"
+
+    # Primary key - matches existing user_id pattern (String(255))
+    id = Column(String(255), primary_key=True)
+
+    # Authentication fields
+    username = Column(String(255), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(500), nullable=True)  # For future password auth
+
+    # Status flags
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    last_login_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    personality_profiles = relationship(
+        "PersonalityProfileModel", back_populates="user", lazy="select"
+    )
+    api_keys = relationship(
+        "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )
+    blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
+    feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
+    # audit_logs = relationship("AuditLog", back_populates="user")  # For Issue #230
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_users_username", "username", unique=True),
+        Index("idx_users_email", "email", unique=True),
+        Index("idx_users_active", "is_active"),
+    )
+
+    def __repr__(self):
+        return f"<User(id={self.id}, username={self.username}, active={self.is_active})>"
+
+
+class UserAPIKey(Base):
+    """
+    User-specific API keys stored securely in OS keychain.
+
+    This model stores metadata about keys; actual keys are in OS keychain
+    with references using format: "piper_{user_id}_{provider}"
+
+    Issue #228 CORE-USERS-API Phase 1B
+    """
+
+    __tablename__ = "user_api_keys"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(255), ForeignKey("users.id"), nullable=False, index=True)
+    provider = Column(String(50), nullable=False)  # openai, anthropic, github, etc
+    key_reference = Column(String(500), nullable=False)  # keychain identifier
+
+    # Key metadata
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_validated = Column(Boolean, default=False)
+    last_validated_at = Column(DateTime, nullable=True)
+
+    # Audit fields
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = Column(String(255), nullable=True)
+
+    # Rotation support
+    previous_key_reference = Column(String(500), nullable=True)
+    rotated_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="api_keys")
+
+    # Constraints
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider", name="uq_user_provider"),
+        Index("idx_user_api_keys_user_id", "user_id"),
+        Index("idx_user_api_keys_provider", "provider"),
+        Index("idx_user_api_keys_active", "is_active"),
+    )
+
+    def __repr__(self):
+        return f"<UserAPIKey(user_id={self.user_id}, provider={self.provider}, active={self.is_active})>"
 
 
 class Product(Base):
@@ -1052,7 +1153,7 @@ class FeedbackDB(Base, TimestampMixin):
     context = Column(JSON, default=dict)  # Additional context data
 
     # User and session context
-    user_id = Column(String, index=True)
+    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
     conversation_context = Column(JSON, default=dict)  # Conversation context if available
 
     # Feedback metadata
@@ -1065,7 +1166,8 @@ class FeedbackDB(Base, TimestampMixin):
     categories = Column(JSON, default=list)  # Auto-detected categories
     tags = Column(JSON, default=list)  # User or system tags
 
-    # Relationships (if needed)
+    # Relationships
+    user = relationship("User", back_populates="feedback")
     # related_issues = Column(JSON, default=list)  # Links to related GitHub issues
 
     # Strategic indexes for query performance
@@ -1131,12 +1233,15 @@ class PersonalityProfileModel(Base, TimestampMixin):
     __tablename__ = "personality_profiles"
 
     id = Column(postgresql.UUID(as_uuid=True), primary_key=True)
-    user_id = Column(String(255), nullable=False, unique=True)
+    user_id = Column(String(255), ForeignKey("users.id"), nullable=False, unique=True)
     warmth_level = Column(Float, nullable=False, default=0.6)
     confidence_style = Column(String(50), nullable=False, default="contextual")
     action_orientation = Column(String(50), nullable=False, default="medium")
     technical_depth = Column(String(50), nullable=False, default="balanced")
     is_active = Column(Boolean, nullable=False, default=True)
+
+    # Relationships
+    user = relationship("User", back_populates="personality_profiles")
 
     # Indexes are defined in the migration
     __table_args__ = (
@@ -1182,3 +1287,37 @@ class PersonalityProfileModel(Base, TimestampMixin):
             technical_depth=profile.technical_depth.value,
             is_active=True,
         )
+
+
+class TokenBlacklist(Base):
+    """
+    Blacklisted JWT tokens (database fallback for Redis)
+
+    Stores revoked tokens for security invalidation when Redis unavailable.
+    Redis is primary storage with TTL; this is fallback only.
+    """
+
+    __tablename__ = "token_blacklist"
+
+    # Primary key
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Token identification
+    token_id = Column(String(255), unique=True, nullable=False, index=True)
+    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+
+    # Blacklist metadata
+    reason = Column(String(50), nullable=False)  # logout, security, admin
+    expires_at = Column(DateTime, nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="blacklisted_tokens")
+
+    # Strategic indexes for performance
+    __table_args__ = (
+        Index("idx_token_blacklist_token_id", "token_id", unique=True),
+        Index("idx_token_blacklist_expires", "expires_at"),
+        Index("idx_token_blacklist_user_id", "user_id"),
+        Index("idx_token_blacklist_user_expires", "user_id", "expires_at"),
+    )

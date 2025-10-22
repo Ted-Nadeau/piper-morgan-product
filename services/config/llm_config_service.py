@@ -392,6 +392,51 @@ class LLMConfigService:
             error_message=f"No validation implemented for {provider}",
         )
 
+    async def validate_api_key(self, provider: str, api_key: str) -> bool:
+        """
+        Validate a specific API key for a provider.
+
+        This method validates any given API key, not just the configured one.
+        Used for user-provided API key validation in multi-user scenarios.
+
+        Args:
+            provider: Provider name (openai, anthropic, gemini, perplexity)
+            api_key: API key to validate
+
+        Returns:
+            True if valid, False otherwise
+
+        Issue #228 CORE-USERS-API - User key validation
+        """
+        if provider not in self._providers:
+            return False
+
+        # Create temporary config with the provided key
+        config = self._providers[provider]
+        temp_config = ProviderConfig(
+            name=config.name,
+            env_var=config.env_var,
+            api_key=api_key,  # Use provided key
+            enabled=True,
+        )
+
+        # Validate with provider-specific logic
+        try:
+            if provider == "openai":
+                result = await self._validate_openai(temp_config)
+            elif provider == "anthropic":
+                result = await self._validate_anthropic(temp_config)
+            elif provider == "gemini":
+                result = await self._validate_gemini(temp_config)
+            elif provider == "perplexity":
+                result = await self._validate_perplexity(temp_config)
+            else:
+                return False
+
+            return result.is_valid
+        except Exception:
+            return False
+
     async def _validate_openai(self, config: ProviderConfig) -> ValidationResult:
         """Validate OpenAI API key"""
         if httpx is None:

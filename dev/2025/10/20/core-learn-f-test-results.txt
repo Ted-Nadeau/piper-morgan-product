@@ -59,7 +59,7 @@ tests/integration/test_user_controls.py::TestUserControlsIntegration::test_priva
 =============================== warnings summary ===============================
 ../../Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373
   /Users/xian/Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
-  
+
     self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
 
 ../../Library/Python/3.9/lib/python/site-packages/PyPDF2/__init__.py:21

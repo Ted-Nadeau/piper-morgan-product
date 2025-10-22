@@ -1,0 +1,111 @@
+"""
+Authentication API Routes
+
+Provides JWT authentication endpoints including login, logout, and token management.
+Integrates with TokenBlacklist for secure token revocation.
+"""
+
+from typing import Optional
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from services.auth.auth_middleware import get_current_user
+from services.auth.jwt_service import JWTClaims, JWTService
+from services.auth.token_blacklist import TokenBlacklist
+from services.cache.redis_factory import RedisFactory
+from services.database.session_factory import AsyncSessionFactory
+
+router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
+security = HTTPBearer()
+logger = structlog.get_logger(__name__)
+
+
+async def get_jwt_service(request: Request) -> JWTService:
+    """
+    Dependency injection for JWTService.
+
+    TODO: Once jwt_service is in ServiceContainer, get from there.
+    For now, instantiate directly with blacklist support.
+    """
+    # Get service container
+    if not hasattr(request.app.state, "service_container"):
+        raise HTTPException(status_code=500, detail="ServiceContainer not initialized")
+
+    # TODO: Get from container when available
+    # container = request.app.state.service_container
+    # return container.get_service("jwt_service")
+
+    # For now, create with blacklist support
+    # Check if we've already initialized jwt_service in app state
+    if hasattr(request.app.state, "jwt_service"):
+        return request.app.state.jwt_service
+
+    # First time: initialize TokenBlacklist and JWTService
+    redis_factory = RedisFactory()
+    db_session_factory = AsyncSessionFactory()
+    blacklist = TokenBlacklist(redis_factory, db_session_factory)
+
+    # Initialize the blacklist (async)
+    await blacklist.initialize()
+
+    # Create JWTService with blacklist
+    jwt_service = JWTService(blacklist=blacklist)
+
+    # Cache in app state for reuse
+    request.app.state.jwt_service = jwt_service
+
+    return jwt_service
+
+
+@router.post("/logout")
+async def logout(
+    current_user: JWTClaims = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    jwt_service: JWTService = Depends(get_jwt_service),
+):
+    """
+    Logout user by revoking their access token.
+
+    The token will be added to the blacklist and no longer valid for authentication.
+    Even if the token hasn't expired, it will be rejected by the middleware.
+
+    Args:
+        current_user: Current authenticated user (from token)
+        credentials: Bearer token credentials
+        jwt_service: JWT service for token revocation
+
+    Returns:
+        Success message with user ID
+
+    Raises:
+        HTTPException 500: If token revocation fails
+    """
+    token = credentials.credentials
+
+    try:
+        # Revoke the token via blacklist
+        success = await jwt_service.revoke_token(
+            token=token, reason="logout", user_id=current_user.user_id
+        )
+
+        if success:
+            logger.info(
+                "User logged out successfully",
+                user_id=current_user.user_id,
+                user_email=current_user.user_email,
+            )
+            return {"message": "Logged out successfully", "user_id": current_user.user_id}
+        else:
+            logger.error("Failed to revoke token during logout", user_id=current_user.user_id)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Logout failed: Unable to revoke token",
+            )
+
+    except Exception as e:
+        logger.error("Logout error", user_id=current_user.user_id, error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(e)}"
+        )

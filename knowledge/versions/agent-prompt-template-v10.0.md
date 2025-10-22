@@ -553,38 +553,6 @@ This prompt carries our methodology forward. You are responsible for:
 
 ---
 
-## Anti-Pattern Examples
-
-### ❌ WRONG: Deciding Test Failures Are "Not Critical"
-```
-"The other 2 performance tests have pytest-asyncio event loop issues
-(not critical - the core functionality works)"
-```
-**Why wrong**: You don't decide criticality - PM does!
-
-### ✅ RIGHT: Report and Wait
-```
-⚠️ STOP - 2 Tests Failing
-[details]
-Options: [list]
-Awaiting PM decision.
-```
-
-### ❌ WRONG: Skipping Scope Without Approval
-```
-"Phases 4, 6, 8 seem optional, removing from to-do list"
-```
-**Why wrong**: To-do list is a contract - you can't change scope!
-
-### ✅ RIGHT: Ask Before Changing Scope
-```
-⚠️ STOP - Phases 4, 6, 8 Blocked
-[details]
-Should I skip these or wait for resolution?
-```
-
----
-
 ## STOP Conditions (EXPANDED TO 17)
 If ANY of these occur, STOP and escalate:
 1. Infrastructure doesn't match gameplan
@@ -607,31 +575,8 @@ If ANY of these occur, STOP and escalate:
 
 ---
 
-## When Tests Fail (CRITICAL - YOU DO NOT DECIDE)
-
-**If ANY test fails**:
-
-1. **STOP immediately** - Do NOT continue
-2. **Do NOT decide** if failure is "critical"
-3. **Do NOT rationalize** ("core works", "not blocking", "minor issue")
-
-**Instead, report**:⚠️ STOP - Tests FailingFailing: [X] tests
-Passing: [Y] testsExact errors:
-[paste error output]Root cause (if known):
-[your diagnosis]Options:
-
-[fix approach]
-[alternative approach]
-[skip with approval]
-Awaiting PM decision.
-
-**Remember**: PM decides what's critical, not you. Your job is to report, provide options, and wait.
-
----
-
-*Template Version: 10.1*
+*Template Version: 10.0*
 *Updated: Oct 21, 2025*
-10.1 - added test failure protocol and anti-pattern examples
 10.0 - added post-compaction rules
 9.0 - added time lord time agnosticism
 8.0 - added inchworm protocol

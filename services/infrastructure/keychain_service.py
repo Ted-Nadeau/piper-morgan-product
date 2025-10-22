@@ -74,13 +74,14 @@ class KeychainService:
             logger.error(f"Failed to initialize keyring: {e}")
             raise RuntimeError(f"Keyring initialization failed: {e}")
 
-    def store_api_key(self, provider: str, api_key: str) -> None:
+    def store_api_key(self, provider: str, api_key: str, username: Optional[str] = None) -> None:
         """
         Store API key securely in keychain
 
         Args:
             provider: Provider name (e.g., "openai", "anthropic")
             api_key: API key to store
+            username: Optional username for multi-user support (uses provider as default)
 
         Raises:
             ValueError: If provider or api_key is empty
@@ -92,18 +93,21 @@ class KeychainService:
             raise ValueError("API key cannot be empty")
 
         try:
-            keyring.set_password(self.service_name, self._get_key_name(provider), api_key)
-            logger.info(f"Stored API key for {provider} in keychain")
+            keyring.set_password(self.service_name, self._get_key_name(provider, username), api_key)
+            log_identifier = f"{username}/{provider}" if username else provider
+            logger.info(f"Stored API key for {log_identifier} in keychain")
         except Exception as e:
-            logger.error(f"Failed to store API key for {provider}: {e}")
+            log_identifier = f"{username}/{provider}" if username else provider
+            logger.error(f"Failed to store API key for {log_identifier}: {e}")
             raise RuntimeError(f"Failed to store API key: {e}")
 
-    def get_api_key(self, provider: str) -> Optional[str]:
+    def get_api_key(self, provider: str, username: Optional[str] = None) -> Optional[str]:
         """
         Retrieve API key from keychain
 
         Args:
             provider: Provider name (e.g., "openai", "anthropic")
+            username: Optional username for multi-user support (uses provider as default)
 
         Returns:
             API key if found, None otherwise
@@ -112,20 +116,23 @@ class KeychainService:
             return None
 
         try:
-            key = keyring.get_password(self.service_name, self._get_key_name(provider))
+            key = keyring.get_password(self.service_name, self._get_key_name(provider, username))
             if key:
-                logger.debug(f"Retrieved API key for {provider} from keychain")
+                log_identifier = f"{username}/{provider}" if username else provider
+                logger.debug(f"Retrieved API key for {log_identifier} from keychain")
             return key
         except Exception as e:
-            logger.error(f"Failed to retrieve API key for {provider}: {e}")
+            log_identifier = f"{username}/{provider}" if username else provider
+            logger.error(f"Failed to retrieve API key for {log_identifier}: {e}")
             return None
 
-    def delete_api_key(self, provider: str) -> bool:
+    def delete_api_key(self, provider: str, username: Optional[str] = None) -> bool:
         """
         Delete API key from keychain
 
         Args:
             provider: Provider name
+            username: Optional username for multi-user support (uses provider as default)
 
         Returns:
             True if deleted, False if not found or error
@@ -134,14 +141,17 @@ class KeychainService:
             return False
 
         try:
-            keyring.delete_password(self.service_name, self._get_key_name(provider))
-            logger.info(f"Deleted API key for {provider} from keychain")
+            keyring.delete_password(self.service_name, self._get_key_name(provider, username))
+            log_identifier = f"{username}/{provider}" if username else provider
+            logger.info(f"Deleted API key for {log_identifier} from keychain")
             return True
         except keyring.errors.PasswordDeleteError:
-            logger.debug(f"No API key found for {provider} to delete")
+            log_identifier = f"{username}/{provider}" if username else provider
+            logger.debug(f"No API key found for {log_identifier} to delete")
             return False
         except Exception as e:
-            logger.error(f"Failed to delete API key for {provider}: {e}")
+            log_identifier = f"{username}/{provider}" if username else provider
+            logger.error(f"Failed to delete API key for {log_identifier}: {e}")
             return False
 
     def list_stored_keys(self) -> List[str]:
@@ -191,16 +201,19 @@ class KeychainService:
 
         return status
 
-    def _get_key_name(self, provider: str) -> str:
+    def _get_key_name(self, provider: str, username: Optional[str] = None) -> str:
         """
         Get keychain entry name for provider
 
         Args:
             provider: Provider name
+            username: Optional username for multi-user support
 
         Returns:
-            Keychain entry name
+            Keychain entry name (e.g., "openai_api_key" or "user123_openai_api_key")
         """
+        if username:
+            return f"{username}_{provider}_api_key"
         return f"{provider}_api_key"
 
     def _get_env_var_name(self, provider: str) -> str:

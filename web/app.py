@@ -249,6 +249,23 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ Failed to mount health API router: {e}")
         print("   Continuing without health API\n")
 
+    # Mount API keys API router (Issue #228 - CORE-USERS-API)
+    print("\n🔑 Mounting API Keys API Router...")
+    try:
+        from web.api.routes.api_keys import router as api_keys_router
+
+        app.include_router(api_keys_router)
+        print("✅ API Keys API router mounted at /api/v1/keys")
+        print("   Endpoints:")
+        print("   - POST /api/v1/keys/store (store API key)")
+        print("   - GET  /api/v1/keys/list (list user's keys)")
+        print("   - DELETE /api/v1/keys/{provider} (delete key)")
+        print("   - POST /api/v1/keys/{provider}/validate (validate key)")
+        print("   - POST /api/v1/keys/{provider}/rotate (rotate key)")
+    except Exception as e:
+        print(f"⚠️ Failed to mount API keys API router: {e}")
+        print("   Continuing without API keys API\n")
+
     # Start background cleanup job for token blacklist (Issue #227 - CORE-USERS-JWT)
     print("\n🧹 Starting Background Cleanup Job...")
     try:
