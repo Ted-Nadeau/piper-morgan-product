@@ -221,6 +221,53 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ Failed to mount learning API router: {e}")
         print("   Continuing without learning API\n")
 
+    # Mount auth API router (Issue #227 - CORE-USERS-JWT)
+    print("\n🔐 Mounting Auth API Router...")
+    try:
+        from web.api.routes.auth import router as auth_router
+
+        app.include_router(auth_router)
+        print("✅ Auth API router mounted at /api/v1/auth")
+        print("   Endpoints:")
+        print("   - POST /api/v1/auth/logout")
+    except Exception as e:
+        print(f"⚠️ Failed to mount auth API router: {e}")
+        print("   Continuing without auth API\n")
+
+    # Mount health API router (Issue #229 - CORE-USERS-PROD)
+    print("\n❤️ Mounting Health API Router...")
+    try:
+        from web.api.routes.health import router as health_router
+
+        app.include_router(health_router)
+        print("✅ Health API router mounted at /api/v1/health")
+        print("   Endpoints:")
+        print("   - GET /api/v1/health (basic)")
+        print("   - GET /api/v1/health/database (database health)")
+        print("   - GET /api/v1/health/detailed (all components)")
+    except Exception as e:
+        print(f"⚠️ Failed to mount health API router: {e}")
+        print("   Continuing without health API\n")
+
+    # Start background cleanup job for token blacklist (Issue #227 - CORE-USERS-JWT)
+    print("\n🧹 Starting Background Cleanup Job...")
+    try:
+        import asyncio
+
+        from services.scheduler.blacklist_cleanup_job import BlacklistCleanupJob
+
+        cleanup_job = BlacklistCleanupJob(interval_hours=24)
+        cleanup_task = asyncio.create_task(cleanup_job.start())
+
+        # Store in app state for shutdown
+        app.state.blacklist_cleanup_job = cleanup_job
+        app.state.blacklist_cleanup_task = cleanup_task
+
+        print("✅ Blacklist cleanup job started (runs every 24 hours)")
+    except Exception as e:
+        print(f"⚠️ Failed to start blacklist cleanup job: {e}")
+        print("   Continuing without background cleanup\n")
+
     print("🚀 Web server startup complete")
 
     yield
@@ -237,6 +284,17 @@ async def lifespan(app: FastAPI):
             print(f"⚠️ Plugin shutdown error: {e}")
 
     print("🛑 Plugin system shutdown complete")
+
+    # Shutdown background cleanup job (Issue #227 - CORE-USERS-JWT)
+    print("\n🧹 Shutting down Background Cleanup Job...")
+    if hasattr(app.state, "blacklist_cleanup_job") and app.state.blacklist_cleanup_job:
+        try:
+            await app.state.blacklist_cleanup_job.stop()
+            print("✅ Blacklist cleanup job stopped")
+        except Exception as e:
+            print(f"⚠️ Cleanup job shutdown error: {e}")
+
+    print("🛑 Background cleanup shutdown complete")
 
     # Phase 1.5: ServiceContainer shutdown
     print("\n🔧 Shutting down ServiceContainer...")
