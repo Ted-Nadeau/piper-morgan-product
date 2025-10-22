@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.config.llm_config_service import LLMConfigService
 from services.database.models import UserAPIKey
 from services.infrastructure.keychain_service import KeychainService
+from services.security.audit_logger import Action, audit_logger
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class UserAPIKeyService:
         provider: str,
         api_key: str,
         validate: bool = True,
+        audit_context: Optional[Dict[str, Any]] = None,
     ) -> UserAPIKey:
         """
         Store API key for user in keychain with database metadata.
@@ -51,12 +53,15 @@ class UserAPIKeyService:
             provider: Service provider (openai, anthropic, github, etc)
             api_key: API key to store
             validate: Whether to validate key with provider API
+            audit_context: Optional request context for audit logging
 
         Returns:
             UserAPIKey database record
 
         Raises:
             ValueError: If validation fails or key invalid
+
+        Issue #249: Added audit logging
         """
         logger.info(f"Storing API key for user {user_id}, provider {provider}")
 
@@ -98,6 +103,23 @@ class UserAPIKeyService:
             existing_key.is_validated = is_valid
             existing_key.last_validated_at = datetime.utcnow() if is_valid else None
             existing_key.updated_at = datetime.utcnow()
+
+            # Audit log (Issue #249)
+            await audit_logger.log_api_key_event(
+                action=Action.KEY_STORED,
+                provider=provider,
+                status="success",
+                message=f"API key updated for {provider}",
+                session=session,
+                user_id=user_id,
+                details={
+                    "keychain_ref": key_reference,
+                    "validated": is_valid,
+                    "operation": "update",
+                },
+                audit_context=audit_context,
+            )
+
             await session.commit()
             logger.info(f"Updated existing key record for {user_id}/{provider}")
             return existing_key
@@ -113,6 +135,23 @@ class UserAPIKeyService:
                 created_by=user_id,
             )
             session.add(user_key)
+
+            # Audit log (Issue #249)
+            await audit_logger.log_api_key_event(
+                action=Action.KEY_STORED,
+                provider=provider,
+                status="success",
+                message=f"API key stored for {provider}",
+                session=session,
+                user_id=user_id,
+                details={
+                    "keychain_ref": key_reference,
+                    "validated": is_valid,
+                    "operation": "create",
+                },
+                audit_context=audit_context,
+            )
+
             await session.commit()
             logger.info(f"Created new key record for {user_id}/{provider}")
             return user_key
@@ -162,7 +201,13 @@ class UserAPIKeyService:
             logger.error(f"Failed to retrieve key from keychain: {e}")
             return None
 
-    async def delete_user_key(self, session: AsyncSession, user_id: str, provider: str) -> bool:
+    async def delete_user_key(
+        self,
+        session: AsyncSession,
+        user_id: str,
+        provider: str,
+        audit_context: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         Delete API key for user from keychain and database.
 
@@ -170,9 +215,12 @@ class UserAPIKeyService:
             session: Database session
             user_id: User identifier
             provider: Service provider
+            audit_context: Optional request context for audit logging
 
         Returns:
             True if deleted, False if not found
+
+        Issue #249: Added audit logging
         """
         logger.info(f"Deleting API key for {user_id}/{provider}")
 
@@ -188,6 +236,15 @@ class UserAPIKeyService:
             logger.debug(f"No key record to delete for {user_id}/{provider}")
             return False
 
+        # Store old value for audit
+        old_value = {
+            "keychain_ref": user_key.key_reference,
+            "created_at": user_key.created_at.isoformat() if user_key.created_at else None,
+            "last_validated_at": (
+                user_key.last_validated_at.isoformat() if user_key.last_validated_at else None
+            ),
+        }
+
         # Delete from keychain
         try:
             self._keychain.delete_api_key(provider, username=user_id)
@@ -197,6 +254,19 @@ class UserAPIKeyService:
 
         # Delete database record
         await session.delete(user_key)
+
+        # Audit log (Issue #249)
+        await audit_logger.log_api_key_event(
+            action=Action.KEY_DELETED,
+            provider=provider,
+            status="success",
+            message=f"API key deleted for {provider}",
+            session=session,
+            user_id=user_id,
+            old_value=old_value,
+            audit_context=audit_context,
+        )
+
         await session.commit()
         logger.info(f"Deleted key database record for {user_id}/{provider}")
 
@@ -286,6 +356,7 @@ class UserAPIKeyService:
         provider: str,
         new_api_key: str,
         validate: bool = True,
+        audit_context: Optional[Dict[str, Any]] = None,
     ) -> UserAPIKey:
         """
         Rotate API key for user with zero-downtime strategy.
@@ -303,6 +374,7 @@ class UserAPIKeyService:
             provider: Service provider
             new_api_key: New API key to rotate to
             validate: Whether to validate new key before rotation
+            audit_context: Optional request context for audit logging
 
         Returns:
             Updated UserAPIKey database record
@@ -311,6 +383,7 @@ class UserAPIKeyService:
             ValueError: If no existing key found or validation fails
 
         Issue #228 CORE-USERS-API Phase 2A - Key rotation
+        Issue #249: Added audit logging
         """
         logger.info(f"Rotating API key for {user_id}/{provider}")
 
@@ -361,6 +434,28 @@ class UserAPIKeyService:
         existing_key.is_validated = validate
         existing_key.last_validated_at = datetime.utcnow() if validate else None
         existing_key.updated_at = datetime.utcnow()
+
+        # Audit log (Issue #249)
+        await audit_logger.log_api_key_event(
+            action=Action.KEY_ROTATED,
+            provider=provider,
+            status="success",
+            message=f"API key rotated for {provider}",
+            session=session,
+            user_id=user_id,
+            old_value={
+                "keychain_ref": old_key_reference,
+                "rotated_at": (
+                    existing_key.rotated_at.isoformat() if existing_key.rotated_at else None
+                ),
+            },
+            new_value={
+                "keychain_ref": new_key_reference,
+                "validated": validate,
+            },
+            details={"zero_downtime": True},
+            audit_context=audit_context,
+        )
 
         await session.commit()
 

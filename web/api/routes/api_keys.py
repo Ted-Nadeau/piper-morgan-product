@@ -5,6 +5,7 @@ Provides endpoints for managing user-specific API keys with OS keychain storage.
 Supports multi-user key isolation, validation, and zero-downtime rotation.
 
 Issue #228 CORE-USERS-API Phase 2B
+Issue #249 CORE-AUDIT-LOGGING Phase 3B - Added audit logging
 """
 
 from typing import Any, Dict, List, Optional
@@ -20,6 +21,26 @@ from services.security.user_api_key_service import UserAPIKeyService
 
 router = APIRouter(prefix="/api/v1/keys", tags=["api-keys"])
 logger = structlog.get_logger(__name__)
+
+
+def build_audit_context(request: Request) -> Dict[str, Any]:
+    """
+    Extract audit context from FastAPI request.
+
+    Args:
+        request: FastAPI Request object
+
+    Returns:
+        Dict with ip_address, user_agent, request_id, request_path
+
+    Issue #249: Audit logging context helper
+    """
+    return {
+        "ip_address": request.client.host if request.client else None,
+        "user_agent": request.headers.get("user-agent"),
+        "request_id": request.headers.get("x-request-id"),
+        "request_path": str(request.url.path),
+    }
 
 
 # Request/Response Models
@@ -105,6 +126,7 @@ async def get_user_api_key_service(request: Request) -> UserAPIKeyService:
 # Endpoints
 @router.post("/store", response_model=StoreKeyResponse, status_code=status.HTTP_201_CREATED)
 async def store_api_key(
+    req: Request,
     request: StoreKeyRequest,
     current_user: JWTClaims = Depends(get_current_user),
     service: UserAPIKeyService = Depends(get_user_api_key_service),
@@ -116,6 +138,7 @@ async def store_api_key(
     Keys are isolated per user - each user can have their own keys for the same provider.
 
     Args:
+        req: FastAPI Request object for audit context
         request: Store key request with provider and api_key
         current_user: Current authenticated user from JWT token
         service: UserAPIKeyService instance
@@ -125,8 +148,13 @@ async def store_api_key(
 
     Raises:
         HTTPException: If validation fails or storage fails
+
+    Issue #249: Added audit logging
     """
     try:
+        # Build audit context from request (Issue #249)
+        audit_context = build_audit_context(req)
+
         async with AsyncSessionFactory.session_scope() as session:
             user_key = await service.store_user_key(
                 session=session,
@@ -134,6 +162,7 @@ async def store_api_key(
                 provider=request.provider,
                 api_key=request.api_key,
                 validate=request.validate,
+                audit_context=audit_context,
             )
 
             logger.info(
@@ -204,6 +233,7 @@ async def list_api_keys(
 @router.delete("/{provider}", response_model=DeleteKeyResponse)
 async def delete_api_key(
     provider: str,
+    request: Request,
     current_user: JWTClaims = Depends(get_current_user),
     service: UserAPIKeyService = Depends(get_user_api_key_service),
 ):
@@ -214,6 +244,7 @@ async def delete_api_key(
 
     Args:
         provider: Service provider (e.g., "openai", "anthropic")
+        request: FastAPI Request object for audit context
         current_user: Current authenticated user from JWT token
         service: UserAPIKeyService instance
 
@@ -222,11 +253,19 @@ async def delete_api_key(
 
     Raises:
         HTTPException: If key not found or deletion fails
+
+    Issue #249: Added audit logging
     """
     try:
+        # Build audit context from request (Issue #249)
+        audit_context = build_audit_context(request)
+
         async with AsyncSessionFactory.session_scope() as session:
             deleted = await service.delete_user_key(
-                session=session, user_id=current_user.user_id, provider=provider
+                session=session,
+                user_id=current_user.user_id,
+                provider=provider,
+                audit_context=audit_context,
             )
 
             if not deleted:
@@ -304,6 +343,7 @@ async def validate_api_key(
 @router.post("/{provider}/rotate", response_model=RotateKeyResponse)
 async def rotate_api_key(
     provider: str,
+    req: Request,
     request: RotateKeyRequest,
     current_user: JWTClaims = Depends(get_current_user),
     service: UserAPIKeyService = Depends(get_user_api_key_service),
@@ -320,6 +360,7 @@ async def rotate_api_key(
 
     Args:
         provider: Service provider (e.g., "openai", "anthropic")
+        req: FastAPI Request object for audit context
         request: Rotate key request with new_api_key
         current_user: Current authenticated user from JWT token
         service: UserAPIKeyService instance
@@ -329,8 +370,13 @@ async def rotate_api_key(
 
     Raises:
         HTTPException: If no existing key found or validation fails
+
+    Issue #249: Added audit logging
     """
     try:
+        # Build audit context from request (Issue #249)
+        audit_context = build_audit_context(req)
+
         async with AsyncSessionFactory.session_scope() as session:
             user_key = await service.rotate_user_key(
                 session=session,
@@ -338,6 +384,7 @@ async def rotate_api_key(
                 provider=provider,
                 new_api_key=request.new_api_key,
                 validate=request.validate,
+                audit_context=audit_context,
             )
 
             logger.info(

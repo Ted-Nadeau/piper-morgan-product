@@ -4,6 +4,7 @@ SQLAlchemy models for persistent storage
 """
 
 import enum
+import uuid
 from datetime import datetime
 
 from sqlalchemy import (
@@ -90,7 +91,7 @@ class User(Base):
     )
     blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
-    # audit_logs = relationship("AuditLog", back_populates="user")  # For Issue #230
+    audit_logs = relationship("AuditLog", back_populates="user", lazy="select")  # Issue #249
 
     # Indexes
     __table_args__ = (
@@ -147,6 +148,71 @@ class UserAPIKey(Base):
 
     def __repr__(self):
         return f"<UserAPIKey(user_id={self.user_id}, provider={self.provider}, active={self.is_active})>"
+
+
+class AuditLog(Base, TimestampMixin):
+    """
+    Comprehensive audit trail for security and compliance.
+
+    Tracks all security-relevant events including:
+    - Authentication (login, logout, token operations)
+    - API key management (store, retrieve, delete, rotate)
+    - Data modifications
+    - Security events
+
+    Issue #249 CORE-AUDIT-LOGGING
+    """
+
+    __tablename__ = "audit_logs"
+
+    # Identity (follow User model pattern - String primary key)
+    id = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    session_id = Column(String(255), nullable=True, index=True)
+
+    # Event classification
+    event_type = Column(String(50), nullable=False, index=True)  # auth, api_key, data, system
+    action = Column(String(100), nullable=False, index=True)  # login, logout, store_key, etc
+    resource_type = Column(String(50), nullable=True, index=True)  # user, api_key, token, etc
+    resource_id = Column(String(255), nullable=True, index=True)  # Specific resource identifier
+
+    # Event details
+    status = Column(String(20), nullable=False, index=True)  # success, failed, error
+    severity = Column(String(20), nullable=False, index=True)  # info, warning, error, critical
+    message = Column(Text, nullable=False)  # Human-readable description
+    details = Column(JSON, nullable=True)  # Additional structured data
+
+    # Request context
+    ip_address = Column(String(45), nullable=True, index=True)  # IPv4/IPv6 support
+    user_agent = Column(String(500), nullable=True)  # Browser/client info
+    request_id = Column(String(255), nullable=True, index=True)  # Request correlation
+    request_path = Column(String(500), nullable=True)  # API endpoint called
+
+    # Change tracking
+    old_value = Column(JSON, nullable=True)  # Previous state
+    new_value = Column(JSON, nullable=True)  # New state
+
+    # Relationships
+    user = relationship("User", back_populates="audit_logs")
+
+    # Strategic indexes for query performance
+    __table_args__ = (
+        Index("idx_audit_user_date", "user_id", "created_at"),
+        Index("idx_audit_event_type", "event_type"),
+        Index("idx_audit_action", "action"),
+        Index("idx_audit_resource", "resource_type", "resource_id"),
+        Index("idx_audit_severity", "severity"),
+        Index("idx_audit_status", "status"),
+        Index("idx_audit_ip", "ip_address"),
+        Index("idx_audit_session", "session_id"),
+        Index("idx_audit_request", "request_id"),
+    )
+
+    def __repr__(self):
+        return (
+            f"<AuditLog(id={self.id}, event_type={self.event_type}, "
+            f"action={self.action}, user_id={self.user_id}, status={self.status})>"
+        )
 
 
 class Product(Base):
