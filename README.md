@@ -130,7 +130,34 @@ All errors follow this structure:
 
 ---
 
-## 🚀 Quick Start (30 seconds)
+## 🚀 Quick Start
+
+### Option 1: Guided Setup (Recommended for New Users)
+
+**Takes about 5 minutes**
+
+```bash
+# Clone repository
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+
+# Run interactive setup wizard
+python main.py setup
+```
+
+The setup wizard will:
+1. ✓ Check system requirements (Docker, Python, ports, database)
+2. ✓ Collect and validate your API keys (OpenAI required, Anthropic/GitHub optional)
+3. ✓ Create your user account
+4. ✓ Store keys securely in your system keychain
+
+**Then start Piper Morgan:**
+```bash
+python main.py
+# Access at: http://localhost:8001
+```
+
+### Option 2: Manual Setup (Advanced Users)
 
 ```bash
 # Clone and setup
@@ -140,12 +167,22 @@ python -m venv venv && source venv/bin/activate
 
 # Install and configure
 pip install -r requirements.txt
-cp .env.example .env  # Add your API keys
+cp config/PIPER.user.md.example config/PIPER.user.md
+# Edit PIPER.user.md with your API keys
 
 # Launch
 docker-compose up -d
 python main.py
 ```
+
+### Check System Health
+
+Anytime you want to check system status:
+```bash
+python main.py status
+```
+
+This shows database health, API key validity, and performance metrics.
 
 ## 📚 Documentation
 

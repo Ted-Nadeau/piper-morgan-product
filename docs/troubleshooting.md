@@ -1,5 +1,77 @@
 # Troubleshooting Guide
 
+## Setup Wizard Issues (Issue #218)
+
+### "Docker is not installed"
+
+**Error**: Setup wizard reports Docker is not installed.
+
+**Solution**: Install Docker Desktop:
+- **macOS**: https://docs.docker.com/desktop/mac/install/
+- **Windows**: https://docs.docker.com/desktop/windows/install/
+- **Linux**: https://docs.docker.com/engine/install/
+
+Verify with: `docker --version`
+
+### "Port 8001 is not available"
+
+**Error**: Setup wizard reports port 8001 is already in use.
+
+**Solution**:
+```bash
+# Find what's using port 8001
+lsof -i :8001
+
+# Stop existing Piper Morgan instance
+docker-compose down
+```
+
+### "Database is not accessible"
+
+**Error**: Setup wizard cannot connect to database.
+
+**Solution**:
+```bash
+# Start database
+docker-compose up -d db
+
+# Wait 10 seconds
+sleep 10
+
+# Try setup again
+python main.py setup
+```
+
+### "OpenAI API key is invalid"
+
+**Error**: Setup wizard rejects OpenAI API key.
+
+**Causes**:
+1. Typo in key (should start with `sk-`)
+2. Key revoked or expired
+3. Network connectivity issues
+4. Rate limit exceeded
+
+**Solution**:
+1. Double-check key from https://platform.openai.com/api-keys
+2. Test key:
+   ```bash
+   curl https://api.openai.com/v1/models \
+     -H "Authorization: Bearer YOUR_KEY"
+   ```
+3. Wait a few minutes if rate limited
+
+### "Anthropic API key is invalid"
+
+**Error**: Setup wizard rejects Anthropic API key.
+
+**Solution**:
+1. Verify key from https://console.anthropic.com/settings/keys
+2. Ensure key starts with `sk-ant-`
+3. Verify key has Claude API access
+
+---
+
 ## Python Version Issues
 
 ### AsyncIO.timeout AttributeError
