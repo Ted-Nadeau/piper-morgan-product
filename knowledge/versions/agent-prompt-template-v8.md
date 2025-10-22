@@ -220,7 +220,7 @@ Stop immediately if:
 4. Show objective completion metrics
 
 ### Before Claiming Phase Complete
-1. Run completeness verification 
+1. Run completeness verification
 2. Execute all tests
 3. Document evidence
 4. Request cross-validation if applicable
@@ -238,4 +238,3 @@ Stop immediately if:
 
 *Template Version 8.0 - Updated September 29, 2025*
 *Key Addition: Anti-80% pattern safeguards from CORE-QUERY-1 learnings*
-          
