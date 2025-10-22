@@ -56,14 +56,50 @@ class DatabaseConnection:
         logger.info("Database connection initialized")
 
     def _build_database_url(self) -> str:
-        """Build PostgreSQL URL from environment variables"""
+        """Build PostgreSQL URL from environment variables with SSL support
+
+        SSL Configuration (Issue #229 CORE-USERS-PROD):
+        - POSTGRES_SSL_MODE: disable (dev), prefer (staging), require/verify-full (production)
+        - POSTGRES_SSL_ROOT_CERT: Path to CA certificate (for verify-ca, verify-full)
+        - POSTGRES_SSL_CERT: Path to client certificate (optional)
+        - POSTGRES_SSL_KEY: Path to client key (optional)
+        """
         user = os.getenv("POSTGRES_USER", "piper")
         password = os.getenv("POSTGRES_PASSWORD", "dev_changeme")
         host = os.getenv("POSTGRES_HOST", "localhost")
         port = os.getenv("POSTGRES_PORT", "5432")
         database = os.getenv("POSTGRES_DB", "piper_morgan")
 
-        return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
+        # Build base URL
+        base_url = f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
+
+        # Add SSL parameters if configured (Issue #229)
+        ssl_params = []
+        ssl_mode = os.getenv("POSTGRES_SSL_MODE", "prefer")  # Default: prefer SSL if available
+
+        # Add SSL mode
+        ssl_params.append(f"ssl={ssl_mode}")
+
+        # Add SSL certificate paths if provided
+        ssl_root_cert = os.getenv("POSTGRES_SSL_ROOT_CERT")
+        if ssl_root_cert:
+            ssl_params.append(f"sslrootcert={ssl_root_cert}")
+
+        ssl_cert = os.getenv("POSTGRES_SSL_CERT")
+        if ssl_cert:
+            ssl_params.append(f"sslcert={ssl_cert}")
+
+        ssl_key = os.getenv("POSTGRES_SSL_KEY")
+        if ssl_key:
+            ssl_params.append(f"sslkey={ssl_key}")
+
+        # Combine URL with SSL parameters
+        if ssl_params:
+            url = f"{base_url}?{'&'.join(ssl_params)}"
+            logger.debug("Database URL built with SSL configuration", ssl_mode=ssl_mode)
+            return url
+
+        return base_url
 
     async def create_tables(self):
         """Create all tables in the database"""

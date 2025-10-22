@@ -1,0 +1,234 @@
+/Users/xian/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-7.4.3, pluggy-1.6.0 -- /Library/Developer/CommandLineTools/usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pytest.ini
+plugins: asyncio-0.21.1, anyio-3.7.1, langsmith-0.3.45, cov-7.0.0
+asyncio: mode=auto
+collecting ... collected 4 items
+
+tests/performance/test_database_performance.py::test_connection_pool_acquisition 2025-10-21 20:04:19 [debug    ] Database URL built with SSL configuration ssl_mode=prefer
+2025-10-21 20:04:19 [info     ] Database connection initialized
+
+============================================================
+Connection Pool Acquisition Performance
+============================================================
+Iterations:      20
+Average latency: 3.499 ms
+Median latency:  0.011 ms
+Min latency:     0.010 ms
+Max latency:     69.766 ms
+Target:          <10.0 ms
+============================================================
+✅ PASS: Average latency 3.499ms <= 10.0ms target
+============================================================
+
+PASSED
+tests/performance/test_database_performance.py::test_simple_query_performance 2025-10-21 20:04:19,916 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2025-10-21 20:04:19,916 INFO sqlalchemy.engine.Engine [raw sql] ()
+2025-10-21 20:04:19,918 INFO sqlalchemy.engine.Engine select current_schema()
+2025-10-21 20:04:19,918 INFO sqlalchemy.engine.Engine [raw sql] ()
+2025-10-21 20:04:19,920 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2025-10-21 20:04:19,920 INFO sqlalchemy.engine.Engine [raw sql] ()
+2025-10-21 20:04:19,922 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,923 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,923 INFO sqlalchemy.engine.Engine [generated in 0.00024s] ()
+2025-10-21 20:04:19,953 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,955 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,955 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,955 INFO sqlalchemy.engine.Engine [cached since 0.03242s ago] ()
+2025-10-21 20:04:19,957 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,958 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,959 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,959 INFO sqlalchemy.engine.Engine [cached since 0.03584s ago] ()
+2025-10-21 20:04:19,968 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,969 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,969 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,969 INFO sqlalchemy.engine.Engine [cached since 0.04595s ago] ()
+2025-10-21 20:04:19,970 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,971 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,971 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,971 INFO sqlalchemy.engine.Engine [cached since 0.04843s ago] ()
+2025-10-21 20:04:19,973 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,974 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,974 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,974 INFO sqlalchemy.engine.Engine [cached since 0.05083s ago] ()
+2025-10-21 20:04:19,975 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,975 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,976 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,976 INFO sqlalchemy.engine.Engine [cached since 0.05249s ago] ()
+2025-10-21 20:04:19,976 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,977 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,978 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,978 INFO sqlalchemy.engine.Engine [cached since 0.05474s ago] ()
+2025-10-21 20:04:19,981 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,983 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,983 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,983 INFO sqlalchemy.engine.Engine [cached since 0.06004s ago] ()
+2025-10-21 20:04:19,986 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,987 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,987 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,987 INFO sqlalchemy.engine.Engine [cached since 0.0643s ago] ()
+2025-10-21 20:04:19,989 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,990 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,990 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,990 INFO sqlalchemy.engine.Engine [cached since 0.06668s ago] ()
+2025-10-21 20:04:19,991 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,992 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,992 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,992 INFO sqlalchemy.engine.Engine [cached since 0.06866s ago] ()
+2025-10-21 20:04:19,993 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,994 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,994 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,994 INFO sqlalchemy.engine.Engine [cached since 0.07058s ago] ()
+2025-10-21 20:04:19,995 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,996 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,996 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,996 INFO sqlalchemy.engine.Engine [cached since 0.07324s ago] ()
+2025-10-21 20:04:19,997 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,998 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,998 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,998 INFO sqlalchemy.engine.Engine [cached since 0.07479s ago] ()
+2025-10-21 20:04:19,999 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:19,999 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:19,999 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:19,999 INFO sqlalchemy.engine.Engine [cached since 0.07609s ago] ()
+2025-10-21 20:04:20,000 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:20,001 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:20,001 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:20,001 INFO sqlalchemy.engine.Engine [cached since 0.07765s ago] ()
+2025-10-21 20:04:20,001 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:20,002 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:20,002 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:20,002 INFO sqlalchemy.engine.Engine [cached since 0.07892s ago] ()
+2025-10-21 20:04:20,003 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:20,003 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:20,003 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:20,003 INFO sqlalchemy.engine.Engine [cached since 0.08016s ago] ()
+2025-10-21 20:04:20,004 INFO sqlalchemy.engine.Engine ROLLBACK
+2025-10-21 20:04:20,004 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2025-10-21 20:04:20,004 INFO sqlalchemy.engine.Engine SELECT 1 as health_check
+2025-10-21 20:04:20,004 INFO sqlalchemy.engine.Engine [cached since 0.08144s ago] ()
+2025-10-21 20:04:20,005 INFO sqlalchemy.engine.Engine ROLLBACK
+
+============================================================
+Simple Query Performance (SELECT 1)
+============================================================
+Iterations:      20
+Average latency: 6.134 ms
+Median latency:  1.968 ms
+Min latency:     1.214 ms
+Max latency:     71.924 ms
+Target:          <5.0 ms
+============================================================
+⚠️  WARNING: Average latency 6.134ms > 5.0ms target
+============================================================
+
+FAILED
+
+=================================== FAILURES ===================================
+________________________ test_simple_query_performance _________________________
+tests/performance/test_database_performance.py:143: in test_simple_query_performance
+    assert (
+E   AssertionError: Simple query latency 6.134ms exceeds 5.0ms target
+E   assert 6.13446875 <= 5.0
+------------------------------ Captured log call -------------------------------
+INFO     sqlalchemy.engine.Engine:base.py:1901 select pg_catalog.version()
+INFO     sqlalchemy.engine.Engine:base.py:1906 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1901 select current_schema()
+INFO     sqlalchemy.engine.Engine:base.py:1906 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1901 show standard_conforming_strings
+INFO     sqlalchemy.engine.Engine:base.py:1906 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [generated in 0.00024s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.03242s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.03584s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.04595s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.04843s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.05083s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.05249s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.05474s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.06004s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.0643s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.06668s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.06866s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.07058s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.07324s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.07479s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.07609s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.07765s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.07892s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.08016s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+INFO     sqlalchemy.engine.Engine:base.py:1091 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1901 SELECT 1 as health_check
+INFO     sqlalchemy.engine.Engine:base.py:1906 [cached since 0.08144s ago] ()
+INFO     sqlalchemy.engine.Engine:base.py:1117 ROLLBACK
+=============================== warnings summary ===============================
+../../Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373
+  /Users/xian/Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
+
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/performance/test_database_performance.py::test_simple_query_performance
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+==================== 1 failed, 1 passed, 1 warning in 0.48s ====================
