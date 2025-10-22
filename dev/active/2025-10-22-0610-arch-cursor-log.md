@@ -377,3 +377,55 @@ context_rules:
 **Report Created**: `dev/2025/10/22/piper-morgan-usage-models-architecture-analysis.md`
 
 **Bottom Line**: Piper Morgan accidentally became enterprise-ready while staying DIY. The hybrid approach leverages this unique positioning cost-effectively! 🎯
+
+---
+
+## 🔍 AUDIT LOGGING INFRASTRUCTURE INVESTIGATION COMPLETE
+
+**Time**: 8:48 AM - 9:23 AM (35 minutes)  
+**Issue**: #249 CORE-AUDIT-LOGGING  
+**Mission**: Investigate existing logging infrastructure for comprehensive audit system
+
+### 🎯 **KEY DISCOVERIES**
+
+**1. Perfect Foundation Exists**:
+
+- ✅ **User model ready**: Commented audit_logs relationship already prepared
+- ✅ **JWT authentication**: Full service with token lifecycle management
+- ✅ **UserAPIKeyService**: Complete API key management with session context
+- ✅ **Consistent patterns**: TimestampMixin, String PKs, JSON columns, index naming
+
+**2. Integration Points Identified**:
+
+- **JWT Service**: `create_token`, `validate_token`, `revoke_token` methods
+- **API Key Service**: `store_user_key`, `retrieve_user_key`, `delete_user_key` methods
+- **Token Blacklist**: Already tracks revocation with user_id and reason
+- **Request Context**: FastAPI provides IP, user_agent, request_path
+
+**3. Architecture Strategy**:
+
+- **AuditLog Model**: String PK + TimestampMixin + JSON details (matches patterns)
+- **AuditLogger Service**: Async service with convenience methods for auth/API key events
+- **Context Capture**: Explicit passing from FastAPI routes (clean data flow)
+- **Migration Pattern**: Follows recent User model migration structure
+
+### 📋 **IMPLEMENTATION ROADMAP**
+
+**Phase 1** (3h): AuditLog model + migration + AuditLogger service + tests  
+**Phase 2** (2h): JWT authentication integration (login/logout/token events)  
+**Phase 3** (3h): API key management integration (store/retrieve/delete/rotate)  
+**Phase 4** (4h): Query service + REST API + basic dashboard  
+**Phase 5** (3h): Security alerts + pattern detection + automated response
+
+**Total Estimate**: 15 hours for comprehensive audit system
+
+### 🏗️ **TECHNICAL SPECIFICATIONS**
+
+**Model Structure**: Comprehensive audit trail with event classification, request context, and change tracking  
+**Service Pattern**: Async AuditLogger with convenience methods and session handling  
+**Integration Strategy**: Explicit context passing from routes to services  
+**Query Optimization**: Strategic indexes for user/date, event type, severity, IP analysis
+
+**Report Created**: `dev/2025/10/22/audit-logging-infrastructure-analysis.md`
+
+**Ready for Code**: Complete specifications, integration examples, and migration strategy provided! 🚀

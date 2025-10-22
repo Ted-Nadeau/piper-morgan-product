@@ -21,6 +21,9 @@ from typing import Any, Dict, List, Optional
 
 import jwt
 import structlog
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from services.security.audit_logger import Action, audit_logger
 
 logger = structlog.get_logger(__name__)
 
@@ -304,15 +307,24 @@ class JWTService:
             logger.error("Token validation error", error=str(e))
             raise TokenInvalid(f"Token validation error: {e}")
 
-    async def refresh_access_token(self, refresh_token: str) -> Optional[str]:
+    async def refresh_access_token(
+        self,
+        refresh_token: str,
+        session: Optional[AsyncSession] = None,
+        audit_context: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
         """
         Generate new access token from valid refresh token.
 
         Args:
             refresh_token: Valid JWT refresh token
+            session: Optional database session for audit logging (Issue #249)
+            audit_context: Optional request context for audit logging (Issue #249)
 
         Returns:
             New access token string if refresh token is valid, None otherwise
+
+        Issue #249: Added audit logging
         """
         try:
             claims = await self.validate_token(refresh_token)
@@ -331,13 +343,35 @@ class JWTService:
             )
 
             logger.info("Access token refreshed", user_id=claims.user_id)
+
+            # Audit logging (Issue #249)
+            if session:
+                await audit_logger.log_auth_event(
+                    action=Action.TOKEN_REFRESHED,
+                    status="success",
+                    message="Access token refreshed from valid refresh token",
+                    session=session,
+                    user_id=claims.user_id,
+                    session_id=claims.session_id,
+                    details={
+                        "refresh_token_id": claims.jti,
+                        "scopes": ["read", "write"],
+                    },
+                    audit_context=audit_context,
+                )
+
             return new_access_token
         except (TokenRevoked, TokenExpired, TokenInvalid):
             logger.warning("Refresh token validation failed")
             return None
 
     async def revoke_token(
-        self, token: str, reason: str = "logout", user_id: Optional[str] = None
+        self,
+        token: str,
+        reason: str = "logout",
+        user_id: Optional[str] = None,
+        session: Optional[AsyncSession] = None,
+        audit_context: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Revoke JWT token by adding to blacklist.
@@ -346,9 +380,13 @@ class JWTService:
             token: JWT token to revoke
             reason: Reason for revocation (logout, security, admin)
             user_id: Optional user ID for audit trail
+            session: Optional database session for audit logging (Issue #249)
+            audit_context: Optional request context for audit logging (Issue #249)
 
         Returns:
             True if token was successfully revoked, False otherwise
+
+        Issue #249: Added audit logging
         """
         if not self.blacklist:
             logger.warning("Blacklist not configured, cannot revoke token")
@@ -391,6 +429,22 @@ class JWTService:
                     user_id=user_id or payload.get("user_id"),
                     reason=reason,
                 )
+
+                # Audit logging (Issue #249)
+                if session:
+                    await audit_logger.log_auth_event(
+                        action=Action.TOKEN_REVOKED,
+                        status="success",
+                        message=f"JWT token revoked: {reason}",
+                        session=session,
+                        user_id=user_id or payload.get("user_id"),
+                        details={
+                            "token_id": token_id,
+                            "reason": reason,
+                            "expires_at": expires_at.isoformat(),
+                        },
+                        audit_context=audit_context,
+                    )
             else:
                 logger.error("Failed to add token to blacklist", jti=token_id)
 

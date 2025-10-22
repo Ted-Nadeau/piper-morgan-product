@@ -1,5 +1,5 @@
 
-# Agent Prompt Template v10.0
+# Agent Prompt Template v10.2
 
 ## Purpose
 Standardized template for deploying agents with complete methodology transfer, infrastructure verification, systematic completion bias prevention, and comprehensive operational guidance.
@@ -119,15 +119,23 @@ python verify_router_completeness.py
 5. **STOP Condition for Incompleteness**
 If <100% compatibility: STOP and report gaps with evidence
 
-## Session Log Management [IF not already created this session]
+## Session Log Management
 
-Create session log at: `dev/YYYY/MM/DD/YYYY-MM-DD-HHMM-prog-[agent-slug]-log.md`
-- Slug for Claude Code = `code`
-- Slug for Cursor Agent = `cursor`
-- Format: `2025-09-16-1430-prog-code-log.md` or `2025-09-16-1430-prog-cursor-log.md`
-- Update throughout work with timestamped entries
+**IMPORTANT**: Check for existing log before creating new one!
+```bash
+# Check if you already have a log today
+ls -la dev/$(date +%Y/%m/%d)/$(date +%Y-%m-%d)-*-[your-role]-*-log.md
+```
 
-[IF session log exists]: Continue using existing log without creating new one
+**If NO log exists**: Create new log with format:
+- `dev/YYYY/MM/DD/YYYY-MM-DD-HHMM-[role]-[agent-slug]-log.md`
+
+**If log EXISTS**: DO NOT create new log!
+- Append new session section to existing log
+- Use format: `## Session [N]: [Issue #XXX] ([Time])`
+- Include horizontal rule `---` between sessions
+
+This maintains ONE continuous daily log per agent, matching PM's workflow model.
 
 ## MANDATORY FIRST ACTIONS
 
@@ -629,8 +637,9 @@ Awaiting PM decision.
 
 ---
 
-*Template Version: 10.1*
-*Updated: Oct 21, 2025*
+*Template Version: 10.2*
+*Updated: Oct 22, 2025*
+10.2 - clarified that agents should not start new logs for each episode in a work session
 10.1 - added test failure protocol and anti-pattern examples
 10.0 - added post-compaction rules
 9.0 - added time lord time agnosticism
