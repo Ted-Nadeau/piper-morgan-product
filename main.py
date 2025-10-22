@@ -55,4 +55,32 @@ async def main():
 
 
 if __name__ == "__main__":
+    # Check for CLI commands (Issue #218 CORE-USERS-ONBOARD)
+    if len(sys.argv) > 1:
+        command = sys.argv[1]
+
+        if command == "setup":
+            # Run interactive setup wizard
+            from scripts.setup_wizard import run_setup_wizard
+
+            success = asyncio.run(run_setup_wizard())
+            sys.exit(0 if success else 1)
+
+        elif command == "status":
+            # Run system health check
+            from scripts.status_checker import run_status_check
+
+            asyncio.run(run_status_check())
+            sys.exit(0)
+
+        else:
+            print(f"Unknown command: {command}")
+            print()
+            print("Available commands:")
+            print("  python main.py setup   - Interactive setup wizard")
+            print("  python main.py status  - Check system health")
+            print("  python main.py         - Start Piper Morgan")
+            sys.exit(1)
+
+    # Normal startup (no command specified)
     asyncio.run(main())

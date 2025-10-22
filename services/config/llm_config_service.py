@@ -417,7 +417,8 @@ class LLMConfigService:
             name=config.name,
             env_var=config.env_var,
             api_key=api_key,  # Use provided key
-            enabled=True,
+            validation_endpoint=config.validation_endpoint,
+            required=False,
         )
 
         # Validate with provider-specific logic
