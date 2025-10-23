@@ -9,11 +9,13 @@
 
 ## 📊 STATUS BANNER
 
-**Current Position**: 2.7.2 (Sprint A6, CORE-USERS epic)
-**Last Updated**: October 21, 2025, 3:44 PM PT
+**Current Position**: 2.7.4 (Complete the Build of CORE - Sprint A7 Active, Expanded Scope)
+**Last Updated**: October 22, 2025, 3:15 PM PDT
 **Great Refactor**: ✅ COMPLETE
 **CORE-CRAFT**: ✅ COMPLETE (Oct 14)
 **Sprint A5**: ✅ COMPLETE (Oct 20) - CORE-LEARN
+**Sprint A6**: ✅ COMPLETE (Oct 22) - CORE-USERS (Onboarding)
+**Sprint A7**: ➡️ IN PROGRESS - Polish & Buffer (12 issues across 4 categories)
 
 ---
 
@@ -36,13 +38,13 @@
         - ✅ 🔌 Complete MCP migration
     5. ✅ A4: Standup Epic
     6. ✅ A5: Learning System
-    7. 🐛 A6: User Onboarding
-    8. 🔜 A7: Testing & Buffer
-3. ⏳Start Piper education
-4. Start alpha testing on 0.1
-5. Complete MVP track
-6. Start beta testing on 0.9
-7. Launch 1.0
+    7. ✅ A6: User Onboarding
+    8. ➡️ A7: Polish & Buffer (12 issues)
+    9. ⏳ A8: Alpha Prep & Launch
+3. Start alpha testing on 0.1 (Alpha Wave 2)
+4. Complete MVP track
+5. Start beta testing on 0.9
+6. Launch 1.0
 ```
 
 ---
@@ -71,23 +73,77 @@
 - ✅ Knowledge graph connection (A3 in progress)
 
 
-**Remaining CORE Work (~2%)** - Progressing well!:
-- ⏸ User onboarding (A6)
+**Remaining CORE Work (~2%)** - Nearly complete!:
+- ✅ User onboarding (A6 - COMPLETE Oct 22)
+- ⏸ Polish & Buffer (A7 - IN PROGRESS, 12 issues)
+- ⏳ Alpha Prep & Launch (A8 - PLANNED)
 
 ---
 
-**Key Insight**: Both ethics layer and knowledge graph are 90%+ built, just need activation and connection!
+**Key Insight**: CORE infrastructure is complete! Sprints A7-A8 focus on polish, API key lifecycle, user architecture, and Alpha Wave 2 launch.
 
-### Remaining Sprints (A6-A7)
+### Current Sprint (A7)
 
-**All items need verification** - no skipping even if handlers exist!
+**A7: Polish & Buffer** - Expanded scope (12 issues across 4 categories)
 
-**A6: User Onboarding**
-- CORE-USERS
+**1. CORE-UX** (4 issues, 6-9 hours):
+- Issue #254: CORE-UX-QUIET - Quiet startup mode (2h, Medium)
+- Issue #255: CORE-UX-STATUS-USER - Status checker user detection (3h, Medium)
+- Issue #256: CORE-UX-BROWSER - Auto-launch browser (1h, Low) - Optional
+- Issue #248: CORE-PREF-CONVO - Conversational personality preferences (3-5h, Medium)
 
-**A7: Testing & Buffer**
-- End-to-end testing
-- Alpha deployment prep
+**2. Critical Fixes** (2 issues, 4-6 hours):
+- Issue #257: CORE-KNOW-BOUNDARY-COMPLETE - Complete BoundaryEnforcer integration (2-3h)
+- Issue #258: CORE-AUTH-CONTAINER - Fix JWT service dependency injection (2-3h)
+
+**3. CORE-KEYS** (3 issues, 6-8 hours):
+- Issue #250: CORE-KEYS-ROTATION-REMINDERS - Automated key rotation reminders (2-3h)
+- Issue #252: CORE-KEYS-STRENGTH-VALIDATION - API key strength validation (2-3h)
+- Issue #253: CORE-KEYS-COST-ANALYTICS - API cost tracking & usage analytics (2-3h)
+
+**4. CORE-ALPHA** (3 issues, 4-6 hours):
+- Issue #259: CORE-USER-ALPHA-TABLE - Create Alpha users table (1-2h)
+- Issue #260: CORE-USER-MIGRATION - Alpha to production user migration tool (2-3h)
+- Issue #261: CORE-USER-XIAN - Migrate xian superuser to proper user structure (1-2h)
+
+**Total A7 Scope**: 12 issues, 20-29 hours estimated
+**Estimated Duration**: 3-5 days (based on 88% velocity pattern from A6, likely 1-2 days actual)
+**Execution Order**: See `/Users/xian/Development/piper-morgan/dev/active/sprint-a7-gameplan-polish-buffer.md`
+
+---
+
+### Next Sprint (A8)
+
+**A8: Alpha Prep & Launch** - Final activities before Alpha Wave 2
+
+**Testing & Validation**:
+1. End-to-end workflow testing
+2. Performance validation
+3. Security audit
+
+**Documentation**:
+1. User guides and onboarding materials
+2. Known issues documentation
+3. Feature status documentation
+
+**Alpha Deployment**:
+1. Design onboarding communications
+2. Invitation emails with instructions
+3. Issue reporting guidelines
+4. Testing checklists
+5. A/B test design
+
+**Baseline Piper Education** (demoted from Phase 3, 90% complete from Sprint A5):
+1. Self-knowledge (ethics ✅, spatial intelligence ✅)
+2. Ethical values documentation
+3. Spatial intelligence patterns
+4. Growth mindset training
+5. Systematic blindness awareness
+6. Flywheel Methodology integration
+7. Domain knowledge (PM, clients, projects)
+
+**Estimated Duration**: 3-5 days
+**Target**: Alpha Wave 2 launch readiness (late Oct / early Nov)
 
 ---
 
@@ -112,17 +168,17 @@
 
 ## 🔄 NEXT STEPS
 
-### Short-term (Sprints A6-A7)
-1. **Execute remaining CORE epics** (no skipping!)
-2. **Verify each claimed implementation**
+### Short-term (Sprints A7-A8)
+1. **Execute Sprint A7** (12 issues across 4 categories)
+2. **Execute Sprint A8** (Alpha prep activities)
 3. **Maintain 100% completion standard**
-4. **Document MVP readiness continuously**
+4. **Launch Alpha Wave 2** (late Oct / early Nov)
 
-### Medium-term (Post-Alpha)
-1. **Complete Piper Education**
-2. **Start Alpha testing**
-3. **MVP configuration sprint** (if not done earlier)
-4. **Polish and user experience**
+### Medium-term (Post-Alpha Launch)
+1. **Alpha testing with Wave 2 users**
+2. **MVP configuration sprint** (API keys, OAuth)
+3. **User feedback integration**
+4. **Beta preparation**
 
 ---
 
