@@ -1,6 +1,8 @@
-# Piper Morgan Roadmap
+# Piper Morgan Roadmap - Sprint A7 Active (Expanded Scope)
 
-Strategic roadmap for Piper Morgan's evolution from MVP to enterprise platform. This roadmap documents completed work, current progress, and future direction based on actual development velocity.
+**Version**: 10.0
+**Last Updated**: October 22, 2025, 3:30 PM PDT
+**Key Change**: Sprint A6 complete, Sprint A7 expanded to 12 issues (4 categories), Sprint A8 added for Alpha prep
 
 ## Vision Statement
 
@@ -12,266 +14,345 @@ _To create the world's most advanced AI-assisted development platform, enabling 
 
 **Our Execution Methodology**: Complete each epic 100% before moving to next. NO EXCEPTIONS.
 
-Each epic follows this pattern:
-1. **Fix** the broken system
-2. **Test** comprehensively
-3. **Lock** with tests that prevent regression
-4. **Document** what was done and why
-5. **Verify** with core user story (GitHub issue creation)
-
-**Rule**: Cannot start next epic until current is 100% complete, tested, and documented.
+**Critical Principle**: Even when we discover work is partially done (like the production handlers), we VERIFY everything systematically. No assumptions, no skipping.
 
 ---
 
-## 🆕 Methodology Enhancements (September-October 2025)
+## Current Status (October 22, 2025)
 
-### Anti-80% Pattern Safeguards
-Discovered and resolved systematic completion bias through structural prompt improvements:
-- **Mandatory Method Enumeration**: Force comparison tables showing EVERY method
-- **Zero Authorization Statement**: Explicit prohibition against skipping functionality
-- **Objective Metrics**: "X/X methods = 100%" required vs subjective "verify complete"
-- **Pre-flight Verification**: Validate completeness before dependent work
-- **STOP Conditions**: Cannot proceed with <100% compatibility
+### ✅ Completed Work
 
-**Result**: 100% completion achieved consistently after implementation.
+#### Phase 1: The Great Refactor (Sept 20 - Oct 8)
+All GREAT epics complete with 99%+ verification
 
-### Three-Layer Architectural Protection
-Critical infrastructure protected through automation, not discipline:
-1. **Pre-commit Hooks**: Prevent violations at development time
-2. **CI/CD Enforcement**: Block regressions at merge time
-3. **Documentation**: Guide future developers with patterns and examples
+#### Phase 2: Complete the Build of CORE
+**Sprint A1**: Critical Infrastructure ✅ (Oct 8-11)
+- Database migration (#113)
+- Test cache fixes (#216)
+- LLM configuration architecture (#217)
+- Intent classification enhancement (#212) - 98.62% accuracy achieved
 
-### Key Process Discoveries (October 2025)
-- **Phase -1 Pattern**: Always investigate before implementing (saves time)
-- **Evidence-Based Completion**: Every acceptance criterion needs filesystem proof
-- **Multi-Agent Coordination**: Right agent for right task maximizes efficiency
-- **Time Lord Philosophy**: Quality determines time, not arbitrary deadlines
+**CORE-CRAFT Superepic** ✅ (Oct 11-14)
+- GAP: Infrastructure maturity (#232)
+- PROOF: Documentation precision (#233)
+- VALID: System verification (#234)
+- **Discovery**: 22 production handlers already implemented!
 
----
+**Sprint A2**: Notion & Errors ✅ (Oct 15-16)
+- CORE-ERROR-STANDARDS (#215) - REST-compliant error handling across all endpoints
+- CORE-NOTN-API (#142) - Notion API connectivity fixed
+- CORE-NOTN-USER (#136) - Removed hardcoded values
+- CORE-NOTN-UP (#165) - Database API upgrade
+- CORE-INT (#109) - GitHub legacy deprecation
 
-## Current Status (October 28, 2025)
+**Sprint A3**: Core Activation ✅ (Oct 17-19)
+- CORE-MCP-MIGRATION (#198) - Model Context Protocol adoption
+- CORE-ETHICS-ACTIVATE (#197) - Ethics middleware activated
+- CORE-KNOW (#99) - Knowledge graph connected to conversation
+- CORE-KNOW-BOUNDARY (#230) - Boundary enforcement implemented
 
-### ✅ The Great Refactor - COMPLETE
+**Sprint A4**: Standup Epic ✅ (Oct 19-20)
+- CORE-STAND-FOUND (#119) - Morning standup foundation
+- CORE-STAND-MODES-API (#162) - Multi-modal generation API
+- CORE-STAND-SLACK-REMIND (#161) - Slack reminder integration
+- CORE-STAND (#240) - Core daily standup functionality
 
-**Timeline**: September 20 - October 27, 2025 (5 weeks)
-**Achievement**: Complete architectural transformation with zero technical debt
+**Sprint A5**: Learning System ✅ (Oct 20-21)
+- CORE-LEARN-A (#221) - Learning infrastructure foundation
+- CORE-LEARN-B (#222) - Pattern recognition (PatternType extensions)
+- CORE-LEARN-C (#223) - Preference learning (UserPreferenceManager)
+- CORE-LEARN-D (#224) - Workflow optimization (Chain-of-Draft)
+- CORE-LEARN-E (#225) - Intelligent automation (safety-first)
+- CORE-LEARN-F (#226) - Integration & polish, Learning Dashboard UI
+- CORE-LEARN (#220) - Parent epic complete
 
-#### CORE-GREAT-1: Orchestration Core
-**Status**: ✅ COMPLETE (September 22, 2025)
-- QueryRouter enabled and operational
-- Bug #166 fixed (UI no longer hangs)
-- Orchestration pipeline operational (Intent → Engine → Router)
-- 8 lock tests prevent regression
+**Sprint A6**: User Infrastructure ✅ (Oct 9-22)
+- CORE-LLM-SUPPORT (#237) - Complete LLM provider integration (4 providers)
+- CORE-USERS-JWT (#227) - Token blacklist storage
+- CORE-USERS-PROD (#229) - Production database hardening (SSL/TLS)
+- CORE-USERS-API (#228) - Multi-user API key management with zero-downtime rotation
+- CORE-AUDIT-LOGGING (#249) - Comprehensive audit trail system
+- CORE-USERS-ONBOARD (#218) - Alpha user onboarding with setup wizard and health checks
 
-#### CORE-GREAT-2: Integration Cleanup
-**Status**: ✅ COMPLETE (October 1, 2025)
-- Only one way to call each service (router pattern)
-- Configuration validated on startup
-- Zero broken documentation links
-- No dual implementation patterns
+**Test Coverage**: 100% passing across all sprints (250+ tests)
+**Security**: JWT blacklist, keychain integration, audit trail, SSL/TLS
+**Performance**: 602K req/sec sustained, <100ms API response
 
-#### CORE-GREAT-3: Plugin Architecture
-**Status**: ✅ COMPLETE (October 4-5, 2025)
-- 3 sub-epics completed (3A, 3B, 3C)
-- Plugin framework established with config-based discovery
-- 9 plugins operational (GitHub, Slack, Notion, etc.)
-- Test coverage: 68 tests, 100% passing
-- Monolith refactoring complete (main.py: 1107→318 lines)
+### 🔄 Currently Active
 
-#### CORE-GREAT-4: Intent Universal Entry
-**Status**: ✅ COMPLETE (October 7, 2025)
-- 7 sub-epics completed (4A-4F plus 4E-2)
-- 13 intent categories operational
-- Zero bypass routes
-- Performance: 602,907 req/sec sustained
-- Accuracy: 95%+ for core categories (PRIORITY: 100%, TEMPORAL: 96.7%, STATUS: 96.7%)
-- 142+ tests created and passing
-
-#### CORE-GREAT-5: Essential Validation Suite
-**Status**: ✅ COMPLETE (October 27, 2025)
-- Duration: 1.8 hours
-- 37 new tests protecting critical functionality
-- 6 quality gates preventing regression
-- Performance benchmarks locked (602K req/sec)
-- CI/CD pipeline: 2.5 minutes with 100% enforcement
-
-### 📍 Currently Active
-
-**Position**: 2. Complete the build of CORE
-
-### Administrative Tasks in Progress
-1. Token/billing optimization
-2. Documentation sweep
-3. Pattern catalog refinement (process focus)
-4. Remaining CORE epic review and prioritization
+**Position**: Sprint A7 (Polish & Buffer)
+**Sprint**: A7 of 8 (penultimate Alpha sprint)
 
 ---
 
-## Post-Refactor Roadmap
+## CORE Completion Path - Sprints A7-A8
 
-### 2. Complete CORE Track
+### Sprint A7: Polish & Buffer ➡️ (Oct 22-26)
+**Current Sprint** - Expanded scope (12 issues across 4 categories)
 
-**Prerequisites**: ✅ Great Refactor complete
+**1. CORE-UX** (4 issues):
+- #254: CORE-UX-QUIET - Quiet startup mode (2h, Medium)
+- #255: CORE-UX-STATUS-USER - Status checker user detection (3h, Medium)
+- #256: CORE-UX-BROWSER - Auto-launch browser (1h, Low, Optional)
+- #248: CORE-PREF-CONVO - Conversational personality preferences (3-5h, Medium)
 
-#### Identified CORE Epics (Order TBD)
-- **CORE-INTENT-ENHANCE**: Classification accuracy improvements (4-6 hours)
-  - IDENTITY: 76% → 90%+
-  - GUIDANCE: 76.7% → 90%+
-  - Pre-classifier optimization: ~1% → 10%+ hit rate
+**2. Critical Fixes** (2 issues):
+- #257: CORE-KNOW-BOUNDARY-COMPLETE - Complete BoundaryEnforcer integration (2-3h)
+- #258: CORE-AUTH-CONTAINER - Fix JWT service dependency injection (2-3h)
 
-- **MVP-ERROR-STANDARDS**: Standardize error handling (1-2 days)
-  - REST-compliant status codes
-  - Consistent error response format
+**3. CORE-KEYS** (3 issues):
+- #250: CORE-KEYS-ROTATION-REMINDERS - Automated key rotation reminders (2-3h)
+- #252: CORE-KEYS-STRENGTH-VALIDATION - API key strength validation (2-3h)
+- #253: CORE-KEYS-COST-ANALYTICS - API cost tracking & usage analytics (2-3h)
 
-- **CORE-TEST-CACHE**: Fix cache test environment (30-60 min)
-  - Test-only issue, production works perfectly
+**4. CORE-ALPHA** (3 issues):
+- #259: CORE-USER-ALPHA-TABLE - Create Alpha users table (1-2h)
+- #260: CORE-USER-MIGRATION - Alpha to production user migration tool (2-3h)
+- #261: CORE-USER-XIAN - Migrate xian superuser to proper user structure (1-2h)
 
-[Additional CORE epics to be enumerated from backlog review]
+**Total**: 12 issues, 20-29 hours estimated
+**Actual Duration**: 1-2 days (based on 88% velocity pattern from Sprint A6)
+**Execution Order**: See `/dev/active/sprint-a7-gameplan-polish-buffer.md`
 
-### 3. Piper Education Foundation
+---
 
-**Prerequisites**: Core functionality complete
-- Pattern recognition from user interactions
-- Preference learning and adaptation
-- Workflow optimization suggestions
-- Feedback loop implementation
+### Sprint A8: Alpha Prep & Launch ⏳ (Oct 27 - Nov 1)
+**Next Sprint** - Final Alpha sprint before Wave 2 launch
 
-### 4. Alpha Testing (v0.1)
-
-**Prerequisites**: Core + Education complete
-- Internal testing with development team
+**Testing & Validation**:
+- End-to-end workflow testing
 - Performance validation
 - Security audit
-- User acceptance testing
 
-### 5. Complete MVP Track
+**Documentation**:
+- User guides and onboarding materials
+- Known issues documentation
+- Feature status documentation
 
-**Features**:
-- Morning standup automation
-- Production readiness validation
-- Performance optimization (<100ms API maintained)
-- External API documentation
+**Alpha Deployment**:
+- Design onboarding communications
+- Invitation emails with instructions
+- Issue reporting guidelines
+- Testing checklists
+- A/B test design
 
-### 6. Beta Testing (v0.9)
+**Baseline Piper Education** (demoted from Phase 3, 90% complete):
+- Self-knowledge (ethics ✅, spatial intelligence ✅)
+- Ethical values documentation
+- Spatial intelligence patterns
+- Growth mindset training
+- Systematic blindness awareness
+- Flywheel Methodology integration
+- Domain knowledge (PM, clients, projects)
 
-**Prerequisites**: MVP complete
+**Estimated Duration**: 3-5 days
+**Target**: Alpha Wave 2 launch readiness
+
+---
+
+## Alpha Milestone Completion Analysis
+
+### ✅ Completed Sprints (6 of 8)
+- Sprint A1: Critical Infrastructure (5 issues)
+- Sprint A2: Notion & Errors (5 issues)
+- Sprint A3: Core Activation (4 issues)
+- Sprint A4: Standup Epic (4 issues)
+- Sprint A5: Learning System (7 issues)
+- Sprint A6: User Infrastructure (7 issues)
+
+**Total Delivered**: 32 issues, 54 issues closed in Alpha milestone overall
+
+### 🔜 Remaining Work (Sprints A7-A8)
+
+**Sprint A7: Polish & Buffer** (12 issues, 20-29 hours):
+- CORE-UX: 4 issues
+- Critical fixes: 2 issues
+- CORE-KEYS: 3 issues
+- CORE-ALPHA: 3 issues
+
+**Sprint A8: Alpha Prep & Launch** (activities, 3-5 days):
+- Testing & validation
+- Documentation
+- Alpha deployment prep
+- Baseline Piper Education completion
+
+**Total Remaining**: 12 issues + A8 activities
+**Estimated Completion**: Early November 2025
+
+---
+
+## Post-Alpha Path
+
+### Phase 3: Alpha Testing v0.1 (Early November 2025)
+**Status**: Ready to begin after Sprint A8
+- Internal testing with development team (Alpha Wave 2)
+- Performance validation
+- Security audit
+- End-to-end workflow testing
+- User feedback integration
+- **Decision Point**: Assess MVP readiness
+
+### Phase 4: MVP Completion (Nov-Dec 2025)
+
+**What MVP Needs** (from VALID-2 assessment):
+
+**Already Implemented** (70-75% complete):
+- ✅ Intent classification (98.62% accuracy)
+- ✅ 22 production handlers including:
+  - GitHub operations (create, update, analyze)
+  - Summarization with LLM (145 lines)
+  - Strategic planning (125 lines)
+  - Pattern learning (94 lines)
+- ✅ Plugin architecture (4 plugins operational)
+
+**Configuration Required** (1 week):
+- 🔧 GitHub API token
+- 🔧 OpenAI/Anthropic API keys
+- 🔧 Slack OAuth setup
+- 🔧 Notion API credentials
+- 🔧 Google Calendar credentials
+
+**Testing Required** (1 week):
+- 🔧 E2E with real APIs (not mocked)
+- 🔧 User journey validation
+- 🔧 Performance under load
+
+**Polish Required** (1 week):
+- 🔧 Greeting/help content
+- 🔧 Error message refinement
+- 🔧 User documentation
+
+**MVP Features to Validate**:
+All originally planned features still need verification:
+- Chitchat (greeting, help/menu)
+- Knowledge (upload, summarize, analyze)
+- Lists (todo management)
+- Integrations (GitHub, Slack, Notion, Calendar)
+- Jobs (updates, standup generation)
+
+### Phase 5: Beta Testing v0.9 (December 2025)
 - Limited external users
-- Feedback incorporation
 - Scale testing
-- Enterprise feature validation
+- Enterprise features
 
-### 7. Launch v1.0
-
-**Target**: Post-beta validation
+### Phase 6: Launch v1.0 (January 2026)
 - Public availability
 - SLA commitment
-- Enterprise features
 - Full documentation
 
 ---
 
-## Deferred to Post-MVP (MVP-QUALITY-ENHANCE)
+## Critical Insights from CRAFT
 
-Tracked but not blocking:
-- **Staging Environment**: When first external user
-- **Prometheus/Grafana**: When SLAs matter
-- **Security Scanning**: Before public deployment
-- **Automated Rollback**: When downtime costly
-- **Load Testing Infrastructure**: When scaling to many users
+### What Changed Our Understanding
+
+1. **Handlers aren't placeholders** - 22 production implementations exist
+2. **MVP closer than expected** - 70-75% complete vs assumed 40%
+3. **Learning already started** - Pattern learning handler exists
+4. **Standup partially done** - Handler exists, needs wiring
+
+### What DOESN'T Change
+
+1. **Alpha plan execution** - All A2-A7 items get verified
+2. **No skipping** - Even if handlers exist, we verify everything
+3. **Quality standards** - 100% completion required
+4. **Inchworm protocol** - Sequential, methodical progress
+
+---
+
+## Timeline Summary
+
+**October 2025**: ✅ Mostly Complete
+- Week 2: Sprint A1 + CRAFT ✅
+- Week 3: Sprint A2 ✅
+- Week 4: Sprint A3-A6 ✅ (accelerated)
+- Oct 22-26: Sprint A7 ➡️ (12 issues, 1-2 days actual)
+- Oct 27 - Nov 1: Sprint A8 ⏳ (Alpha prep, 3-5 days)
+
+**Early November 2025**:
+- Alpha Wave 2 launch
+- Phase 3: Alpha Testing with Wave 2 users
+- User feedback integration
+
+**Mid-Late November 2025**:
+- MVP Configuration (API keys, OAuth)
+- Decision Point: MVP scope finalization
+- MVP Polish and Testing
+
+**December 2025**:
+- Beta preparation
+- Beta testing (v0.9)
+
+**January 2026**:
+- 1.0 preparation
+- Public launch
 
 ---
 
 ## Success Metrics
 
-### Great Refactor Validation ✅
-**North Star**: GitHub issue creation works end-to-end
-- Intent classification: ✅ Working
-- QueryRouter: ✅ Operational
-- OrchestrationEngine: ✅ Functional
-- GitHub service: ✅ Connected
-- End-to-end flow: ✅ Validated
+### CORE Completion ✅ (October 22, 2025)
+- ✅ All A1-A6 sprints complete (32 issues delivered)
+- ✅ Every item verified (not assumed)
+- ✅ Documentation current
+- ✅ Tests comprehensive (250+ tests, 100% passing)
+- ➡️ Sprint A7 in progress (12 issues, 1-2 days actual)
+- ⏳ Sprint A8 planned (Alpha prep, 3-5 days)
 
-### Technical Metrics Achieved
-- **API Performance**: <100ms (canonical: ~1ms) ✅
-- **Throughput**: 602K req/sec sustained ✅
-- **Classification Accuracy**: 95%+ for core categories ✅
-- **Test Coverage**: 80%+ overall, 100% critical paths ✅
-- **CI/CD Pipeline**: 2.5 minutes ✅
+### Alpha Success Criteria (Early November 2025)
+- ✅ Core functionality operational (all handlers working)
+- ✅ Performance baselines maintained (602K req/sec)
+- ✅ Multi-user support working (JWT, API keys, onboarding)
+- ✅ Security hardened (SSL/TLS, audit trail, keychain)
+- 🔜 UX polished (Sprint A7 - 12 issues)
+- 🔜 API key lifecycle complete (CORE-KEYS)
+- 🔜 User architecture separated (CORE-ALPHA)
+- 🔜 Alpha prep complete (Sprint A8)
+- 🔜 Alpha Wave 2 launched
 
-### Process Metrics
-- **Completion Rate**: 100% per epic ✅
-- **Regression Rate**: 0% (prevented by quality gates) ✅
-- **Technical Debt**: Zero accumulation ✅
-
----
-
-## Development Velocity
-
-### Actual Performance (Sept 20 - Oct 27)
-- **Duration**: 5 weeks
-- **Epics Completed**: 5 major (with 13+ sub-epics)
-- **Tests Created**: 200+ across all epics
-- **Code Quality**: Production-ready, not prototype
-- **Technical Debt**: Zero
-
-### Velocity Insights
-- Average epic: 3-7 days when properly scoped
-- Sub-epic pattern effective for large epics
-- Multi-agent execution reduces time by ~40%
-- Phase -1 investigation prevents rework
-
----
-
-## Lessons Learned
-
-### What's Working
-1. **Inchworm Protocol**: Sequential completion prevents technical debt
-2. **Sub-epic Decomposition**: Breaking large epics enables progress
-3. **Multi-Agent Verification**: Catches gaps individual agents miss
-4. **Anti-80% Safeguards**: Ensures true 100% completion
-5. **Evidence-Based Completion**: Objective verification prevents false completions
-6. **Phase -1 Investigation**: Understanding before implementing saves time
-
-### What We've Adjusted
-1. **Alpha-appropriate scoping**: Don't over-engineer before users
-2. **Defer enterprise features**: Track but don't build prematurely
-3. **Focus on regression prevention**: Quality gates over features
-4. **Document deferrals completely**: Clear tracking of what's postponed
+### MVP Launch (December 2025)
+- 🔜 Configuration complete (API keys, OAuth)
+- 🔜 E2E tests passing with real APIs
+- 🔜 User journeys validated
+- 🔜 Documentation ready for external users
 
 ---
 
 ## Risk Management
 
 ### Mitigated Risks ✅
-- **Partial implementations**: Solved by Inchworm Protocol
-- **Completion bias**: Solved by anti-80% safeguards
-- **Regression**: Solved by quality gates + CI/CD
-- **Context loss**: Solved by systematic documentation
-- **Performance degradation**: Solved by benchmarks + gates
+- Partial implementations (CRAFT verified completeness)
+- Technical debt (zero accumulation)
+- Regression (quality gates active)
 
 ### Active Risks
-- **Token/billing management**: Being addressed
-- **Remaining CORE scope**: Under review
-- **Team scaling**: Deferred to post-MVP
+- Configuration availability (API keys needed)
+- OAuth complexity (Slack, Google)
+- Timeline pressure (resist shortcuts)
+
+### Mitigation Strategy
+- Follow Alpha plan exactly
+- Verify everything systematically
+- Document all discoveries
+- No skipping, no assumptions
 
 ---
 
-## Version History
+## Key Principle: Trust but Verify
 
-- **v7.0** (October 28, 2025): Post-Great Refactor update
-- **v6.0** (October 1, 2025): GREAT-2 completion update
-- **v5.0** (September 29, 2025): Post-CORE-QUERY-1 update
-- Previous versions archived
-   - **v4.0** (September 20, 2025): Great Refactor integration
-   - **v3.0**: Previous incremental updates
-   - **v2.0**: Initial roadmap structure
-   - **v1.0**: Original vision document
+CRAFT showed us that much more is implemented than we knew. This is fantastic! But we still:
+1. Verify every Alpha checklist item
+2. Test every integration point
+3. Document every gap
+4. Complete every sprint fully
 
+The handlers existing means sprints might go faster, not that we skip verification.
 
 ---
 
-_This is a living document updated based on actual development progress. All dates reflect actual completion, not estimates. Development pace determined by quality and completeness, not deadlines._
+_This roadmap reflects the remarkable progress through Sprint A6, with Sprint A7 expanded to 12 issues and Sprint A8 added for Alpha prep. Quality and completeness continue to determine pace, not arbitrary deadlines._
 
-**Last Updated**: October 28, 2025
-**Version**: 7.0
-**Key Changes**: Complete Great Refactor (GREAT 1-5), updated current position, added velocity metrics
+**Version**: 10.0
+**Last Updated**: October 22, 2025, 3:30 PM PDT
+**Next Update**: After Sprint A7 completion or Sprint A8 start
+**Previous**: v9.0 (Oct 22, 2025, 1:45 PM) - Sprint A6 Complete
