@@ -1,7 +1,5 @@
 # CORE-USERS-ONBOARD: Alpha User Onboarding Infrastructure
 
-## Context
-
 Alpha testing requires users to self-onboard with minimal friction. Currently, configuration is developer-focused with manual file editing. Alpha users need a guided setup experience.
 
 **Strategic Context** (from usage models analysis):
