@@ -23,6 +23,21 @@ from typing import Any, Dict
 sys.path.insert(0, ".")
 
 
+def get_platform() -> str:
+    """Detect the current platform"""
+    import platform
+
+    system = platform.system().lower()
+    if system == "darwin":
+        return "macos"
+    elif system == "windows":
+        return "windows"
+    elif system == "linux":
+        return "linux"
+    else:
+        return "unknown"
+
+
 async def check_docker() -> bool:
     """Check if Docker is installed and running"""
     try:
@@ -30,6 +45,90 @@ async def check_docker() -> bool:
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
+
+
+async def guide_docker_installation() -> bool:
+    """Guide user through Docker installation with platform-specific instructions"""
+    platform = get_platform()
+
+    print("\n" + "=" * 50)
+    print("🐳 Docker Installation Guide")
+    print("=" * 50)
+
+    print("\nDocker is required for Piper Morgan's database and services.")
+    print("Let's get Docker installed on your system.\n")
+
+    if platform == "macos":
+        print("📱 macOS Installation:")
+        print("1. Visit: https://docs.docker.com/desktop/mac/install/")
+        print("2. Download Docker Desktop for Mac")
+        print("3. Open the .dmg file and drag Docker to Applications")
+        print("4. Launch Docker Desktop from Applications")
+        print("5. Wait for Docker to start (whale icon in menu bar)")
+
+    elif platform == "windows":
+        print("🪟 Windows Installation:")
+        print("1. Visit: https://docs.docker.com/desktop/windows/install/")
+        print("2. Download Docker Desktop for Windows")
+        print("3. Run the installer and follow the setup wizard")
+        print("4. Restart your computer when prompted")
+        print("5. Launch Docker Desktop and wait for it to start")
+
+    elif platform == "linux":
+        print("🐧 Linux Installation:")
+        print("1. Visit: https://docs.docker.com/engine/install/")
+        print("2. Choose your Linux distribution")
+        print("3. Follow the installation instructions")
+        print("4. Start Docker: sudo systemctl start docker")
+        print("5. Enable auto-start: sudo systemctl enable docker")
+
+    else:
+        print("❓ Unknown Platform:")
+        print("1. Visit: https://docs.docker.com/get-docker/")
+        print("2. Choose the appropriate installer for your system")
+        print("3. Follow the installation instructions")
+
+    print("\n" + "-" * 50)
+    print("After installation:")
+    print("• Docker Desktop should show a green 'running' status")
+    print("• You can test with: docker --version")
+    print("• If you see version info, Docker is working!")
+
+    while True:
+        print("\n" + "-" * 50)
+        choice = input("Have you installed Docker? (y/n/skip): ").lower().strip()
+
+        if choice in ["y", "yes"]:
+            # Test Docker installation
+            if await check_docker():
+                print("✅ Great! Docker is now working.")
+                return True
+            else:
+                print("❌ Docker doesn't seem to be working yet.")
+                print("💡 Try:")
+                print("   • Make sure Docker Desktop is running")
+                print("   • Restart Docker Desktop")
+                print("   • Check Docker Desktop status")
+                continue
+
+        elif choice in ["n", "no"]:
+            print("📝 No problem! Please install Docker and run setup again.")
+            print("   Docker is required for Piper Morgan's database.")
+            return False
+
+        elif choice == "skip":
+            print("⚠️  WARNING: Skipping Docker installation.")
+            print("   Some features may not work without Docker.")
+            print("   You can install Docker later and re-run setup.")
+
+            confirm = input("Continue without Docker? (y/n): ").lower().strip()
+            if confirm in ["y", "yes"]:
+                return True
+            else:
+                continue
+        else:
+            print("Please enter 'y' (yes), 'n' (no), or 'skip'")
+            continue
 
 
 async def check_python_version() -> bool:
@@ -305,12 +404,23 @@ async def run_setup_wizard():
         # Phase 1: System checks
         checks = await check_system()
 
-        if not all(checks.values()):
+        # Handle Docker installation separately with guided setup
+        if not checks["Docker installed"]:
+            print("\n🐳 Docker is not installed or not running.")
+            docker_success = await guide_docker_installation()
+            if not docker_success:
+                print("\n❌ Setup cannot continue without Docker.")
+                return False
+            # Re-check Docker after guided installation
+            checks["Docker installed"] = await check_docker()
+
+        # Check other requirements
+        remaining_issues = {k: v for k, v in checks.items() if not v and k != "Docker installed"}
+
+        if remaining_issues:
             print("\n❌ Setup cannot continue. Please fix the issues above.")
             print("\nTroubleshooting:")
 
-            if not checks["Docker installed"]:
-                print("  • Install Docker: https://docs.docker.com/get-docker/")
             if not checks["Python 3.9+"]:
                 print("  • Install Python 3.9+: https://www.python.org/downloads/")
                 print("  • Recommended: Python 3.11+ for best compatibility")

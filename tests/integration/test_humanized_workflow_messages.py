@@ -47,11 +47,11 @@ class TestHumanizedWorkflowMessages:
         )
 
         # Assert - Should see humanized action, not technical string
-        assert "investigate a crash" in result
+        assert "look into that crash" in result
         assert "investigate_crash" not in result
         assert (
             result
-            == "I understand you want to investigate a crash. I've started a workflow to handle this."
+            == "I understand you want to look into that crash. I've started a workflow to handle this."
         )
 
     @pytest.mark.asyncio
@@ -89,8 +89,8 @@ class TestHumanizedWorkflowMessages:
         )
 
         # Assert
-        assert "analyze a file" in result
-        assert result == "I'm analyze a file for you."
+        assert "take a look at a file" in result
+        assert result == "I'm take a look at a file for you."
 
     @pytest.mark.asyncio
     async def test_summarize_document_workflow_message(self, template_renderer):
@@ -108,8 +108,8 @@ class TestHumanizedWorkflowMessages:
         )
 
         # Assert
-        assert "summarize a document" in result
-        assert result == "I'm summarize a document for you."
+        assert "sum up a document" in result
+        assert result == "I'm sum up a document for you."
 
     @pytest.mark.asyncio
     async def test_unknown_action_fallback(self, template_renderer):
@@ -145,9 +145,9 @@ class TestHumanizedWorkflowMessages:
             intent_category=intent_category,
         )
 
-        # Assert - Should return action as-is
-        assert "analyze" in result
-        assert result == "Processing analyze."
+        # Assert - Should return conversational version
+        assert "take a look at" in result
+        assert result == "Processing take a look at."
 
     @pytest.mark.asyncio
     async def test_template_without_human_action_placeholder(self, template_renderer):
@@ -185,7 +185,7 @@ class TestHumanizedWorkflowMessages:
         )
 
         # Assert
-        assert "review code" in result
+        assert "check out the code" in result
         assert "Alice" in result
         assert "Piper Morgan" in result
-        assert result == "I'm review code for Alice on Piper Morgan."
+        assert result == "I'm check out the code for Alice on Piper Morgan."

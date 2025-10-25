@@ -8,12 +8,15 @@ Issue #218 CORE-USERS-ONBOARD Phase 1B
 """
 
 import asyncio
+import logging
 import sys
 from datetime import datetime
 from typing import Any, Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, ".")
+
+logger = logging.getLogger(__name__)
 
 
 class StatusChecker:
@@ -63,11 +66,14 @@ class StatusChecker:
             from sqlalchemy import text
 
             from services.database.session_factory import AsyncSessionFactory
+            from services.security.key_rotation_reminder import KeyRotationReminder
             from services.security.user_api_key_service import UserAPIKeyService
 
             async with AsyncSessionFactory.session_scope() as session:
-                # Get first user (for alpha, might just be one)
-                user_result = await session.execute(text("SELECT id, username FROM users LIMIT 1"))
+                # Get most recent user (Issue #255 CORE-UX-STATUS-USER)
+                user_result = await session.execute(
+                    text("SELECT id, username FROM users ORDER BY created_at DESC LIMIT 1")
+                )
                 user = user_result.first()
 
                 if not user:
@@ -77,8 +83,13 @@ class StatusChecker:
                         "details": {},
                     }
 
-                user_id = user[0]
+                user_id, username = user[0], user[1]
                 service = UserAPIKeyService()
+                reminder_service = KeyRotationReminder(service)
+
+                # Check rotation reminders (Issue #250 CORE-KEYS-ROTATION-REMINDERS)
+                rotation_reminders = await reminder_service.check_key_ages(session, user_id)
+                rotation_status = reminder_service.format_reminder_for_status(rotation_reminders)
 
                 # Check each provider
                 results = {}
@@ -91,23 +102,40 @@ class StatusChecker:
                             results[provider] = {"status": "○", "message": "Not configured"}
                             continue
 
+                        # Check for rotation reminders first
+                        base_message = ""
+                        base_status = "✓"
+
                         # Validate (only for OpenAI/Anthropic, skip GitHub)
                         if provider in ["openai", "anthropic"]:
                             is_valid = await service.validate_user_key(session, user_id, provider)
 
                             if is_valid:
-                                results[provider] = {"status": "✓", "message": "Valid"}
+                                base_message = "Valid"
+                                base_status = "✓"
                             else:
-                                results[provider] = {
-                                    "status": "✗",
-                                    "message": "Invalid or expired",
-                                }
+                                base_message = "Invalid or expired"
+                                base_status = "✗"
                         else:
                             # GitHub token (don't validate, expensive)
+                            base_message = "Configured (not validated)"
+                            base_status = "✓"
+
+                        # Add rotation reminder if present
+                        if provider in rotation_status:
+                            rotation_msg = rotation_status[provider]
+                            # Extract just the message part (after the icon)
+                            rotation_text = (
+                                rotation_msg.split(" ", 1)[1]
+                                if " " in rotation_msg
+                                else rotation_msg
+                            )
                             results[provider] = {
-                                "status": "✓",
-                                "message": "Configured (not validated)",
+                                "status": rotation_msg.split(" ")[0],  # Use rotation icon
+                                "message": f"{base_message} - {rotation_text}",
                             }
+                        else:
+                            results[provider] = {"status": base_status, "message": base_message}
 
                     except Exception as e:
                         results[provider] = {
@@ -115,7 +143,13 @@ class StatusChecker:
                             "message": f"Error: {str(e)[:50]}",
                         }
 
-            return results
+            return {
+                "status": "✓",
+                "message": f"API Keys for user: {username}",
+                "details": results,
+                "username": username,
+                "user_id": user_id,
+            }
 
         except Exception as e:
             return {
@@ -169,7 +203,6 @@ async def run_status_check():
     print("\n" + "=" * 50)
     print("Piper Morgan System Status")
     print("=" * 50)
-    print()
 
     checker = StatusChecker()
 
@@ -185,10 +218,17 @@ async def run_status_check():
     key_status = await checker.check_api_keys()
 
     if isinstance(key_status, dict) and "status" in key_status:
-        # Error case
-        print(f"  {key_status['status']} {key_status['message']}")
+        if "username" in key_status:
+            # Success case with user info (Issue #255 CORE-UX-STATUS-USER)
+            print(f"User: {key_status['username']}")
+            print()
+            for provider, status in key_status["details"].items():
+                print(f"  {status['status']} {provider}: {status['message']}")
+        else:
+            # Error case
+            print(f"  {key_status['status']} {key_status['message']}")
     else:
-        # Provider results
+        # Legacy format (shouldn't happen with new code)
         for provider, status in key_status.items():
             print(f"  {status['status']} {provider}: {status['message']}")
 
@@ -210,13 +250,23 @@ async def run_status_check():
 
     if isinstance(key_status, dict):
         if "status" in key_status:
-            # Error case
-            if key_status["status"] == "⚠":
-                recommendations.append(
-                    "  • Configure at least one API provider (run: python main.py setup)"
-                )
+            if "username" in key_status:
+                # Success case - check details
+                valid_keys = [
+                    p for p, s in key_status["details"].items() if s["status"] in ["✓", "○"]
+                ]
+                if not valid_keys:
+                    recommendations.append(
+                        "  • Configure at least one API provider (run: python main.py setup)"
+                    )
+            else:
+                # Error case
+                if key_status["status"] == "⚠":
+                    recommendations.append(
+                        "  • Configure at least one API provider (run: python main.py setup)"
+                    )
         else:
-            # Check if any valid keys
+            # Legacy format - check if any valid keys
             valid_keys = [p for p, s in key_status.items() if s["status"] in ["✓", "○"]]
             if not valid_keys:
                 recommendations.append(
@@ -226,6 +276,26 @@ async def run_status_check():
     if perf_status["status"] in ["⚠", "✗"]:
         recommendations.append("  • System performance is slow - check database load")
         recommendations.append("  • Try: docker-compose restart")
+
+    # Add rotation recommendations (Issue #250 CORE-KEYS-ROTATION-REMINDERS)
+    if isinstance(key_status, dict) and "username" in key_status:
+        try:
+            from services.database.session_factory import AsyncSessionFactory
+            from services.security.key_rotation_reminder import KeyRotationReminder
+            from services.security.user_api_key_service import UserAPIKeyService
+
+            async def get_rotation_recs():
+                async with AsyncSessionFactory.session_scope() as session:
+                    service = UserAPIKeyService()
+                    reminder_service = KeyRotationReminder(service)
+                    return await reminder_service.get_rotation_recommendations(
+                        session, key_status["user_id"]
+                    )
+
+            rotation_recs = asyncio.run(get_rotation_recs())
+            recommendations.extend(rotation_recs)
+        except Exception as e:
+            logger.warning(f"Failed to get rotation recommendations: {e}")
 
     if not recommendations:
         recommendations.append("  ✓ All systems operational!")

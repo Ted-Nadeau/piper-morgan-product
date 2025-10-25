@@ -54,9 +54,12 @@ class KnowledgeGraphService:
 
         # Privacy check if boundary enforcer is available
         if self.boundary_enforcer:
-            # For now, skip privacy check as BoundaryEnforcer expects Request objects
-            # TODO: Add content-based boundary checking method to BoundaryEnforcer
-            pass
+            # Check node content for boundary violations
+            combined_content = f"{name} {description}"
+            if await self.boundary_enforcer.check_harassment_patterns(combined_content):
+                raise ValueError(f"Node content violates harassment boundaries: {name}")
+            if await self.boundary_enforcer.check_inappropriate_content(combined_content):
+                raise ValueError(f"Node content contains inappropriate material: {name}")
 
         # Create the node
         node = KnowledgeNode(
@@ -104,8 +107,12 @@ class KnowledgeGraphService:
 
         # Privacy check for updated content
         if self.boundary_enforcer and (name or description or metadata):
-            # TODO: Add content-based boundary checking method to BoundaryEnforcer
-            pass
+            # Check updated content for boundary violations
+            combined_content = f"{name or node.name} {description or node.description}"
+            if await self.boundary_enforcer.check_harassment_patterns(combined_content):
+                raise ValueError(f"Updated node content violates harassment boundaries")
+            if await self.boundary_enforcer.check_inappropriate_content(combined_content):
+                raise ValueError(f"Updated node content contains inappropriate material")
 
         # Update fields
         if name is not None:
@@ -256,14 +263,21 @@ class KnowledgeGraphService:
             # Filter nodes based on privacy boundaries
             privacy_filtered_nodes = []
             for node in subgraph["nodes"]:
-                # TODO: Implement proper boundary check
-                # For now, allow all nodes
-                check = type("obj", (object,), {"allowed": True, "reason": None})
-                if check.allowed:
+                # Check node content for boundary violations
+                combined_content = f"{node.name} {node.description}"
+                violates_harassment = await self.boundary_enforcer.check_harassment_patterns(
+                    combined_content
+                )
+                violates_inappropriate = await self.boundary_enforcer.check_inappropriate_content(
+                    combined_content
+                )
+
+                if not (violates_harassment or violates_inappropriate):
                     privacy_filtered_nodes.append(node)
                 else:
+                    reason = "harassment" if violates_harassment else "inappropriate_content"
                     self.logger.debug(
-                        "Node filtered by privacy boundaries", node_id=node.id, reason=check.reason
+                        "Node filtered by privacy boundaries", node_id=node.id, reason=reason
                     )
 
             subgraph["nodes"] = privacy_filtered_nodes
@@ -325,11 +339,12 @@ class KnowledgeGraphService:
         # Privacy check if enforcer available
         if self.boundary_enforcer:
             for node in nodes:
-                # TODO: Implement proper boundary check
-                # For now, allow all nodes
-                check = type("obj", (object,), {"allowed": True, "reason": None})
-                if not check.allowed:
-                    raise ValueError(f"Node '{node.name}' violates boundaries: {check.reason}")
+                # Check node content for boundary violations
+                combined_content = f"{node.name} {node.description}"
+                if await self.boundary_enforcer.check_harassment_patterns(combined_content):
+                    raise ValueError(f"Node '{node.name}' violates harassment boundaries")
+                if await self.boundary_enforcer.check_inappropriate_content(combined_content):
+                    raise ValueError(f"Node '{node.name}' contains inappropriate material")
 
         return await self.repo.create_nodes_bulk(nodes)
 

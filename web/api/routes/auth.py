@@ -13,8 +13,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims, JWTService
-from services.auth.token_blacklist import TokenBlacklist
-from services.cache.redis_factory import RedisFactory
 from services.database.session_factory import AsyncSessionFactory
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
@@ -46,37 +44,13 @@ async def get_jwt_service(request: Request) -> JWTService:
     """
     Dependency injection for JWTService.
 
-    TODO: Once jwt_service is in ServiceContainer, get from there.
-    For now, instantiate directly with blacklist support.
+    Uses AuthContainer for singleton JWT service with proper DI.
+    Fixed: Issue #258 CORE-AUTH-CONTAINER
     """
-    # Get service container
-    if not hasattr(request.app.state, "service_container"):
-        raise HTTPException(status_code=500, detail="ServiceContainer not initialized")
+    # Get from AuthContainer (singleton pattern)
+    from services.auth.container import AuthContainer
 
-    # TODO: Get from container when available
-    # container = request.app.state.service_container
-    # return container.get_service("jwt_service")
-
-    # For now, create with blacklist support
-    # Check if we've already initialized jwt_service in app state
-    if hasattr(request.app.state, "jwt_service"):
-        return request.app.state.jwt_service
-
-    # First time: initialize TokenBlacklist and JWTService
-    redis_factory = RedisFactory()
-    db_session_factory = AsyncSessionFactory()
-    blacklist = TokenBlacklist(redis_factory, db_session_factory)
-
-    # Initialize the blacklist (async)
-    await blacklist.initialize()
-
-    # Create JWTService with blacklist
-    jwt_service = JWTService(blacklist=blacklist)
-
-    # Cache in app state for reuse
-    request.app.state.jwt_service = jwt_service
-
-    return jwt_service
+    return AuthContainer.get_jwt_service()
 
 
 @router.post("/logout")

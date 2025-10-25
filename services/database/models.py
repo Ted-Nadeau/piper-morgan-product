@@ -72,6 +72,7 @@ class User(Base):
     username = Column(String(255), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(500), nullable=True)  # For future password auth
+    role = Column(String(50), default="user", nullable=False)  # Issue #259 - user role
 
     # Status flags
     is_active = Column(Boolean, default=True, nullable=False)
@@ -102,6 +103,79 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, active={self.is_active})>"
+
+
+class AlphaUser(Base):
+    """
+    Alpha tester user model - temporary accounts for testing.
+
+    Separate from production users (users table) to enable:
+    - Clean alpha/production data separation
+    - Username preservation (prevent "Netcom problem")
+    - Test data cleanup without affecting production
+    - User choice in data migration
+
+    Issue #259 CORE-USER-ALPHA-TABLE
+    """
+
+    __tablename__ = "alpha_users"
+
+    # Identity - UUID for alpha users
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    username = Column(String(50), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    display_name = Column(String(100))
+
+    # Auth fields (mirrored from users table)
+    password_hash = Column(String(500))
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
+
+    # Timestamps (mirrored from users table)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    last_login_at = Column(DateTime)
+
+    # Alpha-specific fields
+    alpha_wave = Column(Integer, default=2)  # Wave 2 = first external alpha
+    test_start_date = Column(DateTime, default=datetime.utcnow)
+    test_end_date = Column(DateTime)
+    migrated_to_prod = Column(Boolean, default=False)
+    migration_date = Column(DateTime)
+    prod_user_id = Column(String(255), ForeignKey("users.id"))  # Link to production user
+
+    # Preferences (JSONB for flexibility during alpha)
+    preferences = Column(postgresql.JSONB, default=dict)
+    learning_data = Column(postgresql.JSONB, default=dict)
+
+    # Metadata
+    notes = Column(Text)  # PM notes about tester
+    feedback_count = Column(Integer, default=0)
+    last_active = Column(DateTime)
+
+    # Relationships
+    # production_user = relationship("User", foreign_keys=[prod_user_id])
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_alpha_users_username", "username", unique=True),
+        Index("idx_alpha_users_email", "email", unique=True),
+        Index("idx_alpha_users_alpha_wave", "alpha_wave"),
+        Index("idx_alpha_users_migrated", "migrated_to_prod"),
+        Index(
+            "idx_alpha_users_prod_user",
+            "prod_user_id",
+            postgresql_where=Column("prod_user_id").isnot(None),
+        ),
+        Index(
+            "idx_alpha_users_last_active",
+            "last_active",
+            postgresql_where=Column("last_active").isnot(None),
+        ),
+    )
+
+    def __repr__(self):
+        return f"<AlphaUser(username={self.username}, email={self.email}, wave={self.alpha_wave})>"
 
 
 class UserAPIKey(Base):

@@ -1,4 +1,6 @@
 [project]
+name = "piper-morgan"
+version = "0.8.0-alpha"
 requires-python = ">=3.11.0"
 
 [tool.black]
