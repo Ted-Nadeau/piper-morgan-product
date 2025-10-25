@@ -1,0 +1,1 @@
+# Testing smoke tests in pre-commit hooks

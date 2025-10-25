@@ -24,6 +24,15 @@ repos:
         exclude: ^venv/
   - repo: local
     hooks:
+      - id: smoke-tests
+        name: Smoke Tests
+        entry: ./scripts/run_tests.sh smoke
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        description: |
+          Run smoke tests (<1s) to verify basic functionality before commit.
+          Catches import errors and critical failures immediately.
       - id: documentation-check
         name: Documentation Check
         entry: .git/hooks/pre-commit.legacy
@@ -41,7 +50,7 @@ repos:
         entry: bash -c 'PYTHONPATH=. python3 -m pytest tests/test_architecture_enforcement.py -xvs'
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
         files: '^(services/.*\.py|tests/test_architecture_enforcement\.py)$'
         description: |
@@ -53,7 +62,7 @@ repos:
         args: ['-c', 'if grep -r "from.*github_agent import GitHubAgent" services/ --include="*.py" --exclude="services/integrations/github/*"; then echo "ERROR: Direct GitHubAgent imports found!"; exit 1; fi']
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
         files: '^services/.*\.py$'
         description: |
@@ -76,7 +85,7 @@ repos:
         entry: scripts/validate-numbering.sh
         language: script
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         files: '^docs/internal/architecture/current/(patterns/pattern-|adrs/adr-).*\.md$'
         description: |
           Validates that new patterns and ADRs have consecutive numbering.
