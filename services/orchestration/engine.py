@@ -32,6 +32,14 @@ from services.intent_service.intent_enricher import IntentEnricher
 from services.llm.clients import LLMClient
 from services.queries.query_router import QueryRouter
 from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
+from services.ui_messages.loading_states import (
+    LoadingState,
+    OperationType,
+    complete_loading,
+    start_loading,
+    update_loading,
+)
+from web.utils.streaming_responses import ProgressTracker
 
 # Multi-Agent Coordinator Integration
 from .integration import PerformanceMonitor, SessionIntegration, WorkflowIntegration
@@ -251,14 +259,37 @@ class OrchestrationEngine:
         start_time = datetime.now()
         task_results = []
 
+        # Start loading operation for workflow execution
+        operation_id = start_loading(
+            OperationType.WORKFLOW_EXECUTION,
+            f"Executing workflow: {workflow.type.value}",
+            estimated_duration_seconds=len(workflow.tasks) * 30,  # Estimate 30s per task
+        )
+
+        # Create progress tracker for tasks
+        tracker = ProgressTracker(operation_id, total_steps=len(workflow.tasks))
+
         try:
             # Update workflow status
             workflow.status = WorkflowStatus.IN_PROGRESS
+            update_loading(operation_id, f"Starting workflow with {len(workflow.tasks)} tasks...")
 
             # Execute tasks in dependency order
-            for task in workflow.tasks:
+            for i, task in enumerate(workflow.tasks):
+                # Update progress for current task
+                tracker.next_step(
+                    task.type.value,
+                    f"Executing task {i+1} of {len(workflow.tasks)}: {task.type.value}",
+                )
+
                 task_result = await self._execute_task(task, workflow)
                 task_results.append(task_result)
+
+                # Update progress with task result
+                if task_result.status == TaskStatus.COMPLETED:
+                    tracker.update_current_step(f"✅ Task completed: {task.type.value}")
+                else:
+                    tracker.update_current_step(f"⚠️ Task failed: {task.type.value}")
 
                 # Stop execution if a critical task fails
                 if task_result.status == TaskStatus.FAILED and task.type in [
@@ -266,6 +297,11 @@ class OrchestrationEngine:
                     TaskType.EXTRACT_REQUIREMENTS,
                 ]:
                     workflow.status = WorkflowStatus.FAILED
+                    complete_loading(
+                        operation_id,
+                        success=False,
+                        message=f"Critical task {task.id} failed: {task_result.error_message}",
+                    )
                     return WorkflowResult(
                         workflow_id=workflow.id,
                         status=WorkflowStatus.FAILED,
@@ -276,6 +312,12 @@ class OrchestrationEngine:
 
             # Mark workflow as completed if all tasks succeeded
             workflow.status = WorkflowStatus.COMPLETED
+            complete_loading(
+                operation_id,
+                success=True,
+                message=f"Workflow completed successfully! Executed {len(workflow.tasks)} tasks.",
+            )
+
             return WorkflowResult(
                 workflow_id=workflow.id,
                 status=WorkflowStatus.COMPLETED,
@@ -286,6 +328,9 @@ class OrchestrationEngine:
         except Exception as e:
             self.logger.error("Workflow execution failed", error=str(e), workflow_id=workflow.id)
             workflow.status = WorkflowStatus.FAILED
+            complete_loading(
+                operation_id, success=False, message=f"Workflow execution failed: {str(e)}"
+            )
             return WorkflowResult(
                 workflow_id=workflow.id,
                 status=WorkflowStatus.FAILED,
