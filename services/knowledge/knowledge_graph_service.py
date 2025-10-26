@@ -603,3 +603,176 @@ class KnowledgeGraphService:
         self.logger.info(f"Traversal complete: {stats}")
 
         return results
+
+    # Issue #278: Graph-First Retrieval Pattern
+    async def expand(
+        self,
+        node_ids: List[str],
+        max_hops: int = 2,
+        edge_types: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Expand from given nodes to nearby nodes using specified edge types.
+
+        This implements the graph-first retrieval pattern: query graph to gather
+        context before expensive LLM processing.
+
+        Args:
+            node_ids: Starting nodes for expansion
+            max_hops: Maximum depth for traversal (default: 2)
+            edge_types: Filter by these edge types (e.g., ['BECAUSE', 'ENABLES'])
+
+        Returns:
+            Dictionary with expanded nodes and edges
+        """
+        visited_nodes = set(node_ids)
+        nodes_to_expand = list(node_ids)
+        all_edges = []
+
+        for hop in range(max_hops):
+            next_level = []
+
+            for node_id in nodes_to_expand:
+                # Get neighbors
+                neighbors = await self.repo.find_neighbors(
+                    node_id, edge_type=None, direction="outgoing"
+                )
+
+                for neighbor_edge in neighbors:
+                    # Filter by edge type if specified
+                    if edge_types and neighbor_edge.edge_type.value not in edge_types:
+                        continue
+
+                    # Track edge and node
+                    all_edges.append(neighbor_edge)
+                    neighbor_node_id = neighbor_edge.target_node_id
+
+                    if neighbor_node_id not in visited_nodes:
+                        visited_nodes.add(neighbor_node_id)
+                        next_level.append(neighbor_node_id)
+
+            nodes_to_expand = next_level
+
+            if not nodes_to_expand:
+                break
+
+        # Retrieve all nodes
+        nodes = []
+        for node_id in visited_nodes:
+            node = await self.repo.get_node_by_id(node_id)
+            if node:
+                nodes.append(node)
+
+        return {"nodes": nodes, "edges": all_edges}
+
+    async def extract_reasoning_chains(self, graph_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Extract reasoning chains from graph traversal results.
+
+        Identifies sequences of causal/enables relationships that form
+        logical reasoning paths.
+
+        Args:
+            graph_data: Result from expand() with nodes and edges
+
+        Returns:
+            List of reasoning chains
+        """
+        chains = []
+        edges = graph_data.get("edges", [])
+        nodes = {n.id: n for n in graph_data.get("nodes", [])}
+
+        # Find causal/reasoning edges
+        reasoning_edge_types = ["because", "enables", "requires", "leads_to", "prevents"]
+
+        for edge in edges:
+            if edge.edge_type.value not in reasoning_edge_types:
+                continue
+
+            source_node = nodes.get(edge.source_node_id)
+            target_node = nodes.get(edge.target_node_id)
+
+            if not source_node or not target_node:
+                continue
+
+            # Create reasoning chain entry
+            chain = {
+                "source": source_node.name,
+                "edge_type": edge.edge_type.value,
+                "target": target_node.name,
+                "confidence": getattr(edge, "confidence", 1.0),
+                "explanation": f"{source_node.name} {edge.edge_type.value} {target_node.name}",
+            }
+            chains.append(chain)
+
+        return chains
+
+    async def get_relevant_context(
+        self,
+        user_query: str,
+        user_id: str,
+        max_nodes: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Get relevant context from knowledge graph for a user query.
+
+        Implements the graph-first pattern: semantic search + 2-hop expansion
+        + reasoning chain extraction.
+
+        Args:
+            user_query: User's question/request
+            user_id: User ID for personalization
+            max_nodes: Maximum nodes to retrieve (default: 10)
+
+        Returns:
+            Dictionary with context nodes, edges, and reasoning chains
+        """
+        self.logger.info(
+            "Getting relevant context from graph",
+            user_query=user_query,
+            user_id=user_id,
+        )
+
+        # Step 1: Search for relevant nodes
+        relevant_nodes = await self.search_nodes(user_query, user_id=user_id, limit=max_nodes)
+
+        if not relevant_nodes:
+            self.logger.debug(
+                "No relevant nodes found in graph",
+                user_query=user_query,
+            )
+            return {
+                "nodes": [],
+                "edges": [],
+                "reasoning_chains": [],
+                "found_context": False,
+            }
+
+        node_ids = [node.id for node in relevant_nodes]
+
+        # Step 2: Expand to nearby nodes (2-hop traversal)
+        causal_types = ["because", "enables", "requires", "prevents", "leads_to"]
+        expanded_graph = await self.expand(
+            node_ids=node_ids,
+            max_hops=2,
+            edge_types=causal_types,
+        )
+
+        # Step 3: Extract reasoning chains
+        reasoning_chains = await self.extract_reasoning_chains(expanded_graph)
+
+        context = {
+            "nodes": relevant_nodes,
+            "expanded_nodes": expanded_graph["nodes"],
+            "edges": expanded_graph["edges"],
+            "reasoning_chains": reasoning_chains,
+            "found_context": True,
+        }
+
+        self.logger.info(
+            "Context retrieved from graph",
+            node_count=len(relevant_nodes),
+            chain_count=len(reasoning_chains),
+        )
+
+        return context

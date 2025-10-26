@@ -824,17 +824,21 @@ class KnowledgeNode:
 
 @dataclass
 class KnowledgeEdge:
-    """Domain model for knowledge graph edges"""
+    """Domain model for knowledge graph edges (Issue #278: CORE-KNOW-ENHANCE)"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
     source_node_id: str = ""
     target_node_id: str = ""
     edge_type: EdgeType = EdgeType.REFERENCES
     weight: float = 1.0
+    # Issue #278: Confidence weighting for relationship-based reasoning
+    confidence: float = 1.0  # 0.0 to 1.0, strength of relationship
+    usage_count: int = 0  # Reinforced with use
     metadata: Dict[str, Any] = field(default_factory=dict)
     properties: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+    last_accessed: Optional[datetime] = None  # For confidence decay
     session_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -845,10 +849,13 @@ class KnowledgeEdge:
             "target_node_id": self.target_node_id,
             "edge_type": self.edge_type.value if self.edge_type else None,
             "weight": self.weight,
+            "confidence": self.confidence,
+            "usage_count": self.usage_count,
             "metadata": self.metadata,
             "properties": self.properties,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
             "session_id": self.session_id,
         }
 

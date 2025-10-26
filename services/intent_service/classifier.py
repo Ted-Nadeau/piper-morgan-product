@@ -37,16 +37,23 @@ logger = structlog.get_logger()
 
 
 class IntentClassifier:
-    def __init__(self, llm_service=None, event_bus: Optional[EventBus] = None):
+    def __init__(
+        self,
+        llm_service=None,
+        event_bus: Optional[EventBus] = None,
+        knowledge_graph_service=None,  # Issue #278: Graph-first retrieval
+    ):
         """
         Initialize IntentClassifier.
 
         Args:
             llm_service: LLM service instance (optional, will get from container if not provided)
             event_bus: Event bus for classifier events
+            knowledge_graph_service: Knowledge graph service for context (optional, Issue #278)
         """
         self._llm = llm_service  # Accept via dependency injection
         self.event_bus = event_bus
+        self.knowledge_graph_service = knowledge_graph_service  # Issue #278
         self.knowledge_hierarchy = [
             "pm_fundamentals",  # Your book, PM best practices
             "business_context",  # Client/domain specific
@@ -150,6 +157,12 @@ class IntentClassifier:
             message_preview=message[:50],
         )
 
+        # Issue #278: Get graph context for improved classification
+        graph_context = {}
+        user_id = context.get("user_id") if context else None
+        if user_id:
+            graph_context = await self._get_graph_context(message, user_id)
+
         # Check for file references
         has_file_reference = PreClassifier.detect_file_reference(message)
 
@@ -169,6 +182,7 @@ class IntentClassifier:
             "has_file_reference": has_file_reference,
             "file_context": file_context,
             "spatial_context": spatial_context or {},
+            "graph_context": graph_context,  # Issue #278: Include graph context
         }
 
         try:
@@ -829,6 +843,75 @@ class IntentClassifier:
 
         # Ultimate fallback
         return message.strip()
+
+    # Issue #278: Graph-first retrieval pattern methods
+    async def _get_graph_context(
+        self, message: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Get context from knowledge graph for improved intent classification.
+
+        Args:
+            message: User message
+            user_id: User ID for personalization
+
+        Returns:
+            Dictionary with graph context information
+        """
+        if not self.knowledge_graph_service or not user_id:
+            return {}
+
+        try:
+            context = await self.knowledge_graph_service.get_relevant_context(
+                user_query=message,
+                user_id=user_id,
+                max_nodes=10,
+            )
+            return context
+        except Exception as e:
+            logger.warning(
+                "Failed to get graph context",
+                error=str(e),
+                message_preview=message[:50],
+            )
+            return {}
+
+    def _extract_intent_hints_from_graph(self, graph_context: Dict[str, Any]) -> List[str]:
+        """
+        Extract intent hints from graph context to improve classification.
+
+        Analyzes reasoning chains and node names to identify relevant intent keywords.
+
+        Args:
+            graph_context: Context dictionary from get_relevant_context
+
+        Returns:
+            List of intent hint keywords
+        """
+        hints = []
+
+        # Extract hints from reasoning chains
+        for chain in graph_context.get("reasoning_chains", []):
+            hints.append(chain.get("edge_type", "").lower())
+            hints.append(chain.get("source", "").lower())
+            hints.append(chain.get("target", "").lower())
+
+        # Extract hints from node names
+        for node in graph_context.get("nodes", []):
+            node_name = getattr(node, "name", "").lower()
+            if node_name:
+                hints.append(node_name)
+
+        # Clean and deduplicate hints
+        hints = list(set([h.strip() for h in hints if h.strip()]))
+
+        logger.debug(
+            "Extracted intent hints from graph",
+            hint_count=len(hints),
+            hints=hints[:5],  # Log first 5 for debugging
+        )
+
+        return hints
 
 
 # Create a singleton instance without event bus for backward compatibility

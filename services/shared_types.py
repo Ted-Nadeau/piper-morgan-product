@@ -145,8 +145,10 @@ class NodeType(Enum):
     CUSTOM = "custom"
 
 
-# PM-040: Knowledge graph edge types
+# PM-040: Knowledge graph edge types (Issue #278: CORE-KNOW-ENHANCE)
 class EdgeType(Enum):
+    """Basic relationship types"""
+
     REFERENCES = "references"
     DEPENDS_ON = "depends_on"
     IMPLEMENTS = "implements"
@@ -156,4 +158,18 @@ class EdgeType(Enum):
     ENHANCES = "enhances"
     REPLACES = "replaces"
     SUPPORTS = "supports"
+
+    """Causal relationship types (Issue #278)"""
+    BECAUSE = "because"  # X happens BECAUSE of Y
+    ENABLES = "enables"  # X ENABLES Y capability
+    REQUIRES = "requires"  # X REQUIRES Y to function
+    PREVENTS = "prevents"  # X PREVENTS Y from happening
+    LEADS_TO = "leads_to"  # X LEADS_TO Y outcome
+
+    """Temporal relationship types (Issue #278)"""
+    BEFORE = "before"  # X occurs BEFORE Y
+    DURING = "during"  # X occurs DURING Y
+    AFTER = "after"  # X occurs AFTER Y
+
+    """Other relationship types"""
     CUSTOM = "custom"

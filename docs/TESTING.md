@@ -83,7 +83,9 @@ pytest tests/ -v -m contract
 **Implementation Status**: 2 of 4 providers operational
 
 **Fully Implemented**:
+
 - ✅ **Anthropic (Claude)** - Primary provider
+
   - Models: claude-sonnet-4-20250514, claude-opus-4-20250514
   - Usage: Intent classification, content generation, analysis
   - Status: Fully operational with graceful initialization
@@ -94,7 +96,9 @@ pytest tests/ -v -m contract
   - Status: Fully operational
 
 **Configured but Not Implemented**:
+
 - ⏳ **Gemini** - Config exists, adapter pending
+
   - Intended use: Research, web search integration
   - Status: Environment variables supported, implementation deferred
 
@@ -103,6 +107,7 @@ pytest tests/ -v -m contract
   - Status: Environment variables supported, implementation deferred
 
 **Current Behavior**:
+
 - **Primary**: Anthropic (Claude) for all LLM operations
 - **Fallback**: OpenAI (GPT) if Anthropic fails or unavailable
 - **Graceful**: System continues without LLM if no keys configured
@@ -127,6 +132,7 @@ API keys are stored securely in the system keychain (macOS Keyring) via `Keychai
 ### Graceful Degradation
 
 The `LLMClient` supports graceful initialization:
+
 - Can be imported without API keys
 - `providers_initialized` property indicates if LLM is available
 - Clear error messages when LLM calls attempted without providers
@@ -144,11 +150,13 @@ The `LLMClient` supports graceful initialization:
 ### Local Testing Workflow
 
 1. **Before Pushing**: Run full test suite locally with API keys
+
    ```bash
    pytest tests/ -v  # Includes LLM tests
    ```
 
 2. **Quick Validation**: Run non-LLM tests for faster feedback
+
    ```bash
    pytest tests/ -v -m "not llm"
    ```
@@ -233,6 +241,7 @@ async def test_llm_feature():
 
 **Cause**: No API keys configured
 **Solution**: Configure keys in system keychain or export environment variables:
+
 ```bash
 export ANTHROPIC_API_KEY="your-key-here"
 export OPENAI_API_KEY="your-key-here"
@@ -241,6 +250,7 @@ export OPENAI_API_KEY="your-key-here"
 ### Tests Pass Locally but Fail in CI
 
 **Possible Causes**:
+
 1. Test depends on LLM but not marked with `@pytest.mark.llm`
 2. Test depends on local files not committed to repo
 3. Test depends on specific Python version (local vs CI)

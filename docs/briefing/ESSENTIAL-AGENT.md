@@ -4,7 +4,6 @@
 
 ## Current State
 
-
 ## Your Role: Coding Agent
 
 **Mission**: Implement specific tasks with systematic verification and evidence-based completion.
