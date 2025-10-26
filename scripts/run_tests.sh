@@ -47,9 +47,8 @@ setup_environment() {
     source "$VENV_PATH"
     print_success "Virtual environment activated"
 
-    # Verify Python path
-    export PYTHONPATH=.
-    print_success "PYTHONPATH set to current directory"
+    # Note: pytest.ini already configures pythonpath=.
+    print_success "Using pytest.ini configuration for Python path"
 
     # Check if PostgreSQL is needed and running
     if pgrep postgres > /dev/null 2>&1; then
@@ -120,14 +119,14 @@ run_fast_tests() {
     local start_time=$(date +%s)
 
     # Unit tests with coverage
-    PYTHONPATH=. python -m pytest tests/unit/ --tb=short -v || {
+    python -m pytest tests/unit/ --tb=short -v || {
         print_error "Fast unit tests failed"
         return 1
     }
 
     # Standalone orchestration tests (no database)
     if [ -f "tests/orchestration/test_excellence_flywheel_unittest.py" ]; then
-        PYTHONPATH=. python -m pytest tests/orchestration/test_excellence_flywheel_unittest.py -v || {
+        python -m pytest tests/orchestration/test_excellence_flywheel_unittest.py -v || {
             print_warning "Standalone orchestration tests failed"
         }
     fi
@@ -156,7 +155,7 @@ run_full_tests() {
     fi
 
     # Full test suite with coverage
-    PYTHONPATH=. python -m pytest tests/ --tb=short -v --cov=services --cov-report=term-missing || {
+    python -m pytest tests/ --tb=short -v --cov=services --cov-report=term-missing || {
         print_error "Full test suite failed"
         return 1
     }
@@ -172,7 +171,7 @@ run_full_tests() {
 run_coverage_report() {
     print_header "COVERAGE ANALYSIS"
 
-    PYTHONPATH=. python -m pytest tests/ --cov=services --cov-report=html --cov-report=term-missing -q || {
+    python -m pytest tests/ --cov=services --cov-report=html --cov-report=term-missing -q || {
         print_error "Coverage analysis failed"
         return 1
     }

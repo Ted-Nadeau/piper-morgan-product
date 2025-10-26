@@ -24,6 +24,9 @@ pytest tests/ -v
 
 # Or with specific markers
 pytest tests/ -v -m "unit or integration or llm"
+
+# Note: pytest.ini configures pythonpath=. automatically
+# No PYTHONPATH prefix needed
 ```
 
 ### Locally (without API keys)
@@ -251,7 +254,7 @@ export OPENAI_API_KEY="your-key-here"
 
 ## References
 
-- Configuration: `pytest.ini`
+- Configuration: `pytest.ini` (includes `pythonpath = .` - no PYTHONPATH prefix needed)
 - LLM Client: `services/llm/clients.py`
 - CI Workflow: `.github/workflows/test.yml`
 - Test Constants: `tests/intent/test_constants.py`
