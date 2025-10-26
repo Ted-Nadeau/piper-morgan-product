@@ -48,4 +48,4 @@ This directory contains documentation for tools in the Piper Morgan system.
 
 **Last Updated**: October 1, 2025
 **Maintained By**: Documentation Team
-**Related**: [Documentation Standards](../../standards/documentation-standards.md)
+**Related**: [Documentation Standards](../../../piper-style-guide.md)
