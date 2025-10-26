@@ -147,7 +147,7 @@ Files Modified:
 - tests/plugins/test_registry.py: +89 lines
 
 Tests Passing:
-PYTHONPATH=. python -m pytest tests/plugins/ -v
+python -m pytest tests/plugins/ -v
 ========================= 3 passed, 0 failed =========================
 
 Verification:
@@ -163,4 +163,4 @@ GitHub Updated: Issue #199 task 3 marked complete with evidence
 - **Implementation guides**: knowledge/agent-prompt-template-v3.md
 - **Active tasks**: GitHub #197-200
 - **Architecture**: ADR-038 (spatial), ADR-034 (plugins)
-- **Testing**: Use PYTHONPATH=. prefix for all pytest commands
+- **Testing**: pytest configured in pytest.ini (no PYTHONPATH prefix needed)

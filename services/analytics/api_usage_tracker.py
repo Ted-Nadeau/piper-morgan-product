@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -162,9 +162,53 @@ class APIUsageTracker:
 
     async def _store_usage_log(self, session: AsyncSession, usage_log: APIUsageLog) -> None:
         """Store usage log in database"""
-        # TODO: Implement actual database storage
-        # This would insert into an api_usage_logs table
-        logger.debug(f"Would store usage log: {usage_log}")
+        try:
+            # Insert usage log into api_usage_logs table
+            insert_query = text(
+                """
+                INSERT INTO api_usage_logs (
+                    user_id, provider, model,
+                    prompt_tokens, completion_tokens, total_tokens,
+                    estimated_cost,
+                    conversation_id, feature,
+                    request_id, response_time_ms,
+                    created_at
+                ) VALUES (
+                    :user_id, :provider, :model,
+                    :prompt_tokens, :completion_tokens, :total_tokens,
+                    :estimated_cost,
+                    :conversation_id, :feature,
+                    :request_id, :response_time_ms,
+                    :created_at
+                )
+            """
+            )
+
+            await session.execute(
+                insert_query,
+                {
+                    "user_id": usage_log.user_id,
+                    "provider": usage_log.provider,
+                    "model": usage_log.model,
+                    "prompt_tokens": usage_log.prompt_tokens,
+                    "completion_tokens": usage_log.completion_tokens,
+                    "total_tokens": usage_log.total_tokens,
+                    "estimated_cost": float(usage_log.estimated_cost),
+                    "conversation_id": usage_log.conversation_id,
+                    "feature": usage_log.feature or "chat",
+                    "request_id": usage_log.request_id,
+                    "response_time_ms": usage_log.response_time_ms,
+                    "created_at": usage_log.created_at or datetime.utcnow(),
+                },
+            )
+
+            logger.debug(
+                f"Stored API usage log: {usage_log.provider}/{usage_log.model} "
+                f"- {usage_log.total_tokens} tokens, ${usage_log.estimated_cost}"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to store usage log: {e}")
 
     async def _check_budget_alerts(
         self, session: AsyncSession, user_id: str, cost: Decimal
