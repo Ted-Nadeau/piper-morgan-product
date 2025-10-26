@@ -1,0 +1,210 @@
+#!/bin/bash
+# Simple sprint creation command
+# Usage: ./scripts/new-sprint "Sprint Name" [YYYY-MM-DD]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Check if we're in the right directory
+if [ ! -f "$REPO_ROOT/main.py" ]; then
+    echo "❌ Error: Run this from the piper-morgan-product repository root"
+    exit 1
+fi
+
+# Check arguments
+if [ $# -eq 0 ]; then
+    echo "📖 Usage: $0 \"Sprint Name\" [YYYY-MM-DD]"
+    echo ""
+    echo "Examples:"
+    echo "  $0 \"Core UI Enhancement\""
+    echo "  $0 \"MCP Integration\" 2025-10-15"
+    echo ""
+    echo "Or use the interactive script:"
+    echo "  ./scripts/create_sprint.sh"
+    exit 1
+fi
+
+SPRINT_NAME="$1"
+SPRINT_DATE="${2:-$(date +"%Y-%m-%d")}"
+
+# Validate date format
+if [[ ! $SPRINT_DATE =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+    echo "❌ Invalid date format. Use YYYY-MM-DD"
+    exit 1
+fi
+
+# Extract date components
+YEAR=${SPRINT_DATE:0:4}
+MONTH=${SPRINT_DATE:5:2}
+DAY=${SPRINT_DATE:8:2}
+
+# Set environment variables for the main script
+export SPRINT_NAME
+export SPRINT_DATE
+export YEAR
+export MONTH  
+export DAY
+export NON_INTERACTIVE=1
+
+echo "🚀 Creating sprint: $SPRINT_NAME"
+echo "📅 Date: $SPRINT_DATE"
+echo "📁 Location: dev/$YEAR/$MONTH/$DAY"
+
+# Create the sprint using the main script logic
+SPRINT_DIR="dev/$YEAR/$MONTH/$DAY"
+TIMESTAMP=$(date +"%Y-%m-%d-%H%M")
+
+# Create directory structure
+cd "$REPO_ROOT"
+mkdir -p "$SPRINT_DIR/session-logs"
+mkdir -p "$SPRINT_DIR/artifacts"/{diagrams,prototypes,documentation}
+
+# Create AGENTS.md
+cat > "$SPRINT_DIR/AGENTS.md" << EOF
+# AGENTS.md - Sprint Agent Instructions
+
+## Project Context
+You are working on Piper Morgan, an intelligent PM assistant. The project uses:
+- Python 3.11+ with FastAPI
+- PostgreSQL (port 5433, not 5432)  
+- Domain-Driven Design
+- Port 8001 for web (not 8080)
+
+## Sprint: $SPRINT_NAME
+**Date**: $SPRINT_DATE
+**Objectives**: [TO BE DEFINED IN sprint-planning.md]
+
+## Infrastructure Verification (MANDATORY)
+Before ANY work:
+\`\`\`bash
+ls -la web/ services/ cli/
+grep -r "ClassName" . --include="*.py"
+\`\`\`
+If reality doesn't match instructions: STOP and report.
+
+## Technical Specifics
+\`\`\`bash
+# Entry point
+main.py  # NOT web/app.py for startup
+
+# Key locations  
+web/app.py                   # FastAPI app
+services/domain/models.py    # Domain models
+services/shared_types.py     # ALL enums
+config/PIPER.user.md        # User config (not YAML)
+
+# Testing
+PYTHONPATH=. python -m pytest tests/ -xvs
+
+# Database
+docker exec -it piper-postgres psql -U piper -d piper_morgan
+\`\`\`
+
+## Current Focus
+**$SPRINT_NAME**: [DEFINE SPECIFIC FOCUS IN sprint-planning.md]
+
+## Critical: The 75% Pattern
+Most code is 75% complete then abandoned. Complete existing work, don't create new patterns.
+
+## Evidence Required
+Show actual output in session logs:
+\`\`\`bash
+pytest tests/test_feature.py -xvs  # Full output
+curl http://localhost:8001/test     # Real response
+\`\`\`
+EOF
+
+# Create sprint-planning.md
+cat > "$SPRINT_DIR/sprint-planning.md" << EOF
+# Sprint Planning - $SPRINT_DATE
+
+## Sprint: $SPRINT_NAME
+
+### Sprint Overview
+**Start Date**: $SPRINT_DATE
+**Duration**: [TO BE DEFINED]
+**Type**: [Development/Research/Integration/Bug Fix]
+
+## Sprint Objectives
+- [ ] Objective 1: [DEFINE SPECIFIC OBJECTIVE]
+- [ ] Objective 2: [DEFINE SPECIFIC OBJECTIVE]
+- [ ] Objective 3: [DEFINE SPECIFIC OBJECTIVE]
+
+## Success Criteria
+- [ ] All objectives completed with evidence
+- [ ] Tests passing (100% where applicable)
+- [ ] Documentation updated
+- [ ] GitHub issues properly tracked (PM-XXX format)
+- [ ] No regressions introduced
+
+## Issues to Address
+- [ ] Issue 1 (PM-XXX) - [DESCRIPTION]
+- [ ] Issue 2 (PM-XXX) - [DESCRIPTION]
+
+**Verify PM numbers**: \`gh issue list --state all --limit 100 | grep "PM-"\`
+
+## Definition of Done
+- [ ] All code changes implemented and tested
+- [ ] Documentation updated
+- [ ] GitHub issues updated with evidence
+- [ ] Session logs complete
+- [ ] Clean linting and formatting
+
+## Technical Approach
+**Strategy**: [HIGH-LEVEL APPROACH]
+
+## Key Milestones
+- **25% Complete**: [MILESTONE]
+- **50% Complete**: [MILESTONE]
+- **75% Complete**: [MILESTONE]  
+- **100% Complete**: All objectives met
+
+---
+**Created**: $TIMESTAMP
+**Status**: Planning
+EOF
+
+# Create README
+cat > "$SPRINT_DIR/README.md" << EOF
+# Sprint: $SPRINT_NAME
+
+**Date**: $SPRINT_DATE
+**Created**: $TIMESTAMP
+
+## Quick Start
+1. Review \`sprint-planning.md\` for objectives
+2. Read \`AGENTS.md\` for context and instructions
+3. Create session logs in \`session-logs/\`
+4. Track progress in \`sprint-planning.md\`
+
+## Next Steps
+1. Edit \`sprint-planning.md\` to define specific objectives
+2. Create GitHub issues with proper PM-XXX numbers  
+3. Begin development following \`AGENTS.md\` guidance
+
+**Reference**: \`docs/HOW-TO-CREATE-A-NEW-SPRINT.md\`
+EOF
+
+# Check PM numbers if GitHub CLI is available
+if command -v gh >/dev/null 2>&1; then
+    echo ""
+    echo "🔍 Checking existing PM numbers..."
+    LATEST_PM=$(gh issue list --state all --limit 100 2>/dev/null | grep -o "PM-[0-9]*" | sort -V | tail -1)
+    if [ -n "$LATEST_PM" ]; then
+        PM_NUMBER=${LATEST_PM#PM-}
+        NEXT_PM=$((PM_NUMBER + 1))
+        echo "📋 Latest PM: $LATEST_PM → Suggested next: PM-$NEXT_PM"
+    fi
+fi
+
+echo ""
+echo "✅ Sprint created successfully!"
+echo ""
+echo "📁 Sprint directory: $SPRINT_DIR"
+echo "📝 Next steps:"
+echo "   1. cd $SPRINT_DIR"
+echo "   2. Edit sprint-planning.md to define objectives"
+echo "   3. Create GitHub issues with PM-XXX numbers"
+echo "   4. Begin sprint work"
+echo ""
+echo "📚 See: docs/HOW-TO-CREATE-A-NEW-SPRINT.md for detailed workflow"
