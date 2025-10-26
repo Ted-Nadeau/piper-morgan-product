@@ -48,11 +48,17 @@ jobs:
           print(f\"\\n✅ Configuration validator operational\")
           print(f\"Services checked: {len(summary['services'])}\")
 
-          # Expected in CI: all services missing (no secrets)
-          if summary['invalid_count'] == len(summary['services']):
-              print(f\"✅ Expected state: All {summary['invalid_count']} services missing credentials (CI environment)\")
+          # In CI, we expect most services to be missing (no secrets in repo)
+          # Some services (like calendar) might be valid if config files exist
+          missing_count = sum(1 for service in summary['services'].values() if service['status'] == 'missing')
+          total_services = len(summary['services'])
+
+          if missing_count >= total_services - 1:  # Allow 1 service to be configured
+              print(f\"✅ Expected state: {missing_count}/{total_services} services missing credentials (CI environment)\")
+              if summary['valid_count'] > 0:
+                  print(f\"ℹ️ {summary['valid_count']} service(s) configured (acceptable in CI)\")
           else:
-              print(f\"⚠️ Unexpected state: Some services configured in CI (should all be missing)\")
+              print(f\"⚠️ Unexpected state: Only {missing_count}/{total_services} services missing (too many configured)\")
 
           print(f\"\\n✅ Configuration validation structure: PASSED\")
           "
