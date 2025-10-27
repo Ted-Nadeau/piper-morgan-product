@@ -196,7 +196,7 @@ class IntentService:
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
             # Phase 3D: Preserve Tier 1 conversation bypass
-            if intent.category.value == "CONVERSATION":
+            if intent.category.value == "conversation":
                 return await self._handle_conversation_intent(intent, session_id)
 
             # Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
