@@ -4,7 +4,7 @@
 **Audience**: Agents, developers, architects, and internal contributors
 **Public Documentation**: See [README.md](README.md) for pmorgan.tech public site
 
-**Last Updated**: September 20, 2025
+**Last Updated**: October 27, 2025
 **Status**: ✅ **Complete Internal Navigation System** - Role-based access for development teams
 
 ---
@@ -22,6 +22,7 @@
 - [Chief of Staff](../knowledge/BRIEFING-ESSENTIAL-CHIEF-STAFF.md) - 2.5K tokens
 - [Communications](../knowledge/BRIEFING-ESSENTIAL-COMMS.md) - 2.5K tokens
 - [Coding Agent](../knowledge/BRIEFING-ESSENTIAL-AGENT.md) - 2K tokens
+- [LLM Support](../knowledge/BRIEFING-ESSENTIAL-LLM.md) - 1K tokens
 
 ### Progressive Loading
 
@@ -57,12 +58,9 @@ Each essential briefing includes triggers for loading detailed documentation as 
 
 ### 📚 Researchers & Historians
 
-- **[Session Logs Archive](archives/session-logs/)** - Chronological development history
-- **[Archaeological Index](archives/session-logs/yearly-index.md)** - Research navigation
-- **[Monthly Summaries](archives/session-logs/2025/09/index.md)** - Detailed monthly insights
-- **[Historical Artifacts](archives/artifacts/)** - Generated content and reports
-- **[Decision Archive](archives/decisions/)** - Historical decisions and rationale
-- **[Omnibus Logs](archives/session-logs/omnibus-logs/)** - Weekly/monthly consolidations
+- **[Session Logs Archive](dev/2025/)** - Chronological development history (dev/2025/MM/DD/ structure)
+- **[Omnibus Logs](omnibus-logs/)** - Weekly/monthly session consolidations
+- **[Development Logs](internal/development/active/)** - Active development work and status files
 
 ### 👥 External Users
 
