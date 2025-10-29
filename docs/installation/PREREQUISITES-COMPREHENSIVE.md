@@ -51,12 +51,14 @@ git --version  # Should show: git version 2.x.x
 ### 3. Docker Desktop (REQUIRED)
 **Why**: Runs PostgreSQL, Redis, ChromaDB, Temporal, and Traefik
 
+> **⏱️ First time installing Docker?** Docker Desktop will guide you through account creation, terms acceptance, and initial setup (~5-10 minutes). You can use your Google account for quick signup.
+
 **Status Check**:
 ```bash
 docker --version   # Should show: Docker version 20.x+
 ```
 
-**Mac**: Must be running (click Docker icon to launch, wait for whale icon)
+**Mac**: Must be running (click Docker icon to launch, wait for whale icon to be solid, not grayed)
 **Windows**: Must be running + WSL 2 enabled
 
 **Install**: See `step-by-step-installation.md` Check 4
