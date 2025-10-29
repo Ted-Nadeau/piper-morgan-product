@@ -263,18 +263,21 @@ python main.py setup       # Run wizard again (now inside venv)
 ### 🐛 **Port 5433 Issue (8:30 AM)**
 
 **USER TESTING RESULT**:
+
 ```
 Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::1', 5432, 0, 0)
 ✗ Database accessible
 ```
 
 **ROOT CAUSE**:
+
 - Wizard tried to connect to port **5432** (PostgreSQL default)
 - Piper Morgan uses port **5433** (from `docker-compose.yml`)
 - `services/database/connection.py` line 70: `port = os.getenv("POSTGRES_PORT", "5432")`
 - No `POSTGRES_PORT` env var → defaults to wrong port!
 
 **FIX**:
+
 - ✅ Wizard now **sets `POSTGRES_PORT=5433`** before system checks
 - ✅ Added message: "(Using Piper's database port: 5433)"
 - ✅ Enhanced troubleshooting with Docker Desktop launch + port info
@@ -284,26 +287,31 @@ Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::
 ### 🚨 **SYSTEMATIC FIX: Database Config Mismatches (8:38 AM)**
 
 **USER FEEDBACK**:
+
 > "password authentication failed for user 'piper' - Please do not populate the wizard with generic guesses? All of this information is documented and available? Please do a cross-comparison between the wizard's logic and the docs and serena."
 
 **AUDIT RESULTS**:
 
-| Component | Password | Port | Match? |
-|-----------|----------|------|--------|
-| `docker-compose.yml` (TRUTH) | `dev_changeme_in_production` | `5433` | ✅ |
-| `services/database/connection.py` | `dev_changeme` | `5432` | ❌ WRONG |
-| `scripts/setup_wizard.py` | (inherits from code) | Override to `5433` | ⚠️ Bandaid |
+| Component                         | Password                     | Port               | Match?     |
+| --------------------------------- | ---------------------------- | ------------------ | ---------- |
+| `docker-compose.yml` (TRUTH)      | `dev_changeme_in_production` | `5433`             | ✅         |
+| `services/database/connection.py` | `dev_changeme`               | `5432`             | ❌ WRONG   |
+| `scripts/setup_wizard.py`         | (inherits from code)         | Override to `5433` | ⚠️ Bandaid |
 
 **ROOT CAUSE**:
+
 - Code defaults didn't match docker-compose.yml
 - Wizard was patching symptoms, not fixing source
 - No `.env.example` as single source of truth
 
 **SYSTEMATIC FIX**:
+
 1. ✅ Fixed `services/database/connection.py` defaults:
    - Password: `dev_changeme` → `dev_changeme_in_production`
    - Port: `5432` → `5433`
 2. ✅ Removed wizard bandaid (port override) - now uses correct code default
-3. ✅ Created `env.example` as reference with all defaults documented
+3. ✅ Fixed existing `.env.example` (user caught this!):
+   - Port: `5432` → `5433`
+   - Added note about keychain for API keys
 
-**NOW**: Code, Docker, and wizard all aligned to single source of truth!
+**NOW**: Code, Docker, wizard, AND .env.example all aligned!
