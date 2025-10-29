@@ -346,14 +346,13 @@ async def check_database() -> bool:
 
 
 async def check_system() -> Dict[str, bool]:
-    """Run all system checks"""
+    """Run all system checks (skips database - requires venv deps)"""
     print("\n1. System Check")
 
     checks = {
         "Docker installed": await check_docker(),
         "Python 3.9+": await check_python_version(),
         "Port 8001 available": await check_port_available(),
-        "Database accessible": await check_database(),
     }
 
     for name, result in checks.items():
@@ -608,6 +607,7 @@ async def run_setup_wizard():
         print("\n" + "=" * 50)
         print("📋 System Checks")
         print("=" * 50)
+        print("   (Database check will happen after user creation)")
         checks = await check_system()
 
         # Handle Docker installation separately with guided setup
@@ -627,15 +627,12 @@ async def run_setup_wizard():
             print("\n❌ Setup cannot continue. Please fix the issues above.")
             print("\nTroubleshooting:")
 
-            if not checks["Python 3.9+"]:
+            if not checks.get("Python 3.9+", True) is False:
                 print("  • Install Python 3.9+: https://www.python.org/downloads/")
                 print("  • Recommended: Python 3.11+ for best compatibility")
-            if not checks["Port 8001 available"]:
+            if not checks.get("Port 8001 available", True) is False:
                 print("  • Free up port 8001 or stop other Piper Morgan instances")
                 print("  • Run: lsof -i :8001 to see what's using the port")
-            if not checks["Database accessible"]:
-                print("  • Ensure database is running: docker-compose up -d postgres")
-                print("  • Wait 10 seconds for database to start")
 
             return False
 

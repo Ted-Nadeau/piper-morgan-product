@@ -186,9 +186,52 @@ User documented the **complete first-time Docker Desktop setup flow** that a new
 ### 💡 Reassurance for User
 
 Your Docker flow is **exactly what new users will see** - this is normal and expected! The screenshots confirm:
+
 - ✅ Docker's onboarding is well-designed (clear prompts, Google OAuth option)
 - ✅ Our "Launch Docker Desktop" instruction is correct
 - ✅ The ~5-10 minute estimate is accurate
 - ✅ No blockers or confusing steps
 
 **You're doing great!** Continue testing - you're finding exactly the kind of real-world friction we need to document. 🚀
+
+---
+
+## 🚨 CRITICAL BUG FOUND (7:44 AM)
+
+### Issue: Wizard Can't See Dependencies It Installs
+
+**User Report**: "No module named 'sqlalchemy'" error during wizard system checks
+
+**Root Cause**: Wizard has a **chicken-and-egg problem**:
+
+1. User runs `python main.py setup` (uses current Python env)
+2. Wizard creates fresh venv + installs requirements
+3. **But wizard keeps running in original Python env**
+4. When wizard tries database checks → imports `sqlalchemy` → FAILS
+5. sqlalchemy is only in the **new venv**, not the Python running the wizard
+
+**Why This Happens**:
+
+- Wizard runs subprocess: `venv/bin/pip install -r requirements.txt`
+- This installs to NEW venv
+- But wizard's own Python process can't see those packages
+- Need: Wizard must either (a) restart itself in the new venv, or (b) not do system checks that require deps
+
+**Workaround for User (NOW)**:
+
+```bash
+source venv/bin/activate  # Activate the venv wizard created
+python main.py setup       # Run wizard again (now inside venv)
+```
+
+**Proper Fix Needed**:
+
+1. **Option A**: Wizard restarts itself after venv setup: `os.execv(venv/bin/python, [venv/bin/python, main.py, setup])`
+2. **Option B**: Skip database checks in wizard (only check Docker/Python/port)
+
+**FIX IMPLEMENTED (7:47 AM)**:
+- ✅ Removed `check_database()` from wizard's system checks
+- ✅ Wizard now only checks: Docker, Python 3.9+, Port 8001
+- ✅ Added note: "(Database check will happen after user creation)"
+- ✅ Database connectivity validated later when creating user (inside venv context)
+- **Result**: Wizard no longer tries to import sqlalchemy before venv is active
