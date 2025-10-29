@@ -22,7 +22,9 @@ parser.add_argument(
     "--no-browser", action="store_true", help="Don't auto-launch browser on startup"
 )
 parser.add_argument(
-    "command", nargs="?", help="Command to run (setup, status, preferences, migrate-user)"
+    "command",
+    nargs="?",
+    help="Command to run (setup, status, preferences, migrate-user, keys)",
 )
 
 # Parse known args to handle both flags and commands
@@ -250,6 +252,111 @@ if __name__ == "__main__":
             success = asyncio.run(run_preferences())
             sys.exit(0 if success else 1)
 
+        elif command == "keys":
+            # Lightweight key management CLI (keychain-first)
+            # Usage:
+            #   python main.py keys add <provider>
+            #   python main.py keys list
+            #   python main.py keys validate [provider]
+            from getpass import getpass
+
+            from services.config.llm_config_service import LLMConfigService
+            from services.infrastructure.keychain_service import KeychainService
+
+            subargs = unknown  # remaining argv after first parse
+
+            def print_keys_help():
+                print("Usage:")
+                print("  python main.py keys add <provider>")
+                print("  python main.py keys list")
+                print("  python main.py keys validate [provider]")
+                print()
+                print("Providers: openai, anthropic, gemini, perplexity")
+
+            if not subargs:
+                print_keys_help()
+                sys.exit(1)
+
+            action = subargs[0]
+            keychain = KeychainService()
+            llm_config = LLMConfigService()
+
+            if action == "add":
+                if len(subargs) < 2:
+                    print("Error: provider required\n")
+                    print_keys_help()
+                    sys.exit(1)
+                provider = subargs[1].lower()
+                secret = getpass(f"Enter {provider} API key: ")
+                if not secret:
+                    print("No key entered. Aborting.")
+                    sys.exit(1)
+                # Store in OS keychain (global scope)
+                try:
+                    keychain.store_api_key(provider, secret)
+                    print(f"✓ Stored {provider} key in OS keychain")
+                except Exception as e:
+                    print(f"❌ Failed to store key: {e}")
+                    sys.exit(1)
+                # Optional validation
+                try:
+                    valid = asyncio.run(llm_config.validate_api_key(provider, secret))
+                    if valid:
+                        print(f"✓ {provider} key validated successfully")
+                    else:
+                        print(
+                            f"⚠ Validation failed for {provider}. Key saved; re-check provider/limits."
+                        )
+                except Exception as e:
+                    print(f"⚠ Validation error: {e}")
+                sys.exit(0)
+
+            elif action == "list":
+                configured = llm_config.get_configured_providers()
+                if not configured:
+                    print("No providers configured.")
+                else:
+                    print("Configured providers:")
+                    for p in configured:
+                        print(f"  - {p}")
+                sys.exit(0)
+
+            elif action == "validate":
+                # Validate one or all configured providers
+                if len(subargs) >= 2:
+                    provider = subargs[1].lower()
+                    try:
+                        result = asyncio.run(llm_config.validate_provider(provider))
+                        if result.is_valid:
+                            print(f"✓ {provider}: valid")
+                            sys.exit(0)
+                        else:
+                            print(f"❌ {provider}: {result.error_message}")
+                            sys.exit(2)
+                    except Exception as e:
+                        print(f"❌ Validation error for {provider}: {e}")
+                        sys.exit(2)
+                else:
+                    try:
+                        results = asyncio.run(llm_config.validate_all_providers())
+                        if not results:
+                            print("No providers configured.")
+                            sys.exit(1)
+                        exit_code = 0
+                        for provider, res in results.items():
+                            if res.is_valid:
+                                print(f"✓ {provider}: valid")
+                            else:
+                                print(f"❌ {provider}: {res.error_message}")
+                                exit_code = 2
+                        sys.exit(exit_code)
+                    except Exception as e:
+                        print(f"❌ Validation error: {e}")
+                        sys.exit(2)
+            else:
+                print_keys_help()
+                sys.exit(1)
+
         else:
             print(f"Unknown command: {command}")
             print()
@@ -257,6 +364,7 @@ if __name__ == "__main__":
             print("  python main.py setup        - Interactive setup wizard")
             print("  python main.py status       - Check system health")
             print("  python main.py preferences  - Configure user preferences")
+            print("  python main.py keys         - Manage API keys (keychain)")
             print("  python main.py migrate-user - Migrate alpha user to production")
             print("  python main.py [--verbose]  - Start Piper Morgan")
             print()

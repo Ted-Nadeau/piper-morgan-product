@@ -42,20 +42,21 @@ Python 3.12.x
 ❌ **If you see an error** like `command not found` or a different version:
 
 **Important Note About Python Versions**:
-For best compatibility with current packages, **Python 3.11 or 3.12 are recommended**. Python 3.13 is very new and some packages don't have pre-built wheels for it yet, which can cause installation issues.
+For best compatibility with current packages, **Python 3.12 is recommended** (3.11 also works). Python 3.13 is very new and some packages don't have pre-built wheels for it yet, which can cause build failures. On macOS, **Python 3.12.10 is the last version with a GUI installer**; later patches are source-only downloads.
 
-**Mac** - Install Python 3.12:
+**Mac** - Install Python 3.12.10 (Recommended):
 
-1. Open a browser and go to [python.org/downloads](https://www.python.org/downloads/)
-2. Scroll down to "Looking for a specific release?"
-3. Find "Python 3.12.x" in the table (NOT the big banner at top)
-4. Click "Download" next to Python 3.12.x
-5. Choose "macOS 64-bit universal2 installer"
-6. Run the installer
-7. **Important**: Check the box that says "Add Python to PATH" during installation (if it appears)
-8. Complete the installation
-9. Close your terminal completely
-10. Open a NEW terminal and run `python3 --version` again
+1. Open a browser and go to [python.org/downloads/release/python-31210/](https://www.python.org/downloads/release/python-31210/)
+2. Download "macOS 64-bit universal2 installer" (this is Python 3.12.10, the last macOS installer build)
+3. If the link doesn't work, go to [python.org/downloads](https://www.python.org/downloads/) and scroll to "3.12.10" in "Looking for a specific release?"
+4. Choose "macOS 64-bit universal2 installer"
+5. Download and run the installer
+6. If you later see "Install Certificates.command" and it errors with "Permission denied":
+   - Don't worry! Just skip it and continue
+   - Inside your venv later, run: `python -m pip install --upgrade certifi`
+7. Complete the installation
+8. Close your terminal completely
+9. Open a NEW terminal and run `python3.12 --version` (verify 3.12.10 is installed)
 
 **Windows** - Install Python 3.12:
 
@@ -414,12 +415,12 @@ structlog                                23.2.0
 
 ### Step 9: Create Your Personal Configuration File
 
-Piper Morgan needs a configuration file with your preferences.
+Piper Morgan needs a configuration file with your preferences (NOT your API keys).
 
 **Type this command**:
 
 ```bash
-cp config/PIPER.example.md config/PIPER.user.md
+cp config/PIPER.user.md.example config/PIPER.user.md
 ```
 
 Press Enter.
@@ -430,51 +431,38 @@ Press Enter.
 
 ---
 
-### Step 10: Set Up Your API Key
+### Step 10: Set Up Your API Keys (Securely via OS Keychain)
 
-Piper Morgan uses Claude's API to talk to you. You need an API key.
+Piper Morgan stores your API keys securely in your operating system's keychain (macOS Keychain, Windows Credential Manager, or Linux Secret Service). Keys are NOT stored in `PIPER.user.md`.
 
-**First, get an API key**:
+You have two ways to add keys:
 
-1. Open a browser
-2. Go to [console.anthropic.com](https://console.anthropic.com)
-3. Sign up or log in with your Google account
-4. Click your profile (top-right) → "API Keys"
-5. Click "Create Key"
-6. Copy the key (it starts with `sk-ant-...`)
-7. Save it somewhere safe (you'll need it)
-
-**Now add it to Piper Morgan**:
-
-**Mac** - Open the config file:
+1. Preferred: Use the Setup Wizard
 
 ```bash
-open config/PIPER.user.md
+python main.py setup
 ```
 
-**Windows** - Open the config file:
+- Follow the prompts to add your OpenAI/Anthropic/Gemini/Perplexity keys
+- Keys are validated and saved to your OS keychain
+
+2. CLI (quick add/validate)
 
 ```bash
-notepad config/PIPER.user.md
+# Add a key
+python main.py keys add openai
+
+# List configured providers
+python main.py keys list
+
+# Validate configured providers
+python main.py keys validate
 ```
 
-The file will open in your default editor.
+Notes:
 
-**Find the line that says**:
-
-```
-anthropic_api_key: "your-key-here"
-```
-
-**Replace `"your-key-here"`** with your actual API key. Your line should look like:
-
-```
-anthropic_api_key: "sk-ant-abc123xyz..."
-```
-
-⚠️ **Keep the quotes!** The key should be inside the quotes.
-
-**Save the file** and close the editor.
+- You can run the wizard at any time to add/replace keys
+- Environment variables are still supported for headless servers, but keychain is recommended on laptops
 
 ---
 
@@ -665,3 +653,9 @@ If you run into issues:
 **Last updated**: October 27, 2025
 **Version**: 1.0 - Initial extreme-from-nothing guide
 **Status**: ✅ Ready for Beatrice on Thursday!
+
+---
+
+## 📚 Advanced: API Key Management
+
+For detailed information on setting up keys securely via OS keychain (recommended), see [Key Setup Guide](./key-setup.md).
