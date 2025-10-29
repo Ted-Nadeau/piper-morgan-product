@@ -231,7 +231,23 @@ cd piper-morgan-workspace
 
 ## 🚀 Start Docker (Required Before Wizard)
 
-Piper Morgan's database runs in Docker. Start it now in a **separate terminal tab**:
+Piper Morgan's database runs in Docker. First, **make sure Docker Desktop is running**:
+
+**Mac**:
+1. Press `Cmd + Space`
+2. Type "Docker"
+3. Press Enter (launches Docker Desktop)
+4. **Wait 30 seconds** for the whale icon to appear in the menu bar (top-right)
+5. Make sure the whale icon is **solid/filled** (not grayed out)
+
+**Windows**:
+1. Click the Windows Start menu
+2. Search for "Docker Desktop"
+3. Click "Docker Desktop" to launch it
+4. **Wait 30 seconds** for Docker to start
+5. Look for the whale icon in the system tray (bottom-right)
+
+**Once Docker is running**, open a **new terminal tab** and start the database:
 
 **Mac/Linux**:
 
