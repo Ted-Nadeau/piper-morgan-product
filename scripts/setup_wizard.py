@@ -223,6 +223,63 @@ async def check_docker() -> bool:
         return False
 
 
+async def start_docker_services() -> bool:
+    """Start all required Docker services using docker-compose"""
+    print("\n🐳 Starting Docker services...")
+    print("   (This may take a minute on first run)")
+
+    try:
+        # Start services in detached mode
+        result = subprocess.run(
+            ["docker-compose", "up", "-d"],
+            capture_output=True,
+            text=True,
+            timeout=120,  # 2 minutes max
+        )
+
+        if result.returncode != 0:
+            print(f"   ✗ Failed to start services")
+            print(f"   Error: {result.stderr}")
+            return False
+
+        print("   ✓ Services starting...")
+
+        # Wait for services to be healthy
+        print("   ⏳ Waiting for services to be ready...")
+        await asyncio.sleep(10)  # Give services time to start
+
+        # Check if services are now accessible
+        services_ok = {
+            "PostgreSQL": await check_database(),
+            "Redis": await check_redis(),
+            "ChromaDB": await check_chromadb(),
+            "Temporal": await check_temporal(),
+        }
+
+        all_ok = all(services_ok.values())
+
+        if all_ok:
+            print("   ✓ All services ready")
+        else:
+            print("   ⚠  Some services not ready yet:")
+            for name, ok in services_ok.items():
+                if not ok:
+                    print(f"      ✗ {name}")
+            print("   (Services may still be starting up)")
+
+        return True
+
+    except subprocess.TimeoutExpired:
+        print("   ✗ Timeout waiting for services to start")
+        return False
+    except FileNotFoundError:
+        print("   ✗ docker-compose command not found")
+        return False
+    except Exception as e:
+        print(f"   ✗ Error starting services: {e}")
+        return False
+
+
 async def guide_docker_installation() -> bool:
     """Guide user through Docker installation with platform-specific instructions"""
     platform = get_platform()
@@ -330,8 +387,34 @@ async def check_port_available(port: int = 8001) -> bool:
         return False
 
 
+async def check_service_port(host: str, port: int, service_name: str) -> bool:
+    """Check if a service is accessible on a specific port"""
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=2.0)
+        writer.close()
+        await writer.wait_closed()
+        return True
+    except Exception:
+        return False
+
+
+async def check_redis() -> bool:
+    """Check Redis connectivity"""
+    return await check_service_port("localhost", 6379, "Redis")
+
+
+async def check_chromadb() -> bool:
+    """Check ChromaDB connectivity"""
+    return await check_service_port("localhost", 8000, "ChromaDB")
+
+
+async def check_temporal() -> bool:
+    """Check Temporal connectivity"""
+    return await check_service_port("localhost", 7233, "Temporal")
+
+
 async def check_database() -> bool:
-    """Check database connectivity"""
+    """Check PostgreSQL database connectivity"""
     try:
         from sqlalchemy import text
 
@@ -347,14 +430,17 @@ async def check_database() -> bool:
 
 
 async def check_system() -> Dict[str, bool]:
-    """Run all system checks (database check works when in venv)"""
+    """Run all system checks (includes all required Docker services)"""
     print("\n1. System Check")
 
     checks = {
         "Docker installed": await check_docker(),
         "Python 3.9+": await check_python_version(),
         "Port 8001 available": await check_port_available(),
-        "Database accessible": await check_database(),
+        "PostgreSQL (5433)": await check_database(),
+        "Redis (6379)": await check_redis(),
+        "ChromaDB (8000)": await check_chromadb(),
+        "Temporal (7233)": await check_temporal(),
     }
 
     for name, result in checks.items():
@@ -635,6 +721,33 @@ async def run_setup_wizard():
             # Re-check Docker after guided installation
             checks["Docker installed"] = await check_docker()
 
+        # Check if Docker services need to be started
+        service_checks = [
+            "PostgreSQL (5433)",
+            "Redis (6379)",
+            "ChromaDB (8000)",
+            "Temporal (7233)",
+        ]
+        services_down = [k for k in service_checks if not checks.get(k, False)]
+
+        if services_down and checks.get("Docker installed", False):
+            print(f"\n⚠️  {len(services_down)} service(s) not running:")
+            for service in services_down:
+                print(f"   ✗ {service}")
+
+            # Try to start services automatically
+            services_started = await start_docker_services()
+
+            if services_started:
+                # Re-check services after starting
+                checks["PostgreSQL (5433)"] = await check_database()
+                checks["Redis (6379)"] = await check_redis()
+                checks["ChromaDB (8000)"] = await check_chromadb()
+                checks["Temporal (7233)"] = await check_temporal()
+
+                # Update services_down list
+                services_down = [k for k in service_checks if not checks.get(k, False)]
+
         # Check other requirements
         remaining_issues = {k: v for k, v in checks.items() if not v and k != "Docker installed"}
 
@@ -648,11 +761,14 @@ async def run_setup_wizard():
             if not checks.get("Port 8001 available", True) is False:
                 print("  • Free up port 8001 or stop other Piper Morgan instances")
                 print("  • Run: lsof -i :8001 to see what's using the port")
-            if not checks.get("Database accessible", True) is False:
-                print("  • Start Docker Desktop application first (launch from Applications)")
-                print("  • Then run: docker-compose up -d postgres")
-                print("  • Wait 10 seconds for database to start")
-                print("  • Set POSTGRES_PORT=5433 in your environment (Piper uses port 5433)")
+
+            # Service-specific troubleshooting
+            if services_down:
+                print("  • Docker services not running:")
+                print("    1. Make sure Docker Desktop is running")
+                print("    2. Try: docker-compose up -d")
+                print("    3. Wait 30 seconds for services to start")
+                print("    4. Re-run this wizard")
 
             return False
 

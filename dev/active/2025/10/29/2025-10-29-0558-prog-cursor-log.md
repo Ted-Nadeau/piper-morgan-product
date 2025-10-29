@@ -319,24 +319,28 @@ Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::
 ### 🐛 **Missing Database Schema Creation (8:46 AM)**
 
 **USER TESTING RESULT**:
+
 ```
 ❌ Setup failed: relation "users" does not exist
 [SQL: INSERT INTO users ...]
 ```
 
 **ROOT CAUSE**:
+
 - Wizard checked database connectivity ✓
 - But never created the database tables!
 - `scripts/init_db.py` exists for this purpose
 - Wizard jumped straight to user creation
 
 **FIX**:
+
 - ✅ Added "Phase 1.5: Database Schema" step
 - ✅ Checks if tables exist (SELECT 1 FROM users)
 - ✅ If not, calls `db.create_tables()` (creates all models)
 - ✅ Idempotent - won't recreate if tables already exist
 
 **FLOW NOW**:
+
 1. System checks (Docker, Python, Port, Database connection)
 2. **Database schema creation** ← NEW!
 3. User account creation
@@ -345,6 +349,7 @@ Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::
 ### 🎯 **USER INSIGHT: Stop Being Reactive (8:55 AM)**
 
 **USER FEEDBACK**:
+
 > "I still feel we are using a naive process here vs. a planned one. we should have known we'd need database tables. Can you possibly anticipate other steps the wizard may not yet be including?"
 
 **AUDIT COMPLETED**: `dev/active/2025/10/29/wizard-completeness-audit.md`
@@ -352,6 +357,7 @@ Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::
 **CRITICAL FINDINGS**:
 
 Wizard checks **1 of 5** required Docker services:
+
 - ✅ PostgreSQL (5433) - **Only one checked!**
 - ❌ **Redis** (6379) - **NOT CHECKED**
 - ❌ **ChromaDB** (8000) - **NOT CHECKED**
@@ -359,14 +365,51 @@ Wizard checks **1 of 5** required Docker services:
 - ❌ **Traefik** (80) - **NOT CHECKED**
 
 **MISSING PHASES**:
+
 - ❌ Phase 4: Configuration (PIPER.user.md, .env)
 - ❌ Phase 5: Service Verification (E2E test)
 - ❌ Phase 6: Post-Setup (summary, next steps)
 
 **RECOMMENDATION**:
+
 - **STOP** reactive bug-fixing
 - **PLAN** complete wizard systematically
 - **IMPLEMENT** all missing checks before next alpha test
 - See audit doc for complete checklist
 
 **NEXT**: Implement missing service checks or continue testing?
+
+---
+
+## 🔨 **SYSTEMATIC IMPLEMENTATION BEGINS** (9:00 AM)
+
+**USER DECISION**: "this is all work we were going to have to do at some point and this is exactly the right time to do it"
+
+### ✅ **Phase 1: Multi-Service Checks (COMPLETE)**
+
+**Implemented**:
+1. ✅ Added `check_redis()` - Redis connectivity (port 6379)
+2. ✅ Added `check_chromadb()` - ChromaDB connectivity (port 8000)
+3. ✅ Added `check_temporal()` - Temporal connectivity (port 7233)
+4. ✅ Updated `check_system()` to check ALL 7 requirements:
+   - Docker installed
+   - Python 3.9+
+   - Port 8001 available
+   - PostgreSQL (5433)
+   - Redis (6379)
+   - ChromaDB (8000)
+   - Temporal (7233)
+
+5. ✅ Added `start_docker_services()`:
+   - Runs `docker-compose up -d`
+   - Waits for services to be ready
+   - Verifies all 4 services accessible
+   - Timeout protection (2min max)
+
+6. ✅ Smart wizard flow:
+   - Detects which services are down
+   - Automatically runs `docker-compose up -d`
+   - Re-checks services after starting
+   - Provides helpful troubleshooting if still failing
+
+**NEXT**: Phase 2 - Configuration files (PIPER.user.md, .env)
