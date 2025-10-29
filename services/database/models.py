@@ -798,7 +798,7 @@ class TodoListDB(Base):
 
     # Metadata and tags
     list_metadata = Column(JSON, default=dict)
-    tags = Column(JSON, default=list)  # Array of tag strings
+    tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -806,7 +806,7 @@ class TodoListDB(Base):
 
     # Ownership and sharing
     owner_id = Column(String, nullable=False)
-    shared_with = Column(JSON, default=list)  # Array of user IDs
+    shared_with = Column(postgresql.JSONB, default=list)  # Array of user IDs
 
     # Performance optimization - cached counts
     todo_count = Column(Integer, default=0, nullable=False)
@@ -898,7 +898,7 @@ class TodoDB(Base):
     scheduled_date = Column(DateTime)
 
     # Context and categorization
-    tags = Column(JSON, default=list)
+    tags = Column(postgresql.JSONB, default=list)
     project_id = Column(String, ForeignKey("projects.id"))
     context = Column(String)  # @home, @work, etc.
 
@@ -917,7 +917,7 @@ class TodoDB(Base):
     intent_confidence = Column(Float)
 
     # External integrations
-    external_refs = Column(JSON, default=dict)  # {"github_issue": "123"}
+    external_refs = Column(postgresql.JSONB, default=dict)  # {"github_issue": "123"}
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -1138,7 +1138,7 @@ class ListDB(Base):
 
     # Metadata and tags
     list_metadata = Column(JSON, default=dict)
-    tags = Column(JSON, default=list)  # Array of tag strings
+    tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -1146,7 +1146,7 @@ class ListDB(Base):
 
     # Ownership and sharing
     owner_id = Column(String, nullable=False)
-    shared_with = Column(JSON, default=list)  # Array of user IDs
+    shared_with = Column(postgresql.JSONB, default=list)  # Array of user IDs
 
     # Performance optimization - cached counts
     item_count = Column(Integer, default=0, nullable=False)

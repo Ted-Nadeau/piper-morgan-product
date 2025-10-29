@@ -563,6 +563,7 @@ Wizard checks **1 of 5** required Docker services:
 ## 4:28 PM - Database Schema Bug: JSON Index Issue
 
 **USER REPORTS**:
+
 ```
 ❌ Setup failed: data type json has no default operator class for access method "btree"
 HINT: You must specify an operator class for the index or define a default operator class for the data type.
@@ -572,6 +573,7 @@ HINT: You must specify an operator class for the index or define a default opera
 **ROOT CAUSE**: PostgreSQL cannot create BTree indexes on JSON columns. Need GIN (Generalized Inverted Index) for JSON.
 
 **FILES AFFECTED** (`services/database/models.py`):
+
 1. Line 824: `idx_todo_lists_shared` on `shared_with` (JSON)
 2. Line 826: `idx_todo_lists_tags` on `tags` (JSON)
 3. Line 953: `idx_todos_tags` on `tags` (JSON)
@@ -582,6 +584,7 @@ HINT: You must specify an operator class for the index or define a default opera
 **FIX**: Added `postgresql_using="gin"` to all 6 JSON column indexes.
 
 **EXAMPLE**:
+
 ```python
 # Before:
 Index("idx_todo_lists_shared", "shared_with"),  # FAILS
@@ -589,3 +592,45 @@ Index("idx_todo_lists_shared", "shared_with"),  # FAILS
 # After:
 Index("idx_todo_lists_shared", "shared_with", postgresql_using="gin"),  # WORKS
 ```
+
+**TEST CREATION** (4:35 PM):
+Created `tests/integration/test_fresh_database_setup.py` with 4 tests:
+
+1. ✅ `test_create_tables_from_scratch()` - End-to-end schema creation
+2. ✅ `test_database_schema_has_no_broken_indexes()` - Validates index types
+3. ✅ `test_all_tables_have_primary_keys()` - PK validation
+4. ✅ `test_foreign_keys_reference_existing_tables()` - FK integrity
+
+**DEEPER BUG DISCOVERED** (4:36 PM):
+Test revealed: **`JSON` type doesn't support GIN indexes, only `JSONB` does!**
+
+```
+E asyncpg.exceptions.UndefinedObjectError: data type json has no default operator class for access method "gin"
+E [SQL: CREATE INDEX idx_todo_lists_shared ON todo_lists USING gin (shared_with)]
+```
+
+**ROOT CAUSE #2**: Using `Column(JSON)` instead of `Column(JSONB)` for indexed columns.
+
+**NEXT**: Change indexed JSON columns to JSONB (binary format, supports GIN).
+
+---
+
+## 4:50 PM: JSONB Migration Complete ✅
+
+**Architectural Analysis**: `dev/active/2025/10/29/jsonb-migration-architectural-analysis.md`
+- ✅ PostgreSQL official documentation consulted (Context7)
+- ✅ Existing codebase pattern verified (`preferences` uses JSONB)
+- ✅ ADR-024 alignment confirmed
+- ✅ 6 columns migrated from `JSON` to `postgresql.JSONB`
+
+**Changes Made**:
+1. `TodoListDB.tags`: JSON → JSONB
+2. `TodoListDB.shared_with`: JSON → JSONB
+3. `TodoDB.tags`: JSON → JSONB
+4. `TodoDB.external_refs`: JSON → JSONB
+5. `ListDB.tags`: JSON → JSONB
+6. `ListDB.shared_with`: JSON → JSONB
+
+**Test Result**: ✅ `test_fresh_database_setup.py::test_create_tables_from_scratch` **PASSING**
+
+**Ready for**: Alpha onboarding database creation!
