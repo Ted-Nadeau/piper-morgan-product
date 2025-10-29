@@ -38,6 +38,181 @@ def get_platform() -> str:
         return "unknown"
 
 
+def check_python312_available() -> bool:
+    """Check if python3.12 is available on the system"""
+    try:
+        result = subprocess.run(
+            ["python3.12", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def setup_virtual_environment() -> bool:
+    """Set up Python virtual environment with requirements"""
+    import os
+
+    print("\n" + "=" * 50)
+    print("🔧 Setting Up Virtual Environment")
+    print("=" * 50)
+
+    # Clean up old venv
+    if os.path.exists("venv"):
+        print("\n🧹 Removing old virtual environment...")
+        try:
+            subprocess.run(["rm", "-rf", "venv"], check=True, timeout=10)
+            print("   ✓ Old venv removed")
+        except Exception as e:
+            print(f"   ⚠ Could not remove old venv: {e}")
+            return False
+
+    # Create new venv with python3.12
+    print("\n📦 Creating virtual environment with Python 3.12...")
+    try:
+        subprocess.run(
+            ["python3.12", "-m", "venv", "venv"],
+            check=True,
+            timeout=60,
+        )
+        print("   ✓ Virtual environment created")
+    except Exception as e:
+        print(f"   ✗ Failed to create venv: {e}")
+        return False
+
+    # Upgrade pip
+    print("\n📥 Upgrading pip...")
+    try:
+        subprocess.run(
+            ["venv/bin/pip", "install", "--upgrade", "pip"],
+            check=True,
+            timeout=60,
+        )
+        print("   ✓ pip upgraded")
+    except Exception as e:
+        print(f"   ⚠ pip upgrade had issues: {e}")
+
+    # Install requirements
+    print("\n📦 Installing dependencies (this may take 2-3 minutes)...")
+    try:
+        result = subprocess.run(
+            ["venv/bin/pip", "install", "-r", "requirements.txt"],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        if result.returncode == 0:
+            print("   ✓ All dependencies installed successfully!")
+            return True
+        else:
+            print(f"   ✗ Installation failed:")
+            print(result.stderr[-500:] if result.stderr else "Unknown error")
+            return False
+    except subprocess.TimeoutExpired:
+        print("   ✗ Installation timed out (>5 minutes)")
+        return False
+    except Exception as e:
+        print(f"   ✗ Installation failed: {e}")
+        return False
+
+
+def setup_ssh_key() -> bool:
+    """Generate SSH key if missing and guide user to add it to GitHub"""
+    import os
+
+    print("\n" + "=" * 50)
+    print("🔐 SSH Key Setup")
+    print("=" * 50)
+
+    ssh_dir = os.path.expanduser("~/.ssh")
+    key_path = os.path.join(ssh_dir, "id_ed25519")
+
+    # Check if key exists
+    if os.path.exists(key_path):
+        print("\n✓ SSH key already exists at ~/.ssh/id_ed25519")
+        print("✓ Skipping SSH key generation")
+        return True
+
+    # Generate new key
+    print("\n🔑 Generating new SSH key...")
+    try:
+        # Create .ssh directory if it doesn't exist
+        os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
+
+        subprocess.run(
+            [
+                "ssh-keygen",
+                "-t",
+                "ed25519",
+                "-f",
+                key_path,
+                "-N",
+                "",
+                "-C",
+                "piper-morgan-alpha",
+            ],
+            check=True,
+            timeout=10,
+        )
+        print("   ✓ SSH key generated")
+
+        # Read and copy public key
+        pub_key_path = key_path + ".pub"
+        with open(pub_key_path, "r") as f:
+            pub_key = f.read().strip()
+
+        # Copy to clipboard (platform-specific)
+        platform = get_platform()
+        try:
+            if platform == "macos":
+                subprocess.run(
+                    ["pbcopy"],
+                    input=pub_key.encode(),
+                    check=True,
+                    timeout=5,
+                )
+                print("   ✓ Public key copied to clipboard")
+            elif platform == "windows":
+                subprocess.run(
+                    ["clip"],
+                    input=pub_key.encode(),
+                    check=True,
+                    timeout=5,
+                )
+                print("   ✓ Public key copied to clipboard")
+            # Linux: no auto-copy, just display
+        except Exception as e:
+            print(f"   ⚠ Could not copy to clipboard: {e}")
+
+        # Display instructions
+        print("\n" + "-" * 50)
+        print("📋 Next Steps: Add SSH Key to GitHub")
+        print("-" * 50)
+        print("\n1. Visit: https://github.com/settings/ssh")
+        print("2. Click 'New SSH key'")
+        print("3. Give it a title (e.g., 'My Laptop')")
+        if platform != "linux":
+            print("4. The key is already copied—paste it into the 'Key' field")
+        else:
+            print("4. Copy and paste this key into the 'Key' field:")
+            print("\n" + pub_key + "\n")
+        print("5. Click 'Add SSH key'")
+        print("\n6. Back in terminal, verify with:")
+        print("   ssh -T git@github.com")
+        print("   (You may need to type 'yes' when prompted)")
+
+        print("\n" + "-" * 50)
+        ready = input("Have you added the SSH key to GitHub? (y/n): ").lower().strip()
+        return ready == "y"
+
+    except Exception as e:
+        print(f"   ✗ Failed to generate SSH key: {e}")
+        return False
+
+
 async def check_docker() -> bool:
     """Check if Docker is installed and running"""
     try:
@@ -397,11 +572,42 @@ async def run_setup_wizard():
     print("\n" + "=" * 50)
     print("Welcome to Piper Morgan Alpha!")
     print("=" * 50)
-    print("\nLet's get you set up (takes about 5 minutes)")
+    print("\nLet's get you set up (takes about 5-10 minutes)")
     print()
 
     try:
+        # Phase 0: Pre-flight checks (Python 3.12, venv, SSH)
+        print("\n" + "=" * 50)
+        print("🚀 Pre-Flight Checks")
+        print("=" * 50)
+
+        # Check Python 3.12
+        print("\n1️⃣  Checking for Python 3.12...")
+        if not check_python312_available():
+            print("   ✗ Python 3.12 not found")
+            print(
+                "   📥 Please install from: https://www.python.org/downloads/release/python-31210/"
+            )
+            print("   ⏸  Install Python 3.12.10 and run this wizard again.")
+            return False
+        print("   ✓ Python 3.12 found")
+
+        # Set up virtual environment
+        print("\n2️⃣  Setting up virtual environment...")
+        if not setup_virtual_environment():
+            print("   ✗ Failed to set up virtual environment")
+            return False
+
+        # Set up SSH (optional but recommended)
+        print("\n3️⃣  Setting up SSH key...")
+        ssh_ready = setup_ssh_key()
+        if not ssh_ready:
+            print("   ⚠  SSH setup skipped (you can set this up later manually)")
+
         # Phase 1: System checks
+        print("\n" + "=" * 50)
+        print("📋 System Checks")
+        print("=" * 50)
         checks = await check_system()
 
         # Handle Docker installation separately with guided setup
