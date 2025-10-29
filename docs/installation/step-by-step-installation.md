@@ -6,182 +6,20 @@
 
 ---
 
-## ⚠️ Prerequisites Check: Do You Have What You Need?
+## ⚠️ Prerequisites: Do You Have What You Need?
 
-Before we start, let's make sure your computer is ready. If anything is missing, don't worry—we'll install it!
+**Before starting, verify you have everything:**
 
-### Check 1: Do You Have Python 3.11 or Later?
+→ **[Read: Comprehensive Prerequisites Guide](./PREREQUISITES-COMPREHENSIVE.md)**
 
-Open your terminal and check your Python version:
+This covers:
+- ✅ System requirements (OS, RAM, disk)
+- ✅ Python 3.12 installation & verification
+- ✅ Git installation & verification
+- ✅ Docker Desktop installation & verification
+- ✅ How to check everything with verification commands
 
-**Mac**: Press `Cmd + Space`, type "Terminal", press Enter
-**Windows**: Press `Windows + R`, type "cmd", press Enter
-
-Once the terminal is open, type this exact command:
-
-```bash
-python3 --version
-```
-
-Press Enter.
-
-**What you should see**:
-
-```
-Python 3.11.x
-```
-
-or
-
-```
-Python 3.12.x
-```
-
-✅ **If you see Python 3.11 or 3.12**: Great! Move to Check 2.
-
-❌ **If you see an error** like `command not found` or a different version:
-
-**Important Note About Python Versions**:
-For best compatibility with current packages, **Python 3.12 is recommended** (3.11 also works). Python 3.13 is very new and some packages don't have pre-built wheels for it yet, which can cause build failures. On macOS, **Python 3.12.10 is the last version with a GUI installer**; later patches are source-only downloads.
-
-**Mac** - Install Python 3.12.10 (Recommended):
-
-1. Open a browser and go to [python.org/downloads/release/python-31210/](https://www.python.org/downloads/release/python-31210/)
-2. Download "macOS 64-bit universal2 installer" (this is Python 3.12.10, the last macOS installer build)
-3. If the link doesn't work, go to [python.org/downloads](https://www.python.org/downloads/) and scroll to "3.12.10" in "Looking for a specific release?"
-4. Choose "macOS 64-bit universal2 installer"
-5. Download and run the installer
-6. If you later see "Install Certificates.command" and it errors with "Permission denied":
-   - Don't worry! Just skip it and continue
-   - Inside your venv later, run: `python -m pip install --upgrade certifi`
-7. Complete the installation
-8. Close your terminal completely
-9. Open a NEW terminal and run `python3.12 --version` (verify 3.12.10 is installed)
-
-**Windows** - Install Python 3.12:
-
-1. Open a browser and go to [python.org/downloads](https://www.python.org/downloads/)
-2. Scroll down to "Looking for a specific release?"
-3. Find "Python 3.12.x" in the table (NOT the big banner at top)
-4. Click "Download" next to Python 3.12.x
-5. Run the installer
-6. **CRITICAL**: Check "Add Python to PATH" (bottom of first screen!)
-7. Click "Install Now"
-8. Wait for it to complete
-9. Close your Command Prompt completely
-10. Open a NEW Command Prompt and run `python3 --version` again
-
----
-
-### Check 2: Do You Have Git?
-
-Git is software that downloads code from the internet. Let's check if you have it.
-
-In your terminal, type:
-
-```bash
-git --version
-```
-
-Press Enter.
-
-**What you should see**:
-
-```
-git version 2.x.x
-```
-
-✅ **If you see a version**: Great! Move to Check 3.
-
-❌ **If you see an error** like `command not found`:
-
-**Mac** - Install Git:
-
-1. In Terminal, type: `xcode-select --install`
-2. Press Enter
-3. A window will appear asking if you want to install Command Line Tools
-4. Click "Install"
-5. Wait ~10 minutes for installation to complete
-6. Close Terminal
-7. Open a NEW Terminal and run `git --version` again
-
-**Windows** - Install Git:
-
-1. Open a browser and go to [git-scm.com](https://git-scm.com)
-2. Click "Download for Windows"
-3. Run the installer
-4. Keep clicking "Next" through all screens (defaults are fine)
-5. At the end, make sure "Launch Git Bash" is checked
-6. Click "Finish"
-7. Open Command Prompt and run `git --version` again
-
----
-
-### Check 3: Do You Have Enough Disk Space?
-
-Piper Morgan needs about 500MB of free space.
-
-**Mac**:
-
-1. Click the Apple menu (top-left)
-2. Click "About This Mac"
-3. Click "Storage"
-4. Look at the bar - you need mostly empty space (gray/white, not full)
-
-**Windows**:
-
-1. Open File Explorer
-2. Click "This PC"
-3. Look at "Local Disk (C:)"
-4. You should see plenty of free space (not full/red)
-
-✅ **If you have space**: Perfect! You're ready to install Piper Morgan.
-
----
-
-### Check 4: Do You Have Docker?
-
-Docker runs Piper Morgan's database. Let's check if you have it.
-
-In your terminal, type:
-
-```bash
-docker --version
-```
-
-Press Enter.
-
-**What you should see**:
-
-```
-Docker version 20.x.x, build xxxxx
-```
-
-✅ **If you see a version**: Great! Move to Installation below.
-
-❌ **If you see an error** like `command not found`:
-
-**Mac** - Install Docker Desktop:
-
-1. Visit: [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
-2. Download "Docker Desktop for Mac" (choose Apple Silicon if you have M1/M2/M3, Intel otherwise)
-3. Open the downloaded file and drag Docker icon to Applications folder
-4. Launch Docker Desktop from Applications (look for whale icon in menu bar)
-5. Wait for Docker to fully start (whale icon should be solid, not grayed out)
-6. Open a NEW terminal and run `docker --version` again
-
-**Windows** - Install Docker Desktop:
-
-1. Visit: [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
-2. Download "Docker Desktop for Windows"
-3. Run the installer and follow the setup wizard
-4. **Important**: When asked "Use WSL 2 instead of Hyper-V", choose "Yes" (simpler setup)
-5. Restart your computer when prompted
-6. After restart, launch Docker Desktop
-7. Wait for Docker to fully start (look for whale icon in system tray)
-8. Open Command Prompt and run `docker --version` again
-
-✅ **If you see a version**: Perfect! You're ready.
+**Skip ahead only if you already verified all four items above.**
 
 ---
 
@@ -234,6 +72,7 @@ cd piper-morgan-workspace
 Piper Morgan's database runs in Docker. First, **make sure Docker Desktop is running**:
 
 **Mac**:
+
 1. Press `Cmd + Space`
 2. Type "Docker"
 3. Press Enter (launches Docker Desktop)
@@ -241,6 +80,7 @@ Piper Morgan's database runs in Docker. First, **make sure Docker Desktop is run
 5. Make sure the whale icon is **solid/filled** (not grayed out)
 
 **Windows**:
+
 1. Click the Windows Start menu
 2. Search for "Docker Desktop"
 3. Click "Docker Desktop" to launch it
