@@ -623,6 +623,12 @@ async def run_setup_wizard():
         print("\n" + "=" * 50)
         print("📋 System Checks")
         print("=" * 50)
+
+        # Set Piper's non-standard port (5433 vs 5432)
+        if "POSTGRES_PORT" not in os.environ:
+            os.environ["POSTGRES_PORT"] = "5433"
+            print("   (Using Piper's database port: 5433)")
+
         checks = await check_system()
 
         # Handle Docker installation separately with guided setup
@@ -649,8 +655,10 @@ async def run_setup_wizard():
                 print("  • Free up port 8001 or stop other Piper Morgan instances")
                 print("  • Run: lsof -i :8001 to see what's using the port")
             if not checks.get("Database accessible", True) is False:
-                print("  • Ensure database is running: docker-compose up -d postgres")
+                print("  • Start Docker Desktop application first (launch from Applications)")
+                print("  • Then run: docker-compose up -d postgres")
                 print("  • Wait 10 seconds for database to start")
+                print("  • Set POSTGRES_PORT=5433 in your environment (Piper uses port 5433)")
 
             return False
 

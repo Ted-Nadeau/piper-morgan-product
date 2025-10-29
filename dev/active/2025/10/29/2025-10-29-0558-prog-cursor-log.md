@@ -259,3 +259,24 @@ python main.py setup       # Run wizard again (now inside venv)
 - ✅ All 4 checks now active: Docker, Python 3.9+, Port 8001, Database
 - ✅ User insight: "if we do this then it can check sqlalchemy too, i imagine?"
 - **Result**: Complete system validation before user creation!
+
+### 🐛 **Port 5433 Issue (8:30 AM)**
+
+**USER TESTING RESULT**:
+```
+Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::1', 5432, 0, 0)
+✗ Database accessible
+```
+
+**ROOT CAUSE**:
+- Wizard tried to connect to port **5432** (PostgreSQL default)
+- Piper Morgan uses port **5433** (from `docker-compose.yml`)
+- `services/database/connection.py` line 70: `port = os.getenv("POSTGRES_PORT", "5432")`
+- No `POSTGRES_PORT` env var → defaults to wrong port!
+
+**FIX**:
+- ✅ Wizard now **sets `POSTGRES_PORT=5433`** before system checks
+- ✅ Added message: "(Using Piper's database port: 5433)"
+- ✅ Enhanced troubleshooting with Docker Desktop launch + port info
+
+**NOW TESTING**: User will run wizard again to verify database check passes!
