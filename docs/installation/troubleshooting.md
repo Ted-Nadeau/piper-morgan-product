@@ -553,3 +553,72 @@ Good error reporting = faster help!
 
 **Last updated**: October 27, 2025
 **Status**: Ready to help new users!
+
+---
+
+## Issue #15: "scipy" Build Error (Preparing metadata failed)
+
+**Error Message**:
+```
+ERROR: Unknown compiler(s): [['gfortran'], ['flang-new'], ['flang'], ...
+```
+
+Or:
+```
+× Preparing metadata (pyproject.toml) did not run successfully.
+```
+
+**Root Cause**:
+- Your venv is using Python 3.13 (or newer) instead of 3.12
+- scipy lacks pre-built wheels for Python 3.13+
+- pip tries to build scipy from source, which requires a Fortran compiler (not installed)
+
+**Why It Happens**:
+- You ran `python3 -m venv venv` but your system `python3` is 3.13 or newer
+- Or you deleted Python 3.13 but the old venv's shebang still points to it
+
+**Solution**:
+
+1. **Delete the old venv completely:**
+   ```bash
+   rm -rf venv
+   ```
+
+2. **On Mac, create venv with Python 3.12 explicitly:**
+   ```bash
+   python3.12 -m venv venv
+   ```
+
+3. **On Windows, use:**
+   ```bash
+   python -m venv venv
+   ```
+   (Python 3.12 should be in your PATH if you installed it correctly)
+
+4. **Activate the new venv:**
+   ```bash
+   source venv/bin/activate  # Mac/Linux
+   venv\Scripts\activate      # Windows
+   ```
+
+5. **Verify Python version in venv:**
+   ```bash
+   python --version
+   ```
+   Should show `Python 3.12.x` (NOT 3.13+)
+
+6. **Try pip install again:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+**Prevention**:
+- Always use `python3.12 -m venv venv` explicitly (not `python3`)
+- When upgrading/reinstalling Python, always delete the old `venv` folder first
+- Check your Python version before creating venv: `python3.12 --version`
+
+**If You Still See 3.13 or 3.14**:
+- Check your system: `which python3.12` should exist
+- If missing, reinstall Python 3.12.10 from [python.org/downloads/release/python-31210/](https://www.python.org/downloads/release/python-31210/)
+- Close your terminal completely and open a NEW one (PATH updates need a fresh terminal)
+- Try Step 1 again

@@ -307,21 +307,43 @@ Press Enter.
 
 This is **critical**. A virtual environment isolates Piper Morgan's Python packages from the rest of your system.
 
-**Type this command**:
+⚠️ **IMPORTANT: First, clean up any old virtual environment**
+
+If you see a `venv` folder from a previous attempt, delete it:
 
 ```bash
-python3 -m venv venv
+rm -rf venv
 ```
 
 Press Enter.
 
-**What this does**: Creates a special folder called `venv` that contains everything Piper Morgan needs.
+**Now create the virtual environment using Python 3.12 explicitly:**
+
+**Mac**:
+
+```bash
+python3.12 -m venv venv
+```
+
+**Windows**:
+
+```bash
+python -m venv venv
+```
+
+Press Enter.
+
+**What this does**: Creates a special folder called `venv` that contains everything Piper Morgan needs, using Python 3.12.
 
 **What you'll see**: Nothing much. The command runs silently. Wait for the command prompt to return.
 
 **This takes ~30-60 seconds.** Don't interrupt!
 
 **Verify it worked**: Type `ls -la` and press Enter. You should see a folder named `venv` in the list.
+
+**Troubleshoot**: If you see an error like `python3.12: command not found`:
+- On Mac: You need to install Python 3.12.10. Go back to Check 1 and follow the Python installation steps.
+- On Windows: The installer should have added Python to PATH. Close your command prompt completely, open a NEW one, and try again.
 
 ---
 
