@@ -557,3 +557,35 @@ Wizard checks **1 of 5** required Docker services:
 1. Add "Last Verified" dates to critical docs
 2. Automated check: grep "never initialized" + verify with Serena
 3. Archive docs >30 days without "re-verified" marker
+
+---
+
+## 4:28 PM - Database Schema Bug: JSON Index Issue
+
+**USER REPORTS**:
+```
+❌ Setup failed: data type json has no default operator class for access method "btree"
+HINT: You must specify an operator class for the index or define a default operator class for the data type.
+[SQL: CREATE INDEX idx_todo_lists_shared ON todo_lists (shared_with)]
+```
+
+**ROOT CAUSE**: PostgreSQL cannot create BTree indexes on JSON columns. Need GIN (Generalized Inverted Index) for JSON.
+
+**FILES AFFECTED** (`services/database/models.py`):
+1. Line 824: `idx_todo_lists_shared` on `shared_with` (JSON)
+2. Line 826: `idx_todo_lists_tags` on `tags` (JSON)
+3. Line 953: `idx_todos_tags` on `tags` (JSON)
+4. Line 958: `idx_todos_external_refs` on `external_refs` (JSON)
+5. Line 1159: `idx_lists_shared` on `shared_with` (JSON)
+6. Line 1161: `idx_lists_tags` on `tags` (JSON)
+
+**FIX**: Added `postgresql_using="gin"` to all 6 JSON column indexes.
+
+**EXAMPLE**:
+```python
+# Before:
+Index("idx_todo_lists_shared", "shared_with"),  # FAILS
+
+# After:
+Index("idx_todo_lists_shared", "shared_with", postgresql_using="gin"),  # WORKS
+```

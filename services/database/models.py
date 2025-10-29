@@ -821,9 +821,11 @@ class TodoListDB(Base):
     __table_args__ = (
         Index("idx_todo_lists_owner_type", "owner_id", "list_type"),
         Index("idx_todo_lists_owner_archived", "owner_id", "is_archived"),
-        Index("idx_todo_lists_shared", "shared_with"),  # GIN index for JSON array
+        Index(
+            "idx_todo_lists_shared", "shared_with", postgresql_using="gin"
+        ),  # GIN index for JSON array
         Index("idx_todo_lists_default", "owner_id", "is_default"),
-        Index("idx_todo_lists_tags", "tags"),  # GIN index for tag search
+        Index("idx_todo_lists_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
     )
 
     def to_domain(self) -> domain.TodoList:
@@ -950,12 +952,14 @@ class TodoDB(Base):
         # Context and categorization
         Index("idx_todos_context", "context"),
         Index("idx_todos_project", "project_id"),
-        Index("idx_todos_tags", "tags"),  # GIN index for tag search
+        Index("idx_todos_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
         # PM-040/PM-034 integration
         Index("idx_todos_knowledge_node", "knowledge_node_id"),
         Index("idx_todos_creation_intent", "creation_intent"),
         # External references
-        Index("idx_todos_external_refs", "external_refs"),  # GIN index for JSON search
+        Index(
+            "idx_todos_external_refs", "external_refs", postgresql_using="gin"
+        ),  # GIN index for JSON search
         # Performance queries
         Index("idx_todos_owner_created", "owner_id", "created_at"),
         Index("idx_todos_owner_updated", "owner_id", "updated_at"),
@@ -1156,9 +1160,11 @@ class ListDB(Base):
         Index("idx_lists_owner_type", "owner_id", "item_type"),
         Index("idx_lists_owner_list_type", "owner_id", "list_type"),
         Index("idx_lists_owner_archived", "owner_id", "is_archived"),
-        Index("idx_lists_shared", "shared_with"),  # GIN index for JSON array
+        Index(
+            "idx_lists_shared", "shared_with", postgresql_using="gin"
+        ),  # GIN index for JSON array
         Index("idx_lists_default", "owner_id", "item_type", "is_default"),
-        Index("idx_lists_tags", "tags"),  # GIN index for tag search
+        Index("idx_lists_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
     )
 
     def to_domain(self) -> domain.List:
