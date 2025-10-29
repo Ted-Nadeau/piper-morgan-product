@@ -251,3 +251,11 @@ python main.py setup       # Run wizard again (now inside venv)
 - ✅ Detects if already in venv (prevents infinite loop)
 - ✅ Process is replaced - wizard continues in venv with all dependencies
 - **Result**: Wizard runs in the venv it creates, can import everything!
+
+**BONUS FIX (7:59 AM)**:
+
+- ✅ **Restored database check** to system checks
+- ✅ Now works because wizard runs in venv after restart
+- ✅ All 4 checks now active: Docker, Python 3.9+, Port 8001, Database
+- ✅ User insight: "if we do this then it can check sqlalchemy too, i imagine?"
+- **Result**: Complete system validation before user creation!
