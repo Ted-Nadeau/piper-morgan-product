@@ -623,12 +623,6 @@ async def run_setup_wizard():
         print("\n" + "=" * 50)
         print("📋 System Checks")
         print("=" * 50)
-
-        # Set Piper's non-standard port (5433 vs 5432)
-        if "POSTGRES_PORT" not in os.environ:
-            os.environ["POSTGRES_PORT"] = "5433"
-            print("   (Using Piper's database port: 5433)")
-
         checks = await check_system()
 
         # Handle Docker installation separately with guided setup

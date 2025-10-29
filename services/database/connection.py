@@ -65,9 +65,9 @@ class DatabaseConnection:
         - POSTGRES_SSL_KEY: Path to client key (optional)
         """
         user = os.getenv("POSTGRES_USER", "piper")
-        password = os.getenv("POSTGRES_PASSWORD", "dev_changeme")
+        password = os.getenv("POSTGRES_PASSWORD", "dev_changeme_in_production")
         host = os.getenv("POSTGRES_HOST", "localhost")
-        port = os.getenv("POSTGRES_PORT", "5432")
+        port = os.getenv("POSTGRES_PORT", "5433")
         database = os.getenv("POSTGRES_DB", "piper_morgan")
 
         # Build base URL

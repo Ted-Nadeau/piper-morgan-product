@@ -280,3 +280,30 @@ Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::
 - ✅ Enhanced troubleshooting with Docker Desktop launch + port info
 
 **NOW TESTING**: User will run wizard again to verify database check passes!
+
+### 🚨 **SYSTEMATIC FIX: Database Config Mismatches (8:38 AM)**
+
+**USER FEEDBACK**:
+> "password authentication failed for user 'piper' - Please do not populate the wizard with generic guesses? All of this information is documented and available? Please do a cross-comparison between the wizard's logic and the docs and serena."
+
+**AUDIT RESULTS**:
+
+| Component | Password | Port | Match? |
+|-----------|----------|------|--------|
+| `docker-compose.yml` (TRUTH) | `dev_changeme_in_production` | `5433` | ✅ |
+| `services/database/connection.py` | `dev_changeme` | `5432` | ❌ WRONG |
+| `scripts/setup_wizard.py` | (inherits from code) | Override to `5433` | ⚠️ Bandaid |
+
+**ROOT CAUSE**:
+- Code defaults didn't match docker-compose.yml
+- Wizard was patching symptoms, not fixing source
+- No `.env.example` as single source of truth
+
+**SYSTEMATIC FIX**:
+1. ✅ Fixed `services/database/connection.py` defaults:
+   - Password: `dev_changeme` → `dev_changeme_in_production`
+   - Port: `5432` → `5433`
+2. ✅ Removed wizard bandaid (port override) - now uses correct code default
+3. ✅ Created `env.example` as reference with all defaults documented
+
+**NOW**: Code, Docker, and wizard all aligned to single source of truth!
