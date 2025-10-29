@@ -11,6 +11,7 @@ Issue #218 CORE-USERS-ONBOARD Phase 1A
 """
 
 import asyncio
+import os
 import socket
 import subprocess
 import sys
@@ -591,11 +592,25 @@ async def run_setup_wizard():
             return False
         print("   ✓ Python 3.12 found")
 
-        # Set up virtual environment
-        print("\n2️⃣  Setting up virtual environment...")
-        if not setup_virtual_environment():
-            print("   ✗ Failed to set up virtual environment")
-            return False
+        # Set up virtual environment (only if not already in one)
+        in_venv = hasattr(sys, "real_prefix") or (
+            hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+        )
+
+        if not in_venv:
+            print("\n2️⃣  Setting up virtual environment...")
+            if not setup_virtual_environment():
+                print("   ✗ Failed to set up virtual environment")
+                return False
+
+            # Restart wizard in the new venv
+            print("\n🔄 Restarting wizard in virtual environment...")
+            print("   (This ensures all dependencies are available)")
+            venv_python = os.path.join(os.getcwd(), "venv", "bin", "python")
+            os.execv(venv_python, [venv_python, "main.py", "setup"])
+            # execv doesn't return - the process is replaced
+        else:
+            print("\n2️⃣  Virtual environment: ✓ Active")
 
         # Set up SSH (optional but recommended)
         print("\n3️⃣  Setting up SSH key...")

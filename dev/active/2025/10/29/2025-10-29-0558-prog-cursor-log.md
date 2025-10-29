@@ -230,8 +230,24 @@ python main.py setup       # Run wizard again (now inside venv)
 2. **Option B**: Skip database checks in wizard (only check Docker/Python/port)
 
 **FIX IMPLEMENTED (7:47 AM)**:
+
 - ✅ Removed `check_database()` from wizard's system checks
 - ✅ Wizard now only checks: Docker, Python 3.9+, Port 8001
 - ✅ Added note: "(Database check will happen after user creation)"
 - ✅ Database connectivity validated later when creating user (inside venv context)
 - **Result**: Wizard no longer tries to import sqlalchemy before venv is active
+
+**STILL BROKEN (7:54 AM)**:
+
+- User hit: "ModuleNotFoundError: No module named 'structlog'"
+- Same root cause: Wizard tries to `from services.database.models import User`
+- User model imports database connection → imports structlog
+- Still running in original Python, not the venv!
+
+**REAL FIX IMPLEMENTED (7:56 AM)**:
+
+- ✅ Wizard now **restarts itself** in the new venv after creating it
+- ✅ Uses `os.execv(venv/bin/python, [python, main.py, setup])`
+- ✅ Detects if already in venv (prevents infinite loop)
+- ✅ Process is replaced - wizard continues in venv with all dependencies
+- **Result**: Wizard runs in the venv it creates, can import everything!
