@@ -39,28 +39,36 @@ Python 3.12.x
 
 ✅ **If you see Python 3.11 or 3.12**: Great! Move to Check 2.
 
-❌ **If you see an error** like `command not found` or an older version like `Python 3.9`:
+❌ **If you see an error** like `command not found` or a different version:
+
+**Important Note About Python Versions**:
+For best compatibility with current packages, **Python 3.11 or 3.12 are recommended**. Python 3.13 is very new and some packages don't have pre-built wheels for it yet, which can cause installation issues.
 
 **Mac** - Install Python 3.12:
 
 1. Open a browser and go to [python.org/downloads](https://www.python.org/downloads/)
-2. Click "Download Python 3.12.x" (the latest)
-3. Run the installer
-4. **Important**: Check the box that says "Add Python to PATH" during installation
-5. Complete the installation
-6. Close your terminal completely
-7. Open a NEW terminal and run `python3 --version` again
+2. Scroll down to "Looking for a specific release?"
+3. Find "Python 3.12.x" in the table (NOT the big banner at top)
+4. Click "Download" next to Python 3.12.x
+5. Choose "macOS 64-bit universal2 installer"
+6. Run the installer
+7. **Important**: Check the box that says "Add Python to PATH" during installation (if it appears)
+8. Complete the installation
+9. Close your terminal completely
+10. Open a NEW terminal and run `python3 --version` again
 
 **Windows** - Install Python 3.12:
 
 1. Open a browser and go to [python.org/downloads](https://www.python.org/downloads/)
-2. Click "Download Python 3.12.x" (the latest)
-3. Run the installer
-4. **CRITICAL**: Check "Add Python to PATH" (bottom of first screen!)
-5. Click "Install Now"
-6. Wait for it to complete
-7. Close your Command Prompt completely
-8. Open a NEW Command Prompt and run `python3 --version` again
+2. Scroll down to "Looking for a specific release?"
+3. Find "Python 3.12.x" in the table (NOT the big banner at top)
+4. Click "Download" next to Python 3.12.x
+5. Run the installer
+6. **CRITICAL**: Check "Add Python to PATH" (bottom of first screen!)
+7. Click "Install Now"
+8. Wait for it to complete
+9. Close your Command Prompt completely
+10. Open a NEW Command Prompt and run `python3 --version` again
 
 ---
 
@@ -174,6 +182,82 @@ cd piper-morgan-workspace
 
 ---
 
+### Step 2b: Set Up SSH Key (One-Time Setup)
+
+Before we can download Piper Morgan, we need to set up an SSH key with GitHub. This only needs to be done once on your computer.
+
+**What is an SSH key?** It's like a secure password that lets your computer talk to GitHub without typing your password every time.
+
+#### **First Time Only: Generate Your SSH Key**
+
+**Type this command** (all on one line):
+
+```bash
+ssh-keygen -t ed25519 -C "your-github-email@example.com"
+```
+
+Replace `your-github-email@example.com` with your actual GitHub email.
+
+**What you'll see**:
+
+- `Enter file in which to save the key` → Just press Enter (accept default)
+- `Enter passphrase` → Type a secure password (or press Enter for no password)
+- `Enter same passphrase again` → Type it again
+
+**Verify it worked**: Type `ls ~/.ssh` and press Enter. You should see files including `id_ed25519` and `id_ed25519.pub`.
+
+#### **Add Your Key to GitHub (Via Web)**
+
+Now we need to tell GitHub about your new key.
+
+1. Copy your public key to clipboard:
+
+**Mac**:
+
+```bash
+cat ~/.ssh/id_ed25519.pub | pbcopy
+```
+
+**Windows** (in Command Prompt or PowerShell):
+
+```bash
+type %USERPROFILE%\.ssh\id_ed25519.pub | clip
+```
+
+2. Go to [github.com/settings/ssh](https://github.com/settings/ssh) (or Settings → SSH and GPG keys)
+3. Click "New SSH key"
+4. Give it a title: "My Laptop" or similar
+5. Paste the key you just copied
+6. Click "Add SSH key"
+
+#### **Test Your SSH Connection**
+
+Back in terminal, type:
+
+```bash
+ssh -T git@github.com
+```
+
+You'll see a prompt:
+
+```
+The authenticity of host 'github.com' can't be established.
+...
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+**Type `yes` and press Enter.** (Important: You must type the word `yes`, not just press Enter!)
+
+You should see:
+
+```
+Hi [your-username]! You've successfully authenticated.
+```
+
+✅ If you see this: Your SSH key is working! Ready for next step.
+
+---
+
 ### Step 3: Download Piper Morgan from GitHub
 
 Now we'll download all of Piper Morgan's code.
@@ -181,7 +265,7 @@ Now we'll download all of Piper Morgan's code.
 **Type this command**:
 
 ```bash
-git clone https://github.com/Codewarrior1988/piper-morgan.git
+git clone git@github.com:mediajunkie/piper-morgan-product.git
 ```
 
 Press Enter.
@@ -190,7 +274,17 @@ Press Enter.
 
 **What you'll see**: Text scrolling by with filenames. This is normal! Wait until you see the command prompt return.
 
-**Verify it worked**: Type `ls` and press Enter. You should see a folder named `piper-morgan`.
+**Important - First Time Only**: You may see a prompt asking:
+
+```
+The authenticity of host 'github.com' can't be established.
+...
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
+
+**Type the word `yes` and press Enter.** (Don't just press Enter - you must type `yes`!)
+
+**Verify it worked**: Type `ls` and press Enter. You should see a folder named `piper-morgan-product`.
 
 ---
 
@@ -199,12 +293,12 @@ Press Enter.
 **Type this command**:
 
 ```bash
-cd piper-morgan
+cd piper-morgan-product
 ```
 
 Press Enter.
 
-**Verify it worked**: Type `pwd` and press Enter. You should see a path ending in `piper-morgan`.
+**Verify it worked**: Type `pwd` and press Enter. You should see a path ending in `piper-morgan-product`.
 
 ---
 
@@ -480,7 +574,7 @@ After installation, when you want to use Piper Morgan again:
 **Step 2: Navigate to Piper Morgan folder**:
 
 ```bash
-cd ~/piper-morgan-workspace/piper-morgan
+cd ~/piper-morgan-workspace/piper-morgan-product
 ```
 
 **Step 3: Activate the virtual environment**:
@@ -525,8 +619,8 @@ Save this for next time:
 cd ~
 mkdir piper-morgan-workspace
 cd piper-morgan-workspace
-git clone https://github.com/Codewarrior1988/piper-morgan.git
-cd piper-morgan
+git clone git@github.com:mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
 python3 -m venv venv
 source venv/bin/activate  # Mac/Linux
 # or
@@ -541,7 +635,7 @@ python main.py
 ### Starting Piper Morgan (Every Time After Installation)
 
 ```bash
-cd ~/piper-morgan-workspace/piper-morgan
+cd ~/piper-morgan-workspace/piper-morgan-product
 source venv/bin/activate  # Mac/Linux
 # or
 venv\Scripts\activate     # Windows
