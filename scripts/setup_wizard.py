@@ -226,54 +226,71 @@ async def check_docker() -> bool:
 async def start_docker_services() -> bool:
     """Start all required Docker services using docker-compose"""
     print("\n🐳 Starting Docker services...")
-    print("   (This may take a minute on first run)")
+    print("   (First run may take 5-10 minutes to download images)")
 
     try:
-        # Start services in detached mode
-        result = subprocess.run(
+        # Start services in detached mode (no timeout - image pulls can be slow)
+        print("   📦 Pulling and starting containers...")
+        process = subprocess.Popen(
             ["docker-compose", "up", "-d"],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=120,  # 2 minutes max
         )
 
-        if result.returncode != 0:
-            print(f"   ✗ Failed to start services")
-            print(f"   Error: {result.stderr}")
+        # Wait for process with longer timeout for image downloads
+        try:
+            stdout, stderr = process.communicate(timeout=600)  # 10 minutes for first-time pulls
+        except subprocess.TimeoutExpired:
+            process.kill()
+            print("   ✗ Timeout after 10 minutes (likely network issue)")
             return False
 
-        print("   ✓ Services starting...")
+        if process.returncode != 0:
+            print(f"   ✗ Failed to start services")
+            if stderr:
+                print(f"   Error: {stderr}")
+            return False
 
-        # Wait for services to be healthy
+        print("   ✓ Containers started")
+
+        # Wait for services to be healthy with progressive checks
         print("   ⏳ Waiting for services to be ready...")
-        await asyncio.sleep(10)  # Give services time to start
+        print("   (This can take 30-60 seconds on first run)")
 
-        # Check if services are now accessible
-        services_ok = {
-            "PostgreSQL": await check_database(),
-            "Redis": await check_redis(),
-            "ChromaDB": await check_chromadb(),
-            "Temporal": await check_temporal(),
-        }
+        max_attempts = 30  # 30 attempts x 2 seconds = 1 minute
+        for attempt in range(max_attempts):
+            await asyncio.sleep(2)
 
-        all_ok = all(services_ok.values())
+            services_ok = {
+                "PostgreSQL": await check_database(),
+                "Redis": await check_redis(),
+                "ChromaDB": await check_chromadb(),
+                "Temporal": await check_temporal(),
+            }
 
-        if all_ok:
-            print("   ✓ All services ready")
-        else:
-            print("   ⚠  Some services not ready yet:")
-            for name, ok in services_ok.items():
-                if not ok:
-                    print(f"      ✗ {name}")
-            print("   (Services may still be starting up)")
+            all_ok = all(services_ok.values())
 
-        return True
+            if all_ok:
+                print("   ✓ All services ready")
+                return True
 
-    except subprocess.TimeoutExpired:
-        print("   ✗ Timeout waiting for services to start")
+            # Show progress every 10 seconds
+            if (attempt + 1) % 5 == 0:
+                ready = sum(1 for ok in services_ok.values() if ok)
+                print(f"   ⏳ {ready}/4 services ready... (attempt {attempt + 1}/{max_attempts})")
+
+        # Final status after timeout
+        print("   ⚠  Timeout waiting for all services:")
+        for name, ok in services_ok.items():
+            status = "✓" if ok else "✗"
+            print(f"      {status} {name}")
+        print("   Services may still be starting - you can continue and they might work")
         return False
+
     except FileNotFoundError:
         print("   ✗ docker-compose command not found")
+        print("   Please install Docker Compose: https://docs.docker.com/compose/install/")
         return False
     except Exception as e:
         print(f"   ✗ Error starting services: {e}")

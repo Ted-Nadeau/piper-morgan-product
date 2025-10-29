@@ -388,10 +388,12 @@ Wizard checks **1 of 5** required Docker services:
 ### ✅ **Phase 1: Multi-Service Checks (COMPLETE)**
 
 **Implemented**:
+
 1. ✅ Added `check_redis()` - Redis connectivity (port 6379)
 2. ✅ Added `check_chromadb()` - ChromaDB connectivity (port 8000)
 3. ✅ Added `check_temporal()` - Temporal connectivity (port 7233)
 4. ✅ Updated `check_system()` to check ALL 7 requirements:
+
    - Docker installed
    - Python 3.9+
    - Port 8001 available
@@ -401,6 +403,7 @@ Wizard checks **1 of 5** required Docker services:
    - Temporal (7233)
 
 5. ✅ Added `start_docker_services()`:
+
    - Runs `docker-compose up -d`
    - Waits for services to be ready
    - Verifies all 4 services accessible
@@ -413,3 +416,30 @@ Wizard checks **1 of 5** required Docker services:
    - Provides helpful troubleshooting if still failing
 
 **NEXT**: Phase 2 - Configuration files (PIPER.user.md, .env)
+
+### 🐛 **Timeout Issue: First-Time Docker Pulls (10:22 AM)**
+
+**USER TESTING**:
+```
+🐳 Starting Docker services...
+   (This may take a minute on first run)
+   ✗ Timeout waiting for services to start
+```
+
+**ROOT CAUSE**:
+- Timeout was 120 seconds (2 minutes)
+- First-time Docker image pulls can take 5-10 minutes!
+- postgres:15, redis:7, chromadb, temporal images = ~2GB
+- Wizard gave up before images finished downloading
+
+**FIX**:
+1. ✅ Increased timeout: 120s → 600s (10 minutes)
+2. ✅ Changed to `Popen` with live feedback
+3. ✅ Progressive health checks (30 attempts x 2s = 1 minute)
+4. ✅ Progress messages every 10 seconds: "2/4 services ready..."
+5. ✅ Better UX messaging:
+   - "First run may take 5-10 minutes to download images"
+   - "Pulling and starting containers..."
+   - Shows which services are ready/not ready
+
+**NOW**: User can see progress, won't timeout during image downloads
