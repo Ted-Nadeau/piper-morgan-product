@@ -303,6 +303,34 @@ Press Enter.
 
 ---
 
+## 🎯 Recommended: Use the Setup Wizard (Automated)
+
+Instead of doing Steps 5-10 manually, you can use the automated setup wizard:
+
+```bash
+python main.py setup
+```
+
+This single command will:
+1. ✅ Check for Python 3.12
+2. ✅ Create your virtual environment
+3. ✅ Install all dependencies
+4. ✅ Generate SSH key (if needed)
+5. ✅ Guide you through GitHub setup
+6. ✅ System checks (Docker, port, database)
+7. ✅ Create your user account
+8. ✅ Collect and validate API keys
+
+**Time**: ~5-10 minutes total (including waiting for dependencies to install)
+
+If you prefer to do it manually, continue below. Otherwise, you're done! 🎉
+
+---
+
+## Manual Setup (Optional Alternative)
+
+If you prefer to understand each step, follow Steps 5-10 below. Both approaches work!
+
 ### Step 5: Create a Python Virtual Environment
 
 This is **critical**. A virtual environment isolates Piper Morgan's Python packages from the rest of your system.
