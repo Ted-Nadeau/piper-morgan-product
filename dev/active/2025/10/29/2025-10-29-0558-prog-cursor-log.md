@@ -450,6 +450,7 @@ Wizard checks **1 of 5** required Docker services:
 ### ✅ **3/4 Services Working! Make Temporal Optional (3:50 PM)**
 
 **USER TESTING RESULT**:
+
 ```
 ✓ PostgreSQL
 ✓ Redis
@@ -458,15 +459,18 @@ Wizard checks **1 of 5** required Docker services:
 ```
 
 **USER INSIGHT**:
+
 > "I think we also need to tell people how to make sure docker is running after a restart (i had to logout and in again and needed to manually restart docker)"
 
 **ANALYSIS**:
+
 - 3 of 4 core services are working perfectly! 🎉
 - Only Temporal failing (known to be flaky)
 - Temporal is NOT required for user setup/account creation
 - Should not block wizard from continuing
 
 **FIX**:
+
 1. ✅ Made Temporal **optional** (won't block setup)
 2. ✅ Split services into:
    - Core: PostgreSQL, Redis, ChromaDB (required)
@@ -478,3 +482,71 @@ Wizard checks **1 of 5** required Docker services:
    - "After system restart: Docker doesn't auto-start by default"
 
 **RESULT**: Setup will now continue with 3/4 services!
+
+**USER QUESTION**: "when will it bite the user later and is there some way to keep trying to load it lazily till it's there in a nonblocking way?"
+
+**INITIAL ANSWER (WRONG)**:
+
+- ~~Temporal isn't actually used yet! OrchestrationEngine exists but not initialized~~
+
+**USER CORRECTION** (3:54 PM):
+
+> "the orchestration engine is wired up. that documentation is either out of date or problematic. please use serena to verify the actual state before i proceed. morning standup is one of the things alpha testers are expected to be able to test."
+
+**SERENA VERIFICATION**:
+
+1. ✅ **OrchestrationEngine IS wired up** - 50+ references, used in `web/app.py`, `IntentService`
+2. ✅ **Morning Standup DOES NOT use Temporal** - uses direct Python async in `MorningStandupWorkflow`
+3. ⚠️ **Temporal Docker service exists but Python code doesn't call Temporal client yet**
+
+**CORRECTED ANSWER**:
+
+- **OrchestrationEngine**: ✅ Required for alpha (already wired)
+- **Morning Standup**: ✅ Works WITHOUT Temporal (direct async calls)
+- **Temporal Service**: Docker container exists but not used by Python code yet
+- **For Alpha**: Temporal failure = OK, just warning noise
+
+**ACTION**: User can proceed! Temporal service failure won't block standup testing.
+
+---
+
+## 4:00 PM - Documentation Audit: Stale Content
+
+**USER REQUEST**:
+> "Is it possible to fix the incorrect entry that misled you earlier and look for similar gaps in the docs while I continue testing?"
+
+**FINDINGS**:
+
+### Temporal's Architectural Status
+- **ADR-019**: "Full Orchestration Commitment" refers to Python `OrchestrationEngine`, NOT Temporal
+- **docker-compose.yml**: Has Temporal service (speculative infrastructure)
+- **Python code**: No `temporalio` client library imports found
+- **VERDICT**: Temporal is "infrastructure ready, not yet integrated"
+
+### Stale Documentation Found
+**Root Doc That Misled**: `docs/internal/architecture/current/current-state-documentation.md`
+- Dated: September 19, 2025 (40 days old)
+- Claimed: "OrchestrationEngine never initialized"
+- Reality: Engine wired up in late Sept 2025
+
+**8 Additional Stale Documents**:
+1. ✅ `docs/briefing/PROJECT.md` (2 instances)
+2. ✅ `docs/briefing/roles/ARCHITECT.md` (2 instances)
+3. `docs/internal/architecture/evolution/great-refactor-roadmap.md`
+4. `docs/internal/development/planning/plans/CORE-INTENT-QUALITY-layer4-gameplan.md`
+5. `docs/internal/development/active/in-progress/chief-of-staff-report-2025-09-19.md`
+6. `docs/omnibus-logs/2025-09-18-omnibus-log.md` (historical)
+7. `docs/internal/architecture/current/adrs/adr-035-inchworm-protocol.md`
+
+**FIXES APPLIED**:
+- ✅ Updated `current-state-documentation.md` (lines 46-54)
+- ✅ Updated `PROJECT.md` (2 locations)
+- ✅ Updated `ARCHITECT.md` (2 locations)
+- 📝 Created audit report: `dev/active/2025/10/29/stale-orchestration-docs-audit.md`
+
+**ROOT CAUSE**: Weekly documentation audit not catching code-reality divergence
+
+**RECOMMENDATIONS**:
+1. Add "Last Verified" dates to critical docs
+2. Automated check: grep "never initialized" + verify with Serena
+3. Archive docs >30 days without "re-verified" marker

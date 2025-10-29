@@ -125,13 +125,13 @@ main.py                 → Primary backend entry
 web/app.py             → FastAPI (933 lines, refactor at 1000)
 services/              → Business logic (mixed patterns)
 cli/commands/          → Direct implementations (bypass intent)
-services/orchestration/→ Engine never initialized
+services/orchestration/→ ✅ Engine operational (fixed Sept 2025)
 ```
 
 **The Broken Chain**:
 1. Intent Classifier works ✅
 2. QueryRouter disabled ❌ (blocks everything)
-3. OrchestrationEngine not initialized ❌
+3. ~~OrchestrationEngine not initialized~~ ✅ FIXED Sept 2025
 4. Therefore 80% of features broken ❌
 
 ## Document Creation Guidelines

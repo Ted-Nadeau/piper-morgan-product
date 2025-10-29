@@ -43,15 +43,15 @@
    - Impact: Can't route queries to handlers
    - Workaround: Unknown (probably direct calls)
 
-2. **OrchestrationEngine**
-   - Status: Declared as Optional but never initialized
-   - Impact: No workflow orchestration
-   - Location: main.py line ~609 tries to use None
+2. **~~OrchestrationEngine~~** ✅ FIXED (Late Sept 2025)
+   - ~~Status: Declared as Optional but never initialized~~
+   - **Current Status**: Fully wired up, 50+ references across codebase
+   - Used in: web/app.py, IntentService, SlackResponseHandler, etc.
 
-3. **Complex Workflows**
-   - "Show standup" → Error ❌
-   - Any multi-step flow → Broken ❌
-   - Workflow creation → undefined ❌
+3. **~~Complex Workflows~~** ⚠️ PARTIALLY FIXED
+   - "Show standup" → ✅ Works (MorningStandupWorkflow using direct async)
+   - Multi-step flows → ⚠️ Works via OrchestrationEngine (Python async, not Temporal)
+   - Workflow creation → ✅ WorkflowFactory operational
 
 ---
 

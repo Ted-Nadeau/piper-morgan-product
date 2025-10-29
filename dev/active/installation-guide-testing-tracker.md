@@ -75,14 +75,14 @@ The installation docs have been restructured for clarity:
 
   - Command: `python3.12 --version`
   - Expected: `Python 3.12.10` (or 3.12.x)
-  - Actual: ******\_\_\_******
+  - Actual: **\*\***\_\_\_**\*\***
   - Status: ⬜ YES / ⬜ NO
 
 - [ ] **Git**: Installed and verified
 
   - Command: `git --version`
   - Expected: Git version 2.x or higher
-  - Actual: ******\_\_\_******
+  - Actual: **\*\***\_\_\_**\*\***
   - Status: ⬜ YES / ⬜ NO
 
 - [ ] **Docker Desktop**: Installed and running
@@ -94,7 +94,7 @@ The installation docs have been restructured for clarity:
 - [ ] **Disk Space**: At least 2GB free
   - Mac: `df -h`
   - Windows: Check "This PC"
-  - Actual: ******\_\_\_******
+  - Actual: **\*\***\_\_\_**\*\***
   - Status: ⬜ YES / ⬜ NO
 
 **Prerequisites Overall**: ⬜ PASS / ⬜ FAIL / ⬜ NEEDS IMPROVEMENT
@@ -106,13 +106,13 @@ The installation docs have been restructured for clarity:
 #### **Pre-Wizard: Docker Startup** 🐳
 
 - [ ] Docker Desktop launched (via Spotlight/Start Menu)
-  - How: ******\_\_\_******
+  - How: **\*\***\_\_\_**\*\***
   - Status: ⬜ YES / ⬜ NO
 - [ ] Whale icon solid (not grayed) in menu bar
   - Status: ⬜ YES / ⬜ NO
 - [ ] Started database: `docker-compose up -d postgres`
   - Command worked: ⬜ YES / ⬜ NO
-  - Error if any: ******\_\_\_******
+  - Error if any: **\*\***\_\_\_**\*\***
 - [ ] Waited 10 seconds for database startup
   - Status: ⬜ YES / ⬜ NO
 
@@ -127,7 +127,7 @@ The installation docs have been restructured for clarity:
 - [ ] Python 3.12 check
 
   - Status: ⬜ ✓ / ⬜ ✗
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] Virtual environment setup
 
@@ -135,13 +135,13 @@ The installation docs have been restructured for clarity:
   - New venv created: ⬜ ✓ / ⬜ ✗
   - pip upgraded: ⬜ ✓ / ⬜ ✗
   - Dependencies installed: ⬜ ✓ / ⬜ ✗
-  - Time taken: ******\_\_\_******
-  - Notes: ******\_\_\_******
+  - Time taken: **\*\***\_\_\_**\*\***
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] SSH key setup
   - Key exists/generated: ⬜ ✓ / ⬜ ✗
   - Instructions clear: ⬜ YES / ⬜ NO
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 **Pre-Flight Overall**: ⬜ PASS / ⬜ FAIL
 
@@ -167,7 +167,7 @@ The installation docs have been restructured for clarity:
 - [ ] Password prompt clear: ⬜ YES / ⬜ NO
 - [ ] Password confirmation works: ⬜ YES / ⬜ NO
 - [ ] User created successfully: ⬜ YES / ⬜ NO
-- **Notes**: ******\_\_\_******
+- **Notes**: **\*\***\_\_\_**\*\***
 
 **User Creation Overall**: ⬜ PASS / ⬜ FAIL
 
@@ -181,20 +181,20 @@ The installation docs have been restructured for clarity:
   - Input masked: ⬜ YES / ⬜ NO
   - Validation worked: ⬜ YES / ⬜ NO
   - Stored to keychain: ⬜ YES / ⬜ NO
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] Anthropic key (optional):
 
   - Prompt clear: ⬜ YES / ⬜ NO
   - Skip option clear: ⬜ YES / ⬜ NO
   - If entered, validated: ⬜ YES / ⬜ NO / ⬜ SKIPPED
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] GitHub key (optional):
   - Prompt clear: ⬜ YES / ⬜ NO
   - Skip option clear: ⬜ YES / ⬜ NO
   - If entered, validated: ⬜ YES / ⬜ NO / ⬜ SKIPPED
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 **API Key Collection Overall**: ⬜ PASS / ⬜ FAIL
 
@@ -205,7 +205,7 @@ The installation docs have been restructured for clarity:
 - [ ] Success message clear: ⬜ YES / ⬜ NO
 - [ ] Next steps explained: ⬜ YES / ⬜ NO
 - [ ] How to start Piper explained: ⬜ YES / ⬜ NO
-- **Notes**: ******\_\_\_******
+- **Notes**: **\*\***\_\_\_**\*\***
 
 **Wizard Overall Experience**: ⬜ EXCELLENT / ⬜ GOOD / ⬜ NEEDS WORK
 
@@ -218,22 +218,22 @@ _Only test if NOT using wizard, or if wizard fails_
 - [ ] Step 1-2: Terminal + Create folder
 
   - Status: ⬜ PASS / ⬜ FAIL / ⬜ SKIPPED
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] Step 3: Clone repository
 
   - URL correct: `git@github.com:mediajunkie/piper-morgan-product.git`
   - Status: ⬜ PASS / ⬜ FAIL / ⬜ SKIPPED
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] Step 4: Enter folder (`cd piper-morgan-product`)
 
   - Status: ⬜ PASS / ⬜ FAIL / ⬜ SKIPPED
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 - [ ] Step 5-8: Venv + Dependencies
   - Status: ⬜ PASS / ⬜ FAIL / ⬜ SKIPPED
-  - Notes: ******\_\_\_******
+  - Notes: **\*\***\_\_\_**\*\***
 
 **Manual Path Overall**: ⬜ PASS / ⬜ FAIL / ⬜ SKIPPED
 
@@ -249,7 +249,7 @@ _Only test if NOT using wizard, or if wizard fails_
 - [ ] Browser auto-opened: ⬜ YES / ⬜ NO
 - [ ] Web UI loaded: ⬜ YES / ⬜ NO
 - [ ] Port 8001 accessible: ⬜ YES / ⬜ NO
-- **Notes**: ******\_\_\_******
+- **Notes**: **\*\***\_\_\_**\*\***
 
 **First Run Overall**: ⬜ PASS / ⬜ FAIL
 
@@ -262,7 +262,7 @@ _Only test if NOT using wizard, or if wizard fails_
 - [ ] Response quality: ⬜ EXCELLENT / ⬜ GOOD / ⬜ POOR
 - [ ] Welcome message appropriate: ⬜ YES / ⬜ NO
 - [ ] UI intuitive: ⬜ YES / ⬜ NO
-- **Notes**: ******\_\_\_******
+- **Notes**: **\*\***\_\_\_**\*\***
 
 **First Interaction Overall**: ⬜ PASS / ⬜ FAIL
 
@@ -270,15 +270,15 @@ _Only test if NOT using wizard, or if wizard fails_
 
 ## 🐛 **NEW ISSUES FOUND** (Today's Testing)
 
-### **Issue #\_\_\_**: ******\_\_\_******
+### **Issue #\_\_\_**: **\*\***\_\_\_**\*\***
 
-- **Phase**: ******\_\_\_******
-- **Step**: ******\_\_\_******
-- **Problem**: ******\_\_\_******
-- **Expected**: ******\_\_\_******
-- **Actual**: ******\_\_\_******
+- **Phase**: **\*\***\_\_\_**\*\***
+- **Step**: **\*\***\_\_\_**\*\***
+- **Problem**: **\*\***\_\_\_**\*\***
+- **Expected**: **\*\***\_\_\_**\*\***
+- **Actual**: **\*\***\_\_\_**\*\***
 - **Severity**: ⬜ BLOCKER / ⬜ MAJOR / ⬜ MINOR
-- **Suggested Fix**: ******\_\_\_******
+- **Suggested Fix**: **\*\***\_\_\_**\*\***
 
 ---
 
@@ -324,7 +324,7 @@ _Only test if NOT using wizard, or if wizard fails_
 ⬜ MINOR FIXES - Small improvements, then ready
 ⬜ MAJOR REVISION - Needs significant work
 
-**Reasoning**: ******\_\_\_******
+**Reasoning**: **\*\***\_\_\_**\*\***
 
 ---
 
@@ -334,8 +334,8 @@ _Only test if NOT using wizard, or if wizard fails_
 - **Prerequisites Verification**: \_\_\_ min
 - **Setup Wizard Execution**: \_\_\_ min
 - **First Run**: \_\_\_ min
-- **Total Time**: ******\_\_\_******
-- **vs. Estimated 20-30 min**: ******\_\_\_******
+- **Total Time**: **\*\***\_\_\_**\*\***
+- **vs. Estimated 20-30 min**: **\*\***\_\_\_**\*\***
 
 ---
 

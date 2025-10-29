@@ -59,7 +59,7 @@ config/             # PIPER.md and user config
    - Location: `services/intent_service/`
    - ADR-032 for universal entry requirement
 
-3. **Orchestration Engine** - Complex workflow system (built but never initialized)
+3. **Orchestration Engine** - ✅ Fully operational (wired up late Sept 2025)
    - Location: `services/orchestration/engine.py`
    - Disabled line: `# self.query_router = QueryRouter(self.session)`
 
@@ -90,7 +90,7 @@ config/             # PIPER.md and user config
 
 **What's Blocked** (~70%):
 - QueryRouter disabled, blocking orchestration
-- OrchestrationEngine never initialized
+- ~~OrchestrationEngine never initialized~~ ✅ FIXED Sept 2025
 - Multiple patterns coexisting (dual repositories, mixed configs)
 - CLI bypasses intent classification entirely
 

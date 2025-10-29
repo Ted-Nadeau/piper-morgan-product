@@ -13,6 +13,7 @@
 → **[Read: Comprehensive Prerequisites Guide](./PREREQUISITES-COMPREHENSIVE.md)**
 
 This covers:
+
 - ✅ System requirements (OS, RAM, disk)
 - ✅ Python 3.12 installation & verification
 - ✅ Git installation & verification
