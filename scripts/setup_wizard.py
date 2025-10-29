@@ -656,6 +656,29 @@ async def run_setup_wizard():
 
             return False
 
+        # Phase 1.5: Initialize database schema
+        print("\n" + "=" * 50)
+        print("📊 Database Schema")
+        print("=" * 50)
+        print("   Checking for existing tables...")
+
+        from services.database.connection import db
+        from services.database.models import Base
+
+        # Check if tables exist by trying a simple query
+        try:
+            async with AsyncSessionFactory.session_scope() as session:
+                from sqlalchemy import text
+
+                result = await session.execute(text("SELECT 1 FROM users LIMIT 1"))
+            print("   ✓ Database tables already exist")
+        except Exception:
+            # Tables don't exist, create them
+            print("   Creating database tables...")
+            await db.initialize()
+            await db.create_tables()
+            print("   ✓ Database tables created")
+
         # Phase 2: Create user first (need user_id for API keys)
         user = await create_user_account()
 

@@ -315,3 +315,29 @@ Database check details: Multiple exceptions: [Errno 61] Connect call failed ('::
    - Added note about keychain for API keys
 
 **NOW**: Code, Docker, wizard, AND .env.example all aligned!
+
+### 🐛 **Missing Database Schema Creation (8:46 AM)**
+
+**USER TESTING RESULT**:
+```
+❌ Setup failed: relation "users" does not exist
+[SQL: INSERT INTO users ...]
+```
+
+**ROOT CAUSE**:
+- Wizard checked database connectivity ✓
+- But never created the database tables!
+- `scripts/init_db.py` exists for this purpose
+- Wizard jumped straight to user creation
+
+**FIX**:
+- ✅ Added "Phase 1.5: Database Schema" step
+- ✅ Checks if tables exist (SELECT 1 FROM users)
+- ✅ If not, calls `db.create_tables()` (creates all models)
+- ✅ Idempotent - won't recreate if tables already exist
+
+**FLOW NOW**:
+1. System checks (Docker, Python, Port, Database connection)
+2. **Database schema creation** ← NEW!
+3. User account creation
+4. API keys setup
