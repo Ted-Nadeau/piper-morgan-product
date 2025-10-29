@@ -420,6 +420,7 @@ Wizard checks **1 of 5** required Docker services:
 ### 🐛 **Timeout Issue: First-Time Docker Pulls (10:22 AM)**
 
 **USER TESTING**:
+
 ```
 🐳 Starting Docker services...
    (This may take a minute on first run)
@@ -427,12 +428,14 @@ Wizard checks **1 of 5** required Docker services:
 ```
 
 **ROOT CAUSE**:
+
 - Timeout was 120 seconds (2 minutes)
 - First-time Docker image pulls can take 5-10 minutes!
 - postgres:15, redis:7, chromadb, temporal images = ~2GB
 - Wizard gave up before images finished downloading
 
 **FIX**:
+
 1. ✅ Increased timeout: 120s → 600s (10 minutes)
 2. ✅ Changed to `Popen` with live feedback
 3. ✅ Progressive health checks (30 attempts x 2s = 1 minute)
@@ -443,3 +446,35 @@ Wizard checks **1 of 5** required Docker services:
    - Shows which services are ready/not ready
 
 **NOW**: User can see progress, won't timeout during image downloads
+
+### ✅ **3/4 Services Working! Make Temporal Optional (3:50 PM)**
+
+**USER TESTING RESULT**:
+```
+✓ PostgreSQL
+✓ Redis
+✓ ChromaDB
+✗ Temporal (7233) - Timeout
+```
+
+**USER INSIGHT**:
+> "I think we also need to tell people how to make sure docker is running after a restart (i had to logout and in again and needed to manually restart docker)"
+
+**ANALYSIS**:
+- 3 of 4 core services are working perfectly! 🎉
+- Only Temporal failing (known to be flaky)
+- Temporal is NOT required for user setup/account creation
+- Should not block wizard from continuing
+
+**FIX**:
+1. ✅ Made Temporal **optional** (won't block setup)
+2. ✅ Split services into:
+   - Core: PostgreSQL, Redis, ChromaDB (required)
+   - Optional: Temporal (nice-to-have)
+3. ✅ Wizard continues if only optional services fail
+4. ✅ Enhanced troubleshooting for Docker startup:
+   - "Launch Docker Desktop application (check menu bar icon)"
+   - "Wait for Docker to fully start (icon stops animating)"
+   - "After system restart: Docker doesn't auto-start by default"
+
+**RESULT**: Setup will now continue with 3/4 services!

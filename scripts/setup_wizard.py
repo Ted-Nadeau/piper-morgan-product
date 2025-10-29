@@ -739,17 +739,22 @@ async def run_setup_wizard():
             checks["Docker installed"] = await check_docker()
 
         # Check if Docker services need to be started
-        service_checks = [
+        # Core services (required for setup)
+        core_services = [
             "PostgreSQL (5433)",
             "Redis (6379)",
             "ChromaDB (8000)",
-            "Temporal (7233)",
         ]
-        services_down = [k for k in service_checks if not checks.get(k, False)]
+        # Optional services (Temporal can fail without blocking setup)
+        optional_services = ["Temporal (7233)"]
 
-        if services_down and checks.get("Docker installed", False):
-            print(f"\n⚠️  {len(services_down)} service(s) not running:")
-            for service in services_down:
+        services_down = [k for k in core_services if not checks.get(k, False)]
+        optional_down = [k for k in optional_services if not checks.get(k, False)]
+
+        if (services_down or optional_down) and checks.get("Docker installed", False):
+            all_down = services_down + optional_down
+            print(f"\n⚠️  {len(all_down)} service(s) not running:")
+            for service in all_down:
                 print(f"   ✗ {service}")
 
             # Try to start services automatically
@@ -762,11 +767,20 @@ async def run_setup_wizard():
                 checks["ChromaDB (8000)"] = await check_chromadb()
                 checks["Temporal (7233)"] = await check_temporal()
 
-                # Update services_down list
-                services_down = [k for k in service_checks if not checks.get(k, False)]
+                # Update services_down list (only core services)
+                services_down = [k for k in core_services if not checks.get(k, False)]
+                optional_down = [k for k in optional_services if not checks.get(k, False)]
 
-        # Check other requirements
-        remaining_issues = {k: v for k, v in checks.items() if not v and k != "Docker installed"}
+                if optional_down:
+                    print(f"\n   ⚠  Optional service not ready: {', '.join(optional_down)}")
+                    print("   (This won't prevent setup from continuing)")
+
+        # Check other requirements (exclude optional services from blocking)
+        remaining_issues = {
+            k: v
+            for k, v in checks.items()
+            if not v and k != "Docker installed" and k not in optional_services
+        }
 
         if remaining_issues:
             print("\n❌ Setup cannot continue. Please fix the issues above.")
@@ -782,10 +796,14 @@ async def run_setup_wizard():
             # Service-specific troubleshooting
             if services_down:
                 print("  • Docker services not running:")
-                print("    1. Make sure Docker Desktop is running")
-                print("    2. Try: docker-compose up -d")
-                print("    3. Wait 30 seconds for services to start")
-                print("    4. Re-run this wizard")
+                print("    1. Launch Docker Desktop application (check menu bar icon)")
+                print("    2. Wait for Docker to fully start (icon stops animating)")
+                print("    3. Try: docker-compose up -d")
+                print("    4. Wait 30 seconds for services to start")
+                print("    5. Re-run this wizard")
+                print("  • After system restart:")
+                print("    - Docker Desktop doesn't auto-start by default")
+                print("    - You must manually launch it from Applications")
 
             return False
 
