@@ -236,13 +236,13 @@ Piper Morgan's database runs in Docker. Start it now in a **separate terminal ta
 **Mac/Linux**:
 
 ```bash
-docker-compose up -d db
+docker-compose up -d postgres
 ```
 
 **Windows** (PowerShell):
 
 ```bash
-docker-compose up -d db
+docker-compose up -d postgres
 ```
 
 Press Enter.

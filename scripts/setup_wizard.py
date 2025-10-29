@@ -634,7 +634,7 @@ async def run_setup_wizard():
                 print("  • Free up port 8001 or stop other Piper Morgan instances")
                 print("  • Run: lsof -i :8001 to see what's using the port")
             if not checks["Database accessible"]:
-                print("  • Ensure database is running: docker-compose up -d db")
+                print("  • Ensure database is running: docker-compose up -d postgres")
                 print("  • Wait 10 seconds for database to start")
 
             return False
