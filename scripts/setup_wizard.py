@@ -469,24 +469,24 @@ async def check_system() -> Dict[str, bool]:
 
 async def check_for_incomplete_setup() -> Any:
     """
-    Check if there's a user with no API keys (incomplete setup).
+    Check if there's an alpha user with no API keys (incomplete setup).
 
     Returns:
-        User object if incomplete setup found, None otherwise
+        AlphaUser object if incomplete setup found, None otherwise
     """
     from sqlalchemy import select
 
-    from services.database.models import User, UserAPIKey
+    from services.database.models import AlphaUser, UserAPIKey
     from services.database.session_factory import AsyncSessionFactory
 
     try:
         async with AsyncSessionFactory.session_scope() as session:
-            # Find users with no API keys
+            # Find alpha users with no API keys (during alpha phase)
             result = await session.execute(
-                select(User)
-                .outerjoin(UserAPIKey)
+                select(AlphaUser)
+                .outerjoin(UserAPIKey, AlphaUser.id == UserAPIKey.user_id)
                 .where(UserAPIKey.id.is_(None))
-                .order_by(User.created_at.desc())
+                .order_by(AlphaUser.created_at.desc())
                 .limit(1)
             )
             user = result.scalar_one_or_none()
@@ -496,11 +496,12 @@ async def check_for_incomplete_setup() -> Any:
 
 
 async def create_user_account() -> Any:
-    """Create user account for multi-user support"""
-    from services.database.models import User
+    """Create alpha user account during alpha testing phase"""
+    from services.database.models import AlphaUser
     from services.database.session_factory import AsyncSessionFactory
 
-    print("\n2. User Account")
+    print("\n2. Alpha Tester Account")
+    print("   (Creating alpha_users record - Issue #259)")
 
     # Check for incomplete setup (Issue #218 - Smart Resume)
     existing_user = await check_for_incomplete_setup()
@@ -518,9 +519,9 @@ async def create_user_account() -> Any:
         else:
             print("   Starting new setup (existing account will remain)...")
     else:
-        print("   Creating your Piper Morgan account...")
+        print("   Creating your alpha tester account...")
 
-    # Try to create user, handle duplicates
+    # Try to create alpha user, handle duplicates
     max_attempts = 3
     for attempt in range(max_attempts):
         username = input("   Username: ").strip()
@@ -531,11 +532,13 @@ async def create_user_account() -> Any:
 
         email = input("   Email (optional, press Enter to skip): ").strip() or None
 
-        # Create user using existing User model from #228
-        user = User(
-            id=str(uuid.uuid4()),
+        # Create alpha user (Issue #259 - Alpha/production data separation)
+        user = AlphaUser(
+            id=uuid.uuid4(),  # UUID for alpha users
             username=username,
             email=email,
+            alpha_wave=1,  # First wave of alpha testing
+            test_start_date=datetime.utcnow(),
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
@@ -834,13 +837,14 @@ async def run_setup_wizard():
 
         from services.database.connection import db
         from services.database.models import Base
+        from services.database.session_factory import AsyncSessionFactory
 
-        # Check if tables exist by trying a simple query
+        # Check if tables exist by trying a simple query (check alpha_users for alpha phase)
         try:
             async with AsyncSessionFactory.session_scope() as session:
                 from sqlalchemy import text
 
-                result = await session.execute(text("SELECT 1 FROM users LIMIT 1"))
+                result = await session.execute(text("SELECT 1 FROM alpha_users LIMIT 1"))
             print("   ✓ Database tables already exist")
         except Exception:
             # Tables don't exist, create them
@@ -853,7 +857,9 @@ async def run_setup_wizard():
         user = await create_user_account()
 
         # Phase 3: API keys
-        api_keys = await collect_and_validate_api_keys(user.id)
+        # Convert UUID to string for UserAPIKey foreign key compatibility
+        user_id_str = str(user.id)
+        api_keys = await collect_and_validate_api_keys(user_id_str)
 
         # Phase 4: Success!
         print("\n" + "=" * 50)
