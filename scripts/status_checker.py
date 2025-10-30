@@ -33,8 +33,8 @@ class StatusChecker:
                 # Check basic connectivity
                 await session.execute(text("SELECT 1"))
 
-                # Count users
-                user_count_result = await session.execute(text("SELECT COUNT(*) FROM users"))
+                # Count alpha users (during alpha phase)
+                user_count_result = await session.execute(text("SELECT COUNT(*) FROM alpha_users"))
                 user_count = user_count_result.scalar_one()
 
                 # Get database size (optional, might not work on all setups)
@@ -70,20 +70,21 @@ class StatusChecker:
             from services.security.user_api_key_service import UserAPIKeyService
 
             async with AsyncSessionFactory.session_scope() as session:
-                # Get most recent user (Issue #255 CORE-UX-STATUS-USER)
+                # Get most recent alpha user (during alpha phase - Issue #259)
                 user_result = await session.execute(
-                    text("SELECT id, username FROM users ORDER BY created_at DESC LIMIT 1")
+                    text("SELECT id, username FROM alpha_users ORDER BY created_at DESC LIMIT 1")
                 )
                 user = user_result.first()
 
                 if not user:
                     return {
                         "status": "⚠",
-                        "message": "No users found. Run setup wizard first.",
+                        "message": "No alpha users found. Run setup wizard first.",
                         "details": {},
                     }
 
-                user_id, username = user[0], user[1]
+                # Convert UUID to string for alpha users
+                user_id, username = str(user[0]), user[1]
                 service = UserAPIKeyService()
                 reminder_service = KeyRotationReminder(service)
 
@@ -284,16 +285,14 @@ async def run_status_check():
             from services.security.key_rotation_reminder import KeyRotationReminder
             from services.security.user_api_key_service import UserAPIKeyService
 
-            async def get_rotation_recs():
-                async with AsyncSessionFactory.session_scope() as session:
-                    service = UserAPIKeyService()
-                    reminder_service = KeyRotationReminder(service)
-                    return await reminder_service.get_rotation_recommendations(
-                        session, key_status["user_id"]
-                    )
-
-            rotation_recs = asyncio.run(get_rotation_recs())
-            recommendations.extend(rotation_recs)
+            # Already in async context, just await directly
+            async with AsyncSessionFactory.session_scope() as session:
+                service = UserAPIKeyService()
+                reminder_service = KeyRotationReminder(service)
+                rotation_recs = await reminder_service.get_rotation_recommendations(
+                    session, key_status["user_id"]
+                )
+                recommendations.extend(rotation_recs)
         except Exception as e:
             logger.warning(f"Failed to get rotation recommendations: {e}")
 

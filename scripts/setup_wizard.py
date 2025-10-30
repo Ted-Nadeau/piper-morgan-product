@@ -590,7 +590,32 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     openai_key = os.environ.get("OPENAI_API_KEY")
     if openai_key:
         print("   ℹ️  Using OPENAI_API_KEY from environment")
+        print("   Validating...")
 
+        # Store and validate the key from environment
+        try:
+            async with AsyncSessionFactory.session_scope() as session:
+                await service.store_user_key(
+                    user_id=user_id,
+                    provider="openai",
+                    api_key=openai_key,
+                    session=session,
+                    validate=True,
+                )
+                await session.commit()
+
+            print("   ✓ Valid (gpt-4 access confirmed)")
+            stored_keys["openai"] = openai_key
+        except ValueError as e:
+            print(f"   ✗ {str(e)}")
+            print("   Key from environment is invalid. Please update OPENAI_API_KEY")
+            openai_key = None  # Force manual entry
+        except Exception as e:
+            print(f"   ✗ Validation error: {e}")
+            print("   Continuing with manual entry...")
+            openai_key = None  # Force manual entry
+
+    # Manual entry loop if env var not set or failed
     while not openai_key:
         openai_key = getpass("   Enter key (sk-...): ")
 
@@ -623,9 +648,11 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
             # Validation failed
             print(f"   ✗ {str(e)}")
             print("   Please check your key and try again.")
+            openai_key = None  # Reset to retry
         except Exception as e:
             print(f"   ✗ Validation error: {e}")
             print("   Please check your key and try again.")
+            openai_key = None  # Reset to retry
 
     # Anthropic (optional)
     print("\n   Anthropic API key (optional, press Enter to skip):")
