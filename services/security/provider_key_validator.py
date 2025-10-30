@@ -37,10 +37,10 @@ class ProviderKeyValidator:
         self.rules = {
             "openai": {
                 "prefixes": ["sk-"],
-                "min_length": 50,
-                "max_length": 60,
-                "pattern": r"^sk-[A-Za-z0-9]{48,}$",
-                "description": "OpenAI API key (starts with 'sk-')",
+                "min_length": 20,  # Support both old and new formats
+                "max_length": 200,  # New project keys are longer
+                "pattern": r"^sk-[A-Za-z0-9\-_]{20,}$",  # Allow hyphens and underscores
+                "description": "OpenAI API key (starts with 'sk-', includes legacy and project keys)",
             },
             "anthropic": {
                 "prefixes": ["sk-ant-"],
