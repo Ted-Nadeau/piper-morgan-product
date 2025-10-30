@@ -130,7 +130,7 @@ async def get_existing_preferences(user_id: str) -> Dict:
     try:
         async with AsyncSessionFactory.session_scope() as session:
             result = await session.execute(
-                text("SELECT preferences FROM alpha_users WHERE id = :user_id"),
+                text("SELECT preferences FROM users WHERE id = :user_id"),
                 {"user_id": user_id},
             )
 
@@ -286,7 +286,7 @@ async def main():
     user_id = await get_current_user_id()
 
     if not user_id:
-        print("❌ No alpha user found. Please run setup first:")
+        print("❌ No user found. Please run setup first:")
         print("  python main.py setup")
         sys.exit(1)
 
