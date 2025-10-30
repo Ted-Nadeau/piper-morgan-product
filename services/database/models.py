@@ -92,7 +92,9 @@ class User(Base):
     )
     blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
-    audit_logs = relationship("AuditLog", back_populates="user", lazy="select")  # Issue #249
+    # NOTE: AuditLog relationship disabled during alpha phase (Issue #259)
+    # FK constraint removed to support alpha_users (UUID) - relationship requires explicit primaryjoin
+    # audit_logs = relationship("AuditLog", back_populates="user", lazy="select")  # Issue #249
 
     # Indexes
     __table_args__ = (
@@ -269,7 +271,9 @@ class AuditLog(Base, TimestampMixin):
     new_value = Column(JSON, nullable=True)  # New state
 
     # Relationships
-    user = relationship("User", back_populates="audit_logs")
+    # NOTE: Relationship to User disabled during alpha phase (Issue #259)
+    # FK constraint removed to support alpha_users (UUID) - relationship requires explicit primaryjoin
+    # user = relationship("User", back_populates="audit_logs")
 
     # Strategic indexes for query performance
     __table_args__ = (
