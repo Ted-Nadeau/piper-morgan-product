@@ -582,11 +582,18 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
     # OpenAI (required)
     print("\n   OpenAI API key (required):")
-    while True:
+
+    # Check for environment variable first (workaround for getpass paste issue)
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    if openai_key:
+        print("   ℹ️  Using OPENAI_API_KEY from environment")
+
+    while not openai_key:
         openai_key = getpass("   Enter key (sk-...): ")
 
         if not openai_key:
             print("   ✗ OpenAI key is required")
+            print("   💡 Tip: Set OPENAI_API_KEY environment variable to avoid paste issues")
             continue
 
         print("   Validating...")
@@ -619,7 +626,13 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
     # Anthropic (optional)
     print("\n   Anthropic API key (optional, press Enter to skip):")
-    anthropic_key = getpass("   Enter key (sk-ant-...): ")
+
+    # Check for environment variable first
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    if anthropic_key:
+        print("   ℹ️  Using ANTHROPIC_API_KEY from environment")
+    else:
+        anthropic_key = getpass("   Enter key (sk-ant-...): ")
 
     if anthropic_key:
         print("   Validating...")
@@ -646,7 +659,13 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
     # GitHub (optional)
     print("\n   GitHub token (optional, press Enter to skip):")
-    github_token = getpass("   Enter token (ghp_...): ")
+
+    # Check for environment variable first
+    github_token = os.environ.get("GITHUB_TOKEN")
+    if github_token:
+        print("   ℹ️  Using GITHUB_TOKEN from environment")
+    else:
+        github_token = getpass("   Enter token (ghp_...): ")
 
     if github_token:
         try:
