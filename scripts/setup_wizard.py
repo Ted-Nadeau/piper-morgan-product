@@ -501,7 +501,6 @@ async def create_user_account() -> Any:
     from services.database.session_factory import AsyncSessionFactory
 
     print("\n2. Alpha Tester Account")
-    print("   (Creating alpha_users record - Issue #259)")
 
     # Check for incomplete setup (Issue #218 - Smart Resume)
     existing_user = await check_for_incomplete_setup()
