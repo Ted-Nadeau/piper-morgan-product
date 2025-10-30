@@ -9,9 +9,26 @@ Issue #267 CORE-PREF-QUEST
 
 import asyncio
 import logging
+import os
 import sys
 from datetime import datetime
 from typing import Dict, List
+
+# Check if we're in a venv, if not restart inside it
+in_venv = hasattr(sys, "real_prefix") or (
+    hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+)
+
+if not in_venv:
+    # Not in venv - restart inside it
+    venv_python = os.path.join(os.getcwd(), "venv", "bin", "python")
+    if os.path.exists(venv_python):
+        print("🔄 Activating virtual environment...")
+        os.execv(venv_python, [venv_python, "main.py", "preferences"])
+    else:
+        print("❌ Error: Virtual environment not found!")
+        print("   Run setup wizard first: python3.12 main.py setup")
+        sys.exit(1)
 
 from sqlalchemy import text
 
