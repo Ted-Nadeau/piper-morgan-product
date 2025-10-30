@@ -870,9 +870,10 @@ async def run_setup_wizard():
             print(f"  ✓ {provider}")
 
         print("\nNext steps:")
-        print("  1. Start Piper Morgan: python main.py")
-        print("  2. Access at: http://localhost:8001")
-        print("  3. Check system status: python main.py status")
+        print("  1. Set your preferences: python main.py preferences")
+        print("  2. Start Piper Morgan: python main.py")
+        print("  3. Access at: http://localhost:8001")
+        print("  4. Check system status: python main.py status")
 
         print("\nNeed help?")
         print("  • Documentation: https://pmorgan.tech")
