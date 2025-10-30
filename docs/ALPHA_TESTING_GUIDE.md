@@ -18,7 +18,16 @@
 
 **Required Accounts & Keys:**
 
-- [ ] GitHub account with SSH key or token configured
+- [ ] **GitHub account with SSH key configured** (required BEFORE cloning)
+  - **Why needed**: You must authenticate to GitHub to clone the repository
+  - **If you already have SSH keys**: Test with `ssh -T git@github.com`
+    - ✅ Success: "Hi username! You've successfully authenticated..."
+    - ❌ Failure: See setup guide below
+  - **If you need to set up SSH keys**: Follow GitHub's official guides:
+    - 📖 [Generating SSH Keys](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+    - 📖 [Adding SSH Key to GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+  - **Note**: This MUST be done before Step 1 (cloning repository)
+
 - [ ] At least one LLM API key:
   - OpenAI API key (GPT-4 access preferred), OR
   - Anthropic API key (Claude access)

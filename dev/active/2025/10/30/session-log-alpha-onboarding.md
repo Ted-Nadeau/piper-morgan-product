@@ -164,3 +164,51 @@ Redesign entire onboarding using DDD principles to avoid this hackery.
 - Proper upgrade/downgrade paths
 
 **Time to Fix**: 7 minutes actual (migration, model update, apply, commit, push)
+
+---
+
+## UPDATE: 9:00 AM - Further Issues Discovered
+
+**New Blocker**: `alpha_users.email` NOT NULL constraint
+
+- Migration created email as `nullable=False`
+- Setup wizard allows skipping email (passes `None`)
+- Schema/code mismatch
+
+**Status**: Escalation to Chief Architect initiated at 8:47 AM
+
+- Created `ESCALATION-alpha-onboarding-blocker.md` with full context
+- Created `nuclear-reset-steps.sh` for clean baseline test
+- Architect engaged, making progress (11:07 AM update)
+
+**Root Issues Identified**:
+
+1. Schema doesn't match code expectations
+2. Migrations not tested end-to-end before deployment
+3. No validation between model definitions and migrations
+4. Dual-user-table architecture needs proper design review
+
+**Decision**: PAUSED reactive bugfixing, awaiting architectural guidance
+**Time Invested**: 4+ hours total
+**Successful Onboardings**: Still 0
+
+---
+
+## DOCUMENTATION UPDATE: 11:07 AM
+
+**Issue**: SSH key setup documentation was incorrect
+- Wizard's SSH setup (`setup_wizard.py:123-214`) happens AFTER user clones repo
+- But users need SSH keys BEFORE cloning (chicken/egg problem)
+- Wizard's SSH generation is redundant - users already authenticated to clone
+
+**Fix Applied**:
+- ✅ Updated `docs/ALPHA_TESTING_GUIDE.md` prerequisites section
+- ✅ Added clear SSH key setup requirement BEFORE Step 1
+- ✅ References GitHub's official documentation
+- ✅ Includes test command: `ssh -T git@github.com`
+
+**TODO for Future**:
+- [ ] Remove or simplify wizard's redundant SSH setup (lines 123-214)
+- [ ] Wizard could verify SSH key exists but shouldn't generate
+- [ ] Or remove entirely since it's already a prerequisite
+- Issue to track: TBD (post-alpha architectural review)
