@@ -870,10 +870,15 @@ async def run_setup_wizard():
             print(f"  ✓ {provider}")
 
         print("\nNext steps:")
-        print("  1. Set your preferences: python main.py preferences")
-        print("  2. Start Piper Morgan: python main.py")
+        print("  1. Set your preferences:")
+        print("     source venv/bin/activate")
+        print("     python main.py preferences")
+        print("  2. Start Piper Morgan:")
+        print("     python main.py")
         print("  3. Access at: http://localhost:8001")
-        print("  4. Check system status: python main.py status")
+        print("  4. Check system status:")
+        print("     python main.py status")
+        print("\n  💡 Tip: All commands work best from within 'venv/bin/activate'")
 
         print("\nNeed help?")
         print("  • Documentation: https://pmorgan.tech")
