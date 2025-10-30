@@ -70,30 +70,36 @@ async def store_user_preferences(user_id: str, preferences: Dict) -> bool:
     Returns:
         True if successful, False otherwise
     """
+    import json
+    import uuid
+
     try:
         # Add timestamp
         preferences["configured_at"] = datetime.utcnow().isoformat()
 
         async with AsyncSessionFactory.session_scope() as session:
+            # Convert string to UUID for alpha_users table
+            uid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+
             # Check if user exists in alpha_users table
             result = await session.execute(
-                text("SELECT id FROM alpha_users WHERE id = :user_id"), {"user_id": user_id}
+                text("SELECT id FROM alpha_users WHERE id = :user_id"), {"user_id": uid}
             )
 
             if not result.fetchone():
                 logger.error(f"User {user_id} not found in alpha_users table")
                 return False
 
-            # Update preferences
+            # Update preferences - use ::jsonb cast and json.dumps for proper JSONB binding
             await session.execute(
                 text(
                     """
                     UPDATE alpha_users
-                    SET preferences = :prefs
+                    SET preferences = :prefs::jsonb
                     WHERE id = :user_id
                 """
                 ),
-                {"prefs": preferences, "user_id": user_id},
+                {"prefs": json.dumps(preferences), "user_id": uid},
             )
 
             logger.info(f"Stored preferences for user {user_id}")
@@ -115,7 +121,8 @@ async def get_current_user_id() -> str:
 
             user = result.fetchone()
             if user:
-                return user[0]
+                # Convert UUID to string for consistency
+                return str(user[0])
 
             logger.error("No alpha users found in database")
             return None
@@ -126,12 +133,16 @@ async def get_current_user_id() -> str:
 
 
 async def get_existing_preferences(user_id: str) -> Dict:
-    """Get existing preferences for user"""
+    """Get existing preferences for alpha user"""
+    import uuid
+
     try:
         async with AsyncSessionFactory.session_scope() as session:
+            # Convert string to UUID for alpha_users table
+            uid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
             result = await session.execute(
-                text("SELECT preferences FROM users WHERE id = :user_id"),
-                {"user_id": user_id},
+                text("SELECT preferences FROM alpha_users WHERE id = :user_id"),
+                {"user_id": uid},
             )
 
             row = result.fetchone()
