@@ -87,9 +87,11 @@ class User(Base):
     personality_profiles = relationship(
         "PersonalityProfileModel", back_populates="user", lazy="select"
     )
-    api_keys = relationship(
-        "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
-    )
+    # NOTE: api_keys relationship disabled during alpha phase (Issue #259)
+    # FK constraint removed to support alpha_users (UUID)
+    # api_keys = relationship(
+    #     "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    # )
     blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
     # NOTE: AuditLog relationship disabled during alpha phase (Issue #259)
@@ -193,7 +195,9 @@ class UserAPIKey(Base):
     __tablename__ = "user_api_keys"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(
+        String(255), nullable=False, index=True
+    )  # No FK constraint to support alpha_users UUIDs (Issue #259)
     provider = Column(String(50), nullable=False)  # openai, anthropic, github, etc
     key_reference = Column(String(500), nullable=False)  # keychain identifier
 
@@ -211,8 +215,8 @@ class UserAPIKey(Base):
     previous_key_reference = Column(String(500), nullable=True)
     rotated_at = Column(DateTime, nullable=True)
 
-    # Relationships
-    user = relationship("User", back_populates="api_keys")
+    # Relationships (commented out due to FK removal for Issue #259)
+    # user = relationship("User", back_populates="api_keys")
 
     # Constraints
     __table_args__ = (
