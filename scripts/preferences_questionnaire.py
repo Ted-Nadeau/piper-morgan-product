@@ -90,12 +90,12 @@ async def store_user_preferences(user_id: str, preferences: Dict) -> bool:
                 logger.error(f"User {user_id} not found in alpha_users table")
                 return False
 
-            # Update preferences - use ::jsonb cast and json.dumps for proper JSONB binding
+            # Update preferences - use CAST for proper JSONB binding
             await session.execute(
                 text(
                     """
                     UPDATE alpha_users
-                    SET preferences = :prefs::jsonb
+                    SET preferences = CAST(:prefs AS jsonb)
                     WHERE id = :user_id
                 """
                 ),
