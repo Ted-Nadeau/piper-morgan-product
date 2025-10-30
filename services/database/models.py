@@ -241,7 +241,9 @@ class AuditLog(Base, TimestampMixin):
 
     # Identity (follow User model pattern - String primary key)
     id = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    # NOTE: FK removed for alpha phase (Issue #259) - supports both alpha_users (UUID) and users (String)
+    # Will be re-added post-alpha when alpha users migrate to production users table
+    user_id = Column(String(255), nullable=True, index=True)
     session_id = Column(String(255), nullable=True, index=True)
 
     # Event classification
