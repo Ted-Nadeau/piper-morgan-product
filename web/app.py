@@ -221,18 +221,8 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ Failed to mount learning API router: {e}")
         print("   Continuing without learning API\n")
 
-    # Mount auth API router (Issue #227 - CORE-USERS-JWT)
-    print("\n🔐 Mounting Auth API Router...")
-    try:
-        from web.api.routes.auth import router as auth_router
-
-        app.include_router(auth_router)
-        print("✅ Auth API router mounted at /api/v1/auth")
-        print("   Endpoints:")
-        print("   - POST /api/v1/auth/logout")
-    except Exception as e:
-        print(f"⚠️ Failed to mount auth API router: {e}")
-        print("   Continuing without auth API\n")
+    # Auth API router mounted at module level (after app creation)
+    # See line ~360 where router is registered before app starts
 
     # Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
     print("\n📁 Mounting Files API Router...")
@@ -353,6 +343,16 @@ from web.middleware.intent_enforcement import IntentEnforcementMiddleware
 
 app.add_middleware(IntentEnforcementMiddleware)
 logger.info("✅ IntentEnforcementMiddleware registered (GREAT-4B)")
+
+# Mount auth API router (Issue #227 - CORE-USERS-JWT, Issue #281 - CORE-ALPHA-WEB-AUTH)
+# Register BEFORE app starts to ensure routes are available
+try:
+    from web.api.routes.auth import router as auth_router
+
+    app.include_router(auth_router)
+    logger.info("✅ Auth API router mounted at /auth (login, logout endpoints)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount auth API router: {e}")
 
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory="templates")
