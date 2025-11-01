@@ -91,3 +91,14 @@ repos:
           Validates that new patterns and ADRs have consecutive numbering.
           Prevents duplicate or skipped numbers in pattern/ADR sequences.
           Use ./scripts/new-pattern.sh or ./scripts/new-adr.sh for auto-numbering.
+      - id: check-tmp-work-files
+        name: Check for Work Files in /tmp
+        entry: scripts/check-tmp-work-files.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: |
+          Detects work files (reports, analysis, verification docs) in /tmp.
+          These are ephemeral and will be lost. Must save to dev/active/ first.
+          Prevents accidental loss of work products during development.
