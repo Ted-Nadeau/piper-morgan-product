@@ -234,6 +234,21 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ Failed to mount auth API router: {e}")
         print("   Continuing without auth API\n")
 
+    # Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
+    print("\n📁 Mounting Files API Router...")
+    try:
+        from web.api.routes.files import router as files_router
+
+        app.include_router(files_router)
+        print("✅ Files API router mounted at /api/v1/files")
+        print("   Endpoints:")
+        print("   - POST /api/v1/files/upload (upload file)")
+        print("   - GET  /api/v1/files/list (list user files)")
+        print("   - DELETE /api/v1/files/{file_id} (delete file)")
+    except Exception as e:
+        print(f"⚠️ Failed to mount files API router: {e}")
+        print("   Continuing without files API\n")
+
     # Mount health API router (Issue #229 - CORE-USERS-PROD)
     print("\n❤️ Mounting Health API Router...")
     try:

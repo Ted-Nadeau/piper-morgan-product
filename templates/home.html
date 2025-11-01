@@ -151,9 +151,60 @@
       #upload-form {
         display: flex;
         align-items: center;
+        gap: 10px;
       }
       #upload-form input[type="file"] {
         flex-grow: 1;
+      }
+      #upload-form .submit-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      #upload-status {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        display: none;
+      }
+      #upload-status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      #upload-status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      #upload-status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      #upload-progress {
+        margin-top: 10px;
+        height: 20px;
+        background: #ecf0f1;
+        border-radius: 10px;
+        overflow: hidden;
+        display: none;
+      }
+      #upload-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #27ae60, #2ecc71);
+        width: 0%;
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .file-size-info {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 5px;
       }
       .examples {
         margin-top: 30px;
@@ -285,9 +336,18 @@
         </button>
         <div id="upload-form-container">
           <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" name="file" required />
+            <input
+              type="file"
+              name="file"
+              accept=".txt,.pdf,.docx,.md,.json"
+              required
+            />
             <button type="submit" class="submit-btn">Upload</button>
           </form>
+          <div id="upload-status"></div>
+          <div id="upload-progress">
+            <div id="upload-progress-fill">0%</div>
+          </div>
         </div>
       </div>
 
@@ -355,6 +415,40 @@
             container.style.display === "none" ? "block" : "none";
         });
 
+      // Configuration for file uploads
+      const UPLOAD_CONFIG = {
+        MAX_SIZE: 10 * 1024 * 1024, // 10MB
+        ALLOWED_TYPES: [
+          "text/plain",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "text/markdown",
+          "application/json",
+        ],
+      };
+
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (
+          Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+        );
+      }
+
+      function showUploadStatus(message, type) {
+        const statusDiv = document.getElementById("upload-status");
+        statusDiv.textContent = message;
+        statusDiv.className = type;
+        statusDiv.style.display = "block";
+      }
+
+      function hideUploadStatus() {
+        const statusDiv = document.getElementById("upload-status");
+        statusDiv.style.display = "none";
+      }
+
       document
         .getElementById("upload-form")
         .addEventListener("submit", async (e) => {
@@ -362,11 +456,37 @@
           const form = e.target;
           const fileInput = form.querySelector('input[type="file"]');
           const file = fileInput.files[0];
-          if (!file) return;
 
-          const thinkingDiv = appendMessage(`Uploading ${file.name}...`);
-          thinkingDiv.classList.add("thinking");
+          if (!file) {
+            showUploadStatus("Please select a file", "error");
+            return;
+          }
 
+          // Client-side validation
+          if (file.size > UPLOAD_CONFIG.MAX_SIZE) {
+            showUploadStatus(
+              `File too large (${formatFileSize(file.size)}). Maximum is 10MB.`,
+              "error"
+            );
+            return;
+          }
+
+          if (!UPLOAD_CONFIG.ALLOWED_TYPES.includes(file.type)) {
+            showUploadStatus(
+              `Unsupported file type. Allowed: .txt, .pdf, .docx, .md, .json`,
+              "error"
+            );
+            return;
+          }
+
+          // Show uploading status
+          showUploadStatus(
+            `📤 Uploading ${file.name} (${formatFileSize(file.size)})...`,
+            "info"
+          );
+          document.getElementById("upload-progress").style.display = "block";
+
+          const progressFill = document.getElementById("upload-progress-fill");
           const formData = new FormData();
           formData.append("file", file);
           if (sessionId) {
@@ -374,46 +494,66 @@
           }
 
           try {
+            // Simulate progress (since we can't track raw bytes)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+              progress += Math.random() * 30;
+              if (progress < 90) {
+                progressFill.style.width = progress + "%";
+                progressFill.textContent = Math.round(progress) + "%";
+              }
+            }, 300);
+
             const response = await fetch(
               `${API_BASE_URL}/api/v1/files/upload`,
               {
                 method: "POST",
                 body: formData,
+                credentials: "include", // Include auth cookies
               }
             );
+
+            clearInterval(progressInterval);
+            progressFill.style.width = "100%";
+            progressFill.textContent = "100%";
+
             const result = await response.json();
-            let botResponseHTML;
 
             if (response.ok && result.file_id) {
-              botResponseHTML = `
-                        <div class="result success">
-                            <strong>✅ Document Uploaded!</strong><br>
-                            <strong>File:</strong> ${result.filename}<br>
-                            <strong>File ID:</strong> ${result.file_id}
-                        </div>`;
+              showUploadStatus(
+                `✅ Document Uploaded! (ID: ${result.file_id})`,
+                "success"
+              );
+
+              // Append message to chat
+              const successMsg = appendMessage(
+                `📎 Document uploaded: ${result.filename} (${formatFileSize(result.size)})`
+              );
+
+              // Clear form and hide progress after delay
+              setTimeout(() => {
+                form.reset();
+                document.getElementById("upload-progress").style.display = "none";
+                progressFill.style.width = "0%";
+                progressFill.textContent = "0%";
+              }, 2000);
             } else {
-              botResponseHTML = `
-                        <div class="result error">
-                            <strong>❌ Upload Failed</strong><br>
-                            ${result.detail || "An unknown error occurred."}
-                        </div>`;
+              showUploadStatus(
+                `❌ Upload failed: ${result.detail || "Unknown error"}`,
+                "error"
+              );
+              document.getElementById("upload-progress").style.display = "none";
             }
-            thinkingDiv.innerHTML = botResponseHTML;
-            thinkingDiv.classList.remove("thinking");
 
             if (result.session_id) {
               sessionId = result.session_id;
             }
           } catch (error) {
-            thinkingDiv.innerHTML = `
-                    <div class="result error">
-                        <strong>❌ Network Error</strong><br>
-                        Could not connect to API: ${error.message}
-                    </div>`;
-            thinkingDiv.classList.add("error");
-            thinkingDiv.classList.remove("thinking");
-          } finally {
-            form.reset();
+            showUploadStatus(
+              `❌ Network error: ${error.message}`,
+              "error"
+            );
+            document.getElementById("upload-progress").style.display = "none";
           }
         });
 
