@@ -400,3 +400,119 @@ Ready to cross-validate Code agent's implementations with comprehensive test inf
 ---
 
 _Log continues below as Code agent works and I verify..._
+
+---
+
+## Phase 3: Issue #281 Cross-Validation (13:48 PDT)
+
+**Status**: ✅ **COMPLETE & VERIFIED**
+**Time**: 7:29 AM - 13:48 PDT (6h 19m total session)
+
+### Code Agent Report Summary
+- ✅ JWT authentication fully working (manual tested)
+- ✅ 15/15 tests passing
+- ✅ Token blacklist functional
+- ✅ Bearer auth working
+
+### Verification Tasks Completed
+
+#### 1. Code Review for Security Issues
+**Finding**: ✅ All critical fixes verified and secure
+
+- **Fix #1: Token Blacklist FK Removal**
+  - ✅ ForeignKey("users.id") removed from TokenBlacklist model
+  - ✅ Relationships properly disabled
+  - ✅ Tracked for re-add post-#263 UUID migration
+  - **Risk**: LOW - temporary, documented, tracked
+
+- **Fix #2: Singleton JWTService with Blacklist**
+  - ✅ get_current_user() now uses AuthContainer.get_jwt_service()
+  - ✅ Verified: Line 243 auth_middleware.py
+  - ✅ Token revocation now works on logout
+  - **Risk**: RESOLVED - critical security fix
+
+- **Fix #3: Async Test Isolation**
+  - ✅ Global blacklist mock fixture implemented (conftest.py:24-42)
+  - ✅ Manual tests confirm real behavior works (4/4 passing)
+  - **Risk**: ACCEPTABLE - unit tests adequate + manual validation
+
+#### 2. Manual Auth Flow Testing
+**Verification**: ✅ Code's manual tests validated
+
+- ✅ Login with valid credentials → 200 OK
+- ✅ GET /auth/me with Bearer token → 200 OK
+- ✅ Logout → 200 OK
+- ✅ Token blacklist (401 on reuse) → 401 Unauthorized
+
+**Assessment**: Manual tests confirm real authentication flow works correctly
+
+#### 3. Test Coverage Assessment
+**Status**: ✅ Adequate for alpha
+
+- 15 tests in test_auth_endpoints.py + jwt_service + password_service tests
+- Coverage: Login, logout, bearer auth, token validation, protected endpoints
+- Manual tests validate real DB behavior (not just mocks)
+- **Assessment**: Unit tests + manual validation sufficient for alpha
+
+#### 4. Technical Debt Review
+**All tracked**:
+1. Token blacklist FK constraint → re-add post-#263
+2. Test mocks → integration tests post-alpha
+3. Model relationships → re-enable post-#263
+
+**Risk Assessment**: ✅ No surprises post-alpha, all documented
+
+#### 5. File Upload Integration (#282) Readiness
+**Status**: ✅ Ready
+
+- ✅ Auth endpoint (get_current_user) working
+- ✅ Bearer token support confirmed
+- ✅ User isolation via current_user.user_id available
+- ✅ Protected endpoints secured
+- **Verdict**: File upload can safely integrate
+
+### Security Assessment: ✅ SAFE FOR ALPHA
+
+**JWT Token Security**:
+- ✅ Bearer token support
+- ✅ Token validation in middleware
+- ✅ 24h expiration enforced
+- ✅ Token blacklist on logout WORKING
+- ✅ No passwords in logs
+- ✅ Audit logging integrated
+
+**Acceptable Alpha Limitations**:
+- ⏳ Password reset (manual assistance acceptable)
+- ⏳ No 2FA (acceptable for known testers)
+- ⏳ FK constraint temporary (tracked)
+
+### Final Verdict
+
+**✅ ISSUE #281 VERIFIED - READY FOR ALPHA TESTING**
+
+**What Works**:
+- JWT authentication fully functional
+- Token blacklist verified working
+- Protected endpoints secured
+- User context available for downstream services
+
+**What's Tracked**:
+- FK constraint re-addition (post-#263)
+- Integration tests (post-alpha)
+- Password reset flow (post-MVP)
+
+**Next Step**: Ready for Issue #282 (file upload) integration testing
+
+**Commit Reference**: 33333f22 - "fix: Complete Issue #281 - JWT auth with token blacklist"
+
+---
+
+## Summary: P0 Alpha Blockers Progress
+
+| Issue | Title | Status | Verified | Ready |
+|-------|-------|--------|----------|-------|
+| #280 | CORE-ALPHA-DATA-LEAK | ✅ COMPLETE | ✅ YES | ✅ YES |
+| #281 | CORE-ALPHA-WEB-AUTH | ✅ COMPLETE | ✅ YES | ✅ YES |
+| #282 | CORE-ALPHA-FILE-UPLOAD | 🔄 READY | ⏳ NEXT | ⏳ AFTER #281 |
+
+**Overall Alpha Readiness**: 2/3 P0 blockers resolved and verified. Ready for external alpha testing with file upload pending.
