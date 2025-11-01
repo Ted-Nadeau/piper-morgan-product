@@ -92,7 +92,9 @@ class User(Base):
     # api_keys = relationship(
     #     "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
     # )
-    blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
+    # NOTE: blacklisted_tokens relationship disabled during alpha phase (Issue #259/#281)
+    # FK constraint removed from TokenBlacklist to support alpha_users (UUID)
+    # blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
     # NOTE: AuditLog relationship disabled during alpha phase (Issue #259)
     # FK constraint removed to support alpha_users (UUID) - relationship requires explicit primaryjoin
@@ -1460,7 +1462,9 @@ class TokenBlacklist(Base):
 
     # Token identification
     token_id = Column(String(255), unique=True, nullable=False, index=True)
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    # NOTE: Foreign key temporarily removed for alpha testing with alpha_users table
+    # Will be re-added as ForeignKey("users.id") after #263 UUID migration
+    user_id = Column(String(255), nullable=True, index=True)
 
     # Blacklist metadata
     reason = Column(String(50), nullable=False)  # logout, security, admin
@@ -1468,7 +1472,8 @@ class TokenBlacklist(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationships
-    user = relationship("User", back_populates="blacklisted_tokens")
+    # NOTE: Relationship disabled until #263 UUID migration (no foreign key)
+    # user = relationship("User", back_populates="blacklisted_tokens")
 
     # Strategic indexes for performance
     __table_args__ = (

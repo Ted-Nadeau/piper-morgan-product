@@ -208,8 +208,6 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    jwt_service: JWTService = Depends(),
-    user_service: UserService = Depends(),
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> JWTClaims:
     """
@@ -231,6 +229,7 @@ async def get_current_user(
     Raises:
         HTTPException: If authentication fails
     """
+    from services.auth.container import AuthContainer
     from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
     if not credentials:
@@ -239,6 +238,9 @@ async def get_current_user(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Get JWT service singleton with blacklist support
+    jwt_service = AuthContainer.get_jwt_service()
 
     try:
         claims = await jwt_service.validate_token(credentials.credentials)

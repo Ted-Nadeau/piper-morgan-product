@@ -169,9 +169,8 @@ async def login(
 
         # Generate JWT token (after session closed)
         audit_context = build_audit_context(request)
-        token_data = jwt_service.create_access_token(
+        token = jwt_service.generate_access_token(
             user_id=user_id,
-            username=username,
             user_email=user_email,
             scopes=["user"],  # Default scope for alpha users
         )
@@ -179,7 +178,7 @@ async def login(
         # Set cookie for web clients
         response.set_cookie(
             key="auth_token",
-            value=token_data["access_token"],
+            value=token,
             httponly=True,
             secure=True,  # HTTPS only in production
             samesite="lax",
@@ -194,7 +193,7 @@ async def login(
         )
 
         return LoginResponse(
-            token=token_data["access_token"],
+            token=token,
             user_id=user_id,
             username=username,
         )
@@ -249,8 +248,12 @@ async def logout(
         # Build audit context from request (Issue #249)
         audit_context = build_audit_context(request)
 
-        # Revoke the token via blacklist with audit logging
-        async with AsyncSessionFactory.session_scope() as session:
+        # Initialize database if needed
+        if not db._initialized:
+            await db.initialize()
+
+        # Revoke the token via blacklist with audit logging (use db.get_session like login does)
+        async with await db.get_session() as session:
             success = await jwt_service.revoke_token(
                 token=token,
                 reason="logout",
@@ -278,4 +281,60 @@ async def logout(
         logger.error("Logout error", user_id=current_user.user_id, error=str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(e)}"
+        )
+
+
+@router.get("/me")
+async def get_me(
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Get current authenticated user's information.
+
+    Returns the user's basic profile information by querying the database
+    with the user_id from the authenticated JWT token.
+
+    Args:
+        current_user: Current authenticated user (from JWT token)
+
+    Returns:
+        User information (user_id, username, email)
+
+    Raises:
+        HTTPException 401: If not authenticated or token invalid
+        HTTPException 404: If user not found in database
+
+    Issue #281: CORE-ALPHA-WEB-AUTH
+    """
+    try:
+        # Initialize database if needed
+        if not db._initialized:
+            await db.initialize()
+
+        # Query user by ID from token
+        async with await db.get_session() as session:
+            result = await session.execute(
+                select(AlphaUser).where(AlphaUser.id == current_user.user_id)
+            )
+            user = result.scalar_one_or_none()
+
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found",
+                )
+
+            return {
+                "user_id": str(user.id),
+                "username": user.username,
+                "email": user.email,
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_me_error", user_id=current_user.user_id, error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user information",
         )

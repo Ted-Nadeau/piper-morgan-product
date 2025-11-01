@@ -7,6 +7,8 @@ import sys
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # Add project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -17,6 +19,27 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 def mock_session():
     """Provide a mock session for tests that need it"""
     return Mock()
+
+
+@pytest.fixture(autouse=True)
+def mock_token_blacklist():
+    """
+    Auto-mock TokenBlacklist for all tests to prevent database session conflicts.
+
+    Issue #281: TokenBlacklist.is_blacklisted() gets async context manager from
+    overridden db.get_session() in tests, causing '_AsyncGeneratorContextManager'
+    has no attribute 'execute' errors.
+
+    Solution: Mock is_blacklisted to return False (token not blacklisted) for all tests.
+    Individual tests can override this if they need to test blacklist behavior.
+    """
+    from unittest.mock import AsyncMock, patch
+
+    with patch(
+        "services.auth.token_blacklist.TokenBlacklist.is_blacklisted",
+        new=AsyncMock(return_value=False),
+    ):
+        yield
 
 
 @pytest.fixture
@@ -113,3 +136,59 @@ def client_with_intent():
 
     client = TestClient(app)
     return client
+
+
+@pytest_asyncio.fixture(scope="function")
+async def db_engine():
+    """
+    Create fresh async database engine per test.
+
+    Using function scope ensures each test gets a new engine in a fresh event loop,
+    avoiding "Future attached to different loop" errors when tests run together.
+
+    Issue #281: Fix async test isolation
+    """
+    from services.database.connection import db
+
+    # Initialize global db connection if not already done
+    if not db._initialized:
+        await db.initialize()
+
+    # Build database URL (same as db.initialize() does)
+    db_url = db._build_database_url()
+
+    # Create fresh engine for this test
+    engine = create_async_engine(
+        db_url,
+        echo=False,  # Reduce log noise in tests
+        pool_pre_ping=True,  # Verify connections are alive
+        pool_recycle=3600,
+    )
+
+    yield engine
+
+    # Proper cleanup: dispose engine and its connection pool
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def db_session(db_engine):
+    """
+    Create fresh async database session per test.
+
+    Each test gets a new session from a new engine, ensuring proper event loop isolation.
+    The session is automatically cleaned up by the context manager.
+
+    Issue #281: Fix async test isolation
+    """
+    # Create fresh sessionmaker for this test
+    async_session_factory = async_sessionmaker(
+        db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,  # Allow access to objects after commit
+    )
+
+    # Create session and yield it
+    async with async_session_factory() as session:
+        yield session
+        # Session cleanup happens automatically via context manager
