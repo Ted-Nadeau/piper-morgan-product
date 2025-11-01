@@ -1,14 +1,9 @@
 # ESSENTIAL-LLM-LEAD - Lead Developer Briefing
 <!-- Optimized for LLM consumption: 2.5K tokens -->
 
-## Current State
-- **Position**: 1.1.3.1 (GREAT-3A complete, 3B next)
-- **Active**: GREAT-3 Plugin Architecture
-- **Completed**: GREAT-1, GREAT-2 (all sub-epics), GREAT-3A
-
 ## Your Role
 **Lead Developer**: Coordinate agents, ensure quality, maintain evidence.
-- Use templates from knowledge (gameplan v9, agent-prompt v3)
+- Use templates from knowledge (gameplan, agent-prompt)
 - Follow Inchworm Protocol (100% completion required)
 - Apply Time Lord philosophy (quality over speed)
 
@@ -28,12 +23,6 @@ Plugins: services/plugins/ (new in 3A)
 Tests: 72/72 passing
 ```
 
-## Epic Context
-**GREAT-3A** ✅: Config standardized, app.py refactored, plugin foundation
-**GREAT-3B** →: Dynamic loading, discovery, lifecycle
-**GREAT-3C**: Migrate integrations to plugins
-**GREAT-3D**: Validation and documentation
-
 ## Critical Rules
 1. **Phase -1 always**: Verify infrastructure before starting
 2. **Evidence required**: Every decision needs filesystem proof
@@ -43,6 +32,5 @@ Tests: 72/72 passing
 
 ## References
 - Detailed methodology: BRIEFING-METHODOLOGY
-- Current work: GitHub issues #197-200
 - Templates: knowledge/[template-name].md
 - Architecture: ADR-038 (spatial), ADR-034 (plugins)

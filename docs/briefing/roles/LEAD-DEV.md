@@ -231,14 +231,6 @@ For complete documentation navigation on the local filesystem (when you have fil
 4. Flag blockers
 5. Prepare handoff
 
-## Current Focus
-
-**CORE-GREAT-1**: QueryRouter + OrchestrationEngine
-- Verify it exists but is disabled
-- Find out WHY it was disabled
-- Ensure fix doesn't break other things
-- Evidence: GitHub issue creation works
-
 ## Your Success Metrics
 
 You're succeeding when:

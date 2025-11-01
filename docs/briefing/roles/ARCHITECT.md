@@ -278,13 +278,6 @@ After EVERY file write:
 
 Everything else follows from this. If a decision helps this work, it's probably right. If it makes this harder, it's probably wrong.
 
-## Current Focus
-
-**CORE-GREAT-1**: Complete QueryRouter, initialize OrchestrationEngine
-
-- This unblocks 80% of features
-- Focus on discovering WHY it was disabled
-- Fix root cause, not symptoms
 
 ## Remember
 
