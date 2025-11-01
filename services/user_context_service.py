@@ -29,57 +29,107 @@ class UserContextService:
         self.cache_misses = 0
         logger.info("UserContextService initialized")
 
-    async def get_user_context(self, session_id: str) -> UserContext:
+    async def get_user_context(self, session_id: str, user_id: Optional[str] = None) -> UserContext:
         """
-        Get user context from session.
+        Get user context from session with optional user-specific data.
 
         Args:
             session_id: Session identifier
+            user_id: Optional user ID to load user-specific preferences from database
 
         Returns:
-            UserContext with user-specific data
+            UserContext with user-specific data (if user_id provided) or generic data
+
+        Issue #280: Now supports loading user preferences from alpha_users.preferences
         """
+        # Use user_id for cache key if provided, otherwise session_id
+        cache_key = f"user:{user_id}" if user_id else f"session:{session_id}"
+
         # Check cache first
-        if session_id in self.cache:
+        if cache_key in self.cache:
             self.cache_hits += 1  # GREAT-4C Phase 3: Track cache hit
             logger.debug(
-                "user_context_cache_hit", session_id=session_id, cache_hits=self.cache_hits
+                "user_context_cache_hit",
+                cache_key=cache_key,
+                user_id=user_id,
+                cache_hits=self.cache_hits,
             )
-            return self.cache[session_id]
+            return self.cache[cache_key]
 
-        # Cache miss - load from session/database
+        # Cache miss - load from database or config
         self.cache_misses += 1  # GREAT-4C Phase 3: Track cache miss
         logger.debug(
-            "user_context_cache_miss", session_id=session_id, cache_misses=self.cache_misses
+            "user_context_cache_miss",
+            cache_key=cache_key,
+            user_id=user_id,
+            cache_misses=self.cache_misses,
         )
 
-        # Load from PIPER.md based on session
-        context = await self._load_context_from_config(session_id)
+        # Load context (with user preferences if user_id provided)
+        context = await self._load_context_from_config(session_id, user_id)
 
         # Cache it
-        self.cache[session_id] = context
-        logger.debug("user_context_cached", session_id=session_id, org=context.organization)
+        self.cache[cache_key] = context
+        logger.debug(
+            "user_context_cached",
+            cache_key=cache_key,
+            user_id=user_id,
+            org=context.organization,
+        )
         return context
 
-    async def _load_context_from_config(self, session_id: str) -> UserContext:
-        """Load user context from PIPER.md configuration."""
+    async def _load_context_from_config(
+        self, session_id: str, user_id: Optional[str] = None
+    ) -> UserContext:
+        """
+        Load user context from PIPER.md and optionally user preferences.
+
+        Issue #280: Now loads generic PIPER.md and merges with user preferences
+        from alpha_users.preferences JSONB field.
+
+        Args:
+            session_id: Session identifier
+            user_id: Optional user ID to load database preferences
+
+        Returns:
+            UserContext with merged generic + user-specific data
+        """
         from services.configuration.piper_config_loader import piper_config_loader
 
         try:
-            config = piper_config_loader.load_config()
+            # 1. Load generic PIPER.md (shared across all users)
+            generic_config = piper_config_loader.load_config()
 
-            # Extract user context from config
-            # (This is session-specific PIPER.md, not hardcoded)
+            # 2. Load user-specific preferences from database if user_id provided
+            user_prefs = {}
+            if user_id:
+                user_prefs = await self._load_user_preferences_from_db(user_id)
+
+            # 3. Merge configurations (user preferences override generic)
+            merged_config = {**generic_config, **user_prefs}
+
+            # 4. Extract context from merged config
             context = UserContext(
-                user_id=session_id,  # TODO: Get actual user_id from session
-                organization=self._extract_organization(config),
-                projects=self._extract_projects(config),
-                priorities=self._extract_priorities(config),
+                user_id=user_id or session_id,
+                organization=self._extract_organization(merged_config),
+                projects=(
+                    self._extract_projects_from_prefs(user_prefs)
+                    if user_prefs
+                    else self._extract_projects(merged_config)
+                ),
+                priorities=(
+                    self._extract_priorities_from_prefs(user_prefs)
+                    if user_prefs
+                    else self._extract_priorities(merged_config)
+                ),
+                preferences=user_prefs,  # Store raw preferences for advanced use
             )
 
             logger.info(
                 "user_context_loaded",
                 session_id=session_id,
+                user_id=user_id,
+                has_user_prefs=bool(user_prefs),
                 org=context.organization,
                 project_count=len(context.projects),
                 priority_count=len(context.priorities),
@@ -88,9 +138,93 @@ class UserContextService:
             return context
 
         except Exception as e:
-            logger.warning("user_context_load_failed", session_id=session_id, error=str(e))
+            logger.warning(
+                "user_context_load_failed",
+                session_id=session_id,
+                user_id=user_id,
+                error=str(e),
+            )
             # Return empty context
-            return UserContext(user_id=session_id)
+            return UserContext(user_id=user_id or session_id)
+
+    async def _load_user_preferences_from_db(self, user_id: str) -> Dict[str, Any]:
+        """
+        Load user preferences from alpha_users.preferences JSONB field.
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            Dictionary of user preferences, or empty dict if not found
+
+        Issue #280: Enables per-user data isolation
+        """
+        try:
+            from sqlalchemy import select
+
+            from services.database.connection import db
+            from services.database.models import AlphaUser
+
+            # Initialize DB if needed
+            if not db._initialized:
+                await db.initialize()
+
+            # Query user preferences
+            async with await db.get_session() as session:
+                result = await session.execute(select(AlphaUser).where(AlphaUser.id == user_id))
+                user = result.scalar_one_or_none()
+
+                if user and user.preferences:
+                    logger.debug(
+                        "user_preferences_loaded",
+                        user_id=user_id,
+                        pref_keys=list(user.preferences.keys()),
+                    )
+                    return user.preferences
+                else:
+                    logger.debug("no_user_preferences_found", user_id=user_id)
+                    return {}
+
+        except Exception as e:
+            logger.warning("user_preferences_load_failed", user_id=user_id, error=str(e))
+            return {}
+
+    def _extract_projects_from_prefs(self, prefs: Dict) -> list:
+        """
+        Extract projects from user preferences (database format).
+
+        Issue #280: Handles structured project data from alpha_users.preferences
+        """
+        projects = []
+        if "projects" in prefs and isinstance(prefs["projects"], list):
+            for project in prefs["projects"]:
+                if isinstance(project, dict):
+                    # Extract project name and key info
+                    project_name = project.get("name", "")
+                    allocation = project.get("allocation", 0)
+                    if project_name:
+                        projects.append(f"{project_name} ({allocation}%)")
+                elif isinstance(project, str):
+                    projects.append(project)
+        return projects
+
+    def _extract_priorities_from_prefs(self, prefs: Dict) -> list:
+        """
+        Extract priorities from user preferences (database format).
+
+        Issue #280: Handles structured priority data from alpha_users.preferences
+        """
+        priorities = []
+        if "priorities" in prefs and isinstance(prefs["priorities"], list):
+            for priority in prefs["priorities"]:
+                if isinstance(priority, dict):
+                    # Extract priority name
+                    priority_name = priority.get("name", "")
+                    if priority_name:
+                        priorities.append(priority_name)
+                elif isinstance(priority, str):
+                    priorities.append(priority)
+        return priorities
 
     def _extract_organization(self, config: Dict) -> Optional[str]:
         """Extract organization from config."""
