@@ -81,6 +81,13 @@ class TaskType(Enum):
     # Feedback tasks
     PROCESS_USER_FEEDBACK = "process_user_feedback"
 
+    # Document processing tasks (Issue #290)
+    ANALYZE_DOCUMENT = "analyze_document"
+    QUESTION_ANSWER_DOCUMENT = "qa_document"
+    COMPARE_DOCUMENTS = "compare_documents"
+    SUMMARIZE_DOCUMENT = "summarize_document"
+    SEARCH_DOCUMENTS = "search_documents"
+
 
 class TaskStatus(Enum):
     PENDING = "pending"

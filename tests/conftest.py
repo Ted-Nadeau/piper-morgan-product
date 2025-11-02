@@ -2,6 +2,7 @@
 conftest.py — Minimal test infrastructure for Piper Morgan
 """
 
+import asyncio
 import os
 import sys
 from unittest.mock import AsyncMock, Mock, patch
@@ -12,6 +13,18 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 # Add project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
+
+# Session-scoped event loop for async integration tests (Issue #290)
+# This ensures all tests in a session share the same event loop, preventing
+# "Task attached to different loop" errors when database connections are reused
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the entire test session."""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
 
 
 # Basic fixtures that don't depend on services that may not exist

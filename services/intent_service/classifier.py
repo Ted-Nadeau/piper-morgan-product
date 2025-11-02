@@ -207,6 +207,16 @@ class IntentClassifier:
                 "find_docs": "search_documents",
                 "search_docs": "search_documents",
                 "search_documents": "search_documents",  # idempotent
+                # Document analysis intents (Issue #290)
+                "analyze": "analyze_document",
+                "analyze_document": "analyze_document",  # idempotent
+                "summarize": "summarize_document",
+                "summarize_document": "summarize_document",  # idempotent
+                "what_does": "qa_document",
+                "question_document": "qa_document",
+                "qa_document": "qa_document",  # idempotent
+                "compare": "compare_documents",
+                "compare_documents": "compare_documents",  # idempotent
             }
             if intent.action in action_normalization_map:
                 logger.info(

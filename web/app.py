@@ -223,21 +223,7 @@ async def lifespan(app: FastAPI):
 
     # Auth API router mounted at module level (after app creation)
     # See line ~360 where router is registered before app starts
-
-    # Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
-    print("\n📁 Mounting Files API Router...")
-    try:
-        from web.api.routes.files import router as files_router
-
-        app.include_router(files_router)
-        print("✅ Files API router mounted at /api/v1/files")
-        print("   Endpoints:")
-        print("   - POST /api/v1/files/upload (upload file)")
-        print("   - GET  /api/v1/files/list (list user files)")
-        print("   - DELETE /api/v1/files/{file_id} (delete file)")
-    except Exception as e:
-        print(f"⚠️ Failed to mount files API router: {e}")
-        print("   Continuing without files API\n")
+    # Files and documents API routers also mounted at module level (below)
 
     # Mount health API router (Issue #229 - CORE-USERS-PROD)
     print("\n❤️ Mounting Health API Router...")
@@ -353,6 +339,26 @@ try:
     logger.info("✅ Auth API router mounted at /auth (login, logout endpoints)")
 except Exception as e:
     logger.error(f"⚠️ Failed to mount auth API router: {e}")
+
+# Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
+# Register at module level to ensure routes available for tests
+try:
+    from web.api.routes.files import router as files_router
+
+    app.include_router(files_router)
+    logger.info("✅ Files API router mounted at /api/v1/files")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount files API router: {e}")
+
+# Mount documents API router (Issue #290 - CORE-ALPHA-DOC-PROCESSING)
+# Register at module level to ensure routes available for tests
+try:
+    from web.api.routes.documents import router as documents_router
+
+    app.include_router(documents_router)
+    logger.info("✅ Documents API router mounted at /api/v1/documents")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount documents API router: {e}")
 
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory="templates")
