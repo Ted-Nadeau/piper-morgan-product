@@ -22,6 +22,7 @@ from services.conversation.conversation_handler import ConversationHandler
 from services.domain.models import Intent
 from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
 from services.intent_service import classifier
+from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.orchestration.engine import OrchestrationEngine
@@ -472,25 +473,33 @@ class IntentService:
         Follows QUERY pattern for consistency.
 
         GREAT-4D Phase 1: Replaces Phase 3C placeholder.
+        Issue #284: Added ActionMapper to handle classifier/handler name mismatches.
         """
         self.logger.info(f"Processing EXECUTION intent: {intent.action}")
 
-        # Route based on action
-        if intent.action in ["create_issue", "create_ticket"]:
+        # Issue #284: Map classifier action to handler method name
+        mapped_action = ActionMapper.map_action(intent.action)
+        self.logger.debug(f"Action routing: '{intent.action}' -> '{mapped_action}'")
+
+        # Route based on mapped action
+        if mapped_action in ["create_issue", "create_ticket"]:
             return await self._handle_create_issue(intent, workflow.id, session_id)
 
-        elif intent.action in ["update_issue", "update_ticket"]:
+        elif mapped_action in ["update_issue", "update_ticket"]:
             return await self._handle_update_issue(intent, workflow.id)
 
         else:
             # Generic execution handler - indicate not yet implemented
-            self.logger.warning(f"Unhandled EXECUTION action: {intent.action}")
+            self.logger.warning(
+                f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action})"
+            )
             return IntentProcessingResult(
                 success=False,
                 message=f"EXECUTION action '{intent.action}' is not yet implemented.",
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
+                    "mapped_action": mapped_action,
                     "confidence": intent.confidence,
                 },
                 workflow_id=workflow.id,
