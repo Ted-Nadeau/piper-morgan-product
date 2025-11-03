@@ -183,3 +183,97 @@ This completes the 75% pattern: Infrastructure existed but wasn't connected. Iss
 
 **Time**: 6:20 AM - 6:32 AM = 12 minutes
 **Effort**: 2-3 hours estimated → 12 minutes actual (wiring, not building)
+
+---
+
+## Phase 2 Investigation: End-to-End Validation (7:00 AM - ongoing)
+
+**Status**: ⚠️ **PARTIAL - ARCHITECTURAL LIMITATION IDENTIFIED**
+
+### Discovery
+
+Upon Phase 2 validation testing, discovered a critical architectural limitation:
+
+**The Problem**:
+- FastAPI's built-in HTTPException handler intercepts errors BEFORE middleware can process them
+- This is a fundamental FastAPI design - HTTPExceptions bypass normal exception handling middleware
+- The EnhancedErrorMiddleware correctly catches exceptions like ValueError, database errors, timeouts
+- BUT it CANNOT catch HTTPException (401, 404, etc.) raised by route handlers or dependencies
+
+**Current Evidence**:
+- ✅ 12/12 middleware tests passing (for non-HTTPException errors)
+- ✅ 22/22 user-friendly error service tests passing
+- ⚠️ HTTPException errors still showing technical messages ("Authentication required", "Invalid token", "Not Found")
+- ✅ Middleware IS mounted and operational for non-HTTP errors
+
+### What Works (Middleware CAN Catch)
+- Database connection errors → "I'm having trouble accessing the database..."
+- Timeout errors → "That's complex - let me reconsider..."
+- Validation errors → "I couldn't process that..."
+- Generic Python exceptions → "Something went wrong on my end..."
+
+### What Doesn't Work (Middleware CAN'T Catch)
+- 401 Unauthorized → still shows "Authentication required"
+- 404 Not Found → still shows "Not Found"
+- 403 Forbidden → still shows technical message
+- Any HTTPException raised in routes/dependencies
+
+### Test Results
+
+```bash
+# Test 1: Missing Auth (HTTPException)
+$ curl -X POST http://localhost:8001/api/v1/standup/generate
+Response: {"detail": "Authentication required"}  ❌ (not friendly)
+
+# Test 2: Invalid Token (HTTPException)
+$ curl -X POST http://localhost:8001/api/v1/standup/generate \
+  -H "Authorization: Bearer badtoken"
+Response: {"detail": "Invalid token"}  ❌ (not friendly)
+
+# Test 3: Database Error (if triggered)
+# Would show friendly message ✅
+
+# Test 4: Timeout (if triggered)
+# Would show friendly message ✅
+```
+
+### Root Cause
+
+FastAPI's exception handling order (from Starlette architecture):
+1. HTTPException → caught by FastAPI built-in handler → bypasses middleware
+2. Request processing → wrapped in middleware
+3. Other exceptions → caught by middleware
+
+The middleware dispatch only wraps `call_next()`. HTTPExceptions are intercepted before middleware can intercept them.
+
+### Proposed Solutions for Phase 2 Completion
+
+**Option A: Accept Limitation** (Lowest Effort)
+- Keep middleware as-is for non-HTTPException errors
+- Document that 5 error types partially supported (3/5 fully, 2/5 partially)
+- HTTPExceptions still show technical messages
+- Mark as "Partially Complete"
+
+**Option B: Custom HTTPException Handler** (Medium Effort, Most Likely to Work)
+- Register @app.exception_handler(HTTPException) in app.py
+- Let it convert technical details to friendly messages
+- Cleanest solution if FastAPI respects custom handlers
+
+**Option C: Source Conversion** (Higher Effort)
+- Convert all HTTPExceptions to APIError in auth_middleware.py
+- Let middleware catch the APIError
+- Requires refactoring route handlers
+
+**Option D: CustromRequest Wrapper** (Complex)
+- Create custom BaseHTTPException subclass with friendly message
+- Update all route handlers to use it
+
+### Blocker for Full Completion
+
+**Cannot achieve 100% friendly error messages for ALL 5 error types without resolving HTTPException limitation.**
+
+Current state:
+- Issue #283 Phase 1: ✅ COMPLETE (middleware mounted and working for non-HTTPException)
+- Issue #283 Phase 2: ⚠️ BLOCKED (HTTPException handling requires architectural decision)
+
+**Decision Required**: Which solution approach should I implement for HTTPException handling?
