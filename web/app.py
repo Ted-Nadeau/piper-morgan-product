@@ -324,6 +324,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Issue #283: Enhanced error handling with user-friendly messages
+# Mount BEFORE other middleware so it catches exceptions from all handlers
+try:
+    from web.middleware.enhanced_error_middleware import EnhancedErrorMiddleware
+
+    app.add_middleware(EnhancedErrorMiddleware)
+    logger.info("✅ EnhancedErrorMiddleware registered (Issue #283 - CORE-ALPHA-ERROR-MESSAGES)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount EnhancedErrorMiddleware: {e}")
+
 # GREAT-4B: Intent Enforcement Middleware
 from web.middleware.intent_enforcement import IntentEnforcementMiddleware
 
