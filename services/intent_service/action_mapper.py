@@ -103,6 +103,25 @@ class ActionMapper:
         # Standup
         "get_standup": "standup_query",
         "standup": "standup_query",
+        # ===== TODO ACTIONS ===== (Issue #285)
+        # Todo Creation
+        "create_todo": "create_todo",  # Already normalized
+        "add_todo": "create_todo",
+        "new_todo": "create_todo",
+        # Todo Listing
+        "list_todos": "list_todos",  # Already normalized
+        "show_todos": "list_todos",
+        "get_todos": "list_todos",
+        "my_todos": "list_todos",
+        # Todo Completion
+        "complete_todo": "complete_todo",  # Already normalized
+        "finish_todo": "complete_todo",
+        "mark_complete": "complete_todo",
+        "mark_done": "complete_todo",
+        # Todo Deletion
+        "delete_todo": "delete_todo",  # Already normalized
+        "remove_todo": "delete_todo",
+        "cancel_todo": "delete_todo",
         # ===== SPECIAL ACTIONS =====
         # Clarification
         "clarification_needed": "unknown_intent",

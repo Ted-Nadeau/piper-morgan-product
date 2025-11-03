@@ -24,6 +24,7 @@ from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refac
 from services.intent_service import classifier
 from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.orchestration.engine import OrchestrationEngine
 from services.shared_types import IntentCategory
@@ -91,6 +92,7 @@ class IntentService:
         self.conversation_handler = conversation_handler
         self.canonical_handlers = CanonicalHandlers()
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
+        self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
         self.logger = structlog.get_logger()
 
     async def process_intent(
@@ -487,6 +489,67 @@ class IntentService:
 
         elif mapped_action in ["update_issue", "update_ticket"]:
             return await self._handle_update_issue(intent, workflow.id)
+
+        # Issue #285: Todo operations routing
+        elif mapped_action == "create_todo":
+            message = await self.todo_handlers.handle_create_todo(
+                intent, session_id, user_id="default"  # TODO: Get actual user_id
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "list_todos":
+            message = await self.todo_handlers.handle_list_todos(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "complete_todo":
+            message = await self.todo_handlers.handle_complete_todo(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "delete_todo":
+            message = await self.todo_handlers.handle_delete_todo(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
 
         else:
             # Generic execution handler - indicate not yet implemented
