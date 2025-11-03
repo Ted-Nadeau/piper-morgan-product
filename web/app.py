@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 
 import structlog
-from fastapi import FastAPI, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -333,6 +333,67 @@ try:
     logger.info("✅ EnhancedErrorMiddleware registered (Issue #283 - CORE-ALPHA-ERROR-MESSAGES)")
 except Exception as e:
     logger.error(f"⚠️ Failed to mount EnhancedErrorMiddleware: {e}")
+
+# Issue #283: Custom HTTPException handler for friendly error messages
+# This catches FastAPI's built-in HTTPException errors (401, 404, etc) which bypass middleware
+try:
+    from fastapi import HTTPException, Request
+    from fastapi.responses import JSONResponse
+
+    from services.ui_messages.user_friendly_errors import UserFriendlyErrorService
+
+    error_service = UserFriendlyErrorService()
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        """
+        Convert FastAPI HTTPException to user-friendly messages.
+
+        This handler intercepts FastAPI's built-in error responses (401, 404, etc)
+        that bypass normal middleware exception handling, and converts them using
+        UserFriendlyErrorService for consistent user-friendly messaging.
+        """
+        # Get friendly message based on status code and exception detail
+        friendly_message = None
+
+        if exc.status_code == 401:
+            # Authentication errors
+            friendly_message = "Let's try logging in again. Your session may have expired."
+        elif exc.status_code == 403:
+            # Permission errors
+            friendly_message = "You don't have permission to access that. Please contact your administrator if you think this is incorrect."
+        elif exc.status_code == 404:
+            # Not found errors
+            friendly_message = "I couldn't find that. It may have been moved or deleted."
+        elif exc.status_code == 422:
+            # Validation errors
+            friendly_message = f"I couldn't process that request: {str(exc.detail)}"
+        elif exc.status_code >= 500:
+            # Server errors
+            friendly_message = (
+                "Something went wrong on my end. I've logged the details for debugging."
+            )
+        else:
+            # Fallback to original detail
+            friendly_message = str(exc.detail)
+
+        # CRITICAL: Log technical details server-side for debugging
+        logger.error(
+            "http_exception",
+            status_code=exc.status_code,
+            detail=str(exc.detail),
+            path=request.url.path,
+            method=request.method,
+        )
+
+        # Return friendly message to user
+        return JSONResponse(status_code=exc.status_code, content={"message": friendly_message})
+
+    logger.info(
+        "✅ HTTPException handler registered (Issue #283 - catches 401, 404, 403, 422 errors)"
+    )
+except Exception as e:
+    logger.error(f"⚠️ Failed to register HTTPException handler: {e}")
 
 # GREAT-4B: Intent Enforcement Middleware
 from web.middleware.intent_enforcement import IntentEnforcementMiddleware
