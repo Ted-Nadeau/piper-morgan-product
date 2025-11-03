@@ -227,16 +227,19 @@ async def get_current_user(
         JWT claims for authenticated user
 
     Raises:
-        HTTPException: If authentication fails
+        APIError: If authentication fails (Issue #283 - for friendly error messages)
     """
+    from services.api.errors import APIError
     from services.auth.container import AuthContainer
     from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
     if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required",
-            headers={"WWW-Authenticate": "Bearer"},
+        # Issue #283: Use APIError so middleware can catch and convert to friendly message
+        raise APIError(
+            message="authentication_required",
+            status_code=401,
+            error_code="NO_AUTH",
+            context={"detail": "Authentication required"},
         )
 
     # Get JWT service singleton with blacklist support
@@ -245,31 +248,35 @@ async def get_current_user(
     try:
         claims = await jwt_service.validate_token(credentials.credentials)
         if not claims:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
-                headers={"WWW-Authenticate": "Bearer"},
+            raise APIError(
+                message="invalid_token",
+                status_code=401,
+                error_code="INVALID_TOKEN",
+                context={"detail": "Invalid or expired token"},
             )
 
         return claims
 
     except TokenRevoked:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has been revoked",
-            headers={"WWW-Authenticate": "Bearer"},
+        raise APIError(
+            message="token_revoked",
+            status_code=401,
+            error_code="TOKEN_REVOKED",
+            context={"detail": "Token has been revoked"},
         )
     except TokenExpired:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
+        raise APIError(
+            message="token_expired",
+            status_code=401,
+            error_code="TOKEN_EXPIRED",
+            context={"detail": "Token has expired"},
         )
     except TokenInvalid:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
+        raise APIError(
+            message="invalid_token",
+            status_code=401,
+            error_code="INVALID_TOKEN",
+            context={"detail": "Invalid token"},
         )
 
 
