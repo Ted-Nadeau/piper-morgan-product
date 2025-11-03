@@ -33,12 +33,12 @@ class TodoIntentHandlers:
         Handle: "add todo: Review PR #285"
         Extract text, create todo, format response.
         """
-        text = self._extract_todo_text(intent.message)
+        text = self._extract_todo_text(intent.original_message)
         if not text:
             return "I didn't catch what you'd like me to add. Could you try: 'add todo: [description]'?"
 
         # Parse optional priority
-        priority = self._extract_priority(intent.message)
+        priority = self._extract_priority(intent.original_message)
 
         # For now, return confirmation (API returns mock data)
         # In future, call todo_management.create_todo via API
@@ -67,7 +67,7 @@ class TodoIntentHandlers:
 
     async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: str) -> str:
         """Handle: "mark todo 1 as complete" or "complete todo about PR"""
-        todo_id = self._extract_todo_id(intent.message)
+        todo_id = self._extract_todo_id(intent.original_message)
         if not todo_id:
             return "Which todo? Try: 'mark todo [number] as complete'"
 
@@ -79,7 +79,7 @@ class TodoIntentHandlers:
 
     async def handle_delete_todo(self, intent: Intent, session_id: str, user_id: str) -> str:
         """Handle: "delete todo 3" or "remove todo about meeting"""
-        todo_id = self._extract_todo_id(intent.message)
+        todo_id = self._extract_todo_id(intent.original_message)
         if not todo_id:
             return "Which todo should I remove? Try: 'delete todo [number]'"
 
