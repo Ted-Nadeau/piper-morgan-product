@@ -370,6 +370,16 @@ try:
 except Exception as e:
     logger.error(f"⚠️ Failed to mount documents API router: {e}")
 
+# Mount todos API router (Issue #285 - CORE-ALPHA-TODO-INCOMPLETE)
+# Wires up existing todo infrastructure (PM-081)
+try:
+    from services.api.todo_management import todo_management_router
+
+    app.include_router(todo_management_router)
+    logger.info("✅ Todos API router mounted at /api/v1/todos (PM-081)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount todos API router: {e}")
+
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory="templates")
 
