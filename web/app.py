@@ -395,6 +395,71 @@ try:
 except Exception as e:
     logger.error(f"⚠️ Failed to register HTTPException handler: {e}")
 
+# Issue #283: APIError exception handler for dependency-level errors
+# Dependencies execute BEFORE middleware, so exceptions raised in Depends() need
+# this handler to be caught and converted to friendly messages
+try:
+    from services.api.errors import APIError
+
+    @app.exception_handler(APIError)
+    async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
+        """
+        Handle APIError exceptions with user-friendly messages.
+
+        This catches APIError raised anywhere in the application,
+        including from FastAPI dependencies like get_current_user.
+
+        Since dependencies execute before middleware, this exception
+        handler is the appropriate layer to convert APIError to
+        friendly messages for users.
+        """
+        # Get friendly message based on error code and status code
+        friendly_message = None
+
+        if exc.status_code == 401:
+            # Authentication errors
+            friendly_message = "Let's try logging in again. Your session may have expired."
+        elif exc.status_code == 403:
+            # Permission errors
+            friendly_message = (
+                "You don't have permission to access that. Please contact your administrator."
+            )
+        elif exc.status_code == 404:
+            # Not found errors
+            friendly_message = "I couldn't find that. It may have been moved or deleted."
+        elif exc.status_code == 422:
+            # Validation errors
+            friendly_message = (
+                "I couldn't process that request. Please check your input and try again."
+            )
+        elif exc.status_code >= 500:
+            # Server errors
+            friendly_message = (
+                "Something went wrong on my end. I've logged the details for debugging."
+            )
+        else:
+            # Fallback
+            friendly_message = "An error occurred. Please try again."
+
+        # CRITICAL: Log technical details for debugging
+        logger.error(
+            "api_error",
+            error_code=exc.error_code,
+            status_code=exc.status_code,
+            details=exc.details,
+            path=request.url.path,
+            method=request.method,
+        )
+
+        # Return friendly message to user
+        return JSONResponse(status_code=exc.status_code, content={"message": friendly_message})
+
+    logger.info(
+        "✅ APIError exception handler registered (Issue #283 - catches dependency-level errors)"
+    )
+except Exception as e:
+    logger.error(f"⚠️ Failed to register APIError handler: {e}")
+
 # GREAT-4B: Intent Enforcement Middleware
 from web.middleware.intent_enforcement import IntentEnforcementMiddleware
 

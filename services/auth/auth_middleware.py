@@ -234,12 +234,11 @@ async def get_current_user(
     from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
     if not credentials:
-        # Issue #283: Use APIError so middleware can catch and convert to friendly message
+        # Issue #283: Use APIError so exception handler can convert to friendly message
         raise APIError(
-            message="authentication_required",
             status_code=401,
-            error_code="NO_AUTH",
-            context={"detail": "Authentication required"},
+            error_code="AUTHENTICATION_REQUIRED",
+            details={"detail": "Authentication required"},
         )
 
     # Get JWT service singleton with blacklist support
@@ -249,34 +248,30 @@ async def get_current_user(
         claims = await jwt_service.validate_token(credentials.credentials)
         if not claims:
             raise APIError(
-                message="invalid_token",
                 status_code=401,
                 error_code="INVALID_TOKEN",
-                context={"detail": "Invalid or expired token"},
+                details={"detail": "Invalid or expired token"},
             )
 
         return claims
 
     except TokenRevoked:
         raise APIError(
-            message="token_revoked",
             status_code=401,
             error_code="TOKEN_REVOKED",
-            context={"detail": "Token has been revoked"},
+            details={"detail": "Token has been revoked"},
         )
     except TokenExpired:
         raise APIError(
-            message="token_expired",
             status_code=401,
             error_code="TOKEN_EXPIRED",
-            context={"detail": "Token has expired"},
+            details={"detail": "Token has expired"},
         )
     except TokenInvalid:
         raise APIError(
-            message="invalid_token",
             status_code=401,
             error_code="INVALID_TOKEN",
-            context={"detail": "Invalid token"},
+            details={"detail": "Invalid token"},
         )
 
 
