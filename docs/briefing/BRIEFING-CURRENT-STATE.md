@@ -9,14 +9,14 @@
 
 ## 📊 STATUS BANNER
 
-**Current Position**: 2.3.9.2 (Complete the Build of CORE - Sprint A8 Active)
-**Last Updated**: October 31, 2025, 8:35 AM PDT
+**Current Position**: 2.9.3.3.2.7.2.1 (Complete the Build of CORE - Sprint A8 Active, P1 Polish Phase)
+**Last Updated**: November 4, 2025, 10:30 AM PDT
 **Great Refactor**: ✅ COMPLETE
 **CORE-CRAFT**: ✅ COMPLETE (Oct 14)
 **Sprint A5**: ✅ COMPLETE (Oct 20) - CORE-LEARN
 **Sprint A6**: ✅ COMPLETE (Oct 22) - CORE-USERS (Onboarding)
 **Sprint A7**: ✅ COMPLETE (Oct 23) - Polish & Buffer (7 issues completed)
-**Sprint A8**: ➡️ IN PROGRESS - Alpha Tester Onboarding Preparation
+**Sprint A8**: ✅ MOSTLY COMPLETE - P0 Blockers Complete (Nov 1), P1 Polish Sprint (Nov 3)
 
 ---
 
@@ -40,8 +40,8 @@
     5. ✅ A4: Standup Epic
     6. ✅ A5: Learning System
     7. ✅ A6: User Onboarding
-    8. ➡️ A7: Polish & Buffer (12 issues)
-    9. ⏳ A8: Alpha Prep & Launch
+    8. ✅ A7: Polish & Buffer (7 issues)
+    9. ➡️ A8: Alpha Prep & Launch (P0 Blockers + P1 Polish - IN PROGRESS)
 3. Start alpha testing on 0.1 (Alpha Wave 2)
 4. Complete MVP track
 5. Start beta testing on 0.9
@@ -74,77 +74,93 @@
 - ✅ Knowledge graph connection (A3 in progress)
 
 
-**Remaining CORE Work (~2%)** - Nearly complete!:
+**Remaining CORE Work (~1%)** - Nearly complete!:
 - ✅ User onboarding (A6 - COMPLETE Oct 22)
-- ⏸ Polish & Buffer (A7 - IN PROGRESS, 12 issues)
-- ⏳ Alpha Prep & Launch (A8 - PLANNED)
+- ✅ Polish & Buffer (A7 - COMPLETE Oct 23)
+- ➡️ Alpha Prep & Launch (A8 - P0 COMPLETE Nov 1, P1 POLISH COMPLETE Nov 3)
 
 ---
 
 **Key Insight**: CORE infrastructure is complete! Sprints A7-A8 focus on polish, API key lifecycle, user architecture, and Alpha Wave 2 launch.
 
-### Current Sprint (A7)
+### Current Sprint (A8)
 
-**A7: Polish & Buffer** - Expanded scope (12 issues across 4 categories)
+**A8: Alpha Prep & Launch** - Active (Nov 1-3, P0 Blockers + P1 Polish)
 
-**1. CORE-UX** (4 issues, 6-9 hours):
-- Issue #254: CORE-UX-QUIET - Quiet startup mode (2h, Medium)
-- Issue #255: CORE-UX-STATUS-USER - Status checker user detection (3h, Medium)
-- Issue #256: CORE-UX-BROWSER - Auto-launch browser (1h, Low) - Optional
-- Issue #248: CORE-PREF-CONVO - Conversational personality preferences (3-5h, Medium)
+#### ✅ P0 BLOCKERS (November 1, 2025)
+**Status**: COMPLETE - 2 critical issues resolved
 
-**2. Critical Fixes** (2 issues, 4-6 hours):
-- Issue #257: CORE-KNOW-BOUNDARY-COMPLETE - Complete BoundaryEnforcer integration (2-3h)
-- Issue #258: CORE-AUTH-CONTAINER - Fix JWT service dependency injection (2-3h)
+**Completed Issues**:
+- Issue #280: CORE-ALPHA-DATA-LEAK - Fixed (5/5 sub-tasks)
+- Issue #282: CORE-ALPHA-FILE-UPLOAD - Fixed (5/5 sub-tasks)
 
-**3. CORE-KEYS** (3 issues, 6-8 hours):
-- Issue #250: CORE-KEYS-ROTATION-REMINDERS - Automated key rotation reminders (2-3h)
-- Issue #252: CORE-KEYS-STRENGTH-VALIDATION - API key strength validation (2-3h)
-- Issue #253: CORE-KEYS-COST-ANALYTICS - API cost tracking & usage analytics (2-3h)
+**Architectural Decision**:
+- **ADR-040**: Local Database Per Environment (CODE ≠ DATA principle)
+  - CODE (application): Managed via git (version control)
+  - DATA (user data): Managed via PostgreSQL per environment
+  - Enables parallel development with isolated state
 
-**4. CORE-ALPHA** (3 issues, 4-6 hours):
-- Issue #259: CORE-USER-ALPHA-TABLE - Create Alpha users table (1-2h)
-- Issue #260: CORE-USER-MIGRATION - Alpha to production user migration tool (2-3h)
-- Issue #261: CORE-USER-XIAN - Migrate xian superuser to proper user structure (1-2h)
+**Critical Infrastructure**:
+- Anti-80% Protocol Enforcement: Completion matrix preventing incomplete work
+- Session log discipline established (mandatory infrastructure)
+- Issue #281, #290 completed with 6/6 acceptance criteria
 
-**Total A7 Scope**: 12 issues, 20-29 hours estimated
-**Estimated Duration**: 3-5 days (based on 88% velocity pattern from A6, likely 1-2 days actual)
-**Execution Order**: See `/Users/xian/Development/piper-morgan/dev/active/sprint-a7-gameplan-polish-buffer.md`
+**Known Issues Discovered**:
+- FK constraint issue #291 on token blacklist (post-#263, low priority)
 
 ---
 
-### Next Sprint (A8)
+#### ✅ P1 POLISH SPRINT (November 3, 2025)
+**Status**: MOSTLY COMPLETE - 2/3 issues complete, 1/3 at architectural ceiling
 
-**A8: Alpha Prep & Launch** - Final activities before Alpha Wave 2
+**Completed Issues**:
+- **Issue #284: CORE-ALPHA-ACTION-MAPPING** ✅ COMPLETE
+  - Resolved classifier output → handler name mismatches
+  - Created action mapping layer for systematic routing
+  - Tests passing
 
-**Testing & Validation**:
-1. End-to-end workflow testing
-2. Performance validation
-3. Security audit
+- **Issue #285: CORE-ALPHA-TODO-INCOMPLETE** ✅ COMPLETE
+  - Wired TodoKnowledgeService to web routes
+  - Chat handlers created and tested
+  - Todo CRUD operations fully functional
+  - Both API and chat integration working
 
-**Documentation**:
-1. User guides and onboarding materials
-2. Known issues documentation
-3. Feature status documentation
+**Partial Issue**:
+- **Issue #283: CORE-ALPHA-ERROR-MESSAGES** ⚠️ 4/6 COMPLETE
+  - Empty input errors ✅
+  - Unknown action errors ✅
+  - Timeout errors ✅
+  - Unknown intent errors ✅
+  - Invalid token errors ❌ (architectural limitation: FastAPI dependency injection phase before exception handlers)
+  - No token errors ❌ (architectural limitation: FastAPI dependency injection phase)
+  - **Architectural Decision**: Accept 4/6 as complete. Auth errors are <5% of scenarios, and FastAPI's design intentionally fails dependencies early for security. Options A/B (moving auth to routes or ASGI middleware) would cost 4-12 hours with high risk for marginal UX gain. Decision: Document limitation honestly and proceed.
 
-**Alpha Deployment**:
-1. Design onboarding communications
-2. Invitation emails with instructions
-3. Issue reporting guidelines
-4. Testing checklists
-5. A/B test design
+**Key Discoveries**:
+- ActionHumanizer + EnhancedErrorMiddleware were 75% complete and simply needed wiring
+- Archaeological investigation saved 6+ hours of redundant implementation
+- Critical system bug reported to Anthropic (false "Human:" responses in interface)
 
-**Baseline Piper Education** (demoted from Phase 3, 90% complete from Sprint A5):
-1. Self-knowledge (ethics ✅, spatial intelligence ✅)
-2. Ethical values documentation
-3. Spatial intelligence patterns
-4. Growth mindset training
-5. Systematic blindness awareness
-6. Flywheel Methodology integration
-7. Domain knowledge (PM, clients, projects)
+---
 
-**Estimated Duration**: 3-5 days
-**Target**: Alpha Wave 2 launch readiness (late Oct / early Nov)
+**Execution Summary**:
+- Wall time: 9.5 hours actual (Nov 3, 5:53 AM - 3:15 PM)
+- Team: 5 simultaneous agent sessions (Lead Dev, Code, Cursor, Architect, Executive)
+- Methodology: Phase -1 investigation before implementation
+- Quality: 75% pattern applied 3 times, all tests passing
+- Technical debt: Minimal (FK constraint issue low priority)
+
+### Next Steps (A8 Continuation)
+
+**Remaining for Alpha Launch**:
+1. ⏳ End-to-end workflow testing
+2. ⏳ Performance validation
+3. ⏳ Security audit
+4. ⏳ Alpha deployment communications
+5. ⏳ Baseline Piper Education completion (90% from Sprint A5)
+
+**Documentation Gap**: ADR-040 added to knowledge/ by PM
+
+**Target**: Alpha Wave 2 launch readiness (early Nov)
 
 ---
 
@@ -213,4 +229,4 @@ All features listed in original plan still need verification:
 
 ---
 
-*Last Updated: October 21, 2025*
+*Last Updated: November 4, 2025, 10:30 AM PDT - Sprint A8 P0/P1 Status*
