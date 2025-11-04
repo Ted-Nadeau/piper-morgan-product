@@ -1482,3 +1482,82 @@ class TokenBlacklist(Base):
         Index("idx_token_blacklist_user_id", "user_id"),
         Index("idx_token_blacklist_user_expires", "user_id", "expires_at"),
     )
+
+
+# ============================================================================
+# PRIMITIVE DOMAIN MODELS (Phase 1: Foundation)
+# ============================================================================
+
+
+class ItemDB(Base):
+    """
+    Database representation of universal Item primitive.
+
+    This is the base table for all item types using SQLAlchemy's
+    polymorphic inheritance (joined table inheritance pattern).
+
+    Future item types (Todo, ShoppingItem, etc.) will have their own tables
+    that join to this one via foreign key on id.
+
+    Phase 1: Create base items table
+    Phase 2: Create todo_items table (joins to items)
+    Future: Other item types can follow same pattern
+    """
+
+    __tablename__ = "items"
+
+    # Core fields
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    text = Column(String, nullable=False)  # Universal property - all items have text
+    position = Column(Integer, default=0, nullable=False)  # Order within list
+    list_id = Column(String, nullable=True)  # Which list contains this item
+    item_type = Column(String(50), nullable=False, default="item")  # Discriminator
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Polymorphic configuration for future inheritance
+    __mapper_args__ = {
+        "polymorphic_identity": "item",
+        "polymorphic_on": item_type,
+    }
+
+    # Indexes for performance
+    __table_args__ = (
+        Index("idx_items_list_id", "list_id"),
+        Index("idx_items_item_type", "item_type"),
+        Index("idx_items_list_position", "list_id", "position"),
+        Index("idx_items_created", "created_at"),
+    )
+
+    def to_domain(self) -> "domain.Item":
+        """Convert database model to domain model."""
+        # Import here to avoid circular imports
+        from services.domain.primitives import Item
+
+        return Item(
+            id=self.id,
+            text=self.text,
+            position=self.position,
+            list_id=self.list_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+    @classmethod
+    def from_domain(cls, item: "domain.Item") -> "ItemDB":
+        """Convert domain model to database model."""
+        return cls(
+            id=item.id,
+            text=item.text,
+            position=item.position,
+            list_id=item.list_id,
+            item_type="item",  # Base type
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+        )
+
+
+# Note: ListDB already exists at line 1126 with full implementation
+# It includes all fields from domain.List plus owner_id, shared_with, etc.
