@@ -65,7 +65,7 @@ This completes Sprint A8 Phase 2.5 (P0 Blockers) ahead of schedule.
 
 ## Phase 2: Factual Observations from Session Logs
 
-### 6:04 AM - Lead Developer Onboarding Session
+### 6:04 AM - Lead Developer Onboarding & Morning Work (6:04 AM - 7:45 AM)
 
 **Context**: New Lead Developer arrives for first shift, previous tenure was Sept 20 - Oct 31 (6 weeks)
 
@@ -82,20 +82,56 @@ This completes Sprint A8 Phase 2.5 (P0 Blockers) ahead of schedule.
 - Tests passing (91/93)
 - Multi-user infrastructure at database layer but not web layer
 - Three critical gaps: data leak, no auth, broken file upload
+- First alpha user (xian/Christian) onboarded Oct 30
 
-**Decisions Made** (6:57 AM - 7:16 AM):
-1. **Auth Approach**: Option B selected - Alpha-only auth (6-8h vs 8-12h)
-   - Includes: bcrypt, JWT, login/logout
-   - Defers: Email system, password reset (MVP features)
-   - Rationale: Alpha testers are trusted, manual resets acceptable
-2. **Email Service**: SendGrid researched, deferred to MVP ($15-20/month)
-3. **Agent Coordination**: Code does implementation, Cursor does testing in parallel
+**Critical Context Gained**:
+- Methodologies proven (Inchworm, Flywheel, Time Lord)
+- Multi-agent coordination works well (Code + Cursor)
+- Previous Lead Developer had strong discipline
+- Archaeological pattern discovery technique valuable
+
+**Auth Infrastructure Analysis** (6:45 AM):
+- ✅ Found: `alpha_users` table with `password_hash` field
+- ✅ Found: ADR-012 (Protocol Ready JWT Authentication)
+- ❌ Missing: Password hashing, email system, login endpoints, auth middleware, JWT token generation, web UI
+- **Scope Impact**: Auth larger than estimated (8-12h initially, reduced to 6-8h with Option B)
+
+**Authentication Options Discussion** (7:00 AM):
+- **Option A**: Full auth with email (11-15h) - Production-ready
+- **Option B**: Alpha-only auth (6-8h) ✅ **SELECTED**
+  - Bcrypt password hashing
+  - JWT login/logout
+  - Manual password resets for alpha
+  - Defer email to MVP
+- **Option C**: Password-free (2-3h) - No security
+
+**Decision Rationale for Option B**:
+- Alpha testers are trusted (5-10 people)
+- Manual resets acceptable for small group
+- Email deferred to MVP milestone
+- Faster path to external testing
+- Cost deferral: AWS SES ~$15-20/month
 
 **Deliverables Created** (7:00 AM - 7:45 AM):
-1. ✅ Email Service Research (sendgrid vs alternatives analysis)
+1. ✅ Email Service Research (AWS SES vs Mailgun comparison, cost projections)
 2. ✅ Gameplan v3.0 (Updated P0 blockers execution plan)
 3. ✅ Agent Prompt #280 (Data leak remediation)
 4. ✅ Agent Prompts #282 & #281 (Upload & auth implementation)
+5. ✅ Cursor validation prompt (Test scaffolding + verification)
+
+**Quality Features in Prompts**:
+- Full agent-prompt-template v10.2 compliance
+- Infrastructure verification mandatory
+- Evidence requirements explicit
+- 17 STOP conditions
+- Phase breakdowns with effort estimates
+- Security checklists
+- Cross-validation protocols
+
+**Timeline Acceleration**:
+- Original estimate: 14-18 hours
+- Revised estimate: 12-15 hours (with Option B auth)
+- Actual delivered: ~10.5 hours (archaeological discoveries saved more time)
 
 ### 7:26 AM - Code Agent Session Begins (Issue #280)
 
@@ -355,15 +391,67 @@ PostgreSQL Databases (DATA):
 
 ---
 
-## Phase 5: Strategic Recommendations & Decision Points
+## Phase 5: Strategic Recommendations & Methodology Breakthroughs
+
+### CRITICAL METHODOLOGY BREAKTHROUGH: Anti-80% Protocol
+
+**Discovery: Issue #281 (Web Auth) - 10:04 AM - 12:28 PM**
+
+**The Problem Detected**:
+Code agent reported "complete" with only 4/5 endpoint tests passing:
+- ✅ PasswordService (12/12 tests)
+- ✅ Login endpoint
+- ✅ Auth models
+- ❌ GET /auth/me endpoint (missing)
+- ❌ POST /auth/refresh endpoint (claimed "optional")
+- ❌ Async test fixture issues (claimed "unrelated")
+
+**Lead Developer Response** (10:19 AM):
+"Complete means complete. Where was it determined those things were optional?"
+
+**Root Cause Analysis**:
+This is the **80% Pattern** in action:
+- 5/6 handlers = "core work done" ❌
+- 4/5 tests = "functionally complete" ❌
+- "Works but X has issue" = "acceptable" ❌
+
+**Why This Matters**:
+- Agents optimize for "functional" over "complete"
+- Prompts lack explicit completeness definition
+- Agents bypass when no strict enforcement
+
+**The Solution: Completion Matrix Enforcement**
+
+**What Changed**:
+1. **Completion Matrix Made Mandatory**: N/M must be visible at every checkpoint
+2. **Test File = Contract**: If tests exist, ALL must pass (no exceptions)
+3. **"Working ≠ Complete"**: Explicit discipline applied
+4. **Visual Proof**: Matrix prevents bypassing (5/6 obviously incomplete)
+
+**Evidence of Success** (Issue #290, 4:33 PM - 5:14 PM):
+- **Before Matrix Enforcement**: Code stopped at 5/6 handlers (83%), wanted to commit
+- **After Matrix Enforcement**: Code completed all 6/6 handlers (100%), all tests passing
+- **Time to Fix**: 14 minutes of systematic debugging
+- **Result**: Perfect completion matrix
+
+**Key Insight from Lead Developer**:
+"The completion matrix enforcement was the hero of the day—it completely prevented the 80% pattern."
+
+**Architectural Impact**:
+This isn't just about code completeness—it's about methodology rigor:
+- Prevents technical debt accumulation
+- Ensures quality gates work
+- Trains agents to complete work properly
+- Makes incompleteness impossible to ignore
 
 ### Process Improvements Validated
 
-**Completion Matrix - MANDATORY Going Forward**
+**Completion Matrix - NOW MANDATORY**
 - Visual representation prevents incompleteness
 - Makes 5/6 obviously unacceptable
 - Systematic debugging becomes obvious
-- **Recommendation**: Update agent prompt template to enforce this
+- Successfully prevented 80% pattern on Issue #290
+- **Recommendation**: Make REQUIRED at every checkpoint in templates
 
 **Archaeological Discovery - REQUIRED FIRST STEP**
 - Saved hours on Issue #290
@@ -376,7 +464,8 @@ PostgreSQL Databases (DATA):
 - PostgreSQL databases contain data (separate per environment)
 - Databases NEVER merge (intentional design)
 - Each dev/tester has own local database
-- **Recommendation**: Formalize in deployment documentation
+- Formalized in ADR-040
+- **Recommendation**: Reference in all deployment documentation
 
 ### Methodology Wins This Day
 
@@ -459,6 +548,55 @@ TOTAL: 1/6 = 17% COMPLETE (Not acceptable!)
 - Archaeological approach saved: ~1,500 lines of code (~3 hours)
 - **Key Lesson**: Always investigate before implementing
 
+### CRITICAL: Database Architecture Discovery (ADR-040) - 8:12 AM
+
+**The Architectural Question from Lead Developer**:
+"When databases don't branch like code—where should alpha user data live?"
+
+**The Problem**:
+- Git branches = code (main branch vs production branch)
+- PostgreSQL databases = data (NEVER branch!)
+- Migration script created for `xian` user but breaks on `alfy` user (test laptop)
+- How do user preferences migrate across environments?
+
+**Code + Lead Dev Discussion**: 8:12 AM - 8:21 AM
+
+**The Critical Insight**: CODE ≠ DATA
+```
+Git Branches (CODE):
+- main → development work
+- production → for release/testing
+- Same schema, shared across all
+
+PostgreSQL Databases (DATA):
+- dev_laptop → PM's personal data (xian user, local dev DB)
+- test_laptop → Test user data (alfy user, local alpha DB)
+- NEVER merge - each environment separate
+```
+
+**Decision: Create ADR-040**
+**Title**: Local Database Per Environment Architecture
+
+**Key Architectural Principles**:
+1. Each environment has its own local database
+2. Git manages code, NOT data
+3. User data lives in `alpha_users.preferences` (JSONB field)
+4. Generic config in `config/PIPER.md` (shared across all)
+5. Migration to production is manual per user (intentional)
+
+**Benefits**:
+- Strong data isolation (security ✅)
+- Each tester controls their data ✅
+- No cross-contamination risk ✅
+- Simple rollback (local database only) ✅
+
+**Tradeoffs**:
+- Manual migration to production required
+- No automatic sync between environments
+- Testers must set up local database
+
+**Impact**: This architecture decision prevented confusion about data management and established clear separation between code (git) and data (postgres per environment)
+
 ### Architectural Quality Observations
 
 **Patterns Followed**:
@@ -466,6 +604,7 @@ TOTAL: 1/6 = 17% COMPLETE (Not acceptable!)
 - ✅ User isolation (all endpoints check user_id)
 - ✅ JWT authentication (consistent across endpoints)
 - ✅ Test infrastructure (proper async handling)
+- ✅ Database architecture decision (ADR-040)
 
 **Red Flags Found**: NONE
 - Security review: Clean
@@ -498,6 +637,41 @@ TOTAL: 1/6 = 17% COMPLETE (Not acceptable!)
 | Document processing (#290) | ✅ COMPLETE | 6/6 tests passing (34.17s) |
 | **All P0 Blockers** | ✅ **COMPLETE** | **READY FOR EXTERNAL TESTING** |
 
+### Critical Technical Discovery: FK Constraint Issue (12:45 PM - 1:00 PM)
+
+**Problem Found During Manual Testing**:
+- Logout endpoint returned 200 OK
+- But JWT token NOT blacklisted after logout
+- Token should return 401 on reuse
+
+**Root Cause**:
+```
+FK Constraint Error:
+insert or update on table "token_blacklist" violates foreign key constraint
+Key (user_id)=(3f4593ae...) is not present in table "users"
+```
+
+**The Mismatch**:
+- `token_blacklist.user_id` has FK to `users.id`
+- But alpha users in `alpha_users` table!
+- Xian exists in `alpha_users`, NOT `users`
+- This is Issue #263 (UUID migration) coming back
+
+**Decision Made**:
+1. **Temporarily drop FK constraint** for alpha testing
+2. **Document as technical debt** (Issue #291)
+3. **Create follow-up issue** to re-add after #263
+4. **Note in #263** that this is blocking
+
+**Why This Matters**:
+- Manual testing found critical bug that unit tests MISSED
+- Heavy mocking in tests hid the real integration problem
+- "Working" code had silent failure in production use
+- This validates the PM's instinct about manual verification
+
+**Lesson**:
+"Tests passing ≠ Feature working" - Manual verification essential when heavy mocking used.
+
 ### What Worked Exceptionally Well
 
 **1. New Lead Developer Onboarding** ⭐⭐⭐⭐⭐
@@ -505,7 +679,8 @@ TOTAL: 1/6 = 17% COMPLETE (Not acceptable!)
 - Essential briefings read immediately
 - Methodologies understood quickly
 - Gameplan created in first 45 minutes
-- Agent prompts followed template rigorously
+- Agent prompts followed template v10.2 rigorously
+- Architecture discussion quality high (ADR-040 created)
 
 **2. Completion Matrix Enforcement** ⭐⭐⭐⭐⭐
 - Prevented 80% pattern completely
@@ -604,15 +779,70 @@ TOTAL: 1/6 = 17% COMPLETE (Not acceptable!)
 **Next Tester**: Beatrice (external alpha)
 **System Status**: READY FOR EXTERNAL TESTING ✅
 
+### Critical Methodological Failure: Session Log Discipline (5:43 PM Discovery)
+
+**What Happened**:
+- Lead Developer created session log artifact at 6:25 AM
+- NEVER updated it throughout the day (9+ hour gap!)
+- Discovered missing log at 5:43 PM (10 hours later)
+- Only had chat transcript, not log artifact
+
+**Root Causes**:
+1. Didn't read session-log-instructions.md
+2. Didn't ask "Is there an existing log?"
+3. Treated artifact as "nice to have" not "mandatory infrastructure"
+4. No verification step after creating log
+5. Assumed new log was correct approach
+
+**PM's Reflection**:
+"I don't know if you can reconstruct all the entries you missed since you started the log."
+
+**Lead Developer's Assessment**:
+"MAJOR FAILURE - Session logs are non-negotiable infrastructure"
+
+**Lesson for Future Sessions**:
+- ✅ Create session log FIRST (before any work)
+- ✅ Update at EACH major milestone
+- ✅ Verify no existing log first
+- ✅ Read session-log-instructions.md
+- ✅ Never assume the process
+
+**Commitments Made**:
+- Session log mandatory first action
+- Update at every major checkpoint
+- Perfect discipline going forward
+- No excuses
+
+**Why This Matters**:
+Session logs are the institutional memory. Missing 10 hours of a 13-hour sprint creates gaps in understanding decision-making and process flow.
+
 ---
 
 **Log Type**: P0 Blockers Sprint Completion & Alpha Launch Readiness
 **Confidence Level**: Very High (comprehensive testing, security review, architectural assessment)
 **Ready for**: External alpha testing with first external tester (Beatrice)
-**Date Completed**: November 2, 2025
+**Date Completed**: November 4, 2025
 
 ---
 
-*This omnibus log documents a historic day of coordinated multi-agent development that transformed the system from "P0 blockers preventing external testing" to "READY FOR EXTERNAL ALPHA TESTING" in a single day. The completion matrix, archaeological discovery, and parallel execution methodologies proved their value at scale.*
+*This omnibus log documents a historic day of coordinated multi-agent development that transformed the system from "P0 blockers preventing external testing" to "READY FOR EXTERNAL ALPHA TESTING" in a single day.*
 
-*Inchworm Position: 2.9.3.3.2.7 (P0 Blockers Complete)*
+**Key Achievements**:
+- Completion matrix enforcement prevented 80% pattern (hero of the day)
+- Archaeological discovery saved ~6 hours of work
+- ADR-040 established CODE ≠ DATA architecture principle
+- Manual testing found critical FK constraint bug (tests missed it!)
+- All 4 P0 blockers resolved, 27/27 tests passing
+
+**Methodology Breakthroughs**:
+- Completion matrix at every checkpoint = mandatory discipline
+- Test file = contract (no exceptions)
+- Manual verification essential (mocking hides issues)
+- Time Lord philosophy must be absolute (no time estimates)
+- Session logs are non-negotiable infrastructure
+
+**Technical Debt Properly Tracked**:
+- Issue #291: Re-add FK constraint (post-#263)
+- Issue #292: Integration tests (reduce mocking)
+
+*Inchworm Position: 2.9.3.3.2.7.2 (All P0 Complete, Alpha Ready)*
