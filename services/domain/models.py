@@ -15,6 +15,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
+# Import Item primitive for Todo to extend
+from services.domain.primitives import Item
+
 # Import shared types for consistency
 from services.shared_types import (
     EdgeType,
@@ -942,16 +945,39 @@ class ListItem:
         }
 
 
-# PM-081: Refactored Todo as standalone atomic domain object
+# PM-081: Refactored Todo to extend Item primitive (Phase 2)
 @dataclass
-class Todo:
-    """Standalone Todo domain object - no coupling to TodoList"""
+class Todo(Item):
+    """A todo is an Item that can be completed and has priority.
 
-    id: str = field(default_factory=lambda: str(uuid4()))
-    title: str = ""
+    Extends Item with todo-specific properties.
+    Inherits from Item: id, text, position, list_id, created_at, updated_at
+
+    Design Decision: Todo IS-A Item. This enables todos to use all
+    generic Item operations (reordering, text updates) while adding
+    todo-specific behavior (completion, priority).
+
+    Examples:
+        >>> todo = Todo(text="Review PR", priority="high")
+        >>> assert isinstance(todo, Item)  # Todo IS-A Item
+        >>> assert todo.text == "Review PR"
+        >>> todo.complete()  # Todo-specific method
+        >>> assert todo.completed is True
+    """
+
+    # Inherited from Item (do NOT redefine):
+    # - id: str
+    # - text: str (was 'title')
+    # - position: int
+    # - list_id: Optional[str]
+    # - created_at: datetime
+    # - updated_at: datetime
+
+    # Todo-specific fields only:
     description: str = ""
     priority: str = "medium"  # low, medium, high, urgent
     status: str = "pending"  # pending, in_progress, completed, cancelled
+    completed: bool = False
     due_date: Optional[datetime] = None
     tags: List[str] = field(default_factory=list)
     assignee_id: Optional[str] = None
@@ -959,19 +985,49 @@ class Todo:
     # Metadata for PM-040 Knowledge Graph integration
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    # Timestamps
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
+    # Completion timestamp
     completed_at: Optional[datetime] = None
+
+    @property
+    def title(self) -> str:
+        """Backward compatibility: title maps to text.
+
+        DEPRECATED: Use .text instead.
+        This property exists for backward compatibility during migration.
+        """
+        return self.text
+
+    @title.setter
+    def title(self, value: str):
+        """Backward compatibility: setting title sets text."""
+        self.text = value
+
+    def complete(self):
+        """Mark todo as complete."""
+        self.completed = True
+        self.completed_at = datetime.now()
+        self.status = "completed"
+        self.updated_at = datetime.now()
+
+    def reopen(self):
+        """Reopen completed todo."""
+        self.completed = False
+        self.completed_at = None
+        self.status = "pending"
+        self.updated_at = datetime.now()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "id": self.id,
-            "title": self.title,
+            "text": self.text,
+            "title": self.title,  # Backward compatibility
+            "position": self.position,
+            "list_id": self.list_id,
             "description": self.description,
             "priority": self.priority,
             "status": self.status,
+            "completed": self.completed,
             "due_date": self.due_date.isoformat() if self.due_date else None,
             "tags": self.tags,
             "assignee_id": self.assignee_id,
