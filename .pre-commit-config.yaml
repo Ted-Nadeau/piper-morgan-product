@@ -102,3 +102,25 @@ repos:
           Detects work files (reports, analysis, verification docs) in /tmp.
           These are ephemeral and will be lost. Must save to dev/active/ first.
           Prevents accidental loss of work products during development.
+      - id: check-init-py
+        name: Check __init__.py exists in services/
+        entry: .pre-commit-hooks/check-init-py.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: |
+          Ensures all services/ subdirectories with .py files have __init__.py.
+          Prevents Python 3.3+ namespace package issues that cause inconsistent
+          import behavior between development and strict validation contexts.
+      - id: check-manual-tests
+        name: Check for misnamed manual tests
+        entry: .pre-commit-hooks/check-manual-tests.sh
+        language: script
+        pass_filenames: false
+        files: '^tests/.*test.*\.py$'
+        stages: [pre-commit]
+        description: |
+          Detects manual test scripts incorrectly named with test_ prefix.
+          Manual tests (with load_dotenv, hardcoded IDs) should be named
+          manual_*.py or script_*.py to exclude from pytest collection.
