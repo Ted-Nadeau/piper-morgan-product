@@ -912,7 +912,8 @@ class ListMembershipDB(Base):
 
     # Relationships
     todo_list = relationship("TodoListDB", back_populates="memberships")
-    todo = relationship("TodoDB", back_populates="memberships")
+    # Disabled: TodoDB.memberships relationship disabled after foundation refactor
+    # todo = relationship("TodoDB", back_populates="memberships")
 
     # Strategic indexes for many-to-many queries
     __table_args__ = (
@@ -1479,9 +1480,11 @@ class TodoDB(ItemDB):
         back_populates="parent",
         cascade="all, delete-orphan",
     )
-    memberships = relationship(
-        "ListMembershipDB", back_populates="todo", cascade="all, delete-orphan"
-    )
+    # Disabled: list_memberships table was dropped in foundation/item-list-primitives refactor
+    # TODO: Re-enable after UniversalList migration is complete
+    # memberships = relationship(
+    #     "ListMembershipDB", back_populates="todo", cascade="all, delete-orphan"
+    # )
 
     # Comprehensive indexes for query performance
     # NOTE: Indexes on inherited fields (position, created_at, updated_at)

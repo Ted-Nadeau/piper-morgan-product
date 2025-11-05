@@ -138,6 +138,9 @@ class TodoManagementService:
             # Persist to database
             saved_todo = await todo_repo.create_todo(todo)
 
+            # Commit the transaction to persist to database
+            await session.commit()
+
             # Optional: Create knowledge node
             if self.knowledge_service:
                 try:
@@ -250,6 +253,9 @@ class TodoManagementService:
             # Complete todo
             completed_todo = await todo_repo.complete_todo(todo_id)
 
+            # Commit the transaction
+            await session.commit()
+
             return completed_todo
 
     async def reopen_todo(self, todo_id: UUID, user_id: str) -> Optional[Todo]:
@@ -276,6 +282,9 @@ class TodoManagementService:
 
             # Reopen todo
             reopened_todo = await todo_repo.reopen_todo(todo_id)
+
+            # Commit the transaction
+            await session.commit()
 
             return reopened_todo
 
@@ -310,15 +319,16 @@ class TodoManagementService:
             if todo.owner_id != user_id:
                 return None
 
-            # Update fields
+            # Prepare updates dict (repository expects dict, not object)
+            update_dict = {}
             for key, value in updates.items():
-                if hasattr(todo, key):
-                    setattr(todo, key, value)
+                update_dict[key] = value
 
-            todo.updated_at = datetime.utcnow()
+            # Save via repository (repository adds updated_at automatically)
+            updated_todo = await todo_repo.update_todo(str(todo.id), update_dict)
 
-            # Save
-            updated_todo = await todo_repo.update_todo(todo)
+            # Commit the transaction
+            await session.commit()
 
             return updated_todo
 
@@ -350,5 +360,8 @@ class TodoManagementService:
 
             # Delete
             await todo_repo.delete_todo(todo_id)
+
+            # Commit the transaction
+            await session.commit()
 
             return True
