@@ -53,12 +53,14 @@ if not credentials:
 ### Test 1: Invalid Token
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8001/auth/me \
   -H "Authorization: Bearer INVALID_TOKEN_12345"
 ```
 
 **Expected Response** (if exception handler worked):
+
 ```json
 {
   "message": "Let's try logging in again. Your session may have expired."
@@ -66,6 +68,7 @@ curl -X GET http://localhost:8001/auth/me \
 ```
 
 **Actual Response**:
+
 ```json
 {
   "detail": "Invalid token"
@@ -73,6 +76,7 @@ curl -X GET http://localhost:8001/auth/me \
 ```
 
 **Analysis**:
+
 - Response has `"detail"` key (not `"message"`)
 - Contains technical message (not friendly message)
 - This is from `APIError.details` field
@@ -81,11 +85,13 @@ curl -X GET http://localhost:8001/auth/me \
 ### Test 2: No Token
 
 **Request**:
+
 ```bash
 curl -X GET http://localhost:8001/auth/me
 ```
 
 **Expected Response** (if exception handler worked):
+
 ```json
 {
   "message": "Let's try logging in again. Your session may have expired."
@@ -93,6 +99,7 @@ curl -X GET http://localhost:8001/auth/me
 ```
 
 **Actual Response**:
+
 ```json
 {
   "detail": "Authentication required"
@@ -100,12 +107,14 @@ curl -X GET http://localhost:8001/auth/me
 ```
 
 **Analysis**:
+
 - Same pattern: `"detail"` key with technical message
 - Exception handler was **NOT invoked**
 
 ### Test 3: Valid Token (Control)
 
 **Request**:
+
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8001/auth/login \
   -H "Content-Type: application/json" \
@@ -116,6 +125,7 @@ curl -X GET http://localhost:8001/auth/me \
 ```
 
 **Response**:
+
 ```json
 {
   "user_id": "3f4593ae-5bc9-468d-b08d-8c4c02a5b963",
@@ -125,6 +135,7 @@ curl -X GET http://localhost:8001/auth/me \
 ```
 
 **Analysis**:
+
 - Auth works correctly when valid token provided
 - Confirms the endpoint and dependency are functioning
 
@@ -135,6 +146,7 @@ curl -X GET http://localhost:8001/auth/me \
 ### Where the Technical Message Comes From
 
 **Source Code** (auth_middleware.py, line 241):
+
 ```python
 raise APIError(
     status_code=401,
@@ -144,6 +156,7 @@ raise APIError(
 ```
 
 **What's Happening**:
+
 1. `get_current_user()` dependency raises `APIError`
 2. FastAPI's dependency error handler catches it
 3. FastAPI extracts `APIError.details` dict
@@ -165,6 +178,7 @@ HTTP Request
 ```
 
 **Confirmation**: The response structure proves this
+
 - We return `{"message": "..."}` from exception handler
 - FastAPI returns `{"detail": "..."}` from dependency errors
 - The `"detail"` comes from `APIError.details` field
@@ -175,12 +189,14 @@ HTTP Request
 ## Why @app.exception_handler Doesn't Catch Dependency Errors
 
 **FastAPI Architecture**:
+
 - Exception handlers wrap **route handler execution**
 - Dependencies execute **before entering route handler**
 - Dependency errors are caught by FastAPI's **internal dependency error handler**
 - App-level exception handlers only see exceptions from **inside the route handler**
 
 **Diagram**:
+
 ```
 ┌─────────────────────────────────────────┐
 │ FastAPI Internal Request Cycle          │
@@ -209,6 +225,7 @@ HTTP Request
 **This is NOT a bug** - it's how FastAPI/Starlette's request cycle works.
 
 **Evidence**:
+
 1. ✅ Exception handler code exists and is correct
 2. ✅ Auth middleware raises APIError correctly
 3. ✅ Test shows technical messages still returned
@@ -216,6 +233,7 @@ HTTP Request
 5. ✅ Two approaches tested (HTTPException and APIError), same result
 
 **Completion Status**:
+
 - **Achievable**: 4/6 = 67% (route handler exceptions via middleware)
 - **Unachievable**: 2/6 = 33% (dependency exceptions - architectural limitation)
 
@@ -228,16 +246,19 @@ HTTP Request
 To catch dependency-level auth errors, would need to:
 
 **Option A**: Move auth out of `Depends()` into route handler body
+
 - Invasive: 20+ routes need modification
 - Breaks FastAPI patterns
 - Not recommended
 
 **Option B**: Implement custom Starlette middleware at ASGI level
+
 - Complex: Below FastAPI abstraction layer
 - Risk of side effects
 - Out of scope for this issue
 
 **Option C**: Accept limitation and document it
+
 - Honest: 4/6 is true achievable ceiling
 - Clear: Users understand what works and what doesn't
 - Pragmatic: Focus effort on achievable improvements

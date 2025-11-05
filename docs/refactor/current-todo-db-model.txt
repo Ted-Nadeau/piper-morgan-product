@@ -1,0 +1,51 @@
+class TodoDB(Base):
+    """Database model for Todo with comprehensive indexing"""
+
+    __tablename__ = "todos"
+
+    # Primary key
+    id = Column(String, primary_key=True)
+
+    # Core fields
+    title = Column(String, nullable=False)
+    description = Column(Text, default="")
+    status = Column(Enum(TodoStatus), nullable=False, default=TodoStatus.PENDING)
+    priority = Column(Enum(TodoPriority), nullable=False, default=TodoPriority.MEDIUM)
+
+    # Hierarchical structure
+    parent_id = Column(String, ForeignKey("todos.id"))
+    position = Column(Integer, default=0, nullable=False)
+
+    # Scheduling
+    due_date = Column(DateTime)
+    reminder_date = Column(DateTime)
+    scheduled_date = Column(DateTime)
+
+    # Context and categorization
+    tags = Column(postgresql.JSONB, default=list)
+    project_id = Column(String, ForeignKey("projects.id"))
+    context = Column(String)  # @home, @work, etc.
+
+    # Progress tracking
+    estimated_minutes = Column(Integer)
+    actual_minutes = Column(Integer)
+    completion_notes = Column(Text, default="")
+
+    # PM-040 Knowledge Graph integration
+    list_metadata = Column(JSON, default=dict)
+    knowledge_node_id = Column(String)  # Link to Knowledge Graph
+    related_todos = Column(JSON, default=list)  # Array of todo IDs
+
+    # PM-034 Intent Classification integration
+    creation_intent = Column(String)
+    intent_confidence = Column(Float)
+
+    # External integrations
+    external_refs = Column(postgresql.JSONB, default=dict)  # {"github_issue": "123"}
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    completed_at = Column(DateTime)
+
+    # Ownership

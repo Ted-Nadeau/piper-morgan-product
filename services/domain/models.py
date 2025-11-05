@@ -15,6 +15,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
+# Import Item primitive for Todo to extend
+from services.domain.primitives import Item
+
 # Import shared types for consistency
 from services.shared_types import (
     EdgeType,
@@ -942,43 +945,150 @@ class ListItem:
         }
 
 
-# PM-081: Refactored Todo as standalone atomic domain object
+# PM-081: Refactored Todo to extend Item primitive (Phase 2)
 @dataclass
-class Todo:
-    """Standalone Todo domain object - no coupling to TodoList"""
+class Todo(Item):
+    """A todo is an Item that can be completed and has priority.
 
-    id: str = field(default_factory=lambda: str(uuid4()))
-    title: str = ""
+    Extends Item with todo-specific properties.
+    Inherits from Item: id, text, position, list_id, created_at, updated_at
+
+    Design Decision: Todo IS-A Item. This enables todos to use all
+    generic Item operations (reordering, text updates) while adding
+    todo-specific behavior (completion, priority).
+
+    Examples:
+        >>> todo = Todo(text="Review PR", priority="high")
+        >>> assert isinstance(todo, Item)  # Todo IS-A Item
+        >>> assert todo.text == "Review PR"
+        >>> todo.complete()  # Todo-specific method
+        >>> assert todo.completed is True
+    """
+
+    # Inherited from Item (do NOT redefine):
+    # - id: str
+    # - text: str (was 'title')
+    # - position: int
+    # - list_id: Optional[str]
+    # - created_at: datetime
+    # - updated_at: datetime
+
+    # Todo-specific fields (matching TodoDB):
+    # Core fields
     description: str = ""
     priority: str = "medium"  # low, medium, high, urgent
     status: str = "pending"  # pending, in_progress, completed, cancelled
-    due_date: Optional[datetime] = None
-    tags: List[str] = field(default_factory=list)
-    assignee_id: Optional[str] = None
+    completed: bool = False
 
-    # Metadata for PM-040 Knowledge Graph integration
+    # Hierarchical structure
+    parent_id: Optional[str] = None
+
+    # Scheduling
+    due_date: Optional[datetime] = None
+    reminder_date: Optional[datetime] = None
+    scheduled_date: Optional[datetime] = None
+
+    # Context and categorization
+    tags: List[str] = field(default_factory=list)
+    project_id: Optional[str] = None
+    context: Optional[str] = None  # @home, @work, etc.
+
+    # Progress tracking
+    estimated_minutes: Optional[int] = None
+    actual_minutes: Optional[int] = None
+    completion_notes: str = ""
+
+    # PM-040 Knowledge Graph integration
     metadata: Dict[str, Any] = field(default_factory=dict)
+    knowledge_node_id: Optional[str] = None
+    related_todos: List[str] = field(default_factory=list)
+
+    # PM-034 Intent Classification integration
+    creation_intent: Optional[str] = None
+    intent_confidence: Optional[float] = None
+
+    # External integrations
+    external_refs: Dict[str, Any] = field(default_factory=dict)
 
     # Timestamps
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
+
+    # Ownership
+    owner_id: Optional[str] = None
+    assigned_to: Optional[str] = None
+
+    @property
+    def title(self) -> str:
+        """Backward compatibility: title maps to text.
+
+        DEPRECATED: Use .text instead.
+        This property exists for backward compatibility during migration.
+        """
+        return self.text
+
+    @title.setter
+    def title(self, value: str):
+        """Backward compatibility: setting title sets text."""
+        self.text = value
+
+    def complete(self):
+        """Mark todo as complete."""
+        self.completed = True
+        self.completed_at = datetime.now()
+        self.status = "completed"
+        self.updated_at = datetime.now()
+
+    def reopen(self):
+        """Reopen completed todo."""
+        self.completed = False
+        self.completed_at = None
+        self.status = "pending"
+        self.updated_at = datetime.now()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
+            # Inherited from Item
             "id": self.id,
-            "title": self.title,
+            "text": self.text,
+            "title": self.title,  # Backward compatibility
+            "position": self.position,
+            "list_id": self.list_id,
+            # Core Todo fields
             "description": self.description,
             "priority": self.priority,
             "status": self.status,
+            "completed": self.completed,
+            # Hierarchical structure
+            "parent_id": self.parent_id,
+            # Scheduling
             "due_date": self.due_date.isoformat() if self.due_date else None,
+            "reminder_date": self.reminder_date.isoformat() if self.reminder_date else None,
+            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            # Context and categorization
             "tags": self.tags,
-            "assignee_id": self.assignee_id,
+            "project_id": self.project_id,
+            "context": self.context,
+            # Progress tracking
+            "estimated_minutes": self.estimated_minutes,
+            "actual_minutes": self.actual_minutes,
+            "completion_notes": self.completion_notes,
+            # Knowledge Graph integration
             "metadata": self.metadata,
+            "knowledge_node_id": self.knowledge_node_id,
+            "related_todos": self.related_todos,
+            # Intent Classification integration
+            "creation_intent": self.creation_intent,
+            "intent_confidence": self.intent_confidence,
+            # External integrations
+            "external_refs": self.external_refs,
+            # Timestamps
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            # Ownership
+            "owner_id": self.owner_id,
+            "assigned_to": self.assigned_to,
         }
 
 

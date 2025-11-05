@@ -1,0 +1,95 @@
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:128:    # Update todos table to remove enum constraints and use simple strings
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:130:    op.drop_constraint("todos_parent_id_fkey", "todos", type_="foreignkey")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:132:    # Create new todos table with string fields
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:134:        "todos_new",
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:153:        sa.Column("related_todos", sa.JSON(), nullable=True),
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:162:        sa.ForeignKeyConstraint(["parent_id"], ["todos_new.id"]),
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:167:    # Copy data from old todos table to new
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:170:        INSERT INTO todos_new
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:177:            completion_notes, metadata, knowledge_node_id, related_todos,
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:180:        FROM todos
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:187:    op.drop_table("todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:189:    # Rename new todos table
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:190:    op.rename_table("todos_new", "todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:192:    # Recreate all indexes for todos table
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:193:    op.create_index("idx_todos_owner_status", "todos", ["owner_id", "status"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:194:    op.create_index("idx_todos_owner_priority", "todos", ["owner_id", "priority"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:195:    op.create_index("idx_todos_assigned_status", "todos", ["assigned_to", "status"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:196:    op.create_index("idx_todos_due_date", "todos", ["due_date"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:197:    op.create_index("idx_todos_owner_due", "todos", ["owner_id", "due_date"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:198:    op.create_index("idx_todos_scheduled", "todos", ["scheduled_date"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:199:    op.create_index("idx_todos_reminder", "todos", ["reminder_date"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:200:    op.create_index("idx_todos_parent", "todos", ["parent_id"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:201:    op.create_index("idx_todos_parent_position", "todos", ["parent_id", "position"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:202:    op.create_index("idx_todos_context", "todos", ["context"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:203:    op.create_index("idx_todos_project", "todos", ["project_id"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:204:    op.create_index("idx_todos_tags", "todos", ["tags"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:205:    op.create_index("idx_todos_knowledge_node", "todos", ["knowledge_node_id"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:206:    op.create_index("idx_todos_creation_intent", "todos", ["creation_intent"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:207:    op.create_index("idx_todos_external_refs", "todos", ["external_refs"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:208:    op.create_index("idx_todos_owner_created", "todos", ["owner_id", "created_at"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:209:    op.create_index("idx_todos_owner_updated", "todos", ["owner_id", "updated_at"], unique=False)
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:219:    op.drop_index("idx_todos_owner_updated", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:220:    op.drop_index("idx_todos_owner_created", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:221:    op.drop_index("idx_todos_external_refs", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:222:    op.drop_index("idx_todos_creation_intent", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:223:    op.drop_index("idx_todos_knowledge_node", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:224:    op.drop_index("idx_todos_tags", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:225:    op.drop_index("idx_todos_project", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:226:    op.drop_index("idx_todos_context", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:227:    op.drop_index("idx_todos_parent_position", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:228:    op.drop_index("idx_todos_parent", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:229:    op.drop_index("idx_todos_reminder", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:230:    op.drop_index("idx_todos_scheduled", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:231:    op.drop_index("idx_todos_owner_due", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:232:    op.drop_index("idx_todos_due_date", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:233:    op.drop_index("idx_todos_assigned_status", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:234:    op.drop_index("idx_todos_owner_priority", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:235:    op.drop_index("idx_todos_owner_status", table_name="todos")
+alembic/versions/6m5s5d1t6500_universal_list_architecture_pm_081.py:256:    op.drop_table("todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:27:    todostatus_enum = postgresql.ENUM(
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:33:        name="todostatus",
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:35:    todostatus_enum.create(op.get_bind())
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:116:    # Create todos table
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:118:        "todos",
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:130:                name="todostatus",
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:158:        sa.Column("related_todos", sa.JSON(), nullable=True),  # Array of todo IDs
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:167:        sa.ForeignKeyConstraint(["parent_id"], ["todos.id"]),
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:195:        sa.ForeignKeyConstraint(["todo_id"], ["todos.id"]),
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:214:    op.create_index("idx_todos_owner_status", "todos", ["owner_id", "status"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:215:    op.create_index("idx_todos_owner_priority", "todos", ["owner_id", "priority"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:216:    op.create_index("idx_todos_assigned_status", "todos", ["assigned_to", "status"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:219:    op.create_index("idx_todos_due_date", "todos", ["due_date"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:220:    op.create_index("idx_todos_owner_due", "todos", ["owner_id", "due_date"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:221:    op.create_index("idx_todos_scheduled", "todos", ["scheduled_date"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:222:    op.create_index("idx_todos_reminder", "todos", ["reminder_date"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:225:    op.create_index("idx_todos_parent", "todos", ["parent_id"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:226:    op.create_index("idx_todos_parent_position", "todos", ["parent_id", "position"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:229:    op.create_index("idx_todos_context", "todos", ["context"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:230:    op.create_index("idx_todos_project", "todos", ["project_id"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:231:    op.create_index("idx_todos_tags", "todos", ["tags"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:234:    op.create_index("idx_todos_knowledge_node", "todos", ["knowledge_node_id"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:235:    op.create_index("idx_todos_creation_intent", "todos", ["creation_intent"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:238:    op.create_index("idx_todos_external_refs", "todos", ["external_refs"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:241:    op.create_index("idx_todos_owner_created", "todos", ["owner_id", "created_at"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:242:    op.create_index("idx_todos_owner_updated", "todos", ["owner_id", "updated_at"], unique=False)
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:288:    # Drop indexes for todos
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:289:    op.drop_index("idx_todos_owner_updated", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:290:    op.drop_index("idx_todos_owner_created", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:291:    op.drop_index("idx_todos_external_refs", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:292:    op.drop_index("idx_todos_creation_intent", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:293:    op.drop_index("idx_todos_knowledge_node", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:294:    op.drop_index("idx_todos_tags", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:295:    op.drop_index("idx_todos_project", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:296:    op.drop_index("idx_todos_context", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:297:    op.drop_index("idx_todos_parent_position", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:298:    op.drop_index("idx_todos_parent", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:299:    op.drop_index("idx_todos_reminder", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:300:    op.drop_index("idx_todos_scheduled", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:301:    op.drop_index("idx_todos_owner_due", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:302:    op.drop_index("idx_todos_due_date", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:303:    op.drop_index("idx_todos_assigned_status", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:304:    op.drop_index("idx_todos_owner_priority", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:305:    op.drop_index("idx_todos_owner_status", table_name="todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:316:    op.drop_table("todos")
+alembic/versions/ffns5hckf96d_add_todo_management_tables_pm_081.py:323:    op.execute("DROP TYPE IF EXISTS todostatus")

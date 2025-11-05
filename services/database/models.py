@@ -886,163 +886,6 @@ class TodoListDB(Base):
         )
 
 
-class TodoDB(Base):
-    """Database model for Todo with comprehensive indexing"""
-
-    __tablename__ = "todos"
-
-    # Primary key
-    id = Column(String, primary_key=True)
-
-    # Core fields
-    title = Column(String, nullable=False)
-    description = Column(Text, default="")
-    status = Column(Enum(TodoStatus), nullable=False, default=TodoStatus.PENDING)
-    priority = Column(Enum(TodoPriority), nullable=False, default=TodoPriority.MEDIUM)
-
-    # Hierarchical structure
-    parent_id = Column(String, ForeignKey("todos.id"))
-    position = Column(Integer, default=0, nullable=False)
-
-    # Scheduling
-    due_date = Column(DateTime)
-    reminder_date = Column(DateTime)
-    scheduled_date = Column(DateTime)
-
-    # Context and categorization
-    tags = Column(postgresql.JSONB, default=list)
-    project_id = Column(String, ForeignKey("projects.id"))
-    context = Column(String)  # @home, @work, etc.
-
-    # Progress tracking
-    estimated_minutes = Column(Integer)
-    actual_minutes = Column(Integer)
-    completion_notes = Column(Text, default="")
-
-    # PM-040 Knowledge Graph integration
-    list_metadata = Column(JSON, default=dict)
-    knowledge_node_id = Column(String)  # Link to Knowledge Graph
-    related_todos = Column(JSON, default=list)  # Array of todo IDs
-
-    # PM-034 Intent Classification integration
-    creation_intent = Column(String)
-    intent_confidence = Column(Float)
-
-    # External integrations
-    external_refs = Column(postgresql.JSONB, default=dict)  # {"github_issue": "123"}
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    completed_at = Column(DateTime)
-
-    # Ownership
-    owner_id = Column(String, nullable=False)
-    assigned_to = Column(String)
-
-    # Relationships
-    parent = relationship("TodoDB", remote_side=[id], back_populates="children")
-    children = relationship("TodoDB", back_populates="parent", cascade="all, delete-orphan")
-    memberships = relationship(
-        "ListMembershipDB", back_populates="todo", cascade="all, delete-orphan"
-    )
-
-    # Comprehensive indexes for query performance
-    __table_args__ = (
-        # Core query patterns
-        Index("idx_todos_owner_status", "owner_id", "status"),
-        Index("idx_todos_owner_priority", "owner_id", "priority"),
-        Index("idx_todos_assigned_status", "assigned_to", "status"),
-        # Date-based queries
-        Index("idx_todos_due_date", "due_date"),
-        Index("idx_todos_owner_due", "owner_id", "due_date"),
-        Index("idx_todos_scheduled", "scheduled_date"),
-        Index("idx_todos_reminder", "reminder_date"),
-        # Hierarchical queries
-        Index("idx_todos_parent", "parent_id"),
-        Index("idx_todos_parent_position", "parent_id", "position"),
-        # Context and categorization
-        Index("idx_todos_context", "context"),
-        Index("idx_todos_project", "project_id"),
-        Index("idx_todos_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
-        # PM-040/PM-034 integration
-        Index("idx_todos_knowledge_node", "knowledge_node_id"),
-        Index("idx_todos_creation_intent", "creation_intent"),
-        # External references
-        Index(
-            "idx_todos_external_refs", "external_refs", postgresql_using="gin"
-        ),  # GIN index for JSON search
-        # Performance queries
-        Index("idx_todos_owner_created", "owner_id", "created_at"),
-        Index("idx_todos_owner_updated", "owner_id", "updated_at"),
-    )
-
-    def to_domain(self) -> domain.Todo:
-        """Convert to domain model"""
-        return domain.Todo(
-            id=self.id,
-            title=self.title,
-            description=self.description,
-            status=self.status,
-            priority=self.priority,
-            parent_id=self.parent_id,
-            position=self.position,
-            due_date=self.due_date,
-            reminder_date=self.reminder_date,
-            scheduled_date=self.scheduled_date,
-            tags=self.tags or [],
-            project_id=self.project_id,
-            context=self.context,
-            estimated_minutes=self.estimated_minutes,
-            actual_minutes=self.actual_minutes,
-            completion_notes=self.completion_notes,
-            metadata=self.list_metadata or {},
-            knowledge_node_id=self.knowledge_node_id,
-            related_todos=self.related_todos or [],
-            creation_intent=self.creation_intent,
-            intent_confidence=self.intent_confidence,
-            external_refs=self.external_refs or {},
-            created_at=self.created_at,
-            updated_at=self.updated_at,
-            completed_at=self.completed_at,
-            owner_id=self.owner_id,
-            assigned_to=self.assigned_to,
-        )
-
-    @classmethod
-    def from_domain(cls, todo: domain.Todo) -> "TodoDB":
-        """Create from domain model"""
-        return cls(
-            id=todo.id,
-            title=todo.title,
-            description=todo.description,
-            status=todo.status,
-            priority=todo.priority,
-            parent_id=todo.parent_id,
-            position=todo.position,
-            due_date=todo.due_date,
-            reminder_date=todo.reminder_date,
-            scheduled_date=todo.scheduled_date,
-            tags=todo.tags,
-            project_id=todo.project_id,
-            context=todo.context,
-            estimated_minutes=todo.estimated_minutes,
-            actual_minutes=todo.actual_minutes,
-            completion_notes=todo.completion_notes,
-            list_metadata=todo.metadata,
-            knowledge_node_id=todo.knowledge_node_id,
-            related_todos=todo.related_todos,
-            creation_intent=todo.creation_intent,
-            intent_confidence=todo.intent_confidence,
-            external_refs=todo.external_refs,
-            created_at=todo.created_at,
-            updated_at=todo.updated_at,
-            completed_at=todo.completed_at,
-            owner_id=todo.owner_id,
-            assigned_to=todo.assigned_to,
-        )
-
-
 class ListMembershipDB(Base):
     """Database model for many-to-many Todo-to-List relationships"""
 
@@ -1053,7 +896,7 @@ class ListMembershipDB(Base):
 
     # Foreign keys
     list_id = Column(String, ForeignKey("todo_lists.id"), nullable=False)
-    todo_id = Column(String, ForeignKey("todos.id"), nullable=False)
+    todo_id = Column(String, ForeignKey("todo_items.id"), nullable=False)
 
     # Position tracking
     position = Column(Integer, default=0, nullable=False)
@@ -1482,3 +1325,274 @@ class TokenBlacklist(Base):
         Index("idx_token_blacklist_user_id", "user_id"),
         Index("idx_token_blacklist_user_expires", "user_id", "expires_at"),
     )
+
+
+# ============================================================================
+# PRIMITIVE DOMAIN MODELS (Phase 1: Foundation)
+# ============================================================================
+
+
+class ItemDB(Base):
+    """
+    Database representation of universal Item primitive.
+
+    This is the base table for all item types using SQLAlchemy's
+    polymorphic inheritance (joined table inheritance pattern).
+
+    Future item types (Todo, ShoppingItem, etc.) will have their own tables
+    that join to this one via foreign key on id.
+
+    Phase 1: Create base items table
+    Phase 2: Create todo_items table (joins to items)
+    Future: Other item types can follow same pattern
+    """
+
+    __tablename__ = "items"
+
+    # Core fields
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    text = Column(String, nullable=False)  # Universal property - all items have text
+    position = Column(Integer, default=0, nullable=False)  # Order within list
+    list_id = Column(String, nullable=True)  # Which list contains this item
+    item_type = Column(String(50), nullable=False, default="item")  # Discriminator
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Polymorphic configuration for future inheritance
+    __mapper_args__ = {
+        "polymorphic_identity": "item",
+        "polymorphic_on": item_type,
+    }
+
+    # Indexes for performance
+    __table_args__ = (
+        Index("idx_items_list_id", "list_id"),
+        Index("idx_items_item_type", "item_type"),
+        Index("idx_items_list_position", "list_id", "position"),
+        Index("idx_items_created", "created_at"),
+    )
+
+    def to_domain(self) -> "domain.Item":
+        """Convert database model to domain model."""
+        # Import here to avoid circular imports
+        from services.domain.primitives import Item
+
+        return Item(
+            id=self.id,
+            text=self.text,
+            position=self.position,
+            list_id=self.list_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+    @classmethod
+    def from_domain(cls, item: "domain.Item") -> "ItemDB":
+        """Convert domain model to database model."""
+        return cls(
+            id=item.id,
+            text=item.text,
+            position=item.position,
+            list_id=item.list_id,
+            item_type="item",  # Base type
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+        )
+
+
+class TodoDB(ItemDB):
+    """Database model for Todo using polymorphic inheritance.
+
+    Extends ItemDB using SQLAlchemy's joined table inheritance:
+    - Base data in 'items' table (id, text, position, list_id, created_at, updated_at)
+    - Todo-specific data in 'todo_items' table
+    - Joined via foreign key on id
+
+    Design: TodoDB IS-A ItemDB, matching domain's Todo IS-A Item
+    """
+
+    __tablename__ = "todo_items"
+
+    # Primary key is also foreign key to items.id
+    id = Column(String, ForeignKey("items.id"), primary_key=True)
+
+    # Todo-specific fields only (NOT duplicating ItemDB fields)
+    # Note: text (was title), position, created_at, updated_at are inherited from ItemDB
+
+    # Core Todo fields
+    description = Column(Text, default="")
+    status = Column(String(11), nullable=False, default="pending")  # Changed from Enum to String
+    priority = Column(String(6), nullable=False, default="medium")  # Changed from Enum to String
+    completed = Column(Boolean, default=False, nullable=False)
+
+    # Hierarchical structure
+    parent_id = Column(String, ForeignKey("todo_items.id"))
+
+    # Scheduling
+    due_date = Column(DateTime)
+    reminder_date = Column(DateTime)
+    scheduled_date = Column(DateTime)
+
+    # Context and categorization
+    tags = Column(postgresql.JSONB, default=list)
+    project_id = Column(String, ForeignKey("projects.id"))
+    context = Column(String)  # @home, @work, etc.
+
+    # Progress tracking
+    estimated_minutes = Column(Integer)
+    actual_minutes = Column(Integer)
+    completion_notes = Column(Text, default="")
+
+    # PM-040 Knowledge Graph integration
+    list_metadata = Column(JSON, default=dict)
+    knowledge_node_id = Column(String)  # Link to Knowledge Graph
+    related_todos = Column(JSON, default=list)  # Array of todo IDs
+
+    # PM-034 Intent Classification integration
+    creation_intent = Column(String)
+    intent_confidence = Column(Float)
+
+    # External integrations
+    external_refs = Column(postgresql.JSONB, default=dict)  # {"github_issue": "123"}
+
+    # Timestamps (inherited: created_at, updated_at from ItemDB)
+    completed_at = Column(DateTime)
+
+    # Ownership
+    owner_id = Column(String, nullable=False)
+    assigned_to = Column(String)
+
+    # Polymorphic configuration - TodoDB is a specialized ItemDB
+    __mapper_args__ = {
+        "polymorphic_identity": "todo",
+    }
+
+    # Relationships
+    parent = relationship(
+        "TodoDB", remote_side=[id], foreign_keys="[TodoDB.parent_id]", back_populates="children"
+    )
+    children = relationship(
+        "TodoDB",
+        foreign_keys="[TodoDB.parent_id]",
+        back_populates="parent",
+        cascade="all, delete-orphan",
+    )
+    memberships = relationship(
+        "ListMembershipDB", back_populates="todo", cascade="all, delete-orphan"
+    )
+
+    # Comprehensive indexes for query performance
+    # NOTE: Indexes on inherited fields (position, created_at, updated_at)
+    # belong in items table, not todo_items table
+    __table_args__ = (
+        # Core query patterns
+        Index("idx_todos_owner_status", "owner_id", "status"),
+        Index("idx_todos_owner_priority", "owner_id", "priority"),
+        Index("idx_todos_assigned_status", "assigned_to", "status"),
+        # Date-based queries
+        Index("idx_todos_due_date", "due_date"),
+        Index("idx_todos_owner_due", "owner_id", "due_date"),
+        Index("idx_todos_scheduled", "scheduled_date"),
+        Index("idx_todos_reminder", "reminder_date"),
+        # Hierarchical queries
+        Index("idx_todos_parent", "parent_id"),
+        # Context and categorization
+        Index("idx_todos_context", "context"),
+        Index("idx_todos_project", "project_id"),
+        Index("idx_todos_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
+        # PM-040/PM-034 integration
+        Index("idx_todos_knowledge_node", "knowledge_node_id"),
+        Index("idx_todos_creation_intent", "creation_intent"),
+        # External references
+        Index(
+            "idx_todos_external_refs", "external_refs", postgresql_using="gin"
+        ),  # GIN index for JSON search
+    )
+
+    def to_domain(self) -> domain.Todo:
+        """Convert to domain model.
+
+        Maps database fields to domain model, including inherited ItemDB fields.
+        """
+        return domain.Todo(
+            # Inherited from ItemDB
+            id=self.id,
+            text=self.text,  # ItemDB uses 'text', domain Todo has 'text' and 'title' property
+            position=self.position,
+            list_id=self.list_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            # Todo-specific fields
+            description=self.description,
+            status=self.status,
+            priority=self.priority,
+            completed=self.completed,
+            parent_id=self.parent_id,
+            due_date=self.due_date,
+            reminder_date=self.reminder_date,
+            scheduled_date=self.scheduled_date,
+            tags=self.tags or [],
+            project_id=self.project_id,
+            context=self.context,
+            estimated_minutes=self.estimated_minutes,
+            actual_minutes=self.actual_minutes,
+            completion_notes=self.completion_notes,
+            metadata=self.list_metadata or {},
+            knowledge_node_id=self.knowledge_node_id,
+            related_todos=self.related_todos or [],
+            creation_intent=self.creation_intent,
+            intent_confidence=self.intent_confidence,
+            external_refs=self.external_refs or {},
+            completed_at=self.completed_at,
+            owner_id=self.owner_id,
+            assigned_to=self.assigned_to,
+        )
+
+    @classmethod
+    def from_domain(cls, todo: domain.Todo) -> "TodoDB":
+        """Create from domain model.
+
+        Maps domain model fields to database, including inherited ItemDB fields.
+        Note: ItemDB fields (id, text, position, list_id) are set automatically
+        by SQLAlchemy's polymorphic inheritance.
+        """
+        return cls(
+            # Inherited from ItemDB (polymorphic inheritance handles these)
+            id=todo.id,
+            text=todo.text,  # Use text, not title
+            position=todo.position,
+            list_id=todo.list_id,
+            item_type="todo",  # Polymorphic discriminator
+            created_at=todo.created_at,
+            updated_at=todo.updated_at,
+            # Todo-specific fields
+            description=todo.description,
+            status=todo.status,
+            priority=todo.priority,
+            completed=todo.completed,
+            parent_id=todo.parent_id,
+            due_date=todo.due_date,
+            reminder_date=todo.reminder_date,
+            scheduled_date=todo.scheduled_date,
+            tags=todo.tags,
+            project_id=todo.project_id,
+            context=todo.context,
+            estimated_minutes=todo.estimated_minutes,
+            actual_minutes=todo.actual_minutes,
+            completion_notes=todo.completion_notes,
+            list_metadata=todo.metadata,
+            knowledge_node_id=todo.knowledge_node_id,
+            related_todos=todo.related_todos,
+            creation_intent=todo.creation_intent,
+            intent_confidence=todo.intent_confidence,
+            external_refs=todo.external_refs,
+            completed_at=todo.completed_at,
+            owner_id=todo.owner_id,
+            assigned_to=todo.assigned_to,
+        )
+
+
+# Note: ListDB already exists at line 1126 with full implementation
+# It includes all fields from domain.List plus owner_id, shared_with, etc.

@@ -1,6 +1,6 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: October 13, 2025
+**Last Updated**: November 4, 2025
 **Total ADRs**: 42
 **Status**: Active
 
@@ -33,6 +33,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-005: Eliminate Dual Repository Implementations](adr-005-eliminate-dual-repository-implementations.md) - Repository pattern standardization
 - [ADR-006: Standardize Async Session Management](adr-006-standardize-async-session-management.md) - Session management patterns
 - [ADR-025: Unified Session Management Architecture](adr-025-unified-session-management.md) - Comprehensive session management
+- [ADR-041: Domain Primitives - Item and List Refactoring](adr-041-domain-primitives-refactoring.md) - Polymorphic inheritance with Item/List as universal primitives
 
 ### Infrastructure & Operations
 
@@ -42,6 +43,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-010: Configuration Patterns](adr-010-configuration-patterns.md) - Configuration management
 - [ADR-012: Protocol Ready JWT Authentication](adr-012-protocol-ready-jwt-authentication.md) - Authentication architecture
 - [ADR-027: Configuration Architecture: User vs. System Separation](adr-027-configuration-architecture-user-vs-system-separation.md) - Configuration architecture (may partly supersede ADR-010?)
+- [ADR-040: Local Database Per Environment](adr-040-local-database-per-environment.md) - CODE ≠ DATA architecture (git-managed code, PostgreSQL per environment data)
 
 ### Testing & Quality Assurance
 
@@ -83,7 +85,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-040)
+1. Use next sequential number (next: ADR-042)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -97,7 +99,9 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
-- **October 13, 2025**: Updated index with ADR-037, ADR-038, ADR-039 (PROOF-8 audit) - Total now 42 ADRs
+- **November 4, 2025**: Added ADR-041 (Domain Primitives - Item and List Refactoring) - Polymorphic inheritance with Item/List as universal primitives - Total now 42 ADRs (000-041)
+- **November 4, 2025**: Added ADR-040 (Local Database Per Environment) - CODE ≠ DATA architecture for Sprint A8 P0 blockers
+- **October 13, 2025**: Updated index with ADR-037, ADR-038, ADR-039 (PROOF-8 audit) - Total was 42 ADRs
 - **October 7, 2025**: Added ADR-039 (Canonical Handler Fast-Path Pattern) - Dual-path intent architecture from GREAT-4
 - **October 2-4, 2025**: Updated ADR-034 (Plugin Architecture) with implementation verification (GREAT-3)
 - **September 30, 2025**: Added ADR-038 (Spatial Intelligence Architecture Patterns) - Three validated spatial patterns from GREAT-2
@@ -120,3 +124,4 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-037: Test-Driven Locking Strategy](adr-037-test-driven-locking.md) - Lock critical infrastructure with tests
 - [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Three validated spatial patterns (Granular, Embedded, Delegated MCP)
 - [ADR-039: Canonical Handler Fast-Path Pattern](adr-039-canonical-handler-pattern.md) - Dual-path architecture for intent classification
+- [ADR-040: Local Database Per Environment](adr-040-local-database-per-environment.md) - CODE ≠ DATA architecture (git-managed code, PostgreSQL per environment data)

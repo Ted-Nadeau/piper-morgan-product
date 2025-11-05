@@ -270,11 +270,11 @@ class TodoRepository(BaseRepository):
         context: Optional[str] = None,
         project_id: Optional[str] = None,
     ) -> List[domain.Todo]:
-        """Search todos by title/description with optional context filtering"""
+        """Search todos by text/description with optional context filtering"""
         search_query = select(TodoDB).where(
             and_(
                 TodoDB.owner_id == owner_id,
-                or_(TodoDB.title.ilike(f"%{query}%"), TodoDB.description.ilike(f"%{query}%")),
+                or_(TodoDB.text.ilike(f"%{query}%"), TodoDB.description.ilike(f"%{query}%")),
             )
         )
 
@@ -446,7 +446,7 @@ class ListMembershipRepository(BaseRepository):
         elif ordering_strategy == OrderingStrategy.CREATED_DATE:
             query = query.order_by(TodoDB.created_at.desc())
         elif ordering_strategy == OrderingStrategy.ALPHABETICAL:
-            query = query.order_by(TodoDB.title.asc())
+            query = query.order_by(TodoDB.text.asc())
         elif ordering_strategy == OrderingStrategy.STATUS:
             query = query.order_by(TodoDB.status.asc(), ListMembershipDB.position.asc())
 

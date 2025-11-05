@@ -1,0 +1,3 @@
+Test baseline status: Import errors prevent running tests (not todo-specific)
+649 tests collected with -k 'todo'
+Import errors in test_api_degradation_integration.py and test_api_query_integration.py
