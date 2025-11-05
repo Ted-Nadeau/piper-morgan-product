@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
 **Last Updated**: November 4, 2025
-**Total ADRs**: 43
+**Total ADRs**: 42
 **Status**: Active
 
 ## Overview
@@ -33,6 +33,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-005: Eliminate Dual Repository Implementations](adr-005-eliminate-dual-repository-implementations.md) - Repository pattern standardization
 - [ADR-006: Standardize Async Session Management](adr-006-standardize-async-session-management.md) - Session management patterns
 - [ADR-025: Unified Session Management Architecture](adr-025-unified-session-management.md) - Comprehensive session management
+- [ADR-041: Domain Primitives - Item and List Refactoring](adr-041-domain-primitives-refactoring.md) - Polymorphic inheritance with Item/List as universal primitives
 
 ### Infrastructure & Operations
 
@@ -75,8 +76,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Total**: 43 ADRs
-- **Accepted**: 43 ADRs (all current ADRs are accepted/implemented)
+- **Total**: 42 ADRs
+- **Accepted**: 42 ADRs (all current ADRs are accepted/implemented)
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -84,7 +85,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-041)
+1. Use next sequential number (next: ADR-042)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -98,7 +99,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
-- **November 4, 2025**: Added ADR-040 (Local Database Per Environment) - CODE ≠ DATA architecture for Sprint A8 P0 blockers - Total now 43 ADRs
+- **November 4, 2025**: Added ADR-041 (Domain Primitives - Item and List Refactoring) - Polymorphic inheritance with Item/List as universal primitives - Total now 42 ADRs (000-041)
+- **November 4, 2025**: Added ADR-040 (Local Database Per Environment) - CODE ≠ DATA architecture for Sprint A8 P0 blockers
 - **October 13, 2025**: Updated index with ADR-037, ADR-038, ADR-039 (PROOF-8 audit) - Total was 42 ADRs
 - **October 7, 2025**: Added ADR-039 (Canonical Handler Fast-Path Pattern) - Dual-path intent architecture from GREAT-4
 - **October 2-4, 2025**: Updated ADR-034 (Plugin Architecture) with implementation verification (GREAT-3)

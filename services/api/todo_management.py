@@ -150,14 +150,16 @@ class TodoListListResponse(BaseModel):
 # Dependency injection for services
 async def get_todo_service():
     """Get todo management service instance"""
-    # TODO: Implement TodoManagementService
-    return None
+    from services.todo_service import TodoService
+
+    return TodoService()
 
 
 async def get_universal_list_service():
     """Get universal list service instance"""
-    # TODO: Implement UniversalListService
-    return None
+    from services.item_service import ItemService
+
+    return ItemService()
 
 
 async def get_knowledge_graph_service():

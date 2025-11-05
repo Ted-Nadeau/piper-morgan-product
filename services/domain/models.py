@@ -973,20 +973,49 @@ class Todo(Item):
     # - created_at: datetime
     # - updated_at: datetime
 
-    # Todo-specific fields only:
+    # Todo-specific fields (matching TodoDB):
+    # Core fields
     description: str = ""
     priority: str = "medium"  # low, medium, high, urgent
     status: str = "pending"  # pending, in_progress, completed, cancelled
     completed: bool = False
+
+    # Hierarchical structure
+    parent_id: Optional[str] = None
+
+    # Scheduling
     due_date: Optional[datetime] = None
+    reminder_date: Optional[datetime] = None
+    scheduled_date: Optional[datetime] = None
+
+    # Context and categorization
     tags: List[str] = field(default_factory=list)
-    assignee_id: Optional[str] = None
+    project_id: Optional[str] = None
+    context: Optional[str] = None  # @home, @work, etc.
 
-    # Metadata for PM-040 Knowledge Graph integration
+    # Progress tracking
+    estimated_minutes: Optional[int] = None
+    actual_minutes: Optional[int] = None
+    completion_notes: str = ""
+
+    # PM-040 Knowledge Graph integration
     metadata: Dict[str, Any] = field(default_factory=dict)
+    knowledge_node_id: Optional[str] = None
+    related_todos: List[str] = field(default_factory=list)
 
-    # Completion timestamp
+    # PM-034 Intent Classification integration
+    creation_intent: Optional[str] = None
+    intent_confidence: Optional[float] = None
+
+    # External integrations
+    external_refs: Dict[str, Any] = field(default_factory=dict)
+
+    # Timestamps
     completed_at: Optional[datetime] = None
+
+    # Ownership
+    owner_id: Optional[str] = None
+    assigned_to: Optional[str] = None
 
     @property
     def title(self) -> str:
@@ -1019,22 +1048,47 @@ class Todo(Item):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
+            # Inherited from Item
             "id": self.id,
             "text": self.text,
             "title": self.title,  # Backward compatibility
             "position": self.position,
             "list_id": self.list_id,
+            # Core Todo fields
             "description": self.description,
             "priority": self.priority,
             "status": self.status,
             "completed": self.completed,
+            # Hierarchical structure
+            "parent_id": self.parent_id,
+            # Scheduling
             "due_date": self.due_date.isoformat() if self.due_date else None,
+            "reminder_date": self.reminder_date.isoformat() if self.reminder_date else None,
+            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            # Context and categorization
             "tags": self.tags,
-            "assignee_id": self.assignee_id,
+            "project_id": self.project_id,
+            "context": self.context,
+            # Progress tracking
+            "estimated_minutes": self.estimated_minutes,
+            "actual_minutes": self.actual_minutes,
+            "completion_notes": self.completion_notes,
+            # Knowledge Graph integration
             "metadata": self.metadata,
+            "knowledge_node_id": self.knowledge_node_id,
+            "related_todos": self.related_todos,
+            # Intent Classification integration
+            "creation_intent": self.creation_intent,
+            "intent_confidence": self.intent_confidence,
+            # External integrations
+            "external_refs": self.external_refs,
+            # Timestamps
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            # Ownership
+            "owner_id": self.owner_id,
+            "assigned_to": self.assigned_to,
         }
 
 
