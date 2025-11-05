@@ -120,8 +120,9 @@ class TodoManagementService:
             todo_repo = TodoRepository(session)
 
             # Create todo domain object
+            # Note: Convert UUID to string for database (ItemDB.id is String type)
             todo = Todo(
-                id=uuid4(),
+                id=str(uuid4()),
                 text=text.strip(),
                 priority=priority,
                 owner_id=user_id,

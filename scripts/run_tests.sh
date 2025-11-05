@@ -47,7 +47,11 @@ setup_environment() {
     source "$VENV_PATH"
     print_success "Virtual environment activated"
 
-    # Note: pytest.ini already configures pythonpath=.
+    # Explicitly set PYTHONPATH to project root
+    export PYTHONPATH="$(pwd):$PYTHONPATH"
+    print_success "PYTHONPATH set to project root"
+
+    # Note: pytest.ini also configures pythonpath=.
     print_success "Using pytest.ini configuration for Python path"
 
     # Check if PostgreSQL is needed and running

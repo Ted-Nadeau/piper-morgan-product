@@ -172,6 +172,59 @@ git commit -m "your message"
 
 **See**: `docs/dev-tips/preventing-pre-commit-failures.md` for details.
 
+## PYTHON PACKAGE STRUCTURE REQUIREMENTS
+
+**CRITICAL**: ALL directories under `services/` that contain `.py` files MUST have `__init__.py`
+
+**Why**: Ensures consistent import behavior across Python versions and environments. Python 3.3+ allows imports without `__init__.py` (namespace packages), but this creates inconsistent behavior between development and strict validation contexts (pytest, type checkers, pre-push hooks).
+
+**Creating new service directories**:
+```bash
+# Always create __init__.py when creating directories
+mkdir -p services/my_new_service
+echo "# my_new_service module" > services/my_new_service/__init__.py
+
+# Then add your code
+touch services/my_new_service/my_module.py
+```
+
+**Verification before committing**:
+```bash
+# Check for missing __init__.py files
+find services/ -type d -not -path '*/__pycache__*' \
+  -exec sh -c '[ ! -f "$1/__init__.py" ] && echo "MISSING: $1"' _ {} \;
+
+# Should return no output - all directories have __init__.py
+```
+
+**Test Naming Conventions**:
+
+**Automated tests** (collected by pytest):
+- Naming: `test_*.py` or `*_test.py`
+- Location: `tests/unit/`, `tests/integration/`
+- Requirements: Use pytest fixtures, no `load_dotenv()`, no hardcoded IDs
+- Purpose: Run automatically in test suite and CI/CD
+
+**Manual tests** (NOT collected by pytest):
+- Naming: `manual_*.py` or `script_*.py`
+- Location: `tests/manual/` or `scripts/`
+- May use: `load_dotenv()`, hardcoded IDs, `if __name__ == "__main__"`
+- Purpose: Run manually for exploratory testing
+
+**Example manual test**:
+```python
+# tests/manual/manual_notion_test.py
+from dotenv import load_dotenv
+import asyncio
+
+async def main():
+    load_dotenv()
+    # Test code with hardcoded IDs OK here
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
 ## TECHNICAL SPECIFICS
 ```bash
 # Run pytest (pytest.ini configured - no PYTHONPATH needed)
