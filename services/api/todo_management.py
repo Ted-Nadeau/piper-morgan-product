@@ -205,7 +205,7 @@ async def get_query_router():
 @todo_management_router.post("/", response_model=TodoResponse, status_code=status.HTTP_201_CREATED)
 async def create_todo(
     todo_data: TodoCreateRequest,
-    service: TodoManagementService = Depends(get_todo_management_service),
+    service: "TodoManagementService" = Depends(get_todo_management_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):
     """
