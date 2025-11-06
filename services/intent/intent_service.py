@@ -198,11 +198,8 @@ class IntentService:
             intent = await self.intent_classifier.classify(message)
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
-            # Phase 3D: Preserve Tier 1 conversation bypass
-            if intent.category.value == "conversation":
-                return await self._handle_conversation_intent(intent, session_id)
-
-            # Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
+            # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
+            # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
                 canonical_result = await self.canonical_handlers.handle(intent, session_id)
                 return IntentProcessingResult(

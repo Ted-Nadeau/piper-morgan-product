@@ -1,6 +1,14 @@
 """
 Canonical Query Handlers
-Specialized handlers for the 5 canonical standup queries
+Specialized handlers for the 6 canonical categories:
+- IDENTITY: "What's your name and role?"
+- TEMPORAL: "What time is it?" / "What's on my calendar?"
+- STATUS: "What am I working on?"
+- PRIORITY: "What should I focus on?"
+- GUIDANCE: "What should I do?" / "How can you help me?"
+- CONVERSATION: Simple greetings and conversational responses
+
+Issue #286: CONVERSATION added to canonical section (was handled separately)
 """
 
 import logging
@@ -10,11 +18,37 @@ from typing import Dict, Optional
 import structlog
 
 from services.configuration.piper_config_loader import piper_config_loader
+from services.conversation.conversation_handler import ConversationHandler
 from services.domain.models import Intent, IntentCategory
 from services.shared_types import IntentCategory as IntentCategoryEnum
 from services.user_context_service import user_context_service
 
 logger = structlog.get_logger()
+
+# Issue #287: Timezone abbreviation mapping
+# Maps IANA timezone identifiers to common abbreviations
+TIMEZONE_ABBREVIATIONS = {
+    # US Timezones
+    "America/Los_Angeles": "PT",
+    "America/New_York": "ET",
+    "America/Chicago": "CT",
+    "America/Denver": "MT",
+    "America/Phoenix": "MST",  # Arizona (no DST)
+    "America/Anchorage": "AKT",
+    "Pacific/Honolulu": "HST",
+    # International
+    "Europe/London": "GMT",
+    "Europe/Paris": "CET",
+    "Europe/Berlin": "CET",
+    "Asia/Tokyo": "JST",
+    "Asia/Shanghai": "CST",
+    "Asia/Hong_Kong": "HKT",
+    "Asia/Singapore": "SGT",
+    "Australia/Sydney": "AEDT",
+    "Australia/Melbourne": "AEDT",
+    # Fallback
+    "UTC": "UTC",
+}
 
 
 class CanonicalHandlers:
@@ -31,6 +65,7 @@ class CanonicalHandlers:
             IntentCategoryEnum.STATUS,
             IntentCategoryEnum.PRIORITY,
             IntentCategoryEnum.GUIDANCE,
+            IntentCategoryEnum.CONVERSATION,  # Issue #286: CONVERSATION is canonical
         }
         return intent.category in canonical_categories
 
@@ -47,6 +82,9 @@ class CanonicalHandlers:
                 return await self._handle_priority_query(intent, session_id)
             elif intent.category == IntentCategoryEnum.GUIDANCE:
                 return await self._handle_guidance_query(intent, session_id)
+            elif intent.category == IntentCategoryEnum.CONVERSATION:
+                # Issue #286: Handle CONVERSATION in canonical section
+                return await self._handle_conversation_query(intent, session_id)
             else:
                 # Fallback to conversation
                 return {
@@ -151,7 +189,8 @@ class CanonicalHandlers:
         # Load timezone from configuration
         standup_config = piper_config_loader.load_standup_config()
         timezone = standup_config["timing"]["timezone"]
-        timezone_short = timezone.split("/")[-1].replace("_", " ")
+        # Issue #287 Fix #1: Use timezone abbreviation instead of city name
+        timezone_short = TIMEZONE_ABBREVIATIONS.get(timezone, "UTC")
         current_time = datetime.now().strftime(f"%I:%M %p {timezone_short}")
 
         # Base message
@@ -222,6 +261,8 @@ class CanonicalHandlers:
 
             else:
                 # DEFAULT: Standard detail
+                # Issue #287 Fix #2: Prevent contradictory messages
+                # Only show stats block if no current/next meeting mentioned
                 if temporal_summary.get("current_meeting"):
                     current_meeting = temporal_summary["current_meeting"]
                     message += f" You're currently in: {current_meeting.get('title', 'a meeting')}"
@@ -233,23 +274,35 @@ class CanonicalHandlers:
                         "title": next_meeting.get("title", "Meeting"),
                         "time": next_meeting.get("start_time", "TBD"),
                     }
-
-                stats = temporal_summary.get("stats", {})
-                if stats.get("total_meetings_today", 0) > 0:
-                    meeting_count = stats["total_meetings_today"]
-                    message += f" ({meeting_count} meetings scheduled today)"
-                    calendar_context["meeting_load"] = {"count": meeting_count}
                 else:
-                    message += " (No meetings - great day for deep work!)"
-                    calendar_context["calendar_status"] = "free_day"
+                    # No current or upcoming meeting - show daily summary
+                    stats = temporal_summary.get("stats", {})
+                    if stats.get("total_meetings_today", 0) > 0:
+                        meeting_count = stats["total_meetings_today"]
+                        message += f" ({meeting_count} meetings scheduled today)"
+                        calendar_context["meeting_load"] = {"count": meeting_count}
+                    else:
+                        message += " (No meetings - great day for deep work!)"
+                        calendar_context["calendar_status"] = "free_day"
 
         except Exception as e:
+            # Issue #287 Fix #3: Enhanced calendar validation and error handling
             # Calendar unavailable - log but continue with helpful message
-            logger.warning(f"Calendar service unavailable: {e}")
+            logger.warning(f"Calendar service unavailable: {e}", exc_info=True)
+
             if spatial_pattern != "EMBEDDED":
-                message += "\n\nNote: I couldn't access your calendar right now. The calendar service may be unavailable."
+                # Provide user-friendly error message (not for EMBEDDED - too verbose)
+                error_type = type(e).__name__
+                if "timeout" in str(e).lower() or "TimeoutError" in error_type:
+                    message += "\n\n⚠️ Note: Calendar check timed out. Your calendar may be temporarily unavailable."
+                elif "auth" in str(e).lower() or "permission" in str(e).lower():
+                    message += "\n\n⚠️ Note: Calendar authentication needed. Please check your calendar connection."
+                else:
+                    message += "\n\n⚠️ Note: I couldn't access your calendar right now. The calendar service may be unavailable."
+
             calendar_context["calendar_service"] = "unavailable"
             calendar_context["fallback_used"] = True
+            calendar_context["error_type"] = type(e).__name__
 
         return {
             "message": message,
@@ -686,6 +739,30 @@ class CanonicalHandlers:
             "personalized": bool(user_context),
             "fallback_guidance": not user_context,
             "requires_clarification": False,
+        }
+
+    async def _handle_conversation_query(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Handle CONVERSATION category intents (Tier 1 bypass).
+
+        Issue #286: Moved to canonical section for architectural consistency.
+        CONVERSATION is a canonical category like IDENTITY, TEMPORAL, etc.
+
+        Phase 3D: Conversation handling without full orchestration.
+        """
+        # Initialize conversation handler
+        conversation_handler = ConversationHandler(session_manager=None)
+
+        # Get conversation response
+        result = await conversation_handler.respond(intent, session_id)
+
+        # Return in canonical format (Dict)
+        return {
+            "message": result["message"],
+            "intent": result["intent"],
+            "workflow_id": result.get("workflow_id"),
+            "requires_clarification": result.get("requires_clarification", False),
+            "clarification_type": result.get("clarification_type"),
         }
 
 
