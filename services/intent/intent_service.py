@@ -308,28 +308,6 @@ class IntentService:
                 error_type="ServiceUnavailable",
             )
 
-    async def _handle_conversation_intent(
-        self, intent: Intent, session_id: str
-    ) -> IntentProcessingResult:
-        """
-        Handle CONVERSATION category intents (Tier 1 bypass).
-
-        Phase 3D: Conversation handling without full orchestration.
-        """
-        # Initialize conversation handler if not provided
-        if self.conversation_handler is None:
-            self.conversation_handler = ConversationHandler(session_manager=None)
-
-        result = await self.conversation_handler.respond(intent, session_id)
-        return IntentProcessingResult(
-            success=True,
-            message=result["message"],
-            intent_data=result["intent"],
-            workflow_id=result.get("workflow_id"),
-            requires_clarification=result.get("requires_clarification", False),
-            clarification_type=result.get("clarification_type"),
-        )
-
     async def _handle_query_intent(
         self, intent: Intent, workflow, session_id: str
     ) -> IntentProcessingResult:
