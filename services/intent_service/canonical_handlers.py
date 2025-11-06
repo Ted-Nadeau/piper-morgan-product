@@ -704,7 +704,8 @@ class CanonicalHandlers:
 
         standup_config = piper_config_loader.load_standup_config()
         timezone = standup_config["timing"]["timezone"]
-        timezone_short = timezone.split("/")[-1].replace("_", " ")
+        # Issue #287: Use timezone abbreviation instead of city name
+        timezone_short = TIMEZONE_ABBREVIATIONS.get(timezone, "UTC")
 
         # Extract guidance context components for API response
         focus = self._get_immediate_focus(current_hour, user_context)
