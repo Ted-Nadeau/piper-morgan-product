@@ -372,6 +372,13 @@ Understanding gained:
 - Systematic solution implemented
 - Tests passing
 
+*Follow-up: Issue #294 (Nov 5, 2025) - ActionMapper Cleanup*
+- Removed 40 unused mappings (non-EXECUTION categories)
+- Reduced from 66 to 26 mappings (EXECUTION category only)
+- Added comprehensive EXECUTION-only scope documentation
+- Clarified that QUERY, ANALYSIS, SYNTHESIS categories route by category, not action name
+- See: services/intent_service/action_mapper.py
+
 **Issue #285: CORE-ALPHA-TODO-INCOMPLETE** ✅ COMPLETE
 - TodoKnowledgeService wired to web routes
 - Chat handlers created

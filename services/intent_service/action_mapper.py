@@ -1,14 +1,31 @@
 """
-Action Mapper - Maps classifier action outputs to handler method names
+ActionMapper - Maps EXECUTION category action name variations to handler methods.
 
 Issue #284: CORE-ALPHA-ACTION-MAPPING
-Problem: Intent classifier generates action names that don't match handler method names
-Solution: Centralized mapping layer between classifier output and handler dispatch
+Issue #294: CORE-ALPHA-ACTIONMAPPER-CLEANUP
 
-Example:
-    Classifier outputs: "create_github_issue"
-    Handler expects: "create_issue"
-    ActionMapper bridges: "create_github_issue" -> "create_issue"
+SCOPE: This mapper handles EXECUTION category actions ONLY.
+
+Why EXECUTION needs mapping:
+- Classifier generates variations like 'create_github_issue' or 'make_github_issue'
+- Handler method is named 'create_issue'
+- ActionMapper bridges this naming gap by normalizing variations
+
+Why other categories DON'T need mapping:
+- QUERY category: Routes to query handler regardless of action name
+- ANALYSIS category: Routes to analysis handler regardless of action name
+- SYNTHESIS category: Routes to synthesis handler regardless of action name
+- They route by CATEGORY first, not by action name variations
+
+This is by design - EXECUTION actions are more varied and specific (create_issue,
+add_todo, update_issue), while other categories have uniform handling within
+their category (all queries go to query handler, all analysis goes to analysis handler).
+
+Architecture Note:
+IntentService.process_intent() routes by category FIRST. Only EXECUTION category
+calls ActionMapper.map_action(). Other categories route directly to their handlers.
+
+See: services/intent/intent_service.py - process_intent() method
 """
 
 import logging
@@ -19,111 +36,63 @@ logger = logging.getLogger(__name__)
 
 class ActionMapper:
     """
-    Maps classifier action outputs to handler method names.
+    Maps EXECUTION category action name variations to handler method names.
 
-    The intent classifier outputs descriptive action names (e.g., "create_github_issue")
-    while handler methods use normalized names (e.g., "_handle_create_issue").
-    This class provides the translation layer.
+    SCOPE: EXECUTION actions ONLY.
+
+    The intent classifier outputs varied action names for EXECUTION category
+    (e.g., "create_github_issue", "make_github_issue", "new_github_issue")
+    while handler methods use normalized names (e.g., "create_issue").
+
+    This mapper provides the normalization layer for EXECUTION actions.
+
+    Other categories (QUERY, ANALYSIS, SYNTHESIS) route by category and
+    do NOT use this mapper.
 
     Design Principles:
-    1. Explicit mappings for known mismatches
+    1. Explicit mappings for EXECUTION action variations
     2. Graceful fallback to original action if unmapped
-    3. Logging for discovery of new patterns
+    3. Logging for discovery of new EXECUTION patterns
     4. No silent failures - always returns a string
     """
 
-    # Comprehensive action mappings from classifier output to handler method names
+    # EXECUTION action mappings: classifier output -> handler method name
+    # NOTE: Only EXECUTION category actions belong here
     ACTION_MAPPING: Dict[str, str] = {
-        # ===== EXECUTION ACTIONS =====
+        # ===== GITHUB ACTIONS (EXECUTION category) =====
         # GitHub Issue Creation
         "create_github_issue": "create_issue",
-        "create_item": "create_issue",  # Generic create from classifier
-        "create_ticket": "create_issue",  # Already normalized
-        "create_issue": "create_issue",  # Already normalized
+        "create_item": "create_issue",
+        "create_ticket": "create_issue",
+        "create_issue": "create_issue",
+        "make_github_issue": "create_issue",
+        "new_github_issue": "create_issue",
         # GitHub Issue Updates
         "update_github_issue": "update_issue",
         "update_ticket": "update_issue",
-        "update_issue": "update_issue",  # Already normalized
-        # ===== ANALYSIS ACTIONS =====
-        # Data/File Analysis
-        "analyze_data": "analyze_data",  # Already normalized
-        "analyze_file": "analyze_data",
-        "analyze_github_issue": "analyze_data",
-        "review_github_issue": "analyze_data",
-        "check_github_issue": "analyze_data",
-        "analyze_metrics": "analyze_data",
-        "analyze_feedback": "analyze_data",
-        "system_analysis": "analyze_data",
-        # Commit Analysis
-        "analyze_commits": "analyze_commits",  # Already normalized
-        "review_commits": "analyze_commits",
-        # ===== SYNTHESIS ACTIONS =====
-        # Content Generation
-        "generate_content": "generate_content",  # Already normalized
-        "create_content": "generate_content",
-        "write_content": "generate_content",
-        # Report Generation
-        "generate_report": "generate_report",  # Already normalized
-        "create_report": "generate_report",
-        "performance_analysis": "generate_report",
-        "user_feedback_analysis": "generate_report",
-        # Summarization
-        "summarize": "summarize",  # Already normalized
-        "summarize_issue": "summarize",
-        "summarize_commits": "summarize",
-        # ===== STRATEGY ACTIONS =====
-        # Strategic Planning
-        "strategic_planning": "strategic_planning",  # Already normalized
-        "plan_strategy": "strategic_planning",
-        "create_plan": "strategic_planning",
-        # Prioritization
-        "prioritize": "prioritization",
-        "prioritization": "prioritization",  # Already normalized
-        "rank_items": "prioritization",
-        # ===== LEARNING ACTIONS =====
-        # Pattern Learning
-        "learn_pattern": "learn_pattern",  # Already normalized
-        "discover_pattern": "learn_pattern",
-        "identify_pattern": "learn_pattern",
-        # ===== QUERY ACTIONS =====
-        # Projects
-        "list_projects": "projects_query",
-        "list_all_projects": "projects_query",
-        "show_projects": "projects_query",
-        "get_project": "projects_query",
-        "get_project_details": "projects_query",
-        "find_project": "projects_query",
-        "count_projects": "projects_query",
-        "get_default_project": "projects_query",
-        # Documents/Files
-        "find_documents": "generic_query",
-        "search_files": "generic_query",
-        "search_content": "generic_query",
-        "list_items": "generic_query",
-        # Standup
-        "get_standup": "standup_query",
-        "standup": "standup_query",
-        # ===== TODO ACTIONS ===== (Issue #285)
+        "update_issue": "update_issue",
+        "modify_issue": "update_issue",
+        # ===== TODO ACTIONS (EXECUTION category) =====
         # Todo Creation
-        "create_todo": "create_todo",  # Already normalized
+        "create_todo": "create_todo",
         "add_todo": "create_todo",
         "new_todo": "create_todo",
         # Todo Listing
-        "list_todos": "list_todos",  # Already normalized
+        "list_todos": "list_todos",
         "show_todos": "list_todos",
         "get_todos": "list_todos",
         "my_todos": "list_todos",
         # Todo Completion
-        "complete_todo": "complete_todo",  # Already normalized
+        "complete_todo": "complete_todo",
         "finish_todo": "complete_todo",
         "mark_complete": "complete_todo",
         "mark_done": "complete_todo",
         # Todo Deletion
-        "delete_todo": "delete_todo",  # Already normalized
+        "delete_todo": "delete_todo",
         "remove_todo": "delete_todo",
         "cancel_todo": "delete_todo",
         # ===== SPECIAL ACTIONS =====
-        # Clarification
+        # Clarification/Unknown (fallback handling)
         "clarification_needed": "unknown_intent",
         "unknown": "unknown_intent",
     }
@@ -131,17 +100,24 @@ class ActionMapper:
     @classmethod
     def map_action(cls, classifier_action: str) -> str:
         """
-        Map classifier action to handler method name.
+        Map EXECUTION category action name to handler method name.
+
+        SCOPE: Use for EXECUTION category actions ONLY.
 
         Args:
-            classifier_action: Action string from classifier (e.g., "create_github_issue")
+            classifier_action: EXECUTION action from classifier (e.g., "create_github_issue")
 
         Returns:
             Normalized action name for handler (e.g., "create_issue")
 
         Note:
-            Always returns a string - never None. Falls back to original action
-            if no explicit mapping exists.
+            - Always returns a string - never None
+            - Falls back to original action if no explicit mapping exists
+            - Only EXECUTION actions should call this method
+            - Other categories (QUERY, ANALYSIS, SYNTHESIS) route by category
+
+        Raises:
+            None - Graceful fallback behavior
         """
         if not classifier_action:
             logger.warning("ActionMapper received empty action string")
@@ -152,13 +128,14 @@ class ActionMapper:
 
         if mapped_action:
             if mapped_action != classifier_action:
-                logger.debug(f"Action mapped: '{classifier_action}' -> '{mapped_action}'")
+                logger.debug(f"EXECUTION action mapped: '{classifier_action}' -> '{mapped_action}'")
             return mapped_action
 
-        # No explicit mapping found - log for future additions
+        # No explicit mapping found - log for future EXECUTION action additions
         logger.warning(
-            f"Unmapped action: '{classifier_action}' - using original. "
-            f"Consider adding to ACTION_MAPPING if this is a common action."
+            f"Unmapped EXECUTION action: '{classifier_action}' - using original. "
+            f"Consider adding to ACTION_MAPPING if this is a common EXECUTION action. "
+            f"Note: Only EXECUTION actions use this mapper."
         )
 
         # Fallback: use original action

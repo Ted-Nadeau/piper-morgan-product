@@ -1,7 +1,16 @@
 """
-Unit tests for ActionMapper (Issue #284)
+Unit tests for ActionMapper (Issue #284, #294)
 
-Tests the action mapping logic independently of IntentService integration.
+Tests the action mapping logic for EXECUTION category actions.
+
+ActionMapper handles EXECUTION category actions ONLY.
+Other categories (QUERY, ANALYSIS, SYNTHESIS) route by category
+and don't use action name mapping.
+
+These tests verify:
+- EXECUTION action variations map to correct handler methods
+- Unknown actions fall back gracefully
+- Mapping is consistent with execution handler expectations
 """
 
 import pytest
@@ -10,7 +19,9 @@ from services.intent_service.action_mapper import ActionMapper
 
 
 class TestActionMapper:
-    """Test ActionMapper functionality"""
+    """Test ActionMapper functionality - EXECUTION actions only"""
+
+    # ===== GITHUB ACTIONS (EXECUTION category) =====
 
     def test_github_issue_create_mapping(self):
         """Test create_github_issue maps to create_issue"""
@@ -32,55 +43,12 @@ class TestActionMapper:
         result = ActionMapper.map_action("update_ticket")
         assert result == "update_issue"
 
-    def test_analyze_data_passthrough(self):
-        """Test analyze_data passes through unchanged"""
-        result = ActionMapper.map_action("analyze_data")
-        assert result == "analyze_data"
+    def test_make_github_issue_mapping(self):
+        """Test make_github_issue maps to create_issue"""
+        result = ActionMapper.map_action("make_github_issue")
+        assert result == "create_issue"
 
-    def test_analyze_github_issue_mapping(self):
-        """Test analyze_github_issue maps to analyze_data"""
-        result = ActionMapper.map_action("analyze_github_issue")
-        assert result == "analyze_data"
-
-    def test_analyze_commits_passthrough(self):
-        """Test analyze_commits passes through unchanged"""
-        result = ActionMapper.map_action("analyze_commits")
-        assert result == "analyze_commits"
-
-    def test_generate_content_passthrough(self):
-        """Test generate_content passes through unchanged"""
-        result = ActionMapper.map_action("generate_content")
-        assert result == "generate_content"
-
-    def test_create_content_mapping(self):
-        """Test create_content maps to generate_content"""
-        result = ActionMapper.map_action("create_content")
-        assert result == "generate_content"
-
-    def test_performance_analysis_mapping(self):
-        """Test performance_analysis maps to generate_report"""
-        result = ActionMapper.map_action("performance_analysis")
-        assert result == "generate_report"
-
-    def test_plan_strategy_mapping(self):
-        """Test plan_strategy maps to strategic_planning"""
-        result = ActionMapper.map_action("plan_strategy")
-        assert result == "strategic_planning"
-
-    def test_prioritize_mapping(self):
-        """Test prioritize maps to prioritization"""
-        result = ActionMapper.map_action("prioritize")
-        assert result == "prioritization"
-
-    def test_show_projects_mapping(self):
-        """Test show_projects maps to projects_query"""
-        result = ActionMapper.map_action("show_projects")
-        assert result == "projects_query"
-
-    def test_find_documents_mapping(self):
-        """Test find_documents maps to generic_query"""
-        result = ActionMapper.map_action("find_documents")
-        assert result == "generic_query"
+    # ===== TODO ACTIONS (EXECUTION category) =====
 
     def test_add_todo_mapping(self):
         """Test add_todo maps to create_todo (Issue #285)"""
@@ -91,6 +59,18 @@ class TestActionMapper:
         """Test mark_done maps to complete_todo (Issue #285)"""
         result = ActionMapper.map_action("mark_done")
         assert result == "complete_todo"
+
+    def test_show_todos_mapping(self):
+        """Test show_todos maps to list_todos"""
+        result = ActionMapper.map_action("show_todos")
+        assert result == "list_todos"
+
+    def test_remove_todo_mapping(self):
+        """Test remove_todo maps to delete_todo"""
+        result = ActionMapper.map_action("remove_todo")
+        assert result == "delete_todo"
+
+    # ===== FALLBACK BEHAVIOR =====
 
     def test_unmapped_action_fallback(self):
         """Test unmapped action returns original action"""
@@ -107,10 +87,13 @@ class TestActionMapper:
         result = ActionMapper.map_action(None)
         assert result == "unknown_intent"
 
+    # ===== METADATA TESTS =====
+
     def test_mapping_count(self):
-        """Test that we have the expected number of mappings"""
+        """Test that we have only EXECUTION mappings (Issue #294)"""
         mappings = ActionMapper.list_all_mappings()
-        assert len(mappings) == 66, f"Expected 66 mappings, got {len(mappings)}"
+        # Updated after Issue #294 cleanup: removed non-EXECUTION mappings
+        assert len(mappings) == 26, f"Expected 26 EXECUTION mappings, got {len(mappings)}"
 
     def test_get_mapping_coverage(self):
         """Test mapping coverage calculation"""
