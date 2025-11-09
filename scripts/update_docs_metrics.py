@@ -135,16 +135,38 @@ python scripts/update_docs_metrics.py
     print(f"✅ Updated docs/metrics.md")
 
 
+def find_project_root() -> Path:
+    """Find project root by looking for marker directories."""
+    current = Path.cwd()
+
+    # Check if we're already in project root
+    if (current / "services").exists() and (current / "tests").exists():
+        return current
+
+    # Check parent directories
+    for parent in current.parents:
+        if (parent / "services").exists() and (parent / "tests").exists():
+            return parent
+
+    # If not found, raise error
+    raise FileNotFoundError(
+        "Could not find project root. Looking for directory containing services/ and tests/"
+    )
+
+
 def main():
     """Main execution."""
-    # Verify we're in project root (safeguard against running from wrong directory)
-    if not Path("services").exists() or not Path("tests").exists():
-        print("❌ ERROR: Must run from project root directory")
+    # Find and change to project root (works from any subdirectory)
+    try:
+        project_root = find_project_root()
+        if Path.cwd() != project_root:
+            print(f"📂 Found project root: {project_root}")
+            import os
+
+            os.chdir(project_root)
+    except FileNotFoundError as e:
+        print(f"❌ ERROR: {e}")
         print(f"   Current directory: {Path.cwd()}")
-        print("   Expected: Directory containing services/, tests/, docs/")
-        print("\n   Usage:")
-        print("     cd /path/to/piper-morgan")
-        print("     python scripts/update_docs_metrics.py")
         return 1
 
     print("📊 Gathering metrics...")
