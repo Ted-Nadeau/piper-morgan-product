@@ -137,6 +137,16 @@ python scripts/update_docs_metrics.py
 
 def main():
     """Main execution."""
+    # Verify we're in project root (safeguard against running from wrong directory)
+    if not Path("services").exists() or not Path("tests").exists():
+        print("❌ ERROR: Must run from project root directory")
+        print(f"   Current directory: {Path.cwd()}")
+        print("   Expected: Directory containing services/, tests/, docs/")
+        print("\n   Usage:")
+        print("     cd /path/to/piper-morgan")
+        print("     python scripts/update_docs_metrics.py")
+        return 1
+
     print("📊 Gathering metrics...")
 
     metrics = {

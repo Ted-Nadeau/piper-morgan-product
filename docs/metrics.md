@@ -1,13 +1,13 @@
 # Piper Morgan Codebase Metrics
 
-**Last Updated**: October 13, 2025 at 06:45 PM
+**Last Updated**: November 09, 2025 at 06:02 AM
 **Auto-Generated**: This file is automatically updated by `scripts/update_docs_metrics.py`
 
 ---
 
 ## Test Coverage
 
-- **Test Files**: 260
+- **Test Files**: 311
 - **Contract Tests**: 5
 - **Regression Tests**: 2
 
@@ -15,16 +15,16 @@
 
 ## Codebase Size
 
-- **Services**: 81,057 lines
-- **Tests**: 76,521 lines
-- **Web**: 1,075 lines
+- **Services**: 98,326 lines
+- **Tests**: 96,170 lines
+- **Web**: 6,000 lines
 - **CLI**: 3,033 lines
 
 ---
 
 ## Architecture
 
-- **ADRs**: 42 architecture decision records
+- **ADRs**: 44 architecture decision records
 
 ---
 
