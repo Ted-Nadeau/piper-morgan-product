@@ -1,9 +1,10 @@
 """
 User management services.
 
-Includes alpha user migration and production user management.
+NOTE: AlphaMigrationService deprecated after Issue #262 (alpha_users merged into users).
 """
 
-from .alpha_migration_service import AlphaMigrationService, MigrationOptions
+# Issue #262: AlphaMigrationService deprecated - migration completed in Alembic
+# from .alpha_migration_service import AlphaMigrationService, MigrationOptions
 
-__all__ = ["AlphaMigrationService", "MigrationOptions"]
+__all__ = []  # AlphaMigrationService deprecated

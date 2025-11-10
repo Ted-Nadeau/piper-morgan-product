@@ -13,6 +13,7 @@ Each handler:
 
 from pathlib import Path
 from typing import Dict, List, Optional
+from uuid import UUID
 
 import structlog
 from sqlalchemy import select

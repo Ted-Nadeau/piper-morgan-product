@@ -12,6 +12,8 @@ These tests define what "done" means for auth endpoints:
 - Authenticated requests work with valid token
 """
 
+from uuid import UUID, uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -51,13 +53,11 @@ class TestAuthEndpoints:
 
         from services.auth.password_service import PasswordService
         from services.database.connection import db
-        from services.database.models import AlphaUser
+        from services.database.models import User
 
         # Cleanup any existing test user first
         async with await db.get_session() as session:
-            await session.execute(
-                sql_delete(AlphaUser).where(AlphaUser.email == "logintest@example.com")
-            )
+            await session.execute(sql_delete(User).where(User.email == "logintest@example.com"))
             await session.commit()
 
         # Create test user with password
@@ -65,7 +65,7 @@ class TestAuthEndpoints:
         test_password = "test_login_password_123"
         hashed = ps.hash_password(test_password)
 
-        test_user = AlphaUser(
+        test_user = User(
             username="login_test_user", email="logintest@example.com", password_hash=hashed
         )
 
@@ -95,9 +95,7 @@ class TestAuthEndpoints:
         finally:
             # Cleanup - always runs even if test fails
             async with await db.get_session() as session:
-                await session.execute(
-                    sql_delete(AlphaUser).where(AlphaUser.email == "logintest@example.com")
-                )
+                await session.execute(sql_delete(User).where(User.email == "logintest@example.com"))
                 await session.commit()
 
     @pytest.mark.asyncio
@@ -141,12 +139,10 @@ class TestAuthEndpoints:
         from sqlalchemy import delete as sql_delete
 
         from services.auth.password_service import PasswordService
-        from services.database.models import AlphaUser
+        from services.database.models import User
 
         # Clean up any existing test user first
-        await db_session.execute(
-            sql_delete(AlphaUser).where(AlphaUser.email == "wrongpass@example.com")
-        )
+        await db_session.execute(sql_delete(User).where(User.email == "wrongpass@example.com"))
         await db_session.commit()
 
         # Create test user
@@ -154,7 +150,7 @@ class TestAuthEndpoints:
         correct_password = "correct_password_789"
         hashed = ps.hash_password(correct_password)
 
-        test_user = AlphaUser(
+        test_user = User(
             username="wrong_pass_test", email="wrongpass@example.com", password_hash=hashed
         )
         db_session.add(test_user)
@@ -186,16 +182,14 @@ class TestAuthEndpoints:
         """
         from sqlalchemy import delete as sql_delete
 
-        from services.database.models import AlphaUser
+        from services.database.models import User
 
         # Clean up any existing test user first
-        await db_session.execute(
-            sql_delete(AlphaUser).where(AlphaUser.email == "nopass@example.com")
-        )
+        await db_session.execute(sql_delete(User).where(User.email == "nopass@example.com"))
         await db_session.commit()
 
         # Create user without password
-        test_user = AlphaUser(
+        test_user = User(
             username="no_password_user",
             email="nopass@example.com",
             password_hash=None,  # No password set
@@ -327,12 +321,10 @@ class TestAuthEndpoints:
         from sqlalchemy import delete as sql_delete
 
         from services.auth.password_service import PasswordService
-        from services.database.models import AlphaUser
+        from services.database.models import User
 
         # Clean up any existing test user first
-        await db_session.execute(
-            sql_delete(AlphaUser).where(AlphaUser.email == "bearertest@example.com")
-        )
+        await db_session.execute(sql_delete(User).where(User.email == "bearertest@example.com"))
         await db_session.commit()
 
         # Create test user
@@ -340,7 +332,7 @@ class TestAuthEndpoints:
         test_password = "bearer_test_password_123"
         hashed = ps.hash_password(test_password)
 
-        test_user = AlphaUser(
+        test_user = User(
             username="bearer_test_user", email="bearertest@example.com", password_hash=hashed
         )
         db_session.add(test_user)
@@ -432,12 +424,10 @@ class TestAuthEndpoints:
 
         from services.auth.jwt_service import JWTService
         from services.auth.password_service import PasswordService
-        from services.database.models import AlphaUser
+        from services.database.models import User
 
         # Clean up any existing test user first
-        await db_session.execute(
-            sql_delete(AlphaUser).where(AlphaUser.email == "tokentest@example.com")
-        )
+        await db_session.execute(sql_delete(User).where(User.email == "tokentest@example.com"))
         await db_session.commit()
 
         # Create test user
@@ -445,7 +435,7 @@ class TestAuthEndpoints:
         test_password = "valid_token_test_123"
         hashed = ps.hash_password(test_password)
 
-        test_user = AlphaUser(
+        test_user = User(
             username="token_valid_test", email="tokentest@example.com", password_hash=hashed
         )
         db_session.add(test_user)
@@ -548,14 +538,14 @@ async def authenticated_client(async_client, db_session):
     from sqlalchemy import delete as sql_delete
 
     from services.auth.password_service import PasswordService
-    from services.database.models import AlphaUser
+    from services.database.models import User
 
     # Create test user
     ps = PasswordService()
     test_password = "auth_fixture_password_123"
     hashed = ps.hash_password(test_password)
 
-    test_user = AlphaUser(
+    test_user = User(
         username="auth_fixture_user", email="authfixture@example.com", password_hash=hashed
     )
 
@@ -579,7 +569,5 @@ async def authenticated_client(async_client, db_session):
     yield async_client
 
     # Cleanup - use same session
-    await db_session.execute(
-        sql_delete(AlphaUser).where(AlphaUser.email == "authfixture@example.com")
-    )
+    await db_session.execute(sql_delete(User).where(User.email == "authfixture@example.com"))
     await db_session.commit()

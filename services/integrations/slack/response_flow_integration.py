@@ -10,6 +10,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from services.domain.models import Workflow, WorkflowResult
 from services.integrations.slack.config_service import SlackConfigService

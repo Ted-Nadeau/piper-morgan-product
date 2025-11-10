@@ -8,6 +8,7 @@ Addresses architectural violation: Direct integration access from application la
 
 from datetime import datetime
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.github_domain_service import GitHubDomainService
@@ -56,7 +57,7 @@ class StandupOrchestrationService:
             self._canonical_handlers = CanonicalHandlers()
 
     async def orchestrate_standup_workflow(
-        self, user_id: Optional[str] = None, workflow_type: str = "standard"
+        self, user_id: Optional[UUID] = None, workflow_type: str = "standard"
     ) -> StandupResult:
         """
         Orchestrate complete standup workflow through domain layer
@@ -102,7 +103,7 @@ class StandupOrchestrationService:
         else:
             return await workflow.generate_standup(user_id)
 
-    async def get_standup_context(self, user_id: str) -> Dict[str, Any]:
+    async def get_standup_context(self, user_id: UUID) -> Dict[str, Any]:
         """
         Get standup context without executing full workflow
 

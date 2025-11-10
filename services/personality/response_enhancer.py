@@ -9,6 +9,7 @@ import asyncio
 import logging
 import time
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 from .cache import ProfileCache
 from .exceptions import (

@@ -37,6 +37,7 @@ import logging
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -105,7 +106,7 @@ class AuditLogger:
         severity: str,
         message: str,
         session: AsyncSession,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         resource_type: Optional[str] = None,
         resource_id: Optional[str] = None,
@@ -184,7 +185,7 @@ class AuditLogger:
         status: str,
         message: str,
         session: AsyncSession,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
         audit_context: Optional[Dict[str, Any]] = None,
@@ -227,7 +228,7 @@ class AuditLogger:
         status: str,
         message: str,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         details: Optional[Dict[str, Any]] = None,
         old_value: Optional[Dict[str, Any]] = None,
         new_value: Optional[Dict[str, Any]] = None,
@@ -276,7 +277,7 @@ class AuditLogger:
         severity: str,
         message: str,
         session: AsyncSession,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         details: Optional[Dict[str, Any]] = None,
         audit_context: Optional[Dict[str, Any]] = None,
     ) -> AuditLog:

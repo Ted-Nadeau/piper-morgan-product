@@ -10,6 +10,7 @@ Task: 3 of 4 - Message Formatting
 
 from datetime import datetime
 from typing import Any, Dict
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import structlog

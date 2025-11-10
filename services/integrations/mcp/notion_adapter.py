@@ -10,6 +10,7 @@ import logging
 
 # Import for service injection pattern
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from uuid import UUID
 
 import aiohttp
 from notion_client import Client

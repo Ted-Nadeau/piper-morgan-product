@@ -14,9 +14,14 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from services.integrations.slack.attention_model import (
+    UUID,
     AttentionEvent,
     AttentionModel,
     AttentionSource,
+    from,
+    import,
+    uuid,
+    uuid4,
 )
 from services.integrations.slack.ngrok_service import NgrokService
 from services.integrations.slack.oauth_handler import SlackOAuthHandler

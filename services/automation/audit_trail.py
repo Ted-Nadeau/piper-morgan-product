@@ -10,6 +10,7 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Dict, List, Optional
+from uuid import UUID
 
 
 @dataclass
@@ -22,7 +23,7 @@ class AutomationEvent:
     confidence: float
     safety_level: str
     auto_executed: bool
-    user_id: Optional[str]
+    user_id: Optional[UUID]
     result: Optional[str]
     details: Dict
 
@@ -51,7 +52,7 @@ class AuditTrail:
         confidence: float,
         safety_level: str,
         auto_executed: bool,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         result: Optional[str] = None,
         details: Optional[Dict] = None,
     ) -> AutomationEvent:
@@ -98,7 +99,7 @@ class AuditTrail:
     def get_events(
         self,
         event_type: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         auto_executed: Optional[bool] = None,
         limit: int = 100,
     ) -> List[AutomationEvent]:

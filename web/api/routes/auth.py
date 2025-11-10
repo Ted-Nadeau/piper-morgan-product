@@ -20,7 +20,7 @@ from services.auth.jwt_service import JWTClaims, JWTService
 from services.auth.models import LoginRequest, LoginResponse
 from services.auth.password_service import PasswordService
 from services.database.connection import db
-from services.database.models import AlphaUser
+from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -102,7 +102,7 @@ async def login(
         async with await db.get_session() as session:
             # Query user by username
             result = await session.execute(
-                select(AlphaUser).where(AlphaUser.username == credentials.username)
+                select(User).where(User.username == credentials.username)
             )
             user = result.scalar_one_or_none()
 
@@ -313,9 +313,7 @@ async def get_me(
 
         # Query user by ID from token
         async with await db.get_session() as session:
-            result = await session.execute(
-                select(AlphaUser).where(AlphaUser.id == current_user.user_id)
-            )
+            result = await session.execute(select(User).where(User.id == current_user.user_id))
             user = result.scalar_one_or_none()
 
             if not user:

@@ -14,6 +14,9 @@ Issue #228 CORE-USERS-API Phase 1E
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+# Test fixtures
+from uuid import UUID, uuid4
+
 import pytest
 from sqlalchemy import select
 
@@ -22,7 +25,6 @@ from services.database.session_factory import AsyncSessionFactory
 from services.security.user_api_key_service import UserAPIKeyService
 
 
-# Test fixtures
 @pytest.fixture
 def test_users(request):
     """Create test user objects for isolation testing with unique IDs per test"""

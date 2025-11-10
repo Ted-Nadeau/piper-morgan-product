@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import structlog
 
@@ -60,7 +60,7 @@ class AuditEvent:
     timestamp: datetime
     provider: str
     key_hash: str  # SHA256 hash of key for tracking
-    user_id: Optional[str]
+    user_id: Optional[UUID]
     session_id: Optional[str]
     ip_address: Optional[str]
     user_agent: Optional[str]
@@ -160,7 +160,7 @@ class KeyAuditService:
         provider: str,
         key_hash: str,
         action: str,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
@@ -228,7 +228,7 @@ class KeyAuditService:
         tokens_used: Optional[int] = None,
         cost: Optional[float] = None,
         response_time_ms: Optional[float] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         success: bool = True,
         error_message: Optional[str] = None,
@@ -280,7 +280,7 @@ class KeyAuditService:
         key_hash: str,
         description: str,
         risk_level: RiskLevel = RiskLevel.MEDIUM,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         ip_address: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
     ) -> str:
@@ -820,7 +820,7 @@ async def log_key_access(
     provider: str,
     key_hash: str,
     action: str,
-    user_id: Optional[str] = None,
+    user_id: Optional[UUID] = None,
     success: bool = True,
     **kwargs,
 ) -> str:

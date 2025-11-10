@@ -5,6 +5,7 @@ High-level business logic for knowledge graph operations
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
+from uuid import UUID
 
 import structlog
 
@@ -710,7 +711,7 @@ class KnowledgeGraphService:
     async def get_relevant_context(
         self,
         user_query: str,
-        user_id: str,
+        user_id: UUID,
         max_nodes: int = 10,
     ) -> Dict[str, Any]:
         """

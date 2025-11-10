@@ -7,6 +7,7 @@ Following TDD principles: Write failing test → See it fail → Verify integrat
 
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID, uuid4
 
 import pytest
 

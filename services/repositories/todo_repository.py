@@ -6,6 +6,7 @@ Following established repository patterns with AsyncSessionFactory
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, func, or_, select, update
@@ -74,7 +75,7 @@ class TodoListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def get_shared_lists(self, user_id: str) -> List[domain.TodoList]:
+    async def get_shared_lists(self, user_id: UUID) -> List[domain.TodoList]:
         """Get lists shared with a user"""
         # Using JSON array containment for shared_with check
         result = await self.session.execute(
@@ -626,7 +627,7 @@ class TodoManagementRepository:
 
         return completed_todo
 
-    async def get_user_dashboard(self, user_id: str) -> Dict[str, any]:
+    async def get_user_dashboard(self, user_id: UUID) -> Dict[str, any]:
         """Get comprehensive dashboard data for a user"""
         # Get user's lists
         user_lists = await self.todo_lists.get_lists_by_owner(user_id)

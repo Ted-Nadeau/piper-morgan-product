@@ -9,6 +9,7 @@ Issue: #225 (CORE-LEARN-E)
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, List, Optional
+from uuid import UUID
 
 from services.automation.action_classifier import ActionClassifier, ActionSafetyLevel
 from services.automation.audit_trail import get_audit_trail
@@ -63,7 +64,7 @@ class AutonomousExecutor:
         action_type: str,
         action_handler: Callable[..., Awaitable[Any]],
         confidence: float,
-        user_id: str,
+        user_id: UUID,
         context: Optional[Dict] = None,
         auto_approve: bool = False,
     ) -> ExecutionResult:
@@ -265,7 +266,7 @@ class AutonomousExecutor:
 
             return result
 
-    async def predict_and_suggest(self, user_id: str, context: Dict[str, Any]) -> Optional[Dict]:
+    async def predict_and_suggest(self, user_id: UUID, context: Dict[str, Any]) -> Optional[Dict]:
         """
         Predict next action and provide suggestions.
 

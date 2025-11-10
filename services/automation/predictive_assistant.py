@@ -9,6 +9,7 @@ Issue: #225 (CORE-LEARN-E)
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.learning.query_learning_loop import PatternType, QueryLearningLoop
@@ -42,7 +43,7 @@ class PredictiveAssistant:
         self.preference_manager = UserPreferenceManager()
 
     async def predict_next_action(
-        self, user_id: str, context: Dict[str, Any]
+        self, user_id: UUID, context: Dict[str, Any]
     ) -> Optional[PredictionResult]:
         """
         Predict the next likely action based on learned patterns.
@@ -95,7 +96,7 @@ class PredictiveAssistant:
         return None
 
     async def suggest_smart_defaults(
-        self, user_id: str, action_type: str, context: Optional[Dict] = None
+        self, user_id: UUID, action_type: str, context: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """
         Suggest smart defaults for an action based on user preferences.
@@ -144,7 +145,7 @@ class PredictiveAssistant:
 
     async def pre_populate_fields(
         self,
-        user_id: str,
+        user_id: UUID,
         form_type: str,
         existing_values: Optional[Dict] = None,
     ) -> Dict[str, Any]:

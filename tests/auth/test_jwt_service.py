@@ -13,9 +13,12 @@ These tests define what "done" means for JWT service:
 
 import time
 from datetime import datetime, timedelta
+from uuid import UUID, uuid4
 
 import jwt as pyjwt  # Use pyjwt for verification
 import pytest
+
+from tests.conftest import TEST_USER_ID, TEST_USER_ID_2
 
 
 class TestJWTService:
@@ -49,7 +52,7 @@ class TestJWTService:
         from services.auth.jwt_service import JWTService
 
         jwt_service = JWTService()
-        token = jwt_service.generate_token(user_id="test-user-123", username="testuser")
+        token = jwt_service.generate_token(user_id=TEST_USER_ID, username="testuser")
 
         # Verify format: header.payload.signature
         parts = token.split(".")
@@ -76,7 +79,7 @@ class TestJWTService:
 
         jwt_service = JWTService()
 
-        user_id = "user-456"
+        user_id = TEST_USER_ID
         username = "claimtester"
 
         token = jwt_service.generate_token(user_id=user_id, username=username)
@@ -105,7 +108,7 @@ class TestJWTService:
         jwt_service = JWTService()
 
         before_time = datetime.utcnow()
-        token = jwt_service.generate_token(user_id="exp-test", username="expuser")
+        token = jwt_service.generate_token(user_id=TEST_USER_ID, username="expuser")
         after_time = datetime.utcnow()
 
         payload = jwt_service.decode_token_unsafe(token)
@@ -140,7 +143,7 @@ class TestJWTService:
 
         jwt_service = JWTService()
 
-        user_id = "valid-user-789"
+        user_id = TEST_USER_ID
         username = "validuser"
 
         token = jwt_service.generate_token(user_id=user_id, username=username)
@@ -198,7 +201,7 @@ class TestJWTService:
         jwt_service = JWTService()
 
         # Generate valid token
-        token = jwt_service.generate_token(user_id="tamper-test", username="tamperuser")
+        token = jwt_service.generate_token(user_id=TEST_USER_ID, username="tamperuser")
 
         # Tamper with payload (change one character in middle section)
         parts = token.split(".")
@@ -356,7 +359,7 @@ class TestJWTService:
 
         try:
             token = jwt_service.generate_token(
-                user_id="claims-test",
+                user_id=TEST_USER_ID,
                 username="claimsuser",
                 additional_claims={"role": "admin", "department": "engineering"},
             )
@@ -387,12 +390,12 @@ class TestJWTService:
             jwt_service, "decode_token_unsafe"
         ), "JWTService should have decode_token_unsafe method for debugging"
 
-        token = jwt_service.generate_token(user_id="decode-test", username="decodeuser")
+        token = jwt_service.generate_token(user_id=TEST_USER_ID, username="decodeuser")
 
         payload = jwt_service.decode_token_unsafe(token)
 
         assert payload is not None
-        assert payload["user_id"] == "decode-test"
+        assert payload["user_id"] == str(TEST_USER_ID)
 
     def test_token_uniqueness(self):
         """
@@ -408,7 +411,7 @@ class TestJWTService:
 
         tokens = []
         for _ in range(3):
-            token = jwt_service.generate_token(user_id="unique-test", username="uniqueuser")
+            token = jwt_service.generate_token(user_id=TEST_USER_ID, username="uniqueuser")
             tokens.append(token)
             time.sleep(0.01)  # Small delay to ensure different iat
 

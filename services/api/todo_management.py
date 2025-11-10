@@ -6,7 +6,7 @@ Universal List Architecture - Chief Architect's universal composition over speci
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -131,7 +131,7 @@ class TodoListResponse(BaseModel):
 class ListMembershipRequest(BaseModel):
     """Request model for list membership operations (universal ListItem with item_type='todo')"""
 
-    user_id: str = Field(..., description="User ID to add/remove from list")
+    user_id: UUID = Field(..., description="User ID to add/remove from list")
     role: str = Field("member", description="User role: owner, admin, member, viewer")
 
 
@@ -139,7 +139,7 @@ class ListMembershipResponse(BaseModel):
     """Response model for list membership data (universal ListItem with item_type='todo')"""
 
     list_id: str
-    user_id: str
+    user_id: UUID
     role: str
     joined_at: datetime
     permissions: Dict[str, bool]
@@ -726,7 +726,7 @@ async def add_list_member(
 )
 async def remove_list_member(
     list_id: str,
-    user_id: str,
+    user_id: UUID,
     universal_list_service=Depends(get_universal_list_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):

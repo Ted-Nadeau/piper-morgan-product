@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 import structlog
 
@@ -12,7 +13,7 @@ logger = structlog.get_logger()
 class UserContext:
     """User-specific context data."""
 
-    user_id: str
+    user_id: UUID
     organization: Optional[str] = None
     projects: list = field(default_factory=list)
     priorities: list = field(default_factory=list)
@@ -29,7 +30,9 @@ class UserContextService:
         self.cache_misses = 0
         logger.info("UserContextService initialized")
 
-    async def get_user_context(self, session_id: str, user_id: Optional[str] = None) -> UserContext:
+    async def get_user_context(
+        self, session_id: str, user_id: Optional[UUID] = None
+    ) -> UserContext:
         """
         Get user context from session with optional user-specific data.
 
@@ -79,7 +82,7 @@ class UserContextService:
         return context
 
     async def _load_context_from_config(
-        self, session_id: str, user_id: Optional[str] = None
+        self, session_id: str, user_id: Optional[UUID] = None
     ) -> UserContext:
         """
         Load user context from PIPER.md and optionally user preferences.
@@ -147,7 +150,7 @@ class UserContextService:
             # Return empty context
             return UserContext(user_id=user_id or session_id)
 
-    async def _load_user_preferences_from_db(self, user_id: str) -> Dict[str, Any]:
+    async def _load_user_preferences_from_db(self, user_id: UUID) -> Dict[str, Any]:
         """
         Load user preferences from alpha_users.preferences JSONB field.
 
@@ -163,15 +166,15 @@ class UserContextService:
             from sqlalchemy import select
 
             from services.database.connection import db
-            from services.database.models import AlphaUser
+            from services.database.models import User
 
             # Initialize DB if needed
             if not db._initialized:
                 await db.initialize()
 
-            # Query user preferences
+            # Query user preferences (Issue #262 - alpha_users merged into users)
             async with await db.get_session() as session:
-                result = await session.execute(select(AlphaUser).where(AlphaUser.id == user_id))
+                result = await session.execute(select(User).where(User.id == user_id))
                 user = result.scalar_one_or_none()
 
                 if user and user.preferences:

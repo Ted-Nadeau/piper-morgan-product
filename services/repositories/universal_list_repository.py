@@ -6,6 +6,7 @@ Chief Architect's universal composition over specialization principle
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, func, or_, select, update
@@ -82,7 +83,7 @@ class UniversalListRepository(BaseRepository):
         return db_list.to_domain() if db_list else None
 
     async def get_shared_lists(
-        self, user_id: str, item_type: Optional[str] = None
+        self, user_id: UUID, item_type: Optional[str] = None
     ) -> List[domain.List]:
         """Get lists shared with a user"""
         query = select(ListDB).where(

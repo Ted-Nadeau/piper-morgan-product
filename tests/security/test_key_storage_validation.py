@@ -14,6 +14,7 @@ Issue #268 CORE-KEYS-STORAGE-VALIDATION
 """
 
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select
@@ -25,6 +26,7 @@ from services.security.key_leak_detector import LeakCheckResult
 from services.security.key_strength_analyzer import KeyStrength
 from services.security.provider_key_validator import ValidationResult
 from services.security.user_api_key_service import UserAPIKeyService
+from tests.conftest import TEST_USER_ID
 
 # ============================================================================
 # FIXTURES
@@ -39,7 +41,7 @@ def test_user(request):
 
     test_name = request.node.name
     timestamp = str(int(time.time() * 1000000))[-8:]  # Last 8 digits for uniqueness
-    user_id = f"test_key_{test_name}_{timestamp}"
+    user_id = uuid4()  # Issue #262 - UUID instead of string
     username = f"test_key_{test_name[:15]}_{timestamp}"  # Limit to keep it reasonable
     return User(
         id=user_id,

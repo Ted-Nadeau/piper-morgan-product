@@ -11,6 +11,7 @@ These tests define what "done" means for the data leak fix:
 
 import re
 from pathlib import Path
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select

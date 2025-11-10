@@ -12,6 +12,8 @@ import sys
 from datetime import datetime
 
 # Add project root to path
+from uuid import UUID, uuid4
+
 sys.path.insert(0, "/Users/xian/Development/piper-morgan")
 
 from sqlalchemy import select

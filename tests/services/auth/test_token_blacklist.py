@@ -13,6 +13,7 @@ Test Coverage:
 
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -188,7 +189,7 @@ class TestJWTServiceIntegration:
         """Should check blacklist during token validation"""
         # Create a valid token
         token = jwt_service.generate_access_token(
-            user_id="user123",
+            user_id=uuid4()  # Issue #262,
             user_email="user@example.com",
             scopes=["read", "write"],
         )
@@ -208,7 +209,7 @@ class TestJWTServiceIntegration:
     async def test_revoke_token_adds_to_blacklist(self, jwt_service):
         """Should add token to blacklist on revocation"""
         token = jwt_service.generate_access_token(
-            user_id="user456",
+            user_id=uuid4()  # Issue #262,
             user_email="test@example.com",
             scopes=["read"],
         )
@@ -227,7 +228,7 @@ class TestJWTServiceIntegration:
         service = JWTService(secret_key="test-key")
 
         token = service.generate_access_token(
-            user_id="user789",
+            user_id=uuid4()  # Issue #262,
             user_email="test@example.com",
             scopes=["read"],
         )
@@ -245,7 +246,7 @@ class TestJWTServiceIntegration:
         )
 
         token = service.generate_access_token(
-            user_id="user999",
+            user_id=uuid4()  # Issue #262,
             user_email="test@example.com",
             scopes=["read"],
         )
@@ -321,7 +322,7 @@ class TestEdgeCases:
         """Should check blacklist when refreshing tokens"""
         # Create refresh token
         refresh_token = jwt_service.generate_refresh_token(
-            user_id="user123", user_email="test@example.com"
+            user_id=uuid4()  # Issue #262, user_email="test@example.com"
         )
 
         # Should work initially

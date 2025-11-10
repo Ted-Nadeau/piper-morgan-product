@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 # Import Item primitive for Todo to extend
 from services.domain.primitives import Item
@@ -1136,7 +1136,7 @@ class Conversation:
     """Domain model for conversational interactions"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
-    user_id: str = ""
+    user_id: UUID = ""
     session_id: str = ""
     title: str = ""  # Optional conversation title/summary
     context: Dict[str, Any] = field(default_factory=dict)  # Conversation context

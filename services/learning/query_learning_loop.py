@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 # Configure logging
 logger = logging.getLogger(__name__)

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,7 +41,7 @@ class AlertSeverity(Enum):
 class Budget:
     """User budget configuration"""
 
-    user_id: str
+    user_id: UUID
     budget_type: BudgetType
     amount: Decimal
     provider: Optional[str] = None  # None = all providers
@@ -73,7 +74,7 @@ class BudgetStatus:
 class BudgetAlert:
     """Budget alert notification"""
 
-    user_id: str
+    user_id: UUID
     budget_id: str
     threshold: float
     current_percentage: float
@@ -93,7 +94,7 @@ class BudgetManager:
     async def set_budget(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         budget_type: BudgetType,
         amount: Decimal,
         provider: Optional[str] = None,
@@ -135,7 +136,7 @@ class BudgetManager:
     async def get_budget_status(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         budget_type: BudgetType,
         provider: Optional[str] = None,
     ) -> Optional[BudgetStatus]:
@@ -203,7 +204,7 @@ class BudgetManager:
             return None
 
     async def check_spending_against_budget(
-        self, session: AsyncSession, user_id: str, additional_cost: Decimal
+        self, session: AsyncSession, user_id: UUID, additional_cost: Decimal
     ) -> List[BudgetAlert]:
         """
         Check if additional spending would trigger budget alerts
@@ -402,7 +403,7 @@ class BudgetManager:
     async def _get_budget(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         budget_type: BudgetType,
         provider: Optional[str] = None,
     ) -> Optional[Budget]:
@@ -410,7 +411,7 @@ class BudgetManager:
         # TODO: Implement actual database query
         return None
 
-    async def _get_user_budgets(self, session: AsyncSession, user_id: str) -> List[Budget]:
+    async def _get_user_budgets(self, session: AsyncSession, user_id: UUID) -> List[Budget]:
         """Get all active budgets for user"""
         # TODO: Implement actual database query
         return []
@@ -418,7 +419,7 @@ class BudgetManager:
     async def _get_current_spending(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         budget_type: BudgetType,
         provider: Optional[str] = None,
     ) -> Decimal:

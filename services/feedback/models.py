@@ -4,7 +4,7 @@ Feedback domain models for PM-005 feedback tracking implementation
 
 from datetime import datetime
 from typing import Dict, List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +20,7 @@ class Feedback(BaseModel):
     context: Dict = Field(default_factory=dict, description="Additional context data")
 
     # User and session context
-    user_id: Optional[str] = Field(None, description="User ID if available")
+    user_id: Optional[UUID] = Field(None, description="User ID if available")
     conversation_context: Dict = Field(
         default_factory=dict, description="Conversation context if available"
     )
@@ -53,7 +53,7 @@ class FeedbackCreateRequest(BaseModel):
     rating: Optional[int] = Field(None, ge=1, le=5, description="Rating from 1-5")
     comment: str = Field(..., description="User feedback comment")
     context: Dict = Field(default_factory=dict, description="Additional context data")
-    user_id: Optional[str] = Field(None, description="User ID if available")
+    user_id: Optional[UUID] = Field(None, description="User ID if available")
     conversation_context: Dict = Field(
         default_factory=dict, description="Conversation context if available"
     )
@@ -70,7 +70,7 @@ class FeedbackResponse(BaseModel):
     rating: Optional[int]
     comment: str
     context: Dict
-    user_id: Optional[str]
+    user_id: Optional[UUID]
     conversation_context: Dict
     source: str
     status: str

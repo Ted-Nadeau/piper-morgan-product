@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from sqlalchemy import and_, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class APIUsageLog:
     """Represents a single API usage record"""
 
-    user_id: str
+    user_id: UUID
     provider: str
     model: str
 
@@ -49,7 +50,7 @@ class APIUsageLog:
 class UsageSummary:
     """Summary of API usage for a period"""
 
-    user_id: str
+    user_id: UUID
     period: str
     start_date: datetime
     end_date: datetime
@@ -88,7 +89,7 @@ class APIUsageTracker:
     async def log_api_call(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         provider: str,
         model: str,
         request_data: Dict[str, Any],
@@ -211,7 +212,7 @@ class APIUsageTracker:
             logger.error(f"Failed to store usage log: {e}")
 
     async def _check_budget_alerts(
-        self, session: AsyncSession, user_id: str, cost: Decimal
+        self, session: AsyncSession, user_id: UUID, cost: Decimal
     ) -> None:
         """Check if usage triggers budget alerts"""
         try:
@@ -226,7 +227,7 @@ class APIUsageTracker:
             logger.warning(f"Failed to check budget alerts: {e}")
 
     async def _get_current_spending(
-        self, session: AsyncSession, user_id: str
+        self, session: AsyncSession, user_id: UUID
     ) -> Dict[str, Decimal]:
         """Get current spending totals for user"""
         # TODO: Implement actual database queries
@@ -235,7 +236,7 @@ class APIUsageTracker:
     async def get_usage_summary(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         period: str = "month",
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
@@ -318,7 +319,7 @@ class APIUsageTracker:
     async def get_cost_breakdown(
         self,
         session: AsyncSession,
-        user_id: str,
+        user_id: UUID,
         breakdown_type: str = "provider",
         period: str = "month",
     ) -> Dict[str, Any]:
@@ -337,7 +338,7 @@ class APIUsageTracker:
             return {"error": str(e)}
 
     async def get_usage_trends(
-        self, session: AsyncSession, user_id: str, days: int = 30
+        self, session: AsyncSession, user_id: UUID, days: int = 30
     ) -> List[Dict[str, Any]]:
         """Get daily usage trends for the last N days"""
         try:
@@ -362,7 +363,7 @@ class APIUsageTracker:
             return []
 
     async def get_top_conversations(
-        self, session: AsyncSession, user_id: str, limit: int = 10, period: str = "month"
+        self, session: AsyncSession, user_id: UUID, limit: int = 10, period: str = "month"
     ) -> List[Dict[str, Any]]:
         """Get most expensive conversations for period"""
         try:

@@ -13,6 +13,7 @@ import json
 import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from services.domain.models import BoundaryViolation, EthicalDecision
 from services.infrastructure.logging.config import get_ethics_logger
@@ -68,7 +69,7 @@ class AuditLogEntry:
         event_type: str,
         timestamp: datetime,
         session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         details: Dict[str, Any] = None,
         redacted: bool = True,
     ):

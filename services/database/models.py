@@ -54,51 +54,47 @@ class User(Base):
     """
     User account model.
 
-    Represents authenticated users in the system. Initially populated from
-    existing user_id values in PersonalityProfile, TokenBlacklist, and Feedback.
-
-    For Alpha: Uses user_id pattern from existing data (concurrent_X).
-    For Beta: Will include full authentication with username/email/password.
+    Unified user table for all users (production and alpha).
+    Alpha users migrated from alpha_users table with is_alpha=true.
 
     Issue #228 CORE-USERS-API
+    Issue #262 CORE-USER-ID-MIGRATION (UUID conversion complete)
     """
 
     __tablename__ = "users"
 
-    # Primary key - matches existing user_id pattern (String(255))
-    id = Column(String(255), primary_key=True)
+    # Primary key - UUID (migrated from VARCHAR in Issue #262)
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Authentication fields
     username = Column(String(255), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(500), nullable=True)  # For future password auth
-    role = Column(String(50), default="user", nullable=False)  # Issue #259 - user role
+    role = Column(String(50), default="user", nullable=False)
 
     # Status flags
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+    is_alpha = Column(Boolean, default=False, nullable=False)  # Issue #262 - alpha user flag
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
 
-    # Relationships
+    # Relationships (Issue #262/#291 - FK constraints restored with UUID)
     personality_profiles = relationship(
         "PersonalityProfileModel", back_populates="user", lazy="select"
     )
-    # NOTE: api_keys relationship disabled during alpha phase (Issue #259)
-    # FK constraint removed to support alpha_users (UUID)
-    # api_keys = relationship(
-    #     "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
-    # )
-    # NOTE: blacklisted_tokens relationship disabled during alpha phase (Issue #259/#281)
-    # FK constraint removed from TokenBlacklist to support alpha_users (UUID)
-    # blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
+    api_keys = relationship(
+        "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )
+    blacklisted_tokens = relationship(
+        "TokenBlacklist", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )  # Issue #291 - FK restored
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
-    # NOTE: AuditLog relationship disabled during alpha phase (Issue #259)
-    # FK constraint removed to support alpha_users (UUID) - relationship requires explicit primaryjoin
-    # audit_logs = relationship("AuditLog", back_populates="user", lazy="select")  # Issue #249
+    # NOTE: AuditLog relationship still disabled (audit_logs.user_id has no FK constraint)
+    # audit_logs = relationship("AuditLog", back_populates="user", lazy="select")
 
     # Indexes
     __table_args__ = (
@@ -111,77 +107,9 @@ class User(Base):
         return f"<User(id={self.id}, username={self.username}, active={self.is_active})>"
 
 
-class AlphaUser(Base):
-    """
-    Alpha tester user model - temporary accounts for testing.
-
-    Separate from production users (users table) to enable:
-    - Clean alpha/production data separation
-    - Username preservation (prevent "Netcom problem")
-    - Test data cleanup without affecting production
-    - User choice in data migration
-
-    Issue #259 CORE-USER-ALPHA-TABLE
-    """
-
-    __tablename__ = "alpha_users"
-
-    # Identity - UUID for alpha users
-    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    username = Column(String(50), unique=True, nullable=False, index=True)
-    email = Column(String(255), unique=True, nullable=False, index=True)
-    display_name = Column(String(100))
-
-    # Auth fields (mirrored from users table)
-    password_hash = Column(String(500))
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-
-    # Timestamps (mirrored from users table)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    last_login_at = Column(DateTime)
-
-    # Alpha-specific fields
-    alpha_wave = Column(Integer, default=2)  # Wave 2 = first external alpha
-    test_start_date = Column(DateTime, default=datetime.utcnow)
-    test_end_date = Column(DateTime)
-    migrated_to_prod = Column(Boolean, default=False)
-    migration_date = Column(DateTime)
-    prod_user_id = Column(String(255), ForeignKey("users.id"))  # Link to production user
-
-    # Preferences (JSONB for flexibility during alpha)
-    preferences = Column(postgresql.JSONB, default=dict)
-    learning_data = Column(postgresql.JSONB, default=dict)
-
-    # Metadata
-    notes = Column(Text)  # PM notes about tester
-    feedback_count = Column(Integer, default=0)
-    last_active = Column(DateTime)
-
-    # Relationships
-    # production_user = relationship("User", foreign_keys=[prod_user_id])
-
-    # Indexes
-    __table_args__ = (
-        Index("idx_alpha_users_username", "username", unique=True),
-        Index("idx_alpha_users_email", "email", unique=True),
-        Index("idx_alpha_users_alpha_wave", "alpha_wave"),
-        Index("idx_alpha_users_migrated", "migrated_to_prod"),
-        Index(
-            "idx_alpha_users_prod_user",
-            "prod_user_id",
-            postgresql_where=Column("prod_user_id").isnot(None),
-        ),
-        Index(
-            "idx_alpha_users_last_active",
-            "last_active",
-            postgresql_where=Column("last_active").isnot(None),
-        ),
-    )
-
-    def __repr__(self):
-        return f"<AlphaUser(username={self.username}, email={self.email}, wave={self.alpha_wave})>"
+# NOTE: AlphaUser model removed in Issue #262
+# Alpha users merged into User table with is_alpha=true flag
+# Table dropped, data migrated to users table
 
 
 class UserAPIKey(Base):
@@ -192,14 +120,15 @@ class UserAPIKey(Base):
     with references using format: "piper_{user_id}_{provider}"
 
     Issue #228 CORE-USERS-API Phase 1B
+    Issue #262 - UUID migration complete
     """
 
     __tablename__ = "user_api_keys"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(
-        String(255), nullable=False, index=True
-    )  # No FK constraint to support alpha_users UUIDs (Issue #259)
+        postgresql.UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )  # Issue #262 - FK restored with UUID
     provider = Column(String(50), nullable=False)  # openai, anthropic, github, etc
     key_reference = Column(String(500), nullable=False)  # keychain identifier
 
@@ -217,8 +146,8 @@ class UserAPIKey(Base):
     previous_key_reference = Column(String(500), nullable=True)
     rotated_at = Column(DateTime, nullable=True)
 
-    # Relationships (commented out due to FK removal for Issue #259)
-    # user = relationship("User", back_populates="api_keys")
+    # Relationships (Issue #262 - restored with UUID)
+    user = relationship("User", back_populates="api_keys")
 
     # Constraints
     __table_args__ = (
@@ -243,15 +172,16 @@ class AuditLog(Base, TimestampMixin):
     - Security events
 
     Issue #249 CORE-AUDIT-LOGGING
+    Issue #262 - UUID migration complete (NO FK constraint - intentional)
     """
 
     __tablename__ = "audit_logs"
 
     # Identity (follow User model pattern - String primary key)
     id = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
-    # NOTE: FK removed for alpha phase (Issue #259) - supports both alpha_users (UUID) and users (String)
-    # Will be re-added post-alpha when alpha users migrate to production users table
-    user_id = Column(String(255), nullable=True, index=True)
+    # NOTE: FK intentionally NOT added - audit logs should persist even if user deleted
+    # user_id stores UUID as string for reference only
+    user_id = Column(postgresql.UUID(as_uuid=True), nullable=True, index=True)
     session_id = Column(String(255), nullable=True, index=True)
 
     # Event classification
@@ -1140,7 +1070,10 @@ class ListItemDB(Base):
 
 
 class FeedbackDB(Base, TimestampMixin):
-    """Database model for user feedback tracking - PM-005"""
+    """Database model for user feedback tracking - PM-005
+
+    Issue #262 - UUID migration complete
+    """
 
     __tablename__ = "feedback"
 
@@ -1155,7 +1088,9 @@ class FeedbackDB(Base, TimestampMixin):
     context = Column(JSON, default=dict)  # Additional context data
 
     # User and session context
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
+    )
     conversation_context = Column(JSON, default=dict)  # Conversation context if available
 
     # Feedback metadata
@@ -1230,12 +1165,17 @@ class FeedbackDB(Base, TimestampMixin):
 
 
 class PersonalityProfileModel(Base, TimestampMixin):
-    """Database model for personality profiles"""
+    """Database model for personality profiles
+
+    Issue #262 - UUID migration complete
+    """
 
     __tablename__ = "personality_profiles"
 
     id = Column(postgresql.UUID(as_uuid=True), primary_key=True)
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=False, unique=True)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True
+    )
     warmth_level = Column(Float, nullable=False, default=0.6)
     confidence_style = Column(String(50), nullable=False, default="contextual")
     action_orientation = Column(String(50), nullable=False, default="medium")
@@ -1275,7 +1215,7 @@ class PersonalityProfileModel(Base, TimestampMixin):
 
     @classmethod
     def from_domain(
-        cls, profile: "domain.PersonalityProfile", user_id: str
+        cls, profile: "domain.PersonalityProfile", user_id: uuid.UUID
     ) -> "PersonalityProfileModel":
         """Create from domain model"""
         import uuid
@@ -1297,6 +1237,8 @@ class TokenBlacklist(Base):
 
     Stores revoked tokens for security invalidation when Redis unavailable.
     Redis is primary storage with TTL; this is fallback only.
+
+    Issue #291 - FK constraint restored with CASCADE delete
     """
 
     __tablename__ = "token_blacklist"
@@ -1306,18 +1248,21 @@ class TokenBlacklist(Base):
 
     # Token identification
     token_id = Column(String(255), unique=True, nullable=False, index=True)
-    # NOTE: Foreign key temporarily removed for alpha testing with alpha_users table
-    # Will be re-added as ForeignKey("users.id") after #263 UUID migration
-    user_id = Column(String(255), nullable=True, index=True)
+    # Issue #291 - FK constraint restored (was temporarily removed for alpha)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
 
     # Blacklist metadata
     reason = Column(String(50), nullable=False)  # logout, security, admin
     expires_at = Column(DateTime, nullable=False, index=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    # Relationships
-    # NOTE: Relationship disabled until #263 UUID migration (no foreign key)
-    # user = relationship("User", back_populates="blacklisted_tokens")
+    # Relationships (Issue #291 - restored)
+    user = relationship("User", back_populates="blacklisted_tokens")
 
     # Strategic indexes for performance
     __table_args__ = (

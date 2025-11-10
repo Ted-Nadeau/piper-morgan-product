@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import structlog
 
@@ -122,7 +122,7 @@ class EnhancedContextTracker:
         message: str,
         conversation_id: str,
         session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
     ) -> ContextEnrichment:
         """
         Main method to enrich conversation context
@@ -451,7 +451,7 @@ async def enrich_message_context(
     message: str,
     conversation_id: str,
     session_id: Optional[str] = None,
-    user_id: Optional[str] = None,
+    user_id: Optional[UUID] = None,
 ) -> ContextEnrichment:
     """Convenience function to enrich message context"""
     return await enhanced_context_tracker.enrich_conversation_context(

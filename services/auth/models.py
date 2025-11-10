@@ -4,6 +4,8 @@ Pydantic models for authentication API requests and responses.
 Issue #281: CORE-ALPHA-WEB-AUTH
 """
 
+from uuid import UUID
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -44,5 +46,5 @@ class LoginResponse(BaseModel):
     """
 
     token: str = Field(..., description="JWT access token")
-    user_id: str = Field(..., description="User UUID")
+    user_id: UUID = Field(..., description="User UUID")
     username: str = Field(..., description="Username")

@@ -8,6 +8,7 @@ import threading
 import time
 from collections import OrderedDict
 from typing import Optional
+from uuid import UUID
 
 from .exceptions import CacheError
 from .personality_profile import PersonalityProfile

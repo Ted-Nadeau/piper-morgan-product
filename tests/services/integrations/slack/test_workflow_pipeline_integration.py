@@ -16,11 +16,16 @@ from services.domain.models import Feature, Intent, Product, Workflow, WorkItem
 from services.integrations.slack.attention_model import AttentionModel, AttentionSource
 from services.integrations.slack.spatial_mapper import SlackSpatialMapper
 from services.integrations.slack.spatial_types import (
+    UUID,
     AttentionLevel,
     EmotionalValence,
     RoomPurpose,
     SpatialCoordinates,
     TerritoryType,
+    from,
+    import,
+    uuid,
+    uuid4,
 )
 from services.integrations.slack.workspace_navigator import NavigationIntent, WorkspaceNavigator
 from services.shared_types import IntentCategory, WorkflowType, WorkItemStatus, WorkItemType

@@ -67,7 +67,7 @@ class TodoManagementService:
 
     async def create_todo(
         self,
-        user_id: str,
+        user_id: UUID,
         text: str,
         priority: str = "medium",
         list_id: Optional[str] = None,
@@ -154,7 +154,7 @@ class TodoManagementService:
 
     async def list_todos(
         self,
-        user_id: str,
+        user_id: UUID,
         list_id: Optional[str] = None,
         status: Optional[str] = None,
         include_completed: bool = False,
@@ -197,7 +197,7 @@ class TodoManagementService:
 
             return todos
 
-    async def get_todo(self, todo_id: UUID, user_id: Optional[str] = None) -> Optional[Todo]:
+    async def get_todo(self, todo_id: UUID, user_id: Optional[UUID] = None) -> Optional[Todo]:
         """Get a specific todo by ID.
 
         Args:
@@ -224,7 +224,7 @@ class TodoManagementService:
 
             return todo
 
-    async def complete_todo(self, todo_id: UUID, user_id: str) -> Optional[Todo]:
+    async def complete_todo(self, todo_id: UUID, user_id: UUID) -> Optional[Todo]:
         """Mark a todo as complete.
 
         Args:
@@ -258,7 +258,7 @@ class TodoManagementService:
 
             return completed_todo
 
-    async def reopen_todo(self, todo_id: UUID, user_id: str) -> Optional[Todo]:
+    async def reopen_todo(self, todo_id: UUID, user_id: UUID) -> Optional[Todo]:
         """Reopen a completed todo.
 
         Args:
@@ -288,7 +288,7 @@ class TodoManagementService:
 
             return reopened_todo
 
-    async def update_todo(self, todo_id: UUID, user_id: str, **updates) -> Optional[Todo]:
+    async def update_todo(self, todo_id: UUID, user_id: UUID, **updates) -> Optional[Todo]:
         """Update todo fields.
 
         Args:
@@ -332,7 +332,7 @@ class TodoManagementService:
 
             return updated_todo
 
-    async def delete_todo(self, todo_id: UUID, user_id: str) -> bool:
+    async def delete_todo(self, todo_id: UUID, user_id: UUID) -> bool:
         """Delete a todo.
 
         Args:

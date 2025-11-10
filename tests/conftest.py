@@ -6,6 +6,7 @@ import asyncio
 import os
 import sys
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
@@ -13,6 +14,18 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 # Add project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
+# ============================================================================
+# UUID Test Fixtures (Issue #262 - UUID Migration)
+# ============================================================================
+# Reusable UUIDs for tests - use these instead of hardcoded strings
+TEST_USER_ID = UUID("11111111-1111-1111-1111-111111111111")
+TEST_USER_ID_2 = UUID("22222222-2222-2222-2222-222222222222")
+TEST_SESSION_ID = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+TEST_WORKFLOW_ID = UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+
+# For xian's actual UUID from migration
+XIAN_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
 
 
 # Session-scoped event loop for async integration tests (Issue #290)

@@ -11,6 +11,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.github_domain_service import GitHubDomainService

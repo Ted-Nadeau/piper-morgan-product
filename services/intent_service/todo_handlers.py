@@ -34,7 +34,7 @@ class TodoIntentHandlers:
         """Initialize with TodoManagementService."""
         self.todo_service = TodoManagementService()
 
-    async def handle_create_todo(self, intent: Intent, session_id: str, user_id: str) -> str:
+    async def handle_create_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """
         Handle: "add todo: Review PR #285"
         Extract text, create todo with database persistence, format response.
@@ -75,7 +75,7 @@ class TodoIntentHandlers:
             logger.error("Todo creation failed", error=str(e), user_id=user_id, exc_info=True)
             return "I had trouble adding that todo. Could you try again?"
 
-    async def handle_list_todos(self, intent: Intent, session_id: str, user_id: str) -> str:
+    async def handle_list_todos(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "show my todos" or "list todos" - shows active todos from database."""
         try:
             # Get active todos from database
@@ -110,7 +110,7 @@ class TodoIntentHandlers:
             logger.error("Todo list retrieval failed", error=str(e), user_id=user_id, exc_info=True)
             return "I had trouble getting your todos. Could you try again?"
 
-    async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: str) -> str:
+    async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "mark todo 1 as complete" or "complete todo about PR"""
         todo_number = self._extract_todo_id(intent.original_message)
         if not todo_number:
@@ -146,7 +146,7 @@ class TodoIntentHandlers:
             logger.error("Todo completion failed", error=str(e), user_id=user_id, exc_info=True)
             return "I had trouble completing that todo. Could you try again?"
 
-    async def handle_delete_todo(self, intent: Intent, session_id: str, user_id: str) -> str:
+    async def handle_delete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "delete todo 3" or "remove todo about meeting"""
         todo_number = self._extract_todo_id(intent.original_message)
         if not todo_number:

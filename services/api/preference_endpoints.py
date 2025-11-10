@@ -10,6 +10,7 @@ import asyncio
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.orchestration.session_persistence import SessionContextManager
@@ -52,9 +53,9 @@ class PreferenceAPI:
 
     async def get_user_preferences(
         self,
-        user_id: str,
+        user_id: UUID,
         session_id: Optional[str] = None,
-        requesting_user_id: Optional[str] = None,
+        requesting_user_id: Optional[UUID] = None,
     ) -> Dict[str, Any]:
         """
         GET /api/preferences/{user_id}
@@ -114,7 +115,7 @@ class PreferenceAPI:
 
     async def update_user_preferences(
         self,
-        user_id: str,
+        user_id: UUID,
         preferences: Dict[str, Any],
         requesting_user_id: Optional[str] = None,
         merge_strategy: str = "replace",
@@ -297,7 +298,7 @@ class PreferenceAPI:
             )
 
     async def get_session_context(
-        self, session_id: str, user_id: Optional[str] = None
+        self, session_id: str, user_id: Optional[UUID] = None
     ) -> Dict[str, Any]:
         """
         GET /api/sessions/{session_id}/context
@@ -341,7 +342,7 @@ class PreferenceAPI:
             )
 
     async def update_session_context(
-        self, session_id: str, user_id: str, context_data: Dict[str, Any]
+        self, session_id: str, user_id: UUID, context_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         PUT /api/sessions/{session_id}/context
@@ -439,7 +440,7 @@ class PreferenceAPI:
     # Validation and utility methods
 
     def _validate_get_preferences_request(
-        self, user_id: str, session_id: Optional[str], requesting_user_id: Optional[str]
+        self, user_id: UUID, session_id: Optional[str], requesting_user_id: Optional[str]
     ) -> Optional[Dict[str, Any]]:
         """Validate GET preferences request parameters"""
         if not user_id or not user_id.strip():
@@ -455,7 +456,7 @@ class PreferenceAPI:
         return None
 
     def _validate_update_preferences_request(
-        self, user_id: str, preferences: Dict[str, Any]
+        self, user_id: UUID, preferences: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """Validate update preferences request parameters"""
         if not user_id or not user_id.strip():
@@ -498,7 +499,7 @@ class PreferenceAPI:
             return False
 
     async def _validate_user_access(
-        self, target_user_id: str, requesting_user_id: Optional[str]
+        self, target_user_id: UUID, requesting_user_id: Optional[UUID]
     ) -> Optional[Dict[str, Any]]:
         """Validate user access permissions (mock implementation)"""
         # In production, this would check actual authentication/authorization
@@ -510,7 +511,7 @@ class PreferenceAPI:
 
         return None
 
-    async def _check_rate_limit(self, user_id: str) -> Optional[Dict[str, Any]]:
+    async def _check_rate_limit(self, user_id: UUID) -> Optional[Dict[str, Any]]:
         """Check rate limiting for user (mock implementation)"""
         # Mock rate limiting implementation
         now = datetime.now()

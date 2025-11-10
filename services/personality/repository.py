@@ -6,6 +6,7 @@ Handles database operations and PIPER.user.md integration
 import logging
 import os
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 import yaml
 from sqlalchemy import delete, select, update

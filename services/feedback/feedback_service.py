@@ -5,7 +5,7 @@ Feedback Service for PM-005 feedback tracking implementation
 import json
 from datetime import datetime
 from typing import Dict, List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +27,7 @@ class FeedbackService:
         comment: str,
         rating: Optional[int] = None,
         context: Dict = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         conversation_context: Dict = None,
         source: str = "api",
         tags: List[str] = None,
@@ -90,7 +90,7 @@ class FeedbackService:
         session_id: Optional[str] = None,
         feedback_type: Optional[str] = None,
         status: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> List[Feedback]:
@@ -167,7 +167,7 @@ class FeedbackService:
     async def get_feedback_stats(
         self,
         session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
     ) -> Dict:

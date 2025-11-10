@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import structlog
 
@@ -150,7 +150,7 @@ class KeyRotationService:
         provider: str,
         new_key: str,
         config: Optional[RotationConfig] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
     ) -> str:
         """
         Start key rotation process

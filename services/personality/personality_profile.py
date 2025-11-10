@@ -11,10 +11,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from sqlalchemy import select, text
 
-from services.database.models import AlphaUser
+from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
 
 logger = logging.getLogger(__name__)
@@ -216,12 +217,12 @@ class PersonalityProfile:
         try:
             # Load user preferences from database
             async with AsyncSessionFactory.session_scope() as session:
-                # Query for alpha_users record
-                result = await session.execute(select(AlphaUser).where(AlphaUser.id == user_id))
+                # Query for users record (Issue #262 - alpha_users merged into users)
+                result = await session.execute(select(User).where(User.id == user_id))
                 user = result.scalar_one_or_none()
 
                 if not user:
-                    logger.warning(f"User {user_id} not found in alpha_users, using defaults")
+                    logger.warning(f"User {user_id} not found in users, using defaults")
                     return cls.get_default(user_id)
 
                 # Extract preferences or use empty dict

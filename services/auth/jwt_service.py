@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import jwt
 import structlog
@@ -69,7 +70,7 @@ class JWTClaims:
     jti: str  # JWT ID - Unique token identifier
 
     # Custom claims for Piper Morgan
-    user_id: str
+    user_id: UUID
     user_email: str
     scopes: List[str]  # Permissions/scopes
     token_type: str  # TokenType enum value
@@ -137,7 +138,7 @@ class JWTService:
 
     def generate_access_token(
         self,
-        user_id: str,
+        user_id: UUID,
         user_email: str,
         scopes: List[str],
         session_id: Optional[str] = None,
@@ -162,7 +163,7 @@ class JWTService:
         claims = JWTClaims(
             iss=self.issuer,
             aud=self.audience,
-            sub=user_id,
+            sub=str(user_id),  # Convert UUID to string for JWT standard claim
             exp=int(expire.timestamp()),
             iat=int(now.timestamp()),
             jti=str(uuid.uuid4()),
@@ -175,10 +176,14 @@ class JWTService:
         )
 
         # Convert dataclass to dict for JWT encoding
-        claims_dict = {
-            field.name: getattr(claims, field.name)
-            for field in claims.__dataclass_fields__.values()
-        }
+        # Convert UUID objects to strings for JSON serialization
+        claims_dict = {}
+        for field in claims.__dataclass_fields__.values():
+            value = getattr(claims, field.name)
+            if isinstance(value, UUID):
+                claims_dict[field.name] = str(value)
+            else:
+                claims_dict[field.name] = value
 
         token = jwt.encode(claims_dict, self.secret_key, algorithm=self.algorithm)
 
@@ -189,7 +194,7 @@ class JWTService:
         return token
 
     def generate_refresh_token(
-        self, user_id: str, user_email: str, session_id: Optional[str] = None
+        self, user_id: UUID, user_email: str, session_id: Optional[str] = None
     ) -> str:
         """
         Generate JWT refresh token for long-term authentication.
@@ -208,7 +213,7 @@ class JWTService:
         claims = JWTClaims(
             iss=self.issuer,
             aud=self.audience,
-            sub=user_id,
+            sub=str(user_id),  # Convert UUID to string for JWT standard claim
             exp=int(expire.timestamp()),
             iat=int(now.timestamp()),
             jti=str(uuid.uuid4()),
@@ -219,10 +224,15 @@ class JWTService:
             session_id=session_id,
         )
 
-        claims_dict = {
-            field.name: getattr(claims, field.name)
-            for field in claims.__dataclass_fields__.values()
-        }
+        # Convert dataclass to dict for JWT encoding
+        # Convert UUID objects to strings for JSON serialization
+        claims_dict = {}
+        for field in claims.__dataclass_fields__.values():
+            value = getattr(claims, field.name)
+            if isinstance(value, UUID):
+                claims_dict[field.name] = str(value)
+            else:
+                claims_dict[field.name] = value
 
         token = jwt.encode(claims_dict, self.secret_key, algorithm=self.algorithm)
 
@@ -369,7 +379,7 @@ class JWTService:
         self,
         token: str,
         reason: str = "logout",
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session: Optional[AsyncSession] = None,
         audit_context: Optional[Dict[str, Any]] = None,
     ) -> bool:

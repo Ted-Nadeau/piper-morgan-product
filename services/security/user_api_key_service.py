@@ -10,6 +10,7 @@ Issue #228 CORE-USERS-API Phase 1C
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession

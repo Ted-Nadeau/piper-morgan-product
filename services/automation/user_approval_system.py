@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional, Set
+from uuid import UUID
 
 from services.domain.user_preference_manager import UserPreferenceManager
 
@@ -29,7 +30,7 @@ class ApprovalRequest:
     """An approval request for an automation action."""
 
     request_id: str
-    user_id: str
+    user_id: UUID
     action_type: str
     confidence: float
     safety_level: str
@@ -53,7 +54,7 @@ class UserApprovalSystem:
         self._pending_requests: Dict[str, ApprovalRequest] = {}
         self._approval_history: List[ApprovalRequest] = []
 
-    async def should_auto_approve(self, user_id: str, action_type: str, confidence: float) -> bool:
+    async def should_auto_approve(self, user_id: UUID, action_type: str, confidence: float) -> bool:
         """
         Check if action should be auto-approved based on user preferences.
 
@@ -100,7 +101,7 @@ class UserApprovalSystem:
 
     async def request_approval(
         self,
-        user_id: str,
+        user_id: UUID,
         action_type: str,
         confidence: float,
         safety_level: str,
@@ -187,7 +188,7 @@ class UserApprovalSystem:
 
         return request
 
-    def get_pending_requests(self, user_id: Optional[str] = None) -> List[ApprovalRequest]:
+    def get_pending_requests(self, user_id: Optional[UUID] = None) -> List[ApprovalRequest]:
         """
         Get pending approval requests.
 
@@ -208,7 +209,7 @@ class UserApprovalSystem:
         return requests
 
     def get_approval_history(
-        self, user_id: Optional[str] = None, limit: int = 100
+        self, user_id: Optional[UUID] = None, limit: int = 100
     ) -> List[ApprovalRequest]:
         """
         Get approval history.
@@ -230,7 +231,7 @@ class UserApprovalSystem:
 
         return history[:limit]
 
-    def get_approval_statistics(self, user_id: Optional[str] = None) -> Dict:
+    def get_approval_statistics(self, user_id: Optional[UUID] = None) -> Dict:
         """
         Get approval statistics.
 
@@ -265,7 +266,7 @@ class UserApprovalSystem:
 
     async def set_automation_preferences(
         self,
-        user_id: str,
+        user_id: UUID,
         enabled: bool,
         min_confidence: Optional[float] = None,
         auto_approve_actions: Optional[Set[str]] = None,
