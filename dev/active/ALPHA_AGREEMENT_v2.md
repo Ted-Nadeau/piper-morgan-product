@@ -89,6 +89,7 @@ The software may collect the following data:
 
 **Your API keys and personal data:**
 
+- Passwords are hashed with bcrypt (12 rounds) and stored locally
 - API keys are stored locally in your system keychain and never transmitted
 - User preferences are stored locally in your database
 - You may opt out of analytics collection in settings
@@ -142,6 +143,6 @@ GitHub: https://github.com/Codewarrior1988/piper-morgan
 
 ---
 
-_Last Updated: October 24, 2025_
-_Version: 2.0_
+_Last Updated: November 11, 2025_
+_Version: 2.1_
 _Software Version: 0.8.0-alpha_

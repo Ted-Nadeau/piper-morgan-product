@@ -496,11 +496,12 @@ async def check_for_incomplete_setup() -> Any:
 
 
 async def create_user_account() -> Any:
-    """Create alpha user account during alpha testing phase"""
-    from services.database.models import AlphaUser
+    """Create user account with secure password (Issue #297)"""
+    from services.auth.password_service import PasswordService
+    from services.database.models import User
     from services.database.session_factory import AsyncSessionFactory
 
-    print("\n2. Alpha Tester Account")
+    print("\n2. User Account Setup")
 
     # Check for incomplete setup (Issue #218 - Smart Resume)
     existing_user = await check_for_incomplete_setup()
@@ -531,13 +532,37 @@ async def create_user_account() -> Any:
 
         email = input("   Email (optional, press Enter to skip): ").strip() or None
 
-        # Create alpha user (Issue #259 - Alpha/production data separation)
-        user = AlphaUser(
-            id=uuid.uuid4(),  # UUID for alpha users
+        # Prompt for password (Issue #297 - Secure password setup)
+        print("\n   Create a secure password:")
+        password = getpass("   Password (min 8 characters): ")
+
+        while len(password) < 8:
+            print("   ✗ Password must be at least 8 characters")
+            password = getpass("   Password (min 8 characters): ")
+
+        # Confirm password
+        password_confirm = getpass("   Confirm password: ")
+
+        while password != password_confirm:
+            print("   ✗ Passwords don't match, please try again")
+            password = getpass("   Password (min 8 characters): ")
+            password_confirm = getpass("   Confirm password: ")
+
+        # Hash password with bcrypt
+        password_service = PasswordService()
+        password_hash = password_service.hash_password(password)
+        print("   ✓ Password set securely")
+
+        # Create user account (Issue #262 - UUID migration, #297 - Password setup)
+        user = User(
+            id=uuid.uuid4(),
             username=username,
             email=email,
-            alpha_wave=1,  # First wave of alpha testing
-            test_start_date=datetime.utcnow(),
+            password_hash=password_hash,
+            role="user",
+            is_active=True,
+            is_verified=True,
+            is_alpha=True,  # Alpha tester flag
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )

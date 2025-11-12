@@ -19,6 +19,7 @@
 **Required Accounts & Keys:**
 
 - [ ] **GitHub account with SSH key configured** (required BEFORE cloning)
+
   - **Why needed**: You must authenticate to GitHub to clone the repository
   - **If you already have SSH keys**: Test with `ssh -T git@github.com`
     - ✅ Success: "Hi username! You've successfully authenticated..."
@@ -98,7 +99,8 @@ python main.py setup
 The setup wizard will:
 
 - ✅ Check your system (Docker, Python 3.9+, port 8001, database)
-- ✅ Guide you through creating your alpha user account
+- ✅ Guide you through creating your user account (username, email, password)
+- ✅ Set up secure password (min 8 chars, bcrypt-hashed)
 - ✅ Collect and validate your API keys
 - ✅ Initialize the database and services
 - ✅ Verify everything is working
@@ -118,10 +120,13 @@ Let's get you set up (takes about 5 minutes)
    ✓ Port 8001 available
    ✓ Database accessible
 
-2. User Account Creation
+2. User Account Setup
    Username: [you'll enter this]
    Email: [you'll enter this]
-   ✓ Alpha user created
+   Password: [secure, hidden input - min 8 chars]
+   Confirm password: [must match]
+   ✓ Password set securely
+   ✓ Account created
 
 3. API Key Configuration
    [Guided prompts for OpenAI/Anthropic keys]
@@ -181,7 +186,14 @@ Recommendations:
 python main.py
 ```
 
-Navigate to http://localhost:8001 in your browser.
+The server will start and automatically open http://localhost:8001 in your browser.
+
+**Login with your credentials:**
+
+- Username: [from setup wizard]
+- Password: [from setup wizard]
+
+After login, you'll see the Piper Morgan chat interface.
 
 ---
 
@@ -192,8 +204,10 @@ Start with these simple tests to verify everything works:
 1. **Basic Chat**: "Hello, what can you help me with?"
 2. **Task Creation**: "Add a todo: Review Q3 metrics"
 3. **Information Query**: "What tasks do I have?"
-4. **Document Summary**: Upload a simple text file and ask for a summary
-5. **Preference Check**: "How do you prefer to communicate?" (should reflect your settings)
+4. **File Upload**: Upload a PDF or DOCX file (max 10MB) and ask for analysis
+5. **Document Summary**: "Summarize the document I just uploaded"
+6. **Preference Check**: "How do you prefer to communicate?" (should reflect your settings)
+7. **Multi-User Test**: If testing with others, verify you can't see their data
 
 ---
 
@@ -248,6 +262,20 @@ The setup wizard will guide you through Docker installation with platform-specif
 - Re-run: `python main.py preferences`
 - Restart Piper Morgan after preference changes
 - Check status shows your username correctly
+
+**Login issues**
+
+- Forgot password? Run `python main.py setup` to create a new account
+- Can't access http://localhost:8001? Try http://127.0.0.1:8001
+- Check server is running: Look for "Server ready" message
+- Browser didn't open? Manually navigate to http://localhost:8001
+
+**File upload issues**
+
+- Supported formats: PDF, DOCX, TXT, MD, JSON
+- Max file size: 10MB
+- Check file isn't corrupted or password-protected
+- Verify you're logged in (file upload requires authentication)
 
 ---
 
@@ -327,6 +355,6 @@ Thank you for being an early adopter and helping us perfect the onboarding exper
 
 ---
 
-_Last updated: October 24, 2025_
+_Last updated: November 11, 2025_
 _Software version: 0.8.0_
-_Guide version: 2.0 (Guided Setup)_
+_Guide version: 2.1 (Guided Setup with Password)_

@@ -294,3 +294,244 @@ Fixes #291
 
 *Session log updated: 7:05 PM PT, November 8, 2025*
 *Gameplan reviewed - ready for PM decision and agent deployment*
+
+---
+
+## Agent Deployment Preparation (7:05 PM - 7:08 PM)
+
+### 7:08 PM - PM Confirms Option 1B and Requests Prompt
+
+**PM**: "Yes, chief and I discussed and agreed on 1B. Ready for the first prompt. Any supporting role for Cursor (testing, verifying, validating, documenting, etc.)? Also, do I need to remind you to follow the agent-prompt template strictly?"
+
+**Decisions Made**:
+- ✅ Option 1B selected (merge tables)
+- ✅ Ready to deploy Code Agent
+- ✅ Asking about Cursor support role
+- ✅ Checking on template adherence
+
+---
+
+## Cursor Support Role - YES! ✅
+
+**Cursor can provide excellent parallel support**:
+
+**During Code's Work** (Phases 0-3):
+1. 📸 **Evidence Gathering**: Screenshot before/after states
+2. 📊 **Documentation**: Create visual progress tracking
+3. 🔍 **Cross-Validation**: Verify Code's database changes
+4. 📝 **Session Notes**: Enhance documentation with details
+
+**After Code Completes Phases** (Phases 4-5):
+1. 🧪 **Manual Testing**: Test auth flow end-to-end
+2. ✅ **Validation**: Verify UUID changes work correctly
+3. 📸 **Evidence Package**: Screenshots, test results, metrics
+4. 📊 **Completion Report**: Professional summary with evidence
+5. ✍️ **Blog Material**: Gather content for "Building Piper Morgan"
+
+**Specific Cursor Tasks**:
+
+**Phase 0-1 Verification**:
+- Verify backup files created (size checks)
+- Document database state before migration
+- Screenshot table structures
+
+**Phase 2-3 Verification**:
+- Review type hint changes (spot check)
+- Verify UUID imports added correctly
+- Document code changes
+
+**Phase 4-5 Active Testing**:
+- Manual auth flow testing (login, logout, token validation)
+- Test token blacklist cascade behavior
+- Verify #291 resolution (FK constraint working)
+- Performance testing (query speed checks)
+
+**Phase Z Completion**:
+- Create comprehensive evidence package
+- Document before/after metrics
+- Prepare blog post material
+- Create completion report for both #262 and #291
+
+**Work Pattern**: Code implements → Cursor verifies → Code moves to next phase
+
+---
+
+## Template v10.2 Adherence - YES! ✅
+
+**Answer**: No need to remind - I'll follow template v10.2 strictly!
+
+**I remember the key requirements**:
+- ✅ Identity section
+- ✅ Essential briefing documents
+- ✅ Task overview clear
+- ✅ Gameplan integration complete
+- ✅ Critical requirements listed
+- ✅ Success criteria defined
+- ✅ **Anti-80% safeguards MANDATORY**
+- ✅ Methodology reminders (Inchworm Protocol)
+- ✅ Stop conditions clear
+- ✅ Risk assessment included
+- ✅ Commit message template
+- ✅ Session log requirements
+- ✅ Deliverables checklist
+- ✅ Evidence requirements specific
+
+**Creating comprehensive prompt now following v10.2...**
+
+---
+
+*Session log updated: 7:08 PM PT, November 8, 2025*
+*Creating Code Agent prompt with Cursor support plan*
+
+---
+
+## Code Agent Prompt Created (7:09 PM)
+
+### Prompt Complete - Following Template v10.2 ✅
+
+**File**: `agent-prompt-issue-262.md`
+
+**Comprehensive Prompt Includes**:
+1. ✅ Identity section (Code Agent)
+2. ✅ Essential briefing documents
+3. ✅ Task overview (both #262 and #291)
+4. ✅ Gameplan integration (680-line reference)
+5. ✅ Critical requirements (6 major sections)
+6. ✅ Success criteria (both issues)
+7. ✅ Anti-80% safeguards MANDATORY (detailed per phase)
+8. ✅ Methodology reminders (Inchworm Protocol)
+9. ✅ Stop conditions (clearly defined)
+10. ✅ Risk assessment (medium, with mitigation)
+11. ✅ Cursor support role (coordination plan)
+12. ✅ Special handling (hardcoded IDs, data investigation)
+13. ✅ Commit message template (comprehensive)
+14. ✅ Session log requirements (what to document)
+15. ✅ Deliverables checklist (comprehensive)
+16. ✅ Communication expectations
+17. ✅ Timeline (Saturday + Sunday breakdown)
+18. ✅ Critical reminders (8 key points)
+
+**Key Features**:
+- Option 1B confirmed (merge tables)
+- Issue #291 integrated (FK constraint)
+- Automation scripts referenced (152 + 104 files)
+- Cursor coordination planned
+- Evidence requirements specific
+- Testing incremental (after each phase)
+- Both issues documented together
+
+**Timeline**:
+- Saturday: Phases -1, 0, 1, 2 (~5-6 hours)
+- Sunday: Phases 3, 4, 5, Z (~8-12 hours)
+- Total: 14 hours across 2 days
+
+**Ready for Deployment**: ✅ Prompt comprehensive and ready
+
+---
+
+*Session log updated: 7:10 PM PT, November 8, 2025*
+*Code Agent prompt complete - ready for deployment*
+
+---
+
+## Cursor Prompt Needed (7:11 PM)
+
+### 7:11 PM - PM Asks About Cursor Prompt
+
+**PM**: "Do we need a unique prompt for Cursor as well so it knows what to do?"
+
+**Answer**: ✅ YES - Excellent catch!
+
+**Why Cursor Needs Its Own Prompt**:
+1. Different role (verification vs implementation)
+2. Needs to know WHAT Code is doing
+3. Needs to know WHEN to verify
+4. Needs to know WHAT to verify
+5. Needs clear evidence gathering instructions
+6. Needs manual testing specifications
+7. Needs completion reporting expectations
+
+**Creating Cursor prompt now...**
+
+---
+
+*Session log updated: 7:11 PM PT, November 8, 2025*
+*Creating Cursor Agent prompt for verification and testing support*
+
+---
+
+## Both Agent Prompts Complete (7:12 PM - 7:18 PM)
+
+### Cursor Agent Prompt Created ✅
+
+**File**: `agent-prompt-cursor-verification.md`
+
+**Comprehensive Verification Prompt Includes**:
+1. ✅ Identity (Cursor as verification agent)
+2. ✅ Understanding of Code's work (all phases)
+3. ✅ Phase-by-phase verification instructions
+4. ✅ Manual testing scripts (5 comprehensive tests)
+5. ✅ Issue #291 specific verification (cascade delete!)
+6. ✅ Performance testing instructions
+7. ✅ Evidence gathering requirements
+8. ✅ Completion report template
+9. ✅ Success criteria (both issues)
+10. ✅ Communication expectations
+11. ✅ Timeline coordination
+
+**Cursor's Key Responsibilities**:
+
+**Verification Work** (Phases 0-4):
+- Backup verification
+- Database schema checks
+- Type hint spot checks
+- Test fixture verification
+
+**Active Testing** (Phase 5) - PRIMARY ROLE:
+1. Auth flow end-to-end (login, JWT, logout, blacklist)
+2. Token blacklist cascade delete (Issue #291 proof!)
+3. FK constraint enforcement (orphan prevention)
+4. Performance verification (query plans)
+5. Full test suite run (comprehensive)
+
+**Completion** (Phase Z):
+- Comprehensive verification report
+- Evidence package (screenshots, test outputs)
+- Blog material gathering
+- Clear recommendation (approve/requires fixes)
+
+**Testing Scripts Provided**:
+- test_cascade_delete.py (proves Issue #291 working)
+- test_fk_enforcement.py (proves FK constraint working)
+- SQL performance queries
+- Auth flow curl commands
+- JWT decode verification
+
+---
+
+## Deployment Package Ready
+
+**Files Created**:
+1. ✅ `agent-prompt-issue-262.md` (Code Agent - implementation)
+2. ✅ `agent-prompt-cursor-verification.md` (Cursor - verification/testing)
+
+**Coordination Pattern**:
+- Code implements (Phases -1 through Z)
+- Cursor verifies after each phase
+- Cursor does comprehensive manual testing (Phase 5)
+- Cursor creates completion report
+- Both agents coordinate on final evidence
+
+**Timeline**:
+- Saturday: Code works Phases 0-2, Cursor verifies (~7 hours total)
+- Sunday: Code works Phases 3-4, Cursor does Phase 5 testing (~12 hours total)
+- Total: ~19 hours (Code 14 hours + Cursor 5 hours)
+
+**Both Issues Covered**:
+- Issue #262: UUID Migration (Code implements, Cursor verifies)
+- Issue #291: Token Blacklist FK (Code implements, Cursor proves working)
+
+---
+
+*Session log updated: 7:18 PM PT, November 8, 2025*
+*Both agent prompts complete and ready for deployment*
