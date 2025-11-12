@@ -48,18 +48,26 @@ def mock_session():
 
 
 @pytest.fixture(autouse=True)
-def mock_token_blacklist():
+def mock_token_blacklist(request):
     """
-    Auto-mock TokenBlacklist for all tests to prevent database session conflicts.
+    Auto-mock TokenBlacklist for unit tests to prevent database session conflicts.
 
     Issue #281: TokenBlacklist.is_blacklisted() gets async context manager from
     overridden db.get_session() in tests, causing '_AsyncGeneratorContextManager'
     has no attribute 'execute' errors.
 
-    Solution: Mock is_blacklisted to return False (token not blacklisted) for all tests.
-    Individual tests can override this if they need to test blacklist behavior.
+    Solution: Mock is_blacklisted to return False (token not blacklisted) for unit tests.
+    Integration tests (marked with @pytest.mark.integration) skip this mock and use
+    real database behavior.
+
+    Issue #292: Integration tests need real blacklist behavior
     """
     from unittest.mock import AsyncMock, patch
+
+    # Skip mock for integration tests - they use real database
+    if "integration" in request.keywords:
+        yield
+        return
 
     with patch(
         "services.auth.token_blacklist.TokenBlacklist.is_blacklisted",
