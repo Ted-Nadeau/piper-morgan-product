@@ -69,6 +69,16 @@ def mock_token_blacklist(request):
         yield
         return
 
+    # Import the module first to ensure it exists before patching
+    # This avoids "module has no attribute" errors during patch()
+    try:
+        from services.auth import token_blacklist  # noqa: F401
+    except ImportError:
+        # If module doesn't exist, skip the mock
+        yield
+        return
+
+    # Patch the service class at its module definition location
     with patch(
         "services.auth.token_blacklist.TokenBlacklist.is_blacklisted",
         new=AsyncMock(return_value=False),

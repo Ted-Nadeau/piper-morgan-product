@@ -32,6 +32,7 @@ from services.shared_types import (
     ListType,
     NodeType,
     OrderingStrategy,
+    PatternType,
     TaskStatus,
     TaskType,
     TodoPriority,
@@ -93,6 +94,9 @@ class User(Base):
         "TokenBlacklist", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )  # Issue #291 - FK restored
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
+    learned_patterns = relationship(
+        "LearnedPattern", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )  # Issue #300 - Learning system
     # NOTE: AuditLog relationship still disabled (audit_logs.user_id has no FK constraint)
     # audit_logs = relationship("AuditLog", back_populates="user", lazy="select")
 
@@ -1540,6 +1544,85 @@ class TodoDB(ItemDB):
             owner_id=todo.owner_id,
             assigned_to=todo.assigned_to,
         )
+
+
+class LearnedPattern(Base, TimestampMixin):
+    """
+    Learned patterns for auto-learning system.
+
+    Stores user-specific patterns discovered through real-time learning.
+    Confidence increases with successful applications, decreases with failures.
+
+    Issue #300: CORE-ALPHA-LEARNING-BASIC - Basic Auto-Learning
+    Foundation Stone #1 of the learning cathedral.
+    """
+
+    __tablename__ = "learned_patterns"
+
+    # Primary key
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # User association
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Pattern identification
+    pattern_type = Column(Enum(PatternType), nullable=False)
+    pattern_data = Column(JSON, nullable=False)  # Flexible pattern storage
+
+    # Confidence tracking
+    confidence = Column(Float, default=0.5, nullable=False)  # 0.0 to 1.0
+    usage_count = Column(Integer, default=0, nullable=False)
+    success_count = Column(Integer, default=0, nullable=False)
+    failure_count = Column(Integer, default=0, nullable=False)
+
+    # Status
+    enabled = Column(Boolean, default=True, nullable=False)
+
+    # Timestamps (from TimestampMixin: created_at, updated_at)
+    last_used_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="learned_patterns")
+
+    # Indexes for performance
+    __table_args__ = (
+        Index("ix_learned_patterns_user_confidence", "user_id", "confidence"),
+        Index("ix_learned_patterns_user_enabled", "user_id", "enabled"),
+    )
+
+    def update_confidence(self):
+        """
+        Calculate confidence from success/failure rates with volume factor.
+
+        Formula: confidence = (success_rate * 0.8 + previous_confidence * 0.2) * volume_factor
+        Volume factor: min(usage_count / 10, 1.0) - caps at 10 uses
+        """
+        total = self.success_count + self.failure_count
+        if total == 0:
+            return  # No outcomes yet
+
+        # Success rate (0.0 - 1.0)
+        success_rate = self.success_count / total
+
+        # Volume factor (more uses = more confidence, caps at 10)
+        volume_factor = min(self.usage_count / 10, 1.0)
+
+        # Weighted: 80% current success, 20% previous confidence
+        new_confidence = success_rate * 0.8 + self.confidence * 0.2
+
+        # Apply volume factor
+        self.confidence = new_confidence * volume_factor
+
+        # Disable if too low
+        if self.confidence < 0.3:
+            self.enabled = False
+
+        self.updated_at = datetime.utcnow()
 
 
 # Note: ListDB already exists at line 1126 with full implementation

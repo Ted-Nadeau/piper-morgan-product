@@ -180,3 +180,18 @@ class EdgeType(Enum):
 
     """Other relationship types"""
     CUSTOM = "custom"
+
+
+class PatternType(Enum):
+    """
+    Types of patterns that can be learned by the auto-learning system.
+
+    Issue #300: CORE-ALPHA-LEARNING-BASIC - Basic Auto-Learning
+    """
+
+    USER_WORKFLOW = "user_workflow"  # Recurring user action sequences
+    COMMAND_SEQUENCE = "command_sequence"  # Frequently used command patterns
+    TIME_BASED = "time_based"  # Temporal patterns (e.g., daily standup)
+    CONTEXT_BASED = "context_based"  # Context-triggered patterns
+    PREFERENCE = "preference"  # User preference patterns
+    INTEGRATION = "integration"  # Integration usage patterns

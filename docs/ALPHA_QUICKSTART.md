@@ -27,7 +27,10 @@ pip install -r requirements.txt
 
 # 2. Run interactive setup (5 mins)
 python main.py setup
-# → Follow prompts for user account + API keys
+# → Follow prompts for:
+#    - Username and email
+#    - Secure password (min 8 chars, bcrypt-hashed)
+#    - API keys (OpenAI/Anthropic)
 
 # 3. Configure preferences (2 mins)
 python main.py preferences
@@ -51,6 +54,7 @@ python main.py
 "Hello, what can you help me with?"
 "Add a todo: Test Piper Morgan"
 "What tasks do I have?"
+"Upload a document and summarize it"  # Use file upload feature
 ```
 
 ---
@@ -58,6 +62,7 @@ python main.py
 ## If Something Breaks
 
 ### Docker not running?
+
 ```bash
 docker --version  # Should show version
 docker ps         # Should show containers
@@ -65,15 +70,28 @@ docker ps         # Should show containers
 ```
 
 ### Port 8001 taken?
+
 ```bash
 lsof -i :8001     # See what's using it
 kill -9 [PID]     # Kill it
 ```
 
 ### API key issues?
+
 ```bash
 python main.py setup  # Re-run setup
 python main.py status # Verify keys
+```
+
+### Login issues?
+
+```bash
+# Forgot password? Re-run setup to create new account
+python main.py setup
+
+# Can't access http://localhost:8001?
+# Check server is running: python main.py
+# Try: http://127.0.0.1:8001
 ```
 
 ---
@@ -92,9 +110,11 @@ python main.py --no-browser # Don't auto-open browser
 
 ## What's Working in 0.8.0
 
-✅ Setup wizard, preferences, health checks
-✅ Multi-user support, JWT auth, API keys
-✅ Database (PostgreSQL via Docker)
+✅ Setup wizard with secure password setup, preferences, health checks
+✅ Multi-user support, JWT auth with bcrypt, API keys
+✅ Database (PostgreSQL via Docker) with UUID-based user IDs
+✅ Token blacklist with CASCADE delete (Issue #291)
+✅ File upload and document processing (PDF, DOCX, TXT, MD, JSON)
 ✅ Knowledge graph, boundary enforcement
 ✅ Audit logging, test coverage 100%
 
@@ -119,4 +139,4 @@ This is **alpha software** (0.8.0). Expect bugs. Don't use for production. You'r
 
 **Happy testing!** 🚀
 
-_Last Updated: October 24, 2025_
+_Last Updated: November 11, 2025_
