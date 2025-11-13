@@ -15,10 +15,13 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 import structlog
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.conversation.conversation_handler import ConversationHandler
+from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent
 from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
 from services.intent_service import classifier
@@ -200,13 +203,30 @@ class IntentService:
             intent = await self.intent_classifier.classify(message)
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
-            # Issue #300 Phase 0: Learning Handler Hook - Capture Action
-            # Note: Full database integration in Phase 1
-            self.logger.info(
-                "Learning Handler: Action captured (Phase 0 - logging only)",
-                action_type=intent.category.value,
-                context={"intent": intent.action, "message": message[:100]},
-            )
+            # Issue #300 Phase 1: Learning Handler - Capture Action
+            # Store pattern_id for outcome recording
+            pattern_id = None
+            try:
+                async with AsyncSessionFactory.session_scope() as db_session:
+                    # TODO: Get actual user_id from auth context
+                    # For Phase 1, using test user "xian"
+                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                    pattern_id = await self.learning_handler.capture_action(
+                        user_id=user_id,
+                        action_type=intent.category,
+                        context={"intent": intent.action, "message": message[:100]},
+                        session=db_session,
+                    )
+
+                    self.logger.info(
+                        "Learning Handler: Action captured",
+                        pattern_id=str(pattern_id) if pattern_id else None,
+                        action_type=intent.category.value,
+                    )
+            except Exception as e:
+                self.logger.error(f"Learning Handler: Capture failed: {e}")
+                # Continue processing even if learning fails
 
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency
@@ -281,13 +301,27 @@ class IntentService:
                 error_type="UnhandledCategoryError",
             )
 
-            # Issue #300 Phase 0: Learning Handler Hook - Record Outcome
-            # Note: Full database integration in Phase 1
-            self.logger.info(
-                "Learning Handler: Outcome recorded (Phase 0 - logging only)",
-                success=result.success,
-                intent_category=intent.category.value,
-            )
+            # Issue #300 Phase 1: Learning Handler - Record Outcome
+            if pattern_id:
+                try:
+                    async with AsyncSessionFactory.session_scope() as db_session:
+                        user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                        success = await self.learning_handler.record_outcome(
+                            user_id=user_id,
+                            pattern_id=pattern_id,
+                            success=result.success,
+                            session=db_session,
+                        )
+
+                        self.logger.info(
+                            "Learning Handler: Outcome recorded",
+                            pattern_id=str(pattern_id),
+                            success=result.success,
+                            outcome_recorded=success,
+                        )
+                except Exception as e:
+                    self.logger.error(f"Learning Handler: Outcome recording failed: {e}")
 
             return result
 

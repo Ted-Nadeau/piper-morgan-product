@@ -13,12 +13,12 @@ Architecture:
 Issue #300: CORE-ALPHA-LEARNING-BASIC - Foundation Stone #1
 """
 
-import structlog
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, select
+import structlog
+from sqlalchemy import String, and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.database.models import LearnedPattern
@@ -74,7 +74,7 @@ class LearningHandler:
 
         Performance Target: <10ms
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.utcnow()
 
         try:
             # Extract pattern features
@@ -132,7 +132,7 @@ class LearningHandler:
             await session.commit()
 
             # Performance monitoring
-            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
             self.logger.debug(
                 "Pattern capture complete",
                 elapsed_ms=round(elapsed_ms, 2),
@@ -175,7 +175,7 @@ class LearningHandler:
 
         Performance Target: <5ms
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.utcnow()
 
         try:
             # Find the pattern
@@ -209,7 +209,7 @@ class LearningHandler:
             await session.commit()
 
             # Performance monitoring
-            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             self.logger.info(
                 "Outcome recorded",
@@ -254,7 +254,7 @@ class LearningHandler:
 
         Performance Target: <1ms (cached)
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.utcnow()
 
         try:
             # Query high-confidence patterns for user
@@ -286,7 +286,7 @@ class LearningHandler:
                 )
 
             # Performance monitoring
-            elapsed_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+            elapsed_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
 
             self.logger.debug(
                 "Suggestions retrieved",
@@ -337,7 +337,8 @@ class LearningHandler:
                 .where(
                     and_(
                         LearnedPattern.user_id == user_id,
-                        LearnedPattern.pattern_data["action_type"].astext == action_type,
+                        LearnedPattern.pattern_data.op("->")("action_type").cast(String)
+                        == action_type,
                         LearnedPattern.enabled == True,  # noqa: E712
                     )
                 )
