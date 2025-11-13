@@ -61,7 +61,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.database.models import LearnedPattern
+from services.database.models import LearnedPattern, LearningSettings
 from services.database.session_factory import AsyncSessionFactory
 from services.learning.cross_feature_knowledge import CrossFeatureKnowledgeService
 from services.learning.query_learning_loop import PatternType, QueryLearningLoop
@@ -1177,4 +1177,131 @@ async def disable_pattern(pattern_id: str) -> Dict[str, Any]:
         return internal_error(
             message=f"Failed to disable pattern: {str(e)}",
             error_id="DISABLE_PATTERN_ERROR",
+        )
+
+
+# Learning Settings Endpoints
+
+
+@router.get("/settings")
+async def get_settings() -> Dict[str, Any]:
+    """
+    Get learning settings for the test user.
+
+    Returns settings or default values if not yet configured.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
+            )
+            settings = result.scalar_one_or_none()
+
+            if not settings:
+                # Return defaults if no settings exist yet
+                return {
+                    "settings": {
+                        "learning_enabled": True,
+                        "suggestion_threshold": 0.7,
+                        "automation_threshold": 0.9,
+                        "auto_apply_enabled": False,
+                        "notification_enabled": True,
+                    },
+                    "configured": False,
+                }
+
+            return {
+                "settings": {
+                    "learning_enabled": settings.learning_enabled,
+                    "suggestion_threshold": settings.suggestion_threshold,
+                    "automation_threshold": settings.automation_threshold,
+                    "auto_apply_enabled": settings.auto_apply_enabled,
+                    "notification_enabled": settings.notification_enabled,
+                    "created_at": settings.created_at.isoformat() if settings.created_at else None,
+                    "updated_at": settings.updated_at.isoformat() if settings.updated_at else None,
+                },
+                "configured": True,
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to get settings: {str(e)}",
+            error_id="GET_SETTINGS_ERROR",
+        )
+
+
+class SettingsUpdate(BaseModel):
+    """Request model for updating learning settings"""
+
+    learning_enabled: Optional[bool] = None
+    suggestion_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
+    automation_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
+    auto_apply_enabled: Optional[bool] = None
+    notification_enabled: Optional[bool] = None
+
+
+@router.put("/settings")
+async def update_settings(settings_update: SettingsUpdate) -> Dict[str, Any]:
+    """
+    Update learning settings for the test user.
+
+    Creates settings if they don't exist, updates if they do.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearningSettings)
+                .where(LearningSettings.user_id == TEST_USER_ID)
+                .with_for_update()
+            )
+            settings = result.scalar_one_or_none()
+
+            if not settings:
+                # Create new settings
+                settings = LearningSettings(
+                    user_id=TEST_USER_ID,
+                    learning_enabled=(
+                        settings_update.learning_enabled
+                        if settings_update.learning_enabled is not None
+                        else True
+                    ),
+                    suggestion_threshold=settings_update.suggestion_threshold or 0.7,
+                    automation_threshold=settings_update.automation_threshold or 0.9,
+                    auto_apply_enabled=settings_update.auto_apply_enabled or False,
+                    notification_enabled=(
+                        settings_update.notification_enabled
+                        if settings_update.notification_enabled is not None
+                        else True
+                    ),
+                )
+                session.add(settings)
+            else:
+                # Update existing settings
+                if settings_update.learning_enabled is not None:
+                    settings.learning_enabled = settings_update.learning_enabled
+                if settings_update.suggestion_threshold is not None:
+                    settings.suggestion_threshold = settings_update.suggestion_threshold
+                if settings_update.automation_threshold is not None:
+                    settings.automation_threshold = settings_update.automation_threshold
+                if settings_update.auto_apply_enabled is not None:
+                    settings.auto_apply_enabled = settings_update.auto_apply_enabled
+                if settings_update.notification_enabled is not None:
+                    settings.notification_enabled = settings_update.notification_enabled
+
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": "Settings updated successfully",
+                "settings": {
+                    "learning_enabled": settings.learning_enabled,
+                    "suggestion_threshold": settings.suggestion_threshold,
+                    "automation_threshold": settings.automation_threshold,
+                    "auto_apply_enabled": settings.auto_apply_enabled,
+                    "notification_enabled": settings.notification_enabled,
+                },
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to update settings: {str(e)}",
+            error_id="UPDATE_SETTINGS_ERROR",
         )

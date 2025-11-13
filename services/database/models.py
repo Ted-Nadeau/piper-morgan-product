@@ -97,6 +97,13 @@ class User(Base):
     learned_patterns = relationship(
         "LearnedPattern", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )  # Issue #300 - Learning system
+    learning_settings = relationship(
+        "LearningSettings",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="select",
+        uselist=False,  # One-to-one relationship
+    )  # Issue #300 - Learning settings
     # NOTE: AuditLog relationship still disabled (audit_logs.user_id has no FK constraint)
     # audit_logs = relationship("AuditLog", back_populates="user", lazy="select")
 
@@ -1623,6 +1630,60 @@ class LearnedPattern(Base, TimestampMixin):
             self.enabled = False
 
         self.updated_at = datetime.utcnow()
+
+
+class LearningSettings(Base, TimestampMixin):
+    """
+    User learning preferences and configuration.
+
+    Controls auto-learning behavior, suggestion thresholds, and automation settings.
+    One settings record per user (enforced by unique constraint).
+    """
+
+    __tablename__ = "learning_settings"
+
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,  # One settings per user
+        index=True,
+    )
+
+    # Learning behavior controls
+    learning_enabled = Column(
+        Boolean, default=True, nullable=False, comment="Master switch for learning system"
+    )
+    suggestion_threshold = Column(
+        Float,
+        default=0.7,
+        nullable=False,
+        comment="Minimum confidence to show suggestions",
+    )
+    automation_threshold = Column(
+        Float,
+        default=0.9,
+        nullable=False,
+        comment="Minimum confidence for automatic execution",
+    )
+
+    # Optional: Future settings placeholders
+    auto_apply_enabled = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="Allow automatic pattern application",
+    )
+    notification_enabled = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+        comment="Show learning notifications",
+    )
+
+    # Relationship
+    user = relationship("User", back_populates="learning_settings")
 
 
 # Note: ListDB already exists at line 1126 with full implementation
