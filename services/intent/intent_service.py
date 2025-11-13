@@ -26,6 +26,7 @@ from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
+from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
 from services.shared_types import IntentCategory
 
@@ -93,6 +94,7 @@ class IntentService:
         self.canonical_handlers = CanonicalHandlers()
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
+        self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
         self.logger = structlog.get_logger()
 
     async def process_intent(
@@ -198,6 +200,14 @@ class IntentService:
             intent = await self.intent_classifier.classify(message)
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
+            # Issue #300 Phase 0: Learning Handler Hook - Capture Action
+            # Note: Full database integration in Phase 1
+            self.logger.info(
+                "Learning Handler: Action captured (Phase 0 - logging only)",
+                action_type=intent.category.value,
+                context={"intent": intent.action, "message": message[:100]},
+            )
+
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
@@ -257,7 +267,7 @@ class IntentService:
                 return await self._handle_unknown_intent(intent, workflow, session_id)
 
             # Fallback for truly unhandled categories (should never reach here)
-            return IntentProcessingResult(
+            result = IntentProcessingResult(
                 success=False,
                 message=f"Unhandled intent category: {intent.category.value}",
                 intent_data={
@@ -270,6 +280,16 @@ class IntentService:
                 error=f"No handler for category: {intent.category.value}",
                 error_type="UnhandledCategoryError",
             )
+
+            # Issue #300 Phase 0: Learning Handler Hook - Record Outcome
+            # Note: Full database integration in Phase 1
+            self.logger.info(
+                "Learning Handler: Outcome recorded (Phase 0 - logging only)",
+                success=result.success,
+                intent_category=intent.category.value,
+            )
+
+            return result
 
         except Exception as e:
             self.logger.error(f"Intent processing error: {e}")
