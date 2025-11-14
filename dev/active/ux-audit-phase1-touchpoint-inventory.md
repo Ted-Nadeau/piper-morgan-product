@@ -244,22 +244,60 @@ Piper Morgan currently operates across **10 distinct user touchpoints** spanning
 
 ---
 
-### 8. Authentication Flow ⏳
-**Location**: `web/api/routes/auth.py`
+### 8. Authentication Flow (CLI + API)
+**Location**: `scripts/setup_wizard.py`, `web/api/routes/auth.py`
 **Endpoints**: `/auth/login`, `/auth/logout`, `/auth/me`
 
-**Status**: ⚠️ **NO UI FOUND**
-- Auth routes exist in backend
-- JWT token management implemented
-- Cookie-based auth for web
-- **Missing**: Login/signup HTML pages
+**Implementation Status**: ✅ **FUNCTIONAL** (Issues #281, #297)
 
-**Critical Gap**: No visible login/signup interface found in templates or assets.
+**Components**:
+- ✅ Setup Wizard (CLI-based account creation)
+- ✅ Password Service (bcrypt hashing, 12 rounds)
+- ✅ JWT Login API (`POST /auth/login`)
+- ✅ User table with secure password storage
+- ❌ **Web Login UI** (missing HTML pages)
 
-**Questions**:
-- Is authentication currently used?
-- Is there a login page we're missing?
-- Is this planned for future implementation?
+**Current User Flow**:
+1. User runs `python main.py setup`
+2. Setup wizard prompts for:
+   - Username (required)
+   - Email (optional)
+   - Password (min 8 chars, bcrypt hashed)
+   - Password confirmation
+3. Account created in `users` table
+4. API keys collected (OpenAI, Anthropic, GitHub)
+5. Setup complete → user can access web app
+
+**Authentication Pattern**: **CLI-First Onboarding**
+- Accounts created through terminal-based wizard
+- No web signup form (CLI only for alpha)
+- Backend ready for JWT login
+- Cookie-based sessions for web clients
+- Bearer tokens for API clients
+
+**Missing Components**:
+- ❌ `/login` HTML page for browser login
+- ❌ `/signup` HTML page for new user registration
+- ❌ "Forgot password" flow (deferred for alpha)
+- ❌ "Logged in as..." indicator in web UI
+- ❌ Logout button in web interface
+
+**Security Features**:
+- Bcrypt password hashing (OWASP-compliant 12 rounds)
+- Timing-safe password verification
+- Generic error messages (prevents user enumeration)
+- Inactive user handling
+- Password strength validation (min 8 chars)
+
+**UX Implications**:
+- **Unconventional but intentional** for technical alpha testers
+- Assumes users comfortable with CLI
+- Creates clear separation: setup (CLI) vs usage (web)
+- **Issue**: No visual feedback of logged-in state
+- **Issue**: No way to log out from web UI
+- **Issue**: Can't create accounts from web (must use CLI)
+
+**Recommendation**: Add web login/signup UI to improvement backlog for post-alpha.
 
 ---
 

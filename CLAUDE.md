@@ -127,6 +127,88 @@ grep -r "similar_functionality" . --include="*.py"
 - Tests fail for any reason → STOP
 - No GitHub issue number → STOP
 - Found 75% complete code → STOP (report it)
+- Completion matrix missing from gameplan → STOP (escalate to PM)
+- Want to defer work without approval → STOP (ask PM)
+- Tests failing but want to close issue → STOP (file blocker first)
+- Epic has open children but want to close → STOP (complete or escalate)
+
+## BEADS COMPLETION DISCIPLINE: NO EXPEDIENCE RATIONALIZATION
+
+**Core Principle**: You cannot skip work by rationalizing it as "optional" or "nice-to-have."
+
+### Session Start Protocol
+```bash
+bd ready --json    # Find work with no blockers
+bd list            # Orient to current state
+bd status          # Beads database health check
+```
+
+### Proactive Issue Creation
+- Discover work mid-task? → `bd create` immediately
+- Link discovered work: `bd dep add <new> <parent> --type discovered-from`
+- Don't defer tracking because "it's small"
+- PM decides priority, not agent
+
+### Completion Criteria Enforcement
+
+**Before closing ANY issue**:
+1. Read acceptance criteria from gameplan
+2. Every criterion met? → Can close
+3. Criterion not met? → Complete it OR add `@PM-approval-needed: <reason>`
+4. No criteria listed? → STOP, escalate: "Missing completion matrix"
+
+**Before closing ANY epic**:
+1. `bd list --parent <epic>` → Check children
+2. All closed? → Can close epic
+3. Any open? → Complete them OR get PM approval for each
+
+**"Optional" is a PM decision, not agent decision**:
+- If work is in the gameplan → it's required
+- If you think it's skippable → ask PM with evidence
+- Never close with rationalization like "core works" or "post-MVP"
+
+**The discomfort of open issues is working as designed**:
+- Feel pressure to close? That's correct pressure
+- Want to call something done? Meet criteria first
+- Want to move on? File remaining work, don't hide it
+
+### Session End Protocol ("Landing the Plane")
+
+Execute these steps IN ORDER before ending ANY session:
+
+**1. File all remaining work as issues**
+```bash
+# Any bugs found? Tech debt noticed? Follow-ups needed?
+bd create "Thing discovered but not fixed"
+bd dep add <new> <parent> --type discovered-from
+```
+
+**2. Run quality gates** (if code changed)
+```bash
+pytest tests/  # All tests must pass
+# If tests fail → file P0 blocker issue, keep parent open
+```
+
+**3. Close completed issues only**
+```bash
+# Use bd-safe wrapper for validation
+./scripts/bd-safe close <issue>
+
+# Or manually verify then close
+bd close <issue>
+```
+
+**4. Sync database**
+```bash
+bd sync
+git status  # Must show clean state
+```
+
+**5. Verify no open children**
+```bash
+bd list | grep <your-epic>
+# All children must be closed OR have @PM-approved deferral
+```
 
 ## YOUR STRENGTHS
 - **Broad investigation**: Find ALL instances of something
