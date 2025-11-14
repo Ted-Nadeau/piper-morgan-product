@@ -294,6 +294,172 @@
         background: #f8f9fa;
         font-weight: bold;
       }
+      /* Phase 3: Pattern Suggestions UI */
+      .suggestions-container {
+        margin-top: 15px;
+      }
+      .suggestions-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        user-select: none;
+      }
+      .suggestions-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+      }
+      .suggestions-badge.expanded {
+        border-radius: 20px 20px 0 0;
+      }
+      .badge-chevron {
+        margin-left: 8px;
+        font-size: 10px;
+      }
+      .suggestions-panel {
+        background: #f0fdfa;
+        border: 2px solid #14b8a6;
+        border-top: none;
+        border-radius: 0 12px 12px 12px;
+        padding: 16px;
+        margin-top: -2px;
+      }
+      .suggestions-header {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #99f6e4;
+      }
+      .suggestions-header strong {
+        display: block;
+        color: #0f766e;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+      .suggestions-subtitle {
+        color: #0d9488;
+        font-size: 13px;
+      }
+      .suggestion-card {
+        background: white;
+        border: 1px solid #99f6e4;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+      }
+      .suggestion-card:hover {
+        border-color: #5eead4;
+        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+      }
+      .suggestion-card:last-child {
+        margin-bottom: 0;
+      }
+      .suggestion-content {
+        margin-bottom: 12px;
+      }
+      .suggestion-reasoning {
+        color: #115e59;
+        font-size: 15px;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+      .suggestion-meta {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      .suggestion-type {
+        background: #ccfbf1;
+        color: #0f766e;
+        padding: 3px 8px;
+        border-radius: 4px;
+        text-transform: capitalize;
+      }
+      .suggestion-usage {
+        color: #0d9488;
+      }
+      .confidence-bar-container {
+        position: relative;
+        background: #e0f2fe;
+        height: 24px;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .confidence-bar {
+        background: linear-gradient(90deg, #fb923c 0%, #ea580c 100%);
+        height: 100%;
+        transition: width 0.3s;
+        border-radius: 12px;
+      }
+      .confidence-label {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        font-weight: 600;
+        color: #082f49;
+      }
+      .suggestion-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .suggestion-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .suggestion-btn.accept {
+        background: #10b981;
+        color: white;
+      }
+      .suggestion-btn.accept:hover {
+        background: #059669;
+      }
+      .suggestion-btn.reject {
+        background: #ef4444;
+        color: white;
+      }
+      .suggestion-btn.reject:hover {
+        background: #dc2626;
+      }
+      .suggestion-btn.dismiss {
+        background: #e5e7eb;
+        color: #6b7280;
+      }
+      .suggestion-btn.dismiss:hover {
+        background: #d1d5db;
+      }
+      .feedback-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.3s;
+        z-index: 1000;
+      }
+      .feedback-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
     </style>
   </head>
   <body>
