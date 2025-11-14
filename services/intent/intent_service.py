@@ -52,6 +52,9 @@ class IntentProcessingResult:
     error: Optional[str] = None
     error_type: Optional[str] = None
     implemented: bool = True  # CORE-CRAFT-GAP: Track actual implementation vs placeholders
+    suggestions: Optional[List[Dict[str, Any]]] = (
+        None  # Phase 3: Pattern suggestions  # CORE-CRAFT-GAP: Track actual implementation vs placeholders
+    )
 
 
 class IntentProcessingError(Exception):
@@ -228,6 +231,27 @@ class IntentService:
                 self.logger.error(f"Learning Handler: Capture failed: {e}")
                 # Continue processing even if learning fails
 
+            # Issue #300 Phase 3: Get pattern suggestions
+            suggestions = None
+            try:
+                async with AsyncSessionFactory.session_scope() as db_session:
+                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                    suggestions = await self.learning_handler.get_suggestions(
+                        user_id=user_id,
+                        context={"intent": intent.action, "message": message[:100]},
+                        session=db_session,
+                    )
+
+                    self.logger.info(
+                        "Learning Handler: Suggestions retrieved",
+                        suggestion_count=len(suggestions) if suggestions else 0,
+                    )
+            except Exception as e:
+                self.logger.error(f"Learning Handler: Get suggestions failed: {e}")
+                # Continue processing even if suggestions fail
+                suggestions = None
+
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
@@ -237,6 +261,7 @@ class IntentService:
                     message=canonical_result["message"],
                     intent_data=canonical_result["intent"],
                     requires_clarification=canonical_result.get("requires_clarification", False),
+                    suggestions=suggestions,
                 )
 
             # Create workflow with timeout protection (Bug #166)
@@ -260,31 +285,45 @@ class IntentService:
 
             # Handle QUERY intents with domain services
             if intent.category.value.upper() == "QUERY":
-                return await self._handle_query_intent(intent, workflow, session_id)
+                result = await self._handle_query_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # GREAT-4D Phase 1: Handle EXECUTION intents with domain services
             if intent.category.value.upper() == "EXECUTION":
-                return await self._handle_execution_intent(intent, workflow, session_id)
+                result = await self._handle_execution_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # GREAT-4D Phase 2: Handle ANALYSIS intents with domain services
             if intent.category.value.upper() == "ANALYSIS":
-                return await self._handle_analysis_intent(intent, workflow, session_id)
+                result = await self._handle_analysis_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # GREAT-4D Phase 4: Handle SYNTHESIS intents
             if intent.category.value.upper() == "SYNTHESIS":
-                return await self._handle_synthesis_intent(intent, workflow, session_id)
+                result = await self._handle_synthesis_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # GREAT-4D Phase 5: Handle STRATEGY intents
             if intent.category.value.upper() == "STRATEGY":
-                return await self._handle_strategy_intent(intent, workflow, session_id)
+                result = await self._handle_strategy_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # GREAT-4D Phase 6: Handle LEARNING intents
             if intent.category.value.upper() == "LEARNING":
-                return await self._handle_learning_intent(intent, workflow, session_id)
+                result = await self._handle_learning_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # GREAT-4D Phase 7: Handle UNKNOWN intents
             if intent.category.value.upper() == "UNKNOWN":
-                return await self._handle_unknown_intent(intent, workflow, session_id)
+                result = await self._handle_unknown_intent(intent, workflow, session_id)
+                result.suggestions = suggestions
+                return result
 
             # Fallback for truly unhandled categories (should never reach here)
             result = IntentProcessingResult(
@@ -299,6 +338,7 @@ class IntentService:
                 workflow_id=workflow.id,
                 error=f"No handler for category: {intent.category.value}",
                 error_type="UnhandledCategoryError",
+                suggestions=suggestions,
             )
 
             # Issue #300 Phase 1: Learning Handler - Record Outcome

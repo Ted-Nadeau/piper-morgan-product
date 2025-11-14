@@ -780,6 +780,7 @@ async def process_intent(request: Request):
             "workflow_id": result.workflow_id,
             "requires_clarification": result.requires_clarification,
             "clarification_type": result.clarification_type,
+            "suggestions": result.suggestions,  # Phase 3: Pattern suggestions
         }
 
         # Add error fields if present (semantic/validation errors from service)
