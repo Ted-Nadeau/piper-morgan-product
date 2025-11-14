@@ -1239,6 +1239,13 @@ class SettingsUpdate(BaseModel):
     notification_enabled: Optional[bool] = None
 
 
+class PatternFeedback(BaseModel):
+    """Request model for pattern suggestion feedback (Phase 3)"""
+
+    action: str = Field(..., description="Feedback action: 'accept', 'reject', or 'dismiss'")
+    feedback_text: Optional[str] = Field(None, description="Optional user feedback text")
+
+
 @router.put("/settings")
 async def update_settings(settings_update: SettingsUpdate) -> Dict[str, Any]:
     """
@@ -1304,4 +1311,95 @@ async def update_settings(settings_update: SettingsUpdate) -> Dict[str, Any]:
         return internal_error(
             message=f"Failed to update settings: {str(e)}",
             error_id="UPDATE_SETTINGS_ERROR",
+        )
+
+
+# ============================================================================
+# Phase 3: Pattern Feedback Endpoint
+# ============================================================================
+
+
+@router.post("/patterns/{pattern_id}/feedback")
+async def provide_pattern_feedback(pattern_id: UUID, feedback: PatternFeedback) -> Dict[str, Any]:
+    """
+    Submit feedback on a pattern suggestion (Phase 3).
+
+    Actions:
+    - 'accept': Increase confidence (* 1.1, cap at 1.0), success_count += 2
+    - 'reject': Decrease confidence (* 0.5), failure_count += 2
+    - 'dismiss': No confidence change, just track dismissal
+
+    This endpoint is called by the frontend suggestion UI when users
+    interact with pattern suggestion cards.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            # Get pattern with row lock
+            result = await session.execute(
+                select(LearnedPattern)
+                .where(
+                    and_(
+                        LearnedPattern.id == pattern_id,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+                .with_for_update()
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    error_id="PATTERN_NOT_FOUND",
+                )
+
+            # Apply feedback based on action
+            action = feedback.action.lower()
+
+            if action == "accept":
+                # Increase confidence
+                pattern.confidence = min(1.0, pattern.confidence * 1.1)
+                pattern.success_count += 2
+                message = "Pattern accepted - confidence increased"
+
+            elif action == "reject":
+                # Decrease confidence
+                pattern.confidence = pattern.confidence * 0.5
+                pattern.failure_count += 2
+
+                # Auto-disable if confidence falls below threshold
+                if pattern.confidence < 0.3:
+                    pattern.enabled = False
+                    message = "Pattern rejected - confidence decreased and pattern disabled"
+                else:
+                    message = "Pattern rejected - confidence decreased"
+
+            elif action == "dismiss":
+                # No confidence change, just track
+                message = "Pattern dismissed"
+
+            else:
+                return validation_error(
+                    message=f"Invalid action: {action}. Must be 'accept', 'reject', or 'dismiss'",
+                    error_id="INVALID_FEEDBACK_ACTION",
+                )
+
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": message,
+                "pattern": {
+                    "id": str(pattern.id),
+                    "confidence": round(pattern.confidence, 2),
+                    "success_count": pattern.success_count,
+                    "failure_count": pattern.failure_count,
+                    "enabled": pattern.enabled,
+                },
+            }
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to submit feedback: {str(e)}",
+            error_id="FEEDBACK_SUBMISSION_ERROR",
         )
