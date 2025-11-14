@@ -460,6 +460,124 @@
         opacity: 1;
         transform: translateY(0);
       }
+
+      /* Phase 3.3: Onboarding Tooltip */
+      .onboarding-tooltip {
+        background: #FFF9E6;
+        border: 2px solid #FFD54F;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+
+      .tooltip-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .tooltip-icon {
+        font-size: 24px;
+      }
+
+      .tooltip-header h4 {
+        margin: 0;
+        color: #2C3E50;
+        font-size: 16px;
+      }
+
+      .onboarding-tooltip p {
+        margin: 0 0 12px 0;
+        color: #5D6D7E;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .tooltip-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tooltip-actions button {
+        padding: 8px 16px;
+        border: 1px solid #FFD54F;
+        border-radius: 5px;
+        background: white;
+        color: #F39C12;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
+
+      .tooltip-actions button:hover {
+        background: #FFF5E6;
+      }
+
+      .tooltip-actions button:first-child {
+        background: #F39C12;
+        color: white;
+        border-color: #F39C12;
+      }
+
+      .tooltip-actions button:first-child:hover {
+        background: #E67E22;
+      }
+
+      /* Learn More Modal */
+      .learn-more-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+      }
+
+      .learn-more-modal .modal-content {
+        max-width: 500px;
+      }
+
+      .learn-section {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #ECF0F1;
+      }
+
+      .learn-section:last-of-type {
+        border-bottom: none;
+      }
+
+      .learn-section h4 {
+        margin: 0 0 8px 0;
+        color: #2C3E50;
+        font-size: 15px;
+      }
+
+      .learn-section p {
+        margin: 0;
+        color: #7F8C8D;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .learn-more-modal .modal-content button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 5px;
+        background: #0095A8;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        margin-top: 8px;
+        transition: background 0.2s ease;
+      }
+
+      .learn-more-modal .modal-content button:hover {
+        background: #007A8A;
+      }
     </style>
   </head>
   <body>

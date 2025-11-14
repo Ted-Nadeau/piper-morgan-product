@@ -43,6 +43,14 @@ function handleDirectResponse(result, element) {
     // Phase 3: Render pattern suggestions if present
     if (result.suggestions && result.suggestions.length > 0) {
         element.innerHTML += renderSuggestions(result.suggestions);
+
+        // Auto-show onboarding tooltip if first time
+        setTimeout(() => {
+            const tooltip = document.querySelector('.onboarding-tooltip');
+            if (tooltip) {
+                tooltip.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 100);
     }
 }
 
@@ -55,8 +63,18 @@ function renderSuggestions(suggestions) {
     const count = suggestions.length;
     const plural = count === 1 ? '' : 's';
 
-    return `
-        <div class="suggestions-container">
+    // Check if user has seen suggestions before (Phase 3.3)
+    const showOnboarding = !hasSeenSuggestions();
+
+    let html = '<div class="suggestions-container">';
+
+    // Onboarding tooltip (first-time only)
+    if (showOnboarding) {
+        html += renderOnboardingTooltip();
+    }
+
+    // Main suggestions UI
+    html += `
             <div class="suggestions-badge" onclick="toggleSuggestionsPanel()">
                 💡 ${count} pattern suggestion${plural}
                 <span class="badge-chevron">▼</span>
@@ -70,6 +88,8 @@ function renderSuggestions(suggestions) {
             </div>
         </div>
     `;
+
+    return html;
 }
 
 /**
@@ -244,4 +264,105 @@ function handleWorkflowResponse(data, element) {
 function handleErrorResponse(error, element) {
     console.error('Error response:', error.message);
     element.innerHTML = renderBotMessage(error.message, 'error', false);
+}
+
+/**
+ * Phase 3.3: Onboarding Helpers
+ */
+
+/**
+ * Check if user has seen suggestions before
+ * @returns {boolean}
+ */
+function hasSeenSuggestions() {
+    return localStorage.getItem('piper_suggestions_seen') === 'true';
+}
+
+/**
+ * Mark suggestions as seen
+ */
+function markSuggestionsAsSeen() {
+    localStorage.setItem('piper_suggestions_seen', 'true');
+}
+
+/**
+ * Render onboarding tooltip (Phase 3.3)
+ * @returns {string} - Rendered HTML
+ */
+function renderOnboardingTooltip() {
+    return `
+        <div class="onboarding-tooltip">
+            <div class="tooltip-header">
+                <span class="tooltip-icon">💡</span>
+                <h4>New: Pattern Suggestions</h4>
+            </div>
+            <p>Piper noticed patterns in how you work and can suggest helpful next steps. You're always in control.</p>
+            <div class="tooltip-actions">
+                <button onclick="dismissOnboarding()">Got it</button>
+                <button onclick="showLearnMore()">Learn more</button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Dismiss onboarding tooltip
+ */
+function dismissOnboarding() {
+    markSuggestionsAsSeen();
+    const tooltip = document.querySelector('.onboarding-tooltip');
+    if (tooltip) {
+        tooltip.style.opacity = '0';
+        tooltip.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => tooltip.remove(), 300);
+    }
+}
+
+/**
+ * Show "Learn More" modal
+ */
+function showLearnMore() {
+    dismissOnboarding();
+
+    const modal = document.createElement('div');
+    modal.className = 'learn-more-modal';
+    modal.innerHTML = `
+        <div class="modal-overlay" onclick="closeLearnMoreModal()"></div>
+        <div class="modal-content">
+            <h3>How Pattern Suggestions Work</h3>
+
+            <div class="learn-section">
+                <h4>🔍 Pattern Detection</h4>
+                <p>Piper observes when you repeatedly do similar actions (like creating issues after standup).</p>
+            </div>
+
+            <div class="learn-section">
+                <h4>📊 Confidence</h4>
+                <p>The percentage shows how confident Piper is based on how often the pattern succeeds.</p>
+            </div>
+
+            <div class="learn-section">
+                <h4>✓ Feedback</h4>
+                <p>Accept helpful suggestions to see more like them. Reject unhelpful ones to improve Piper's learning.</p>
+            </div>
+
+            <div class="learn-section">
+                <h4>🔒 Privacy</h4>
+                <p>Your patterns are private. Only you see them.</p>
+            </div>
+
+            <button onclick="closeLearnMoreModal()">Got it!</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+/**
+ * Close "Learn More" modal
+ */
+function closeLearnMoreModal() {
+    const modal = document.querySelector('.learn-more-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
