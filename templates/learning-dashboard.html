@@ -445,6 +445,11 @@
 </head>
 <body>
     {% include 'components/navigation.html' %}
+    {% set breadcrumbs = [
+      {"label": "Settings", "url": "/settings"},
+      {"label": "Learning", "url": None}
+    ] %}
+    {% include 'components/breadcrumbs.html' %}
     <script>
       // G8: Logged-in User Indicator - Pass user context from server to navigation
       {% if request.state.user_claims %}
