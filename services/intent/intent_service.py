@@ -317,6 +317,10 @@ class IntentService:
                     all_suggestions.append(suggestion)
                     seen_pattern_ids.add(pattern_id)
 
+            self.logger.debug(
+                f"Suggestion deduplication: {len(automation_patterns)} auto + {len(suggestions)} regular → {len(all_suggestions)} unique"
+            )
+
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
