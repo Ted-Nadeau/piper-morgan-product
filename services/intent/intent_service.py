@@ -260,10 +260,9 @@ class IntentService:
 
                     # Build context for matching
                     current_context = {
-                        "intent": intent.action,
+                        "intent": intent.category.value.upper(),  # Match against category (EXECUTION, QUERY, etc.)
                         "message": message[:100],
-                        "last_action": None,  # TODO: Track last action in session
-                        "current_event": None,  # TODO: Get from temporal context
+                        # Note: Don't pass None values - context matcher expects strings or missing keys
                     }
 
                     patterns = await self.learning_handler.get_automation_patterns(
@@ -296,10 +295,27 @@ class IntentService:
                 # Continue processing even if automation patterns fail
                 automation_patterns = []
 
-            # Combine regular suggestions with automation patterns
+            # Combine regular suggestions with automation patterns (Bug #86n: deduplicate)
             if suggestions is None:
                 suggestions = []
-            all_suggestions = suggestions + automation_patterns
+
+            # Deduplicate by pattern_id, preferring automation_patterns (auto_triggered=True)
+            seen_pattern_ids = set()
+            all_suggestions = []
+
+            # Add automation patterns first (higher priority)
+            for pattern in automation_patterns:
+                pattern_id = pattern.get("pattern_id")
+                if pattern_id and pattern_id not in seen_pattern_ids:
+                    all_suggestions.append(pattern)
+                    seen_pattern_ids.add(pattern_id)
+
+            # Add regular suggestions only if not already seen
+            for suggestion in suggestions:
+                pattern_id = suggestion.get("pattern_id")
+                if pattern_id and pattern_id not in seen_pattern_ids:
+                    all_suggestions.append(suggestion)
+                    seen_pattern_ids.add(pattern_id)
 
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency

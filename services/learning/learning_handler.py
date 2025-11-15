@@ -282,6 +282,7 @@ class LearningHandler:
                         "pattern_type": pattern.pattern_type.value,
                         "pattern_data": pattern.pattern_data,
                         "usage_count": pattern.usage_count,
+                        "auto_triggered": False,  # Phase 4: Regular (reactive) suggestions
                     }
                 )
 
@@ -330,13 +331,16 @@ class LearningHandler:
         """
         # Query high-confidence enabled patterns
         result = await session.execute(
-            select(LearnedPattern).where(
+            select(LearnedPattern)
+            .where(
                 and_(
                     LearnedPattern.user_id == user_id,
                     LearnedPattern.confidence >= min_confidence,
                     LearnedPattern.enabled == True,  # noqa: E712
                 )
-            ).order_by(LearnedPattern.confidence.desc()).limit(limit)
+            )
+            .order_by(LearnedPattern.confidence.desc())
+            .limit(limit)
         )
 
         patterns = result.scalars().all()
