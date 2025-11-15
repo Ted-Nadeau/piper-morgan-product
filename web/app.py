@@ -821,6 +821,30 @@ async def settings_index_ui(request: Request):
     return templates.TemplateResponse("settings-index.html", {"request": request})
 
 
+@app.get("/account")
+async def account_settings_ui(request: Request):
+    """Serve the account settings page (Coming Soon)"""
+    return templates.TemplateResponse("account.html", {"request": request})
+
+
+@app.get("/files")
+async def files_ui(request: Request):
+    """Serve the files page (Coming Soon)"""
+    return templates.TemplateResponse("files.html", {"request": request})
+
+
+@app.get("/settings/privacy")
+async def privacy_settings_ui(request: Request):
+    """Serve the privacy & data settings page (Coming Soon)"""
+    return templates.TemplateResponse("privacy-settings.html", {"request": request})
+
+
+@app.get("/settings/advanced")
+async def advanced_settings_ui(request: Request):
+    """Serve the advanced settings page (Coming Soon)"""
+    return templates.TemplateResponse("advanced-settings.html", {"request": request})
+
+
 @app.get("/health/config")
 async def health_config():
     """
