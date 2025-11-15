@@ -3,6 +3,7 @@
   <head>
     <title>Personality Preferences - Piper Morgan</title>
     <link rel="stylesheet" href="/static/css/toast.css" />
+    <link rel="stylesheet" href="/static/css/spinner.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -541,7 +542,9 @@
 
       // Save preferences
       async function savePreferences() {
+        const saveBtn = document.querySelector('button[onclick="savePreferences()"]');
         try {
+          Loading.button(saveBtn, true);
           const response = await fetch("/api/personality/profile/default", {
             method: "PUT",
             headers: {
@@ -559,6 +562,8 @@
           }
         } catch (error) {
           Toast.error("Network Error", "Failed to save preferences: " + error.message);
+        } finally {
+          Loading.button(saveBtn, false);
         }
       }
 
@@ -618,5 +623,6 @@
       loadPreferences();
     </script>
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/loading.js"></script>
   </body>
 </html>

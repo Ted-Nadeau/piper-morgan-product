@@ -861,6 +861,7 @@
           }
 
           // Show uploading status
+          Loading.overlay(true, `Uploading ${file.name}...`);
           showUploadStatus(
             `📤 Uploading ${file.name} (${formatFileSize(file.size)})...`,
             "info"
@@ -914,12 +915,14 @@
 
               // Clear form and hide progress after delay
               setTimeout(() => {
+                Loading.overlay(false);
                 form.reset();
                 document.getElementById("upload-progress").style.display = "none";
                 progressFill.style.width = "0%";
                 progressFill.textContent = "0%";
               }, 2000);
             } else {
+              Loading.overlay(false);
               Toast.error("Upload Failed", result.detail || "An error occurred while uploading the document");
               showUploadStatus(
                 `❌ Upload failed: ${result.detail || "Unknown error"}`,
@@ -932,6 +935,7 @@
               sessionId = result.session_id;
             }
           } catch (error) {
+            Loading.overlay(false);
             Toast.error("Network Error", "Failed to upload document: " + error.message);
             showUploadStatus(
               `❌ Network error: ${error.message}`,

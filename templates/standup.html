@@ -4,6 +4,7 @@
     <title>Morning Standup - Piper Morgan</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
     <link rel="stylesheet" href="/static/css/toast.css" />
+    <link rel="stylesheet" href="/static/css/spinner.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -132,8 +133,7 @@
         const results = document.getElementById("results");
 
         // Show loading state
-        loadBtn.disabled = true;
-        loadBtn.textContent = "Loading...";
+        Loading.button(loadBtn, true);
         results.innerHTML =
           '<div class="loading">⏱️ Generating your morning standup...</div>';
 
@@ -231,11 +231,11 @@
                     </div>
                 `;
         } finally {
-          loadBtn.disabled = false;
-          loadBtn.textContent = "Generate Standup";
+          Loading.button(loadBtn, false);
         }
       }
     </script>
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/loading.js"></script>
   </body>
 </html>
