@@ -252,6 +252,55 @@ class IntentService:
                 # Continue processing even if suggestions fail
                 suggestions = None
 
+            # Issue #300 Phase 4: Get proactive automation patterns
+            automation_patterns = []
+            try:
+                async with AsyncSessionFactory.session_scope() as db_session:
+                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                    # Build context for matching
+                    current_context = {
+                        "intent": intent.action,
+                        "message": message[:100],
+                        "last_action": None,  # TODO: Track last action in session
+                        "current_event": None,  # TODO: Get from temporal context
+                    }
+
+                    patterns = await self.learning_handler.get_automation_patterns(
+                        user_id=user_id,
+                        context=current_context,
+                        min_confidence=0.9,
+                        limit=3,
+                        session=db_session,
+                    )
+
+                    # Convert LearnedPattern objects to suggestion format with auto_triggered flag
+                    for pattern in patterns:
+                        automation_patterns.append(
+                            {
+                                "pattern_id": str(pattern.id),
+                                "confidence": round(pattern.confidence, 2),
+                                "pattern_type": pattern.pattern_type.value,
+                                "pattern_data": pattern.pattern_data,
+                                "usage_count": pattern.usage_count,
+                                "auto_triggered": True,  # Mark as proactive
+                            }
+                        )
+
+                    self.logger.info(
+                        "Learning Handler: Automation patterns retrieved",
+                        pattern_count=len(automation_patterns),
+                    )
+            except Exception as e:
+                self.logger.error(f"Learning Handler: Get automation patterns failed: {e}")
+                # Continue processing even if automation patterns fail
+                automation_patterns = []
+
+            # Combine regular suggestions with automation patterns
+            if suggestions is None:
+                suggestions = []
+            all_suggestions = suggestions + automation_patterns
+
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
@@ -261,7 +310,7 @@ class IntentService:
                     message=canonical_result["message"],
                     intent_data=canonical_result["intent"],
                     requires_clarification=canonical_result.get("requires_clarification", False),
-                    suggestions=suggestions,
+                    suggestions=all_suggestions,
                 )
 
             # Create workflow with timeout protection (Bug #166)
@@ -286,43 +335,43 @@ class IntentService:
             # Handle QUERY intents with domain services
             if intent.category.value.upper() == "QUERY":
                 result = await self._handle_query_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # GREAT-4D Phase 1: Handle EXECUTION intents with domain services
             if intent.category.value.upper() == "EXECUTION":
                 result = await self._handle_execution_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # GREAT-4D Phase 2: Handle ANALYSIS intents with domain services
             if intent.category.value.upper() == "ANALYSIS":
                 result = await self._handle_analysis_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # GREAT-4D Phase 4: Handle SYNTHESIS intents
             if intent.category.value.upper() == "SYNTHESIS":
                 result = await self._handle_synthesis_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # GREAT-4D Phase 5: Handle STRATEGY intents
             if intent.category.value.upper() == "STRATEGY":
                 result = await self._handle_strategy_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # GREAT-4D Phase 6: Handle LEARNING intents
             if intent.category.value.upper() == "LEARNING":
                 result = await self._handle_learning_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # GREAT-4D Phase 7: Handle UNKNOWN intents
             if intent.category.value.upper() == "UNKNOWN":
                 result = await self._handle_unknown_intent(intent, workflow, session_id)
-                result.suggestions = suggestions
+                result.suggestions = all_suggestions
                 return result
 
             # Fallback for truly unhandled categories (should never reach here)
