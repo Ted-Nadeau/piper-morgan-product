@@ -103,14 +103,27 @@ function renderSuggestionCard(suggestion, index) {
     const patternType = suggestion.pattern_type.replace('_', ' ').toLowerCase();
     const usageText = `Used ${suggestion.usage_count} time${suggestion.usage_count === 1 ? '' : 's'}`;
 
+    // Phase 4: Check for auto-triggered flag
+    const isAutoTriggered = suggestion.auto_triggered || false;
+
     // Extract reasoning from pattern_data
     const reasoning = suggestion.pattern_data?.reasoning ||
                      suggestion.pattern_data?.description ||
                      `${patternType} pattern detected`;
 
+    // Phase 4: Visual styling based on type
+    const icon = isAutoTriggered ? '⚡' : '💡';
+    const cardClass = isAutoTriggered ? 'auto-triggered' : '';
+    const badgeClass = isAutoTriggered ? 'auto-badge' : 'manual-badge';
+    const badgeText = isAutoTriggered ? 'Auto-detected' : 'Suggested';
+
     return `
-        <div class="suggestion-card" data-pattern-id="${suggestion.pattern_id}">
+        <div class="suggestion-card ${cardClass}" data-pattern-id="${suggestion.pattern_id}">
             <div class="suggestion-content">
+                <div class="suggestion-header">
+                    <span class="suggestion-icon">${icon}</span>
+                    <span class="suggestion-badge ${badgeClass}">${badgeText}</span>
+                </div>
                 <div class="suggestion-reasoning">${reasoning}</div>
                 <div class="suggestion-meta">
                     <span class="suggestion-type">${patternType}</span>
@@ -122,15 +135,27 @@ function renderSuggestionCard(suggestion, index) {
                 </div>
             </div>
             <div class="suggestion-actions">
-                <button class="suggestion-btn accept" onclick="handleSuggestionFeedback('${suggestion.pattern_id}', 'accept')">
-                    ✓ Accept
-                </button>
-                <button class="suggestion-btn reject" onclick="handleSuggestionFeedback('${suggestion.pattern_id}', 'reject')">
-                    ✗ Reject
-                </button>
-                <button class="suggestion-btn dismiss" onclick="handleSuggestionFeedback('${suggestion.pattern_id}', 'dismiss')">
-                    Dismiss
-                </button>
+                ${isAutoTriggered ? `
+                    <button class="suggestion-btn execute" onclick="handleExecute('${suggestion.pattern_id}')">
+                        ▶ Execute Now
+                    </button>
+                    <button class="suggestion-btn skip" onclick="handleSkip('${suggestion.pattern_id}')">
+                        Skip This Time
+                    </button>
+                    <button class="suggestion-btn disable" onclick="handleDisable('${suggestion.pattern_id}')">
+                        Disable Pattern
+                    </button>
+                ` : `
+                    <button class="suggestion-btn accept" onclick="handleSuggestionFeedback('${suggestion.pattern_id}', 'accept')">
+                        ✓ Accept
+                    </button>
+                    <button class="suggestion-btn reject" onclick="handleSuggestionFeedback('${suggestion.pattern_id}', 'reject')">
+                        ✗ Reject
+                    </button>
+                    <button class="suggestion-btn dismiss" onclick="handleSuggestionFeedback('${suggestion.pattern_id}', 'dismiss')">
+                        Dismiss
+                    </button>
+                `}
             </div>
         </div>
     `;
@@ -206,19 +231,123 @@ async function handleSuggestionFeedback(patternId, action) {
 }
 
 /**
+ * Phase 4: Handle Execute button for proactive suggestions
+ * @param {string} patternId - Pattern UUID
+ */
+async function handleExecute(patternId) {
+    console.log(`Executing proactive pattern: ${patternId}`);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/learning/patterns/${patternId}/execute`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Pattern execution failed');
+        }
+
+        const result = await response.json();
+
+        // Remove the suggestion card
+        removeSuggestionCard(patternId);
+
+        // Show success message
+        showFeedbackToast('execute', result.message || 'Action executed successfully!');
+
+    } catch (error) {
+        console.error('Execute error:', error);
+        alert('Failed to execute action. Please try again.');
+    }
+}
+
+/**
+ * Phase 4: Handle Skip button for proactive suggestions
+ * @param {string} patternId - Pattern UUID
+ */
+async function handleSkip(patternId) {
+    console.log(`Skipping proactive pattern: ${patternId}`);
+
+    // Just dismiss without feedback (neutral action)
+    removeSuggestionCard(patternId);
+    showFeedbackToast('skip');
+}
+
+/**
+ * Phase 4: Handle Disable button for proactive suggestions
+ * @param {string} patternId - Pattern UUID
+ */
+async function handleDisable(patternId) {
+    console.log(`Disabling proactive pattern: ${patternId}`);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/learning/patterns/${patternId}/disable`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Pattern disable failed');
+        }
+
+        // Remove the suggestion card
+        removeSuggestionCard(patternId);
+
+        // Show success message
+        showFeedbackToast('disable');
+
+    } catch (error) {
+        console.error('Disable error:', error);
+        alert('Failed to disable pattern. Please try again.');
+    }
+}
+
+/**
+ * Phase 4: Helper to remove suggestion card with animation
+ * @param {string} patternId - Pattern UUID
+ */
+function removeSuggestionCard(patternId) {
+    const card = document.querySelector(`[data-pattern-id="${patternId}"]`);
+    if (card) {
+        card.style.opacity = '0.5';
+        card.style.transition = 'opacity 0.3s';
+        setTimeout(() => {
+            card.remove();
+
+            // Update badge count
+            const remaining = document.querySelectorAll('.suggestion-card').length;
+            if (remaining === 0) {
+                const container = document.querySelector('.suggestions-container');
+                if (container) container.remove();
+            } else {
+                const badge = document.querySelector('.suggestions-badge');
+                if (badge) {
+                    const plural = remaining === 1 ? '' : 's';
+                    badge.innerHTML = `💡 ${remaining} pattern suggestion${plural} <span class="badge-chevron">▲</span>`;
+                }
+            }
+        }, 300);
+    }
+}
+
+/**
  * Show feedback toast message (Phase 3)
  * @param {string} action - Feedback action
+ * @param {string} customMessage - Optional custom message
  */
-function showFeedbackToast(action) {
+function showFeedbackToast(action, customMessage) {
     const messages = {
         accept: '✓ Pattern accepted - confidence increased',
         reject: '✗ Pattern rejected - confidence decreased',
-        dismiss: 'Pattern dismissed'
+        dismiss: 'Pattern dismissed',
+        execute: '▶ Action executed successfully!',
+        skip: 'Skipped for now',
+        disable: 'Pattern disabled - won\'t suggest again'
     };
 
     const toast = document.createElement('div');
     toast.className = 'feedback-toast';
-    toast.textContent = messages[action];
+    toast.textContent = customMessage || messages[action] || 'Action completed';
     document.body.appendChild(toast);
 
     setTimeout(() => toast.classList.add('show'), 10);

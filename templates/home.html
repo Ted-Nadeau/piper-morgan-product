@@ -461,6 +461,84 @@
         transform: translateY(0);
       }
 
+      /* Phase 4: Auto-Triggered (Proactive) Suggestions */
+      .suggestion-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .suggestion-icon {
+        font-size: 20px;
+      }
+
+      /* Badge styling */
+      .suggestion-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .manual-badge {
+        background: #E0F2F1;
+        color: #00796B;
+      }
+
+      .auto-badge {
+        background: #FF7043;
+        color: white;
+      }
+
+      /* Auto-triggered card highlighting */
+      .suggestion-card.auto-triggered {
+        border-left: 4px solid #FF7043;
+        background: #FFF5F2;
+      }
+
+      .suggestion-card.auto-triggered:hover {
+        box-shadow: 0 2px 8px rgba(255, 112, 67, 0.3);
+      }
+
+      .suggestion-card.auto-triggered .suggestion-icon {
+        color: #FF7043;
+      }
+
+      /* Execute button (prominent) */
+      .suggestion-btn.execute {
+        background: #FF7043;
+        color: white;
+        border-color: #FF7043;
+        font-weight: 600;
+      }
+
+      .suggestion-btn.execute:hover {
+        background: #F4511E;
+      }
+
+      /* Skip button (neutral) */
+      .suggestion-btn.skip {
+        background: white;
+        color: #7F8C8D;
+        border: 1px solid #BDC3C7;
+      }
+
+      .suggestion-btn.skip:hover {
+        background: #F8F9FA;
+      }
+
+      /* Disable button (warning) */
+      .suggestion-btn.disable {
+        background: white;
+        color: #E74C3C;
+        border: 1px solid #E74C3C;
+      }
+
+      .suggestion-btn.disable:hover {
+        background: #FFEBEE;
+      }
+
       /* Phase 3.3: Onboarding Tooltip */
       .onboarding-tooltip {
         background: #FFF9E6;
