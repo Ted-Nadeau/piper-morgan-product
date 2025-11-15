@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/static/css/spinner.css" />
     <link rel="stylesheet" href="/static/css/help-tooltip.css" />
     <link rel="stylesheet" href="/static/css/keyboard-shortcuts.css" />
+    <link rel="stylesheet" href="/static/css/form-validation.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -226,6 +227,7 @@
       </p>
     </div>
 
+    <form id="preferences-form">
     <div class="preference-section">
       <div class="preference-title">
         Warmth Level
@@ -422,6 +424,7 @@
         style="display: none"
       ></div>
     </div>
+    </form>
 
     <script>
       let currentConfig = {
@@ -644,10 +647,18 @@
       KeyboardShortcuts.init(() => {
         savePreferences();
       });
+
+      // Initialize form validation
+      FormValidation.init('preferences-form', {
+        confidence: [Validators.requiredRadio('confidence')],
+        action: [Validators.requiredRadio('action')],
+        technical: [Validators.requiredRadio('technical')],
+      }, savePreferences);
     </script>
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/help-tooltip.js"></script>
     <script src="/static/js/keyboard-shortcuts.js"></script>
+    <script src="/static/js/form-validation.js"></script>
   </body>
 </html>

@@ -1,0 +1,126 @@
+/* G43: Form Validation
+   Real-time validation feedback with error messages
+   WCAG 2.2 AA Compliance:
+   - aria-invalid for invalid fields
+   - role="alert" on error messages for announcement
+   - aria-describedby links field to error message
+   - Color contrast: red error text on light background (4.5:1) ✓
+   - Error icon + text for clarity
+*/
+
+/* Field error state */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #e74c3c;
+  background-color: #ffebee;
+}
+
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus {
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+  outline: none;
+}
+
+/* Radio/checkbox in error state */
+.radio-option input[aria-invalid="true"] {
+  border-color: #e74c3c;
+}
+
+.radio-option input[aria-invalid="true"] + .toggle-slider {
+  border-color: #e74c3c;
+}
+
+/* Error message styling */
+.error-message {
+  display: none;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #ffebee;
+  border-left: 4px solid #e74c3c;
+  color: #c62828;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 4px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-message::before {
+  content: '⚠ ';
+  font-weight: 600;
+}
+
+/* Field groups with validation */
+.preference-section {
+  position: relative;
+}
+
+/* Success state (optional) */
+input[aria-invalid="false"],
+select[aria-invalid="false"],
+textarea[aria-invalid="false"] {
+  /* No special styling for valid fields to avoid visual clutter */
+}
+
+/* Validation summary (if used) */
+.validation-summary {
+  margin: 20px 0;
+  padding: 16px;
+  background: #ffebee;
+  border-left: 4px solid #e74c3c;
+  border-radius: 4px;
+}
+
+.validation-summary h3 {
+  margin: 0 0 12px 0;
+  color: #c62828;
+  font-size: 1.1em;
+}
+
+.validation-summary ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #c62828;
+}
+
+.validation-summary li {
+  margin-bottom: 6px;
+}
+
+.validation-summary li:last-child {
+  margin-bottom: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .error-message {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .error-message {
+    animation: none;
+  }
+
+  input[aria-invalid="true"]:focus,
+  select[aria-invalid="true"]:focus,
+  textarea[aria-invalid="true"]:focus {
+    box-shadow: none;
+  }
+}
