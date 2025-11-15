@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/spinner.css" />
     <link rel="stylesheet" href="/static/css/help-tooltip.css" />
+    <link rel="stylesheet" href="/static/css/keyboard-shortcuts.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -199,6 +200,7 @@
   <body>
     {% include 'components/navigation.html' %}
     {% include 'components/toast.html' %}
+    {% include 'components/keyboard-shortcuts.html' %}
     {% set breadcrumbs = [
       {"label": "Settings", "url": "/settings"},
       {"label": "Personality", "url": None}
@@ -638,9 +640,14 @@
 
       // Load preferences when page loads
       loadPreferences();
+      // Initialize keyboard shortcuts with save callback
+      KeyboardShortcuts.init(() => {
+        savePreferences();
+      });
     </script>
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/help-tooltip.js"></script>
+    <script src="/static/js/keyboard-shortcuts.js"></script>
   </body>
 </html>
