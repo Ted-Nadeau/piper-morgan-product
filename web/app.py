@@ -815,6 +815,12 @@ async def learning_dashboard_ui(request: Request):
     return templates.TemplateResponse("learning-dashboard.html", {"request": request})
 
 
+@app.get("/settings")
+async def settings_index_ui(request: Request):
+    """Serve the settings index page (G2: Settings Index Page)"""
+    return templates.TemplateResponse("settings-index.html", {"request": request})
+
+
 @app.get("/health/config")
 async def health_config():
     """

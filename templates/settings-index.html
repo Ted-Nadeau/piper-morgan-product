@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Settings - Piper Morgan</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+      }
+
+      .settings-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+
+      .settings-header {
+        margin-bottom: 48px;
+      }
+
+      .settings-header h1 {
+        font-size: 32px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 8px 0;
+      }
+
+      .settings-description {
+        font-size: 16px;
+        color: #7f8c8d;
+        margin: 0;
+      }
+
+      .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+      }
+
+      .settings-card {
+        background: white;
+        border: 1px solid #ecf0f1;
+        border-radius: 12px;
+        padding: 24px;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: block;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .settings-card:hover {
+        border-color: #3498db;
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .settings-card-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .settings-card-disabled:hover {
+        border-color: #ecf0f1;
+        box-shadow: none;
+        transform: none;
+      }
+
+      .card-icon {
+        font-size: 32px;
+        margin-bottom: 16px;
+      }
+
+      .card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 8px 0;
+      }
+
+      .card-description {
+        font-size: 14px;
+        color: #7f8c8d;
+        line-height: 1.5;
+        margin: 0 0 16px 0;
+      }
+
+      .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .meta-item {
+        font-size: 12px;
+        color: #95a5a6;
+        padding: 4px 8px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .card-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #3498db;
+        background: #e3f2fd;
+        padding: 4px 12px;
+        border-radius: 12px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .settings-container {
+          padding: 32px 16px;
+        }
+
+        .settings-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .settings-header h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'components/navigation.html' %}
+    <script>
+      // G8: Logged-in User Indicator - Pass user context from server to navigation
+      {% if request.state.user_claims %}
+      window.currentUser = {
+        username: "{{ request.state.user_claims.user_email.split('@')[0] }}",
+        email: "{{ request.state.user_claims.user_email }}",
+        user_id: "{{ request.state.user_claims.user_id }}"
+      };
+      {% else %}
+      window.currentUser = null;
+      {% endif %}
+    </script>
+
+    <div class="settings-container">
+      <div class="settings-header">
+        <h1>Settings</h1>
+        <p class="settings-description">
+          Configure Piper Morgan to match your workflow and preferences
+        </p>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Personality Settings Card -->
+        <a href="/personality-preferences" class="settings-card">
+          <div class="card-icon">🎭</div>
+          <h3 class="card-title">Personality</h3>
+          <p class="card-description">
+            Customize how Piper communicates and responds to you
+          </p>
+          <div class="card-meta">
+            <span class="meta-item">Communication style</span>
+            <span class="meta-item">Response preferences</span>
+          </div>
+        </a>
+
+        <!-- Learning Settings Card -->
+        <a href="/learning" class="settings-card">
+          <div class="card-icon">🧠</div>
+          <h3 class="card-title">Learning & Patterns</h3>
+          <p class="card-description">
+            Control how Piper learns from your behavior and suggests patterns
+          </p>
+          <div class="card-meta">
+            <span class="meta-item">Pattern suggestions</span>
+            <span class="meta-item">Learning preferences</span>
+          </div>
+        </a>
+
+        <!-- Privacy Settings Card -->
+        <a href="/settings/privacy" class="settings-card">
+          <div class="card-icon">🔒</div>
+          <h3 class="card-title">Privacy & Data</h3>
+          <p class="card-description">
+            Manage your data, conversation history, and privacy preferences
+          </p>
+          <div class="card-meta">
+            <span class="meta-item">Data retention</span>
+            <span class="meta-item">Export/delete data</span>
+          </div>
+        </a>
+
+        <!-- Account Settings Card -->
+        <a href="/account" class="settings-card">
+          <div class="card-icon">👤</div>
+          <h3 class="card-title">Account</h3>
+          <p class="card-description">
+            Update your profile, password, and account preferences
+          </p>
+          <div class="card-meta">
+            <span class="meta-item">Profile information</span>
+            <span class="meta-item">Security settings</span>
+          </div>
+        </a>
+
+        <!-- Integrations Card (Future) -->
+        <a href="/settings/integrations" class="settings-card settings-card-disabled">
+          <div class="card-icon">🔌</div>
+          <h3 class="card-title">Integrations</h3>
+          <p class="card-description">
+            Connect Piper with GitHub, Notion, Slack, and other tools
+          </p>
+          <div class="card-badge">Coming Soon</div>
+        </a>
+
+        <!-- Advanced Settings Card -->
+        <a href="/settings/advanced" class="settings-card">
+          <div class="card-icon">⚙️</div>
+          <h3 class="card-title">Advanced</h3>
+          <p class="card-description">
+            Developer options, experimental features, and system configuration
+          </p>
+          <div class="card-meta">
+            <span class="meta-item">API access</span>
+            <span class="meta-item">Debug mode</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </body>
+</html>
