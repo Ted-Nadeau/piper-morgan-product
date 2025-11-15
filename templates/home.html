@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/css/spinner.css" />
     <link rel="stylesheet" href="/static/css/session-timeout.css" />
     <link rel="stylesheet" href="/static/css/dialog.css" />
+    <link rel="stylesheet" href="/static/css/skip-link.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -663,6 +664,7 @@
     </style>
   </head>
   <body>
+    {% include 'components/skip-link.html' %}
     {% include 'components/navigation.html' %}
     {% include 'components/toast.html' %}
     {% include 'components/session-timeout-modal.html' %}
@@ -1069,6 +1071,7 @@
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/session-timeout.js"></script>
+    <script src="/static/js/focus-manager.js"></script>
     <script src="/static/js/dialog.js"></script>
   </body>
 </html>

@@ -5,6 +5,7 @@
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/spinner.css" />
+    <link rel="stylesheet" href="/static/css/skip-link.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -101,6 +102,7 @@
     </style>
   </head>
   <body>
+    {% include 'components/skip-link.html' %}
     {% include 'components/navigation.html' %}
     {% include 'components/toast.html' %}
     {% set breadcrumbs = [{"label": "Standup", "url": None}] %}
@@ -237,5 +239,6 @@
     </script>
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
+    <script src="/static/js/focus-manager.js"></script>
   </body>
 </html>
