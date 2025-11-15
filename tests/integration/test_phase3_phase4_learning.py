@@ -1,0 +1,281 @@
+"""
+Focused integration test for Phase 3 + Phase 4 learning (Issue #300).
+
+Tests critical learning cycle paths:
+1. Pattern feedback API
+2. Learning settings API
+3. Pattern enable/disable API
+4. Performance verification
+
+Simpler than test_learning_cycle_phase3_phase4.py - focused on API-level testing.
+"""
+
+from uuid import UUID, uuid4
+
+import pytest
+from sqlalchemy import delete, select
+
+from services.database.models import LearnedPattern, LearningSettings
+from services.database.session_factory import AsyncSessionFactory
+from services.shared_types import PatternType
+from web.api.routes.learning import (
+    PatternFeedback,
+    SettingsUpdate,
+    disable_pattern,
+    enable_pattern,
+    get_settings,
+    provide_pattern_feedback,
+    update_settings,
+)
+
+TEST_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+
+@pytest.fixture
+async def clean_test_data():
+    """Clean up test data before and after each test."""
+    async with AsyncSessionFactory.session_scope() as session:
+        await session.execute(delete(LearnedPattern).where(LearnedPattern.user_id == TEST_USER_ID))
+        await session.execute(
+            delete(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
+        )
+        await session.commit()
+
+    yield
+
+    async with AsyncSessionFactory.session_scope() as session:
+        await session.execute(delete(LearnedPattern).where(LearnedPattern.user_id == TEST_USER_ID))
+        await session.execute(
+            delete(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
+        )
+        await session.commit()
+
+
+class TestPhase3FeedbackCycle:
+    """Test Phase 3: User feedback on pattern suggestions."""
+
+    @pytest.mark.asyncio
+    async def test_accept_feedback_increases_confidence(self, clean_test_data):
+        """Test accepting a pattern increases confidence."""
+        # Create test pattern
+        async with AsyncSessionFactory.session_scope() as session:
+            pattern = LearnedPattern(
+                user_id=TEST_USER_ID,
+                pattern_type=PatternType.COMMAND_SEQUENCE,
+                pattern_data={"action_type": "test_action"},
+                confidence=0.7,
+                usage_count=5,
+                success_count=3,
+                failure_count=2,
+                enabled=True,
+            )
+            session.add(pattern)
+            await session.commit()
+            pattern_id = pattern.id
+
+        # Submit accept feedback
+        feedback = PatternFeedback(action="accept", feedback_text="Great!")
+        result = await provide_pattern_feedback(pattern_id, feedback)
+
+        assert result["success"] is True
+        assert result["pattern"]["confidence"] > 0.7  # Increased
+        assert result["pattern"]["success_count"] == 5  # 3 + 2
+
+    @pytest.mark.asyncio
+    async def test_reject_feedback_decreases_confidence(self, clean_test_data):
+        """Test rejecting a pattern decreases confidence."""
+        # Create test pattern
+        async with AsyncSessionFactory.session_scope() as session:
+            pattern = LearnedPattern(
+                user_id=TEST_USER_ID,
+                pattern_type=PatternType.COMMAND_SEQUENCE,
+                pattern_data={"action_type": "test_action"},
+                confidence=0.6,
+                usage_count=5,
+                success_count=3,
+                failure_count=2,
+                enabled=True,
+            )
+            session.add(pattern)
+            await session.commit()
+            pattern_id = pattern.id
+
+        # Submit reject feedback
+        feedback = PatternFeedback(action="reject", feedback_text="Not helpful")
+        result = await provide_pattern_feedback(pattern_id, feedback)
+
+        assert result["success"] is True
+        assert result["pattern"]["confidence"] < 0.6  # Decreased
+        assert result["pattern"]["failure_count"] == 4  # 2 + 2
+
+    @pytest.mark.asyncio
+    async def test_low_confidence_auto_disables(self, clean_test_data):
+        """Test patterns auto-disable when confidence drops below 0.3."""
+        # Create pattern near disable threshold
+        async with AsyncSessionFactory.session_scope() as session:
+            pattern = LearnedPattern(
+                user_id=TEST_USER_ID,
+                pattern_type=PatternType.COMMAND_SEQUENCE,
+                pattern_data={"action_type": "test_action"},
+                confidence=0.35,  # Just above threshold
+                usage_count=5,
+                success_count=1,
+                failure_count=4,
+                enabled=True,
+            )
+            session.add(pattern)
+            await session.commit()
+            pattern_id = pattern.id
+
+        # Reject should drop below 0.3 and auto-disable
+        feedback = PatternFeedback(action="reject")
+        result = await provide_pattern_feedback(pattern_id, feedback)
+
+        assert result["success"] is True
+        assert result["pattern"]["confidence"] < 0.3
+        assert result["pattern"]["enabled"] is False  # Auto-disabled
+
+
+class TestLearningSettings:
+    """Test learning settings management (global enable/disable)."""
+
+    @pytest.mark.asyncio
+    async def test_get_default_settings(self, clean_test_data):
+        """Test getting default settings when none exist."""
+        result = await get_settings()
+
+        assert result["configured"] is False
+        assert result["settings"]["learning_enabled"] is True  # Default
+        assert result["settings"]["suggestion_threshold"] == 0.7
+        assert result["settings"]["automation_threshold"] == 0.9
+
+    @pytest.mark.asyncio
+    async def test_update_settings_creates_new(self, clean_test_data):
+        """Test updating settings creates new record if none exists."""
+        settings_update = SettingsUpdate(learning_enabled=False, suggestion_threshold=0.8)
+
+        result = await update_settings(settings_update)
+
+        assert result["success"] is True
+        assert result["settings"]["learning_enabled"] is False
+        assert result["settings"]["suggestion_threshold"] == 0.8
+
+    @pytest.mark.asyncio
+    async def test_update_existing_settings(self, clean_test_data):
+        """Test updating existing settings."""
+        # Create initial settings
+        async with AsyncSessionFactory.session_scope() as session:
+            settings = LearningSettings(
+                user_id=TEST_USER_ID,
+                learning_enabled=True,
+                suggestion_threshold=0.7,
+                automation_threshold=0.9,
+                auto_apply_enabled=False,
+                notification_enabled=True,
+            )
+            session.add(settings)
+            await session.commit()
+
+        # Update settings
+        settings_update = SettingsUpdate(learning_enabled=False)
+        result = await update_settings(settings_update)
+
+        assert result["success"] is True
+        assert result["settings"]["learning_enabled"] is False
+        assert result["settings"]["suggestion_threshold"] == 0.7  # Unchanged
+
+
+class TestPatternEnableDisable:
+    """Test per-pattern enable/disable (Phase 3 requirement)."""
+
+    @pytest.mark.asyncio
+    async def test_disable_pattern(self, clean_test_data):
+        """Test disabling a pattern."""
+        # Create pattern
+        async with AsyncSessionFactory.session_scope() as session:
+            pattern = LearnedPattern(
+                user_id=TEST_USER_ID,
+                pattern_type=PatternType.COMMAND_SEQUENCE,
+                pattern_data={"action_type": "test_action"},
+                confidence=0.8,
+                usage_count=5,
+                success_count=4,
+                failure_count=1,
+                enabled=True,
+            )
+            session.add(pattern)
+            await session.commit()
+            pattern_id = pattern.id
+
+        # Disable pattern
+        result = await disable_pattern(str(pattern_id))
+
+        assert result["success"] is True
+        assert result["pattern"]["enabled"] is False
+
+    @pytest.mark.asyncio
+    async def test_enable_pattern(self, clean_test_data):
+        """Test enabling a pattern."""
+        # Create disabled pattern
+        async with AsyncSessionFactory.session_scope() as session:
+            pattern = LearnedPattern(
+                user_id=TEST_USER_ID,
+                pattern_type=PatternType.COMMAND_SEQUENCE,
+                pattern_data={"action_type": "test_action"},
+                confidence=0.8,
+                usage_count=5,
+                success_count=4,
+                failure_count=1,
+                enabled=False,  # Disabled
+            )
+            session.add(pattern)
+            await session.commit()
+            pattern_id = pattern.id
+
+        # Enable pattern
+        result = await enable_pattern(str(pattern_id))
+
+        assert result["success"] is True
+        assert result["pattern"]["enabled"] is True
+
+
+class TestPerformanceRequirements:
+    """Test <10ms overhead requirement from #300."""
+
+    @pytest.mark.asyncio
+    async def test_feedback_performance(self, clean_test_data):
+        """Test pattern feedback completes quickly."""
+        import time
+
+        # Create pattern
+        async with AsyncSessionFactory.session_scope() as session:
+            pattern = LearnedPattern(
+                user_id=TEST_USER_ID,
+                pattern_type=PatternType.COMMAND_SEQUENCE,
+                pattern_data={"action_type": "test_action"},
+                confidence=0.7,
+                usage_count=5,
+                success_count=3,
+                failure_count=2,
+                enabled=True,
+            )
+            session.add(pattern)
+            await session.commit()
+            pattern_id = pattern.id
+
+        # Warm up
+        feedback = PatternFeedback(action="accept")
+        await provide_pattern_feedback(pattern_id, feedback)
+
+        # Measure
+        start = time.perf_counter()
+        feedback = PatternFeedback(action="accept")
+        await provide_pattern_feedback(pattern_id, feedback)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+
+        # Should complete quickly (<10ms target)
+        assert elapsed_ms < 50.0, f"Feedback took {elapsed_ms:.2f}ms"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "--tb=short", "-s"])

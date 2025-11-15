@@ -106,10 +106,25 @@ function renderSuggestionCard(suggestion, index) {
     // Phase 4: Check for auto-triggered flag
     const isAutoTriggered = suggestion.auto_triggered || false;
 
-    // Extract reasoning from pattern_data
-    const reasoning = suggestion.pattern_data?.reasoning ||
-                     suggestion.pattern_data?.description ||
-                     `${patternType} pattern detected`;
+    // Bug #76n: Extract action details from pattern_data for better descriptions
+    let reasoning = suggestion.pattern_data?.reasoning || suggestion.pattern_data?.description;
+
+    // If no reasoning/description, try to generate from action details
+    if (!reasoning) {
+        const actionType = suggestion.pattern_data?.action_type;
+        const actionParams = suggestion.pattern_data?.action_params;
+
+        if (actionType === 'create_github_issue' && actionParams?.title) {
+            reasoning = `Create GitHub Issue: ${actionParams.title}`;
+        } else if (actionType && actionParams) {
+            // Generic action description
+            const actionName = actionType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            reasoning = `${actionName}`;
+        } else {
+            // Fallback to generic pattern type
+            reasoning = `${patternType} pattern detected`;
+        }
+    }
 
     // Phase 4: Visual styling based on type
     const icon = isAutoTriggered ? '⚡' : '💡';

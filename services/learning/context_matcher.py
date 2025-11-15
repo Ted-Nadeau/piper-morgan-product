@@ -1,4 +1,5 @@
 """Context matching for pattern application"""
+
 from datetime import datetime, time
 from typing import Any, Dict
 
@@ -26,9 +27,7 @@ class ContextMatcher:
 
         # Check temporal triggers
         if "trigger_time" in pattern_context:
-            if not cls._check_temporal(
-                pattern_context["trigger_time"], current_context
-            ):
+            if not cls._check_temporal(pattern_context["trigger_time"], current_context):
                 return False
 
         # Check sequential triggers (after specific action)
@@ -47,9 +46,7 @@ class ContextMatcher:
         return True
 
     @staticmethod
-    def _check_temporal(
-        trigger_time: str, current_context: Dict[str, Any]
-    ) -> bool:
+    def _check_temporal(trigger_time: str, current_context: Dict[str, Any]) -> bool:
         """
         Check if current time matches trigger
 
@@ -60,18 +57,23 @@ class ContextMatcher:
         Returns:
             bool: True if time matches
         """
+        # Handle None trigger_time (pattern without temporal trigger)
+        if not trigger_time:
+            return False
+
         # Simple keyword matching for alpha
         trigger_lower = trigger_time.lower()
 
         # Check for event-based temporal triggers
-        current_event = current_context.get("current_event", "").lower()
-        if current_event:
+        current_event = current_context.get("current_event")
+        if current_event and isinstance(current_event, str):
+            current_event_lower = current_event.lower()
             # "after standup" matches if current_event is "standup_complete"
-            if "standup" in trigger_lower and "standup" in current_event:
+            if "standup" in trigger_lower and "standup" in current_event_lower:
                 return True
             # "end of day" matches if current_event is "eod" or "end_of_day"
             if "eod" in trigger_lower or "end of day" in trigger_lower:
-                if "eod" in current_event or "end_of_day" in current_event:
+                if "eod" in current_event_lower or "end_of_day" in current_event_lower:
                     return True
 
         # Check for time-based triggers (future enhancement)
@@ -80,18 +82,14 @@ class ContextMatcher:
             # TODO: Parse time specifications like "9am", "monday morning"
             # For alpha: Simple hour matching
             if "9am" in trigger_lower or "morning" in trigger_lower:
-                hour = (
-                    current_time.hour if hasattr(current_time, "hour") else 0
-                )
+                hour = current_time.hour if hasattr(current_time, "hour") else 0
                 return 7 <= hour <= 11
 
         # Default: trigger doesn't match
         return False
 
     @staticmethod
-    def _calculate_similarity(
-        conditions: Dict[str, Any], current_context: Dict[str, Any]
-    ) -> float:
+    def _calculate_similarity(conditions: Dict[str, Any], current_context: Dict[str, Any]) -> float:
         """
         Calculate similarity between conditions and context
         (Future enhancement - defer to post-alpha)

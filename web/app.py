@@ -610,10 +610,11 @@ async def get_workflow_status(workflow_id: str, request: Request):
 
         # For GREAT-1B, return a simple status response
         # This prevents the infinite polling that causes UI hangs
+        # Bug #xpv: Changed message to not claim completion when status unknown
         return {
             "workflow_id": workflow_id,
-            "status": "completed",  # Simplified for Bug #166 fix
-            "message": "Workflow processing completed",
+            "status": "processing",  # Neutral status (not "completed" - may need clarification)
+            "message": "",  # No message - avoids misleading "completed" claim
             "tasks": [],
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
