@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learning System Dashboard - Piper Morgan</title>
+    <link rel="stylesheet" href="/static/css/empty-state.css" />
     <style>
         /* Base Styles - Match existing dark theme */
         body {
@@ -445,6 +446,7 @@
 </head>
 <body>
     {% include 'components/navigation.html' %}
+    {% include 'components/empty-state.html' %}
     {% set breadcrumbs = [
       {"label": "Settings", "url": "/settings"},
       {"label": "Learning", "url": None}
@@ -718,7 +720,14 @@
             const container = document.getElementById('patternDistribution');
 
             if (Object.keys(distribution).length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No patterns learned yet</p></div>';
+                // Display reusable empty state component
+                container.innerHTML = `
+                    <div class="empty-state" role="status" aria-label="No patterns learned">
+                      <div class="empty-state-icon" aria-hidden="true">📊</div>
+                      <h2 class="empty-state-title">No Patterns Learned Yet</h2>
+                      <p class="empty-state-message">Patterns will appear here as the system learns from your interactions and feedback.</p>
+                    </div>
+                `;
                 return;
             }
 
