@@ -1,0 +1,379 @@
+<!-- Global Navigation Component -->
+<!-- Usage: {% include 'components/navigation.html' %} -->
+
+<style>
+.global-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #ecf0f1;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.nav-logo {
+  height: 32px;
+  width: auto;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.nav-menu {
+  display: flex;
+  list-style: none;
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  margin-left: 48px;
+}
+
+.nav-link {
+  color: #2c3e50;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  background: #f5f5f5;
+  color: #3498db;
+}
+
+.nav-link.active {
+  background: #e3f2fd;
+  color: #3498db;
+  font-weight: 600;
+}
+
+/* User Menu Styles */
+.nav-user {
+  position: relative;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ecf0f1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.user-button:hover {
+  background: #e8e8e8;
+  border-color: #bdc3c7;
+}
+
+.user-button:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-name {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.user-chevron {
+  color: #7f8c8d;
+  transition: transform 0.2s;
+  width: 16px;
+  height: 16px;
+}
+
+.user-button[aria-expanded="true"] .user-chevron {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: white;
+  border: 1px solid #ecf0f1;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  z-index: 1001;
+}
+
+.user-dropdown[hidden] {
+  display: none;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  color: #2c3e50;
+  text-decoration: none;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.dropdown-item:focus {
+  outline: 2px solid #3498db;
+  outline-offset: -2px;
+}
+
+.dropdown-item svg {
+  color: #7f8c8d;
+  width: 16px;
+  height: 16px;
+}
+
+.dropdown-item-danger {
+  color: #e74c3c;
+}
+
+.dropdown-item-danger svg {
+  color: #e74c3c;
+}
+
+.dropdown-divider {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid #ecf0f1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .nav-menu {
+    gap: 16px;
+    margin-left: 24px;
+  }
+
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .nav-brand {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-menu {
+    gap: 12px;
+    margin-left: 12px;
+  }
+
+  .nav-link {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .user-name {
+    display: none;
+  }
+}
+</style>
+
+<nav class="global-nav" role="navigation" aria-label="Main navigation">
+  <div class="nav-container">
+    <!-- Logo/Brand -->
+    <a href="/" class="nav-brand">
+      <div class="nav-logo">PM</div>
+      <span>Piper Morgan</span>
+    </a>
+
+    <!-- Main Navigation -->
+    <ul class="nav-menu">
+      <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
+      <li><a href="/standup" class="nav-link" id="nav-standup">Standup</a></li>
+      <li><a href="/files" class="nav-link" id="nav-files">Files</a></li>
+      <li><a href="/learning" class="nav-link" id="nav-learning">Learning</a></li>
+      <li><a href="/settings" class="nav-link" id="nav-settings">Settings</a></li>
+    </ul>
+
+    <!-- User Menu -->
+    <div class="nav-user">
+      <button class="user-button" aria-haspopup="true" aria-expanded="false" id="user-menu-button">
+        <span class="user-avatar" id="user-avatar">U</span>
+        <span class="user-name" id="user-name">User</span>
+        <svg class="user-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6l4 4 4-4"/>
+        </svg>
+      </button>
+
+      <div class="user-dropdown" hidden id="user-dropdown">
+        <a href="/settings" class="dropdown-item" id="dropdown-settings">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M9.405 1.05c-.413-1.238-2.397-1.238-2.81 0l-.1.34a1.464 1.464 0 01-2.105.872l-.31-.17c-1.088-.601-2.187.529-1.586 1.617l.17.31c.463.836.023 1.917-.856 2.105l-.34.1c-1.238.413-1.238 2.397 0 2.81l.34.1c.883.188 1.319 1.269.856 2.105l-.17.31c-.601 1.088.529 2.187 1.617 1.586l.31-.17a1.464 1.464 0 012.105.872l.1.34c.413 1.238 2.397 1.238 2.81 0l.1-.34a1.464 1.464 0 012.105-.872l.31.17c1.088.601 2.187-.529 1.586-1.617l-.17-.31c-.463-.836-.023-1.917.856-2.105l.34-.1c1.238-.413 1.238-2.397 0-2.81l-.34-.1c-.883-.188-1.319-1.269-.856-2.105l.17-.31c.601-1.088-.529-2.187-1.617-1.586l-.31.17a1.464 1.464 0 01-2.105-.872l-.1-.34z"/>
+          </svg>
+          Settings
+        </a>
+        <a href="/account" class="dropdown-item" id="dropdown-account">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 8a3 3 0 100-6 3 3 0 000 6zm.5-9H8c4.418 0 8 1.79 8 4v2c0 2.21-3.582 4-8 4s-8-1.79-8-4V3c0-2.21 3.582-4 8-4z"/>
+          </svg>
+          Account
+        </a>
+        <hr class="dropdown-divider">
+        <a href="/logout" class="dropdown-item dropdown-item-danger" id="dropdown-logout">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5.338 1.59a61.44 61.44 0 00-2.837.856.481.481 0 00-.328.39c-.554 4.157.726 7.213 2.363 9.337a3.494 3.494 0 00.636.643l.049-.04a.658.658 0 00.015-.691A2.89 2.89 0 005.1 9.5c0-.822.503-4.76 1.102-6.402a.413.413 0 00-.078-.465 3.2 3.2 0 00-.6-.756zm2.768.885a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm4.048 .895a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+          </svg>
+          Logout
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Get user info if available in context (will be passed from server)
+  const userButton = document.getElementById('user-menu-button');
+  const userDropdown = document.getElementById('user-dropdown');
+  const userAvatar = document.getElementById('user-avatar');
+  const userName = document.getElementById('user-name');
+
+  // Set active nav link based on current path
+  const currentPath = window.location.pathname;
+  const navLinks = {
+    '/': 'nav-home',
+    '/standup': 'nav-standup',
+    '/files': 'nav-files',
+    '/learning': 'nav-learning',
+    '/settings': 'nav-settings'
+  };
+
+  for (const [path, id] of Object.entries(navLinks)) {
+    const link = document.getElementById(id);
+    if (link) {
+      if (currentPath === path || (currentPath === '/' && path === '/')) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    }
+  }
+
+  // Handle user dropdown menu
+  if (userButton && userDropdown) {
+    userButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isExpanded = userButton.getAttribute('aria-expanded') === 'true';
+      userButton.setAttribute('aria-expanded', !isExpanded);
+      userDropdown.hidden = isExpanded;
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function() {
+      userButton.setAttribute('aria-expanded', 'false');
+      userDropdown.hidden = true;
+    });
+
+    // Keyboard support
+    userButton.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        userButton.setAttribute('aria-expanded', 'false');
+        userDropdown.hidden = true;
+      }
+    });
+
+    // Arrow key navigation in dropdown
+    const dropdownItems = userDropdown.querySelectorAll('.dropdown-item');
+    let currentFocus = -1;
+
+    userButton.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        currentFocus = 0;
+        if (dropdownItems[currentFocus]) {
+          dropdownItems[currentFocus].focus();
+        }
+      }
+    });
+
+    dropdownItems.forEach((item, index) => {
+      item.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          currentFocus = (index + 1) % dropdownItems.length;
+          dropdownItems[currentFocus].focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          currentFocus = (index - 1 + dropdownItems.length) % dropdownItems.length;
+          dropdownItems[currentFocus].focus();
+        }
+      });
+    });
+  }
+
+  // Try to get user info from server context (if available)
+  // This would be set by the server in a script tag
+  if (window.currentUser) {
+    if (window.currentUser.username) {
+      userName.textContent = window.currentUser.username;
+      const firstLetter = window.currentUser.username.charAt(0).toUpperCase();
+      userAvatar.textContent = firstLetter;
+    }
+  }
+});
+</script>

@@ -804,13 +804,15 @@ async def standup_ui(request: Request):
 
 
 @app.get("/personality-preferences")
-async def personality_preferences_ui():
+async def personality_preferences_ui(request: Request):
     """Serve the personality preferences interface"""
-    return HTMLResponse(
-        content=open(
-            os.path.join(os.path.dirname(__file__), "assets", "personality-preferences.html")
-        ).read()
-    )
+    return templates.TemplateResponse("personality-preferences.html", {"request": request})
+
+
+@app.get("/learning")
+async def learning_dashboard_ui(request: Request):
+    """Serve the learning dashboard interface"""
+    return templates.TemplateResponse("learning-dashboard.html", {"request": request})
 
 
 @app.get("/health/config")
