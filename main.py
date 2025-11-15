@@ -108,8 +108,15 @@ async def main():
         if args.verbose:
             logger.info("Starting web server on http://127.0.0.1:8001")
         else:
-            print("\n🌐 Server ready at http://localhost:8001")
-            print("   Press Ctrl+C to stop")
+            # G50: Clear Server Startup Message with all necessary URLs
+            print("\n" + "=" * 60)
+            print("✅ Piper Morgan is running!")
+            print("=" * 60)
+            print("\n🌐 Web Interface:     http://localhost:8001")
+            print("🔧 API Documentation: http://localhost:8001/docs")
+            print("📊 Health Check:      http://localhost:8001/health")
+            print("\nPress Ctrl+C to stop the server")
+            print("=" * 60 + "\n")
 
         # Auto-launch browser if appropriate (Issue #256 CORE-UX-BROWSER)
         if should_open_browser():
