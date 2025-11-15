@@ -3,6 +3,7 @@
   <head>
     <title>Piper Morgan - AI PM Assistant</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/toast.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -660,6 +661,7 @@
   </head>
   <body>
     {% include 'components/navigation.html' %}
+    {% include 'components/toast.html' %}
     <script>
       // G8: Logged-in User Indicator - Pass user context from server to navigation
       {% if request.state.user_claims %}
@@ -1049,5 +1051,6 @@
           }
         });
     </script>
+    <script src="/static/js/toast.js"></script>
   </body>
 </html>
