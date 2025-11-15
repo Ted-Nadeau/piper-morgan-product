@@ -4,6 +4,7 @@
     <title>Personality Preferences - Piper Morgan</title>
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/spinner.css" />
+    <link rel="stylesheet" href="/static/css/help-tooltip.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -224,7 +225,11 @@
     </div>
 
     <div class="preference-section">
-      <div class="preference-title">Warmth Level</div>
+      <div class="preference-title">
+        Warmth Level
+        {% set help_text = "At 0.0 (Professional): 'Task completed successfully.' At 0.7 (Balanced): 'Perfect! Your task is complete and ready for the next step.' At 1.0 (Friendly): 'Fantastic! Everything's done and looking great—you're all set!'" %}
+        {% include 'components/help-tooltip.html' %}
+      </div>
       <div class="preference-description">
         Controls how friendly vs formal Piper's responses feel. Higher values
         add warmth while maintaining professionalism.
@@ -248,7 +253,11 @@
     </div>
 
     <div class="preference-section">
-      <div class="preference-title">Confidence Display Style</div>
+      <div class="preference-title">
+        Confidence Display Style
+        {% set help_text = "Numeric: Shows a percentage (e.g., 87% confident). Descriptive: Uses words like 'high confidence' or 'moderate uncertainty'. Contextual: Adjusts the style based on the situation. Hidden: No confidence indicators." %}
+        {% include 'components/help-tooltip.html' %}
+      </div>
       <div class="preference-description">
         How Piper shows confidence in responses. Choose the style that feels
         most helpful to you.
@@ -295,7 +304,11 @@
     </div>
 
     <div class="preference-section">
-      <div class="preference-title">Action Orientation</div>
+      <div class="preference-title">
+        Action Orientation
+        {% set help_text = "High: Every response includes suggested next steps. Medium: Next steps suggested when relevant to the topic. Low: Minimal guidance—mostly just answer your question." %}
+        {% include 'components/help-tooltip.html' %}
+      </div>
       <div class="preference-description">
         How much guidance and next steps Piper provides in responses.
       </div>
@@ -322,7 +335,11 @@
     </div>
 
     <div class="preference-section">
-      <div class="preference-title">Technical Depth</div>
+      <div class="preference-title">
+        Technical Depth
+        {% set help_text = "Detailed: Full technical explanations with architecture, code examples, and advanced concepts. Balanced: Enough detail to be useful without overwhelming. Simplified: High-level summaries focused on practical 'what to do'." %}
+        {% include 'components/help-tooltip.html' %}
+      </div>
       <div class="preference-description">
         Level of technical detail in responses. Adjust based on your preference
         for technical depth.
@@ -624,5 +641,6 @@
     </script>
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
+    <script src="/static/js/help-tooltip.js"></script>
   </body>
 </html>

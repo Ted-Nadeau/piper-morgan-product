@@ -1,0 +1,27 @@
+{# G5: Contextual Help Tooltips Component
+   Reusable help icon with accessible tooltip
+   Usage:
+     {% set help_text = "Longer explanation of this setting" %}
+     {% include 'components/help-tooltip.html' %}
+#}
+
+<div class="help-tooltip" role="region" aria-label="Help information">
+  <button
+    class="help-icon"
+    aria-label="Show help"
+    aria-expanded="false"
+    aria-describedby="help-content"
+    type="button"
+    onclick="toggleHelpTooltip(event)"
+  >
+    ?
+  </button>
+  <div
+    id="help-content"
+    class="help-content"
+    role="tooltip"
+    aria-hidden="true"
+  >
+    {{ help_text }}
+  </div>
+</div>

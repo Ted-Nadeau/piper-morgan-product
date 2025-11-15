@@ -1,0 +1,146 @@
+/* G5: Contextual Help Tooltips
+   Accessible help icon with tooltip guidance
+   WCAG 2.2 AA Compliance:
+   - aria-expanded toggles on interaction
+   - aria-hidden shown/hidden with tooltip visibility
+   - Color contrast: icon #007acc on white (4.5:1) ✓
+   - Keyboard support: Tab to focus, Enter/Space toggle, Escape close
+   - Focus indicator: 2px solid outline visible
+   - Reduced motion: animations disabled when preferred
+*/
+
+.help-tooltip {
+  position: relative;
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #007acc;
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.help-icon:hover {
+  background: #005a9e;
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+}
+
+.help-icon:focus {
+  outline: 2px solid #007acc;
+  outline-offset: 2px;
+}
+
+.help-icon:active {
+  transform: scale(0.95);
+}
+
+/* Tooltip content */
+.help-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #2c3e50;
+  color: #e0e0e0;
+  border: 1px solid #007acc;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  min-width: 200px;
+  max-width: 300px;
+  font-size: 13px;
+  line-height: 1.5;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.help-content::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  background: #2c3e50;
+  border-top: 1px solid #007acc;
+  border-left: 1px solid #007acc;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+/* Show tooltip when visible */
+.help-tooltip.active .help-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Update button state when active */
+.help-icon[aria-expanded="true"] {
+  background: #005a9e;
+  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+}
+
+/* Adjust tooltip position if near right edge */
+.help-tooltip.right-align .help-content {
+  left: auto;
+  right: 0;
+}
+
+.help-tooltip.right-align .help-content::before {
+  left: auto;
+  right: 12px;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .help-icon {
+    transition: none;
+  }
+
+  .help-content {
+    transition: none;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .help-content {
+    min-width: 160px;
+    max-width: 250px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .help-content {
+    min-width: 140px;
+    max-width: 200px;
+    padding: 10px 12px;
+  }
+
+  .help-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+}
