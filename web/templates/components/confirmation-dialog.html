@@ -1,0 +1,53 @@
+{# G24: Confirmation Dialog Component
+   Modal dialog for confirming destructive actions (delete, reset, clear, etc.)
+   Provides clear warning and two-button flow (Cancel / Confirm)
+#}
+
+<div
+  id="confirmation-dialog"
+  class="confirmation-dialog"
+  role="alertdialog"
+  aria-modal="true"
+  aria-labelledby="dialog-title"
+  aria-describedby="dialog-message"
+  aria-hidden="true"
+>
+  <div class="confirmation-dialog-content">
+    <button
+      class="confirmation-dialog-close"
+      aria-label="Cancel action"
+      type="button"
+      onclick="Dialog.cancel()"
+    >
+      ✕
+    </button>
+
+    <div class="confirmation-dialog-icon">⚠️</div>
+
+    <h2 id="dialog-title" class="confirmation-dialog-title">
+      Confirm Action
+    </h2>
+
+    <p id="dialog-message" class="confirmation-dialog-message">
+      Are you sure you want to proceed? This action cannot be undone.
+    </p>
+
+    <div class="confirmation-dialog-actions">
+      <button
+        class="btn btn-secondary"
+        onclick="Dialog.cancel()"
+        type="button"
+      >
+        Cancel
+      </button>
+      <button
+        class="btn btn-danger"
+        id="dialog-confirm-btn"
+        onclick="Dialog.confirm()"
+        type="button"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+</div>

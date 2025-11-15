@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>500 - Server Error</title>
+  <link rel="stylesheet" href="/static/css/base.css" />
+  <link rel="stylesheet" href="/static/css/error-page.css" />
+</head>
+<body>
+  <main class="error-container">
+    <div class="error-content">
+      <div class="error-icon">⚠️</div>
+
+      <h1 class="error-title">Something Went Wrong</h1>
+
+      <p class="error-message">
+        We encountered an unexpected error on our server. Our team has been notified.
+      </p>
+
+      <p class="error-code">Error 500</p>
+
+      <div class="error-actions">
+        <a href="/" class="btn btn-primary">
+          Go to Home
+        </a>
+        <button class="btn btn-secondary" onclick="location.reload()">
+          Try Again
+        </button>
+      </div>
+
+      <div class="error-help">
+        <h2>What you can do:</h2>
+        <ul>
+          <li>Refresh the page to try again</li>
+          <li>Return to the home page</li>
+          <li>Try clearing your browser cache</li>
+          <li>Contact support if the problem persists</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Announce error to screen readers
+    if (typeof Toast !== 'undefined' && Toast.error) {
+      Toast.error('Server Error', 'An unexpected error occurred. Our team has been notified. Please try again.');
+    }
+  </script>
+</body>
+</html>

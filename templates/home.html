@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/spinner.css" />
     <link rel="stylesheet" href="/static/css/session-timeout.css" />
+    <link rel="stylesheet" href="/static/css/dialog.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -665,6 +666,7 @@
     {% include 'components/navigation.html' %}
     {% include 'components/toast.html' %}
     {% include 'components/session-timeout-modal.html' %}
+    {% include 'components/confirmation-dialog.html' %}
     <script>
       // G8: Logged-in User Indicator - Pass user context from server to navigation
       {% if request.state.user_claims %}
@@ -1067,5 +1069,6 @@
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/session-timeout.js"></script>
+    <script src="/static/js/dialog.js"></script>
   </body>
 </html>
