@@ -274,7 +274,7 @@
           Account
         </a>
         <hr class="dropdown-divider">
-        <a href="/logout" class="dropdown-item dropdown-item-danger" id="dropdown-logout">
+        <a href="#" class="dropdown-item dropdown-item-danger" id="dropdown-logout" onclick="handleLogout(event)">
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M5.338 1.59a61.44 61.44 0 00-2.837.856.481.481 0 00-.328.39c-.554 4.157.726 7.213 2.363 9.337a3.494 3.494 0 00.636.643l.049-.04a.658.658 0 00.015-.691A2.89 2.89 0 005.1 9.5c0-.822.503-4.76 1.102-6.402a.413.413 0 00-.078-.465 3.2 3.2 0 00-.6-.756zm2.768.885a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm4.048 .895a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
           </svg>
@@ -376,4 +376,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+
+// G8: Handle logout - POST to /api/v1/auth/logout
+async function handleLogout(event) {
+  event.preventDefault();
+
+  try {
+    const response = await fetch('/api/v1/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include' // Include authentication cookies
+    });
+
+    if (response.ok) {
+      // Redirect to login or home page
+      window.location.href = '/';
+    } else {
+      const data = await response.json();
+      alert('Logout failed: ' + (data.detail || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    alert('Logout failed: ' + error.message);
+  }
+}
 </script>
