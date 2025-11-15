@@ -659,6 +659,19 @@
     </style>
   </head>
   <body>
+    {% include 'components/navigation.html' %}
+    <script>
+      // G8: Logged-in User Indicator - Pass user context from server to navigation
+      {% if request.state.user_claims %}
+      window.currentUser = {
+        username: "{{ request.state.user_claims.user_email.split('@')[0] }}",
+        email: "{{ request.state.user_claims.user_email }}",
+        user_id: "{{ request.state.user_claims.user_id }}"
+      };
+      {% else %}
+      window.currentUser = null;
+      {% endif %}
+    </script>
     <div class="container">
       <div class="header">
         <h1>
