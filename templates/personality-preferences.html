@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Personality Preferences - Piper Morgan</title>
+    <link rel="stylesheet" href="/static/css/toast.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -195,6 +196,7 @@
   </head>
   <body>
     {% include 'components/navigation.html' %}
+    {% include 'components/toast.html' %}
     {% set breadcrumbs = [
       {"label": "Settings", "url": "/settings"},
       {"label": "Personality", "url": None}
@@ -551,12 +553,12 @@
           const result = await response.json();
 
           if (result.status === "success") {
-            showStatus("✅ Preferences saved successfully!", "success");
+            Toast.success("Preferences Saved", "Your personality preferences have been updated successfully!");
           } else {
-            showStatus("❌ Error saving preferences: " + result.error, "error");
+            Toast.error("Save Failed", "Error saving preferences: " + (result.error || "Unknown error"));
           }
         } catch (error) {
-          showStatus("❌ Network error: " + error.message, "error");
+          Toast.error("Network Error", "Failed to save preferences: " + error.message);
         }
       }
 
@@ -569,7 +571,7 @@
           technical_depth: "balanced",
         };
         updateUI();
-        showStatus("🔄 Reset to default preferences", "success");
+        Toast.info("Reset Complete", "Preferences reset to default values");
       }
 
       // Test personality enhancement
@@ -592,12 +594,12 @@
 
           if (result.status === "success") {
             const enhanced = result.data.enhanced_content;
-            showStatus(`🧪 Test: "${testContent}" → "${enhanced}"`, "success");
+            Toast.success("Test Passed", `"${testContent}" → "${enhanced}"`);
           } else {
-            showStatus("❌ Test failed: " + result.error, "error");
+            Toast.error("Test Failed", result.error || "Unknown error occurred");
           }
         } catch (error) {
-          showStatus("❌ Test error: " + error.message, "error");
+          Toast.error("Test Error", "Failed to run personality test: " + error.message);
         }
       }
 
@@ -615,5 +617,6 @@
       // Load preferences when page loads
       loadPreferences();
     </script>
+    <script src="/static/js/toast.js"></script>
   </body>
 </html>

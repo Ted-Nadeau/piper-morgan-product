@@ -836,12 +836,14 @@
           const file = fileInput.files[0];
 
           if (!file) {
+            Toast.warning("No File Selected", "Please select a file to upload");
             showUploadStatus("Please select a file", "error");
             return;
           }
 
           // Client-side validation
           if (file.size > UPLOAD_CONFIG.MAX_SIZE) {
+            Toast.error("File Too Large", `Maximum file size is 10MB. Your file is ${formatFileSize(file.size)}.`);
             showUploadStatus(
               `File too large (${formatFileSize(file.size)}). Maximum is 10MB.`,
               "error"
@@ -850,6 +852,7 @@
           }
 
           if (!UPLOAD_CONFIG.ALLOWED_TYPES.includes(file.type)) {
+            Toast.error("Unsupported File Type", `Allowed formats: .txt, .pdf, .docx, .md, .json`);
             showUploadStatus(
               `Unsupported file type. Allowed: .txt, .pdf, .docx, .md, .json`,
               "error"
@@ -898,6 +901,7 @@
             const result = await response.json();
 
             if (response.ok && result.file_id) {
+              Toast.success("Document Uploaded", `${result.filename} (${formatFileSize(result.size)}) has been added to your knowledge base`);
               showUploadStatus(
                 `✅ Document Uploaded! (ID: ${result.file_id})`,
                 "success"
@@ -916,6 +920,7 @@
                 progressFill.textContent = "0%";
               }, 2000);
             } else {
+              Toast.error("Upload Failed", result.detail || "An error occurred while uploading the document");
               showUploadStatus(
                 `❌ Upload failed: ${result.detail || "Unknown error"}`,
                 "error"
@@ -927,6 +932,7 @@
               sessionId = result.session_id;
             }
           } catch (error) {
+            Toast.error("Network Error", "Failed to upload document: " + error.message);
             showUploadStatus(
               `❌ Network error: ${error.message}`,
               "error"
