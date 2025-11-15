@@ -1180,6 +1180,110 @@ async def disable_pattern(pattern_id: str) -> Dict[str, Any]:
         )
 
 
+@router.post("/patterns/{pattern_id}/execute")
+async def execute_pattern(pattern_id: str) -> Dict[str, Any]:
+    """
+    Execute a pattern action (Phase 4 - proactive execution).
+
+    Called when user clicks "Execute Now" on a proactive suggestion.
+
+    Args:
+        pattern_id: UUID of the pattern to execute
+
+    Returns:
+        Execution result from ActionRegistry
+    """
+    try:
+        pattern_uuid = UUID(pattern_id)
+    except ValueError:
+        return validation_error(
+            message=f"Invalid pattern ID format: {pattern_id}",
+            details={"error_id": "INVALID_PATTERN_ID", "pattern_id": pattern_id},
+        )
+
+    try:
+        from services.actions.action_registry import ActionRegistry
+
+        async with AsyncSessionFactory.session_scope() as session:
+            # Get pattern
+            result = await session.execute(
+                select(LearnedPattern).where(
+                    and_(
+                        LearnedPattern.id == pattern_uuid,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    details={
+                        "error_id": "PATTERN_NOT_FOUND",
+                        "pattern_id": pattern_id,
+                    },
+                )
+
+            # Extract action from pattern
+            pattern_data = pattern.pattern_data
+            action_type = pattern_data.get("action_type")
+            action_params = pattern_data.get("action_params", {})
+
+            if not action_type:
+                return validation_error(
+                    message="Pattern has no action_type defined",
+                    details={
+                        "error_id": "MISSING_ACTION_TYPE",
+                        "pattern_id": pattern_id,
+                    },
+                )
+
+            # Execute via Action Registry
+            try:
+                context = {"user_id": pattern.user_id, "pattern_id": pattern.id}
+
+                execution_result = await ActionRegistry.execute(
+                    action_type, action_params, context
+                )
+
+                # Record as success
+                pattern.success_count += 1
+                pattern.confidence = min(pattern.confidence * 1.05, 1.0)
+                pattern.updated_at = datetime.utcnow()
+                await session.commit()
+
+                return {
+                    "success": True,
+                    "message": execution_result.get(
+                        "message", "Action executed successfully"
+                    ),
+                    "result": execution_result,
+                    "pattern": {
+                        "id": str(pattern.id),
+                        "confidence": round(pattern.confidence, 2),
+                        "success_count": pattern.success_count,
+                    },
+                }
+
+            except Exception as exec_error:
+                # Record as failure
+                pattern.failure_count += 1
+                pattern.confidence *= 0.9
+                await session.commit()
+
+                return internal_error(
+                    message=f"Execution failed: {str(exec_error)}",
+                    error_id="PATTERN_EXECUTION_ERROR",
+                )
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to execute pattern: {str(e)}",
+            error_id="EXECUTE_PATTERN_ERROR",
+        )
+
+
 # Learning Settings Endpoints
 
 

@@ -304,6 +304,58 @@ class LearningHandler:
             )
             return []
 
+    async def get_automation_patterns(
+        self,
+        user_id: UUID,
+        context: Optional[Dict[str, Any]] = None,
+        min_confidence: float = 0.9,
+        limit: int = 3,
+        session: Optional[AsyncSession] = None,
+    ) -> List[LearnedPattern]:
+        """
+        Get patterns eligible for proactive application (Phase 4).
+
+        Similar to get_suggestions but with higher confidence threshold
+        and context matching for proactive triggering.
+
+        Args:
+            user_id: User to get patterns for
+            context: Current context for matching
+            min_confidence: Minimum confidence (default 0.9 for automation)
+            limit: Maximum patterns to return
+            session: Database session
+
+        Returns:
+            List of high-confidence LearnedPattern objects that match context
+        """
+        # Query high-confidence enabled patterns
+        result = await session.execute(
+            select(LearnedPattern).where(
+                and_(
+                    LearnedPattern.user_id == user_id,
+                    LearnedPattern.confidence >= min_confidence,
+                    LearnedPattern.enabled == True,  # noqa: E712
+                )
+            ).order_by(LearnedPattern.confidence.desc()).limit(limit)
+        )
+
+        patterns = result.scalars().all()
+
+        # Filter by context if provided
+        if context:
+            from services.learning.context_matcher import ContextMatcher
+
+            matched_patterns = []
+
+            for pattern in patterns:
+                pattern_context = pattern.pattern_data.get("context", {})
+                if await ContextMatcher.matches(pattern_context, context):
+                    matched_patterns.append(pattern)
+
+            return matched_patterns
+
+        return list(patterns)
+
     async def find_similar_pattern(
         self,
         user_id: UUID,
