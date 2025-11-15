@@ -1,0 +1,33 @@
+<!-- Empty State Component - WCAG 2.2 AA Accessible
+     Reusable component for displaying helpful guidance when no content exists
+
+     Usage:
+     {% set icon = '📄' %}
+     {% set title = 'No documents yet' %}
+     {% set message = 'Upload documents to your knowledge base' %}
+     {% set cta_text = 'Upload Document' %}
+     {% set cta_url = '#upload' %}
+     {% include 'components/empty-state.html' with context only %}
+-->
+
+<div class="empty-state" role="status" aria-label="Empty state">
+  <div class="empty-state-icon" aria-hidden="true">
+    {{ icon if icon else '📭' }}
+  </div>
+
+  <h2 class="empty-state-title">{{ title }}</h2>
+
+  <p class="empty-state-message">{{ message }}</p>
+
+  {% if cta_text and cta_url %}
+  <a href="{{ cta_url }}" class="btn btn-primary empty-state-cta">
+    {{ cta_text }}
+  </a>
+  {% endif %}
+
+  {% if help_link %}
+  <a href="{{ help_link }}" class="empty-state-help">
+    Learn more →
+  </a>
+  {% endif %}
+</div>
