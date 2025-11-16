@@ -671,13 +671,15 @@
          */
         async function loadLearningStatus() {
             try {
-                const response = await fetch(`${API_BASE}/controls/learning/status?user_id=${USER_ID}`);
+                const response = await fetch(`${API_BASE}/settings`);
                 const data = await response.json();
 
                 const badge = document.getElementById('statusBadge');
                 const toggleBtn = document.getElementById('toggleLearningBtn');
 
-                if (data.learning_enabled) {
+                const isEnabled = data.settings?.learning_enabled ?? true;
+
+                if (isEnabled) {
                     badge.className = 'status-badge enabled';
                     badge.innerHTML = '<span class="status-dot"></span><span>Enabled</span>';
                     toggleBtn.textContent = 'Disable Learning';
@@ -701,18 +703,42 @@
          */
         async function loadMetrics() {
             try {
-                const response = await fetch(`${API_BASE}/analytics`);
+                const response = await fetch(`${API_BASE}/patterns`);
                 const data = await response.json();
+                const patterns = data.patterns || [];
 
-                document.getElementById('totalPatterns').textContent = data.total_patterns || 0;
-                document.getElementById('successRate').textContent =
-                    ((data.success_rate || 0) * 100).toFixed(0) + '%';
-                document.getElementById('avgConfidence').textContent =
-                    (data.avg_confidence || 0).toFixed(2);
-                document.getElementById('recentPatterns').textContent = data.recent_patterns_24h || 0;
+                // Calculate metrics from patterns
+                const totalPatterns = patterns.length;
+                const totalSuccess = patterns.reduce((sum, p) => sum + (p.success_count || 0), 0);
+                const totalFailure = patterns.reduce((sum, p) => sum + (p.failure_count || 0), 0);
+                const totalAttempts = totalSuccess + totalFailure;
+                const successRate = totalAttempts > 0 ? totalSuccess / totalAttempts : 0;
+                const avgConfidence = totalPatterns > 0
+                    ? patterns.reduce((sum, p) => sum + (p.confidence || 0), 0) / totalPatterns
+                    : 0;
+
+                // Count recent patterns (created in last 24h)
+                const now = new Date();
+                const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+                const recentPatterns = patterns.filter(p => {
+                    const created = new Date(p.created_at);
+                    return created > oneDayAgo;
+                }).length;
+
+                // Calculate pattern type distribution
+                const distribution = {};
+                patterns.forEach(p => {
+                    const type = p.pattern_type || 'unknown';
+                    distribution[type] = (distribution[type] || 0) + 1;
+                });
+
+                document.getElementById('totalPatterns').textContent = totalPatterns;
+                document.getElementById('successRate').textContent = (successRate * 100).toFixed(0) + '%';
+                document.getElementById('avgConfidence').textContent = avgConfidence.toFixed(2);
+                document.getElementById('recentPatterns').textContent = recentPatterns;
 
                 // Update pattern distribution
-                updatePatternDistribution(data.pattern_type_distribution || {});
+                updatePatternDistribution(distribution);
             } catch (error) {
                 console.error('Failed to load metrics:', error);
                 throw error;
@@ -758,18 +784,23 @@
         }
 
         /**
-         * Load privacy settings
+         * Load privacy settings (stubbed - privacy controls are Level 3 feature)
          */
         async function loadPrivacySettings() {
             try {
-                const response = await fetch(`${API_BASE}/controls/privacy/settings?user_id=${USER_ID}`);
-                const data = await response.json();
-                const settings = data.privacy_settings || {};
+                // Privacy controls not implemented in Level 1 (Basic Auto-Learning)
+                // Set default values for UI
+                const settings = {
+                    share_patterns: false,  // Default: don't share (privacy-first)
+                    share_across_users: false,  // Default: no cross-user sharing
+                    allow_automation: true,  // Default: allow automation (core feature)
+                    allow_predictive: false  // Default: no predictive (Level 4 feature)
+                };
 
-                document.getElementById('sharePatterns').checked = settings.share_patterns !== false;
-                document.getElementById('shareAcrossUsers').checked = settings.share_across_users === true;
-                document.getElementById('allowAutomation').checked = settings.allow_automation !== false;
-                document.getElementById('allowPredictive').checked = settings.allow_predictive !== false;
+                document.getElementById('sharePatterns').checked = settings.share_patterns;
+                document.getElementById('shareAcrossUsers').checked = settings.share_across_users;
+                document.getElementById('allowAutomation').checked = settings.allow_automation;
+                document.getElementById('allowPredictive').checked = settings.allow_predictive;
 
                 privacySettingsChanged = false;
                 document.getElementById('savePrivacyBtn').style.display = 'none';
@@ -795,11 +826,10 @@
             toggleBtn.disabled = true;
 
             try {
-                const endpoint = currentlyEnabled ? 'disable' : 'enable';
-                const response = await fetch(`${API_BASE}/controls/learning/${endpoint}`, {
-                    method: 'POST',
+                const response = await fetch(`${API_BASE}/settings`, {
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: USER_ID })
+                    body: JSON.stringify({ learning_enabled: !currentlyEnabled })
                 });
 
                 if (!response.ok) throw new Error('Failed to toggle learning');
@@ -828,6 +858,8 @@
          * Save privacy settings
          */
         async function savePrivacySettings() {
+            // Privacy controls not implemented in Level 1 (Basic Auto-Learning)
+            // Stubbed for alpha - will be implemented in Level 3 (Collaborative Learning)
             const settings = {
                 share_patterns: document.getElementById('sharePatterns').checked,
                 share_across_users: document.getElementById('shareAcrossUsers').checked,
@@ -837,17 +869,12 @@
             };
 
             try {
-                const response = await fetch(`${API_BASE}/controls/privacy/settings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: USER_ID, settings })
-                });
-
-                if (!response.ok) throw new Error('Failed to save privacy settings');
+                // Simulate save (no backend endpoint yet)
+                console.info('Privacy settings (Level 3 feature - not persisted in alpha):', settings);
 
                 privacySettingsChanged = false;
                 document.getElementById('savePrivacyBtn').style.display = 'none';
-                showSuccess('Privacy settings saved successfully');
+                showSuccess('Privacy settings noted (will be persisted in Level 3)');
                 setTimeout(() => hideMessage('success'), 3000);
             } catch (error) {
                 showError(`Failed to save privacy settings: ${error.message}`);
