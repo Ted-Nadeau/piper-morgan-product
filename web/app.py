@@ -513,13 +513,6 @@ templates = Jinja2Templates(directory=str(project_root / "templates"))
 config_parser = PiperConfigParser()
 personality_enhancer = PersonalityResponseEnhancer()
 
-# Mount static files
-app.mount(
-    "/assets",
-    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")),
-    name="assets",
-)
-
 
 @app.get("/debug-markdown", response_class=HTMLResponse)
 async def debug_markdown(request: Request):
@@ -1006,6 +999,21 @@ async def invalidate_user_context(session_id: str):
         "session_id": session_id,
         "message": f"User context for session {session_id} invalidated",
     }
+
+
+# Mount static files (MUST be last - after all routes)
+# FastAPI/Starlette routing: routes are checked first, mounts last
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")),
+    name="assets",
+)
+
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
+    name="static",
+)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network Error - Connection Failed</title>
+  <link rel="stylesheet" href="/static/css/base.css" />
+  <link rel="stylesheet" href="/static/css/error-page.css" />
+</head>
+<body>
+  <main class="error-container">
+    <div class="error-content">
+      <div class="error-icon">📡</div>
+
+      <h1 class="error-title">Connection Failed</h1>
+
+      <p class="error-message">
+        Unable to connect to the server. Please check your internet connection and try again.
+      </p>
+
+      <p class="error-code">Network Error</p>
+
+      <div class="error-actions">
+        <a href="/" class="btn btn-primary">
+          Go to Home
+        </a>
+        <button class="btn btn-secondary" onclick="location.reload()">
+          Retry Connection
+        </button>
+      </div>
+
+      <div class="error-help">
+        <h2>Connection troubleshooting:</h2>
+        <ul>
+          <li>Check your internet connection (Wi-Fi or mobile data)</li>
+          <li>Verify you're not in airplane mode</li>
+          <li>Try switching between Wi-Fi and mobile data</li>
+          <li>Restart your router if using Wi-Fi</li>
+          <li>Refresh the page when connection is restored</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Announce error to screen readers
+    if (typeof Toast !== 'undefined' && Toast.error) {
+      Toast.error('Connection Failed', 'Unable to reach the server. Please check your internet connection.');
+    }
+
+    // Auto-retry when connection is restored
+    window.addEventListener('online', () => {
+      if (typeof Toast !== 'undefined' && Toast.success) {
+        Toast.success('Connection Restored', 'Your connection has been restored. Reloading page...');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        setTimeout(() => location.reload(), 1500);
+      }
+    });
+  </script>
+</body>
+</html>

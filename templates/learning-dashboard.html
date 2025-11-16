@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learning System Dashboard - Piper Morgan</title>
     <link rel="stylesheet" href="/static/css/empty-state.css" />
+    <link rel="stylesheet" href="/static/css/skip-link.css" />
+    <link rel="stylesheet" href="/static/css/page-transitions.css" />
+    <link rel="stylesheet" href="/static/css/hover-focus-states.css" />
+    <link rel="stylesheet" href="/static/css/spacing.css" />
     <style>
         /* Base Styles - Match existing dark theme */
         body {
@@ -445,6 +449,8 @@
     </style>
 </head>
 <body>
+    {% include 'components/skip-link.html' %}
+    {% include 'components/page-transition.html' %}
     {% include 'components/navigation.html' %}
     {% include 'components/empty-state.html' %}
     {% set breadcrumbs = [

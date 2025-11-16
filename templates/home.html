@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/spinner.css" />
     <link rel="stylesheet" href="/static/css/session-timeout.css" />
+    <link rel="stylesheet" href="/static/css/dialog.css" />
+    <link rel="stylesheet" href="/static/css/skip-link.css" />
+    <link rel="stylesheet" href="/static/css/page-transitions.css" />
+    <link rel="stylesheet" href="/static/css/hover-focus-states.css" />
+    <link rel="stylesheet" href="/static/css/spacing.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -662,9 +667,12 @@
     </style>
   </head>
   <body>
+    {% include 'components/skip-link.html' %}
+    {% include 'components/page-transition.html' %}
     {% include 'components/navigation.html' %}
     {% include 'components/toast.html' %}
     {% include 'components/session-timeout-modal.html' %}
+    {% include 'components/confirmation-dialog.html' %}
     <script>
       // G8: Logged-in User Indicator - Pass user context from server to navigation
       {% if request.state.user_claims %}
@@ -1067,5 +1075,8 @@
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/session-timeout.js"></script>
+    <script src="/static/js/focus-manager.js"></script>
+    <script src="/static/js/dialog.js"></script>
+    <script src="/static/js/page-transitions.js"></script>
   </body>
 </html>

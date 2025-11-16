@@ -1,0 +1,447 @@
+/* G49: Hover & Focus States
+   Subtle animations for interactive elements (buttons, links, inputs)
+   Provides visual feedback without being distracting
+   WCAG 2.2 AA Compliance:
+   - Respects prefers-reduced-motion
+   - Maintains visible focus indicators
+   - High contrast on focus states
+   - 60fps smooth transitions
+*/
+
+/* Global transition for all interactive elements */
+a,
+button,
+input,
+select,
+textarea,
+[role="button"],
+[role="menuitem"],
+[role="option"] {
+  transition: all 0.2s ease;
+}
+
+/* ===== BUTTONS ===== */
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+/* Button hover state */
+button:hover:not(:disabled),
+[role="button"]:hover:not([aria-disabled="true"]) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button focus state (keyboard) */
+button:focus-visible:not(:disabled),
+[role="button"]:focus-visible:not([aria-disabled="true"]) {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+
+/* Button active state */
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary button hover */
+.btn-primary:hover:not(:disabled) {
+  background: #2980b9;
+  box-shadow: 0 6px 16px rgba(52, 152, 219, 0.3);
+}
+
+/* Danger button hover */
+.btn-danger:hover:not(:disabled) {
+  background: #a93226;
+  box-shadow: 0 6px 16px rgba(192, 57, 43, 0.3);
+}
+
+/* Success button hover */
+.btn-success:hover:not(:disabled) {
+  background: #229954;
+  box-shadow: 0 6px 16px rgba(39, 174, 96, 0.3);
+}
+
+/* Secondary button hover */
+.btn-secondary:hover:not(:disabled) {
+  background: #7f8c8d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== LINKS ===== */
+
+a:not(.skip-link):not(.no-hover) {
+  position: relative;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+/* Link hover state */
+a:hover:not(.skip-link):not(.no-hover) {
+  color: #2980b9;
+  border-bottom-color: #3498db;
+}
+
+/* Link focus state */
+a:focus-visible:not(.skip-link):not(.no-hover) {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Link active state */
+a:active:not(.skip-link):not(.no-hover) {
+  color: #2980b9;
+}
+
+/* ===== FORM INPUTS ===== */
+
+input:not([type="hidden"]),
+select,
+textarea {
+  transition: all 0.2s ease;
+}
+
+/* Input focus state */
+input:focus:not([type="hidden"]),
+select:focus,
+textarea:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Input hover state */
+input:hover:not([type="hidden"]):not(:focus),
+select:hover:not(:focus),
+textarea:hover:not(:focus) {
+  border-color: #95a5a6;
+  background-color: #f9f9f9;
+}
+
+/* Input error state */
+input[aria-invalid="true"],
+[aria-invalid="true"] input {
+  border-color: #e74c3c;
+  background-color: #ffebee;
+}
+
+input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+  border-color: #e74c3c;
+}
+
+/* Input disabled state */
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+/* Input placeholder hover */
+input::placeholder,
+textarea::placeholder {
+  color: #bdc3c7;
+  transition: color 0.2s ease;
+}
+
+input:hover::placeholder,
+textarea:hover::placeholder {
+  color: #95a5a6;
+}
+
+/* ===== CHECKBOXES & RADIO BUTTONS ===== */
+
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  transform: scale(1.1);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+  transform: scale(0.95);
+}
+
+/* ===== CARD/CONTAINER HOVER ===== */
+
+.card:not(.no-hover),
+.item:not(.no-hover),
+.list-item:not(.no-hover) {
+  transition: all 0.2s ease;
+}
+
+.card:hover:not(.no-hover),
+.item:hover:not(.no-hover),
+.list-item:hover:not(.no-hover) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== SELECT/DROPDOWN ===== */
+
+select {
+  cursor: pointer;
+}
+
+select:focus {
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* ===== TABS & NAVIGATION ===== */
+
+[role="tab"],
+.tab-button {
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+[role="tab"]:hover,
+.tab-button:hover {
+  opacity: 0.8;
+}
+
+[role="tab"][aria-selected="true"],
+.tab-button.active {
+  border-bottom: 3px solid #3498db;
+  color: #3498db;
+}
+
+/* ===== TOGGLE/SWITCH ===== */
+
+[role="switch"] {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[role="switch"]:hover {
+  opacity: 0.8;
+}
+
+[role="switch"][aria-checked="true"] {
+  background-color: #27ae60;
+}
+
+[role="switch"][aria-checked="false"] {
+  background-color: #bdc3c7;
+}
+
+/* ===== ICON BUTTONS ===== */
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+  background-color: #f5f5f5;
+  transform: scale(1.1);
+}
+
+.icon-button:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+/* ===== BREADCRUMB ===== */
+
+.breadcrumb a {
+  position: relative;
+  color: #3498db;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.breadcrumb a:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+.breadcrumb a:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+/* ===== DROPDOWN MENU ===== */
+
+[role="menuitem"] {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+[role="menuitem"]:hover {
+  background-color: #f5f5f5;
+  transform: translateX(2px);
+}
+
+[role="menuitem"]:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: -2px;
+  background-color: #ecf0f1;
+}
+
+/* ===== SEARCH INPUT ===== */
+
+.search-input {
+  position: relative;
+}
+
+.search-input input:focus {
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  border-color: #3498db;
+}
+
+.search-input input:hover:not(:focus) {
+  border-color: #95a5a6;
+}
+
+/* ===== MODAL/DIALOG ELEMENTS ===== */
+
+.dialog-button,
+.modal-button {
+  transition: all 0.2s ease;
+}
+
+.dialog-button:hover,
+.modal-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.dialog-button:focus-visible,
+.modal-button:focus-visible {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+/* ===== ACCESSIBILITY ===== */
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+  button:hover:not(:disabled),
+  a:hover {
+    text-decoration: underline;
+    font-weight: bold;
+  }
+
+  a:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* Reduced motion - disable all animations */
+@media (prefers-reduced-motion: reduce) {
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="menuitem"],
+  [role="option"],
+  [role="tab"],
+  [role="switch"],
+  .card,
+  .item,
+  .list-item,
+  .icon-button,
+  .breadcrumb a,
+  [role="menuitem"],
+  .search-input input,
+  .dialog-button,
+  .modal-button {
+    transition: none;
+  }
+
+  button:hover:not(:disabled),
+  [role="button"]:hover:not([aria-disabled="true"]),
+  .card:hover:not(.no-hover),
+  .item:hover:not(.no-hover),
+  .list-item:hover:not(.no-hover),
+  .icon-button:hover {
+    transform: none;
+  }
+
+  a:hover:not(.skip-link):not(.no-hover) {
+    border-bottom-color: #3498db;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  button:hover:not(:disabled),
+  [role="button"]:hover:not([aria-disabled="true"]) {
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  }
+
+  input:hover::placeholder,
+  textarea:hover::placeholder {
+    color: #7f8c8d;
+  }
+
+  .card:hover:not(.no-hover),
+  .item:hover:not(.no-hover),
+  .list-item:hover:not(.no-hover) {
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.12);
+  }
+
+  .icon-button:hover {
+    background-color: #2c3e50;
+  }
+
+  [role="menuitem"]:hover {
+    background-color: #2c3e50;
+  }
+}
+
+/* Mobile/touch devices - reduce animation complexity */
+@media (max-width: 768px) {
+  button:hover:not(:disabled),
+  a:hover {
+    transform: none;
+  }
+
+  .card:hover:not(.no-hover),
+  .item:hover:not(.no-hover),
+  .list-item:hover:not(.no-hover) {
+    transform: none;
+  }
+
+  /* Keep focus states visible on touch */
+  button:focus,
+  a:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+  }
+}

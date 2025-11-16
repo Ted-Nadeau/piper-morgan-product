@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/static/css/help-tooltip.css" />
     <link rel="stylesheet" href="/static/css/keyboard-shortcuts.css" />
     <link rel="stylesheet" href="/static/css/form-validation.css" />
+    <link rel="stylesheet" href="/static/css/skip-link.css" />
+    <link rel="stylesheet" href="/static/css/page-transitions.css" />
+    <link rel="stylesheet" href="/static/css/hover-focus-states.css" />
+    <link rel="stylesheet" href="/static/css/spacing.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -199,6 +203,7 @@
     </style>
   </head>
   <body>
+    {% include 'components/skip-link.html' %}
     {% include 'components/navigation.html' %}
     {% include 'components/toast.html' %}
     {% include 'components/keyboard-shortcuts.html' %}
@@ -659,6 +664,8 @@
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/help-tooltip.js"></script>
     <script src="/static/js/keyboard-shortcuts.js"></script>
+    <script src="/static/js/focus-manager.js"></script>
     <script src="/static/js/form-validation.js"></script>
+    <script src="/static/js/page-transitions.js"></script>
   </body>
 </html>

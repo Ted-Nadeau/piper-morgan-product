@@ -1,0 +1,45 @@
+{# G42: Skeleton Loading Component
+   Placeholder content during data loading with shimmer animation
+   Improves perceived performance and user experience
+   Available variants: card, list-item, text, title, avatar
+#}
+
+{# Skeleton card (for dashboard cards, list items) #}
+<div class="skeleton skeleton-card" aria-busy="true" aria-label="Loading...">
+  <div class="skeleton-avatar"></div>
+  <div class="skeleton-content">
+    <div class="skeleton-title"></div>
+    <div class="skeleton-text"></div>
+    <div class="skeleton-text" style="width: 80%;"></div>
+  </div>
+</div>
+
+{# Skeleton list item (for lists of content) #}
+<div class="skeleton skeleton-list-item" aria-busy="true" aria-label="Loading...">
+  <div class="skeleton-avatar"></div>
+  <div class="skeleton-content" style="flex: 1;">
+    <div class="skeleton-title"></div>
+    <div class="skeleton-text"></div>
+  </div>
+  <div class="skeleton-meta">
+    <div class="skeleton-text" style="width: 60px;"></div>
+  </div>
+</div>
+
+{# Skeleton title (for page headings) #}
+<div class="skeleton skeleton-title-block" aria-busy="true" aria-label="Loading...">
+  <div class="skeleton-title" style="width: 40%;"></div>
+</div>
+
+{# Skeleton form field #}
+<div class="skeleton skeleton-form-field" aria-busy="true" aria-label="Loading...">
+  <div class="skeleton-text" style="width: 100%; height: 12px; margin-bottom: 8px;"></div>
+  <div class="skeleton-text" style="width: 100%; height: 40px;"></div>
+</div>
+
+{# Skeleton multi-line text (for paragraphs) #}
+<div class="skeleton skeleton-text-block" aria-busy="true" aria-label="Loading...">
+  <div class="skeleton-text"></div>
+  <div class="skeleton-text"></div>
+  <div class="skeleton-text" style="width: 60%;"></div>
+</div>
