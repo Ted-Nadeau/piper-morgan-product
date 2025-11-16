@@ -1,7 +1,7 @@
-# Combined Track A & B Cross-Check Verification Prompt for Cursor Agent
+# Combined Track A, B & C Cross-Check Verification Prompt for Cursor Agent
 
 ## Task
-Perform automated code quality, accessibility, and integration verification for **both Track A and Track B** implementation (G24, G42, G41, G57, G58, G59, G60).
+Perform automated code quality, accessibility, and integration verification for **all three tracks** (Track A, B, and C) implementation (G24, G42, G41, G57, G58, G59, G60, G48, G49, G26).
 
 ## Context
 - Branch: `claude/ux-tranche3-feedback-accessibility-polish-015W99syFQ7b9HrV2WoB9S48`
@@ -52,20 +52,38 @@ Perform automated code quality, accessibility, and integration verification for 
 
 ---
 
+### TRACK C: Micro-Interactions & Polish
+
+#### G48: Page Transitions
+- [ ] `web/templates/components/page-transition.html` (12 lines)
+- [ ] `web/static/css/page-transitions.css` (180 lines)
+- [ ] `web/static/js/page-transitions.js` (195 lines)
+- [ ] Integration in all major pages
+
+#### G49: Hover & Focus States
+- [ ] `web/static/css/hover-focus-states.css` (445 lines)
+
+#### G26: Spacing System
+- [ ] `web/static/css/spacing.css` (365 lines)
+- [ ] `docs/design/spacing-system.md` (320 lines)
+
+---
+
 ### Documentation & Validation
 - [ ] `docs/track-a-validation.md` - Track A validation report
 - [ ] `docs/track-b-validation.md` - Track B validation report
+- [ ] `docs/track-c-validation.md` - Track C validation report
 
 ---
 
 ## Verification Checklist
 
-### 1. File Structure & Creation (Both Tracks)
+### 1. File Structure & Creation (All Three Tracks)
 ```bash
 # Verify all files exist
-find web/templates/components web/static/css web/static/js templates docs/accessibility -type f | sort
+find web/templates/components web/static/css web/static/js templates docs/accessibility docs/design -type f | sort
 ```
-- [ ] All 19 files from Track A and B exist
+- [ ] All 27 files from Track A, B, and C exist
 - [ ] No empty or truncated files
 - [ ] All files have proper newlines at EOF
 
@@ -75,12 +93,14 @@ find web/templates/components web/static/css web/static/js templates docs/access
 
 #### JavaScript
 ```bash
-# Check syntax for both tracks
+# Check syntax for all three tracks
 node -c web/static/js/dialog.js
 node -c web/static/js/focus-manager.js
+node -c web/static/js/page-transitions.js
 ```
 - [ ] dialog.js has valid syntax
 - [ ] focus-manager.js has valid syntax
+- [ ] page-transitions.js has valid syntax
 - [ ] No stray console.log statements (except intentional ones)
 - [ ] No syntax errors in CSS files
 
@@ -246,6 +266,50 @@ node -c web/static/js/focus-manager.js
 
 ---
 
+### 9. TRACK C: CSS Validation
+
+**page-transitions.css**:
+- [ ] `.page-transition-overlay` has `position: fixed`, `z-index: 9999`
+- [ ] `.page-transition-overlay.active` shows overlay
+- [ ] Fade animations: `@keyframes fadeIn`, `fadeOut`
+- [ ] Slide animations: `@keyframes slideUp`, `slideDown`
+- [ ] Spinner animation: `@keyframes spin`
+- [ ] `prefers-reduced-motion` disables animations
+- [ ] High contrast mode support
+
+**hover-focus-states.css**:
+- [ ] Buttons have `transition: all 0.2s ease`
+- [ ] Hover states: `translateY(-2px)` and `box-shadow`
+- [ ] Focus states: 2px outline on all elements
+- [ ] Links: underline + color change
+- [ ] Form inputs: border-color + glow
+- [ ] Cards: `translateY(-4px)` on hover
+- [ ] Dark mode adjustments
+- [ ] `prefers-reduced-motion` removes animations
+- [ ] High contrast mode enhancements
+
+**spacing.css**:
+- [ ] CSS variables defined: `--space-xs` through `--space-5xl`
+- [ ] Padding utilities: `.p-*`, `.px-*`, `.py-*`, `.pt-*`, `.pb-*`, `.pl-*`, `.pr-*`
+- [ ] Margin utilities: `.m-*`, `.mx-*`, `.my-*`, `.mt-*`, `.mb-*`, `.ml-*`, `.mr-*`
+- [ ] Gap utilities: `.gap-*`, `.row-gap-*`, `.col-gap-*`
+- [ ] Common patterns: `.card-padding`, `.form-field-spacing`, etc.
+- [ ] Mobile breakpoints at 768px (reduced spacing)
+- [ ] Touch target minimum 48px
+
+---
+
+### 9.5. TRACK C: Integration Verification
+
+**All pages (home.html, personality-preferences.html, standup.html, learning-dashboard.html)**:
+- [ ] `page-transitions.css` linked in `<head>`
+- [ ] `hover-focus-states.css` linked in `<head>`
+- [ ] `spacing.css` linked in `<head>`
+- [ ] `page-transition.html` component included in `<body>` (if needed)
+- [ ] `page-transitions.js` loaded on appropriate pages
+
+---
+
 ### 9. TRACK A: Integration Verification
 
 **templates/home.html**:
@@ -271,7 +335,7 @@ node -c web/static/js/focus-manager.js
 
 ### 11. Accessibility Compliance (WCAG 2.2 AA)
 
-#### Color Contrast - TRACK A
+#### Color Contrast - TRACK A & B & C
 - [ ] Dialog title: 7.8:1 (AAA)
 - [ ] Dialog message: 5.2:1+ (AA)
 - [ ] Danger button: 7.8:1 (AAA)
@@ -371,15 +435,25 @@ wc -l web/templates/components/skip-link.html \
     docs/accessibility/landmark-regions.md \
     docs/accessibility/color-contrast-audit.md
 
-# Combined validation docs
+# Track C files
+wc -l web/templates/components/page-transition.html \
+    web/static/css/page-transitions.css \
+    web/static/js/page-transitions.js \
+    web/static/css/hover-focus-states.css \
+    web/static/css/spacing.css \
+    docs/design/spacing-system.md
+
+# All validation docs
 wc -l docs/track-a-validation.md \
-    docs/track-b-validation.md
+    docs/track-b-validation.md \
+    docs/track-c-validation.md
 ```
 
 **Expected totals**:
 - Track A: ~1,200 lines
 - Track B: ~900 lines
-- Validation docs: ~600 lines
+- Track C: ~1,500 lines
+- Validation docs: ~880 lines
 
 ---
 
@@ -388,7 +462,7 @@ wc -l docs/track-a-validation.md \
 Please provide a report in this format:
 
 ```
-# Combined Track A & B Verification Report
+# Combined Track A, B & C Verification Report
 
 ## Status Summary
 ### TRACK A
@@ -401,6 +475,11 @@ Please provide a report in this format:
 - G58 Focus Manager: ✅ PASS / ⚠️ ISSUES / ❌ FAIL
 - G59 Landmark Regions: ✅ PASS / ⚠️ ISSUES / ❌ FAIL
 - G60 Color Contrast Audit: ✅ PASS / ⚠️ ISSUES / ❌ FAIL
+
+### TRACK C
+- G48 Page Transitions: ✅ PASS / ⚠️ ISSUES / ❌ FAIL
+- G49 Hover & Focus States: ✅ PASS / ⚠️ ISSUES / ❌ FAIL
+- G26 Spacing System: ✅ PASS / ⚠️ ISSUES / ❌ FAIL
 
 ## File Verification
 - All files exist: ✅
@@ -453,21 +532,23 @@ Ready for manual testing / Needs fixes before manual testing
 ## Quick Test Commands
 
 ```bash
-# Verify all Track A & B files exist
-find web/templates/components web/static/css web/static/js templates docs/accessibility \
+# Verify all Track A, B & C files exist
+find web/templates/components web/static/css web/static/js templates docs/accessibility docs/design \
   -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.md" | wc -l
 
-# Check JavaScript syntax
-node -c web/static/js/dialog.js && node -c web/static/js/focus-manager.js
+# Check JavaScript syntax (all three tracks)
+node -c web/static/js/dialog.js && \
+node -c web/static/js/focus-manager.js && \
+node -c web/static/js/page-transitions.js
 
-# Count total lines
-find web/templates/components web/static/css web/static/js templates docs/accessibility \
+# Count total lines (all tracks)
+find web/templates/components web/static/css web/static/js templates docs/accessibility docs/design \
   -type f \( -name "*.html" -o -name "*.css" -o -name "*.js" -o -name "*.md" \) -exec wc -l {} + | tail -1
 
-# Verify integration points
-grep -r "dialog.css\|dialog.js\|confirmation-dialog\|skip-link.css\|skip-link\|focus-manager.js" templates/
+# Verify all integration points (Track A, B, C)
+grep -r "dialog.css\|dialog.js\|confirmation-dialog\|skip-link.css\|skip-link\|focus-manager.js\|page-transitions.css\|page-transitions.js\|hover-focus-states.css\|spacing.css" templates/
 ```
 
 ---
 
-Please run this verification on both Track A and B, then report your findings.
+Please run this verification on all three tracks (A, B, and C), then report your findings.
