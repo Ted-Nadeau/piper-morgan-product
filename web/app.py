@@ -507,7 +507,7 @@ except Exception as e:
     logger.error(f"⚠️ Failed to mount todos API router: {e}")
 
 # Initialize Jinja2 templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(project_root / "templates"))
 
 # Initialize personality components
 config_parser = PiperConfigParser()
