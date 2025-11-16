@@ -1,8 +1,11 @@
 # Piper Morgan Alpha - Quick Start
 
 **Version**: 0.8.0
+**Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes (assumes everything works)
+
+> 📍 **Branch Info**: This quickstart uses the `production` branch, which receives stable alpha releases. The `main` branch is for active development and may have bugs.
 
 ⚠️ **If you hit issues, see `ALPHA_TESTING_GUIDE.md` for comprehensive troubleshooting.**
 
@@ -19,8 +22,8 @@
 ## 5-Step Setup
 
 ```bash
-# 1. Clone and setup
-git clone https://github.com/Codewarrior1988/piper-morgan.git
+# 1. Clone and setup (using production branch for alpha testing)
+git clone -b production https://github.com/Codewarrior1988/piper-morgan.git
 cd piper-morgan
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
