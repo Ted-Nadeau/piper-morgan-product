@@ -85,7 +85,7 @@ echo "🌐 Starting frontend..."
 echo "Starting web frontend with uvicorn..."
 # Export environment variables to ensure they're passed to subprocess
 export GITHUB_TOKEN="$GITHUB_TOKEN"
-nohup bash -c "export GITHUB_TOKEN='$GITHUB_TOKEN' && export ENVIRONMENT='$ENVIRONMENT' && export WEB_PORT='$WEB_PORT' && export BACKEND_PORT='$BACKEND_PORT' && cd web && python app.py" > logs/frontend.log 2>&1 &
+nohup bash -c "export GITHUB_TOKEN='$GITHUB_TOKEN' && export ENVIRONMENT='$ENVIRONMENT' && export WEB_PORT='$WEB_PORT' && export BACKEND_PORT='$BACKEND_PORT' && cd web && python -m uvicorn app:app --host 0.0.0.0 --port \$WEB_PORT" > logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "Frontend PID: $FRONTEND_PID"
 
