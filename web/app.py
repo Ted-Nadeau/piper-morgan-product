@@ -520,6 +520,13 @@ app.mount(
     name="assets",
 )
 
+# Mount CSS/JS static files
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
+    name="static",
+)
+
 
 @app.get("/debug-markdown", response_class=HTMLResponse)
 async def debug_markdown(request: Request):
