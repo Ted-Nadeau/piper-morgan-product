@@ -1,254 +1,217 @@
 # Piper Morgan - AI Product Management Assistant
 
+**Status**: ⚡ **ALPHA** - Actively improving with your feedback
+**Version**: 0.3-alpha (November 2025)
+
 [![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://pmorgan.tech)
-[![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **NEW: Multi-User Configuration System** - Teams can now customize their GitHub repositories, PM number formats, and integration settings. Each user maintains their own configuration while sharing the same Piper Morgan instance.
+> **Welcome to the Piper Morgan alpha!** 🚀 You're part of a small group testing the next generation of AI-powered product management. Your feedback shapes what we build next.
 
-## 🎯 What is Piper Morgan?
+## What is Piper Morgan?
 
-Piper Morgan is an intelligent product management assistant that transforms routine PM tasks into natural conversations while providing strategic insights through AI-powered analysis.
+Piper Morgan is an AI-powered assistant that helps product managers work smarter, faster, and with better context. Talk to Piper in natural language, and it understands your intent, remembers context, and takes action across your tools.
 
-**Core Capabilities:**
-- 🗣️ **Natural Language Processing**: Use "that issue", "the document", "my task"
-- 🧠 **10-Turn Context Memory**: Remembers your conversation across interactions
-- ⚡ **Sub-150ms Response Times**: Lightning-fast conversational AI
-- 📊 **Issue Intelligence**: AI-powered GitHub issue analysis and prioritization
-- 🎯 **Morning Standup**: Daily accomplishments with real data from all integrations
-- 🌐 **Web Interface**: Dark mode UI with 4.6-5.1s generation (faster than CLI)
-- 🔧 **Multi-User Configuration**: Teams can customize their own settings
+### What You Can Do
 
-## 🗣️ Natural Language Interface
+- **🗣️ Natural Conversations**: Just ask—Piper understands "that issue we discussed" and "my highest priority task"
+- **🧠 Remembers Context**: 10-turn context memory means you don't have to repeat yourself
+- **⚡ Morning Standup**: Get your daily summary with real activity from GitHub, Calendar, and more
+- **📊 Smart Analysis**: Let AI prioritize, summarize, and surface insights from your work
+- **🌐 Works Everywhere**: Web interface, API, or CLI—use what works for you
 
-Piper Morgan uses an intent classification system to understand and route natural language commands through multiple interfaces:
+### Alpha Features (November 2025)
 
-### Supported Interfaces
-- **Web API**: POST to `/api/v1/intent` with natural language messages
-- **Slack**: Direct messages and mentions in Slack workspace
-- **CLI**: Command-line interface for local development
-- **Direct**: Python API for programmatic access
+- ✅ GitHub issue analysis and status updates
+- ✅ Calendar and availability checking
+- ✅ Morning standup with multi-integration context
+- ✅ Web interface with dark mode
+- ✅ Natural language intent understanding
+- 🚧 Slack integration (coming soon)
+- 🚧 Notion document management (coming soon)
 
-### Intent Categories
-The system recognizes 13 intent categories, routing to either fast canonical handlers (~1ms) or workflow orchestration (2-3 seconds):
+## 🚀 Quick Start (5 Minutes)
 
-**Quick Response Categories** (Canonical Handlers):
-- Identity, Temporal, Status, Priority, Guidance
+### Prerequisites
 
-**Complex Operations** (Workflow Handlers):
-- Execution, Analysis, Synthesis, Strategy, Learning, Query, Conversation, Unknown
+- Python 3.11+
+- Docker (for database and services)
+- OpenAI API key ([get one free](https://platform.openai.com))
+- GitHub personal access token ([create one](https://github.com/settings/tokens))
+- Calendar API credentials optional (Google Calendar or similar)
 
-### Example Usage
-
-```bash
-# Web API
-curl -X POST http://localhost:8001/api/v1/intent \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What's on my calendar today?"}'
-
-# CLI
-piper ask "Create a GitHub issue for bug fix"
-
-# Python
-from services.intent.intent_service import IntentService
-result = await intent_service.process_intent("Show my standup status")
-```
-
-### Architecture Documentation
-- Full architecture: [ADR-032](docs/internal/architecture/current/adrs/adr-032-intent-classification-universal-entry.md)
-- Pattern catalog: [Pattern-032](docs/internal/architecture/current/patterns/pattern-032-intent-pattern-catalog.md)
-- Developer guide: [Intent Classification Guide](docs/guides/intent-classification-guide.md)
-
-### Performance
-- **Validated**: 126 tests passing, 5 load benchmarks met
-- **Throughput**: 600K+ requests/second sustained
-- **Cache**: 84.6% hit rate, 7.6x speedup
-- **Production**: Deployed and stable
-
-### Classification Accuracy
-
-Piper Morgan's intent classifier achieves 95%+ accuracy for the three most common query types:
-- Calendar/Schedule queries (TEMPORAL): 96.7%
-- Work Status queries (STATUS): 96.7%
-- Priority queries (PRIORITY): 100%
-
-Validated with 140+ query variants across 5 canonical categories (GREAT-4F, October 2025).
-
----
-
-## ⚠️ API Error Handling
-
-Piper Morgan follows REST principles for error responses with proper HTTP status codes:
-
-- **200 OK**: Request succeeded
-- **422 Unprocessable Entity**: Validation error (invalid input)
-- **404 Not Found**: Resource not found
-- **500 Internal Server Error**: Unexpected server error
-
-### Example Error Handling
-
-```python
-import requests
-
-response = requests.post("/api/v1/intent", json={"message": "test"})
-
-if response.status_code == 200:
-    # Success
-    data = response.json()
-elif response.status_code == 422:
-    # Validation error
-    error = response.json()
-    print(f"Validation failed: {error['message']}")
-elif response.status_code == 404:
-    # Not found
-    error = response.json()
-    print(f"Resource not found: {error['message']}")
-elif response.status_code == 500:
-    # Internal error
-    error = response.json()
-    error_id = error.get("details", {}).get("error_id")
-    print(f"Server error (ID: {error_id})")
-```
-
-### Error Response Format
-
-All errors follow this structure:
-```json
-{
-  "status": "error",
-  "code": "VALIDATION_ERROR",
-  "message": "User-friendly error message",
-  "details": { /* Optional context */ }
-}
-```
-
-**Documentation**:
-- [Complete Error Handling Guide](docs/public/api-reference/api/error-handling.md)
-- [Migration Guide](docs/public/migration/error-handling-migration.md)
-- [Pattern 034 Reference](docs/internal/architecture/current/patterns/pattern-034-error-handling-standards.md)
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Guided Setup (Recommended for New Users)
-
-**Takes about 5 minutes**
+### Installation
 
 ```bash
-# Clone repository
+# 1. Clone the repository
 git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 
-# Run interactive setup wizard
+# 2. Run the setup wizard (recommended)
 python main.py setup
 ```
 
 The setup wizard will:
-1. ✓ Check system requirements (Docker, Python, ports, database)
-2. ✓ Collect and validate your API keys (OpenAI required, Anthropic/GitHub optional)
-3. ✓ Create your user account
-4. ✓ Store keys securely in your system keychain
+- ✅ Check your system (Python, Docker, ports)
+- ✅ Ask for API keys (stored securely)
+- ✅ Initialize the database
+- ✅ Create your user account
 
-**Then start Piper Morgan:**
+### Start Using Piper
+
 ```bash
+# Start the server
 python main.py
-# Access at: http://localhost:8001
+
+# Open your browser
+# Web: http://localhost:8001
+# Morning Standup: http://localhost:8001/standup
+# API Docs: http://localhost:8001/docs
 ```
 
-### Option 2: Manual Setup (Advanced Users)
+### First Steps
+
+1. **Try the Web Interface**: Open http://localhost:8001/standup for your morning summary
+2. **Use the Chat Interface**: Ask natural language questions like:
+   - "What are my top 5 priorities?"
+   - "Show me open issues in my repos"
+   - "What's on my calendar today?"
+3. **Check the Examples**: See [Alpha Testing Guide](docs/ALPHA_TESTING_GUIDE.md) for test scenarios
+
+### Example Conversations
+
+```
+You: "What's on my calendar today?"
+Piper: "📅 You have 3 meetings: Stand-up at 10am, Product Review at 2pm, 1:1 with Alex at 4pm"
+
+You: "Show me my open issues"
+Piper: "🐙 15 open issues: 5 bugs, 4 features, 6 enhancements. Top priority: Critical login bug (P0)"
+
+You: "Mark that login bug as done"
+Piper: "✅ Updated GitHub issue #42 to closed status"
+```
+
+---
+
+## 📋 Alpha Testing
+
+### How to Report Issues
+
+Found a bug or something doesn't work? Help us improve:
 
 ```bash
-# Clone and setup
-git clone https://github.com/mediajunkie/piper-morgan-product.git
-cd piper-morgan-product
-python -m venv venv && source venv/bin/activate
-
-# Install and configure
-pip install -r requirements.txt
-cp config/PIPER.user.md.example config/PIPER.user.md
-# Edit PIPER.user.md with your API keys
-
-# Launch
-docker-compose up -d
-python main.py
+1. Check Known Issues: docs/ALPHA_KNOWN_ISSUES.md
+2. File a GitHub Issue: https://github.com/mediajunkie/piper-morgan-product/issues
+3. Include:
+   - What you were trying to do
+   - What happened instead
+   - Steps to reproduce
+   - System info (python --version, docker --version)
+   - Any error messages
 ```
 
-### Check System Health
+### Alpha Testing Guide
 
-Anytime you want to check system status:
-```bash
-python main.py status
-```
+See [ALPHA_TESTING_GUIDE.md](docs/ALPHA_TESTING_GUIDE.md) for:
+- Guided test scenarios
+- What features to focus on
+- How to provide feedback
+- Weekly testing checklist
 
-This shows database health, API key validity, and performance metrics.
+### Known Issues
+
+See [ALPHA_KNOWN_ISSUES.md](docs/ALPHA_KNOWN_ISSUES.md) for current limitations and workarounds.
+
+### Alpha Agreement
+
+By participating in alpha testing, you agree to:
+- Report bugs and issues
+- Keep your feedback constructive
+- Understand that features may change
+- Not share with non-alpha testers (until public release)
+
+[Read full agreement](docs/ALPHA_AGREEMENT_v2.md)
+
+---
 
 ## 📚 Documentation
 
-**Full documentation and guides available at [pmorgan.tech](https://pmorgan.tech)**
+### For Alpha Testers
+- **[Alpha Quick Start](docs/ALPHA_QUICKSTART.md)** - Get running in 5 minutes
+- **[Alpha Testing Guide](docs/ALPHA_TESTING_GUIDE.md)** - What to test and how
+- **[Known Issues](docs/ALPHA_KNOWN_ISSUES.md)** - Current limitations
+- **[Testing Checklist](docs/ALPHA_TESTING_GUIDE.md#testing-checklist)** - Weekly focus areas
 
-### Essential Links
-- 🚀 [Getting Started Guide](https://pmorgan.tech) - 15-minute introduction
-- ⌨️ [CLI Commands](https://pmorgan.tech) - Command-line interface reference
-- 🔧 [Developer Documentation](https://pmorgan.tech) - API and integration guides
-- 📖 [Complete Feature List](https://pmorgan.tech) - All capabilities and workflows
+### For Developers
+- **[Technical Reference](docs/TECHNICAL-DEVELOPERS.md)** - Complete developer guide
+- **[Architecture Overview](docs/NAVIGATION.md)** - System design and patterns
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute code
 
-## 💬 Example Workflow
+### General Resources
+- 📖 [Documentation Hub](docs/NAVIGATION.md) - Find what you need
+- 🏠 [Main Project Hub](docs/HOME.md) - Project overview
+- 🔧 [Version Info](docs/VERSION_NUMBERING.md) - Release versioning
 
-```
-You: "Update that bug we discussed"
-Piper: "✅ Updated issue #1247 (login timeout) status to done"
+---
 
-You: "Show me the latest requirements"
-Piper: "📄 Here's requirements_v2.pdf (47 pages, updated 2 days ago)"
+## ❓ FAQ & Troubleshooting
 
-You: "Run my morning standup"
-Piper: "🌅 Good morning! Here are your accomplishments from yesterday..."
-```
-
-## 🌅 Morning Standup Web Interface
-
-**Quick Access**: Start your daily standup with a professional dark mode interface.
-
-### Starting the Server
+### "Setup fails at database check"
+**Fix**: Make sure Docker is running and port 5433 is available
 ```bash
-# Recommended: Use main.py (initializes services)
-python main.py
-
-# Server will start on http://127.0.0.1:8001
+docker ps  # Check if containers running
+lsof -i :5433  # Check port availability
 ```
 
-**Note**: Use `python main.py` instead of `uvicorn` directly. This ensures proper service initialization and dependency injection.
+### "API keys not being accepted"
+**Fix**: Keys are stored in your system keychain. Rerun setup or update manually
+```bash
+python main.py setup  # Run setup again
+```
 
-### Access Points
-- **Web UI**: http://localhost:8001/standup (dark mode, mobile responsive)
-- **API Endpoint**: http://localhost:8001/api/standup (JSON response)
-- **API Documentation**: http://localhost:8001/docs (FastAPI auto-docs)
+### "Standup page takes too long to load"
+**Fix**: It aggregates data from multiple integrations. First load can take 5-10 seconds. Subsequent loads are faster (cached).
 
-### Performance & Features
-- **Generation Time**: 4.6-5.1 seconds (faster than CLI baseline)
-- **Response Format**: JSON with comprehensive standup data and metadata
-- **UI Features**: Dark mode, mobile responsive, error handling, performance metrics
-- **Daily Usage**: Optimized for 6 AM daily standup routine
+### "Changes not showing up"
+**Fix**: Clear your browser cache (Cmd+Shift+R on Mac, Ctrl+Shift+R on Windows/Linux)
 
-### What You Get
-- ✅ Yesterday's accomplishments from all integrations
-- 🎯 Today's priorities with context
-- 🚫 Blockers identification
-- 📊 Performance metrics and generation time
-- 🐙 GitHub activity (commits, PRs, issues)
-- 📁 Project context and repository information
+### For more help
+See [Troubleshooting Guide](docs/TESTING.md) or file an issue with details.
 
-## 🤝 Contributing
+---
 
-We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+## 🤝 Feedback & Support
 
-## 🆘 Support
+### Report a Bug
+- **GitHub Issues**: [File an issue](https://github.com/mediajunkie/piper-morgan-product/issues/new)
+- **Include**: Reproduction steps, error message, system info
 
-- **📚 Documentation**: [pmorgan.tech](https://pmorgan.tech)
-- **🐛 Issues**: [GitHub Issues](https://github.com/mediajunkie/piper-morgan-product/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/mediajunkie/piper-morgan-product/discussions)
+### Share Feedback
+- **Email**: feedback@pmorgan.tech
+- **Discussions**: [GitHub Discussions](https://github.com/mediajunkie/piper-morgan-product/discussions)
+- **What we want to hear**:
+  - Features you want
+  - Workflows that work well
+  - Pain points and rough edges
+  - Ideas for improvement
+
+### Get Help
+- **Setup issues**: See [ALPHA_QUICKSTART.md](docs/ALPHA_QUICKSTART.md)
+- **Usage questions**: Check [ALPHA_TESTING_GUIDE.md](docs/ALPHA_TESTING_GUIDE.md)
+- **Technical problems**: See [TECHNICAL-DEVELOPERS.md](docs/TECHNICAL-DEVELOPERS.md)
+
+---
+
+## 📅 What's Next
+
+**Coming in next alpha release** (December 2025):
+- 🚧 Slack integration for notifications
+- 🚧 Notion document linking
+- 🚧 Jira integration
+- 🚧 Performance improvements
+- 🚧 Better error messages
+
+Your feedback shapes our priorities! Tell us what matters most.
 
 ---
 

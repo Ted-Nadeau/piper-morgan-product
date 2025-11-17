@@ -363,6 +363,70 @@ python script.py                    # Actual results
 curl http://localhost:8001/test     # Real response
 ```
 
+## GIT WORKFLOW - FEATURE BRANCH DISCIPLINE
+
+### ⚡ CRITICAL RULE: Always Work on Your Assigned Feature Branch
+
+**Never develop on `main`** (whether running locally or in sandbox). Every Claude Code session has an assigned feature branch in the session briefing that:
+- Starts with `claude/`
+- Ends with a session ID (e.g., `015W99syFQ7b9HrV2WoB9S48`)
+- Example: `claude/ux-quick-wins-navigation-settings-015W99syFQ7b9HrV2WoB9S48`
+
+**The branch name is always provided in your session instructions.** Look for "Git Development Branch Requirements" section.
+
+### Session Start Protocol (Local & Sandbox)
+
+```bash
+# FIRST: Look up your assigned branch from session instructions
+# (Should be listed in "Git Development Branch Requirements")
+
+# SECOND: Check out the branch
+git fetch origin <your-assigned-branch>
+git checkout <your-assigned-branch>
+
+# Verify you're on the correct branch
+git branch  # Should show: * claude/your-branch-name-[SESSION_ID]
+            # NOT: * main
+```
+
+### Development Workflow
+
+```bash
+# 1. Make changes on your feature branch (NEVER on main)
+# 2. Commit with clear messages
+./scripts/fix-newlines.sh  # Always run this first
+git add .
+git commit -m "your message"
+
+# 3. Push to YOUR feature branch only (not main)
+git push -u origin <your-assigned-branch>
+```
+
+### Why This Matters
+
+- **403 errors on push to main are intentional** - The system rejects pushes to `main` without your session ID
+- **Feature branches prevent conflicts** - Your work stays isolated until merged
+- **Session ID in branch name proves authorization** - Prevents accidental commits to production branches
+
+### If You Accidentally Worked on `main`
+
+```bash
+# Don't panic - fix it like this:
+git checkout <your-assigned-branch>
+git log main..HEAD  # See commits on main that shouldn't be there
+# Ask PM how to recover or reset your local main
+```
+
+### Branch Discipline Checklist
+
+Before EVERY commit:
+- [ ] `git branch -a | grep "^*"` shows your assigned branch (not `main`)
+- [ ] Assigned branch name starts with `claude/`
+- [ ] Assigned branch name ends with your session ID
+- [ ] You ran `./scripts/fix-newlines.sh`
+
+---
+
 ## COMMITTING CHANGES
 
 **BEFORE EVERY COMMIT** - Run the newline fixer to prevent pre-commit hook failures:
