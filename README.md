@@ -1,6 +1,6 @@
 # Piper Morgan - AI Product Management Assistant
 
-[![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/test/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
+[![Build Status](https://github.com/mediajunkie/piper-morgan-product/workflows/Tests/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)
 [![Documentation](https://img.shields.io/badge/docs-pmorgan.tech-brightgreen.svg)](https://pmorgan.tech)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
