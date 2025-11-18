@@ -476,7 +476,8 @@ async def check_for_incomplete_setup() -> Any:
     """
     from sqlalchemy import select
 
-    from services.database.models import AlphaUser, UserAPIKey
+    from services.database.models import User as AlphaUser
+    from services.database.models import UserAPIKey
     from services.database.session_factory import AsyncSessionFactory
 
     try:
