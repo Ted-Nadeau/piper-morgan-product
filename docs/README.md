@@ -1,6 +1,7 @@
 <!-- LOGO: Updated to correct location -->
 <!-- Testing GitHub Pages rebuild after broken image reference fix - October 5, 2025 3:59 PM -->
-![Piper Morgan Logo](assets/images/pm-logo.png)
+
+<img src="assets/images/pm-logo.png" alt="Piper Morgan Logo" width="50%" />
 
 # Piper Morgan - AI Product Management Assistant
 
@@ -18,6 +19,7 @@
 ### New to the Project?
 
 Start with one of these:
+
 - **[Getting Started Guide](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)** - 15-minute introduction
 - **[Morning Standup Web Interface](#-morning-standup-web-interface)** - Daily workflow feature
 - **[CLI Commands](#️-cli-commands)** - Command-line interface guide
@@ -129,6 +131,7 @@ python main.py standup
 ```
 
 **Features**:
+
 - **Smart Prioritization**: AI-driven issue priority scoring
 - **Beautiful CLI Output**: Color-coded, formatted displays
 - **Cross-Feature Learning**: Issue patterns enhance morning standups
@@ -141,6 +144,7 @@ python main.py standup
 **Launch your daily standup with a professional dark mode web interface - faster than CLI with comprehensive GitHub integration.**
 
 ### 🚀 Quick Start
+
 ```bash
 # Start FastAPI server
 PYTHONPATH=. python web/app.py
@@ -149,17 +153,20 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 ```
 
 ### 🌐 Access Points
+
 - **Web UI**: http://localhost:8001/standup (dark mode, mobile responsive)
 - **API Endpoint**: http://localhost:8001/api/standup (JSON response)
 - **API Documentation**: http://localhost:8001/docs (FastAPI auto-docs)
 
 ### ⚡ Performance & Features
+
 - **Generation Time**: 4.6-5.1 seconds (180ms faster than CLI baseline)
 - **Response Format**: JSON with comprehensive standup data and metadata
 - **UI Features**: Dark mode, mobile responsive, error handling, performance metrics
 - **Daily Usage**: Optimized for 6 AM daily standup routine
 
 ### 📊 What You Get
+
 - ✅ **Yesterday's accomplishments** from all integrations
 - 🎯 **Today's priorities** with project context
 - 🚫 **Blockers identification** and resolution paths
@@ -192,10 +199,12 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 ### 🏗️ Architecture & Design Documentation
 
 #### **[Architecture Patterns](internal/architecture/current/patterns/README.md)** - Implementation Patterns Library
-*30 proven patterns* organized by functional category: Infrastructure & Architecture (001-010), Context & Session Management (011-017), Integration & Adapters (018-022), Query & Data Patterns (023-027), and AI & Orchestration (028-030). Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
+
+_30 proven patterns_ organized by functional category: Infrastructure & Architecture (001-010), Context & Session Management (011-017), Integration & Adapters (018-022), Query & Data Patterns (023-027), and AI & Orchestration (028-030). Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
 
 #### **[Architectural Decision Records](internal/architecture/current/adrs/adr-index.md)** - Decision History & Rationale
-*34 architectural decisions* documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
+
+_34 architectural decisions_ documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
 
 ## 🧪 Testing & Quality Assurance
 
@@ -229,6 +238,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 ## 🚀 Recent Infrastructure Activations
 
 ### 🏗️ GREAT-3A: Plugin Architecture Foundation (October 2, 2025)
+
 - **GREAT-3A Complete**: Plugin foundation, config standardization, and app.py refactoring ([Issue #197-198](https://github.com/mediajunkie/piper-morgan-product/issues/197))
 - **Architecture Achievement**: web/app.py refactored from 1,052 to 467 lines (55% reduction)
 - **Plugin System**: 4 operational plugins (Slack, GitHub, Notion, Calendar) with standardized interfaces
@@ -236,6 +246,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **Quality Maintained**: 72/72 tests passing throughout refactoring
 
 ### ✅ GREAT-2 Epic Completion (September 30, 2025)
+
 - **Spatial Intelligence**: Three patterns discovered and documented (Granular, Embedded, Delegated)
 - **Router Architecture**: 100% completion across all 4 integrations (Calendar, GitHub, Notion, Slack)
 - **CORE-QUERY-1**: Complete integration router infrastructure with feature flag control
@@ -243,6 +254,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **Documentation**: Comprehensive architectural guidance and ADR-038 spatial patterns
 
 ### 🔧 Multi-User Configuration System (September 6, 2025)
+
 - **PM-123 Complete**: Per-user GitHub repository and PM number format configuration ([Issue PM-123](https://github.com/mediajunkie/piper-morgan-product/issues/123))
 - **CLI Architecture Fix**: All 6 commands now accessible (create, verify, sync, triage, status, patterns)
 - **Configuration Integration**: GitHubConfiguration dataclass with YAML parsing in PIPER.user.md
@@ -250,6 +262,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **Test Coverage**: 31 unit tests + 10 orchestration tests passing
 
 ### 📚 Notion Integration (August 26, 2025)
+
 - **Knowledge Management**: Complete Notion workspace integration activated ([Issue #134](https://github.com/mediajunkie/piper-morgan-product/issues/134))
 - **MCP+Spatial Intelligence**: 8-dimensional spatial analysis for Notion pages
 - **CLI Commands**: `piper notion status/test/search/pages` for workspace management
@@ -257,18 +270,21 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **Test Coverage**: 652 lines of comprehensive test coverage activated
 
 ### 🧪 Test Infrastructure (August 20, 2025)
+
 - **Smart Test Execution**: ../scripts/run_tests.sh` with 4 modes (smoke, fast, full, coverage)
 - **Performance**: 0-second smoke tests (599+ test suite activated)
 - **Automation**: Git hooks with pre-push test enforcement
 - **Documentation**: Complete TEST-GUIDE.md for developers
 
 ### 🔄 Multi-Agent Coordination (August 20, 2025)
+
 - **Operational Deployment**: Complete implementation plan ready ([Issue PM-118](https://github.com/mediajunkie/piper-morgan-product/issues/118))
 - **Automation Scripts**: Deployment and validation scripts created
 - **Quick Start**: [5-minute deployment guide](internal/development/methodology-core/MULTI_AGENT_QUICK_START.md) available
 - **Integration**: REST API design for coordination triggers
 
 ### 💾 Persistent Context Foundation (August 20, 2025)
+
 - **MVP Foundation**: Complete user preference and session persistence ([Issue PM-119](https://github.com/mediajunkie/piper-morgan-product/issues/119))
 - **Performance**: <500ms operations supporting 1000+ concurrent users
 - **API Integration**: REST endpoints with validation and security
@@ -277,6 +293,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 ## 📚 Enhanced Development Documentation
 
 ### Core Methodology
+
 > **🧭 Complete Methodology Index**: [methodology-core/INDEX.md](internal/development/methodology-core/INDEX.md) - Full navigation guide
 > **⚡ Quick Start**: [METHODOLOGY.md](briefing/METHODOLOGY.md) - Operational overview
 
@@ -286,11 +303,13 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **[Test Infrastructure Guide](internal/development/active/pending-review/TEST-GUIDE.md)** - Smart test execution patterns
 
 ### Implementation Guides
+
 - **[Multi-Agent Integration Plan](internal/development/methodology-core/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
 - **[Persistent Context Research](internal/development/active/pending-review/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
 - **Enhanced Autonomy Patterns** - (coming soon) - Advanced development workflows
 
 ### Operations & Automation
+
 - **[Smart Test Execution](../scripts/run_tests.sh)** - 4-mode test infrastructure
 - **[Multi-Agent Deployment](../scripts/deploy_multi_agent_coordinator.sh)** - Automated coordinator deployment
 - **[Operation Validation](../scripts/validate_multi_agent_operation.sh)** - Production readiness validation
@@ -298,6 +317,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 ## 📊 Roadmap Status
 
 ### The Great Refactor Progress (~30% Complete)
+
 - **GREAT-1** ✅ Complete (Router Foundation)
 - **GREAT-2** ✅ Complete (all 6 sub-epics: 2A-2E, CORE-QUERY-1)
 - **GREAT-3** 🚧 In Progress (3A complete, 3B active)
@@ -309,6 +329,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **MVP** 🎯 Target: Production-ready system
 
 ### Architecture Evolution
+
 - **Router Architecture**: Operational across all 4 integrations
 - **Three Spatial Patterns**: Documented and working (Granular, Embedded, Delegated)
 - **Plugin System**: Foundation complete, dynamic loading in progress
@@ -317,6 +338,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 ## 🎯 Current Capabilities (~80% Functional)
 
 ### ✅ Working Systems
+
 - **All integrations working** via router architecture (Calendar, GitHub, Notion, Slack)
 - **Plugin architecture** operational (4 plugins with standardized interfaces)
 - **Config validation** active across all services
@@ -325,11 +347,13 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **Documentation** comprehensive (98/98 directories covered)
 
 ### 🚧 In Development (GREAT-3B)
+
 - **Dynamic plugin loading** system
 - **Plugin discovery** and lifecycle management
 - **Registry automation** for seamless plugin integration
 
 ### ❌ Future Work
+
 - **Learning system** (adaptive behavior based on usage patterns)
 - **Complex workflow automation** (multi-step task coordination)
 - **Advanced AI coordination** (enhanced multi-agent collaboration)
@@ -436,7 +460,6 @@ python scripts/init_db.py
 # Start the development server
 python main.py
 ```
-
 
 ## 🤝 Contributing
 
