@@ -625,6 +625,7 @@ pip install -r requirements.txt  # Should work now!
 **Error**: `Unknown compiler(s): gfortran` - scipy trying to build from source because no Python 3.13 wheel available
 
 **Root Cause**:
+
 - `scipy==1.13.1` is current stable version
 - Version predates Python 3.13 wheel builds
 - Meson build system trying to compile from source requires Fortran compiler (gfortran)
@@ -633,30 +634,33 @@ pip install -r requirements.txt  # Should work now!
 **Impact**: 🔴 **CRITICAL BLOCKER** - Installation fails on any clean machine
 
 **Possible Solutions**:
+
 1. **Check if scipy has Python 3.13 wheels in pre-releases** - might need 1.14.0-rc or later
 2. **Require gfortran installation** - NOT feasible for alpha testers
 3. **Find scipy version that has 3.13 wheels in stable releases** - investigate available versions
 4. **Use scipy wheels from conda-forge or other source** - complex, not recommended
 
 **Investigation Needed**:
+
 - Does scipy 1.13.2+ have Python 3.13 wheels?
 - What's the earliest scipy with Python 3.13 wheel support?
 - Is there a pre-release/development version we should use?
 
 **Status**: ⏳ AWAITING - Need to investigate scipy 3.13 support timeline
 
-
 ---
 
 ## ✅ **DECISION: Python 3.12 Target for Alpha** (5:10 PM)
 
 **Rationale**:
+
 - scipy==1.13.1, onnxruntime==1.19.2, Pillow==10.0.0 all predate Python 3.13
 - Every old pinned version is a potential Python 3.13 blocker
 - Chasing Python 3.13 compatibility would delay alpha onboarding Thursday
 - Python 3.12 has mature package ecosystem and wheel support
 
 **Action Taken**:
+
 - Updated guide: Recommend Python 3.11 or 3.12 ONLY
 - Removed Python 3.13/3.14 from instructions
 - Added note: "Python 3.13 is very new and some packages don't have pre-built wheels yet"
@@ -664,11 +668,13 @@ pip install -r requirements.txt  # Should work now!
 **Status**: 🎯 Ready to test full installation with Python 3.12
 
 **Future Work**:
+
 - Create GitHub issue for "Python 3.13 Compatibility Migration"
 - Update scipy, onnxruntime, Pillow after they release 3.13 wheels
 - Revisit for Python 3.13 support in next version
 
 **Christian's Next Steps**:
+
 - Downgrade to Python 3.12
 - Create fresh venv
 - Test: `pip install -r requirements.txt` (should work!)

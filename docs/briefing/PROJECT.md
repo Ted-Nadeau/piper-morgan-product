@@ -1,5 +1,12 @@
 # PROJECT.md - Piper Morgan Development
 
+## Repository Information
+
+**CRITICAL**: Always use the correct repository URL:
+- **GitHub Repository**: `https://github.com/mediajunkie/piper-morgan-product`
+- **Local Directory Name**: `piper-morgan` (legacy naming, but repo is `piper-morgan-product`)
+- **NEVER use**: `Codewarrior1988/piper-morgan` (this is a hallucinated URL that has infected docs)
+
 ## Vision
 
 Piper Morgan is an intelligent PM assistant that transforms how product managers work with AI agents. By combining spatial intelligence, domain-driven design, and systematic orchestration, Piper becomes a true thought partner who learns and adapts to each PM's unique style and needs.

@@ -60,6 +60,7 @@ This was the week alpha testing became real. After discovering a critical archit
 **Current blockers**: None - all P0 and P1 issues resolved
 
 **Team input needed**:
+
 - First external tester feedback (Beatrice onboarding soon)
 - Content strategy decisions (tiered newsletter options based on poll)
 
@@ -78,7 +79,7 @@ This was the week alpha testing became real. After discovering a critical archit
 
 ## 📚 Weekend reading
 
-*For the engineering team and anyone interested in AI-assisted development:*
+_For the engineering team and anyone interested in AI-assisted development:_
 
 - **Simon Willison: "Designing Agentic Loops"**: Framework for building reliable AI agent systems (https://simonwillison.net/2025/Sep/30/designing-agentic-loops/)
 - **Edwin Torres: Augmented Intent Development**: Methodology for human-AI collaborative development (https://github.com/edwintorres/augmented-intent-development)
@@ -93,6 +94,7 @@ When coordinating parallel AI agent work, explicit verification prevented confli
 **The situation**: Two agents (prog-code and prog-cursor) both completed P2 issues simultaneously, both editing the same file (`canonical_handlers.py`). Without verification, one agent's changes would have overwritten the other's.
 
 **The pattern**: Lead Developer created a verification gate before allowing push:
+
 1. List both agents' changes
 2. Verify both changes present in final code
 3. Check for conflicts or overwrites
@@ -107,4 +109,4 @@ When coordinating parallel AI agent work, explicit verification prevented confli
 **Thanks,**
 xian + Piper Morgan Development Team
 
-*P.S. Full session logs and technical details available in the [GitHub repository](https://github.com/Codewarrior1988/piper-morgan) **[CORRECTED 2025-11-18: Wrong URL - correct is https://github.com/mediajunkie/piper-morgan-product]** and project knowledge base.*
+_P.S. Full session logs and technical details available in the [GitHub repository](https://github.com/Codewarrior1988/piper-morgan) **[CORRECTED 2025-11-18: Wrong URL - correct is https://github.com/mediajunkie/piper-morgan-product]** and project knowledge base._

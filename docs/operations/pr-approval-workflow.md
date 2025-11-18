@@ -24,6 +24,7 @@ GitHub requires PRs to be approved by someone other than the author. We use a bo
 ```
 
 **Example**:
+
 ```bash
 ./scripts/approve-pr.sh 270
 ```
@@ -48,6 +49,7 @@ GitHub requires PRs to be approved by someone other than the author. We use a bo
 ### Token Permissions
 
 The token has `repo` scope (full repository access):
+
 - Read pull requests
 - Write pull request reviews
 - Comment on pull requests
@@ -55,6 +57,7 @@ The token has `repo` scope (full repository access):
 ### Security Notes
 
 ⚠️ **Token is in plaintext** in the script file
+
 - This is intentional for the quick hack
 - File is not committed (in .gitignore)
 - Only works for this repository
@@ -64,9 +67,10 @@ The token has `repo` scope (full repository access):
 
 ## Workflow
 
-### For Your PRs (Codewarrior1988)
+### For Your PRs (mediajunkie)
 
 1. Create PR as usual:
+
    ```bash
    gh pr create --title "..." --body "..."
    ```
@@ -74,6 +78,7 @@ The token has `repo` scope (full repository access):
 2. Get PR number from output (e.g., #270)
 
 3. Approve with bot:
+
    ```bash
    ./scripts/approve-pr.sh 270
    ```
@@ -86,6 +91,7 @@ The token has `repo` scope (full repository access):
 ### Safety Checks (Manual)
 
 Before approving, verify:
+
 - ✅ No secrets/API keys in diff
 - ✅ No direct database schema changes
 - ✅ Tests passing (CI green)
@@ -98,6 +104,7 @@ Before approving, verify:
 ## Limitations
 
 **What This Doesn't Do**:
+
 - ❌ No automated safety checks
 - ❌ No CI integration
 - ❌ Doesn't auto-approve on PR creation
@@ -128,6 +135,7 @@ See `dev/active/bot-approver-setup.md` for implementation plan.
 **Problem**: PR doesn't exist or wrong number
 
 **Solution**: Check PR number:
+
 ```bash
 gh pr list
 ```
@@ -137,6 +145,7 @@ gh pr list
 **Problem**: Bot token expired or invalid
 
 **Solution**: Regenerate token:
+
 1. Login to GitHub as `piper-reviewer`
 2. Go to Settings → Developer settings → Tokens
 3. Generate new token with `repo` scope
@@ -147,6 +156,7 @@ gh pr list
 **Problem**: Bot account doesn't have access
 
 **Solution**: Re-invite as collaborator:
+
 1. Go to repo Settings → Collaborators
 2. Add `piper-reviewer` with Write access
 

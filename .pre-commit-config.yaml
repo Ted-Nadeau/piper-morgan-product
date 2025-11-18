@@ -24,6 +24,12 @@ repos:
         exclude: ^venv/
   - repo: local
     hooks:
+      - id: check-hallucinated-urls
+        name: Check for Hallucinated GitHub URLs
+        entry: .pre-commit-hooks/check-hallucinated-urls.py
+        language: python
+        pass_filenames: false
+        always_run: true
       - id: smoke-tests
         name: Smoke Tests
         entry: ./scripts/run_tests.sh smoke
