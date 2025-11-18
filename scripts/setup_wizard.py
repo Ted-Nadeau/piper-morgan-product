@@ -398,6 +398,8 @@ async def check_port_available(port: int = 8001) -> bool:
     """Check if port is available"""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # Set SO_REUSEADDR to handle TIME_WAIT state after restart
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(("", port))
         return True
     except OSError:
