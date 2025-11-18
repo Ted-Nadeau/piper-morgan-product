@@ -1,8 +1,8 @@
 # Phase 4 Implementation Plan
 ## Based on Chief Architect Recommendations
 
-**Date**: Friday, November 14, 2025, 8:05 AM PT  
-**Architect Consult**: Completed 7:00-7:20 AM  
+**Date**: Friday, November 14, 2025, 8:05 AM PT
+**Architect Consult**: Completed 7:00-7:20 AM
 **Status**: Ready to implement
 
 ---
@@ -32,19 +32,19 @@
 ```python
 class ActionRegistry:
     """Central registry for executable actions"""
-    
+
     _actions = {
         "create_github_issue": GithubIssueCommand,
         "update_notion": NotionUpdateCommand,
         "send_slack_message": SlackMessageCommand,
     }
-    
+
     @classmethod
     async def execute(cls, action_type: str, params: dict, context: dict):
         command_class = cls._actions.get(action_type)
         if not command_class:
             raise ValueError(f"Unknown action: {action_type}")
-        
+
         command = command_class(params, context)
         return await command.execute()
 ```
@@ -69,7 +69,7 @@ class ActionRegistry:
 # Risk classification
 LOW_RISK_ACTIONS = [
     "read_github_issue",
-    "fetch_notion_page", 
+    "fetch_notion_page",
     "search_slack",
     "draft_document",  # Not sent/published
 ]
@@ -87,7 +87,7 @@ async def apply_pattern(pattern, context):
         result = await execute_action(pattern)
         notify_user(f"I've {pattern.description} based on your pattern")
         return result
-        
+
     elif pattern.action_type in HIGH_RISK_ACTIONS:
         # Preview and wait for approval (reuse Phase 3 UI)
         await show_auto_suggestion(
@@ -115,30 +115,30 @@ async def apply_pattern(pattern, context):
 ```python
 class ContextMatcher:
     """Match current context to pattern triggers"""
-    
+
     @classmethod
     async def matches(cls, pattern_context: dict, current_context: dict) -> bool:
         # 1. Temporal triggers (explicit)
         if pattern_context.get("trigger_time"):
             if not cls._check_temporal(...):
                 return False
-        
+
         # 2. Sequential triggers (explicit)
         if pattern_context.get("after_action"):
             if current_context.get("last_action") != pattern_context["after_action"]:
                 return False
-        
+
         # 3. Conditional (similarity-based)
         if pattern_context.get("conditions"):
             similarity = cls._calculate_similarity(...)
             if similarity < 0.8:
                 return False
-        
+
         # 4. Event-based (exact match)
         if pattern_context.get("trigger_event"):
             if current_context.get("event") != pattern_context["trigger_event"]:
                 return False
-        
+
         return True  # All conditions met
 ```
 
@@ -161,32 +161,32 @@ class ContextMatcher:
 async def execute(user_input, user_id, context):
     # 1. Classify intent
     intent = await intent_classifier.classify(user_input)
-    
+
     # 2. Capture for learning
     await learning_handler.capture_action(user_id, intent, context)
-    
+
     # 3. Check for HIGH-CONFIDENCE auto-application (NEW)
     auto_patterns = await learning_handler.get_automation_patterns(
         user_id, context, min_confidence=0.9
     )
-    
+
     # 4. Apply pattern if found
     if auto_patterns and context_matches(auto_patterns[0], context):
         result = await apply_pattern(auto_patterns[0], context)
-        
+
         # Still run canonical for side effects
         canonical_result = await canonical_handlers.execute(intent, context)
-        
+
         return IntentProcessingResult(
             response=result.response or canonical_result.response,
             pattern_applied=auto_patterns[0],
             suggestions=[]  # No suggestions when auto-applied
         )
-    
+
     # 5. Otherwise, normal flow
     suggestions = await learning_handler.get_suggestions(user_id, context)
     result = await canonical_handlers.execute(intent, context)
-    
+
     return IntentProcessingResult(
         response=result,
         suggestions=suggestions
@@ -313,7 +313,7 @@ if pattern.confidence >= 0.9 and context_matches(pattern, context):
 function renderSuggestionCard(suggestion) {
     const isAutoTriggered = suggestion.auto_triggered;
     const badgeClass = isAutoTriggered ? 'auto-badge' : 'manual-badge';
-    
+
     return `
         <div class="suggestion-card ${isAutoTriggered ? 'auto-triggered' : ''}">
             <span class="suggestion-badge ${badgeClass}">
@@ -509,13 +509,13 @@ if auto_patterns and context_matcher.matches(...):
 
 ---
 
-**Status**: Ready to create Phase 4 agent prompt  
-**Estimated implementation**: 2-3 hours  
-**Philosophy**: Aligned with Piper's values  
+**Status**: Ready to create Phase 4 agent prompt
+**Estimated implementation**: 2-3 hours
+**Philosophy**: Aligned with Piper's values
 **Risk**: Low
 
 ---
 
-_"Measure twice, cut once"_ ✅  
-_"The architect has spoken"_  
+_"Measure twice, cut once"_ ✅
+_"The architect has spoken"_
 _"Let's build it right"_

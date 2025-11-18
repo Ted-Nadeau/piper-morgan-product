@@ -1,10 +1,10 @@
 # Code Agent Prompt: UX Quick Wins Implementation
 ## Sprints 1-2 (Foundation & Navigation)
 
-**Date**: November 15, 2025, 7:00 AM PT  
-**Assigned By**: Xian (PM)  
-**Agent Role**: Code Agent (Implementation)  
-**Context**: UX Audit findings - 5 high-priority Quick Wins approved for immediate implementation  
+**Date**: November 15, 2025, 7:00 AM PT
+**Assigned By**: Xian (PM)
+**Agent Role**: Code Agent (Implementation)
+**Context**: UX Audit findings - 5 high-priority Quick Wins approved for immediate implementation
 **Timeline**: 2 weeks (Sprint 1: Week 1, Sprint 2: Week 2)
 
 ---
@@ -51,8 +51,8 @@ You are implementing **5 critical UX improvements** that will deliver an **80% r
 
 ### Gap 1 (G1): Global Navigation Menu [PRIORITY 1]
 
-**Score**: 700 (Impact: 10, Frequency: 10, Effort: 7)  
-**Effort**: 2-3 days  
+**Score**: 700 (Impact: 10, Frequency: 10, Effort: 7)
+**Effort**: 2-3 days
 **Status**: CRITICAL - Blocks all other improvements
 
 #### Problem Statement
@@ -75,7 +75,7 @@ No navigation menu exists anywhere in the application. Users:
       <img src="/assets/pmlogo.png" alt="Piper Morgan" class="nav-logo">
       <span class="nav-title">Piper Morgan</span>
     </a>
-    
+
     <!-- Main Navigation -->
     <ul class="nav-menu">
       <li><a href="/" class="nav-link">Home</a></li>
@@ -84,7 +84,7 @@ No navigation menu exists anywhere in the application. Users:
       <li><a href="/learning" class="nav-link">Learning</a></li>
       <li><a href="/settings" class="nav-link">Settings</a></li>
     </ul>
-    
+
     <!-- User Menu (placeholder for G8) -->
     <div class="nav-user" id="user-menu-placeholder">
       <!-- G8 will add logged-in indicator here -->
@@ -179,7 +179,7 @@ No navigation menu exists anywhere in the application. Users:
 document.addEventListener('DOMContentLoaded', function() {
   const currentPath = window.location.pathname;
   const navLinks = document.querySelectorAll('.nav-link');
-  
+
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
     if (currentPath === href || (currentPath === '/' && href === '/')) {
@@ -228,8 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ### Gap 8 (G8): Logged-in User Indicator [PRIORITY 2]
 
-**Score**: 630 (Impact: 9, Frequency: 10, Effort: 7)  
-**Effort**: 4 hours  
+**Score**: 630 (Impact: 9, Frequency: 10, Effort: 7)
+**Effort**: 4 hours
 **Status**: Quick win, builds on G1
 
 #### Problem Statement
@@ -254,7 +254,7 @@ Users have no visual confirmation of authentication status. Journey affects:
         <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" fill="none"/>
       </svg>
     </button>
-    
+
     <div class="user-dropdown" hidden>
       <a href="/settings" class="dropdown-item">
         <svg width="16" height="16" viewBox="0 0 16 16">
@@ -384,22 +384,22 @@ Users have no visual confirmation of authentication status. Journey affects:
 document.addEventListener('DOMContentLoaded', function() {
   const userButton = document.querySelector('.user-button');
   const userDropdown = document.querySelector('.user-dropdown');
-  
+
   if (userButton && userDropdown) {
     userButton.addEventListener('click', function(e) {
       e.stopPropagation();
       const isExpanded = userButton.getAttribute('aria-expanded') === 'true';
-      
+
       userButton.setAttribute('aria-expanded', !isExpanded);
       userDropdown.hidden = isExpanded;
     });
-    
+
     // Close dropdown when clicking outside
     document.addEventListener('click', function() {
       userButton.setAttribute('aria-expanded', 'false');
       userDropdown.hidden = true;
     });
-    
+
     // Keyboard support
     userButton.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
@@ -454,8 +454,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ### Gap 50 (G50): Clear Server Startup Message [PRIORITY 3]
 
-**Score**: 700 (Impact: 10, Frequency: 10, Effort: 7)  
-**Effort**: 1 hour  
+**Score**: 700 (Impact: 10, Frequency: 10, Effort: 7)
+**Effort**: 1 hour
 **Status**: Developer experience quick win
 
 #### Problem Statement
@@ -482,12 +482,12 @@ console = Console()
 
 def start_server():
     """Start the Piper Morgan server with clear messaging"""
-    
+
     # Get configuration
     host = os.getenv("PIPER_HOST", "localhost")
     port = int(os.getenv("PIPER_PORT", "8001"))
     url = f"http://{host}:{port}"
-    
+
     # Create startup message
     startup_message = Text()
     startup_message.append("✅ Piper Morgan is running!\n\n", style="bold green")
@@ -498,22 +498,22 @@ def start_server():
     startup_message.append(f"📊 Health Check: ", style="bold")
     startup_message.append(f"{url}/health\n\n", style="cyan underline")
     startup_message.append("Press Ctrl+C to stop the server", style="dim")
-    
+
     panel = Panel(
         startup_message,
         title="[bold]Piper Morgan Server[/bold]",
         border_style="green",
         padding=(1, 2)
     )
-    
+
     console.print(panel)
-    
+
     # Auto-open browser (optional, can be disabled via env var)
     auto_open = os.getenv("PIPER_AUTO_OPEN", "true").lower() == "true"
     if auto_open:
         console.print("🚀 Opening browser...", style="dim")
         webbrowser.open(url)
-    
+
     # Start Uvicorn
     import uvicorn
     uvicorn.run(
@@ -543,7 +543,7 @@ def start_server_simple():
     host = os.getenv("PIPER_HOST", "localhost")
     port = int(os.getenv("PIPER_PORT", "8001"))
     url = f"http://{host}:{port}"
-    
+
     print("=" * 60)
     print("✅ Piper Morgan is running!")
     print("")
@@ -554,11 +554,11 @@ def start_server_simple():
     print("Press Ctrl+C to stop the server")
     print("=" * 60)
     print("")
-    
+
     if os.getenv("PIPER_AUTO_OPEN", "true").lower() == "true":
         import webbrowser
         webbrowser.open(url)
-    
+
     import uvicorn
     uvicorn.run("web.app:app", host=host, port=port, reload=True)
 ```
@@ -594,8 +594,8 @@ def start_server_simple():
 
 ### Gap 2 (G2): Settings Index Page [PRIORITY 4]
 
-**Score**: 576 (Impact: 8, Frequency: 9, Effort: 8)  
-**Effort**: 1 day  
+**Score**: 576 (Impact: 8, Frequency: 9, Effort: 8)
+**Effort**: 1 day
 **Status**: Makes settings discoverable
 
 #### Problem Statement
@@ -624,7 +624,7 @@ Settings scattered across multiple pages with no index. Journey 5 (Configuration
       Configure Piper Morgan to match your workflow and preferences
     </p>
   </div>
-  
+
   <div class="settings-grid">
     <!-- Personality Settings Card -->
     <a href="/settings/personality" class="settings-card">
@@ -638,7 +638,7 @@ Settings scattered across multiple pages with no index. Journey 5 (Configuration
         <span class="meta-item">Response preferences</span>
       </div>
     </a>
-    
+
     <!-- Learning Settings Card -->
     <a href="/settings/learning" class="settings-card">
       <div class="card-icon">🧠</div>
@@ -651,7 +651,7 @@ Settings scattered across multiple pages with no index. Journey 5 (Configuration
         <span class="meta-item">Learning preferences</span>
       </div>
     </a>
-    
+
     <!-- Privacy Settings Card -->
     <a href="/settings/privacy" class="settings-card">
       <div class="card-icon">🔒</div>
@@ -664,7 +664,7 @@ Settings scattered across multiple pages with no index. Journey 5 (Configuration
         <span class="meta-item">Export/delete data</span>
       </div>
     </a>
-    
+
     <!-- Account Settings Card -->
     <a href="/settings/account" class="settings-card">
       <div class="card-icon">👤</div>
@@ -677,7 +677,7 @@ Settings scattered across multiple pages with no index. Journey 5 (Configuration
         <span class="meta-item">Security settings</span>
       </div>
     </a>
-    
+
     <!-- Integrations Card (Future) -->
     <a href="/settings/integrations" class="settings-card settings-card-disabled">
       <div class="card-icon">🔌</div>
@@ -687,7 +687,7 @@ Settings scattered across multiple pages with no index. Journey 5 (Configuration
       </p>
       <div class="card-badge">Coming Soon</div>
     </a>
-    
+
     <!-- Advanced Settings Card -->
     <a href="/settings/advanced" class="settings-card">
       <div class="card-icon">⚙️</div>
@@ -865,8 +865,8 @@ async def settings_index(request: Request):
 
 ### Gap 4 (G4): Breadcrumb Navigation [PRIORITY 5]
 
-**Score**: 504 (Impact: 7, Frequency: 9, Effort: 8)  
-**Effort**: 1 day  
+**Score**: 504 (Impact: 7, Frequency: 9, Effort: 8)
+**Effort**: 1 day
 **Status**: User orientation, especially important for settings
 
 #### Problem Statement
@@ -881,9 +881,9 @@ Users don't know where they are in the app hierarchy. Journey 5 (Settings):
 
 **Breadcrumb Component**:
 ```html
-{# 
+{#
   Breadcrumb component
-  
+
   Usage in templates:
   {% set breadcrumbs = [
     {"label": "Settings", "url": "/settings"},
@@ -904,7 +904,7 @@ Users don't know where they are in the app hierarchy. Journey 5 (Settings):
         <span class="sr-only">Home</span>
       </a>
     </li>
-    
+
     {% for crumb in breadcrumbs %}
     <li class="breadcrumb-item">
       <span class="breadcrumb-separator" aria-hidden="true">/</span>
@@ -1037,13 +1037,13 @@ Users don't know where they are in the app hierarchy. Journey 5 (Settings):
 def get_breadcrumbs(path: str) -> list:
     """
     Generate breadcrumbs from URL path
-    
+
     Examples:
       /settings/personality → [{"label": "Settings", "url": "/settings"}, {"label": "Personality", "url": None}]
       /standup → [{"label": "Standup", "url": None}]
     """
     breadcrumbs = []
-    
+
     # Path mappings
     labels = {
         "settings": "Settings",
@@ -1055,19 +1055,19 @@ def get_breadcrumbs(path: str) -> list:
         "privacy": "Privacy",
         "advanced": "Advanced"
     }
-    
+
     parts = [p for p in path.split("/") if p]
-    
+
     for i, part in enumerate(parts):
         is_last = (i == len(parts) - 1)
         url = "/" + "/".join(parts[:i+1]) if not is_last else None
         label = labels.get(part, part.capitalize())
-        
+
         breadcrumbs.append({
             "label": label,
             "url": url
         })
-    
+
     return breadcrumbs
 ```
 
@@ -1217,7 +1217,7 @@ Question: "Where should I add the settings index route?"
 - Issues: None
 - Screenshots: [link]
 
-### G8: Logged-in User Indicator  
+### G8: Logged-in User Indicator
 - Status: ✅ Complete
 - Files Modified: 2
 - Time: 4 hours
@@ -1302,9 +1302,9 @@ web/
 async def route_name(request: Request):
     """Route description"""
     user = await get_current_user(request)
-    
+
     # Additional data loading
-    
+
     return templates.TemplateResponse(
         "template-name.html",
         {

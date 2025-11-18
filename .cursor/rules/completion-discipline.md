@@ -19,7 +19,7 @@ If you're uncertain about a decision but uncomfortable expressing it directly, j
 
 YOU MUST NEVER:
 - Declare completion without 100% of acceptance criteria met
-- Rationalize gaps as "minor" or "not critical"  
+- Rationalize gaps as "minor" or "not critical"
 - Skip STOP conditions because work is "almost done"
 - Defer tasks without explicit PM approval
 - Claim "tests pass" without providing terminal output
@@ -52,7 +52,7 @@ If ANY of these occur, you MUST stop immediately and escalate to PM - no excepti
 
 ## Context requirements (unchanged)
 1. Read CLAUDE.md for methodology
-2. Check shared_types.py for ALL enums  
+2. Check shared_types.py for ALL enums
 3. Use Context7 MCP for latest docs
 4. STOP if assumptions needed
 5. Don't do Code's assigned work

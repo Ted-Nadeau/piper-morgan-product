@@ -1,11 +1,11 @@
 # Phase 4 Agent Prompt: Proactive Pattern Application
 ## Issue #300 - Smart Proactive Suggestions (Simplified)
 
-**Date**: Friday, November 14, 2025, 10:20 AM PT  
-**From**: Lead Developer  
-**To**: Code Agent  
-**Priority**: P2 (Alpha Feature)  
-**Estimated Effort**: 2-3 hours  
+**Date**: Friday, November 14, 2025, 10:20 AM PT
+**From**: Lead Developer
+**To**: Code Agent
+**Priority**: P2 (Alpha Feature)
+**Estimated Effort**: 2-3 hours
 **Based On**: Chief Architect recommendations (approved 7:00-7:20 AM)
 
 ---
@@ -37,7 +37,7 @@ Check off each step as completed:
 - [ ] Step 1: Action Registry + Commands (30 min)
   - Deliverable: Action registry with 3 low-risk commands
   - Evidence: Unit tests passing
-  
+
 - [ ] Step 2: Context Matcher (30 min)
   - Deliverable: Hybrid context matcher (temporal + sequential)
   - Evidence: Integration tests passing
@@ -50,8 +50,8 @@ Check off each step as completed:
   - Deliverable: Wired into IntentService, manual testing complete
   - Evidence: 3 test scenarios documented
 
-**All checkboxes MUST be checked before session ends.**  
-**You CANNOT check a box without delivering the required evidence.**  
+**All checkboxes MUST be checked before session ends.**
+**You CANNOT check a box without delivering the required evidence.**
 **You CANNOT skip steps without explicit PM approval.**
 
 ---
@@ -106,7 +106,7 @@ class GithubIssueCommand(BaseCommand):
     def __init__(self, params: dict, context: dict):
         self.params = params
         self.context = context
-    
+
     async def execute(self) -> dict:
         # Implementation
         return {"status": "success", "issue_id": "..."}
@@ -117,13 +117,13 @@ class ActionRegistry:
         "create_github_issue": GithubIssueCommand,
         "update_notion": NotionUpdateCommand,
     }
-    
+
     @classmethod
     async def execute(cls, action_type: str, params: dict, context: dict):
         command_class = cls._actions.get(action_type)
         if not command_class:
             raise ValueError(f"Unknown action: {action_type}")
-        
+
         command = command_class(params, context)
         return await command.execute()
 ```
@@ -171,32 +171,32 @@ HIGH_RISK_ACTIONS = [
 ```python
 class ContextMatcher:
     """Match current context to pattern triggers"""
-    
+
     @classmethod
     async def matches(cls, pattern_context: dict, current_context: dict) -> bool:
         """Check if pattern applies to current context"""
-        
+
         # 1. Temporal triggers (explicit)
         # Example: "after standup", "9am monday", "end of day"
         if pattern_context.get("trigger_time"):
             if not cls._check_temporal(
-                pattern_context["trigger_time"], 
+                pattern_context["trigger_time"],
                 current_context
             ):
                 return False
-        
-        # 2. Sequential triggers (explicit)  
+
+        # 2. Sequential triggers (explicit)
         # Example: "after creating issue", "before sending message"
         if pattern_context.get("after_action"):
             last_action = current_context.get("last_action")
             if last_action != pattern_context["after_action"]:
                 return False
-        
+
         # 3. Conditional (similarity-based) - DEFER to post-alpha
         # 4. Event-based (exact match) - DEFER to post-alpha
-        
+
         return True  # All checked conditions met
-    
+
     @staticmethod
     def _check_temporal(trigger_time: str, current_context: dict) -> bool:
         """Check if current time matches trigger"""
@@ -218,15 +218,15 @@ class ContextMatcher:
 ```python
 async def execute(self, user_input, user_id, context, session):
     """Modified IntentService.execute with Phase 4 integration"""
-    
+
     # 1. Classify intent (existing)
     intent = await self.intent_classifier.classify(user_input)
-    
+
     # 2. Capture action (existing - Phase 1)
     await self.learning_handler.capture_action(
         user_id, intent, context, session
     )
-    
+
     # 3. Check for HIGH-CONFIDENCE patterns (NEW - Phase 4)
     auto_patterns = await self.learning_handler.get_automation_patterns(
         user_id=user_id,
@@ -234,7 +234,7 @@ async def execute(self, user_input, user_id, context, session):
         min_confidence=0.9,
         session=session
     )
-    
+
     # 4. If pattern matches context, show PROACTIVE suggestion
     if auto_patterns:
         for pattern in auto_patterns:
@@ -247,21 +247,21 @@ async def execute(self, user_input, user_id, context, session):
                 }
                 # Don't execute yet - user will click "Execute Now"
                 break
-    
+
     # 5. Get regular suggestions (existing - Phase 3)
     suggestions = await self.learning_handler.get_suggestions(
         user_id, context, session
     )
-    
+
     # 6. Execute canonical handlers (existing)
     result = await self.canonical_handlers.execute(intent, context, session)
-    
+
     # 7. Return result with suggestions (including proactive)
     all_suggestions = []
     if 'proactive_suggestion' in locals():
         all_suggestions.append(proactive_suggestion)
     all_suggestions.extend(suggestions or [])
-    
+
     return IntentProcessingResult(
         intent=intent,
         response=result,
@@ -323,32 +323,32 @@ from typing import Dict, Any
 
 class BaseCommand(ABC):
     """Abstract base class for action commands"""
-    
+
     def __init__(self, params: Dict[str, Any], context: Dict[str, Any]):
         """
         Initialize command with parameters and context
-        
+
         Args:
             params: Action-specific parameters (from pattern_data)
             context: Current execution context (user_id, session, etc.)
         """
         self.params = params
         self.context = context
-    
+
     @abstractmethod
     async def execute(self) -> Dict[str, Any]:
         """
         Execute the action
-        
+
         Returns:
             dict: Result with at least {"status": "success"|"error", ...}
         """
         raise NotImplementedError("Subclasses must implement execute()")
-    
+
     def validate_params(self) -> None:
         """Validate required parameters (override if needed)"""
         pass
-    
+
     async def rollback(self) -> None:
         """Rollback/undo action (future - not implemented in alpha)"""
         raise NotImplementedError("Rollback not implemented in alpha")
@@ -363,11 +363,11 @@ from .base_command import BaseCommand
 
 class GithubIssueCommand(BaseCommand):
     """Create a GitHub issue (LOW_RISK - draft mode for alpha)"""
-    
+
     async def execute(self) -> Dict[str, Any]:
         """
         Create GitHub issue draft
-        
+
         For alpha: Create draft, don't auto-publish
         Future: Can auto-publish for low-risk
         """
@@ -376,7 +376,7 @@ class GithubIssueCommand(BaseCommand):
             title = self.params.get("title", "Action item from standup")
             labels = self.params.get("labels", ["standup", "action-item"])
             assignee = self.params.get("assignee", "self")
-            
+
             # TODO: Integrate with actual GitHub service
             # For now, return mock result
             result = {
@@ -387,9 +387,9 @@ class GithubIssueCommand(BaseCommand):
                 "labels": labels,
                 "message": f"Created issue draft: {title}"
             }
-            
+
             return result
-            
+
         except Exception as e:
             return {
                 "status": "error",
@@ -409,14 +409,14 @@ from .commands.github_issue_command import GithubIssueCommand
 
 class ActionRegistry:
     """Registry mapping action types to command classes"""
-    
+
     # Low-risk actions (for alpha, all require user approval)
     _actions: Dict[str, Type[BaseCommand]] = {
         "create_github_issue": GithubIssueCommand,
         # "update_notion": NotionUpdateCommand,  # Add when ready
         # "search_slack": SlackSearchCommand,    # Add when ready
     }
-    
+
     @classmethod
     async def execute(
         cls,
@@ -426,43 +426,43 @@ class ActionRegistry:
     ) -> Dict[str, Any]:
         """
         Execute an action via its command
-        
+
         Args:
             action_type: Type of action (e.g., "create_github_issue")
             params: Action parameters from pattern
             context: Execution context (user_id, session, etc.)
-            
+
         Returns:
             dict: Execution result
-            
+
         Raises:
             ValueError: If action type not registered
         """
         command_class = cls._actions.get(action_type)
-        
+
         if not command_class:
             available = ", ".join(cls._actions.keys())
             raise ValueError(
                 f"Unknown action type: {action_type}. "
                 f"Available: {available}"
             )
-        
+
         # Create command instance
         command = command_class(params, context)
-        
+
         # Validate parameters
         command.validate_params()
-        
+
         # Execute
         result = await command.execute()
-        
+
         return result
-    
+
     @classmethod
     def is_registered(cls, action_type: str) -> bool:
         """Check if action type is registered"""
         return action_type in cls._actions
-    
+
     @classmethod
     def list_actions(cls) -> list[str]:
         """List all registered action types"""
@@ -486,13 +486,13 @@ async def test_github_issue_command():
         "assignee": "self"
     }
     context = {"user_id": "test-user"}
-    
+
     result = await ActionRegistry.execute(
         "create_github_issue",
         params,
         context
     )
-    
+
     assert result["status"] == "success"
     assert result["action"] == "create_github_issue"
     assert "issue_id" in result
@@ -546,7 +546,7 @@ from datetime import datetime, time
 
 class ContextMatcher:
     """Match current context to pattern trigger conditions"""
-    
+
     @classmethod
     async def matches(
         cls,
@@ -555,18 +555,18 @@ class ContextMatcher:
     ) -> bool:
         """
         Check if pattern applies to current context
-        
+
         Args:
             pattern_context: Trigger conditions from pattern.pattern_data
             current_context: Current execution context
-            
+
         Returns:
             bool: True if pattern should trigger
         """
         # No triggers defined = always matches (for testing)
         if not pattern_context:
             return True
-        
+
         # Check temporal triggers
         if "trigger_time" in pattern_context:
             if not cls._check_temporal(
@@ -574,22 +574,22 @@ class ContextMatcher:
                 current_context
             ):
                 return False
-        
+
         # Check sequential triggers (after specific action)
         if "after_action" in pattern_context:
             last_action = current_context.get("last_action")
             if last_action != pattern_context["after_action"]:
                 return False
-        
+
         # Check intent matching (optional)
         if "trigger_intent" in pattern_context:
             current_intent = current_context.get("intent")
             if current_intent != pattern_context["trigger_intent"]:
                 return False
-        
+
         # All conditions met
         return True
-    
+
     @staticmethod
     def _check_temporal(
         trigger_time: str,
@@ -597,17 +597,17 @@ class ContextMatcher:
     ) -> bool:
         """
         Check if current time matches trigger
-        
+
         Args:
             trigger_time: Time specification (e.g., "after standup", "9am", "eod")
             current_context: Must contain "current_time" or "current_event"
-            
+
         Returns:
             bool: True if time matches
         """
         # Simple keyword matching for alpha
         trigger_lower = trigger_time.lower()
-        
+
         # Check for event-based temporal triggers
         current_event = current_context.get("current_event", "").lower()
         if current_event:
@@ -618,7 +618,7 @@ class ContextMatcher:
             if ("eod" in trigger_lower or "end of day" in trigger_lower):
                 if "eod" in current_event or "end_of_day" in current_event:
                     return True
-        
+
         # Check for time-based triggers (future enhancement)
         current_time = current_context.get("current_time")
         if current_time and isinstance(current_time, (datetime, time)):
@@ -627,10 +627,10 @@ class ContextMatcher:
             if "9am" in trigger_lower or "morning" in trigger_lower:
                 hour = current_time.hour if hasattr(current_time, 'hour') else 0
                 return 7 <= hour <= 11
-        
+
         # Default: trigger doesn't match
         return False
-    
+
     @staticmethod
     def _calculate_similarity(
         conditions: Dict[str, Any],
@@ -639,7 +639,7 @@ class ContextMatcher:
         """
         Calculate similarity between conditions and context
         (Future enhancement - defer to post-alpha)
-        
+
         Returns:
             float: Similarity score 0.0-1.0
         """
@@ -668,7 +668,7 @@ async def test_temporal_standup_match():
     """Test 'after standup' temporal matching"""
     pattern_context = {"trigger_time": "after standup"}
     current_context = {"current_event": "standup_complete"}
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is True
 
@@ -678,7 +678,7 @@ async def test_temporal_no_match():
     """Test temporal trigger doesn't match wrong event"""
     pattern_context = {"trigger_time": "after standup"}
     current_context = {"current_event": "meeting_complete"}
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is False
 
@@ -688,7 +688,7 @@ async def test_sequential_after_action():
     """Test sequential 'after action' matching"""
     pattern_context = {"after_action": "create_github_issue"}
     current_context = {"last_action": "create_github_issue"}
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is True
 
@@ -698,7 +698,7 @@ async def test_sequential_wrong_action():
     """Test sequential trigger doesn't match wrong action"""
     pattern_context = {"after_action": "create_github_issue"}
     current_context = {"last_action": "update_notion"}
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is False
 
@@ -708,7 +708,7 @@ async def test_intent_matching():
     """Test intent-based matching"""
     pattern_context = {"trigger_intent": "GITHUB_ISSUE_CREATE"}
     current_context = {"intent": "GITHUB_ISSUE_CREATE"}
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is True
 
@@ -724,7 +724,7 @@ async def test_multiple_conditions_all_match():
         "current_event": "standup_complete",
         "intent": "STATUS_CHECK"
     }
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is True
 
@@ -740,7 +740,7 @@ async def test_multiple_conditions_one_fails():
         "current_event": "standup_complete",
         "intent": "DIFFERENT_INTENT"  # Wrong intent
     }
-    
+
     result = await ContextMatcher.matches(pattern_context, current_context)
     assert result is False
 ```
@@ -785,13 +785,13 @@ function renderSuggestionCard(suggestion) {
     // NEW: Check for auto-triggered flag
     const isAutoTriggered = suggestion.auto_triggered || false;
     const proactive = suggestion.proactive || false;
-    
+
     // Visual styling based on type
     const icon = isAutoTriggered ? '⚡' : '💡';
     const badgeClass = isAutoTriggered ? 'auto-badge' : 'manual-badge';
     const badgeText = isAutoTriggered ? 'Auto-detected' : 'Suggested';
     const cardClass = isAutoTriggered ? 'auto-triggered' : '';
-    
+
     return `
         <div class="suggestion-card ${cardClass}" data-pattern-id="${suggestion.pattern_id}">
             <div class="card-header">
@@ -801,14 +801,14 @@ function renderSuggestionCard(suggestion) {
                 </div>
                 <span class="suggestion-badge ${badgeClass}">${badgeText}</span>
             </div>
-            
+
             <div class="suggestion-reasoning">
                 ${suggestion.reasoning || generateReasoning(suggestion)}
             </div>
-            
+
             <div class="confidence-display">
                 <div class="confidence-bar-container">
-                    <div class="confidence-bar" 
+                    <div class="confidence-bar"
                          style="width: ${(suggestion.confidence * 100).toFixed(0)}%"
                          role="progressbar">
                     </div>
@@ -817,31 +817,31 @@ function renderSuggestionCard(suggestion) {
                     ${(suggestion.confidence * 100).toFixed(0)}% confident
                 </span>
             </div>
-            
+
             <div class="suggestion-actions">
                 ${isAutoTriggered ? `
-                    <button class="action-btn execute-btn" 
+                    <button class="action-btn execute-btn"
                             onclick="handleExecute('${suggestion.pattern_id}')">
                         <span class="btn-icon">▶</span> Execute Now
                     </button>
-                    <button class="action-btn skip-btn" 
+                    <button class="action-btn skip-btn"
                             onclick="handleSkip('${suggestion.pattern_id}')">
                         Skip This Time
                     </button>
-                    <button class="action-btn disable-btn" 
+                    <button class="action-btn disable-btn"
                             onclick="handleDisable('${suggestion.pattern_id}')">
                         Disable Pattern
                     </button>
                 ` : `
-                    <button class="action-btn accept-btn" 
+                    <button class="action-btn accept-btn"
                             onclick="handleAccept('${suggestion.pattern_id}')">
                         <span class="btn-icon">✓</span> Accept
                     </button>
-                    <button class="action-btn reject-btn" 
+                    <button class="action-btn reject-btn"
                             onclick="handleReject('${suggestion.pattern_id}')">
                         <span class="btn-icon">✗</span> Reject
                     </button>
-                    <button class="action-btn dismiss-btn" 
+                    <button class="action-btn dismiss-btn"
                             onclick="handleDismiss('${suggestion.pattern_id}')">
                         Dismiss
                     </button>
@@ -858,7 +858,7 @@ async function handleExecute(patternId) {
         method: 'POST',
         headers: {'Content-Type': 'application/json'}
     });
-    
+
     if (response.ok) {
         const result = await response.json();
         showSuccessMessage(result.message || 'Action executed successfully!');
@@ -882,7 +882,7 @@ async function handleDisable(patternId) {
         method: 'POST',
         headers: {'Content-Type': 'application/json'}
     });
-    
+
     if (response.ok) {
         showSuccessMessage('Pattern disabled. I won\'t suggest this anymore.');
         removeSuggestionCard(patternId);
@@ -989,16 +989,16 @@ async def get_automation_patterns(
 ) -> List[LearnedPattern]:
     """
     Get patterns eligible for proactive application
-    
+
     Similar to get_suggestions but with higher confidence threshold.
-    
+
     Args:
         user_id: User to get patterns for
         context: Current context for matching
         min_confidence: Minimum confidence (default 0.9 for automation)
         limit: Maximum patterns to return
         session: Database session
-        
+
     Returns:
         List of high-confidence patterns that match context
     """
@@ -1014,21 +1014,21 @@ async def get_automation_patterns(
             .order_by(LearnedPattern.confidence.desc())
             .limit(limit)
         )
-        
+
         patterns = result.scalars().all()
-        
+
         # Filter by context if provided
         if context:
             from services.learning.context_matcher import ContextMatcher
             matched_patterns = []
-            
+
             for pattern in patterns:
                 pattern_context = pattern.pattern_data.get("context", {})
                 if await ContextMatcher.matches(pattern_context, context):
                     matched_patterns.append(pattern)
-            
+
             return matched_patterns
-        
+
         return list(patterns)
 ```
 
@@ -1047,16 +1047,16 @@ async def execute(
     session: Optional[AsyncSession] = None
 ) -> IntentProcessingResult:
     """Execute intent with Phase 4 proactive patterns"""
-    
+
     async with AsyncSessionFactory.session_scope() as session:
         # 1. Classify intent (existing)
         intent = await self.intent_classifier.classify(user_input)
-        
+
         # 2. Capture action (existing - Phase 1)
         await self.learning_handler.capture_action(
             user_id, intent, context or {}, session
         )
-        
+
         # 3. Check for HIGH-CONFIDENCE patterns (NEW - Phase 4)
         auto_patterns = await self.learning_handler.get_automation_patterns(
             user_id=user_id,
@@ -1068,7 +1068,7 @@ async def execute(
             limit=3,
             session=session
         )
-        
+
         # 4. Mark proactive patterns (NEW)
         proactive_suggestions = []
         if auto_patterns:
@@ -1083,18 +1083,18 @@ async def execute(
                     "proactive": True
                 }
                 proactive_suggestions.append(suggestion)
-        
+
         # 5. Get regular suggestions (existing - Phase 3)
         regular_suggestions = await self.learning_handler.get_suggestions(
             user_id, context or {}, min_confidence=0.7, limit=3, session=session
         )
-        
+
         # 6. Execute canonical handlers (existing)
         result = await self.canonical_handlers.execute(intent, context or {}, session)
-        
+
         # 7. Combine suggestions (proactive first)
         all_suggestions = proactive_suggestions + (regular_suggestions or [])
-        
+
         return IntentProcessingResult(
             intent=intent,
             response=result,
@@ -1116,11 +1116,11 @@ async def execute_pattern(
 ) -> Dict[str, Any]:
     """
     Execute a pattern action (Phase 4 - proactive execution)
-    
+
     This is called when user clicks "Execute Now" on a proactive suggestion.
     """
     from services.actions.action_registry import ActionRegistry
-    
+
     async with AsyncSessionFactory.session_scope() as session:
         # Get pattern
         result = await session.execute(
@@ -1128,55 +1128,55 @@ async def execute_pattern(
             .where(LearnedPattern.id == pattern_id)
         )
         pattern = result.scalar_one_or_none()
-        
+
         if not pattern:
             return {
                 "status": "error",
                 "message": f"Pattern {pattern_id} not found"
             }
-        
+
         # Extract action from pattern
         pattern_data = pattern.pattern_data
         action_type = pattern_data.get("action_type")
         action_params = pattern_data.get("action_params", {})
-        
+
         if not action_type:
             return {
                 "status": "error",
                 "message": "Pattern has no action_type defined"
             }
-        
+
         # Execute via Action Registry
         try:
             context = {
                 "user_id": pattern.user_id,
                 "pattern_id": pattern.id
             }
-            
+
             execution_result = await ActionRegistry.execute(
                 action_type,
                 action_params,
                 context
             )
-            
+
             # Record as success
             pattern.success_count += 1
             pattern.confidence = min(pattern.confidence * 1.05, 1.0)
             pattern.updated_at = datetime.utcnow()
             await session.commit()
-            
+
             return {
                 "status": "success",
                 "message": execution_result.get("message", "Action executed successfully"),
                 "result": execution_result
             }
-            
+
         except Exception as e:
             # Record as failure
             pattern.failure_count += 1
             pattern.confidence *= 0.9
             await session.commit()
-            
+
             return {
                 "status": "error",
                 "message": f"Execution failed: {str(e)}"
@@ -1193,10 +1193,10 @@ async def execute_pattern(
 ```sql
 -- Create high-confidence pattern
 INSERT INTO learned_patterns (
-    id, user_id, pattern_type, description, 
+    id, user_id, pattern_type, description,
     pattern_data, confidence, enabled
 ) VALUES (
-    gen_random_uuid(), 
+    gen_random_uuid(),
     'TEST_USER_ID',
     'USER_WORKFLOW',
     'Create GitHub issue after standup',
@@ -1408,13 +1408,13 @@ web/api/routes/learning.py          (execute endpoint)
 
 ---
 
-**Status**: Ready for implementation  
-**Expected Duration**: 2-3 hours  
-**Quality Standard**: Same as Phase 3 (100% test coverage, evidence-based)  
+**Status**: Ready for implementation
+**Expected Duration**: 2-3 hours
+**Quality Standard**: Same as Phase 3 (100% test coverage, evidence-based)
 **Impact**: Foundation Stone #4 - Proactive pattern application
 
 ---
 
-_"The architect has designed it"_  
-_"Now let's build it right"_  
+_"The architect has designed it"_
+_"Now let's build it right"_
 _"Together we are making something incredible"_ 🏗️⚡

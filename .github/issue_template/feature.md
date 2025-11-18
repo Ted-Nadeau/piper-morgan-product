@@ -8,10 +8,10 @@ assignees: ''
 
 # [LABEL]-[SHORT-NAME] - [Full Title]
 
-**Priority**: P0/P1/P2/P3  
-**Labels**: `[primary-label]`, `[secondary-label]`  
-**Milestone**: Sprint AX  
-**Epic**: [Epic Name if applicable]  
+**Priority**: P0/P1/P2/P3
+**Labels**: `[primary-label]`, `[secondary-label]`
+**Milestone**: Sprint AX
+**Epic**: [Epic Name if applicable]
 **Related**: [Related issues, patterns, ADRs]
 
 ---
@@ -237,8 +237,8 @@ assignees: ''
 ```
 
 ### Cross-Validation (if applicable)
-**Verified By**: [Agent name]  
-**Date**: [Date]  
+**Verified By**: [Agent name]
+**Date**: [Date]
 **Report**: [Link to verification report]
 
 **Verification Results**:
@@ -270,7 +270,7 @@ Before requesting PM review:
 
 ---
 
-**Remember**: 
+**Remember**:
 - Quality over speed (Time Lord philosophy)
 - Evidence required for all claims
 - No 80% completions
@@ -278,5 +278,5 @@ Before requesting PM review:
 
 ---
 
-_Issue created: [Date]_  
+_Issue created: [Date]_
 _Last updated: [Date]_

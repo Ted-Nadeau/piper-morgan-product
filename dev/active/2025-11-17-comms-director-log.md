@@ -1,8 +1,8 @@
 # Communications Director Session Log - November 17, 2025
 
-**Session Start**: 5:51 AM Monday, November 17, 2025  
-**Agent**: Communications Director (Claude Sonnet 4.5)  
-**Human**: Christian (Xian) Crumlish  
+**Session Start**: 5:51 AM Monday, November 17, 2025
+**Agent**: Communications Director (Claude Sonnet 4.5)
+**Human**: Christian (Xian) Crumlish
 **Context**: Footer template correction, preparing for Nov 13-16 logs
 
 ---
@@ -46,7 +46,7 @@
 - Oct 31 - Nov 12: 10 daily narratives (with footers added manually for recent ones)
 - 8 methodology posts (complete series)
 
-**Upcoming work**: 
+**Upcoming work**:
 - Nov 13 (Thu)
 - Nov 14 (Fri)
 - Nov 15 (Sat)

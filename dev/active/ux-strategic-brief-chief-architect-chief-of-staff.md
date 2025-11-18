@@ -1,10 +1,10 @@
 # UX-Specific Strategic Brief
 ## Operational Planning & Risk Management for MVP Execution
 
-**Date**: November 15, 2025, 7:35 AM PT  
-**For**: Chief Architect + Chief of Staff  
-**From**: UX Lead (Sonnet)  
-**Context**: Post-Comprehensive UX Audit (350+ pages, 68 gaps identified)  
+**Date**: November 15, 2025, 7:35 AM PT
+**For**: Chief Architect + Chief of Staff
+**From**: UX Lead (Sonnet)
+**Context**: Post-Comprehensive UX Audit (350+ pages, 68 gaps identified)
 **Purpose**: Actionable operational guidance for 8-sprint MVP roadmap execution
 
 ---
@@ -38,7 +38,7 @@ Each sprint's work impacts multiple user journeys. This dashboard shows **concre
 
 ### Journey 1: New User Onboarding (FTUX)
 
-**Current State**: 3/10 (frustrated, confused, lost)  
+**Current State**: 3/10 (frustrated, confused, lost)
 **Goal State (MVP)**: 8/10 (guided, confident, successful)
 
 #### Sprint Impact Matrix
@@ -69,7 +69,7 @@ Each sprint's work impacts multiple user journeys. This dashboard shows **concre
 
 ### Journey 2: Daily PM Workflow (Standup → Issue Creation)
 
-**Current State**: 6/10 (functional but friction-filled)  
+**Current State**: 6/10 (functional but friction-filled)
 **Goal State (MVP)**: 9/10 (smooth, predictable, efficient)
 
 #### Sprint Impact Matrix
@@ -99,7 +99,7 @@ Each sprint's work impacts multiple user journeys. This dashboard shows **concre
 
 ### Journey 3: Learning Discovery (First Pattern Suggestion)
 
-**Current State**: 4/10 (confusing, opaque, untrusted)  
+**Current State**: 4/10 (confusing, opaque, untrusted)
 **Goal State (MVP)**: 7/10 (clear, transparent, helpful)
 
 #### Sprint Impact Matrix
@@ -129,8 +129,8 @@ Each sprint's work impacts multiple user journeys. This dashboard shows **concre
 
 ### Journey 4: Cross-Channel Usage (Web → CLI → Slack)
 
-**Current State**: 5/10 (feels like 3 separate products)  
-**Goal State (MVP)**: 6/10 (connected but not unified)  
+**Current State**: 5/10 (feels like 3 separate products)
+**Goal State (MVP)**: 6/10 (connected but not unified)
 **Goal State (Beta)**: 9/10 (true unified memory)
 
 #### Sprint Impact Matrix
@@ -162,7 +162,7 @@ Each sprint's work impacts multiple user journeys. This dashboard shows **concre
 
 ### Journey 5: Configuration & Customization
 
-**Current State**: 4/10 (hidden, scattered, confusing)  
+**Current State**: 4/10 (hidden, scattered, confusing)
 **Goal State (MVP)**: 9/10 (discoverable, organized, clear)
 
 #### Sprint Impact Matrix
@@ -193,7 +193,7 @@ Each sprint's work impacts multiple user journeys. This dashboard shows **concre
 
 ### Journey 6: Document Creation & Retrieval
 
-**Current State**: 2/10 (can create, can't retrieve - critical gap)  
+**Current State**: 2/10 (can create, can't retrieve - critical gap)
 **Goal State (MVP)**: 8/10 (full lifecycle management)
 
 #### Sprint Impact Matrix
@@ -577,7 +577,7 @@ AVERAGE SCORE                4.0/10 → 5.9/10  →  7.8/10    →  7.8/10
   1. "Do these pages feel like the same product?" (rate 1-10)
   2. "Toggle between light and dark theme"
   3. "Complete a standup in your preferred theme"
-- **Success Criteria**: 
+- **Success Criteria**:
   - Consistency rating: >7/10 average
   - Theme toggle works for 100% of users
   - No visual bugs reported
@@ -603,7 +603,7 @@ AVERAGE SCORE                4.0/10 → 5.9/10  →  7.8/10    →  7.8/10
   2. "Ask Piper to generate a PRD"
   3. "Find that PRD tomorrow" (next day test)
   4. "Download the PRD"
-- **Success Criteria**: 
+- **Success Criteria**:
   - 4/4 tasks completed
   - Document retrieval: 100% success rate
   - User satisfaction: >8/10
@@ -617,7 +617,7 @@ AVERAGE SCORE                4.0/10 → 5.9/10  →  7.8/10    →  7.8/10
   1. "Try to upload an invalid file (too large)"
   2. "Try to save settings with missing required field"
   3. "Observe notifications when actions complete"
-- **Success Criteria**: 
+- **Success Criteria**:
   - Errors are clear and helpful
   - Success notifications appear
   - Users feel confident in system state
@@ -803,7 +803,7 @@ Sprint | Test Date | Participants | Tasks | Success Rate | Satisfaction | Issues
 
 ## Issues from User Testing
 - P0: None ✅
-- P1: 
+- P1:
   - #789: Navigation overlap on mobile (assigned to Code agent)
   - #790: Breadcrumbs missing on one page (assigned to Code agent)
 - P2: [list]
@@ -1012,8 +1012,8 @@ This brief provides **operational clarity** for executing the 8-sprint MVP roadm
 
 ---
 
-**Document Status**: ✅ Complete  
-**Ready for**: Chief Architect + Chief of Staff strategic planning  
+**Document Status**: ✅ Complete
+**Ready for**: Chief Architect + Chief of Staff strategic planning
 **Next Step**: Review with PM, align on roadmap option (A/B/C), begin Sprint 1
 
 ---

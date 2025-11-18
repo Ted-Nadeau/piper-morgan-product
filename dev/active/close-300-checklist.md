@@ -33,7 +33,7 @@
 5. Click "Disable" on another → verify disabled
 6. Quick screenshot of each action
 
-**Evidence**: 
+**Evidence**:
 - `evidence/screenshots/02-feedback-accept.png`
 - `evidence/screenshots/03-feedback-reject.png`
 - `evidence/screenshots/04-pattern-disabled.png`
@@ -56,8 +56,8 @@
 
 **Database check**:
 ```sql
-SELECT id, confidence, success_count 
-FROM learned_patterns 
+SELECT id, confidence, success_count
+FROM learned_patterns
 WHERE user_id = '3f4593ae-5bc9-468d-b08d-8c4c02a5b963'::uuid
   AND confidence >= 0.9;
 ```
@@ -375,8 +375,8 @@ git push origin main
 
 ## Total Time: ~1 hour
 
-**Step 1**: 30 min (light testing)  
-**Step 2**: 30 min (evidence packaging)  
+**Step 1**: 30 min (light testing)
+**Step 2**: 30 min (evidence packaging)
 **Result**: Issue #300 CLOSED ✅
 
 ---

@@ -1,10 +1,10 @@
 # Chief Architect Consult: Phase 4 Pattern Application
 ## Quick Architectural Clarity Needed
 
-**Date**: November 13, 2025, 7:25 PM PT  
-**From**: Lead Developer  
-**To**: Chief Architect  
-**Duration**: 30 minutes  
+**Date**: November 13, 2025, 7:25 PM PT
+**From**: Lead Developer
+**To**: Chief Architect
+**Duration**: 30 minutes
 **Purpose**: Clarify architectural approach before implementing Phase 4
 
 ---
@@ -213,18 +213,18 @@ if await llm_check(prompt):
 async def execute(user_input, user_id, context):
     # 1. Classify intent (TEMPORAL, GITHUB, etc.)
     intent = await intent_classifier.classify(user_input)
-    
+
     # 2. Capture action for learning (Phase 1)
     await learning_handler.capture_action(user_id, intent, context)
-    
+
     # 3. Get suggestions for UI (Phase 3)
     suggestions = await learning_handler.get_suggestions(user_id, context)
-    
+
     # 4. ?????? WHERE TO CHECK AUTO-APPLICATION (Phase 4)
-    
+
     # 5. Execute canonical handlers (standup, issue creation, etc.)
     result = await canonical_handlers.execute(intent, context)
-    
+
     # 6. Return result + suggestions
     return IntentProcessingResult(response=result, suggestions=suggestions)
 ```
@@ -289,7 +289,7 @@ else:
 - Reuses Phase 3 UI
 - 2-3 hours work, lower risk
 
-**Your recommendation**: 
+**Your recommendation**:
 - Full auto for alpha? (more impressive, riskier)
 - Simplified for alpha, full post-alpha? (safer, faster)
 - Something in between?
@@ -417,12 +417,12 @@ class LearnedPattern:
 
 ---
 
-**Status**: Ready for 30-minute architect consult  
-**Scheduling**: Tonight (brief) or tomorrow morning?  
+**Status**: Ready for 30-minute architect consult
+**Scheduling**: Tonight (brief) or tomorrow morning?
 **Output**: Clear direction for Phase 4 implementation
 
 ---
 
-_"Measure twice, cut once"_  
-_"30 minutes of architecture saves 2 hours of refactoring"_  
+_"Measure twice, cut once"_
+_"30 minutes of architecture saves 2 hours of refactoring"_
 _"The PM decides scope. The architect decides approach."_

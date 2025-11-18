@@ -173,7 +173,7 @@ jobs:
         with:
           script: |
             const result = ${{ job.status }};
-            const message = result === 'success' 
+            const message = result === 'success'
               ? '✅ Validation passed - ready for PM review'
               : '❌ Validation failed - see workflow logs';
             github.rest.issues.createComment({
@@ -291,7 +291,7 @@ python scripts/validate-completion.py <incomplete-issue-number>
 
 ---
 
-**Version**: 1.0  
-**Created**: November 15, 2025  
-**Author**: Chief of Staff + PM (xian)  
+**Version**: 1.0
+**Created**: November 15, 2025
+**Author**: Chief of Staff + PM (xian)
 **Purpose**: Down payment on methodology enforcement automation

@@ -1,11 +1,11 @@
 # Code Agent Prompt: Polish Sprint - UX Refinements
 ## Foundation for Professional User Experience
 
-**Date**: November 15, 2025, 10:25 AM PT  
-**Assigned By**: Xian (PM)  
-**Agent Role**: Code Agent (Implementation)  
-**Context**: Quick Wins (G1, G8, G50, G2, G4) completed - now adding polish to transform from functional to professional  
-**Timeline**: 1-2 weeks (flexible, working in parallel with strategic planning)  
+**Date**: November 15, 2025, 10:25 AM PT
+**Assigned By**: Xian (PM)
+**Agent Role**: Code Agent (Implementation)
+**Context**: Quick Wins (G1, G8, G50, G2, G4) completed - now adding polish to transform from functional to professional
+**Timeline**: 1-2 weeks (flexible, working in parallel with strategic planning)
 **Environment**: Sandbox/branch (can work with autonomy)
 
 ---
@@ -15,7 +15,7 @@
 You've successfully implemented the Quick Wins (navigation, user indicator, settings). Now we're adding the **professional polish** that makes Piper feel complete:
 
 - **Toast notifications** → Users know their actions succeeded
-- **Loading states** → Async operations feel fast and responsive  
+- **Loading states** → Async operations feel fast and responsive
 - **Empty states** → Guidance when no content exists yet
 - **Contextual help** → Features are self-explanatory
 - **Keyboard shortcuts** → Power users can navigate efficiently
@@ -74,8 +74,8 @@ You've successfully implemented the Quick Wins (navigation, user indicator, sett
 
 ## Feature 1: Toast Notifications System (G23)
 
-**Score**: 420 (Impact: 7, Frequency: 10, Effort: 6)  
-**Effort**: 1-2 days  
+**Score**: 420 (Impact: 7, Frequency: 10, Effort: 6)
+**Effort**: 1-2 days
 **Priority**: CRITICAL - Foundation for all user feedback
 
 ### Problem Statement
@@ -262,7 +262,7 @@ Users have no feedback when actions complete. Examples:
     left: 16px;
     max-width: none;
   }
-  
+
   .toast {
     min-width: 0;
   }
@@ -276,7 +276,7 @@ Users have no feedback when actions complete. Examples:
 ```javascript
 /**
  * Toast Notification System
- * 
+ *
  * Usage:
  *   Toast.success('Settings saved!', 'Your preferences have been updated')
  *   Toast.error('Upload failed', 'File size must be less than 10MB')
@@ -300,7 +300,7 @@ const Toast = {
   show(type, title, message, duration = null) {
     const container = document.getElementById('toast-container');
     const template = document.getElementById('toast-template');
-    
+
     if (!container || !template) {
       console.error('Toast container or template not found');
       return;
@@ -308,28 +308,28 @@ const Toast = {
 
     // Clone template
     const toast = template.content.cloneNode(true).querySelector('.toast');
-    
+
     // Set type
     toast.classList.add(`toast-${type}`);
-    
+
     // Set icon
     toast.querySelector('.toast-icon').innerHTML = this.icons[type];
-    
+
     // Set content
     toast.querySelector('.toast-title').textContent = title;
     toast.querySelector('.toast-message').textContent = message;
-    
+
     // Close button handler
     const closeBtn = toast.querySelector('.toast-close');
     closeBtn.addEventListener('click', () => this.dismiss(toast));
-    
+
     // Add to container
     container.appendChild(toast);
-    
+
     // Auto-dismiss after duration
     const dismissDuration = duration || this.defaultDuration;
     setTimeout(() => this.dismiss(toast), dismissDuration);
-    
+
     // Keyboard support
     closeBtn.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -381,7 +381,7 @@ document.getElementById('save-settings').addEventListener('click', async () => {
       method: 'POST',
       body: JSON.stringify(formData)
     });
-    
+
     if (response.ok) {
       Toast.success('Settings saved', 'Your personality preferences have been updated');
     } else {
@@ -399,9 +399,9 @@ document.getElementById('save-settings').addEventListener('click', async () => {
 async function handleUpload(file) {
   try {
     Toast.info('Uploading', `Uploading ${file.name}...`);
-    
+
     const response = await uploadFile(file);
-    
+
     if (response.ok) {
       Toast.success('Upload complete', `${file.name} has been uploaded`);
     } else {
@@ -422,7 +422,7 @@ async function submitStandup(data) {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    
+
     if (response.ok) {
       Toast.success('Standup submitted', 'Your standup has been saved and shared');
     } else {
@@ -502,8 +502,8 @@ async function submitStandup(data) {
 
 ## Feature 2: Loading States & Spinners (G29)
 
-**Score**: 320 (Impact: 8, Frequency: 8, Effort: 5)  
-**Effort**: 1 day  
+**Score**: 320 (Impact: 8, Frequency: 8, Effort: 5)
+**Effort**: 1 day
 **Priority**: HIGH - Makes async operations feel responsive
 
 ### Problem Statement
@@ -687,7 +687,7 @@ No visual feedback during async operations:
 ```javascript
 /**
  * Loading State Utilities
- * 
+ *
  * Usage:
  *   Loading.button(buttonElement, true) // Start loading
  *   Loading.button(buttonElement, false) // Stop loading
@@ -712,7 +712,7 @@ const Loading = {
   // Page spinner
   page(show, message = 'Loading...') {
     let container = document.getElementById('page-spinner');
-    
+
     if (show) {
       if (!container) {
         container = document.createElement('div');
@@ -740,7 +740,7 @@ const Loading = {
   // Overlay spinner (blocks interaction)
   overlay(show, message = 'Loading...') {
     let overlay = document.getElementById('loading-overlay');
-    
+
     if (show) {
       if (!overlay) {
         overlay = document.createElement('div');
@@ -785,7 +785,7 @@ const saveBtn = document.getElementById('save-settings');
 
 saveBtn.addEventListener('click', async () => {
   Loading.button(saveBtn, true); // Start loading
-  
+
   try {
     await saveSettings();
     Toast.success('Saved', 'Settings updated');
@@ -801,16 +801,16 @@ saveBtn.addEventListener('click', async () => {
 ```javascript
 async function uploadFile(file) {
   Loading.overlay(true, `Uploading ${file.name}...`);
-  
+
   try {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await fetch('/upload', {
       method: 'POST',
       body: formData
     });
-    
+
     if (response.ok) {
       Toast.success('Upload complete', `${file.name} uploaded`);
     } else {
@@ -829,7 +829,7 @@ async function uploadFile(file) {
 // When loading settings page
 document.addEventListener('DOMContentLoaded', async () => {
   Loading.page(true, 'Loading settings...');
-  
+
   try {
     const settings = await fetchSettings();
     renderSettings(settings);
@@ -895,8 +895,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 ## Feature 3: Empty States (G30)
 
-**Score**: 288 (Impact: 6, Frequency: 8, Effort: 7)  
-**Effort**: 1 day  
+**Score**: 288 (Impact: 6, Frequency: 8, Effort: 7)
+**Effort**: 1 day
 **Priority**: MEDIUM - Polish for new users
 
 ### Problem Statement
@@ -923,17 +923,17 @@ When no content exists, pages show:
     <!-- Icon slot (filled by usage) -->
     {{ icon | safe }}
   </div>
-  
+
   <h3 class="empty-state-title">{{ title }}</h3>
-  
+
   <p class="empty-state-message">{{ message }}</p>
-  
+
   {% if cta_text %}
   <a href="{{ cta_url }}" class="btn btn-primary empty-state-cta">
     {{ cta_text }}
   </a>
   {% endif %}
-  
+
   {% if help_link %}
   <a href="{{ help_link }}" class="empty-state-help">
     Learn more →
@@ -1004,7 +1004,7 @@ When no content exists, pages show:
   .empty-state {
     padding: 48px 16px;
   }
-  
+
   .empty-state-icon {
     width: 64px;
     height: 64px;
@@ -1023,7 +1023,7 @@ When no content exists, pages show:
       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
     </svg>
   {% endset %}
-  
+
   {% include 'components/empty-state.html' with context only %}
   {% set title = "No standups yet" %}
   {% set message = "Create your first standup to track your daily progress and share updates with your team" %}
@@ -1041,7 +1041,7 @@ When no content exists, pages show:
       <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
     </svg>
   {% endset %}
-  
+
   {% set title = "No documents yet" %}
   {% set message = "Upload documents to your knowledge base or generate new content with Piper" %}
   {% set cta_text = "Upload Document" %}
@@ -1059,7 +1059,7 @@ When no content exists, pages show:
       <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
     </svg>
   {% endset %}
-  
+
   {% set title = "Start a conversation" %}
   {% set message = "Ask Piper anything! Get help with product management tasks, create documents, or analyze data" %}
   {% set cta_text = "New Chat" %}
@@ -1076,7 +1076,7 @@ When no content exists, pages show:
       <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
     </svg>
   {% endset %}
-  
+
   {% set title = "No patterns discovered yet" %}
   {% set message = "As you use Piper, we'll learn your preferences and suggest patterns to make you more productive" %}
   {% set help_link = "/docs/learning" %}
@@ -1140,8 +1140,8 @@ When no content exists, pages show:
 
 ### Feature 4: Contextual Help Links (G5)
 
-**Score**: 360 (Impact: 6, Frequency: 10, Effort: 7)  
-**Effort**: 1-2 days  
+**Score**: 360 (Impact: 6, Frequency: 10, Effort: 7)
+**Effort**: 1-2 days
 **Priority**: MEDIUM - Reduces support burden
 
 **Quick Spec**:
@@ -1170,8 +1170,8 @@ When no content exists, pages show:
 
 ### Feature 5: Keyboard Shortcuts (G61)
 
-**Score**: 252 (Impact: 7, Frequency: 6, Effort: 8)  
-**Effort**: 1-2 days  
+**Score**: 252 (Impact: 7, Frequency: 6, Effort: 8)
+**Effort**: 1-2 days
 **Priority**: LOW - Power user feature
 
 **Quick Spec**:
@@ -1196,8 +1196,8 @@ When no content exists, pages show:
 
 ### Feature 6: Form Validation (G43)
 
-**Score**: 240 (Impact: 6, Frequency: 8, Effort: 5)  
-**Effort**: 1-2 days  
+**Score**: 240 (Impact: 6, Frequency: 8, Effort: 5)
+**Effort**: 1-2 days
 **Priority**: MEDIUM - Prevents errors
 
 **Quick Spec**:
@@ -1219,8 +1219,8 @@ When no content exists, pages show:
 
 ### Feature 7: Session Timeout Handling (G52)
 
-**Score**: 315 (Impact: 9, Frequency: 7, Effort: 5)  
-**Effort**: 2 days  
+**Score**: 315 (Impact: 9, Frequency: 7, Effort: 5)
+**Effort**: 2 days
 **Priority**: MEDIUM - Data loss prevention
 
 **Quick Spec**:

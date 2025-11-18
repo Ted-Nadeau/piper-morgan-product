@@ -1,10 +1,10 @@
 # UX-TRANCHE3 - Production-Ready Polish & Accessibility Infrastructure
 
-**Priority**: P1  
-**Labels**: `ux`, `accessibility`, `polish`, `alpha-blocker`, `code-agent`  
-**Milestone**: Sprint A9 (UX Polish)  
-**Epic**: Alpha → MVP UX Transformation  
-**Related**: 
+**Priority**: P1
+**Labels**: `ux`, `accessibility`, `polish`, `alpha-blocker`, `code-agent`
+**Milestone**: Sprint A9 (UX Polish)
+**Epic**: Alpha → MVP UX Transformation
+**Related**:
 - UX Audit Comprehensive Report (350+ pages)
 - Tranche 1: Quick Wins (G1, G8, G50, G2, G4) - ✅ Complete
 - Tranche 2: Polish Sprint (G23, G29, G30, G5, G61, G43, G52) - ✅ Complete
@@ -29,12 +29,12 @@ After completing Quick Wins and Polish Sprint, Piper has strong foundational UX:
 
 ### Impact
 - **Blocks**: Sprint 7 accessibility validation (missing foundational infrastructure)
-- **User Impact**: 
+- **User Impact**:
   - Alpha users can accidentally delete data (no confirmation dialogs)
   - Screen reader users struggle with navigation (no skip links or landmarks)
   - Keyboard users lose focus context (no focus management)
   - Visual polish incomplete (inconsistent spacing, no transitions)
-- **Technical Debt**: 
+- **Technical Debt**:
   - Accessibility retrofitting in Sprint 7 costs 3-5x more than building now
   - Missing infrastructure makes future features harder (no focus trap utility, etc.)
   - Color contrast issues compound (better to fix systematically now)
@@ -813,7 +813,7 @@ Pure UI/UX work, no backend logic requiring unit tests.
 - ⚠️ CLAUDE.md guidelines unclear or contradictory
 - ⚠️ Can't provide verification evidence (tests failing, features broken)
 
-**When stopped**: 
+**When stopped**:
 1. Document the issue (screenshot, error message, description)
 2. Provide options (multiple approaches if possible)
 3. Wait for PM decision (don't proceed with assumptions)
@@ -845,7 +845,7 @@ Pure UI/UX work, no backend logic requiring unit tests.
 
 **Total Estimated Effort**: 6-7 days
 
-**Complexity Notes**: 
+**Complexity Notes**:
 - Focus management requires careful testing (keyboard traps risk)
 - Page transitions need performance optimization (60fps target)
 - Color contrast fixes may require multiple iterations (validation cycles)
@@ -1092,8 +1092,8 @@ Pure UI/UX work, no backend logic requiring unit tests.
 ```
 
 ### Cross-Validation (if applicable)
-**Verified By**: [Agent name or PM]  
-**Date**: [Date]  
+**Verified By**: [Agent name or PM]
+**Date**: [Date]
 **Report**: [Link to verification report]
 
 **Verification Results**:
@@ -1172,7 +1172,7 @@ Before requesting PM review:
 
 ---
 
-**Remember**: 
+**Remember**:
 - Quality over speed (Time Lord philosophy)
 - Accessibility is not optional (WCAG 2.2 AA required)
 - Evidence required for all claims (screenshots, videos, test results)
@@ -1181,5 +1181,5 @@ Before requesting PM review:
 
 ---
 
-_Issue created: November 15, 2025, 1:15 PM PT_  
+_Issue created: November 15, 2025, 1:15 PM PT_
 _Last updated: November 15, 2025, 1:15 PM PT_

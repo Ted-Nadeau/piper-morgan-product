@@ -82,10 +82,10 @@ Establish context for token measurement, understand MCP usage patterns
    ```bash
    # Find all MCP adapter usage
    grep -r "MCPAdapter\|mcp_adapter" . --include="*.py"
-   
+
    # Check for existing monitoring
    find . -name "*monitor*" -o -name "*metric*" -o -name "*token*"
-   
+
    # Identify MCP call patterns
    grep -r "await.*adapter\." . --include="*.py" | head -20
    ```
@@ -93,14 +93,14 @@ Establish context for token measurement, understand MCP usage patterns
 3. **Update GitHub Issue**
    ```bash
    gh issue comment 309 -b "## Investigation Started
-   
+
    Found MCP adapters:
    - [ ] GitHub: [location]
    - [ ] Slack: [location]
    - [ ] Notion: [location]
    - [ ] Calendar: [location]
    - [ ] Serena: [location]
-   
+
    Token counting infrastructure: [None exists/Found existing]"
    ```
 
@@ -171,7 +171,7 @@ FOCUSED IMPLEMENTATION:
 ```bash
 gh issue comment 309 -b "✓ Phase 2: MCP adapters wrapped
 - GitHub: [X] operations instrumented
-- Slack: [Y] operations instrumented  
+- Slack: [Y] operations instrumented
 - Notion: [Z] operations instrumented
 Evidence: Sample output showing token counts"
 ```

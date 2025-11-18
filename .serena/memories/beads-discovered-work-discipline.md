@@ -38,13 +38,13 @@ bd close <new-issue-id>
 
 ### Anti-Pattern: Rationalizing Away Tracking
 
-❌ **WRONG:** "This is part of the same feature, no need to track separately"  
+❌ **WRONG:** "This is part of the same feature, no need to track separately"
 ✅ **RIGHT:** Create issue, link with `discovered-from`, let PM decide
 
-❌ **WRONG:** "This is just 10 minutes of work, not worth tracking"  
+❌ **WRONG:** "This is just 10 minutes of work, not worth tracking"
 ✅ **RIGHT:** If you're doing it, track it
 
-❌ **WRONG:** "I'll just mention it in the commit message"  
+❌ **WRONG:** "I'll just mention it in the commit message"
 ✅ **RIGHT:** Commit message + Beads issue
 
 ## Example: Phase 4.5 IntentService Integration
@@ -65,7 +65,7 @@ bd close piper-morgan-xyz
 
 ## When In Doubt
 
-**Ask yourself:** "Am I writing code for this?"  
+**Ask yourself:** "Am I writing code for this?"
 **If yes:** Create the Beads issue.
 
 No judgment calls. No "it's small". No "it's part of X".
