@@ -63,3 +63,6 @@ docs/comms/blog/*.png
 docs/comms/blog/*.jpg
 docs/comms/blog/*.jpeg
 archive/
+*.dmg
+*.png
+*.docx
