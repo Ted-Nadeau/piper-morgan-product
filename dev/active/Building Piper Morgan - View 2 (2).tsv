@@ -1,0 +1,57 @@
+Title	URL	Sprint	Milestone
+CORE-CONFIG-PIPER: PIPER.md Lightweight Configuration System	https://github.com/mediajunkie/piper-morgan-product/issues/305	MVP Foundation (M1)	MVP
+CONV-MCP-MEASURE: Token Measurement & Baseline Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/306	MVP Foundation (M1)	MVP
+CONV-UX-NAV: Global Navigation & Wayfinding	https://github.com/mediajunkie/piper-morgan-product/issues/307	MVP Foundation (M1)	MVP
+INFR-DATA: Repository Pattern & Dependency Cleanup	https://github.com/mediajunkie/piper-morgan-product/issues/308	MVP Foundation (M1)	MVP
+CONV-INFR-NOTN: Activate Existing Notion Integration	https://github.com/mediajunkie/piper-morgan-product/issues/304	MVP Activation (M2)	MVP
+CONV-MCP-PROTO: DocumentAnalysisSkill Prototype	https://github.com/mediajunkie/piper-morgan-product/issues/309	MVP Activation (M2)	MVP
+CONV-UX-QUICK: Settings & Startup Quick Wins	https://github.com/mediajunkie/piper-morgan-product/issues/310	MVP Activation (M2)	MVP
+CONV-MCP-STANDUP: Standup Workflow Skill	https://github.com/mediajunkie/piper-morgan-product/issues/303	MVP Skills (M3)	MVP
+CONV-MCP-LIBRARY: Core Skills Library Implementation	https://github.com/mediajunkie/piper-morgan-product/issues/315	MVP Skills (M3)	MVP
+CONV-MCP-DOCS: Unified Document Processing via Skills	https://github.com/mediajunkie/piper-morgan-product/issues/302	MVP Document Revolution (M4)	MVP
+CONV-UX-DOCS: File Browser & Document Management UI	https://github.com/mediajunkie/piper-morgan-product/issues/313	MVP Document Revolution (M4)	MVP
+CONV-UX-PERSIST: Conversation History & Persistence	https://github.com/mediajunkie/piper-morgan-product/issues/314	MVP Document Revolution (M4)	MVP
+CONV-UX-SLACK: Interactive Slack Standup Features	https://github.com/mediajunkie/piper-morgan-product/issues/244	MVP Polish (M5)	MVP
+AUTH-PASSWORD-CHANGE: Implement Password Change Endpoint + Integration Test	https://github.com/mediajunkie/piper-morgan-product/issues/298		MVP
+MVP-PREF-CONVO: Conversational Personality Preference Gathering	https://github.com/mediajunkie/piper-morgan-product/issues/248		MVP
+INFR-TEST: Review regression testing for gaps	https://github.com/mediajunkie/piper-morgan-product/issues/167		MVP
+MVP-TEST-QUALITY: Test Reliability for Production Confidence	https://github.com/mediajunkie/piper-morgan-product/issues/190		MVP
+INFR-CONFIG-PERF: Establish performance benchmarking framework for configuration system	https://github.com/mediajunkie/piper-morgan-product/issues/143		MVP
+FLY-VERIFY: Implement Three-Tier Verification Pyramid	https://github.com/mediajunkie/piper-morgan-product/issues/146		MVP
+FLY-VERIFY-HAND: Implement Mandatory Handoff Protocol with Verification	https://github.com/mediajunkie/piper-morgan-product/issues/147		MVP
+FLY-VERIFY-CONFIG: Extract Configuration Layer from Mandatory Handoff Protocol	https://github.com/mediajunkie/piper-morgan-product/issues/148		MVP
+FEAT-GRAPH: Visual knowledge graph interface	https://github.com/mediajunkie/piper-morgan-product/issues/87		MVP
+FEAT-VISION: Visual Content Analysis Pipeline	https://github.com/mediajunkie/piper-morgan-product/issues/65		MVP
+FEAT-DASH: Analytics Dashboard Integration	https://github.com/mediajunkie/piper-morgan-product/issues/58		MVP
+BUG-TEST-ASYNC: AsyncSessionFactory causes event loop conflicts in performance tests	https://github.com/mediajunkie/piper-morgan-product/issues/247		MVP
+FEAT-MEET: Transcript Analysis & Visualization	https://github.com/mediajunkie/piper-morgan-product/issues/57		MVP
+INFR-DATA: Remove Legacy DatabasePool Class and Deprecated RepositoryFactory	https://github.com/mediajunkie/piper-morgan-product/issues/114		MVP
+INFR-DATA: Fix IntentEnricher Dependency Injection Anti-Pattern	https://github.com/mediajunkie/piper-morgan-product/issues/115		MVP
+INFR-AGENT: Multi-Agent Coordinator Operational Deployment	https://github.com/mediajunkie/piper-morgan-product/issues/118		MVP
+FEAT-PREDICT: Predictive Project Analytics	https://github.com/mediajunkie/piper-morgan-product/issues/66		MVP
+UX-FTUX: Wizard Implementation	https://github.com/mediajunkie/piper-morgan-product/issues/128		MVP
+MVP-USER-DOCS: Document Ingestion for Context	https://github.com/mediajunkie/piper-morgan-product/issues/98		MVP
+MVP-USER-PROJ: Project Portfolio Awareness	https://github.com/mediajunkie/piper-morgan-product/issues/100		MVP
+MVP-FEAT-TIME: Temporal Context System	https://github.com/mediajunkie/piper-morgan-product/issues/101		MVP
+MVP-FEAT-STRAT: Strategic Recommendations	https://github.com/mediajunkie/piper-morgan-product/issues/106		MVP
+MVP-USER-GREET: Calendar Scanning on Greeting	https://github.com/mediajunkie/piper-morgan-product/issues/102		MVP
+MVP-FEAT-ALLOC: Time Allocation Analysis	https://github.com/mediajunkie/piper-morgan-product/issues/104		MVP
+MVP-USER-PRIOR: Priority Calculation Engine	https://github.com/mediajunkie/piper-morgan-product/issues/103		MVP
+UX-DESIGN: Establish design system for consistent UI development	https://github.com/mediajunkie/piper-morgan-product/issues/154		MVP
+CORE-ETHICS-TUNE: Post-Alpha Ethics Optimization	https://github.com/mediajunkie/piper-morgan-product/issues/241		MVP
+FLY-AUDIT: Add clear links to ADRs and Patterns in docs/README	https://github.com/mediajunkie/piper-morgan-product/issues/171		MVP
+MVP-QUALITY-ENHANCE: Enterprise Infrastructure & Advanced Monitoring	https://github.com/mediajunkie/piper-morgan-product/issues/213		MVP
+POST-TEST-E2E: Web UI End-to-End Testing Enhancement	https://github.com/mediajunkie/piper-morgan-product/issues/191		MVP
+BUG-TEST-CONFIG:  Fix test_error_handling_with_invalid_config	https://github.com/mediajunkie/piper-morgan-product/issues/239		MVP
+BUG-HEALTH-UTC: Health Endpoint Should Return UTC Timestamps with Timezone Marker	https://github.com/mediajunkie/piper-morgan-product/issues/245		MVP
+MVP-STAND-INTERACTIVE: Interactive Standup Assistant	https://github.com/mediajunkie/piper-morgan-product/issues/242		MVP
+MVP-STAND-MODES-UI: Advanced Multi-Modal UI Controls	https://github.com/mediajunkie/piper-morgan-product/issues/243		MVP
+TEST-SMOKE-RELY: Improve smoke test discovery and enumeration reliability	https://github.com/mediajunkie/piper-morgan-product/issues/277		MVP
+TEST-SMOKE-CI: Integrate smoke tests into GitHub Actions CI pipeline	https://github.com/mediajunkie/piper-morgan-product/issues/276		MVP
+TEST-SMOKE-BUG-BUS: Smoke test collection fails with ChromaDB/numpy Bus error on macOS	https://github.com/mediajunkie/piper-morgan-product/issues/275		MVP
+CORE-KEYS-ROTATION-WORKFLOW: Apply Rotation Reminders to Key Management Workflows	https://github.com/mediajunkie/piper-morgan-product/issues/270		MVP
+RESEARCH-TOKENS-THINKING: Investigate Thinking Token Optimization for Chain of Drafts	https://github.com/mediajunkie/piper-morgan-product/issues/272		MVP
+TEST-SMOKE: Smoke test epic on the Testing track	https://github.com/mediajunkie/piper-morgan-product/issues/273		MVP
+MVP-UX-QUICK: 5 Quick Wins	https://github.com/mediajunkie/piper-morgan-product/issues/301		MVP
+CONV (Convergence Transformation)	https://github.com/mediajunkie/piper-morgan-product/issues/311		MVP
+CONV-UX-DESIGN: Unified Design System & Token Migration	https://github.com/mediajunkie/piper-morgan-product/issues/312		MVP

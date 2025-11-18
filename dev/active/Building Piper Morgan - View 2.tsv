@@ -1,0 +1,51 @@
+Title	URL	Assignees	Status	Milestone
+AUTH-PASSWORD-CHANGE: Implement Password Change Endpoint + Integration Test	https://github.com/mediajunkie/piper-morgan-product/issues/298	mediajunkie	Product Backlog	MVP
+MVP-PREF-CONVO: Conversational Personality Preference Gathering	https://github.com/mediajunkie/piper-morgan-product/issues/248	mediajunkie	Product Backlog	MVP
+MVP-STAND-MODEL: Sprint Model & Team Coordination	https://github.com/mediajunkie/piper-morgan-product/issues/159	mediajunkie	Product Backlog	MVP
+INFR-TEST: Review regression testing for gaps	https://github.com/mediajunkie/piper-morgan-product/issues/167		Product Backlog	MVP
+MVP-CONFIG-NOTN: Notion integration for knowledge management workflows	https://github.com/mediajunkie/piper-morgan-product/issues/134	mediajunkie	Product Backlog	MVP
+MVP-STAND-FTUX: Standup Experience Excellence	https://github.com/mediajunkie/piper-morgan-product/issues/95	mediajunkie	Product Backlog	MVP
+MVP-DOCS-MSG: Message-Scoped Document Context	https://github.com/mediajunkie/piper-morgan-product/issues/56	mediajunkie	Product Backlog	MVP
+MVP-TEST-QUALITY: Test Reliability for Production Confidence	https://github.com/mediajunkie/piper-morgan-product/issues/190		Product Backlog	MVP
+INFR-CONFIG-PERF: Establish performance benchmarking framework for configuration system	https://github.com/mediajunkie/piper-morgan-product/issues/143		Product Backlog	MVP
+FLY-VERIFY: Implement Three-Tier Verification Pyramid	https://github.com/mediajunkie/piper-morgan-product/issues/146		Product Backlog	MVP
+FLY-VERIFY-HAND: Implement Mandatory Handoff Protocol with Verification	https://github.com/mediajunkie/piper-morgan-product/issues/147		Product Backlog	MVP
+FLY-VERIFY-CONFIG: Extract Configuration Layer from Mandatory Handoff Protocol	https://github.com/mediajunkie/piper-morgan-product/issues/148		Product Backlog	MVP
+FEAT-GRAPH: Visual knowledge graph interface	https://github.com/mediajunkie/piper-morgan-product/issues/87	mediajunkie	Product Backlog	MVP
+FEAT-VISION: Visual Content Analysis Pipeline	https://github.com/mediajunkie/piper-morgan-product/issues/65	mediajunkie	Product Backlog	MVP
+FEAT-DASH: Analytics Dashboard Integration	https://github.com/mediajunkie/piper-morgan-product/issues/58	mediajunkie	Product Backlog	MVP
+BUG-TEST-ASYNC: AsyncSessionFactory causes event loop conflicts in performance tests	https://github.com/mediajunkie/piper-morgan-product/issues/247		Product Backlog	MVP
+FEAT-MEET: Transcript Analysis & Visualization	https://github.com/mediajunkie/piper-morgan-product/issues/57	mediajunkie	Product Backlog	MVP
+INFR-DATA: Remove Legacy DatabasePool Class and Deprecated RepositoryFactory	https://github.com/mediajunkie/piper-morgan-product/issues/114	mediajunkie	Product Backlog	MVP
+INFR-DATA: Fix IntentEnricher Dependency Injection Anti-Pattern	https://github.com/mediajunkie/piper-morgan-product/issues/115		Product Backlog	MVP
+INFR-AGENT: Multi-Agent Coordinator Operational Deployment	https://github.com/mediajunkie/piper-morgan-product/issues/118		Product Backlog	MVP
+FEAT-PREDICT: Predictive Project Analytics	https://github.com/mediajunkie/piper-morgan-product/issues/66	mediajunkie	Product Backlog	MVP
+UX-FTUX: Wizard Implementation	https://github.com/mediajunkie/piper-morgan-product/issues/128	mediajunkie	Product Backlog	MVP
+MVP-CONFIG-PROMPT: Quick Context Loading via System Prompt	https://github.com/mediajunkie/piper-morgan-product/issues/97	mediajunkie	Product Backlog	MVP
+MVP-USER-DOCS: Document Ingestion for Context	https://github.com/mediajunkie/piper-morgan-product/issues/98	mediajunkie	Product Backlog	MVP
+MVP-USER-PROJ: Project Portfolio Awareness	https://github.com/mediajunkie/piper-morgan-product/issues/100	mediajunkie	Product Backlog	MVP
+MVP-FEAT-TIME: Temporal Context System	https://github.com/mediajunkie/piper-morgan-product/issues/101	mediajunkie	Product Backlog	MVP
+MVP-FEAT-STRAT: Strategic Recommendations	https://github.com/mediajunkie/piper-morgan-product/issues/106	mediajunkie	Product Backlog	MVP
+MVP-USER-GREET: Calendar Scanning on Greeting	https://github.com/mediajunkie/piper-morgan-product/issues/102	mediajunkie	Product Backlog	MVP
+MVP-FEAT-ALLOC: Time Allocation Analysis	https://github.com/mediajunkie/piper-morgan-product/issues/104	mediajunkie	Product Backlog	MVP
+MVP-USER-PRIOR: Priority Calculation Engine	https://github.com/mediajunkie/piper-morgan-product/issues/103	mediajunkie	Product Backlog	MVP
+UX-DESIGN: Establish design system for consistent UI development	https://github.com/mediajunkie/piper-morgan-product/issues/154		Product Backlog	MVP
+CORE-ETHICS-TUNE: Post-Alpha Ethics Optimization	https://github.com/mediajunkie/piper-morgan-product/issues/241	mediajunkie	Product Backlog	MVP
+FLY-AUDIT: Add clear links to ADRs and Patterns in docs/README	https://github.com/mediajunkie/piper-morgan-product/issues/171		Product Backlog	MVP
+MVP-QUALITY-ENHANCE: Enterprise Infrastructure & Advanced Monitoring	https://github.com/mediajunkie/piper-morgan-product/issues/213		Product Backlog	MVP
+MVP-STAND-INTERACTIVE: Interactive Standup Assistant	https://github.com/mediajunkie/piper-morgan-product/issues/242		Product Backlog	MVP
+MVP-STAND-MODES-UI: Advanced Multi-Modal UI Controls	https://github.com/mediajunkie/piper-morgan-product/issues/243		Product Backlog	MVP
+MVP-STAND-SLACK-INTERACT: Interactive Slack Standup Features	https://github.com/mediajunkie/piper-morgan-product/issues/244		Product Backlog	MVP
+CORE-KEYS-ROTATION-WORKFLOW: Apply Rotation Reminders to Key Management Workflows	https://github.com/mediajunkie/piper-morgan-product/issues/270	mediajunkie	Product Backlog	MVP
+RESEARCH-TOKENS-THINKING: Investigate Thinking Token Optimization for Chain of Drafts	https://github.com/mediajunkie/piper-morgan-product/issues/272	mediajunkie	Product Backlog	MVP
+AUTH-CONCURRENT-SESSIONS: Add Concurrent Session Handling Test + Architecture	https://github.com/mediajunkie/piper-morgan-product/issues/299	mediajunkie	Product Backlog	ENT
+ENT-KEYS-TEAM-SHARING: Team API Key Sharing (Enterprise)	https://github.com/mediajunkie/piper-morgan-product/issues/251		Product Backlog	ENT
+POST-TEST-E2E: Web UI End-to-End Testing Enhancement	https://github.com/mediajunkie/piper-morgan-product/issues/191		Product Backlog	
+BUG-TEST-CONFIG:  Fix test_error_handling_with_invalid_config	https://github.com/mediajunkie/piper-morgan-product/issues/239		Product Backlog	
+BUG-HEALTH-UTC: Health Endpoint Should Return UTC Timestamps with Timezone Marker	https://github.com/mediajunkie/piper-morgan-product/issues/245		Product Backlog	
+TEST-SMOKE-RELY: Improve smoke test discovery and enumeration reliability	https://github.com/mediajunkie/piper-morgan-product/issues/277		Product Backlog	
+TEST-SMOKE-CI: Integrate smoke tests into GitHub Actions CI pipeline	https://github.com/mediajunkie/piper-morgan-product/issues/276		Product Backlog	
+TEST-SMOKE-BUG-BUS: Smoke test collection fails with ChromaDB/numpy Bus error on macOS	https://github.com/mediajunkie/piper-morgan-product/issues/275		Product Backlog	
+TEST-SMOKE: Smoke test epic on the Testing track	https://github.com/mediajunkie/piper-morgan-product/issues/273	mediajunkie	Product Backlog	
+FLY-AUDIT: Weekly Docs Audit - 2025-11-10	https://github.com/mediajunkie/piper-morgan-product/issues/296	mediajunkie	Sprint Backlog	
+MVP-UX-QUICK: 5 Quick Wins	https://github.com/mediajunkie/piper-morgan-product/issues/301		In Progress	

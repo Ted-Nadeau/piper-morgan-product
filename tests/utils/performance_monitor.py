@@ -122,3 +122,22 @@ class PerformanceMonitor:
                 1 for latency in latencies if latency > self.target_latency_ms
             ),
         }
+
+
+# Convenience function for quick performance testing
+async def quick_performance_test(
+    operation_name: str, operation: Callable[[], Awaitable[Any]], target_ms: int = 200
+) -> tuple:
+    """Quick performance test for single operations
+
+    Args:
+        operation_name: Name of the operation to test
+        operation: Async callable to measure
+        target_ms: Target latency in milliseconds
+
+    Returns:
+        Tuple of (result, latency_ms)
+    """
+    monitor = PerformanceMonitor(target_ms)
+    result, measurement = await monitor.measure_async_operation(operation_name, operation)
+    return result, measurement.latency_ms
