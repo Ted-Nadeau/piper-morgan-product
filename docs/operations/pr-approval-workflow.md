@@ -165,7 +165,7 @@ gh pr list
 ```bash
 # Create PR
 $ gh pr create --title "feat: Add new feature" --body "Description"
-https://github.com/Codewarrior1988/piper-morgan/pull/270
+https://github.com/mediajunkie/piper-morgan-product/pull/270
 
 # Approve with bot
 $ ./scripts/approve-pr.sh 270
@@ -175,7 +175,7 @@ Approving PR #270 as piper-reviewer...
   "state": "APPROVED",
   ...
 }
-Done! Check https://github.com/Codewarrior1988/piper-morgan/pull/270
+Done! Check https://github.com/mediajunkie/piper-morgan-product/pull/270
 
 # Merge
 $ gh pr merge 270 --squash

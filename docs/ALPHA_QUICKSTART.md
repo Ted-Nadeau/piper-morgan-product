@@ -23,7 +23,7 @@
 
 ```bash
 # 1. Clone and setup (using production branch for alpha testing)
-git clone -b production https://github.com/Codewarrior1988/piper-morgan.git
+git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt

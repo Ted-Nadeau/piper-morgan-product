@@ -71,7 +71,7 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/Codewarrior1988/piper-morgan.git
+git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan
 ```
 

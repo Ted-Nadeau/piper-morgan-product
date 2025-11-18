@@ -124,7 +124,7 @@ Workflow established:
 
 **Issue #1: Wrong Repository URL**
 
-- Guide says: `https://github.com/Codewarrior1988/piper-morgan.git`
+- Guide says: `https://github.com/Codewarrior1988/piper-morgan.git` **[CORRECTED 2025-11-18: Hallucinated URL. Correct: https://github.com/mediajunkie/piper-morgan-product.git]**
 - **Reality**: Should be `git@github.com:mediajunkie/piper-morgan-product.git` (SSH)
 - **Note**: "Codewarrior1988" repository appears to be hallucinated/outdated
 

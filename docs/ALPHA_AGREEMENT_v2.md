@@ -135,7 +135,7 @@ This agreement is governed by the laws of California, USA, without regard to con
 
 For questions about this agreement or the software:
 Email: [contact email]
-GitHub: https://github.com/Codewarrior1988/piper-morgan
+GitHub: https://github.com/mediajunkie/piper-morgan-product
 
 ---
 

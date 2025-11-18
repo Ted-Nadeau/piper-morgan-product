@@ -22,7 +22,7 @@ mkdir piper-morgan-workspace
 cd piper-morgan-workspace
 
 # 2. Download Piper Morgan
-git clone https://github.com/Codewarrior1988/piper-morgan.git
+git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan
 
 # 3. Create virtual environment
@@ -144,7 +144,7 @@ After installation, you should be able to:
 - **Python 3.12**: https://python.org/downloads
 - **Git**: https://git-scm.com
 - **Anthropic Console**: https://console.anthropic.com
-- **Piper Morgan GitHub**: https://github.com/Codewarrior1988/piper-morgan
+- **Piper Morgan GitHub**: https://github.com/mediajunkie/piper-morgan-product
 
 ---
 

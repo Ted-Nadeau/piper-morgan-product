@@ -1,18 +1,18 @@
-2025-11-15 22:32:24 [debug    ] Using user configuration       path=config/PIPER.user.md
-2025-11-15 22:32:24 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
-2025-11-15 22:32:24 [debug    ] PortConfigurationService initialized environment=development
+2025-11-18 07:33:57 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-11-18 07:33:57 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-11-18 07:33:57 [debug    ] PortConfigurationService initialized environment=development
 /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-INFO:     Started server process [96727]
+INFO:     Started server process [58153]
 INFO:     Waiting for application startup.
-{"provider": "gemini", "error": "google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0", "help": "Install required package (e.g., google-generativeai)", "event": "factory_import_error", "logger": "services.llm.adapters.factory", "level": "error", "timestamp": "2025-11-16T06:32:27.229518Z"}
-{"event": "Failed to initialize gemini adapter: google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0", "logger": "services.domain.llm_domain_service", "level": "warning", "timestamp": "2025-11-16T06:32:27.229831Z"}
+{"provider": "gemini", "error": "google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0", "help": "Install required package (e.g., google-generativeai)", "event": "factory_import_error", "logger": "services.llm.adapters.factory", "level": "error", "timestamp": "2025-11-18T15:34:01.239728Z"}
+{"event": "Failed to initialize gemini adapter: google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0", "logger": "services.domain.llm_domain_service", "level": "warning", "timestamp": "2025-11-18T15:34:01.239998Z"}
 Integrations directory not found: services/integrations
 No plugins discovered
-/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/pydantic/_internal/_fields.py:184: UserWarning: Field name "validate" shadows an attribute in parent "BaseModel"; 
+/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/pydantic/_internal/_fields.py:184: UserWarning: Field name "validate" shadows an attribute in parent "BaseModel";
   warnings.warn(
 INFO:     Application startup complete.
-ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 8000): address already in use
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 8081): address already in use
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
 
@@ -30,11 +30,11 @@ INFO:     Application shutdown complete.
 CONFIGURATION VALIDATION SUMMARY
 ============================================================
 
-❌ GITHUB: missing
-   GitHub token not configured
+❌ GITHUB: invalid
+   GitHub token appears invalid (wrong format)
 
    Recovery:
-   Set GITHUB_TOKEN environment variable with a valid GitHub personal access token. Create token at: https://github.com/settings/tokens
+   GitHub personal access tokens should start with 'ghp_' or 'github_pat_'. Verify token at: https://github.com/settings/tokens
 
 ❌ SLACK: missing
    Slack configuration incomplete: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET not set

@@ -311,7 +311,7 @@ This document will be updated:
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
 - `ALPHA_AGREEMENT.md` - Legal terms and conditions
 - `VERSION_NUMBERING.md` - Understanding version 0.8.0
-- GitHub Issues: https://github.com/Codewarrior1988/piper-morgan/issues
+- GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
 ---
 

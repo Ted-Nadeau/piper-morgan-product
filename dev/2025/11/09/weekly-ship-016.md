@@ -107,4 +107,4 @@ When coordinating parallel AI agent work, explicit verification prevented confli
 **Thanks,**
 xian + Piper Morgan Development Team
 
-*P.S. Full session logs and technical details available in the [GitHub repository](https://github.com/Codewarrior1988/piper-morgan) and project knowledge base.*
+*P.S. Full session logs and technical details available in the [GitHub repository](https://github.com/Codewarrior1988/piper-morgan) **[CORRECTED 2025-11-18: Wrong URL - correct is https://github.com/mediajunkie/piper-morgan-product]** and project knowledge base.*

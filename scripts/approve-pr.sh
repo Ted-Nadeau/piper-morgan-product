@@ -24,8 +24,8 @@ curl -X POST \
   -H "Accept: application/vnd.github+json" \
   -H "Authorization: Bearer ${PIPER_REVIEWER_TOKEN}" \
   -H "X-GitHub-Api-Version: 2022-11-28" \
-  https://api.github.com/repos/Codewarrior1988/piper-morgan/pulls/${PR_NUMBER}/reviews \
+  https://api.github.com/repos/mediajunkie/piper-morgan-product/pulls/${PR_NUMBER}/reviews \
   -d '{"event":"APPROVE","body":"✅ Auto-approved by piper-reviewer bot"}'
 
 echo ""
-echo "Done! Check https://github.com/Codewarrior1988/piper-morgan/pull/${PR_NUMBER}"
+echo "Done! Check https://github.com/mediajunkie/piper-morgan-product/pull/${PR_NUMBER}"
