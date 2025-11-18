@@ -4,6 +4,28 @@
 
 # Piper Morgan - AI Product Management Assistant
 
+---
+
+## 🚀 Alpha Testing Program
+
+**Are you part of the Piper Morgan alpha?** You're in the right place! This is the public documentation hub for pmorgan.tech.
+
+### Quick Links for Alpha Testers
+
+- **[Alpha Quick Start](ALPHA_QUICKSTART.md)** - Get running in 5 minutes
+- **[Testing Guide](ALPHA_TESTING_GUIDE.md)** - What to test and how to provide feedback
+- **[Known Issues](ALPHA_KNOWN_ISSUES.md)** - Current limitations and workarounds
+- **[Alpha Agreement](ALPHA_AGREEMENT_v2.md)** - Terms and expectations
+
+### New to the Project?
+
+Start with one of these:
+- **[Getting Started Guide](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)** - 15-minute introduction
+- **[Morning Standup Web Interface](#-morning-standup-web-interface)** - Daily workflow feature
+- **[CLI Commands](#️-cli-commands)** - Command-line interface guide
+
+---
+
 ## 📋 Table of Contents
 
 - [🎯 What is Piper Morgan?](#-what-is-piper-morgan)
