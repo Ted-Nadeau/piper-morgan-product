@@ -613,8 +613,21 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     # OpenAI (required)
     print("\n   OpenAI API key (required):")
 
-    # Check for environment variable first (workaround for getpass paste issue)
-    openai_key = os.environ.get("OPENAI_API_KEY")
+    # Check keychain first (in case wizard was run before)
+    openai_key = None
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            existing_key = await service.retrieve_user_key(session, user_id, "openai")
+            if existing_key:
+                print("   ✓ Using existing key from keychain")
+                stored_keys["openai"] = existing_key
+                openai_key = existing_key  # Mark as found
+    except Exception:
+        pass  # Keychain check failed, continue to other methods
+
+    # Check for environment variable if not in keychain
+    if not openai_key:
+        openai_key = os.environ.get("OPENAI_API_KEY")
     if openai_key:
         print("   ℹ️  Using OPENAI_API_KEY from environment")
         print("   Validating...")
@@ -684,14 +697,23 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     # Anthropic (optional)
     print("\n   Anthropic API key (optional, press Enter to skip):")
 
-    # Check for environment variable first
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    # Check keychain first
+    anthropic_key = None
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            existing_key = await service.retrieve_user_key(session, user_id, "anthropic")
+            if existing_key:
+                print("   ✓ Using existing key from keychain")
+                stored_keys["anthropic"] = existing_key
+                anthropic_key = existing_key  # Mark as found
+    except Exception:
+        pass  # Keychain check failed, continue to other methods
+
+    # Check for environment variable if not in keychain
+    if not anthropic_key:
+        anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
     if anthropic_key:
         print("   ℹ️  Using ANTHROPIC_API_KEY from environment")
-    else:
-        anthropic_key = getpass("   Enter key (sk-ant-...): ")
-
-    if anthropic_key:
         print("   Validating...")
         try:
             async with AsyncSessionFactory.session_scope() as session:
@@ -708,23 +730,59 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
             stored_keys["anthropic"] = anthropic_key
 
         except ValueError as e:
-            print(f"   ✗ {str(e)}. Skipping Anthropic setup.")
+            print(f"   ✗ {str(e)}. Continuing with manual entry...")
+            anthropic_key = None  # Force manual entry
         except Exception as e:
-            print(f"   ✗ Validation error: {e}. Skipping Anthropic setup.")
-    else:
-        print("   Skipped (you can add this later)")
+            print(f"   ✗ Validation error: {e}. Continuing with manual entry...")
+            anthropic_key = None  # Force manual entry
+
+    # Manual entry if env var not set or failed
+    if not anthropic_key:
+        anthropic_key = getpass("   Enter key (sk-ant-...): ")
+
+        if anthropic_key:
+            print("   Validating...")
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    await service.store_user_key(
+                        user_id=user_id,
+                        provider="anthropic",
+                        api_key=anthropic_key,
+                        session=session,
+                        validate=True,
+                    )
+                    await session.commit()
+
+                print("   ✓ Valid (claude-3.5 access confirmed)")
+                stored_keys["anthropic"] = anthropic_key
+
+            except ValueError as e:
+                print(f"   ✗ {str(e)}. Skipping Anthropic setup.")
+            except Exception as e:
+                print(f"   ✗ Validation error: {e}. Skipping Anthropic setup.")
+        else:
+            print("   Skipped (you can add this later)")
 
     # GitHub (optional)
     print("\n   GitHub token (optional, press Enter to skip):")
 
-    # Check for environment variable first
-    github_token = os.environ.get("GITHUB_TOKEN")
+    # Check keychain first
+    github_token = None
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            existing_key = await service.retrieve_user_key(session, user_id, "github")
+            if existing_key:
+                print("   ✓ Using existing token from keychain")
+                stored_keys["github"] = existing_key
+                github_token = existing_key  # Mark as found
+    except Exception:
+        pass  # Keychain check failed, continue to other methods
+
+    # Check for environment variable if not in keychain
+    if not github_token:
+        github_token = os.environ.get("GITHUB_TOKEN")
     if github_token:
         print("   ℹ️  Using GITHUB_TOKEN from environment")
-    else:
-        github_token = getpass("   Enter token (ghp_...): ")
-
-    if github_token:
         try:
             async with AsyncSessionFactory.session_scope() as session:
                 await service.store_user_key(
@@ -739,9 +797,31 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
             print("   ✓ GitHub token saved (validation will happen on first use)")
             stored_keys["github"] = github_token
         except Exception as e:
-            print(f"   ✗ Error saving GitHub token: {e}. Skipping GitHub setup.")
-    else:
-        print("   Skipped (you can add this later)")
+            print(f"   ✗ Error saving GitHub token: {e}. Continuing with manual entry...")
+            github_token = None  # Force manual entry
+
+    # Manual entry if env var not set or failed
+    if not github_token:
+        github_token = getpass("   Enter token (ghp_...): ")
+
+        if github_token:
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    await service.store_user_key(
+                        user_id=user_id,
+                        provider="github",
+                        api_key=github_token,
+                        session=session,
+                        validate=False,  # Skip validation for GitHub (expensive)
+                    )
+                    await session.commit()
+
+                print("   ✓ GitHub token saved (validation will happen on first use)")
+                stored_keys["github"] = github_token
+            except Exception as e:
+                print(f"   ✗ Error saving GitHub token: {e}. Skipping GitHub setup.")
+        else:
+            print("   Skipped (you can add this later)")
 
     return stored_keys
 
@@ -906,6 +986,24 @@ async def run_setup_wizard():
             await db.initialize()
             await db.create_tables()
             print("   ✓ Database tables created")
+
+        # Run database migrations to ensure schema is up to date
+        print("   Running database migrations...")
+        try:
+            migration_result = subprocess.run(
+                ["alembic", "upgrade", "head"], capture_output=True, text=True, timeout=30
+            )
+            if migration_result.returncode == 0:
+                print("   ✓ Database schema up to date")
+            else:
+                print(f"   ⚠️  Migration warnings: {migration_result.stderr}")
+                print("   Continuing setup (migrations may have already been applied)")
+        except subprocess.TimeoutExpired:
+            print("   ⚠️  Migration timeout (taking longer than expected)")
+            print("   Continuing setup...")
+        except FileNotFoundError:
+            print("   ⚠️  Alembic not found in PATH")
+            print("   Please run 'alembic upgrade head' manually after setup")
 
         # Phase 2: Create user first (need user_id for API keys)
         user = await create_user_account()
