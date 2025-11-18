@@ -1,7 +1,7 @@
 <!-- LOGO: Updated to correct location -->
 <!-- Testing GitHub Pages rebuild after broken image reference fix - October 5, 2025 3:59 PM -->
 
-<img src="assets/images/pm-logo.png" alt="Piper Morgan Logo" width="50%" />
+<img src="assets/images/pm-logo.png" alt="Piper Morgan Logo" width="200" />
 
 # Piper Morgan - AI Product Management Assistant
 
