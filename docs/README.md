@@ -4,8 +4,6 @@
 
 # Piper Morgan - AI Product Management Assistant
 
----
-
 ## 🚀 Alpha Testing Program
 
 **Are you part of the Piper Morgan alpha?** You're in the right place! This is the public documentation hub for pmorgan.tech.
@@ -23,8 +21,6 @@ Start with one of these:
 - **[Getting Started Guide](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)** - 15-minute introduction
 - **[Morning Standup Web Interface](#-morning-standup-web-interface)** - Daily workflow feature
 - **[CLI Commands](#️-cli-commands)** - Command-line interface guide
-
----
 
 ## 📋 Table of Contents
 
