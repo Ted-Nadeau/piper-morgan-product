@@ -115,7 +115,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.emotional_marker.reaction == "thumbsup"
         assert result.emotional_valence in [EmotionalValence.POSITIVE, EmotionalValence.NEUTRAL]
 
-    def test_channel_created_event_maps_to_room(self, event_handler, spatial_mapper):
+    async def test_channel_created_event_maps_to_room(self, event_handler, spatial_mapper):
         """Test that channel creation events map to rooms"""
         # Arrange
         channel_event = {
@@ -136,7 +136,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.room.room_id == "C789012"
         assert result.spatial_event.room.name == "new-channel"
 
-    def test_thread_event_maps_to_conversational_path(self, event_handler, spatial_mapper):
+    async def test_thread_event_maps_to_conversational_path(self, event_handler, spatial_mapper):
         """Test that thread events map to conversational paths"""
         # Arrange
         thread_event = {
@@ -157,7 +157,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.coordinates.path_id == "1234567890.123456"
         assert result.spatial_event.coordinates.room_id == "C123456"
 
-    def test_user_joined_event_updates_spatial_state(self, event_handler, spatial_mapper):
+    async def test_user_joined_event_updates_spatial_state(self, event_handler, spatial_mapper):
         """Test that user joined events update spatial state"""
         # Arrange
         user_event = {
@@ -176,7 +176,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "inhabitant_joined"
         assert result.spatial_event.coordinates.room_id == "C123456"
 
-    def test_negative_reaction_maps_to_negative_emotional_marker(
+    async def test_negative_reaction_maps_to_negative_emotional_marker(
         self, event_handler, spatial_mapper
     ):
         """Test that negative reactions map to negative emotional markers"""
@@ -199,7 +199,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.emotional_marker.reaction == "thumbsdown"
         assert result.emotional_valence == EmotionalValence.NEGATIVE
 
-    def test_channel_deleted_event_removes_room(self, event_handler, spatial_mapper):
+    async def test_channel_deleted_event_removes_room(self, event_handler, spatial_mapper):
         """Test that channel deletion events remove rooms from spatial state"""
         # Arrange
         channel_deleted_event = {"type": "channel_deleted", "channel": "C789012", "team": "T123456"}
@@ -213,7 +213,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "room_deleted"
         assert result.spatial_event.coordinates.room_id == "C789012"
 
-    def test_multiple_events_update_spatial_state_sequentially(self, event_handler, spatial_mapper):
+    async def test_multiple_events_update_spatial_state_sequentially(self, event_handler, spatial_mapper):
         """Test that multiple events update spatial state sequentially"""
         # Arrange
         events = [
@@ -258,7 +258,7 @@ class TestEventSpatialMapping:
         assert "attention_attractors" in spatial_state
         assert "emotional_markers" in spatial_state
 
-    def test_unsupported_event_returns_error(self, event_handler, spatial_mapper):
+    async def test_unsupported_event_returns_error(self, event_handler, spatial_mapper):
         """Test that unsupported events return error"""
         # Arrange
         unsupported_event = {"type": "unsupported_event_type", "data": "some data"}
@@ -270,7 +270,7 @@ class TestEventSpatialMapping:
         assert result.success is False
         assert "Unsupported event type" in result.error
 
-    def test_spatial_coordinates_are_consistent(self, event_handler, spatial_mapper):
+    async def test_spatial_coordinates_are_consistent(self, event_handler, spatial_mapper):
         """Test that spatial coordinates are consistent across events"""
         # Arrange
         message_event = {
@@ -291,7 +291,7 @@ class TestEventSpatialMapping:
         assert coords.object_id == "1234567890.123456"
         assert coords.path_id is None  # No thread
 
-    def test_spatial_event_timestamps_are_preserved(self, event_handler, spatial_mapper):
+    async def test_spatial_event_timestamps_are_preserved(self, event_handler, spatial_mapper):
         """Test that spatial event timestamps are preserved"""
         # Arrange
         message_event = {
@@ -310,7 +310,7 @@ class TestEventSpatialMapping:
         assert spatial_event.timestamp is not None
         assert isinstance(spatial_event.timestamp, datetime)
 
-    def test_spatial_changes_are_tracked(self, event_handler, spatial_mapper):
+    async def test_spatial_changes_are_tracked(self, event_handler, spatial_mapper):
         """Test that spatial changes are tracked in results"""
         # Arrange
         message_event = {
