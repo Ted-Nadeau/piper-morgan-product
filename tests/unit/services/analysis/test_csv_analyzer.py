@@ -8,7 +8,7 @@ from services.analysis.base_analyzer import BaseAnalyzer
 from services.analysis.csv_analyzer import CSVAnalyzer
 from services.domain.models import AnalysisResult, AnalysisType
 
-FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "../../fixtures")
+FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "../../../fixtures")
 
 
 class TestCSVAnalyzer:
