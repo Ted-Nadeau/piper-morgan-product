@@ -117,7 +117,9 @@ class TestSlackEventHandler:
         assert "Navigate to room" in result.navigation_suggestions[0]
 
     @patch("services.integrations.slack.event_handler.SlackSpatialMapper")
-    def test_process_reaction_event(self, mock_mapper_class, event_handler, mock_spatial_mapper):
+    async def test_process_reaction_event(
+        self, mock_mapper_class, event_handler, mock_spatial_mapper
+    ):
         """Test processing reaction event as emotional marker"""
         mock_mapper_class.return_value = mock_spatial_mapper
 
@@ -142,7 +144,7 @@ class TestSlackEventHandler:
         assert result.attention_level == AttentionLevel.MEDIUM
         assert result.emotional_valence == EmotionalValence.POSITIVE
 
-    def test_process_unsupported_event(self, event_handler):
+    async def test_process_unsupported_event(self, event_handler):
         """Test processing unsupported event type"""
         unsupported_event = {"type": "unsupported_event_type", "data": "some data"}
 
@@ -185,7 +187,7 @@ class TestSlackSpatialAgent:
         """Spatial agent instance"""
         return SlackSpatialAgent(config_service, event_handler)
 
-    def test_process_spatial_event_no_event(self, spatial_agent):
+    async def test_process_spatial_event_no_event(self, spatial_agent):
         """Test processing spatial event with no valid event"""
         result = EventProcessingResult(success=False, spatial_event=None, error="No event")
 
@@ -195,7 +197,7 @@ class TestSlackSpatialAgent:
         assert decision.confidence == 0.0
         assert "No valid spatial event" in decision.reasoning
 
-    def test_process_high_attention_event(self, spatial_agent):
+    async def test_process_high_attention_event(self, spatial_agent):
         """Test processing high attention event"""
         # Create mock spatial event
         spatial_event = Mock()
@@ -218,7 +220,7 @@ class TestSlackSpatialAgent:
         assert decision.urgency == 0.9
         assert "requires immediate response" in decision.reasoning
 
-    def test_process_emotional_event(self, spatial_agent):
+    async def test_process_emotional_event(self, spatial_agent):
         """Test processing emotional event"""
         # Create mock spatial event
         spatial_event = Mock()
@@ -241,7 +243,7 @@ class TestSlackSpatialAgent:
         assert decision.urgency == 0.6
         assert "requires investigation" in decision.reasoning
 
-    def test_process_new_room_event(self, spatial_agent):
+    async def test_process_new_room_event(self, spatial_agent):
         """Test processing new room creation event"""
         # Create mock spatial event
         spatial_event = Mock()

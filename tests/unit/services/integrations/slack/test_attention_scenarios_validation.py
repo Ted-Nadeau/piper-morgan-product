@@ -20,7 +20,6 @@ from services.integrations.slack.attention_model import (
     AttentionModel,
     AttentionPattern,
     AttentionSource,
-    NavigationIntent,
 )
 from services.integrations.slack.spatial_memory import SpatialMemoryStore
 from services.integrations.slack.spatial_types import (
