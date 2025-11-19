@@ -25,7 +25,7 @@ from services.integrations.slack.spatial_types import (
     TerritoryType,
 )
 from services.integrations.slack.workspace_navigator import NavigationIntent, WorkspaceNavigator
-from services.shared_types import IntentCategory, WorkflowType, WorkItemStatus, WorkItemType
+from services.shared_types import IntentCategory, WorkflowType
 
 
 class TestCompleteWorkflowPipeline:
