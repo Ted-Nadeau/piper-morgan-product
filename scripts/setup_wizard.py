@@ -525,7 +525,21 @@ async def create_user_account() -> Any:
             print(f"   ✓ Resuming setup for {existing_user.username}")
             return existing_user
         else:
-            print("   Starting new setup (existing account will remain)...")
+            # Delete incomplete account so user can reclaim the username
+            print(f"   Removing incomplete setup for {existing_user.username}...")
+            try:
+                from sqlalchemy import delete
+
+                async with AsyncSessionFactory.session_scope() as session:
+                    # Delete the incomplete user account
+                    await session.execute(delete(User).where(User.id == existing_user.id))
+                    await session.commit()
+                print(f"   ✓ Removed incomplete account")
+            except Exception as e:
+                print(f"   ⚠️  Could not remove incomplete account: {e}")
+                print("   Note: You may need to use a different username")
+
+            print("   Starting new setup...")
     else:
         print("   Creating your alpha tester account...")
 
