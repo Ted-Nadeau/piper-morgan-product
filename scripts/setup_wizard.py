@@ -23,6 +23,19 @@ from typing import Any, Dict
 # Add parent directory to path for imports
 sys.path.insert(0, ".")
 
+# Check for required dependencies
+try:
+    import sqlalchemy  # noqa: F401
+except ImportError:
+    print("\n❌ Error: SQLAlchemy not installed")
+    print("\nPlease install dependencies first:")
+    print("  pip install -r requirements.txt")
+    print("\nOr if using a virtual environment:")
+    print("  python3.12 -m venv venv")
+    print("  source venv/bin/activate  # On Windows: venv\\Scripts\\activate")
+    print("  pip install -r requirements.txt")
+    sys.exit(1)
+
 
 def get_platform() -> str:
     """Detect the current platform"""

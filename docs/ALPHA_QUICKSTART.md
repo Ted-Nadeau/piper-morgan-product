@@ -24,8 +24,9 @@
 ```bash
 # 1. Clone and setup (using production branch for alpha testing)
 git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
-cd piper-morgan
-python -m venv venv && source venv/bin/activate
+cd piper-morgan-product
+python3.12 -m venv venv && source venv/bin/activate
+# Requires Python 3.11 or 3.12 - verify with: python --version
 pip install -r requirements.txt
 
 # 2. Run interactive setup (5 mins)
@@ -121,16 +122,16 @@ python main.py --no-browser # Don't auto-open browser
 ✅ Knowledge graph, boundary enforcement
 ✅ Audit logging, test coverage 100%
 
-See `ALPHA_KNOWN_ISSUES.md` for complete status.
+See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status.
 
 ---
 
 ## Getting Help
 
-- **Full Guide**: `ALPHA_TESTING_GUIDE.md` (comprehensive setup)
-- **Known Issues**: `ALPHA_KNOWN_ISSUES.md` (bugs and status)
-- **Legal**: `ALPHA_AGREEMENT.md` (terms and conditions)
-- **Version Info**: `VERSION_NUMBERING.md` (what 0.8.0 means)
+- **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
+- **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
+- **Legal**: [ALPHA_AGREEMENT.md](ALPHA_AGREEMENT.md) (terms and conditions)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.0 means)
 
 ---
 
