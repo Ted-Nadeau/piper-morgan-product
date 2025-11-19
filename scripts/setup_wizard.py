@@ -257,8 +257,9 @@ async def start_docker_services() -> bool:
         # Wait for services to be healthy with progressive checks
         print("   ⏳ Waiting for services to be ready...")
         print("   (This can take 30-60 seconds on first run)")
+        print("   ℹ️  Temporal is optional - setup will continue if it's not ready")
 
-        max_attempts = 30  # 30 attempts x 2 seconds = 1 minute
+        max_attempts = 10  # 10 attempts x 2 seconds = 20 seconds (reduced for alpha)
         for attempt in range(max_attempts):
             await asyncio.sleep(2)
 
@@ -269,10 +270,14 @@ async def start_docker_services() -> bool:
                 "Temporal": await check_temporal(),
             }
 
-            all_ok = all(services_ok.values())
+            # Check if core services are ready (Temporal is optional)
+            core_services_ready = all(services_ok[s] for s in ["PostgreSQL", "Redis", "ChromaDB"])
 
-            if all_ok:
-                print("   ✓ All services ready")
+            if core_services_ready:
+                if services_ok["Temporal"]:
+                    print("   ✓ All services ready")
+                else:
+                    print("   ✓ Core services ready (Temporal still starting)")
                 return True
 
             # Show progress every 10 seconds
@@ -990,19 +995,36 @@ async def run_setup_wizard():
         # Run database migrations to ensure schema is up to date
         print("   Running database migrations...")
         try:
+            # Get project root (setup_wizard.py is in scripts/ subdirectory)
+            import os
+
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
             migration_result = subprocess.run(
-                ["alembic", "upgrade", "head"], capture_output=True, text=True, timeout=30
+                ["alembic", "upgrade", "head"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=project_root,  # Run from project root where alembic.ini lives
             )
             if migration_result.returncode == 0:
                 print("   ✓ Database schema up to date")
             else:
-                print(f"   ⚠️  Migration warnings: {migration_result.stderr}")
-                print("   Continuing setup (migrations may have already been applied)")
+                # Show actual error for debugging
+                print(f"   ⚠️  Migration had issues:")
+                if migration_result.stderr:
+                    print(f"      {migration_result.stderr.strip()}")
+                if migration_result.stdout:
+                    print(f"      {migration_result.stdout.strip()}")
+                print("   Continuing setup...")
         except subprocess.TimeoutExpired:
             print("   ⚠️  Migration timeout (taking longer than expected)")
             print("   Continuing setup...")
         except FileNotFoundError:
             print("   ⚠️  Alembic not found in PATH")
+            print("   Please run 'alembic upgrade head' manually after setup")
+        except Exception as e:
+            print(f"   ⚠️  Unexpected error running migrations: {e}")
             print("   Please run 'alembic upgrade head' manually after setup")
 
         # Phase 2: Create user first (need user_id for API keys)
