@@ -60,7 +60,7 @@ class StatusChecker:
                 "details": None,
             }
 
-    async def check_api_keys(self) -> Dict[str, Any]:
+    async def check_api_keys(self, key_service=None, reminder_service=None) -> Dict[str, Any]:
         """Check API key validity for all providers"""
         try:
             from sqlalchemy import text
@@ -68,6 +68,10 @@ class StatusChecker:
             from services.database.session_factory import AsyncSessionFactory
             from services.security.key_rotation_reminder import KeyRotationReminder
             from services.security.user_api_key_service import UserAPIKeyService
+
+            # Use provided services or create new ones (for backwards compatibility)
+            service = key_service or UserAPIKeyService()
+            reminder_service = reminder_service or KeyRotationReminder(service)
 
             async with AsyncSessionFactory.session_scope() as session:
                 # Get most recent alpha user (during alpha phase - Issue #259)
@@ -85,8 +89,6 @@ class StatusChecker:
 
                 # Convert UUID to string for alpha users
                 user_id, username = str(user[0]), user[1]
-                service = UserAPIKeyService()
-                reminder_service = KeyRotationReminder(service)
 
                 # Check rotation reminders (Issue #250 CORE-KEYS-ROTATION-REMINDERS)
                 rotation_reminders = await reminder_service.check_key_ages(session, user_id)
@@ -207,6 +209,13 @@ async def run_status_check():
 
     checker = StatusChecker()
 
+    # Initialize services once to avoid duplicate logging
+    from services.security.key_rotation_reminder import KeyRotationReminder
+    from services.security.user_api_key_service import UserAPIKeyService
+
+    key_service = UserAPIKeyService()
+    reminder_service = KeyRotationReminder(key_service)
+
     # Database
     print("Database:")
     db_status = await checker.check_database()
@@ -216,7 +225,7 @@ async def run_status_check():
 
     # API Keys
     print("\nAPI Keys:")
-    key_status = await checker.check_api_keys()
+    key_status = await checker.check_api_keys(key_service, reminder_service)
 
     if isinstance(key_status, dict) and "status" in key_status:
         if "username" in key_status:
@@ -282,13 +291,10 @@ async def run_status_check():
     if isinstance(key_status, dict) and "username" in key_status:
         try:
             from services.database.session_factory import AsyncSessionFactory
-            from services.security.key_rotation_reminder import KeyRotationReminder
-            from services.security.user_api_key_service import UserAPIKeyService
 
             # Already in async context, just await directly
+            # Reuse reminder_service from initialization to avoid duplicate logging
             async with AsyncSessionFactory.session_scope() as session:
-                service = UserAPIKeyService()
-                reminder_service = KeyRotationReminder(service)
                 rotation_recs = await reminder_service.get_rotation_recommendations(
                     session, key_status["user_id"]
                 )

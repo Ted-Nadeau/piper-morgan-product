@@ -342,6 +342,7 @@ class UserAPIKeyService:
 
         return [
             {
+                "id": key.id,
                 "provider": key.provider,
                 "is_active": key.is_active,
                 "is_validated": key.is_validated,

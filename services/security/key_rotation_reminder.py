@@ -105,7 +105,18 @@ class KeyRotationReminder:
     def _calculate_key_age(self, key) -> int:
         """Calculate key age in days"""
         # Use rotated_at if available, otherwise created_at
-        last_update = key.rotated_at or key.created_at
+        # Note: key is a dict from list_user_keys(), with ISO format timestamps
+        rotated_str = key.get("rotated_at")
+        created_str = key["created_at"]
+
+        # Parse ISO format timestamps
+        from datetime import datetime
+
+        if rotated_str:
+            last_update = datetime.fromisoformat(rotated_str)
+        else:
+            last_update = datetime.fromisoformat(created_str)
+
         return (datetime.utcnow() - last_update).days
 
     async def check_key_ages(self, session: AsyncSession, user_id: str) -> List[RotationReminder]:
@@ -116,11 +127,11 @@ class KeyRotationReminder:
             reminders = []
 
             for key in keys:
-                if not key.is_active:
+                if not key["is_active"]:
                     continue  # Skip inactive keys
 
                 age_days = self._calculate_key_age(key)
-                policy = self._get_policy(key.provider)
+                policy = self._get_policy(key["provider"])
 
                 # Check if reminder is needed
                 reminder = self._evaluate_key_age(key, age_days, policy, user_id)
@@ -142,37 +153,37 @@ class KeyRotationReminder:
         # Critical reminder
         if age_days >= policy.critical_days:
             return RotationReminder(
-                provider=key.provider,
+                provider=key["provider"],
                 age_days=age_days,
                 severity="critical",
-                message=f"Your {key.provider} key is {age_days} days old. Rotate immediately!",
+                message=f"Your {key['provider']} key is {age_days} days old. Rotate immediately!",
                 max_age_days=policy.max_age_days,
                 user_id=user_id,
-                key_id=key.id,
+                key_id=key["id"],
             )
 
         # Warning reminders
         if age_days in policy.warning_days:
             return RotationReminder(
-                provider=key.provider,
+                provider=key["provider"],
                 age_days=age_days,
                 severity="warning",
-                message=f"Your {key.provider} key is {age_days} days old. Consider rotating soon.",
+                message=f"Your {key['provider']} key is {age_days} days old. Consider rotating soon.",
                 max_age_days=policy.max_age_days,
                 user_id=user_id,
-                key_id=key.id,
+                key_id=key["id"],
             )
 
         # Info reminder (approaching first warning)
         if policy.warning_days and age_days >= (policy.warning_days[0] - 7):
             return RotationReminder(
-                provider=key.provider,
+                provider=key["provider"],
                 age_days=age_days,
                 severity="info",
-                message=f"Your {key.provider} key is {age_days} days old. Rotation recommended in {policy.warning_days[0] - age_days} days.",
+                message=f"Your {key['provider']} key is {age_days} days old. Rotation recommended in {policy.warning_days[0] - age_days} days.",
                 max_age_days=policy.max_age_days,
                 user_id=user_id,
-                key_id=key.id,
+                key_id=key["id"],
             )
 
         return None
