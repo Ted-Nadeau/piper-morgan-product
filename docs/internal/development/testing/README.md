@@ -7,12 +7,14 @@ This directory contains internal documentation for testing, including team proce
 ## Documentation Files
 
 ### E2E Bug Investigation Protocol
+
 - **[E2E Bug Fix Execution Protocol](e2e-bug-fix-execution-protocol.md)** - TDD/DDD/Excellence Flywheel fix protocol
 - **[E2E Bug Investigation Report Template](e2e-bug-investigation-report-template.md)** - Template for Phase 2 investigation reports
 - **[E2E Bug PM Review Process](e2e-bug-pm-review-process.md)** - Phase 3 pattern recognition and fix strategy
 - **[E2E Bug Session Log Template](e2e-bug-session-log-template.md)** - Template for tracking bugs during e2e testing
 
 ### Manual Testing Guides
+
 - **[Comprehensive Pm Testing Guide](COMPREHENSIVE_PM_TESTING_GUIDE.md)** - Step-by-step guidance and instructions
 - **[Enhanced Pm Manual Testing Guide](ENHANCED_PM_MANUAL_TESTING_GUIDE.md)** - Step-by-step guidance and instructions
 - **[Methodology Config Testing Guide](METHODOLOGY_CONFIG_TESTING_GUIDE.md)** - Step-by-step guidance and instructions
@@ -24,6 +26,7 @@ This directory contains internal documentation for testing, including team proce
 
 - **[← Back to Development](../README.md)**
 - **[📚 Documentation Home](../../README.md)**
+
 ---
 
 **Last Updated**: November 18, 2025

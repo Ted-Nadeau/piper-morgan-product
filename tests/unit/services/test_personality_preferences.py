@@ -18,7 +18,7 @@ from uuid import uuid4
 
 import pytest
 
-from services.database.models import AlphaUser
+from services.database.models import User as AlphaUser
 from services.database.session_factory import AsyncSessionFactory
 from services.personality.personality_profile import (
     ActionLevel,

@@ -13,13 +13,14 @@ Test Coverage:
 """
 
 import pytest
+
 from services.llm.adapters import (
-    LLMFactory,
-    LLMAdapter,
-    LLMResponse,
     ClaudeAdapter,
-    OpenAIAdapter,
     GeminiAdapter,
+    LLMAdapter,
+    LLMFactory,
+    LLMResponse,
+    OpenAIAdapter,
     PerplexityAdapter,
 )
 from services.llm.config import LLMProvider
@@ -192,6 +193,7 @@ class TestGeminiAdapter:
         """Adapter should initialize with config"""
         try:
             import google.generativeai
+
             adapter = GeminiAdapter(api_key="test-key", model="gemini-pro")
 
             assert adapter.model == "gemini-pro"
@@ -205,6 +207,7 @@ class TestGeminiAdapter:
         """Adapter should return model info"""
         try:
             import google.generativeai
+
             adapter = GeminiAdapter(api_key="test-key", model="gemini-pro")
             info = await adapter.get_model_info()
 
@@ -262,9 +265,7 @@ class TestLLMResponse:
 
     def test_llm_response_defaults(self):
         """LLMResponse should use empty dicts for optional fields"""
-        response = LLMResponse(
-            content="Test", model="test-model", provider="test-provider"
-        )
+        response = LLMResponse(content="Test", model="test-model", provider="test-provider")
 
         assert response.usage == {}
         assert response.metadata == {}
@@ -301,9 +302,9 @@ class TestAdapterInterface:
 
         for adapter in self.get_test_adapters():
             for method_name in required_methods:
-                assert hasattr(adapter, method_name), (
-                    f"{adapter.__class__.__name__} missing {method_name}"
-                )
+                assert hasattr(
+                    adapter, method_name
+                ), f"{adapter.__class__.__name__} missing {method_name}"
                 assert callable(getattr(adapter, method_name))
 
     def test_all_adapters_inherit_from_base(self):

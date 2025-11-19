@@ -1,6 +1,8 @@
 """Tests for Context Matcher"""
-import pytest
+
 from datetime import datetime, time
+
+import pytest
 
 from services.learning.context_matcher import ContextMatcher
 
@@ -209,17 +211,11 @@ class TestCheckTemporal:
         """Test various end-of-day trigger formats"""
         # Test "eod" trigger
         assert ContextMatcher._check_temporal("eod", {"current_event": "eod"})
-        assert ContextMatcher._check_temporal(
-            "eod", {"current_event": "end_of_day"}
-        )
+        assert ContextMatcher._check_temporal("eod", {"current_event": "end_of_day"})
 
         # Test "end of day" trigger
-        assert ContextMatcher._check_temporal(
-            "end of day", {"current_event": "eod"}
-        )
-        assert ContextMatcher._check_temporal(
-            "end of day", {"current_event": "end_of_day"}
-        )
+        assert ContextMatcher._check_temporal("end of day", {"current_event": "eod"})
+        assert ContextMatcher._check_temporal("end of day", {"current_event": "end_of_day"})
 
     def test_no_match_returns_false(self):
         """Test unmatched triggers return False"""

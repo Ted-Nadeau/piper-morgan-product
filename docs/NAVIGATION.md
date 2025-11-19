@@ -145,7 +145,8 @@ Each essential briefing includes triggers for loading detailed documentation as 
 **Staging area for claude.ai project knowledge**
 
 Files optimized for RAG search in the claude.ai project knowledge base:
-- **BRIEFING-*** files use prefix for context in flat namespace
+
+- **BRIEFING-\*** files use prefix for context in flat namespace
 - **Symlinked canonical sources** from docs/briefing/ (zero duplication)
 - **Workflow**: Update files in docs/briefing/ → automatically syncs to knowledge/ → PM updates claude.ai
 
