@@ -72,13 +72,14 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ```bash
 git clone https://github.com/mediajunkie/piper-morgan-product.git
-cd piper-morgan
+cd piper-morgan-product
 ```
 
 ### Step 2: Create Virtual Environment
 
 ```bash
-python -m venv venv
+python3.12 -m venv venv
+# Requires Python 3.11 or 3.12 - verify with: python --version
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 

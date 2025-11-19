@@ -29,6 +29,8 @@
 - **📋 TDD Methodology**: [methodology-01-TEST-DRIVEN-DEVELOPMENT.md](methodology-01-TEST-DRIVEN-DEVELOPMENT.md)
 - **📋 Testing Framework**: [methodology-15-TESTING-FRAMEWORK.md](methodology-15-TESTING-FRAMEWORK.md)
 - **🛠️ Testing Guide**: [testing/methodology-config-testing-guide.md](../testing/methodology-config-testing-guide.md)
+- **🐛 E2E Bug Protocol**: [testing/e2e-bug-fix-execution-protocol.md](../testing/e2e-bug-fix-execution-protocol.md) - 3-phase investigation protocol
+- **📋 E2E Bug Templates**: [testing/e2e-bug-investigation-report-template.md](../testing/e2e-bug-investigation-report-template.md) - Investigation report template
 
 ### Issue Tracking & GitHub
 - **📋 Issue Tracking**: [methodology-08-ISSUE-TRACKING.md](methodology-08-ISSUE-TRACKING.md)

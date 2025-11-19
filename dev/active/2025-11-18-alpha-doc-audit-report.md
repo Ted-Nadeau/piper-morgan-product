@@ -260,17 +260,25 @@ from services.database.models import User as AlphaUser, UserAPIKey
 
 ### High Priority (Blocking Alpha)
 
-1. **README.md**
-   - Line 26: Add python version spec
-   - Add troubleshooting section
-   - Link to comprehensive guides
+1. **docs/ALPHA_QUICKSTART.md**
+   - ✅ FIXED: Line 27 `cd piper-morgan` → `cd piper-morgan-product`
+   - ✅ FIXED: Line 28 `python -m venv` → `python3.12 -m venv` with version note
 
-2. **.python-version**
+2. **docs/ALPHA_TESTING_GUIDE.md**
+   - ✅ FIXED: Line 75 `cd piper-morgan` → `cd piper-morgan-product`
+   - ✅ FIXED: Line 81 `python -m venv` → `python3.12 -m venv` with version note
+
+3. **README.md**
+   - Line 26: Already correct (`cd piper-morgan-product`)
+   - Needs: Add python version spec, troubleshooting section
+
+4. **.python-version**
    - Align with PREREQUISITES (3.12 vs 3.11 decision)
    - Document purpose/usage
 
-3. **scripts/setup_wizard.py**
+5. **scripts/setup_wizard.py**
    - ✅ FIXED: AlphaUser import (commit 7ce48ec4)
+   - ❌ NEW BUG: Trying to insert `is_alpha` column that doesn't exist in database
 
 ### Medium Priority (Improve Alpha Experience)
 
