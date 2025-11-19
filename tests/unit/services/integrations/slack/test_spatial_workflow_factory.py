@@ -46,7 +46,7 @@ class TestSpatialWorkflowFactory:
         """Mock event processing result"""
         result = Mock(spec=EventProcessingResult)
         result.success = True
-        result.attention_level = AttentionLevel.HIGH
+        result.attention_level = AttentionLevel.URGENT
         result.emotional_valence = EmotionalValence.POSITIVE
         result.spatial_changes = [{"type": "attention_attracted", "room_id": "C123456"}]
         result.spatial_event = Mock(spec=SpatialEvent)
@@ -108,7 +108,7 @@ class TestSpatialWorkflowFactory:
         # Arrange
         event_result = Mock(spec=EventProcessingResult)
         event_result.success = True
-        event_result.attention_level = AttentionLevel.MEDIUM
+        event_result.attention_level = AttentionLevel.FOCUSED
         event_result.emotional_valence = EmotionalValence.NEUTRAL
         event_result.spatial_event = Mock()
         event_result.spatial_event.event_type = "message_placed"
@@ -147,7 +147,7 @@ class TestSpatialWorkflowFactory:
         # Arrange
         event_result = Mock(spec=EventProcessingResult)
         event_result.success = True
-        event_result.attention_level = AttentionLevel.MEDIUM
+        event_result.attention_level = AttentionLevel.FOCUSED
         event_result.emotional_valence = EmotionalValence.NEGATIVE
         event_result.spatial_event = Mock()
         event_result.spatial_event.event_type = "emotional_marker_updated"
@@ -186,7 +186,7 @@ class TestSpatialWorkflowFactory:
         # Arrange
         event_result = Mock(spec=EventProcessingResult)
         event_result.success = True
-        event_result.attention_level = AttentionLevel.LOW
+        event_result.attention_level = AttentionLevel.AMBIENT
         event_result.emotional_valence = EmotionalValence.NEUTRAL
         event_result.spatial_event = Mock()
         event_result.spatial_event.event_type = "room_created"
@@ -223,7 +223,7 @@ class TestSpatialWorkflowFactory:
         # Arrange
         event_result = Mock(spec=EventProcessingResult)
         event_result.success = True
-        event_result.attention_level = AttentionLevel.LOW
+        event_result.attention_level = AttentionLevel.AMBIENT
         event_result.emotional_valence = EmotionalValence.NEUTRAL
         event_result.spatial_event = Mock()
         event_result.spatial_event.event_type = "unknown_event_type"

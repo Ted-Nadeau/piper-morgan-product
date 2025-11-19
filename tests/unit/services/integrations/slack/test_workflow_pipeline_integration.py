@@ -9,14 +9,13 @@ Slack spatial events into actionable Piper Morgan workflows.
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from uuid import UUID, uuid4
 
 import pytest
 
 from services.domain.models import Feature, Intent, Product, Workflow, WorkItem
 from services.integrations.slack.attention_model import AttentionModel, AttentionSource
 from services.integrations.slack.spatial_mapper import SlackSpatialMapper
-from uuid import UUID, uuid4
-
 from services.integrations.slack.spatial_types import (
     AttentionLevel,
     EmotionalValence,
@@ -139,7 +138,7 @@ class TestCompleteWorkflowPipeline:
 
         # ASSERTION 1: Spatial objects properly created
         assert room.purpose == RoomPurpose.DEVELOPMENT
-        assert attention_attractor.level == AttentionLevel.HIGH
+        assert attention_attractor.level == AttentionLevel.URGENT
         assert spatial_event.event_type == "help_request"
         assert "user registration feature" in spatial_event.content.lower()
 

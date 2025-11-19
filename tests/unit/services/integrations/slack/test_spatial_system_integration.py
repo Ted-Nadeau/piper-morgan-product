@@ -10,10 +10,9 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID, uuid4
 
 import pytest
-
-from uuid import UUID, uuid4
 
 from services.integrations.slack.attention_model import (
     AttentionEvent,
@@ -194,7 +193,7 @@ class TestCompleteOAuthToSpatialWorkflow:
         # ASSERTION 2: Attention attractor created with correct urgency
         assert attention_attractor.coordinates.room_id == "C123456"
         assert attention_attractor.coordinates.territory_id == "T123456"
-        assert attention_attractor.level == AttentionLevel.HIGH
+        assert attention_attractor.level == AttentionLevel.URGENT
         assert "critical bug" in attention_attractor.trigger_content.lower()
 
         # STEP 2: Attention model processing

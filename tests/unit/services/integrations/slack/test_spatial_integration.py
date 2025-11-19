@@ -81,7 +81,7 @@ class TestSlackEventHandler:
         assert result.success is True
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "message_placed"
-        assert result.attention_level == AttentionLevel.LOW
+        assert result.attention_level == AttentionLevel.AMBIENT
         assert result.emotional_valence == EmotionalValence.NEUTRAL
         assert len(result.spatial_changes) == 1
         assert result.spatial_changes[0]["type"] == "message_placed"
@@ -111,7 +111,7 @@ class TestSlackEventHandler:
         assert result.success is True
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "attention_attracted"
-        assert result.attention_level == AttentionLevel.HIGH
+        assert result.attention_level == AttentionLevel.URGENT
         assert result.emotional_valence == EmotionalValence.POSITIVE
         assert len(result.navigation_suggestions) == 1
         assert "Navigate to room" in result.navigation_suggestions[0]
@@ -141,7 +141,7 @@ class TestSlackEventHandler:
         assert result.success is True
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "emotional_marker_updated"
-        assert result.attention_level == AttentionLevel.MEDIUM
+        assert result.attention_level == AttentionLevel.FOCUSED
         assert result.emotional_valence == EmotionalValence.POSITIVE
 
     async def test_process_unsupported_event(self, event_handler):
@@ -208,7 +208,7 @@ class TestSlackSpatialAgent:
         result = EventProcessingResult(
             success=True,
             spatial_event=spatial_event,
-            attention_level=AttentionLevel.HIGH,
+            attention_level=AttentionLevel.URGENT,
             emotional_valence=EmotionalValence.POSITIVE,
         )
 
@@ -231,7 +231,7 @@ class TestSlackSpatialAgent:
         result = EventProcessingResult(
             success=True,
             spatial_event=spatial_event,
-            attention_level=AttentionLevel.MEDIUM,
+            attention_level=AttentionLevel.FOCUSED,
             emotional_valence=EmotionalValence.NEGATIVE,
         )
 
@@ -254,7 +254,7 @@ class TestSlackSpatialAgent:
         result = EventProcessingResult(
             success=True,
             spatial_event=spatial_event,
-            attention_level=AttentionLevel.LOW,
+            attention_level=AttentionLevel.AMBIENT,
             emotional_valence=EmotionalValence.NEUTRAL,
         )
 
@@ -282,8 +282,8 @@ class TestSlackSpatialAgent:
         """Test getting navigation suggestions"""
         # Add some test data to spatial state
         spatial_agent.spatial_state.attention_focus = [
-            Mock(level=AttentionLevel.HIGH),
-            Mock(level=AttentionLevel.MEDIUM),
+            Mock(level=AttentionLevel.URGENT),
+            Mock(level=AttentionLevel.FOCUSED),
         ]
 
         spatial_agent.spatial_state.spatial_memories = {

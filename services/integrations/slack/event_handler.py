@@ -155,7 +155,7 @@ class SlackEventHandler:
                     "content_preview": event_data.get("text", "")[:100],
                 }
             ],
-            attention_level=AttentionLevel.LOW,
+            attention_level=AttentionLevel.AMBIENT,
             emotional_valence=EmotionalValence.NEUTRAL,
         )
 
@@ -197,7 +197,7 @@ class SlackEventHandler:
                     "object_id": event_data.get("item", {}).get("ts"),
                 }
             ],
-            attention_level=AttentionLevel.MEDIUM,
+            attention_level=AttentionLevel.FOCUSED,
             emotional_valence=(
                 emotional_marker.valence if emotional_marker else EmotionalValence.NEUTRAL
             ),
@@ -239,7 +239,7 @@ class SlackEventHandler:
                     "content": event_data.get("text", ""),
                 }
             ],
-            attention_level=AttentionLevel.HIGH,
+            attention_level=AttentionLevel.URGENT,
             emotional_valence=EmotionalValence.POSITIVE,
             navigation_suggestions=[f"Navigate to room {event_data.get('channel')} to respond"],
         )
@@ -296,7 +296,7 @@ class SlackEventHandler:
                     "room_name": event_data.get("channel", {}).get("name") if created else None,
                 }
             ],
-            attention_level=AttentionLevel.MEDIUM,
+            attention_level=AttentionLevel.FOCUSED,
             emotional_valence=EmotionalValence.NEUTRAL,
         )
 
@@ -345,7 +345,7 @@ class SlackEventHandler:
                     "object_id": event_data.get("ts"),
                 }
             ],
-            attention_level=AttentionLevel.MEDIUM,
+            attention_level=AttentionLevel.FOCUSED,
             emotional_valence=EmotionalValence.NEUTRAL,
         )
 

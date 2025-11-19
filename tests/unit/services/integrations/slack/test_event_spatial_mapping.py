@@ -89,9 +89,9 @@ class TestEventSpatialMapping:
         assert result.success is True
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "attention_attracted"
-        assert result.attention_level == AttentionLevel.HIGH
+        assert result.attention_level == AttentionLevel.URGENT
         assert result.spatial_event.attention_attractor is not None
-        assert result.spatial_event.attention_attractor.level == AttentionLevel.HIGH
+        assert result.spatial_event.attention_attractor.level == AttentionLevel.URGENT
 
     async def test_reaction_event_maps_to_emotional_marker(self, event_handler, spatial_mapper):
         """Test that reaction events map to emotional markers"""
@@ -213,7 +213,9 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "room_deleted"
         assert result.spatial_event.coordinates.room_id == "C789012"
 
-    async def test_multiple_events_update_spatial_state_sequentially(self, event_handler, spatial_mapper):
+    async def test_multiple_events_update_spatial_state_sequentially(
+        self, event_handler, spatial_mapper
+    ):
         """Test that multiple events update spatial state sequentially"""
         # Arrange
         events = [
