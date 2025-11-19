@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from services.api.errors import ValidationError
 from services.security.api_key_validator import (
     APIKeyValidator,
-    ValidationError,
     ValidationReport,
     ValidationResult,
     get_provider_format_info,
