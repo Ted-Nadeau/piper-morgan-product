@@ -619,6 +619,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     print("\n   OpenAI API key (required):")
 
     # Check keychain first (in case wizard was run before)
+    print("   Checking keychain for existing key...")
     openai_key = None
     try:
         async with AsyncSessionFactory.session_scope() as session:
@@ -627,7 +628,10 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
                 print("   ✓ Using existing key from keychain")
                 stored_keys["openai"] = existing_key
                 openai_key = existing_key  # Mark as found
-    except Exception:
+            else:
+                print("   ℹ️  No existing key found in keychain")
+    except Exception as e:
+        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
         pass  # Keychain check failed, continue to other methods
 
     # Check for environment variable if not in keychain
@@ -703,6 +707,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     print("\n   Anthropic API key (optional, press Enter to skip):")
 
     # Check keychain first
+    print("   Checking keychain for existing key...")
     anthropic_key = None
     try:
         async with AsyncSessionFactory.session_scope() as session:
@@ -711,7 +716,10 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
                 print("   ✓ Using existing key from keychain")
                 stored_keys["anthropic"] = existing_key
                 anthropic_key = existing_key  # Mark as found
-    except Exception:
+            else:
+                print("   ℹ️  No existing key found in keychain")
+    except Exception as e:
+        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
         pass  # Keychain check failed, continue to other methods
 
     # Check for environment variable if not in keychain
@@ -772,6 +780,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     print("\n   GitHub token (optional, press Enter to skip):")
 
     # Check keychain first
+    print("   Checking keychain for existing token...")
     github_token = None
     try:
         async with AsyncSessionFactory.session_scope() as session:
@@ -780,7 +789,10 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
                 print("   ✓ Using existing token from keychain")
                 stored_keys["github"] = existing_key
                 github_token = existing_key  # Mark as found
-    except Exception:
+            else:
+                print("   ℹ️  No existing token found in keychain")
+    except Exception as e:
+        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
         pass  # Keychain check failed, continue to other methods
 
     # Check for environment variable if not in keychain
