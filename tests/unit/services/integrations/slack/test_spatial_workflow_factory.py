@@ -179,7 +179,7 @@ class TestSpatialWorkflowFactory:
         assert workflow is not None
         assert workflow.id == "wf-feedback"
 
-    def test_new_room_event_creates_pattern_workflow(
+    async def test_new_room_event_creates_pattern_workflow(
         self, slack_workflow_factory, workflow_factory
     ):
         """Test that new room events create pattern learning workflows"""
@@ -218,7 +218,7 @@ class TestSpatialWorkflowFactory:
         assert workflow is not None
         assert workflow.id == "wf-pattern"
 
-    def test_no_mapping_returns_none(self, slack_workflow_factory, workflow_factory):
+    async def test_no_mapping_returns_none(self, slack_workflow_factory, workflow_factory):
         """Test that events without mappings return None"""
         # Arrange
         event_result = Mock(spec=EventProcessingResult)
@@ -249,7 +249,7 @@ class TestSpatialWorkflowFactory:
         # Assert
         assert workflow is None
 
-    def test_workflow_context_enrichment(
+    async def test_workflow_context_enrichment(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
         """Test that workflows are enriched with spatial context"""
@@ -350,7 +350,7 @@ class TestSpatialWorkflowFactory:
         message_mappings = [m for m in mappings if m.spatial_event_type == "message_placed"]
         assert len(message_mappings) > 0
 
-    def test_workflow_factory_error_handling(
+    async def test_workflow_factory_error_handling(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
         """Test that workflow factory errors are handled gracefully"""
