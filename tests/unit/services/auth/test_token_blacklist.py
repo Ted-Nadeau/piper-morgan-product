@@ -25,7 +25,7 @@ from services.auth.token_blacklist import TokenBlacklist
 # ============================================================================
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_redis():
     """Mock Redis client for testing with stateful blacklist"""
     redis = AsyncMock()
@@ -49,15 +49,21 @@ def mock_redis():
     return redis
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_redis_factory(mock_redis):
     """Mock RedisFactory for testing"""
     factory = MagicMock()
-    factory.create_client = AsyncMock(return_value=mock_redis)
+
+    # Ensure create_client returns the SAME mock_redis instance each time
+    # (with shared stateful blacklisted_tokens set)
+    async def create_client():
+        return mock_redis
+
+    factory.create_client = create_client
     return factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_db_session_factory():
     """Mock database session factory"""
     factory = MagicMock()
@@ -65,7 +71,7 @@ def mock_db_session_factory():
     return factory
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def blacklist(mock_redis_factory, mock_db_session_factory):
     """Create TokenBlacklist instance for testing"""
     bl = TokenBlacklist(mock_redis_factory, mock_db_session_factory)
@@ -88,6 +94,7 @@ def jwt_service(blacklist):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration  # Skip conftest auto-mock of is_blacklisted
 class TestTokenBlacklistOperations:
     """Test token blacklist basic operations"""
 
@@ -182,14 +189,16 @@ class TestTokenBlacklistOperations:
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration  # Skip conftest auto-mock for blacklist integration tests
 class TestJWTServiceIntegration:
     """Test blacklist integration with JWT service"""
 
     async def test_validate_token_checks_blacklist(self, jwt_service, blacklist):
         """Should check blacklist during token validation"""
         # Create a valid token
+        user_id = uuid4()  # Issue #262
         token = jwt_service.generate_access_token(
-            user_id=uuid4(),  # Issue #262
+            user_id=user_id,
             user_email="user@example.com",
             scopes=["read", "write"],
         )
@@ -197,7 +206,7 @@ class TestJWTServiceIntegration:
         # Initially valid (not blacklisted)
         claims = await jwt_service.validate_token(token)
         assert claims is not None
-        assert claims.user_id == "user123"
+        assert claims.user_id == str(user_id)
 
         # Blacklist the token
         await jwt_service.revoke_token(token, reason="test")
@@ -292,6 +301,7 @@ class TestMiddlewareIntegration:
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration  # Skip conftest auto-mock for edge case tests
 class TestEdgeCases:
     """Test edge cases and error handling"""
 
@@ -322,7 +332,8 @@ class TestEdgeCases:
         """Should check blacklist when refreshing tokens"""
         # Create refresh token
         refresh_token = jwt_service.generate_refresh_token(
-            user_id=uuid4(),  # Issue #262 user_email="test@example.com"
+            user_id=uuid4(),  # Issue #262
+            user_email="test@example.com",
         )
 
         # Should work initially
