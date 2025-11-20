@@ -8,6 +8,12 @@ import time
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 
+class PerformanceTargetExceededError(Exception):
+    """Raised when performance target is exceeded"""
+
+    pass
+
+
 class PerformanceMeasurement:
     """Performance measurement result"""
 
