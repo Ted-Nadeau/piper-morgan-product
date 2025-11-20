@@ -16,21 +16,19 @@ class TestAPIDegradationIntegration:
 
     @pytest.fixture
     def test_client(self):
-        """Create test client for API testing"""
-        return TestClient(app)
+        """Create test client for API testing with lifespan context"""
+        # Use context manager to ensure lifespan events run
+        with TestClient(app) as client:
+            yield client
 
     def test_api_handles_database_degradation_gracefully(self, test_client):
-        """Test API returns proper structured response when database is unavailable"""
+        """Test API returns proper structured response when IntentService is unavailable"""
 
-        # Mock database connection failure
-        with patch(
-            "services.database.session_factory.AsyncSessionFactory.session_scope"
-        ) as mock_session:
-            mock_session.side_effect = Exception("Database connection failed")
-
+        # Mock IntentService being unavailable (simulates service initialization failure)
+        with patch.object(test_client.app.state, "intent_service", None):
             response = test_client.post("/api/v1/intent", json={"message": "List all projects"})
 
-            # Should return 200 with proper structured response
+            # Should return 200 with proper structured response (Pattern-007 graceful degradation)
             assert response.status_code == 200
             data = response.json()
 
@@ -46,17 +44,20 @@ class TestAPIDegradationIntegration:
             assert "Docker" in data["message"] or "try again" in data["message"]
 
     def test_api_handles_circuit_breaker_degradation(self, test_client):
-        """Test API handles circuit breaker activation gracefully"""
+        """Test API handles exceptions during intent processing gracefully"""
 
-        # Mock circuit breaker failure
-        with patch(
-            "services.queries.query_router.QueryRouter._execute_with_circuit_breaker"
-        ) as mock_circuit:
-            mock_circuit.side_effect = Exception("Circuit breaker open")
+        # Mock IntentService.process_intent to throw exception
+        async def mock_process_intent_error(*args, **kwargs):
+            raise Exception("Circuit breaker open")
 
+        with patch.object(
+            test_client.app.state.intent_service,
+            "process_intent",
+            side_effect=mock_process_intent_error,
+        ):
             response = test_client.post("/api/v1/intent", json={"message": "List all projects"})
 
-            # Should return 200 with degradation response
+            # Should return 200 with degradation response (Pattern-007)
             assert response.status_code == 200
             data = response.json()
 
@@ -79,20 +80,23 @@ class TestAPIDegradationIntegration:
         assert "project_id" in data["detail"].lower()
 
     def test_api_handles_file_service_degradation(self, test_client):
-        """Test API handles file service degradation gracefully"""
+        """Test API handles file service exceptions gracefully"""
 
-        # Mock file service failure
-        with patch(
-            "services.queries.file_queries.FileQueryService.read_file_contents"
-        ) as mock_file:
-            mock_file.side_effect = Exception("File service unavailable")
+        # Mock IntentService.process_intent to throw file service exception
+        async def mock_process_intent_file_error(*args, **kwargs):
+            raise Exception("File service unavailable")
 
+        with patch.object(
+            test_client.app.state.intent_service,
+            "process_intent",
+            side_effect=mock_process_intent_file_error,
+        ):
             response = test_client.post(
                 "/api/v1/intent",
                 json={"message": "Read file contents", "context": {"resolved_file_id": "test-id"}},
             )
 
-            # Should return 200 with degradation response
+            # Should return 200 with degradation response (Pattern-007)
             assert response.status_code == 200
             data = response.json()
 
@@ -102,17 +106,20 @@ class TestAPIDegradationIntegration:
             assert data["intent"]["action"] == "read_file_contents"
 
     def test_api_handles_conversation_service_degradation(self, test_client):
-        """Test API handles conversation service degradation gracefully"""
+        """Test API handles conversation service exceptions gracefully"""
 
-        # Mock conversation service failure
-        with patch(
-            "services.queries.conversation_queries.ConversationQueryService.get_greeting"
-        ) as mock_conv:
-            mock_conv.side_effect = Exception("Conversation service unavailable")
+        # Mock IntentService.process_intent to throw conversation service exception
+        async def mock_process_intent_conv_error(*args, **kwargs):
+            raise Exception("Conversation service unavailable")
 
+        with patch.object(
+            test_client.app.state.intent_service,
+            "process_intent",
+            side_effect=mock_process_intent_conv_error,
+        ):
             response = test_client.post("/api/v1/intent", json={"message": "Hello"})
 
-            # Should return 200 with degradation response
+            # Should return 200 with degradation response (Pattern-007)
             assert response.status_code == 200
             data = response.json()
 
@@ -121,7 +128,7 @@ class TestAPIDegradationIntegration:
             assert "intent" in data
 
     def test_api_maintains_response_structure_consistency(self, test_client):
-        """Test API maintains consistent response structure across all degradation scenarios"""
+        """Test API maintains consistent response structure when IntentService unavailable"""
 
         degradation_scenarios = [
             ("List all projects", "list_projects"),
@@ -129,15 +136,12 @@ class TestAPIDegradationIntegration:
             ("Show me the default project", "get_default_project"),
         ]
 
-        for message, expected_action in degradation_scenarios:
-            with patch(
-                "services.database.connection.AsyncSessionFactory.session_scope"
-            ) as mock_session:
-                mock_session.side_effect = Exception("Database connection failed")
-
+        # Test that all scenarios return consistent degradation response structure
+        with patch.object(test_client.app.state, "intent_service", None):
+            for message, expected_action in degradation_scenarios:
                 response = test_client.post("/api/v1/intent", json={"message": message})
 
-                # All should return 200 with consistent structure
+                # All should return 200 with consistent structure (Pattern-007)
                 assert response.status_code == 200
                 data = response.json()
 

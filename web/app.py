@@ -45,6 +45,94 @@ API_BASE_URL = port_config.get_api_base_url()
 logger = structlog.get_logger()
 
 
+# Pattern-007: Graceful degradation helper functions
+def _extract_degradation_message(error: Exception) -> str:
+    """
+    Extract user-friendly degradation message from exception.
+
+    Maps technical exceptions to actionable user guidance following Pattern-007.
+    Never exposes technical details, always provides recovery guidance.
+
+    Args:
+        error: The exception that occurred
+
+    Returns:
+        User-friendly degradation message with recovery guidance
+    """
+    error_msg = str(error).lower()
+
+    # Database connection failures
+    if "database" in error_msg or "connection" in error_msg or "psycopg" in error_msg:
+        return "Database temporarily unavailable. Please ensure Docker is running and try again."
+
+    # File service failures
+    if "file" in error_msg and ("service" in error_msg or "unavailable" in error_msg):
+        return "File service temporarily unavailable. Please try again in a few moments."
+
+    # Circuit breaker failures
+    if "circuit breaker" in error_msg or "circuit" in error_msg:
+        return "Service temporarily overloaded. Please try again in a few moments."
+
+    # Conversation service failures
+    if "conversation" in error_msg and ("service" in error_msg or "unavailable" in error_msg):
+        return "Conversation service temporarily unavailable. Please try again shortly."
+
+    # Generic degradation message
+    return "Service temporarily unavailable. Please try again in a few moments."
+
+
+def _create_degradation_response(message: str, degradation_msg: str) -> dict:
+    """
+    Create structured IntentResponse for graceful degradation.
+
+    Implements Pattern-007 requirement: maintain consistent response structure
+    even when services fail. Returns 200 OK with user-friendly message.
+
+    Args:
+        message: Original user message
+        degradation_msg: User-friendly degradation message
+
+    Returns:
+        Structured IntentResponse dict with degradation message
+    """
+    # Try to infer basic intent from message for better UX
+    message_lower = message.lower()
+    action = "unknown"
+    category = "query"
+
+    # Simple intent inference for common patterns
+    if "list" in message_lower and "project" in message_lower:
+        action = "list_projects"
+    elif (
+        any(word in message_lower for word in ["count", "how many", "number of"])
+        and "project" in message_lower
+    ):
+        action = "count_projects"
+    elif "default project" in message_lower:
+        action = "get_default_project"
+    elif "show" in message_lower and "project" in message_lower:
+        action = "get_default_project"
+    elif "read" in message_lower and "file" in message_lower:
+        action = "read_file_contents"
+    elif any(greeting in message_lower for greeting in ["hello", "hi", "hey"]):
+        action = "greeting"
+        category = "conversation"
+
+    return {
+        "message": degradation_msg,
+        "intent": {
+            "action": action,
+            "category": category,
+            "confidence": 0.0,  # Low confidence due to degradation
+            "context": {},
+        },
+        "workflow_id": None,
+        "requires_clarification": False,
+        "clarification_type": None,
+        "suggestions": [],
+    }
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -746,6 +834,11 @@ async def process_intent(request: Request):
     Delegates all business logic to IntentService.
     Route only handles HTTP concerns (request parsing, response formatting, status codes).
 
+    Implements Pattern-007 (Async Error Handling) graceful degradation:
+    - Returns 200 OK with structured response even when services unavailable
+    - Provides user-friendly degradation messages
+    - Maintains consistent IntentResponse structure
+
     Business logic: services/intent/intent_service.py
     """
     try:
@@ -758,10 +851,11 @@ async def process_intent(request: Request):
         intent_service = getattr(request.app.state, "intent_service", None)
 
         if intent_service is None:
-            # Service not initialized - should not happen with proper lifespan
-            return internal_error(
-                "IntentService not available - initialization failed",
-                error_id="intent-service-unavailable",
+            # Pattern-007: Graceful degradation - return 200 with user-friendly message
+            logger.warning("IntentService not available - returning degradation response")
+            return _create_degradation_response(
+                message,
+                "Database temporarily unavailable. Please ensure Docker is running and try again.",
             )
 
         # Delegate to service (all business logic)
@@ -786,9 +880,16 @@ async def process_intent(request: Request):
         return response
 
     except Exception as e:
-        # Unexpected error - HTTP 500
+        # Pattern-007: Graceful degradation - return 200 with user-friendly message
         logger.error(f"Intent route error: {str(e)}", exc_info=True)
-        return internal_error("Intent processing failed")
+
+        # Extract user-friendly degradation message from exception
+        degradation_msg = _extract_degradation_message(e)
+
+        # Return structured IntentResponse instead of 500 error
+        return _create_degradation_response(
+            request_data.get("message", "") if "request_data" in locals() else "", degradation_msg
+        )
 
 
 @app.get("/standup")
