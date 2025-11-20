@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tests.mocks.mock_agents import MockAgent, MockAgentCoordinator
+from tests.mocks.mock_agents import MockAgent, MockCoordinatorAgent
 
 # Import our testing framework components
 from tests.utils.performance_monitor import PerformanceMonitor
@@ -23,7 +23,7 @@ class TestDatabaseIntegration:
 
     def setup_method(self):
         """Set up test fixtures for each test method."""
-        self.coordinator = MockAgentCoordinator()
+        self.coordinator = MockCoordinatorAgent()
         self.performance_monitor = PerformanceMonitor()
 
     def test_database_connection_validation(self):

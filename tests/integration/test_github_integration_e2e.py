@@ -11,7 +11,6 @@ import pytest
 
 from services.domain.models import Intent, Task, Workflow
 from services.domain.work_item_extractor import WorkItemExtractor
-from services.integrations.github.github_agent import GitHubAgent
 from services.orchestration.engine import OrchestrationEngine
 from services.shared_types import IntentCategory, TaskStatus, TaskType, WorkflowType
 

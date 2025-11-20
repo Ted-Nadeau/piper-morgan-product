@@ -16,7 +16,7 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select
 
-from services.database.models import AlphaUser
+from services.database.models import User
 
 
 class TestDataIsolation:
@@ -92,7 +92,7 @@ class TestDataIsolation:
         - Contains projects, q4_goals, team info
         - Data structure is valid JSON
         """
-        result = await db_session.execute(select(AlphaUser).where(AlphaUser.username == "xian"))
+        result = await db_session.execute(select(User).where(User.username == "xian"))
         user = result.scalar_one_or_none()
 
         assert user is not None, "User 'xian' must exist in alpha_users table"
@@ -149,7 +149,7 @@ class TestDataIsolation:
         from services.config.config_service import ConfigService
 
         # Get xian's user_id
-        result = await db_session.execute(select(AlphaUser).where(AlphaUser.username == "xian"))
+        result = await db_session.execute(select(User).where(User.username == "xian"))
         user = result.scalar_one()
 
         config_service = ConfigService(db_session)
@@ -184,11 +184,11 @@ class TestDataIsolation:
         from services.config.config_service import ConfigService
 
         # Get xian (existing user with personal data)
-        result = await db_session.execute(select(AlphaUser).where(AlphaUser.username == "xian"))
+        result = await db_session.execute(select(User).where(User.username == "xian"))
         user_xian = result.scalar_one_or_none()
 
         # Create test user B with different preferences
-        user_b = AlphaUser(
+        user_b = User(
             username="test_user_b",
             email="testb@example.com",
             preferences={"projects": ["Test Project B"], "team": {"engineers": 3}},

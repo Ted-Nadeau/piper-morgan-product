@@ -9,7 +9,6 @@ from typing import Dict
 
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.features.morning_standup import MorningStandupWorkflow
-from services.integrations.github.github_agent import GitHubAgent
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
 

@@ -1,92 +1,92 @@
 🚀 Starting Piper Morgan...
    ⏳ Initializing services...
-2025-11-18 07:33:52 [debug    ] Using default configuration (no user config found) path=config/PIPER.md
-2025-11-18 07:33:52 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.md
-2025-11-18 07:33:52 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
-2025-11-18 07:33:52 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
-2025-11-18 07:33:53 [debug    ] Retrieved API key for openai from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved openai key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for anthropic from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved anthropic key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for gemini from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved gemini key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for perplexity from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved perplexity key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for anthropic from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved anthropic key from keychain (secure)
-2025-11-18 07:33:53 [info     ] Anthropic client initialized
-2025-11-18 07:33:53 [debug    ] Retrieved API key for openai from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved openai key from keychain (secure)
-2025-11-18 07:33:53 [info     ] OpenAI client initialized
-2025-11-18 07:33:53 [info     ] Initializing LLM domain service...
-2025-11-18 07:33:53 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
-2025-11-18 07:33:53 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
-2025-11-18 07:33:53 [info     ] Validating LLM providers...
-2025-11-18 07:33:53 [debug    ] Retrieved API key for openai from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved openai key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for anthropic from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved anthropic key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for gemini from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved gemini key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for perplexity from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved perplexity key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for openai from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved openai key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for anthropic from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved anthropic key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for gemini from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved gemini key from keychain (secure)
-2025-11-18 07:33:53 [debug    ] Retrieved API key for perplexity from keychain
-2025-11-18 07:33:53 [debug    ] Retrieved perplexity key from keychain (secure)
-2025-11-18 07:33:54 [info     ] ✅ openai: Valid
-2025-11-18 07:33:54 [info     ] ✅ anthropic: Valid
-2025-11-18 07:33:54 [info     ] ✅ gemini: Valid
-2025-11-18 07:33:54 [info     ] ✅ perplexity: Valid
-2025-11-18 07:33:54 [info     ] ✅ openai: Valid
-2025-11-18 07:33:54 [info     ] ✅ anthropic: Valid
-2025-11-18 07:33:54 [info     ] ✅ gemini: Valid
-2025-11-18 07:33:54 [info     ] ✅ perplexity: Valid
-2025-11-18 07:33:54 [info     ] LLM providers validated: 4/4
-2025-11-18 07:33:54 [info     ] LLM client initialized
-2025-11-18 07:33:54 [info     ] Initializing Pattern-012 LLM adapters...
-2025-11-18 07:33:54 [debug    ] Retrieved API key for openai from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved openai key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] Retrieved API key for anthropic from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved anthropic key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] Retrieved API key for gemini from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved gemini key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] Retrieved API key for perplexity from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved perplexity key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] Retrieved API key for openai from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved openai key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] factory_creating_adapter       adapter_class=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
-2025-11-18 07:33:54 [info     ] openai_adapter_initialized     model=gpt-4-turbo-preview timeout=60.0
-2025-11-18 07:33:54 [info     ] factory_adapter_created        adapter_type=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
-2025-11-18 07:33:54 [info     ] adapter_initialized            adapter_type=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
-2025-11-18 07:33:54 [debug    ] Retrieved API key for anthropic from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved anthropic key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] factory_creating_adapter       adapter_class=ClaudeAdapter model=claude-3-5-sonnet-20241022 provider=anthropic
-2025-11-18 07:33:54 [info     ] claude_adapter_initialized     model=claude-3-5-sonnet-20241022 timeout=60.0
-2025-11-18 07:33:54 [info     ] factory_adapter_created        adapter_type=ClaudeAdapter model=claude-3-5-sonnet-20241022 provider=anthropic
-2025-11-18 07:33:54 [info     ] adapter_initialized            adapter_type=ClaudeAdapter model=claude-3-5-sonnet-20241022 provider=anthropic
-2025-11-18 07:33:54 [debug    ] Retrieved API key for gemini from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved gemini key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] factory_creating_adapter       adapter_class=GeminiAdapter model=gemini-pro provider=gemini
-2025-11-18 07:33:54 [error    ] factory_import_error           error=google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0 help=Install required package (e.g., google-generativeai) provider=gemini
-2025-11-18 07:33:54 [warning  ] Failed to initialize gemini adapter: google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0
-2025-11-18 07:33:54 [debug    ] Retrieved API key for perplexity from keychain
-2025-11-18 07:33:54 [debug    ] Retrieved perplexity key from keychain (secure)
-2025-11-18 07:33:54 [debug    ] factory_creating_adapter       adapter_class=PerplexityAdapter model=pplx-70b-online provider=perplexity
-2025-11-18 07:33:54 [info     ] perplexity_adapter_initialized model=pplx-70b-online online_search=True
-2025-11-18 07:33:54 [info     ] factory_adapter_created        adapter_type=PerplexityAdapter model=pplx-70b-online provider=perplexity
-2025-11-18 07:33:54 [info     ] adapter_initialized            adapter_type=PerplexityAdapter model=pplx-70b-online provider=perplexity
-2025-11-18 07:33:54 [info     ] Pattern-012 adapters initialized: 3/4
-2025-11-18 07:33:54 [info     ] LLM domain service initialized successfully
-2025-11-18 07:33:54 [info     ] Adapters available: [<LLMProvider.OPENAI: 'openai'>, <LLMProvider.ANTHROPIC: 'anthropic'>, <LLMProvider.PERPLEXITY: 'perplexity'>]
+2025-11-19 17:39:18 [debug    ] Using default configuration (no user config found) path=config/PIPER.md
+2025-11-19 17:39:18 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.md
+2025-11-19 17:39:18 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-11-19 17:39:18 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-11-19 17:39:18 [debug    ] Retrieved API key for openai from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved openai key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for anthropic from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for gemini from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved gemini key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for perplexity from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for anthropic from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-11-19 17:39:18 [info     ] Anthropic client initialized
+2025-11-19 17:39:18 [debug    ] Retrieved API key for openai from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved openai key from keychain (secure)
+2025-11-19 17:39:18 [info     ] OpenAI client initialized
+2025-11-19 17:39:18 [info     ] Initializing LLM domain service...
+2025-11-19 17:39:18 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2025-11-19 17:39:18 [debug    ] Selection config loaded: env=development, excluded=[], default=openai
+2025-11-19 17:39:18 [info     ] Validating LLM providers...
+2025-11-19 17:39:18 [debug    ] Retrieved API key for openai from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved openai key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for anthropic from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for gemini from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved gemini key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for perplexity from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for openai from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved openai key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for anthropic from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for gemini from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved gemini key from keychain (secure)
+2025-11-19 17:39:18 [debug    ] Retrieved API key for perplexity from keychain
+2025-11-19 17:39:18 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-11-19 17:39:20 [info     ] ✅ openai: Valid
+2025-11-19 17:39:20 [info     ] ✅ anthropic: Valid
+2025-11-19 17:39:20 [info     ] ✅ gemini: Valid
+2025-11-19 17:39:20 [info     ] ✅ perplexity: Valid
+2025-11-19 17:39:20 [info     ] ✅ openai: Valid
+2025-11-19 17:39:20 [info     ] ✅ anthropic: Valid
+2025-11-19 17:39:20 [info     ] ✅ gemini: Valid
+2025-11-19 17:39:20 [info     ] ✅ perplexity: Valid
+2025-11-19 17:39:20 [info     ] LLM providers validated: 4/4
+2025-11-19 17:39:20 [info     ] LLM client initialized
+2025-11-19 17:39:20 [info     ] Initializing Pattern-012 LLM adapters...
+2025-11-19 17:39:20 [debug    ] Retrieved API key for openai from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved openai key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] Retrieved API key for anthropic from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] Retrieved API key for gemini from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved gemini key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] Retrieved API key for perplexity from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] Retrieved API key for openai from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved openai key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] factory_creating_adapter       adapter_class=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
+2025-11-19 17:39:20 [info     ] openai_adapter_initialized     model=gpt-4-turbo-preview timeout=60.0
+2025-11-19 17:39:20 [info     ] factory_adapter_created        adapter_type=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
+2025-11-19 17:39:20 [info     ] adapter_initialized            adapter_type=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
+2025-11-19 17:39:20 [debug    ] Retrieved API key for anthropic from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved anthropic key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] factory_creating_adapter       adapter_class=ClaudeAdapter model=claude-3-5-sonnet-20241022 provider=anthropic
+2025-11-19 17:39:20 [info     ] claude_adapter_initialized     model=claude-3-5-sonnet-20241022 timeout=60.0
+2025-11-19 17:39:20 [info     ] factory_adapter_created        adapter_type=ClaudeAdapter model=claude-3-5-sonnet-20241022 provider=anthropic
+2025-11-19 17:39:20 [info     ] adapter_initialized            adapter_type=ClaudeAdapter model=claude-3-5-sonnet-20241022 provider=anthropic
+2025-11-19 17:39:20 [debug    ] Retrieved API key for gemini from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved gemini key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] factory_creating_adapter       adapter_class=GeminiAdapter model=gemini-pro provider=gemini
+2025-11-19 17:39:20 [error    ] factory_import_error           error=google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0 help=Install required package (e.g., google-generativeai) provider=gemini
+2025-11-19 17:39:20 [warning  ] Failed to initialize gemini adapter: google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0
+2025-11-19 17:39:20 [debug    ] Retrieved API key for perplexity from keychain
+2025-11-19 17:39:20 [debug    ] Retrieved perplexity key from keychain (secure)
+2025-11-19 17:39:20 [debug    ] factory_creating_adapter       adapter_class=PerplexityAdapter model=pplx-70b-online provider=perplexity
+2025-11-19 17:39:20 [info     ] perplexity_adapter_initialized model=pplx-70b-online online_search=True
+2025-11-19 17:39:20 [info     ] factory_adapter_created        adapter_type=PerplexityAdapter model=pplx-70b-online provider=perplexity
+2025-11-19 17:39:20 [info     ] adapter_initialized            adapter_type=PerplexityAdapter model=pplx-70b-online provider=perplexity
+2025-11-19 17:39:20 [info     ] Pattern-012 adapters initialized: 3/4
+2025-11-19 17:39:20 [info     ] LLM domain service initialized successfully
+2025-11-19 17:39:20 [info     ] Adapters available: [<LLMProvider.OPENAI: 'openai'>, <LLMProvider.ANTHROPIC: 'anthropic'>, <LLMProvider.PERPLEXITY: 'perplexity'>]
 /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-2025-11-18 07:33:55 [info     ] IntentCache integrated with classifier ttl_seconds=3600
-2025-11-18 07:33:55 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-11-19 17:39:21 [info     ] IntentCache integrated with classifier ttl_seconds=3600
+2025-11-19 17:39:21 [info     ] IntentCache integrated with classifier ttl_seconds=3600
 Config file not found: config/PIPER.user.md
 /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/pydantic/_internal/_fields.py:184: UserWarning: Field name "validate" shadows an attribute in parent "BaseModel";
   warnings.warn(

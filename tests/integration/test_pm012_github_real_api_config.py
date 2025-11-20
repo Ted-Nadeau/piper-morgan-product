@@ -4,12 +4,10 @@ Configuration and utilities for testing with actual GitHub API
 """
 
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from unittest.mock import Mock
 
 import pytest
-
-from services.integrations.github.github_agent import GitHubAgent
 
 
 class GitHubTestConfig:
@@ -50,7 +48,7 @@ class GitHubTestConfig:
         }
 
 
-class MockGitHubAgentFactory:
+class MockAnyFactory:
     """Factory for creating mock GitHub agents for testing"""
 
     @staticmethod
@@ -139,13 +137,13 @@ def skip_if_no_real_api():
     return decorator
 
 
-def create_real_github_agent() -> Optional[GitHubAgent]:
+def create_real_github_agent() -> Any:
     """Create a real GitHub agent for integration testing"""
     if not GitHubTestConfig.is_real_api_available():
         return None
 
     try:
-        return GitHubAgent(token=GitHubTestConfig.get_github_token())
+        return Any(token=GitHubTestConfig.get_github_token())
     except Exception as e:
         print(f"Failed to create real GitHub agent: {e}")
         return None
@@ -199,7 +197,7 @@ def generate_test_work_item(title: str = None, issue_type: str = "task") -> Dict
     }
 
 
-def cleanup_test_issues(agent: GitHubAgent, repository: str, test_label: str = "piper-morgan"):
+def cleanup_test_issues(agent: Any, repository: str, test_label: str = "piper-morgan"):
     """Clean up test issues created during testing"""
     try:
         # This would require implementing issue listing and deletion

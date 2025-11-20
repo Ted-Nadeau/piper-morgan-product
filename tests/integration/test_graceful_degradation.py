@@ -14,7 +14,6 @@ import pytest
 
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.features.morning_standup import MorningStandupWorkflow
-from services.integrations.github.github_agent import GitHubAgent
 from services.intent_service.canonical_handlers import CanonicalHandlers
 from services.orchestration.session_persistence import SessionPersistenceManager
 
@@ -24,7 +23,7 @@ def mock_services():
     """Create mock services for testing"""
     preference_manager = Mock(spec=UserPreferenceManager)
     session_manager = Mock(spec=SessionPersistenceManager)
-    github_agent = Mock(spec=GitHubAgent)
+    github_agent = Mock()  # GitHubAgent class no longer exists
     canonical_handlers = Mock(spec=CanonicalHandlers)
 
     # Mock successful responses
@@ -292,7 +291,7 @@ if __name__ == "__main__":
         # Create mock services
         preference_manager = Mock(spec=UserPreferenceManager)
         session_manager = Mock(spec=SessionPersistenceManager)
-        github_agent = Mock(spec=GitHubAgent)
+        github_agent = Mock()  # GitHubAgent class no longer exists
         canonical_handlers = Mock(spec=CanonicalHandlers)
 
         # Mock successful responses

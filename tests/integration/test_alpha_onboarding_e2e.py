@@ -22,7 +22,7 @@ import pytest
 import sqlalchemy
 from sqlalchemy import select, text
 
-from services.database.models import AlphaUser, UserAPIKey
+from services.database.models import User, UserAPIKey
 from services.database.session_factory import AsyncSessionFactory
 from services.security.user_api_key_service import UserAPIKeyService
 
@@ -40,9 +40,7 @@ class TestAlphaOnboardingE2E:
         # Cleanup: Remove test user if it exists
         try:
             async with AsyncSessionFactory.session_scope() as session:
-                result = await session.execute(
-                    select(AlphaUser).where(AlphaUser.username == test_username)
-                )
+                result = await session.execute(select(User).where(User.username == test_username))
                 user = result.scalar_one_or_none()
                 if user:
                     await session.delete(user)
@@ -55,7 +53,7 @@ class TestAlphaOnboardingE2E:
         Test Step 1: Setup wizard creates alpha user account
 
         Verifies:
-        - AlphaUser record created in alpha_users table
+        - User record created in alpha_users table
         - UUID primary key assigned
         - Username and email stored
         - Alpha wave set to 1
@@ -65,7 +63,7 @@ class TestAlphaOnboardingE2E:
         email = f"{username}@test.com"
 
         # Simulate what setup_wizard.create_user_account() does
-        user = AlphaUser(
+        user = User(
             id=uuid.uuid4(),
             username=username,
             email=email,
@@ -80,7 +78,7 @@ class TestAlphaOnboardingE2E:
             await session.commit()
 
             # Verify user was created
-            result = await session.execute(select(AlphaUser).where(AlphaUser.username == username))
+            result = await session.execute(select(User).where(User.username == username))
             created_user = result.scalar_one()
 
             assert created_user is not None
@@ -107,7 +105,7 @@ class TestAlphaOnboardingE2E:
 
         # Create user in first session
         async with AsyncSessionFactory.session_scope() as session:
-            user = AlphaUser(
+            user = User(
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
@@ -155,7 +153,7 @@ class TestAlphaOnboardingE2E:
 
         # Create user
         async with AsyncSessionFactory.session_scope() as session:
-            user = AlphaUser(
+            user = User(
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
@@ -229,7 +227,7 @@ class TestAlphaOnboardingE2E:
 
         # Create user
         async with AsyncSessionFactory.session_scope() as session:
-            user = AlphaUser(
+            user = User(
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
@@ -290,7 +288,7 @@ class TestAlphaOnboardingE2E:
 
         # STEP 1: Create user (setup wizard)
         async with AsyncSessionFactory.session_scope() as session:
-            user = AlphaUser(
+            user = User(
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
@@ -339,7 +337,7 @@ class TestAlphaOnboardingE2E:
 
         # STEP 4: Verify final state - in new session
         async with AsyncSessionFactory.session_scope() as session:
-            result = await session.execute(select(AlphaUser).where(AlphaUser.id == user_id))
+            result = await session.execute(select(User).where(User.id == user_id))
             final_user = result.scalar_one()
 
             assert final_user.username == username

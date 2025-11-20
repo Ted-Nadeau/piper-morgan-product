@@ -194,10 +194,10 @@ class TestFileUpload:
         """
         from sqlalchemy import select
 
-        from services.database.models import AlphaUser
+        from services.database.models import User
 
         # Get two different users
-        result = await db_session.execute(select(AlphaUser).limit(2))
+        result = await db_session.execute(select(User).limit(2))
         users = result.scalars().all()
 
         if len(users) >= 2:

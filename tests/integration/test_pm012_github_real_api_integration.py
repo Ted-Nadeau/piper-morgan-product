@@ -11,7 +11,6 @@ from unittest.mock import Mock
 import pytest
 
 from services.domain.models import WorkItem
-from services.integrations.github.github_agent import GitHubAgent
 from tests.integration.test_pm012_github_real_api_config import (
     GitHubTestConfig,
     cleanup_test_issues,

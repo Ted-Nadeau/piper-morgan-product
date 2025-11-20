@@ -27,7 +27,6 @@ class TestStandupDataSources:
 
         # Test that GitHub agent can be imported
         try:
-            from services.integrations.github.github_agent import GitHubAgent
 
             print("✅ GitHub agent import successful")
 
@@ -50,7 +49,6 @@ class TestStandupDataSources:
         # Test the specific issue: not detecting recent commits (549f076f, 16e4010f from today)
 
         try:
-            from services.integrations.github.github_agent import GitHubAgent
 
             # Test with mock token to avoid environment dependency
             with patch.dict("os.environ", {"GITHUB_TOKEN": "test_token"}):
@@ -308,7 +306,6 @@ class TestStandupDataSources:
 
         # Test GitHub activity
         try:
-            from services.integrations.github.github_agent import GitHubAgent
 
             github_agent = GitHubAgent()
             if hasattr(github_agent, "get_recent_activity"):

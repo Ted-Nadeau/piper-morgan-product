@@ -27,7 +27,7 @@ from sqlalchemy import delete
 
 from services.auth.password_service import PasswordService
 from services.database.connection import db
-from services.database.models import AlphaUser, UploadedFileDB
+from services.database.models import UploadedFileDB
 from web.app import app
 
 
@@ -55,7 +55,7 @@ async def test_user():
     ps = PasswordService()
     hashed = ps.hash_password(test_password)
 
-    test_user = AlphaUser(
+    test_user = User(
         id=str(uuid.uuid4()),
         username="doc_test_user",
         email="doctest@example.com",
@@ -86,7 +86,7 @@ async def test_user():
         )
 
         # Delete user
-        stmt = select(AlphaUser).where(AlphaUser.id == user_id)
+        stmt = select(User).where(User.id == user_id)
         result = await session.execute(stmt)
         user_to_delete = result.scalar_one_or_none()
 
