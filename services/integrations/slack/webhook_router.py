@@ -664,14 +664,19 @@ class SlackWebhookRouter:
         Returns:
             Processing result
         """
-        # Use event_handler if available (TDD tests inject this)
-        if hasattr(self, "event_handler") and self.event_handler:
-            result = await self.event_handler.process_event(event)
-            return {"success": True, "result": result, "event": event}
+        try:
+            # Use event_handler if available (TDD tests inject this)
+            if hasattr(self, "event_handler") and self.event_handler:
+                result = await self.event_handler.process_event(event)
+                return {"success": True, "result": result, "event": event}
 
-        # Fall back to existing event processing
-        await self._process_event_callback(event)
-        return {"success": True, "event": event}
+            # Fall back to existing event processing
+            await self._process_event_callback(event)
+            return {"success": True, "event": event}
+
+        except Exception as e:
+            logger.error(f"Error processing webhook event: {e}")
+            return {"success": False, "error": str(e), "event": event}
 
     # Private processing methods
 
