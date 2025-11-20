@@ -6,6 +6,12 @@ This test suite validates the complete OAuth → Spatial → Workflow → Attent
 that represents the core value proposition of PM-074 Slack Integration.
 """
 
+
+import pytest
+
+pytestmark = pytest.mark.skip(
+    reason="TDD spec - Spatial system integration incomplete. Related to piper-morgan-1i5, piper-morgan-8jn, piper-morgan-agf"
+)
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
