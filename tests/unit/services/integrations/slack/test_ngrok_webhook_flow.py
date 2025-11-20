@@ -10,10 +10,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="TDD spec - NgrokService missing methods: create_tunnel and others. "
-    "Tracked in piper-morgan-8jn"
-)
+# TDD spec tests - implementing missing methods progressively
+# Tracked in piper-morgan-8jn
 
 from services.integrations.slack.config_service import SlackConfigService
 from services.integrations.slack.event_handler import SlackEventHandler
