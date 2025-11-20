@@ -256,8 +256,8 @@ class FileResolver:
             original_message = intent.context.get("original_message", "")
             if original_message:
                 context_text = original_message.lower()
-                # Extract meaningful words (improved regex)
-                words = re.findall(r"\b[a-z0-9_-]{3,}\b", context_text)
+                # Extract meaningful words (Unicode-aware regex)
+                words = re.findall(r"\b\w{3,}\b", context_text)
                 keywords.extend(words)
 
         if not keywords:

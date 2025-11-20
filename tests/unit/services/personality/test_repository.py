@@ -149,7 +149,8 @@ personality:
 
         with patch("builtins.open", mock_open(read_data=yaml_content)):
             with patch("os.path.exists", return_value=True):
-                config = await repository._load_piper_config_overrides()
+                with patch("os.path.getmtime", return_value=1234567890.0):
+                    config = await repository._load_piper_config_overrides()
 
         assert config is not None
         assert config["profile"]["warmth_level"] == 0.8
@@ -170,7 +171,8 @@ personality:
 
         with patch("builtins.open", mock_open(read_data=invalid_yaml)):
             with patch("os.path.exists", return_value=True):
-                config = await repository._load_piper_config_overrides()
+                with patch("os.path.getmtime", return_value=1234567890.0):
+                    config = await repository._load_piper_config_overrides()
 
         assert config is None
 

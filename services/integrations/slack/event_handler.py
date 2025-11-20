@@ -108,6 +108,10 @@ class SlackEventHandler:
                 return await self._process_thread_event(slack_event, created=True)
             elif slack_event.event_type == EventType.THREAD_REPLY.value:
                 return await self._process_thread_event(slack_event, created=False)
+            elif slack_event.event_type == EventType.USER_JOINED.value:
+                return await self._process_user_event(slack_event, joined=True)
+            elif slack_event.event_type == EventType.USER_LEFT.value:
+                return await self._process_user_event(slack_event, joined=False)
             else:
                 return EventProcessingResult(
                     success=False, error=f"Unsupported event type: {slack_event.event_type}"
@@ -422,6 +426,51 @@ class SlackEventHandler:
                 }
             ],
             attention_level=AttentionLevel.FOCUSED,
+            emotional_valence=EmotionalValence.NEUTRAL,
+        )
+
+    async def _process_user_event(
+        self, slack_event: SlackEvent, joined: bool
+    ) -> EventProcessingResult:
+        """Process user joined/left events as inhabitant changes"""
+        event_data = slack_event.event_data
+
+        user_id = event_data.get("user", "")
+        channel_id = event_data.get("channel", "")
+
+        spatial_event = SpatialEvent(
+            event_id=f"{channel_id}:{user_id}:{'joined' if joined else 'left'}",
+            event_type="inhabitant_joined" if joined else "inhabitant_left",
+            coordinates=SpatialCoordinates(
+                territory_id=event_data.get("team"),
+                room_id=channel_id,
+                path_id=None,
+                object_position=None,
+            ),
+            actor_id=user_id,
+            affected_objects=[user_id],
+            spatial_changes={
+                "user_joined" if joined else "user_left": True,
+                "user_id": user_id,
+            },
+            event_time=datetime.now() if hasattr(datetime, "now") else None,
+            significance_level="routine",
+        )
+
+        # Update spatial state
+        await self._update_spatial_state(spatial_event)
+
+        return EventProcessingResult(
+            success=True,
+            spatial_event=spatial_event,
+            spatial_changes=[
+                {
+                    "type": "inhabitant_joined" if joined else "inhabitant_left",
+                    "room_id": channel_id,
+                    "user_id": user_id,
+                }
+            ],
+            attention_level=AttentionLevel.AMBIENT,
             emotional_valence=EmotionalValence.NEUTRAL,
         )
 

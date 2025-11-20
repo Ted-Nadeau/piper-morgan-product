@@ -173,7 +173,7 @@ class TodoService(ItemService):
     async def get_todos_in_list(self, list_id: UUID) -> List[Todo]:
         """Get all todos in a list.
 
-        Convenience method using inherited get_items_in_list.
+        Override base method to query TodoDB directly, ensuring joined table data is loaded.
 
         Args:
             list_id: List ID
@@ -181,4 +181,17 @@ class TodoService(ItemService):
         Returns:
             List of todos
         """
-        return await self.get_items_in_list(list_id=list_id, item_type="todo")
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+
+        from services.database.models import TodoDB
+        from services.database.session_factory import AsyncSessionFactory
+
+        async with AsyncSessionFactory.session_scope() as session:
+            # Query TodoDB directly (not ItemDB) to ensure todo-specific fields are loaded
+            query = select(TodoDB).where(TodoDB.list_id == str(list_id)).order_by(TodoDB.position)
+
+            result = await session.execute(query)
+            todos_db = result.scalars().all()
+
+            return [todo_db.to_domain() for todo_db in todos_db]

@@ -236,7 +236,8 @@ class ItemService:
         )
         max_position = result.scalar()
 
-        return (max_position or -1) + 1
+        # Explicitly check for None - don't use `or` because 0 is falsy!
+        return (max_position + 1) if max_position is not None else 0
 
     def _get_db_model_class(self, item_class: Type[Item]):
         """Map domain class to database model class."""
