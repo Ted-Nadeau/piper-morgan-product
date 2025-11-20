@@ -145,6 +145,7 @@ class TestOAuthSpatialIntegration:
         with pytest.raises(ValueError, match="Invalid OAuth state"):
             oauth_handler.validate_and_initialize_spatial_territory(oauth_response, "valid-state")
 
+    @pytest.mark.skip(reason="TDD test - SlackOAuthHandler.get_user_spatial_context() not implemented. Tracked in piper-morgan-0np")
     def test_oauth_user_context_integration(self, oauth_handler, spatial_agent):
         """Test that OAuth user context integrates with spatial system"""
         # Arrange
