@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skip(
     reason="TDD spec - SlackSpatialMapper missing 4 methods: "
     "map_message_to_spatial_object, map_reaction_to_emotional_marker, "
     "map_mention_to_attention_attractor, map_channel_to_room. "
-    "Tracked in piper-morgan-k4s"
+    "Tracked in piper-morgan-1i5"
 )
 
 from services.integrations.slack.config_service import SlackConfigService

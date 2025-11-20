@@ -356,10 +356,10 @@ python scripts/check-known-failures.py test-results.json .pytest-known-failures
 - **piper-morgan-yix**: test_attention_scenarios: proximity scoring assertion mismatch (P3)
 - **piper-morgan-ygy**: test_attention_scenarios: TDD test suite failing (entire TestAdvancedAttentionAlgorithms class) (P3)
 
-### New Bead Needed
+### New Bead Created
 
-- **piper-morgan-[xyz]**: test_event_spatial_mapping: 4 missing SlackSpatialMapper methods (P2)
-  - Blocks: 16+ TDD tests
+- **piper-morgan-1i5**: test_event_spatial_mapping: 4 missing SlackSpatialMapper methods (P2)
+  - Blocks: 13 TDD tests
   - Implementation gap: map_message_to_spatial_object, map_reaction_to_emotional_marker, map_mention_to_attention_attractor, map_channel_to_room
   - Existing similar methods: map_message_to_spatial_event, _create_spatial_object
 
