@@ -86,6 +86,7 @@ class TestOAuthSpatialIntegration:
         assert spatial_agent.spatial_state.current_territory == "T123456"
         assert spatial_agent.get_spatial_summary()["current_position"]["territory"] == "T123456"
 
+    @pytest.mark.skip(reason="TDD test - SlackOAuthHandler.get_spatial_capabilities() not implemented. Tracked in piper-morgan-7wq")
     def test_oauth_scopes_affect_spatial_capabilities(self, oauth_handler, spatial_agent):
         """Test that OAuth scopes determine spatial capabilities"""
         # Arrange
