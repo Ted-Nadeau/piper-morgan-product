@@ -241,11 +241,8 @@ class TestCircuitBreaker:
         assert circuit_breaker.get_state() == "OPEN"
         assert circuit_breaker.is_open() is True
 
-    @pytest.mark.skip(
-        reason="Bug - CircuitBreaker.record_success() not resetting failure_count. Tracked in piper-morgan-3qz"
-    )
     def test_success_resets_failure_count(self, circuit_breaker):
-        """Test that success resets failure count in CLOSED state"""
+        """Test that success resets failure count in CLOSED state (Bug Fix: piper-morgan-3qz)"""
         circuit_breaker.record_failure()
         circuit_breaker.record_success()
 

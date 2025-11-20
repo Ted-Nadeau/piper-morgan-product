@@ -180,10 +180,14 @@ class TestLLMIntentClassifier:
 
     @pytest.mark.asyncio
     async def test_invalid_json_response_handling(self, classifier):
-        """Test handling of invalid JSON from LLM"""
+        """Test handling of invalid JSON from LLM
+
+        Note: LLM classifier has robust fallback parsing (regex extraction)
+        that triggers LowConfidenceIntentError instead of failing completely.
+        """
         # Mock invalid response
         with patch.object(classifier.llm, "complete", AsyncMock(return_value="Not valid JSON")):
-            with pytest.raises(IntentClassificationFailedError):
+            with pytest.raises(LowConfidenceIntentError):
                 await classifier.classify("Find documents")
 
     @pytest.mark.asyncio

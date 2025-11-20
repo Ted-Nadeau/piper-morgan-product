@@ -292,7 +292,8 @@ class CircuitBreaker:
         """Record successful enhancement"""
         if self.state == "HALF_OPEN":
             self.state = "CLOSED"
-            self.failure_count = 0
+        # Always reset failure count on success to prevent accumulation
+        self.failure_count = 0
 
     def record_failure(self):
         """Record failed enhancement"""
