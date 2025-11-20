@@ -96,7 +96,7 @@ class TestAPIKeyValidator:
     async def test_validate_slack_token_valid_format(self, validator):
         """Test Slack bot token format"""
         # Valid Slack bot token: xoxb- + numbers + dash + mixed characters
-        valid_token = "xoxb-1234567890-1234567890123-X7k9mP2nQ5tR8wY3jL6hN4vC1b"
+        valid_token = "xoxb-FAKE-FAKE-TESTTOKEN"  # Intentionally fake for testing
 
         report = await validator.validate_api_key("slack", valid_token)
 
