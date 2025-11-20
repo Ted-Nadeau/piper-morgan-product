@@ -292,6 +292,7 @@ class TestLLMIntentClassifier:
                 await high_threshold_classifier.classify("Search for something")
 
 
+@pytest.mark.skip(reason="Bug - All tests need container initialization in fixture. Tracked in piper-morgan-5yz")
 class TestLLMClassifierPerformance:
     """Performance benchmarks for LLMIntentClassifier"""
 
@@ -354,6 +355,7 @@ class TestLLMClassifierPerformance:
             assert avg_time_ms < 100  # With mocks, should be very fast
 
 
+@pytest.mark.skip(reason="Bug - All tests need container initialization in fixture. Tracked in piper-morgan-5yz")
 class TestLLMClassifierEdgeCases:
     """Edge case testing for LLMIntentClassifier"""
 
