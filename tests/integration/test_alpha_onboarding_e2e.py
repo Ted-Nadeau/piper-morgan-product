@@ -53,10 +53,10 @@ class TestAlphaOnboardingE2E:
         Test Step 1: Setup wizard creates alpha user account
 
         Verifies:
-        - User record created in alpha_users table
+        - User record created in users table with is_alpha=True
         - UUID primary key assigned
         - Username and email stored
-        - Alpha wave set to 1
+        - Alpha flag set to True (Issue #262 schema migration)
         - Timestamps created
         """
         username = clean_test_user
@@ -67,8 +67,7 @@ class TestAlphaOnboardingE2E:
             id=uuid.uuid4(),
             username=username,
             email=email,
-            alpha_wave=1,  # First wave of alpha testing
-            test_start_date=datetime.utcnow(),
+            is_alpha=True,  # Alpha user flag (Issue #262 schema migration)
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
@@ -84,10 +83,10 @@ class TestAlphaOnboardingE2E:
             assert created_user is not None
             assert created_user.username == username
             assert created_user.email == email
-            assert created_user.alpha_wave == 1
+            assert created_user.is_alpha is True
             assert isinstance(created_user.id, uuid.UUID)
             assert created_user.created_at is not None
-            assert created_user.migrated_to_prod is False
+            # migrated_to_prod field removed in Issue #262 schema consolidation
 
     async def test_system_status_check(self, clean_test_user):
         """
@@ -95,7 +94,7 @@ class TestAlphaOnboardingE2E:
 
         Verifies:
         - Database connectivity works
-        - Can query alpha_users table
+        - Can query users table for alpha users
         - Can retrieve user by ID
         - Status checker finds the user
         """
@@ -109,8 +108,7 @@ class TestAlphaOnboardingE2E:
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
-                alpha_wave=1,
-                test_start_date=datetime.utcnow(),
+                is_alpha=True,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
@@ -124,23 +122,33 @@ class TestAlphaOnboardingE2E:
             assert result.scalar_one() == 1
 
             # Count alpha users
-            count_result = await session.execute(text("SELECT COUNT(*) FROM alpha_users"))
+            count_result = await session.execute(
+                text("SELECT COUNT(*) FROM users WHERE is_alpha = true")
+            )
             user_count = count_result.scalar_one()
             assert user_count >= 1
 
             # Retrieve most recent user (what status_checker does)
             user_result = await session.execute(
-                text("SELECT id, username FROM alpha_users ORDER BY created_at DESC LIMIT 1")
+                text(
+                    "SELECT id, username FROM users WHERE is_alpha = true ORDER BY created_at DESC LIMIT 1"
+                )
             )
             retrieved_user = user_result.first()
             assert retrieved_user is not None
             assert retrieved_user[1] == username
 
+    @pytest.mark.skip(
+        reason="Preferences JSONB column removed in Issue #262 schema migration. Needs redesign to use PersonalityProfile or separate preferences table."
+    )
     async def test_preferences_storage(self, clean_test_user):
         """
         Test Step 3: Store and retrieve preferences
 
-        Verifies:
+        DEPRECATED: User model no longer has preferences JSONB column (Issue #262)
+        This test needs redesign to use current PersonalityProfile system.
+
+        Original intent:
         - Preferences saved to alpha_users.preferences JSONB column
         - All 5 preference types stored correctly
         - Can retrieve preferences
@@ -157,8 +165,7 @@ class TestAlphaOnboardingE2E:
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
-                alpha_wave=1,
-                test_start_date=datetime.utcnow(),
+                is_alpha=True,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
@@ -231,8 +238,7 @@ class TestAlphaOnboardingE2E:
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
-                alpha_wave=1,
-                test_start_date=datetime.utcnow(),
+                is_alpha=True,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
@@ -270,15 +276,20 @@ class TestAlphaOnboardingE2E:
                     f"FK constraint violation (should be fixed by migration 648730a3238d): {e}"
                 )
 
+    @pytest.mark.skip(
+        reason="Preferences JSONB column removed in Issue #262 schema migration. Test needs redesign for current PersonalityProfile system."
+    )
     async def test_complete_onboarding_happy_path(self, clean_test_user):
         """
         Test Complete Happy Path: wizard → status → preferences → final status
+
+        DEPRECATED: Depends on preferences JSONB column (removed in Issue #262)
 
         This is the "birthday success" test!
         Verifies the complete end-to-end flow works:
         1. User created
         2. System status checks pass
-        3. Preferences configured
+        3. Preferences configured (DEPRECATED - column removed)
         4. Final status shows configured
         """
         import json
@@ -292,8 +303,7 @@ class TestAlphaOnboardingE2E:
                 id=user_id,
                 username=username,
                 email=f"{username}@test.com",
-                alpha_wave=1,
-                test_start_date=datetime.utcnow(),
+                is_alpha=True,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
@@ -303,7 +313,9 @@ class TestAlphaOnboardingE2E:
         # STEP 2: Check status (should find user) - in new session
         async with AsyncSessionFactory.session_scope() as session:
             result = await session.execute(
-                text("SELECT id, username FROM alpha_users ORDER BY created_at DESC LIMIT 1")
+                text(
+                    "SELECT id, username FROM users WHERE is_alpha = true ORDER BY created_at DESC LIMIT 1"
+                )
             )
             retrieved = result.first()
             assert retrieved is not None
@@ -319,21 +331,25 @@ class TestAlphaOnboardingE2E:
             "configured_at": datetime.utcnow().isoformat(),
         }
 
-        async with AsyncSessionFactory.session_scope() as session:
-            await session.execute(
-                text(
-                    """
-                    UPDATE alpha_users
-                    SET preferences = CAST(:prefs AS jsonb)
-                    WHERE id = :user_id
-                """
-                ),
-                {
-                    "prefs": json.dumps(preferences),
-                    "user_id": user_id,
-                },
-            )
-            await session.commit()
+        # NOTE: Preferences storage removed in Issue #262 schema consolidation
+        # User model no longer has preferences JSONB column
+        # This test needs redesign to use PersonalityProfile or separate preferences table
+        #
+        # async with AsyncSessionFactory.session_scope() as session:
+        #     await session.execute(
+        #         text(
+        #             """
+        #             UPDATE users
+        #             SET preferences = CAST(:prefs AS jsonb)
+        #             WHERE id = :user_id
+        #         """
+        #         ),
+        #         {
+        #             "prefs": json.dumps(preferences),
+        #             "user_id": user_id,
+        #         },
+        #     )
+        #     await session.commit()
 
         # STEP 4: Verify final state - in new session
         async with AsyncSessionFactory.session_scope() as session:
@@ -341,10 +357,11 @@ class TestAlphaOnboardingE2E:
             final_user = result.scalar_one()
 
             assert final_user.username == username
-            assert final_user.preferences is not None
-            assert final_user.preferences["communication_style"] == "balanced"
-            assert final_user.alpha_wave == 1
-            assert final_user.migrated_to_prod is False
+            # Preferences assertions removed - functionality not implemented in current schema
+            # assert final_user.preferences is not None
+            # assert final_user.preferences["communication_style"] == "balanced"
+            assert final_user.is_alpha is True
+            # migrated_to_prod field removed in Issue #262
 
         # 🎉 Success!
 
