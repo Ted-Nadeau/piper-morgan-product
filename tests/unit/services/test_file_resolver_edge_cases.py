@@ -22,9 +22,9 @@ from services.repositories.file_repository import FileRepository
 
 class TestFileResolverEdgeCases:
 
-    async def test_no_files_in_session(self, async_session):
+    async def test_no_files_in_session(self, async_transaction):
         """Test when user references files but none uploaded"""
-        async with async_session as session:
+        async with async_transaction as session:
             resolver = FileResolver(FileRepository(session))
             intent = Intent(
                 category=IntentCategory.ANALYSIS,

@@ -280,10 +280,10 @@ async def test_delete_file(async_transaction):
         assert deleted_file is None
 
 
-async def test_repository_inherits_from_base(async_session):
+async def test_repository_inherits_from_base(async_transaction):
     """Test that FileRepository inherits from BaseRepository"""
-    # This test uses async_session instead of async_transaction for better isolation
-    async with async_session as session:
+    # This test uses async_transaction for consistent fixture usage
+    async with async_transaction as session:
         repo = FileRepository(session)
         # Verify it has the expected interface
         assert hasattr(repo, "save_file_metadata")

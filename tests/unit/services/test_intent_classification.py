@@ -9,16 +9,16 @@ from services.intent_service.classifier import IntentClassifier
 @pytest.fixture
 def classifier():
     """Fixture to create an IntentClassifier with a mocked LLM client."""
-    classifier_instance = IntentClassifier()
-    # Mock the LLM client to return a predictable response
-    classifier_instance.llm = AsyncMock()
-    # Mock the knowledge graph ingester as well, since it's called during classification
-    # You might need to adjust this path based on where get_ingester is imported/used
-    # For this test, we assume it's not critical and can return an empty list
-    classifier_instance.knowledge_graph = MagicMock()
+    # Inject mocked LLM through constructor (llm is a read-only property)
+    mock_llm = AsyncMock()
+    mock_knowledge_graph = MagicMock()
     ingester_mock = MagicMock()
     ingester_mock.search_with_context = AsyncMock(return_value=[])
-    classifier_instance.knowledge_graph.get_ingester = MagicMock(return_value=ingester_mock)
+    mock_knowledge_graph.get_ingester = MagicMock(return_value=ingester_mock)
+
+    classifier_instance = IntentClassifier(
+        llm_service=mock_llm, knowledge_graph_service=mock_knowledge_graph
+    )
 
     return classifier_instance
 
