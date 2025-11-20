@@ -11,7 +11,7 @@ results = registry.load_enabled_plugins()
 print(f"Loaded {len(results)} plugin(s): {list(results.keys())}")
 print(f"Success: {sum(1 for s in results.values() if s)}/{len(results)}")
 
-assert len(results) == 4, f"Expected 4 plugins, got {len(results)}"
+assert len(results) == 5, f"Expected 5 plugins, got {len(results)}"
 assert all(results.values()), f"Some plugins failed to load: {results}"
 print("✅ Test 1 passed\n")
 
@@ -22,7 +22,7 @@ registry = get_plugin_registry()
 
 enabled = registry.get_enabled_plugins()
 print(f"Enabled plugins: {enabled}")
-assert len(enabled) == 4, f"Expected 4 enabled plugins, got {len(enabled)}"
+assert len(enabled) == 5, f"Expected 5 enabled plugins, got {len(enabled)}"
 print("✅ Test 2 passed\n")
 
 # Test 3: Verify loaded plugins are functional
@@ -38,7 +38,7 @@ for name in sorted(loaded_plugins):
     metadata = plugin.get_metadata()
     print(f"  - {name}: v{metadata.version} - {metadata.capabilities}")
 
-assert len(loaded_plugins) == 4, f"Expected 4 loaded plugins, got {len(loaded_plugins)}"
+assert len(loaded_plugins) == 5, f"Expected 5 loaded plugins, got {len(loaded_plugins)}"
 print("✅ Test 3 passed\n")
 
 print("✅ All config integration tests passed!")
