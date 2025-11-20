@@ -11,6 +11,8 @@ class IntentCategory(Enum):
     ANALYSIS = "analysis"
     SYNTHESIS = "synthesis"
     STRATEGY = "strategy"
+    PLANNING = "planning"  # For planning and design activities
+    REVIEW = "review"  # For review and validation activities
     LEARNING = "learning"
     QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
     CONVERSATION = "conversation"  # For greetings, chitchat, social interaction
