@@ -9,7 +9,7 @@ import asyncio
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -244,16 +244,32 @@ class OrchestrationEngine:
             self.logger.error(f"Failed to create workflow from intent: {str(e)}")
             return None
 
-    async def execute_workflow(self, workflow: Workflow) -> WorkflowResult:
+    async def execute_workflow(self, workflow: Union[str, Workflow]) -> WorkflowResult:
         """
         Execute a complete workflow, handling task dependencies and error recovery
+
+        Args:
+            workflow: Either a Workflow object or workflow ID string to look up
+
+        Returns:
+            WorkflowResult with execution details
+
+        Raises:
+            ValueError: If workflow ID is provided but not found in registry
         """
+        # Support both workflow objects and IDs
+        if isinstance(workflow, str):
+            workflow_id = workflow
+            if workflow_id not in self.workflows:
+                raise ValueError(f"Workflow {workflow_id} not found")
+            workflow = self.workflows[workflow_id]
+
         start_time = datetime.now()
         task_results = []
 
         try:
             # Update workflow status
-            workflow.status = WorkflowStatus.IN_PROGRESS
+            workflow.status = WorkflowStatus.RUNNING
 
             # Execute tasks in dependency order
             for task in workflow.tasks:
@@ -286,6 +302,7 @@ class OrchestrationEngine:
         except Exception as e:
             self.logger.error("Workflow execution failed", error=str(e), workflow_id=workflow.id)
             workflow.status = WorkflowStatus.FAILED
+            workflow.error = str(e)
             return WorkflowResult(
                 workflow_id=workflow.id,
                 status=WorkflowStatus.FAILED,
@@ -299,7 +316,7 @@ class OrchestrationEngine:
         start_time = datetime.now()
 
         try:
-            task.status = TaskStatus.IN_PROGRESS
+            task.status = TaskStatus.RUNNING
 
             if task.type == TaskType.ANALYZE_REQUEST:
                 output_data = await self._analyze_request_task(task, workflow)

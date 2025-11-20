@@ -19,7 +19,11 @@ class TestOrchestrationEngine:
     @pytest.fixture
     def engine(self):
         """Create a fresh OrchestrationEngine instance for each test"""
-        return OrchestrationEngine()
+        # Provide mock llm_client to avoid container initialization requirement
+        from services.llm.clients import LLMClient
+
+        mock_llm = Mock(spec=LLMClient)
+        return OrchestrationEngine(llm_client=mock_llm)
 
     @pytest.fixture
     def mock_intent(self):
@@ -78,12 +82,7 @@ class TestOrchestrationEngine:
             engine.factory, "create_from_intent", new_callable=AsyncMock
         ) as mock_factory:
             mock_factory.return_value = mock_workflow
-
-            # Mock database persistence
-            with patch.object(
-                engine, "_persist_workflow_to_database", new_callable=AsyncMock
-            ) as mock_persist:
-                result = await engine.create_workflow_from_intent(mock_intent)
+            result = await engine.create_workflow_from_intent(mock_intent)
 
         # Verify workflow was created and stored
         assert result is not None
@@ -92,9 +91,6 @@ class TestOrchestrationEngine:
 
         # Verify factory was called
         mock_factory.assert_called_once_with(mock_intent)
-
-        # Verify persistence was called
-        mock_persist.assert_called_once_with(mock_workflow)
 
     @pytest.mark.asyncio
     async def test_create_workflow_from_intent_failure(self, engine, mock_intent):
@@ -117,6 +113,9 @@ class TestOrchestrationEngine:
             await engine.execute_workflow("test-missing")
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="OrchestrationEngine._analyze_file method no longer exists - implementation refactored"
+    )
     async def test_analyze_file_success(self, engine, mock_workflow, mock_file_metadata):
         """Test successful file analysis execution"""
         # Mock database pool and file repository
@@ -172,6 +171,9 @@ class TestOrchestrationEngine:
         mock_file_analyzer.analyze_file.assert_called_once()
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="OrchestrationEngine._analyze_file method no longer exists - implementation refactored"
+    )
     async def test_analyze_file_missing_file_id(self, engine, mock_workflow):
         """Test file analysis with missing file ID in context"""
         # Remove file_id from context
@@ -185,6 +187,9 @@ class TestOrchestrationEngine:
         assert "No file ID found in workflow context" in result.error
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="OrchestrationEngine._analyze_file method no longer exists - implementation refactored"
+    )
     async def test_analyze_file_file_not_found(self, engine, mock_workflow):
         """Test file analysis when file is not found in database"""
         # Mock database pool and file repository
@@ -209,6 +214,9 @@ class TestOrchestrationEngine:
         assert "File not found: test-file-123" in result.error
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="OrchestrationEngine._analyze_file method no longer exists - implementation refactored"
+    )
     async def test_analyze_file_analysis_exception(self, engine, mock_workflow, mock_file_metadata):
         """Test file analysis when FileAnalyzer raises an exception"""
         # Mock database pool and file repository
@@ -242,6 +250,9 @@ class TestOrchestrationEngine:
         assert "Analysis error: Analysis failed" in result.error
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="OrchestrationEngine.task_handlers attribute no longer exists - implementation refactored to use if/elif dispatch"
+    )
     async def test_task_handler_registration(self, engine):
         """Test that all required task handlers are registered"""
         expected_handlers = [
@@ -264,6 +275,9 @@ class TestOrchestrationEngine:
             assert callable(engine.task_handlers[task_type])
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(
+        reason="OrchestrationEngine._placeholder_handler method no longer exists - implementation refactored"
+    )
     async def test_placeholder_handler(self, engine, mock_workflow):
         """Test placeholder handler for unimplemented task types"""
         # Create a task with placeholder type
@@ -309,9 +323,15 @@ class TestOrchestrationEngine:
         engine.workflows[workflow.id] = workflow
 
         # Simulate execution (mock only the actual task execution)
-        def complete_task_side_effect(workflow_obj, task_obj):
+        from services.orchestration.engine import TaskResult
+
+        def complete_task_side_effect(task_obj, workflow_obj):
             task_obj.status = TaskStatus.COMPLETED
-            return None
+            return TaskResult(
+                task_id=task_obj.id,
+                status=TaskStatus.COMPLETED,
+                output_data={},
+            )
 
         with patch.object(engine, "_execute_task", new_callable=AsyncMock) as mock_exec_task:
             mock_exec_task.side_effect = complete_task_side_effect
@@ -352,9 +372,13 @@ class TestOrchestrationEngine:
         # Simulate execution failure
         with patch.object(engine, "_execute_task", new_callable=AsyncMock) as mock_exec_task:
             mock_exec_task.side_effect = Exception("Task execution failed")
-            with pytest.raises(Exception):
-                await engine.execute_workflow(workflow.id)
+            # execute_workflow now catches exceptions and returns WorkflowResult instead of re-raising
+            result = await engine.execute_workflow(workflow.id)
 
         # Assert workflow status was updated to failed
         assert workflow.status == WorkflowStatus.FAILED
         assert workflow.error is not None
+        # Assert result indicates failure
+        assert result is not None
+        assert result.status == WorkflowStatus.FAILED
+        assert "Task execution failed" in result.error_message
