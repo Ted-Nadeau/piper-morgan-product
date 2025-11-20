@@ -27,7 +27,6 @@ except ImportError:
     ValidationLevel = None
 
 
-@pytest.mark.skipif(NotionUserConfig is None, reason="NotionUserConfig not implemented yet")
 class TestNotionConfigRequiredFields:
     """Test required field validation with specific error messages"""
 
@@ -79,7 +78,6 @@ class TestNotionConfigRequiredFields:
         assert "Resolution steps:" in error_msg
 
 
-@pytest.mark.skipif(NotionUserConfig is None, reason="NotionUserConfig not implemented yet")
 class TestNotionConfigFormatValidation:
     """Test format validation catches invalid Notion IDs"""
 
@@ -121,7 +119,6 @@ class TestNotionConfigFormatValidation:
         assert result.is_valid_format()
 
 
-@pytest.mark.skipif(NotionUserConfig is None, reason="NotionUserConfig not implemented yet")
 class TestNotionConfigValidationTiers:
     """Test tiered validation system: basic|enhanced|full"""
 
@@ -183,7 +180,6 @@ class TestNotionConfigValidationTiers:
         assert result.validation_permission_check is True
 
 
-@pytest.mark.skipif(NotionUserConfig is None, reason="NotionUserConfig not implemented yet")
 class TestNotionConfigMigrationValidation:
     """Test migration from hardcoded values works correctly"""
 
@@ -217,7 +213,6 @@ class TestNotionConfigMigrationValidation:
         assert result.development_debug_parent == "25d11704d8bf80c8a71ddbe7aba51f55"
 
 
-@pytest.mark.skipif(NotionUserConfig is None, reason="NotionUserConfig not implemented yet")
 class TestNotionConfigFromUserMD:
     """Test loading from actual PIPER.user.md file structure"""
 
