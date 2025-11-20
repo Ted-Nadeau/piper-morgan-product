@@ -199,7 +199,7 @@ class TestEventSpatialMapping:
         assert result.success is True
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "emotional_marker_updated"
-        assert result.spatial_event.emotional_marker.reaction == "thumbsdown"
+        assert result.spatial_event.emotional_marker.reaction_type == "thumbsdown"
         assert result.emotional_valence == EmotionalValence.NEGATIVE
 
     async def test_channel_deleted_event_removes_room(self, event_handler, spatial_mapper):
@@ -293,7 +293,9 @@ class TestEventSpatialMapping:
         # Assert
         assert coords.territory_id == "T123456"
         assert coords.room_id == "C123456"
-        assert coords.object_id == "1234567890.123456"
+        assert (
+            result.spatial_event.affected_objects[0] == "1234567890.123456"
+        )  # Message ID in affected_objects
         assert coords.path_id is None  # No thread
 
     async def test_spatial_event_timestamps_are_preserved(self, event_handler, spatial_mapper):
@@ -312,8 +314,8 @@ class TestEventSpatialMapping:
         spatial_event = result.spatial_event
 
         # Assert
-        assert spatial_event.timestamp is not None
-        assert isinstance(spatial_event.timestamp, datetime)
+        assert spatial_event.event_time is not None
+        assert isinstance(spatial_event.event_time, datetime)
 
     async def test_spatial_changes_are_tracked(self, event_handler, spatial_mapper):
         """Test that spatial changes are tracked in results"""

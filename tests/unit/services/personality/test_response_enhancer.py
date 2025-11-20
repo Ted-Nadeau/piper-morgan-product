@@ -157,14 +157,19 @@ class TestResponsePersonalityEnhancer:
         enhancer.performance_timeout_ms = 1  # Very short timeout
         mock_repository.get_by_user_id.return_value = test_profile
 
-        # Mock a slow transformation
+        # Mock a slow transformation - transformation methods are synchronous, not async!
+        import time as time_module
+
         slow_service = MagicMock()
 
-        async def slow_transform(*args, **kwargs):
-            await asyncio.sleep(0.1)  # Longer than timeout
+        def slow_transform(*args, **kwargs):
+            time_module.sleep(0.1)  # Blocking sleep - longer than 1ms timeout
             return "transformed"
 
-        slow_service.add_warmth = slow_transform
+        # Transformation service methods are synchronous (not awaited in code)
+        slow_service.add_warmth = MagicMock(side_effect=slow_transform)
+        slow_service.inject_confidence = MagicMock(return_value="confidence")
+        slow_service.extract_actions = MagicMock(return_value="actions")
 
         enhancer.transformation_service = slow_service
 

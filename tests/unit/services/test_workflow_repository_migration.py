@@ -18,18 +18,18 @@ from services.shared_types import WorkflowStatus, WorkflowType
 class TestWorkflowRepositoryMigration:
     """Test WorkflowRepository Pattern #1 compliance and find_by_id() method"""
 
-    async def test_repository_inherits_from_base(self, async_session):
+    async def test_repository_inherits_from_base(self, async_transaction):
         """Test that WorkflowRepository inherits from BaseRepository"""
         from services.database.repositories import BaseRepository
 
-        async with async_session as session:
+        async with async_transaction as session:
             repo = WorkflowRepository(session)
             assert isinstance(repo, BaseRepository)
             assert repo.model == WorkflowDB
 
-    async def test_find_by_id_method_exists(self, async_session):
+    async def test_find_by_id_method_exists(self, async_transaction):
         """Test that find_by_id() method exists and has correct signature"""
-        async with async_session as session:
+        async with async_transaction as session:
             repo = WorkflowRepository(session)
 
             # Method should exist
@@ -68,9 +68,9 @@ class TestWorkflowRepositoryMigration:
             assert result.status == WorkflowStatus.COMPLETED
             assert result.context == {"project": "test"}
 
-    async def test_find_by_id_returns_none_for_nonexistent(self, async_session):
+    async def test_find_by_id_returns_none_for_nonexistent(self, async_transaction):
         """Test that find_by_id() returns None for non-existent workflow"""
-        async with async_session as session:
+        async with async_transaction as session:
             repo = WorkflowRepository(session)
 
             nonexistent_id = str(uuid.uuid4())
