@@ -116,7 +116,7 @@ class NgrokService:
         Create ngrok tunnel (TDD-compatible wrapper for start_tunnel).
         
         This method provides a simpler sync interface matching TDD test expectations.
-        Internally delegates to the existing start_tunnel implementation.
+        Internally delegates to _create_tunnel which can be mocked in tests.
         
         Args:
             port: Local port to tunnel to
@@ -124,7 +124,14 @@ class NgrokService:
         Returns:
             Public tunnel URL
         """
-        # Use existing async start_tunnel via asyncio
+        return self._create_tunnel(port)
+    
+    def _create_tunnel(self, port: int) -> str:
+        """
+        Internal tunnel creation (for test mocking compatibility).
+        
+        This method does the actual work and can be mocked in tests.
+        """
         import asyncio
         
         # Get or create event loop
@@ -144,14 +151,6 @@ class NgrokService:
         if isinstance(tunnel_info, dict):
             return tunnel_info.get("public_url", "")
         return str(tunnel_info)
-    
-    def _create_tunnel(self, port: int) -> str:
-        """
-        Internal tunnel creation (for test mocking compatibility).
-        
-        This is called by create_tunnel() and can be mocked in tests.
-        """
-        return self.create_tunnel(port)
     
     def _validate_tunnel_url(self, url: str) -> bool:
         """
@@ -216,9 +215,38 @@ class NgrokService:
         Cleanup ngrok tunnel (TDD-compatible wrapper for stop_tunnel).
         
         This method provides a simpler sync interface matching TDD test expectations.
-        Internally delegates to the existing stop_tunnel implementation.
+        Internally delegates to _delete_tunnel which can be mocked in tests.
         """
-        # Use existing async stop_tunnel via asyncio
+        self._delete_tunnel()
+
+    def setup_webhook_tunnel(self, port: int, webhook_router=None) -> str:
+        """
+        Setup complete webhook tunnel (convenience method for TDD).
+        
+        Creates tunnel and optionally configures webhook router with the URL.
+        
+        Args:
+            port: Local port to tunnel to
+            webhook_router: Optional webhook router to configure
+            
+        Returns:
+            Tunnel URL
+        """
+        # Create the tunnel
+        tunnel_url = self.create_tunnel(port)
+        
+        # Configure webhook router if provided
+        if webhook_router and hasattr(webhook_router, 'set_webhook_url'):
+            webhook_router.set_webhook_url(tunnel_url)
+        
+        return tunnel_url
+    
+    def _delete_tunnel(self) -> None:
+        """
+        Internal tunnel deletion (for test mocking compatibility).
+        
+        This method does the actual work and can be mocked in tests.
+        """
         import asyncio
         
         # Get or create event loop
@@ -233,14 +261,6 @@ class NgrokService:
         else:
             # Running in async context
             asyncio.create_task(self.stop_tunnel())
-    
-    def _delete_tunnel(self) -> None:
-        """
-        Internal tunnel deletion (for test mocking compatibility).
-        
-        This is called by cleanup_tunnel() and can be mocked in tests.
-        """
-        self.cleanup_tunnel()
 
     async def get_tunnel_info(self) -> Optional[NgrokTunnel]:
         """Get information about the active tunnel"""
