@@ -128,7 +128,7 @@ class TestSlackResponseHandler:
         # Assert: No orchestration for monitoring intents
         mock_dependencies["orchestration_engine"].create_workflow_from_intent.assert_not_called()
 
-    @pytest.mark.skip(reason="Temporarily disabled - complex mocking issue with spatial adapter")
+    @pytest.mark.skip(reason="Complex mocking issue with spatial adapter. Tracked in piper-morgan-i98")
     @pytest.mark.smoke
     async def test_response_handler_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
@@ -192,7 +192,7 @@ class TestSlackResponseHandler:
         # Assert: Slack message was sent
         mock_dependencies["slack_client"].send_message.assert_called_once()
 
-    @pytest.mark.skip(reason="Temporarily disabled - duplicate event detection issue")
+    @pytest.mark.skip(reason="Duplicate event detection issue. Tracked in piper-morgan-8yz")
     @pytest.mark.smoke
     async def test_response_handler_error_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
@@ -262,7 +262,7 @@ class TestSlackAdapter:
         assert response_context is not None, "Response context should be available"
         assert response_context.get("channel_id") == "C1234567890", "Channel ID should be preserved"
 
-    @pytest.mark.skip(reason="Temporarily disabled - async/await issue in spatial adapter")
+    @pytest.mark.skip(reason="Async/await issue in spatial adapter. Tracked in piper-morgan-65k")
     @pytest.mark.smoke
     async def test_bidirectional_mapping_observability(self, spatial_adapter):
         """
@@ -294,7 +294,7 @@ class TestSlackAdapter:
         stats = await spatial_adapter.get_mapping_stats()
         assert stats["timestamp_mappings"] > 0, "Mapping should be recorded in stats"
 
-    @pytest.mark.skip(reason="Temporarily disabled - context storage issue in spatial adapter")
+    @pytest.mark.skip(reason="Context storage issue in spatial adapter. Tracked in piper-morgan-7bn")
     @pytest.mark.smoke
     async def test_context_storage_observability(self, spatial_adapter):
         """
@@ -441,7 +441,7 @@ class TestRobustTaskManager:
         assert task_summary["total_tasks_created"] > 0, "Task creation should be tracked"
 
 
-@pytest.mark.skip(reason="Temporarily disabled - SlackPipelineMetrics initialization issue")
+@pytest.mark.skip(reason="SlackPipelineMetrics initialization issue. Tracked in piper-morgan-ev7")
 class TestSlackPipelineMetrics:
     """
     Test SlackPipelineMetrics with correlation tracking.
