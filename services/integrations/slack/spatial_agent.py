@@ -198,7 +198,7 @@ class SlackSpatialAgent:
         coords = spatial_event.coordinates
 
         # High attention events (mentions) require immediate response
-        if event_result.attention_level == AttentionLevel.HIGH:
+        if event_result.attention_level == AttentionLevel.URGENT:
             return NavigationDecision(
                 intent=NavigationIntent.RESPOND,
                 target_room=coords.room_id,
@@ -259,7 +259,7 @@ class SlackSpatialAgent:
         unattended_attractors = [
             attractor
             for attractor in self.spatial_state.attention_focus
-            if attractor.level == AttentionLevel.MEDIUM
+            if attractor.level == AttentionLevel.FOCUSED
             and datetime.now() - attractor.timestamp > timedelta(minutes=10)
         ]
 
@@ -347,7 +347,7 @@ class SlackSpatialAgent:
         high_priority = [
             attractor
             for attractor in self.spatial_state.attention_focus
-            if attractor.level == AttentionLevel.HIGH
+            if attractor.level == AttentionLevel.URGENT
         ]
 
         if high_priority:
