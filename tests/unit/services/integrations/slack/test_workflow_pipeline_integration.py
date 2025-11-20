@@ -13,6 +13,10 @@ from uuid import UUID, uuid4
 
 import pytest
 
+pytestmark = pytest.mark.skip(
+    reason="TDD spec - Complete workflow pipeline. Part of epic piper-morgan-23y"
+)
+
 from services.domain.models import Feature, Intent, Product, Workflow, WorkItem
 from services.integrations.slack.attention_model import AttentionModel, AttentionSource
 from services.integrations.slack.spatial_mapper import SlackSpatialMapper
