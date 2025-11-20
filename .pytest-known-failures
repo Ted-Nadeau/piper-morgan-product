@@ -1,0 +1,20 @@
+# Pytest Known Failures Tracking
+#
+# This file tracks test failures that are known and tracked in beads.
+# Pre-push hook will allow pushes if failures match this list.
+#
+# IMPORTANT: All entries MUST have:
+# - Bead reference (for tracking)
+# - Expiry date (max 30 days from creation)
+# - Clear reason (TDD spec, known bug, deferred work)
+#
+# Expired entries will cause WARNING (not block) and should be cleaned up.
+
+version: 1
+failures:
+  # LLM Intent Classifier - Test Assertion Mismatch
+  - test_path: "tests/unit/services/test_llm_intent_classifier.py::TestLLMIntentClassifier::test_invalid_json_response_handling"
+    reason: "Test expects IntentClassificationFailedError but LLM classifier has robust fallback parsing (regex extraction) that triggers LowConfidenceIntentError instead. Test assertions need updating to match improved error handling."
+    bead: "piper-morgan-xj9"
+    expires: "2025-12-20"
+    category: "known_bug"

@@ -80,7 +80,111 @@ pytest tests/integration/ -v  # Integration tests
 python -W error::DeprecationWarning -m pytest tests/
 ```
 
-### 4. Docker Validation
+### 4. Known Test Failures Workflow
+
+Piper Morgan uses a **known-failures tracking system** to allow pushes even when some tests are failing, as long as those failures are:
+1. **Documented** with clear reason
+2. **Tracked** in a bead (issue tracker)
+3. **Time-boxed** with expiry date
+4. **Categorized** (TDD spec, known bug, or deferred)
+
+#### How It Works
+
+The pre-push hook will:
+1. Run the fast test suite (`./scripts/run_tests.sh fast`)
+2. If tests fail, check against `.pytest-known-failures`
+3. Allow push if all failures are known
+4. Block push if new failures are detected
+5. Warn about expired or resolved failures
+
+#### Adding a Known Failure
+
+If you need to push with a failing test that's tracked in a bead:
+
+```bash
+# Edit .pytest-known-failures file
+nano .pytest-known-failures
+```
+
+Add an entry following this format:
+
+```yaml
+- test_path: "tests/unit/path/to/test_file.py::TestClass::test_method"
+  reason: "Clear explanation of why this test is failing"
+  bead: "piper-morgan-xyz"  # Must be a valid bead ID
+  expires: "2025-12-20"      # Max 30 days from creation
+  category: "tdd_spec"       # or "known_bug" or "deferred"
+```
+
+**Categories:**
+- `tdd_spec`: Test-driven development spec (expected to fail until implementation)
+- `known_bug`: Known bug tracked in bead, fix planned
+- `deferred`: Work deferred to later sprint, tracked in bead
+
+**Rules:**
+- All entries MUST have bead references (for tracking)
+- Expiry dates MUST be within 30 days
+- Expired entries cause WARNING (not block) - update or remove them
+- Resolved tests (now passing) should be removed from the file
+
+#### Validating Known Failures Manually
+
+```bash
+# Test the known-failures validation
+python scripts/filter_known_failures.py
+
+# Should output:
+# ✅ All failures are known - push allowed
+# OR
+# ❌ NEW FAILURES DETECTED (BLOCKING PUSH)
+```
+
+#### Common Scenarios
+
+**Scenario 1: TDD Workflow**
+```yaml
+- test_path: "tests/unit/services/test_new_feature.py::TestNewFeature::test_method"
+  reason: "TDD - NewFeature.method() not implemented yet"
+  bead: "piper-morgan-abc"
+  expires: "2025-12-15"
+  category: "tdd_spec"
+```
+
+**Scenario 2: Known Bug**
+```yaml
+- test_path: "tests/unit/services/test_service.py::TestService::test_edge_case"
+  reason: "Bug - service crashes on empty input, tracked for fix"
+  bead: "piper-morgan-def"
+  expires: "2025-12-10"
+  category: "known_bug"
+```
+
+**Scenario 3: Deferred Work**
+```yaml
+- test_path: "tests/integration/test_complex_flow.py::test_end_to_end"
+  reason: "Deferred - integration test needs mock data setup"
+  bead: "piper-morgan-ghi"
+  expires: "2025-12-20"
+  category: "deferred"
+```
+
+#### Best Practices
+
+✅ **DO:**
+- Create a bead BEFORE adding to known-failures
+- Use clear, descriptive reasons
+- Set realistic expiry dates (max 30 days)
+- Remove entries when tests are fixed
+- Review warnings about expired entries
+
+❌ **DON'T:**
+- Add failures without bead tracking
+- Use vague reasons like "broken" or "fails sometimes"
+- Set distant expiry dates (>30 days)
+- Leave resolved tests in the file
+- Ignore expiry warnings
+
+### 5. Docker Validation
 
 ```bash
 # Build and test Docker containers
