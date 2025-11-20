@@ -300,6 +300,62 @@ class SlackOAuthHandler:
             logger.error(f"Failed to initialize spatial workspace: {e}")
             raise SlackAuthFailedError(f"Spatial workspace initialization failed: {e}") from e
 
+    def initialize_spatial_territory(self, oauth_response: dict):
+        """
+        Initialize spatial territory from OAuth response (TDD-compatible).
+        
+        Creates a territory representation that includes OAuth credentials.
+        This is a simplified sync wrapper for TDD test compatibility.
+        
+        Args:
+            oauth_response: OAuth response dict with team and token info
+            
+        Returns:
+            Object with territory_id, name, type, and access_token attributes
+            
+        Raises:
+            ValueError: If OAuth response indicates failure
+        """
+        from dataclasses import dataclass
+        from services.integrations.slack.spatial_types import TerritoryType
+        
+        # Check for OAuth errors
+        if "error" in oauth_response:
+            raise ValueError(f"OAuth failed: {oauth_response.get('error_description', oauth_response['error'])}")
+        
+        # Extract OAuth data
+        access_token = oauth_response.get("access_token", "")
+        team_info = oauth_response.get("team", {})
+        territory_id = team_info.get("id", "")
+        name = team_info.get("name", "Unknown Workspace")
+        
+        # Create territory via spatial mapper
+        workspace_data = {
+            "id": territory_id,
+            "name": name,
+            "domain": team_info.get("domain"),
+            "enterprise_id": team_info.get("enterprise_id"),
+        }
+        
+        territory = self.spatial_mapper.map_workspace(workspace_data)
+        
+        # Create TDD-compatible response object with access_token
+        # For OAuth-initialized workspaces, default to WORKSPACE type
+        @dataclass
+        class SpatialTerritory:
+            """OAuth + Spatial Territory wrapper"""
+            territory_id: str
+            name: str
+            type: TerritoryType
+            access_token: str
+            
+        return SpatialTerritory(
+            territory_id=territory.id,
+            name=territory.name,
+            type=TerritoryType.WORKSPACE,  # OAuth workspaces default to WORKSPACE type
+            access_token=access_token,
+        )
+
     async def _store_workspace_tokens(
         self, workspace_data: Dict[str, Any], token_data: Dict[str, Any]
     ) -> None:

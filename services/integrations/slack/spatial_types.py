@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Set
 class TerritoryType(Enum):
     """Types of Slack workspace territories"""
 
+    WORKSPACE = "workspace"  # General Slack workspace
     CORPORATE = "corporate"
     COMMUNITY = "community"
     PROJECT = "project"
