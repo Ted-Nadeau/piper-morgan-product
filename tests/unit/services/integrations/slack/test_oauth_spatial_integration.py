@@ -11,13 +11,13 @@ from uuid import UUID, uuid4
 
 import pytest
 
-# TDD spec tests - implementing initialize_spatial_territory method
-# Tracked in piper-morgan-agf
-
 from services.integrations.slack.config_service import SlackConfigService
 from services.integrations.slack.oauth_handler import SlackOAuthHandler
 from services.integrations.slack.spatial_agent import SlackSpatialAgent
 from services.integrations.slack.spatial_types import Territory, TerritoryType
+
+# TDD spec tests - implementing initialize_spatial_territory method
+# Tracked in piper-morgan-agf
 
 
 class TestOAuthSpatialIntegration:
@@ -86,7 +86,9 @@ class TestOAuthSpatialIntegration:
         assert spatial_agent.spatial_state.current_territory == "T123456"
         assert spatial_agent.get_spatial_summary()["current_position"]["territory"] == "T123456"
 
-    @pytest.mark.skip(reason="TDD test - SlackOAuthHandler.get_spatial_capabilities() not implemented. Tracked in piper-morgan-7wq")
+    @pytest.mark.skip(
+        reason="TDD test - SlackOAuthHandler.get_spatial_capabilities() not implemented. Tracked in piper-morgan-5eu"
+    )
     def test_oauth_scopes_affect_spatial_capabilities(self, oauth_handler, spatial_agent):
         """Test that OAuth scopes determine spatial capabilities"""
         # Arrange
@@ -106,7 +108,9 @@ class TestOAuthSpatialIntegration:
         assert "users:read" in capabilities
         assert len(capabilities) == 3
 
-    @pytest.mark.skip(reason="TDD test - SlackOAuthHandler.refresh_spatial_territory() not implemented. Tracked in piper-morgan-8kt")
+    @pytest.mark.skip(
+        reason="TDD test - SlackOAuthHandler.refresh_spatial_territory() not implemented. Tracked in piper-morgan-7sr"
+    )
     def test_oauth_token_refresh_updates_spatial_territory(self, oauth_handler, spatial_agent):
         """Test that token refresh updates spatial territory"""
         # Arrange
@@ -129,7 +133,9 @@ class TestOAuthSpatialIntegration:
         assert initial_territory.access_token != updated_territory.access_token
         assert updated_territory.access_token == "xoxb-new-token"
 
-    @pytest.mark.skip(reason="TDD test - SlackOAuthHandler.validate_and_initialize_spatial_territory() not implemented. Tracked in piper-morgan-9lm")
+    @pytest.mark.skip(
+        reason="TDD test - SlackOAuthHandler.validate_and_initialize_spatial_territory() not implemented. Tracked in piper-morgan-04y"
+    )
     def test_oauth_state_validation_prevents_spatial_initialization(
         self, oauth_handler, spatial_agent
     ):
@@ -145,7 +151,9 @@ class TestOAuthSpatialIntegration:
         with pytest.raises(ValueError, match="Invalid OAuth state"):
             oauth_handler.validate_and_initialize_spatial_territory(oauth_response, "valid-state")
 
-    @pytest.mark.skip(reason="TDD test - SlackOAuthHandler.get_user_spatial_context() not implemented. Tracked in piper-morgan-0np")
+    @pytest.mark.skip(
+        reason="TDD test - SlackOAuthHandler.get_user_spatial_context() not implemented. Tracked in piper-morgan-3v8"
+    )
     def test_oauth_user_context_integration(self, oauth_handler, spatial_agent):
         """Test that OAuth user context integrates with spatial system"""
         # Arrange

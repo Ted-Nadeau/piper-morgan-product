@@ -23,7 +23,6 @@ from services.intent_service.llm_classifier_factory import LLMClassifierFactory
 from services.shared_types import NodeType
 
 
-@pytest.mark.skip(reason="Bug - All tests need container initialization in fixture. Tracked in piper-morgan-5yz")
 class TestLLMIntentClassifier:
     """Test suite for LLM-based intent classification"""
 
@@ -43,8 +42,10 @@ class TestLLMIntentClassifier:
         return mock
 
     @pytest.fixture
-    async def classifier(self, mock_knowledge_graph_service, mock_semantic_indexing_service):
-        """Create classifier with mocked dependencies"""
+    async def classifier(
+        self, initialized_container, mock_knowledge_graph_service, mock_semantic_indexing_service
+    ):
+        """Create classifier with mocked dependencies and initialized container"""
         return await LLMClassifierFactory.create_for_testing(
             mock_knowledge_graph_service=mock_knowledge_graph_service,
             mock_semantic_indexing_service=mock_semantic_indexing_service,
@@ -292,13 +293,12 @@ class TestLLMIntentClassifier:
                 await high_threshold_classifier.classify("Search for something")
 
 
-@pytest.mark.skip(reason="Bug - All tests need container initialization in fixture. Tracked in piper-morgan-5yz")
 class TestLLMClassifierPerformance:
     """Performance benchmarks for LLMIntentClassifier"""
 
     @pytest.fixture
-    async def fast_classifier(self):
-        """Create classifier optimized for performance testing"""
+    async def fast_classifier(self, initialized_container):
+        """Create classifier optimized for performance testing with initialized container"""
         return await LLMClassifierFactory.create_for_testing(confidence_threshold=0.75)
 
     @pytest.mark.asyncio
@@ -355,13 +355,12 @@ class TestLLMClassifierPerformance:
             assert avg_time_ms < 100  # With mocks, should be very fast
 
 
-@pytest.mark.skip(reason="Bug - All tests need container initialization in fixture. Tracked in piper-morgan-5yz")
 class TestLLMClassifierEdgeCases:
     """Edge case testing for LLMIntentClassifier"""
 
     @pytest.fixture
-    async def classifier(self):
-        """Create classifier for edge case testing"""
+    async def classifier(self, initialized_container):
+        """Create classifier for edge case testing with initialized container"""
         return await LLMClassifierFactory.create_for_testing()
 
     @pytest.mark.asyncio

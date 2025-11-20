@@ -38,7 +38,6 @@ import pytest
 from services.intent_service.classifier import IntentClassifier
 
 
-@pytest.mark.skip(reason="Bug - IntentClassifier needs container initialization in fixture. Tracked in piper-morgan-4wx")
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "message,expected_action,expected_query",
@@ -57,7 +56,7 @@ from services.intent_service.classifier import IntentClassifier
         ("find documents about project timeline", "search_documents", "project timeline"),
     ],
 )
-async def test_pm039_patterns(message, expected_action, expected_query):
+async def test_pm039_patterns(initialized_container, message, expected_action, expected_query):
     classifier = IntentClassifier()
     intent = await classifier.classify(message)
     assert intent.action == expected_action, f"Message: {message} | Got: {intent.action}"

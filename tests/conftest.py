@@ -153,6 +153,40 @@ async def intent_service():
     ServiceContainer.reset()
 
 
+@pytest_asyncio.fixture
+async def initialized_container():
+    """
+    Initialize ServiceContainer with LLM service for tests that need container setup.
+
+    This fixture provides a minimal container initialization for tests that directly
+    instantiate IntentClassifier or LLMIntentClassifier without going through IntentService.
+
+    Created to fix piper-morgan-8oz and piper-morgan-ss0 (container initialization bugs).
+
+    Usage:
+        @pytest.mark.asyncio
+        async def test_classifier(initialized_container):
+            classifier = IntentClassifier()  # Now works - container is initialized
+            intent = await classifier.classify("message")
+    """
+    from services.container import ServiceContainer
+    from services.domain.llm_domain_service import LLMDomainService
+
+    # Initialize LLM domain service
+    llm_domain_service = LLMDomainService()
+    await llm_domain_service.initialize()
+
+    # Get container instance and register LLM service
+    container = ServiceContainer()
+    container._registry.register("llm", llm_domain_service)
+    container._initialized = True
+
+    yield container
+
+    # Cleanup: Reset container for next test
+    ServiceContainer.reset()
+
+
 @pytest.fixture
 def client_with_intent():
     """

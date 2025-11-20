@@ -325,8 +325,9 @@ class TestSlackSpatialAgent:
         assert len(spatial_agent.spatial_state.attention_focus) == 0
 
 
-@pytest.mark.skip(reason="SpatialCoordinates signature mismatch - unexpected keyword object_id. Related to piper-morgan-1i5")
-
+@pytest.mark.skip(
+    reason="Bug - SpatialEvent missing 'timestamp' attribute. Tracked in piper-morgan-1i5 (reopened)"
+)
 class TestSpatialIntegration:
     """Integration tests for spatial metaphor processing"""
 

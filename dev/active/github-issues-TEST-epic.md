@@ -1,8 +1,8 @@
-# GitHub Issues for TEST- Super Epic
+# GitHub Issues for TEST Super Epic
 
 ## Super Epic
 ```markdown
-Title: TEST- Test Infrastructure Repair
+Title: TEST: Test Infrastructure Repair
 Labels: super-epic, test-infrastructure, p0-critical
 Body:
 
