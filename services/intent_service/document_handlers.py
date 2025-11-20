@@ -138,11 +138,11 @@ async def handle_question_document(file_id: str, question: str, user_id: str) ->
             raise FileNotFoundError(f"File not found in storage: {file_path}")
 
         # 3. Extract text content (for PDFs)
-        import PyPDF2
+        import pypdf
 
         text_content = ""
         with open(file_path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
+            reader = pypdf.PdfReader(f)
             for page in reader.pages:
                 text_content += page.extract_text() or ""
 
@@ -257,11 +257,11 @@ async def handle_compare_documents(file_ids: List[str], user_id: str) -> Dict:
                 raise FileNotFoundError(f"File not found in storage: {file_path}")
 
             # Extract text
-            import PyPDF2
+            import pypdf
 
             text_content = ""
             with open(file_path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
+                reader = pypdf.PdfReader(f)
                 for page in reader.pages:
                     text_content += page.extract_text() or ""
 
@@ -405,11 +405,11 @@ async def handle_reference_in_conversation(
             raise FileNotFoundError(f"File not found in storage: {file_path}")
 
         # Extract text content
-        import PyPDF2
+        import pypdf
 
         text_content = ""
         with open(file_path, "rb") as f:
-            reader = PyPDF2.PdfReader(f)
+            reader = pypdf.PdfReader(f)
             for page in reader.pages[:5]:  # First 5 pages to avoid token overflow
                 text_content += page.extract_text() or ""
 

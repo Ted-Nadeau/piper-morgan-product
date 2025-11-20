@@ -50,14 +50,14 @@ class MdContentExtractor(BaseContentExtractor):
 
 
 class PdfContentExtractor(BaseContentExtractor):
-    """Extractor for PDF files (.pdf) using PyPDF2."""
+    """Extractor for PDF files (.pdf) using pypdf."""
 
     def extract(self, file_path: str) -> str:
         try:
-            import PyPDF2
+            import pypdf
 
             with open(file_path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
+                reader = pypdf.PdfReader(f)
                 text = []
                 for page in reader.pages:
                     try:

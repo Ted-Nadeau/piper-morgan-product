@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import chromadb
-import PyPDF2
+import pypdf
 import structlog
 from chromadb.utils import embedding_functions
 
@@ -228,7 +228,7 @@ Be specific and concise. Extract real concepts from the content."""
 
         try:
             with open(file_path, "rb") as file:
-                pdf_reader = PyPDF2.PdfReader(file)
+                pdf_reader = pypdf.PdfReader(file)
 
                 # Extract text from all pages
                 full_text = ""
