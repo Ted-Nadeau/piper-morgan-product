@@ -10,13 +10,13 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-# TDD spec tests - implementing missing methods progressively
-# Tracked in piper-morgan-8jn
-
 from services.integrations.slack.config_service import SlackConfigService
 from services.integrations.slack.event_handler import SlackEventHandler
 from services.integrations.slack.ngrok_service import NgrokService
 from services.integrations.slack.webhook_router import SlackWebhookRouter
+
+# TDD spec tests - implementing missing methods progressively
+# Tracked in piper-morgan-8jn
 
 
 class TestNgrokWebhookFlow:
@@ -98,19 +98,35 @@ class TestNgrokWebhookFlow:
 
     def test_webhook_signature_verification(self, webhook_router):
         """Test that webhook signatures are verified"""
-        # Arrange
-        signature = "v0=abc123"
-        timestamp = "1234567890"
+        import hashlib
+        import hmac
+        import time
+
+        # Arrange - use current timestamp to pass replay attack check
+        current_timestamp = str(int(time.time()))
         body = "test body"
 
-        webhook_router._verify_signature = Mock(return_value=True)
+        # Mock config to provide signing secret
+        webhook_router.config_service.get_config = Mock(
+            return_value=Mock(signing_secret="test_secret_key")
+        )
+
+        # Compute valid signature using same algorithm as the code
+        sig_basestring = f"v0:{current_timestamp}:{body}"
+        valid_signature = (
+            "v0="
+            + hmac.new(
+                "test_secret_key".encode(), sig_basestring.encode(), hashlib.sha256
+            ).hexdigest()
+        )
 
         # Act
-        is_valid = webhook_router._verify_webhook_signature(signature, timestamp, body)
+        is_valid = webhook_router._verify_webhook_signature(
+            valid_signature, current_timestamp, body
+        )
 
         # Assert
         assert is_valid is True
-        webhook_router._verify_signature.assert_called_once_with(signature, timestamp, body)
 
     async def test_webhook_event_processing_flow(self, webhook_router, event_handler):
         """Test complete webhook event processing flow"""
