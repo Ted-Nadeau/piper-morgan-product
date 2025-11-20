@@ -10,13 +10,6 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="TDD spec - SlackSpatialMapper missing 4 methods: "
-    "map_message_to_spatial_object, map_reaction_to_emotional_marker, "
-    "map_mention_to_attention_attractor, map_channel_to_room. "
-    "Tracked in piper-morgan-1i5"
-)
-
 from services.integrations.slack.config_service import SlackConfigService
 from services.integrations.slack.event_handler import EventProcessingResult, SlackEventHandler
 from services.integrations.slack.spatial_mapper import SlackSpatialMapper
@@ -75,7 +68,9 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "message_placed"
         assert result.spatial_event.coordinates.room_id == "C123456"
         assert result.spatial_event.coordinates.territory_id == "T123456"
-        assert result.spatial_event.coordinates.object_id == "1234567890.123456"
+        # Message timestamp is in event_id and affected_objects
+        assert "1234567890.123456" in result.spatial_event.event_id
+        assert "1234567890.123456" in result.spatial_event.affected_objects
 
     async def test_mention_event_maps_to_attention_attractor(self, event_handler, spatial_mapper):
         """Test that mention events map to attention attractors"""
@@ -96,9 +91,10 @@ class TestEventSpatialMapping:
         assert result.success is True
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "attention_attracted"
+        # Mention with "help" keyword is URGENT level
         assert result.attention_level == AttentionLevel.URGENT
         assert result.spatial_event.attention_attractor is not None
-        assert result.spatial_event.attention_attractor.level == AttentionLevel.URGENT
+        assert result.spatial_event.attention_attractor.attractor_type == AttentionLevel.URGENT
 
     async def test_reaction_event_maps_to_emotional_marker(self, event_handler, spatial_mapper):
         """Test that reaction events map to emotional markers"""
@@ -119,7 +115,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event is not None
         assert result.spatial_event.event_type == "emotional_marker_updated"
         assert result.spatial_event.emotional_marker is not None
-        assert result.spatial_event.emotional_marker.reaction == "thumbsup"
+        assert result.spatial_event.emotional_marker.reaction_type == "thumbsup"
         assert result.emotional_valence in [EmotionalValence.POSITIVE, EmotionalValence.NEUTRAL]
 
     async def test_channel_created_event_maps_to_room(self, event_handler, spatial_mapper):
@@ -140,7 +136,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "room_created"
         assert result.spatial_event.coordinates.room_id == "C789012"
         assert result.spatial_event.room is not None
-        assert result.spatial_event.room.room_id == "C789012"
+        assert result.spatial_event.room.id == "C789012"
         assert result.spatial_event.room.name == "new-channel"
 
     async def test_thread_event_maps_to_conversational_path(self, event_handler, spatial_mapper):

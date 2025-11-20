@@ -186,6 +186,25 @@ class SlackSpatialMapper:
             logger.error(f"Failed to map channel to room: {e}")
             raise ValueError(f"Channel mapping failed: {e}") from e
 
+    async def map_channel_to_room(self, channel_data: Dict[str, Any]) -> Room:
+        """
+        Map Slack channel data to Room spatial metaphor (async wrapper for map_channel).
+
+        This method adapts the synchronous map_channel() method for use in async event handling.
+        It extracts the territory_id from the channel data and delegates to map_channel().
+
+        Args:
+            channel_data: Slack channel data from event
+
+        Returns:
+            Room representation of channel
+        """
+        # Extract territory ID from channel data
+        territory_id = channel_data.get("team_id") or channel_data.get("team", "unknown")
+
+        # Delegate to existing synchronous method
+        return self.map_channel(slack_channel=channel_data, territory_id=territory_id)
+
     def _classify_room_purpose(self, channel: Dict[str, Any]) -> RoomPurpose:
         """Classify channel as room purpose based on characteristics"""
 
@@ -340,6 +359,41 @@ class SlackSpatialMapper:
             placement_time=self._parse_slack_timestamp(message_ts),
         )
 
+    async def map_message_to_spatial_object(
+        self,
+        message_data: Dict[str, Any],
+        room_id: str,
+        thread_ts: Optional[str] = None,
+    ) -> SpatialObject:
+        """
+        Map Slack message to SpatialObject for event processing.
+
+        This async method creates a spatial object representation of a message,
+        suitable for real-time event processing. It uses the existing _create_spatial_object
+        helper but accepts event-based parameters.
+
+        Args:
+            message_data: Slack message event data
+            room_id: Channel ID where message was posted
+            thread_ts: Thread timestamp if message is in thread
+
+        Returns:
+            SpatialObject representation of message
+        """
+        # Extract territory ID from message data
+        territory_id = message_data.get("team") or message_data.get("team_id", "unknown")
+
+        # Create spatial coordinates for the object
+        coordinates = SpatialCoordinates(
+            territory_id=territory_id,
+            room_id=room_id,
+            path_id=thread_ts,
+            object_position=None,
+        )
+
+        # Use existing helper to create spatial object
+        return self._create_spatial_object(message=message_data, coordinates=coordinates)
+
     def _classify_object_type(self, message: Dict[str, Any]) -> ObjectType:
         """Classify message as spatial object type"""
 
@@ -413,6 +467,82 @@ class SlackSpatialMapper:
 
         return attractors
 
+    async def map_mention_to_attention_attractor(
+        self, mention_data: Dict[str, Any]
+    ) -> AttentionAttractor:
+        """
+        Map Slack mention to AttentionAttractor for event processing.
+
+        Analyzes a message containing a mention and creates an attention attractor
+        representing the @mention event. Classifies the attention level based on
+        the type of mention (@user, @channel, @here, etc.).
+
+        Args:
+            mention_data: Slack message event data containing mention
+
+        Returns:
+            AttentionAttractor representing the mention
+        """
+        text = mention_data.get("text", "")
+        message_ts = mention_data.get("ts", "")
+
+        # Determine attention level and target based on mention type
+        if "@channel" in text:
+            attention_level = AttentionLevel.FOCUSED
+            target_id = "channel"
+            attention_radius = "room-wide"
+            urgency_indicators = ["@channel"]
+        elif "@here" in text:
+            attention_level = AttentionLevel.FOCUSED
+            target_id = "here"
+            attention_radius = "room-wide"
+            urgency_indicators = ["@here"]
+        elif "<@" in text:
+            # Extract user ID from mention format <@U12345>
+            import re
+
+            user_match = re.search(r"<@([A-Z0-9]+)>", text)
+            target_id = user_match.group(1) if user_match else "user"
+            attention_level = AttentionLevel.DIRECT
+            attention_radius = "focused"
+            urgency_indicators = []
+        else:
+            # Fallback for other mention types
+            target_id = "unknown"
+            attention_level = AttentionLevel.AMBIENT
+            attention_radius = "focused"
+            urgency_indicators = []
+
+        # Check for urgency keywords
+        urgency_keywords = ["urgent", "asap", "emergency", "critical", "help"]
+        text_lower = text.lower()
+        for keyword in urgency_keywords:
+            if keyword in text_lower:
+                urgency_indicators.append(keyword)
+                # Upgrade attention level if urgent keywords present
+                if attention_level == AttentionLevel.DIRECT:
+                    attention_level = AttentionLevel.URGENT
+                elif attention_level == AttentionLevel.FOCUSED:
+                    attention_level = AttentionLevel.URGENT
+
+        # Extract context keywords (simple word extraction)
+        context_keywords = [
+            word for word in text_lower.split() if len(word) > 4 and word not in urgency_keywords
+        ][
+            :5
+        ]  # Limit to top 5 meaningful words
+
+        return AttentionAttractor(
+            target_id=target_id,
+            attractor_type=attention_level,
+            source_object_id=message_ts,
+            urgency_indicators=urgency_indicators,
+            context_keywords=context_keywords,
+            attention_radius=attention_radius,
+            persistence_level="sustained" if urgency_indicators else "standard",
+            created_at=self._parse_slack_timestamp(message_ts),
+        )
+
     def _extract_emotional_markers(self, message: Dict[str, Any]) -> List[EmotionalMarker]:
         """Extract reactions as emotional markers"""
 
@@ -440,6 +570,73 @@ class SlackSpatialMapper:
                 )
 
         return markers
+
+    async def map_reaction_to_emotional_marker(
+        self, reaction_data: Dict[str, Any], added: bool
+    ) -> EmotionalMarker:
+        """
+        Map Slack reaction to EmotionalMarker for event processing.
+
+        Creates an emotional marker from a reaction_added or reaction_removed event.
+        Classifies the emotional valence and assesses the social context of the reaction.
+
+        Args:
+            reaction_data: Slack reaction event data
+            added: True if reaction was added, False if removed
+
+        Returns:
+            EmotionalMarker representing the reaction
+        """
+        # Extract reaction details from event structure
+        # Reaction events have structure: {reaction: "emoji_name", item: {type, channel, ts}, user: "U123"}
+        emoji_name = reaction_data.get("reaction", "")
+        user_id = reaction_data.get("user", "")
+
+        # Get message reference from item
+        item = reaction_data.get("item", {})
+        message_ts = item.get("ts", "")
+
+        # Classify emotional valence using existing helper
+        valence = self._classify_emotional_valence(emoji_name)
+
+        # Assess intensity using existing helper
+        intensity = self._assess_reaction_intensity(emoji_name)
+
+        # Determine timing significance
+        # If we had message timestamp and reaction timestamp, we could calculate this
+        # For now, use simple heuristic
+        timing_significance = "immediate"  # Reactions in event stream are typically immediate
+
+        # Assess social signal (would need to check if others reacted with same emoji)
+        # For event-based processing, we default to individual unless we have aggregate data
+        social_signal = "individual"
+
+        # Determine emotional radius based on reaction type
+        if valence in [EmotionalValence.POSITIVE, EmotionalValence.SUPPORTIVE]:
+            emotional_radius = "room"  # Positive emotions spread
+            contagion_potential = "medium"
+        elif valence == EmotionalValence.NEGATIVE:
+            emotional_radius = "local"  # Negative emotions more contained
+            contagion_potential = "low"
+        elif valence == EmotionalValence.HUMOROUS:
+            emotional_radius = "room"  # Humor spreads
+            contagion_potential = "high"
+        else:
+            emotional_radius = "local"
+            contagion_potential = "low"
+
+        return EmotionalMarker(
+            reaction_type=emoji_name,
+            valence=valence,
+            source_object_id=message_ts,
+            reactor_id=user_id,
+            intensity=intensity,
+            social_signal=social_signal,
+            timing_significance=timing_significance,
+            emotional_radius=emotional_radius,
+            contagion_potential=contagion_potential,
+            created_at=self._parse_slack_timestamp(message_ts) if message_ts else None,
+        )
 
     def _classify_emotional_valence(self, emoji_name: str) -> EmotionalValence:
         """Classify emoji reaction as emotional valence"""

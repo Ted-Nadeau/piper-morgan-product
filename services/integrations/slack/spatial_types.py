@@ -326,6 +326,13 @@ class SpatialEvent:
     affected_objects: List[str] = field(default_factory=list)
     spatial_changes: Dict[str, Any] = field(default_factory=dict)
 
+    # Event-specific domain objects (optional)
+    spatial_object: Optional["SpatialObject"] = None
+    attention_attractor: Optional["AttentionAttractor"] = None
+    emotional_marker: Optional["EmotionalMarker"] = None
+    room: Optional["Room"] = None
+    conversational_path: Optional["ConversationalPath"] = None
+
     # Context
     event_time: Optional[datetime] = None
     significance_level: str = "routine"  # routine, notable, significant, critical
