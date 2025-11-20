@@ -27,7 +27,7 @@ from sqlalchemy import delete
 
 from services.auth.password_service import PasswordService
 from services.database.connection import db
-from services.database.models import UploadedFileDB
+from services.database.models import UploadedFileDB, User
 from web.app import app
 
 
