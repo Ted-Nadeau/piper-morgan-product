@@ -303,32 +303,35 @@ class SlackOAuthHandler:
     def initialize_spatial_territory(self, oauth_response: dict):
         """
         Initialize spatial territory from OAuth response (TDD-compatible).
-        
+
         Creates a territory representation that includes OAuth credentials.
         This is a simplified sync wrapper for TDD test compatibility.
-        
+
         Args:
             oauth_response: OAuth response dict with team and token info
-            
+
         Returns:
             Object with territory_id, name, type, and access_token attributes
-            
+
         Raises:
             ValueError: If OAuth response indicates failure
         """
         from dataclasses import dataclass
+
         from services.integrations.slack.spatial_types import TerritoryType
-        
+
         # Check for OAuth errors
         if "error" in oauth_response:
-            raise ValueError(f"OAuth failed: {oauth_response.get('error_description', oauth_response['error'])}")
-        
+            raise ValueError(
+                f"OAuth failed: {oauth_response.get('error_description', oauth_response['error'])}"
+            )
+
         # Extract OAuth data
         access_token = oauth_response.get("access_token", "")
         team_info = oauth_response.get("team", {})
         territory_id = team_info.get("id", "")
         name = team_info.get("name", "Unknown Workspace")
-        
+
         # Create territory via spatial mapper
         workspace_data = {
             "id": territory_id,
@@ -336,19 +339,20 @@ class SlackOAuthHandler:
             "domain": team_info.get("domain"),
             "enterprise_id": team_info.get("enterprise_id"),
         }
-        
+
         territory = self.spatial_mapper.map_workspace(workspace_data)
-        
+
         # Create TDD-compatible response object with access_token
         # For OAuth-initialized workspaces, default to WORKSPACE type
         @dataclass
         class SpatialTerritory:
             """OAuth + Spatial Territory wrapper"""
+
             territory_id: str
             name: str
             type: TerritoryType
             access_token: str
-            
+
         return SpatialTerritory(
             territory_id=territory.id,
             name=territory.name,
@@ -466,3 +470,46 @@ class SlackOAuthHandler:
         except Exception as e:
             logger.error(f"Failed to revoke workspace access: {e}")
             return False
+
+    def get_spatial_capabilities(self, oauth_response: Dict[str, Any]) -> list:
+        """
+        Map OAuth scopes to spatial capabilities.
+
+        Extracts granted scopes from OAuth response and returns them as a list
+        of individual capability strings. These scopes determine what spatial
+        operations the bot can perform in the workspace.
+
+        Args:
+            oauth_response: OAuth response dict containing authed_user.scope
+
+        Returns:
+            List of individual scope strings (e.g., ["chat:write", "channels:read"])
+
+        Raises:
+            KeyError: If authed_user.scope is missing from OAuth response
+
+        Example:
+            >>> oauth_response = {
+            ...     "authed_user": {"scope": "chat:write,channels:read"}
+            ... }
+            >>> handler.get_spatial_capabilities(oauth_response)
+            ['chat:write', 'channels:read']
+        """
+        try:
+            # Extract scope string from authed_user
+            authed_user = oauth_response.get("authed_user", {})
+            scope_string = authed_user.get("scope", "")
+
+            # Parse comma-separated scopes into list
+            if not scope_string:
+                logger.warning("No scopes found in OAuth response")
+                return []
+
+            capabilities = [scope.strip() for scope in scope_string.split(",") if scope.strip()]
+
+            logger.info(f"Extracted {len(capabilities)} spatial capabilities from OAuth response")
+            return capabilities
+
+        except Exception as e:
+            logger.error(f"Failed to extract spatial capabilities: {e}")
+            raise
