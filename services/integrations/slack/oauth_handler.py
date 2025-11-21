@@ -573,3 +573,53 @@ class SlackOAuthHandler:
         except Exception as e:
             logger.error(f"Failed to extract user spatial context: {e}")
             raise
+
+    def refresh_spatial_territory(self, refresh_response: Dict[str, Any]):
+        """
+        Refresh spatial territory after OAuth token refresh.
+
+        Updates territory metadata when an OAuth token is refreshed, maintaining
+        the same territory ID but updating the access token and other mutable fields.
+
+        This method handles token refresh scenarios where the workspace/territory
+        remains the same but credentials need to be updated.
+
+        Args:
+            refresh_response: OAuth token refresh response (same structure as initial OAuth response)
+
+        Returns:
+            Updated SpatialTerritory object with refreshed access token
+
+        Raises:
+            ValueError: If OAuth response indicates failure
+
+        Example:
+            >>> refresh_response = {
+            ...     "access_token": "xoxb-new-token",
+            ...     "team": {"id": "T123456", "name": "Test Workspace"}
+            ... }
+            >>> updated_territory = handler.refresh_spatial_territory(refresh_response)
+            >>> updated_territory.access_token
+            'xoxb-new-token'
+
+        Note:
+            This reuses initialize_spatial_territory() logic since the data structure
+            is identical. The distinction is semantic - refresh vs initial setup.
+        """
+        try:
+            # Extract territory info for logging
+            team_info = refresh_response.get("team", {})
+            territory_id = team_info.get("id", "")
+
+            logger.info(f"Refreshing spatial territory for workspace {territory_id}")
+
+            # Reuse initialization logic - structure is identical
+            # The difference is semantic (refresh vs create), not structural
+            territory = self.initialize_spatial_territory(refresh_response)
+
+            logger.info(f"Spatial territory refreshed: {territory.name} ({territory.territory_id})")
+            return territory
+
+        except Exception as e:
+            logger.error(f"Failed to refresh spatial territory: {e}")
+            raise
