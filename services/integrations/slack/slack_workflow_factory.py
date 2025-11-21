@@ -206,7 +206,10 @@ class SlackWorkflowFactory:
             return workflow
 
         except Exception as e:
+            import traceback
+
             self.logger.error(f"Error creating workflow from spatial event: {e}")
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return None
 
     def _find_workflow_mapping(

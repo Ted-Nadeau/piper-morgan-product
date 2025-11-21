@@ -256,7 +256,27 @@ class TestWorkflowIntegration:
     @pytest.fixture
     def slack_workflow_factory(self, workflow_factory):
         """Slack workflow factory instance"""
-        return SlackWorkflowFactory(workflow_factory)
+        from services.domain.models import Intent
+        from services.intent_service.classifier import IntentClassifier
+        from services.shared_types import IntentCategory
+
+        # Create a real intent classifier and mock its classify method to avoid LLM requirements
+        intent_classifier = IntentClassifier()
+
+        # Create a mock intent for the classifier to return
+        mock_intent = Intent(
+            category=IntentCategory.EXECUTION,
+            action="create_workflow",
+            context={"spatial_event_type": "attention_attracted"},
+        )
+
+        # Mock the classify method to return a valid intent
+        async def mock_classify(*args, **kwargs):
+            return (mock_intent, "Classified as workflow creation request")
+
+        intent_classifier._classify_with_reasoning = mock_classify
+
+        return SlackWorkflowFactory(workflow_factory, intent_classifier=intent_classifier)
 
     @pytest.fixture
     def intent_classifier(self):
@@ -266,24 +286,48 @@ class TestWorkflowIntegration:
     @pytest.fixture
     def mock_event_result(self):
         """Mock event processing result"""
-        result = Mock(spec=EventProcessingResult)
-        result.success = True
-        result.attention_level.value = "high"
-        result.emotional_valence.value = "positive"
-        result.spatial_changes = [
-            {"type": "attention_attracted", "content": "I need help with this bug"}
-        ]
-        result.spatial_event = Mock()
-        result.spatial_event.event_type = "attention_attracted"
+        from services.integrations.slack.spatial_types import (
+            AttentionLevel,
+            EmotionalValence,
+            SpatialCoordinates,
+            SpatialEvent,
+        )
+
+        # Create a proper SpatialEvent instead of Mock for JSON serializability
+        spatial_event = SpatialEvent(
+            event_id="evt-123",
+            event_type="attention_attracted",
+            coordinates=SpatialCoordinates(
+                territory_id="T123456",
+                room_id="C123456",
+            ),
+            actor_id="U789012",
+            spatial_changes={
+                "type": "attention_attracted",
+                "content": "I need help with this bug",
+            },
+        )
+
+        result = EventProcessingResult(
+            success=True,
+            spatial_event=spatial_event,
+            spatial_changes=[
+                {"type": "attention_attracted", "content": "I need help with this bug"}
+            ],
+            attention_level=AttentionLevel.URGENT,
+            emotional_valence=EmotionalValence.NEUTRAL,
+        )
         return result
 
     @pytest.fixture
     def mock_navigation_decision(self):
         """Mock navigation decision"""
-        decision = Mock(spec=NavigationDecision)
-        decision.intent = NavigationIntent.RESPOND
-        decision.target_room = "C123456"
-        decision.confidence = 0.9
+        decision = NavigationDecision(
+            intent=NavigationIntent.RESPOND,
+            target_room="C123456",
+            confidence=0.9,
+            reasoning="Critical bug mentioned in general channel",
+        )
         return decision
 
     @pytest.fixture
@@ -298,9 +342,6 @@ class TestWorkflowIntegration:
             navigation_intent="respond",
         )
 
-    @pytest.mark.skip(
-        reason="E2E test requires JSON-serializable spatial context - integration test scope"
-    )
     async def test_end_to_end_workflow_creation(
         self,
         slack_workflow_factory,

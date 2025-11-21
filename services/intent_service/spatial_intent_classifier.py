@@ -62,7 +62,7 @@ class SpatialIntentClassifier:
                 "territory_id": coords.territory_id,
                 "room_id": coords.room_id,
                 "path_id": coords.path_id,
-                "object_id": coords.object_id,
+                "object_position": coords.object_position,
             },
             user_context=user_context,
         )
