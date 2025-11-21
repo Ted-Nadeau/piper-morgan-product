@@ -47,23 +47,41 @@ def mock_session():
     return Mock()
 
 
-@pytest.fixture(autouse=False)  # TEMP DISABLED FOR INVESTIGATION - SLACK-SPATIAL Phase 1.2
+@pytest.fixture(autouse=True)
 def mock_token_blacklist(request):
     """
     Auto-mock TokenBlacklist for unit tests to prevent database session conflicts.
 
-    TEMPORARY: Disabled for SLACK-SPATIAL Phase 1.2 investigation (2025-11-20)
-    See: dev/2025/11/20/token-blacklist-investigation-results.md
+    Investigation (2025-11-20 SLACK-SPATIAL Phase 1.2):
+    Confirmed this auto-mock serves its purpose without hiding bugs. All auth tests
+    use @pytest.mark.integration and bypass this mock. See investigation report:
+    dev/2025/11/20/token-blacklist-investigation-results.md
 
+    WHY THIS EXISTS:
     Issue #281: TokenBlacklist.is_blacklisted() gets async context manager from
     overridden db.get_session() in tests, causing '_AsyncGeneratorContextManager'
-    has no attribute 'execute' errors.
+    has no attribute 'execute' errors in unit tests that don't properly configure
+    database session mocks.
 
-    Solution: Mock is_blacklisted to return False (token not blacklisted) for unit tests.
-    Integration tests (marked with @pytest.mark.integration) skip this mock and use
-    real database behavior.
+    WHAT IT DOES:
+    - Automatically mocks is_blacklisted() to return False for unit tests
+    - Allows unit tests to run without complex database session setup
+    - Does NOT affect integration tests (they bypass this mock)
 
-    Issue #292: Integration tests need real blacklist behavior
+    WHEN IT APPLIES:
+    - Unit tests (no @pytest.mark.integration marker)
+    - Tests that indirectly call TokenBlacklist through JWT validation
+
+    WHEN IT DOESN'T APPLY:
+    - Integration tests (marked with @pytest.mark.integration)
+    - Tests in tests/unit/services/auth/ (all use integration marker)
+
+    TO DISABLE FOR INVESTIGATION:
+    Change autouse=True to autouse=False and run your tests. Remember to re-enable
+    after investigation to maintain unit test stability.
+
+    Related Issues: #281 (original issue), #292 (integration test behavior)
+    Investigation: piper-morgan-otf (SLACK-SPATIAL Phase 1.2)
     """
     from unittest.mock import AsyncMock, patch
 
