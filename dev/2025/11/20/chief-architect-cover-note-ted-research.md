@@ -67,7 +67,7 @@ Ted's questions revealed:
 - Python 3.11: Score 1.50 → P2 (do soon)
 
 **Architectural decision needed**:
-- Should we adopt this as Pattern-042?
+- Should we adopt this as Pattern-039?
 - Apply to current roadmap?
 
 ---
@@ -85,7 +85,7 @@ Ted's questions revealed:
 - ⚠️ PostgreSQL → MS-SQL (needs work)
 
 **Architectural decision needed**:
-- Create Pattern-043: "Integration Swappability Guide"?
+- Create Pattern-040: "Integration Swappability Guide"?
 - Document Router pattern benefits for enterprise sales?
 
 ---
@@ -102,7 +102,7 @@ Ted's questions revealed:
 **PM feedback**: "maybe we should write an ADR about that?"
 
 **Architectural decision needed**:
-- Create ADR-044: "Mobile Strategy - Progressive Enhancement"?
+- Create ADR-042: "Mobile Strategy - Progressive Enhancement"?
 - Document decision criteria for each phase?
 - Capture mobile-first vs mobile-optional trade-offs?
 
@@ -131,19 +131,19 @@ Ted's questions revealed:
 
 ### Immediate Documentation (No Code)
 
-**Pattern-042: Feature Prioritization Scorecard**
+**Pattern-039: Feature Prioritization Scorecard**
 - Quantified decision framework
 - Fights "everything is P1" problem
 - Supports cost/benefit analysis
 - **Effort**: 2-3 hours (write pattern doc)
 
-**Pattern-043: Integration Swappability Guide**
+**Pattern-040: Integration Swappability Guide**
 - Document Router pattern benefits
 - List supported alternatives per integration
 - Enterprise value proposition
 - **Effort**: 2-3 hours (write pattern doc)
 
-**ADR-044: Mobile Strategy - Progressive Enhancement**
+**ADR-042: Mobile Strategy - Progressive Enhancement**
 - Why PWA before native
 - Decision criteria for each phase
 - Mobile-first vs mobile-optional trade-offs
@@ -189,11 +189,11 @@ Ted's questions revealed:
 
 1. **Python 3.11 upgrade**: Prioritize now or defer? (Security expired, performance boost, low risk)
 
-2. **Feature Scorecard**: Should we adopt this as Pattern-042? Apply to roadmap?
+2. **Feature Scorecard**: Should we adopt this as Pattern-039? Apply to roadmap?
 
-3. **Router pattern documentation**: Create Pattern-043 to capture swappability for enterprise?
+3. **Router pattern documentation**: Create Pattern-040 to capture swappability for enterprise?
 
-4. **Mobile strategy ADR**: Should we write ADR-044 now or wait until closer to implementation?
+4. **Mobile strategy ADR**: Should we write ADR-042 now or wait until closer to implementation?
 
 5. **Antigravity patterns**: After Ted tries it, which UX patterns should we prioritize learning from?
 
@@ -217,7 +217,7 @@ Ted's validation confirms our architectural decisions are sound.
 
 ### For Chief Architect Review:
 1. Read research doc (1,092 lines, comprehensive): `dev/2025/11/20/ted-nadeau-follow-up-research.md`
-2. Review proposed patterns/ADRs (Pattern-042, Pattern-043, ADR-044)
+2. Review proposed patterns/ADRs (Pattern-039, Pattern-040, ADR-042)
 3. Decide on Python 3.11 upgrade priority
 4. Provide feedback on Feature Scorecard model
 
@@ -227,9 +227,9 @@ Ted's validation confirms our architectural decisions are sound.
 3. ✅ Clear recommendations with priorities
 
 ### For Code Agent (pending decisions):
-1. Create Pattern-042 if approved
-2. Create Pattern-043 if approved
-3. Create ADR-044 if approved
+1. Create Pattern-039 if approved
+2. Create Pattern-040 if approved
+3. Create ADR-042 if approved
 4. Execute Python 3.11 upgrade if prioritized
 5. Create VSCode dev setup package
 

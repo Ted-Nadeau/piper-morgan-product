@@ -10,11 +10,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-pytestmark = pytest.mark.skip(
-    reason="Slack Spatial Integration TDD incomplete - tracked in epic piper-morgan-23y"
-)
-
-from services.domain.models import Workflow
+from services.domain.models import Intent, Workflow
 from services.integrations.slack.event_handler import EventProcessingResult
 from services.integrations.slack.slack_workflow_factory import (
     SlackWorkflowFactory,
@@ -28,8 +24,9 @@ from services.integrations.slack.spatial_types import (
     SpatialCoordinates,
     SpatialEvent,
 )
+from services.intent_service.classifier import IntentClassifier
 from services.orchestration.workflow_factory import WorkflowFactory
-from services.shared_types import WorkflowType
+from services.shared_types import IntentCategory, WorkflowType
 
 
 class TestSpatialWorkflowFactory:
@@ -41,9 +38,22 @@ class TestSpatialWorkflowFactory:
         return Mock(spec=WorkflowFactory)
 
     @pytest.fixture
-    def slack_workflow_factory(self, workflow_factory):
+    def mock_intent_classifier(self):
+        """Mock intent classifier to avoid JSON serialization issues"""
+        classifier = Mock(spec=IntentClassifier)
+        mock_intent = Intent(
+            category=IntentCategory.EXECUTION,
+            action="create_task",
+            context={},
+            confidence=0.9,
+        )
+        classifier.classify = AsyncMock(return_value=mock_intent)
+        return classifier
+
+    @pytest.fixture
+    def slack_workflow_factory(self, workflow_factory, mock_intent_classifier):
         """Slack workflow factory instance"""
-        return SlackWorkflowFactory(workflow_factory)
+        return SlackWorkflowFactory(workflow_factory, mock_intent_classifier)
 
     @pytest.fixture
     def mock_event_result(self):
@@ -58,6 +68,7 @@ class TestSpatialWorkflowFactory:
         result.spatial_event.coordinates = Mock(spec=SpatialCoordinates)
         result.spatial_event.coordinates.room_id = "C123456"
         result.spatial_event.coordinates.territory_id = "T123456"
+        result.spatial_event.coordinates.object_id = None
         return result
 
     @pytest.fixture
@@ -133,7 +144,10 @@ class TestSpatialWorkflowFactory:
         mock_workflow = Mock(spec=Workflow)
         mock_workflow.id = "wf-report"
         mock_workflow.context = {}
-        workflow_factory.create_from_intent = AsyncMock(return_value=mock_workflow)
+        mock_workflow.tasks = []
+        slack_workflow_factory.workflow_factory.create_from_intent = AsyncMock(
+            return_value=mock_workflow
+        )
 
         # Act
         workflow = await slack_workflow_factory.create_workflow_from_spatial_event(
@@ -172,7 +186,10 @@ class TestSpatialWorkflowFactory:
         mock_workflow = Mock(spec=Workflow)
         mock_workflow.id = "wf-feedback"
         mock_workflow.context = {}
-        workflow_factory.create_from_intent = AsyncMock(return_value=mock_workflow)
+        mock_workflow.tasks = []
+        slack_workflow_factory.workflow_factory.create_from_intent = AsyncMock(
+            return_value=mock_workflow
+        )
 
         # Act
         workflow = await slack_workflow_factory.create_workflow_from_spatial_event(
@@ -211,7 +228,10 @@ class TestSpatialWorkflowFactory:
         mock_workflow = Mock(spec=Workflow)
         mock_workflow.id = "wf-pattern"
         mock_workflow.context = {}
-        workflow_factory.create_from_intent = AsyncMock(return_value=mock_workflow)
+        mock_workflow.tasks = []
+        slack_workflow_factory.workflow_factory.create_from_intent = AsyncMock(
+            return_value=mock_workflow
+        )
 
         # Act
         workflow = await slack_workflow_factory.create_workflow_from_spatial_event(
@@ -222,7 +242,7 @@ class TestSpatialWorkflowFactory:
         assert workflow is not None
         assert workflow.id == "wf-pattern"
 
-    async def test_no_mapping_returns_none(self, slack_workflow_factory, workflow_factory):
+    async def test_no_mapping_returns_none(self, slack_workflow_factory):
         """Test that events without mappings return None"""
         # Arrange
         event_result = Mock(spec=EventProcessingResult)
@@ -233,16 +253,16 @@ class TestSpatialWorkflowFactory:
         event_result.spatial_event.event_type = "unknown_event_type"
 
         navigation_decision = Mock(spec=NavigationDecision)
-        navigation_decision.intent = NavigationIntent.MONITOR
+        navigation_decision.intent = NavigationIntent.RETREAT  # RETREAT doesn't match any mapping
         navigation_decision.confidence = 0.3
 
         context = SpatialWorkflowContext(
             room_id="C123456",
             territory_id="T123456",
             spatial_event_type="unknown_event_type",
-            attention_level="low",
+            attention_level="ambient",  # Doesn't match high/medium/low
             emotional_valence="neutral",
-            navigation_intent="monitor",
+            navigation_intent="retreat",  # Doesn't match any mapping
         )
 
         # Act
@@ -261,7 +281,12 @@ class TestSpatialWorkflowFactory:
         mock_workflow = Mock(spec=Workflow)
         mock_workflow.id = "wf-123"
         mock_workflow.context = {}
-        mock_workflow.tasks = [Mock(), Mock()]
+        # Create tasks with mutable result attribute
+        task1 = Mock()
+        task1.result = None
+        task2 = Mock()
+        task2.result = None
+        mock_workflow.tasks = [task1, task2]
         slack_workflow_factory.workflow_factory.create_from_intent = AsyncMock(
             return_value=mock_workflow
         )

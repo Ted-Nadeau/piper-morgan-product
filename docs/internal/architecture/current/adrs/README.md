@@ -4,11 +4,11 @@
 
 This directory contains Architecture Decision Records (ADRs) that document significant architectural decisions, their context, rationale, and consequences.
 
-**Total ADRs**: 45 records (000-044)
+**Total ADRs**: 43 records (000-042)
 
 ## Recent ADRs
 
-- **[ADR-044: Mobile Strategy - Progressive Enhancement](adr-044-mobile-strategy-progressive-enhancement.md)** (Nov 2025) - Mobile support phased approach
+- **[ADR-042: Mobile Strategy - Progressive Enhancement](adr-042-mobile-strategy-progressive-enhancement.md)** (Nov 2025) - Mobile support phased approach
 - **[ADR-013: MCP + Spatial Intelligence Integration Pattern](adr-013-mcp-spatial-integration-pattern.md)** - Core integration architecture
 - **[ADR-010: Configuration Patterns](adr-010-configuration-patterns.md)** - Configuration management approach
 - **[ADR-007: Staging Environment Architecture](adr-007-staging-environment-architecture.md)** - Environment strategy

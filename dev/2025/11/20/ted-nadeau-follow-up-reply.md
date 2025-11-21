@@ -109,7 +109,7 @@ Higher score = Higher priority
 - ✅ Transparent decision-making
 - ✅ Supports your pairwise comparison idea
 
-**Action**: We'll create this as **Pattern-042: Feature Prioritization Scorecard**
+**Action**: We'll create this as **Pattern-039: Feature Prioritization Scorecard**
 
 ---
 
@@ -145,7 +145,7 @@ External API / MCP Adapter (many providers)
 - When: If enterprise customers standardize on MS-SQL
 
 **Recommendation**:
-1. **Document swappability** (Pattern-043: Integration Swapping Guide)
+1. **Document swappability** (Pattern-040: Integration Swappability Guide)
 2. **Add Jira if enterprise need emerges** (medium effort, high value)
 3. **Add Gemini LLM** (low effort, diversifies AI risk)
 4. **Defer MS-SQL** (high effort, wait for customer request)
@@ -178,7 +178,7 @@ External API / MCP Adapter (many providers)
 - **Benefit**: Premium mobile experience
 
 **Should we write an ADR?**: Good idea!
-- ADR-044: "Mobile Strategy - Progressive Enhancement"
+- ADR-042: "Mobile Strategy - Progressive Enhancement"
 - Document: Why PWA before native, decision criteria for each phase
 - Captures: Mobile-first vs mobile-optional trade-offs
 
@@ -312,8 +312,8 @@ External API / MCP Adapter (many providers)
 3. ✅ **VSCode dev setup** (2-3 hours, improves onboarding)
 
 ### Document (No Code)
-4. ✅ **Integration swappability guide** (Pattern-043)
-5. ✅ **Mobile strategy ADR** (ADR-044)
+4. ✅ **Integration swappability guide** (Pattern-040)
+5. ✅ **Mobile strategy ADR** (ADR-042)
 
 ### Defer (P3/P4 - Wait for Demand)
 6. ⏸️ **Social login** (when users request)

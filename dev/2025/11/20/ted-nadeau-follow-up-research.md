@@ -219,7 +219,7 @@ Higher score = Higher priority
 6. ✅ Supports pairwise comparison (compare scores)
 7. ✅ Transparent decision-making
 
-**Action**: Create this as Pattern-042 (Feature Prioritization Scorecard)
+**Action**: Create this as Pattern-039 (Feature Prioritization Scorecard)
 
 ---
 
@@ -299,7 +299,7 @@ Higher score = Higher priority
    - Document Router pattern benefits
 
 **Action**:
-- Create Pattern-043 (Integration Swappability Guide)
+- Create Pattern-040 (Integration Swappability Guide)
 - Consider Issue: "Add Jira integration via Router pattern" (if enterprise need)
 
 ---
@@ -1017,7 +1017,7 @@ Kiro.dev           |                  |                        |       |
    - Risk: Low (well-supported)
 
 2. **Cost/Benefit Scorecard** (P2)
-   - Create as Pattern-042
+   - Create as Pattern-039
    - Apply to existing roadmap
    - Use for all future feature decisions
 
@@ -1028,7 +1028,7 @@ Kiro.dev           |                  |                        |       |
 
 ### Document & Monitor (No Implementation Yet)
 
-4. **Inter-operability Guide** (Pattern-043)
+4. **Inter-operability Guide** (Pattern-040)
    - Document Router pattern swappability
    - List supported alternatives
    - Effort: 2-3 hours (documentation only)

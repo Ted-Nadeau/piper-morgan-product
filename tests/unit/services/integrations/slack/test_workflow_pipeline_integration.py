@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="TDD spec - Complete workflow pipeline. Part of epic piper-morgan-23y"
+    reason="TDD spec - Interface mismatch (channel_id vs channel_data). Requires refactoring. Part of epic piper-morgan-23y"
 )
 
 from services.domain.models import Feature, Intent, Product, Workflow, WorkItem
