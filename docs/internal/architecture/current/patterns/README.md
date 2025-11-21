@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 35 patterns (001-035) + template (000)
+**Total Patterns**: 40 patterns (001-040) + template (000)
 
 ## Pattern Categories
 
@@ -57,6 +57,7 @@ _External system integration, plugin architecture, and platform connectivity pat
 - [Pattern-031: Plugin Wrapper](pattern-031-plugin-wrapper.md) - Adapter pattern for integration routers
 - [Pattern-033: Notion Publishing](pattern-033-notion-publishing.md) - Knowledge management publishing
 - [Pattern-035: MCP Adapter Methods](pattern-035-mcp-adapter-methods.md) - Backward-compatible MCP migration pattern (ADR-013 Phase 2)
+- [Pattern-040: Integration Swappability Guide](pattern-040-integration-swappability-guide.md) - Router pattern for pluggable provider implementations
 
 ### Development & Process Patterns
 
@@ -68,6 +69,10 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-011: Context Resolution](pattern-011-context-resolution.md) - Implicit context resolution
 - [Pattern-021: Development Session Management](pattern-021-development-session-management.md) - Dev workflow sessions
 - [Pattern-024: Methodology Patterns](pattern-024-methodology-patterns.md) - Development methodology patterns
+- [Pattern-036: Signal Convergence](pattern-036-signal-convergence.md) - Multi-analyzer breakthrough detection (META-PATTERN)
+- [Pattern-037: Cross-Context Validation](pattern-037-cross-context-validation.md) - Concept validation across contexts (META-PATTERN)
+- [Pattern-038: Temporal Clustering](pattern-038-temporal-clustering.md) - Coordination analysis via temporal grouping (META-PATTERN)
+- [Pattern-039: Feature Prioritization Scorecard](pattern-039-feature-prioritization-scorecard.md) - Quantified feature prioritization framework
 
 ## Pattern Development
 
@@ -95,5 +100,5 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: October 19, 2025_
-_All 35 patterns now included with logical categorization_
+_Last updated: November 20, 2025_
+_All 40 patterns now included with logical categorization_

@@ -322,6 +322,9 @@ class SpatialEvent:
     event_type: str  # join, leave, message_posted, thread_started, etc.
     coordinates: SpatialCoordinates
 
+    # SLACK-SPATIAL Phase 1.1: Event timestamp (optional with default)
+    timestamp: Optional[datetime] = None
+
     # Event details
     actor_id: Optional[str] = None
     affected_objects: List[str] = field(default_factory=list)

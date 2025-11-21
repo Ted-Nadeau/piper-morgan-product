@@ -1,0 +1,43 @@
+/Users/xian/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+============================= test session starts ==============================
+platform darwin -- Python 3.9.6, pytest-7.4.3, pluggy-1.6.0 -- /Library/Developer/CommandLineTools/usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/xian/Development/piper-morgan
+configfile: pytest.ini
+plugins: asyncio-0.21.1, anyio-3.7.1, langsmith-0.3.45, cov-7.0.0
+asyncio: mode=auto
+collecting ... collected 6 items
+
+tests/unit/services/integrations/slack/test_spatial_integration.py::TestSlackEventHandler::test_process_message_event FAILED [ 16%]
+
+=================================== FAILURES ===================================
+_______________ TestSlackEventHandler.test_process_message_event _______________
+tests/unit/services/integrations/slack/test_spatial_integration.py:81: in test_process_message_event
+    assert result.success is True
+E   assert False is True
+E    +  where False = EventProcessingResult(success=False, spatial_event=None, spatial_changes=[], attention_level=<AttentionLevel.AMBIENT: 'ambient'>, emotional_valence=<EmotionalValence.NEUTRAL: 'neutral'>, navigation_suggestions=[], error="Event processing error: __init__() missing 1 required positional argument: 'timestamp'").success
+---------------------------- Captured stdout setup -----------------------------
+2025-11-20 15:56:37 [info     ] Integration Health Monitor initialized
+2025-11-20 15:56:37 [info     ] Registered component for health monitoring: database_connection
+2025-11-20 15:56:37 [info     ] Registered component for health monitoring: slack_integration
+2025-11-20 15:56:37 [info     ] Registered component for health monitoring: query_response_formatter
+2025-11-20 15:56:37 [info     ] Registered component for health monitoring: type_system
+------------------------------ Captured log call -------------------------------
+ERROR    services.integrations.slack.event_handler:event_handler.py:121 Error processing Slack event: __init__() missing 1 required positional argument: 'timestamp'
+=============================== warnings summary ===============================
+../../Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373
+  /Users/xian/Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: asyncio_default_fixture_loop_scope
+
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373
+  /Users/xian/Library/Python/3.9/lib/python/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: asyncio_default_test_loop_scope
+
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/unit/services/integrations/slack/test_spatial_integration.py::TestSlackEventHandler::test_process_message_event
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======================== 1 failed, 2 warnings in 0.88s =========================

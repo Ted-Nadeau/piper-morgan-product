@@ -172,7 +172,7 @@ class SlackSpatialAgent:
                     {
                         "type": "message",
                         "timestamp": spatial_event.timestamp,
-                        "object_id": coords.object_id,
+                        "object_id": spatial_event.event_id,  # Fixed: use event_id instead of coords.object_id
                     }
                 )
 
@@ -181,7 +181,7 @@ class SlackSpatialAgent:
                 room_memory.recent_activity = [
                     activity
                     for activity in room_memory.recent_activity
-                    if activity["timestamp"] > cutoff_time
+                    if activity["timestamp"] and activity["timestamp"] > cutoff_time
                 ]
 
         # Update emotional state
