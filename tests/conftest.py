@@ -47,10 +47,13 @@ def mock_session():
     return Mock()
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False)  # TEMP DISABLED FOR INVESTIGATION - SLACK-SPATIAL Phase 1.2
 def mock_token_blacklist(request):
     """
     Auto-mock TokenBlacklist for unit tests to prevent database session conflicts.
+
+    TEMPORARY: Disabled for SLACK-SPATIAL Phase 1.2 investigation (2025-11-20)
+    See: dev/2025/11/20/token-blacklist-investigation-results.md
 
     Issue #281: TokenBlacklist.is_blacklisted() gets async context manager from
     overridden db.get_session() in tests, causing '_AsyncGeneratorContextManager'
