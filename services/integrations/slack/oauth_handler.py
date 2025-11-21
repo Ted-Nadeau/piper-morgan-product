@@ -513,3 +513,63 @@ class SlackOAuthHandler:
         except Exception as e:
             logger.error(f"Failed to extract spatial capabilities: {e}")
             raise
+
+    def get_user_spatial_context(self, oauth_response: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get user's spatial context from OAuth data.
+
+        Extracts user information and spatial permissions from OAuth response,
+        providing a complete context of the user's spatial position and capabilities
+        within the workspace.
+
+        Args:
+            oauth_response: OAuth response dict containing authed_user and team info
+
+        Returns:
+            Dict with user spatial context:
+                - user_id: str - User's Slack ID
+                - user_name: str - User's display name
+                - territory_id: str - Workspace/team ID
+                - capabilities: list - List of granted scopes
+
+        Example:
+            >>> oauth_response = {
+            ...     "authed_user": {"id": "U123", "name": "Alice", "scope": "chat:write"},
+            ...     "team": {"id": "T456", "name": "Workspace"}
+            ... }
+            >>> handler.get_user_spatial_context(oauth_response)
+            {
+                'user_id': 'U123',
+                'user_name': 'Alice',
+                'territory_id': 'T456',
+                'capabilities': ['chat:write']
+            }
+        """
+        try:
+            # Extract user information
+            authed_user = oauth_response.get("authed_user", {})
+            user_id = authed_user.get("id", "")
+            user_name = authed_user.get("name", "Unknown User")
+
+            # Extract territory (workspace) information
+            team_info = oauth_response.get("team", {})
+            territory_id = team_info.get("id", "")
+
+            # Get spatial capabilities (reuse existing method)
+            capabilities = self.get_spatial_capabilities(oauth_response)
+
+            user_context = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "territory_id": territory_id,
+                "capabilities": capabilities,
+            }
+
+            logger.info(
+                f"Extracted user spatial context for {user_name} ({user_id}) in territory {territory_id}"
+            )
+            return user_context
+
+        except Exception as e:
+            logger.error(f"Failed to extract user spatial context: {e}")
+            raise
