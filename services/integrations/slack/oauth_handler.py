@@ -623,3 +623,72 @@ class SlackOAuthHandler:
         except Exception as e:
             logger.error(f"Failed to refresh spatial territory: {e}")
             raise
+
+    def validate_and_initialize_spatial_territory(
+        self, oauth_response: Dict[str, Any], expected_state: str
+    ):
+        """
+        Initialize spatial territory on OAuth success after state validation.
+
+        Validates the OAuth state parameter for security, then initializes the
+        spatial territory. This method combines security validation with territory
+        creation to ensure OAuth callbacks are legitimate before creating workspace
+        representations.
+
+        Args:
+            oauth_response: OAuth response dict containing state and workspace data
+            expected_state: Expected state value for validation
+
+        Returns:
+            SpatialTerritory object for the authenticated workspace
+
+        Raises:
+            ValueError: If OAuth state is invalid or missing
+
+        Example:
+            >>> oauth_response = {
+            ...     "access_token": "xoxb-token",
+            ...     "state": "secure-state-123",
+            ...     "team": {"id": "T123", "name": "Workspace"}
+            ... }
+            >>> territory = handler.validate_and_initialize_spatial_territory(
+            ...     oauth_response, "secure-state-123"
+            ... )
+            >>> territory.territory_id
+            'T123'
+
+        Security:
+            The state parameter prevents CSRF attacks in the OAuth flow.
+            This method MUST be used for OAuth callbacks rather than calling
+            initialize_spatial_territory() directly.
+        """
+        try:
+            # Extract and validate state parameter
+            received_state = oauth_response.get("state")
+
+            # State validation
+            if not received_state:
+                raise ValueError("Invalid OAuth state: state parameter missing")
+
+            if received_state != expected_state:
+                logger.warning(
+                    f"OAuth state mismatch: expected {expected_state[:8]}..., "
+                    f"received {received_state[:8]}..."
+                )
+                raise ValueError("Invalid OAuth state: state mismatch")
+
+            # State is valid - proceed with territory initialization
+            logger.info("OAuth state validated successfully")
+
+            # Initialize territory
+            territory = self.initialize_spatial_territory(oauth_response)
+
+            logger.info(f"Spatial territory initialized after state validation: {territory.name}")
+            return territory
+
+        except ValueError:
+            # Re-raise validation errors
+            raise
+        except Exception as e:
+            logger.error(f"Failed to validate and initialize spatial territory: {e}")
+            raise
