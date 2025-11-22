@@ -1,0 +1,118 @@
+"""Upgrade shared_with JSONB to include role-based permissions (SEC-RBAC Phase 2)
+
+Revision ID: 20251122_upgrade_shared_with
+Revises: 6m5s5d1t6500
+Create Date: 2025-11-22 10:58:00.000000
+
+"""
+
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+from alembic import op
+
+# revision identifiers, used by Alembic.
+revision: str = "20251122_upgrade_shared_with"
+down_revision: Union[str, Sequence[str], None] = "6m5s5d1t6500"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema - convert shared_with from [uuid] to [{user_id, role}]"""
+
+    # Upgrade lists table
+    # Convert old format: ["uuid1", "uuid2"] → [{"user_id": "uuid1", "role": "viewer"}, ...]
+    op.execute(
+        """
+        UPDATE lists
+        SET shared_with = (
+            SELECT jsonb_agg(jsonb_build_object('user_id', elem, 'role', 'viewer'))
+            FROM jsonb_array_elements_text(shared_with) AS elem
+        )
+        WHERE shared_with IS NOT NULL
+        AND jsonb_typeof(shared_with) = 'array'
+        AND jsonb_array_length(shared_with) > 0
+        AND jsonb_typeof(shared_with->0) = 'string';  -- Only if old format (string elements)
+    """
+    )
+
+    # Upgrade todos table
+    op.execute(
+        """
+        UPDATE todos
+        SET shared_with = (
+            SELECT jsonb_agg(jsonb_build_object('user_id', elem, 'role', 'viewer'))
+            FROM jsonb_array_elements_text(shared_with) AS elem
+        )
+        WHERE shared_with IS NOT NULL
+        AND jsonb_typeof(shared_with) = 'array'
+        AND jsonb_array_length(shared_with) > 0
+        AND jsonb_typeof(shared_with->0) = 'string';  -- Only if old format (string elements)
+    """
+    )
+
+    # Add comment to lists.shared_with documenting new structure
+    op.execute(
+        """
+        COMMENT ON COLUMN lists.shared_with IS 'Array of {user_id, role} objects for SEC-RBAC Phase 2 role-based permissions.
+        Roles: viewer (read-only), editor (can modify), admin (can share). Owner has all permissions plus delete.';
+    """
+    )
+
+    # Add comment to todos.shared_with
+    op.execute(
+        """
+        COMMENT ON COLUMN todos.shared_with IS 'Array of {user_id, role} objects for SEC-RBAC Phase 2 role-based permissions.
+        Roles: viewer (read-only), editor (can modify), admin (can share). Owner has all permissions plus delete.';
+    """
+    )
+
+
+def downgrade() -> None:
+    """Downgrade schema - convert shared_with back to [uuid] format (loses role info)"""
+
+    # Downgrade lists table
+    # Convert new format: [{user_id, role}] → ["uuid1", "uuid2"]
+    # Note: This loses role information, converting everything back to simple user ID array
+    op.execute(
+        """
+        UPDATE lists
+        SET shared_with = (
+            SELECT jsonb_agg(elem->>'user_id')
+            FROM jsonb_array_elements(shared_with) AS elem
+            WHERE jsonb_typeof(elem) = 'object'
+        )
+        WHERE shared_with IS NOT NULL
+        AND jsonb_array_length(shared_with) > 0;
+    """
+    )
+
+    # Downgrade todos table
+    op.execute(
+        """
+        UPDATE todos
+        SET shared_with = (
+            SELECT jsonb_agg(elem->>'user_id')
+            FROM jsonb_array_elements(shared_with) AS elem
+            WHERE jsonb_typeof(elem) = 'object'
+        )
+        WHERE shared_with IS NOT NULL
+        AND jsonb_array_length(shared_with) > 0;
+    """
+    )
+
+    # Update comments
+    op.execute(
+        """
+        COMMENT ON COLUMN lists.shared_with IS 'Array of user IDs (UUIDs) with read-only access to this list (SEC-RBAC Phase 1.4)';
+    """
+    )
+
+    op.execute(
+        """
+        COMMENT ON COLUMN todos.shared_with IS 'Array of user IDs (UUIDs) with read-only access to this todo (SEC-RBAC Phase 1.4)';
+    """
+    )

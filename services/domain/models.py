@@ -35,6 +35,32 @@ from services.shared_types import (
 )
 
 
+# SEC-RBAC Phase 2: Role-Based Permissions
+class ShareRole(str, Enum):
+    """Role for shared resource access (SEC-RBAC Phase 2)"""
+
+    VIEWER = "viewer"  # Read-only access
+    EDITOR = "editor"  # Can modify content
+    ADMIN = "admin"  # Can share with others and change roles
+
+
+@dataclass
+class SharePermission:
+    """Permission entry for a shared resource (SEC-RBAC Phase 2)"""
+
+    user_id: str
+    role: ShareRole
+
+    def to_dict(self) -> Dict[str, str]:
+        """Convert to dictionary for JSONB serialization"""
+        return {"user_id": self.user_id, "role": self.role.value}
+
+    @staticmethod
+    def from_dict(data: Dict[str, str]) -> SharePermission:
+        """Create from dictionary (JSONB deserialization)"""
+        return SharePermission(user_id=data["user_id"], role=ShareRole(data["role"]))
+
+
 # Core Entities
 @dataclass
 class Product:
@@ -886,13 +912,42 @@ class List:
     metadata: Dict[str, Any] = field(default_factory=dict)
     tags: List[str] = field(default_factory=list)
 
-    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4)
+    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4 & 2)
     owner_id: Optional[str] = None
-    shared_with: List[str] = field(default_factory=list)  # Array of user IDs with read access
+    shared_with: List[SharePermission] = field(default_factory=list)  # Array of {user_id, role}
 
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+
+    def get_user_role(self, user_id: str) -> Optional[ShareRole]:
+        """Get user's role for this list (returns owner for owner, or role from shared_with)"""
+        if self.owner_id == user_id:
+            return None  # Owner has all permissions (represented as None/owner)
+
+        for perm in self.shared_with:
+            if perm.user_id == user_id:
+                return perm.role
+
+        return None
+
+    def user_can_read(self, user_id: str) -> bool:
+        """Check if user can read this list (any role can read)"""
+        return self.owner_id == user_id or self.get_user_role(user_id) is not None
+
+    def user_can_write(self, user_id: str) -> bool:
+        """Check if user can modify this list (editor or admin can write)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role in (ShareRole.EDITOR, ShareRole.ADMIN)
+
+    def user_can_share(self, user_id: str) -> bool:
+        """Check if user can share this list (only admin or owner)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role == ShareRole.ADMIN
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -910,7 +965,7 @@ class List:
             "metadata": self.metadata,
             "tags": self.tags,
             "owner_id": self.owner_id,
-            "shared_with": self.shared_with,
+            "shared_with": [perm.to_dict() for perm in self.shared_with],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -1019,10 +1074,39 @@ class Todo(Item):
     # Timestamps
     completed_at: Optional[datetime] = None
 
-    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4)
+    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4 & 2)
     owner_id: Optional[str] = None
-    shared_with: List[str] = field(default_factory=list)  # Array of user IDs with read access
+    shared_with: List[SharePermission] = field(default_factory=list)  # Array of {user_id, role}
     assigned_to: Optional[str] = None
+
+    def get_user_role(self, user_id: str) -> Optional[ShareRole]:
+        """Get user's role for this todo (returns owner for owner, or role from shared_with)"""
+        if self.owner_id == user_id:
+            return None  # Owner has all permissions (represented as None/owner)
+
+        for perm in self.shared_with:
+            if perm.user_id == user_id:
+                return perm.role
+
+        return None
+
+    def user_can_read(self, user_id: str) -> bool:
+        """Check if user can read this todo (any role can read)"""
+        return self.owner_id == user_id or self.get_user_role(user_id) is not None
+
+    def user_can_write(self, user_id: str) -> bool:
+        """Check if user can modify this todo (editor or admin can write)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role in (ShareRole.EDITOR, ShareRole.ADMIN)
+
+    def user_can_share(self, user_id: str) -> bool:
+        """Check if user can share this todo (only admin or owner)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role == ShareRole.ADMIN
 
     @property
     def title(self) -> str:
@@ -1093,8 +1177,9 @@ class Todo(Item):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            # Ownership
+            # Ownership and sharing
             "owner_id": self.owner_id,
+            "shared_with": [perm.to_dict() for perm in self.shared_with],
             "assigned_to": self.assigned_to,
         }
 
