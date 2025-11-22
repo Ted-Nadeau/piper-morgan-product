@@ -162,11 +162,12 @@ async def upload_file(
             if not db._initialized:
                 await db.initialize()
 
-            # Create database record
+            # Create database record with SEC-RBAC owner_id
             async with await db.get_session() as session:
                 uploaded_file = UploadedFileDB(
                     id=file_id,
-                    session_id=current_user.sub,  # Use user ID as session for now
+                    session_id=current_user.sub,  # Legacy session field (kept for compatibility)
+                    owner_id=current_user.sub,  # SEC-RBAC ownership
                     filename=file.filename,
                     file_type=file.content_type,
                     file_size=file_size,
@@ -256,10 +257,10 @@ async def list_files(
         if not db._initialized:
             await db.initialize()
 
-        # Query user's files
+        # Query user's files using owner_id for SEC-RBAC compliance
         async with await db.get_session() as session:
             result = await session.execute(
-                select(UploadedFileDB).where(UploadedFileDB.session_id == current_user.sub)
+                select(UploadedFileDB).where(UploadedFileDB.owner_id == current_user.sub)
             )
             files = result.scalars().all()
 
@@ -301,6 +302,86 @@ async def list_files(
         )
 
 
+@router.get("/{file_id}")
+async def get_file(
+    file_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+) -> dict:
+    """
+    Get file metadata by ID with ownership validation (SEC-RBAC).
+
+    Only returns file metadata if current user is the owner.
+
+    Args:
+        file_id: File ID to retrieve
+        current_user: Current authenticated user
+
+    Returns:
+        File metadata (if owned by current user)
+
+    Raises:
+        HTTPException 404: File not found or not owned by current user
+        HTTPException 500: Server error during retrieval
+
+    Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
+    """
+    try:
+        # Initialize database if needed
+        if not db._initialized:
+            await db.initialize()
+
+        # Find file with ownership validation
+        async with await db.get_session() as session:
+            result = await session.execute(
+                select(UploadedFileDB).where(
+                    UploadedFileDB.id == file_id,
+                    UploadedFileDB.owner_id == current_user.sub,
+                )
+            )
+            file = result.scalar_one_or_none()
+
+            if not file:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"File not found: {file_id}",
+                )
+
+        # Format response
+        file_response = {
+            "file_id": file.id,
+            "filename": file.filename,
+            "size": file.file_size,
+            "content_type": file.file_type,
+            "uploaded_at": file.upload_time.isoformat() if file.upload_time else None,
+            "reference_count": file.reference_count,
+            "last_referenced": file.last_referenced.isoformat() if file.last_referenced else None,
+            "storage_path": file.storage_path,
+        }
+
+        logger.info(
+            "file_retrieved",
+            user_id=current_user.sub,
+            file_id=file_id,
+        )
+
+        return file_response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "file_get_error",
+            user_id=current_user.sub,
+            file_id=file_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve file",
+        )
+
+
 @router.delete("/{file_id}")
 async def delete_file(
     file_id: str,
@@ -323,12 +404,12 @@ async def delete_file(
         if not db._initialized:
             await db.initialize()
 
-        # Find file
+        # Find file using owner_id for SEC-RBAC compliance
         async with await db.get_session() as session:
             result = await session.execute(
                 select(UploadedFileDB).where(
                     UploadedFileDB.id == file_id,
-                    UploadedFileDB.session_id == current_user.sub,
+                    UploadedFileDB.owner_id == current_user.sub,
                 )
             )
             file = result.scalar_one_or_none()
