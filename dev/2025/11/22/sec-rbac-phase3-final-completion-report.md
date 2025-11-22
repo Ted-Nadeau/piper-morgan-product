@@ -402,6 +402,25 @@ gh issue close 357
 
 ---
 
+## Completion Discipline Notice
+
+⚠️ **CRITICAL**: This report documents deferred work that MUST be tracked before Issue #357 can be closed.
+
+**Deferred Work Must Be**:
+1. ✅ Created as separate beads issues (DONE)
+2. ✅ Linked to parent Issue #357 (DONE via GitHub comment)
+3. ⏳ **Explicitly approved by PM for deferral** (PENDING)
+4. ⏳ **Issue #357 remains OPEN until approval or completion** (CURRENT STATE)
+
+**Deferred Issues Created**:
+- piper-morgan-9g6: Projects Role-Based Sharing
+- piper-morgan-y7u: Extended Repository Coverage
+- piper-morgan-3nl: Files Ownership Support
+
+**Status**: Issue #357 REMAINS OPEN pending PM approval to defer or completion of all deferred work.
+
+---
+
 ## Conclusion
 
 **SEC-RBAC Phase 3 has successfully established a robust, testable admin bypass infrastructure for role-based access control.** The implementation:
@@ -411,12 +430,15 @@ gh issue close 357
 - ✅ Creates comprehensive test suite proving cross-user access prevention
 - ✅ Validates security with automated scanning tools
 - ✅ Documents deferred work clearly for future iterations
+- ✅ Tracks deferred work in beads system
+- ⏳ **Awaits PM approval for deferral or explicit completion of remaining work**
 
-**Status**: Ready for Issue #357 closure
+**Status**: Issue #357 REMAINS OPEN (per completion discipline)
 
 ---
 
 _Final Completion Report_
 _Created: November 22, 2025, 12:50 PM_
+_Updated: 12:52 PM (Completion Discipline Correction)_
 _By: Code Agent (Claude Code)_
-_Reference: Issue #357, Phases 1-3 Complete_
+_Reference: Issue #357, Phases 1-3 Complete, Deferred Work Tracked_
