@@ -466,8 +466,10 @@ class ProjectDB(Base):
     __tablename__ = "projects"
 
     id = Column(String, primary_key=True)
+    owner_id = Column(String, nullable=True)
     name = Column(String, nullable=False, unique=True)
     description = Column(Text)
+    shared_with = Column(JSON, default=lambda: [])
     is_default = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -479,10 +481,22 @@ class ProjectDB(Base):
     )
 
     def to_domain(self) -> domain.Project:
+        # Convert shared_with JSON to SharePermission objects
+        shared_with = []
+        if self.shared_with:
+            for perm_dict in self.shared_with:
+                shared_with.append(
+                    domain.SharePermission(
+                        user_id=perm_dict["user_id"], role=domain.ShareRole(perm_dict["role"])
+                    )
+                )
+
         project = domain.Project(
             id=self.id,
+            owner_id=self.owner_id or "",
             name=self.name,
             description=self.description,
+            shared_with=shared_with,
             is_default=self.is_default,
             is_archived=self.is_archived,
             created_at=self.created_at,
@@ -494,10 +508,15 @@ class ProjectDB(Base):
 
     @classmethod
     def from_domain(cls, project: domain.Project) -> "ProjectDB":
+        # Convert SharePermission objects to JSONB-serializable format
+        shared_with_json = [perm.to_dict() for perm in project.shared_with]
+
         return cls(
             id=project.id,
+            owner_id=project.owner_id,
             name=project.name,
             description=project.description,
+            shared_with=shared_with_json,
             is_default=project.is_default,
             is_archived=project.is_archived,
             created_at=project.created_at,

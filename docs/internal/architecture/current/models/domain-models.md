@@ -201,13 +201,20 @@ class Intent:
 
 **Purpose**: A PM project with multiple tool integrations
 
+**Updates (Phase 3 SEC-RBAC)**:
+- Added `owner_id` field for resource ownership tracking
+- Added `shared_with` field for role-based sharing (VIEWER, EDITOR, ADMIN roles)
+- Enables ownership-based access control and fine-grained role sharing
+
 ```python
 @dataclass
 class Project:
     id: str = field(default_factory=lambda: str(uuid4()))
+    owner_id: str = ""  # User ID of the project owner (SEC-RBAC Phase 3)
     name: str = ""
     description: str = ""
     integrations: List[ProjectIntegration] = field(default_factory=list)
+    shared_with: List[SharePermission] = field(default_factory=list)  # Role-based sharing
     is_default: bool = False
     is_archived: bool = False
     created_at: datetime = field(default_factory=datetime.now)

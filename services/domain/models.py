@@ -196,9 +196,11 @@ class Project:
     """A PM project with multiple tool integrations"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
+    owner_id: str = ""
     name: str = ""
     description: str = ""
     integrations: List[ProjectIntegration] = field(default_factory=list)
+    shared_with: List[SharePermission] = field(default_factory=list)
     is_default: bool = False
     is_archived: bool = False
     created_at: datetime = field(default_factory=datetime.now)
@@ -228,6 +230,7 @@ class Project:
         """Convert to dictionary for serialization"""
         return {
             "id": self.id,
+            "owner_id": self.owner_id,
             "name": self.name,
             "description": self.description,
             "integrations": [
@@ -241,6 +244,7 @@ class Project:
                 }
                 for integ in self.integrations
             ],
+            "shared_with": [perm.to_dict() for perm in self.shared_with],
             "is_default": self.is_default,
             "is_archived": self.is_archived,
             "created_at": self.created_at.isoformat(),
