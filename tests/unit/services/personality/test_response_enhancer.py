@@ -148,40 +148,56 @@ class TestResponsePersonalityEnhancer:
         assert result.enhanced_content == content
         assert "Circuit breaker open" in result.error_message
 
-    @pytest.mark.skip(
-        reason="Flaky timing test - timeout mechanism not triggering correctly. Tracked in piper-morgan-cjz"
-    )
     @pytest.mark.asyncio
-    async def test_enhance_response_timeout(
+    async def test_enhance_response_input_validation_large_content(self, enhancer, test_context):
+        """Test that excessively large content is rejected by input validation"""
+        # Arrange
+        huge_content = "x" * (enhancer.MAX_CONTENT_LENGTH + 1)  # 50KB + 1 byte
+
+        # Act
+        result = await enhancer.enhance_response(huge_content, test_context, "user")
+
+        # Assert
+        assert result.success is False
+        assert "too large" in result.error_message.lower()
+        assert "Content too large" in result.error_message
+
+    @pytest.mark.asyncio
+    async def test_enhance_response_input_validation_max_content_length(
         self, enhancer, mock_repository, test_profile, test_context
     ):
-        """Test enhancement timeout handling"""
+        """Test that content at MAX_CONTENT_LENGTH is accepted"""
         # Arrange
-        enhancer.performance_timeout_ms = 1  # Very short timeout
+        max_content = "x" * enhancer.MAX_CONTENT_LENGTH  # Exactly at limit
         mock_repository.get_by_user_id.return_value = test_profile
 
-        # Mock a slow transformation - transformation methods are synchronous, not async!
-        import time as time_module
+        # Act
+        result = await enhancer.enhance_response(max_content, test_context, "user")
 
-        slow_service = MagicMock()
+        # Assert
+        assert result.success is True  # Should succeed at max length
+        assert result.processing_time_ms > 0
 
-        def slow_transform(*args, **kwargs):
-            time_module.sleep(0.1)  # Blocking sleep - longer than 1ms timeout
-            return "transformed"
+    @pytest.mark.asyncio
+    async def test_enhance_response_context_history_truncation(
+        self, enhancer, mock_repository, test_profile, test_context
+    ):
+        """Test that excessively long context history is truncated"""
+        # Arrange
+        mock_repository.get_by_user_id.return_value = test_profile
 
-        # Transformation service methods are synchronous (not awaited in code)
-        slow_service.add_warmth = MagicMock(side_effect=slow_transform)
-        slow_service.inject_confidence = MagicMock(return_value="confidence")
-        slow_service.extract_actions = MagicMock(return_value="actions")
-
-        enhancer.transformation_service = slow_service
+        # Create context with more messages than MAX_CONTEXT_HISTORY
+        test_context.conversation_history = [f"message_{i}" for i in range(15)]  # 15 messages
+        original_history_length = len(test_context.conversation_history)
 
         # Act
         result = await enhancer.enhance_response("content", test_context, "user")
 
         # Assert
-        assert result.success is False
-        assert "timeout" in result.error_message.lower()
+        assert result.success is True
+        # History should be truncated to MAX_CONTEXT_HISTORY (10)
+        assert len(test_context.conversation_history) == enhancer.MAX_CONTEXT_HISTORY
+        assert original_history_length > enhancer.MAX_CONTEXT_HISTORY
 
     @pytest.mark.asyncio
     async def test_cache_hit_scenario(self, enhancer, mock_cache, test_profile, test_context):

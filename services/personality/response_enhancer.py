@@ -39,8 +39,22 @@ class ResponsePersonalityEnhancer:
     1. Load PersonalityProfile (database + PIPER.user.md overrides)
     2. Apply context adaptation
     3. Transform content (warmth → confidence → actions)
-    4. Monitor performance (<100ms constraint)
+    4. Monitor performance (<70ms constraint)
+
+    Input Validation:
+    - MAX_CONTENT_LENGTH: 50KB (prevents pathological string operations)
+    - MAX_CONTEXT_HISTORY: 10 messages (prevents context bloat)
+
+    Performance Characteristics:
+    - Target: <70ms total processing time
+    - Timeout: NOT IMPLEMENTED (transformations are synchronous)
+    - Protection: Input validation + circuit breaker + performance monitoring
+    - Note: asyncio.wait_for() cannot interrupt blocking synchronous code
     """
+
+    # Input validation constants
+    MAX_CONTENT_LENGTH = 50_000  # 50KB - prevent pathological inputs
+    MAX_CONTEXT_HISTORY = 10  # messages - prevent context bloat
 
     def __init__(
         self,
@@ -61,6 +75,33 @@ class ResponsePersonalityEnhancer:
         self.cache_hits = 0
         self.cache_misses = 0
 
+    def _validate_inputs(self, content: str, context: ResponseContext) -> None:
+        """
+        Validate input parameters to prevent pathological cases.
+
+        Raises:
+            ValueError: If content exceeds size limits or context is invalid
+        """
+        # Validate content length
+        if len(content) > self.MAX_CONTENT_LENGTH:
+            raise ValueError(
+                f"Content too large for enhancement: {len(content)} chars "
+                f"(max {self.MAX_CONTENT_LENGTH})"
+            )
+
+        # Validate and truncate context history if needed
+        if context.conversation_history:
+            history_length = len(context.conversation_history)
+            if history_length > self.MAX_CONTEXT_HISTORY:
+                logger.warning(
+                    f"Context history too long ({history_length} messages), "
+                    f"truncating to {self.MAX_CONTEXT_HISTORY} most recent"
+                )
+                # Truncate to keep only the most recent messages
+                context.conversation_history = context.conversation_history[
+                    -self.MAX_CONTEXT_HISTORY :
+                ]
+
     async def enhance_response(
         self, content: str, context: ResponseContext, user_id: str
     ) -> EnhancedResponse:
@@ -69,6 +110,8 @@ class ResponsePersonalityEnhancer:
         enhancements_applied = []
 
         try:
+            # Validate inputs early (proactive prevention of pathological cases)
+            self._validate_inputs(content, context)
             # Check circuit breaker
             if self.circuit_breaker.is_open():
                 logger.warning("Circuit breaker open, skipping enhancement")
@@ -76,26 +119,23 @@ class ResponsePersonalityEnhancer:
                     content, context, user_id, "Circuit breaker open"
                 )
 
-            # Performance timeout protection
-            try:
-                result = await asyncio.wait_for(
-                    self._process_enhancement(
-                        content, context, user_id, enhancements_applied, start_time
-                    ),
-                    timeout=self.performance_timeout_ms / 1000,
-                )
-                return result
-            except asyncio.TimeoutError:
-                raise asyncio.TimeoutError()  # Re-raise for outer handling
-
-        except asyncio.TimeoutError:
-            processing_time_ms = (time.time() - start_time) * 1000
-            logger.warning(f"Enhancement timeout after {processing_time_ms:.1f}ms")
-            self.circuit_breaker.record_failure()
-            self._update_metrics(processing_time_ms, False)
-            return self._create_fallback_response(
-                content, context, user_id, f"Enhancement timeout ({processing_time_ms:.1f}ms)"
+            # Process enhancement (no asyncio.wait_for wrapper - see ADR for rationale)
+            # Note: Timeout protection NOT implemented because asyncio.wait_for() cannot
+            # interrupt blocking synchronous code. Instead, we rely on:
+            # 1. Input validation (prevent pathological inputs)
+            # 2. Circuit breaker (protect against repeated failures)
+            # 3. Performance monitoring (warn when approaching 70ms limit)
+            result = await self._process_enhancement(
+                content, context, user_id, enhancements_applied, start_time
             )
+            return result
+
+        except ValueError as e:
+            # Input validation error (e.g., content too large)
+            processing_time_ms = (time.time() - start_time) * 1000
+            logger.warning(f"Input validation error: {e}")
+            self._update_metrics(processing_time_ms, False)
+            return self._create_fallback_response(content, context, user_id, str(e))
 
         except (ProfileLoadError, TransformationError) as e:
             processing_time_ms = (time.time() - start_time) * 1000
