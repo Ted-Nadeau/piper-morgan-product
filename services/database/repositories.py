@@ -262,6 +262,206 @@ class ProjectRepository(BaseRepository):
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
+    async def share_project(
+        self,
+        project_id: str,
+        owner_id: str,
+        user_to_share_with: str,
+        role: domain.ShareRole = None,
+    ) -> Optional[domain.Project]:
+        """Share a project with another user at specified role (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project to share
+            owner_id: User making the share request (must be owner)
+            user_to_share_with: User to share with
+            role: ShareRole (viewer, editor, admin) - defaults to viewer if None
+
+        Returns:
+            Updated Project with new shared_with entry, or None if not found/not owner
+        """
+        # Default role if not specified
+        if role is None:
+            role = domain.ShareRole.VIEWER
+
+        # Verify the caller is the owner
+        result = await self.session.execute(
+            select(ProjectDB).where(
+                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
+            )
+        )
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return None  # Not found or not owner
+
+        # Prevent owner from sharing with themselves (no-op)
+        if user_to_share_with == owner_id:
+            return db_project.to_domain()
+
+        # Convert to domain object to work with SharePermission objects
+        domain_project = db_project.to_domain()
+
+        # Check if user already shared with - update role if exists, otherwise add new share
+        permission = domain.SharePermission(user_id=user_to_share_with, role=role)
+        existing_index = None
+
+        for idx, perm in enumerate(domain_project.shared_with):
+            if perm.user_id == user_to_share_with:
+                existing_index = idx
+                break
+
+        if existing_index is not None:
+            # Update existing permission
+            domain_project.shared_with[existing_index] = permission
+        else:
+            # Add new permission
+            domain_project.shared_with.append(permission)
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_project.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ProjectDB)
+            .where(ProjectDB.id == project_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        # Refresh and return updated project
+        await self.session.refresh(db_project)
+        return db_project.to_domain()
+
+    async def unshare_project(self, project_id: str, owner_id: str, user_to_unshare: str) -> bool:
+        """Remove user from project sharing (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project
+            owner_id: User making the unshare request (must be owner)
+            user_to_unshare: User to remove from sharing
+
+        Returns:
+            True if user was unshared, False if not found/not owner
+        """
+        # Verify the caller is the owner
+        result = await self.session.execute(
+            select(ProjectDB).where(
+                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
+            )
+        )
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return False  # Not found or not owner
+
+        # Convert to domain object
+        domain_project = db_project.to_domain()
+
+        # Remove user from shared_with
+        initial_length = len(domain_project.shared_with)
+        domain_project.shared_with = [
+            perm for perm in domain_project.shared_with if perm.user_id != user_to_unshare
+        ]
+
+        # If nothing changed, return False
+        if len(domain_project.shared_with) == initial_length:
+            return False
+
+        # Convert back to JSONB format
+        shared_with_jsonb = [perm.to_dict() for perm in domain_project.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ProjectDB)
+            .where(ProjectDB.id == project_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def update_share_role(
+        self,
+        project_id: str,
+        owner_id: str,
+        target_user_id: str,
+        new_role: domain.ShareRole,
+    ) -> bool:
+        """Update sharing role for a user (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project
+            owner_id: User making the request (must be owner)
+            target_user_id: User whose role to update
+            new_role: New ShareRole (viewer, editor, admin)
+
+        Returns:
+            True if role was updated, False if not found/not owner/user not shared
+        """
+        # Verify the caller is the owner
+        result = await self.session.execute(
+            select(ProjectDB).where(
+                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
+            )
+        )
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return False  # Not found or not owner
+
+        # Convert to domain object
+        domain_project = db_project.to_domain()
+
+        # Find and update the user's role
+        updated = False
+        for perm in domain_project.shared_with:
+            if perm.user_id == target_user_id:
+                perm.role = new_role
+                updated = True
+                break
+
+        if not updated:
+            return False  # User not in shared_with list
+
+        # Convert back to JSONB format
+        shared_with_jsonb = [perm.to_dict() for perm in domain_project.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ProjectDB)
+            .where(ProjectDB.id == project_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def get_user_role(self, project_id: str, user_id: str) -> Optional[domain.ShareRole]:
+        """Get user's role for a project (owner/viewer/editor/admin) (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project
+            user_id: User ID to check
+
+        Returns:
+            ShareRole if user has access (owner or in shared_with), None otherwise
+        """
+        result = await self.session.execute(select(ProjectDB).where(ProjectDB.id == project_id))
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return None
+
+        # Check if user is owner
+        if db_project.owner_id == user_id:
+            return domain.ShareRole.ADMIN  # Owner is treated as admin role
+
+        # Check shared_with
+        if db_project.shared_with:
+            for perm_dict in db_project.shared_with:
+                if perm_dict["user_id"] == user_id:
+                    return domain.ShareRole(perm_dict["role"])
+
+        return None  # User has no access
+
 
 class ProjectIntegrationRepository(BaseRepository):
     """Repository for ProjectIntegration operations"""
