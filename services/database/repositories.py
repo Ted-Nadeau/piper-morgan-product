@@ -177,11 +177,14 @@ class ProjectRepository(BaseRepository):
     model = ProjectDB
 
     async def get_by_id(
-        self, project_id: str, owner_id: Optional[str] = None
+        self,
+        project_id: str,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Optional[domain.Project]:
-        """Get project by ID with integrations - optionally verify ownership"""
+        """Get project by ID with integrations - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         filters = [ProjectDB.id == project_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -199,10 +202,14 @@ class ProjectRepository(BaseRepository):
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
-    async def list_active_projects(self, owner_id: Optional[str] = None) -> List[domain.Project]:
-        """List active projects - optionally filter by owner"""
+    async def list_active_projects(
+        self,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> List[domain.Project]:
+        """List active projects - optionally filter by owner (admin bypass in SEC-RBAC Phase 3)"""
         filters = [ProjectDB.is_archived == False]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -210,21 +217,31 @@ class ProjectRepository(BaseRepository):
         )
         return [db_project.to_domain() for db_project in result.scalars().all()]
 
-    async def count_active_projects(self, owner_id: Optional[str] = None) -> int:
-        """Count active projects - optionally filter by owner"""
+    async def count_active_projects(
+        self,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> int:
+        """Count active projects - optionally filter by owner (admin bypass in SEC-RBAC Phase 3)"""
         filters = [ProjectDB.is_archived == False]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(select(func.count(ProjectDB.id)).where(and_(*filters)))
         return result.scalar() or 0
 
     async def find_by_name(
-        self, name: str, owner_id: Optional[str] = None
+        self,
+        name: str,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Optional[domain.Project]:
-        """Find project by name - optionally filter by owner"""
-        filters = [func.lower(ProjectDB.name) == name.lower(), ProjectDB.is_archived == False]
-        if owner_id:
+        """Find project by name - optionally filter by owner (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [
+            func.lower(ProjectDB.name) == name.lower(),
+            ProjectDB.is_archived == False,
+        ]
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(select(ProjectDB).where(and_(*filters)))
@@ -249,11 +266,14 @@ class ProjectRepository(BaseRepository):
         return db_project.to_domain()
 
     async def get_project_with_integrations(
-        self, project_id: str, owner_id: Optional[str] = None
+        self,
+        project_id: str,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Optional[domain.Project]:
-        """Get project with integrations - optionally verify ownership"""
+        """Get project with integrations - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         filters = [ProjectDB.id == project_id, ProjectDB.is_archived == False]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(
