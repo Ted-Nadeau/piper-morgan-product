@@ -594,6 +594,56 @@ try:
 except Exception as e:
     logger.error(f"⚠️ Failed to mount todos API router: {e}")
 
+# Mount lists API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides list CRUD endpoints with ownership validation
+try:
+    from web.api.routes.lists import router as lists_router
+
+    app.include_router(lists_router)
+    logger.info("✅ Lists API router mounted at /api/v1/lists (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount lists API router: {e}")
+
+# Mount todos SEC-RBAC API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides todo CRUD endpoints with ownership validation
+try:
+    from web.api.routes.todos import router as sec_todos_router
+
+    app.include_router(sec_todos_router)
+    logger.info("✅ Todos SEC-RBAC API router mounted at /api/v1/todos (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount todos SEC-RBAC API router: {e}")
+
+# Mount projects API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides project CRUD endpoints with ownership validation
+try:
+    from web.api.routes.projects import router as projects_router
+
+    app.include_router(projects_router)
+    logger.info("✅ Projects API router mounted at /api/v1/projects (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount projects API router: {e}")
+
+# Mount feedback API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides feedback submission endpoints with ownership validation
+try:
+    from web.api.routes.feedback import router as feedback_router
+
+    app.include_router(feedback_router)
+    logger.info("✅ Feedback API router mounted at /api/v1/feedback (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount feedback API router: {e}")
+
+# Mount knowledge graph API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides knowledge graph CRUD endpoints with ownership validation
+try:
+    from web.api.routes.knowledge_graph import router as knowledge_graph_router
+
+    app.include_router(knowledge_graph_router)
+    logger.info("✅ Knowledge Graph API router mounted at /api/v1/knowledge (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount knowledge graph API router: {e}")
+
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory=str(project_root / "templates"))
 
