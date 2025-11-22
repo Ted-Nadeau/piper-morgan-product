@@ -176,12 +176,16 @@ class ProjectRepository(BaseRepository):
 
     model = ProjectDB
 
-    async def get_by_id(self, project_id: str) -> Optional[domain.Project]:
-        """Get project by ID with integrations - returns domain model"""
+    async def get_by_id(
+        self, project_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.Project]:
+        """Get project by ID with integrations - optionally verify ownership"""
+        filters = [ProjectDB.id == project_id]
+        if owner_id:
+            filters.append(ProjectDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))
-            .where(ProjectDB.id == project_id)
+            select(ProjectDB).options(selectinload(ProjectDB.integrations)).where(and_(*filters))
         )
         db_project = result.scalar_one_or_none()
         if db_project:
@@ -195,25 +199,35 @@ class ProjectRepository(BaseRepository):
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
-    async def list_active_projects(self) -> List[domain.Project]:
+    async def list_active_projects(self, owner_id: Optional[str] = None) -> List[domain.Project]:
+        """List active projects - optionally filter by owner"""
+        filters = [ProjectDB.is_archived == False]
+        if owner_id:
+            filters.append(ProjectDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(ProjectDB).where(ProjectDB.is_archived == False).order_by(ProjectDB.name)
+            select(ProjectDB).where(and_(*filters)).order_by(ProjectDB.name)
         )
         return [db_project.to_domain() for db_project in result.scalars().all()]
 
-    async def count_active_projects(self) -> int:
-        result = await self.session.execute(
-            select(func.count(ProjectDB.id)).where(ProjectDB.is_archived == False)
-        )
+    async def count_active_projects(self, owner_id: Optional[str] = None) -> int:
+        """Count active projects - optionally filter by owner"""
+        filters = [ProjectDB.is_archived == False]
+        if owner_id:
+            filters.append(ProjectDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(func.count(ProjectDB.id)).where(and_(*filters)))
         return result.scalar() or 0
 
-    async def find_by_name(self, name: str) -> Optional[domain.Project]:
-        result = await self.session.execute(
-            select(ProjectDB).where(
-                func.lower(ProjectDB.name) == name.lower(),
-                ProjectDB.is_archived == False,
-            )
-        )
+    async def find_by_name(
+        self, name: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.Project]:
+        """Find project by name - optionally filter by owner"""
+        filters = [func.lower(ProjectDB.name) == name.lower(), ProjectDB.is_archived == False]
+        if owner_id:
+            filters.append(ProjectDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(ProjectDB).where(and_(*filters)))
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
@@ -234,11 +248,16 @@ class ProjectRepository(BaseRepository):
         await self.session.refresh(db_project)
         return db_project.to_domain()
 
-    async def get_project_with_integrations(self, project_id: str) -> Optional[domain.Project]:
+    async def get_project_with_integrations(
+        self, project_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.Project]:
+        """Get project with integrations - optionally verify ownership"""
+        filters = [ProjectDB.id == project_id, ProjectDB.is_archived == False]
+        if owner_id:
+            filters.append(ProjectDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(ProjectDB)
-            .where(ProjectDB.id == project_id, ProjectDB.is_archived == False)
-            .options(selectinload(ProjectDB.integrations))
+            select(ProjectDB).where(and_(*filters)).options(selectinload(ProjectDB.integrations))
         )
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
@@ -250,24 +269,47 @@ class ProjectIntegrationRepository(BaseRepository):
     model = ProjectIntegrationDB
 
     async def get_by_project_and_type(
-        self, project_id: str, integration_type: IntegrationType
+        self, project_id: str, integration_type: IntegrationType, owner_id: Optional[str] = None
     ) -> Optional[domain.ProjectIntegration]:
-        result = await self.session.execute(
-            select(ProjectIntegrationDB).where(
-                ProjectIntegrationDB.project_id == project_id,
-                ProjectIntegrationDB.type == integration_type,
-                ProjectIntegrationDB.is_active == True,
+        """Get integration by project and type - optionally verify project ownership"""
+        filters = [
+            ProjectIntegrationDB.project_id == project_id,
+            ProjectIntegrationDB.type == integration_type,
+            ProjectIntegrationDB.is_active == True,
+        ]
+
+        # If owner_id provided, join with projects to verify ownership
+        if owner_id:
+            from .models import ProjectDB
+
+            result = await self.session.execute(
+                select(ProjectIntegrationDB)
+                .where(and_(*filters))
+                .join(ProjectDB, ProjectIntegrationDB.project_id == ProjectDB.id)
+                .where(ProjectDB.owner_id == owner_id)
             )
-        )
+        else:
+            result = await self.session.execute(select(ProjectIntegrationDB).where(and_(*filters)))
+
         db_integration = result.scalar_one_or_none()
         return db_integration.to_domain() if db_integration else None
 
     async def list_by_project(
-        self, project_id: str, active_only: bool = True
+        self, project_id: str, active_only: bool = True, owner_id: Optional[str] = None
     ) -> List[domain.ProjectIntegration]:
+        """List integrations by project - optionally verify project ownership"""
         query = select(ProjectIntegrationDB).where(ProjectIntegrationDB.project_id == project_id)
         if active_only:
             query = query.where(ProjectIntegrationDB.is_active == True)
+
+        # If owner_id provided, join with projects to verify ownership
+        if owner_id:
+            from .models import ProjectDB
+
+            query = query.join(ProjectDB, ProjectIntegrationDB.project_id == ProjectDB.id).where(
+                ProjectDB.owner_id == owner_id
+            )
+
         result = await self.session.execute(query.order_by(ProjectIntegrationDB.type))
         return [db_integration.to_domain() for db_integration in result.scalars().all()]
 
