@@ -51,11 +51,13 @@ class FileRepository(BaseRepository):
         # Convert back to domain model
         return db_file.to_domain()
 
-    async def get_file_by_id(self, file_id: str) -> Optional[UploadedFile]:
-        """Get file by ID"""
-        result = await self.session.execute(
-            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
-        )
+    async def get_file_by_id(self, file_id: str, owner_id: str = None) -> Optional[UploadedFile]:
+        """Get file by ID - optionally verify ownership"""
+        filters = [UploadedFileDB.id == file_id]
+        if owner_id:
+            filters.append(UploadedFileDB.session_id == owner_id)
+
+        result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
         return db_file.to_domain() if db_file else None
 
@@ -70,11 +72,15 @@ class FileRepository(BaseRepository):
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def increment_reference_count(self, file_id: str):
-        """Increment reference count and update last_referenced timestamp"""
+    async def increment_reference_count(self, file_id: str, owner_id: str = None):
+        """Increment reference count and update last_referenced timestamp - optionally verify ownership"""
+        filters = [UploadedFileDB.id == file_id]
+        if owner_id:
+            filters.append(UploadedFileDB.session_id == owner_id)
+
         await self.session.execute(
             update(UploadedFileDB)
-            .where(UploadedFileDB.id == file_id)
+            .where(and_(*filters))
             .values(
                 reference_count=UploadedFileDB.reference_count + 1,
                 last_referenced=datetime.now(),
@@ -82,9 +88,7 @@ class FileRepository(BaseRepository):
         )
 
         # Return the updated file
-        result = await self.session.execute(
-            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
-        )
+        result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
         return db_file.to_domain() if db_file else None
 
@@ -156,11 +160,13 @@ class FileRepository(BaseRepository):
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def delete_file(self, file_id: str) -> bool:
-        """Delete file metadata by ID"""
-        result = await self.session.execute(
-            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
-        )
+    async def delete_file(self, file_id: str, owner_id: str = None) -> bool:
+        """Delete file metadata by ID - optionally verify ownership"""
+        filters = [UploadedFileDB.id == file_id]
+        if owner_id:
+            filters.append(UploadedFileDB.session_id == owner_id)
+
+        result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
 
         if db_file:
