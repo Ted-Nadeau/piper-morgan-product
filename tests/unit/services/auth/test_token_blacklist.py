@@ -167,8 +167,12 @@ class TestTokenBlacklistOperations:
 
     async def test_security_fail_closed_on_error(self, mock_redis_factory, mock_db_session_factory):
         """Should fail closed (assume blacklisted) on errors"""
-        # Make both Redis and DB fail
-        mock_redis_factory.create_client = AsyncMock(side_effect=Exception("Connection error"))
+        # Mock db_session_factory.session_scope to raise an error when used
+        failing_context = MagicMock()
+        failing_context.__aenter__ = AsyncMock(side_effect=Exception("Database connection failed"))
+        failing_context.__aexit__ = AsyncMock(return_value=False)
+
+        mock_db_session_factory.session_scope = MagicMock(return_value=failing_context)
 
         bl = TokenBlacklist(mock_redis_factory, mock_db_session_factory)
         bl._redis_available = False  # Simulate no Redis
