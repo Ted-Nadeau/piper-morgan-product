@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: November 4, 2025
-**Total ADRs**: 42
+**Last Updated**: November 22, 2025
+**Total ADRs**: 43
 **Status**: Active
 
 ## Overview
@@ -60,6 +60,10 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-021: Multi Federation](adr-021-multi-federation.md) - Multi-federation architecture
 - [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Two validated spatial patterns (Granular Adapter, Embedded Intelligence)
 
+### Core Patterns & Workflows
+
+- [ADR-043: Application-Layer Stored Procedures](adr-043-application-layer-stored-procedures.md) - Multi-step workflow composition at application layer instead of database layer
+
 ### Experimentation & Innovation
 
 - [ADR-022: Autonomy Experimentation](adr-022-autonomy-experimentation.md) - Autonomous system experiments
@@ -76,8 +80,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Total**: 42 ADRs
-- **Accepted**: 42 ADRs (all current ADRs are accepted/implemented)
+- **Total**: 43 ADRs
+- **Accepted**: 43 ADRs (all current ADRs are accepted/implemented)
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -85,7 +89,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-042)
+1. Use next sequential number (next: ADR-044)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -99,7 +103,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
-- **November 4, 2025**: Added ADR-041 (Domain Primitives - Item and List Refactoring) - Polymorphic inheritance with Item/List as universal primitives - Total now 42 ADRs (000-041)
+- **November 22, 2025**: Added ADR-043 (Application-Layer Stored Procedures) - Documents Piper's stored procedure pattern at application layer (orchestration, workflows, intent handlers) - Total now 43 ADRs (000-043)
+- **November 4, 2025**: Added ADR-041 (Domain Primitives - Item and List Refactoring) - Polymorphic inheritance with Item/List as universal primitives - Total was 42 ADRs (000-041)
 - **November 4, 2025**: Added ADR-040 (Local Database Per Environment) - CODE ≠ DATA architecture for Sprint A8 P0 blockers
 - **October 13, 2025**: Updated index with ADR-037, ADR-038, ADR-039 (PROOF-8 audit) - Total was 42 ADRs
 - **October 7, 2025**: Added ADR-039 (Canonical Handler Fast-Path Pattern) - Dual-path intent architecture from GREAT-4
@@ -125,3 +130,4 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Three validated spatial patterns (Granular, Embedded, Delegated MCP)
 - [ADR-039: Canonical Handler Fast-Path Pattern](adr-039-canonical-handler-pattern.md) - Dual-path architecture for intent classification
 - [ADR-040: Local Database Per Environment](adr-040-local-database-per-environment.md) - CODE ≠ DATA architecture (git-managed code, PostgreSQL per environment data)
+- [ADR-043: Application-Layer Stored Procedures](adr-043-application-layer-stored-procedures.md) - Application-layer workflow composition pattern through OrchestrationEngine, WorkflowFactory, and IntentService (supports ADR-019)
