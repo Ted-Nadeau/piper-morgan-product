@@ -36,9 +36,15 @@ class UniversalListRepository(BaseRepository):
         await self.session.refresh(db_list)
         return db_list.to_domain()
 
-    async def get_list_by_id(self, list_id: str) -> Optional[domain.List]:
-        """Get universal list by ID"""
-        result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+    async def get_list_by_id(
+        self, list_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.List]:
+        """Get universal list by ID - optionally verify ownership"""
+        filters = [ListDB.id == list_id]
+        if owner_id:
+            filters.append(ListDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(ListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
@@ -99,18 +105,24 @@ class UniversalListRepository(BaseRepository):
         db_lists = result.scalars().all()
         return [db_list.to_domain() for db_list in db_lists]
 
-    async def update_list(self, list_id: str, updates: Dict) -> Optional[domain.List]:
-        """Update universal list with optimistic field updates"""
+    async def update_list(
+        self, list_id: str, updates: Dict, owner_id: Optional[str] = None
+    ) -> Optional[domain.List]:
+        """Update universal list - optionally verify ownership"""
         updates["updated_at"] = datetime.now()
 
+        filters = [ListDB.id == list_id]
+        if owner_id:
+            filters.append(ListDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            update(ListDB).where(ListDB.id == list_id).values(**updates).returning(ListDB)
+            update(ListDB).where(and_(*filters)).values(**updates).returning(ListDB)
         )
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_item_counts(self, list_id: str) -> None:
-        """Update cached item counts for a list"""
+    async def update_item_counts(self, list_id: str, owner_id: Optional[str] = None) -> None:
+        """Update cached item counts - optionally verify ownership"""
         # Get total count through list items
         total_result = await self.session.execute(
             select(func.count(ListItemDB.id)).where(ListItemDB.list_id == list_id)
@@ -118,7 +130,7 @@ class UniversalListRepository(BaseRepository):
         total_count = total_result.scalar() or 0
 
         # Get completed count (for todos only - other item types may have different logic)
-        list_obj = await self.get_list_by_id(list_id)
+        list_obj = await self.get_list_by_id(list_id, owner_id)
         completed_count = 0
 
         if list_obj and list_obj.item_type == "todo":
@@ -130,18 +142,26 @@ class UniversalListRepository(BaseRepository):
             )
             completed_count = completed_result.scalar() or 0
 
-        # Update the list with new counts
+        # Update the list with new counts (with ownership verification if provided)
+        filters = [ListDB.id == list_id]
+        if owner_id:
+            filters.append(ListDB.owner_id == owner_id)
+
         await self.session.execute(
             update(ListDB)
-            .where(ListDB.id == list_id)
+            .where(and_(*filters))
             .values(
                 item_count=total_count, completed_count=completed_count, updated_at=datetime.now()
             )
         )
 
-    async def delete_list(self, list_id: str) -> bool:
-        """Delete a list (cascades to items)"""
-        result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+    async def delete_list(self, list_id: str, owner_id: Optional[str] = None) -> bool:
+        """Delete a list - optionally verify ownership (cascades to items)"""
+        filters = [ListDB.id == list_id]
+        if owner_id:
+            filters.append(ListDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(ListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
 
         if db_list:
