@@ -2,9 +2,16 @@
 
 # Piper Morgan Test Execution Script
 # Phase 1: Test Infrastructure Activation
+# Version: 1.1.0 (Cross-platform)
 # Created: 2025-08-20 by Chief Architect deployment
+# Updated: 2025-11-21 for cross-platform support
 
 set -e
+
+# Source OS detection library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/os-detect.sh
+source "$SCRIPT_DIR/lib/os-detect.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,9 +20,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
+# Configuration (cross-platform)
 SMOKE_TEST_TIMEOUT=5
-VENV_PATH="venv/bin/activate"
+VENV_PATH="$(get_venv_activate_path "venv")"
 
 # Helper Functions
 print_header() {
@@ -54,12 +61,23 @@ setup_environment() {
     # Note: pytest.ini also configures pythonpath=.
     print_success "Using pytest.ini configuration for Python path"
 
-    # Check if PostgreSQL is needed and running
-    if pgrep postgres > /dev/null 2>&1; then
-        print_success "PostgreSQL detected running"
+    # Check if PostgreSQL is needed and running (cross-platform)
+    if is_windows; then
+        # Windows: Check if postgres service is running
+        if tasklist /FI "IMAGENAME eq postgres.exe" 2>/dev/null | grep -q postgres.exe; then
+            print_success "PostgreSQL detected running"
+        else
+            print_warning "PostgreSQL not detected - some tests may require database"
+            echo "  Run: docker-compose up -d"
+        fi
     else
-        print_warning "PostgreSQL not detected - some tests may require database"
-        echo "  Run: docker-compose up -d"
+        # Unix: Use pgrep
+        if pgrep postgres > /dev/null 2>&1; then
+            print_success "PostgreSQL detected running"
+        else
+            print_warning "PostgreSQL not detected - some tests may require database"
+            echo "  Run: docker-compose up -d"
+        fi
     fi
 }
 

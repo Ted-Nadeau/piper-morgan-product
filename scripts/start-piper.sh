@@ -1,10 +1,16 @@
 #!/bin/bash
 
 # Piper Morgan One-Click Startup Script
-# Version: 1.0.0
+# Version: 1.1.0 (Cross-platform)
 # Purpose: Launch Piper Morgan with health checks
+# Supports: macOS, Linux, Windows (Git Bash/WSL)
 
 set -e  # Exit on any error
+
+# Source OS detection library
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/os-detect.sh
+source "$SCRIPT_DIR/lib/os-detect.sh"
 
 # Configuration - use environment variables with sensible defaults
 export ENVIRONMENT="${ENVIRONMENT:-development}"
@@ -36,14 +42,22 @@ fi
 
 echo "✅ Piper Morgan directory confirmed"
 
-# Activate virtual environment
+# Activate virtual environment (cross-platform)
 if [ -d "venv" ]; then
     echo "🔧 Activating virtual environment..."
-    source venv/bin/activate
-    echo "✅ Virtual environment activated"
+    if activate_venv "venv"; then
+        echo "✅ Virtual environment activated"
+    else
+        echo "❌ Failed to activate virtual environment"
+        exit 1
+    fi
 else
     echo "❌ Virtual environment not found"
-    echo "Please run: python -m venv venv && source venv/bin/activate"
+    if is_windows; then
+        echo "Please run: python -m venv venv && .\\venv\\Scripts\\activate"
+    else
+        echo "Please run: python -m venv venv && source venv/bin/activate"
+    fi
     exit 1
 fi
 
@@ -135,5 +149,10 @@ echo "🔄 To stop: ./stop-piper.sh"
 echo ""
 echo "🚀 Ready for your 6:00 AM PT standup!"
 
-# Open browser
-open http://localhost:$WEB_PORT/
+# Open browser (cross-platform)
+if ! open_browser "http://localhost:$WEB_PORT/"; then
+    : # Browser opening failed, but script already notified user
+fi
+
+# Show Windows warning if on Windows
+warn_windows_limitations
