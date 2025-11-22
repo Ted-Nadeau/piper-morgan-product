@@ -683,11 +683,10 @@
     {% include 'components/confirmation-dialog.html' %}
     <script>
       // G8: Logged-in User Indicator - Pass user context from server to navigation
-      {% if request.state.user_claims %}
+      {% if user %}
       window.currentUser = {
-        username: "{{ request.state.user_claims.user_email.split('@')[0] }}",
-        email: "{{ request.state.user_claims.user_email }}",
-        user_id: "{{ request.state.user_claims.user_id }}"
+        username: "{{ user.username }}",
+        user_id: "{{ user.user_id }}"
       };
       {% else %}
       window.currentUser = null;

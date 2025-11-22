@@ -230,6 +230,63 @@
   .user-name {
     display: none;
   }
+
+  /* Hamburger menu for mobile */
+  .hamburger-button {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 8px;
+  }
+
+  .hamburger-button span {
+    width: 24px;
+    height: 2px;
+    background: #2c3e50;
+    transition: all 0.3s ease;
+    display: block;
+  }
+
+  /* Hide nav-menu on mobile by default */
+  .nav-menu {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #ecf0f1;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  /* Show nav-menu when hamburger is active */
+  .nav-menu.active {
+    max-height: 300px;
+  }
+
+  .nav-link {
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .nav-link:last-child {
+    border-bottom: none;
+  }
+}
+
+@media (min-width: 481px) {
+  .hamburger-button {
+    display: none !important;
+  }
 }
 </style>
 
@@ -241,8 +298,15 @@
       <span>Piper Morgan</span>
     </a>
 
+    <!-- Hamburger Menu Button (Mobile Only) -->
+    <button class="hamburger-button" id="hamburger-button" aria-label="Toggle menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
     <!-- Main Navigation -->
-    <ul class="nav-menu">
+    <ul class="nav-menu" id="nav-menu">
       <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
       <li><a href="/standup" class="nav-link" id="nav-standup">Standup</a></li>
       <li><a href="/files" class="nav-link" id="nav-files">Files</a></li>
@@ -292,6 +356,36 @@ document.addEventListener('DOMContentLoaded', function() {
   const userDropdown = document.getElementById('user-dropdown');
   const userAvatar = document.getElementById('user-avatar');
   const userName = document.getElementById('user-name');
+
+  // Handle hamburger menu for mobile
+  const hamburgerButton = document.getElementById('hamburger-button');
+  const navMenu = document.getElementById('nav-menu');
+
+  if (hamburgerButton && navMenu) {
+    hamburgerButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isExpanded = hamburgerButton.getAttribute('aria-expanded') === 'true';
+      hamburgerButton.setAttribute('aria-expanded', !isExpanded);
+      navMenu.classList.toggle('active');
+    });
+
+    // Close menu when clicking on a nav link
+    const navLinkElements = navMenu.querySelectorAll('.nav-link');
+    navLinkElements.forEach(link => {
+      link.addEventListener('click', function() {
+        hamburgerButton.setAttribute('aria-expanded', 'false');
+        navMenu.classList.remove('active');
+      });
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!hamburgerButton.contains(e.target) && !navMenu.contains(e.target)) {
+        hamburgerButton.setAttribute('aria-expanded', 'false');
+        navMenu.classList.remove('active');
+      }
+    });
+  }
 
   // Set active nav link based on current path
   const currentPath = window.location.pathname;

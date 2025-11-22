@@ -133,6 +133,34 @@ def _create_degradation_response(message: str, degradation_msg: str) -> dict:
     }
 
 
+def _extract_user_context(request: Request) -> dict:
+    """
+    Extract user context from request state for template injection.
+
+    Retrieves authenticated user information from request.state (set by auth middleware)
+    and returns it as a dict for passing to templates. The navigation component uses this
+    to populate the user dropdown menu with the actual username instead of the default
+    "user" placeholder.
+
+    Args:
+        request: FastAPI Request object with user_claims/user_id in state
+
+    Returns:
+        dict with 'user_id' and 'username' keys for template context
+    """
+    user_id = getattr(request.state, "user_id", "user")
+
+    # Try to get username from user_claims if available
+    username = user_id  # Default to user_id
+    user_claims = getattr(request.state, "user_claims", None)
+    if user_claims and hasattr(user_claims, "username"):
+        username = user_claims.username
+    elif user_claims and isinstance(user_claims, dict) and "username" in user_claims:
+        username = user_claims["username"]
+
+    return {"user_id": user_id, "username": username}
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -716,7 +744,8 @@ async def debug_markdown(request: Request):
 @app.get("/")
 async def home(request: Request):
     """Render home page"""
-    return templates.TemplateResponse("home.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
 
 
 # GREAT-1B: Bug #166 Fix - Add missing workflow status endpoint
@@ -945,49 +974,67 @@ async def process_intent(request: Request):
 @app.get("/standup")
 async def standup_ui(request: Request):
     """Render standup UI"""
-    return templates.TemplateResponse("standup.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("standup.html", {"request": request, "user": user_context})
 
 
 @app.get("/personality-preferences")
 async def personality_preferences_ui(request: Request):
     """Serve the personality preferences interface"""
-    return templates.TemplateResponse("personality-preferences.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "personality-preferences.html", {"request": request, "user": user_context}
+    )
 
 
 @app.get("/learning")
 async def learning_dashboard_ui(request: Request):
     """Serve the learning dashboard interface"""
-    return templates.TemplateResponse("learning-dashboard.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "learning-dashboard.html", {"request": request, "user": user_context}
+    )
 
 
 @app.get("/settings")
 async def settings_index_ui(request: Request):
     """Serve the settings index page (G2: Settings Index Page)"""
-    return templates.TemplateResponse("settings-index.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "settings-index.html", {"request": request, "user": user_context}
+    )
 
 
 @app.get("/account")
 async def account_settings_ui(request: Request):
     """Serve the account settings page (Coming Soon)"""
-    return templates.TemplateResponse("account.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("account.html", {"request": request, "user": user_context})
 
 
 @app.get("/files")
 async def files_ui(request: Request):
     """Serve the files page (Coming Soon)"""
-    return templates.TemplateResponse("files.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
 
 
 @app.get("/settings/privacy")
 async def privacy_settings_ui(request: Request):
     """Serve the privacy & data settings page (Coming Soon)"""
-    return templates.TemplateResponse("privacy-settings.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "privacy-settings.html", {"request": request, "user": user_context}
+    )
 
 
 @app.get("/settings/advanced")
 async def advanced_settings_ui(request: Request):
     """Serve the advanced settings page (Coming Soon)"""
-    return templates.TemplateResponse("advanced-settings.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "advanced-settings.html", {"request": request, "user": user_context}
+    )
 
 
 @app.get("/health/config")
