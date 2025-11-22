@@ -134,11 +134,9 @@ def upgrade() -> None:
     op.create_index(
         "idx_todo_lists_owner_archived", "todo_lists", ["owner_id", "is_archived"], unique=False
     )
-    op.create_index("idx_todo_lists_shared", "todo_lists", ["shared_with"], unique=False)
     op.create_index(
         "idx_todo_lists_default", "todo_lists", ["owner_id", "is_default"], unique=False
     )
-    op.create_index("idx_todo_lists_tags", "todo_lists", ["tags"], unique=False)
 
     # Create comprehensive indexes for Todo table
     # Core query patterns
@@ -159,14 +157,10 @@ def upgrade() -> None:
     # Context and categorization
     op.create_index("idx_todos_context", "todos", ["context"], unique=False)
     op.create_index("idx_todos_project", "todos", ["project_id"], unique=False)
-    op.create_index("idx_todos_tags", "todos", ["tags"], unique=False)
 
     # PM-040/PM-034 integration
     op.create_index("idx_todos_knowledge_node", "todos", ["knowledge_node_id"], unique=False)
     op.create_index("idx_todos_creation_intent", "todos", ["creation_intent"], unique=False)
-
-    # External references
-    op.create_index("idx_todos_external_refs", "todos", ["external_refs"], unique=False)
 
     # Performance queries
     op.create_index("idx_todos_owner_created", "todos", ["owner_id", "created_at"], unique=False)
