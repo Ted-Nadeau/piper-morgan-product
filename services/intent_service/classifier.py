@@ -22,6 +22,9 @@ from services.api.errors import (
     NoRelevantKnowledgeError,
 )
 from services.api.serializers import intent_to_dict
+
+# CORE-CONFIG-PIPER: Load PIPER.md configuration for system context
+from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.models import Intent, IntentCategory
 
 # GREAT-4B Phase 3: Intent caching
@@ -320,7 +323,10 @@ class IntentClassifier:
         try:
             # Use your task-based routing with "intent_classification" task type
             response = await self.llm.complete(
-                task_type="intent_classification", prompt=prompt, context=context
+                task_type="intent_classification",
+                prompt=prompt,
+                context=context,
+                system=piper_config_loader.get_system_prompt(),
             )
 
             # Parse JSON response
