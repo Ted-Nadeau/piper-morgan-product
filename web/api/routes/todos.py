@@ -7,10 +7,11 @@ Provides todo CRUD endpoints with ownership validation:
 - User-isolated todo access
 """
 
-from typing import Optional
+from typing import List, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 
 from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims
@@ -19,6 +20,30 @@ from web.api.dependencies import get_todo_repository
 
 router = APIRouter(prefix="/api/v1/todos", tags=["todos"])
 logger = structlog.get_logger(__name__)
+
+
+# Pydantic models for sharing operations
+class ShareTodoRequest(BaseModel):
+    """Request model for sharing a todo with a user"""
+
+    user_id: str
+
+
+class ShareTodoResponse(BaseModel):
+    """Response model for sharing operations"""
+
+    id: str
+    title: str
+    owner_id: str
+    shared_with: List[str]
+    message: str
+
+
+class SharedTodosResponse(BaseModel):
+    """Response model for shared todos"""
+
+    todos: List[dict]
+    count: int
 
 
 @router.post("")
@@ -376,4 +401,217 @@ async def delete_todo(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete todo",
+        )
+
+
+@router.post("/{todo_id}/share")
+async def share_todo(
+    todo_id: str,
+    request: ShareTodoRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    todo_repo=Depends(get_todo_repository),
+) -> ShareTodoResponse:
+    """
+    Share a todo with another user (owner only - SEC-RBAC Phase 1.4).
+
+    Grants read-only access to the specified user. Only the owner can share.
+
+    Args:
+        todo_id: ID of the todo to share
+        request: ShareTodoRequest with user_id to share with
+        current_user: Current authenticated user (must be owner)
+        todo_repo: Todo repository (injected)
+
+    Returns:
+        Updated todo with shared_with array
+
+    Raises:
+        HTTPException 400: Invalid user_id
+        HTTPException 404: Todo not found or user not owner
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    """
+    try:
+        if not request.user_id or not request.user_id.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="user_id is required",
+            )
+
+        # Share todo (owner-only operation)
+        shared_todo = await todo_repo.share_todo(todo_id, current_user.sub, request.user_id)
+
+        if not shared_todo:
+            logger.warning(
+                "todo_share_unauthorized",
+                user_id=current_user.sub,
+                todo_id=todo_id,
+                target_user=request.user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Todo not found or you don't have permission to share it",
+            )
+
+        logger.info(
+            "todo_shared",
+            owner_id=current_user.sub,
+            todo_id=todo_id,
+            shared_with_user=request.user_id,
+        )
+
+        return ShareTodoResponse(
+            id=shared_todo.id,
+            title=shared_todo.title,
+            owner_id=shared_todo.owner_id,
+            shared_with=shared_todo.shared_with,
+            message=f"Todo shared with user {request.user_id}",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "todo_share_error",
+            user_id=current_user.sub,
+            todo_id=todo_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to share todo",
+        )
+
+
+@router.delete("/{todo_id}/share/{user_id}")
+async def unshare_todo(
+    todo_id: str,
+    user_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    todo_repo=Depends(get_todo_repository),
+) -> dict:
+    """
+    Remove sharing access from a todo (owner only - SEC-RBAC Phase 1.4).
+
+    Revokes read access for the specified user.
+
+    Args:
+        todo_id: ID of the todo to unshare
+        user_id: ID of user to remove from shared_with
+        current_user: Current authenticated user (must be owner)
+        todo_repo: Todo repository (injected)
+
+    Returns:
+        Success status
+
+    Raises:
+        HTTPException 404: Todo not found or user not owner
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    """
+    try:
+        # Unshare todo (owner-only operation)
+        unshared_todo = await todo_repo.unshare_todo(todo_id, current_user.sub, user_id)
+
+        if not unshared_todo:
+            logger.warning(
+                "todo_unshare_unauthorized",
+                user_id=current_user.sub,
+                todo_id=todo_id,
+                unshare_from_user=user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Todo not found or you don't have permission to unshare it",
+            )
+
+        logger.info(
+            "todo_unshared",
+            owner_id=current_user.sub,
+            todo_id=todo_id,
+            unshared_from_user=user_id,
+        )
+
+        return {
+            "success": True,
+            "message": f"User {user_id} no longer has access to this todo",
+            "todo_id": todo_id,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "todo_unshare_error",
+            user_id=current_user.sub,
+            todo_id=todo_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to unshare todo",
+        )
+
+
+@router.get("/shared-with-me")
+async def get_shared_todos(
+    current_user: JWTClaims = Depends(get_current_user),
+    todo_repo=Depends(get_todo_repository),
+) -> SharedTodosResponse:
+    """
+    Get todos shared with the current user (SEC-RBAC Phase 1.4).
+
+    Returns all todos where the current user is in the shared_with array.
+    Does not include todos owned by the current user (see GET / for owned todos).
+
+    Args:
+        current_user: Current authenticated user
+        todo_repo: Todo repository (injected)
+
+    Returns:
+        List of todos shared with this user
+
+    Raises:
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    """
+    try:
+        shared_todos = await todo_repo.get_todos_shared_with_me(current_user.sub)
+
+        logger.info(
+            "shared_todos_retrieved",
+            user_id=current_user.sub,
+            count=len(shared_todos),
+        )
+
+        return SharedTodosResponse(
+            todos=[
+                {
+                    "id": t.id,
+                    "title": t.title,
+                    "description": t.description,
+                    "owner_id": t.owner_id,
+                    "status": t.status,
+                    "created_at": t.created_at.isoformat() if t.created_at else None,
+                }
+                for t in shared_todos
+            ],
+            count=len(shared_todos),
+        )
+
+    except Exception as e:
+        logger.error(
+            "shared_todos_error",
+            user_id=current_user.sub,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve shared todos",
         )

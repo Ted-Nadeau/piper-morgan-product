@@ -405,6 +405,80 @@ class TodoRepository(BaseRepository):
             "completion_rate": (completed_count / total_created * 100) if total_created > 0 else 0,
         }
 
+    async def share_todo(
+        self, todo_id: str, owner_id: str, user_id_to_share: str
+    ) -> Optional[domain.Todo]:
+        """Share a todo with another user - owner only operation (SEC-RBAC Phase 1.4)"""
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == owner_id))
+        )
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None  # Not found or not owner
+
+        # Prevent owner from sharing with themselves (no-op)
+        if user_id_to_share == owner_id:
+            return db_todo.to_domain()
+
+        # Use PostgreSQL's array concatenation to add user to shared_with
+        await self.session.execute(
+            update(TodoDB)
+            .where(TodoDB.id == todo_id)
+            .values(
+                shared_with=func.array_append(TodoDB.shared_with, user_id_to_share),
+                updated_at=datetime.now(),
+            )
+        )
+
+        # Refresh and return updated todo
+        await self.session.refresh(db_todo)
+        return db_todo.to_domain()
+
+    async def unshare_todo(
+        self, todo_id: str, owner_id: str, user_id_to_unshare: str
+    ) -> Optional[domain.Todo]:
+        """Remove sharing access from a todo - owner only operation (SEC-RBAC Phase 1.4)"""
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == owner_id))
+        )
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None  # Not found or not owner
+
+        # Use PostgreSQL's array_remove to remove user from shared_with
+        await self.session.execute(
+            update(TodoDB)
+            .where(TodoDB.id == todo_id)
+            .values(
+                shared_with=func.array_remove(TodoDB.shared_with, user_id_to_unshare),
+                updated_at=datetime.now(),
+            )
+        )
+
+        # Refresh and return updated todo
+        await self.session.refresh(db_todo)
+        return db_todo.to_domain()
+
+    async def get_todos_shared_with_me(self, user_id: str) -> List[domain.Todo]:
+        """Get todos that are shared with this user (excluding owned todos - SEC-RBAC Phase 1.4)"""
+        # Use PostgreSQL's contains operator to check if user is in shared_with array
+        query = select(TodoDB).where(
+            and_(
+                TodoDB.shared_with.contains([user_id]),  # User is in shared_with array
+                TodoDB.owner_id != user_id,  # Not owned by this user
+            )
+        )
+
+        query = query.order_by(TodoDB.created_at.desc())
+
+        result = await self.session.execute(query)
+        db_todos = result.scalars().all()
+        return [db_todo.to_domain() for db_todo in db_todos]
+
 
 class ListMembershipRepository(BaseRepository):
     """Repository for ListMembership operations managing many-to-many relationships"""

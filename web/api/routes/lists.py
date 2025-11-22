@@ -384,3 +384,217 @@ async def delete_list(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete list",
         )
+
+
+@router.post("/{list_id}/share")
+async def share_list(
+    list_id: str,
+    request: ShareListRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> ShareListResponse:
+    """
+    Share a list with another user (owner only - SEC-RBAC Phase 1.4).
+
+    Grants read-only access to the specified user. Only the owner can share.
+
+    Args:
+        list_id: ID of the list to share
+        request: ShareListRequest with user_id to share with
+        current_user: Current authenticated user (must be owner)
+        list_repo: List repository (injected)
+
+    Returns:
+        Updated list with shared_with array
+
+    Raises:
+        HTTPException 400: Invalid user_id
+        HTTPException 404: List not found or user not owner
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    """
+    try:
+        if not request.user_id or not request.user_id.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="user_id is required",
+            )
+
+        # Share list (owner-only operation)
+        shared_list = await list_repo.share_list(list_id, current_user.sub, request.user_id)
+
+        if not shared_list:
+            logger.warning(
+                "list_share_unauthorized",
+                user_id=current_user.sub,
+                list_id=list_id,
+                target_user=request.user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="List not found or you don't have permission to share it",
+            )
+
+        logger.info(
+            "list_shared",
+            owner_id=current_user.sub,
+            list_id=list_id,
+            shared_with_user=request.user_id,
+        )
+
+        return ShareListResponse(
+            id=shared_list.id,
+            name=shared_list.name,
+            owner_id=shared_list.owner_id,
+            shared_with=shared_list.shared_with,
+            message=f"List shared with user {request.user_id}",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "list_share_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to share list",
+        )
+
+
+@router.delete("/{list_id}/share/{user_id}")
+async def unshare_list(
+    list_id: str,
+    user_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> dict:
+    """
+    Remove sharing access from a list (owner only - SEC-RBAC Phase 1.4).
+
+    Revokes read access for the specified user.
+
+    Args:
+        list_id: ID of the list to unshare
+        user_id: ID of user to remove from shared_with
+        current_user: Current authenticated user (must be owner)
+        list_repo: List repository (injected)
+
+    Returns:
+        Success status
+
+    Raises:
+        HTTPException 404: List not found or user not owner
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    """
+    try:
+        # Unshare list (owner-only operation)
+        unshared_list = await list_repo.unshare_list(list_id, current_user.sub, user_id)
+
+        if not unshared_list:
+            logger.warning(
+                "list_unshare_unauthorized",
+                user_id=current_user.sub,
+                list_id=list_id,
+                unshare_from_user=user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="List not found or you don't have permission to unshare it",
+            )
+
+        logger.info(
+            "list_unshared",
+            owner_id=current_user.sub,
+            list_id=list_id,
+            unshared_from_user=user_id,
+        )
+
+        return {
+            "success": True,
+            "message": f"User {user_id} no longer has access to this list",
+            "list_id": list_id,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "list_unshare_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to unshare list",
+        )
+
+
+@router.get("/shared-with-me")
+async def get_shared_lists(
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> SharedListsResponse:
+    """
+    Get lists shared with the current user (SEC-RBAC Phase 1.4).
+
+    Returns all lists where the current user is in the shared_with array.
+    Does not include lists owned by the current user (see GET / for owned lists).
+
+    Args:
+        current_user: Current authenticated user
+        list_repo: List repository (injected)
+
+    Returns:
+        List of lists shared with this user
+
+    Raises:
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    """
+    try:
+        shared_lists = await list_repo.get_lists_shared_with_me(current_user.sub)
+
+        logger.info(
+            "shared_lists_retrieved",
+            user_id=current_user.sub,
+            count=len(shared_lists),
+        )
+
+        return SharedListsResponse(
+            lists=[
+                {
+                    "id": shared_list.id,
+                    "name": shared_list.name,
+                    "description": shared_list.description,
+                    "owner_id": shared_list.owner_id,
+                    "created_at": (
+                        shared_list.created_at.isoformat() if shared_list.created_at else None
+                    ),
+                }
+                for shared_list in shared_lists
+            ],
+            count=len(shared_lists),
+        )
+
+    except Exception as e:
+        logger.error(
+            "shared_lists_error",
+            user_id=current_user.sub,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve shared lists",
+        )
