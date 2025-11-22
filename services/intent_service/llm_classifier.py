@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import structlog
 
 from services.api.errors import IntentClassificationFailedError, LowConfidenceIntentError
+from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.models import Intent, IntentCategory, KnowledgeNode
 from services.intent_service.fuzzy_matcher import correct_common_typos
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
@@ -308,6 +309,7 @@ class LLMIntentClassifier:
                 task_type="intent_classification",
                 prompt=prompt,
                 response_format=response_format,
+                system=piper_config_loader.get_system_prompt(),
             )
 
             logger.debug(f"[{request_id}] LLM response received - length: {len(response)} chars")
@@ -535,6 +537,7 @@ Respond only with valid JSON:"""
                 task_type="intent_classification",
                 prompt=strict_prompt,
                 response_format={"type": "json_object"},
+                system=piper_config_loader.get_system_prompt(),
             )
             return await self._parse_llm_response_resilient_async(response, attempt)
         except Exception as e:
