@@ -186,10 +186,16 @@ class TodoRepository(BaseRepository):
         await self.session.refresh(db_todo)
         return db_todo.to_domain()
 
-    async def get_todo_by_id(self, todo_id: str) -> Optional[domain.Todo]:
-        """Get todo by ID with optional subtask loading"""
+    async def get_todo_by_id(
+        self, todo_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.Todo]:
+        """Get todo by ID with optional subtask loading (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [TodoDB.id == todo_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(TodoDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(TodoDB).options(selectinload(TodoDB.children)).where(TodoDB.id == todo_id)
+            select(TodoDB).options(selectinload(TodoDB.children)).where(and_(*filters))
         )
         db_todo = result.scalar_one_or_none()
         return db_todo.to_domain() if db_todo else None
@@ -326,12 +332,18 @@ class TodoRepository(BaseRepository):
         db_todos = result.scalars().all()
         return [db_todo.to_domain() for db_todo in db_todos]
 
-    async def update_todo(self, todo_id: str, updates: Dict) -> Optional[domain.Todo]:
-        """Update todo with optimistic field updates"""
+    async def update_todo(
+        self, todo_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.Todo]:
+        """Update todo with optimistic field updates (admin bypass in SEC-RBAC Phase 3)"""
         updates["updated_at"] = datetime.now()
 
+        filters = [TodoDB.id == todo_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(TodoDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            update(TodoDB).where(TodoDB.id == todo_id).values(**updates).returning(TodoDB)
+            update(TodoDB).where(and_(*filters)).values(**updates).returning(TodoDB)
         )
         db_todo = result.scalar_one_or_none()
         return db_todo.to_domain() if db_todo else None
@@ -353,9 +365,15 @@ class TodoRepository(BaseRepository):
         updates = {"status": TodoStatus.PENDING, "completed_at": None, "updated_at": datetime.now()}
         return await self.update_todo(todo_id, updates)
 
-    async def delete_todo(self, todo_id: str) -> bool:
-        """Delete a todo (cascades to subtodos and memberships)"""
-        result = await self.session.execute(select(TodoDB).where(TodoDB.id == todo_id))
+    async def delete_todo(
+        self, todo_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete a todo (admin bypass in SEC-RBAC Phase 3, cascades to subtodos and memberships)"""
+        filters = [TodoDB.id == todo_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(TodoDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(TodoDB).where(and_(*filters)))
         db_todo = result.scalar_one_or_none()
 
         if db_todo:

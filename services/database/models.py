@@ -77,6 +77,7 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     is_alpha = Column(Boolean, default=False, nullable=False)  # Issue #262 - alpha user flag
+    is_admin = Column(Boolean, default=False, nullable=False)  # Issue #357 - SEC-RBAC admin bypass
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

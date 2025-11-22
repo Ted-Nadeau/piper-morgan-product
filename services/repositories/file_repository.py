@@ -51,10 +51,12 @@ class FileRepository(BaseRepository):
         # Convert back to domain model
         return db_file.to_domain()
 
-    async def get_file_by_id(self, file_id: str, owner_id: str = None) -> Optional[UploadedFile]:
-        """Get file by ID - optionally verify ownership"""
+    async def get_file_by_id(
+        self, file_id: str, owner_id: str = None, is_admin: bool = False
+    ) -> Optional[UploadedFile]:
+        """Get file by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         filters = [UploadedFileDB.id == file_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(UploadedFileDB.owner_id == owner_id)
 
         result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
@@ -160,10 +162,10 @@ class FileRepository(BaseRepository):
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def delete_file(self, file_id: str, owner_id: str = None) -> bool:
-        """Delete file metadata by ID - optionally verify ownership"""
+    async def delete_file(self, file_id: str, owner_id: str = None, is_admin: bool = False) -> bool:
+        """Delete file metadata by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         filters = [UploadedFileDB.id == file_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(UploadedFileDB.owner_id == owner_id)
 
         result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))

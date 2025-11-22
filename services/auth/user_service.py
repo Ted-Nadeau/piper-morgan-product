@@ -67,9 +67,16 @@ class User:
     login_count: int = 0
     security_events: List[Dict[str, Any]] = None
 
+    # System-wide admin role (Issue #357 - SEC-RBAC admin bypass)
+    is_admin: bool = False
+
     def __post_init__(self):
         if self.security_events is None:
             self.security_events = []
+
+    def can_bypass_ownership(self) -> bool:
+        """Check if user can bypass ownership restrictions (admin access)"""
+        return self.is_admin
 
 
 @dataclass

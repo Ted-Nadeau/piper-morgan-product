@@ -1696,3 +1696,163 @@ _Status: ✅ SEC-RBAC PHASES 1 & 2 COMPLETE - Production ready_
 _Session log maintained by: Lead Developer (Claude Sonnet)_
 _Last updated: 11:50 AM, Saturday November 22, 2025_
 _Status: Awaiting PM decision on Phase 3 scope_
+
+---
+
+## Session 13: Architectural Decision Documentation (11:49 AM - 12:00 PM)
+
+### PM Guidance: Document Deviation or Escalate
+
+**PM (11:49 AM)**: "and if we deviated from the plan we will need to either make an architectural decision about that and track it or prepare a brief for the chief architect to help us decide"
+
+**Action Taken**: Created both ADR and Chief Architect brief
+
+### Documents Created
+
+**1. ADR-044: Lightweight RBAC vs Traditional** ✅
+- **File**: `docs/internal/architecture/current/adrs/ADR-044-lightweight-rbac-vs-traditional.md`
+- **Status**: Proposed (Pending Chief Architect Review)
+- **Purpose**: Document architectural deviation from original gameplan
+
+**Contents**:
+- Context: Why we deviated (alpha timeline, pragmatic approach)
+- Options: Lightweight RBAC vs Traditional RBAC vs Hybrid
+- Decision: Proposed lightweight RBAC (pending approval)
+- Evidence: What we built, performance data, industry precedents
+- Consequences: Positive/negative impacts
+- Refactoring path: When and how to migrate to traditional RBAC
+- Compliance matrix: How lightweight RBAC meets security goals
+
+**2. Chief Architect Brief** ✅
+- **File**: `dev/active/chief-architect-brief-rbac-decision.md`
+- **Purpose**: Request architectural decision on RBAC approach
+
+**Contents**:
+- Quick comparison (lightweight vs traditional)
+- Performance analysis (10-20ms vs 30-50ms)
+- Scalability analysis (<1,000 users vs 10,000+)
+- Industry precedents (Stripe/Notion vs Salesforce/GitHub)
+- Risk assessment (both approaches)
+- Decision framework (when to choose each)
+- Timeline impact (3-4 hours vs 2-3 weeks)
+- Recommended decision: Approve lightweight RBAC
+
+### Key Points for Chief Architect
+
+**Deviation Summary**:
+- Original gameplan: Traditional RBAC (4 tables, decorators, AuthorizationService)
+- What we built: Lightweight RBAC (JSONB, enums, repository checks)
+- Timeline: 5 hours vs 2-3 weeks estimated
+- Security: Both approaches meet Issue #357 goals
+
+**Decision Required**:
+- [ ] Option A: Approve lightweight RBAC (3-4 hours to complete) ⭐ Recommended
+- [ ] Option B: Require traditional RBAC refactor (2-3 weeks)
+- [ ] Option C: Hybrid approach (1-2 days)
+
+**Blocking**: Cannot proceed with Phase 3 until architectural decision made
+
+---
+
+_Session log maintained by: Lead Developer (Claude Sonnet)_
+_Last updated: 12:00 PM, Saturday November 22, 2025_
+_Status: Awaiting Chief Architect decision on RBAC approach_
+
+---
+
+## Session 14: Chief Architect Approval & Phase 3 Prompt (12:01 PM - 12:10 PM)
+
+### 🎉 Chief Architect Approves Lightweight RBAC
+
+**PM (12:01 PM)**: "Good news! The chief architect approves of your decision."
+
+**Architectural Decision**: ✅ APPROVED
+- **ADR-044**: Lightweight RBAC vs Traditional Role-Permission Tables
+- **Decision**: Continue with JSONB-based RBAC approach
+- **Status**: Updated from "Proposed" to "Accepted"
+
+### Documentation Updates ✅
+
+**1. ADR-044 Status Updated**
+- **File**: `docs/internal/architecture/current/adrs/ADR-044-lightweight-rbac-vs-traditional.md`
+- **Status**: Changed from "Proposed" to "✅ Accepted"
+- **Approved**: November 22, 2025, 12:01 PM
+- **Decision**: Proceed with lightweight JSONB-based RBAC
+
+**2. ADRs README Updated**
+- **File**: `docs/internal/architecture/current/adrs/README.md`
+- **Total ADRs**: Updated from 43 to 44
+- **Recent ADRs**: Added ADR-044 to top of list
+- **Link**: Added with description "Security architecture decision"
+
+### Phase 3 Prompt Created ✅
+
+**File**: `dev/active/agent-prompt-sec-rbac-phase3-completion.md`
+
+**Scope** (3-4 hours):
+
+**Step 1: System-Wide Admin Role** (60-90 min)
+- Add `users.is_admin` boolean column (migration)
+- Update 9 repositories with admin bypass logic
+- Update API endpoints to pass `is_admin` from JWT
+- Manual testing: Admin can access all resources
+
+**Step 2: Automated Cross-User Access Tests** (90-120 min)
+- Create `tests/integration/test_cross_user_access.py`
+- Minimum 20 test cases covering all resources
+- Test: User A cannot access User B's resources
+- Test: Owner can access own resources
+- Test: Admin can bypass ownership
+- All tests must pass
+
+**STOP Condition**: After Steps 1-2, create report and wait for PM approval
+
+**Step 3: Security Scan** (30-45 min)
+- Run Bandit (static analysis)
+- Run Safety (dependency vulnerabilities)
+- Fix any critical/high issues found
+- Document results
+
+**Step 4: Extend to Projects & Files** (60-90 min)
+- Add role-based sharing to Projects (same JSONB pattern)
+- Add role-based sharing to Files (same JSONB pattern)
+- 4 methods per repository (share, unshare, update_role, get_role)
+- 4 endpoints per resource (POST /share, DELETE, PUT, GET /my-role)
+
+**Step 5: Update Issue #357 & Close** (30 min)
+- Update issue description with completion evidence
+- Document all phases completed
+- Include test results, security scan results
+- Close issue with gh CLI
+
+### Deliverables
+
+**Phase 3 Completion**:
+- ✅ System-wide admin role (support capability)
+- ✅ 20+ automated integration tests (CI/CD ready)
+- ✅ Security scan results (0 critical issues expected)
+- ✅ Projects with role-based sharing (8 new endpoints)
+- ✅ Files with role-based sharing (8 new endpoints)
+- ✅ Issue #357 closed with evidence
+
+**Estimated**: 3-4 hours
+**Blocks**: Nothing (clears all Issue #357 requirements)
+**Closes**: Issue #357 (SEC-RBAC)
+
+### Next Steps
+
+**For Code Agent**:
+1. Autonomously discover `dev/active/agent-prompt-sec-rbac-phase3-completion.md`
+2. Execute Steps 1-2
+3. STOP and create report
+4. Wait for PM approval
+5. Execute Steps 3-5
+6. Close Issue #357
+
+**Expected Pattern**: Same autonomous discovery as Phase 1.4 and Phase 2 (3/3 success rate)
+
+---
+
+_Session log maintained by: Lead Developer (Claude Sonnet)_
+_Last updated: 12:10 PM, Saturday November 22, 2025_
+_Status: Phase 3 prompt ready, awaiting Code agent autonomous discovery_

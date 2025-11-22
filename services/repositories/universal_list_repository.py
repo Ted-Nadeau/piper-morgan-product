@@ -37,11 +37,11 @@ class UniversalListRepository(BaseRepository):
         return db_list.to_domain()
 
     async def get_list_by_id(
-        self, list_id: str, owner_id: Optional[str] = None
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
     ) -> Optional[domain.List]:
-        """Get universal list by ID - optionally verify ownership"""
+        """Get universal list by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         filters = [ListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(ListDB).where(and_(*filters)))
@@ -139,13 +139,13 @@ class UniversalListRepository(BaseRepository):
         return [db_list.to_domain() for db_list in db_lists]
 
     async def update_list(
-        self, list_id: str, updates: Dict, owner_id: Optional[str] = None
+        self, list_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
     ) -> Optional[domain.List]:
-        """Update universal list - optionally verify ownership"""
+        """Update universal list - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         updates["updated_at"] = datetime.now()
 
         filters = [ListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -154,8 +154,10 @@ class UniversalListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_item_counts(self, list_id: str, owner_id: Optional[str] = None) -> None:
-        """Update cached item counts - optionally verify ownership"""
+    async def update_item_counts(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> None:
+        """Update cached item counts - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         # Get total count through list items
         total_result = await self.session.execute(
             select(func.count(ListItemDB.id)).where(ListItemDB.list_id == list_id)
@@ -163,7 +165,7 @@ class UniversalListRepository(BaseRepository):
         total_count = total_result.scalar() or 0
 
         # Get completed count (for todos only - other item types may have different logic)
-        list_obj = await self.get_list_by_id(list_id, owner_id)
+        list_obj = await self.get_list_by_id(list_id, owner_id, is_admin)
         completed_count = 0
 
         if list_obj and list_obj.item_type == "todo":
@@ -177,7 +179,7 @@ class UniversalListRepository(BaseRepository):
 
         # Update the list with new counts (with ownership verification if provided)
         filters = [ListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         await self.session.execute(
@@ -188,10 +190,12 @@ class UniversalListRepository(BaseRepository):
             )
         )
 
-    async def delete_list(self, list_id: str, owner_id: Optional[str] = None) -> bool:
-        """Delete a list - optionally verify ownership (cascades to items)"""
+    async def delete_list(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete a list - optionally verify ownership (admin bypass in SEC-RBAC Phase 3, cascades to items)"""
         filters = [ListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(ListDB).where(and_(*filters)))
