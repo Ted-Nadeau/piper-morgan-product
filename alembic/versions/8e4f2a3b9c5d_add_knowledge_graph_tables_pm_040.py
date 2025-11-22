@@ -75,7 +75,7 @@ def upgrade() -> None:
         "knowledge_nodes",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("node_type", postgresql.ENUM(name="nodetype"), nullable=False),
+        sa.Column("node_type", sa.String(), nullable=False),  # Uses nodetype enum via constraint
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("node_metadata", sa.JSON(), nullable=True),
         sa.Column("properties", sa.JSON(), nullable=True),
@@ -94,7 +94,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("source_node_id", sa.String(), nullable=False),
         sa.Column("target_node_id", sa.String(), nullable=False),
-        sa.Column("edge_type", postgresql.ENUM(name="edgetype"), nullable=False),
+        sa.Column("edge_type", sa.String(), nullable=False),  # Uses edgetype enum via constraint
         sa.Column("weight", sa.Float(), nullable=True),
         sa.Column("node_metadata", sa.JSON(), nullable=True),
         sa.Column("properties", sa.JSON(), nullable=True),
