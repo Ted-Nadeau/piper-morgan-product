@@ -286,11 +286,15 @@ class KnowledgeGraphRepository(BaseRepository):
         db_node = KnowledgeNodeDB.from_domain(node)
         return await self.create(**db_node.__dict__)
 
-    async def get_node_by_id(self, node_id: str) -> Optional[domain.KnowledgeNode]:
-        """Get node by ID"""
-        result = await self.session.execute(
-            select(KnowledgeNodeDB).where(KnowledgeNodeDB.id == node_id)
-        )
+    async def get_node_by_id(
+        self, node_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.KnowledgeNode]:
+        """Get node by ID - optionally verify ownership"""
+        filters = [KnowledgeNodeDB.id == node_id]
+        if owner_id:
+            filters.append(KnowledgeNodeDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(KnowledgeNodeDB).where(and_(*filters)))
         db_node = result.scalar_one_or_none()
         return db_node.to_domain() if db_node else None
 
@@ -323,11 +327,15 @@ class KnowledgeGraphRepository(BaseRepository):
         db_edge = KnowledgeEdgeDB.from_domain(edge)
         return await self.create(**db_edge.__dict__)
 
-    async def get_edge_by_id(self, edge_id: str) -> Optional[domain.KnowledgeEdge]:
-        """Get edge by ID"""
-        result = await self.session.execute(
-            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.id == edge_id)
-        )
+    async def get_edge_by_id(
+        self, edge_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.KnowledgeEdge]:
+        """Get edge by ID - optionally verify ownership"""
+        filters = [KnowledgeEdgeDB.id == edge_id]
+        if owner_id:
+            filters.append(KnowledgeEdgeDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(KnowledgeEdgeDB).where(and_(*filters)))
         db_edge = result.scalar_one_or_none()
         return db_edge.to_domain() if db_edge else None
 
@@ -343,9 +351,19 @@ class KnowledgeGraphRepository(BaseRepository):
 
     # Graph-specific operations
     async def find_neighbors(
-        self, node_id: str, edge_type: Optional[EdgeType] = None, direction: str = "both"
+        self,
+        node_id: str,
+        edge_type: Optional[EdgeType] = None,
+        direction: str = "both",
+        owner_id: Optional[str] = None,
     ) -> List[domain.KnowledgeNode]:
-        """Find neighboring nodes"""
+        """Find neighboring nodes - optionally verify ownership of root node"""
+        # Verify ownership of the root node if owner_id provided
+        if owner_id:
+            root_node = await self.get_node_by_id(node_id, owner_id)
+            if not root_node:
+                return []  # Node not found or doesn't belong to owner
+
         if direction == "outgoing":
             query = select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.source_node_id == node_id)
         elif direction == "incoming":
@@ -382,12 +400,28 @@ class KnowledgeGraphRepository(BaseRepository):
 
         return []
 
-    async def get_subgraph(self, node_ids: List[str], max_depth: int = 2) -> Dict[str, Any]:
-        """Get a subgraph around specified nodes"""
+    async def get_subgraph(
+        self, node_ids: List[str], max_depth: int = 2, owner_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get a subgraph around specified nodes - optionally verify ownership"""
         nodes = {}
         edges = []
         visited_nodes = set()
         nodes_to_visit = set(node_ids)
+
+        # If owner_id provided, verify all starting nodes belong to owner
+        if owner_id:
+            result = await self.session.execute(
+                select(KnowledgeNodeDB.id).where(
+                    and_(KnowledgeNodeDB.id.in_(node_ids), KnowledgeNodeDB.owner_id == owner_id)
+                )
+            )
+            valid_node_ids = set(row[0] for row in result.fetchall())
+            nodes_to_visit = nodes_to_visit.intersection(valid_node_ids)
+
+            if not nodes_to_visit:
+                # No valid starting nodes
+                return {"nodes": [], "edges": [], "depth": max_depth}
 
         for depth in range(max_depth):
             if not nodes_to_visit:
@@ -435,9 +469,9 @@ class KnowledgeGraphRepository(BaseRepository):
         return {"nodes": list(nodes.values()), "edges": edges, "depth": max_depth}
 
     async def find_paths(
-        self, source_id: str, target_id: str, max_paths: int = 5
+        self, source_id: str, target_id: str, max_paths: int = 5, owner_id: Optional[str] = None
     ) -> List[List[domain.KnowledgeNode]]:
-        """Find paths between two nodes (simplified implementation)"""
+        """Find paths between two nodes - optionally verify ownership"""
         # This is a simplified path finding - in production you'd want a more sophisticated algorithm
         paths = []
 
@@ -453,9 +487,9 @@ class KnowledgeGraphRepository(BaseRepository):
         direct_edges = result.scalars().all()
 
         if direct_edges:
-            # Direct path exists
-            source_node = await self.get_node_by_id(source_id)
-            target_node = await self.get_node_by_id(target_id)
+            # Direct path exists - verify ownership if required
+            source_node = await self.get_node_by_id(source_id, owner_id)
+            target_node = await self.get_node_by_id(target_id, owner_id)
             if source_node and target_node:
                 paths.append([source_node, target_node])
 

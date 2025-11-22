@@ -83,9 +83,11 @@ class KnowledgeGraphService:
 
         return created_node
 
-    async def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
-        """Get a node by ID"""
-        return await self.repo.get_node_by_id(node_id)
+    async def get_node(
+        self, node_id: str, owner_id: Optional[str] = None
+    ) -> Optional[KnowledgeNode]:
+        """Get a node by ID - optionally verify ownership"""
+        return await self.repo.get_node_by_id(node_id, owner_id)
 
     async def get_nodes_by_type(
         self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
@@ -187,17 +189,22 @@ class KnowledgeGraphService:
 
     # Graph Operations
     async def get_neighbors(
-        self, node_id: str, edge_type: Optional[EdgeType] = None, direction: str = "both"
+        self,
+        node_id: str,
+        edge_type: Optional[EdgeType] = None,
+        direction: str = "both",
+        owner_id: Optional[str] = None,
     ) -> List[KnowledgeNode]:
         """
-        Find neighboring nodes
+        Find neighboring nodes - optionally verify ownership
 
         Args:
             node_id: The node to find neighbors for
             edge_type: Optional filter by edge type
             direction: "incoming", "outgoing", or "both"
+            owner_id: Optional owner ID to verify ownership
         """
-        return await self.repo.find_neighbors(node_id, edge_type, direction)
+        return await self.repo.find_neighbors(node_id, edge_type, direction, owner_id)
 
     async def extract_subgraph(
         self,
@@ -205,20 +212,22 @@ class KnowledgeGraphService:
         max_depth: int = 2,
         edge_types: Optional[List[EdgeType]] = None,
         node_types: Optional[List[NodeType]] = None,
+        owner_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Extract a subgraph around specified nodes with filtering
+        Extract a subgraph around specified nodes with filtering - optionally verify ownership
 
         Args:
             node_ids: Starting nodes for subgraph extraction
             max_depth: How many levels to traverse
             edge_types: Optional filter for edge types to follow
             node_types: Optional filter for node types to include
+            owner_id: Optional owner ID to verify ownership
         """
         self.logger.info("Extracting subgraph", start_nodes=len(node_ids), max_depth=max_depth)
 
-        # Get basic subgraph from repository
-        subgraph = await self.repo.get_subgraph(node_ids, max_depth)
+        # Get basic subgraph from repository (with optional ownership verification)
+        subgraph = await self.repo.get_subgraph(node_ids, max_depth, owner_id)
 
         # Apply filtering if requested
         if edge_types or node_types:
@@ -299,20 +308,26 @@ class KnowledgeGraphService:
         return subgraph
 
     async def find_paths(
-        self, source_id: str, target_id: str, max_paths: int = 5, max_depth: int = 5
+        self,
+        source_id: str,
+        target_id: str,
+        max_paths: int = 5,
+        max_depth: int = 5,
+        owner_id: Optional[str] = None,
     ) -> List[List[KnowledgeNode]]:
         """
-        Find paths between two nodes
+        Find paths between two nodes - optionally verify ownership
 
         Args:
             source_id: Starting node
             target_id: Target node
             max_paths: Maximum number of paths to return
             max_depth: Maximum path length to consider
+            owner_id: Optional owner ID to verify ownership
         """
         # For now, use repository's simple implementation
         # TODO: Implement more sophisticated algorithms (Dijkstra, A*, etc.)
-        return await self.repo.find_paths(source_id, target_id, max_paths)
+        return await self.repo.find_paths(source_id, target_id, max_paths, owner_id)
 
     # Bulk Operations
     async def create_nodes_bulk(
@@ -458,16 +473,16 @@ class KnowledgeGraphService:
         self,
         node_type: Optional[NodeType] = None,
         search_term: Optional[str] = None,
-        session_id: Optional[str] = None,
+        owner_id: Optional[str] = None,
         limit: int = 10,
     ) -> List[KnowledgeNode]:
         """
-        Search for nodes with boundary enforcement.
+        Search for nodes with boundary enforcement - optionally filter by owner.
 
         Args:
             node_type: Optional node type filter
             search_term: Optional search term
-            session_id: Optional session filter
+            owner_id: Optional owner ID filter (uses session_id internally)
             limit: Maximum results (subject to boundary limits)
 
         Returns:
@@ -481,12 +496,12 @@ class KnowledgeGraphService:
             actual_limit = min(limit, self.kg_boundary_enforcer.boundaries.max_result_size)
 
             # Perform search via repository
-            if node_type and session_id:
-                nodes = await self.repo.get_nodes_by_type(node_type, session_id, actual_limit)
+            if node_type and owner_id:
+                nodes = await self.repo.get_nodes_by_type(node_type, owner_id, actual_limit)
             elif node_type:
                 nodes = await self.repo.get_nodes_by_type(node_type, None, actual_limit)
-            elif session_id:
-                nodes = await self.repo.get_nodes_by_session(session_id)
+            elif owner_id:
+                nodes = await self.repo.get_nodes_by_session(owner_id)
                 nodes = nodes[:actual_limit]  # Limit results
             else:
                 # General search - get nodes by type and filter
@@ -527,14 +542,16 @@ class KnowledgeGraphService:
         start_node_id: str,
         max_depth: Optional[int] = None,
         edge_types: Optional[List[EdgeType]] = None,
+        owner_id: Optional[str] = None,
     ) -> List[Dict]:
         """
-        Traverse relationships with boundary enforcement.
+        Traverse relationships with boundary enforcement - optionally verify ownership.
 
         Args:
             start_node_id: Starting node ID
             max_depth: Optional max depth (overrides boundary default)
             edge_types: Optional filter by edge types
+            owner_id: Optional owner ID to verify ownership
 
         Returns:
             List of related nodes (may be partial if limits hit)
@@ -577,14 +594,14 @@ class KnowledgeGraphService:
 
                 visited.add(node_id)
 
-                # Get node
-                node = await self.repo.get_node_by_id(node_id)
+                # Get node (with optional ownership verification)
+                node = await self.repo.get_node_by_id(node_id, owner_id)
                 if node:
                     results.append({"node": node, "depth": current_depth})
 
                     # Get outgoing edges with limit
                     neighbors = await self.repo.find_neighbors(
-                        node_id, edge_type=None, direction="outgoing"
+                        node_id, edge_type=None, direction="outgoing", owner_id=owner_id
                     )
 
                     # Limit edges per node
@@ -611,9 +628,10 @@ class KnowledgeGraphService:
         node_ids: List[str],
         max_hops: int = 2,
         edge_types: Optional[List[str]] = None,
+        owner_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
-        Expand from given nodes to nearby nodes using specified edge types.
+        Expand from given nodes to nearby nodes using specified edge types - optionally verify ownership.
 
         This implements the graph-first retrieval pattern: query graph to gather
         context before expensive LLM processing.
@@ -622,6 +640,7 @@ class KnowledgeGraphService:
             node_ids: Starting nodes for expansion
             max_hops: Maximum depth for traversal (default: 2)
             edge_types: Filter by these edge types (e.g., ['BECAUSE', 'ENABLES'])
+            owner_id: Optional owner ID to verify ownership
 
         Returns:
             Dictionary with expanded nodes and edges
@@ -634,9 +653,9 @@ class KnowledgeGraphService:
             next_level = []
 
             for node_id in nodes_to_expand:
-                # Get neighbors
+                # Get neighbors (with optional ownership verification)
                 neighbors = await self.repo.find_neighbors(
-                    node_id, edge_type=None, direction="outgoing"
+                    node_id, edge_type=None, direction="outgoing", owner_id=owner_id
                 )
 
                 for neighbor_edge in neighbors:
@@ -657,10 +676,10 @@ class KnowledgeGraphService:
             if not nodes_to_expand:
                 break
 
-        # Retrieve all nodes
+        # Retrieve all nodes (with optional ownership verification)
         nodes = []
         for node_id in visited_nodes:
-            node = await self.repo.get_node_by_id(node_id)
+            node = await self.repo.get_node_by_id(node_id, owner_id)
             if node:
                 nodes.append(node)
 
@@ -722,7 +741,7 @@ class KnowledgeGraphService:
 
         Args:
             user_query: User's question/request
-            user_id: User ID for personalization
+            user_id: User ID for personalization (also owner_id for filtering)
             max_nodes: Maximum nodes to retrieve (default: 10)
 
         Returns:
@@ -735,7 +754,7 @@ class KnowledgeGraphService:
         )
 
         # Step 1: Search for relevant nodes
-        relevant_nodes = await self.search_nodes(user_query, user_id=user_id, limit=max_nodes)
+        relevant_nodes = await self.search_nodes(user_query, owner_id=str(user_id), limit=max_nodes)
 
         if not relevant_nodes:
             self.logger.debug(
@@ -757,6 +776,7 @@ class KnowledgeGraphService:
             node_ids=node_ids,
             max_hops=2,
             edge_types=causal_types,
+            owner_id=str(user_id),
         )
 
         # Step 3: Extract reasoning chains
