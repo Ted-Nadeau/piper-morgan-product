@@ -21,7 +21,7 @@ Performance: <2s end-to-end target
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -712,7 +712,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         service="standup-api",
-        timestamp=datetime.now().isoformat(),
+        timestamp=datetime.now(timezone.utc).isoformat(),
         modes_available=5,
         formats_available=4,
     )
