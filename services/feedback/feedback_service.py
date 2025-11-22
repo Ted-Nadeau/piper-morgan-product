@@ -41,7 +41,7 @@ class FeedbackService:
             comment: User feedback comment
             rating: Optional 1-5 rating
             context: Additional context data
-            user_id: Optional user ID
+            user_id: Optional user ID for ownership
             conversation_context: Optional conversation context
             source: Source of feedback (api, ui, conversation)
             tags: Optional tags
@@ -67,17 +67,23 @@ class FeedbackService:
         # Convert to database model
         feedback_db = FeedbackDB.from_domain(feedback)
 
-        # Store in database
+        # Store in database - ownership set by user_id
         self.db.add(feedback_db)
         await self.db.commit()
         await self.db.refresh(feedback_db)
 
         return feedback.id
 
-    async def get_feedback(self, feedback_id: str) -> Optional[Feedback]:
-        """Get feedback by ID"""
+    async def get_feedback(
+        self, feedback_id: str, user_id: Optional[UUID] = None
+    ) -> Optional[Feedback]:
+        """Get feedback by ID - optionally verify ownership"""
 
-        stmt = select(FeedbackDB).where(FeedbackDB.id == feedback_id)
+        filters = [FeedbackDB.id == feedback_id]
+        if user_id:
+            filters.append(FeedbackDB.user_id == user_id)
+
+        stmt = select(FeedbackDB).where(and_(*filters))
         result = await self.db.execute(stmt)
         feedback_db = result.scalar_one_or_none()
 
@@ -121,10 +127,15 @@ class FeedbackService:
         self,
         feedback_id: str,
         update_data: FeedbackUpdateRequest,
+        user_id: Optional[UUID] = None,
     ) -> Optional[Feedback]:
-        """Update feedback status and metadata"""
+        """Update feedback status and metadata - optionally verify ownership"""
 
-        stmt = select(FeedbackDB).where(FeedbackDB.id == feedback_id)
+        filters = [FeedbackDB.id == feedback_id]
+        if user_id:
+            filters.append(FeedbackDB.user_id == user_id)
+
+        stmt = select(FeedbackDB).where(and_(*filters))
         result = await self.db.execute(stmt)
         feedback_db = result.scalar_one_or_none()
 
@@ -150,10 +161,14 @@ class FeedbackService:
 
         return feedback_db.to_domain()
 
-    async def delete_feedback(self, feedback_id: str) -> bool:
-        """Delete feedback by ID"""
+    async def delete_feedback(self, feedback_id: str, user_id: Optional[UUID] = None) -> bool:
+        """Delete feedback by ID - optionally verify ownership"""
 
-        stmt = select(FeedbackDB).where(FeedbackDB.id == feedback_id)
+        filters = [FeedbackDB.id == feedback_id]
+        if user_id:
+            filters.append(FeedbackDB.user_id == user_id)
+
+        stmt = select(FeedbackDB).where(and_(*filters))
         result = await self.db.execute(stmt)
         feedback_db = result.scalar_one_or_none()
 
