@@ -11,6 +11,7 @@ from typing import List, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from services.auth.auth_middleware import get_current_user
@@ -21,6 +22,30 @@ from web.api.dependencies import get_list_repository
 
 router = APIRouter(prefix="/api/v1/lists", tags=["lists"])
 logger = structlog.get_logger(__name__)
+
+
+# Pydantic models for sharing operations
+class ShareListRequest(BaseModel):
+    """Request model for sharing a list with a user"""
+
+    user_id: str
+
+
+class ShareListResponse(BaseModel):
+    """Response model for sharing operations"""
+
+    id: str
+    name: str
+    owner_id: str
+    shared_with: List[str]
+    message: str
+
+
+class SharedListsResponse(BaseModel):
+    """Response model for shared lists"""
+
+    lists: List[dict]
+    count: int
 
 
 @router.post("")

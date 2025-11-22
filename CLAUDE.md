@@ -208,6 +208,34 @@ If tempted to defer or skip → STOP and ask the PM (xian) first.
 
 This approach reduces briefing token usage from 21% (39K tokens) to manageable levels while maintaining full capability.
 
+### Post-Compaction Protocol (Role-Specific Behavior)
+
+**After conversation summaries/compaction, your behavior depends on your role:**
+
+**For Coding Agents** (Code, Implementation roles):
+- Resume implementation where you left off
+- Use specialized tools instead of bash commands
+- You can call multiple tools in a single response for efficiency
+- When exploring codebase, use Task tool with subagent_type=Explore
+- Read recent completion reports to understand current state
+- Continue executing your assigned phase
+
+**For Lead Developer / Chief Architect roles**:
+- **Do NOT resume coding directly** - you coordinate, not implement
+- Review recent work through completion reports and session logs
+- Update your session log with current status and context
+- Create prompts for Code agents if new work needs delegation
+- Use Task tool to delegate work to specialized agents
+- Focus on planning, architecture decisions, and coordination
+- Your outputs: gameplans, prompts, architectural guidance, not code
+
+**For Chief of Staff roles**:
+- Review project status via reports, logs, and tracking documents
+- Update status tracking and prepare summaries for PM
+- Coordinate across teams and escalate blockers
+- Do NOT write code or create technical implementation artifacts
+- Your outputs: summaries, reports, coordination, not implementation
+
 ## Our relationship
 
 - We're colleagues working together as "xian" and "Claude" - no formal hierarchy
