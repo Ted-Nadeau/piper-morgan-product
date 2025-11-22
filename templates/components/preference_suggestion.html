@@ -1,0 +1,317 @@
+<!-- Preference Suggestion Component
+     Displays detected preference hints to user for acceptance/rejection
+
+     Usage:
+     {% include "components/preference_suggestion.html" with hint=hint %}
+
+     Where hint is a dict from ConversationAnalyzer with keys:
+     - id: hint ID
+     - dimension: preference dimension (warmth_level, confidence_style, etc.)
+     - current_value: user's current preference value
+     - detected_value: what we think they prefer
+     - confidence_score: 0.0-1.0
+     - explanation: user-friendly explanation
+-->
+
+<div class="preference-suggestion" id="pref-hint-{{ hint.id }}" data-hint-id="{{ hint.id }}">
+  <div class="suggestion-container">
+    <!-- Header with icon and title -->
+    <div class="suggestion-header">
+      <div class="suggestion-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Light bulb icon -->
+          <path d="M10 2C6.13 2 3 5.13 3 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7zm0 14c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="suggestion-title-group">
+        <h4 class="suggestion-title">We noticed something</h4>
+        <p class="suggestion-dimension">{{ hint.dimension|replace:'_':' '|title }}</p>
+      </div>
+    </div>
+
+    <!-- Main explanation text -->
+    <div class="suggestion-content">
+      <p class="suggestion-text">{{ hint.explanation }}</p>
+    </div>
+
+    <!-- Confidence indicator -->
+    <div class="suggestion-meta">
+      <div class="confidence-badge">
+        <span class="confidence-label">Confidence:</span>
+        <span class="confidence-value">{{ hint.confidence_score|mul:100|int }}%</span>
+      </div>
+      <div class="confidence-bar">
+        <div class="confidence-fill" style="width: {{ hint.confidence_score|mul:100 }}%"></div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="suggestion-actions">
+      <button
+        class="btn btn-accept"
+        onclick="acceptPreference('{{ hint.id }}', event)"
+        title="Apply this preference to your profile"
+        aria-label="Apply preference: {{ hint.dimension }}"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M13.78 4.22a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 011.06-1.06L5.5 10.94l6.72-6.72a.75.75 0 011.06 0z"/>
+        </svg>
+        Apply
+      </button>
+      <button
+        class="btn btn-dismiss"
+        onclick="dismissPreference('{{ hint.id }}', event)"
+        title="Dismiss this suggestion"
+        aria-label="Dismiss preference suggestion"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M3.72 3.72a.75.75 0 011.06 0L8 6.94l3.22-3.22a.75.75 0 111.06 1.06L9.06 8l3.22 3.22a.75.75 0 11-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 11-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 010-1.06z"/>
+        </svg>
+        Dismiss
+      </button>
+    </div>
+
+    <!-- Source note (subtle) -->
+    <div class="suggestion-source">
+      <small>Based on {{ hint.detection_method|replace:'_':' '|lower }}</small>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Preference Suggestion Component Styles */
+.preference-suggestion {
+  margin: 16px 0;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestion-container {
+  border-left: 4px solid #667eea;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  transition: all 0.2s ease;
+}
+
+.preference-suggestion:hover .suggestion-container {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.suggestion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border-radius: 50%;
+  color: #667eea;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+}
+
+.suggestion-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.suggestion-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.suggestion-dimension {
+  margin: 0;
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.suggestion-content {
+  margin-bottom: 12px;
+}
+
+.suggestion-text {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.suggestion-meta {
+  margin-bottom: 12px;
+}
+
+.confidence-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.confidence-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.confidence-value {
+  font-size: 12px;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.confidence-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.suggestion-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.btn {
+  padding: 8px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-accept {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+  flex: 1;
+}
+
+.btn-accept:hover {
+  background: #5568d3;
+  border-color: #5568d3;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-accept:active {
+  background: #4d5fc4;
+}
+
+.btn-accept:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-dismiss {
+  background: white;
+  color: #6b7280;
+  border-color: #d1d5db;
+  flex: 1;
+}
+
+.btn-dismiss:hover {
+  background: #f9fafb;
+  color: #374151;
+  border-color: #bfdbfe;
+}
+
+.btn-dismiss:active {
+  background: #f3f4f6;
+}
+
+.btn-dismiss:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.suggestion-source {
+  padding-top: 8px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  color: #9ca3af;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* Remove suggestion animation */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.preference-suggestion.removing {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .suggestion-container {
+    padding: 12px 14px;
+  }
+
+  .suggestion-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
