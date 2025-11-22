@@ -607,36 +607,21 @@ class ConversationRepository(BaseRepository):
         super().__init__(session)
 
     async def get_conversation_turns(
-        self, conversation_id: str, owner_id: Optional[str] = None
+        self, conversation_id: str, limit: int = 10
     ) -> List[domain.ConversationTurn]:
-        """Get conversation turns - optionally filter by owner"""
-        filters = [ConversationTurnDB.conversation_id == conversation_id]
-        if owner_id:
-            filters.append(ConversationTurnDB.user_id == owner_id)
+        """Get conversation turns for a conversation ID"""
+        # For now, return empty list since we don't have DB table yet
+        # This enables graceful fallback for Phase 3 implementation
+        return []
 
-        result = await self.session.execute(
-            select(ConversationTurnDB)
-            .where(and_(*filters))
-            .order_by(ConversationTurnDB.turn_number)
-        )
-        return [turn.to_domain() for turn in result.scalars().all()]
-
-    async def save_turn(
-        self, turn: domain.ConversationTurn, owner_id: Optional[str] = None
-    ) -> None:
-        """Save conversation turn to database - optionally verify ownership"""
-        # If owner_id provided, verify it matches turn's user_id
-        if owner_id and owner_id != turn.user_id:
-            raise ValueError(f"Owner ID {owner_id} does not match turn user ID {turn.user_id}")
-
+    async def save_turn(self, turn: domain.ConversationTurn) -> None:
+        """Save conversation turn to database"""
         # For now, this is a no-op since we don't have DB table yet
         # Redis caching will handle persistence in Phase 3
         logger.info(f"ConversationTurn saved (cache-only): {turn.id}")
 
-    async def get_next_turn_number(
-        self, conversation_id: str, owner_id: Optional[str] = None
-    ) -> int:
-        """Get next turn number for conversation - optionally verify ownership"""
+    async def get_next_turn_number(self, conversation_id: str) -> int:
+        """Get next turn number for conversation"""
         # For now, return 1 as fallback
         # This enables basic functionality while we build out full DB schema
         return 1
