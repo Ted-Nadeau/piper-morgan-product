@@ -16,12 +16,7 @@ from typing import Dict, List, Optional
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from services.domain.github_domain_service import GitHubDomainService
-from services.domain.slack_domain_service import SlackDomainService
-from services.domain.standup_orchestration_service import StandupOrchestrationService
-from services.domain.user_preference_manager import UserPreferenceManager
-from services.intent_service.canonical_handlers import CanonicalHandlers
-from services.orchestration.session_persistence import SessionPersistenceManager
+from services.integrations.mcp.skills.standup_workflow_skill import StandupWorkflowSkill
 
 
 class StandupCommand:
@@ -42,8 +37,8 @@ class StandupCommand:
     }
 
     def __init__(self):
-        """Initialize the standup command with domain service"""
-        self.orchestration_service = StandupOrchestrationService()
+        """Initialize the standup command with skill"""
+        self.skill = StandupWorkflowSkill()
 
     def print_colored(self, text: str, color: str = "reset", bold: bool = False) -> None:
         """Print colored and optionally bold text"""
@@ -129,130 +124,93 @@ class StandupCommand:
     async def run_standup(
         self,
         user_id: str = "xian",
-        with_issues: bool = False,
-        with_documents: bool = False,
-        with_calendar: bool = False,
-    ) -> Dict[str, str]:
-        """Run the MVP morning standup using persistent context infrastructure"""
+        include_slack: bool = False,
+        include_github: bool = False,
+        include_notion: bool = False,
+    ) -> Dict:
+        """Run morning standup using StandupWorkflowSkill"""
         results = {}
 
         try:
-            self.print_colored("🚀 Morning Standup MVP", "magenta", bold=True)
+            self.print_colored("🚀 Morning Standup", "magenta", bold=True)
             self.print_colored("━" * 50, "gray")
 
-            # Performance tracking
-            start_time = datetime.now()
+            # Generate standup using skill
+            self.print_colored("⏱️  Generating standup (target: <2 seconds)...", "yellow")
 
-            # Generate standup using our MVP workflow - support combinations
-            intelligence_count = sum([with_issues, with_documents, with_calendar])
+            skill_result = await self.skill.execute(
+                {
+                    "user_id": user_id,
+                    "include_slack": include_slack,
+                    "include_github": include_github,
+                    "include_notion": include_notion,
+                    "format": "markdown",
+                }
+            )
 
-            if intelligence_count > 1:
-                # Multiple intelligence sources - use trifecta method
-                intelligence_types = []
-                if with_issues:
-                    intelligence_types.append("issues")
-                if with_documents:
-                    intelligence_types.append("documents")
-                if with_calendar:
-                    intelligence_types.append("calendar")
+            if not skill_result.get("success"):
+                self.print_error(f"Standup generation failed: {skill_result.get('message')}")
+                results["error"] = skill_result.get("message")
+                return results
 
-                self.print_colored(
-                    f"⏱️  Generating standup with {'+'.join(intelligence_types)} (target: <3 seconds)...",
-                    "yellow",
-                )
-                # Use orchestration service for complex workflow
-                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
-                    user_id=user_id, workflow_type="trifecta"
-                )
-
-            elif with_calendar:
-                self.print_colored(
-                    "⏱️  Generating standup with calendar context (target: <2 seconds)...", "yellow"
-                )
-                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
-                    user_id=user_id, workflow_type="with_calendar"
-                )
-            elif with_documents:
-                self.print_colored(
-                    "⏱️  Generating standup with document context (target: <2 seconds)...", "yellow"
-                )
-                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
-                    user_id=user_id, workflow_type="with_documents"
-                )
-            elif with_issues:
-                self.print_colored(
-                    "⏱️  Generating standup with issue priorities (target: <2 seconds)...", "yellow"
-                )
-                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
-                    user_id=user_id, workflow_type="with_issues"
-                )
-            else:
-                self.print_colored("⏱️  Generating standup (target: <2 seconds)...", "yellow")
-                standup_result = await self.orchestration_service.orchestrate_standup_workflow(
-                    user_id=user_id, workflow_type="standard"
-                )
+            standup = skill_result.get("standup", {})
+            execution_time = skill_result.get("execution_time_ms", 0)
 
             # Display results
-            self.print_colored(f"✅ Generated in {standup_result.generation_time_ms}ms", "green")
-            self.print_colored(
-                f"💰 Saved {standup_result.time_saved_minutes} minutes of manual prep", "cyan"
-            )
+            self.print_colored(f"✅ Generated in {execution_time}ms", "green")
+            self.print_colored(f"💰 Saved {skill_result.get('tokens_saved', 15000)} tokens", "cyan")
             self.print_colored("━" * 50, "gray")
 
             # Yesterday's Accomplishments
             self.print_section("📋 Yesterday's Accomplishments", "green")
-            if standup_result.yesterday_accomplishments:
-                for accomplishment in standup_result.yesterday_accomplishments:
+            accomplishments = standup.get("yesterday_accomplishments", [])
+            if accomplishments:
+                for accomplishment in accomplishments:
                     self.print_info(f"  {accomplishment}")
             else:
                 self.print_info("  No specific accomplishments found")
 
             # Today's Priorities
             self.print_section("🎯 Today's Priorities", "blue")
-            for priority in standup_result.today_priorities:
+            priorities = standup.get("today_priorities", [])
+            for priority in priorities:
                 self.print_info(f"  {priority}")
 
             # Blockers
-            self.print_section("⚠️  Blockers", "red" if standup_result.blockers else "gray")
-            if standup_result.blockers:
-                for blocker in standup_result.blockers:
+            blockers = standup.get("blockers", [])
+            self.print_section("⚠️  Blockers", "red" if blockers else "gray")
+            if blockers:
+                for blocker in blockers:
                     self.print_warning(f"  {blocker}")
             else:
                 self.print_success("  No blockers identified")
 
-            # Performance Summary
-            self.print_colored("━" * 50, "gray")
-            self.print_section("📊 Performance Summary", "cyan")
-            self.print_info(f"  Context Source: {standup_result.context_source}")
-            self.print_info(
-                f"  GitHub Activity: {len(standup_result.github_activity.get('commits', []))} commits"
-            )
-            self.print_info(f"  Generation Time: {standup_result.generation_time_ms}ms")
-            self.print_info(
-                f"  Performance Target: {'✅ MET' if standup_result.generation_time_ms < 2000 else '❌ MISSED'}"
-            )
+            # Multi-system posting status
+            posted_to = skill_result.get("posted_to", [])
+            if posted_to:
+                self.print_colored("━" * 50, "gray")
+                self.print_section("📤 Posted to", "cyan")
+                for system in posted_to:
+                    self.print_success(f"  ✓ {system.upper()}")
 
             # Store results
             results.update(
                 {
-                    "user_id": standup_result.user_id,
-                    "generation_time_ms": standup_result.generation_time_ms,
-                    "time_saved_minutes": standup_result.time_saved_minutes,
-                    "yesterday_accomplishments": standup_result.yesterday_accomplishments,
-                    "today_priorities": standup_result.today_priorities,
-                    "blockers": standup_result.blockers,
-                    "context_source": standup_result.context_source,
-                    "performance_met": standup_result.generation_time_ms < 2000,
+                    "success": True,
+                    "user_id": user_id,
+                    "execution_time_ms": execution_time,
+                    "tokens_saved": skill_result.get("tokens_saved", 15000),
+                    "yesterday_accomplishments": accomplishments,
+                    "today_priorities": priorities,
+                    "blockers": blockers,
+                    "posted_to": posted_to,
+                    "issues_created": skill_result.get("issues_created", 0),
+                    "issues_closed": skill_result.get("issues_closed", 0),
+                    "performance_met": execution_time < 2000,
                 }
             )
 
             return results
-
-            # Get current focus
-            self.print_section("Current Focus", "yellow")
-            focus_info = "Q4 2025: MCP implementation and UX enhancement"
-            self.print_info(focus_info)
-            results["focus"] = focus_info
 
         except Exception as e:
             self.print_error(f"Standup execution failed: {e}")
@@ -292,9 +250,9 @@ class StandupCommand:
     async def execute(
         self,
         output_format: str = "cli",
-        with_issues: bool = False,
-        with_documents: bool = False,
-        with_calendar: bool = False,
+        include_slack: bool = False,
+        include_github: bool = False,
+        include_notion: bool = False,
     ) -> None:
         """Execute the standup command with specified output format"""
         try:
@@ -302,8 +260,16 @@ class StandupCommand:
 
             # Run standup sequence
             results = await self.run_standup(
-                with_issues=with_issues, with_documents=with_documents, with_calendar=with_calendar
+                include_slack=include_slack,
+                include_github=include_github,
+                include_notion=include_notion,
             )
+
+            # Check for errors
+            if "error" in results:
+                self.print_header("⚠️  Standup Failed")
+                self.print_error(results["error"])
+                sys.exit(1)
 
             # Generate output based on format
             if output_format == "slack":
@@ -313,13 +279,12 @@ class StandupCommand:
                 print("=" * 60)
                 print(slack_output)
                 print("=" * 60)
-            else:
-                # CLI format - already displayed above
-                pass
 
             # Print summary
             self.print_header("🎯 Standup Complete")
             self.print_success("Morning standup completed successfully!")
+            if results.get("posted_to"):
+                self.print_info(f"Posted to: {', '.join(results['posted_to']).upper()}")
             self.print_info("Use --format slack for Slack-ready output")
 
         except Exception as e:
@@ -336,22 +301,19 @@ def main():
         "--format", choices=["cli", "slack"], default="cli", help="Output format (default: cli)"
     )
     parser.add_argument(
-        "--with-issues",
-        "--with_issues",
+        "--slack",
         action="store_true",
-        help="Include issue priorities from Issue Intelligence",
+        help="Post standup to Slack",
     )
     parser.add_argument(
-        "--with-documents",
-        "--with_documents",
+        "--github",
         action="store_true",
-        help="Include document context from Document Memory",
+        help="Create GitHub issues from action items",
     )
     parser.add_argument(
-        "--with-calendar",
-        "--with_calendar",
+        "--notion",
         action="store_true",
-        help="Include calendar context from Google Calendar",
+        help="Update Notion database with standup",
     )
 
     args = parser.parse_args()
@@ -361,9 +323,9 @@ def main():
     asyncio.run(
         standup.execute(
             output_format=args.format,
-            with_issues=args.with_issues,
-            with_documents=args.with_documents,
-            with_calendar=args.with_calendar,
+            include_slack=args.slack,
+            include_github=args.github,
+            include_notion=args.notion,
         )
     )
 
