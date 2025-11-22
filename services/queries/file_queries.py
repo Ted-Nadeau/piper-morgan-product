@@ -90,21 +90,21 @@ class FileQueryService:
             return {"success": False, "error": f"Search failed: {str(e)}", "query": query}
 
     async def search_files_all_sessions(
-        self, query: str, days: int = 30, limit: int = 10
+        self, query: str, session_id: str, days: int = 30, limit: int = 10
     ) -> Dict[str, Any]:
         """
-        Enhanced file search across all sessions with content awareness.
+        Enhanced file search across all sessions (scoped to user) with content awareness.
         Uses MCP content search when enabled, falls back to filename search.
         """
         try:
             logger.info(
-                f"Searching files across all sessions with query: '{query}' (last {days} days)"
+                f"Searching files across all sessions for session {session_id} with query: '{query}' (last {days} days)"
             )
 
             # Use enhanced search method from FileRepository
             # This method handles MCP integration and fallback automatically
             files = await self.file_repository.search_files_with_content_all_sessions(
-                query, days, limit
+                query, session_id, days, limit
             )
 
             logger.info(f"Found {len(files)} files matching query '{query}' across all sessions")
@@ -143,11 +143,11 @@ class FileQueryService:
         self, search_query: str, session_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Search files using natural language query (maps to existing search_files method)"""
-        if session_id:
-            return await self.search_files(session_id, search_query)
-        else:
-            # Search across all sessions if no specific session
-            return await self.search_files_all_sessions(search_query)
+        if not session_id:
+            return {"success": False, "error": "session_id is required for file search"}
+
+        # Search across all sessions for this user (scoped to session_id/user)
+        return await self.search_files_all_sessions(search_query, session_id)
 
     async def find_documents_about_topic(
         self, topic: str, session_id: Optional[str] = None

@@ -40,8 +40,10 @@ class IntentEnricher:
                 # First try current session
                 files = await self.file_repository.search_files_by_name(session_id, filename)
                 if not files:
-                    # If not found in current session, try all sessions
-                    files = await self.file_repository.search_files_by_name_all_sessions(filename)
+                    # If not found in current session, try all sessions (scoped to this user)
+                    files = await self.file_repository.search_files_by_name_all_sessions(
+                        filename, session_id
+                    )
                     if files:
                         logger.info(
                             f"Found file from previous session: {filename} -> {files[0].id}"

@@ -77,8 +77,8 @@ class FileResolver:
         )
 
         if is_temporal_reference:
-            # For temporal references, search across sessions
-            files = await self.repo.get_recent_files_all_sessions(days=7)
+            # For temporal references, search across sessions (but scoped to this user)
+            files = await self.repo.get_recent_files_all_sessions(session_id, days=7)
             if not files:
                 return None, 0.0
         else:
