@@ -264,14 +264,23 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return []
 
     async def get_database(self, database_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific database using notion_client"""
+        """Get specific database using notion_client (with token counting)"""
         try:
             if not database_id:
                 logger.error("database_id is required")
                 return None
 
-            # Retrieve database using notion_client
-            response = self._notion_client.databases.retrieve(database_id=database_id)
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                # Retrieve database using notion_client
+                response = self._notion_client.databases.retrieve(database_id=database_id)
+                return response
+
+            response = await self.token_counter.wrap_mcp_call(
+                "notion_get_database",
+                _get(),
+                input_data=f"database_id={database_id}",
+            )
 
             logger.info(f"Retrieved database: {database_id}")
             return response
@@ -455,21 +464,30 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def get_page_blocks(self, page_id: str, page_size: int = 100) -> List[Dict[str, Any]]:
-        """Get page content blocks using notion_client"""
+        """Get page content blocks using notion_client (with token counting)"""
         try:
             if not page_id:
                 logger.error("page_id is required")
                 return []
 
-            # Get blocks using notion_client
-            response = self._notion_client.blocks.children.list(
-                block_id=page_id, page_size=min(page_size, 100)
-            )
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                # Get blocks using notion_client
+                response = self._notion_client.blocks.children.list(
+                    block_id=page_id, page_size=min(page_size, 100)
+                )
 
-            blocks = []
-            if response and "results" in response:
-                for block in response["results"]:
-                    blocks.append(block)
+                blocks = []
+                if response and "results" in response:
+                    for block in response["results"]:
+                        blocks.append(block)
+                return blocks
+
+            blocks = await self.token_counter.wrap_mcp_call(
+                "notion_get_page_blocks",
+                _get(),
+                input_data=f"page_id={page_id},page_size={page_size}",
+            )
 
             return blocks
 
@@ -478,14 +496,23 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return []
 
     async def update_page(self, page_id: str, properties: Dict):
-        """Update a Notion page using notion_client"""
+        """Update a Notion page using notion_client (with token counting)"""
         try:
             if not page_id:
                 logger.error("page_id is required for page update")
                 return None
 
-            # Update page using notion_client
-            response = self._notion_client.pages.update(page_id=page_id, properties=properties)
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _update():
+                # Update page using notion_client
+                response = self._notion_client.pages.update(page_id=page_id, properties=properties)
+                return response
+
+            response = await self.token_counter.wrap_mcp_call(
+                "notion_update_page",
+                _update(),
+                input_data=str({"page_id": page_id, "properties_count": len(properties)}),
+            )
 
             logger.info(f"Page updated successfully: {page_id}")
             return response
@@ -712,23 +739,32 @@ class NotionMCPAdapter(BaseSpatialAdapter):
     async def search_notion(
         self, query: str, filter_type: Optional[str] = None, page_size: int = 100
     ) -> List[Dict[str, Any]]:
-        """Search Notion workspace using notion_client"""
+        """Search Notion workspace using notion_client (with token counting)"""
         try:
-            # Build search parameters
-            search_params = {"query": query, "page_size": min(page_size, 100)}
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _search():
+                # Build search parameters
+                search_params = {"query": query, "page_size": min(page_size, 100)}
 
-            # Add filter if specified
-            if filter_type:
-                search_params["filter"] = {"property": "object", "value": filter_type}
+                # Add filter if specified
+                if filter_type:
+                    search_params["filter"] = {"property": "object", "value": filter_type}
 
-            # Search using notion_client
-            response = self._notion_client.search(**search_params)
+                # Search using notion_client
+                response = self._notion_client.search(**search_params)
 
-            # Extract results
-            results = []
-            if response and "results" in response:
-                for item in response["results"]:
-                    results.append(item)
+                # Extract results
+                results = []
+                if response and "results" in response:
+                    for item in response["results"]:
+                        results.append(item)
+                return results
+
+            results = await self.token_counter.wrap_mcp_call(
+                "notion_search",
+                _search(),
+                input_data=str({"query": query, "filter": filter_type, "page_size": page_size}),
+            )
 
             logger.info(f"Search found {len(results)} results for query: {query}")
             return results
@@ -738,39 +774,59 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return []
 
     async def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Get user information using notion_client"""
+        """Get user information using notion_client (with token counting)"""
         try:
-            response = self._notion_client.users.retrieve(user_id=user_id)
-            if response:
-                return {
-                    "id": response["id"],
-                    "name": response.get("name"),
-                    "email": response.get("person", {}).get("email"),
-                    "type": response.get("type"),
-                }
-            return None
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                response = self._notion_client.users.retrieve(user_id=user_id)
+                if response:
+                    return {
+                        "id": response["id"],
+                        "name": response.get("name"),
+                        "email": response.get("person", {}).get("email"),
+                        "type": response.get("type"),
+                    }
+                return None
+
+            user_data = await self.token_counter.wrap_mcp_call(
+                "notion_get_user",
+                _get(),
+                input_data=f"user_id={user_id}",
+            )
+
+            return user_data
 
         except Exception as e:
             logger.error(f"Error getting user {user_id}: {e}")
             return None
 
     async def list_users(self) -> List[Dict[str, Any]]:
-        """List workspace users using notion_client"""
+        """List workspace users using notion_client (with token counting)"""
         try:
-            response = self._notion_client.users.list()
-            if response and "results" in response:
-                users = []
-                for user in response["results"]:
-                    users.append(
-                        {
-                            "id": user["id"],
-                            "name": user.get("name"),
-                            "email": user.get("person", {}).get("email"),
-                            "type": user.get("type"),
-                        }
-                    )
-                return users
-            return []
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _list():
+                response = self._notion_client.users.list()
+                if response and "results" in response:
+                    users = []
+                    for user in response["results"]:
+                        users.append(
+                            {
+                                "id": user["id"],
+                                "name": user.get("name"),
+                                "email": user.get("person", {}).get("email"),
+                                "type": user.get("type"),
+                            }
+                        )
+                    return users
+                return []
+
+            users = await self.token_counter.wrap_mcp_call(
+                "notion_list_users",
+                _list(),
+                input_data="",
+            )
+
+            return users
 
         except Exception as e:
             logger.error(f"Error listing users: {e}")

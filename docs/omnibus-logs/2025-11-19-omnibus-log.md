@@ -1,13 +1,108 @@
-# November 19, 2025 - Test Infrastructure Recovery
+# Daily Omnibus Log: November 19, 2025
 
-**Date**: Tuesday, November 19, 2025
-**Agent**: Code Agent (1h 40m)
-**Duration**: 8:36 AM - 10:16 AM
-**Context**: Test infrastructure cleanup and baseline establishment
+**Date**: Wednesday, November 19, 2025
+**Summary**: Ultra-Complex Day - 9 parallel sessions, 6 agents, 3 major workstreams
+**Status**: ✅ COMPLETE - Heavy documentation & research day with test infrastructure fixes
 
 ---
 
-## Timeline
+## Executive Overview
+
+November 19 was a **highly parallel day** with multiple agents working simultaneously on distinct workstreams:
+
+1. **Documentation Consolidation** (Early morning: 5:29-6:45 AM) - Continuing omnibus synthesis for Nov 13-16
+2. **Tooling Integration Research** (Morning: 6:47-7:35 AM) - Claude Code vs Cursor comparative analysis
+3. **Test Infrastructure Cleanup** (Morning-Late: 8:36 AM-10:16 AM) - Shadow package fix + 14 test errors resolved
+4. **E2E Testing Preparation** (Morning: 8:53 AM) - Protocol refresher standing by for afternoon testing
+5. **Architectural Research** (Afternoon-Evening: 12:59 PM-5:30 PM) - Massive Ted Nadeau deep dive (4.5+ hours)
+6. **Chief Architect Review** (Evening: 5:39 PM) - Four-day retrospective + test infrastructure analysis
+
+**Compression**: 2,200+ source lines → 814 omnibus lines (63% reduction)
+
+---
+
+## Workstream 1: Documentation Consolidation (Early Morning)
+
+**Time**: 5:29 AM - 6:45 AM
+**Agents**: docs-code (Claude Code - Sonnet 4.5)
+**Context**: Continuation of omnibus synthesis work from Nov 18
+
+### Session 1a: Nov 13 Omnibus Consolidation (5:29 AM)
+
+**Task**: Synthesize 6-agent day from Nov 13 using Pattern-020 methodology
+
+**Results**:
+- ✅ Consolidated 5,295 source lines → 575 omnibus lines (89.1% compression)
+- ✅ Applied High-Complexity Day format
+- ✅ Documented 6 concurrent agents and workstreams
+- 📌 Key finding: Phase-020 (omnibus consolidation methodology itself) proven effective for complex days
+
+### Session 1b: Nov 15 Omnibus Consolidation (6:16 AM)
+
+**Task**: Synthesize 8-agent day from Nov 15
+
+**Results**:
+- ✅ Consolidated 4,506 source lines → 642 omnibus lines (85.8% compression)
+- ✅ Documented 8 parallel agents (docs-code, arch-opus, researcher, etc.)
+- ✅ Integrated late-breaking session log (Chief Architect log discovered post-initial read)
+- 📌 Key learning: Late log integration requires second pass through omnibus to maintain narrative coherence
+
+### Session 1c: Branch Scanning (6:29 AM)
+
+**Task**: Quick scan for stranded session logs on remote branches
+
+**Results**:
+- ✅ Verified no cherry-picks needed - logs already on main
+- ✅ Confirmed omnibus consolidation complete
+
+---
+
+## Workstream 2: Tooling Integration Research (Morning)
+
+**Time**: 6:47 AM - ~7:35 AM
+**Agent**: tool-code (Claude Code - Sonnet 4.5)
+**Context**: Exploring Claude Code (terminal) capabilities vs Cursor integration
+
+### Research Scope (476 lines)
+
+**Objective**: Evaluate which tool (Claude Code terminal vs Cursor) is better for different development tasks
+
+**Testing Protocol**:
+1. ✅ **Serena MCP Integration** - Symbolic code tools, memory access, repository operations
+2. ✅ **Context7 MCP Integration** - Library documentation retrieval
+3. ✅ **Beads CLI Integration** - Work tracking and beads database queries
+4. ✅ **pytest Output Integration** - Test result parsing and analysis
+
+**Key Findings**:
+
+| Feature | Claude Code Terminal | Cursor IDE | Best For |
+|---------|----------------------|------------|----------|
+| Parallel tool execution | ✅ Native | ⚠️ Async only | Claude Code |
+| Live output streaming | ✅ Native | ⚠️ Buffered | Claude Code |
+| Serena symbolic tools | ✅ Full access | ❌ None | Claude Code |
+| Real-time editing | ❌ Tool-based | ✅ Native | Cursor |
+| Code completion | ⚠️ Minimal | ✅ Excellent | Cursor |
+
+**Conclusion**: Use **hybrid approach** - Claude Code terminal for systematic implementation, Cursor for exploratory editing
+
+---
+
+## Workstream 3: Test Infrastructure Cleanup (Morning-Late)
+
+**Time**: 8:36 AM - 10:16 AM
+**Agent**: prog-code (Claude Code - Sonnet 4.5)
+**Status**: ✅ COMPLETE - 14 test collection errors fixed
+
+### Critical Discovery: Shadow Package Blocking Tests
+
+**Root Cause**: Directory `tests/services/` with `__init__.py` created shadow package blocking pytest from importing real `services/` module
+
+**Result**: 0% test collection (all 617 tests invisible)
+
+**Fix Applied**:
+- ✅ Moved 51 test files: `tests/services/` → `tests/unit/services/`
+- ✅ Deleted shadow package `__init__.py` files
+- ✅ Architecture test now passes (7/7 tests)
 
 ### Morning: Test Collection Fix (8:36 AM - 9:55 AM)
 
@@ -382,9 +477,161 @@
 
 ---
 
-**Source Log**:
-- `dev/2025/11/19/2025-11-19-0836-prog-code-log.md` (293 lines) - Test infrastructure cleanup
+---
 
-**Total Source Material**: 293 lines compressed to Standard Day format
+## Workstream 4: E2E Testing Preparation (Morning)
 
-**Final Status**: Test collection recovered (0% → 100%), accurate baseline established (68.4% pass rate), 3 analysis documents created, 3 Beads for follow-up work, ready for parallel e2e testing with accurate test health data
+**Time**: 8:53 AM
+**Agent**: prog-cursor (Cursor - Composer)
+**Status**: Standing by for afternoon testing resumption
+
+### Protocol Refresher Summary
+
+**3-Phase E2E Bug Protocol** (Established Nov 18):
+
+**Phase 1: Bug Capture & Categorization** (PM responsibility)
+- Create GitHub issue using `.github/ISSUE_TEMPLATE/e2e-bug.md`
+- Initial categorization: Domain/Integration/UI/Infrastructure/Data
+
+**Phase 2: Investigation-Only Assignment** (Agent responsibility)
+- ✅ Complete full root cause investigation
+- ❌ NO fixes allowed during investigation phase
+- ✅ Complete investigation report using template
+- ✅ Wait for PM review before proposing fixes
+
+**Phase 3: Strategic Fix Planning** (PM review + execution)
+- Recognize patterns across bugs
+- Decide: isolated fix vs refactoring vs domain update vs architectural change
+
+**Status**: Ready to assist with e2e bug logging when PM resumes testing
+
+---
+
+## Workstream 5: Architectural Research Deep Dive (Afternoon-Evening)
+
+**Time**: 12:59 PM - 5:30 PM (4.5+ hours)
+**Agent**: research-code (Claude Code - Sonnet 4.5)
+**Context**: Responding to brilliant computer scientist (Ted Nadeau) architectural questions
+
+### Massive 3-Phase Research Session
+
+**Phase 1** (12:59-13:45): Ted's initial architectural questions
+- ✅ Singletons & scalability (ServiceContainer pattern identified)
+- ✅ Database design (PostgreSQL, 3NF, integer PKs)
+- ✅ Security implementation (JWT working, no RBAC, no encryption at rest)
+- ✅ Architecture (monolith with plugin system, single-tenant)
+- **Deliverable**: Ted Nadeau reply draft (350+ lines)
+
+**Phase 2** (13:45-16:00): Database design follow-up questions
+- ✅ Stored Procedures - No SQL procedures, application-layer workflows act as stored procedures
+- ✅ Primary Key Naming - Current: unprefixed (id), Ted prefers: prefixed (user_id)
+- ✅ Keyspace Partitioning - Current: UUIDs, Ted suggests: partitioned ranges
+- ✅ Table Naming - Current: plural (users), Ted prefers: singular (user)
+- ✅ **Database Annotations** - NOVEL PATTERN: Annotate WHY data changed (for AI learning!)
+- ✅ Email Integration - Feasible via Gmail MCP adapter
+- **Key Discovery**: Ted's annotation pattern could be patent/research paper
+- **Deliverable**: Ted follow-up reply (comprehensive DB design analysis)
+
+**Phase 3** (16:00-17:30): GitHub issues + comprehensive reports
+- ✅ Created 17 GitHub issues (#319-#340)
+- ✅ 4 comprehensive reports (1,200+ lines)
+- **Reports**:
+  1. `architect-database-design-decisions.md` - For Chief Architect
+  2. `qa-test-coverage-gaps.md` - For QA Lead
+  3. `mvp-acceptance-criteria.md` - MVP definition
+  4. `pre-mvp-migration-plan.md` - Migration sequencing
+
+### GitHub Issues Created (17 total)
+
+**Critical MVP Issues**:
+- #319: Windows compatibility bug (2-3h)
+- #320: Database indexes (4-6h)
+- #321: Audit field standardization (12-16h)
+- #323: RBAC implementation (20-24h) - **CRITICAL BLOCKER**
+- #324: Encryption at rest (24-30h) - **CRITICAL BLOCKER**
+
+**Novel High-Priority Issue**:
+- #329: Database annotation system (Ted's innovation) - **12-16h, HIGH VALUE**
+
+**Post-MVP Issues**:
+- #326: Multi-org support (40-60h)
+- #327: AI agent GitHub accounts (4-6h)
+- #328: Observability infrastructure (30-40h)
+
+**Database Design Issues**:
+- #330: Email integration via Gmail MCP
+- #331: Document application-layer stored procedures (ADR-013)
+- #336: Soft delete strategy
+- #338: Migration rollback testing framework
+- #339: Prefixed PK naming convention
+- #340: Singular table naming convention
+
+---
+
+## Workstream 6: Chief Architect Review (Evening)
+
+**Time**: 5:39 PM
+**Agent**: arch-opus (Claude - Opus model)
+**Role**: Chief Architect
+**Context**: Four-day retrospective before analyzing test infrastructure cleanup
+
+### Four-Day Retrospective
+
+**November 15** (Planning Marathon):
+- ✅ Convergence transformation strategy created
+- ✅ Backlog reorganized (53→40 issues)
+- ✅ Roadmap v11.1 with 6 sprints
+
+**November 16** (Sandbox Debugging):
+- ⚠️ 6.5 hours debugging (4 hours wasted on untestable theories)
+- ✅ Fixed: Template paths + Alpha documentation
+- ❌ Blocked: Static file mounting (/static returns 404)
+- 📌 Learning: Cannot test web server changes without runtime
+
+**November 17** (Repository Hygiene):
+- ✅ 3 branches merged, 2 archived
+- ✅ 536MB binaries prevented from git
+- ✅ All 63 tests passing
+
+**November 18** (Alpha Breakthrough):
+- ✅ First successful E2E test (user onboarded)
+- ✅ 7 wizard issues resolved with TDD
+- ✅ E2E bug investigation protocol established
+- ✅ URL hallucination eradicated (4-layer prevention)
+
+### Pattern Recognition
+
+**Key Insights**:
+1. **Environment Capabilities Matter** - Sandbox good for logic, bad for infrastructure
+2. **Systematic > Reactive** - Investigation before fix prevents incomplete solutions
+3. **Documentation Architecture** - `/docs/` vs `/dev/` audience separation critical
+
+---
+
+## Summary
+
+**Total Deliverables**:
+- ✅ Session log (this omnibus)
+- ✅ Ted Nadeau reply draft (350+ lines)
+- ✅ Ted follow-up reply (comprehensive DB design analysis)
+- ✅ 17 GitHub issues created (#319-#340)
+- ✅ 4 comprehensive reports (1,200+ lines)
+- ✅ Test infrastructure cleanup (14 errors fixed, 68.4% baseline)
+- ✅ E2E protocol refresher (standing by)
+- ✅ Documentation consolidation (Nov 13-16 omnibus complete)
+- ✅ Tooling research (hybrid approach recommendation)
+
+**Source Logs**:
+- `dev/2025/11/19/2025-11-19-0529-docs-code-log.md` - Documentation consolidation
+- `dev/2025/11/19/2025-11-19-0616-docs-code-log.md` - Nov 15 omnibus
+- `dev/2025/11/19/2025-11-19-0629-docs-code-log.md` - Branch scanning
+- `dev/2025/11/19/2025-11-19-0647-tool-code-log.md` - Tooling research (476 lines)
+- `dev/2025/11/19/2025-11-19-0720-docs-code-log.md` - Nov 16 omnibus
+- `dev/2025/11/19/2025-11-19-0836-prog-code-log.md` - Test infrastructure cleanup
+- `dev/2025/11/19/2025-11-19-0853-prog-cursor-log.md` - E2E protocol preparation
+- `dev/2025/11/19/2025-11-19-1259-research-code-log.md` - Architectural research (681 lines)
+- `dev/2025/11/19/2025-11-19-1739-arch-opus-log.md` - Chief Architect review
+
+**Total Source Material**: 2,200+ lines compressed to 814 omnibus lines (63% reduction)
+
+**Final Status**: Ultra-complex day with 6 agents, 3 workstreams, comprehensive research and documentation work, test infrastructure recovered (0%→100% collection, 68.4% baseline), 17 actionable issues created, novel database annotation pattern discovered
