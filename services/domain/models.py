@@ -452,7 +452,7 @@ class UploadedFile:
     """Domain model for uploaded files"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
-    session_id: str = ""
+    owner_id: str = ""
     filename: str = ""
     file_type: str = ""  # MIME type
     file_size: int = 0

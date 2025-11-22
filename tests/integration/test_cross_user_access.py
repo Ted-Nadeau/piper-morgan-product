@@ -367,14 +367,86 @@ class TestCrossUserTodoAccess:
             assert result is True, "Admin should be able to delete any todo"
 
 
-# NOTE: FileRepository tests deferred pending owner_id support in UploadedFile domain model
-# The FileRepository methods reference owner_id in get_file_by_id() and delete_file(),
-# but the UploadedFile domain model does not include an owner_id field.
-# This is a design inconsistency that needs to be resolved before file tests can run.
-# See Phase 3 Step 4 for file ownership implementation.
-#
-# TODO: Add owner_id to UploadedFile domain model
-# TODO: Add owner_id to UploadedFileDB database model
-# TODO: Update FileRepository methods to use owner_id consistently
-# TODO: Implement TestCrossUserFileAccess with corrected domain model
-# Reference: services/domain/models.py line 451, services/database/models.py line 550
+class TestCrossUserFileAccess:
+    """Test file access control across users with owner_id enforcement"""
+
+    async def test_user_a_cannot_read_user_b_file(self, async_transaction):
+        """User A should not be able to read User B's file"""
+        user_a_id = str(uuid4())
+        user_b_id = str(uuid4())
+
+        async with async_transaction as session:
+            file_repo = FileRepository(session)
+            file_b = domain.UploadedFile(
+                id=str(uuid4()),
+                owner_id=user_b_id,
+                filename="user_b_file.txt",
+                file_type="text/plain",
+                file_size=1024,
+                storage_path="/files/user_b_file.txt",
+            )
+            await file_repo.save_file_metadata(file_b)
+
+            result = await file_repo.get_file_by_id(file_b.id, owner_id=user_a_id, is_admin=False)
+            assert result is None  # Cross-user access blocked ✅
+
+    async def test_user_a_cannot_delete_user_b_file(self, async_transaction):
+        """User A should not be able to delete User B's file"""
+        user_a_id = str(uuid4())
+        user_b_id = str(uuid4())
+
+        async with async_transaction as session:
+            file_repo = FileRepository(session)
+            file_b = domain.UploadedFile(
+                id=str(uuid4()),
+                owner_id=user_b_id,
+                filename="user_b_file.txt",
+                file_type="text/plain",
+                file_size=1024,
+                storage_path="/files/user_b_file.txt",
+            )
+            await file_repo.save_file_metadata(file_b)
+
+            deleted = await file_repo.delete_file(file_b.id, owner_id=user_a_id, is_admin=False)
+            assert not deleted  # Cross-user delete blocked ✅
+
+    async def test_owner_can_read_own_file(self, async_transaction):
+        """Owner should be able to read their own file"""
+        owner_id = str(uuid4())
+
+        async with async_transaction as session:
+            file_repo = FileRepository(session)
+            my_file = domain.UploadedFile(
+                id=str(uuid4()),
+                owner_id=owner_id,
+                filename="my_file.txt",
+                file_type="text/plain",
+                file_size=1024,
+                storage_path="/files/my_file.txt",
+            )
+            await file_repo.save_file_metadata(my_file)
+
+            result = await file_repo.get_file_by_id(my_file.id, owner_id=owner_id, is_admin=False)
+            assert result is not None  # Owner access allowed ✅
+            assert result.id == my_file.id
+
+    async def test_admin_can_read_any_file(self, async_transaction):
+        """Admin should be able to read any file"""
+        owner_id = str(uuid4())
+        admin_id = str(uuid4())
+
+        async with async_transaction as session:
+            file_repo = FileRepository(session)
+            any_file = domain.UploadedFile(
+                id=str(uuid4()),
+                owner_id=owner_id,
+                filename="any_file.txt",
+                file_type="text/plain",
+                file_size=1024,
+                storage_path="/files/any_file.txt",
+            )
+            await file_repo.save_file_metadata(any_file)
+
+            result = await file_repo.get_file_by_id(any_file.id, owner_id=admin_id, is_admin=True)
+            assert result is not None  # Admin bypass allowed ✅
+            assert result.id == any_file.id

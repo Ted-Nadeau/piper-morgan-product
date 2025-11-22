@@ -553,7 +553,7 @@ class UploadedFileDB(Base):
     __tablename__ = "uploaded_files"
 
     id = Column(String, primary_key=True)
-    session_id = Column(String, nullable=False)
+    owner_id = Column(String, nullable=False)
     filename = Column(String(500), nullable=False)
     file_type = Column(String(255))
     file_size = Column(Integer)
@@ -565,14 +565,14 @@ class UploadedFileDB(Base):
     item_metadata = Column(JSON, default=dict)
 
     __table_args__ = (
-        Index("idx_files_session", "session_id", "upload_time"),
+        Index("idx_files_owner", "owner_id", "upload_time"),
         Index("idx_files_filename", "filename"),
     )
 
     def to_domain(self) -> domain.UploadedFile:
         return domain.UploadedFile(
             id=self.id,
-            session_id=self.session_id,
+            owner_id=self.owner_id,
             filename=self.filename,
             file_type=self.file_type,
             file_size=self.file_size,
@@ -588,7 +588,7 @@ class UploadedFileDB(Base):
     def from_domain(cls, file: domain.UploadedFile) -> "UploadedFileDB":
         return cls(
             id=file.id,
-            session_id=file.session_id,
+            owner_id=file.owner_id,
             filename=file.filename,
             file_type=file.file_type,
             file_size=file.file_size,
