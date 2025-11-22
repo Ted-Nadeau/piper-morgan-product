@@ -610,6 +610,84 @@
         background: #E67E22;
       }
 
+      /* G50: Startup Welcome Message */
+      .startup-greeting {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .greeting-header {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+
+      .greeting-username {
+        font-weight: 700;
+        color: #ffd700;
+      }
+
+      .greeting-time {
+        font-size: 14px;
+        opacity: 0.95;
+        margin: 0;
+      }
+
+      .quick-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .quick-action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        backdrop-filter: blur(10px);
+      }
+
+      .quick-action-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+      }
+
+      .quick-action-btn.primary {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: white;
+      }
+
+      @media (max-width: 768px) {
+        .startup-greeting {
+          padding: 30px 20px;
+        }
+
+        .greeting-header {
+          font-size: 22px;
+        }
+
+        .quick-actions {
+          flex-direction: column;
+        }
+
+        .quick-action-btn {
+          width: 100%;
+          text-align: center;
+        }
+      }
+
       /* Learn More Modal */
       .learn-more-modal {
         position: fixed;
@@ -678,6 +756,8 @@
     {% include 'components/skip-link.html' %}
     {% include 'components/page-transition.html' %}
     {% include 'components/navigation.html' %}
+    {% set breadcrumbs = [{"label": "Home", "url": None}] %}
+    {% include 'components/breadcrumbs.html' %}
     {% include 'components/toast.html' %}
     {% include 'components/session-timeout-modal.html' %}
     {% include 'components/confirmation-dialog.html' %}
@@ -706,10 +786,29 @@
         <p><em>I can create GitHub issues, analyze documents, and more!</em></p>
       </div>
 
+      <!-- G50: Startup Welcome Message -->
+      {% if user %}
+      <div class="startup-greeting">
+        <h2 class="greeting-header" id="greeting-text">Good morning!</h2>
+        <p class="greeting-time" id="greeting-time"></p>
+        <div class="quick-actions">
+          <button class="quick-action-btn primary" onclick="document.querySelector('.chat-input').focus(); return false;">
+            💬 Ask a question
+          </button>
+          <button class="quick-action-btn" onclick="document.getElementById('upload-toggle-btn').click(); return false;">
+            📄 Upload a document
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/settings'; return false;">
+            ⚙️ Go to Settings
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
       <div id="chat-window">
         <div class="message-container">
           <div class="message bot-message">
-            Hello! How can I help you today?
+            What can I help you with today?
           </div>
         </div>
       </div>
@@ -768,6 +867,40 @@
       const chatWindow = document.getElementById("chat-window");
       let sessionId = null;
 
+      // G50: Initialize startup greeting with time-based message
+      function initializeGreeting() {
+        if (!window.currentUser) return;
+
+        const hour = new Date().getHours();
+        let timeGreeting = "Good morning";
+        if (hour >= 12 && hour < 18) {
+          timeGreeting = "Good afternoon";
+        } else if (hour >= 18) {
+          timeGreeting = "Good evening";
+        }
+
+        const username = window.currentUser.username || "there";
+        const fullGreeting = `${timeGreeting}, <span class="greeting-username">${username}</span>`;
+
+        const greetingElement = document.getElementById("greeting-text");
+        if (greetingElement) {
+          greetingElement.innerHTML = fullGreeting;
+        }
+
+        // Update the time display (e.g., "Tuesday, 2:35 PM")
+        const timeElement = document.getElementById("greeting-time");
+        if (timeElement) {
+          const now = new Date();
+          const formattedTime = now.toLocaleDateString("en-US", {
+            weekday: "long",
+            hour: "numeric",
+            minute: "2-digit",
+            meridiem: "short"
+          });
+          timeElement.textContent = `It's ${formattedTime}`;
+        }
+      }
+
       // Use DDD bot message renderer for all bot messages
 
       // Wait for DOM and scripts to load
@@ -776,6 +909,7 @@
           "DOM loaded, marked.js available:",
           typeof marked !== "undefined"
         );
+        initializeGreeting();
       });
 
       function appendMessage(html, isUser = false) {
