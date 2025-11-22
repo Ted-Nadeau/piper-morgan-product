@@ -292,6 +292,142 @@ async def robust_operation():
         raise
 ```
 
+## Windows Development
+
+### Repository Cloning on Windows
+
+Piper Morgan repositories use cross-platform filenames validated by both local pre-commit hooks and GitHub Actions CI/CD. **If you encounter clone failures on Windows**, this is likely due to illegal filename characters.
+
+**Windows cannot use these characters in filenames**: `: < > " | ? *`
+
+Our pre-commit hooks prevent these characters from being committed. If an older version somehow has them:
+
+```powershell
+# Clone with a different branch strategy
+git clone --no-checkout https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+git checkout main  # or your target branch
+```
+
+### WSL2 Recommendation for Windows Developers
+
+**Why WSL2?**
+- Native Linux environment without VM overhead
+- Direct filesystem access to Windows
+- Full Python 3.11 support
+- All bash scripts work without modification
+- Git operations are faster
+
+**Installation Steps:**
+
+1. **Enable WSL2** (Windows 10/11):
+   ```powershell
+   # Run as Administrator
+   wsl --install
+   wsl --set-default-version 2
+   ```
+
+2. **Install Ubuntu**:
+   ```powershell
+   wsl --install -d Ubuntu-22.04
+   ```
+
+3. **From inside Ubuntu terminal**, set up development environment:
+   ```bash
+   # Update system
+   sudo apt update && sudo apt upgrade -y
+
+   # Install Python 3.11
+   sudo apt install python3.11 python3.11-venv python3.11-pip git
+
+   # Clone repository (using WSL terminal)
+   git clone https://github.com/mediajunkie/piper-morgan-product.git
+   cd piper-morgan-product
+
+   # Continue with normal setup (see Environment Setup section above)
+   python3.11 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+4. **Access from Windows**:
+   - WSL files are available at: `\\wsl$\Ubuntu-22.04\home\<username>\`
+   - Edit files from Windows with WSL paths: `code \\wsl$\Ubuntu-22.04\home\username\piper-morgan-product`
+
+### Native Windows Setup (PowerShell)
+
+If you prefer native Windows development:
+
+1. **Install Python 3.11**:
+   ```powershell
+   # Using Windows Package Manager (recommended)
+   winget install Python.Python.3.11
+
+   # Or download from https://www.python.org/downloads/
+   # During installation, MUST check "Add Python to PATH"
+   ```
+
+2. **Create virtual environment**:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+
+3. **Install dependencies**:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+4. **Verify Python 3.11**:
+   ```powershell
+   python --version  # Should show Python 3.11.x
+   ```
+
+### Pre-commit Hooks on Windows
+
+The `check-windows-filenames` hook prevents commits with illegal Windows characters automatically:
+
+```bash
+# This will be blocked by pre-commit hook:
+# "❌ Pre-commit hook: Windows-illegal characters found in filenames"
+# Windows filenames cannot contain: : < > " | ? *
+# Use dashes (-) or underscores (_) instead.
+
+# To bypass (not recommended):
+git commit --no-verify
+```
+
+### Common Windows Development Issues
+
+**Problem**: "command not found" errors in bash scripts
+**Solution**: Use WSL2 (recommended) or ensure PowerShell scripts use proper syntax
+
+**Problem**: Virtual environment activation fails
+**Solution**: Use correct activation script for Windows:
+```powershell
+# PowerShell
+.\venv\Scripts\Activate.ps1
+
+# CMD
+venv\Scripts\activate.bat
+```
+
+**Problem**: File paths with spaces causing errors
+**Solution**: Wrap paths in quotes:
+```powershell
+python -m pytest "tests\my test\test_file.py"
+```
+
+### GitHub Actions: Windows Validation
+
+GitHub Actions automatically validates repository compatibility on Windows via the `windows-clone-test` job. This ensures:
+
+- ✅ Repository clones successfully on Windows
+- ✅ No illegal filename characters present
+- ✅ All files transfer without corruption
+
+This validation runs on every push to main/develop branches.
+
 ## Common Issues and Solutions
 
 ### Python Version Issues

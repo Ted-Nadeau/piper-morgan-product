@@ -622,3 +622,102 @@ Or:
 - If missing, reinstall Python 3.12.10 from [python.org/downloads/release/python-31210/](https://www.python.org/downloads/release/python-31210/)
 - Close your terminal completely and open a NEW one (PATH updates need a fresh terminal)
 - Try Step 1 again
+
+---
+
+## Windows-Specific Issues
+
+For comprehensive Windows setup and troubleshooting, see [Windows Setup Guide](./windows-setup-guide.md).
+
+### Issue: Virtual Environment Activation Fails on Windows
+
+**Error**:
+```
+.ps1 cannot be loaded because running scripts is disabled on this system
+```
+
+**Solution**:
+```powershell
+# Run PowerShell as Administrator, then:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Answer "Y" when prompted
+# Now try activation again:
+.\venv\Scripts\Activate.ps1
+```
+
+### Issue: Pre-commit Hook Blocks Commit on Windows
+
+**Error**:
+```
+❌ Pre-commit hook: Windows-illegal characters found in filenames
+Windows filenames cannot contain: : < > " | ? *
+```
+
+**Why**: You're committing a file with illegal Windows characters.
+
+**Solution**:
+1. Rename the file to use dashes or underscores
+2. Example: `file (10:30).txt` → `file-1030.txt`
+3. Re-add and commit
+
+**To bypass** (not recommended):
+```powershell
+git commit --no-verify
+```
+
+### Issue: Repository Clone Fails on Windows
+
+**Error**:
+```
+error: unable to create file <path>: Filename too long
+```
+
+**Solution**:
+```powershell
+# Run as Administrator
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+  -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+
+# Then retry clone
+```
+
+### Issue: Path-Related Test Failures on Windows
+
+**Error**:
+```
+FileNotFoundError: [Errno 2] No such file or directory: 'tests/unit/...'
+```
+
+**Why**: Test paths use forward slashes (Linux style) but Windows uses backslashes.
+
+**Solution**:
+```powershell
+# Use backslashes in pytest commands:
+pytest tests\unit\test_file.py
+
+# Or use quotes with forward slashes:
+pytest "tests/unit/test_file.py"
+```
+
+### Issue: "python command not found" on Windows
+
+**Why**: Python not in Windows PATH
+
+**Solution**:
+1. Uninstall Python from Settings → Apps
+2. Download from https://www.python.org/downloads/
+3. Run installer and **check "Add Python to PATH"**
+4. Restart PowerShell/CMD
+5. Verify: `python --version`
+
+### Recommendation: Use WSL2
+
+If you encounter Windows-specific issues, consider using **WSL2** (Windows Subsystem for Linux):
+
+- No more path separator issues
+- All bash scripts work natively
+- Better Python compatibility
+- Actually faster than native Windows
+
+See [Windows Setup Guide - WSL2 Option](./windows-setup-guide.md#option-1-wsl2-recommended-for-windows-developers) for setup instructions.

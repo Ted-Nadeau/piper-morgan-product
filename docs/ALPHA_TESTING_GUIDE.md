@@ -66,6 +66,61 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
 
+## Windows Alpha Tester Setup
+
+**For Windows testers, we recommend using WSL2 (Windows Subsystem for Linux).**
+
+### Quick Start: Windows with WSL2
+
+WSL2 provides the smoothest setup experience on Windows:
+
+```powershell
+# 1. Run as Administrator
+wsl --install
+wsl --set-default-version 2
+wsl --install -d Ubuntu-22.04
+
+# 2. Inside Ubuntu terminal
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3.11 python3.11-venv git
+
+# 3. Clone and setup
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 4. Run setup wizard (same as below)
+python main.py setup
+```
+
+### Alternative: Native Windows Setup
+
+If you prefer not to use WSL2, follow the guided setup below but use:
+- PowerShell instead of bash
+- `venv\Scripts\Activate.ps1` to activate (Windows-style path)
+- See [Windows Setup Guide](installation/windows-setup-guide.md) for troubleshooting
+
+### Known Windows Issues for Alpha Testers
+
+1. **Clone failures**: Ensure you have long path support enabled:
+   ```powershell
+   # Run as Administrator
+   New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+     -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+   ```
+
+2. **Python not found**: Reinstall from https://www.python.org/downloads and check "Add Python to PATH"
+
+3. **Path errors in commands**: Use backslashes (Windows-native) or quotes with forward slashes:
+   ```powershell
+   python main.py setup              # Works on all platforms
+   python -c "import sys; print(sys.version)"  # Also works
+   ```
+
+---
+
 ## Guided Setup Instructions
 
 ### Step 1: Clone the Repository
@@ -74,6 +129,8 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 git clone https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 ```
+
+**Note**: On Windows, use the WSL2 terminal or PowerShell with proper path handling
 
 ### Step 2: Create Virtual Environment
 

@@ -24,6 +24,17 @@ repos:
         exclude: ^venv/
   - repo: local
     hooks:
+      - id: check-windows-filenames
+        name: Check for Windows-incompatible filenames
+        entry: python3 scripts/check-windows-filenames.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        description: |
+          Prevents Windows-illegal characters in filenames (: < > " | ? *).
+          Windows cannot process files with these characters; this blocks commits
+          that would make the repository un-cloneable on Windows.
+          Allows easy cross-platform development without breaking Windows users.
       - id: check-hallucinated-urls
         name: Check for Hallucinated GitHub URLs
         entry: .pre-commit-hooks/check-hallucinated-urls.py
