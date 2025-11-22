@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -44,6 +45,9 @@ class GitBookMCPSpatialAdapter(BaseSpatialAdapter):
 
         # HTTP session
         self._session: Optional[aiohttp.ClientSession] = None
+
+        # Token counting for MCP operations (Issue #369)
+        self.token_counter = TokenCounter()
 
         logger.info("GitBookMCPSpatialAdapter initialized")
 
@@ -98,152 +102,189 @@ class GitBookMCPSpatialAdapter(BaseSpatialAdapter):
             return None
 
     async def get_spaces(self) -> List[Dict[str, Any]]:
-        """Get accessible GitBook spaces"""
-        result = await self._call_gitbook_api("/spaces")
+        """Get accessible GitBook spaces (with token counting)"""
 
-        if result and "data" in result:
-            spaces = []
-            for space in result["data"]:
-                standardized = {
-                    "id": space.get("id"),
-                    "name": space.get("title", space.get("name", "Untitled")),
-                    "description": space.get("description", ""),
-                    "visibility": space.get("visibility", "private"),
-                    "created_at": space.get("createdAt"),
-                    "updated_at": space.get("updatedAt"),
-                    "type": "space",
-                    "url": space.get("url"),
-                    "organization": space.get("organization"),
-                }
-                spaces.append(standardized)
-            return spaces
+        async def _get():
+            result = await self._call_gitbook_api("/spaces")
+            if result and "data" in result:
+                spaces = []
+                for space in result["data"]:
+                    standardized = {
+                        "id": space.get("id"),
+                        "name": space.get("title", space.get("name", "Untitled")),
+                        "description": space.get("description", ""),
+                        "visibility": space.get("visibility", "private"),
+                        "created_at": space.get("createdAt"),
+                        "updated_at": space.get("updatedAt"),
+                        "type": "space",
+                        "url": space.get("url"),
+                        "organization": space.get("organization"),
+                    }
+                    spaces.append(standardized)
+                return spaces
+            return []
 
-        return []
+        spaces = await self.token_counter.wrap_mcp_call(
+            "gitbook_consumer_get_spaces",
+            _get(),
+            input_data="",
+        )
+
+        logger.info(f"Retrieved {len(spaces)} GitBook spaces")
+        return spaces
 
     async def get_space_content(self, space_id: str) -> Dict[str, Any]:
-        """Get space content tree (collections + pages)"""
-        result = await self._call_gitbook_api(f"/spaces/{space_id}")
+        """Get space content tree (collections + pages) (with token counting)"""
 
-        if result:
-            # Get collections in this space
-            collections = await self.get_collections(space_id)
+        async def _get():
+            result = await self._call_gitbook_api(f"/spaces/{space_id}")
+            if result:
+                collections = await self.get_collections(space_id)
+                pages = await self._call_gitbook_api(f"/spaces/{space_id}/content")
 
-            # Get root pages (pages not in collections)
-            pages = await self._call_gitbook_api(f"/spaces/{space_id}/content")
+                standardized = {
+                    "id": space_id,
+                    "type": "space",
+                    "collections": collections,
+                    "pages": pages.get("data", []) if pages else [],
+                    "space_id": space_id,
+                }
 
-            standardized = {
-                "id": space_id,
-                "type": "space",
-                "collections": collections,
-                "pages": pages.get("data", []) if pages else [],
-                "space_id": space_id,
-            }
+                return standardized
+            return {}
 
-            return standardized
+        content = await self.token_counter.wrap_mcp_call(
+            "gitbook_consumer_get_space_content",
+            _get(),
+            input_data=f"space_id={space_id}",
+        )
 
-        return {}
+        logger.info(f"Retrieved content tree for space {space_id}")
+        return content
 
     async def get_collections(self, space_id: str) -> List[Dict[str, Any]]:
-        """Get collections in a space"""
-        result = await self._call_gitbook_api(f"/spaces/{space_id}/collections")
+        """Get collections in a space (with token counting)"""
 
-        if result and "data" in result:
-            collections = []
-            for collection in result["data"]:
-                standardized = {
-                    "id": collection.get("id"),
-                    "name": collection.get("title", "Untitled Collection"),
-                    "description": collection.get("description", ""),
-                    "space_id": space_id,
-                    "type": "collection",
-                    "created_at": collection.get("createdAt"),
-                    "updated_at": collection.get("updatedAt"),
-                    "page_count": len(collection.get("pages", [])),
-                }
-                collections.append(standardized)
-            return collections
+        async def _get():
+            result = await self._call_gitbook_api(f"/spaces/{space_id}/collections")
+            if result and "data" in result:
+                collections = []
+                for collection in result["data"]:
+                    standardized = {
+                        "id": collection.get("id"),
+                        "name": collection.get("title", "Untitled Collection"),
+                        "description": collection.get("description", ""),
+                        "space_id": space_id,
+                        "type": "collection",
+                        "created_at": collection.get("createdAt"),
+                        "updated_at": collection.get("updatedAt"),
+                        "page_count": len(collection.get("pages", [])),
+                    }
+                    collections.append(standardized)
+                return collections
+            return []
 
-        return []
+        collections = await self.token_counter.wrap_mcp_call(
+            "gitbook_consumer_get_collections",
+            _get(),
+            input_data=f"space_id={space_id}",
+        )
+
+        logger.info(f"Retrieved {len(collections)} collections from space {space_id}")
+        return collections
 
     async def get_page(self, space_id: str, page_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific page content"""
-        result = await self._call_gitbook_api(f"/spaces/{space_id}/content/{page_id}")
+        """Get specific page content (with token counting)"""
 
-        if result:
-            # Extract page content and metadata
-            page_data = result.get("data", result)
+        async def _get():
+            result = await self._call_gitbook_api(f"/spaces/{space_id}/content/{page_id}")
+            if result:
+                page_data = result.get("data", result)
 
-            standardized = {
-                "id": page_data.get("id", page_id),
-                "title": page_data.get("title", "Untitled"),
-                "description": page_data.get("description", ""),
-                "body": page_data.get("body", {}).get("document", ""),
-                "type": "page",
-                "space_id": space_id,
-                "collection_id": (
-                    page_data.get("parent", {}).get("id") if page_data.get("parent") else None
-                ),
-                "visibility": page_data.get("visibility", "public"),
-                "status": page_data.get("status", "published"),
-                "created_at": page_data.get("createdAt"),
-                "updated_at": page_data.get("updatedAt"),
-                "created_by": page_data.get("createdBy"),
-                "contributors": page_data.get("contributors", []),
-                "tags": page_data.get("tags", []),
-                "url": page_data.get("url"),
-                "parent": page_data.get("parent"),
-                "children": page_data.get("children", []),
-                "revision_count": page_data.get("revisionCount", 0),
-            }
-
-            # Add additional metadata if available
-            if space_data := await self._call_gitbook_api(f"/spaces/{space_id}"):
-                standardized["space"] = {
-                    "id": space_id,
-                    "title": space_data.get("title", ""),
-                    "visibility": space_data.get("visibility", "private"),
+                standardized = {
+                    "id": page_data.get("id", page_id),
+                    "title": page_data.get("title", "Untitled"),
+                    "description": page_data.get("description", ""),
+                    "body": page_data.get("body", {}).get("document", ""),
+                    "type": "page",
+                    "space_id": space_id,
+                    "collection_id": (
+                        page_data.get("parent", {}).get("id") if page_data.get("parent") else None
+                    ),
+                    "visibility": page_data.get("visibility", "public"),
+                    "status": page_data.get("status", "published"),
+                    "created_at": page_data.get("createdAt"),
+                    "updated_at": page_data.get("updatedAt"),
+                    "created_by": page_data.get("createdBy"),
+                    "contributors": page_data.get("contributors", []),
+                    "tags": page_data.get("tags", []),
+                    "url": page_data.get("url"),
+                    "parent": page_data.get("parent"),
+                    "children": page_data.get("children", []),
+                    "revision_count": page_data.get("revisionCount", 0),
                 }
 
-            return standardized
+                if space_data := await self._call_gitbook_api(f"/spaces/{space_id}"):
+                    standardized["space"] = {
+                        "id": space_id,
+                        "title": space_data.get("title", ""),
+                        "visibility": space_data.get("visibility", "private"),
+                    }
 
-        return None
+                return standardized
+            return None
+
+        page = await self.token_counter.wrap_mcp_call(
+            "gitbook_consumer_get_page",
+            _get(),
+            input_data=f"space_id={space_id},page_id={page_id}",
+        )
+
+        logger.info(f"Retrieved page {page_id} from space {space_id}")
+        return page
 
     async def search_pages(
         self, space_id: str, query: str, limit: int = 10
     ) -> List[Dict[str, Any]]:
-        """Search pages within a space"""
-        # GitBook search endpoint
-        search_endpoint = f"/spaces/{space_id}/search?query={query}&limit={limit}"
-        result = await self._call_gitbook_api(search_endpoint)
+        """Search pages within a space (with token counting)"""
 
-        if result and "data" in result:
-            matching_pages = []
+        async def _search():
+            search_endpoint = f"/spaces/{space_id}/search?query={query}&limit={limit}"
+            result = await self._call_gitbook_api(search_endpoint)
 
-            for item in result["data"][:limit]:
-                if item.get("type") == "page":
-                    page_id = item.get("id")
+            if result and "data" in result:
+                matching_pages = []
 
-                    # Get full page details
-                    full_page = await self.get_page(space_id, page_id)
-                    if full_page:
-                        matching_pages.append(full_page)
-                    else:
-                        # Fallback to search result data
-                        standardized = {
-                            "id": page_id,
-                            "title": item.get("title", "Untitled"),
-                            "description": item.get("excerpt", ""),
-                            "type": "page",
-                            "space_id": space_id,
-                            "url": item.get("url"),
-                            "updated_at": item.get("updatedAt"),
-                        }
-                        matching_pages.append(standardized)
+                for item in result["data"][:limit]:
+                    if item.get("type") == "page":
+                        page_id = item.get("id")
+                        full_page = await self.get_page(space_id, page_id)
+                        if full_page:
+                            matching_pages.append(full_page)
+                        else:
+                            standardized = {
+                                "id": page_id,
+                                "title": item.get("title", "Untitled"),
+                                "description": item.get("excerpt", ""),
+                                "type": "page",
+                                "space_id": space_id,
+                                "url": item.get("url"),
+                                "updated_at": item.get("updatedAt"),
+                            }
+                            matching_pages.append(standardized)
 
-            return matching_pages
+                return matching_pages
 
-        # Fallback: Get all pages and filter manually
-        return await self._fallback_search_pages(space_id, query, limit)
+            return await self._fallback_search_pages(space_id, query, limit)
+
+        pages = await self.token_counter.wrap_mcp_call(
+            "gitbook_consumer_search_pages",
+            _search(),
+            input_data=str({"space_id": space_id, "query": query, "limit": limit}),
+        )
+
+        logger.info(f"Found {len(pages)} pages matching '{query}' in space {space_id}")
+        return pages
 
     async def _fallback_search_pages(
         self, space_id: str, query: str, limit: int
@@ -292,24 +333,33 @@ class GitBookMCPSpatialAdapter(BaseSpatialAdapter):
             return []
 
     async def get_users(self, space_id: str) -> List[Dict[str, Any]]:
-        """Get space users and permissions"""
-        result = await self._call_gitbook_api(f"/spaces/{space_id}/members")
+        """Get space users and permissions (with token counting)"""
 
-        if result and "data" in result:
-            users = []
-            for member in result["data"]:
-                user_data = {
-                    "id": member.get("id"),
-                    "name": member.get("user", {}).get("displayName", "Unknown"),
-                    "email": member.get("user", {}).get("email"),
-                    "role": member.get("role", "member"),
-                    "permissions": member.get("permissions", []),
-                    "joined_at": member.get("joinedAt"),
-                }
-                users.append(user_data)
-            return users
+        async def _get():
+            result = await self._call_gitbook_api(f"/spaces/{space_id}/members")
+            if result and "data" in result:
+                users = []
+                for member in result["data"]:
+                    user_data = {
+                        "id": member.get("id"),
+                        "name": member.get("user", {}).get("displayName", "Unknown"),
+                        "email": member.get("user", {}).get("email"),
+                        "role": member.get("role", "member"),
+                        "permissions": member.get("permissions", []),
+                        "joined_at": member.get("joinedAt"),
+                    }
+                    users.append(user_data)
+                return users
+            return []
 
-        return []
+        users = await self.token_counter.wrap_mcp_call(
+            "gitbook_consumer_get_users",
+            _get(),
+            input_data=f"space_id={space_id}",
+        )
+
+        logger.info(f"Retrieved {len(users)} users from space {space_id}")
+        return users
 
     async def map_to_position(self, content_id: str, context: Dict[str, Any]) -> SpatialPosition:
         """Map GitBook content ID to spatial position"""

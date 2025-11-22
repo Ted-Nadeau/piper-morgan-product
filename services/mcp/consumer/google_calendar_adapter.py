@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
+
 # Google Calendar dependencies - graceful fallback if not available
 try:
     from google.auth.transport.requests import Request
@@ -84,6 +86,9 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         self._circuit_open = False
         self._circuit_timeout = config.circuit_timeout
 
+        # Token counting for MCP operations (Issue #369)
+        self.token_counter = TokenCounter()
+
         logger.info(
             "GoogleCalendarMCPAdapter initialized with %s",
             "service injection" if config_service else "default config",
@@ -149,12 +154,7 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             return False
 
     async def get_todays_events(self) -> List[Dict[str, Any]]:
-        """
-        Get today's calendar events from Google Calendar
-
-        Returns:
-            List[Dict[str, Any]]: List of today's calendar events
-        """
+        """Get today's calendar events from Google Calendar (with token counting)"""
         if self._circuit_open:
             logger.warning("Google Calendar circuit breaker is open")
             return []
@@ -164,40 +164,47 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 return []
 
         try:
-            # Get start and end of today in UTC
-            now = datetime.utcnow()
-            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_of_day = start_of_day + timedelta(days=1)
 
-            # Format for Google Calendar API
-            time_min = start_of_day.isoformat() + "Z"
-            time_max = end_of_day.isoformat() + "Z"
+            async def _get_events():
+                from datetime import datetime, timedelta
 
-            # Call Google Calendar API
-            events_result = (
-                self._service.events()
-                .list(
-                    calendarId=self._calendar_id,
-                    timeMin=time_min,
-                    timeMax=time_max,
-                    singleEvents=True,
-                    orderBy="startTime",
+                now = datetime.utcnow()
+                start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                end_of_day = start_of_day + timedelta(days=1)
+
+                time_min = start_of_day.isoformat() + "Z"
+                time_max = end_of_day.isoformat() + "Z"
+
+                events_result = (
+                    self._service.events()
+                    .list(
+                        calendarId=self._calendar_id,
+                        timeMin=time_min,
+                        timeMax=time_max,
+                        singleEvents=True,
+                        orderBy="startTime",
+                    )
+                    .execute()
                 )
-                .execute()
+
+                events = events_result.get("items", [])
+                processed_events = []
+                for event in events:
+                    processed_event = self._process_event(event)
+                    if processed_event:
+                        processed_events.append(processed_event)
+
+                return processed_events
+
+            events = await self.token_counter.wrap_mcp_call(
+                "calendar_get_todays_events",
+                _get_events(),
+                input_data="",
             )
 
-            events = events_result.get("items", [])
-
-            # Process events for temporal awareness
-            processed_events = []
-            for event in events:
-                processed_event = self._process_event(event)
-                if processed_event:
-                    processed_events.append(processed_event)
-
-            logger.info(f"Retrieved {len(processed_events)} events for today")
+            logger.info(f"Retrieved {len(events)} events for today")
             self._reset_circuit_breaker()
-            return processed_events
+            return events
 
         except Exception as e:
             logger.error(f"Failed to retrieve calendar events: {e}")
@@ -269,150 +276,160 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def get_current_meeting(self) -> Optional[Dict[str, Any]]:
-        """
-        Get currently active meeting if any
+        """Get currently active meeting if any (with token counting)"""
 
-        Returns:
-            Dict[str, Any]: Current meeting details or None
-        """
-        events = await self.get_todays_events()
+        async def _get():
+            events = await self.get_todays_events()
+            for event in events:
+                if event["status"] == "current":
+                    return event
+            return None
 
-        for event in events:
-            if event["status"] == "current":
-                return event
+        result = await self.token_counter.wrap_mcp_call(
+            "calendar_get_current_meeting",
+            _get(),
+            input_data="",
+        )
 
-        return None
+        return result
 
     async def get_next_meeting(self) -> Optional[Dict[str, Any]]:
-        """
-        Get next upcoming meeting today
+        """Get next upcoming meeting today (with token counting)"""
 
-        Returns:
-            Dict[str, Any]: Next meeting details or None
-        """
-        events = await self.get_todays_events()
+        async def _get():
+            events = await self.get_todays_events()
+            for event in events:
+                if event["status"] == "upcoming":
+                    return event
+            return None
 
-        for event in events:
-            if event["status"] == "upcoming":
-                return event
+        result = await self.token_counter.wrap_mcp_call(
+            "calendar_get_next_meeting",
+            _get(),
+            input_data="",
+        )
 
-        return None
+        return result
 
     async def get_free_time_blocks(self) -> List[Dict[str, Any]]:
-        """
-        Calculate free time blocks between meetings
+        """Calculate free time blocks between meetings (with token counting)"""
 
-        Returns:
-            List[Dict[str, Any]]: Available free time blocks
-        """
-        events = await self.get_todays_events()
+        async def _get():
+            from datetime import datetime, timedelta
 
-        # Filter only scheduled meetings (not all-day events)
-        meetings = [e for e in events if not e["is_all_day"]]
+            events = await self.get_todays_events()
+            meetings = [e for e in events if not e["is_all_day"]]
 
-        if not meetings:
-            # Entire day is free
+            if not meetings:
+                now = datetime.now()
+                end_of_day = now.replace(hour=18, minute=0, second=0, microsecond=0)
+                return [
+                    {
+                        "start_time": now.isoformat(),
+                        "end_time": end_of_day.isoformat(),
+                        "duration_minutes": int((end_of_day - now).total_seconds() / 60),
+                        "type": "free_block",
+                    }
+                ]
+
+            free_blocks = []
             now = datetime.now()
-            end_of_day = now.replace(hour=18, minute=0, second=0, microsecond=0)  # 6 PM
+            meetings.sort(key=lambda x: x["start_time"])
 
-            return [
-                {
-                    "start_time": now.isoformat(),
-                    "end_time": end_of_day.isoformat(),
-                    "duration_minutes": int((end_of_day - now).total_seconds() / 60),
-                    "type": "free_block",
-                }
-            ]
+            for i, meeting in enumerate(meetings):
+                meeting_start = datetime.fromisoformat(meeting["start_time"])
 
-        # Calculate gaps between meetings
-        free_blocks = []
-        now = datetime.now()
+                if i == 0 and now < meeting_start:
+                    gap_duration = int((meeting_start - now).total_seconds() / 60)
+                    if gap_duration > 15:
+                        free_blocks.append(
+                            {
+                                "start_time": now.isoformat(),
+                                "end_time": meeting["start_time"],
+                                "duration_minutes": gap_duration,
+                                "type": "before_meeting",
+                            }
+                        )
 
-        # Sort meetings by start time
-        meetings.sort(key=lambda x: x["start_time"])
+                if i < len(meetings) - 1:
+                    next_meeting = meetings[i + 1]
+                    meeting_end = datetime.fromisoformat(meeting["end_time"])
+                    next_start = datetime.fromisoformat(next_meeting["start_time"])
 
-        for i, meeting in enumerate(meetings):
-            meeting_start = datetime.fromisoformat(meeting["start_time"])
+                    gap_duration = int((next_start - meeting_end).total_seconds() / 60)
+                    if gap_duration > 15:
+                        free_blocks.append(
+                            {
+                                "start_time": meeting["end_time"],
+                                "end_time": next_meeting["start_time"],
+                                "duration_minutes": gap_duration,
+                                "type": "between_meetings",
+                            }
+                        )
 
-            # Free time before first meeting
-            if i == 0 and now < meeting_start:
-                gap_duration = int((meeting_start - now).total_seconds() / 60)
-                if gap_duration > 15:  # Only include gaps > 15 minutes
-                    free_blocks.append(
-                        {
-                            "start_time": now.isoformat(),
-                            "end_time": meeting["start_time"],
-                            "duration_minutes": gap_duration,
-                            "type": "before_meeting",
-                        }
-                    )
+            return free_blocks
 
-            # Free time between meetings
-            if i < len(meetings) - 1:
-                next_meeting = meetings[i + 1]
-                meeting_end = datetime.fromisoformat(meeting["end_time"])
-                next_start = datetime.fromisoformat(next_meeting["start_time"])
+        result = await self.token_counter.wrap_mcp_call(
+            "calendar_get_free_blocks",
+            _get(),
+            input_data="",
+        )
 
-                gap_duration = int((next_start - meeting_end).total_seconds() / 60)
-                if gap_duration > 15:
-                    free_blocks.append(
-                        {
-                            "start_time": meeting["end_time"],
-                            "end_time": next_meeting["start_time"],
-                            "duration_minutes": gap_duration,
-                            "type": "between_meetings",
-                        }
-                    )
-
-        return free_blocks
+        logger.info(f"Found {len(result)} free time blocks")
+        return result
 
     async def get_temporal_summary(self) -> Dict[str, Any]:
-        """
-        Get comprehensive temporal summary for standup integration
+        """Get comprehensive temporal summary for standup integration (with token counting)"""
 
-        Returns:
-            Dict[str, Any]: Temporal awareness summary
-        """
-        try:
-            current_meeting = await self.get_current_meeting()
-            next_meeting = await self.get_next_meeting()
-            free_blocks = await self.get_free_time_blocks()
-            all_events = await self.get_todays_events()
+        async def _get():
+            from datetime import datetime
 
-            # Calculate summary statistics
-            total_meetings = len([e for e in all_events if not e["is_all_day"]])
-            total_meeting_time = sum(
-                e["duration_minutes"] for e in all_events if not e["is_all_day"]
-            )
-            total_free_time = sum(b["duration_minutes"] for b in free_blocks)
+            try:
+                current_meeting = await self.get_current_meeting()
+                next_meeting = await self.get_next_meeting()
+                free_blocks = await self.get_free_time_blocks()
+                all_events = await self.get_todays_events()
 
-            summary = {
-                "current_meeting": current_meeting,
-                "next_meeting": next_meeting,
-                "free_blocks": free_blocks,
-                "stats": {
-                    "total_meetings_today": total_meetings,
-                    "total_meeting_minutes": total_meeting_time,
-                    "total_free_minutes": total_free_time,
-                    "calendar_load": (
-                        "heavy" if total_meeting_time > 240 else "light"
-                    ),  # 4+ hours = heavy
-                },
-                "recommendations": self._generate_recommendations(
-                    current_meeting, next_meeting, free_blocks
-                ),
-                "timestamp": datetime.now().isoformat(),
-            }
+                total_meetings = len([e for e in all_events if not e["is_all_day"]])
+                total_meeting_time = sum(
+                    e["duration_minutes"] for e in all_events if not e["is_all_day"]
+                )
+                total_free_time = sum(b["duration_minutes"] for b in free_blocks)
 
-            return summary
+                summary = {
+                    "current_meeting": current_meeting,
+                    "next_meeting": next_meeting,
+                    "free_blocks": free_blocks,
+                    "stats": {
+                        "total_meetings_today": total_meetings,
+                        "total_meeting_minutes": total_meeting_time,
+                        "total_free_minutes": total_free_time,
+                        "calendar_load": "heavy" if total_meeting_time > 240 else "light",
+                    },
+                    "recommendations": self._generate_recommendations(
+                        current_meeting, next_meeting, free_blocks
+                    ),
+                    "timestamp": datetime.now().isoformat(),
+                }
 
-        except Exception as e:
-            logger.error(f"Failed to generate temporal summary: {e}")
-            return {
-                "error": "Calendar unavailable",
-                "fallback": "Static calendar patterns from configuration",
-                "timestamp": datetime.now().isoformat(),
-            }
+                return summary
+
+            except Exception as e:
+                logger.error(f"Failed to generate temporal summary: {e}")
+                return {
+                    "error": "Calendar unavailable",
+                    "fallback": "Static calendar patterns from configuration",
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+        result = await self.token_counter.wrap_mcp_call(
+            "calendar_get_temporal_summary",
+            _get(),
+            input_data="",
+        )
+
+        logger.info("Generated temporal summary")
+        return result
 
     def _generate_recommendations(
         self, current_meeting: Optional[Dict], next_meeting: Optional[Dict], free_blocks: List[Dict]

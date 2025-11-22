@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -48,6 +49,9 @@ class DevEnvironmentMCPSpatialAdapter(BaseSpatialAdapter):
 
         # HTTP session
         self._session: Optional[aiohttp.ClientSession] = None
+
+        # Token counting for MCP operations (Issue #369)
+        self.token_counter = TokenCounter()
 
         logger.info("DevEnvironmentMCPSpatialAdapter initialized")
 
@@ -119,77 +123,99 @@ class DevEnvironmentMCPSpatialAdapter(BaseSpatialAdapter):
             return None
 
     async def get_docker_container(self, container_id: str) -> Optional[Dict[str, Any]]:
-        """Get Docker container by ID"""
-        result = await self._call_docker_api(f"/containers/{container_id}/json")
+        """Get Docker container by ID (with token counting)"""
+        try:
 
-        if result:
-            # Standardize container format
-            standardized = {
-                "id": result.get("Id", "")[:12],  # Short ID
-                "name": result.get("Name", "").lstrip("/"),
-                "type": "development",
-                "status": result.get("State", {}).get("Status", "unknown"),
-                "health_status": self._extract_health_status(result),
-                "platform": "docker",
-                "project": {"name": self._extract_project_name(result)},
-                "workspace": {"name": self._extract_workspace_name(result)},
-                "created_at": result.get("Created"),
-                "started_at": result.get("State", {}).get("StartedAt"),
-                "cpu_usage": 0,  # Would need stats API call
-                "memory_usage": 0,  # Would need stats API call
-                "restart_count": result.get("RestartCount", 0),
-                "labels": (
-                    list(result.get("Config", {}).get("Labels", {}).keys())
-                    if result.get("Config", {}).get("Labels")
-                    else []
-                ),
-                "services": self._extract_services_from_container(result),
-                "depends_on": self._extract_depends_on(result),
-                "volumes": result.get("Mounts", []),
-                "technologies": self._extract_technologies(result),
-            }
+            async def _get():
+                result = await self._call_docker_api(f"/containers/{container_id}/json")
+                if result:
+                    standardized = {
+                        "id": result.get("Id", "")[:12],
+                        "name": result.get("Name", "").lstrip("/"),
+                        "type": "development",
+                        "status": result.get("State", {}).get("Status", "unknown"),
+                        "health_status": self._extract_health_status(result),
+                        "platform": "docker",
+                        "project": {"name": self._extract_project_name(result)},
+                        "workspace": {"name": self._extract_workspace_name(result)},
+                        "created_at": result.get("Created"),
+                        "started_at": result.get("State", {}).get("StartedAt"),
+                        "cpu_usage": 0,
+                        "memory_usage": 0,
+                        "restart_count": result.get("RestartCount", 0),
+                        "labels": (
+                            list(result.get("Config", {}).get("Labels", {}).keys())
+                            if result.get("Config", {}).get("Labels")
+                            else []
+                        ),
+                        "services": self._extract_services_from_container(result),
+                        "depends_on": self._extract_depends_on(result),
+                        "volumes": result.get("Mounts", []),
+                        "technologies": self._extract_technologies(result),
+                    }
 
-            # Add resource usage if available
-            try:
-                stats = await self._call_docker_api(
-                    f"/containers/{container_id}/stats?stream=false"
-                )
-                if stats:
-                    standardized.update(self._extract_resource_stats(stats))
-            except Exception as e:
-                logger.debug(f"Could not get stats for container {container_id}: {e}")
+                    try:
+                        stats = await self._call_docker_api(
+                            f"/containers/{container_id}/stats?stream=false"
+                        )
+                        if stats:
+                            standardized.update(self._extract_resource_stats(stats))
+                    except Exception as e:
+                        logger.debug(f"Could not get stats for container {container_id}: {e}")
 
-            return standardized
+                    return standardized
+                return None
 
-        return None
+            result = await self.token_counter.wrap_mcp_call(
+                "devenvironment_get_docker_container",
+                _get(),
+                input_data=f"container_id={container_id}",
+            )
+
+            logger.info(f"Retrieved Docker container: {container_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Error getting Docker container {container_id}: {e}")
+            return None
 
     async def get_vscode_workspace(self, workspace_id: str) -> Optional[Dict[str, Any]]:
-        """Get VS Code workspace information"""
-        result = await self._call_vscode_api(f"/workspaces/{workspace_id}")
+        """Get VS Code workspace information (with token counting)"""
+        try:
 
-        if result:
-            # Standardize workspace format
-            standardized = {
-                "id": workspace_id,
-                "name": result.get("name", workspace_id),
-                "type": "development",
-                "status": "running" if result.get("active") else "stopped",
-                "health_status": "healthy" if result.get("active") else "unknown",
-                "platform": "vscode",
-                "project": {"name": result.get("project", {}).get("name", "unknown")},
-                "workspace": {"name": result.get("name", workspace_id)},
-                "created_at": result.get("created_at"),
-                "started_at": result.get("last_opened"),
-                "owner": result.get("owner"),
-                "team_members": result.get("collaborators", []),
-                "technologies": result.get("detected_languages", []),
-                "extensions": result.get("extensions", []),
-                "shared_configs": result.get("shared_settings", []),
-            }
+            async def _get():
+                result = await self._call_vscode_api(f"/workspaces/{workspace_id}")
+                if result:
+                    standardized = {
+                        "id": workspace_id,
+                        "name": result.get("name", workspace_id),
+                        "type": "development",
+                        "status": "running" if result.get("active") else "stopped",
+                        "health_status": "healthy" if result.get("active") else "unknown",
+                        "platform": "vscode",
+                        "project": {"name": result.get("project", {}).get("name", "unknown")},
+                        "workspace": {"name": result.get("name", workspace_id)},
+                        "created_at": result.get("created_at"),
+                        "started_at": result.get("last_opened"),
+                        "owner": result.get("owner"),
+                        "team_members": result.get("collaborators", []),
+                        "technologies": result.get("detected_languages", []),
+                        "extensions": result.get("extensions", []),
+                        "shared_configs": result.get("shared_settings", []),
+                    }
+                    return standardized
+                return None
 
-            return standardized
+            result = await self.token_counter.wrap_mcp_call(
+                "devenvironment_get_vscode_workspace",
+                _get(),
+                input_data=f"workspace_id={workspace_id}",
+            )
 
-        return None
+            logger.info(f"Retrieved VS Code workspace: {workspace_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Error getting VS Code workspace {workspace_id}: {e}")
+            return None
 
     def _extract_health_status(self, container_data: Dict[str, Any]) -> str:
         """Extract health status from Docker container data"""
@@ -304,98 +330,129 @@ class DevEnvironmentMCPSpatialAdapter(BaseSpatialAdapter):
         }
 
     async def search_docker_containers(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Search Docker containers"""
-        # Get all containers
-        result = await self._call_docker_api("/containers/json?all=true")
+        """Search Docker containers (with token counting)"""
+        try:
 
-        if not result:
+            async def _search():
+                result = await self._call_docker_api("/containers/json?all=true")
+                if not result:
+                    return []
+
+                matching_containers = []
+                query_lower = query.lower()
+
+                for container in result:
+                    searchable_text = " ".join(
+                        [
+                            container.get("Names", [""])[0].lstrip("/"),
+                            container.get("Image", ""),
+                            (
+                                " ".join(container.get("Labels", {}).values())
+                                if container.get("Labels")
+                                else ""
+                            ),
+                            container.get("State", ""),
+                        ]
+                    ).lower()
+
+                    if query_lower in searchable_text:
+                        container_id = container.get("Id", "")
+                        full_container = await self.get_docker_container(container_id)
+                        if full_container:
+                            matching_containers.append(full_container)
+
+                return matching_containers[:limit]
+
+            results = await self.token_counter.wrap_mcp_call(
+                "devenvironment_search_docker",
+                _search(),
+                input_data=f"query={query},limit={limit}",
+            )
+
+            logger.info(f"Found {len(results)} Docker containers matching '{query}'")
+            return results
+        except Exception as e:
+            logger.error(f"Error searching Docker containers: {e}")
             return []
-
-        # Filter by query
-        matching_containers = []
-        query_lower = query.lower()
-
-        for container in result:
-            # Search in container name, image, and labels
-            searchable_text = " ".join(
-                [
-                    container.get("Names", [""])[0].lstrip("/"),
-                    container.get("Image", ""),
-                    (
-                        " ".join(container.get("Labels", {}).values())
-                        if container.get("Labels")
-                        else ""
-                    ),
-                    container.get("State", ""),
-                ]
-            ).lower()
-
-            if query_lower in searchable_text:
-                # Get full container details
-                container_id = container.get("Id", "")
-                full_container = await self.get_docker_container(container_id)
-                if full_container:
-                    matching_containers.append(full_container)
-
-        return matching_containers[:limit]
 
     async def search_vscode_workspaces(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Search VS Code workspaces"""
-        # Get workspaces list
-        result = await self._call_vscode_api("/workspaces")
+        """Search VS Code workspaces (with token counting)"""
+        try:
 
-        if not result:
+            async def _search():
+                result = await self._call_vscode_api("/workspaces")
+                if not result:
+                    return []
+
+                matching_workspaces = []
+                query_lower = query.lower()
+
+                for workspace in result.get("workspaces", []):
+                    searchable_text = " ".join(
+                        [
+                            workspace.get("name", ""),
+                            workspace.get("project", {}).get("name", ""),
+                            " ".join(workspace.get("detected_languages", [])),
+                        ]
+                    ).lower()
+
+                    if query_lower in searchable_text:
+                        workspace_id = workspace.get("id", "")
+                        full_workspace = await self.get_vscode_workspace(workspace_id)
+                        if full_workspace:
+                            matching_workspaces.append(full_workspace)
+
+                return matching_workspaces[:limit]
+
+            results = await self.token_counter.wrap_mcp_call(
+                "devenvironment_search_vscode",
+                _search(),
+                input_data=f"query={query},limit={limit}",
+            )
+
+            logger.info(f"Found {len(results)} VS Code workspaces matching '{query}'")
+            return results
+        except Exception as e:
+            logger.error(f"Error searching VS Code workspaces: {e}")
             return []
-
-        # Filter by query
-        matching_workspaces = []
-        query_lower = query.lower()
-
-        for workspace in result.get("workspaces", []):
-            # Search in workspace name and project
-            searchable_text = " ".join(
-                [
-                    workspace.get("name", ""),
-                    workspace.get("project", {}).get("name", ""),
-                    " ".join(workspace.get("detected_languages", [])),
-                ]
-            ).lower()
-
-            if query_lower in searchable_text:
-                workspace_id = workspace.get("id", "")
-                full_workspace = await self.get_vscode_workspace(workspace_id)
-                if full_workspace:
-                    matching_workspaces.append(full_workspace)
-
-        return matching_workspaces[:limit]
 
     async def search_environments(
         self, query: str, platforms: List[str] = None, limit: int = 10
     ) -> List[Dict[str, Any]]:
-        """Search development environments across platforms"""
-        all_results = []
+        """Search development environments across platforms (with token counting)"""
+        try:
 
-        # Default to both platforms if not specified
-        if not platforms:
-            platforms = ["docker", "vscode"]
+            async def _search():
+                all_results = []
+                platforms_to_search = platforms if platforms else ["docker", "vscode"]
 
-        # Search Docker containers
-        if "docker" in platforms:
-            try:
-                docker_results = await self.search_docker_containers(query, limit // 2)
-                all_results.extend(docker_results)
-            except Exception as e:
-                logger.warning(f"Failed to search Docker containers: {e}")
+                if "docker" in platforms_to_search:
+                    try:
+                        docker_results = await self.search_docker_containers(query, limit // 2)
+                        all_results.extend(docker_results)
+                    except Exception as e:
+                        logger.warning(f"Failed to search Docker containers: {e}")
 
-        # Search VS Code workspaces
-        if "vscode" in platforms:
-            try:
-                vscode_results = await self.search_vscode_workspaces(query, limit // 2)
-                all_results.extend(vscode_results)
-            except Exception as e:
-                logger.warning(f"Failed to search VS Code workspaces: {e}")
+                if "vscode" in platforms_to_search:
+                    try:
+                        vscode_results = await self.search_vscode_workspaces(query, limit // 2)
+                        all_results.extend(vscode_results)
+                    except Exception as e:
+                        logger.warning(f"Failed to search VS Code workspaces: {e}")
 
-        return all_results[:limit]
+                return all_results[:limit]
+
+            results = await self.token_counter.wrap_mcp_call(
+                "devenvironment_search_environments",
+                _search(),
+                input_data=str({"query": query, "platforms": platforms, "limit": limit}),
+            )
+
+            logger.info(f"Found {len(results)} environments matching '{query}'")
+            return results
+        except Exception as e:
+            logger.error(f"Error searching environments: {e}")
+            return []
 
     async def map_to_position(
         self, environment_id: str, context: Dict[str, Any]

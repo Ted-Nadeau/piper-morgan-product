@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -42,6 +43,9 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
         self._github_token: Optional[str] = None
         self._github_api_base = "https://api.github.com"
         self._session: Optional[aiohttp.ClientSession] = None
+
+        # Token counting for MCP operations (Issue #369)
+        self.token_counter = TokenCounter()
 
         logger.info("GitHubMCPSpatialAdapter initialized")
 
@@ -102,42 +106,53 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
     ) -> List[Dict[str, Any]]:
         """List GitHub issues directly via GitHub API"""
         try:
-            endpoint = f"repos/{owner}/{repo}/issues"
-            params = {"state": "all", "per_page": 100}
 
-            issues_data = await self._call_github_api(endpoint, params)
-            if not issues_data:
-                logger.warning("No GitHub issues data received")
-                return []
+            async def _operation():
+                endpoint = f"repos/{owner}/{repo}/issues"
+                params = {"state": "all", "per_page": 100}
 
-            # Transform GitHub API response to our format
-            issues = []
-            for issue in issues_data:
-                issue_info = {
-                    "number": issue.get("number"),
-                    "title": issue.get("title"),
-                    "description": issue.get("body", ""),
-                    "state": issue.get("state"),
-                    "repository": repo,
-                    "uri": issue.get("html_url"),
-                    "mime_type": "text/markdown",
-                    "created_at": issue.get("created_at"),
-                    "updated_at": issue.get("updated_at"),
-                    "labels": [label["name"] for label in issue.get("labels", [])],
-                    "assignees": [assignee["login"] for assignee in issue.get("assignees", [])],
-                    "milestone": (
-                        issue.get("milestone", {}).get("title") if issue.get("milestone") else None
-                    ),
-                    "user": issue.get("user", {}).get("login"),
-                    "retrieved_via": "github_api",
-                }
-                issues.append(issue_info)
+                issues_data = await self._call_github_api(endpoint, params)
+                if not issues_data:
+                    logger.warning("No GitHub issues data received")
+                    return []
 
-                # Store context for spatial mapping
-                await self._store_github_context(issue_info)
+                # Transform GitHub API response to our format
+                issues = []
+                for issue in issues_data:
+                    issue_info = {
+                        "number": issue.get("number"),
+                        "title": issue.get("title"),
+                        "description": issue.get("body", ""),
+                        "state": issue.get("state"),
+                        "repository": repo,
+                        "uri": issue.get("html_url"),
+                        "mime_type": "text/markdown",
+                        "created_at": issue.get("created_at"),
+                        "updated_at": issue.get("updated_at"),
+                        "labels": [label["name"] for label in issue.get("labels", [])],
+                        "assignees": [assignee["login"] for assignee in issue.get("assignees", [])],
+                        "milestone": (
+                            issue.get("milestone", {}).get("title")
+                            if issue.get("milestone")
+                            else None
+                        ),
+                        "user": issue.get("user", {}).get("login"),
+                        "retrieved_via": "github_api",
+                    }
+                    issues.append(issue_info)
 
-            logger.info(f"Retrieved {len(issues)} issues from GitHub API for {owner}/{repo}")
-            return issues
+                    # Store context for spatial mapping
+                    await self._store_github_context(issue_info)
+
+                return issues
+
+            result = await self.token_counter.wrap_mcp_call(
+                "github_list_issues_direct",
+                _operation(),
+                input_data=f"repo={repo},owner={owner}",
+            )
+            logger.info(f"Retrieved {len(result)} issues from GitHub API for {owner}/{repo}")
+            return result
 
         except Exception as e:
             logger.error(f"Error listing GitHub issues directly: {e}")
@@ -148,39 +163,50 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
     ) -> Optional[Dict[str, Any]]:
         """Get specific GitHub issue directly via GitHub API"""
         try:
-            endpoint = f"repos/{owner}/{repo}/issues/{issue_number}"
 
-            issue_data = await self._call_github_api(endpoint)
-            if not issue_data:
-                return None
+            async def _operation():
+                endpoint = f"repos/{owner}/{repo}/issues/{issue_number}"
 
-            # Transform to our format
-            issue_info = {
-                "number": issue_data.get("number"),
-                "title": issue_data.get("title"),
-                "description": issue_data.get("body", ""),
-                "state": issue_data.get("state"),
-                "repository": repo,
-                "uri": issue_data.get("html_url"),
-                "mime_type": "text/markdown",
-                "created_at": issue_data.get("created_at"),
-                "updated_at": issue_data.get("updated_at"),
-                "labels": [label["name"] for label in issue_data.get("labels", [])],
-                "assignees": [assignee["login"] for assignee in issue_data.get("assignees", [])],
-                "milestone": (
-                    issue_data.get("milestone", {}).get("title")
-                    if issue_data.get("milestone")
-                    else None
-                ),
-                "user": issue_data.get("user", {}).get("login"),
-                "retrieved_via": "github_api",
-            }
+                issue_data = await self._call_github_api(endpoint)
+                if not issue_data:
+                    return None
 
-            # Store context for spatial mapping
-            await self._store_github_context(issue_info)
+                # Transform to our format
+                issue_info = {
+                    "number": issue_data.get("number"),
+                    "title": issue_data.get("title"),
+                    "description": issue_data.get("body", ""),
+                    "state": issue_data.get("state"),
+                    "repository": repo,
+                    "uri": issue_data.get("html_url"),
+                    "mime_type": "text/markdown",
+                    "created_at": issue_data.get("created_at"),
+                    "updated_at": issue_data.get("updated_at"),
+                    "labels": [label["name"] for label in issue_data.get("labels", [])],
+                    "assignees": [
+                        assignee["login"] for assignee in issue_data.get("assignees", [])
+                    ],
+                    "milestone": (
+                        issue_data.get("milestone", {}).get("title")
+                        if issue_data.get("milestone")
+                        else None
+                    ),
+                    "user": issue_data.get("user", {}).get("login"),
+                    "retrieved_via": "github_api",
+                }
 
+                # Store context for spatial mapping
+                await self._store_github_context(issue_info)
+
+                return issue_info
+
+            result = await self.token_counter.wrap_mcp_call(
+                "github_get_issue_direct",
+                _operation(),
+                input_data=f"issue_number={issue_number},repo={repo},owner={owner}",
+            )
             logger.info(f"Retrieved GitHub issue #{issue_number} from API")
-            return issue_info
+            return result
 
         except Exception as e:
             logger.error(f"Error getting GitHub issue {issue_number}: {e}")
@@ -428,49 +454,59 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
             List of GitHub issues
         """
         try:
-            # Try MCP first
-            if self.mcp_consumer.is_connected():
-                issues = await self.mcp_consumer.execute("list_issues", repo=repo)
-                if issues and len(issues) > 0:
-                    logger.info(f"Retrieved {len(issues)} issues from GitHub via MCP")
+
+            async def _operation():
+                # Try MCP first
+                if self.mcp_consumer.is_connected():
+                    issues = await self.mcp_consumer.execute("list_issues", repo=repo)
+                    if issues and len(issues) > 0:
+                        logger.info(f"Retrieved {len(issues)} issues from GitHub via MCP")
+                        return issues
+
+                # Fallback to direct GitHub API
+                logger.info("MCP not available, falling back to GitHub API")
+
+                # Ensure GitHub API is configured for fallback
+                if not self._session:
+                    await self.configure_github_api()
+
+                issues = await self.list_github_issues_direct(repo)
+                if issues:
+                    logger.info(f"Retrieved {len(issues)} issues from GitHub API")
                     return issues
 
-            # Fallback to direct GitHub API
-            logger.info("MCP not available, falling back to GitHub API")
+                # Final fallback to demo data
+                logger.warning("Both MCP and GitHub API failed, using demo data")
+                return [
+                    {
+                        "number": 1,
+                        "title": "MCP Integration Implementation",
+                        "description": "Implement MCP Consumer for external service integration",
+                        "state": "open",
+                        "repository": repo,
+                        "uri": "mcp://demo/issue/1",
+                        "mime_type": "text/plain",
+                        "retrieved_via": "demo_fallback",
+                    },
+                    {
+                        "number": 2,
+                        "title": "GitHub MCP Adapter",
+                        "description": "Create GitHub MCP spatial adapter following established patterns",
+                        "state": "open",
+                        "repository": repo,
+                        "uri": "mcp://demo/issue/2",
+                        "mime_type": "text/plain",
+                        "retrieved_via": "demo_fallback",
+                    },
+                ]
 
-            # Ensure GitHub API is configured for fallback
-            if not self._session:
-                await self.configure_github_api()
-
-            issues = await self.list_github_issues_direct(repo)
-            if issues:
-                logger.info(f"Retrieved {len(issues)} issues from GitHub API")
-                return issues
-
-            # Final fallback to demo data
-            logger.warning("Both MCP and GitHub API failed, using demo data")
-            return [
-                {
-                    "number": 1,
-                    "title": "MCP Integration Implementation",
-                    "description": "Implement MCP Consumer for external service integration",
-                    "state": "open",
-                    "repository": repo,
-                    "uri": "mcp://demo/issue/1",
-                    "mime_type": "text/plain",
-                    "retrieved_via": "demo_fallback",
-                },
-                {
-                    "number": 2,
-                    "title": "GitHub MCP Adapter",
-                    "description": "Create GitHub MCP spatial adapter following established patterns",
-                    "state": "open",
-                    "repository": repo,
-                    "uri": "mcp://demo/issue/2",
-                    "mime_type": "text/plain",
-                    "retrieved_via": "demo_fallback",
-                },
-            ]
+            result = await self.token_counter.wrap_mcp_call(
+                "github_list_issues_via_mcp",
+                _operation(),
+                input_data=f"repo={repo}",
+            )
+            logger.info(f"Retrieved {len(result)} issues via MCP for repo {repo}")
+            return result
 
         except Exception as e:
             logger.error(f"Error listing GitHub issues via MCP: {e}")
@@ -490,34 +526,44 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
             GitHub issue data if found, None otherwise
         """
         try:
-            # Try MCP first
-            if self.mcp_consumer.is_connected():
-                # This would use the MCP protocol to fetch specific issue data
-                # For now, return basic info
-                mcp_issue = {
-                    "number": issue_number,
-                    "repository": repo,
-                    "title": f"Issue #{issue_number}",
-                    "state": "open",
-                    "retrieved_via": "mcp",
-                }
-                logger.info(f"Retrieved issue #{issue_number} via MCP")
-                return mcp_issue
 
-            # Fallback to direct GitHub API
-            logger.info(f"MCP not available, trying GitHub API for issue #{issue_number}")
+            async def _operation():
+                # Try MCP first
+                if self.mcp_consumer.is_connected():
+                    # This would use the MCP protocol to fetch specific issue data
+                    # For now, return basic info
+                    mcp_issue = {
+                        "number": issue_number,
+                        "repository": repo,
+                        "title": f"Issue #{issue_number}",
+                        "state": "open",
+                        "retrieved_via": "mcp",
+                    }
+                    logger.info(f"Retrieved issue #{issue_number} via MCP")
+                    return mcp_issue
 
-            # Ensure GitHub API is configured for fallback
-            if not self._session:
-                await self.configure_github_api()
+                # Fallback to direct GitHub API
+                logger.info(f"MCP not available, trying GitHub API for issue #{issue_number}")
 
-            issue = await self.get_github_issue_direct(issue_number, repo)
-            if issue:
-                return issue
+                # Ensure GitHub API is configured for fallback
+                if not self._session:
+                    await self.configure_github_api()
 
-            # Final fallback
-            logger.warning(f"Issue #{issue_number} not found via MCP or GitHub API")
-            return None
+                issue = await self.get_github_issue_direct(issue_number, repo)
+                if issue:
+                    return issue
+
+                # Final fallback
+                logger.warning(f"Issue #{issue_number} not found via MCP or GitHub API")
+                return None
+
+            result = await self.token_counter.wrap_mcp_call(
+                "github_get_issue_via_mcp",
+                _operation(),
+                input_data=f"issue_number={issue_number},repo={repo}",
+            )
+            logger.info(f"Retrieved issue #{issue_number} via MCP")
+            return result
 
         except Exception as e:
             logger.error(f"Error getting GitHub issue {issue_number} via MCP: {e}")
