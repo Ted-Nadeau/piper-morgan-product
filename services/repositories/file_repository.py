@@ -55,7 +55,7 @@ class FileRepository(BaseRepository):
         """Get file by ID - optionally verify ownership"""
         filters = [UploadedFileDB.id == file_id]
         if owner_id:
-            filters.append(UploadedFileDB.session_id == owner_id)
+            filters.append(UploadedFileDB.owner_id == owner_id)
 
         result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
@@ -76,7 +76,7 @@ class FileRepository(BaseRepository):
         """Increment reference count and update last_referenced timestamp - optionally verify ownership"""
         filters = [UploadedFileDB.id == file_id]
         if owner_id:
-            filters.append(UploadedFileDB.session_id == owner_id)
+            filters.append(UploadedFileDB.owner_id == owner_id)
 
         await self.session.execute(
             update(UploadedFileDB)
@@ -164,7 +164,7 @@ class FileRepository(BaseRepository):
         """Delete file metadata by ID - optionally verify ownership"""
         filters = [UploadedFileDB.id == file_id]
         if owner_id:
-            filters.append(UploadedFileDB.session_id == owner_id)
+            filters.append(UploadedFileDB.owner_id == owner_id)
 
         result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
