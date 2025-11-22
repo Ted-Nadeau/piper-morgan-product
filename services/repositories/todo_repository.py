@@ -406,9 +406,13 @@ class TodoRepository(BaseRepository):
         }
 
     async def share_todo(
-        self, todo_id: str, owner_id: str, user_id_to_share: str
+        self, todo_id: str, owner_id: str, user_id_to_share: str, role: domain.ShareRole = None
     ) -> Optional[domain.Todo]:
-        """Share a todo with another user - owner only operation (SEC-RBAC Phase 1.4)"""
+        """Share a todo with another user at specified role - owner only operation (SEC-RBAC Phase 2)"""
+        # Default role if not specified
+        if role is None:
+            role = domain.ShareRole.VIEWER
+
         # First verify the caller is the owner
         result = await self.session.execute(
             select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == owner_id))
@@ -422,14 +426,33 @@ class TodoRepository(BaseRepository):
         if user_id_to_share == owner_id:
             return db_todo.to_domain()
 
-        # Use PostgreSQL's array concatenation to add user to shared_with
+        # Convert to domain object to work with SharePermission objects
+        domain_todo = db_todo.to_domain()
+
+        # Check if user already shared with - update role if exists, otherwise add new share
+        permission = domain.SharePermission(user_id=user_id_to_share, role=role)
+        existing_index = None
+
+        for idx, perm in enumerate(domain_todo.shared_with):
+            if perm.user_id == user_id_to_share:
+                existing_index = idx
+                break
+
+        if existing_index is not None:
+            # Update existing permission
+            domain_todo.shared_with[existing_index] = permission
+        else:
+            # Add new permission
+            domain_todo.shared_with.append(permission)
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_todo.shared_with]
+
+        # Update database
         await self.session.execute(
             update(TodoDB)
             .where(TodoDB.id == todo_id)
-            .values(
-                shared_with=func.array_append(TodoDB.shared_with, user_id_to_share),
-                updated_at=datetime.now(),
-            )
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
         )
 
         # Refresh and return updated todo
@@ -439,7 +462,7 @@ class TodoRepository(BaseRepository):
     async def unshare_todo(
         self, todo_id: str, owner_id: str, user_id_to_unshare: str
     ) -> Optional[domain.Todo]:
-        """Remove sharing access from a todo - owner only operation (SEC-RBAC Phase 1.4)"""
+        """Remove sharing access from a todo - owner only operation (SEC-RBAC Phase 2)"""
         # First verify the caller is the owner
         result = await self.session.execute(
             select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == owner_id))
@@ -449,14 +472,22 @@ class TodoRepository(BaseRepository):
         if not db_todo:
             return None  # Not found or not owner
 
-        # Use PostgreSQL's array_remove to remove user from shared_with
+        # Convert to domain object to work with SharePermission objects
+        domain_todo = db_todo.to_domain()
+
+        # Remove user from shared_with array
+        domain_todo.shared_with = [
+            perm for perm in domain_todo.shared_with if perm.user_id != user_id_to_unshare
+        ]
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_todo.shared_with]
+
+        # Update database
         await self.session.execute(
             update(TodoDB)
             .where(TodoDB.id == todo_id)
-            .values(
-                shared_with=func.array_remove(TodoDB.shared_with, user_id_to_unshare),
-                updated_at=datetime.now(),
-            )
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
         )
 
         # Refresh and return updated todo
@@ -478,6 +509,67 @@ class TodoRepository(BaseRepository):
         result = await self.session.execute(query)
         db_todos = result.scalars().all()
         return [db_todo.to_domain() for db_todo in db_todos]
+
+    async def update_share_role(
+        self, todo_id: str, requesting_user_id: str, target_user_id: str, new_role: domain.ShareRole
+    ) -> bool:
+        """Update a user's role for a shared todo (owner or admin only)"""
+        # Verify requestor is owner
+        result = await self.session.execute(
+            select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == requesting_user_id))
+        )
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return False  # Not found or not owner
+
+        # Convert to domain object to work with SharePermission objects
+        domain_todo = db_todo.to_domain()
+
+        # Find and update the permission
+        found = False
+        for perm in domain_todo.shared_with:
+            if perm.user_id == target_user_id:
+                perm.role = new_role
+                found = True
+                break
+
+        if not found:
+            return False  # User not in shared_with
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_todo.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(TodoDB)
+            .where(TodoDB.id == todo_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def get_user_role(self, todo_id: str, user_id: str) -> Optional[str]:
+        """Get user's role for a todo"""
+        # Get the todo
+        result = await self.session.execute(select(TodoDB).where(TodoDB.id == todo_id))
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None
+
+        # Check if owner
+        if db_todo.owner_id == user_id:
+            return "owner"
+
+        # Convert to domain object to search shared_with
+        domain_todo = db_todo.to_domain()
+
+        for perm in domain_todo.shared_with:
+            if perm.user_id == user_id:
+                return perm.role.value
+
+        return None
 
 
 class ListMembershipRepository(BaseRepository):

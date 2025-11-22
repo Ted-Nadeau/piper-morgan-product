@@ -26,18 +26,39 @@ logger = structlog.get_logger(__name__)
 
 # Pydantic models for sharing operations
 class ShareListRequest(BaseModel):
-    """Request model for sharing a list with a user"""
+    """Request model for sharing a list with a user (SEC-RBAC Phase 2)"""
 
     user_id: str
+    role: str = "viewer"  # Default to viewer (read-only) - can be viewer, editor, admin
+
+
+class SharePermissionResponse(BaseModel):
+    """Response model for individual share permissions"""
+
+    user_id: str
+    role: str
 
 
 class ShareListResponse(BaseModel):
-    """Response model for sharing operations"""
+    """Response model for sharing operations (SEC-RBAC Phase 2)"""
 
     id: str
     name: str
     owner_id: str
-    shared_with: List[str]
+    shared_with: List[SharePermissionResponse]
+    message: str
+
+
+class UpdateRoleRequest(BaseModel):
+    """Request model for updating a user's role (SEC-RBAC Phase 2)"""
+
+    role: str  # viewer, editor, admin
+
+
+class UserRoleResponse(BaseModel):
+    """Response model for user's role on a resource (SEC-RBAC Phase 2)"""
+
+    role: str  # owner, admin, editor, viewer, or null
     message: str
 
 
@@ -394,25 +415,28 @@ async def share_list(
     list_repo=Depends(get_list_repository),
 ) -> ShareListResponse:
     """
-    Share a list with another user (owner only - SEC-RBAC Phase 1.4).
+    Share a list with another user at specified role (owner only - SEC-RBAC Phase 2).
 
-    Grants read-only access to the specified user. Only the owner can share.
+    Owner explicitly specifies role when sharing:
+    - viewer: Read-only access
+    - editor: Can modify content
+    - admin: Can share with others (but not delete)
 
     Args:
         list_id: ID of the list to share
-        request: ShareListRequest with user_id to share with
+        request: ShareListRequest with user_id and role
         current_user: Current authenticated user (must be owner)
         list_repo: List repository (injected)
 
     Returns:
-        Updated list with shared_with array
+        Updated list with shared_with array of {user_id, role} objects
 
     Raises:
-        HTTPException 400: Invalid user_id
+        HTTPException 400: Invalid user_id or role
         HTTPException 404: List not found or user not owner
         HTTPException 500: Server error
 
-    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    Issue #357: SEC-RBAC Phase 2 Role-Based Permissions
     """
     try:
         if not request.user_id or not request.user_id.strip():
@@ -421,8 +445,21 @@ async def share_list(
                 detail="user_id is required",
             )
 
+        # Validate role
+        valid_roles = ["viewer", "editor", "admin"]
+        if request.role not in valid_roles:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"role must be one of {valid_roles}",
+            )
+
+        # Convert string role to ShareRole enum
+        share_role = domain.ShareRole(request.role)
+
         # Share list (owner-only operation)
-        shared_list = await list_repo.share_list(list_id, current_user.sub, request.user_id)
+        shared_list = await list_repo.share_list(
+            list_id, current_user.sub, request.user_id, share_role
+        )
 
         if not shared_list:
             logger.warning(
@@ -441,14 +478,21 @@ async def share_list(
             owner_id=current_user.sub,
             list_id=list_id,
             shared_with_user=request.user_id,
+            role=request.role,
         )
+
+        # Convert shared_with SharePermission objects to response format
+        shared_with_response = [
+            SharePermissionResponse(user_id=perm.user_id, role=perm.role.value)
+            for perm in shared_list.shared_with
+        ]
 
         return ShareListResponse(
             id=shared_list.id,
             name=shared_list.name,
             owner_id=shared_list.owner_id,
-            shared_with=shared_list.shared_with,
-            message=f"List shared with user {request.user_id}",
+            shared_with=shared_with_response,
+            message=f"List shared with user {request.user_id} as {request.role}",
         )
 
     except HTTPException:
@@ -536,6 +580,165 @@ async def unshare_list(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to unshare list",
+        )
+
+
+@router.put("/{list_id}/share/{user_id}")
+async def update_share_role(
+    list_id: str,
+    user_id: str,
+    request: UpdateRoleRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> dict:
+    """
+    Update a user's role for a shared list (owner only - SEC-RBAC Phase 2).
+
+    Changes the role of an already-shared user (viewer, editor, admin).
+
+    Args:
+        list_id: ID of the list
+        user_id: ID of user whose role to update
+        request: UpdateRoleRequest with new role
+        current_user: Current authenticated user (must be owner)
+        list_repo: List repository (injected)
+
+    Returns:
+        Success status with updated role
+
+    Raises:
+        HTTPException 400: Invalid role
+        HTTPException 404: List not found or user not owner or user not shared with
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 2 Role-Based Permissions
+    """
+    try:
+        # Validate role
+        valid_roles = ["viewer", "editor", "admin"]
+        if request.role not in valid_roles:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"role must be one of {valid_roles}",
+            )
+
+        # Convert string role to ShareRole enum
+        share_role = domain.ShareRole(request.role)
+
+        # Update role
+        success = await list_repo.update_share_role(list_id, current_user.sub, user_id, share_role)
+
+        if not success:
+            logger.warning(
+                "list_update_role_failed",
+                user_id=current_user.sub,
+                list_id=list_id,
+                target_user=user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="List not found, you don't have permission, or user is not shared with this list",
+            )
+
+        logger.info(
+            "list_share_role_updated",
+            owner_id=current_user.sub,
+            list_id=list_id,
+            target_user=user_id,
+            new_role=request.role,
+        )
+
+        return {
+            "success": True,
+            "message": f"Updated user {user_id} role to {request.role}",
+            "list_id": list_id,
+            "user_id": user_id,
+            "role": request.role,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "list_update_role_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update share role",
+        )
+
+
+@router.get("/{list_id}/my-role")
+async def get_my_role(
+    list_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> UserRoleResponse:
+    """
+    Get current user's role for a list (SEC-RBAC Phase 2).
+
+    Returns the role of the current user for the specified list:
+    - 'owner': User owns the list
+    - 'admin': User can share and modify
+    - 'editor': User can modify content
+    - 'viewer': User can read only
+    - None: User has no access (404)
+
+    Args:
+        list_id: ID of the list
+        current_user: Current authenticated user
+        list_repo: List repository (injected)
+
+    Returns:
+        Current user's role for the list
+
+    Raises:
+        HTTPException 404: List not found or user has no access
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 2 Role-Based Permissions
+    """
+    try:
+        # Get user's role
+        role = await list_repo.get_user_role(list_id, current_user.sub)
+
+        if not role:
+            logger.info(
+                "list_no_access",
+                user_id=current_user.sub,
+                list_id=list_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="List not found or you don't have access to it",
+            )
+
+        logger.info(
+            "list_role_retrieved",
+            user_id=current_user.sub,
+            list_id=list_id,
+            role=role,
+        )
+
+        return UserRoleResponse(role=role, message=f"You have {role} access to this list")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "list_get_role_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user role",
         )
 
 

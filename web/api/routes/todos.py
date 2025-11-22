@@ -24,18 +24,39 @@ logger = structlog.get_logger(__name__)
 
 # Pydantic models for sharing operations
 class ShareTodoRequest(BaseModel):
-    """Request model for sharing a todo with a user"""
+    """Request model for sharing a todo with a user (SEC-RBAC Phase 2)"""
 
     user_id: str
+    role: str = "viewer"  # Default to viewer (read-only) - can be viewer, editor, admin
+
+
+class TodoSharePermissionResponse(BaseModel):
+    """Response model for individual todo share permissions"""
+
+    user_id: str
+    role: str
 
 
 class ShareTodoResponse(BaseModel):
-    """Response model for sharing operations"""
+    """Response model for sharing operations (SEC-RBAC Phase 2)"""
 
     id: str
     title: str
     owner_id: str
-    shared_with: List[str]
+    shared_with: List[TodoSharePermissionResponse]
+    message: str
+
+
+class UpdateTodoRoleRequest(BaseModel):
+    """Request model for updating a user's role on a todo (SEC-RBAC Phase 2)"""
+
+    role: str  # viewer, editor, admin
+
+
+class TodoUserRoleResponse(BaseModel):
+    """Response model for user's role on a todo (SEC-RBAC Phase 2)"""
+
+    role: str  # owner, admin, editor, viewer, or null
     message: str
 
 
@@ -412,25 +433,28 @@ async def share_todo(
     todo_repo=Depends(get_todo_repository),
 ) -> ShareTodoResponse:
     """
-    Share a todo with another user (owner only - SEC-RBAC Phase 1.4).
+    Share a todo with another user at specified role (owner only - SEC-RBAC Phase 2).
 
-    Grants read-only access to the specified user. Only the owner can share.
+    Owner explicitly specifies role when sharing:
+    - viewer: Read-only access
+    - editor: Can modify content
+    - admin: Can share with others (but not delete)
 
     Args:
         todo_id: ID of the todo to share
-        request: ShareTodoRequest with user_id to share with
+        request: ShareTodoRequest with user_id and role
         current_user: Current authenticated user (must be owner)
         todo_repo: Todo repository (injected)
 
     Returns:
-        Updated todo with shared_with array
+        Updated todo with shared_with array of {user_id, role} objects
 
     Raises:
-        HTTPException 400: Invalid user_id
+        HTTPException 400: Invalid user_id or role
         HTTPException 404: Todo not found or user not owner
         HTTPException 500: Server error
 
-    Issue #357: SEC-RBAC Phase 1.4 Shared Resource Access
+    Issue #357: SEC-RBAC Phase 2 Role-Based Permissions
     """
     try:
         if not request.user_id or not request.user_id.strip():
@@ -439,8 +463,21 @@ async def share_todo(
                 detail="user_id is required",
             )
 
+        # Validate role
+        valid_roles = ["viewer", "editor", "admin"]
+        if request.role not in valid_roles:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"role must be one of {valid_roles}",
+            )
+
+        # Convert string role to ShareRole enum
+        share_role = domain.ShareRole(request.role)
+
         # Share todo (owner-only operation)
-        shared_todo = await todo_repo.share_todo(todo_id, current_user.sub, request.user_id)
+        shared_todo = await todo_repo.share_todo(
+            todo_id, current_user.sub, request.user_id, share_role
+        )
 
         if not shared_todo:
             logger.warning(
@@ -459,14 +496,21 @@ async def share_todo(
             owner_id=current_user.sub,
             todo_id=todo_id,
             shared_with_user=request.user_id,
+            role=request.role,
         )
+
+        # Convert shared_with SharePermission objects to response format
+        shared_with_response = [
+            TodoSharePermissionResponse(user_id=perm.user_id, role=perm.role.value)
+            for perm in shared_todo.shared_with
+        ]
 
         return ShareTodoResponse(
             id=shared_todo.id,
             title=shared_todo.title,
             owner_id=shared_todo.owner_id,
-            shared_with=shared_todo.shared_with,
-            message=f"Todo shared with user {request.user_id}",
+            shared_with=shared_with_response,
+            message=f"Todo shared with user {request.user_id} as {request.role}",
         )
 
     except HTTPException:
@@ -554,6 +598,165 @@ async def unshare_todo(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to unshare todo",
+        )
+
+
+@router.put("/{todo_id}/share/{user_id}")
+async def update_todo_share_role(
+    todo_id: str,
+    user_id: str,
+    request: UpdateTodoRoleRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    todo_repo=Depends(get_todo_repository),
+) -> dict:
+    """
+    Update a user's role for a shared todo (owner only - SEC-RBAC Phase 2).
+
+    Changes the role of an already-shared user (viewer, editor, admin).
+
+    Args:
+        todo_id: ID of the todo
+        user_id: ID of user whose role to update
+        request: UpdateTodoRoleRequest with new role
+        current_user: Current authenticated user (must be owner)
+        todo_repo: Todo repository (injected)
+
+    Returns:
+        Success status with updated role
+
+    Raises:
+        HTTPException 400: Invalid role
+        HTTPException 404: Todo not found or user not owner or user not shared with
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 2 Role-Based Permissions
+    """
+    try:
+        # Validate role
+        valid_roles = ["viewer", "editor", "admin"]
+        if request.role not in valid_roles:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"role must be one of {valid_roles}",
+            )
+
+        # Convert string role to ShareRole enum
+        share_role = domain.ShareRole(request.role)
+
+        # Update role
+        success = await todo_repo.update_share_role(todo_id, current_user.sub, user_id, share_role)
+
+        if not success:
+            logger.warning(
+                "todo_update_role_failed",
+                user_id=current_user.sub,
+                todo_id=todo_id,
+                target_user=user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Todo not found, you don't have permission, or user is not shared with this todo",
+            )
+
+        logger.info(
+            "todo_share_role_updated",
+            owner_id=current_user.sub,
+            todo_id=todo_id,
+            target_user=user_id,
+            new_role=request.role,
+        )
+
+        return {
+            "success": True,
+            "message": f"Updated user {user_id} role to {request.role}",
+            "todo_id": todo_id,
+            "user_id": user_id,
+            "role": request.role,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "todo_update_role_error",
+            user_id=current_user.sub,
+            todo_id=todo_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update share role",
+        )
+
+
+@router.get("/{todo_id}/my-role")
+async def get_todo_my_role(
+    todo_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    todo_repo=Depends(get_todo_repository),
+) -> TodoUserRoleResponse:
+    """
+    Get current user's role for a todo (SEC-RBAC Phase 2).
+
+    Returns the role of the current user for the specified todo:
+    - 'owner': User owns the todo
+    - 'admin': User can share and modify
+    - 'editor': User can modify content
+    - 'viewer': User can read only
+    - None: User has no access (404)
+
+    Args:
+        todo_id: ID of the todo
+        current_user: Current authenticated user
+        todo_repo: Todo repository (injected)
+
+    Returns:
+        Current user's role for the todo
+
+    Raises:
+        HTTPException 404: Todo not found or user has no access
+        HTTPException 500: Server error
+
+    Issue #357: SEC-RBAC Phase 2 Role-Based Permissions
+    """
+    try:
+        # Get user's role
+        role = await todo_repo.get_user_role(todo_id, current_user.sub)
+
+        if not role:
+            logger.info(
+                "todo_no_access",
+                user_id=current_user.sub,
+                todo_id=todo_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Todo not found or you don't have access to it",
+            )
+
+        logger.info(
+            "todo_role_retrieved",
+            user_id=current_user.sub,
+            todo_id=todo_id,
+            role=role,
+        )
+
+        return TodoUserRoleResponse(role=role, message=f"You have {role} access to this todo")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "todo_get_role_error",
+            user_id=current_user.sub,
+            todo_id=todo_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user role",
         )
 
 
