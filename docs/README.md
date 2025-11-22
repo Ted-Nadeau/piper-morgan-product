@@ -198,13 +198,23 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 
 ### 🏗️ Architecture & Design Documentation
 
-#### **[Architecture Patterns](internal/architecture/current/patterns/README.md)** - Implementation Patterns Library
+#### **Architecture Collections** - Core Technical Assets
 
-_30 proven patterns_ organized by functional category: Infrastructure & Architecture (001-010), Context & Session Management (011-017), Integration & Adapters (018-022), Query & Data Patterns (023-027), and AI & Orchestration (028-030). Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
+**[📐 Architecture Patterns Catalog](internal/architecture/current/patterns/README.md)** - 30+ Proven Implementation Patterns
+- Organized by domain: Infrastructure (001-010), Context & Sessions (011-017), Integration (018-022), Data Patterns (023-027), AI & Orchestration (028-030)
+- Each pattern includes: Context, Implementation, Usage Guidelines, Codebase Examples
+- **Quick Access**: [Pattern Index](internal/architecture/current/patterns/README.md)
 
-#### **[Architectural Decision Records](internal/architecture/current/adrs/adr-index.md)** - Decision History & Rationale
+**[📋 Architectural Decision Records (ADRs)](internal/architecture/current/adrs/adr-index.md)** - 43+ Architectural Decisions
+- Organized by category: Foundation, Integration, Service Enhancement, Data Management, Infrastructure, Testing, Spatial Intelligence, Methodology
+- Traces evolution from initial MCP integration through multi-agent coordination
+- **Quick Access**: [ADR Index](internal/architecture/current/adrs/adr-index.md)
 
-_34 architectural decisions_ documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
+#### **Why These Matter**
+
+- **Patterns**: Reusable solutions to common architecture problems - learn from proven implementations
+- **ADRs**: Record of architectural decisions, their rationale, and trade-offs - understand the "why" behind the design
+- **Together**: Complete picture of system design philosophy and technical patterns
 
 ## 🧪 Testing & Quality Assurance
 
