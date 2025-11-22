@@ -886,6 +886,10 @@ class List:
     metadata: Dict[str, Any] = field(default_factory=dict)
     tags: List[str] = field(default_factory=list)
 
+    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4)
+    owner_id: Optional[str] = None
+    shared_with: List[str] = field(default_factory=list)  # Array of user IDs with read access
+
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
@@ -905,6 +909,8 @@ class List:
             "is_default": self.is_default,
             "metadata": self.metadata,
             "tags": self.tags,
+            "owner_id": self.owner_id,
+            "shared_with": self.shared_with,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -1013,8 +1019,9 @@ class Todo(Item):
     # Timestamps
     completed_at: Optional[datetime] = None
 
-    # Ownership
+    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4)
     owner_id: Optional[str] = None
+    shared_with: List[str] = field(default_factory=list)  # Array of user IDs with read access
     assigned_to: Optional[str] = None
 
     @property

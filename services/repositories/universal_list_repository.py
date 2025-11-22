@@ -48,6 +48,32 @@ class UniversalListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
+    async def get_list_for_read(
+        self, list_id: str, user_id: Optional[str] = None
+    ) -> Optional[domain.List]:
+        """Get list for reading - allows both owner AND shared users to access"""
+        if user_id:
+            # User can access if EITHER:
+            # 1. User is owner
+            # 2. User is in shared_with array
+            result = await self.session.execute(
+                select(ListDB).where(
+                    and_(
+                        ListDB.id == list_id,
+                        or_(
+                            ListDB.owner_id == user_id,  # Owner
+                            ListDB.shared_with.contains([user_id]),  # Shared with user
+                        ),
+                    )
+                )
+            )
+        else:
+            # No user_id provided - just get the list
+            result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+
+        db_list = result.scalar_one_or_none()
+        return db_list.to_domain() if db_list else None
+
     async def get_lists_by_owner(
         self,
         owner_id: str,
@@ -187,6 +213,87 @@ class UniversalListRepository(BaseRepository):
         search_query = search_query.order_by(ListDB.name)
 
         result = await self.session.execute(search_query)
+        db_lists = result.scalars().all()
+        return [db_list.to_domain() for db_list in db_lists]
+
+    async def share_list(
+        self, list_id: str, owner_id: str, user_id_to_share: str
+    ) -> Optional[domain.List]:
+        """Share a list with another user - owner only operation"""
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(ListDB).where(and_(ListDB.id == list_id, ListDB.owner_id == owner_id))
+        )
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return None  # Not found or not owner
+
+        # Prevent owner from sharing with themselves (no-op)
+        if user_id_to_share == owner_id:
+            return db_list.to_domain()
+
+        # Use PostgreSQL's array concatenation to add user to shared_with
+        # If user already in array, this is a no-op due to database constraints
+        await self.session.execute(
+            update(ListDB)
+            .where(ListDB.id == list_id)
+            .values(
+                shared_with=func.array_append(
+                    ListDB.shared_with, user_id_to_share
+                ),  # Add user to array
+                updated_at=datetime.now(),
+            )
+        )
+
+        # Refresh and return updated list
+        await self.session.refresh(db_list)
+        return db_list.to_domain()
+
+    async def unshare_list(
+        self, list_id: str, owner_id: str, user_id_to_unshare: str
+    ) -> Optional[domain.List]:
+        """Remove sharing access - owner only operation"""
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(ListDB).where(and_(ListDB.id == list_id, ListDB.owner_id == owner_id))
+        )
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return None  # Not found or not owner
+
+        # Use PostgreSQL's array_remove to remove user from shared_with
+        await self.session.execute(
+            update(ListDB)
+            .where(ListDB.id == list_id)
+            .values(
+                shared_with=func.array_remove(
+                    ListDB.shared_with, user_id_to_unshare
+                ),  # Remove user from array
+                updated_at=datetime.now(),
+            )
+        )
+
+        # Refresh and return updated list
+        await self.session.refresh(db_list)
+        return db_list.to_domain()
+
+    async def get_lists_shared_with_me(self, user_id: str) -> List[domain.List]:
+        """Get lists that are shared with this user (excluding owned lists)"""
+        # Use PostgreSQL's @> operator to check if user is in shared_with array
+        # Excludes lists owned by the user to avoid duplication
+        query = select(ListDB).where(
+            and_(
+                ListDB.shared_with.contains([user_id]),  # User is in shared_with array
+                ListDB.owner_id != user_id,  # Not owned by this user
+                ListDB.is_archived == False,
+            )
+        )
+
+        query = query.order_by(ListDB.name)
+
+        result = await self.session.execute(query)
         db_lists = result.scalars().all()
         return [db_list.to_domain() for db_list in db_lists]
 
@@ -394,6 +501,15 @@ class TodoListRepository:
             return domain.TodoList(**result.to_dict())
         return None
 
+    async def get_list_for_read(
+        self, list_id: str, user_id: Optional[str] = None
+    ) -> Optional[domain.TodoList]:
+        """Get todo list for reading - allows both owner AND shared users to access"""
+        result = await self.universal_repo.get_list_for_read(list_id, user_id)
+        if result and result.item_type == "todo":
+            return domain.TodoList(**result.to_dict())
+        return None
+
     async def get_lists_by_owner(
         self, owner_id: str, include_archived: bool = False, list_type: Optional[str] = None
     ) -> List[domain.TodoList]:
@@ -412,6 +528,29 @@ class TodoListRepository:
         if result:
             return domain.TodoList(**result.to_dict())
         return None
+
+    async def share_list(
+        self, list_id: str, owner_id: str, user_id_to_share: str
+    ) -> Optional[domain.TodoList]:
+        """Share a todo list with another user - owner only operation"""
+        result = await self.universal_repo.share_list(list_id, owner_id, user_id_to_share)
+        if result and result.item_type == "todo":
+            return domain.TodoList(**result.to_dict())
+        return None
+
+    async def unshare_list(
+        self, list_id: str, owner_id: str, user_id_to_unshare: str
+    ) -> Optional[domain.TodoList]:
+        """Remove sharing access from a todo list - owner only operation"""
+        result = await self.universal_repo.unshare_list(list_id, owner_id, user_id_to_unshare)
+        if result and result.item_type == "todo":
+            return domain.TodoList(**result.to_dict())
+        return None
+
+    async def get_lists_shared_with_me(self, user_id: str) -> List[domain.TodoList]:
+        """Get todo lists that are shared with this user"""
+        results = await self.universal_repo.get_lists_shared_with_me(user_id)
+        return [domain.TodoList(**r.to_dict()) for r in results if r.item_type == "todo"]
 
     async def update_todo_counts(self, list_id: str) -> None:
         """Update cached todo counts for a list"""

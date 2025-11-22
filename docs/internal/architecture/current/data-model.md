@@ -910,6 +910,12 @@ See `docs/tools/PM-056-schema-validator.md` for complete documentation.
   - Added `Stakeholder.satisfaction` column
   - Renamed `WorkItem.metadata` to `WorkItem.item_metadata` to avoid SQLAlchemy conflicts
   - Added PM-056 Schema Validator tool documentation
+- **November 22, 2025**: Updated SEC-RBAC Phase 1.4 - Shared Resource Access:
+  - Added `List.owner_id` and `List.shared_with` fields for ownership and sharing
+  - Added `Todo.shared_with` field (owner_id already existed) for shared access
+  - Added repository methods: `share_list()`, `unshare_list()`, `get_list_for_read()`, `get_lists_shared_with_me()`
+  - Implemented JSONB array operations for atomic sharing via `array_append()` and `array_remove()`
+  - Read access now checks both ownership and shared_with array membership
 
 ---
 
