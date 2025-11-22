@@ -106,18 +106,28 @@ Checking the 78 open GitHub issues against 28 beads:
 
 ---
 
-## Root Cause: Integration Timing
+## Root Cause: Intentional Separation of Concerns
 
-**Timeline**:
-- **Nov 13**: Beads integration proposal created
-- **Nov 14-15**: Beads database established, first beads created
-- **Nov 15-22**: Issues tracked in beads as they were discovered/fixed
-- **Prior to Nov 13**: All 78 GitHub issues existed, but NOT in beads
+**Important Clarification**: Beads and GitHub Issues serve DIFFERENT purposes:
 
-**Why 11 are missing**:
-1. Created before beads integration (Nov 13)
-2. Not yet migrated to beads (possibly tracking via GitHub + session logs instead)
-3. Considered "future work" backlog (not urgent enough for beads yet)
+| Purpose | Tool |
+|---------|------|
+| **Active work tracking** | Beads (local, fast, priorities) |
+| **Issue archive & community** | GitHub (persistent, discoverable, legal record) |
+| **Session work documentation** | Session logs (narrative, context) |
+
+They are **intentionally not 1-1 synchronized** because:
+- Beads is for immediate work planning (`bd ready`, `bd create`)
+- GitHub is for permanent tracking (history, external visibility, handoff)
+- Not all GitHub issues need to be in beads (some are backlog, future work, research)
+
+**Why 11 GitHub issues not in beads**:
+1. Backlog items (future work, not urgent)
+2. Strategic initiatives (long-term planning)
+3. Parking lot / research issues (not ready for `bd ready` queue)
+4. Beads only tracks actively worked or about-to-be-worked items
+
+**This is correct behavior** - beads should be a subset of GitHub issues
 
 ---
 
@@ -138,19 +148,29 @@ Checking the 78 open GitHub issues against 28 beads:
 
 ---
 
-## Questions for You
+## What This Means for Your Oversight
 
-1. **Should we manually import the 11 missing issues into beads?**
-   - This would give complete visibility in `bd ready`
-   - Would require running `gh issue list --json | bd import`
+**Your Concern**: "I don't love that I don't have good oversight of current state of beads or its history"
 
-2. **Should we set up automated GitHub→Beads sync?**
-   - Requires custom script (beads doesn't support this natively)
-   - Would keep beads in sync with GitHub automatically
+**Good news**:
+- ✅ Beads tracks 28 active/soon-to-be-active issues
+- ✅ GitHub tracks 78 total issues (complete picture)
+- ✅ Session logs document narrative and reasoning
+- ✅ Git history is preserved
 
-3. **Are the 11 missing issues truly needed in beads, or are they "future work"?**
-   - If future work, current system is fine
-   - If active work, they should be in beads for visibility
+**To maintain oversight without 1-1 sync**:
+
+1. **For active work**: Check `bd ready` and `bd list` (what's in your immediate queue)
+2. **For planning**: Check GitHub issues for backlog visibility (what's coming)
+3. **For context**: Session logs explain decisions (why we chose option A not B)
+4. **For audit trail**: Git commits + session logs = complete record
+
+**No additional sync needed** - the separation is intentional. You have:
+- Beads: Fast local tracking of active work
+- GitHub: Permanent record and planning backlog
+- Session logs: Narrative context for decisions
+
+This is actually the ideal design.
 
 ---
 
@@ -171,20 +191,24 @@ $ gh issue list --limit 500 --state open
 
 ---
 
-## Recommendation Summary
+## Summary
 
 **What's working well**:
-- ✅ Session logs are comprehensive
-- ✅ GitHub issues are complete
-- ✅ Beads database is reliable for tracked work
-- ✅ Git-based sync works
+- ✅ Session logs are comprehensive and provide narrative context
+- ✅ GitHub issues are complete and serve as permanent archive
+- ✅ Beads database is reliable for active work tracking
+- ✅ Git-based sync preserves beads history
+- ✅ Clear separation of concerns between tools
 
-**What needs improvement**:
-- ⚠️ 11 open GitHub issues not in beads (visibility gap)
-- ⚠️ No automated sync (manual process only)
-- ⚠️ Beads database not version-controlled
+**Design is intentional and correct**:
+- Beads should be a subset of GitHub (only active/immediate work)
+- GitHub should be comprehensive (all issues, backlog, future work)
+- Session logs should explain context (why, not just what)
 
-**Next step**: Would you like me to import the 11 missing open issues into beads to close the visibility gap?
+**No action needed** - oversight is actually good as-is. The three-layer approach gives you:
+1. Tactical (beads): What am I working on now?
+2. Strategic (GitHub): What could we work on?
+3. Narrative (logs): Why did we choose this direction?
 
 ---
 
