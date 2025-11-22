@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "piper-morgan"
 version = "0.8.0-alpha"
-requires-python = ">=3.9.0"
+requires-python = ">=3.11.0"
 description = "AI-powered project management assistant"
 
 [tool.setuptools]
@@ -14,7 +14,7 @@ package-dir = {"" = "."}
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py311']
 include = '\.pyi?$'
 exclude = '''
 /(
