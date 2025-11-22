@@ -35,8 +35,14 @@ class PersonalityProfileRepository:
         self.config_cache = {}  # Cache for PIPER.user.md overrides
         self.config_cache_ttl = 300  # 5 minutes
 
-    async def get_by_user_id(self, user_id: str) -> Optional[PersonalityProfile]:
-        """Load PersonalityProfile with PIPER.user.md overrides"""
+    async def get_by_user_id(
+        self, user_id: str, owner_id: Optional[str] = None
+    ) -> Optional[PersonalityProfile]:
+        """Load PersonalityProfile with PIPER.user.md overrides - optionally verify ownership"""
+        # If owner_id provided, verify it matches user_id (user owns their own profile)
+        if owner_id and owner_id != user_id:
+            return None
+
         try:
             # Load base profile from database
             base_profile = await self._load_from_database(user_id)
@@ -59,8 +65,14 @@ class PersonalityProfileRepository:
             logger.error(f"Error loading profile for user {user_id}: {e}")
             raise ProfileLoadError(f"Failed to load profile: {e}")
 
-    async def save(self, profile: PersonalityProfile) -> None:
-        """Save PersonalityProfile to database"""
+    async def save(self, profile: PersonalityProfile, owner_id: Optional[str] = None) -> None:
+        """Save PersonalityProfile to database - optionally verify ownership"""
+        # If owner_id provided, verify it matches the profile's user_id
+        if owner_id and owner_id != profile.user_id:
+            raise ValueError(
+                f"Owner ID {owner_id} does not match profile user ID {profile.user_id}"
+            )
+
         try:
             async with AsyncSessionFactory.session_scope() as session:
                 # Check if profile exists
@@ -105,8 +117,12 @@ class PersonalityProfileRepository:
             logger.error(f"Database error saving profile for user {profile.user_id}: {e}")
             raise ProfileLoadError(f"Failed to save profile: {e}")
 
-    async def delete(self, user_id: str) -> bool:
-        """Delete PersonalityProfile for user"""
+    async def delete(self, user_id: str, owner_id: Optional[str] = None) -> bool:
+        """Delete PersonalityProfile for user - optionally verify ownership"""
+        # If owner_id provided, verify it matches user_id
+        if owner_id and owner_id != user_id:
+            return False
+
         try:
             async with AsyncSessionFactory.session_scope() as session:
                 stmt = delete(PersonalityProfileModel).where(
@@ -118,7 +134,7 @@ class PersonalityProfileRepository:
 
         except SQLAlchemyError as e:
             logger.error(f"Database error deleting profile for user {user_id}: {e}")
-            return False
+            raise ProfileLoadError(f"Failed to delete profile: {e}")
 
     async def get_default(self) -> PersonalityProfile:
         """Return default Piper personality"""
