@@ -107,7 +107,6 @@ def upgrade() -> None:
         sa.Column("owner_id", sa.String(), nullable=False),
         sa.Column("assigned_to", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["parent_id"], ["todos.id"]),
-        sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -120,17 +119,7 @@ def upgrade() -> None:
         sa.Column("position", sa.Integer(), nullable=False, default=0),
         sa.Column("added_at", sa.DateTime(), nullable=False),
         sa.Column("added_by", sa.String(), nullable=False),
-        sa.Column(
-            "list_priority",
-            sa.Enum(
-                "low",
-                "medium",
-                "high",
-                "urgent",
-                name="todopriority",
-            ),
-            nullable=True,
-        ),
+        sa.Column("list_priority", sa.String(), nullable=True),
         sa.Column("list_due_date", sa.DateTime(), nullable=True),
         sa.Column("list_notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(["list_id"], ["todo_lists.id"]),
