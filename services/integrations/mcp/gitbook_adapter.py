@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -37,6 +38,9 @@ class GitBookMCPAdapter(BaseSpatialAdapter):
         self._page_to_position: Dict[str, int] = {}
         self._position_to_page: Dict[int, str] = {}
         self._context_storage: Dict[str, Dict[str, Any]] = {}
+
+        # Token counting for MCP operations (Issue #306)
+        self.token_counter = TokenCounter()
 
         logger.info("GitBookMCPAdapter initialized")
 
@@ -83,14 +87,23 @@ class GitBookMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def get_spaces(self) -> List[Dict[str, Any]]:
-        """Get accessible GitBook spaces"""
+        """Get accessible GitBook spaces (with token counting)"""
         try:
-            result = await self._call_gitbook_api("/spaces")
-            if result and "data" in result:
-                spaces = result["data"]
-                logger.info(f"Retrieved {len(spaces)} GitBook spaces")
-                return spaces
-            return []
+            # Wrap with token counting (Issue #306)
+            async def _fetch_spaces():
+                result = await self._call_gitbook_api("/spaces")
+                if result and "data" in result:
+                    return result["data"]
+                return []
+
+            spaces = await self.token_counter.wrap_mcp_call(
+                "gitbook_get_spaces",
+                _fetch_spaces(),
+                input_data="",
+            )
+
+            logger.info(f"Retrieved {len(spaces)} GitBook spaces")
+            return spaces
         except Exception as e:
             logger.error(f"Failed to get GitBook spaces: {e}")
             return []

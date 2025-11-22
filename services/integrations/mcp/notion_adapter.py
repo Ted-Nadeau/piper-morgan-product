@@ -18,6 +18,7 @@ from notion_client.client import ClientOptions
 from notion_client.errors import APIResponseError, RequestTimeoutError
 
 from config.notion_config import NotionConfig
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -44,6 +45,9 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         self._page_to_position: Dict[str, int] = {}
         self._position_to_page: Dict[int, str] = {}
         self._context_storage: Dict[str, Dict[str, Any]] = {}
+
+        # Token counting for MCP operations (Issue #306)
+        self.token_counter = TokenCounter()
 
         # Notion client configuration with service injection pattern
         if config_service:
@@ -233,16 +237,24 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         return await self.list_databases(page_size)
 
     async def list_databases(self, page_size: int = 100) -> List[Dict[str, Any]]:
-        """List all databases using notion_client"""
+        """List all databases using notion_client (with token counting)"""
         try:
-            # Search for all databases
-            response = self._notion_client.search(
-                filter={"property": "object", "value": "database"}, page_size=min(page_size, 100)
-            )
+            # Wrap with token counting (Issue #306)
+            async def _fetch_databases():
+                response = self._notion_client.search(
+                    filter={"property": "object", "value": "database"},
+                    page_size=min(page_size, 100),
+                )
+                databases = []
+                if response and "results" in response:
+                    databases = response["results"]
+                return databases
 
-            databases = []
-            if response and "results" in response:
-                databases = response["results"]
+            databases = await self.token_counter.wrap_mcp_call(
+                "notion_list_databases",
+                _fetch_databases(),
+                input_data=f"page_size={page_size}",
+            )
 
             logger.info(f"Found {len(databases)} databases")
             return databases
@@ -362,27 +374,38 @@ class NotionMCPAdapter(BaseSpatialAdapter):
         sorts: Optional[List] = None,
         page_size: int = 100,
     ) -> List[Dict[str, Any]]:
-        """Query database using notion_client"""
+        """Query database using notion_client (with token counting)"""
         try:
             if not database_id:
                 logger.error("database_id is required")
                 return []
 
-            # Build query parameters
-            query_params = {"database_id": database_id, "page_size": min(page_size, 100)}
+            # Wrap with token counting (Issue #306)
+            async def _query():
+                # Build query parameters
+                query_params = {"database_id": database_id, "page_size": min(page_size, 100)}
 
-            if filter_params:
-                query_params["filter"] = filter_params
+                if filter_params:
+                    query_params["filter"] = filter_params
 
-            if sorts:
-                query_params["sorts"] = sorts
+                if sorts:
+                    query_params["sorts"] = sorts
 
-            # Query database using notion_client
-            response = self._notion_client.databases.query(**query_params)
+                # Query database using notion_client
+                response = self._notion_client.databases.query(**query_params)
 
-            results = []
-            if response and "results" in response:
-                results = response["results"]
+                results = []
+                if response and "results" in response:
+                    results = response["results"]
+                return results
+
+            results = await self.token_counter.wrap_mcp_call(
+                "notion_query_database",
+                _query(),
+                input_data=str(
+                    {"database_id": database_id, "filter": filter_params, "page_size": page_size}
+                ),
+            )
 
             logger.info(f"Query returned {len(results)} results from database: {database_id}")
             return results
@@ -392,30 +415,40 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return []
 
     async def get_page(self, page_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific page content and properties using notion_client"""
+        """Get specific page content and properties using notion_client (with token counting)"""
         try:
             if not page_id:
                 logger.error("page_id is required for page retrieval")
                 return None
 
-            # Retrieve page using notion_client
-            response = self._notion_client.pages.retrieve(page_id=page_id)
+            # Wrap with token counting (Issue #306)
+            async def _get():
+                # Retrieve page using notion_client
+                response = self._notion_client.pages.retrieve(page_id=page_id)
 
-            # Extract title safely
-            title = "Untitled"
-            if "properties" in response and "title" in response["properties"]:
-                title_prop = response["properties"]["title"]
-                if "title" in title_prop and len(title_prop["title"]) > 0:
-                    title = title_prop["title"][0]["text"]["content"]
+                # Extract title safely
+                title = "Untitled"
+                if "properties" in response and "title" in response["properties"]:
+                    title_prop = response["properties"]["title"]
+                    if "title" in title_prop and len(title_prop["title"]) > 0:
+                        title = title_prop["title"][0]["text"]["content"]
 
-            return {
-                "id": response["id"],
-                "title": title,
-                "url": response.get("url"),
-                "properties": response.get("properties", {}),
-                "created_time": response.get("created_time"),
-                "last_edited_time": response.get("last_edited_time"),
-            }
+                return {
+                    "id": response["id"],
+                    "title": title,
+                    "url": response.get("url"),
+                    "properties": response.get("properties", {}),
+                    "created_time": response.get("created_time"),
+                    "last_edited_time": response.get("last_edited_time"),
+                }
+
+            page_data = await self.token_counter.wrap_mcp_call(
+                "notion_get_page",
+                _get(),
+                input_data=f"page_id={page_id}",
+            )
+
+            return page_data
 
         except Exception as e:
             logger.error(f"Failed to get page: {e}")
@@ -462,7 +495,7 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def create_page(self, parent_id: str, properties: Dict, content: Optional[List] = None):
-        """Create a new Notion page using notion_client"""
+        """Create a new Notion page using notion_client (with token counting)"""
         try:
             if not parent_id:
                 raise ValueError("parent_id is required for page creation")
@@ -470,45 +503,63 @@ class NotionMCPAdapter(BaseSpatialAdapter):
             # Validate parent exists first
             parent_validation = await self._validate_parent_exists(parent_id)
 
-            # Chunk content if too large (Notion limit is 100 blocks)
-            initial_content = []
-            remaining_content = []
+            # Wrap with token counting (Issue #306)
+            async def _create():
+                # Chunk content if too large (Notion limit is 100 blocks)
+                initial_content = []
+                remaining_content = []
 
-            if content and len(content) > 100:
-                initial_content = content[:100]
-                remaining_content = content[100:]
-                logger.info(
-                    f"Content chunked: {len(initial_content)} initial blocks, {len(remaining_content)} remaining"
+                if content and len(content) > 100:
+                    initial_content = content[:100]
+                    remaining_content = content[100:]
+                    logger.info(
+                        f"Content chunked: {len(initial_content)} initial blocks, {len(remaining_content)} remaining"
+                    )
+                else:
+                    initial_content = content if content else []
+
+                # Create page with first 100 blocks
+                response = self._notion_client.pages.create(
+                    parent={"page_id": parent_id}, properties=properties, children=initial_content
                 )
-            else:
-                initial_content = content if content else []
 
-            # Create page with first 100 blocks
-            response = self._notion_client.pages.create(
-                parent={"page_id": parent_id}, properties=properties, children=initial_content
+                # Add remaining blocks if any
+                if remaining_content and response:
+                    page_id = response["id"]
+                    # Notion requires adding additional blocks via the blocks endpoint
+                    self._notion_client.blocks.children.append(
+                        block_id=page_id, children=remaining_content
+                    )
+                    logger.info(
+                        f"Added {len(remaining_content)} additional blocks to page {page_id}"
+                    )
+
+                # CRITICAL: Ensure URL is in response for publisher consumption
+                if response and "id" in response:
+                    # Notion API response already includes 'url' field, but ensure it's present
+                    if "url" not in response or not response["url"]:
+                        # Fallback: construct URL from page ID if missing
+                        page_id = response["id"].replace("-", "")
+                        response["url"] = f"https://www.notion.so/{page_id}"
+
+                    logger.info(f"Page created successfully: {response['url']}")
+                else:
+                    logger.error(f"Notion API response missing required fields: {response}")
+                    raise ValueError("Notion API did not return valid page response")
+
+                return response
+
+            response = await self.token_counter.wrap_mcp_call(
+                "notion_create_page",
+                _create(),
+                input_data=str(
+                    {
+                        "parent_id": parent_id,
+                        "properties_count": len(properties),
+                        "content_blocks": len(content) if content else 0,
+                    }
+                ),
             )
-
-            # Add remaining blocks if any
-            if remaining_content and response:
-                page_id = response["id"]
-                # Notion requires adding additional blocks via the blocks endpoint
-                self._notion_client.blocks.children.append(
-                    block_id=page_id, children=remaining_content
-                )
-                logger.info(f"Added {len(remaining_content)} additional blocks to page {page_id}")
-
-            # CRITICAL: Ensure URL is in response for publisher consumption
-            if response and "id" in response:
-                # Notion API response already includes 'url' field, but ensure it's present
-                if "url" not in response or not response["url"]:
-                    # Fallback: construct URL from page ID if missing
-                    page_id = response["id"].replace("-", "")
-                    response["url"] = f"https://www.notion.so/{page_id}"
-
-                logger.info(f"Page created successfully: {response['url']}")
-            else:
-                logger.error(f"Notion API response missing required fields: {response}")
-                raise ValueError("Notion API did not return valid page response")
 
             return response  # Must include 'url' field
 
@@ -519,7 +570,7 @@ class NotionMCPAdapter(BaseSpatialAdapter):
     async def create_database_item(
         self, database_id: str, properties: Dict, content: Optional[List] = None
     ):
-        """Create a new database item using notion_client with API version 2025-09-03 support"""
+        """Create a new database item using notion_client with API version 2025-09-03 support (with token counting)"""
         try:
             if not database_id:
                 raise ValueError("database_id is required for database item creation")
@@ -555,57 +606,73 @@ class NotionMCPAdapter(BaseSpatialAdapter):
                 logger.warning(f"Could not get data_source_id: {e}. Using database_id format.")
                 data_source_id = None
 
-            # Chunk content if too large (Notion limit is 100 blocks)
-            initial_content = []
-            remaining_content = []
+            # Wrap with token counting (Issue #306)
+            async def _create():
+                # Chunk content if too large (Notion limit is 100 blocks)
+                initial_content = []
+                remaining_content = []
 
-            if content and len(content) > 100:
-                initial_content = content[:100]
-                remaining_content = content[100:]
-                logger.info(
-                    f"Content chunked: {len(initial_content)} initial blocks, {len(remaining_content)} remaining"
+                if content and len(content) > 100:
+                    initial_content = content[:100]
+                    remaining_content = content[100:]
+                    logger.info(
+                        f"Content chunked: {len(initial_content)} initial blocks, {len(remaining_content)} remaining"
+                    )
+                else:
+                    initial_content = content if content else []
+
+                # Create database item with first 100 blocks
+                # Use data_source_id if available (API 2025-09-03), otherwise use database_id (backward compat)
+                if data_source_id:
+                    # New format for API 2025-09-03: use data_source_id
+                    parent_param = {"type": "data_source_id", "data_source_id": data_source_id}
+                    logger.debug(f"Creating database item with data_source_id: {data_source_id}")
+                else:
+                    # Legacy format: use database_id
+                    parent_param = {"database_id": database_id}
+                    logger.debug(f"Creating database item with database_id: {database_id}")
+
+                response = self._notion_client.pages.create(
+                    parent=parent_param, properties=properties, children=initial_content
                 )
-            else:
-                initial_content = content if content else []
 
-            # Create database item with first 100 blocks
-            # Use data_source_id if available (API 2025-09-03), otherwise use database_id (backward compat)
-            if data_source_id:
-                # New format for API 2025-09-03: use data_source_id
-                parent_param = {"type": "data_source_id", "data_source_id": data_source_id}
-                logger.debug(f"Creating database item with data_source_id: {data_source_id}")
-            else:
-                # Legacy format: use database_id
-                parent_param = {"database_id": database_id}
-                logger.debug(f"Creating database item with database_id: {database_id}")
+                # Add remaining blocks if any
+                if remaining_content and response:
+                    page_id = response["id"]
+                    # Notion requires adding additional blocks via the blocks endpoint
+                    self._notion_client.blocks.children.append(
+                        block_id=page_id, children=remaining_content
+                    )
+                    logger.info(
+                        f"Added {len(remaining_content)} additional blocks to database item {page_id}"
+                    )
 
-            response = self._notion_client.pages.create(
-                parent=parent_param, properties=properties, children=initial_content
+                # CRITICAL: Ensure URL is in response for publisher consumption
+                if response and "id" in response:
+                    # Notion API response already includes 'url' field, but ensure it's present
+                    if "url" not in response or not response["url"]:
+                        # Fallback: construct URL from page ID if missing
+                        page_id = response["id"].replace("-", "")
+                        response["url"] = f"https://www.notion.so/{page_id}"
+
+                    logger.info(f"Database item created successfully: {response['url']}")
+                else:
+                    logger.error(f"Notion API response missing required fields: {response}")
+                    raise ValueError("Notion API did not return valid database item response")
+
+                return response
+
+            response = await self.token_counter.wrap_mcp_call(
+                "notion_create_database_item",
+                _create(),
+                input_data=str(
+                    {
+                        "database_id": database_id,
+                        "properties_count": len(properties),
+                        "content_blocks": len(content) if content else 0,
+                    }
+                ),
             )
-
-            # Add remaining blocks if any
-            if remaining_content and response:
-                page_id = response["id"]
-                # Notion requires adding additional blocks via the blocks endpoint
-                self._notion_client.blocks.children.append(
-                    block_id=page_id, children=remaining_content
-                )
-                logger.info(
-                    f"Added {len(remaining_content)} additional blocks to database item {page_id}"
-                )
-
-            # CRITICAL: Ensure URL is in response for publisher consumption
-            if response and "id" in response:
-                # Notion API response already includes 'url' field, but ensure it's present
-                if "url" not in response or not response["url"]:
-                    # Fallback: construct URL from page ID if missing
-                    page_id = response["id"].replace("-", "")
-                    response["url"] = f"https://www.notion.so/{page_id}"
-
-                logger.info(f"Database item created successfully: {response['url']}")
-            else:
-                logger.error(f"Notion API response missing required fields: {response}")
-                raise ValueError("Notion API did not return valid database item response")
 
             return response  # Must include 'url' field
 
