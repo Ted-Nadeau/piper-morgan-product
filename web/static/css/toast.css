@@ -17,12 +17,12 @@
 .toast {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-left: 4px solid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-neutral-white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border-left: var(--border-width-thick) solid;
   pointer-events: auto; /* Re-enable for toast itself */
   animation: toast-slide-in 0.3s ease-out;
   min-width: 320px;
@@ -58,19 +58,19 @@
 
 /* Toast Types */
 .toast.toast-success {
-  border-left-color: #27ae60;
+  border-left-color: var(--color-accent-success);
 }
 
 .toast.toast-error {
-  border-left-color: #e74c3c;
+  border-left-color: var(--color-accent-error);
 }
 
 .toast.toast-warning {
-  border-left-color: #f39c12;
+  border-left-color: var(--color-accent-warning);
 }
 
 .toast.toast-info {
-  border-left-color: #3498db;
+  border-left-color: var(--color-primary);
 }
 
 /* Toast Icon */
@@ -86,19 +86,19 @@
 }
 
 .toast-success .toast-icon {
-  color: #27ae60;
+  color: var(--color-accent-success);
 }
 
 .toast-error .toast-icon {
-  color: #e74c3c;
+  color: var(--color-accent-error);
 }
 
 .toast-warning .toast-icon {
-  color: #f39c12;
+  color: var(--color-accent-warning);
 }
 
 .toast-info .toast-icon {
-  color: #3498db;
+  color: var(--color-primary);
 }
 
 /* Toast Content */
@@ -108,17 +108,17 @@
 }
 
 .toast-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: #2c3e50;
-  margin-bottom: 4px;
-  line-height: 1.4;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
+  line-height: var(--line-height-normal);
 }
 
 .toast-message {
-  font-size: 14px;
-  color: #7f8c8d;
-  line-height: 1.4;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
 }
 
 /* Close Button */
@@ -129,21 +129,21 @@
   padding: 0;
   background: none;
   border: none;
-  color: #7f8c8d;
+  color: var(--color-text-secondary);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: var(--transition-color);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .toast-close:hover {
-  color: #2c3e50;
+  color: var(--color-text-primary);
 }
 
 .toast-close:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* Color Contrast Verification

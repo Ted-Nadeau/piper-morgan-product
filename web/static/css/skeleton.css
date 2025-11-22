@@ -9,10 +9,10 @@
 
 .skeleton {
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-neutral-light-gray);
+  border-radius: var(--border-radius-lg);
 }
 
 /* Base skeleton element (blocks) */

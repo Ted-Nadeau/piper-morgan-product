@@ -22,26 +22,26 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background: #007acc;
-  color: white;
+  border-radius: var(--border-radius-full);
+  background: var(--color-special-blue-dark);
+  color: var(--color-neutral-white);
   border: none;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: var(--transition-all);
   flex-shrink: 0;
 }
 
 .help-icon:hover {
-  background: #005a9e;
+  background: var(--color-special-blue-hover);
   box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
 }
 
 .help-icon:focus {
-  outline: 2px solid #007acc;
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .help-icon:active {

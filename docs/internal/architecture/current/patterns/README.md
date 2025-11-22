@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 40 patterns (001-040) + template (000)
+**Total Patterns**: 43 patterns (001-043) + template (000)
 
 ## Pattern Categories
 
@@ -73,6 +73,9 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-037: Cross-Context Validation](pattern-037-cross-context-validation.md) - Concept validation across contexts (META-PATTERN)
 - [Pattern-038: Temporal Clustering](pattern-038-temporal-clustering.md) - Coordination analysis via temporal grouping (META-PATTERN)
 - [Pattern-039: Feature Prioritization Scorecard](pattern-039-feature-prioritization-scorecard.md) - Quantified feature prioritization framework
+- [Pattern-041: Systematic Fix Planning](pattern-041-systematic-fix-planning.md) - Phase-based approach to multi-issue resolution
+- [Pattern-042: Investigation-Only Protocol](pattern-042-investigation-only-protocol.md) - Separation of bug investigation from fixing
+- [Pattern-043: Defense-in-Depth Prevention](pattern-043-defense-in-depth-prevention.md) - Multi-layer protection against discovered vulnerabilities
 
 ## Pattern Development
 
@@ -100,5 +103,6 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: November 20, 2025_
-_All 40 patterns now included with logical categorization_
+_Last updated: November 21, 2025_
+_All 43 patterns now included with logical categorization_
+_Latest additions: Pattern-041 (Systematic Fix Planning), Pattern-042 (Investigation-Only Protocol), Pattern-043 (Defense-in-Depth Prevention)_

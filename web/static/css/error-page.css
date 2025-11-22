@@ -13,17 +13,17 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 24px;
+  padding: var(--space-lg);
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
 .error-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  background: var(--color-neutral-white);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-xl);
   max-width: 600px;
   width: 100%;
-  padding: 48px 32px;
+  padding: var(--space-3xl) var(--space-xl);
   text-align: center;
   animation: slideUp 0.4s ease;
 }
@@ -40,8 +40,8 @@
 }
 
 .error-icon {
-  font-size: 72px;
-  margin-bottom: 24px;
+  font-size: var(--font-size-6xl);
+  margin-bottom: var(--space-lg);
   animation: bounce 2s ease-in-out infinite;
 }
 
@@ -55,25 +55,25 @@
 }
 
 .error-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 var(--space-lg) 0;
   font-size: 2em;
-  color: #2c3e50;
-  font-weight: 700;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
   line-height: 1.2;
 }
 
 .error-message {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  color: #555;
-  line-height: 1.6;
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-neutral-dark-gray);
+  line-height: var(--line-height-relaxed);
 }
 
 .error-code {
-  margin: 0 0 32px 0;
-  font-size: 14px;
-  color: #7f8c8d;
-  font-weight: 600;
+  margin: 0 0 var(--space-xl) 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
@@ -81,20 +81,20 @@
 /* Error actions (buttons) */
 .error-actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 40px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-2xl);
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .error-actions .btn {
-  padding: 12px 28px;
-  font-size: 15px;
-  font-weight: 600;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-all);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -103,24 +103,24 @@
 }
 
 .error-actions .btn-primary {
-  background: #3498db;
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-neutral-white);
 }
 
 .error-actions .btn-primary:hover {
-  background: #2980b9;
+  background: var(--color-primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  box-shadow: var(--shadow-primary-lg);
 }
 
 .error-actions .btn-primary:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .error-actions .btn-secondary {
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: var(--color-neutral-light-gray-2);
+  color: var(--color-text-primary);
 }
 
 .error-actions .btn-secondary:hover {
@@ -129,16 +129,16 @@
 }
 
 .error-actions .btn-secondary:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* Error help section */
 .error-help {
-  background: #f8f9fa;
-  border-left: 4px solid #3498db;
-  border-radius: 6px;
-  padding: 20px;
+  background: var(--color-neutral-off-white);
+  border-left: var(--border-width-thick) solid var(--color-primary);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-lg);
   text-align: left;
 }
 

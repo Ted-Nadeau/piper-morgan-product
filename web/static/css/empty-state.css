@@ -14,71 +14,71 @@
 .empty-state-icon {
   width: 80px;
   height: 80px;
-  margin-bottom: 24px;
-  font-size: 64px;
+  margin-bottom: var(--space-lg);
+  font-size: var(--font-size-5xl);
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  color: #bdc3c7;
+  color: var(--color-neutral-light-blue-gray);
   opacity: 0.8;
 }
 
 .empty-state-title {
   font-size: 24px;
-  font-weight: 600;
-  color: #2c3e50;
-  margin: 0 0 12px 0;
-  line-height: 1.3;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-sm) 0;
+  line-height: var(--line-height-tight);
 }
 
 .empty-state-message {
-  font-size: 16px;
-  color: #7f8c8d;
-  line-height: 1.6;
-  margin: 0 0 32px 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-xl) 0;
   max-width: 400px;
 }
 
 /* Call-to-Action Button */
 .empty-state-cta {
-  margin-bottom: 20px;
-  padding: 12px 32px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-sm) var(--space-xl);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-all);
 }
 
 .empty-state-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  box-shadow: var(--shadow-primary-lg);
 }
 
 .empty-state-cta:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* Help Link */
 .empty-state-help {
-  font-size: 14px;
-  color: #3498db;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
   text-decoration: none;
-  transition: all 0.2s ease;
-  border-radius: 4px;
-  padding: 4px 8px;
+  transition: var(--transition-all);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-xs) var(--space-xs);
 }
 
 .empty-state-help:hover {
-  color: #2980b9;
+  color: var(--color-primary-dark);
   text-decoration: underline;
-  background: rgba(52, 152, 219, 0.1);
+  background: var(--color-primary-light);
 }
 
 .empty-state-help:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* Color Contrast Verification
