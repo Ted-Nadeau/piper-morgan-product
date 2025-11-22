@@ -14,10 +14,16 @@ logger = logging.getLogger(__name__)
 class IntentEnricher:
     """Enriches intents with additional context like resolved files"""
 
-    def __init__(self, db):
-        self.db = db
-        self.file_repository = FileRepository(db)
-        self.file_resolver = FileResolver(self.file_repository)
+    def __init__(self, file_repository: FileRepository, file_resolver: FileResolver):
+        """
+        Initialize IntentEnricher with injected dependencies.
+
+        Args:
+            file_repository: FileRepository instance for file lookups
+            file_resolver: FileResolver instance for resolving file references
+        """
+        self.file_repository = file_repository
+        self.file_resolver = file_resolver
 
     async def enrich_with_file_context(self, intent: Intent, session_id: str) -> Intent:
         """Add resolved file references to intent context"""

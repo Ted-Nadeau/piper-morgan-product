@@ -20,6 +20,7 @@ from services.database.session_factory import AsyncSessionFactory
 
 # Domain-first imports - use domain models consistently
 from services.domain.models import Intent, IntentCategory, Task, Workflow
+from services.file_context.file_resolver import FileResolver
 from services.integrations.github.config_service import GitHubConfigService
 from services.integrations.github.content_generator import GitHubIssueContentGenerator
 from services.integrations.github.github_integration_router import GitHubIntegrationRouter
@@ -31,6 +32,7 @@ from services.integrations.github.production_client import (
 from services.intent_service.intent_enricher import IntentEnricher
 from services.llm.clients import LLMClient
 from services.queries.query_router import QueryRouter
+from services.repositories.file_repository import FileRepository
 from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
 
 # Multi-Agent Coordinator Integration
@@ -87,7 +89,12 @@ class OrchestrationEngine:
         # Following the AsyncSessionFactory pattern from lines 135-138
         self.query_router = None
 
-        self.intent_enricher = IntentEnricher(llm_client)
+        # Initialize IntentEnricher with injected dependencies (issue #308 - clean architecture)
+        # Create file repository and resolver with async session factory
+        async_session_factory = AsyncSessionFactory()
+        file_repository = FileRepository(async_session_factory)
+        file_resolver = FileResolver(file_repository)
+        self.intent_enricher = IntentEnricher(file_repository, file_resolver)
         self.logger = structlog.get_logger()
 
         # Initialize Multi-Agent integration
@@ -364,19 +371,24 @@ class OrchestrationEngine:
         """Analyze the user's request to understand requirements"""
 
         intent_context = workflow.context.get("intent", {})
+        session_id = workflow.context.get("session_id", "")
 
-        # Use intent enricher for deeper analysis
-        analysis = await self.intent_enricher.enrich_intent(
-            message=intent_context.get("original_message", ""),
+        # Create Intent from workflow context (issue #308 - use actual enrich method)
+        intent = Intent(
             category=intent_context.get("category", IntentCategory.UNKNOWN),
+            action=intent_context.get("action", ""),
             context=workflow.context,
         )
+        intent.original_message = intent_context.get("original_message", "")
+
+        # Use intent enricher for deeper file context analysis
+        enriched_intent = await self.intent_enricher.enrich(intent, session_id)
 
         return {
-            "analysis": analysis,
-            "requirements": analysis.get("requirements", []),
-            "complexity": analysis.get("complexity", "unknown"),
-            "estimated_effort": analysis.get("estimated_effort", "unknown"),
+            "analysis": enriched_intent.context,
+            "requirements": enriched_intent.context.get("requirements", []),
+            "complexity": enriched_intent.context.get("complexity", "unknown"),
+            "estimated_effort": enriched_intent.context.get("estimated_effort", "unknown"),
         }
 
     async def _extract_requirements_task(self, task: Task, workflow: Workflow) -> Dict[str, Any]:

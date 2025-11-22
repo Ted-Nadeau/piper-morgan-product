@@ -12,9 +12,9 @@ from services.repositories.file_repository import FileRepository
 async def test_intent_enricher_high_confidence():
     """Test IntentEnricher with high confidence file resolution"""
 
-    # Mock the database pool and repository
-    mock_pool = Mock()
+    # Mock the repository and file resolver (issue #308 - dependency injection)
     mock_repo = Mock(spec=FileRepository)
+    mock_file_resolver = Mock()
 
     # Create test file
     test_file = UploadedFile(
@@ -28,6 +28,11 @@ async def test_intent_enricher_high_confidence():
     # Mock repository methods
     mock_repo.get_files_for_session = AsyncMock(return_value=[test_file])
     mock_repo.get_file_by_id = AsyncMock(return_value=test_file)
+    mock_repo.search_files_by_name = AsyncMock(return_value=[test_file])
+    mock_repo.search_files_by_name_all_sessions = AsyncMock(return_value=[test_file])
+
+    # Mock the file resolver to return high confidence
+    mock_file_resolver.resolve_file_reference = AsyncMock(return_value=(test_file.id, 0.95))
 
     # Create intent with file reference
     intent = Intent(
@@ -36,14 +41,8 @@ async def test_intent_enricher_high_confidence():
         context={"original_message": "analyze the report"},
     )
 
-    # Create enricher with mocked dependencies
-    enricher = IntentEnricher(mock_pool)
-    enricher.file_repository = mock_repo
-
-    # Mock the file resolver to return high confidence
-    mock_file_resolver = Mock()
-    mock_file_resolver.resolve_file_reference = AsyncMock(return_value=(test_file.id, 0.95))
-    enricher.file_resolver = mock_file_resolver
+    # Create enricher with injected dependencies (issue #308)
+    enricher = IntentEnricher(mock_repo, mock_file_resolver)
 
     # Enrich intent
     enriched = await enricher.enrich(intent, "test_session")
@@ -60,9 +59,9 @@ async def test_intent_enricher_high_confidence():
 async def test_intent_enricher_medium_confidence():
     """Test IntentEnricher with medium confidence file resolution"""
 
-    # Mock the database pool and repository
-    mock_pool = Mock()
+    # Mock the repository and file resolver (issue #308 - dependency injection)
     mock_repo = Mock(spec=FileRepository)
+    mock_file_resolver = Mock()
 
     # Create test file
     test_file = UploadedFile(
@@ -73,6 +72,10 @@ async def test_intent_enricher_medium_confidence():
         storage_path="/test/report.pdf",
     )
 
+    # Mock repository methods
+    mock_repo.search_files_by_name = AsyncMock(return_value=[])
+    mock_repo.search_files_by_name_all_sessions = AsyncMock(return_value=[])
+
     # Create intent with file reference
     intent = Intent(
         category=IntentCategory.ANALYSIS,
@@ -80,14 +83,11 @@ async def test_intent_enricher_medium_confidence():
         context={"original_message": "analyze the report"},
     )
 
-    # Create enricher with mocked dependencies
-    enricher = IntentEnricher(mock_pool)
-    enricher.file_repository = mock_repo
-
     # Mock the file resolver to return medium confidence
-    mock_file_resolver = Mock()
     mock_file_resolver.resolve_file_reference = AsyncMock(return_value=(test_file.id, 0.65))
-    enricher.file_resolver = mock_file_resolver
+
+    # Create enricher with injected dependencies (issue #308)
+    enricher = IntentEnricher(mock_repo, mock_file_resolver)
 
     # Enrich intent
     enriched = await enricher.enrich(intent, "test_session")
@@ -104,9 +104,13 @@ async def test_intent_enricher_medium_confidence():
 async def test_intent_enricher_no_file_reference():
     """Test IntentEnricher when no file reference is detected"""
 
-    # Mock the database pool and repository
-    mock_pool = Mock()
+    # Mock the repository and file resolver (issue #308 - dependency injection)
     mock_repo = Mock(spec=FileRepository)
+    mock_file_resolver = Mock()
+
+    # Mock repository methods (no files found)
+    mock_repo.search_files_by_name = AsyncMock(return_value=[])
+    mock_repo.search_files_by_name_all_sessions = AsyncMock(return_value=[])
 
     # Create intent without file reference
     intent = Intent(
@@ -115,9 +119,8 @@ async def test_intent_enricher_no_file_reference():
         context={"original_message": "show me all projects"},
     )
 
-    # Create enricher with mocked dependencies
-    enricher = IntentEnricher(mock_pool)
-    enricher.file_repository = mock_repo
+    # Create enricher with injected dependencies (issue #308)
+    enricher = IntentEnricher(mock_repo, mock_file_resolver)
 
     # Enrich intent
     enriched = await enricher.enrich(intent, "test_session")
