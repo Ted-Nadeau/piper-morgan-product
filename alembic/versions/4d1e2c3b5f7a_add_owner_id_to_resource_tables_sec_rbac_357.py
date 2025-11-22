@@ -51,13 +51,12 @@ def upgrade() -> None:
     )
 
     # Migrate data from session_id to owner_id
-    # For now, NULL values will be filled with backfill script
+    # For alpha: Assign all test files to the alpha owner (xian)
+    # In alpha, all data is test data belonging to the lead developer
     op.execute(
         """
         UPDATE uploaded_files
-        SET owner_id = (
-            SELECT u.id FROM users u WHERE u.id::text = uploaded_files.session_id
-        )
+        SET owner_id = '3f4593ae-5bc9-468d-b08d-8c4c02a5b963'
         WHERE session_id IS NOT NULL
     """
     )

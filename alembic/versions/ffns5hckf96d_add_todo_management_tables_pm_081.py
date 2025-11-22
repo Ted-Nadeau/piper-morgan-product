@@ -23,49 +23,35 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
 
-    # Create TodoStatus enum
-    todostatus_enum = postgresql.ENUM(
-        "pending",
-        "in_progress",
-        "completed",
-        "cancelled",
-        "blocked",
-        name="todostatus",
+    # Create enums with idempotent checks (handle diamond dependencies)
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'todostatus') THEN
+                CREATE TYPE todostatus AS ENUM (
+                    'pending', 'in_progress', 'completed', 'cancelled', 'blocked'
+                );
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'todopriority') THEN
+                CREATE TYPE todopriority AS ENUM (
+                    'low', 'medium', 'high', 'urgent'
+                );
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'listtype') THEN
+                CREATE TYPE listtype AS ENUM (
+                    'personal', 'project', 'team', 'template', 'archive'
+                );
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'orderingstrategy') THEN
+                CREATE TYPE orderingstrategy AS ENUM (
+                    'manual', 'priority', 'due_date', 'created_date', 'alphabetical', 'status'
+                );
+            END IF;
+        END
+        $$;
+    """
     )
-    todostatus_enum.create(op.get_bind())
-
-    # Create TodoPriority enum
-    todopriority_enum = postgresql.ENUM(
-        "low",
-        "medium",
-        "high",
-        "urgent",
-        name="todopriority",
-    )
-    todopriority_enum.create(op.get_bind())
-
-    # Create ListType enum
-    listtype_enum = postgresql.ENUM(
-        "personal",
-        "project",
-        "team",
-        "template",
-        "archive",
-        name="listtype",
-    )
-    listtype_enum.create(op.get_bind())
-
-    # Create OrderingStrategy enum
-    orderingstrategy_enum = postgresql.ENUM(
-        "manual",
-        "priority",
-        "due_date",
-        "created_date",
-        "alphabetical",
-        "status",
-        name="orderingstrategy",
-    )
-    orderingstrategy_enum.create(op.get_bind())
 
     # Create todo_lists table
     op.create_table(
@@ -73,31 +59,8 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column(
-            "list_type",
-            sa.Enum(
-                "personal",
-                "project",
-                "team",
-                "template",
-                "archive",
-                name="listtype",
-            ),
-            nullable=False,
-        ),
-        sa.Column(
-            "ordering_strategy",
-            sa.Enum(
-                "manual",
-                "priority",
-                "due_date",
-                "created_date",
-                "alphabetical",
-                "status",
-                name="orderingstrategy",
-            ),
-            nullable=False,
-        ),
+        sa.Column("list_type", sa.String(), nullable=False),
+        sa.Column("ordering_strategy", sa.String(), nullable=False),
         sa.Column("color", sa.String(7), nullable=True),  # Hex color codes
         sa.Column("emoji", sa.String(4), nullable=True),  # Unicode emoji
         sa.Column("is_archived", sa.Boolean(), nullable=False, default=False),
@@ -119,29 +82,8 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column(
-            "status",
-            sa.Enum(
-                "pending",
-                "in_progress",
-                "completed",
-                "cancelled",
-                "blocked",
-                name="todostatus",
-            ),
-            nullable=False,
-        ),
-        sa.Column(
-            "priority",
-            sa.Enum(
-                "low",
-                "medium",
-                "high",
-                "urgent",
-                name="todopriority",
-            ),
-            nullable=False,
-        ),
+        sa.Column("status", sa.String(), nullable=False),
+        sa.Column("priority", sa.String(), nullable=False),
         sa.Column("parent_id", sa.String(), nullable=True),
         sa.Column("position", sa.Integer(), nullable=False, default=0),
         sa.Column("due_date", sa.DateTime(), nullable=True),

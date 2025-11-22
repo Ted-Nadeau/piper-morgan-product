@@ -547,14 +547,11 @@ class TestKeyPair:
 class TestConvenienceFunctions:
     """Test convenience functions"""
 
-    @pytest.mark.skip(
-        reason="Bug - Mock not set up as AsyncMock, returns str instead of awaitable. Tracked in piper-morgan-3pf"
-    )
     @pytest.mark.asyncio
     @patch("services.security.key_rotation_service.key_rotation_service")
     async def test_rotate_api_key_convenience(self, mock_service):
         """Test rotate_api_key convenience function"""
-        mock_service.start_rotation.return_value = "rotation-123"
+        mock_service.start_rotation = AsyncMock(return_value="rotation-123")
 
         rotation_id = await rotate_api_key("openai", "new-key", RotationStrategy.CANARY, 45)
 
