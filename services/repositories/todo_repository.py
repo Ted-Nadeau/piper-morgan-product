@@ -38,11 +38,11 @@ class TodoListRepository(BaseRepository):
         return db_list.to_domain()
 
     async def get_list_by_id(
-        self, list_id: str, owner_id: Optional[str] = None
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
     ) -> Optional[domain.TodoList]:
-        """Get todo list by ID - optionally verify ownership"""
+        """Get todo list by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
         filters = [TodoListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(TodoListDB).where(and_(*filters)))
@@ -95,13 +95,13 @@ class TodoListRepository(BaseRepository):
         return [db_list.to_domain() for db_list in db_lists]
 
     async def update_list(
-        self, list_id: str, updates: Dict, owner_id: Optional[str] = None
+        self, list_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
     ) -> Optional[domain.TodoList]:
-        """Update todo list - optionally verify ownership"""
+        """Update todo list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
         updates["updated_at"] = datetime.now()
 
         filters = [TodoListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -110,8 +110,10 @@ class TodoListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_todo_counts(self, list_id: str, owner_id: Optional[str] = None) -> None:
-        """Update cached todo counts for a list - optionally verify ownership"""
+    async def update_todo_counts(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> None:
+        """Update cached todo counts for a list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
         # Get current counts through list memberships
         total_result = await self.session.execute(
             select(func.count(ListMembershipDB.id)).where(ListMembershipDB.list_id == list_id)
@@ -128,7 +130,7 @@ class TodoListRepository(BaseRepository):
 
         # Update the list with new counts (with ownership verification if provided)
         filters = [TodoListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         await self.session.execute(
@@ -139,10 +141,12 @@ class TodoListRepository(BaseRepository):
             )
         )
 
-    async def delete_list(self, list_id: str, owner_id: Optional[str] = None) -> bool:
-        """Delete a todo list - optionally verify ownership (cascades to memberships)"""
+    async def delete_list(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete a todo list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
         filters = [TodoListDB.id == list_id]
-        if owner_id:
+        if owner_id and not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(TodoListDB).where(and_(*filters)))

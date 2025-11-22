@@ -827,21 +827,21 @@ class ConversationRepository(BaseRepository):
         super().__init__(session)
 
     async def get_conversation_turns(
-        self, conversation_id: str, limit: int = 10
+        self, conversation_id: str, limit: int = 10, is_admin: bool = False
     ) -> List[domain.ConversationTurn]:
-        """Get conversation turns for a conversation ID"""
+        """Get conversation turns for a conversation ID (SEC-RBAC Phase 3: admins can access any conversation)"""
         # For now, return empty list since we don't have DB table yet
         # This enables graceful fallback for Phase 3 implementation
         return []
 
-    async def save_turn(self, turn: domain.ConversationTurn) -> None:
-        """Save conversation turn to database"""
+    async def save_turn(self, turn: domain.ConversationTurn, is_admin: bool = False) -> None:
+        """Save conversation turn to database (SEC-RBAC Phase 3: admins can save turns for any conversation)"""
         # For now, this is a no-op since we don't have DB table yet
         # Redis caching will handle persistence in Phase 3
         logger.info(f"ConversationTurn saved (cache-only): {turn.id}")
 
-    async def get_next_turn_number(self, conversation_id: str) -> int:
-        """Get next turn number for conversation"""
+    async def get_next_turn_number(self, conversation_id: str, is_admin: bool = False) -> int:
+        """Get next turn number for conversation (SEC-RBAC Phase 3: admins can get next turn for any conversation)"""
         # For now, return 1 as fallback
         # This enables basic functionality while we build out full DB schema
         return 1

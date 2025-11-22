@@ -84,10 +84,12 @@ class KnowledgeGraphService:
         return created_node
 
     async def get_node(
-        self, node_id: str, owner_id: Optional[str] = None
+        self, node_id: str, owner_id: Optional[str] = None, is_admin: bool = False
     ) -> Optional[KnowledgeNode]:
-        """Get a node by ID - optionally verify ownership"""
-        return await self.repo.get_node_by_id(node_id, owner_id)
+        """Get a node by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+        return await self.repo.get_node_by_id(
+            node_id, owner_id if owner_id and not is_admin else None
+        )
 
     async def get_nodes_by_type(
         self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
@@ -102,9 +104,13 @@ class KnowledgeGraphService:
         description: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         properties: Optional[Dict[str, Any]] = None,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Optional[KnowledgeNode]:
-        """Update an existing node"""
-        node = await self.repo.get_node_by_id(node_id)
+        """Update an existing node (SEC-RBAC Phase 3: admins can update any node)"""
+        node = await self.repo.get_node_by_id(
+            node_id, owner_id if owner_id and not is_admin else None
+        )
         if not node:
             return None
 
@@ -194,17 +200,21 @@ class KnowledgeGraphService:
         edge_type: Optional[EdgeType] = None,
         direction: str = "both",
         owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> List[KnowledgeNode]:
         """
-        Find neighboring nodes - optionally verify ownership
+        Find neighboring nodes - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
 
         Args:
             node_id: The node to find neighbors for
             edge_type: Optional filter by edge type
             direction: "incoming", "outgoing", or "both"
             owner_id: Optional owner ID to verify ownership
+            is_admin: If True, bypass ownership check (SEC-RBAC Phase 3)
         """
-        return await self.repo.find_neighbors(node_id, edge_type, direction, owner_id)
+        return await self.repo.find_neighbors(
+            node_id, edge_type, direction, owner_id if owner_id and not is_admin else None
+        )
 
     async def extract_subgraph(
         self,
@@ -213,9 +223,10 @@ class KnowledgeGraphService:
         edge_types: Optional[List[EdgeType]] = None,
         node_types: Optional[List[NodeType]] = None,
         owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Dict[str, Any]:
         """
-        Extract a subgraph around specified nodes with filtering - optionally verify ownership
+        Extract a subgraph around specified nodes with filtering - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
 
         Args:
             node_ids: Starting nodes for subgraph extraction
@@ -227,7 +238,9 @@ class KnowledgeGraphService:
         self.logger.info("Extracting subgraph", start_nodes=len(node_ids), max_depth=max_depth)
 
         # Get basic subgraph from repository (with optional ownership verification)
-        subgraph = await self.repo.get_subgraph(node_ids, max_depth, owner_id)
+        subgraph = await self.repo.get_subgraph(
+            node_ids, max_depth, owner_id if owner_id and not is_admin else None
+        )
 
         # Apply filtering if requested
         if edge_types or node_types:

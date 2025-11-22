@@ -75,12 +75,12 @@ class FeedbackService:
         return feedback.id
 
     async def get_feedback(
-        self, feedback_id: str, user_id: Optional[UUID] = None
+        self, feedback_id: str, user_id: Optional[UUID] = None, is_admin: bool = False
     ) -> Optional[Feedback]:
-        """Get feedback by ID - optionally verify ownership"""
+        """Get feedback by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
 
         filters = [FeedbackDB.id == feedback_id]
-        if user_id:
+        if user_id and not is_admin:
             filters.append(FeedbackDB.user_id == user_id)
 
         stmt = select(FeedbackDB).where(and_(*filters))
@@ -128,11 +128,12 @@ class FeedbackService:
         feedback_id: str,
         update_data: FeedbackUpdateRequest,
         user_id: Optional[UUID] = None,
+        is_admin: bool = False,
     ) -> Optional[Feedback]:
-        """Update feedback status and metadata - optionally verify ownership"""
+        """Update feedback status and metadata - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
 
         filters = [FeedbackDB.id == feedback_id]
-        if user_id:
+        if user_id and not is_admin:
             filters.append(FeedbackDB.user_id == user_id)
 
         stmt = select(FeedbackDB).where(and_(*filters))
@@ -161,11 +162,13 @@ class FeedbackService:
 
         return feedback_db.to_domain()
 
-    async def delete_feedback(self, feedback_id: str, user_id: Optional[UUID] = None) -> bool:
-        """Delete feedback by ID - optionally verify ownership"""
+    async def delete_feedback(
+        self, feedback_id: str, user_id: Optional[UUID] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete feedback by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
 
         filters = [FeedbackDB.id == feedback_id]
-        if user_id:
+        if user_id and not is_admin:
             filters.append(FeedbackDB.user_id == user_id)
 
         stmt = select(FeedbackDB).where(and_(*filters))

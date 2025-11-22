@@ -51,11 +51,11 @@ def generate_unique_session_id() -> str:
 
 async def test_file_repository_with_async_session(async_transaction):
     """Test that FileRepository works with AsyncSession following AsyncSessionFactory pattern"""
-    # Arrange - Use unique session ID for isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for isolation
+    owner_id = generate_unique_session_id()
     test_file = UploadedFile(
         id=str(uuid4()),
-        session_id=session_id,
+        owner_id=owner_id,
         filename="test_document.pdf",
         file_type="application/pdf",
         file_size=1024,
@@ -74,17 +74,17 @@ async def test_file_repository_with_async_session(async_transaction):
         # Assert - Verify saved
         assert saved_file.id == test_file.id
         assert saved_file.filename == test_file.filename
-        assert saved_file.session_id == test_file.session_id
+        assert saved_file.owner_id == test_file.owner_id
 
 
 async def test_file_repository_with_config_service(async_transaction):
     """Test that FileRepository works with ConfigService injection following ADR-010"""
-    # Arrange - Use unique session ID for isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for isolation
+    owner_id = generate_unique_session_id()
     mock_config = create_mock_config_service()
     test_file = UploadedFile(
         id=str(uuid4()),
-        session_id=session_id,
+        owner_id=owner_id,
         filename="config_test.pdf",
         file_type="application/pdf",
         file_size=1024,
@@ -103,17 +103,17 @@ async def test_file_repository_with_config_service(async_transaction):
         # Assert - Verify saved and config service used
         assert saved_file.id == test_file.id
         assert saved_file.filename == test_file.filename
-        assert saved_file.session_id == test_file.session_id
+        assert saved_file.owner_id == test_file.owner_id
 
 
 async def test_get_file_by_id(async_transaction):
     """Test retrieving file by ID using AsyncSession"""
-    # Arrange - Use unique session ID for isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for isolation
+    owner_id = generate_unique_session_id()
     file_id = str(uuid4())
     test_file = UploadedFile(
         id=file_id,
-        session_id=session_id,
+        owner_id=owner_id,
         filename="retrieval_test.pdf",
         file_type="application/pdf",
         file_size=2048,
@@ -135,24 +135,24 @@ async def test_get_file_by_id(async_transaction):
         assert retrieved_file is not None
         assert retrieved_file.id == file_id
         assert retrieved_file.filename == "retrieval_test.pdf"
-        assert retrieved_file.session_id == session_id
+        assert retrieved_file.owner_id == owner_id
         assert retrieved_file.file_size == 2048
 
 
 async def test_get_files_for_session(async_transaction):
     """Test listing files for a session using AsyncSession with enhanced isolation"""
-    # Arrange - Use unique session ID for complete isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for complete isolation
+    owner_id = generate_unique_session_id()
 
     async with async_transaction as session:
         repo = FileRepository(session)
 
-        # Create multiple files for the session
+        # Create multiple files for the owner
         files = []
         for i in range(3):
             file = UploadedFile(
                 id=str(uuid4()),
-                session_id=session_id,
+                owner_id=owner_id,
                 filename=f"file_{i}.txt",
                 file_type="text/plain",
                 file_size=100 * (i + 1),
@@ -165,8 +165,8 @@ async def test_get_files_for_session(async_transaction):
             files.append(file)
             await repo.save_file_metadata(file)
 
-        # Act - Get files for session
-        session_files = await repo.get_files_for_session(session_id, limit=10)
+        # Act - Get files for owner
+        session_files = await repo.get_files_for_session(owner_id, limit=10)
 
         # Assert - Verify exact count and isolation
         assert len(session_files) == 3, f"Expected 3 files, got {len(session_files)}"
@@ -178,8 +178,8 @@ async def test_get_files_for_session(async_transaction):
 
 async def test_search_files_by_name(async_transaction):
     """Test searching files by name pattern using AsyncSession with enhanced isolation"""
-    # Arrange - Use unique session ID for complete isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for complete isolation
+    owner_id = generate_unique_session_id()
 
     async with async_transaction as session:
         repo = FileRepository(session)
@@ -196,7 +196,7 @@ async def test_search_files_by_name(async_transaction):
         for filename, file_type in test_files:
             file = UploadedFile(
                 id=str(uuid4()),
-                session_id=session_id,
+                owner_id=owner_id,
                 filename=filename,
                 file_type=file_type,
                 file_size=1000,
@@ -209,7 +209,7 @@ async def test_search_files_by_name(async_transaction):
             await repo.save_file_metadata(file)
 
         # Act - Search for files containing "requirements"
-        found_files = await repo.search_files_by_name(session_id, "requirements")
+        found_files = await repo.search_files_by_name(owner_id, "requirements")
 
         # Assert - Verify exact count and isolation
         assert len(found_files) == 3, f"Expected 3 files, got {len(found_files)}"
@@ -222,12 +222,12 @@ async def test_search_files_by_name(async_transaction):
 
 async def test_increment_reference_count(async_transaction):
     """Test incrementing reference count using AsyncSession with enhanced isolation"""
-    # Arrange - Use unique session ID for isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for isolation
+    owner_id = generate_unique_session_id()
     file_id = str(uuid4())
     test_file = UploadedFile(
         id=file_id,
-        session_id=session_id,
+        owner_id=owner_id,
         filename="important.doc",
         file_type="application/msword",
         file_size=5000,
@@ -252,12 +252,12 @@ async def test_increment_reference_count(async_transaction):
 
 async def test_delete_file(async_transaction):
     """Test deleting file using AsyncSession with enhanced isolation"""
-    # Arrange - Use unique session ID for isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for isolation
+    owner_id = generate_unique_session_id()
     file_id = str(uuid4())
     test_file = UploadedFile(
         id=file_id,
-        session_id=session_id,
+        owner_id=owner_id,
         filename="delete_test.pdf",
         file_type="application/pdf",
         file_size=1024,
@@ -293,11 +293,11 @@ async def test_repository_inherits_from_base(async_transaction):
 
 async def test_file_repository_returns_domain_models(async_transaction):
     """Test that FileRepository returns domain models, not DB models"""
-    # Arrange - Use unique session ID for isolation
-    session_id = generate_unique_session_id()
+    # Arrange - Use unique owner ID for isolation
+    owner_id = generate_unique_session_id()
     test_file = UploadedFile(
         id=str(uuid4()),
-        session_id=session_id,
+        owner_id=owner_id,
         filename="domain_test.pdf",
         file_type="application/pdf",
         file_size=1024,
@@ -319,4 +319,4 @@ async def test_file_repository_returns_domain_models(async_transaction):
         assert isinstance(retrieved_file, UploadedFile)
         assert not isinstance(retrieved_file, UploadedFileDB)
         assert retrieved_file.filename == "domain_test.pdf"
-        assert retrieved_file.session_id == session_id
+        assert retrieved_file.owner_id == owner_id

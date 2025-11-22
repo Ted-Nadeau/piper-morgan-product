@@ -1,6 +1,6 @@
 # Domain Models Reference
 
-**Last Updated**: November 22, 2025 (SEC-RBAC Phase 3 - UploadedFile ownership)
+**Last Updated**: November 22, 2025 (SEC-RBAC Phase 3 - Admin bypass pattern in 5 repositories)
 **Status**: ✅ Complete and Current
 **File**: `services/domain/models.py`
 
