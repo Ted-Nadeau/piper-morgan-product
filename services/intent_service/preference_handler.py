@@ -336,7 +336,16 @@ class PreferenceDetectionHandler:
                 }
 
             # Reconstruct hint data
-            dimension = PreferenceDimension[hint_dict["dimension"].upper()]
+            # hint_dict["dimension"] contains enum value like "warmth_level"
+            # We need to find the enum member with that value
+            dimension_value = hint_dict["dimension"]
+            dimension = None
+            for dim in PreferenceDimension:
+                if dim.value == dimension_value:
+                    dimension = dim
+                    break
+            if not dimension:
+                raise ValueError(f"Unknown preference dimension: {dimension_value}")
             current_value = hint_dict["current_value"]
             detected_value = hint_dict["detected_value"]
 
