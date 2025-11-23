@@ -55,12 +55,16 @@ def upgrade() -> None:
 
     # Delete any rows that have non-UUID id values (like "system_default")
     # Keep only rows with valid UUID-like values or NULL
+    # UUIDs are 36 chars: 8-4-4-4-12 hex digits with dashes
+    uuid_pattern = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+    # Clean up users table
     conn.execute(
         sa.text(
-            """
+            f"""
         DELETE FROM users
         WHERE id IS NOT NULL
-        AND id !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+        AND id !~ '{uuid_pattern}';
     """
         )
     )
@@ -74,6 +78,45 @@ def upgrade() -> None:
         )
     )
     conn.execute(sa.text("ALTER TABLE users ALTER COLUMN id SET DEFAULT gen_random_uuid();"))
+
+    # Clean up FK columns before converting their types
+    print("  - Cleaning non-UUID values from FK columns...")
+    conn.execute(
+        sa.text(
+            f"""
+        DELETE FROM feedback
+        WHERE user_id IS NOT NULL
+        AND user_id !~ '{uuid_pattern}';
+    """
+        )
+    )
+    conn.execute(
+        sa.text(
+            f"""
+        DELETE FROM personality_profiles
+        WHERE user_id IS NOT NULL
+        AND user_id !~ '{uuid_pattern}';
+    """
+        )
+    )
+    conn.execute(
+        sa.text(
+            f"""
+        DELETE FROM token_blacklist
+        WHERE user_id IS NOT NULL
+        AND user_id !~ '{uuid_pattern}';
+    """
+        )
+    )
+    conn.execute(
+        sa.text(
+            f"""
+        DELETE FROM user_api_keys
+        WHERE user_id IS NOT NULL
+        AND user_id !~ '{uuid_pattern}';
+    """
+        )
+    )
 
     # Step 2: Add is_alpha flag to users
     print("Adding is_alpha flag to users...")
