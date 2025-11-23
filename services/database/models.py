@@ -572,7 +572,7 @@ class UploadedFileDB(Base):
     __tablename__ = "uploaded_files"
 
     id = Column(String, primary_key=True)
-    owner_id = Column(String, nullable=False)
+    owner_id = Column(postgresql.UUID(as_uuid=False), nullable=False)  # UUID type in database
     filename = Column(String(500), nullable=False)
     file_type = Column(String(255))
     file_size = Column(Integer)
@@ -581,7 +581,6 @@ class UploadedFileDB(Base):
     last_referenced = Column(DateTime, nullable=True)
     reference_count = Column(Integer, default=0)
     file_metadata = Column(JSON, default=dict)
-    item_metadata = Column(JSON, default=dict)
 
     __table_args__ = (
         Index("idx_files_owner", "owner_id", "upload_time"),
@@ -591,7 +590,7 @@ class UploadedFileDB(Base):
     def to_domain(self) -> domain.UploadedFile:
         return domain.UploadedFile(
             id=self.id,
-            owner_id=self.owner_id,
+            owner_id=str(self.owner_id) if self.owner_id else None,
             filename=self.filename,
             file_type=self.file_type,
             file_size=self.file_size,
@@ -599,7 +598,7 @@ class UploadedFileDB(Base):
             upload_time=self.upload_time,
             last_referenced=self.last_referenced,
             reference_count=self.reference_count,
-            metadata=self.item_metadata or {},
+            metadata={},  # Not stored separately in database
             file_metadata=self.file_metadata or {},
         )
 
@@ -607,7 +606,7 @@ class UploadedFileDB(Base):
     def from_domain(cls, file: domain.UploadedFile) -> "UploadedFileDB":
         return cls(
             id=file.id,
-            owner_id=file.owner_id,
+            owner_id=file.owner_id,  # Will be converted to UUID by SQLAlchemy
             filename=file.filename,
             file_type=file.file_type,
             file_size=file.file_size,
@@ -616,7 +615,6 @@ class UploadedFileDB(Base):
             last_referenced=file.last_referenced,
             reference_count=file.reference_count,
             file_metadata=file.file_metadata,
-            item_metadata=file.metadata,
         )
 
 
@@ -1423,7 +1421,7 @@ class TodoDB(ItemDB):
     completion_notes = Column(Text, default="")
 
     # PM-040 Knowledge Graph integration
-    list_metadata = Column("metadata", JSON, default=dict)
+    list_metadata = Column("list_metadata", JSON, default=dict)
     knowledge_node_id = Column(String)  # Link to Knowledge Graph
     related_todos = Column(JSON, default=list)  # Array of todo IDs
 

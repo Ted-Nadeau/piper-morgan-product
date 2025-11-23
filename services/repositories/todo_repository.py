@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import services.domain.models as domain
-from services.database.models import ListMembershipDB, TodoDB, TodoListDB
+from services.database.models import ItemDB, ListMembershipDB, TodoDB, TodoListDB
 from services.database.repositories import BaseRepository
 from services.shared_types import ListType, OrderingStrategy, TodoPriority, TodoStatus
 
@@ -340,16 +340,41 @@ class TodoRepository(BaseRepository):
         self, todo_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
     ) -> Optional[domain.Todo]:
         """Update todo with optimistic field updates (admin bypass in SEC-RBAC Phase 3)"""
-        updates["updated_at"] = datetime.now()
+        # Separate inherited fields (from ItemDB) from child-specific fields (from TodoDB)
+        inherited_fields = {"text", "position", "list_id", "created_at"}
+        child_updates = {k: v for k, v in updates.items() if k not in inherited_fields}
+        parent_updates = {k: v for k, v in updates.items() if k in inherited_fields}
 
         filters = [TodoDB.id == todo_id]
         if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(TodoDB.owner_id == owner_id)
 
-        result = await self.session.execute(
-            update(TodoDB).where(and_(*filters)).values(**updates).returning(TodoDB)
-        )
+        # Always update updated_at on parent table (ItemDB)
+        parent_updates["updated_at"] = datetime.now()
+
+        # Build query to fetch the todo first
+        select_stmt = select(TodoDB).where(and_(*filters))
+        result = await self.session.execute(select_stmt)
         db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None
+
+        # Update parent (ItemDB) fields if any exist
+        if parent_updates:
+            parent_stmt = update(ItemDB).where(ItemDB.id == todo_id).values(**parent_updates)
+            await self.session.execute(parent_stmt)
+
+        # Update child (TodoDB) fields if any exist
+        if child_updates:
+            child_stmt = update(TodoDB).where(TodoDB.id == todo_id).values(**child_updates)
+            await self.session.execute(child_stmt)
+
+        # Refresh the todo to get updated values
+        if parent_updates or child_updates:
+            result = await self.session.execute(select_stmt)
+            db_todo = result.scalar_one_or_none()
+
         return db_todo.to_domain() if db_todo else None
 
     async def complete_todo(

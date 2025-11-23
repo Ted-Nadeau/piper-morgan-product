@@ -7,13 +7,67 @@ for isolation. No mocking - tests verify actual system behavior.
 Issue #292 - CORE-ALPHA-AUTH-INTEGRATION-TESTS
 """
 
+from datetime import datetime
+from uuid import UUID
+
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import insert, text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 # Mark all tests in integration/ as integration tests
 pytestmark = pytest.mark.integration
+
+
+def create_test_user_fn(session: AsyncSession):
+    """
+    Factory function to create a test user creator for a specific session.
+
+    Returns a callable that creates users in the given session.
+    Ensures FK constraints are satisfied for tests.
+    """
+
+    async def _create_user(user_id: str, username: str = None, email: str = None):
+        """Create a test user with minimal required fields"""
+        if username is None:
+            username = f"test_user_{user_id[:8]}"
+        if email is None:
+            email = f"{username}@example.com"
+
+        # Insert user directly using raw SQL
+        # This bypasses any domain validation and ensures the user exists for FK constraints
+        await session.execute(
+            text(
+                """
+                INSERT INTO users (id, username, email, password_hash, is_active, is_verified,
+                                   created_at, updated_at, role, is_alpha)
+                VALUES (:id, :username, :email, '', true, false, :created_at, :updated_at, 'user', true)
+                ON CONFLICT (id) DO NOTHING
+            """
+            ),
+            {
+                "id": user_id,
+                "username": username,
+                "email": email,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            },
+        )
+        await session.flush()
+
+    return _create_user
+
+
+@pytest.fixture
+async def create_test_user(integration_db: AsyncSession):
+    """
+    Fixture to create a test user in the database.
+
+    Returns a callable that creates users with the given UUID.
+    Ensures FK constraints are satisfied for tests.
+    """
+    return create_test_user_fn(integration_db)
 
 
 @pytest.fixture(scope="session")

@@ -9,14 +9,45 @@ ADR: ADR-044 (Lightweight RBAC)
 Phase: 3 - System-wide admin role testing
 """
 
+from datetime import datetime
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import text
 
 from services.domain import models as domain
 from services.repositories.file_repository import FileRepository
 from services.repositories.todo_repository import TodoRepository
 from services.repositories.universal_list_repository import UniversalListRepository
+
+
+async def create_test_user_in_session(
+    session, user_id: str, username: str = None, email: str = None
+):
+    """Helper to create a test user in a specific session."""
+    if username is None:
+        username = f"test_user_{user_id[:8]}"
+    if email is None:
+        email = f"{username}@example.com"
+
+    await session.execute(
+        text(
+            """
+            INSERT INTO users (id, username, email, password_hash, is_active, is_verified,
+                               created_at, updated_at, role, is_alpha)
+            VALUES (:id, :username, :email, '', true, false, :created_at, :updated_at, 'user', true)
+            ON CONFLICT (id) DO NOTHING
+        """
+        ),
+        {
+            "id": user_id,
+            "username": username,
+            "email": email,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        },
+    )
+    await session.flush()
 
 
 @pytest.mark.asyncio
@@ -367,6 +398,7 @@ class TestCrossUserTodoAccess:
             assert result is True, "Admin should be able to delete any todo"
 
 
+@pytest.mark.asyncio
 class TestCrossUserFileAccess:
     """Test file access control across users with owner_id enforcement"""
 
@@ -376,6 +408,10 @@ class TestCrossUserFileAccess:
         user_b_id = str(uuid4())
 
         async with async_transaction as session:
+            # Create test users to satisfy FK constraints
+            await create_test_user_in_session(session, user_a_id)
+            await create_test_user_in_session(session, user_b_id)
+
             file_repo = FileRepository(session)
             file_b = domain.UploadedFile(
                 id=str(uuid4()),
@@ -396,6 +432,10 @@ class TestCrossUserFileAccess:
         user_b_id = str(uuid4())
 
         async with async_transaction as session:
+            # Create test users to satisfy FK constraints
+            await create_test_user_in_session(session, user_a_id)
+            await create_test_user_in_session(session, user_b_id)
+
             file_repo = FileRepository(session)
             file_b = domain.UploadedFile(
                 id=str(uuid4()),
@@ -415,6 +455,9 @@ class TestCrossUserFileAccess:
         owner_id = str(uuid4())
 
         async with async_transaction as session:
+            # Create test user to satisfy FK constraints
+            await create_test_user_in_session(session, owner_id)
+
             file_repo = FileRepository(session)
             my_file = domain.UploadedFile(
                 id=str(uuid4()),
@@ -436,6 +479,10 @@ class TestCrossUserFileAccess:
         admin_id = str(uuid4())
 
         async with async_transaction as session:
+            # Create test users to satisfy FK constraints
+            await create_test_user_in_session(session, owner_id)
+            await create_test_user_in_session(session, admin_id)
+
             file_repo = FileRepository(session)
             any_file = domain.UploadedFile(
                 id=str(uuid4()),

@@ -924,6 +924,10 @@ class List:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
+    # Performance optimization - cached counts (SEC-RBAC Phase 1)
+    item_count: int = 0  # Total items in list (cached for performance)
+    completed_count: int = 0  # Completed items in list (cached for performance)
+
     def get_user_role(self, user_id: str) -> Optional[ShareRole]:
         """Get user's role for this list (returns owner for owner, or role from shared_with)"""
         if self.owner_id == user_id:
@@ -972,6 +976,8 @@ class List:
             "shared_with": [perm.to_dict() for perm in self.shared_with],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "item_count": self.item_count,
+            "completed_count": self.completed_count,
         }
 
 
