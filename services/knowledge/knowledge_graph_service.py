@@ -148,13 +148,19 @@ class KnowledgeGraphService:
         metadata: Optional[Dict[str, Any]] = None,
         properties: Optional[Dict[str, Any]] = None,
         session_id: Optional[str] = None,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> KnowledgeEdge:
         """
-        Create an edge between two nodes with validation
+        Create an edge between two nodes with validation (SEC-RBAC Phase 3: admins can create edges in any graph)
         """
-        # Verify both nodes exist
-        source_node = await self.repo.get_node_by_id(source_node_id)
-        target_node = await self.repo.get_node_by_id(target_node_id)
+        # Verify both nodes exist - with optional ownership verification
+        source_node = await self.repo.get_node_by_id(
+            source_node_id, owner_id if owner_id and not is_admin else None
+        )
+        target_node = await self.repo.get_node_by_id(
+            target_node_id, owner_id if owner_id and not is_admin else None
+        )
 
         if not source_node:
             raise ValueError(f"Source node {source_node_id} not found")
