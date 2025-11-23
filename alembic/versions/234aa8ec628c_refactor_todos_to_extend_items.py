@@ -141,7 +141,7 @@ def upgrade() -> None:
             estimated_minutes,
             actual_minutes,
             COALESCE(completion_notes, ''),
-            metadata as list_metadata,
+            list_metadata,
             knowledge_node_id,
             related_todos,
             creation_intent,

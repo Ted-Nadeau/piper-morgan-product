@@ -40,7 +40,7 @@ def upgrade() -> None:
         sa.Column("emoji", sa.String(4), nullable=True),
         sa.Column("is_archived", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("is_default", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("metadata", postgresql.JSONB(none_as_null=True), nullable=True),
+        sa.Column("list_metadata", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("tags", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
@@ -97,7 +97,7 @@ def upgrade() -> None:
         """
         INSERT INTO lists (
             id, name, description, item_type, list_type, ordering_strategy,
-            color, emoji, is_archived, is_default, metadata, tags,
+            color, emoji, is_archived, is_default, list_metadata, tags,
             created_at, updated_at, owner_id, shared_with,
             item_count, completed_count
         )
@@ -105,7 +105,7 @@ def upgrade() -> None:
             id, name, description, 'todo',
             LOWER(list_type::text),
             LOWER(ordering_strategy::text),
-            color, emoji, is_archived, is_default, metadata, tags,
+            color, emoji, is_archived, is_default, list_metadata, tags,
             created_at, updated_at, owner_id, shared_with,
             todo_count, completed_count
         FROM todo_lists
@@ -151,7 +151,7 @@ def upgrade() -> None:
         sa.Column("estimated_minutes", sa.Integer(), nullable=True),
         sa.Column("actual_minutes", sa.Integer(), nullable=True),
         sa.Column("completion_notes", sa.Text(), nullable=True),
-        sa.Column("metadata", postgresql.JSONB(none_as_null=True), nullable=True),
+        sa.Column("list_metadata", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("knowledge_node_id", sa.String(), nullable=True),
         sa.Column("related_todos", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("creation_intent", sa.String(), nullable=True),
@@ -176,7 +176,7 @@ def upgrade() -> None:
             LOWER(priority::text),
             parent_id, position, due_date, reminder_date, scheduled_date,
             tags, project_id, context, estimated_minutes, actual_minutes,
-            completion_notes, metadata, knowledge_node_id, related_todos,
+            completion_notes, list_metadata, knowledge_node_id, related_todos,
             creation_intent, intent_confidence, external_refs,
             created_at, updated_at, completed_at, owner_id, assigned_to
         FROM todos
