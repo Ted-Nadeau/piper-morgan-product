@@ -12,6 +12,7 @@ Flow:
 """
 
 import logging
+from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
@@ -26,6 +27,10 @@ from services.personality.preference_detection import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Session-based storage for temporary hints (30-minute TTL)
+# Maps: session_id -> {hint_id -> PreferenceHint}
+_SESSION_HINTS: Dict[str, Dict[str, dict]] = {}
 
 
 class PreferenceDetectionHandler:
@@ -84,7 +89,10 @@ class PreferenceDetectionHandler:
                     f"{len(detection_result.suggested_hints)} ready for suggestion"
                 )
 
-            # Store hints in session context for later retrieval
+            # Store hints in session context for later retrieval (30-minute TTL)
+            if session_id:
+                await self._store_hints_in_session(session_id, detection_result.suggested_hints)
+
             return {
                 "success": True,
                 "hints": [h.to_dict() for h in detection_result.hints],
@@ -293,7 +301,7 @@ class PreferenceDetectionHandler:
         """
         Handle user's acceptance/rejection of preference suggestion.
 
-        Called when user interacts with suggestion UI.
+        Called when user interacts with suggestion UI (Phase 2.2).
 
         Args:
             user_id: User ID
@@ -302,10 +310,12 @@ class PreferenceDetectionHandler:
             accepted: True if user accepted, False if rejected
 
         Returns:
-            Dict with confirmation result
+            Dict with confirmation result and updated preference info
         """
+        # Handle rejection (no storage needed)
         if not accepted:
             logger.info(f"User {user_id} rejected preference hint {hint_id}")
+            # In future phases: log rejection to learning system for refinement
             return {
                 "success": True,
                 "action": "rejected",
@@ -313,17 +323,59 @@ class PreferenceDetectionHandler:
             }
 
         try:
-            # Note: In Phase 2, we'll retrieve the full PreferenceHint from storage
-            # For now, this is a placeholder for the acceptance flow
-            # Real implementation will load hint from session context
+            # Retrieve hint from session storage
+            hint_dict = await self._retrieve_hint_from_session(session_id, hint_id)
+            if not hint_dict:
+                logger.warning(
+                    f"Preference hint {hint_id} not found in session {session_id} for user {user_id}"
+                )
+                return {
+                    "success": False,
+                    "error": "Preference suggestion not found or expired",
+                    "hint_id": hint_id,
+                }
 
-            logger.info(f"User {user_id} accepted preference hint {hint_id}")
+            # Reconstruct hint data
+            dimension = PreferenceDimension[hint_dict["dimension"].upper()]
+            current_value = hint_dict["current_value"]
+            detected_value = hint_dict["detected_value"]
+
+            # Create confirmation record
+            confirmation = PreferenceConfirmation(
+                id=f"confirm_{uuid4().hex[:8]}",
+                user_id=user_id,
+                dimension=dimension,
+                new_value=detected_value,
+                previous_value=current_value,
+                hint_id=hint_id,
+                confirmation_source="user_accepted",
+            )
+
+            # Store preference in UserPreferenceManager (persistent)
+            pref_key = f"personality_{dimension.value}"
+            await self.preference_manager.set_preference(
+                key=pref_key,
+                value=str(detected_value),
+                user_id=UUID(user_id) if user_id != "user_id" else None,
+                scope="user" if user_id else "global",
+            )
+
+            # Log to learning system
+            await self._log_preference_to_learning(confirmation)
+
+            logger.info(
+                f"User {user_id} accepted and applied preference: "
+                f"{dimension.value} = {detected_value}"
+            )
 
             return {
                 "success": True,
                 "action": "accepted",
                 "hint_id": hint_id,
-                "message": "Preference updated. This will be applied to your profile.",
+                "dimension": dimension.value,
+                "previous_value": str(current_value),
+                "new_value": str(detected_value),
+                "message": f"Preference updated! Your {dimension.value} setting is now {detected_value}",
             }
 
         except Exception as e:
@@ -417,3 +469,78 @@ class PreferenceDetectionHandler:
             )
         else:
             return f"We think you might prefer: {hint.detected_value}"
+
+    async def _store_hints_in_session(self, session_id: str, hints: list[PreferenceHint]) -> None:
+        """
+        Store preference hints in session context for later retrieval.
+
+        Hints are stored temporarily with 30-minute TTL for use by confirm_preference().
+
+        Args:
+            session_id: Current session ID
+            hints: List of PreferenceHint objects to store
+        """
+        if not session_id or not hints:
+            return
+
+        try:
+            # Initialize session storage if needed
+            if session_id not in _SESSION_HINTS:
+                _SESSION_HINTS[session_id] = {}
+
+            # Store each hint as dict for JSON serialization
+            for hint in hints:
+                _SESSION_HINTS[session_id][hint.id] = {
+                    "id": hint.id,
+                    "dimension": hint.dimension.value,
+                    "current_value": str(hint.current_value),
+                    "detected_value": str(hint.detected_value),
+                    "confidence_score": hint.confidence_score,
+                    "detection_method": hint.detection_method.value,
+                    "stored_at": datetime.now().isoformat(),
+                    "ttl_minutes": 30,
+                }
+
+            logger.debug(f"Stored {len(hints)} preference hints in session {session_id}")
+
+        except Exception as e:
+            logger.error(f"Error storing hints in session {session_id}: {e}")
+
+    async def _retrieve_hint_from_session(
+        self, session_id: Optional[str], hint_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve a preference hint from session storage.
+
+        Checks expiration (30-minute TTL) and removes expired hints.
+
+        Args:
+            session_id: Current session ID (required to find hint)
+            hint_id: ID of the hint to retrieve
+
+        Returns:
+            Hint dict if found and not expired, None otherwise
+        """
+        if not session_id or session_id not in _SESSION_HINTS:
+            return None
+
+        if hint_id not in _SESSION_HINTS[session_id]:
+            return None
+
+        try:
+            hint_dict = _SESSION_HINTS[session_id][hint_id]
+
+            # Check expiration (30-minute TTL)
+            stored_at = datetime.fromisoformat(hint_dict["stored_at"])
+            age_minutes = (datetime.now() - stored_at).total_seconds() / 60
+            if age_minutes > 30:
+                # Expired - remove it
+                del _SESSION_HINTS[session_id][hint_id]
+                logger.debug(f"Preference hint {hint_id} expired (age: {age_minutes:.1f} min)")
+                return None
+
+            return hint_dict
+
+        except Exception as e:
+            logger.error(f"Error retrieving hint {hint_id} from session {session_id}: {e}")
+            return None

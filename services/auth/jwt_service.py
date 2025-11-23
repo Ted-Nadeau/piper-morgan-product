@@ -464,6 +464,105 @@ class JWTService:
             logger.error("Token revocation failed", error=str(e))
             return False
 
+    async def change_password(
+        self,
+        user_id: UUID,
+        current_password: str,
+        new_password_hash: str,
+        current_token: str,
+        session: AsyncSession,
+        password_service: Any,
+    ) -> bool:
+        """
+        Change user password and invalidate current token.
+
+        Validates current password, updates user's password hash, and revokes
+        the current access token to force re-authentication.
+
+        Args:
+            user_id: User ID whose password is changing
+            current_password: User's current password (for verification)
+            new_password_hash: Already-hashed new password (from PasswordService.hash_password)
+            current_token: Current JWT token to revoke
+            session: Database session for password update
+            password_service: PasswordService instance for verification
+
+        Returns:
+            True if password changed successfully, False otherwise
+
+        Raises:
+            ValueError: If current password is incorrect
+
+        Issue #298: AUTH-PASSWORD-CHANGE
+        """
+        try:
+            # Import here to avoid circular dependencies
+            from sqlalchemy import select
+
+            from services.database.models import User
+
+            # Query user to get current password hash
+            result = await session.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+
+            if not user:
+                logger.error(
+                    "Password change failed: user not found",
+                    user_id=user_id,
+                )
+                raise ValueError("User not found")
+
+            # Verify current password before making changes
+            # This is a critical security check
+            is_valid = password_service.verify_password(current_password, user.password_hash)
+
+            if not is_valid:
+                logger.warning(
+                    "Password change failed: incorrect current password",
+                    user_id=user_id,
+                )
+                raise ValueError("Current password is incorrect")
+
+            # Update password hash
+            user.password_hash = new_password_hash
+            await session.commit()
+
+            # Revoke current token (user must login again with new password)
+            success = await self.revoke_token(
+                token=current_token,
+                reason="password_change",
+                user_id=user_id,
+                session=session,
+            )
+
+            if success:
+                logger.info(
+                    "Password changed successfully",
+                    user_id=user_id,
+                    token_revoked=True,
+                )
+                return True
+            else:
+                logger.warning(
+                    "Password changed but token revocation failed",
+                    user_id=user_id,
+                )
+                # Password was changed even if token revocation failed
+                # This is acceptable - user can still login with new password
+                return True
+
+        except ValueError:
+            # Re-raise validation errors
+            raise
+        except Exception as e:
+            logger.error(
+                "Password change failed",
+                user_id=user_id,
+                error=str(e),
+                exc_info=True,
+            )
+            return False
+
     async def get_token_info(self, token: str) -> Optional[Dict[str, Any]]:
         """
         Get token information for introspection (OAuth 2.0 style).

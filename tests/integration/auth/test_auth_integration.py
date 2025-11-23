@@ -297,7 +297,209 @@ async def test_concurrent_session_handling(real_client, integration_db):
 
 
 # ============================================================================
-# Test 5: Password Change Invalidation
+# Test 5: Password Change Invalidates Tokens
 # ============================================================================
-# Note: Skipped - /auth/change-password endpoint not implemented yet
-# This test can be enabled when password change functionality is added
+
+
+@pytest.mark.integration
+async def test_password_change_invalidates_tokens(real_client, integration_db):
+    """
+    Verify password change invalidates existing tokens.
+
+    This test was deferred from Issue #292 because the password change
+    endpoint didn't exist yet. Now it can be implemented.
+
+    Success Criteria:
+    - User can change password with correct current password
+    - New password meets strength requirements
+    - Old token is immediately blacklisted
+    - Old token returns 401 Unauthorized after password change
+    - Login with new password works
+    - New token is valid and works for authenticated endpoints
+
+    Issue #298: AUTH-PASSWORD-CHANGE
+    """
+    # Generate unique test data
+    unique_id = uuid4().hex[:8]
+
+    # Create user and login
+    ps = PasswordService()
+    old_password = "OldPass123!"
+    hashed = ps.hash_password(old_password)
+
+    test_user = User(
+        username=f"pwchangeuser_{unique_id}",
+        email=f"pwchange_{unique_id}@example.com",
+        password_hash=hashed,
+    )
+
+    integration_db.add(test_user)
+    await integration_db.commit()
+    await integration_db.refresh(test_user)
+    user_id = test_user.id
+
+    # Login with old password
+    login_data = {"username": f"pwchangeuser_{unique_id}", "password": old_password}
+    response = await real_client.post("/auth/login", json=login_data)
+    assert response.status_code == 200, f"Initial login failed: {response.text}"
+    old_token = response.json()["token"]
+
+    # Verify old token works before password change
+    headers = {"Authorization": f"Bearer {old_token}"}
+    response = await real_client.get("/auth/me", headers=headers)
+    assert response.status_code == 200, "Old token should work before password change"
+
+    # Change password
+    new_password = "NewPass456!"
+    change_data = {
+        "current_password": old_password,
+        "new_password": new_password,
+        "new_password_confirm": new_password,
+    }
+    response = await real_client.post(
+        "/auth/change-password",
+        json=change_data,
+        headers=headers,
+    )
+    assert response.status_code == 200, f"Password change failed: {response.text}"
+    response_data = response.json()
+    assert response_data["success"] is True
+    assert "new password" in response_data["message"].lower()
+
+    # Old token should NO LONGER work
+    response = await real_client.get("/auth/me", headers=headers)
+    assert response.status_code == 401, "Old token should be invalidated after password change"
+
+    # Verify token is blacklisted in database
+    stmt = select(TokenBlacklist).where(TokenBlacklist.user_id == user_id)
+    result = await integration_db.execute(stmt)
+    blacklist_entries = result.scalars().all()
+    assert len(blacklist_entries) > 0, "Token should be blacklisted"
+
+    # Verify blacklist entry has correct reason
+    reasons = [entry.reason for entry in blacklist_entries]
+    assert "password_change" in reasons, f"Expected 'password_change' reason, got: {reasons}"
+
+    # Login with NEW password should work
+    login_data["password"] = new_password
+    response = await real_client.post("/auth/login", json=login_data)
+    assert response.status_code == 200, "Login with new password should work"
+    new_token = response.json()["token"]
+
+    # New token should work
+    headers = {"Authorization": f"Bearer {new_token}"}
+    response = await real_client.get("/auth/me", headers=headers)
+    assert response.status_code == 200, "New token should work"
+    assert response.json()["username"] == f"pwchangeuser_{unique_id}"
+
+
+# ============================================================================
+# Test 6: Password Change Validation (Password Requirements)
+# ============================================================================
+
+
+@pytest.mark.integration
+async def test_password_change_validation(real_client, integration_db):
+    """
+    Verify password change validates new password strength requirements.
+
+    Success Criteria:
+    - Too short password (< 8 chars) rejected
+    - Password missing uppercase letter rejected
+    - Password missing lowercase letter rejected
+    - Password missing digit rejected
+    - Password missing special character rejected
+    - Passwords not matching rejected
+    - Invalid current password rejected
+
+    Issue #298: AUTH-PASSWORD-CHANGE
+    """
+    # Generate unique test data
+    unique_id = uuid4().hex[:8]
+
+    # Create user and login
+    ps = PasswordService()
+    current_password = "Current123!"
+    hashed = ps.hash_password(current_password)
+
+    test_user = User(
+        username=f"validationuser_{unique_id}",
+        email=f"validation_{unique_id}@example.com",
+        password_hash=hashed,
+    )
+
+    integration_db.add(test_user)
+    await integration_db.commit()
+    await integration_db.refresh(test_user)
+
+    # Login to get token
+    login_data = {"username": f"validationuser_{unique_id}", "password": current_password}
+    response = await real_client.post("/auth/login", json=login_data)
+    assert response.status_code == 200
+    token = response.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Test 1: Password too short
+    change_data = {
+        "current_password": current_password,
+        "new_password": "Short1!",
+        "new_password_confirm": "Short1!",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 400, "Too short password should be rejected"
+
+    # Test 2: Missing uppercase
+    change_data = {
+        "current_password": current_password,
+        "new_password": "lowercase123!",
+        "new_password_confirm": "lowercase123!",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 400, "Missing uppercase should be rejected"
+
+    # Test 3: Missing lowercase
+    change_data = {
+        "current_password": current_password,
+        "new_password": "UPPERCASE123!",
+        "new_password_confirm": "UPPERCASE123!",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 400, "Missing lowercase should be rejected"
+
+    # Test 4: Missing digit
+    change_data = {
+        "current_password": current_password,
+        "new_password": "NoDigits!Pass",
+        "new_password_confirm": "NoDigits!Pass",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 400, "Missing digit should be rejected"
+
+    # Test 5: Missing special character
+    change_data = {
+        "current_password": current_password,
+        "new_password": "NoSpecial123",
+        "new_password_confirm": "NoSpecial123",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 400, "Missing special character should be rejected"
+
+    # Test 6: Passwords don't match
+    change_data = {
+        "current_password": current_password,
+        "new_password": "Valid@Pass123",
+        "new_password_confirm": "Different@Pass1",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 400, "Non-matching passwords should be rejected"
+    assert "do not match" in response.json()["detail"].lower()
+
+    # Test 7: Wrong current password
+    change_data = {
+        "current_password": "WrongPass123!",
+        "new_password": "Valid@NewPass1",
+        "new_password_confirm": "Valid@NewPass1",
+    }
+    response = await real_client.post("/auth/change-password", json=change_data, headers=headers)
+    assert response.status_code == 401, "Wrong current password should be rejected"
+    assert "current password" in response.json()["detail"].lower()

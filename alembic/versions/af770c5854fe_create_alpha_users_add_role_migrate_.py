@@ -133,29 +133,34 @@ def upgrade() -> None:
         )
     )
 
-    # Verify migration succeeded
+    # Verify migration result
     result = conn.execute(sa.text("SELECT COUNT(*) FROM alpha_users WHERE username = 'xian-alpha'"))
     count = result.scalar()
 
     if count == 0:
-        raise Exception("Migration failed: xian-alpha not found in alpha_users")
-
-    print(f"✅ Migration successful: xian-alpha found in alpha_users (count={count})")
+        # Expected for fresh database setup - no development data to migrate
+        # This migration is primarily for schema changes (role column, alpha_users table)
+        # Data migration is conditional (only if user exists from Issue #228)
+        print("ℹ️ Info: No xian-alpha user found to migrate (fresh database setup)")
+    else:
+        print(f"✅ Migration successful: xian-alpha found in alpha_users (count={count})")
 
     # Rename xian-alpha in users table to prevent username conflicts
     # We can't DELETE due to FK constraints (audit_logs, user_api_keys reference users.id)
     # Instead, we rename and mark inactive so authentication will check alpha_users first
     # The alpha_users.xian-alpha is now the canonical active account
-    conn.execute(
-        sa.text(
-            """
-        UPDATE users
-        SET username = 'xian-alpha.migrated',
-            is_active = false
-        WHERE username = 'xian-alpha'
-    """
+    # Only do this if user was found (otherwise table is empty from fresh setup)
+    if count > 0:
+        conn.execute(
+            sa.text(
+                """
+            UPDATE users
+            SET username = 'xian-alpha.migrated',
+                is_active = false
+            WHERE username = 'xian-alpha'
+        """
+            )
         )
-    )
 
 
 def downgrade() -> None:

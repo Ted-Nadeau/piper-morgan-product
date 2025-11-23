@@ -17,8 +17,14 @@ from sqlalchemy import select
 
 from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims, JWTService
-from services.auth.models import LoginRequest, LoginResponse
+from services.auth.models import (
+    LoginRequest,
+    LoginResponse,
+    PasswordChangeRequest,
+    PasswordChangeResponse,
+)
 from services.auth.password_service import PasswordService
+from services.auth.password_validator import PasswordValidator
 from services.database.connection import db
 from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
@@ -335,4 +341,147 @@ async def get_me(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user information",
+        )
+
+
+@router.post("/change-password", response_model=PasswordChangeResponse)
+async def change_password(
+    request: Request,
+    data: PasswordChangeRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    jwt_service: JWTService = Depends(get_jwt_service),
+):
+    """
+    Change user password and invalidate current token.
+
+    Requires valid authentication. User must provide their current password
+    for verification. New password is validated for strength requirements.
+
+    After successful password change:
+    - Current token is added to blacklist
+    - User must log in again with new password
+    - Old token will be rejected (401 Unauthorized)
+
+    Args:
+        request: FastAPI Request object for audit context
+        data: PasswordChangeRequest with current_password, new_password, new_password_confirm
+        current_user: Current authenticated user (from JWT token)
+        credentials: Bearer token credentials
+        jwt_service: JWT service for token management
+
+    Returns:
+        PasswordChangeResponse with success=True and success message
+
+    Raises:
+        HTTPException 400: Password validation fails (specific requirement)
+        HTTPException 400: New passwords don't match
+        HTTPException 401: Current password incorrect
+        HTTPException 401: Token invalid/expired
+        HTTPException 500: Unexpected server error
+
+    Security:
+    - Current password verified before accepting change
+    - New password validated for strength (8+ chars, upper, lower, number, special)
+    - Passwords must match exactly (case-sensitive)
+    - Token invalidated immediately (force re-authentication)
+    - Constant-time password comparison (bcrypt)
+
+    Issue #298: AUTH-PASSWORD-CHANGE
+    """
+    try:
+        # Initialize database if needed
+        if not db._initialized:
+            await db.initialize()
+
+        # Verify new passwords match
+        if data.new_password != data.new_password_confirm:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New passwords do not match",
+            )
+
+        # Validate new password strength
+        is_valid, error_message = PasswordValidator.validate(data.new_password)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_message,
+            )
+
+        # Get database session for password update
+        async with await db.get_session() as session:
+            # Hash new password
+            password_service = PasswordService()
+            new_password_hash = password_service.hash_password(data.new_password)
+
+            # Change password via JWT service
+            # This will verify current password, update password hash, and revoke token
+            token = credentials.credentials
+            try:
+                success = await jwt_service.change_password(
+                    user_id=current_user.user_id,
+                    current_password=data.current_password,
+                    new_password_hash=new_password_hash,
+                    current_token=token,
+                    session=session,
+                    password_service=password_service,
+                )
+
+                if success:
+                    logger.info(
+                        "Password changed successfully",
+                        user_id=current_user.user_id,
+                        username=current_user.user_email,
+                    )
+                    return PasswordChangeResponse(
+                        success=True,
+                        message="Password changed successfully. Please log in with your new password.",
+                    )
+                else:
+                    logger.error(
+                        "Password change failed in service",
+                        user_id=current_user.user_id,
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail="Failed to change password",
+                    )
+
+            except ValueError as e:
+                # Current password incorrect or validation error
+                if "Current password is incorrect" in str(e):
+                    logger.warning(
+                        "Password change failed: incorrect current password",
+                        user_id=current_user.user_id,
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Current password is incorrect",
+                    )
+                else:
+                    logger.warning(
+                        "Password change failed: validation error",
+                        user_id=current_user.user_id,
+                        error=str(e),
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=str(e),
+                    )
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (validation errors, auth failures)
+        raise
+    except Exception as e:
+        # Unexpected errors
+        logger.error(
+            "password_change_error",
+            user_id=current_user.user_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password change failed",
         )
