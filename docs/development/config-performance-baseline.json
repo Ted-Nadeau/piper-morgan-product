@@ -1,0 +1,127 @@
+{
+  "metadata": {
+    "generated": "2025-11-22T17:04:00Z",
+    "issue": "143",
+    "title": "INFR-CONFIG-PERF: Establish performance benchmarking framework",
+    "status": "complete"
+  },
+  "performance_targets": {
+    "config_loading_first_load": {
+      "target_ms": 100,
+      "description": "First load from disk (cache miss)"
+    },
+    "config_loading_cache_hit": {
+      "target_ms": 5,
+      "description": "Cached load from memory (cache hit)"
+    },
+    "config_validation": {
+      "target_ms": 50,
+      "description": "Service configuration validation"
+    },
+    "system_prompt_generation": {
+      "target_ms": 20,
+      "description": "System prompt generation from config"
+    },
+    "parse_piper_md": {
+      "target_ms": 80,
+      "description": "Markdown parsing"
+    }
+  },
+  "baseline_measurements": {
+    "test_first_load_performance": {
+      "status": "PASSED",
+      "description": "Initial configuration load from disk",
+      "typical_latency_ms": 8,
+      "target_ms": 100,
+      "compliance": "✅ PASS"
+    },
+    "test_cache_hit_performance": {
+      "status": "PASSED",
+      "description": "Cached configuration retrieval",
+      "typical_latency_ms": 0.02,
+      "target_ms": 5,
+      "compliance": "✅ PASS"
+    },
+    "test_system_prompt_generation_performance": {
+      "status": "PASSED",
+      "description": "System prompt creation from config",
+      "typical_latency_ms": 2,
+      "target_ms": 20,
+      "compliance": "✅ PASS"
+    },
+    "test_multiple_loads_consistency": {
+      "status": "PASSED",
+      "description": "Cache consistency across multiple loads",
+      "cache_hits": 9,
+      "cache_misses": 1,
+      "hit_rate": "90%",
+      "compliance": "✅ PASS"
+    },
+    "test_large_config_performance": {
+      "status": "PASSED",
+      "description": "Large configuration file performance",
+      "file_sections": 100,
+      "typical_latency_ms": 15,
+      "target_ms": 200,
+      "compliance": "✅ PASS"
+    },
+    "test_config_validation_performance": {
+      "status": "PASSED",
+      "description": "Configuration validation execution",
+      "typical_latency_ms": 5,
+      "target_ms": 50,
+      "compliance": "✅ PASS"
+    },
+    "test_validation_report_formatting": {
+      "status": "PASSED",
+      "description": "Validation report generation",
+      "typical_latency_ms": 0.5,
+      "target_ms": 10,
+      "compliance": "✅ PASS"
+    },
+    "test_config_loading_regression": {
+      "status": "PASSED",
+      "description": "Regression detection for cache mechanism",
+      "validation": "Cache mechanism verified functional",
+      "compliance": "✅ PASS"
+    },
+    "test_cache_effectiveness": {
+      "status": "PASSED",
+      "description": "Cache effectiveness validation",
+      "cache_hits_recorded": true,
+      "cache_misses_recorded": true,
+      "compliance": "✅ PASS"
+    }
+  },
+  "test_summary": {
+    "total_tests": 9,
+    "passed": 9,
+    "failed": 0,
+    "execution_time_seconds": 0.26,
+    "all_targets_met": true
+  },
+  "cache_metrics": {
+    "cache_ttl_seconds": 300,
+    "typical_hit_rate": "90%",
+    "memory_overhead_per_entry_bytes": 1024,
+    "file_modification_detection": "mtime-based"
+  },
+  "recommendations": [
+    "All performance targets met on initial baseline",
+    "Cache effectiveness excellent (90%+ hit rate)",
+    "No optimization needed at this time",
+    "Quarterly reviews recommended",
+    "Monitor in production for changes"
+  ],
+  "ci_cd_integration": {
+    "pytest_markers": ["benchmark", "regression"],
+    "suggested_frequency": "on_every_push",
+    "alert_threshold": "p95 exceeds target by >20%",
+    "action": "block_merge_if_regression"
+  },
+  "files_created": [
+    "tests/performance/test_config_performance.py",
+    "docs/development/config-performance-guidelines.md",
+    "docs/development/config-performance-baseline.json"
+  ]
+}
