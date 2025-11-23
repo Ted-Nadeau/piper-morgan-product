@@ -124,6 +124,7 @@ def upgrade() -> None:
             creation_intent, intent_confidence, external_refs,
             completed_at, owner_id, assigned_to
         )
+        -- Note: list_metadata column in todo_items is mapped from metadata in todos table
         SELECT
             id,
             COALESCE(description, ''),
@@ -140,7 +141,7 @@ def upgrade() -> None:
             estimated_minutes,
             actual_minutes,
             COALESCE(completion_notes, ''),
-            list_metadata,
+            metadata as list_metadata,
             knowledge_node_id,
             related_todos,
             creation_intent,

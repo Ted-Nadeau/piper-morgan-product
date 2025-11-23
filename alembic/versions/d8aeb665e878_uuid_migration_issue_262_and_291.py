@@ -41,10 +41,65 @@ def upgrade() -> None:
     """
 
     # Step 1: Drop FK constraints that reference users
-    op.drop_constraint("alpha_users_prod_user_id_fkey", "alpha_users", type_="foreignkey")
-    op.drop_constraint("feedback_user_id_fkey", "feedback", type_="foreignkey")
-    op.drop_constraint(
-        "personality_profiles_user_id_fkey", "personality_profiles", type_="foreignkey"
+    # Use SQL-level conditional logic to handle fresh databases where constraints may not exist
+    conn = op.get_bind()
+
+    # Drop constraints only if they exist using PostgreSQL syntax
+    conn.execute(
+        sa.text(
+            """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.table_constraints
+                       WHERE constraint_name = 'alpha_users_prod_user_id_fkey'
+                       AND table_name = 'alpha_users') THEN
+                ALTER TABLE alpha_users DROP CONSTRAINT alpha_users_prod_user_id_fkey;
+                RAISE NOTICE 'Dropped alpha_users_prod_user_id_fkey';
+            ELSE
+                RAISE NOTICE 'Constraint alpha_users_prod_user_id_fkey not found (expected on fresh DB)';
+            END IF;
+        END
+        $$;
+    """
+        )
+    )
+
+    conn.execute(
+        sa.text(
+            """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.table_constraints
+                       WHERE constraint_name = 'feedback_user_id_fkey'
+                       AND table_name = 'feedback') THEN
+                ALTER TABLE feedback DROP CONSTRAINT feedback_user_id_fkey;
+                RAISE NOTICE 'Dropped feedback_user_id_fkey';
+            ELSE
+                RAISE NOTICE 'Constraint feedback_user_id_fkey not found (expected on fresh DB)';
+            END IF;
+        END
+        $$;
+    """
+        )
+    )
+
+    conn.execute(
+        sa.text(
+            """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.table_constraints
+                       WHERE constraint_name = 'personality_profiles_user_id_fkey'
+                       AND table_name = 'personality_profiles') THEN
+                ALTER TABLE personality_profiles DROP CONSTRAINT personality_profiles_user_id_fkey;
+                RAISE NOTICE 'Dropped personality_profiles_user_id_fkey';
+            ELSE
+                RAISE NOTICE 'Constraint personality_profiles_user_id_fkey not found (expected on fresh DB)';
+            END IF;
+        END
+        $$;
+    """
+        )
     )
 
     # Step 2: Convert users.id to UUID (table is empty, safe to alter)
