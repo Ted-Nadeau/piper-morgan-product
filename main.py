@@ -24,7 +24,12 @@ parser.add_argument(
 parser.add_argument(
     "command",
     nargs="?",
-    help="Command to run (setup, status, preferences, migrate-user, keys)",
+    help="Command to run (setup, status, preferences, migrate-user, keys, rotate-key)",
+)
+parser.add_argument(
+    "provider",
+    nargs="?",
+    help="Provider for rotate-key command (openai, anthropic, github)",
 )
 
 # Parse known args to handle both flags and commands
@@ -280,16 +285,34 @@ if __name__ == "__main__":
                 print_keys_help()
                 sys.exit(1)
 
+        elif command == "rotate-key":
+            # Interactive key rotation workflow (Issue #270 CORE-KEYS-ROTATION-WORKFLOW)
+            from cli.commands.keys import rotate_key_interactive
+
+            if not args.provider:
+                print("Error: provider required\n")
+                print("Usage: python main.py rotate-key <provider>")
+                print()
+                print("Providers: openai, anthropic, github")
+                sys.exit(1)
+
+            provider = args.provider.lower()
+            success = asyncio.run(rotate_key_interactive(provider))
+            sys.exit(0 if success else 1)
+
         else:
             print(f"Unknown command: {command}")
             print()
             print("Available commands:")
-            print("  python main.py setup        - Interactive setup wizard")
-            print("  python main.py status       - Check system health")
-            print("  python main.py preferences  - Configure user preferences")
-            print("  python main.py keys         - Manage API keys (keychain)")
-            print("  python main.py migrate-user - Migrate alpha user to production")
-            print("  python main.py [--verbose]  - Start Piper Morgan")
+            print("  python main.py setup              - Interactive setup wizard")
+            print("  python main.py status             - Check system health")
+            print("  python main.py preferences        - Configure user preferences")
+            print("  python main.py keys               - Manage API keys (keychain)")
+            print(
+                "  python main.py rotate-key <prov>  - Rotate API key (openai, anthropic, github)"
+            )
+            print("  python main.py migrate-user       - Migrate alpha user to production")
+            print("  python main.py [--verbose]        - Start Piper Morgan")
             print()
             print("Options:")
             print("  --verbose, -v               - Show detailed startup information")
