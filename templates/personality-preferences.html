@@ -217,7 +217,8 @@
       {% if user %}
       window.currentUser = {
         username: "{{ user.username }}",
-        user_id: "{{ user.user_id }}"
+        user_id: "{{ user.user_id }}",
+        is_admin: {{ 'true' if user.is_admin else 'false' }}
       };
       {% else %}
       window.currentUser = null;

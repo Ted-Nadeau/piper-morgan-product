@@ -146,7 +146,7 @@ def _extract_user_context(request: Request) -> dict:
         request: FastAPI Request object with user_claims/user_id in state
 
     Returns:
-        dict with 'user_id' and 'username' keys for template context
+        dict with 'user_id', 'username', and 'is_admin' keys for template context
     """
     user_id = getattr(request.state, "user_id", "user")
 
@@ -158,7 +158,14 @@ def _extract_user_context(request: Request) -> dict:
     elif user_claims and isinstance(user_claims, dict) and "username" in user_claims:
         username = user_claims["username"]
 
-    return {"user_id": user_id, "username": username}
+    # Extract is_admin flag from user claims (SEC-RBAC Phase 3)
+    is_admin = False
+    if user_claims:
+        is_admin = getattr(user_claims, "is_admin", False) or (
+            isinstance(user_claims, dict) and user_claims.get("is_admin", False)
+        )
+
+    return {"user_id": user_id, "username": username, "is_admin": is_admin}
 
 
 @asynccontextmanager
@@ -1018,6 +1025,36 @@ async def files_ui(request: Request):
     """Serve the files page (Coming Soon)"""
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
+
+
+@app.get("/lists", response_class=HTMLResponse)
+async def lists_ui(request: Request):
+    """Lists management page with permission-aware UI (Issue #376)"""
+    user_context = _extract_user_context(request)
+    lists_data = []
+    return templates.TemplateResponse(
+        "lists.html", {"request": request, "user": user_context, "lists": lists_data}
+    )
+
+
+@app.get("/todos", response_class=HTMLResponse)
+async def todos_ui(request: Request):
+    """Todos management page with permission-aware UI (Issue #376)"""
+    user_context = _extract_user_context(request)
+    todos_data = []
+    return templates.TemplateResponse(
+        "todos.html", {"request": request, "user": user_context, "todos": todos_data}
+    )
+
+
+@app.get("/projects", response_class=HTMLResponse)
+async def projects_ui(request: Request):
+    """Projects management page with permission-aware UI (Issue #376)"""
+    user_context = _extract_user_context(request)
+    projects_data = []
+    return templates.TemplateResponse(
+        "projects.html", {"request": request, "user": user_context, "projects": projects_data}
+    )
 
 
 @app.get("/settings/privacy")

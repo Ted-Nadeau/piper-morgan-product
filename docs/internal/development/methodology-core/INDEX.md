@@ -21,6 +21,15 @@
 - **📚 Examples**: [multi-agent-patterns.md](../../piper-education/methodologies/emergent/multi-agent-patterns.md) _(real project stories)_
 - **🛠️ Templates**: [human-ai-collaboration-referee.md](../../piper-education/methodologies/emergent/human-ai-collaboration-referee.md) _(handoff protocols)_
 
+### Multi-Agent Coordinator Implementation
+
+- **🚀 How to Use**: [HOW_TO_USE_MULTI_AGENT.md](HOW_TO_USE_MULTI_AGENT.md) _(practical usage guide)_
+- **⚡ Quick Start**: [MULTI_AGENT_QUICK_START.md](MULTI_AGENT_QUICK_START.md) _(5-minute deployment)_
+- **🔧 Integration Guide**: [MULTI_AGENT_INTEGRATION_GUIDE.md](MULTI_AGENT_INTEGRATION_GUIDE.md) _(technical integration details)_
+- **🐍 Implementation**: `services/orchestration/multi_agent_coordinator.py` _(core coordinator)_
+- **✅ Tests**: `tests/orchestration/test_multi_agent_coordinator.py` _(39 unit tests)_
+- **⚠️ Status**: See GitHub Issue #118 for deployment status and remaining work
+
 ### Excellence Flywheel
 
 - **📋 Methodology**: [methodology-00-EXCELLENCE-FLYWHEEL.md](methodology-00-EXCELLENCE-FLYWHEEL.md) _(core framework)_
@@ -89,6 +98,6 @@
 
 ---
 
-**Last Updated**: September 27, 2025
+**Last Updated**: November 22, 2025
 **Maintained By**: Methodology Team
 **Questions?** Check [METHODOLOGY.md](../../briefing/METHODOLOGY.md) or create a GitHub issue
