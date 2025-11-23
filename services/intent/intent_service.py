@@ -336,6 +336,7 @@ class IntentService:
                     intent_data=canonical_result["intent"],
                     requires_clarification=canonical_result.get("requires_clarification", False),
                     suggestions=all_suggestions,
+                    preferences=preferences,  # Issue #248: Attach preference detection results
                 )
 
             # Create workflow with timeout protection (Bug #166)
@@ -361,42 +362,49 @@ class IntentService:
             if intent.category.value.upper() == "QUERY":
                 result = await self._handle_query_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # GREAT-4D Phase 1: Handle EXECUTION intents with domain services
             if intent.category.value.upper() == "EXECUTION":
                 result = await self._handle_execution_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # GREAT-4D Phase 2: Handle ANALYSIS intents with domain services
             if intent.category.value.upper() == "ANALYSIS":
                 result = await self._handle_analysis_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # GREAT-4D Phase 4: Handle SYNTHESIS intents
             if intent.category.value.upper() == "SYNTHESIS":
                 result = await self._handle_synthesis_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # GREAT-4D Phase 5: Handle STRATEGY intents
             if intent.category.value.upper() == "STRATEGY":
                 result = await self._handle_strategy_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # GREAT-4D Phase 6: Handle LEARNING intents
             if intent.category.value.upper() == "LEARNING":
                 result = await self._handle_learning_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # GREAT-4D Phase 7: Handle UNKNOWN intents
             if intent.category.value.upper() == "UNKNOWN":
                 result = await self._handle_unknown_intent(intent, workflow, session_id)
                 result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
 
             # Fallback for truly unhandled categories (should never reach here)
@@ -413,6 +421,7 @@ class IntentService:
                 error=f"No handler for category: {intent.category.value}",
                 error_type="UnhandledCategoryError",
                 suggestions=suggestions,
+                preferences=preferences,  # Issue #248: Attach preference detection results
             )
 
             # Issue #300 Phase 1: Learning Handler - Record Outcome
