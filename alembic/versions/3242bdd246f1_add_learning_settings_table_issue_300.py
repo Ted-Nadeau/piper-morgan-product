@@ -82,7 +82,7 @@ def upgrade() -> None:
         sa.Column("list_notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(
             ["list_id"],
-            ["todo_lists.id"],
+            ["lists.id"],
         ),
         sa.ForeignKeyConstraint(
             ["todo_id"],

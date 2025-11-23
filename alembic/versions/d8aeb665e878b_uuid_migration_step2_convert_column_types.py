@@ -247,7 +247,37 @@ def upgrade() -> None:
     # These are NOT user references and should remain VARCHAR.
     # DO NOT CONVERT these columns.
 
-    print("✅ All column type conversions complete (users.id and all FK columns now UUID)")
+    # However, projects.owner_id IS a user reference and should be converted to UUID
+    # (if projects table exists)
+    print("  - Converting projects.owner_id (user reference)...")
+    conn.execute(
+        sa.text(
+            """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.tables
+                       WHERE table_name = 'projects') THEN
+                IF EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_name = 'projects'
+                          AND column_name = 'owner_id') THEN
+                    ALTER TABLE projects
+                    ALTER COLUMN owner_id TYPE uuid USING COALESCE(owner_id::uuid, NULL);
+                    RAISE NOTICE 'Converted projects.owner_id to UUID';
+                ELSE
+                    RAISE NOTICE 'Column owner_id not found in projects table';
+                END IF;
+            ELSE
+                RAISE NOTICE 'Projects table not found (expected on fresh DB)';
+            END IF;
+        END
+        $$;
+    """
+        )
+    )
+
+    print(
+        "✅ All column type conversions complete (users.id, all FK columns, and projects.owner_id now UUID)"
+    )
 
 
 def downgrade() -> None:
@@ -292,6 +322,28 @@ def downgrade() -> None:
                 ALTER TABLE alpha_users
                 ALTER COLUMN prod_user_id TYPE varchar(255);
                 RAISE NOTICE 'Reverted alpha_users.prod_user_id to VARCHAR';
+            END IF;
+        END
+        $$;
+    """
+        )
+    )
+
+    # Revert projects.owner_id if table exists
+    print("  - Reverting projects.owner_id...")
+    conn.execute(
+        sa.text(
+            """
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.tables
+                       WHERE table_name = 'projects'
+                       AND EXISTS (SELECT 1 FROM information_schema.columns
+                                   WHERE table_name = 'projects'
+                                   AND column_name = 'owner_id')) THEN
+                ALTER TABLE projects
+                ALTER COLUMN owner_id TYPE varchar(255);
+                RAISE NOTICE 'Reverted projects.owner_id to VARCHAR';
             END IF;
         END
         $$;
