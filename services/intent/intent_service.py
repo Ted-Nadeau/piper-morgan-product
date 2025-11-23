@@ -55,6 +55,7 @@ class IntentProcessingResult:
     suggestions: Optional[List[Dict[str, Any]]] = (
         None  # Phase 3: Pattern suggestions  # CORE-CRAFT-GAP: Track actual implementation vs placeholders
     )
+    preferences: Optional[Dict[str, Any]] = None  # Issue #248: Preference detection results
 
 
 class IntentProcessingError(Exception):
@@ -205,6 +206,10 @@ class IntentService:
             self.logger.info(f"Processing intent with OrchestrationEngine: {message}")
             intent = await self.intent_classifier.classify(message)
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
+
+            # Issue #248: Extract preference detection results from intent
+            # Preferences are attached by IntentProcessingHooks during classification
+            preferences = getattr(intent, "preferences", None)
 
             # Issue #300 Phase 1: Learning Handler - Capture Action
             # Store pattern_id for outcome recording

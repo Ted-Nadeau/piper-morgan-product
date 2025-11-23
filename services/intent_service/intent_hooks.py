@@ -124,10 +124,12 @@ class IntentProcessingHooks:
                     hints=detection_result.auto_apply_hints,
                 )
 
-            # Store suggested hints for later retrieval
-            for hint in detection_result.suggested_hints:
-                if self.preference_handler:
-                    await self.preference_handler.store_hint(session_id or "temp", hint)
+            # Store suggested hints in session for later retrieval
+            if detection_result.suggested_hints and session_id:
+                await self.preference_handler._store_hints_in_session(
+                    session_id=session_id,
+                    hints=detection_result.suggested_hints,
+                )
 
             # Return preference metadata for response
             return {
