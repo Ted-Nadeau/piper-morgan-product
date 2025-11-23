@@ -770,7 +770,7 @@ class TodoListDB(Base):
     is_default = Column(Boolean, default=False, nullable=False)
 
     # Metadata and tags
-    list_metadata = Column(JSON, default=dict)
+    list_metadata = Column("metadata", JSON, default=dict)
     tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
@@ -954,7 +954,7 @@ class ListDB(Base):
     is_default = Column(Boolean, default=False, nullable=False)
 
     # Metadata and tags
-    list_metadata = Column(JSON, default=dict)
+    list_metadata = Column("metadata", JSON, default=dict)
     tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
@@ -1423,7 +1423,7 @@ class TodoDB(ItemDB):
     completion_notes = Column(Text, default="")
 
     # PM-040 Knowledge Graph integration
-    list_metadata = Column(JSON, default=dict)
+    list_metadata = Column("metadata", JSON, default=dict)
     knowledge_node_id = Column(String)  # Link to Knowledge Graph
     related_todos = Column(JSON, default=list)  # Array of todo IDs
 
