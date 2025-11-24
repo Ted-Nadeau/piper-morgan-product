@@ -796,11 +796,14 @@
           <button class="quick-action-btn primary" onclick="document.querySelector('.chat-input').focus(); return false;">
             💬 Ask a question
           </button>
-          <button class="quick-action-btn" onclick="document.getElementById('upload-toggle-btn').click(); return false;">
+          <button class="quick-action-btn" onclick="window.location.href='/files'; return false;">
             📄 Upload a document
           </button>
           <button class="quick-action-btn" onclick="window.location.href='/settings'; return false;">
             ⚙️ Go to Settings
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/help'; return false;">
+            ❓ Get Help
           </button>
         </div>
       </div>
@@ -825,6 +828,9 @@
         <button type="submit" class="submit-btn">Send</button>
       </form>
 
+      <!-- TODO: Remove old upload UI - replaced by /files page with new upload dialog -->
+      <!-- The quick-action "Upload a document" button above now directs to /files -->
+      <!--
       <div class="upload-section">
         <button class="upload-toggle" id="upload-toggle-btn">
           📄 Upload a document to the knowledge base
@@ -845,6 +851,7 @@
           </div>
         </div>
       </div>
+      -->
 
       <div class="examples">
         <h3>💡 Try these examples:</h3>
