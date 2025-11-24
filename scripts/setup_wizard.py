@@ -1116,6 +1116,50 @@ async def run_setup_wizard():
         return False
 
 
+async def is_setup_complete() -> bool:
+    """
+    Check if setup has been completed.
+
+    Setup is considered complete when:
+    - At least one user exists in the database
+    - At least one active OpenAI API key is configured
+
+    Returns:
+        bool: True if setup is complete, False otherwise
+    """
+    try:
+        from sqlalchemy import text
+        from services.database.session_factory import AsyncSessionFactory
+
+        async with AsyncSessionFactory.session_scope() as session:
+            # Check if user exists
+            user_result = await session.execute(
+                text("SELECT COUNT(*) FROM users")
+            )
+            user_count = user_result.scalar_one()
+
+            if user_count == 0:
+                return False
+
+            # Check if OpenAI key exists and is active
+            key_result = await session.execute(
+                text(
+                    "SELECT COUNT(*) FROM user_api_keys "
+                    "WHERE provider = 'openai' AND is_active = true"
+                )
+            )
+            openai_key_count = key_result.scalar_one()
+
+            return openai_key_count > 0
+    except Exception as e:
+        # Database might not exist yet (first run)
+        # or there might be a connection issue
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Setup check failed (likely first run): {e}")
+        return False
+
+
 if __name__ == "__main__":
     # Allow running directly
     success = asyncio.run(run_setup_wizard())
