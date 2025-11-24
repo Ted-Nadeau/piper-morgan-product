@@ -310,75 +310,14 @@ async def lifespan(app: FastAPI):
         # Don't fail startup if plugin system has issues
         app.state.plugin_registry = None
 
-    # Mount standup API router (Issue #162 - CORE-STAND-MODES-API)
-    print("\n🎯 Mounting Standup API Router...")
-    try:
-        from web.api.routes.standup import router as standup_router
+    # Phase 1.6: Mount API Routers using factory pattern (Issue #385 - INFR-MAINT-REFACTOR)
+    # This replaces 100+ lines of duplicate try/catch boilerplate (standup, learning, health, api_keys)
+    from web.router_initializer import RouterInitializer
 
-        app.include_router(standup_router)
-        print("✅ Standup API router mounted at /api/v1/standup")
-        print("   Endpoints:")
-        print("   - POST /api/v1/standup/generate")
-        print("   - GET /api/v1/standup/modes")
-        print("   - GET /api/v1/standup/formats")
-        print("   - GET /api/v1/standup/health")
-    except Exception as e:
-        print(f"⚠️ Failed to mount standup API router: {e}")
-        print("   Continuing without standup API\n")
-
-    # Issue #300 database-backed learning system (Nov 12-13, 2025)
-    # Phase 2.1: Pattern management endpoints enabled
-    print("\n🧠 Learning API Router (Issue #300 Phase 2)...")
-    try:
-        from web.api.routes.learning import router as learning_router
-
-        app.include_router(learning_router)
-        print("✅ Learning API router mounted at /api/v1/learning")
-        print("   Phase 2.1 Endpoints:")
-        print("   - GET /api/v1/learning/patterns")
-        print("   - GET /api/v1/learning/patterns/{id}")
-        print("   - DELETE /api/v1/learning/patterns/{id}")
-        print("   - POST /api/v1/learning/patterns/{id}/enable")
-        print("   - POST /api/v1/learning/patterns/{id}/disable")
-    except Exception as e:
-        print(f"⚠️ Failed to mount learning API router: {e}")
-        print("   Continuing without learning API\n")
-
-    # Auth API router mounted at module level (after app creation)
-    # See line ~360 where router is registered before app starts
-    # Files and documents API routers also mounted at module level (below)
-
-    # Mount health API router (Issue #229 - CORE-USERS-PROD)
-    print("\n❤️ Mounting Health API Router...")
-    try:
-        from web.api.routes.health import router as health_router
-
-        app.include_router(health_router)
-        print("✅ Health API router mounted at /api/v1/health")
-        print("   Endpoints:")
-        print("   - GET /api/v1/health (basic)")
-        print("   - GET /api/v1/health/database (database health)")
-        print("   - GET /api/v1/health/detailed (all components)")
-    except Exception as e:
-        print(f"⚠️ Failed to mount health API router: {e}")
-        print("   Continuing without health API\n")
-
-    # Mount API keys API router (Issue #228 - CORE-USERS-API)
-    print("\n🔑 Mounting API Keys API Router...")
-    try:
-        from web.api.routes.api_keys import router as api_keys_router
-
-        app.include_router(api_keys_router)
-        print("✅ API Keys API router mounted at /api/v1/keys")
-        print("   Endpoints:")
-        print("   - POST /api/v1/keys/store (store API key)")
-        print("   - GET  /api/v1/keys/list (list user's keys)")
-        print("   - DELETE /api/v1/keys/{provider} (delete key)")
-        print("   - POST /api/v1/keys/{provider}/validate (validate key)")
-        print("   - POST /api/v1/keys/{provider}/rotate (rotate key)")
-    except Exception as e:
-        print(f"⚠️ Failed to mount API keys API router: {e}")
-        print("   Continuing without API keys API\n")
+    RouterInitializer.mount_router(app, "web.api.routes.standup", "router", "Standup API")
+    RouterInitializer.mount_router(app, "web.api.routes.learning", "router", "Learning API")
+    RouterInitializer.mount_router(app, "web.api.routes.health", "router", "Health API")
+    RouterInitializer.mount_router(app, "web.api.routes.api_keys", "router", "API Keys API")
 
     # Start background cleanup job for token blacklist (Issue #227 - CORE-USERS-JWT)
     print("\n🧹 Starting Background Cleanup Job...")
@@ -589,95 +528,24 @@ from web.middleware.intent_enforcement import IntentEnforcementMiddleware
 app.add_middleware(IntentEnforcementMiddleware)
 logger.info("✅ IntentEnforcementMiddleware registered (GREAT-4B)")
 
-# Mount auth API router (Issue #227 - CORE-USERS-JWT, Issue #281 - CORE-ALPHA-WEB-AUTH)
-# Register BEFORE app starts to ensure routes are available
-try:
-    from web.api.routes.auth import router as auth_router
+# Phase 1: Mount remaining API routers using factory pattern (Issue #385 - INFR-MAINT-REFACTOR)
+# Previously: ~90 lines of duplicate try/catch boilerplate
+# Now: Consolidated calls to RouterInitializer factory for consistency
+from web.router_initializer import RouterInitializer
 
-    app.include_router(auth_router)
-    logger.info("✅ Auth API router mounted at /auth (login, logout endpoints)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount auth API router: {e}")
-
-# Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
-# Register at module level to ensure routes available for tests
-try:
-    from web.api.routes.files import router as files_router
-
-    app.include_router(files_router)
-    logger.info("✅ Files API router mounted at /api/v1/files")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount files API router: {e}")
-
-# Mount documents API router (Issue #290 - CORE-ALPHA-DOC-PROCESSING)
-# Register at module level to ensure routes available for tests
-try:
-    from web.api.routes.documents import router as documents_router
-
-    app.include_router(documents_router)
-    logger.info("✅ Documents API router mounted at /api/v1/documents")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount documents API router: {e}")
-
-# Mount todos API router (Issue #285 - CORE-ALPHA-TODO-INCOMPLETE)
-# Wires up existing todo infrastructure (PM-081)
-try:
-    from services.api.todo_management import todo_management_router
-
-    app.include_router(todo_management_router)
-    logger.info("✅ Todos API router mounted at /api/v1/todos (PM-081)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount todos API router: {e}")
-
-# Mount lists API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides list CRUD endpoints with ownership validation
-try:
-    from web.api.routes.lists import router as lists_router
-
-    app.include_router(lists_router)
-    logger.info("✅ Lists API router mounted at /api/v1/lists (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount lists API router: {e}")
-
-# Mount todos SEC-RBAC API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides todo CRUD endpoints with ownership validation
-try:
-    from web.api.routes.todos import router as sec_todos_router
-
-    app.include_router(sec_todos_router)
-    logger.info("✅ Todos SEC-RBAC API router mounted at /api/v1/todos (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount todos SEC-RBAC API router: {e}")
-
-# Mount projects API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides project CRUD endpoints with ownership validation
-try:
-    from web.api.routes.projects import router as projects_router
-
-    app.include_router(projects_router)
-    logger.info("✅ Projects API router mounted at /api/v1/projects (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount projects API router: {e}")
-
-# Mount feedback API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides feedback submission endpoints with ownership validation
-try:
-    from web.api.routes.feedback import router as feedback_router
-
-    app.include_router(feedback_router)
-    logger.info("✅ Feedback API router mounted at /api/v1/feedback (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount feedback API router: {e}")
-
-# Mount knowledge graph API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides knowledge graph CRUD endpoints with ownership validation
-try:
-    from web.api.routes.knowledge_graph import router as knowledge_graph_router
-
-    app.include_router(knowledge_graph_router)
-    logger.info("✅ Knowledge Graph API router mounted at /api/v1/knowledge (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount knowledge graph API router: {e}")
+RouterInitializer.mount_router(app, "web.api.routes.auth", "router", "Auth API")
+RouterInitializer.mount_router(app, "web.api.routes.files", "router", "Files API")
+RouterInitializer.mount_router(app, "web.api.routes.documents", "router", "Documents API")
+RouterInitializer.mount_router(
+    app, "services.api.todo_management", "todo_management_router", "Todos API"
+)
+RouterInitializer.mount_router(app, "web.api.routes.lists", "router", "Lists API")
+RouterInitializer.mount_router(app, "web.api.routes.todos", "router", "Todos SEC-RBAC API")
+RouterInitializer.mount_router(app, "web.api.routes.projects", "router", "Projects API")
+RouterInitializer.mount_router(app, "web.api.routes.feedback", "router", "Feedback API")
+RouterInitializer.mount_router(
+    app, "web.api.routes.knowledge_graph", "router", "Knowledge Graph API"
+)
 
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory=str(project_root / "templates"))
