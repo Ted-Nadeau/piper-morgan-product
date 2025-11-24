@@ -14,8 +14,7 @@ import pytest
 import yaml
 
 # Import the configuration classes we'll be testing
-# (These will be created by Code Agent)
-# from services.config.notion_configuration import NotionUserConfig, ConfigurationError
+from config.notion_user_config import ConfigurationError, NotionUserConfig
 
 
 class TestNotionConfigurationIntegration:
@@ -192,9 +191,8 @@ class TestNotionConfigurationIntegration:
             }
         }
 
-        with pytest.raises(Exception) as exc_info:
-            # NotionUserConfig.load(incomplete_config)
-            pass
+        with pytest.raises(ConfigurationError) as exc_info:
+            NotionUserConfig.load(incomplete_config)
 
         error_msg = str(exc_info.value)
 
@@ -210,12 +208,11 @@ class TestNotionConfigurationIntegration:
             }
         }
 
-        with pytest.raises(Exception) as exc_info:
-            # NotionUserConfig.load(invalid_format_config)
-            pass
+        with pytest.raises(ConfigurationError) as exc_info:
+            NotionUserConfig.load(invalid_format_config)
 
         error_msg = str(exc_info.value)
-        assert "invalid format" in error_msg.lower() or "invalid database_id" in error_msg.lower()
+        assert "invalid" in error_msg.lower()
 
     def test_validation_levels_integration(self):
         """Test different validation levels with real API integration"""

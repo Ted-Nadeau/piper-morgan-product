@@ -29,8 +29,8 @@ from fastapi.testclient import TestClient
 
 JWT_AVAILABLE = True
 
-from main import app
 from services.api.errors import APIError, AuthenticationRequiredError
+from web.app import app
 
 # Test JWT Configuration
 TEST_SECRET_KEY = "test_secret_key_for_testing_only"

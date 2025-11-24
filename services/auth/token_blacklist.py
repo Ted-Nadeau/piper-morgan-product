@@ -19,6 +19,7 @@ import json
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, Optional
+from uuid import UUID
 
 import structlog
 
@@ -78,7 +79,7 @@ class TokenBlacklist:
         token_id: str,
         reason: str,
         expires_at: datetime,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
     ) -> bool:
         """
         Add token to blacklist.
@@ -183,7 +184,7 @@ class TokenBlacklist:
             # Database cleanup
             return await self._cleanup_database()
 
-    async def revoke_user_tokens(self, user_id: str, reason: str = "security") -> int:
+    async def revoke_user_tokens(self, user_id: UUID, reason: str = "security") -> int:
         """
         Revoke all active tokens for a user (security incident response).
 
@@ -209,7 +210,7 @@ class TokenBlacklist:
         token_id: str,
         reason: str,
         expires_at: datetime,
-        user_id: Optional[str],
+        user_id: Optional[UUID],
     ) -> bool:
         """
         Database fallback for token blacklist.

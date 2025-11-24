@@ -1,0 +1,169 @@
+/* Permission-aware UI styles */
+
+.permission-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.permission-badge.owner {
+  background: #667eea;
+  color: white;
+}
+
+.permission-badge.admin {
+  background: #f59e0b;
+  color: white;
+}
+
+.permission-badge.editor {
+  background: #10b981;
+  color: white;
+}
+
+.permission-badge.viewer {
+  background: #6b7280;
+  color: white;
+}
+
+.shared-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.shared-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Resource list styles */
+.resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.resource-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.resource-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.resource-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.resource-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.resource-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.resource-actions button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resource-actions button.edit-btn {
+  background: #3b82f6;
+  color: white;
+}
+
+.resource-actions button.edit-btn:hover {
+  background: #2563eb;
+}
+
+.resource-actions button.delete-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.resource-actions button.delete-btn:hover {
+  background: #dc2626;
+}
+
+.resource-actions button.share-btn {
+  background: #8b5cf6;
+  color: white;
+}
+
+.resource-actions button.share-btn:hover {
+  background: #7c3aed;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.empty-state h3 {
+  font-size: 1.3em;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  margin-bottom: 20px;
+}
+
+/* Create button */
+.create-resource-btn {
+  background: #10b981;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.create-resource-btn:hover {
+  background: #059669;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .resource-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .resource-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .resource-actions button {
+    width: 100%;
+  }
+}

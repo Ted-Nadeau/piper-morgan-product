@@ -61,11 +61,14 @@ class TerritoryType(Enum):
     COMMUNITY = "community"
 
 class RoomPurpose(Enum):
-    COLLABORATION = "collaboration"
-    DEVELOPMENT = "development"
-    SUPPORT = "support"
-    PLANNING = "planning"
+    GENERAL = "general"
+    ANNOUNCEMENT = "announcement"
+    DISCUSSION = "discussion"
+    PROJECT_WORK = "project_work"
+    COORDINATION = "coordination"
     SOCIAL = "social"
+    SUPPORT = "support"
+    PRIVATE_MEETING = "private_meeting"
 
 class AttentionSource(Enum):
     MENTION = "mention"

@@ -15,15 +15,21 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 import structlog
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.conversation.conversation_handler import ConversationHandler
+from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent
 from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
 from services.intent_service import classifier
+from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
+from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
 from services.shared_types import IntentCategory
 
@@ -46,6 +52,10 @@ class IntentProcessingResult:
     error: Optional[str] = None
     error_type: Optional[str] = None
     implemented: bool = True  # CORE-CRAFT-GAP: Track actual implementation vs placeholders
+    suggestions: Optional[List[Dict[str, Any]]] = (
+        None  # Phase 3: Pattern suggestions  # CORE-CRAFT-GAP: Track actual implementation vs placeholders
+    )
+    preferences: Optional[Dict[str, Any]] = None  # Issue #248: Preference detection results
 
 
 class IntentProcessingError(Exception):
@@ -90,6 +100,8 @@ class IntentService:
         self.conversation_handler = conversation_handler
         self.canonical_handlers = CanonicalHandlers()
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
+        self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
+        self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
         self.logger = structlog.get_logger()
 
     async def process_intent(
@@ -195,11 +207,127 @@ class IntentService:
             intent = await self.intent_classifier.classify(message)
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
-            # Phase 3D: Preserve Tier 1 conversation bypass
-            if intent.category.value == "CONVERSATION":
-                return await self._handle_conversation_intent(intent, session_id)
+            # Issue #248: Extract preference detection results from intent
+            # Preferences are attached by IntentProcessingHooks during classification
+            preferences = getattr(intent, "preferences", None)
 
-            # Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
+            # Issue #300 Phase 1: Learning Handler - Capture Action
+            # Store pattern_id for outcome recording
+            pattern_id = None
+            try:
+                async with AsyncSessionFactory.session_scope() as db_session:
+                    # TODO: Get actual user_id from auth context
+                    # For Phase 1, using test user "xian"
+                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                    pattern_id = await self.learning_handler.capture_action(
+                        user_id=user_id,
+                        action_type=intent.category,
+                        context={"intent": intent.action, "message": message[:100]},
+                        session=db_session,
+                    )
+
+                    self.logger.info(
+                        "Learning Handler: Action captured",
+                        pattern_id=str(pattern_id) if pattern_id else None,
+                        action_type=intent.category.value,
+                    )
+            except Exception as e:
+                self.logger.error(f"Learning Handler: Capture failed: {e}")
+                # Continue processing even if learning fails
+
+            # Issue #300 Phase 3: Get pattern suggestions
+            suggestions = None
+            try:
+                async with AsyncSessionFactory.session_scope() as db_session:
+                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                    suggestions = await self.learning_handler.get_suggestions(
+                        user_id=user_id,
+                        context={"intent": intent.action, "message": message[:100]},
+                        session=db_session,
+                    )
+
+                    self.logger.info(
+                        "Learning Handler: Suggestions retrieved",
+                        suggestion_count=len(suggestions) if suggestions else 0,
+                    )
+            except Exception as e:
+                self.logger.error(f"Learning Handler: Get suggestions failed: {e}")
+                # Continue processing even if suggestions fail
+                suggestions = None
+
+            # Issue #300 Phase 4: Get proactive automation patterns
+            automation_patterns = []
+            try:
+                async with AsyncSessionFactory.session_scope() as db_session:
+                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                    # Build context for matching
+                    current_context = {
+                        "intent": intent.category.value.upper(),  # Match against category (EXECUTION, QUERY, etc.)
+                        "message": message[:100],
+                        # Note: Don't pass None values - context matcher expects strings or missing keys
+                    }
+
+                    patterns = await self.learning_handler.get_automation_patterns(
+                        user_id=user_id,
+                        context=current_context,
+                        min_confidence=0.9,
+                        limit=3,
+                        session=db_session,
+                    )
+
+                    # Convert LearnedPattern objects to suggestion format with auto_triggered flag
+                    for pattern in patterns:
+                        automation_patterns.append(
+                            {
+                                "pattern_id": str(pattern.id),
+                                "confidence": round(pattern.confidence, 2),
+                                "pattern_type": pattern.pattern_type.value,
+                                "pattern_data": pattern.pattern_data,
+                                "usage_count": pattern.usage_count,
+                                "auto_triggered": True,  # Mark as proactive
+                            }
+                        )
+
+                    self.logger.info(
+                        "Learning Handler: Automation patterns retrieved",
+                        pattern_count=len(automation_patterns),
+                    )
+            except Exception as e:
+                self.logger.error(f"Learning Handler: Get automation patterns failed: {e}")
+                # Continue processing even if automation patterns fail
+                automation_patterns = []
+
+            # Combine regular suggestions with automation patterns (Bug #86n: deduplicate)
+            if suggestions is None:
+                suggestions = []
+
+            # Deduplicate by pattern_id, preferring automation_patterns (auto_triggered=True)
+            seen_pattern_ids = set()
+            all_suggestions = []
+
+            # Add automation patterns first (higher priority)
+            for pattern in automation_patterns:
+                pattern_id = pattern.get("pattern_id")
+                if pattern_id and pattern_id not in seen_pattern_ids:
+                    all_suggestions.append(pattern)
+                    seen_pattern_ids.add(pattern_id)
+
+            # Add regular suggestions only if not already seen
+            for suggestion in suggestions:
+                pattern_id = suggestion.get("pattern_id")
+                if pattern_id and pattern_id not in seen_pattern_ids:
+                    all_suggestions.append(suggestion)
+                    seen_pattern_ids.add(pattern_id)
+
+            self.logger.debug(
+                f"Suggestion deduplication: {len(automation_patterns)} auto + {len(suggestions)} regular → {len(all_suggestions)} unique"
+            )
+
+            # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
+            # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
                 canonical_result = await self.canonical_handlers.handle(intent, session_id)
                 return IntentProcessingResult(
@@ -207,6 +335,8 @@ class IntentService:
                     message=canonical_result["message"],
                     intent_data=canonical_result["intent"],
                     requires_clarification=canonical_result.get("requires_clarification", False),
+                    suggestions=all_suggestions,
+                    preferences=preferences,  # Issue #248: Attach preference detection results
                 )
 
             # Create workflow with timeout protection (Bug #166)
@@ -230,34 +360,55 @@ class IntentService:
 
             # Handle QUERY intents with domain services
             if intent.category.value.upper() == "QUERY":
-                return await self._handle_query_intent(intent, workflow, session_id)
+                result = await self._handle_query_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # GREAT-4D Phase 1: Handle EXECUTION intents with domain services
             if intent.category.value.upper() == "EXECUTION":
-                return await self._handle_execution_intent(intent, workflow, session_id)
+                result = await self._handle_execution_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # GREAT-4D Phase 2: Handle ANALYSIS intents with domain services
             if intent.category.value.upper() == "ANALYSIS":
-                return await self._handle_analysis_intent(intent, workflow, session_id)
+                result = await self._handle_analysis_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # GREAT-4D Phase 4: Handle SYNTHESIS intents
             if intent.category.value.upper() == "SYNTHESIS":
-                return await self._handle_synthesis_intent(intent, workflow, session_id)
+                result = await self._handle_synthesis_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # GREAT-4D Phase 5: Handle STRATEGY intents
             if intent.category.value.upper() == "STRATEGY":
-                return await self._handle_strategy_intent(intent, workflow, session_id)
+                result = await self._handle_strategy_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # GREAT-4D Phase 6: Handle LEARNING intents
             if intent.category.value.upper() == "LEARNING":
-                return await self._handle_learning_intent(intent, workflow, session_id)
+                result = await self._handle_learning_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # GREAT-4D Phase 7: Handle UNKNOWN intents
             if intent.category.value.upper() == "UNKNOWN":
-                return await self._handle_unknown_intent(intent, workflow, session_id)
+                result = await self._handle_unknown_intent(intent, workflow, session_id)
+                result.suggestions = all_suggestions
+                result.preferences = preferences  # Issue #248: Attach preference detection results
+                return result
 
             # Fallback for truly unhandled categories (should never reach here)
-            return IntentProcessingResult(
+            result = IntentProcessingResult(
                 success=False,
                 message=f"Unhandled intent category: {intent.category.value}",
                 intent_data={
@@ -269,7 +420,33 @@ class IntentService:
                 workflow_id=workflow.id,
                 error=f"No handler for category: {intent.category.value}",
                 error_type="UnhandledCategoryError",
+                suggestions=suggestions,
+                preferences=preferences,  # Issue #248: Attach preference detection results
             )
+
+            # Issue #300 Phase 1: Learning Handler - Record Outcome
+            if pattern_id:
+                try:
+                    async with AsyncSessionFactory.session_scope() as db_session:
+                        user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+                        success = await self.learning_handler.record_outcome(
+                            user_id=user_id,
+                            pattern_id=pattern_id,
+                            success=result.success,
+                            session=db_session,
+                        )
+
+                        self.logger.info(
+                            "Learning Handler: Outcome recorded",
+                            pattern_id=str(pattern_id),
+                            success=result.success,
+                            outcome_recorded=success,
+                        )
+                except Exception as e:
+                    self.logger.error(f"Learning Handler: Outcome recording failed: {e}")
+
+            return result
 
         except Exception as e:
             self.logger.error(f"Intent processing error: {e}")
@@ -307,28 +484,6 @@ class IntentService:
                 error="Failed to process intent",
                 error_type="ServiceUnavailable",
             )
-
-    async def _handle_conversation_intent(
-        self, intent: Intent, session_id: str
-    ) -> IntentProcessingResult:
-        """
-        Handle CONVERSATION category intents (Tier 1 bypass).
-
-        Phase 3D: Conversation handling without full orchestration.
-        """
-        # Initialize conversation handler if not provided
-        if self.conversation_handler is None:
-            self.conversation_handler = ConversationHandler(session_manager=None)
-
-        result = await self.conversation_handler.respond(intent, session_id)
-        return IntentProcessingResult(
-            success=True,
-            message=result["message"],
-            intent_data=result["intent"],
-            workflow_id=result.get("workflow_id"),
-            requires_clarification=result.get("requires_clarification", False),
-            clarification_type=result.get("clarification_type"),
-        )
 
     async def _handle_query_intent(
         self, intent: Intent, workflow, session_id: str
@@ -472,25 +627,94 @@ class IntentService:
         Follows QUERY pattern for consistency.
 
         GREAT-4D Phase 1: Replaces Phase 3C placeholder.
+        Issue #284: Added ActionMapper to handle classifier/handler name mismatches.
         """
         self.logger.info(f"Processing EXECUTION intent: {intent.action}")
 
-        # Route based on action
-        if intent.action in ["create_issue", "create_ticket"]:
+        # Issue #284: Map classifier action to handler method name
+        mapped_action = ActionMapper.map_action(intent.action)
+        self.logger.debug(f"Action routing: '{intent.action}' -> '{mapped_action}'")
+
+        # Route based on mapped action
+        if mapped_action in ["create_issue", "create_ticket"]:
             return await self._handle_create_issue(intent, workflow.id, session_id)
 
-        elif intent.action in ["update_issue", "update_ticket"]:
+        elif mapped_action in ["update_issue", "update_ticket"]:
             return await self._handle_update_issue(intent, workflow.id)
+
+        # Issue #285: Todo operations routing
+        elif mapped_action == "create_todo":
+            message = await self.todo_handlers.handle_create_todo(
+                intent, session_id, user_id="default"  # TODO: Get actual user_id
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "list_todos":
+            message = await self.todo_handlers.handle_list_todos(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "complete_todo":
+            message = await self.todo_handlers.handle_complete_todo(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "delete_todo":
+            message = await self.todo_handlers.handle_delete_todo(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
 
         else:
             # Generic execution handler - indicate not yet implemented
-            self.logger.warning(f"Unhandled EXECUTION action: {intent.action}")
+            self.logger.warning(
+                f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action})"
+            )
             return IntentProcessingResult(
                 success=False,
                 message=f"EXECUTION action '{intent.action}' is not yet implemented.",
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
+                    "mapped_action": mapped_action,
                     "confidence": intent.confidence,
                 },
                 workflow_id=workflow.id,

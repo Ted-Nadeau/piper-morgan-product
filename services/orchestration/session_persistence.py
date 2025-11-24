@@ -10,6 +10,7 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from services.domain.user_preference_manager import UserPreferenceManager
 from services.session.session_manager import ConversationSession, SessionManager
@@ -38,7 +39,7 @@ class SessionPersistenceManager:
         self._in_memory_storage: Dict[str, Dict[str, Any]] = {}  # Temporary storage for MVP
 
     async def save_session_context(
-        self, session: ConversationSession, user_id: Optional[str] = None
+        self, session: ConversationSession, user_id: Optional[UUID] = None
     ) -> bool:
         """
         Save session context to persistent storage.
@@ -77,7 +78,7 @@ class SessionPersistenceManager:
             return False
 
     async def restore_session_context(
-        self, session: ConversationSession, user_id: Optional[str] = None
+        self, session: ConversationSession, user_id: Optional[UUID] = None
     ) -> bool:
         """
         Restore session context from persistent storage.
@@ -331,7 +332,7 @@ class SessionContextManager:
     async def get_or_create_session_with_context(
         self,
         session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         restore_context: bool = True,
     ) -> ConversationSession:
         """
@@ -358,7 +359,7 @@ class SessionContextManager:
         return session
 
     async def end_session_with_persistence(
-        self, session: ConversationSession, user_id: Optional[str] = None
+        self, session: ConversationSession, user_id: Optional[UUID] = None
     ) -> bool:
         """
         End session and persist context.

@@ -24,6 +24,32 @@ repos:
         exclude: ^venv/
   - repo: local
     hooks:
+      - id: check-windows-filenames
+        name: Check for Windows-incompatible filenames
+        entry: python3 scripts/check-windows-filenames.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        description: |
+          Prevents Windows-illegal characters in filenames (: < > " | ? *).
+          Windows cannot process files with these characters; this blocks commits
+          that would make the repository un-cloneable on Windows.
+          Allows easy cross-platform development without breaking Windows users.
+      - id: check-hallucinated-urls
+        name: Check for Hallucinated GitHub URLs
+        entry: .pre-commit-hooks/check-hallucinated-urls.py
+        language: python
+        pass_filenames: false
+        always_run: true
+      - id: smoke-tests
+        name: Smoke Tests
+        entry: ./scripts/run_tests.sh smoke
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+        description: |
+          Run smoke tests (<1s) to verify basic functionality before commit.
+          Catches import errors and critical failures immediately.
       - id: documentation-check
         name: Documentation Check
         entry: .git/hooks/pre-commit.legacy
@@ -41,7 +67,7 @@ repos:
         entry: bash -c 'PYTHONPATH=. python3 -m pytest tests/test_architecture_enforcement.py -xvs'
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
         files: '^(services/.*\.py|tests/test_architecture_enforcement\.py)$'
         description: |
@@ -53,7 +79,7 @@ repos:
         args: ['-c', 'if grep -r "from.*github_agent import GitHubAgent" services/ --include="*.py" --exclude="services/integrations/github/*"; then echo "ERROR: Direct GitHubAgent imports found!"; exit 1; fi']
         language: system
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
         files: '^services/.*\.py$'
         description: |
@@ -76,9 +102,42 @@ repos:
         entry: scripts/validate-numbering.sh
         language: script
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         files: '^docs/internal/architecture/current/(patterns/pattern-|adrs/adr-).*\.md$'
         description: |
           Validates that new patterns and ADRs have consecutive numbering.
           Prevents duplicate or skipped numbers in pattern/ADR sequences.
           Use ./scripts/new-pattern.sh or ./scripts/new-adr.sh for auto-numbering.
+      - id: check-tmp-work-files
+        name: Check for Work Files in /tmp
+        entry: scripts/check-tmp-work-files.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: |
+          Detects work files (reports, analysis, verification docs) in /tmp.
+          These are ephemeral and will be lost. Must save to dev/active/ first.
+          Prevents accidental loss of work products during development.
+      - id: check-init-py
+        name: Check __init__.py exists in services/
+        entry: .pre-commit-hooks/check-init-py.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: |
+          Ensures all services/ subdirectories with .py files have __init__.py.
+          Prevents Python 3.3+ namespace package issues that cause inconsistent
+          import behavior between development and strict validation contexts.
+      - id: check-manual-tests
+        name: Check for misnamed manual tests
+        entry: .pre-commit-hooks/check-manual-tests.sh
+        language: script
+        pass_filenames: false
+        files: '^tests/.*test.*\.py$'
+        stages: [pre-commit]
+        description: |
+          Detects manual test scripts incorrectly named with test_ prefix.
+          Manual tests (with load_dotenv, hardcoded IDs) should be named
+          manual_*.py or script_*.py to exclude from pytest collection.

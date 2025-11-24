@@ -23,49 +23,35 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
 
-    # Create TodoStatus enum
-    todostatus_enum = postgresql.ENUM(
-        "pending",
-        "in_progress",
-        "completed",
-        "cancelled",
-        "blocked",
-        name="todostatus",
+    # Create enums with idempotent checks (handle diamond dependencies)
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'todostatus') THEN
+                CREATE TYPE todostatus AS ENUM (
+                    'pending', 'in_progress', 'completed', 'cancelled', 'blocked'
+                );
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'todopriority') THEN
+                CREATE TYPE todopriority AS ENUM (
+                    'low', 'medium', 'high', 'urgent'
+                );
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'listtype') THEN
+                CREATE TYPE listtype AS ENUM (
+                    'personal', 'project', 'team', 'template', 'archive'
+                );
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'orderingstrategy') THEN
+                CREATE TYPE orderingstrategy AS ENUM (
+                    'manual', 'priority', 'due_date', 'created_date', 'alphabetical', 'status'
+                );
+            END IF;
+        END
+        $$;
+    """
     )
-    todostatus_enum.create(op.get_bind())
-
-    # Create TodoPriority enum
-    todopriority_enum = postgresql.ENUM(
-        "low",
-        "medium",
-        "high",
-        "urgent",
-        name="todopriority",
-    )
-    todopriority_enum.create(op.get_bind())
-
-    # Create ListType enum
-    listtype_enum = postgresql.ENUM(
-        "personal",
-        "project",
-        "team",
-        "template",
-        "archive",
-        name="listtype",
-    )
-    listtype_enum.create(op.get_bind())
-
-    # Create OrderingStrategy enum
-    orderingstrategy_enum = postgresql.ENUM(
-        "manual",
-        "priority",
-        "due_date",
-        "created_date",
-        "alphabetical",
-        "status",
-        name="orderingstrategy",
-    )
-    orderingstrategy_enum.create(op.get_bind())
 
     # Create todo_lists table
     op.create_table(
@@ -73,31 +59,8 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column(
-            "list_type",
-            sa.Enum(
-                "personal",
-                "project",
-                "team",
-                "template",
-                "archive",
-                name="listtype",
-            ),
-            nullable=False,
-        ),
-        sa.Column(
-            "ordering_strategy",
-            sa.Enum(
-                "manual",
-                "priority",
-                "due_date",
-                "created_date",
-                "alphabetical",
-                "status",
-                name="orderingstrategy",
-            ),
-            nullable=False,
-        ),
+        sa.Column("list_type", sa.String(), nullable=False),
+        sa.Column("ordering_strategy", sa.String(), nullable=False),
         sa.Column("color", sa.String(7), nullable=True),  # Hex color codes
         sa.Column("emoji", sa.String(4), nullable=True),  # Unicode emoji
         sa.Column("is_archived", sa.Boolean(), nullable=False, default=False),
@@ -119,29 +82,8 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column(
-            "status",
-            sa.Enum(
-                "pending",
-                "in_progress",
-                "completed",
-                "cancelled",
-                "blocked",
-                name="todostatus",
-            ),
-            nullable=False,
-        ),
-        sa.Column(
-            "priority",
-            sa.Enum(
-                "low",
-                "medium",
-                "high",
-                "urgent",
-                name="todopriority",
-            ),
-            nullable=False,
-        ),
+        sa.Column("status", sa.String(), nullable=False),
+        sa.Column("priority", sa.String(), nullable=False),
         sa.Column("parent_id", sa.String(), nullable=True),
         sa.Column("position", sa.Integer(), nullable=False, default=0),
         sa.Column("due_date", sa.DateTime(), nullable=True),
@@ -165,7 +107,6 @@ def upgrade() -> None:
         sa.Column("owner_id", sa.String(), nullable=False),
         sa.Column("assigned_to", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["parent_id"], ["todos.id"]),
-        sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -178,17 +119,7 @@ def upgrade() -> None:
         sa.Column("position", sa.Integer(), nullable=False, default=0),
         sa.Column("added_at", sa.DateTime(), nullable=False),
         sa.Column("added_by", sa.String(), nullable=False),
-        sa.Column(
-            "list_priority",
-            sa.Enum(
-                "low",
-                "medium",
-                "high",
-                "urgent",
-                name="todopriority",
-            ),
-            nullable=True,
-        ),
+        sa.Column("list_priority", sa.String(), nullable=True),
         sa.Column("list_due_date", sa.DateTime(), nullable=True),
         sa.Column("list_notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(["list_id"], ["todo_lists.id"]),
@@ -203,11 +134,9 @@ def upgrade() -> None:
     op.create_index(
         "idx_todo_lists_owner_archived", "todo_lists", ["owner_id", "is_archived"], unique=False
     )
-    op.create_index("idx_todo_lists_shared", "todo_lists", ["shared_with"], unique=False)
     op.create_index(
         "idx_todo_lists_default", "todo_lists", ["owner_id", "is_default"], unique=False
     )
-    op.create_index("idx_todo_lists_tags", "todo_lists", ["tags"], unique=False)
 
     # Create comprehensive indexes for Todo table
     # Core query patterns
@@ -228,14 +157,10 @@ def upgrade() -> None:
     # Context and categorization
     op.create_index("idx_todos_context", "todos", ["context"], unique=False)
     op.create_index("idx_todos_project", "todos", ["project_id"], unique=False)
-    op.create_index("idx_todos_tags", "todos", ["tags"], unique=False)
 
     # PM-040/PM-034 integration
     op.create_index("idx_todos_knowledge_node", "todos", ["knowledge_node_id"], unique=False)
     op.create_index("idx_todos_creation_intent", "todos", ["creation_intent"], unique=False)
-
-    # External references
-    op.create_index("idx_todos_external_refs", "todos", ["external_refs"], unique=False)
 
     # Performance queries
     op.create_index("idx_todos_owner_created", "todos", ["owner_id", "created_at"], unique=False)

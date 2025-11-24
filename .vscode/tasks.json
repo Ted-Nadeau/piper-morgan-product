@@ -1,0 +1,75 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Create Virtual Environment (if needed)",
+      "type": "shell",
+      "command": "python3 -m venv venv && source venv/bin/activate",
+      "isBackground": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "source venv/bin/activate && pip install -r requirements.txt",
+      "dependsOn": ["Create Virtual Environment (if needed)"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Piper Server",
+      "type": "shell",
+      "command": "./scripts/start-piper.sh",
+      "isBackground": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "Stop Piper Server",
+      "type": "shell",
+      "command": "./scripts/stop-piper.sh",
+      "isBackground": false,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Unit Tests",
+      "type": "shell",
+      "command": "source venv/bin/activate && python -m pytest tests/unit/ -v",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run All Tests",
+      "type": "shell",
+      "command": "source venv/bin/activate && python -m pytest tests/ -v",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Tests (Current File)",
+      "type": "shell",
+      "command": "source venv/bin/activate && python -m pytest ${file} -v",
+      "problemMatcher": []
+    },
+    {
+      "label": "Format Code (Black)",
+      "type": "shell",
+      "command": "source venv/bin/activate && black .",
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint Code (Flake8)",
+      "type": "shell",
+      "command": "source venv/bin/activate && flake8 .",
+      "problemMatcher": []
+    },
+    {
+      "label": "Database: Setup",
+      "type": "shell",
+      "command": "source venv/bin/activate && alembic upgrade head",
+      "problemMatcher": []
+    },
+    {
+      "label": "Database: Migrate",
+      "type": "shell",
+      "command": "source venv/bin/activate && alembic revision --autogenerate -m",
+      "problemMatcher": []
+    }
+  ]
+}

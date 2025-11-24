@@ -32,6 +32,7 @@ from services.shared_types import (
     ListType,
     NodeType,
     OrderingStrategy,
+    PatternType,
     TaskStatus,
     TaskType,
     TodoPriority,
@@ -54,44 +55,58 @@ class User(Base):
     """
     User account model.
 
-    Represents authenticated users in the system. Initially populated from
-    existing user_id values in PersonalityProfile, TokenBlacklist, and Feedback.
-
-    For Alpha: Uses user_id pattern from existing data (concurrent_X).
-    For Beta: Will include full authentication with username/email/password.
+    Unified user table for all users (production and alpha).
+    Alpha users migrated from alpha_users table with is_alpha=true.
 
     Issue #228 CORE-USERS-API
+    Issue #262 CORE-USER-ID-MIGRATION (UUID conversion complete)
     """
 
     __tablename__ = "users"
 
-    # Primary key - matches existing user_id pattern (String(255))
-    id = Column(String(255), primary_key=True)
+    # Primary key - UUID (migrated from VARCHAR in Issue #262)
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Authentication fields
     username = Column(String(255), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(500), nullable=True)  # For future password auth
+    role = Column(String(50), default="user", nullable=False)
 
     # Status flags
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+    is_alpha = Column(Boolean, default=False, nullable=False)  # Issue #262 - alpha user flag
+    is_admin = Column(Boolean, default=False, nullable=False)  # Issue #357 - SEC-RBAC admin bypass
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
 
-    # Relationships
+    # Relationships (Issue #262/#291 - FK constraints restored with UUID)
     personality_profiles = relationship(
         "PersonalityProfileModel", back_populates="user", lazy="select"
     )
     api_keys = relationship(
         "UserAPIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )
-    blacklisted_tokens = relationship("TokenBlacklist", back_populates="user", lazy="select")
+    blacklisted_tokens = relationship(
+        "TokenBlacklist", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )  # Issue #291 - FK restored
     feedback = relationship("FeedbackDB", back_populates="user", lazy="select")
-    audit_logs = relationship("AuditLog", back_populates="user", lazy="select")  # Issue #249
+    learned_patterns = relationship(
+        "LearnedPattern", back_populates="user", cascade="all, delete-orphan", lazy="select"
+    )  # Issue #300 - Learning system
+    learning_settings = relationship(
+        "LearningSettings",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="select",
+        uselist=False,  # One-to-one relationship
+    )  # Issue #300 - Learning settings
+    # NOTE: AuditLog relationship still disabled (audit_logs.user_id has no FK constraint)
+    # audit_logs = relationship("AuditLog", back_populates="user", lazy="select")
 
     # Indexes
     __table_args__ = (
@@ -104,6 +119,11 @@ class User(Base):
         return f"<User(id={self.id}, username={self.username}, active={self.is_active})>"
 
 
+# NOTE: AlphaUser model removed in Issue #262
+# Alpha users merged into User table with is_alpha=true flag
+# Table dropped, data migrated to users table
+
+
 class UserAPIKey(Base):
     """
     User-specific API keys stored securely in OS keychain.
@@ -112,12 +132,15 @@ class UserAPIKey(Base):
     with references using format: "piper_{user_id}_{provider}"
 
     Issue #228 CORE-USERS-API Phase 1B
+    Issue #262 - UUID migration complete
     """
 
     __tablename__ = "user_api_keys"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )  # Issue #262 - FK restored with UUID
     provider = Column(String(50), nullable=False)  # openai, anthropic, github, etc
     key_reference = Column(String(500), nullable=False)  # keychain identifier
 
@@ -135,7 +158,7 @@ class UserAPIKey(Base):
     previous_key_reference = Column(String(500), nullable=True)
     rotated_at = Column(DateTime, nullable=True)
 
-    # Relationships
+    # Relationships (Issue #262 - restored with UUID)
     user = relationship("User", back_populates="api_keys")
 
     # Constraints
@@ -161,13 +184,16 @@ class AuditLog(Base, TimestampMixin):
     - Security events
 
     Issue #249 CORE-AUDIT-LOGGING
+    Issue #262 - UUID migration complete (NO FK constraint - intentional)
     """
 
     __tablename__ = "audit_logs"
 
     # Identity (follow User model pattern - String primary key)
     id = Column(String(255), primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    # NOTE: FK intentionally NOT added - audit logs should persist even if user deleted
+    # user_id stores UUID as string for reference only
+    user_id = Column(postgresql.UUID(as_uuid=True), nullable=True, index=True)
     session_id = Column(String(255), nullable=True, index=True)
 
     # Event classification
@@ -193,7 +219,9 @@ class AuditLog(Base, TimestampMixin):
     new_value = Column(JSON, nullable=True)  # New state
 
     # Relationships
-    user = relationship("User", back_populates="audit_logs")
+    # NOTE: Relationship to User disabled during alpha phase (Issue #259)
+    # FK constraint removed to support alpha_users (UUID) - relationship requires explicit primaryjoin
+    # user = relationship("User", back_populates="audit_logs")
 
     # Strategic indexes for query performance
     __table_args__ = (
@@ -438,8 +466,10 @@ class ProjectDB(Base):
     __tablename__ = "projects"
 
     id = Column(String, primary_key=True)
+    owner_id = Column(String, nullable=True)
     name = Column(String, nullable=False, unique=True)
     description = Column(Text)
+    shared_with = Column(JSON, default=lambda: [])
     is_default = Column(Boolean, default=False)
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -451,10 +481,22 @@ class ProjectDB(Base):
     )
 
     def to_domain(self) -> domain.Project:
+        # Convert shared_with JSON to SharePermission objects
+        shared_with = []
+        if self.shared_with:
+            for perm_dict in self.shared_with:
+                shared_with.append(
+                    domain.SharePermission(
+                        user_id=perm_dict["user_id"], role=domain.ShareRole(perm_dict["role"])
+                    )
+                )
+
         project = domain.Project(
             id=self.id,
+            owner_id=self.owner_id or "",
             name=self.name,
             description=self.description,
+            shared_with=shared_with,
             is_default=self.is_default,
             is_archived=self.is_archived,
             created_at=self.created_at,
@@ -466,10 +508,15 @@ class ProjectDB(Base):
 
     @classmethod
     def from_domain(cls, project: domain.Project) -> "ProjectDB":
+        # Convert SharePermission objects to JSONB-serializable format
+        shared_with_json = [perm.to_dict() for perm in project.shared_with]
+
         return cls(
             id=project.id,
+            owner_id=project.owner_id,
             name=project.name,
             description=project.description,
+            shared_with=shared_with_json,
             is_default=project.is_default,
             is_archived=project.is_archived,
             created_at=project.created_at,
@@ -525,7 +572,7 @@ class UploadedFileDB(Base):
     __tablename__ = "uploaded_files"
 
     id = Column(String, primary_key=True)
-    session_id = Column(String, nullable=False)
+    owner_id = Column(postgresql.UUID(as_uuid=False), nullable=False)  # UUID type in database
     filename = Column(String(500), nullable=False)
     file_type = Column(String(255))
     file_size = Column(Integer)
@@ -534,17 +581,16 @@ class UploadedFileDB(Base):
     last_referenced = Column(DateTime, nullable=True)
     reference_count = Column(Integer, default=0)
     file_metadata = Column(JSON, default=dict)
-    item_metadata = Column(JSON, default=dict)
 
     __table_args__ = (
-        Index("idx_files_session", "session_id", "upload_time"),
+        Index("idx_files_owner", "owner_id", "upload_time"),
         Index("idx_files_filename", "filename"),
     )
 
     def to_domain(self) -> domain.UploadedFile:
         return domain.UploadedFile(
             id=self.id,
-            session_id=self.session_id,
+            owner_id=str(self.owner_id) if self.owner_id else None,
             filename=self.filename,
             file_type=self.file_type,
             file_size=self.file_size,
@@ -552,7 +598,7 @@ class UploadedFileDB(Base):
             upload_time=self.upload_time,
             last_referenced=self.last_referenced,
             reference_count=self.reference_count,
-            metadata=self.item_metadata or {},
+            metadata={},  # Not stored separately in database
             file_metadata=self.file_metadata or {},
         )
 
@@ -560,7 +606,7 @@ class UploadedFileDB(Base):
     def from_domain(cls, file: domain.UploadedFile) -> "UploadedFileDB":
         return cls(
             id=file.id,
-            session_id=file.session_id,
+            owner_id=file.owner_id,  # Will be converted to UUID by SQLAlchemy
             filename=file.filename,
             file_type=file.file_type,
             file_size=file.file_size,
@@ -569,7 +615,6 @@ class UploadedFileDB(Base):
             last_referenced=file.last_referenced,
             reference_count=file.reference_count,
             file_metadata=file.file_metadata,
-            item_metadata=file.metadata,
         )
 
 
@@ -584,7 +629,8 @@ class KnowledgeNodeDB(Base):
     description = Column(Text)
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
-    session_id = Column(String)
+    session_id = Column(String)  # Legacy - kept for backward compatibility
+    owner_id = Column(String, ForeignKey("users.id"), nullable=True)  # SEC-RBAC Issue #357
     embedding_vector = Column(JSON)  # Will be upgraded to pgvector VECTOR type later
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -647,7 +693,8 @@ class KnowledgeEdgeDB(Base):
     weight = Column(Float, default=1.0)
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
-    session_id = Column(String)
+    session_id = Column(String)  # Legacy - kept for backward compatibility
+    owner_id = Column(String, ForeignKey("users.id"), nullable=True)  # SEC-RBAC Issue #357
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -723,8 +770,8 @@ class TodoListDB(Base):
     is_default = Column(Boolean, default=False, nullable=False)
 
     # Metadata and tags
-    list_metadata = Column(JSON, default=dict)
-    tags = Column(JSON, default=list)  # Array of tag strings
+    list_metadata = Column("metadata", JSON, default=dict)
+    tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -732,7 +779,7 @@ class TodoListDB(Base):
 
     # Ownership and sharing
     owner_id = Column(String, nullable=False)
-    shared_with = Column(JSON, default=list)  # Array of user IDs
+    shared_with = Column(postgresql.JSONB, default=list)  # Array of user IDs
 
     # Performance optimization - cached counts
     todo_count = Column(Integer, default=0, nullable=False)
@@ -747,9 +794,11 @@ class TodoListDB(Base):
     __table_args__ = (
         Index("idx_todo_lists_owner_type", "owner_id", "list_type"),
         Index("idx_todo_lists_owner_archived", "owner_id", "is_archived"),
-        Index("idx_todo_lists_shared", "shared_with"),  # GIN index for JSON array
+        Index(
+            "idx_todo_lists_shared", "shared_with", postgresql_using="gin"
+        ),  # GIN index for JSON array
         Index("idx_todo_lists_default", "owner_id", "is_default"),
-        Index("idx_todo_lists_tags", "tags"),  # GIN index for tag search
+        Index("idx_todo_lists_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
     )
 
     def to_domain(self) -> domain.TodoList:
@@ -787,7 +836,7 @@ class TodoListDB(Base):
             emoji=todo_list.emoji,
             is_archived=todo_list.is_archived,
             is_default=todo_list.is_default,
-            list_metadata=todo_list.metadata,
+            metadata=todo_list.metadata,
             tags=todo_list.tags,
             created_at=todo_list.created_at,
             updated_at=todo_list.updated_at,
@@ -795,161 +844,6 @@ class TodoListDB(Base):
             shared_with=todo_list.shared_with,
             todo_count=todo_list.todo_count,
             completed_count=todo_list.completed_count,
-        )
-
-
-class TodoDB(Base):
-    """Database model for Todo with comprehensive indexing"""
-
-    __tablename__ = "todos"
-
-    # Primary key
-    id = Column(String, primary_key=True)
-
-    # Core fields
-    title = Column(String, nullable=False)
-    description = Column(Text, default="")
-    status = Column(Enum(TodoStatus), nullable=False, default=TodoStatus.PENDING)
-    priority = Column(Enum(TodoPriority), nullable=False, default=TodoPriority.MEDIUM)
-
-    # Hierarchical structure
-    parent_id = Column(String, ForeignKey("todos.id"))
-    position = Column(Integer, default=0, nullable=False)
-
-    # Scheduling
-    due_date = Column(DateTime)
-    reminder_date = Column(DateTime)
-    scheduled_date = Column(DateTime)
-
-    # Context and categorization
-    tags = Column(JSON, default=list)
-    project_id = Column(String, ForeignKey("projects.id"))
-    context = Column(String)  # @home, @work, etc.
-
-    # Progress tracking
-    estimated_minutes = Column(Integer)
-    actual_minutes = Column(Integer)
-    completion_notes = Column(Text, default="")
-
-    # PM-040 Knowledge Graph integration
-    list_metadata = Column(JSON, default=dict)
-    knowledge_node_id = Column(String)  # Link to Knowledge Graph
-    related_todos = Column(JSON, default=list)  # Array of todo IDs
-
-    # PM-034 Intent Classification integration
-    creation_intent = Column(String)
-    intent_confidence = Column(Float)
-
-    # External integrations
-    external_refs = Column(JSON, default=dict)  # {"github_issue": "123"}
-
-    # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    completed_at = Column(DateTime)
-
-    # Ownership
-    owner_id = Column(String, nullable=False)
-    assigned_to = Column(String)
-
-    # Relationships
-    parent = relationship("TodoDB", remote_side=[id], back_populates="children")
-    children = relationship("TodoDB", back_populates="parent", cascade="all, delete-orphan")
-    memberships = relationship(
-        "ListMembershipDB", back_populates="todo", cascade="all, delete-orphan"
-    )
-
-    # Comprehensive indexes for query performance
-    __table_args__ = (
-        # Core query patterns
-        Index("idx_todos_owner_status", "owner_id", "status"),
-        Index("idx_todos_owner_priority", "owner_id", "priority"),
-        Index("idx_todos_assigned_status", "assigned_to", "status"),
-        # Date-based queries
-        Index("idx_todos_due_date", "due_date"),
-        Index("idx_todos_owner_due", "owner_id", "due_date"),
-        Index("idx_todos_scheduled", "scheduled_date"),
-        Index("idx_todos_reminder", "reminder_date"),
-        # Hierarchical queries
-        Index("idx_todos_parent", "parent_id"),
-        Index("idx_todos_parent_position", "parent_id", "position"),
-        # Context and categorization
-        Index("idx_todos_context", "context"),
-        Index("idx_todos_project", "project_id"),
-        Index("idx_todos_tags", "tags"),  # GIN index for tag search
-        # PM-040/PM-034 integration
-        Index("idx_todos_knowledge_node", "knowledge_node_id"),
-        Index("idx_todos_creation_intent", "creation_intent"),
-        # External references
-        Index("idx_todos_external_refs", "external_refs"),  # GIN index for JSON search
-        # Performance queries
-        Index("idx_todos_owner_created", "owner_id", "created_at"),
-        Index("idx_todos_owner_updated", "owner_id", "updated_at"),
-    )
-
-    def to_domain(self) -> domain.Todo:
-        """Convert to domain model"""
-        return domain.Todo(
-            id=self.id,
-            title=self.title,
-            description=self.description,
-            status=self.status,
-            priority=self.priority,
-            parent_id=self.parent_id,
-            position=self.position,
-            due_date=self.due_date,
-            reminder_date=self.reminder_date,
-            scheduled_date=self.scheduled_date,
-            tags=self.tags or [],
-            project_id=self.project_id,
-            context=self.context,
-            estimated_minutes=self.estimated_minutes,
-            actual_minutes=self.actual_minutes,
-            completion_notes=self.completion_notes,
-            metadata=self.list_metadata or {},
-            knowledge_node_id=self.knowledge_node_id,
-            related_todos=self.related_todos or [],
-            creation_intent=self.creation_intent,
-            intent_confidence=self.intent_confidence,
-            external_refs=self.external_refs or {},
-            created_at=self.created_at,
-            updated_at=self.updated_at,
-            completed_at=self.completed_at,
-            owner_id=self.owner_id,
-            assigned_to=self.assigned_to,
-        )
-
-    @classmethod
-    def from_domain(cls, todo: domain.Todo) -> "TodoDB":
-        """Create from domain model"""
-        return cls(
-            id=todo.id,
-            title=todo.title,
-            description=todo.description,
-            status=todo.status,
-            priority=todo.priority,
-            parent_id=todo.parent_id,
-            position=todo.position,
-            due_date=todo.due_date,
-            reminder_date=todo.reminder_date,
-            scheduled_date=todo.scheduled_date,
-            tags=todo.tags,
-            project_id=todo.project_id,
-            context=todo.context,
-            estimated_minutes=todo.estimated_minutes,
-            actual_minutes=todo.actual_minutes,
-            completion_notes=todo.completion_notes,
-            list_metadata=todo.metadata,
-            knowledge_node_id=todo.knowledge_node_id,
-            related_todos=todo.related_todos,
-            creation_intent=todo.creation_intent,
-            intent_confidence=todo.intent_confidence,
-            external_refs=todo.external_refs,
-            created_at=todo.created_at,
-            updated_at=todo.updated_at,
-            completed_at=todo.completed_at,
-            owner_id=todo.owner_id,
-            assigned_to=todo.assigned_to,
         )
 
 
@@ -963,7 +857,7 @@ class ListMembershipDB(Base):
 
     # Foreign keys
     list_id = Column(String, ForeignKey("todo_lists.id"), nullable=False)
-    todo_id = Column(String, ForeignKey("todos.id"), nullable=False)
+    todo_id = Column(String, ForeignKey("todo_items.id"), nullable=False)
 
     # Position tracking
     position = Column(Integer, default=0, nullable=False)
@@ -979,7 +873,8 @@ class ListMembershipDB(Base):
 
     # Relationships
     todo_list = relationship("TodoListDB", back_populates="memberships")
-    todo = relationship("TodoDB", back_populates="memberships")
+    # Disabled: TodoDB.memberships relationship disabled after foundation refactor
+    # todo = relationship("TodoDB", back_populates="memberships")
 
     # Strategic indexes for many-to-many queries
     __table_args__ = (
@@ -1059,8 +954,8 @@ class ListDB(Base):
     is_default = Column(Boolean, default=False, nullable=False)
 
     # Metadata and tags
-    list_metadata = Column(JSON, default=dict)
-    tags = Column(JSON, default=list)  # Array of tag strings
+    list_metadata = Column("metadata", JSON, default=dict)
+    tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -1068,7 +963,7 @@ class ListDB(Base):
 
     # Ownership and sharing
     owner_id = Column(String, nullable=False)
-    shared_with = Column(JSON, default=list)  # Array of user IDs
+    shared_with = Column(postgresql.JSONB, default=list)  # Array of user IDs
 
     # Performance optimization - cached counts
     item_count = Column(Integer, default=0, nullable=False)
@@ -1082,9 +977,11 @@ class ListDB(Base):
         Index("idx_lists_owner_type", "owner_id", "item_type"),
         Index("idx_lists_owner_list_type", "owner_id", "list_type"),
         Index("idx_lists_owner_archived", "owner_id", "is_archived"),
-        Index("idx_lists_shared", "shared_with"),  # GIN index for JSON array
+        Index(
+            "idx_lists_shared", "shared_with", postgresql_using="gin"
+        ),  # GIN index for JSON array
         Index("idx_lists_default", "owner_id", "item_type", "is_default"),
-        Index("idx_lists_tags", "tags"),  # GIN index for tag search
+        Index("idx_lists_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
     )
 
     def to_domain(self) -> domain.List:
@@ -1124,7 +1021,7 @@ class ListDB(Base):
             emoji=list_obj.emoji,
             is_archived=list_obj.is_archived,
             is_default=list_obj.is_default,
-            list_metadata=list_obj.metadata,
+            metadata=list_obj.metadata,
             tags=list_obj.tags,
             created_at=list_obj.created_at,
             updated_at=list_obj.updated_at,
@@ -1204,7 +1101,10 @@ class ListItemDB(Base):
 
 
 class FeedbackDB(Base, TimestampMixin):
-    """Database model for user feedback tracking - PM-005"""
+    """Database model for user feedback tracking - PM-005
+
+    Issue #262 - UUID migration complete
+    """
 
     __tablename__ = "feedback"
 
@@ -1219,7 +1119,9 @@ class FeedbackDB(Base, TimestampMixin):
     context = Column(JSON, default=dict)  # Additional context data
 
     # User and session context
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
+    )
     conversation_context = Column(JSON, default=dict)  # Conversation context if available
 
     # Feedback metadata
@@ -1294,12 +1196,17 @@ class FeedbackDB(Base, TimestampMixin):
 
 
 class PersonalityProfileModel(Base, TimestampMixin):
-    """Database model for personality profiles"""
+    """Database model for personality profiles
+
+    Issue #262 - UUID migration complete
+    """
 
     __tablename__ = "personality_profiles"
 
     id = Column(postgresql.UUID(as_uuid=True), primary_key=True)
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=False, unique=True)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True
+    )
     warmth_level = Column(Float, nullable=False, default=0.6)
     confidence_style = Column(String(50), nullable=False, default="contextual")
     action_orientation = Column(String(50), nullable=False, default="medium")
@@ -1339,7 +1246,7 @@ class PersonalityProfileModel(Base, TimestampMixin):
 
     @classmethod
     def from_domain(
-        cls, profile: "domain.PersonalityProfile", user_id: str
+        cls, profile: "domain.PersonalityProfile", user_id: uuid.UUID
     ) -> "PersonalityProfileModel":
         """Create from domain model"""
         import uuid
@@ -1361,6 +1268,8 @@ class TokenBlacklist(Base):
 
     Stores revoked tokens for security invalidation when Redis unavailable.
     Redis is primary storage with TTL; this is fallback only.
+
+    Issue #291 - FK constraint restored with CASCADE delete
     """
 
     __tablename__ = "token_blacklist"
@@ -1370,14 +1279,20 @@ class TokenBlacklist(Base):
 
     # Token identification
     token_id = Column(String(255), unique=True, nullable=False, index=True)
-    user_id = Column(String(255), ForeignKey("users.id"), nullable=True, index=True)
+    # Issue #291 - FK constraint restored (was temporarily removed for alpha)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
 
     # Blacklist metadata
     reason = Column(String(50), nullable=False)  # logout, security, admin
     expires_at = Column(DateTime, nullable=False, index=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    # Relationships
+    # Relationships (Issue #291 - restored)
     user = relationship("User", back_populates="blacklisted_tokens")
 
     # Strategic indexes for performance
@@ -1387,3 +1302,409 @@ class TokenBlacklist(Base):
         Index("idx_token_blacklist_user_id", "user_id"),
         Index("idx_token_blacklist_user_expires", "user_id", "expires_at"),
     )
+
+
+# ============================================================================
+# PRIMITIVE DOMAIN MODELS (Phase 1: Foundation)
+# ============================================================================
+
+
+class ItemDB(Base):
+    """
+    Database representation of universal Item primitive.
+
+    This is the base table for all item types using SQLAlchemy's
+    polymorphic inheritance (joined table inheritance pattern).
+
+    Future item types (Todo, ShoppingItem, etc.) will have their own tables
+    that join to this one via foreign key on id.
+
+    Phase 1: Create base items table
+    Phase 2: Create todo_items table (joins to items)
+    Future: Other item types can follow same pattern
+    """
+
+    __tablename__ = "items"
+
+    # Core fields
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    text = Column(String, nullable=False)  # Universal property - all items have text
+    position = Column(Integer, default=0, nullable=False)  # Order within list
+    list_id = Column(String, nullable=True)  # Which list contains this item
+    item_type = Column(String(50), nullable=False, default="item")  # Discriminator
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Polymorphic configuration for future inheritance
+    __mapper_args__ = {
+        "polymorphic_identity": "item",
+        "polymorphic_on": item_type,
+    }
+
+    # Indexes for performance
+    __table_args__ = (
+        Index("idx_items_list_id", "list_id"),
+        Index("idx_items_item_type", "item_type"),
+        Index("idx_items_list_position", "list_id", "position"),
+        Index("idx_items_created", "created_at"),
+    )
+
+    def to_domain(self) -> "domain.Item":
+        """Convert database model to domain model."""
+        # Import here to avoid circular imports
+        from services.domain.primitives import Item
+
+        return Item(
+            id=self.id,
+            text=self.text,
+            position=self.position,
+            list_id=self.list_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+    @classmethod
+    def from_domain(cls, item: "domain.Item") -> "ItemDB":
+        """Convert domain model to database model."""
+        return cls(
+            id=item.id,
+            text=item.text,
+            position=item.position,
+            list_id=item.list_id,
+            item_type="item",  # Base type
+            created_at=item.created_at,
+            updated_at=item.updated_at,
+        )
+
+
+class TodoDB(ItemDB):
+    """Database model for Todo using polymorphic inheritance.
+
+    Extends ItemDB using SQLAlchemy's joined table inheritance:
+    - Base data in 'items' table (id, text, position, list_id, created_at, updated_at)
+    - Todo-specific data in 'todo_items' table
+    - Joined via foreign key on id
+
+    Design: TodoDB IS-A ItemDB, matching domain's Todo IS-A Item
+    """
+
+    __tablename__ = "todo_items"
+
+    # Primary key is also foreign key to items.id
+    id = Column(String, ForeignKey("items.id"), primary_key=True)
+
+    # Todo-specific fields only (NOT duplicating ItemDB fields)
+    # Note: text (was title), position, created_at, updated_at are inherited from ItemDB
+
+    # Core Todo fields
+    description = Column(Text, default="")
+    status = Column(String(11), nullable=False, default="pending")  # Changed from Enum to String
+    priority = Column(String(6), nullable=False, default="medium")  # Changed from Enum to String
+    completed = Column(Boolean, default=False, nullable=False)
+
+    # Hierarchical structure
+    parent_id = Column(String, ForeignKey("todo_items.id"))
+
+    # Scheduling
+    due_date = Column(DateTime)
+    reminder_date = Column(DateTime)
+    scheduled_date = Column(DateTime)
+
+    # Context and categorization
+    tags = Column(postgresql.JSONB, default=list)
+    project_id = Column(String, ForeignKey("projects.id"))
+    context = Column(String)  # @home, @work, etc.
+
+    # Progress tracking
+    estimated_minutes = Column(Integer)
+    actual_minutes = Column(Integer)
+    completion_notes = Column(Text, default="")
+
+    # PM-040 Knowledge Graph integration
+    list_metadata = Column("list_metadata", JSON, default=dict)
+    knowledge_node_id = Column(String)  # Link to Knowledge Graph
+    related_todos = Column(JSON, default=list)  # Array of todo IDs
+
+    # PM-034 Intent Classification integration
+    creation_intent = Column(String)
+    intent_confidence = Column(Float)
+
+    # External integrations
+    external_refs = Column(postgresql.JSONB, default=dict)  # {"github_issue": "123"}
+
+    # Timestamps (inherited: created_at, updated_at from ItemDB)
+    completed_at = Column(DateTime)
+
+    # Ownership
+    owner_id = Column(String, nullable=False)
+    assigned_to = Column(String)
+
+    # Polymorphic configuration - TodoDB is a specialized ItemDB
+    __mapper_args__ = {
+        "polymorphic_identity": "todo",
+    }
+
+    # Relationships
+    parent = relationship(
+        "TodoDB", remote_side=[id], foreign_keys="[TodoDB.parent_id]", back_populates="children"
+    )
+    children = relationship(
+        "TodoDB",
+        foreign_keys="[TodoDB.parent_id]",
+        back_populates="parent",
+        cascade="all, delete-orphan",
+    )
+    # Disabled: list_memberships table was dropped in foundation/item-list-primitives refactor
+    # TODO: Re-enable after UniversalList migration is complete
+    # memberships = relationship(
+    #     "ListMembershipDB", back_populates="todo", cascade="all, delete-orphan"
+    # )
+
+    # Comprehensive indexes for query performance
+    # NOTE: Indexes on inherited fields (position, created_at, updated_at)
+    # belong in items table, not todo_items table
+    __table_args__ = (
+        # Core query patterns
+        Index("idx_todos_owner_status", "owner_id", "status"),
+        Index("idx_todos_owner_priority", "owner_id", "priority"),
+        Index("idx_todos_assigned_status", "assigned_to", "status"),
+        # Date-based queries
+        Index("idx_todos_due_date", "due_date"),
+        Index("idx_todos_owner_due", "owner_id", "due_date"),
+        Index("idx_todos_scheduled", "scheduled_date"),
+        Index("idx_todos_reminder", "reminder_date"),
+        # Hierarchical queries
+        Index("idx_todos_parent", "parent_id"),
+        # Context and categorization
+        Index("idx_todos_context", "context"),
+        Index("idx_todos_project", "project_id"),
+        Index("idx_todos_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
+        # PM-040/PM-034 integration
+        Index("idx_todos_knowledge_node", "knowledge_node_id"),
+        Index("idx_todos_creation_intent", "creation_intent"),
+        # External references
+        Index(
+            "idx_todos_external_refs", "external_refs", postgresql_using="gin"
+        ),  # GIN index for JSON search
+    )
+
+    def to_domain(self) -> domain.Todo:
+        """Convert to domain model.
+
+        Maps database fields to domain model, including inherited ItemDB fields.
+        """
+        return domain.Todo(
+            # Inherited from ItemDB
+            id=self.id,
+            text=self.text,  # ItemDB uses 'text', domain Todo has 'text' and 'title' property
+            position=self.position,
+            list_id=self.list_id,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            # Todo-specific fields
+            description=self.description,
+            status=self.status,
+            priority=self.priority,
+            completed=self.completed,
+            parent_id=self.parent_id,
+            due_date=self.due_date,
+            reminder_date=self.reminder_date,
+            scheduled_date=self.scheduled_date,
+            tags=self.tags or [],
+            project_id=self.project_id,
+            context=self.context,
+            estimated_minutes=self.estimated_minutes,
+            actual_minutes=self.actual_minutes,
+            completion_notes=self.completion_notes,
+            metadata=self.list_metadata or {},
+            knowledge_node_id=self.knowledge_node_id,
+            related_todos=self.related_todos or [],
+            creation_intent=self.creation_intent,
+            intent_confidence=self.intent_confidence,
+            external_refs=self.external_refs or {},
+            completed_at=self.completed_at,
+            owner_id=self.owner_id,
+            assigned_to=self.assigned_to,
+        )
+
+    @classmethod
+    def from_domain(cls, todo: domain.Todo) -> "TodoDB":
+        """Create from domain model.
+
+        Maps domain model fields to database, including inherited ItemDB fields.
+        Note: ItemDB fields (id, text, position, list_id) are set automatically
+        by SQLAlchemy's polymorphic inheritance.
+        """
+        return cls(
+            # Inherited from ItemDB (polymorphic inheritance handles these)
+            id=todo.id,
+            text=todo.text,  # Use text, not title
+            position=todo.position,
+            list_id=todo.list_id,
+            item_type="todo",  # Polymorphic discriminator
+            created_at=todo.created_at,
+            updated_at=todo.updated_at,
+            # Todo-specific fields
+            description=todo.description,
+            status=todo.status,
+            priority=todo.priority,
+            completed=todo.completed,
+            parent_id=todo.parent_id,
+            due_date=todo.due_date,
+            reminder_date=todo.reminder_date,
+            scheduled_date=todo.scheduled_date,
+            tags=todo.tags,
+            project_id=todo.project_id,
+            context=todo.context,
+            estimated_minutes=todo.estimated_minutes,
+            actual_minutes=todo.actual_minutes,
+            completion_notes=todo.completion_notes,
+            metadata=todo.metadata,
+            knowledge_node_id=todo.knowledge_node_id,
+            related_todos=todo.related_todos,
+            creation_intent=todo.creation_intent,
+            intent_confidence=todo.intent_confidence,
+            external_refs=todo.external_refs,
+            completed_at=todo.completed_at,
+            owner_id=todo.owner_id,
+            assigned_to=todo.assigned_to,
+        )
+
+
+class LearnedPattern(Base, TimestampMixin):
+    """
+    Learned patterns for auto-learning system.
+
+    Stores user-specific patterns discovered through real-time learning.
+    Confidence increases with successful applications, decreases with failures.
+
+    Issue #300: CORE-ALPHA-LEARNING-BASIC - Basic Auto-Learning
+    Foundation Stone #1 of the learning cathedral.
+    """
+
+    __tablename__ = "learned_patterns"
+
+    # Primary key
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # User association
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    # Pattern identification
+    pattern_type = Column(Enum(PatternType), nullable=False)
+    pattern_data = Column(JSON, nullable=False)  # Flexible pattern storage
+
+    # Confidence tracking
+    confidence = Column(Float, default=0.5, nullable=False)  # 0.0 to 1.0
+    usage_count = Column(Integer, default=0, nullable=False)
+    success_count = Column(Integer, default=0, nullable=False)
+    failure_count = Column(Integer, default=0, nullable=False)
+
+    # Status
+    enabled = Column(Boolean, default=True, nullable=False)
+
+    # Timestamps (from TimestampMixin: created_at, updated_at)
+    last_used_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="learned_patterns")
+
+    # Indexes for performance
+    __table_args__ = (
+        Index("ix_learned_patterns_user_confidence", "user_id", "confidence"),
+        Index("ix_learned_patterns_user_enabled", "user_id", "enabled"),
+    )
+
+    def update_confidence(self):
+        """
+        Calculate confidence from success/failure rates with volume factor.
+
+        Formula: confidence = (success_rate * 0.8 + previous_confidence * 0.2) * volume_factor
+        Volume factor: min(usage_count / 10, 1.0) - caps at 10 uses
+        """
+        total = self.success_count + self.failure_count
+        if total == 0:
+            return  # No outcomes yet
+
+        # Success rate (0.0 - 1.0)
+        success_rate = self.success_count / total
+
+        # Volume factor (more uses = more confidence, caps at 10)
+        volume_factor = min(self.usage_count / 10, 1.0)
+
+        # Weighted: 80% current success, 20% previous confidence
+        new_confidence = success_rate * 0.8 + self.confidence * 0.2
+
+        # Apply volume factor
+        self.confidence = new_confidence * volume_factor
+
+        # Disable if too low
+        if self.confidence < 0.3:
+            self.enabled = False
+
+        self.updated_at = datetime.utcnow()
+
+
+class LearningSettings(Base, TimestampMixin):
+    """
+    User learning preferences and configuration.
+
+    Controls auto-learning behavior, suggestion thresholds, and automation settings.
+    One settings record per user (enforced by unique constraint).
+    """
+
+    __tablename__ = "learning_settings"
+
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,  # One settings per user
+        index=True,
+    )
+
+    # Learning behavior controls
+    learning_enabled = Column(
+        Boolean, default=True, nullable=False, comment="Master switch for learning system"
+    )
+    suggestion_threshold = Column(
+        Float,
+        default=0.7,
+        nullable=False,
+        comment="Minimum confidence to show suggestions",
+    )
+    automation_threshold = Column(
+        Float,
+        default=0.9,
+        nullable=False,
+        comment="Minimum confidence for automatic execution",
+    )
+
+    # Optional: Future settings placeholders
+    auto_apply_enabled = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+        comment="Allow automatic pattern application",
+    )
+    notification_enabled = Column(
+        Boolean,
+        default=True,
+        nullable=False,
+        comment="Show learning notifications",
+    )
+
+    # Relationship
+    user = relationship("User", back_populates="learning_settings")
+
+
+# Note: ListDB already exists at line 1126 with full implementation
+# It includes all fields from domain.List plus owner_id, shared_with, etc.

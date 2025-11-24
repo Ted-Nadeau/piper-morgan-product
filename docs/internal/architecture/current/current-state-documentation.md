@@ -1,4 +1,5 @@
 # Piper Morgan Current State Documentation
+
 **Date**: September 19, 2025
 **Purpose**: Truth about what exists, what works, what doesn't
 
@@ -7,17 +8,21 @@
 ## 🟢 What Actually Works
 
 ### Core Functions
+
 1. **Basic Chat**
+
    - "Hello" → Response ✅
    - "Help" → Menu display ✅
    - Simple conversation ✅
 
 2. **Intent Classification**
+
    - Rule-based patterns work ✅
    - LLM fallback exists ✅
    - Categories: CONVERSATION, EXECUTION, QUERY ✅
 
 3. **Database Layer**
+
    - PostgreSQL connection ✅
    - Repository patterns ✅
    - Model persistence ✅
@@ -28,6 +33,7 @@
    - Knowledge base can store/retrieve ✅
 
 ### Development Infrastructure
+
 - Session logging system ✅
 - Multi-agent coordination methodology ✅
 - Excellence Flywheel documented ✅
@@ -38,37 +44,44 @@
 ## 🔴 What's Broken
 
 ### Critical Breaks
+
 1. **QueryRouter**
+
    - Status: Commented out in engine.py line 79
    - Impact: Can't route queries to handlers
    - Workaround: Unknown (probably direct calls)
 
-2. **OrchestrationEngine**
-   - Status: Declared as Optional but never initialized
-   - Impact: No workflow orchestration
-   - Location: main.py line ~609 tries to use None
+2. **~~OrchestrationEngine~~** ✅ FIXED (Late Sept 2025)
 
-3. **Complex Workflows**
-   - "Show standup" → Error ❌
-   - Any multi-step flow → Broken ❌
-   - Workflow creation → undefined ❌
+   - ~~Status: Declared as Optional but never initialized~~
+   - **Current Status**: Fully wired up, 50+ references across codebase
+   - Used in: web/app.py, IntentService, SlackResponseHandler, etc.
+
+3. **~~Complex Workflows~~** ⚠️ PARTIALLY FIXED
+   - "Show standup" → ✅ Works (MorningStandupWorkflow using direct async)
+   - Multi-step flows → ⚠️ Works via OrchestrationEngine (Python async, not Temporal)
+   - Workflow creation → ✅ WorkflowFactory operational
 
 ---
 
 ## 🟡 What's Partially Working
 
 ### Incomplete Systems
+
 1. **Plugin Architecture** (15% complete)
+
    - Design exists but not implemented
    - All integrations still monolithic
    - MCP readiness not achieved
 
 2. **Conversational Interface** (5% complete)
+
    - Command processing only
    - No state management
    - No multi-turn conversation
 
 3. **A/B Testing Framework** (75% complete)
+
    - PM-034 shows sophisticated design
    - Code exists but not wired
    - Rollout mechanism incomplete
@@ -83,6 +96,7 @@
 ## 📁 File Structure Reality
 
 ### Web Layer
+
 ```
 web/
 ├── app.py          # Main FastAPI app (NOT main.py!)
@@ -91,6 +105,7 @@ web/
 ```
 
 ### Services
+
 ```
 services/
 ├── orchestration/
@@ -111,25 +126,25 @@ services/
 
 ## 📊 MVP Feature Reality Check
 
-| Feature | Expected | Reality |
-|---------|----------|---------|
-| **Chitchat** | ✅ | ✅ Works |
-| Greeting | ✅ | ✅ Works |
-| Help/Menu | ✅ | ✅ Works |
-| **GitHub** | ✅ | ❌ Broken |
-| Create Issue | ✅ | ❌ Broken through chat |
-| Edit Issue | ✅ | ❌ Broken |
-| Review Issue | ✅ | ❌ Broken |
-| Get Recent | ✅ | ❌ Broken |
-| **Knowledge** | ✅ | 🟡 Partial |
-| Upload File | ✅ | ✅ Works |
-| Summarize | ✅ | ❌ Broken |
-| Analyze | ✅ | ❌ Broken |
-| **Integrations** | ✅ | ❌ Broken |
-| Slack | ✅ | ❌ Not through chat |
-| Notion | ✅ | ❌ Unknown |
-| Calendar | ✅ | ❌ Unknown |
-| **Standup** | ✅ | ❌ Completely broken |
+| Feature          | Expected | Reality                |
+| ---------------- | -------- | ---------------------- |
+| **Chitchat**     | ✅       | ✅ Works               |
+| Greeting         | ✅       | ✅ Works               |
+| Help/Menu        | ✅       | ✅ Works               |
+| **GitHub**       | ✅       | ❌ Broken              |
+| Create Issue     | ✅       | ❌ Broken through chat |
+| Edit Issue       | ✅       | ❌ Broken              |
+| Review Issue     | ✅       | ❌ Broken              |
+| Get Recent       | ✅       | ❌ Broken              |
+| **Knowledge**    | ✅       | 🟡 Partial             |
+| Upload File      | ✅       | ✅ Works               |
+| Summarize        | ✅       | ❌ Broken              |
+| Analyze          | ✅       | ❌ Broken              |
+| **Integrations** | ✅       | ❌ Broken              |
+| Slack            | ✅       | ❌ Not through chat    |
+| Notion           | ✅       | ❌ Unknown             |
+| Calendar         | ✅       | ❌ Unknown             |
+| **Standup**      | ✅       | ❌ Completely broken   |
 
 **Reality: ~20% of MVP working, not 80%**
 
@@ -161,6 +176,7 @@ Complex Workflows
 **We have a sophisticated architecture that's 75% built but with critical connection points disabled or never initialized.**
 
 The good news:
+
 - The code exists
 - The design is sound
 - Just needs connection
@@ -188,5 +204,5 @@ curl -X POST http://localhost:8001/api/chat \
 
 ---
 
-*This document represents ground truth as of September 19, 2025.*
-*Update after each REFACTOR epic completes.*
+_This document represents ground truth as of September 19, 2025._
+_Update after each REFACTOR epic completes._

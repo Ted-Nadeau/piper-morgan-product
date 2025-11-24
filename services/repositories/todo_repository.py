@@ -6,6 +6,7 @@ Following established repository patterns with AsyncSessionFactory
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, func, or_, select, update
@@ -13,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import services.domain.models as domain
-from services.database.models import ListMembershipDB, TodoDB, TodoListDB
+from services.database.models import ItemDB, ListMembershipDB, TodoDB, TodoListDB
 from services.database.repositories import BaseRepository
 from services.shared_types import ListType, OrderingStrategy, TodoPriority, TodoStatus
 
@@ -36,9 +37,15 @@ class TodoListRepository(BaseRepository):
         await self.session.refresh(db_list)
         return db_list.to_domain()
 
-    async def get_list_by_id(self, list_id: str) -> Optional[domain.TodoList]:
-        """Get todo list by ID"""
-        result = await self.session.execute(select(TodoListDB).where(TodoListDB.id == list_id))
+    async def get_list_by_id(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.TodoList]:
+        """Get todo list by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+        filters = [TodoListDB.id == list_id]
+        if owner_id and not is_admin:
+            filters.append(TodoListDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(TodoListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
@@ -74,7 +81,7 @@ class TodoListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def get_shared_lists(self, user_id: str) -> List[domain.TodoList]:
+    async def get_shared_lists(self, user_id: UUID) -> List[domain.TodoList]:
         """Get lists shared with a user"""
         # Using JSON array containment for shared_with check
         result = await self.session.execute(
@@ -87,21 +94,26 @@ class TodoListRepository(BaseRepository):
         db_lists = result.scalars().all()
         return [db_list.to_domain() for db_list in db_lists]
 
-    async def update_list(self, list_id: str, updates: Dict) -> Optional[domain.TodoList]:
-        """Update todo list with optimistic field updates"""
+    async def update_list(
+        self, list_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.TodoList]:
+        """Update todo list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
         updates["updated_at"] = datetime.now()
 
+        filters = [TodoListDB.id == list_id]
+        if owner_id and not is_admin:
+            filters.append(TodoListDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            update(TodoListDB)
-            .where(TodoListDB.id == list_id)
-            .values(**updates)
-            .returning(TodoListDB)
+            update(TodoListDB).where(and_(*filters)).values(**updates).returning(TodoListDB)
         )
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_todo_counts(self, list_id: str) -> None:
-        """Update cached todo counts for a list"""
+    async def update_todo_counts(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> None:
+        """Update cached todo counts for a list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
         # Get current counts through list memberships
         total_result = await self.session.execute(
             select(func.count(ListMembershipDB.id)).where(ListMembershipDB.list_id == list_id)
@@ -116,18 +128,28 @@ class TodoListRepository(BaseRepository):
         )
         completed_count = completed_result.scalar() or 0
 
-        # Update the list with new counts
+        # Update the list with new counts (with ownership verification if provided)
+        filters = [TodoListDB.id == list_id]
+        if owner_id and not is_admin:
+            filters.append(TodoListDB.owner_id == owner_id)
+
         await self.session.execute(
             update(TodoListDB)
-            .where(TodoListDB.id == list_id)
+            .where(and_(*filters))
             .values(
                 todo_count=total_count, completed_count=completed_count, updated_at=datetime.now()
             )
         )
 
-    async def delete_list(self, list_id: str) -> bool:
-        """Delete a todo list (cascades to memberships)"""
-        result = await self.session.execute(select(TodoListDB).where(TodoListDB.id == list_id))
+    async def delete_list(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete a todo list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+        filters = [TodoListDB.id == list_id]
+        if owner_id and not is_admin:
+            filters.append(TodoListDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(TodoListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
 
         if db_list:
@@ -168,10 +190,16 @@ class TodoRepository(BaseRepository):
         await self.session.refresh(db_todo)
         return db_todo.to_domain()
 
-    async def get_todo_by_id(self, todo_id: str) -> Optional[domain.Todo]:
-        """Get todo by ID with optional subtask loading"""
+    async def get_todo_by_id(
+        self, todo_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.Todo]:
+        """Get todo by ID with optional subtask loading (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [TodoDB.id == todo_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(TodoDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(TodoDB).options(selectinload(TodoDB.children)).where(TodoDB.id == todo_id)
+            select(TodoDB).options(selectinload(TodoDB.children)).where(and_(*filters))
         )
         db_todo = result.scalar_one_or_none()
         return db_todo.to_domain() if db_todo else None
@@ -270,11 +298,11 @@ class TodoRepository(BaseRepository):
         context: Optional[str] = None,
         project_id: Optional[str] = None,
     ) -> List[domain.Todo]:
-        """Search todos by title/description with optional context filtering"""
+        """Search todos by text/description with optional context filtering"""
         search_query = select(TodoDB).where(
             and_(
                 TodoDB.owner_id == owner_id,
-                or_(TodoDB.title.ilike(f"%{query}%"), TodoDB.description.ilike(f"%{query}%")),
+                or_(TodoDB.text.ilike(f"%{query}%"), TodoDB.description.ilike(f"%{query}%")),
             )
         )
 
@@ -308,14 +336,45 @@ class TodoRepository(BaseRepository):
         db_todos = result.scalars().all()
         return [db_todo.to_domain() for db_todo in db_todos]
 
-    async def update_todo(self, todo_id: str, updates: Dict) -> Optional[domain.Todo]:
-        """Update todo with optimistic field updates"""
-        updates["updated_at"] = datetime.now()
+    async def update_todo(
+        self, todo_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.Todo]:
+        """Update todo with optimistic field updates (admin bypass in SEC-RBAC Phase 3)"""
+        # Separate inherited fields (from ItemDB) from child-specific fields (from TodoDB)
+        inherited_fields = {"text", "position", "list_id", "created_at"}
+        child_updates = {k: v for k, v in updates.items() if k not in inherited_fields}
+        parent_updates = {k: v for k, v in updates.items() if k in inherited_fields}
 
-        result = await self.session.execute(
-            update(TodoDB).where(TodoDB.id == todo_id).values(**updates).returning(TodoDB)
-        )
+        filters = [TodoDB.id == todo_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(TodoDB.owner_id == owner_id)
+
+        # Always update updated_at on parent table (ItemDB)
+        parent_updates["updated_at"] = datetime.now()
+
+        # Build query to fetch the todo first
+        select_stmt = select(TodoDB).where(and_(*filters))
+        result = await self.session.execute(select_stmt)
         db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None
+
+        # Update parent (ItemDB) fields if any exist
+        if parent_updates:
+            parent_stmt = update(ItemDB).where(ItemDB.id == todo_id).values(**parent_updates)
+            await self.session.execute(parent_stmt)
+
+        # Update child (TodoDB) fields if any exist
+        if child_updates:
+            child_stmt = update(TodoDB).where(TodoDB.id == todo_id).values(**child_updates)
+            await self.session.execute(child_stmt)
+
+        # Refresh the todo to get updated values
+        if parent_updates or child_updates:
+            result = await self.session.execute(select_stmt)
+            db_todo = result.scalar_one_or_none()
+
         return db_todo.to_domain() if db_todo else None
 
     async def complete_todo(
@@ -335,9 +394,15 @@ class TodoRepository(BaseRepository):
         updates = {"status": TodoStatus.PENDING, "completed_at": None, "updated_at": datetime.now()}
         return await self.update_todo(todo_id, updates)
 
-    async def delete_todo(self, todo_id: str) -> bool:
-        """Delete a todo (cascades to subtodos and memberships)"""
-        result = await self.session.execute(select(TodoDB).where(TodoDB.id == todo_id))
+    async def delete_todo(
+        self, todo_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete a todo (admin bypass in SEC-RBAC Phase 3, cascades to subtodos and memberships)"""
+        filters = [TodoDB.id == todo_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(TodoDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(TodoDB).where(and_(*filters)))
         db_todo = result.scalar_one_or_none()
 
         if db_todo:
@@ -386,6 +451,172 @@ class TodoRepository(BaseRepository):
             "active": active_count,
             "completion_rate": (completed_count / total_created * 100) if total_created > 0 else 0,
         }
+
+    async def share_todo(
+        self, todo_id: str, owner_id: str, user_id_to_share: str, role: domain.ShareRole = None
+    ) -> Optional[domain.Todo]:
+        """Share a todo with another user at specified role - owner only operation (SEC-RBAC Phase 2)"""
+        # Default role if not specified
+        if role is None:
+            role = domain.ShareRole.VIEWER
+
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == owner_id))
+        )
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None  # Not found or not owner
+
+        # Prevent owner from sharing with themselves (no-op)
+        if user_id_to_share == owner_id:
+            return db_todo.to_domain()
+
+        # Convert to domain object to work with SharePermission objects
+        domain_todo = db_todo.to_domain()
+
+        # Check if user already shared with - update role if exists, otherwise add new share
+        permission = domain.SharePermission(user_id=user_id_to_share, role=role)
+        existing_index = None
+
+        for idx, perm in enumerate(domain_todo.shared_with):
+            if perm.user_id == user_id_to_share:
+                existing_index = idx
+                break
+
+        if existing_index is not None:
+            # Update existing permission
+            domain_todo.shared_with[existing_index] = permission
+        else:
+            # Add new permission
+            domain_todo.shared_with.append(permission)
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_todo.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(TodoDB)
+            .where(TodoDB.id == todo_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        # Refresh and return updated todo
+        await self.session.refresh(db_todo)
+        return db_todo.to_domain()
+
+    async def unshare_todo(
+        self, todo_id: str, owner_id: str, user_id_to_unshare: str
+    ) -> Optional[domain.Todo]:
+        """Remove sharing access from a todo - owner only operation (SEC-RBAC Phase 2)"""
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == owner_id))
+        )
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None  # Not found or not owner
+
+        # Convert to domain object to work with SharePermission objects
+        domain_todo = db_todo.to_domain()
+
+        # Remove user from shared_with array
+        domain_todo.shared_with = [
+            perm for perm in domain_todo.shared_with if perm.user_id != user_id_to_unshare
+        ]
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_todo.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(TodoDB)
+            .where(TodoDB.id == todo_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        # Refresh and return updated todo
+        await self.session.refresh(db_todo)
+        return db_todo.to_domain()
+
+    async def get_todos_shared_with_me(self, user_id: str) -> List[domain.Todo]:
+        """Get todos that are shared with this user (excluding owned todos - SEC-RBAC Phase 1.4)"""
+        # Use PostgreSQL's contains operator to check if user is in shared_with array
+        query = select(TodoDB).where(
+            and_(
+                TodoDB.shared_with.contains([user_id]),  # User is in shared_with array
+                TodoDB.owner_id != user_id,  # Not owned by this user
+            )
+        )
+
+        query = query.order_by(TodoDB.created_at.desc())
+
+        result = await self.session.execute(query)
+        db_todos = result.scalars().all()
+        return [db_todo.to_domain() for db_todo in db_todos]
+
+    async def update_share_role(
+        self, todo_id: str, requesting_user_id: str, target_user_id: str, new_role: domain.ShareRole
+    ) -> bool:
+        """Update a user's role for a shared todo (owner or admin only)"""
+        # Verify requestor is owner
+        result = await self.session.execute(
+            select(TodoDB).where(and_(TodoDB.id == todo_id, TodoDB.owner_id == requesting_user_id))
+        )
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return False  # Not found or not owner
+
+        # Convert to domain object to work with SharePermission objects
+        domain_todo = db_todo.to_domain()
+
+        # Find and update the permission
+        found = False
+        for perm in domain_todo.shared_with:
+            if perm.user_id == target_user_id:
+                perm.role = new_role
+                found = True
+                break
+
+        if not found:
+            return False  # User not in shared_with
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_todo.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(TodoDB)
+            .where(TodoDB.id == todo_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def get_user_role(self, todo_id: str, user_id: str) -> Optional[str]:
+        """Get user's role for a todo"""
+        # Get the todo
+        result = await self.session.execute(select(TodoDB).where(TodoDB.id == todo_id))
+        db_todo = result.scalar_one_or_none()
+
+        if not db_todo:
+            return None
+
+        # Check if owner
+        if db_todo.owner_id == user_id:
+            return "owner"
+
+        # Convert to domain object to search shared_with
+        domain_todo = db_todo.to_domain()
+
+        for perm in domain_todo.shared_with:
+            if perm.user_id == user_id:
+                return perm.role.value
+
+        return None
 
 
 class ListMembershipRepository(BaseRepository):
@@ -446,7 +677,7 @@ class ListMembershipRepository(BaseRepository):
         elif ordering_strategy == OrderingStrategy.CREATED_DATE:
             query = query.order_by(TodoDB.created_at.desc())
         elif ordering_strategy == OrderingStrategy.ALPHABETICAL:
-            query = query.order_by(TodoDB.title.asc())
+            query = query.order_by(TodoDB.text.asc())
         elif ordering_strategy == OrderingStrategy.STATUS:
             query = query.order_by(TodoDB.status.asc(), ListMembershipDB.position.asc())
 
@@ -626,7 +857,7 @@ class TodoManagementRepository:
 
         return completed_todo
 
-    async def get_user_dashboard(self, user_id: str) -> Dict[str, any]:
+    async def get_user_dashboard(self, user_id: UUID) -> Dict[str, any]:
         """Get comprehensive dashboard data for a user"""
         # Get user's lists
         user_lists = await self.todo_lists.get_lists_by_owner(user_id)

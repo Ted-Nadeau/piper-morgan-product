@@ -17,6 +17,7 @@ import pytest
 
 from services.auth.token_blacklist import TokenBlacklist
 from services.cache.redis_factory import RedisFactory
+from services.database.connection import db
 from services.database.session_factory import AsyncSessionFactory
 
 # --- Config ---
@@ -36,7 +37,16 @@ async def measure_async_latency(coro):
 # --- Fixtures ---
 @pytest.fixture(scope="function")
 async def blacklist():
-    """Create TokenBlacklist instance for testing"""
+    """Create TokenBlacklist instance for testing
+
+    Handles event loop conflicts by resetting the global database connection
+    to prevent futures from being attached to different event loops.
+    """
+    # Reset global database connection to avoid event loop conflicts
+    # Each test gets a fresh event loop, so we need a fresh engine
+    await db.close()
+    db._initialized = False
+
     redis_factory = RedisFactory()
     db_session_factory = AsyncSessionFactory()
     bl = TokenBlacklist(redis_factory, db_session_factory)
@@ -44,12 +54,10 @@ async def blacklist():
 
     yield bl
 
-    # Cleanup: Close database connections to prevent event loop issues
+    # Cleanup: Close database connection to prevent event loop issues
     # This ensures each test gets fresh connections on a clean event loop
-    if hasattr(db_session_factory, "close"):
-        await db_session_factory.close()
-    elif hasattr(db_session_factory, "engine") and hasattr(db_session_factory.engine, "dispose"):
-        await db_session_factory.engine.dispose()
+    await db.close()
+    db._initialized = False
 
 
 @pytest.fixture(scope="function")
@@ -133,7 +141,6 @@ async def test_blacklist_lookup_latency(blacklist, sample_tokens):
     print(f"{'='*60}\n")
 
 
-@pytest.mark.skip(reason="Event loop issue with AsyncSessionFactory - Issue #247")
 @pytest.mark.asyncio
 @pytest.mark.performance
 async def test_blacklist_add_latency():
@@ -141,11 +148,12 @@ async def test_blacklist_add_latency():
     Test blacklist add operation performance.
 
     Target: <10ms per add operation (less critical than lookup)
-
-    NOTE: This test is skipped due to asyncio event loop conflicts with AsyncSessionFactory
-    global state. See Issue #247 for details. Test passes when run individually.
     """
-    # Create fresh blacklist instance to avoid event loop conflicts
+    # Reset global database connection to avoid event loop conflicts
+    await db.close()
+    db._initialized = False
+
+    # Create fresh blacklist instance
     redis_factory = RedisFactory()
     db_session_factory = AsyncSessionFactory()
     blacklist = TokenBlacklist(redis_factory, db_session_factory)
@@ -199,11 +207,11 @@ async def test_blacklist_add_latency():
 
     print(f"{'='*60}\n")
 
-    # Cleanup: Test tokens will be automatically cleaned up by database rollback
-    # Note: Redis entries would auto-expire via TTL if Redis were available
+    # Cleanup: Close database connection to prevent event loop issues
+    await db.close()
+    db._initialized = False
 
 
-@pytest.mark.skip(reason="Event loop issue with AsyncSessionFactory - Issue #247")
 @pytest.mark.asyncio
 @pytest.mark.performance
 async def test_concurrent_blacklist_lookups():
@@ -211,11 +219,12 @@ async def test_concurrent_blacklist_lookups():
     Test concurrent blacklist lookup performance.
 
     Simulates multiple simultaneous authentication requests checking blacklist.
-
-    NOTE: This test is skipped due to asyncio event loop conflicts with AsyncSessionFactory
-    global state. See Issue #247 for details. Test passes when run individually.
     """
-    # Create fresh blacklist instance to avoid event loop conflicts
+    # Reset global database connection to avoid event loop conflicts
+    await db.close()
+    db._initialized = False
+
+    # Create fresh blacklist instance
     redis_factory = RedisFactory()
     db_session_factory = AsyncSessionFactory()
     blacklist = TokenBlacklist(redis_factory, db_session_factory)
@@ -242,7 +251,7 @@ async def test_concurrent_blacklist_lookups():
 
     # Run concurrent lookups
     start_time = time.perf_counter()
-    tasks = [lookup_task(sample_tokens[i % len(sample_tokens)]) for i in range(num_concurrent)]
+    tasks = [lookup_task(token_ids[i % len(token_ids)]) for i in range(num_concurrent)]
     results = await asyncio.gather(*tasks)
     total_time_ms = (time.perf_counter() - start_time) * 1000
 
@@ -274,6 +283,10 @@ async def test_concurrent_blacklist_lookups():
     assert (
         avg_latency <= TARGET_LATENCY_MS * 2
     ), f"Concurrent avg latency {avg_latency:.3f}ms should be <{TARGET_LATENCY_MS*2}ms"
+
+    # Cleanup: Close database connection to prevent event loop issues
+    await db.close()
+    db._initialized = False
 
 
 if __name__ == "__main__":

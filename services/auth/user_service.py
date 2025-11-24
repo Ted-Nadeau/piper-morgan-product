@@ -17,6 +17,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import structlog
 
@@ -45,7 +46,7 @@ class OAuthProvider(Enum):
 class User:
     """User identity with portable context"""
 
-    user_id: str
+    user_id: UUID
     email: str
     full_name: str
     status: UserStatus
@@ -66,9 +67,16 @@ class User:
     login_count: int = 0
     security_events: List[Dict[str, Any]] = None
 
+    # System-wide admin role (Issue #357 - SEC-RBAC admin bypass)
+    is_admin: bool = False
+
     def __post_init__(self):
         if self.security_events is None:
             self.security_events = []
+
+    def can_bypass_ownership(self) -> bool:
+        """Check if user can bypass ownership restrictions (admin access)"""
+        return self.is_admin
 
 
 @dataclass
@@ -76,7 +84,7 @@ class UserSession:
     """User session information"""
 
     session_id: str
-    user_id: str
+    user_id: UUID
     created_at: datetime
     expires_at: datetime
     last_activity: datetime
@@ -170,7 +178,7 @@ class UserService:
 
         return user
 
-    def get_user(self, user_id: str) -> Optional[User]:
+    def get_user(self, user_id: UUID) -> Optional[User]:
         """Get user by ID"""
         return self._users.get(user_id)
 
@@ -310,7 +318,7 @@ class UserService:
             return True
         return False
 
-    def update_user_context(self, user_id: str, context_key: str, context_data: Any) -> bool:
+    def update_user_context(self, user_id: UUID, context_key: str, context_data: Any) -> bool:
         """
         Update user-owned context data.
 
@@ -333,7 +341,7 @@ class UserService:
 
         return True
 
-    def export_user_data(self, user_id: str) -> Dict[str, Any]:
+    def export_user_data(self, user_id: UUID) -> Dict[str, Any]:
         """
         Export all user data for portability/compliance.
 
@@ -366,7 +374,7 @@ class UserService:
         return export_data
 
     def link_oauth_provider(
-        self, user_id: str, provider: OAuthProvider, oauth_data: Dict[str, Any]
+        self, user_id: UUID, provider: OAuthProvider, oauth_data: Dict[str, Any]
     ) -> bool:
         """
         Link OAuth provider to user account.

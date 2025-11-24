@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: piper-morgan
+Version: 0.8.0a0
+Summary: AI-powered project management assistant
+Requires-Python: >=3.9.0

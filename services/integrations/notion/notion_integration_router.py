@@ -12,6 +12,7 @@ Following pattern established in CalendarIntegrationRouter.
 
 import warnings
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 from services.infrastructure.config.feature_flags import FeatureFlags
 from services.integrations.spatial_adapter import SpatialContext, SpatialPosition

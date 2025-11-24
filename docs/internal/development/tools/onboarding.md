@@ -136,6 +136,64 @@
   - [ ] Verify tests still pass
   - [ ] Submit a pull request
 
+## Windows Developer Setup
+
+**For Windows developers, we recommend WSL2 for the best experience.**
+
+### Quick Start (Windows with WSL2)
+
+WSL2 provides a native Linux environment on Windows, making development seamless:
+
+```powershell
+# 1. Run as Administrator
+wsl --install
+wsl --set-default-version 2
+wsl --install -d Ubuntu-22.04
+
+# 2. Inside Ubuntu terminal
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3.11 python3.11-venv python3.11-pip git
+
+# 3. Clone and setup (same as Linux)
+git clone https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# 4. Verify setup
+pytest tests/ -v
+```
+
+**Why WSL2?**
+- All bash scripts work natively
+- No path separator issues (no `\` vs `/` confusion)
+- Python behaves exactly like on Linux
+- Actually faster than native Windows
+- Seamless integration with Windows tools (VS Code, Git, etc.)
+
+### Alternative: Native Windows Setup
+
+If you prefer not to use WSL2:
+
+1. **Install Python 3.11**: https://www.python.org/downloads/
+   - **IMPORTANT**: Check "Add Python to PATH" during installation
+2. **Follow steps in "Environment Setup"** above
+3. **Use PowerShell** for all terminal commands
+4. **Use backslashes** in file paths: `pytest tests\unit\test_file.py`
+
+See [Windows Setup Guide](../../../../installation/windows-setup-guide.md) for detailed setup instructions.
+
+### Cross-Platform Notes
+
+- **Virtual environment activation**:
+  - Linux/macOS: `source venv/bin/activate`
+  - Windows: `.\venv\Scripts\Activate.ps1`
+- **File paths** (if using native Windows):
+  - Use backslashes: `tests\unit\test_file.py`
+  - Or quote with forward slashes: `"tests/unit/test_file.py"`
+- **Pre-commit hooks** prevent commits with Windows-illegal characters (`: < > " | ? *`)
+
 ## Troubleshooting
 
 ### Common Issues
@@ -163,6 +221,34 @@ docker-compose exec app python --version  # Verify 3.11.x
 python -W error::DeprecationWarning -m pytest tests/
 # Check for Python 3.11 compatibility issues
 ```
+
+**Windows-Specific Issues**:
+
+If using **native Windows** (not WSL2):
+
+1. **Virtual environment activation fails**:
+   ```powershell
+   # PowerShell execution policy error? Run as Administrator:
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+2. **Pre-commit hook blocks commit** (illegal filename characters):
+   ```powershell
+   # Rename file to use dashes instead of colons/quotes
+   # Example: "file (10:30).txt" → "file-1030.txt"
+   git add .
+   git commit -m "Rename file"
+   ```
+
+3. **Path errors in tests** (backslash vs forward slash):
+   ```powershell
+   # Use backslashes
+   pytest tests\unit\test_file.py
+   # Or quote with forward slashes
+   pytest "tests/unit/test_file.py"
+   ```
+
+**Recommendation**: If Windows issues persist, **use WSL2** (see Windows Developer Setup above).
 
 ### Getting Help
 

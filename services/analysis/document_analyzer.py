@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import PyPDF2
+import pypdf
 
 from services.analysis.base_analyzer import BaseAnalyzer
 from services.analysis.summary_parser import SummaryParser
@@ -23,7 +23,7 @@ class DocumentAnalyzer(BaseAnalyzer):
         """
         try:
             with open(file_path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
+                reader = pypdf.PdfReader(f)
                 page_count = len(reader.pages)
                 text = ""
                 for page in reader.pages:
@@ -82,7 +82,7 @@ class DocumentAnalyzer(BaseAnalyzer):
                 generated_at=datetime.now(),
                 metadata=metadata,
             )
-        except PyPDF2.errors.PdfReadError:
+        except pypdf.errors.PdfReadError:
             return AnalysisResult(
                 file_id=file_path,
                 analysis_type=AnalysisType.DOCUMENT,

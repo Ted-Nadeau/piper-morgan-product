@@ -14,6 +14,9 @@ Issue #228 CORE-USERS-API Phase 1E
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+# Test fixtures
+from uuid import UUID, uuid4
+
 import pytest
 from sqlalchemy import select
 
@@ -22,35 +25,26 @@ from services.database.session_factory import AsyncSessionFactory
 from services.security.user_api_key_service import UserAPIKeyService
 
 
-# Test fixtures
 @pytest.fixture
-async def test_users():
-    """Create test users for isolation testing"""
-    async with AsyncSessionFactory.session_scope() as session:
-        # Create user A
-        user_a = User(
-            id="test_user_a_isolation",
-            username="user_a",
-            email="user_a@example.com",
-            is_active=True,
-        )
-        # Create user B
-        user_b = User(
-            id="test_user_b_isolation",
-            username="user_b",
-            email="user_b@example.com",
-            is_active=True,
-        )
-        session.add(user_a)
-        session.add(user_b)
-        await session.commit()
+def test_users(request):
+    """Create test user objects for isolation testing with unique IDs per test"""
+    import time
 
-        yield user_a, user_b
-
-        # Cleanup
-        await session.delete(user_a)
-        await session.delete(user_b)
-        await session.commit()
+    test_name = request.node.name
+    timestamp = str(int(time.time() * 1000000))[-8:]  # Last 8 digits for uniqueness
+    user_a = User(
+        id=f"test_{test_name}_a_{timestamp}",
+        username=f"{test_name}_a_{timestamp}",
+        email=f"user_a_{timestamp}@example.com",
+        is_active=True,
+    )
+    user_b = User(
+        id=f"test_{test_name}_b_{timestamp}",
+        username=f"{test_name}_b_{timestamp}",
+        email=f"user_b_{timestamp}@example.com",
+        is_active=True,
+    )
+    return user_a, user_b
 
 
 @pytest.fixture
@@ -93,24 +87,94 @@ async def test_multi_user_key_isolation(test_users, mock_keychain):
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
     async with AsyncSessionFactory.session_scope() as session:
-        # User A stores OpenAI key
-        with patch.object(service._llm_config, "validate_api_key", return_value=True):
+        # Create users in database
+        session.add(user_a)
+        session.add(user_b)
+        await session.commit()  # Flush to ensure IDs are available
+
+        # Valid test keys (proper format and length for OpenAI)
+        key_a_value = "sk-" + "a" * 48  # Valid OpenAI format and length
+        key_b_value = "sk-" + "b" * 48  # Valid OpenAI format and length
+
+        # Mock BOTH validator and llm_config
+        with (
+            patch.object(service._validator, "validate_api_key") as mock_validator,
+            patch.object(service._llm_config, "validate_api_key", return_value=True),
+        ):
+
+            # Mock validator to allow these keys
+            from services.security.api_key_validator import ValidationReport
+            from services.security.key_leak_detector import LeakCheckResult
+            from services.security.key_strength_analyzer import KeyStrength
+            from services.security.provider_key_validator import ValidationResult
+
+            mock_validator.return_value = ValidationReport(
+                provider="openai",
+                api_key_preview="sk-a...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="openai"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # User A stores OpenAI key
             key_a = await service.store_user_key(
                 session=session,
                 user_id=user_a.id,
                 provider="openai",
-                api_key="sk-userA-key-123",
-                validate=False,  # Skip validation for speed
+                api_key=key_a_value,
+                validate=False,  # Skip provider validation for speed
             )
 
-        # User B stores OpenAI key (same provider, different key!)
-        with patch.object(service._llm_config, "validate_api_key", return_value=True):
+            # Update mock for user B
+            mock_validator.return_value = ValidationReport(
+                provider="openai",
+                api_key_preview="sk-b...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="openai"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # User B stores OpenAI key (same provider, different key!)
             key_b = await service.store_user_key(
                 session=session,
                 user_id=user_b.id,
                 provider="openai",
-                api_key="sk-userB-key-456",
-                validate=False,  # Skip validation for speed
+                api_key=key_b_value,
+                validate=False,  # Skip provider validation for speed
             )
 
         # Verify both keys stored in database
@@ -129,13 +193,13 @@ async def test_multi_user_key_isolation(test_users, mock_keychain):
         retrieved_key_a = await service.retrieve_user_key(
             session=session, user_id=user_a.id, provider="openai"
         )
-        assert retrieved_key_a == "sk-userA-key-123"
+        assert retrieved_key_a == key_a_value
 
         # Retrieve user B's key - should get user B's key only
         retrieved_key_b = await service.retrieve_user_key(
             session=session, user_id=user_b.id, provider="openai"
         )
-        assert retrieved_key_b == "sk-userB-key-456"
+        assert retrieved_key_b == key_b_value
 
         # Verify keychain was called with correct username parameter
         mock_keychain.get_api_key.assert_any_call("openai", username=user_a.id)
@@ -158,22 +222,63 @@ async def test_delete_user_key_isolation(test_users, mock_keychain):
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
     async with AsyncSessionFactory.session_scope() as session:
-        # Store keys for both users
-        await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="anthropic",
-            api_key="sk-userA-anthropic-123",
-            validate=False,
-        )
+        # Create users in database
+        session.add(user_a)
+        session.add(user_b)
+        await session.commit()
 
-        await service.store_user_key(
-            session=session,
-            user_id=user_b.id,
-            provider="anthropic",
-            api_key="sk-userB-anthropic-456",
-            validate=False,
-        )
+        # Use valid key formats that pass validation
+        key_a_value = "sk-" + "a" * 48
+        key_b_value = "sk-" + "b" * 48
+
+        # Mock validator to allow these keys
+        with patch.object(service._validator, "validate_api_key") as mock_validator:
+            from services.security.api_key_validator import ValidationReport
+            from services.security.key_leak_detector import LeakCheckResult
+            from services.security.key_strength_analyzer import KeyStrength
+            from services.security.provider_key_validator import ValidationResult
+
+            mock_validator.return_value = ValidationReport(
+                provider="anthropic",
+                api_key_preview="sk-a...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="anthropic"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # Store keys for both users
+            await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="anthropic",
+                api_key=key_a_value,
+                validate=False,
+            )
+
+            await service.store_user_key(
+                session=session,
+                user_id=user_b.id,
+                provider="anthropic",
+                api_key=key_b_value,
+                validate=False,
+            )
 
         # Delete user A's key
         deleted = await service.delete_user_key(
@@ -191,7 +296,7 @@ async def test_delete_user_key_isolation(test_users, mock_keychain):
         key_b = await service.retrieve_user_key(
             session=session, user_id=user_b.id, provider="anthropic"
         )
-        assert key_b == "sk-userB-anthropic-456"
+        assert key_b == key_b_value
 
         # Cleanup
         await service.delete_user_key(session, user_b.id, "anthropic")
@@ -208,30 +313,67 @@ async def test_list_user_keys_isolation(test_users, mock_keychain):
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
     async with AsyncSessionFactory.session_scope() as session:
-        # User A stores 2 keys
-        await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="openai",
-            api_key="sk-userA-openai-123",
-            validate=False,
-        )
-        await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="anthropic",
-            api_key="sk-userA-anthropic-456",
-            validate=False,
-        )
+        # Create users in database
+        session.add(user_a)
+        session.add(user_b)
+        await session.commit()
 
-        # User B stores 1 key
-        await service.store_user_key(
-            session=session,
-            user_id=user_b.id,
-            provider="openai",
-            api_key="sk-userB-openai-789",
-            validate=False,
-        )
+        # Mock validator
+        with patch.object(service._validator, "validate_api_key") as mock_validator:
+            from services.security.api_key_validator import ValidationReport
+            from services.security.key_leak_detector import LeakCheckResult
+            from services.security.key_strength_analyzer import KeyStrength
+            from services.security.provider_key_validator import ValidationResult
+
+            mock_validator.return_value = ValidationReport(
+                provider="openai",
+                api_key_preview="sk-x...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="openai"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # User A stores 2 keys
+            await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="openai",
+                api_key="sk-" + "a" * 48,
+                validate=False,
+            )
+            await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="anthropic",
+                api_key="sk-" + "a" * 48,
+                validate=False,
+            )
+
+            # User B stores 1 key
+            await service.store_user_key(
+                session=session,
+                user_id=user_b.id,
+                provider="openai",
+                api_key="sk-" + "b" * 48,
+                validate=False,
+            )
 
         # List user A's keys - should see 2 keys
         keys_a = await service.list_user_keys(session=session, user_id=user_a.id, active_only=True)
@@ -262,24 +404,60 @@ async def test_store_user_key_update_existing(test_users, mock_keychain):
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
     async with AsyncSessionFactory.session_scope() as session:
-        # Store initial key
-        key1 = await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="openai",
-            api_key="sk-old-key-123",
-            validate=False,
-        )
-        initial_id = key1.id
+        # Create user in database
+        session.add(user_a)
+        await session.commit()
 
-        # Store new key (should update, not create new)
-        key2 = await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="openai",
-            api_key="sk-new-key-456",
-            validate=False,
-        )
+        # Mock validator
+        with patch.object(service._validator, "validate_api_key") as mock_validator:
+            from services.security.api_key_validator import ValidationReport
+            from services.security.key_leak_detector import LeakCheckResult
+            from services.security.key_strength_analyzer import KeyStrength
+            from services.security.provider_key_validator import ValidationResult
+
+            mock_validator.return_value = ValidationReport(
+                provider="openai",
+                api_key_preview="sk-x...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="openai"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # Store initial key
+            key1 = await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="openai",
+                api_key="sk-" + "a" * 48,
+                validate=False,
+            )
+            initial_id = key1.id
+
+            # Store new key (should update, not create new)
+            key2 = await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="openai",
+                api_key="sk-" + "b" * 48,
+                validate=False,
+            )
 
         # Verify same record updated (same ID)
         assert key2.id == initial_id
@@ -293,11 +471,11 @@ async def test_store_user_key_update_existing(test_users, mock_keychain):
         all_keys = result.scalars().all()
         assert len(all_keys) == 1
 
-        # Verify new key retrieved
+        # Verify new key retrieved (should be the second key stored)
         retrieved_key = await service.retrieve_user_key(
             session=session, user_id=user_a.id, provider="openai"
         )
-        assert retrieved_key == "sk-new-key-456"
+        assert retrieved_key == "sk-" + "b" * 48
 
         # Cleanup
         await service.delete_user_key(session, user_a.id, "openai")
@@ -314,26 +492,66 @@ async def test_validate_user_key_per_user(test_users, mock_keychain):
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
     async with AsyncSessionFactory.session_scope() as session:
-        # Store keys for both users (skip initial validation)
-        await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="openai",
-            api_key="sk-valid-key-123",
-            validate=False,
-        )
+        # Create users in database
+        session.add(user_a)
+        session.add(user_b)
+        await session.commit()
 
-        await service.store_user_key(
-            session=session,
-            user_id=user_b.id,
-            provider="openai",
-            api_key="sk-invalid-key-456",
-            validate=False,
-        )
+        # Mock validator for storage
+        with patch.object(service._validator, "validate_api_key") as mock_validator:
+            from services.security.api_key_validator import ValidationReport
+            from services.security.key_leak_detector import LeakCheckResult
+            from services.security.key_strength_analyzer import KeyStrength
+            from services.security.provider_key_validator import ValidationResult
+
+            mock_validator.return_value = ValidationReport(
+                provider="openai",
+                api_key_preview="sk-x...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="openai"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # Store keys for both users (skip initial validation)
+            key_a_value = "sk-" + "a" * 48
+            key_b_value = "sk-" + "b" * 48
+
+            await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="openai",
+                api_key=key_a_value,
+                validate=False,
+            )
+
+            await service.store_user_key(
+                session=session,
+                user_id=user_b.id,
+                provider="openai",
+                api_key=key_b_value,
+                validate=False,
+            )
 
         # Mock validation - user A's key is valid, user B's is invalid
         async def mock_validate(provider, api_key):
-            if api_key == "sk-valid-key-123":
+            if api_key == key_a_value:
                 return True
             return False
 
@@ -385,21 +603,58 @@ async def test_keychain_reference_format(test_users, mock_keychain):
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
     async with AsyncSessionFactory.session_scope() as session:
-        # Store key for user A
-        key = await service.store_user_key(
-            session=session,
-            user_id=user_a.id,
-            provider="github",
-            api_key="ghp_test123",
-            validate=False,
-        )
+        # Create user in database
+        session.add(user_a)
+        await session.commit()
+
+        # Mock validator
+        with patch.object(service._validator, "validate_api_key") as mock_validator:
+            from services.security.api_key_validator import ValidationReport
+            from services.security.key_leak_detector import LeakCheckResult
+            from services.security.key_strength_analyzer import KeyStrength
+            from services.security.provider_key_validator import ValidationResult
+
+            mock_validator.return_value = ValidationReport(
+                provider="github",
+                api_key_preview="ghp-...",
+                format_valid=True,
+                format_result=ValidationResult(
+                    valid=True, message="Valid format", provider="github"
+                ),
+                strength_acceptable=True,
+                strength_result=KeyStrength(
+                    length_score=1.0,
+                    entropy_score=0.9,
+                    character_diversity_score=1.0,
+                    pattern_score=0.9,
+                    overall_score=0.9,
+                    recommendations=[],
+                    security_level="strong",
+                ),
+                leak_safe=True,
+                leak_result=LeakCheckResult(leaked=False, source=None),
+                overall_valid=True,
+                security_level="high",
+                recommendations=[],
+                warnings=[],
+            )
+
+            # Store key for user A
+            github_key = "ghp_" + "a" * 36
+            key = await service.store_user_key(
+                session=session,
+                user_id=user_a.id,
+                provider="github",
+                api_key=github_key,
+                validate=False,
+            )
 
         # Verify reference format
         expected_reference = f"piper_{user_a.id}_github"
         assert key.key_reference == expected_reference
 
         # Verify keychain was called with correct username
-        mock_keychain.store_api_key.assert_called_with("github", "ghp_test123", username=user_a.id)
+        mock_keychain.store_api_key.assert_called_with("github", github_key, username=user_a.id)
 
         # Cleanup
         await service.delete_user_key(session, user_a.id, "github")

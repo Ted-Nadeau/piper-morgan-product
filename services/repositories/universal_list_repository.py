@@ -6,6 +6,7 @@ Chief Architect's universal composition over specialization principle
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import structlog
 from sqlalchemy import and_, func, or_, select, update
@@ -35,11 +36,43 @@ class UniversalListRepository(BaseRepository):
         await self.session.refresh(db_list)
         return db_list.to_domain()
 
-    async def get_list_by_id(self, list_id: str) -> Optional[domain.List]:
-        """Get universal list by ID"""
-        result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+    async def get_list_by_id(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.List]:
+        """Get universal list by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [ListDB.id == list_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ListDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(ListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
+
+    async def get_list_for_read(
+        self, list_id: str, user_id: Optional[str] = None
+    ) -> Optional[domain.List]:
+        """Get list for reading - allows both owner AND shared users to access (SEC-RBAC Phase 2)"""
+        # Always get the list first
+        result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return None
+
+        # If no user_id provided, return the list
+        if not user_id:
+            return db_list.to_domain()
+
+        # Convert to domain to check access
+        domain_list = db_list.to_domain()
+
+        # User can access if:
+        # 1. User is owner
+        # 2. User is in shared_with array (any role allows read)
+        if domain_list.owner_id == user_id or domain_list.user_can_read(user_id):
+            return domain_list
+
+        return None
 
     async def get_lists_by_owner(
         self,
@@ -82,11 +115,18 @@ class UniversalListRepository(BaseRepository):
         return db_list.to_domain() if db_list else None
 
     async def get_shared_lists(
-        self, user_id: str, item_type: Optional[str] = None
+        self, user_id: UUID, item_type: Optional[str] = None
     ) -> List[domain.List]:
-        """Get lists shared with a user"""
+        """Get lists shared with a user (SEC-RBAC Phase 2)"""
+        # For Phase 2, shared_with is now an array of {user_id, role} objects
         query = select(ListDB).where(
-            and_(ListDB.shared_with.contains([user_id]), ListDB.is_archived == False)
+            and_(
+                # Check if shared_with array contains an object with matching user_id
+                ListDB.shared_with.op("@>")(
+                    func.jsonb_build_array(func.jsonb_build_object("user_id", user_id))
+                ),
+                ListDB.is_archived == False,
+            )
         )
 
         if item_type:
@@ -98,18 +138,26 @@ class UniversalListRepository(BaseRepository):
         db_lists = result.scalars().all()
         return [db_list.to_domain() for db_list in db_lists]
 
-    async def update_list(self, list_id: str, updates: Dict) -> Optional[domain.List]:
-        """Update universal list with optimistic field updates"""
+    async def update_list(
+        self, list_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[domain.List]:
+        """Update universal list - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         updates["updated_at"] = datetime.now()
 
+        filters = [ListDB.id == list_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ListDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            update(ListDB).where(ListDB.id == list_id).values(**updates).returning(ListDB)
+            update(ListDB).where(and_(*filters)).values(**updates).returning(ListDB)
         )
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_item_counts(self, list_id: str) -> None:
-        """Update cached item counts for a list"""
+    async def update_item_counts(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> None:
+        """Update cached item counts - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
         # Get total count through list items
         total_result = await self.session.execute(
             select(func.count(ListItemDB.id)).where(ListItemDB.list_id == list_id)
@@ -117,7 +165,7 @@ class UniversalListRepository(BaseRepository):
         total_count = total_result.scalar() or 0
 
         # Get completed count (for todos only - other item types may have different logic)
-        list_obj = await self.get_list_by_id(list_id)
+        list_obj = await self.get_list_by_id(list_id, owner_id, is_admin)
         completed_count = 0
 
         if list_obj and list_obj.item_type == "todo":
@@ -129,18 +177,28 @@ class UniversalListRepository(BaseRepository):
             )
             completed_count = completed_result.scalar() or 0
 
-        # Update the list with new counts
+        # Update the list with new counts (with ownership verification if provided)
+        filters = [ListDB.id == list_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ListDB.owner_id == owner_id)
+
         await self.session.execute(
             update(ListDB)
-            .where(ListDB.id == list_id)
+            .where(and_(*filters))
             .values(
                 item_count=total_count, completed_count=completed_count, updated_at=datetime.now()
             )
         )
 
-    async def delete_list(self, list_id: str) -> bool:
-        """Delete a list (cascades to items)"""
-        result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+    async def delete_list(
+        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> bool:
+        """Delete a list - optionally verify ownership (admin bypass in SEC-RBAC Phase 3, cascades to items)"""
+        filters = [ListDB.id == list_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ListDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(ListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
 
         if db_list:
@@ -168,6 +226,205 @@ class UniversalListRepository(BaseRepository):
         result = await self.session.execute(search_query)
         db_lists = result.scalars().all()
         return [db_list.to_domain() for db_list in db_lists]
+
+    async def share_list(
+        self, list_id: str, owner_id: str, user_id_to_share: str, role: domain.ShareRole = None
+    ) -> Optional[domain.List]:
+        """Share a list with another user at specified role (SEC-RBAC Phase 2)
+
+        Args:
+            list_id: ID of list to share
+            owner_id: User making the share request (must be owner or admin)
+            user_id_to_share: User to share with
+            role: ShareRole (viewer, editor, admin) - defaults to viewer if None
+
+        Returns:
+            Updated List with new shared_with entry, or None if not found/not owner
+        """
+        # Default role if not specified
+        if role is None:
+            role = domain.ShareRole.VIEWER
+
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(ListDB).where(and_(ListDB.id == list_id, ListDB.owner_id == owner_id))
+        )
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return None  # Not found or not owner
+
+        # Prevent owner from sharing with themselves (no-op)
+        if user_id_to_share == owner_id:
+            return db_list.to_domain()
+
+        # Convert to domain object to work with SharePermission objects
+        domain_list = db_list.to_domain()
+
+        # Check if user already shared with - update role if exists, otherwise add new share
+        permission = domain.SharePermission(user_id=user_id_to_share, role=role)
+        existing_index = None
+
+        for idx, perm in enumerate(domain_list.shared_with):
+            if perm.user_id == user_id_to_share:
+                existing_index = idx
+                break
+
+        if existing_index is not None:
+            # Update existing permission
+            domain_list.shared_with[existing_index] = permission
+        else:
+            # Add new permission
+            domain_list.shared_with.append(permission)
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_list.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ListDB)
+            .where(ListDB.id == list_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        # Refresh and return updated list
+        await self.session.refresh(db_list)
+        return db_list.to_domain()
+
+    async def unshare_list(
+        self, list_id: str, owner_id: str, user_id_to_unshare: str
+    ) -> Optional[domain.List]:
+        """Remove sharing access - owner only operation (SEC-RBAC Phase 2)"""
+        # First verify the caller is the owner
+        result = await self.session.execute(
+            select(ListDB).where(and_(ListDB.id == list_id, ListDB.owner_id == owner_id))
+        )
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return None  # Not found or not owner
+
+        # Convert to domain object to work with SharePermission objects
+        domain_list = db_list.to_domain()
+
+        # Remove user from shared_with array
+        domain_list.shared_with = [
+            perm for perm in domain_list.shared_with if perm.user_id != user_id_to_unshare
+        ]
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_list.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ListDB)
+            .where(ListDB.id == list_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        # Refresh and return updated list
+        await self.session.refresh(db_list)
+        return db_list.to_domain()
+
+    async def get_lists_shared_with_me(self, user_id: str) -> List[domain.List]:
+        """Get lists that are shared with this user (excluding owned lists) (SEC-RBAC Phase 2)"""
+        # For Phase 2, shared_with is now an array of {user_id, role} objects
+        # Check if any element in the array has a matching user_id
+        # Using SQL: @> operator with JSONB search for array containing object with user_id
+        query = select(ListDB).where(
+            and_(
+                # Check if shared_with array contains an object with matching user_id
+                # Using JSONB containment: shared_with @> '[{"user_id": "value"}]'
+                ListDB.shared_with.op("@>")(
+                    func.jsonb_build_array(func.jsonb_build_object("user_id", user_id))
+                ),
+                ListDB.owner_id != user_id,  # Not owned by this user
+                ListDB.is_archived == False,
+            )
+        )
+
+        query = query.order_by(ListDB.name)
+
+        result = await self.session.execute(query)
+        db_lists = result.scalars().all()
+        return [db_list.to_domain() for db_list in db_lists]
+
+    async def update_share_role(
+        self, list_id: str, requesting_user_id: str, target_user_id: str, new_role: domain.ShareRole
+    ) -> bool:
+        """Update a user's role for a shared list (owner or admin only)
+
+        Args:
+            list_id: ID of list to modify sharing for
+            requesting_user_id: User making the request (must be owner or admin)
+            target_user_id: User whose role to update
+            new_role: New role (viewer, editor, admin)
+
+        Returns:
+            True if update successful, False if not found or unauthorized
+        """
+        # Verify requestor is owner
+        result = await self.session.execute(
+            select(ListDB).where(and_(ListDB.id == list_id, ListDB.owner_id == requesting_user_id))
+        )
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return False  # Not found or not owner
+
+        # Convert to domain object to work with SharePermission objects
+        domain_list = db_list.to_domain()
+
+        # Find and update the permission
+        found = False
+        for perm in domain_list.shared_with:
+            if perm.user_id == target_user_id:
+                perm.role = new_role
+                found = True
+                break
+
+        if not found:
+            return False  # User not in shared_with
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_list.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ListDB)
+            .where(ListDB.id == list_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def get_user_role(self, list_id: str, user_id: str) -> Optional[str]:
+        """Get user's role for a list
+
+        Returns:
+            'owner' if user is owner
+            Role string ('viewer', 'editor', 'admin') if shared with user
+            None if user has no access
+        """
+        # Get the list
+        result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
+        db_list = result.scalar_one_or_none()
+
+        if not db_list:
+            return None
+
+        # Check if owner
+        if db_list.owner_id == user_id:
+            return "owner"
+
+        # Convert to domain object to search shared_with
+        domain_list = db_list.to_domain()
+
+        for perm in domain_list.shared_with:
+            if perm.user_id == user_id:
+                return perm.role.value
+
+        return None
 
 
 class UniversalListItemRepository(BaseRepository):
@@ -373,6 +630,15 @@ class TodoListRepository:
             return domain.TodoList(**result.to_dict())
         return None
 
+    async def get_list_for_read(
+        self, list_id: str, user_id: Optional[str] = None
+    ) -> Optional[domain.TodoList]:
+        """Get todo list for reading - allows both owner AND shared users to access"""
+        result = await self.universal_repo.get_list_for_read(list_id, user_id)
+        if result and result.item_type == "todo":
+            return domain.TodoList(**result.to_dict())
+        return None
+
     async def get_lists_by_owner(
         self, owner_id: str, include_archived: bool = False, list_type: Optional[str] = None
     ) -> List[domain.TodoList]:
@@ -391,6 +657,41 @@ class TodoListRepository:
         if result:
             return domain.TodoList(**result.to_dict())
         return None
+
+    async def share_list(
+        self, list_id: str, owner_id: str, user_id_to_share: str, role: domain.ShareRole = None
+    ) -> Optional[domain.TodoList]:
+        """Share a todo list with another user at specified role - owner only operation (SEC-RBAC Phase 2)"""
+        result = await self.universal_repo.share_list(list_id, owner_id, user_id_to_share, role)
+        if result and result.item_type == "todo":
+            return domain.TodoList(**result.to_dict())
+        return None
+
+    async def unshare_list(
+        self, list_id: str, owner_id: str, user_id_to_unshare: str
+    ) -> Optional[domain.TodoList]:
+        """Remove sharing access from a todo list - owner only operation"""
+        result = await self.universal_repo.unshare_list(list_id, owner_id, user_id_to_unshare)
+        if result and result.item_type == "todo":
+            return domain.TodoList(**result.to_dict())
+        return None
+
+    async def get_lists_shared_with_me(self, user_id: str) -> List[domain.TodoList]:
+        """Get todo lists that are shared with this user"""
+        results = await self.universal_repo.get_lists_shared_with_me(user_id)
+        return [domain.TodoList(**r.to_dict()) for r in results if r.item_type == "todo"]
+
+    async def update_share_role(
+        self, list_id: str, requesting_user_id: str, target_user_id: str, new_role: domain.ShareRole
+    ) -> bool:
+        """Update a user's role for a shared todo list (owner only)"""
+        return await self.universal_repo.update_share_role(
+            list_id, requesting_user_id, target_user_id, new_role
+        )
+
+    async def get_user_role(self, list_id: str, user_id: str) -> Optional[str]:
+        """Get user's role for a todo list"""
+        return await self.universal_repo.get_user_role(list_id, user_id)
 
     async def update_todo_counts(self, list_id: str) -> None:
         """Update cached todo counts for a list"""

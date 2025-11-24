@@ -6,7 +6,7 @@ Provides pre-execution validation for workflow context with user-friendly error 
 """
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from services.api.errors import APIError
 from services.shared_types import WorkflowType
@@ -17,13 +17,16 @@ class ContextValidationError(APIError):
 
     def __init__(
         self,
-        workflow_type: WorkflowType,
+        workflow_type: Union[WorkflowType, str],
         missing_fields: List[str],
         suggestions: List[str],
         details: Dict[str, Any] = None,
     ):
         details = details or {}
-        details["workflow_type"] = workflow_type.value
+        # Handle both enum and string workflow types
+        details["workflow_type"] = (
+            workflow_type.value if hasattr(workflow_type, "value") else workflow_type
+        )
         details["missing_fields"] = missing_fields
         details["suggestions"] = suggestions
 
@@ -34,7 +37,10 @@ class ContextValidationError(APIError):
         self.user_message = error_message
 
     def _create_user_message(
-        self, workflow_type: WorkflowType, missing_fields: List[str], suggestions: List[str]
+        self,
+        workflow_type: Union[WorkflowType, str],
+        missing_fields: List[str],
+        suggestions: List[str],
     ) -> str:
         """Create user-friendly error message with helpful suggestions"""
 

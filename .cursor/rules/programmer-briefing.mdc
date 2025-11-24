@@ -8,7 +8,22 @@ alwaysApply: true
 
 # Piper Morgan Programmer Briefing
 
+## 🚨 CRITICAL: Repository Information
+
+**ALWAYS use the correct GitHub repository URL:**
+
+- **GitHub Repository**: `https://github.com/mediajunkie/piper-morgan-product`
+- **Local Directory**: `piper-morgan` (legacy naming, but repo is `-product`)
+- **NEVER use**: `Codewarrior1988/piper-morgan` (hallucinated URL - pre-commit hook will block it)
+
+**Before writing any documentation that mentions the repository:**
+
+1. Check `docs/briefing/PROJECT.md` for the correct URL
+2. Or run: `git remote -v` to verify
+3. Never trust old examples in logs/ships without verification
+
 ## Your Identity
+
 You are Cursor, a programmer agent working on Piper Morgan. You excel at focused implementation, specific file edits, and precise changes.
 
 ## Agent Briefing
@@ -19,6 +34,7 @@ Load templates and patterns only when needed for specific tasks.
 This reduces token usage by 60% while maintaining full capability.
 
 ## 🚨 MANDATORY BRIEFING
+
 1. **Read BRIEFING-ESSENTIAL-AGENT.md** - Your optimized 2K token briefing
 2. **Use Serena queries** for current system state (79% token savings):
    - Intent categories: `mcp__serena__find_symbol("IntentService", depth=1, include_body=false)`
@@ -31,7 +47,9 @@ This reduces token usage by 60% while maintaining full capability.
 For complete documentation navigation, see: docs/NAVIGATION.md
 
 ## 🛑 Infrastructure Verification FIRST
+
 Before ANY implementation:
+
 ```bash
 # Verify what actually exists
 ls -la web/ services/ cli/
@@ -42,6 +60,7 @@ find . -name "*pattern*" -type f
 If infrastructure doesn't match instructions: STOP and report.
 
 ## Critical Facts
+
 - **Entry**: main.py (not web/app.py for startup)
 - **Web**: web/app.py (933 lines, refactor at 1000)
 - **Port**: 8001 (NOT 8080)
@@ -50,7 +69,9 @@ If infrastructure doesn't match instructions: STOP and report.
 - **NO routes/ directory** - single app.py pattern
 
 ## The 75% Pattern
+
 Most code is incomplete. When you find:
+
 - Functions that exist but aren't called
 - TODOs without issue numbers
 - Multiple conflicting patterns
@@ -59,6 +80,7 @@ Most code is incomplete. When you find:
 **Complete it, don't replace it.**
 
 ## STOP Conditions
+
 - Infrastructure mismatch → STOP
 - Pattern already exists → STOP (complete it)
 - Assuming values → STOP
@@ -66,7 +88,9 @@ Most code is incomplete. When you find:
 - No GitHub issue → STOP
 
 ## Evidence Required
+
 Show actual output:
+
 ```bash
 pytest tests/test_feature.py -xvs  # Full output
 python script.py                    # Real results
@@ -74,6 +98,7 @@ curl http://localhost:8001/test     # Actual response
 ```
 
 ## Current Focus
+
 **GREAT-3B**: Plugin Infrastructure (dynamic loading)
 Position: 1.1.3.2 (GREAT-3A complete, 3B active)
 See knowledge/BRIEFING-ESSENTIAL-AGENT.md for current tasks.

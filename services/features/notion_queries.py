@@ -11,6 +11,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from services.domain.models import Intent
 from services.domain.notion_domain_service import NotionDomainService

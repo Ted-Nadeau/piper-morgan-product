@@ -18,10 +18,36 @@ depends_on = None
 
 
 def upgrade():
-    # Add new value to the PostgreSQL enum type (uppercase, to match existing values)
+    # First, check if tasktype enum exists; if not, create it
+    # This handles the case where tasks table was refactored away
     op.execute(
         """
-        ALTER TYPE tasktype ADD VALUE IF NOT EXISTS 'EXTRACT_WORK_ITEM';
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tasktype') THEN
+                CREATE TYPE tasktype AS ENUM (
+                    'ANALYZE_REQUEST',
+                    'EXTRACT_REQUIREMENTS',
+                    'IDENTIFY_DEPENDENCIES',
+                    'CREATE_WORK_ITEM',
+                    'UPDATE_WORK_ITEM',
+                    'NOTIFY_STAKEHOLDERS',
+                    'GENERATE_DOCUMENT',
+                    'CREATE_SUMMARY',
+                    'GITHUB_CREATE_ISSUE',
+                    'ANALYZE_GITHUB_ISSUE',
+                    'ANALYZE_FILE',
+                    'JIRA_CREATE_TICKET',
+                    'SLACK_SEND_MESSAGE',
+                    'PROCESS_USER_FEEDBACK',
+                    'EXTRACT_WORK_ITEM'
+                );
+            ELSE
+                -- If enum exists, add new value if not already present
+                ALTER TYPE tasktype ADD VALUE IF NOT EXISTS 'EXTRACT_WORK_ITEM';
+            END IF;
+        END
+        $$;
     """
     )
 

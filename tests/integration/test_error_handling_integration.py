@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from main import app
 from services.api.errors import GitHubAuthFailedError, LowConfidenceIntentError, TaskFailedError
 from services.domain.models import Intent, Task, Workflow
 from services.shared_types import IntentCategory, TaskType, WorkflowType
+from web.app import app
 
 
 @pytest.fixture(scope="module")

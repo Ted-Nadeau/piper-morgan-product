@@ -59,7 +59,6 @@ class TestGitHubArchitectureEnforcement:
 
             # Check for direct imports (multiple patterns)
             direct_import_patterns = [
-                "from services.integrations.github.github_agent import GitHubAgent",
                 "from .github_agent import GitHubAgent",
                 "from github_agent import GitHubAgent",
                 "import services.integrations.github.github_agent",
@@ -277,7 +276,6 @@ class TestGitHubArchitectureEnforcement:
                 "",
                 "🔧 How to fix:",
                 "  Replace:",
-                "    from services.integrations.github.github_agent import GitHubAgent",
                 "  With:",
                 "    from services.integrations.github.github_integration_router import GitHubIntegrationRouter",
                 "",

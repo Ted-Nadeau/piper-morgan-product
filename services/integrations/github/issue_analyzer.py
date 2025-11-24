@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # Local imports (adjust paths as needed)
+from services.configuration.piper_config_loader import piper_config_loader
 from services.integrations.github.github_integration_router import GitHubIntegrationRouter
 from services.integrations.github.issue_generator import IssueContentGenerator
 from services.knowledge_graph.ingestion import get_ingester
@@ -116,6 +117,7 @@ class GitHubIssueAnalyzer:
                 "repository": issue_data["repository"]["full_name"],
                 "knowledge_context": [r["content"][:200] for r in knowledge_results],
             },
+            system=piper_config_loader.get_system_prompt(),
         )
 
         # Step 4: Parse and structure the analysis

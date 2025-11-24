@@ -23,7 +23,6 @@ async def test_github_connection():
     try:
         # Import your existing GitHubAgent
         # First, let's try to import and use your current agent
-        from services.integrations.github.github_agent import GitHubAgent
 
         agent = GitHubAgent()
 
@@ -52,7 +51,6 @@ async def test_issue_fetching():
     print("\n📥 Testing issue fetching...")
 
     try:
-        from services.integrations.github.github_agent import GitHubAgent
 
         agent = GitHubAgent()
 

@@ -252,13 +252,6 @@ After EVERY file write:
 - Run: `tail -5 [filename]` to verify
 - Report failures immediately
 - Fall back to next location if failed
--
-## Current Mission Context
-
-**The Big Picture**: Fixing foundations before adding features
-**Current Epic**: CORE-GREAT-1 (QueryRouter resurrection)
-**Why It Matters**: Unblocks 80% of features
-**North Star**: GitHub issue creation through chat
 
 ## Remember
 

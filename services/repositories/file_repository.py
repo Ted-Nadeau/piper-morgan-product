@@ -51,30 +51,38 @@ class FileRepository(BaseRepository):
         # Convert back to domain model
         return db_file.to_domain()
 
-    async def get_file_by_id(self, file_id: str) -> Optional[UploadedFile]:
-        """Get file by ID"""
-        result = await self.session.execute(
-            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
-        )
+    async def get_file_by_id(
+        self, file_id: str, owner_id: str = None, is_admin: bool = False
+    ) -> Optional[UploadedFile]:
+        """Get file by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [UploadedFileDB.id == file_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(UploadedFileDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
         return db_file.to_domain() if db_file else None
 
-    async def get_files_for_session(self, session_id: str, limit: int = 10) -> List[UploadedFile]:
-        """Get files for a session, ordered by upload time (most recent first)"""
+    async def get_files_for_session(self, owner_id: str, limit: int = 10) -> List[UploadedFile]:
+        """Get files for an owner, ordered by upload time (most recent first)"""
         result = await self.session.execute(
             select(UploadedFileDB)
-            .where(UploadedFileDB.session_id == session_id)
+            .where(UploadedFileDB.owner_id == owner_id)
             .order_by(UploadedFileDB.upload_time.desc())
             .limit(limit)
         )
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def increment_reference_count(self, file_id: str):
-        """Increment reference count and update last_referenced timestamp"""
+    async def increment_reference_count(self, file_id: str, owner_id: str = None):
+        """Increment reference count and update last_referenced timestamp - optionally verify ownership"""
+        filters = [UploadedFileDB.id == file_id]
+        if owner_id:
+            filters.append(UploadedFileDB.owner_id == owner_id)
+
         await self.session.execute(
             update(UploadedFileDB)
-            .where(UploadedFileDB.id == file_id)
+            .where(and_(*filters))
             .values(
                 reference_count=UploadedFileDB.reference_count + 1,
                 last_referenced=datetime.now(),
@@ -82,19 +90,17 @@ class FileRepository(BaseRepository):
         )
 
         # Return the updated file
-        result = await self.session.execute(
-            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
-        )
+        result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
         return db_file.to_domain() if db_file else None
 
-    async def search_files_by_name(self, session_id: str, query: str) -> List[UploadedFile]:
-        """Search files by name within a session (case-insensitive partial match)"""
+    async def search_files_by_name(self, owner_id: str, query: str) -> List[UploadedFile]:
+        """Search files by name for an owner (case-insensitive partial match)"""
         result = await self.session.execute(
             select(UploadedFileDB)
             .where(
                 and_(
-                    UploadedFileDB.session_id == session_id,
+                    UploadedFileDB.owner_id == owner_id,
                     UploadedFileDB.filename.ilike(f"%{query}%"),
                 )
             )
@@ -103,14 +109,14 @@ class FileRepository(BaseRepository):
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def get_recent_files(self, session_id: str, hours: int = 24) -> List[UploadedFile]:
-        """Get files uploaded within the last N hours"""
+    async def get_recent_files(self, owner_id: str, hours: int = 24) -> List[UploadedFile]:
+        """Get files uploaded within the last N hours for an owner"""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         result = await self.session.execute(
             select(UploadedFileDB)
             .where(
                 and_(
-                    UploadedFileDB.session_id == session_id,
+                    UploadedFileDB.owner_id == owner_id,
                     UploadedFileDB.upload_time > cutoff_time,
                 )
             )
@@ -120,14 +126,15 @@ class FileRepository(BaseRepository):
         return [db_file.to_domain() for db_file in db_files]
 
     async def search_files_by_name_all_sessions(
-        self, query: str, days: int = 30
+        self, query: str, owner_id: str, days: int = 30
     ) -> List[UploadedFile]:
-        """Search files by name across all sessions within the last N days"""
+        """Search files by name for an owner within the last N days"""
         cutoff_time = datetime.now() - timedelta(days=days)
         result = await self.session.execute(
             select(UploadedFileDB)
             .where(
                 and_(
+                    UploadedFileDB.owner_id == owner_id,
                     UploadedFileDB.filename.ilike(f"%{query}%"),
                     UploadedFileDB.upload_time > cutoff_time,
                 )
@@ -137,22 +144,31 @@ class FileRepository(BaseRepository):
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def get_recent_files_all_sessions(self, days: int = 7) -> List[UploadedFile]:
-        """Get files uploaded across all sessions within the last N days"""
+    async def get_recent_files_all_sessions(
+        self, owner_id: str, days: int = 7
+    ) -> List[UploadedFile]:
+        """Get files uploaded for an owner within the last N days"""
         cutoff_time = datetime.now() - timedelta(days=days)
         result = await self.session.execute(
             select(UploadedFileDB)
-            .where(UploadedFileDB.upload_time > cutoff_time)
+            .where(
+                and_(
+                    UploadedFileDB.owner_id == owner_id,
+                    UploadedFileDB.upload_time > cutoff_time,
+                )
+            )
             .order_by(UploadedFileDB.upload_time.desc())
         )
         db_files = result.scalars().all()
         return [db_file.to_domain() for db_file in db_files]
 
-    async def delete_file(self, file_id: str) -> bool:
-        """Delete file metadata by ID"""
-        result = await self.session.execute(
-            select(UploadedFileDB).where(UploadedFileDB.id == file_id)
-        )
+    async def delete_file(self, file_id: str, owner_id: str = None, is_admin: bool = False) -> bool:
+        """Delete file metadata by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [UploadedFileDB.id == file_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(UploadedFileDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(UploadedFileDB).where(and_(*filters)))
         db_file = result.scalar_one_or_none()
 
         if db_file:
@@ -161,16 +177,16 @@ class FileRepository(BaseRepository):
         return False
 
     async def search_files_with_content(
-        self, session_id: str, query: str, limit: int = 10
+        self, owner_id: str, query: str, limit: int = 10
     ) -> List[UploadedFile]:
         """
         Enhanced search combining filename and content search.
         Falls back to filename-only search if MCP is disabled.
         """
-        logger.info(f"Searching files with content for session {session_id}, query: {query}")
+        logger.info(f"Searching files with content for owner {owner_id}, query: {query}")
 
         # Get files matching by filename first (always available)
-        filename_matches = await self.search_files_by_name(session_id, query)
+        filename_matches = await self.search_files_by_name(owner_id, query)
 
         # ADR-010: Use ConfigService for application layer configuration
         mcp_enabled = self.config_service.get_mcp_search_enabled()
@@ -199,7 +215,7 @@ class FileRepository(BaseRepository):
             for mcp_result in mcp_results:
                 # Find corresponding file in database
                 db_file = await self.get_file_by_id(mcp_result.file_id)
-                if db_file and db_file.session_id == session_id:
+                if db_file and db_file.owner_id == owner_id:
                     content_matches.append(db_file)
 
             # Combine results: content matches first, then filename matches
@@ -230,16 +246,16 @@ class FileRepository(BaseRepository):
             return filename_matches[:limit]
 
     async def search_files_with_content_all_sessions(
-        self, query: str, days: int = 30, limit: int = 10
+        self, query: str, owner_id: str, days: int = 30, limit: int = 10
     ) -> List[UploadedFile]:
         """
-        Enhanced search across all sessions combining filename and content search.
+        Enhanced search for an owner combining filename and content search.
         Falls back to filename-only search if MCP is disabled.
         """
-        logger.info(f"Searching files with content across all sessions, query: {query}")
+        logger.info(f"Searching files with content for owner {owner_id}, query: {query}")
 
         # Get files matching by filename first (always available)
-        filename_matches = await self.search_files_by_name_all_sessions(query, days)
+        filename_matches = await self.search_files_by_name_all_sessions(query, owner_id, days)
 
         # ADR-010: Use ConfigService for application layer configuration
         mcp_enabled = self.config_service.get_mcp_search_enabled()
@@ -264,13 +280,13 @@ class FileRepository(BaseRepository):
             mcp_results = await mcp_manager.enhanced_file_search(query)
 
             # Convert MCP results to UploadedFile objects by matching file_id
-            # Filter by time cutoff
+            # Filter by time cutoff AND owner_id (ownership check)
             cutoff_time = datetime.now() - timedelta(days=days)
             content_matches = []
             for mcp_result in mcp_results:
                 # Find corresponding file in database
                 db_file = await self.get_file_by_id(mcp_result.file_id)
-                if db_file and db_file.upload_time > cutoff_time:
+                if db_file and db_file.upload_time > cutoff_time and db_file.owner_id == owner_id:
                     content_matches.append(db_file)
 
             # Combine results: content matches first, then filename matches

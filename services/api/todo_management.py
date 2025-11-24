@@ -6,7 +6,7 @@ Universal List Architecture - Chief Architect's universal composition over speci
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -23,6 +23,7 @@ class TodoCreateRequest(BaseModel):
     """Request model for creating a new todo"""
 
     title: str = Field(..., min_length=1, max_length=200, description="Todo title")
+    owner_id: str = Field(..., description="Owner/creator user ID")
     description: Optional[str] = Field(None, max_length=1000, description="Todo description")
     priority: str = Field("medium", description="Todo priority: low, medium, high, urgent")
     due_date: Optional[datetime] = Field(None, description="Todo due date")
@@ -63,6 +64,25 @@ class TodoResponse(BaseModel):
     updated_at: datetime
     completed_at: Optional[datetime]
     metadata: Dict[str, Any]
+
+    @classmethod
+    def from_domain(cls, todo):
+        """Convert domain Todo to API response"""
+        return cls(
+            id=str(todo.id),
+            title=todo.text,  # Domain uses 'text', API uses 'title'
+            description=getattr(todo, "description", None),
+            priority=todo.priority,
+            status=todo.status,
+            due_date=todo.due_date,
+            tags=getattr(todo, "tags", []),
+            list_id=str(todo.list_id) if todo.list_id else None,
+            assignee_id=getattr(todo, "assignee_id", None),
+            created_at=todo.created_at,
+            updated_at=todo.updated_at,
+            completed_at=getattr(todo, "completed_at", None),
+            metadata=getattr(todo, "metadata", {}),
+        )
 
 
 # PM-081: Universal List API Models - Backward Compatible
@@ -111,7 +131,7 @@ class TodoListResponse(BaseModel):
 class ListMembershipRequest(BaseModel):
     """Request model for list membership operations (universal ListItem with item_type='todo')"""
 
-    user_id: str = Field(..., description="User ID to add/remove from list")
+    user_id: UUID = Field(..., description="User ID to add/remove from list")
     role: str = Field("member", description="User role: owner, admin, member, viewer")
 
 
@@ -119,7 +139,7 @@ class ListMembershipResponse(BaseModel):
     """Response model for list membership data (universal ListItem with item_type='todo')"""
 
     list_id: str
-    user_id: str
+    user_id: UUID
     role: str
     joined_at: datetime
     permissions: Dict[str, bool]
@@ -148,16 +168,25 @@ class TodoListListResponse(BaseModel):
 
 
 # Dependency injection for services
+def get_todo_management_service():
+    """Get TodoManagementService instance for persistence operations"""
+    from services.todo.todo_management_service import TodoManagementService
+
+    return TodoManagementService()
+
+
 async def get_todo_service():
     """Get todo management service instance"""
-    # TODO: Implement TodoManagementService
-    return None
+    from services.todo_service import TodoService
+
+    return TodoService()
 
 
 async def get_universal_list_service():
     """Get universal list service instance"""
-    # TODO: Implement UniversalListService
-    return None
+    from services.item_service import ItemService
+
+    return ItemService()
 
 
 async def get_knowledge_graph_service():
@@ -176,13 +205,14 @@ async def get_query_router():
 @todo_management_router.post("/", response_model=TodoResponse, status_code=status.HTTP_201_CREATED)
 async def create_todo(
     todo_data: TodoCreateRequest,
-    todo_service=Depends(get_todo_service),
+    service: "TodoManagementService" = Depends(get_todo_management_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):
     """
-    Create a new todo with PM-040 Knowledge Graph integration
+    Create a new todo with database persistence
 
     - **title**: Todo title (required)
+    - **owner_id**: Owner user ID (required)
     - **description**: Todo description (optional)
     - **priority**: Todo priority (low, medium, high, urgent)
     - **due_date**: Todo due date (optional)
@@ -192,29 +222,21 @@ async def create_todo(
     - **metadata**: Additional todo metadata (optional)
     """
     try:
-        # TODO: Implement todo creation with TodoManagementService
-        # TODO: Integrate with PM-040 Knowledge Graph for todo relationships
-        # TODO: Add todo to knowledge graph with appropriate node type and metadata
-
-        # Mock response for now
-        todo_response = TodoResponse(
-            id=str(uuid4()),
-            title=todo_data.title,
-            description=todo_data.description,
+        # Create todo via TodoManagementService (database persistence)
+        todo = await service.create_todo(
+            user_id=todo_data.owner_id,
+            text=todo_data.title,  # API uses 'title', domain uses 'text'
             priority=todo_data.priority,
-            status="pending",
-            due_date=todo_data.due_date,
-            tags=todo_data.tags,
             list_id=todo_data.list_id,
-            assignee_id=todo_data.assignee_id,
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-            completed_at=None,
-            metadata=todo_data.metadata,
+            due_date=todo_data.due_date,
         )
 
-        return todo_response
+        # Convert domain model to API response
+        return TodoResponse.from_domain(todo)
 
+    except ValueError as e:
+        # Validation errors (empty text, invalid priority, etc.)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -255,7 +277,7 @@ async def get_todo(
 async def update_todo(
     todo_id: str,
     todo_data: TodoUpdateRequest,
-    todo_service=Depends(get_todo_service),
+    service: "TodoManagementService" = Depends(get_todo_management_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):
     """
@@ -265,17 +287,70 @@ async def update_todo(
     - **todo_data**: Updated todo data
     """
     try:
-        # TODO: Implement todo update with TodoManagementService
-        # TODO: Update PM-040 Knowledge Graph with todo changes
-        # TODO: Trigger PM-034 intent classification for todo updates
+        from uuid import UUID
 
-        # Mock response for now
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Todo with ID {todo_id} not found"
-        )
+        # Convert todo_id to UUID
+        try:
+            todo_uuid = UUID(todo_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid todo ID format: {todo_id}"
+            )
+
+        # Handle status changes (complete/reopen)
+        if todo_data.status == "completed":
+            # Use complete_todo for status change to completed
+            updated_todo = await service.complete_todo(
+                todo_id=todo_uuid, user_id="default-user"  # TODO: Get from auth context
+            )
+        elif todo_data.status and todo_data.status != "completed":
+            # For other status changes, use update_todo
+            update_data = {}
+            if todo_data.title:
+                update_data["text"] = todo_data.title
+            if todo_data.priority:
+                update_data["priority"] = todo_data.priority
+            if todo_data.due_date is not None:
+                update_data["due_date"] = todo_data.due_date
+            if todo_data.list_id:
+                update_data["list_id"] = todo_data.list_id
+            if todo_data.status:
+                update_data["status"] = todo_data.status
+
+            updated_todo = await service.update_todo(
+                todo_id=todo_uuid,
+                user_id="default-user",  # TODO: Get from auth context
+                **update_data,
+            )
+        else:
+            # Regular update without status change
+            update_data = {}
+            if todo_data.title:
+                update_data["text"] = todo_data.title
+            if todo_data.priority:
+                update_data["priority"] = todo_data.priority
+            if todo_data.due_date is not None:
+                update_data["due_date"] = todo_data.due_date
+            if todo_data.list_id:
+                update_data["list_id"] = todo_data.list_id
+
+            updated_todo = await service.update_todo(
+                todo_id=todo_uuid,
+                user_id="default-user",  # TODO: Get from auth context
+                **update_data,
+            )
+
+        if not updated_todo:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Todo with ID {todo_id} not found"
+            )
+
+        return TodoResponse.from_domain(updated_todo)
 
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -286,7 +361,7 @@ async def update_todo(
 @todo_management_router.delete("/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(
     todo_id: str,
-    todo_service=Depends(get_todo_service),
+    service: "TodoManagementService" = Depends(get_todo_management_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):
     """
@@ -295,14 +370,28 @@ async def delete_todo(
     - **todo_id**: Unique identifier for the todo
     """
     try:
-        # TODO: Implement todo deletion with TodoManagementService
-        # TODO: Remove todo from PM-040 Knowledge Graph
-        # TODO: Clean up related relationships and metadata
+        from uuid import UUID
 
-        # Mock response for now
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"Todo with ID {todo_id} not found"
+        # Convert todo_id to UUID
+        try:
+            todo_uuid = UUID(todo_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid todo ID format: {todo_id}"
+            )
+
+        # Delete todo via TodoManagementService
+        deleted = await service.delete_todo(
+            todo_id=todo_uuid, user_id="default-user"  # TODO: Get from auth context
         )
+
+        if not deleted:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Todo with ID {todo_id} not found"
+            )
+
+        # Return 204 No Content (no response body for successful deletion)
+        return None
 
     except HTTPException:
         raise
@@ -327,7 +416,7 @@ async def list_todos(
         "created_at", description="Ordering field: created_at, due_date, priority, title"
     ),
     order_direction: str = Query("desc", description="Order direction: asc, desc"),
-    todo_service=Depends(get_todo_service),
+    service: "TodoManagementService" = Depends(get_todo_management_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):
     """
@@ -345,18 +434,57 @@ async def list_todos(
     - **order_direction**: Order direction
     """
     try:
-        # TODO: Implement todo listing with TodoManagementService
-        # TODO: Integrate with PM-040 Knowledge Graph for enhanced filtering
-        # TODO: Use PM-034 intent classification for search optimization
+        # Get user_id from assignee_id (for now - will be replaced with proper auth)
+        user_id = assignee_id if assignee_id else "default-user"
 
-        # Mock response for now
+        # Get todos from TodoManagementService
+        include_completed = (status_filter == "completed") if status_filter else True
+        todos = await service.list_todos(user_id=user_id, include_completed=include_completed)
+
+        # Apply filters
+        filtered_todos = todos
+        if list_id:
+            filtered_todos = [t for t in filtered_todos if str(t.list_id) == list_id]
+        if status_filter:
+            filtered_todos = [t for t in filtered_todos if t.status == status_filter]
+        if priority_filter:
+            filtered_todos = [t for t in filtered_todos if t.priority == priority_filter]
+        if tags:
+            filtered_todos = [
+                t for t in filtered_todos if any(tag in getattr(t, "tags", []) for tag in tags)
+            ]
+        if search:
+            search_lower = search.lower()
+            filtered_todos = [t for t in filtered_todos if search_lower in t.text.lower()]
+
+        # Apply ordering
+        reverse = order_direction == "desc"
+        if ordering == "created_at":
+            filtered_todos.sort(key=lambda t: t.created_at, reverse=reverse)
+        elif ordering == "due_date":
+            filtered_todos.sort(key=lambda t: t.due_date or datetime.max, reverse=reverse)
+        elif ordering == "priority":
+            priority_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
+            filtered_todos.sort(key=lambda t: priority_order.get(t.priority, 4), reverse=reverse)
+        elif ordering == "title":
+            filtered_todos.sort(key=lambda t: t.text.lower(), reverse=reverse)
+
+        # Apply pagination
+        total_count = len(filtered_todos)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        page_todos = filtered_todos[start_idx:end_idx]
+
+        # Convert to response models
+        todo_responses = [TodoResponse.from_domain(todo) for todo in page_todos]
+
         return TodoListResponse(
-            todos=[],
-            total_count=0,
+            todos=todo_responses,
+            total_count=total_count,
             page=page,
             page_size=page_size,
-            has_next=False,
-            has_previous=False,
+            has_next=(end_idx < total_count),
+            has_previous=(page > 1),
         )
 
     except Exception as e:
@@ -598,7 +726,7 @@ async def add_list_member(
 )
 async def remove_list_member(
     list_id: str,
-    user_id: str,
+    user_id: UUID,
     universal_list_service=Depends(get_universal_list_service),
     knowledge_graph=Depends(get_knowledge_graph_service),
 ):

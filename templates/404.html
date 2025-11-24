@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 - Page Not Found</title>
+  <link rel="stylesheet" href="/static/css/base.css" />
+  <link rel="stylesheet" href="/static/css/error-page.css" />
+</head>
+<body>
+  <main class="error-container">
+    <div class="error-content">
+      <div class="error-icon">🔍</div>
+
+      <h1 class="error-title">Page Not Found</h1>
+
+      <p class="error-message">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+
+      <p class="error-code">Error 404</p>
+
+      <div class="error-actions">
+        <a href="/" class="btn btn-primary">
+          Go to Home
+        </a>
+        <button class="btn btn-secondary" onclick="window.history.back()">
+          Go Back
+        </button>
+      </div>
+
+      <div class="error-help">
+        <h2>What you can try:</h2>
+        <ul>
+          <li>Check the URL for typos</li>
+          <li>Use the search function to find what you need</li>
+          <li>Return to the home page and navigate from there</li>
+          <li>Contact support if you believe this is an error</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Announce error to screen readers
+    if (typeof Toast !== 'undefined' && Toast.error) {
+      Toast.error('Page Not Found', 'The page you requested could not be found. Error 404.');
+    }
+  </script>
+</body>
+</html>

@@ -13,7 +13,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
-from uuid import uuid4
+from uuid import UUID, uuid4
+
+# Import Item primitive for Todo to extend
+from services.domain.primitives import Item
 
 # Import shared types for consistency
 from services.shared_types import (
@@ -30,6 +33,32 @@ from services.shared_types import (
     WorkflowStatus,
     WorkflowType,
 )
+
+
+# SEC-RBAC Phase 2: Role-Based Permissions
+class ShareRole(str, Enum):
+    """Role for shared resource access (SEC-RBAC Phase 2)"""
+
+    VIEWER = "viewer"  # Read-only access
+    EDITOR = "editor"  # Can modify content
+    ADMIN = "admin"  # Can share with others and change roles
+
+
+@dataclass
+class SharePermission:
+    """Permission entry for a shared resource (SEC-RBAC Phase 2)"""
+
+    user_id: str
+    role: ShareRole
+
+    def to_dict(self) -> Dict[str, str]:
+        """Convert to dictionary for JSONB serialization"""
+        return {"user_id": self.user_id, "role": self.role.value}
+
+    @staticmethod
+    def from_dict(data: Dict[str, str]) -> SharePermission:
+        """Create from dictionary (JSONB deserialization)"""
+        return SharePermission(user_id=data["user_id"], role=ShareRole(data["role"]))
 
 
 # Core Entities
@@ -167,9 +196,11 @@ class Project:
     """A PM project with multiple tool integrations"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
+    owner_id: str = ""
     name: str = ""
     description: str = ""
     integrations: List[ProjectIntegration] = field(default_factory=list)
+    shared_with: List[SharePermission] = field(default_factory=list)
     is_default: bool = False
     is_archived: bool = False
     created_at: datetime = field(default_factory=datetime.now)
@@ -199,6 +230,7 @@ class Project:
         """Convert to dictionary for serialization"""
         return {
             "id": self.id,
+            "owner_id": self.owner_id,
             "name": self.name,
             "description": self.description,
             "integrations": [
@@ -212,6 +244,7 @@ class Project:
                 }
                 for integ in self.integrations
             ],
+            "shared_with": [perm.to_dict() for perm in self.shared_with],
             "is_default": self.is_default,
             "is_archived": self.is_archived,
             "created_at": self.created_at.isoformat(),
@@ -423,7 +456,7 @@ class UploadedFile:
     """Domain model for uploaded files"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
-    session_id: str = ""
+    owner_id: str = ""
     filename: str = ""
     file_type: str = ""  # MIME type
     file_size: int = 0
@@ -824,17 +857,21 @@ class KnowledgeNode:
 
 @dataclass
 class KnowledgeEdge:
-    """Domain model for knowledge graph edges"""
+    """Domain model for knowledge graph edges (Issue #278: CORE-KNOW-ENHANCE)"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
     source_node_id: str = ""
     target_node_id: str = ""
     edge_type: EdgeType = EdgeType.REFERENCES
     weight: float = 1.0
+    # Issue #278: Confidence weighting for relationship-based reasoning
+    confidence: float = 1.0  # 0.0 to 1.0, strength of relationship
+    usage_count: int = 0  # Reinforced with use
     metadata: Dict[str, Any] = field(default_factory=dict)
     properties: Dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+    last_accessed: Optional[datetime] = None  # For confidence decay
     session_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -845,10 +882,13 @@ class KnowledgeEdge:
             "target_node_id": self.target_node_id,
             "edge_type": self.edge_type.value if self.edge_type else None,
             "weight": self.weight,
+            "confidence": self.confidence,
+            "usage_count": self.usage_count,
             "metadata": self.metadata,
             "properties": self.properties,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
             "session_id": self.session_id,
         }
 
@@ -876,9 +916,46 @@ class List:
     metadata: Dict[str, Any] = field(default_factory=dict)
     tags: List[str] = field(default_factory=list)
 
+    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4 & 2)
+    owner_id: Optional[str] = None
+    shared_with: List[SharePermission] = field(default_factory=list)  # Array of {user_id, role}
+
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+
+    # Performance optimization - cached counts (SEC-RBAC Phase 1)
+    item_count: int = 0  # Total items in list (cached for performance)
+    completed_count: int = 0  # Completed items in list (cached for performance)
+
+    def get_user_role(self, user_id: str) -> Optional[ShareRole]:
+        """Get user's role for this list (returns owner for owner, or role from shared_with)"""
+        if self.owner_id == user_id:
+            return None  # Owner has all permissions (represented as None/owner)
+
+        for perm in self.shared_with:
+            if perm.user_id == user_id:
+                return perm.role
+
+        return None
+
+    def user_can_read(self, user_id: str) -> bool:
+        """Check if user can read this list (any role can read)"""
+        return self.owner_id == user_id or self.get_user_role(user_id) is not None
+
+    def user_can_write(self, user_id: str) -> bool:
+        """Check if user can modify this list (editor or admin can write)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role in (ShareRole.EDITOR, ShareRole.ADMIN)
+
+    def user_can_share(self, user_id: str) -> bool:
+        """Check if user can share this list (only admin or owner)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role == ShareRole.ADMIN
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -895,8 +972,12 @@ class List:
             "is_default": self.is_default,
             "metadata": self.metadata,
             "tags": self.tags,
+            "owner_id": self.owner_id,
+            "shared_with": [perm.to_dict() for perm in self.shared_with],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "item_count": self.item_count,
+            "completed_count": self.completed_count,
         }
 
 
@@ -935,43 +1016,181 @@ class ListItem:
         }
 
 
-# PM-081: Refactored Todo as standalone atomic domain object
+# PM-081: Refactored Todo to extend Item primitive (Phase 2)
 @dataclass
-class Todo:
-    """Standalone Todo domain object - no coupling to TodoList"""
+class Todo(Item):
+    """A todo is an Item that can be completed and has priority.
 
-    id: str = field(default_factory=lambda: str(uuid4()))
-    title: str = ""
+    Extends Item with todo-specific properties.
+    Inherits from Item: id, text, position, list_id, created_at, updated_at
+
+    Design Decision: Todo IS-A Item. This enables todos to use all
+    generic Item operations (reordering, text updates) while adding
+    todo-specific behavior (completion, priority).
+
+    Examples:
+        >>> todo = Todo(text="Review PR", priority="high")
+        >>> assert isinstance(todo, Item)  # Todo IS-A Item
+        >>> assert todo.text == "Review PR"
+        >>> todo.complete()  # Todo-specific method
+        >>> assert todo.completed is True
+    """
+
+    # Inherited from Item (do NOT redefine):
+    # - id: str
+    # - text: str (was 'title')
+    # - position: int
+    # - list_id: Optional[str]
+    # - created_at: datetime
+    # - updated_at: datetime
+
+    # Todo-specific fields (matching TodoDB):
+    # Core fields
     description: str = ""
     priority: str = "medium"  # low, medium, high, urgent
     status: str = "pending"  # pending, in_progress, completed, cancelled
-    due_date: Optional[datetime] = None
-    tags: List[str] = field(default_factory=list)
-    assignee_id: Optional[str] = None
+    completed: bool = False
 
-    # Metadata for PM-040 Knowledge Graph integration
+    # Hierarchical structure
+    parent_id: Optional[str] = None
+
+    # Scheduling
+    due_date: Optional[datetime] = None
+    reminder_date: Optional[datetime] = None
+    scheduled_date: Optional[datetime] = None
+
+    # Context and categorization
+    tags: List[str] = field(default_factory=list)
+    project_id: Optional[str] = None
+    context: Optional[str] = None  # @home, @work, etc.
+
+    # Progress tracking
+    estimated_minutes: Optional[int] = None
+    actual_minutes: Optional[int] = None
+    completion_notes: str = ""
+
+    # PM-040 Knowledge Graph integration
     metadata: Dict[str, Any] = field(default_factory=dict)
+    knowledge_node_id: Optional[str] = None
+    related_todos: List[str] = field(default_factory=list)
+
+    # PM-034 Intent Classification integration
+    creation_intent: Optional[str] = None
+    intent_confidence: Optional[float] = None
+
+    # External integrations
+    external_refs: Dict[str, Any] = field(default_factory=dict)
 
     # Timestamps
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
+
+    # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4 & 2)
+    owner_id: Optional[str] = None
+    shared_with: List[SharePermission] = field(default_factory=list)  # Array of {user_id, role}
+    assigned_to: Optional[str] = None
+
+    def get_user_role(self, user_id: str) -> Optional[ShareRole]:
+        """Get user's role for this todo (returns owner for owner, or role from shared_with)"""
+        if self.owner_id == user_id:
+            return None  # Owner has all permissions (represented as None/owner)
+
+        for perm in self.shared_with:
+            if perm.user_id == user_id:
+                return perm.role
+
+        return None
+
+    def user_can_read(self, user_id: str) -> bool:
+        """Check if user can read this todo (any role can read)"""
+        return self.owner_id == user_id or self.get_user_role(user_id) is not None
+
+    def user_can_write(self, user_id: str) -> bool:
+        """Check if user can modify this todo (editor or admin can write)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role in (ShareRole.EDITOR, ShareRole.ADMIN)
+
+    def user_can_share(self, user_id: str) -> bool:
+        """Check if user can share this todo (only admin or owner)"""
+        if self.owner_id == user_id:
+            return True
+        role = self.get_user_role(user_id)
+        return role == ShareRole.ADMIN
+
+    @property
+    def title(self) -> str:
+        """Backward compatibility: title maps to text.
+
+        DEPRECATED: Use .text instead.
+        This property exists for backward compatibility during migration.
+        """
+        return self.text
+
+    @title.setter
+    def title(self, value: str):
+        """Backward compatibility: setting title sets text."""
+        self.text = value
+
+    def complete(self):
+        """Mark todo as complete."""
+        self.completed = True
+        self.completed_at = datetime.now()
+        self.status = "completed"
+        self.updated_at = datetime.now()
+
+    def reopen(self):
+        """Reopen completed todo."""
+        self.completed = False
+        self.completed_at = None
+        self.status = "pending"
+        self.updated_at = datetime.now()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
+            # Inherited from Item
             "id": self.id,
-            "title": self.title,
+            "text": self.text,
+            "title": self.title,  # Backward compatibility
+            "position": self.position,
+            "list_id": self.list_id,
+            # Core Todo fields
             "description": self.description,
             "priority": self.priority,
             "status": self.status,
+            "completed": self.completed,
+            # Hierarchical structure
+            "parent_id": self.parent_id,
+            # Scheduling
             "due_date": self.due_date.isoformat() if self.due_date else None,
+            "reminder_date": self.reminder_date.isoformat() if self.reminder_date else None,
+            "scheduled_date": self.scheduled_date.isoformat() if self.scheduled_date else None,
+            # Context and categorization
             "tags": self.tags,
-            "assignee_id": self.assignee_id,
+            "project_id": self.project_id,
+            "context": self.context,
+            # Progress tracking
+            "estimated_minutes": self.estimated_minutes,
+            "actual_minutes": self.actual_minutes,
+            "completion_notes": self.completion_notes,
+            # Knowledge Graph integration
             "metadata": self.metadata,
+            "knowledge_node_id": self.knowledge_node_id,
+            "related_todos": self.related_todos,
+            # Intent Classification integration
+            "creation_intent": self.creation_intent,
+            "intent_confidence": self.intent_confidence,
+            # External integrations
+            "external_refs": self.external_refs,
+            # Timestamps
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            # Ownership and sharing
+            "owner_id": self.owner_id,
+            "shared_with": [perm.to_dict() for perm in self.shared_with],
+            "assigned_to": self.assigned_to,
         }
 
 
@@ -1019,7 +1238,7 @@ class Conversation:
     """Domain model for conversational interactions"""
 
     id: str = field(default_factory=lambda: str(uuid4()))
-    user_id: str = ""
+    user_id: UUID = ""
     session_id: str = ""
     title: str = ""  # Optional conversation title/summary
     context: Dict[str, Any] = field(default_factory=dict)  # Conversation context

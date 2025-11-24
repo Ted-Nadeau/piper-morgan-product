@@ -9,7 +9,7 @@ import asyncio
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -20,6 +20,7 @@ from services.database.session_factory import AsyncSessionFactory
 
 # Domain-first imports - use domain models consistently
 from services.domain.models import Intent, IntentCategory, Task, Workflow
+from services.file_context.file_resolver import FileResolver
 from services.integrations.github.config_service import GitHubConfigService
 from services.integrations.github.content_generator import GitHubIssueContentGenerator
 from services.integrations.github.github_integration_router import GitHubIntegrationRouter
@@ -31,15 +32,8 @@ from services.integrations.github.production_client import (
 from services.intent_service.intent_enricher import IntentEnricher
 from services.llm.clients import LLMClient
 from services.queries.query_router import QueryRouter
+from services.repositories.file_repository import FileRepository
 from services.shared_types import TaskStatus, TaskType, WorkflowStatus, WorkflowType
-from services.ui_messages.loading_states import (
-    LoadingState,
-    OperationType,
-    complete_loading,
-    start_loading,
-    update_loading,
-)
-from web.utils.streaming_responses import ProgressTracker
 
 # Multi-Agent Coordinator Integration
 from .integration import PerformanceMonitor, SessionIntegration, WorkflowIntegration
@@ -95,7 +89,12 @@ class OrchestrationEngine:
         # Following the AsyncSessionFactory pattern from lines 135-138
         self.query_router = None
 
-        self.intent_enricher = IntentEnricher(llm_client)
+        # Initialize IntentEnricher with injected dependencies (issue #308 - clean architecture)
+        # Create file repository and resolver with async session factory
+        async_session_factory = AsyncSessionFactory()
+        file_repository = FileRepository(async_session_factory)
+        file_resolver = FileResolver(file_repository)
+        self.intent_enricher = IntentEnricher(file_repository, file_resolver)
         self.logger = structlog.get_logger()
 
         # Initialize Multi-Agent integration
@@ -252,44 +251,37 @@ class OrchestrationEngine:
             self.logger.error(f"Failed to create workflow from intent: {str(e)}")
             return None
 
-    async def execute_workflow(self, workflow: Workflow) -> WorkflowResult:
+    async def execute_workflow(self, workflow: Union[str, Workflow]) -> WorkflowResult:
         """
         Execute a complete workflow, handling task dependencies and error recovery
+
+        Args:
+            workflow: Either a Workflow object or workflow ID string to look up
+
+        Returns:
+            WorkflowResult with execution details
+
+        Raises:
+            ValueError: If workflow ID is provided but not found in registry
         """
+        # Support both workflow objects and IDs
+        if isinstance(workflow, str):
+            workflow_id = workflow
+            if workflow_id not in self.workflows:
+                raise ValueError(f"Workflow {workflow_id} not found")
+            workflow = self.workflows[workflow_id]
+
         start_time = datetime.now()
         task_results = []
 
-        # Start loading operation for workflow execution
-        operation_id = start_loading(
-            OperationType.WORKFLOW_EXECUTION,
-            f"Executing workflow: {workflow.type.value}",
-            estimated_duration_seconds=len(workflow.tasks) * 30,  # Estimate 30s per task
-        )
-
-        # Create progress tracker for tasks
-        tracker = ProgressTracker(operation_id, total_steps=len(workflow.tasks))
-
         try:
             # Update workflow status
-            workflow.status = WorkflowStatus.IN_PROGRESS
-            update_loading(operation_id, f"Starting workflow with {len(workflow.tasks)} tasks...")
+            workflow.status = WorkflowStatus.RUNNING
 
             # Execute tasks in dependency order
-            for i, task in enumerate(workflow.tasks):
-                # Update progress for current task
-                tracker.next_step(
-                    task.type.value,
-                    f"Executing task {i+1} of {len(workflow.tasks)}: {task.type.value}",
-                )
-
+            for task in workflow.tasks:
                 task_result = await self._execute_task(task, workflow)
                 task_results.append(task_result)
-
-                # Update progress with task result
-                if task_result.status == TaskStatus.COMPLETED:
-                    tracker.update_current_step(f"✅ Task completed: {task.type.value}")
-                else:
-                    tracker.update_current_step(f"⚠️ Task failed: {task.type.value}")
 
                 # Stop execution if a critical task fails
                 if task_result.status == TaskStatus.FAILED and task.type in [
@@ -297,11 +289,6 @@ class OrchestrationEngine:
                     TaskType.EXTRACT_REQUIREMENTS,
                 ]:
                     workflow.status = WorkflowStatus.FAILED
-                    complete_loading(
-                        operation_id,
-                        success=False,
-                        message=f"Critical task {task.id} failed: {task_result.error_message}",
-                    )
                     return WorkflowResult(
                         workflow_id=workflow.id,
                         status=WorkflowStatus.FAILED,
@@ -312,12 +299,6 @@ class OrchestrationEngine:
 
             # Mark workflow as completed if all tasks succeeded
             workflow.status = WorkflowStatus.COMPLETED
-            complete_loading(
-                operation_id,
-                success=True,
-                message=f"Workflow completed successfully! Executed {len(workflow.tasks)} tasks.",
-            )
-
             return WorkflowResult(
                 workflow_id=workflow.id,
                 status=WorkflowStatus.COMPLETED,
@@ -328,9 +309,7 @@ class OrchestrationEngine:
         except Exception as e:
             self.logger.error("Workflow execution failed", error=str(e), workflow_id=workflow.id)
             workflow.status = WorkflowStatus.FAILED
-            complete_loading(
-                operation_id, success=False, message=f"Workflow execution failed: {str(e)}"
-            )
+            workflow.error = str(e)
             return WorkflowResult(
                 workflow_id=workflow.id,
                 status=WorkflowStatus.FAILED,
@@ -344,7 +323,7 @@ class OrchestrationEngine:
         start_time = datetime.now()
 
         try:
-            task.status = TaskStatus.IN_PROGRESS
+            task.status = TaskStatus.RUNNING
 
             if task.type == TaskType.ANALYZE_REQUEST:
                 output_data = await self._analyze_request_task(task, workflow)
@@ -392,19 +371,24 @@ class OrchestrationEngine:
         """Analyze the user's request to understand requirements"""
 
         intent_context = workflow.context.get("intent", {})
+        session_id = workflow.context.get("session_id", "")
 
-        # Use intent enricher for deeper analysis
-        analysis = await self.intent_enricher.enrich_intent(
-            message=intent_context.get("original_message", ""),
+        # Create Intent from workflow context (issue #308 - use actual enrich method)
+        intent = Intent(
             category=intent_context.get("category", IntentCategory.UNKNOWN),
+            action=intent_context.get("action", ""),
             context=workflow.context,
         )
+        intent.original_message = intent_context.get("original_message", "")
+
+        # Use intent enricher for deeper file context analysis
+        enriched_intent = await self.intent_enricher.enrich(intent, session_id)
 
         return {
-            "analysis": analysis,
-            "requirements": analysis.get("requirements", []),
-            "complexity": analysis.get("complexity", "unknown"),
-            "estimated_effort": analysis.get("estimated_effort", "unknown"),
+            "analysis": enriched_intent.context,
+            "requirements": enriched_intent.context.get("requirements", []),
+            "complexity": enriched_intent.context.get("complexity", "unknown"),
+            "estimated_effort": enriched_intent.context.get("estimated_effort", "unknown"),
         }
 
     async def _extract_requirements_task(self, task: Task, workflow: Workflow) -> Dict[str, Any]:

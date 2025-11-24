@@ -59,6 +59,23 @@ jobs:
 
               **Generated**: ${dayOfWeek}, ${today}
 
+              ### 🗺️ **IMPORTANT: File Location Reference**
+
+              **Before reporting any file as "missing", consult [docs/NAVIGATION.md](../docs/NAVIGATION.md) for actual locations.**
+
+              **Common File Locations** (not in project root):
+              - **roadmap.md**: \`docs/internal/planning/roadmap/roadmap.md\`
+              - **Pattern catalog**: \`docs/internal/architecture/current/patterns/README.md\`
+              - **ADRs**: \`docs/internal/architecture/current/adrs/\`
+              - **Session logs**: \`dev/2025/MM/DD/\` structure
+              - **User config**: \`config/PIPER.md\` (generic), \`config/PIPER.user.md\` (user-specific)
+
+              **Agent instructions**:
+              1. Read docs/NAVIGATION.md FIRST before searching for files
+              2. Use NAVIGATION.md as source of truth for directory structure
+              3. Only report files as "missing" if not found at documented location
+              4. Document actual location if found elsewhere
+
               ### 📚 Claude Project Knowledge Updates (PRIORITY)
 
               - [ ] List all docs modified this week: \`git log --since="1 week ago" --name-only --pretty=format: | grep "\\.md$" | sort -u\`
@@ -68,13 +85,16 @@ jobs:
                 - [ ] docs/internal/development/methodology-core/ files (if modified)
                 - [ ] docs/briefing/METHODOLOGY.md (if modified)
                 - [ ] .cursorrules and docs/cursorrules/ files (if modified)
-                - [ ] roadmap.md and backlog.md (if modified)
+                - [ ] docs/internal/planning/roadmap/roadmap.md (if modified)
+                - [ ] backlog.md (DEPRECATED - moved to trash)
                 - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
                 - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
               - [ ] **Check for stale knowledge/ files**: No duplicates, only symlinks and unique files
 
-              ### 🔍 Automated Audits (Claude Code /agent)
+              ### 🔍 Automated Audits (Claude Code /agent or manual verification)
+
+              **Note**: Agent may choose manual verification instead of launching subagents. Both approaches are acceptable as long as evidence is provided.
 
               - [ ] Run: \`/agent Audit docs/ for stale content older than 30 days\`
               - [ ] Run: \`/agent Find duplicate files in docs/ and list consolidation opportunities\`
@@ -105,11 +125,18 @@ jobs:
 
               ### 🎯 Sprint & Roadmap Alignment
 
+              - [ ] **Verify roadmap.md location** (common error):
+                - Location: \`docs/internal/planning/roadmap/roadmap.md\` (NOT project root)
+                - Check last update: \`git log -1 --format="%ai" -- docs/internal/planning/roadmap/roadmap.md\`
+                - If not found, consult docs/NAVIGATION.md before reporting as missing
               - [ ] Update roadmap.md with completed items from current sprint
               - [ ] **Note**: backlog.md deprecated (moved to trash) - GitHub is source of truth
               - [ ] **Note**: completed.md deprecated - GitHub is source of truth
               - [ ] Check for new issues needing taxonomy labels (TRACK-EPIC format)
-              - [ ] Update sprint goals in PIPER.user.md if new sprint started
+              - [ ] Update sprint goals in config/PIPER.user.md if new sprint started
+                - **Note**: \`config/PIPER.md\` = generic system config (always exists)
+                - **Note**: \`config/PIPER.user.md\` = user-specific config (may not exist if using database config)
+                - These are TWO DIFFERENT FILES with different purposes
 
               ### 📊 GitHub Issues Sync
 
@@ -122,12 +149,21 @@ jobs:
               ### 📚 Pattern & Knowledge Capture
 
               - [ ] Update docs/internal/architecture/current/patterns/README.md with:
-                - [ ] New patterns discovered this week (33 total patterns in 5 categories)
+                - [ ] New patterns discovered this week (38+ total patterns as of Nov 5, 2025)
+                - [ ] Check \`docs/internal/architecture/current/patterns/README.md\` for current count
+                - [ ] Verify README.md count matches actual pattern-*.md files in directory
+                - [ ] Update README.md if new patterns (036-038+) not yet documented
                 - [ ] Core Architecture Patterns (infrastructure/error handling)
                 - [ ] Data & Query Patterns (sessions/queries)
                 - [ ] AI & Intelligence Patterns (LLM/spatial/intent/multi-agent)
                 - [ ] Integration & Platform Patterns (config/CLI/plugins)
                 - [ ] Development & Process Patterns (methodology/workflow)
+              - [ ] **Verify pattern count accuracy**:
+                - Run: \`ls -1 docs/internal/architecture/current/patterns/pattern-*.md | wc -l\`
+                - Compare actual file count to README.md documented count
+                - Investigate discrepancy if counts don't match
+                - Update README.md to document any undocumented patterns
+                - Common cause: Recent pattern sweep work may add patterns without updating README
               - [ ] Review session logs for patterns to document
               - [ ] Check for methodology improvements to capture
               - [ ] **Review CITATIONS.md (docs/references/CITATIONS.md) for completeness**:
@@ -147,10 +183,14 @@ jobs:
               - [ ] Check that no backup files (\`*.backup\`, \`*.old\`) are in active directories
               - [ ] Verify no test files in production directories
               - [ ] Check for TODO/FIXME comments: \`grep -r "TODO\\|FIXME" services/ web/ cli/\`
-              - [ ] **Review root README.md (repository view)**:
-                - [ ] Check for outdated "new" claims (weeks-old items)
-                - [ ] Verify links are current and working
+              - [ ] **Review root README.md (repository view)** - Agent should perform review:
+                - [ ] Check for outdated "new" claims (>2 weeks old features should not say "NEW:")
+                - [ ] Verify external links are current and working (especially pmorgan.tech)
+                - [ ] Ensure code examples are still accurate
+                - [ ] Check setup instructions match current process (PIPER.user.md vs database config)
                 - [ ] Ensure content is brief and evergreen
+                - [ ] Remove any accidental test content or markdown artifacts
+                - [ ] **Create review document**: Save findings to \`dev/2025/MM/DD/root-readme-review.md\`
                 - [ ] Note: This is separate from docs/README.md (pmorgan.tech homepage)
 
               ### 📈 Metrics Collection (Optional)
@@ -181,11 +221,27 @@ jobs:
               - Create PM-* issues for any problems discovered
               - Update this checklist template if new patterns emerge
 
+              ### 📖 Lessons Learned from Previous Audits
+
+              **Nov 5, 2025 (#293) - Key Findings**:
+              1. ✅ **Always check docs/NAVIGATION.md first** before reporting files missing
+              2. ✅ **PIPER.md ≠ PIPER.user.md** - Two different files (generic vs user-specific)
+              3. ✅ **Pattern count discrepancy** - New patterns from pattern sweep may not be in README yet
+              4. ✅ **roadmap.md location** - Lives at \`docs/internal/planning/roadmap/roadmap.md\`, not root
+              5. ✅ **Root README.md review** - Agent should perform review, create findings document
+
+              **Agent Guidelines**:
+              - Provide evidence for all claims (command outputs, file paths, line numbers)
+              - Explain any items that couldn't be completed (don't just skip)
+              - Create separate review documents for complex analyses
+              - Update this "Lessons Learned" section if new patterns discovered
+
               ### References
               - [CLAUDE.md Project Instructions](../CLAUDE.md)
               - [Architecture Documentation](../docs/architecture/architecture.md)
               - [Pattern Catalog](../docs/internal/architecture/current/patterns/README.md)
-              - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md)`,
+              - [Session Archive Guidelines](../docs/session-logs/archive-guidelines.md)
+              - [Navigation Hub](../docs/NAVIGATION.md) - **Check this FIRST for file locations**`,
               labels: ['documentation', 'maintenance', 'weekly-audit', 'fly-audit'],
               assignees: ['mediajunkie']
             });
@@ -215,8 +271,8 @@ jobs:
       - name: Update Essential Briefings
         run: |
           # Extract current position from roadmap or current state
-          if [ -f "docs/planning/roadmap.md" ]; then
-            POSITION=$(grep -i "current position\|position:" docs/planning/roadmap.md | head -1 | cut -d: -f2 | xargs)
+          if [ -f "docs/internal/planning/roadmap/roadmap.md" ]; then
+            POSITION=$(grep -i "current position\|position:" docs/internal/planning/roadmap/roadmap.md | head -1 | cut -d: -f2 | xargs)
           elif [ -f "knowledge/BRIEFING-CURRENT-STATE.md" ]; then
             POSITION=$(grep -i "position:" knowledge/BRIEFING-CURRENT-STATE.md | head -1 | cut -d: -f2 | xargs)
           else

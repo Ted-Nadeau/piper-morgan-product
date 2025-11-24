@@ -19,7 +19,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from main import app
 from services.api.errors import (
     ERROR_MESSAGES,
     APIError,
@@ -29,6 +28,7 @@ from services.api.errors import (
     TaskFailedError,
     WorkflowTimeoutError,
 )
+from web.app import app
 
 
 class TestErrorMessageRegression:

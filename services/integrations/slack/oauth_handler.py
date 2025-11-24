@@ -300,6 +300,66 @@ class SlackOAuthHandler:
             logger.error(f"Failed to initialize spatial workspace: {e}")
             raise SlackAuthFailedError(f"Spatial workspace initialization failed: {e}") from e
 
+    def initialize_spatial_territory(self, oauth_response: dict):
+        """
+        Initialize spatial territory from OAuth response (TDD-compatible).
+
+        Creates a territory representation that includes OAuth credentials.
+        This is a simplified sync wrapper for TDD test compatibility.
+
+        Args:
+            oauth_response: OAuth response dict with team and token info
+
+        Returns:
+            Object with territory_id, name, type, and access_token attributes
+
+        Raises:
+            ValueError: If OAuth response indicates failure
+        """
+        from dataclasses import dataclass
+
+        from services.integrations.slack.spatial_types import TerritoryType
+
+        # Check for OAuth errors
+        if "error" in oauth_response:
+            raise ValueError(
+                f"OAuth failed: {oauth_response.get('error_description', oauth_response['error'])}"
+            )
+
+        # Extract OAuth data
+        access_token = oauth_response.get("access_token", "")
+        team_info = oauth_response.get("team", {})
+        territory_id = team_info.get("id", "")
+        name = team_info.get("name", "Unknown Workspace")
+
+        # Create territory via spatial mapper
+        workspace_data = {
+            "id": territory_id,
+            "name": name,
+            "domain": team_info.get("domain"),
+            "enterprise_id": team_info.get("enterprise_id"),
+        }
+
+        territory = self.spatial_mapper.map_workspace(workspace_data)
+
+        # Create TDD-compatible response object with access_token
+        # For OAuth-initialized workspaces, default to WORKSPACE type
+        @dataclass
+        class SpatialTerritory:
+            """OAuth + Spatial Territory wrapper"""
+
+            territory_id: str
+            name: str
+            type: TerritoryType
+            access_token: str
+
+        return SpatialTerritory(
+            territory_id=territory.id,
+            name=territory.name,
+            type=TerritoryType.WORKSPACE,  # OAuth workspaces default to WORKSPACE type
+            access_token=access_token,
+        )
+
     async def _store_workspace_tokens(
         self, workspace_data: Dict[str, Any], token_data: Dict[str, Any]
     ) -> None:
@@ -410,3 +470,225 @@ class SlackOAuthHandler:
         except Exception as e:
             logger.error(f"Failed to revoke workspace access: {e}")
             return False
+
+    def get_spatial_capabilities(self, oauth_response: Dict[str, Any]) -> list:
+        """
+        Map OAuth scopes to spatial capabilities.
+
+        Extracts granted scopes from OAuth response and returns them as a list
+        of individual capability strings. These scopes determine what spatial
+        operations the bot can perform in the workspace.
+
+        Args:
+            oauth_response: OAuth response dict containing authed_user.scope
+
+        Returns:
+            List of individual scope strings (e.g., ["chat:write", "channels:read"])
+
+        Raises:
+            KeyError: If authed_user.scope is missing from OAuth response
+
+        Example:
+            >>> oauth_response = {
+            ...     "authed_user": {"scope": "chat:write,channels:read"}
+            ... }
+            >>> handler.get_spatial_capabilities(oauth_response)
+            ['chat:write', 'channels:read']
+        """
+        try:
+            # Extract scope string from authed_user
+            authed_user = oauth_response.get("authed_user", {})
+            scope_string = authed_user.get("scope", "")
+
+            # Parse comma-separated scopes into list
+            if not scope_string:
+                logger.warning("No scopes found in OAuth response")
+                return []
+
+            capabilities = [scope.strip() for scope in scope_string.split(",") if scope.strip()]
+
+            logger.info(f"Extracted {len(capabilities)} spatial capabilities from OAuth response")
+            return capabilities
+
+        except Exception as e:
+            logger.error(f"Failed to extract spatial capabilities: {e}")
+            raise
+
+    def get_user_spatial_context(self, oauth_response: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get user's spatial context from OAuth data.
+
+        Extracts user information and spatial permissions from OAuth response,
+        providing a complete context of the user's spatial position and capabilities
+        within the workspace.
+
+        Args:
+            oauth_response: OAuth response dict containing authed_user and team info
+
+        Returns:
+            Dict with user spatial context:
+                - user_id: str - User's Slack ID
+                - user_name: str - User's display name
+                - territory_id: str - Workspace/team ID
+                - capabilities: list - List of granted scopes
+
+        Example:
+            >>> oauth_response = {
+            ...     "authed_user": {"id": "U123", "name": "Alice", "scope": "chat:write"},
+            ...     "team": {"id": "T456", "name": "Workspace"}
+            ... }
+            >>> handler.get_user_spatial_context(oauth_response)
+            {
+                'user_id': 'U123',
+                'user_name': 'Alice',
+                'territory_id': 'T456',
+                'capabilities': ['chat:write']
+            }
+        """
+        try:
+            # Extract user information
+            authed_user = oauth_response.get("authed_user", {})
+            user_id = authed_user.get("id", "")
+            user_name = authed_user.get("name", "Unknown User")
+
+            # Extract territory (workspace) information
+            team_info = oauth_response.get("team", {})
+            territory_id = team_info.get("id", "")
+
+            # Get spatial capabilities (reuse existing method)
+            capabilities = self.get_spatial_capabilities(oauth_response)
+
+            user_context = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "territory_id": territory_id,
+                "capabilities": capabilities,
+            }
+
+            logger.info(
+                f"Extracted user spatial context for {user_name} ({user_id}) in territory {territory_id}"
+            )
+            return user_context
+
+        except Exception as e:
+            logger.error(f"Failed to extract user spatial context: {e}")
+            raise
+
+    def refresh_spatial_territory(self, refresh_response: Dict[str, Any]):
+        """
+        Refresh spatial territory after OAuth token refresh.
+
+        Updates territory metadata when an OAuth token is refreshed, maintaining
+        the same territory ID but updating the access token and other mutable fields.
+
+        This method handles token refresh scenarios where the workspace/territory
+        remains the same but credentials need to be updated.
+
+        Args:
+            refresh_response: OAuth token refresh response (same structure as initial OAuth response)
+
+        Returns:
+            Updated SpatialTerritory object with refreshed access token
+
+        Raises:
+            ValueError: If OAuth response indicates failure
+
+        Example:
+            >>> refresh_response = {
+            ...     "access_token": "xoxb-new-token",
+            ...     "team": {"id": "T123456", "name": "Test Workspace"}
+            ... }
+            >>> updated_territory = handler.refresh_spatial_territory(refresh_response)
+            >>> updated_territory.access_token
+            'xoxb-new-token'
+
+        Note:
+            This reuses initialize_spatial_territory() logic since the data structure
+            is identical. The distinction is semantic - refresh vs initial setup.
+        """
+        try:
+            # Extract territory info for logging
+            team_info = refresh_response.get("team", {})
+            territory_id = team_info.get("id", "")
+
+            logger.info(f"Refreshing spatial territory for workspace {territory_id}")
+
+            # Reuse initialization logic - structure is identical
+            # The difference is semantic (refresh vs create), not structural
+            territory = self.initialize_spatial_territory(refresh_response)
+
+            logger.info(f"Spatial territory refreshed: {territory.name} ({territory.territory_id})")
+            return territory
+
+        except Exception as e:
+            logger.error(f"Failed to refresh spatial territory: {e}")
+            raise
+
+    def validate_and_initialize_spatial_territory(
+        self, oauth_response: Dict[str, Any], expected_state: str
+    ):
+        """
+        Initialize spatial territory on OAuth success after state validation.
+
+        Validates the OAuth state parameter for security, then initializes the
+        spatial territory. This method combines security validation with territory
+        creation to ensure OAuth callbacks are legitimate before creating workspace
+        representations.
+
+        Args:
+            oauth_response: OAuth response dict containing state and workspace data
+            expected_state: Expected state value for validation
+
+        Returns:
+            SpatialTerritory object for the authenticated workspace
+
+        Raises:
+            ValueError: If OAuth state is invalid or missing
+
+        Example:
+            >>> oauth_response = {
+            ...     "access_token": "xoxb-token",
+            ...     "state": "secure-state-123",
+            ...     "team": {"id": "T123", "name": "Workspace"}
+            ... }
+            >>> territory = handler.validate_and_initialize_spatial_territory(
+            ...     oauth_response, "secure-state-123"
+            ... )
+            >>> territory.territory_id
+            'T123'
+
+        Security:
+            The state parameter prevents CSRF attacks in the OAuth flow.
+            This method MUST be used for OAuth callbacks rather than calling
+            initialize_spatial_territory() directly.
+        """
+        try:
+            # Extract and validate state parameter
+            received_state = oauth_response.get("state")
+
+            # State validation
+            if not received_state:
+                raise ValueError("Invalid OAuth state: state parameter missing")
+
+            if received_state != expected_state:
+                logger.warning(
+                    f"OAuth state mismatch: expected {expected_state[:8]}..., "
+                    f"received {received_state[:8]}..."
+                )
+                raise ValueError("Invalid OAuth state: state mismatch")
+
+            # State is valid - proceed with territory initialization
+            logger.info("OAuth state validated successfully")
+
+            # Initialize territory
+            territory = self.initialize_spatial_territory(oauth_response)
+
+            logger.info(f"Spatial territory initialized after state validation: {territory.name}")
+            return territory
+
+        except ValueError:
+            # Re-raise validation errors
+            raise
+        except Exception as e:
+            logger.error(f"Failed to validate and initialize spatial territory: {e}")
+            raise

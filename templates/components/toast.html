@@ -1,0 +1,18 @@
+<!-- Toast Notification Container - Add to base template -->
+<div class="toast-container" id="toast-container" role="region" aria-live="polite" aria-atomic="true" aria-label="Notifications"></div>
+
+<!-- Toast Template - Hidden, cloned by JavaScript -->
+<template id="toast-template">
+  <div class="toast" role="status">
+    <div class="toast-icon" aria-hidden="true"></div>
+    <div class="toast-content">
+      <div class="toast-title"></div>
+      <div class="toast-message"></div>
+    </div>
+    <button class="toast-close" aria-label="Close notification" type="button">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+      </svg>
+    </button>
+  </div>
+</template>

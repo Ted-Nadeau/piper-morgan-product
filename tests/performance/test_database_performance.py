@@ -12,13 +12,15 @@ import time
 from statistics import mean, median
 from typing import List
 
+# --- Performance Targets ---
+from uuid import UUID, uuid4
+
 import pytest
 from sqlalchemy import text
 
 from services.database.connection import DatabaseConnection
 from services.database.session_factory import AsyncSessionFactory
 
-# --- Performance Targets ---
 TARGET_CONNECTION_MS = 10.0  # Connection pool acquisition: <10ms
 TARGET_SIMPLE_QUERY_MS = 5.0  # Simple query: <5ms
 TARGET_TRANSACTION_MS = 20.0  # Transaction: <20ms

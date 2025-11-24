@@ -10,6 +10,7 @@ Issue #249 CORE-AUDIT-LOGGING Phase 1D
 import asyncio
 import sys
 from datetime import datetime
+from uuid import UUID, uuid4
 
 # Add project root to path
 sys.path.insert(0, "/Users/xian/Development/piper-morgan")
@@ -29,7 +30,7 @@ async def main():
     print()
 
     # Test user
-    test_user_id = "integration_test_audit_user"
+    test_user_id = uuid4()
 
     try:
         # ====================================================================
@@ -66,7 +67,7 @@ async def main():
                 message="User logged in successfully",
                 session=session,
                 user_id=test_user_id,
-                session_id="test_session_123",
+                session_id=str(uuid4()),
                 details={"username": "audit_test_user", "method": "password"},
                 audit_context={
                     "ip_address": "192.168.1.1",

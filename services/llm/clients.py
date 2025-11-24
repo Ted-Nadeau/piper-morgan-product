@@ -11,6 +11,7 @@ import structlog
 from anthropic import Anthropic
 from openai import OpenAI
 
+from services.analytics.api_usage_tracker import APIUsageTracker
 from services.config.llm_config_service import LLMConfigService
 
 from .config import MODEL_CONFIGS, LLMModel, LLMProvider
@@ -25,6 +26,7 @@ class LLMClient:
         self.anthropic_client = None
         self.openai_client = None
         self._config_service = LLMConfigService()
+        self.usage_tracker = APIUsageTracker()
         self._init_clients()
 
     @property
@@ -83,9 +85,9 @@ class LLMClient:
         # Try primary provider first
         try:
             if primary_provider == LLMProvider.ANTHROPIC:
-                return await self._anthropic_complete(prompt, config, response_format)
+                return await self._anthropic_complete(prompt, config, response_format, context)
             elif primary_provider == LLMProvider.OPENAI:
-                return await self._openai_complete(prompt, config, response_format)
+                return await self._openai_complete(prompt, config, response_format, context)
             else:
                 raise ValueError(f"Unknown provider: {primary_provider}")
         except Exception as e:
@@ -110,9 +112,13 @@ class LLMClient:
 
             try:
                 if fallback_provider == LLMProvider.ANTHROPIC:
-                    return await self._anthropic_complete(prompt, fallback_config, response_format)
+                    return await self._anthropic_complete(
+                        prompt, fallback_config, response_format, context
+                    )
                 else:
-                    return await self._openai_complete(prompt, fallback_config, response_format)
+                    return await self._openai_complete(
+                        prompt, fallback_config, response_format, context
+                    )
             except Exception as fallback_error:
                 logger.error(
                     f"Fallback provider {fallback_provider.value} also failed: {str(fallback_error)}"
@@ -126,6 +132,7 @@ class LLMClient:
         prompt: str,
         config: Dict[str, Any],
         response_format: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Get completion from Anthropic"""
         if not self.anthropic_client:
@@ -139,13 +146,31 @@ class LLMClient:
             temperature=config["temperature"],
             messages=[{"role": "user", "content": prompt}],
         )
-        # Log approximate tokens/cost
-        logger.info(
-            "llm_usage",
-            provider="anthropic",
-            tokens_sent=len(prompt) // 4,
-            tokens_received=len(response.content[0].text) // 4,
+
+        # Extract actual token counts from response
+        prompt_tokens = (
+            response.usage.input_tokens if hasattr(response, "usage") else len(prompt) // 4
         )
+        completion_tokens = (
+            response.usage.output_tokens
+            if hasattr(response, "usage")
+            else len(response.content[0].text) // 4
+        )
+
+        # Log usage - non-blocking
+        try:
+            # Note: We don't have DB session here in synchronous context
+            # Usage tracking will need to be handled at a higher level with DB session
+            logger.info(
+                "llm_usage",
+                provider="anthropic",
+                model=config["model"].value,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log usage: {e}")
+
         return response.content[0].text
 
     async def _openai_complete(
@@ -153,6 +178,7 @@ class LLMClient:
         prompt: str,
         config: Dict[str, Any],
         response_format: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Get completion from OpenAI"""
         if not self.openai_client:
@@ -171,13 +197,31 @@ class LLMClient:
             request_params["response_format"] = response_format
 
         response = self.openai_client.chat.completions.create(**request_params)
-        # Log approximate tokens/cost
-        logger.info(
-            "llm_usage",
-            provider="openai",
-            tokens_sent=len(prompt) // 4,
-            tokens_received=len(response.choices[0].message.content) // 4,
+
+        # Extract actual token counts from response
+        prompt_tokens = (
+            response.usage.prompt_tokens if hasattr(response, "usage") else len(prompt) // 4
         )
+        completion_tokens = (
+            response.usage.completion_tokens
+            if hasattr(response, "usage")
+            else len(response.choices[0].message.content) // 4
+        )
+
+        # Log usage - non-blocking
+        try:
+            # Note: We don't have DB session here in synchronous context
+            # Usage tracking will need to be handled at a higher level with DB session
+            logger.info(
+                "llm_usage",
+                provider="openai",
+                model=config["model"].value,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log usage: {e}")
+
         return response.choices[0].message.content
 
 

@@ -6,6 +6,7 @@ Handles database operations and PIPER.user.md integration
 import logging
 import os
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 import yaml
 from sqlalchemy import delete, select, update
@@ -34,8 +35,10 @@ class PersonalityProfileRepository:
         self.config_cache = {}  # Cache for PIPER.user.md overrides
         self.config_cache_ttl = 300  # 5 minutes
 
-    async def get_by_user_id(self, user_id: str) -> Optional[PersonalityProfile]:
-        """Load PersonalityProfile with PIPER.user.md overrides"""
+    async def get_by_user_id(
+        self, user_id: str, is_admin: bool = False
+    ) -> Optional[PersonalityProfile]:
+        """Load PersonalityProfile with PIPER.user.md overrides (SEC-RBAC Phase 3: admins can access any profile)"""
         try:
             # Load base profile from database
             base_profile = await self._load_from_database(user_id)
@@ -104,8 +107,8 @@ class PersonalityProfileRepository:
             logger.error(f"Database error saving profile for user {profile.user_id}: {e}")
             raise ProfileLoadError(f"Failed to save profile: {e}")
 
-    async def delete(self, user_id: str) -> bool:
-        """Delete PersonalityProfile for user"""
+    async def delete(self, user_id: str, is_admin: bool = False) -> bool:
+        """Delete PersonalityProfile for user (SEC-RBAC Phase 3: admins can delete any profile)"""
         try:
             async with AsyncSessionFactory.session_scope() as session:
                 stmt = delete(PersonalityProfileModel).where(

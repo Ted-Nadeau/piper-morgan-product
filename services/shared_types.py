@@ -11,6 +11,8 @@ class IntentCategory(Enum):
     ANALYSIS = "analysis"
     SYNTHESIS = "synthesis"
     STRATEGY = "strategy"
+    PLANNING = "planning"  # For planning and design activities
+    REVIEW = "review"  # For review and validation activities
     LEARNING = "learning"
     QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
     CONVERSATION = "conversation"  # For greetings, chitchat, social interaction
@@ -81,6 +83,13 @@ class TaskType(Enum):
     # Feedback tasks
     PROCESS_USER_FEEDBACK = "process_user_feedback"
 
+    # Document processing tasks (Issue #290)
+    ANALYZE_DOCUMENT = "analyze_document"
+    QUESTION_ANSWER_DOCUMENT = "qa_document"
+    COMPARE_DOCUMENTS = "compare_documents"
+    SUMMARIZE_DOCUMENT = "summarize_document"
+    SEARCH_DOCUMENTS = "search_documents"
+
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -145,8 +154,10 @@ class NodeType(Enum):
     CUSTOM = "custom"
 
 
-# PM-040: Knowledge graph edge types
+# PM-040: Knowledge graph edge types (Issue #278: CORE-KNOW-ENHANCE)
 class EdgeType(Enum):
+    """Basic relationship types"""
+
     REFERENCES = "references"
     DEPENDS_ON = "depends_on"
     IMPLEMENTS = "implements"
@@ -156,4 +167,33 @@ class EdgeType(Enum):
     ENHANCES = "enhances"
     REPLACES = "replaces"
     SUPPORTS = "supports"
+
+    """Causal relationship types (Issue #278)"""
+    BECAUSE = "because"  # X happens BECAUSE of Y
+    ENABLES = "enables"  # X ENABLES Y capability
+    REQUIRES = "requires"  # X REQUIRES Y to function
+    PREVENTS = "prevents"  # X PREVENTS Y from happening
+    LEADS_TO = "leads_to"  # X LEADS_TO Y outcome
+
+    """Temporal relationship types (Issue #278)"""
+    BEFORE = "before"  # X occurs BEFORE Y
+    DURING = "during"  # X occurs DURING Y
+    AFTER = "after"  # X occurs AFTER Y
+
+    """Other relationship types"""
     CUSTOM = "custom"
+
+
+class PatternType(Enum):
+    """
+    Types of patterns that can be learned by the auto-learning system.
+
+    Issue #300: CORE-ALPHA-LEARNING-BASIC - Basic Auto-Learning
+    """
+
+    USER_WORKFLOW = "user_workflow"  # Recurring user action sequences
+    COMMAND_SEQUENCE = "command_sequence"  # Frequently used command patterns
+    TIME_BASED = "time_based"  # Temporal patterns (e.g., daily standup)
+    CONTEXT_BASED = "context_based"  # Context-triggered patterns
+    PREFERENCE = "preference"  # User preference patterns
+    INTEGRATION = "integration"  # Integration usage patterns

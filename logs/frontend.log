@@ -1,11 +1,125 @@
-2025-09-30 12:19:07 [debug    ] Using user configuration       path=config/PIPER.user.md
-2025-09-30 12:19:07 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
-2025-09-30 12:19:07 [debug    ] PortConfigurationService initialized environment=development
-INFO:     Started server process [82793]
-INFO:     Waiting for application startup.
+2025-11-19 10:16:08 [debug    ] Using user configuration       path=config/PIPER.user.md
+2025-11-19 10:16:08 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2025-11-19 10:16:08 [debug    ] PortConfigurationService initialized environment=development
 /Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-2025-09-30 12:19:08 [warning  ] No ANTHROPIC_API_KEY found
-2025-09-30 12:19:08 [warning  ] No OPENAI_API_KEY found
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+{"event": "\u26a0\ufe0f Failed to mount documents API router: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.", "logger": "app", "level": "error", "timestamp": "2025-11-19T18:16:08.589042Z"}
+{"event": "\u26a0\ufe0f Failed to mount todos API router: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.", "logger": "app", "level": "error", "timestamp": "2025-11-19T18:16:08.597011Z"}
+INFO:     Started server process [26797]
+INFO:     Waiting for application startup.
+{"provider": "gemini", "error": "google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0", "help": "Install required package (e.g., google-generativeai)", "event": "factory_import_error", "logger": "services.llm.adapters.factory", "level": "error", "timestamp": "2025-11-19T18:16:11.372706Z"}
+{"event": "Failed to initialize gemini adapter: google-generativeai package not installed. Install with: pip install google-generativeai>=0.3.0", "logger": "services.domain.llm_domain_service", "level": "warning", "timestamp": "2025-11-19T18:16:11.373008Z"}
+Failed to initialize OrchestrationEngine: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+Traceback (most recent call last):
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 67, in _initialize_orchestration_engine
+    from services.orchestration.engine import OrchestrationEngine
+  File "/Users/xian/Development/piper-morgan/services/orchestration/__init__.py", line 11, in <module>
+    from .engine import OrchestrationEngine, engine
+  File "/Users/xian/Development/piper-morgan/services/orchestration/engine.py", line 26, in <module>
+    from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
+  File "/Users/xian/Development/piper-morgan/services/integrations/github/issue_analyzer.py", line 14, in <module>
+    from services.knowledge_graph.ingestion import get_ingester
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/__init__.py", line 1, in <module>
+    from .document_service import DocumentService, get_document_service
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/document_service.py", line 16, in <module>
+    from .ingestion import get_ingester
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/ingestion.py", line 19, in <module>
+    import chromadb
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/__init__.py", line 5, in <module>
+    from chromadb.api import AdminAPI, ClientAPI
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/api/__init__.py", line 5, in <module>
+    import chromadb.utils.embedding_functions as ef
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/utils/embedding_functions.py", line 14, in <module>
+    from chromadb.api.types import (
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/api/types.py", line 102, in <module>
+    ImageDType = Union[np.uint, np.int_, np.float_]
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/numpy/__init__.py", line 397, in __getattr__
+    raise AttributeError(
+AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+Container initialization failed: Failed to initialize service 'orchestration': `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+Traceback (most recent call last):
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 67, in _initialize_orchestration_engine
+    from services.orchestration.engine import OrchestrationEngine
+  File "/Users/xian/Development/piper-morgan/services/orchestration/__init__.py", line 11, in <module>
+    from .engine import OrchestrationEngine, engine
+  File "/Users/xian/Development/piper-morgan/services/orchestration/engine.py", line 26, in <module>
+    from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
+  File "/Users/xian/Development/piper-morgan/services/integrations/github/issue_analyzer.py", line 14, in <module>
+    from services.knowledge_graph.ingestion import get_ingester
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/__init__.py", line 1, in <module>
+    from .document_service import DocumentService, get_document_service
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/document_service.py", line 16, in <module>
+    from .ingestion import get_ingester
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/ingestion.py", line 19, in <module>
+    import chromadb
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/__init__.py", line 5, in <module>
+    from chromadb.api import AdminAPI, ClientAPI
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/api/__init__.py", line 5, in <module>
+    import chromadb.utils.embedding_functions as ef
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/utils/embedding_functions.py", line 14, in <module>
+    from chromadb.api.types import (
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/api/types.py", line 102, in <module>
+    ImageDType = Union[np.uint, np.int_, np.float_]
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/numpy/__init__.py", line 397, in __getattr__
+    raise AttributeError(
+AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/xian/Development/piper-morgan/services/container/service_container.py", line 62, in initialize
+    await initializer.initialize_all()
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 31, in initialize_all
+    self._initialize_orchestration_engine()
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 90, in _initialize_orchestration_engine
+    raise ServiceInitializationError("orchestration", e)
+services.container.exceptions.ServiceInitializationError: Failed to initialize service 'orchestration': `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+ERROR:    Traceback (most recent call last):
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 67, in _initialize_orchestration_engine
+    from services.orchestration.engine import OrchestrationEngine
+  File "/Users/xian/Development/piper-morgan/services/orchestration/__init__.py", line 11, in <module>
+    from .engine import OrchestrationEngine, engine
+  File "/Users/xian/Development/piper-morgan/services/orchestration/engine.py", line 26, in <module>
+    from services.integrations.github.issue_analyzer import GitHubIssueAnalyzer
+  File "/Users/xian/Development/piper-morgan/services/integrations/github/issue_analyzer.py", line 14, in <module>
+    from services.knowledge_graph.ingestion import get_ingester
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/__init__.py", line 1, in <module>
+    from .document_service import DocumentService, get_document_service
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/document_service.py", line 16, in <module>
+    from .ingestion import get_ingester
+  File "/Users/xian/Development/piper-morgan/services/knowledge_graph/ingestion.py", line 19, in <module>
+    import chromadb
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/__init__.py", line 5, in <module>
+    from chromadb.api import AdminAPI, ClientAPI
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/api/__init__.py", line 5, in <module>
+    import chromadb.utils.embedding_functions as ef
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/utils/embedding_functions.py", line 14, in <module>
+    from chromadb.api.types import (
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/chromadb/api/types.py", line 102, in <module>
+    ImageDType = Union[np.uint, np.int_, np.float_]
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/numpy/__init__.py", line 397, in __getattr__
+    raise AttributeError(
+AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/xian/Development/piper-morgan/venv/lib/python3.9/site-packages/starlette/routing.py", line 677, in lifespan
+    async with self.lifespan_context(app) as maybe_state:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 175, in __aenter__
+    return await self.gen.__anext__()
+  File "/Users/xian/Development/piper-morgan/web/app.py", line 67, in lifespan
+    await container.initialize()
+  File "/Users/xian/Development/piper-morgan/services/container/service_container.py", line 62, in initialize
+    await initializer.initialize_all()
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 31, in initialize_all
+    self._initialize_orchestration_engine()
+  File "/Users/xian/Development/piper-morgan/services/container/initialization.py", line 90, in _initialize_orchestration_engine
+    raise ServiceInitializationError("orchestration", e)
+services.container.exceptions.ServiceInitializationError: Failed to initialize service 'orchestration': `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+
+ERROR:    Application startup failed. Exiting.
+
+============================================================
+🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)
+============================================================

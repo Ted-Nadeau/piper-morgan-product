@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 from zoneinfo import ZoneInfo, available_timezones
 
 from services.session.session_manager import ConversationSession
@@ -114,7 +115,7 @@ class UserPreferenceManager:
         self,
         key: str,
         value: Any,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         scope: Optional[str] = None,
         ttl_minutes: Optional[int] = None,
@@ -165,7 +166,7 @@ class UserPreferenceManager:
     async def get_preference(
         self,
         key: str,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         scope: Optional[str] = None,
         default: Any = None,
@@ -222,7 +223,7 @@ class UserPreferenceManager:
         return default
 
     async def get_all_preferences(
-        self, user_id: Optional[str] = None, session_id: Optional[str] = None
+        self, user_id: Optional[UUID] = None, session_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Get all preferences for a user/session context.
@@ -252,7 +253,7 @@ class UserPreferenceManager:
 
         return result
 
-    async def merge_preferences(self, user_id: str, session_id: str) -> Dict[str, Any]:
+    async def merge_preferences(self, user_id: UUID, session_id: str) -> Dict[str, Any]:
         """
         Merge preferences with full hierarchy for a specific user/session.
 
@@ -286,7 +287,7 @@ class UserPreferenceManager:
         return True
 
     async def get_preference_version(
-        self, key: str, user_id: Optional[str] = None, session_id: Optional[str] = None
+        self, key: str, user_id: Optional[UUID] = None, session_id: Optional[str] = None
     ) -> Optional[datetime]:
         """
         Get the version (last updated timestamp) of a preference.
@@ -317,7 +318,7 @@ class UserPreferenceManager:
         self,
         key: str,
         value: Any,
-        user_id: Optional[str] = None,
+        user_id: Optional[UUID] = None,
         session_id: Optional[str] = None,
         expected_version: Optional[datetime] = None,
     ) -> bool:
@@ -362,7 +363,7 @@ class UserPreferenceManager:
         return False
 
     async def get_context_format(
-        self, user_id: Optional[str] = None, session_id: Optional[str] = None
+        self, user_id: Optional[UUID] = None, session_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Get preferences in ConversationSession.context compatible format.
@@ -404,7 +405,7 @@ class UserPreferenceManager:
         return context_data
 
     async def update_session_context(
-        self, session: ConversationSession, user_id: Optional[str] = None
+        self, session: ConversationSession, user_id: Optional[UUID] = None
     ) -> bool:
         """
         Update ConversationSession.context with current preferences.
@@ -558,19 +559,19 @@ class UserPreferenceManager:
 
         return True
 
-    async def get_reminder_enabled(self, user_id: str) -> bool:
+    async def get_reminder_enabled(self, user_id: UUID) -> bool:
         """Get whether reminders are enabled for user."""
         return await self.get_preference(STANDUP_REMINDER_ENABLED, user_id=user_id, default=True)
 
-    async def set_reminder_enabled(self, user_id: str, enabled: bool):
+    async def set_reminder_enabled(self, user_id: UUID, enabled: bool):
         """Set whether reminders are enabled for user."""
         await self.set_preference(STANDUP_REMINDER_ENABLED, enabled, user_id=user_id)
 
-    async def get_reminder_time(self, user_id: str) -> str:
+    async def get_reminder_time(self, user_id: UUID) -> str:
         """Get reminder time for user (HH:MM format)."""
         return await self.get_preference(STANDUP_REMINDER_TIME, user_id=user_id, default="06:00")
 
-    async def set_reminder_time(self, user_id: str, time_str: str):
+    async def set_reminder_time(self, user_id: UUID, time_str: str):
         """
         Set reminder time for user.
 
@@ -586,13 +587,13 @@ class UserPreferenceManager:
 
         await self.set_preference(STANDUP_REMINDER_TIME, time_str, user_id=user_id)
 
-    async def get_reminder_timezone(self, user_id: str) -> str:
+    async def get_reminder_timezone(self, user_id: UUID) -> str:
         """Get reminder timezone for user."""
         return await self.get_preference(
             STANDUP_REMINDER_TIMEZONE, user_id=user_id, default="America/Los_Angeles"
         )
 
-    async def set_reminder_timezone(self, user_id: str, timezone: str):
+    async def set_reminder_timezone(self, user_id: UUID, timezone: str):
         """
         Set reminder timezone for user.
 
@@ -608,13 +609,13 @@ class UserPreferenceManager:
 
         await self.set_preference(STANDUP_REMINDER_TIMEZONE, timezone, user_id=user_id)
 
-    async def get_reminder_days(self, user_id: str) -> List[int]:
+    async def get_reminder_days(self, user_id: UUID) -> List[int]:
         """Get reminder days for user."""
         return await self.get_preference(
             STANDUP_REMINDER_DAYS, user_id=user_id, default=[0, 1, 2, 3, 4]
         )
 
-    async def set_reminder_days(self, user_id: str, days: List[int]):
+    async def set_reminder_days(self, user_id: UUID, days: List[int]):
         """
         Set reminder days for user.
 
@@ -630,7 +631,7 @@ class UserPreferenceManager:
 
         await self.set_preference(STANDUP_REMINDER_DAYS, days, user_id=user_id)
 
-    async def get_reminder_preferences(self, user_id: str) -> dict:
+    async def get_reminder_preferences(self, user_id: UUID) -> dict:
         """
         Get all reminder preferences for user.
 
@@ -672,19 +673,19 @@ class UserPreferenceManager:
 
         return True
 
-    async def get_learning_enabled(self, user_id: str) -> bool:
+    async def get_learning_enabled(self, user_id: UUID) -> bool:
         """Get whether pattern learning is enabled for user."""
         return await self.get_preference(LEARNING_ENABLED, user_id=user_id, default=True)
 
-    async def set_learning_enabled(self, user_id: str, enabled: bool):
+    async def set_learning_enabled(self, user_id: UUID, enabled: bool):
         """Set whether pattern learning is enabled for user."""
         await self.set_preference(LEARNING_ENABLED, enabled, user_id=user_id)
 
-    async def get_learning_min_confidence(self, user_id: str) -> float:
+    async def get_learning_min_confidence(self, user_id: UUID) -> float:
         """Get minimum confidence threshold for pattern application."""
         return await self.get_preference(LEARNING_MIN_CONFIDENCE, user_id=user_id, default=0.5)
 
-    async def set_learning_min_confidence(self, user_id: str, confidence: float):
+    async def set_learning_min_confidence(self, user_id: UUID, confidence: float):
         """
         Set minimum confidence threshold for pattern application.
 
@@ -700,11 +701,11 @@ class UserPreferenceManager:
 
         await self.set_preference(LEARNING_MIN_CONFIDENCE, confidence, user_id=user_id)
 
-    async def get_learning_features(self, user_id: str) -> List[str]:
+    async def get_learning_features(self, user_id: UUID) -> List[str]:
         """Get list of features enabled for learning."""
         return await self.get_preference(LEARNING_FEATURES, user_id=user_id, default=[])
 
-    async def set_learning_features(self, user_id: str, features: List[str]):
+    async def set_learning_features(self, user_id: UUID, features: List[str]):
         """
         Set list of features enabled for learning.
 
@@ -725,7 +726,7 @@ class UserPreferenceManager:
 
         await self.set_preference(LEARNING_FEATURES, features, user_id=user_id)
 
-    async def get_learning_preferences(self, user_id: str) -> dict:
+    async def get_learning_preferences(self, user_id: UUID) -> dict:
         """
         Get all learning preferences for user.
 
@@ -748,25 +749,25 @@ class UserPreferenceManager:
     async def apply_preference_pattern(
         self,
         pattern: Dict[str, Any],
-        user_id: str,
+        user_id: UUID,
         session_id: Optional[str] = None,
-        scope: str = "user"
+        scope: str = "user",
     ) -> bool:
         """
         Apply a learned preference pattern to user preferences.
-        
+
         Converts implicit preferences (learned patterns) to explicit preferences.
         Only applies patterns with confidence >= 0.7 (high confidence threshold).
-        
+
         Args:
             pattern: The learned pattern dict (or LearnedPattern object converted to dict)
             user_id: User ID to set preference for
             session_id: Optional session ID for session-scoped preferences
             scope: Preference scope ('user' or 'session')
-        
+
         Returns:
             bool: True if preference was set, False if pattern confidence too low
-        
+
         Example:
             pattern = {
                 "confidence": 0.85,
@@ -778,22 +779,30 @@ class UserPreferenceManager:
             success = await pm.apply_preference_pattern(pattern, "user123")
         """
         # Extract confidence - handle both dict and object
-        confidence = pattern.get("confidence", 0.0) if isinstance(pattern, dict) else getattr(pattern, "confidence", 0.0)
-        
+        confidence = (
+            pattern.get("confidence", 0.0)
+            if isinstance(pattern, dict)
+            else getattr(pattern, "confidence", 0.0)
+        )
+
         # Only apply high-confidence patterns to preferences
         if confidence < 0.7:
             return False
-        
+
         # Extract pattern data - handle both dict and object
-        pattern_data = pattern.get("pattern_data", {}) if isinstance(pattern, dict) else getattr(pattern, "pattern_data", {})
-        
+        pattern_data = (
+            pattern.get("pattern_data", {})
+            if isinstance(pattern, dict)
+            else getattr(pattern, "pattern_data", {})
+        )
+
         # Pattern data should contain preference information
         if "preference_key" not in pattern_data or "preference_value" not in pattern_data:
             return False
-        
+
         preference_key = pattern_data["preference_key"]
         preference_value = pattern_data["preference_value"]
-        
+
         # Set the preference using existing mechanism
         # This respects all existing validation, hierarchy, etc.
         success = await self.set_preference(
@@ -801,9 +810,9 @@ class UserPreferenceManager:
             value=preference_value,
             user_id=user_id,
             session_id=session_id,
-            scope=scope
+            scope=scope,
         )
-        
+
         return success
 
     async def _cleanup_expired_preferences(self):

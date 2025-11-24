@@ -12,6 +12,7 @@ import os
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 import structlog
 
@@ -21,6 +22,9 @@ from services.api.errors import (
     NoRelevantKnowledgeError,
 )
 from services.api.serializers import intent_to_dict
+
+# CORE-CONFIG-PIPER: Load PIPER.md configuration for system context
+from services.configuration.piper_config_loader import piper_config_loader
 from services.domain.models import Intent, IntentCategory
 
 # GREAT-4B Phase 3: Intent caching
@@ -28,7 +32,9 @@ from services.intent_service.cache import IntentCache
 
 # --- Add fuzzy matcher import ---
 from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_match
+from services.intent_service.intent_hooks import IntentProcessingHooks
 from services.intent_service.pre_classifier import PreClassifier
+from services.intent_service.preference_handler import PreferenceDetectionHandler
 from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
 from services.knowledge_graph import get_ingester
 from shared.events import EventBus
@@ -37,16 +43,23 @@ logger = structlog.get_logger()
 
 
 class IntentClassifier:
-    def __init__(self, llm_service=None, event_bus: Optional[EventBus] = None):
+    def __init__(
+        self,
+        llm_service=None,
+        event_bus: Optional[EventBus] = None,
+        knowledge_graph_service=None,  # Issue #278: Graph-first retrieval
+    ):
         """
         Initialize IntentClassifier.
 
         Args:
             llm_service: LLM service instance (optional, will get from container if not provided)
             event_bus: Event bus for classifier events
+            knowledge_graph_service: Knowledge graph service for context (optional, Issue #278)
         """
         self._llm = llm_service  # Accept via dependency injection
         self.event_bus = event_bus
+        self.knowledge_graph_service = knowledge_graph_service  # Issue #278
         self.knowledge_hierarchy = [
             "pm_fundamentals",  # Your book, PM best practices
             "business_context",  # Client/domain specific
@@ -56,6 +69,11 @@ class IntentClassifier:
         # GREAT-4B Phase 3: Initialize cache with 1-hour TTL
         self.cache = IntentCache(ttl=3600)
         logger.info("IntentCache integrated with classifier", ttl_seconds=3600)
+
+        # Issue #248: Initialize preference detection handler and hooks
+        self.preference_handler = PreferenceDetectionHandler()
+        self.hooks = IntentProcessingHooks(self.preference_handler)
+        logger.info("Preference detection hooks initialized for #248")
 
     @property
     def llm(self):
@@ -114,6 +132,23 @@ class IntentClassifier:
                     intent_obj.entities = cached_result["entities"]
                 if "learning_signals" in cached_result:
                     intent_obj.learning_signals = cached_result["learning_signals"]
+
+                # Issue #248: Run preference detection hooks for cached intents too
+                user_id = context.get("user_id") if context else None
+                session_id = context.get("session_id") if context else None
+                if user_id:
+                    try:
+                        pref_result = await self.hooks.on_intent_classified(
+                            user_id=user_id,
+                            message=message,
+                            intent=intent_obj,
+                            session_id=session_id,
+                        )
+                        if pref_result.get("preferences"):
+                            intent_obj.preferences = pref_result["preferences"]
+                    except Exception as e:
+                        logger.error(f"Preference detection hook failed for cached intent: {e}")
+
                 return intent_obj
 
         # Stage 1: Pre-classification
@@ -150,6 +185,12 @@ class IntentClassifier:
             message_preview=message[:50],
         )
 
+        # Issue #278: Get graph context for improved classification
+        graph_context = {}
+        user_id = context.get("user_id") if context else None
+        if user_id:
+            graph_context = await self._get_graph_context(message, user_id)
+
         # Check for file references
         has_file_reference = PreClassifier.detect_file_reference(message)
 
@@ -169,6 +210,7 @@ class IntentClassifier:
             "has_file_reference": has_file_reference,
             "file_context": file_context,
             "spatial_context": spatial_context or {},
+            "graph_context": graph_context,  # Issue #278: Include graph context
         }
 
         try:
@@ -193,6 +235,16 @@ class IntentClassifier:
                 "find_docs": "search_documents",
                 "search_docs": "search_documents",
                 "search_documents": "search_documents",  # idempotent
+                # Document analysis intents (Issue #290)
+                "analyze": "analyze_document",
+                "analyze_document": "analyze_document",  # idempotent
+                "summarize": "summarize_document",
+                "summarize_document": "summarize_document",  # idempotent
+                "what_does": "qa_document",
+                "question_document": "qa_document",
+                "qa_document": "qa_document",  # idempotent
+                "compare": "compare_documents",
+                "compare_documents": "compare_documents",  # idempotent
             }
             if intent.action in action_normalization_map:
                 logger.info(
@@ -256,6 +308,24 @@ class IntentClassifier:
                 self.cache.set(message, cache_data)
                 logger.debug("intent_cached", message_preview=message[:50])
 
+            # Issue #248: Run preference detection hooks (async, non-blocking)
+            user_id = context.get("user_id") if context else None
+            session_id = context.get("session_id") if context else None
+            if user_id:
+                try:
+                    pref_result = await self.hooks.on_intent_classified(
+                        user_id=user_id,
+                        message=message,
+                        intent=intent,
+                        session_id=session_id,
+                    )
+                    # Attach preferences to intent for passing to response generation
+                    if pref_result.get("preferences"):
+                        intent.preferences = pref_result["preferences"]
+                except Exception as e:
+                    logger.error(f"Preference detection hook failed: {e}")
+                    # Don't fail classification if hook fails
+
             return intent
 
         except LowConfidenceIntentError:
@@ -295,7 +365,10 @@ class IntentClassifier:
         try:
             # Use your task-based routing with "intent_classification" task type
             response = await self.llm.complete(
-                task_type="intent_classification", prompt=prompt, context=context
+                task_type="intent_classification",
+                prompt=prompt,
+                context=context,
+                system=piper_config_loader.get_system_prompt(),
             )
 
             # Parse JSON response
@@ -829,6 +902,75 @@ class IntentClassifier:
 
         # Ultimate fallback
         return message.strip()
+
+    # Issue #278: Graph-first retrieval pattern methods
+    async def _get_graph_context(
+        self, message: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Get context from knowledge graph for improved intent classification.
+
+        Args:
+            message: User message
+            user_id: User ID for personalization
+
+        Returns:
+            Dictionary with graph context information
+        """
+        if not self.knowledge_graph_service or not user_id:
+            return {}
+
+        try:
+            context = await self.knowledge_graph_service.get_relevant_context(
+                user_query=message,
+                user_id=user_id,
+                max_nodes=10,
+            )
+            return context
+        except Exception as e:
+            logger.warning(
+                "Failed to get graph context",
+                error=str(e),
+                message_preview=message[:50],
+            )
+            return {}
+
+    def _extract_intent_hints_from_graph(self, graph_context: Dict[str, Any]) -> List[str]:
+        """
+        Extract intent hints from graph context to improve classification.
+
+        Analyzes reasoning chains and node names to identify relevant intent keywords.
+
+        Args:
+            graph_context: Context dictionary from get_relevant_context
+
+        Returns:
+            List of intent hint keywords
+        """
+        hints = []
+
+        # Extract hints from reasoning chains
+        for chain in graph_context.get("reasoning_chains", []):
+            hints.append(chain.get("edge_type", "").lower())
+            hints.append(chain.get("source", "").lower())
+            hints.append(chain.get("target", "").lower())
+
+        # Extract hints from node names
+        for node in graph_context.get("nodes", []):
+            node_name = getattr(node, "name", "").lower()
+            if node_name:
+                hints.append(node_name)
+
+        # Clean and deduplicate hints
+        hints = list(set([h.strip() for h in hints if h.strip()]))
+
+        logger.debug(
+            "Extracted intent hints from graph",
+            hint_count=len(hints),
+            hints=hints[:5],  # Log first 5 for debugging
+        )
+
+        return hints
 
 
 # Create a singleton instance without event bus for backward compatibility

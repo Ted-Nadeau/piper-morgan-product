@@ -22,60 +22,60 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Create NodeType enum
-    nodetype_enum = postgresql.ENUM(
-        "CONCEPT",
-        "DOCUMENT",
-        "PERSON",
-        "ORGANIZATION",
-        "TECHNOLOGY",
-        "PROCESS",
-        "METRIC",
-        "EVENT",
-        "RELATIONSHIP",
-        "CUSTOM",
-        name="nodetype",
+    # Create NodeType enum (check if exists first to handle diamond dependencies)
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'nodetype') THEN
+                CREATE TYPE nodetype AS ENUM (
+                    'CONCEPT',
+                    'DOCUMENT',
+                    'PERSON',
+                    'ORGANIZATION',
+                    'TECHNOLOGY',
+                    'PROCESS',
+                    'METRIC',
+                    'EVENT',
+                    'RELATIONSHIP',
+                    'CUSTOM'
+                );
+            END IF;
+        END
+        $$;
+    """
     )
-    nodetype_enum.create(op.get_bind())
 
-    # Create EdgeType enum
-    edgetype_enum = postgresql.ENUM(
-        "REFERENCES",
-        "DEPENDS_ON",
-        "IMPLEMENTS",
-        "MEASURES",
-        "INVOLVES",
-        "TRIGGERS",
-        "ENHANCES",
-        "REPLACES",
-        "SUPPORTS",
-        "CUSTOM",
-        name="edgetype",
+    # Create EdgeType enum (check if exists first to handle diamond dependencies)
+    op.execute(
+        """
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'edgetype') THEN
+                CREATE TYPE edgetype AS ENUM (
+                    'REFERENCES',
+                    'DEPENDS_ON',
+                    'IMPLEMENTS',
+                    'MEASURES',
+                    'INVOLVES',
+                    'TRIGGERS',
+                    'ENHANCES',
+                    'REPLACES',
+                    'SUPPORTS',
+                    'CUSTOM'
+                );
+            END IF;
+        END
+        $$;
+    """
     )
-    edgetype_enum.create(op.get_bind())
 
     # Create knowledge_nodes table
     op.create_table(
         "knowledge_nodes",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column(
-            "node_type",
-            sa.Enum(
-                "CONCEPT",
-                "DOCUMENT",
-                "PERSON",
-                "ORGANIZATION",
-                "TECHNOLOGY",
-                "PROCESS",
-                "METRIC",
-                "EVENT",
-                "RELATIONSHIP",
-                "CUSTOM",
-                name="nodetype",
-            ),
-            nullable=False,
-        ),
+        sa.Column("node_type", sa.String(), nullable=False),  # Uses nodetype enum via constraint
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("node_metadata", sa.JSON(), nullable=True),
         sa.Column("properties", sa.JSON(), nullable=True),
@@ -94,23 +94,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("source_node_id", sa.String(), nullable=False),
         sa.Column("target_node_id", sa.String(), nullable=False),
-        sa.Column(
-            "edge_type",
-            sa.Enum(
-                "REFERENCES",
-                "DEPENDS_ON",
-                "IMPLEMENTS",
-                "MEASURES",
-                "INVOLVES",
-                "TRIGGERS",
-                "ENHANCES",
-                "REPLACES",
-                "SUPPORTS",
-                "CUSTOM",
-                name="edgetype",
-            ),
-            nullable=False,
-        ),
+        sa.Column("edge_type", sa.String(), nullable=False),  # Uses edgetype enum via constraint
         sa.Column("weight", sa.Float(), nullable=True),
         sa.Column("node_metadata", sa.JSON(), nullable=True),
         sa.Column("properties", sa.JSON(), nullable=True),

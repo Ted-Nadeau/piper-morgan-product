@@ -80,7 +80,111 @@ pytest tests/integration/ -v  # Integration tests
 python -W error::DeprecationWarning -m pytest tests/
 ```
 
-### 4. Docker Validation
+### 4. Known Test Failures Workflow
+
+Piper Morgan uses a **known-failures tracking system** to allow pushes even when some tests are failing, as long as those failures are:
+1. **Documented** with clear reason
+2. **Tracked** in a bead (issue tracker)
+3. **Time-boxed** with expiry date
+4. **Categorized** (TDD spec, known bug, or deferred)
+
+#### How It Works
+
+The pre-push hook will:
+1. Run the fast test suite (`./scripts/run_tests.sh fast`)
+2. If tests fail, check against `.pytest-known-failures`
+3. Allow push if all failures are known
+4. Block push if new failures are detected
+5. Warn about expired or resolved failures
+
+#### Adding a Known Failure
+
+If you need to push with a failing test that's tracked in a bead:
+
+```bash
+# Edit .pytest-known-failures file
+nano .pytest-known-failures
+```
+
+Add an entry following this format:
+
+```yaml
+- test_path: "tests/unit/path/to/test_file.py::TestClass::test_method"
+  reason: "Clear explanation of why this test is failing"
+  bead: "piper-morgan-xyz"  # Must be a valid bead ID
+  expires: "2025-12-20"      # Max 30 days from creation
+  category: "tdd_spec"       # or "known_bug" or "deferred"
+```
+
+**Categories:**
+- `tdd_spec`: Test-driven development spec (expected to fail until implementation)
+- `known_bug`: Known bug tracked in bead, fix planned
+- `deferred`: Work deferred to later sprint, tracked in bead
+
+**Rules:**
+- All entries MUST have bead references (for tracking)
+- Expiry dates MUST be within 30 days
+- Expired entries cause WARNING (not block) - update or remove them
+- Resolved tests (now passing) should be removed from the file
+
+#### Validating Known Failures Manually
+
+```bash
+# Test the known-failures validation
+python scripts/filter_known_failures.py
+
+# Should output:
+# ✅ All failures are known - push allowed
+# OR
+# ❌ NEW FAILURES DETECTED (BLOCKING PUSH)
+```
+
+#### Common Scenarios
+
+**Scenario 1: TDD Workflow**
+```yaml
+- test_path: "tests/unit/services/test_new_feature.py::TestNewFeature::test_method"
+  reason: "TDD - NewFeature.method() not implemented yet"
+  bead: "piper-morgan-abc"
+  expires: "2025-12-15"
+  category: "tdd_spec"
+```
+
+**Scenario 2: Known Bug**
+```yaml
+- test_path: "tests/unit/services/test_service.py::TestService::test_edge_case"
+  reason: "Bug - service crashes on empty input, tracked for fix"
+  bead: "piper-morgan-def"
+  expires: "2025-12-10"
+  category: "known_bug"
+```
+
+**Scenario 3: Deferred Work**
+```yaml
+- test_path: "tests/integration/test_complex_flow.py::test_end_to_end"
+  reason: "Deferred - integration test needs mock data setup"
+  bead: "piper-morgan-ghi"
+  expires: "2025-12-20"
+  category: "deferred"
+```
+
+#### Best Practices
+
+✅ **DO:**
+- Create a bead BEFORE adding to known-failures
+- Use clear, descriptive reasons
+- Set realistic expiry dates (max 30 days)
+- Remove entries when tests are fixed
+- Review warnings about expired entries
+
+❌ **DON'T:**
+- Add failures without bead tracking
+- Use vague reasons like "broken" or "fails sometimes"
+- Set distant expiry dates (>30 days)
+- Leave resolved tests in the file
+- Ignore expiry warnings
+
+### 5. Docker Validation
 
 ```bash
 # Build and test Docker containers
@@ -187,6 +291,142 @@ async def robust_operation():
         logger.error(f"Operation failed: {e}")
         raise
 ```
+
+## Windows Development
+
+### Repository Cloning on Windows
+
+Piper Morgan repositories use cross-platform filenames validated by both local pre-commit hooks and GitHub Actions CI/CD. **If you encounter clone failures on Windows**, this is likely due to illegal filename characters.
+
+**Windows cannot use these characters in filenames**: `: < > " | ? *`
+
+Our pre-commit hooks prevent these characters from being committed. If an older version somehow has them:
+
+```powershell
+# Clone with a different branch strategy
+git clone --no-checkout https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+git checkout main  # or your target branch
+```
+
+### WSL2 Recommendation for Windows Developers
+
+**Why WSL2?**
+- Native Linux environment without VM overhead
+- Direct filesystem access to Windows
+- Full Python 3.11 support
+- All bash scripts work without modification
+- Git operations are faster
+
+**Installation Steps:**
+
+1. **Enable WSL2** (Windows 10/11):
+   ```powershell
+   # Run as Administrator
+   wsl --install
+   wsl --set-default-version 2
+   ```
+
+2. **Install Ubuntu**:
+   ```powershell
+   wsl --install -d Ubuntu-22.04
+   ```
+
+3. **From inside Ubuntu terminal**, set up development environment:
+   ```bash
+   # Update system
+   sudo apt update && sudo apt upgrade -y
+
+   # Install Python 3.11
+   sudo apt install python3.11 python3.11-venv python3.11-pip git
+
+   # Clone repository (using WSL terminal)
+   git clone https://github.com/mediajunkie/piper-morgan-product.git
+   cd piper-morgan-product
+
+   # Continue with normal setup (see Environment Setup section above)
+   python3.11 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+4. **Access from Windows**:
+   - WSL files are available at: `\\wsl$\Ubuntu-22.04\home\<username>\`
+   - Edit files from Windows with WSL paths: `code \\wsl$\Ubuntu-22.04\home\username\piper-morgan-product`
+
+### Native Windows Setup (PowerShell)
+
+If you prefer native Windows development:
+
+1. **Install Python 3.11**:
+   ```powershell
+   # Using Windows Package Manager (recommended)
+   winget install Python.Python.3.11
+
+   # Or download from https://www.python.org/downloads/
+   # During installation, MUST check "Add Python to PATH"
+   ```
+
+2. **Create virtual environment**:
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+
+3. **Install dependencies**:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+4. **Verify Python 3.11**:
+   ```powershell
+   python --version  # Should show Python 3.11.x
+   ```
+
+### Pre-commit Hooks on Windows
+
+The `check-windows-filenames` hook prevents commits with illegal Windows characters automatically:
+
+```bash
+# This will be blocked by pre-commit hook:
+# "❌ Pre-commit hook: Windows-illegal characters found in filenames"
+# Windows filenames cannot contain: : < > " | ? *
+# Use dashes (-) or underscores (_) instead.
+
+# To bypass (not recommended):
+git commit --no-verify
+```
+
+### Common Windows Development Issues
+
+**Problem**: "command not found" errors in bash scripts
+**Solution**: Use WSL2 (recommended) or ensure PowerShell scripts use proper syntax
+
+**Problem**: Virtual environment activation fails
+**Solution**: Use correct activation script for Windows:
+```powershell
+# PowerShell
+.\venv\Scripts\Activate.ps1
+
+# CMD
+venv\Scripts\activate.bat
+```
+
+**Problem**: File paths with spaces causing errors
+**Solution**: Wrap paths in quotes:
+```powershell
+python -m pytest "tests\my test\test_file.py"
+```
+
+### GitHub Actions: Windows Validation
+
+GitHub Actions automatically validates repository compatibility on Windows via the `windows-clone-test` job. This ensures:
+
+- ✅ Repository clones successfully on Windows
+- ✅ No illegal filename characters present
+- ✅ All files transfer without corruption
+
+This validation runs on every push to main/develop branches.
 
 ## Common Issues and Solutions
 

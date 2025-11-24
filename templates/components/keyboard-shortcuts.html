@@ -1,0 +1,65 @@
+{# G61: Keyboard Shortcuts Reference Panel
+   Shows all available keyboard shortcuts for the page
+   Triggered by Cmd+? (Mac) or Ctrl+? (Windows/Linux)
+#}
+
+<div id="shortcuts-panel" class="shortcuts-panel" role="region" aria-label="Keyboard shortcuts" aria-hidden="true">
+  <div class="shortcuts-container">
+    <div class="shortcuts-header">
+      <h2>Keyboard Shortcuts</h2>
+      <button class="shortcuts-close" aria-label="Close shortcuts panel" type="button" onclick="KeyboardShortcuts.close()">
+        ✕
+      </button>
+    </div>
+
+    <div class="shortcuts-content">
+      <div class="shortcuts-group">
+        <h3>Global Shortcuts</h3>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Cmd/Ctrl</kbd>
+          <kbd class="shortcut-key">?</kbd>
+          <span class="shortcut-desc">Show this help</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Esc</kbd>
+          <span class="shortcut-desc">Close dialogs and tooltips</span>
+        </div>
+      </div>
+
+      <div class="shortcuts-group">
+        <h3>Form Actions</h3>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Cmd/Ctrl</kbd>
+          <kbd class="shortcut-key">S</kbd>
+          <span class="shortcut-desc">Save current form</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Cmd/Ctrl</kbd>
+          <kbd class="shortcut-key">Return</kbd>
+          <span class="shortcut-desc">Submit form</span>
+        </div>
+      </div>
+
+      <div class="shortcuts-group">
+        <h3>Navigation Tips</h3>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Tab</kbd>
+          <span class="shortcut-desc">Move to next element</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Shift</kbd>
+          <kbd class="shortcut-key">Tab</kbd>
+          <span class="shortcut-desc">Move to previous element</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Space</kbd>
+          <span class="shortcut-desc">Activate button or toggle</span>
+        </div>
+        <div class="shortcut-item">
+          <kbd class="shortcut-key">Return</kbd>
+          <span class="shortcut-desc">Activate button or submit</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

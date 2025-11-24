@@ -3,6 +3,14 @@
   <head>
     <title>Piper Morgan - AI PM Assistant</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/toast.css" />
+    <link rel="stylesheet" href="/static/css/spinner.css" />
+    <link rel="stylesheet" href="/static/css/session-timeout.css" />
+    <link rel="stylesheet" href="/static/css/dialog.css" />
+    <link rel="stylesheet" href="/static/css/skip-link.css" />
+    <link rel="stylesheet" href="/static/css/page-transitions.css" />
+    <link rel="stylesheet" href="/static/css/hover-focus-states.css" />
+    <link rel="stylesheet" href="/static/css/spacing.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -151,9 +159,60 @@
       #upload-form {
         display: flex;
         align-items: center;
+        gap: 10px;
       }
       #upload-form input[type="file"] {
         flex-grow: 1;
+      }
+      #upload-form .submit-btn {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      #upload-status {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        display: none;
+      }
+      #upload-status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      #upload-status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      #upload-status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      #upload-progress {
+        margin-top: 10px;
+        height: 20px;
+        background: #ecf0f1;
+        border-radius: 10px;
+        overflow: hidden;
+        display: none;
+      }
+      #upload-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #27ae60, #2ecc71);
+        width: 0%;
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .file-size-info {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 5px;
       }
       .examples {
         margin-top: 30px;
@@ -243,9 +302,477 @@
         background: #f8f9fa;
         font-weight: bold;
       }
+      /* Phase 3: Pattern Suggestions UI */
+      .suggestions-container {
+        margin-top: 15px;
+      }
+      .suggestions-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        user-select: none;
+      }
+      .suggestions-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+      }
+      .suggestions-badge.expanded {
+        border-radius: 20px 20px 0 0;
+      }
+      .badge-chevron {
+        margin-left: 8px;
+        font-size: 10px;
+      }
+      .suggestions-panel {
+        background: #f0fdfa;
+        border: 2px solid #14b8a6;
+        border-top: none;
+        border-radius: 0 12px 12px 12px;
+        padding: 16px;
+        margin-top: -2px;
+      }
+      .suggestions-header {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #99f6e4;
+      }
+      .suggestions-header strong {
+        display: block;
+        color: #0f766e;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+      .suggestions-subtitle {
+        color: #0d9488;
+        font-size: 13px;
+      }
+      .suggestion-card {
+        background: white;
+        border: 1px solid #99f6e4;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 12px;
+        transition: all 0.2s;
+      }
+      .suggestion-card:hover {
+        border-color: #5eead4;
+        box-shadow: 0 2px 8px rgba(20, 184, 166, 0.15);
+      }
+      .suggestion-card:last-child {
+        margin-bottom: 0;
+      }
+      .suggestion-content {
+        margin-bottom: 12px;
+      }
+      .suggestion-reasoning {
+        color: #115e59;
+        font-size: 15px;
+        margin-bottom: 10px;
+        line-height: 1.5;
+      }
+      .suggestion-meta {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      .suggestion-type {
+        background: #ccfbf1;
+        color: #0f766e;
+        padding: 3px 8px;
+        border-radius: 4px;
+        text-transform: capitalize;
+      }
+      .suggestion-usage {
+        color: #0d9488;
+      }
+      .confidence-bar-container {
+        position: relative;
+        background: #e0f2fe;
+        height: 24px;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .confidence-bar {
+        background: linear-gradient(90deg, #fb923c 0%, #ea580c 100%);
+        height: 100%;
+        transition: width 0.3s;
+        border-radius: 12px;
+      }
+      .confidence-label {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        font-weight: 600;
+        color: #082f49;
+      }
+      .suggestion-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .suggestion-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .suggestion-btn.accept {
+        background: #10b981;
+        color: white;
+      }
+      .suggestion-btn.accept:hover {
+        background: #059669;
+      }
+      .suggestion-btn.reject {
+        background: #ef4444;
+        color: white;
+      }
+      .suggestion-btn.reject:hover {
+        background: #dc2626;
+      }
+      .suggestion-btn.dismiss {
+        background: #e5e7eb;
+        color: #6b7280;
+      }
+      .suggestion-btn.dismiss:hover {
+        background: #d1d5db;
+      }
+      .feedback-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.3s;
+        z-index: 1000;
+      }
+      .feedback-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Phase 4: Auto-Triggered (Proactive) Suggestions */
+      .suggestion-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .suggestion-icon {
+        font-size: 20px;
+      }
+
+      /* Badge styling */
+      .suggestion-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .manual-badge {
+        background: #E0F2F1;
+        color: #00796B;
+      }
+
+      .auto-badge {
+        background: #FF7043;
+        color: white;
+      }
+
+      /* Auto-triggered card highlighting */
+      .suggestion-card.auto-triggered {
+        border-left: 4px solid #FF7043;
+        background: #FFF5F2;
+      }
+
+      .suggestion-card.auto-triggered:hover {
+        box-shadow: 0 2px 8px rgba(255, 112, 67, 0.3);
+      }
+
+      .suggestion-card.auto-triggered .suggestion-icon {
+        color: #FF7043;
+      }
+
+      /* Execute button (prominent) */
+      .suggestion-btn.execute {
+        background: #FF7043;
+        color: white;
+        border-color: #FF7043;
+        font-weight: 600;
+      }
+
+      .suggestion-btn.execute:hover {
+        background: #F4511E;
+      }
+
+      /* Skip button (neutral) */
+      .suggestion-btn.skip {
+        background: white;
+        color: #7F8C8D;
+        border: 1px solid #BDC3C7;
+      }
+
+      .suggestion-btn.skip:hover {
+        background: #F8F9FA;
+      }
+
+      /* Disable button (warning) */
+      .suggestion-btn.disable {
+        background: white;
+        color: #E74C3C;
+        border: 1px solid #E74C3C;
+      }
+
+      .suggestion-btn.disable:hover {
+        background: #FFEBEE;
+      }
+
+      /* Phase 3.3: Onboarding Tooltip */
+      .onboarding-tooltip {
+        background: #FFF9E6;
+        border: 2px solid #FFD54F;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+
+      .tooltip-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .tooltip-icon {
+        font-size: 24px;
+      }
+
+      .tooltip-header h4 {
+        margin: 0;
+        color: #2C3E50;
+        font-size: 16px;
+      }
+
+      .onboarding-tooltip p {
+        margin: 0 0 12px 0;
+        color: #5D6D7E;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .tooltip-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tooltip-actions button {
+        padding: 8px 16px;
+        border: 1px solid #FFD54F;
+        border-radius: 5px;
+        background: white;
+        color: #F39C12;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
+
+      .tooltip-actions button:hover {
+        background: #FFF5E6;
+      }
+
+      .tooltip-actions button:first-child {
+        background: #F39C12;
+        color: white;
+        border-color: #F39C12;
+      }
+
+      .tooltip-actions button:first-child:hover {
+        background: #E67E22;
+      }
+
+      /* G50: Startup Welcome Message */
+      .startup-greeting {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .greeting-header {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+
+      .greeting-username {
+        font-weight: 700;
+        color: #ffd700;
+      }
+
+      .greeting-time {
+        font-size: 14px;
+        opacity: 0.95;
+        margin: 0;
+      }
+
+      .quick-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .quick-action-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        backdrop-filter: blur(10px);
+      }
+
+      .quick-action-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+      }
+
+      .quick-action-btn.primary {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: white;
+      }
+
+      @media (max-width: 768px) {
+        .startup-greeting {
+          padding: 30px 20px;
+        }
+
+        .greeting-header {
+          font-size: 22px;
+        }
+
+        .quick-actions {
+          flex-direction: column;
+        }
+
+        .quick-action-btn {
+          width: 100%;
+          text-align: center;
+        }
+      }
+
+      /* Learn More Modal */
+      .learn-more-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .learn-more-modal .modal-content {
+        max-width: 500px;
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .learn-section {
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #ECF0F1;
+      }
+
+      .learn-section:last-of-type {
+        border-bottom: none;
+      }
+
+      .learn-section h4 {
+        margin: 0 0 8px 0;
+        color: #2C3E50;
+        font-size: 15px;
+      }
+
+      .learn-section p {
+        margin: 0;
+        color: #7F8C8D;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .learn-more-modal .modal-content button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 5px;
+        background: #0095A8;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        margin-top: 8px;
+        transition: background 0.2s ease;
+      }
+
+      .learn-more-modal .modal-content button:hover {
+        background: #007A8A;
+      }
     </style>
   </head>
   <body>
+    {% include 'components/skip-link.html' %}
+    {% include 'components/page-transition.html' %}
+    {% include 'components/navigation.html' %}
+    {% set breadcrumbs = [{"label": "Home", "url": None}] %}
+    {% include 'components/breadcrumbs.html' %}
+    {% include 'components/toast.html' %}
+    {% include 'components/session-timeout-modal.html' %}
+    {% include 'components/confirmation-dialog.html' %}
+    <script>
+      // G8: Logged-in User Indicator - Pass user context from server to navigation
+      {% if user %}
+      window.currentUser = {
+        username: "{{ user.username }}",
+        user_id: "{{ user.user_id }}",
+        is_admin: {{ 'true' if user.is_admin else 'false' }}
+      };
+      {% else %}
+      window.currentUser = null;
+      {% endif %}
+    </script>
     <div class="container">
       <div class="header">
         <h1>
@@ -260,10 +787,32 @@
         <p><em>I can create GitHub issues, analyze documents, and more!</em></p>
       </div>
 
+      <!-- G50: Startup Welcome Message -->
+      {% if user %}
+      <div class="startup-greeting">
+        <h2 class="greeting-header" id="greeting-text">Good morning!</h2>
+        <p class="greeting-time" id="greeting-time"></p>
+        <div class="quick-actions">
+          <button class="quick-action-btn primary" onclick="document.querySelector('.chat-input').focus(); return false;">
+            💬 Ask a question
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/files'; return false;">
+            📄 Upload a document
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/settings'; return false;">
+            ⚙️ Go to Settings
+          </button>
+          <button class="quick-action-btn" onclick="window.location.href='/help'; return false;">
+            ❓ Get Help
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
       <div id="chat-window">
         <div class="message-container">
           <div class="message bot-message">
-            Hello! How can I help you today?
+            What can I help you with today?
           </div>
         </div>
       </div>
@@ -279,17 +828,30 @@
         <button type="submit" class="submit-btn">Send</button>
       </form>
 
+      <!-- TODO: Remove old upload UI - replaced by /files page with new upload dialog -->
+      <!-- The quick-action "Upload a document" button above now directs to /files -->
+      <!--
       <div class="upload-section">
         <button class="upload-toggle" id="upload-toggle-btn">
           📄 Upload a document to the knowledge base
         </button>
         <div id="upload-form-container">
           <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" name="file" required />
+            <input
+              type="file"
+              name="file"
+              accept=".txt,.pdf,.docx,.md,.json"
+              required
+            />
             <button type="submit" class="submit-btn">Upload</button>
           </form>
+          <div id="upload-status"></div>
+          <div id="upload-progress">
+            <div id="upload-progress-fill">0%</div>
+          </div>
         </div>
       </div>
+      -->
 
       <div class="examples">
         <h3>💡 Try these examples:</h3>
@@ -313,6 +875,40 @@
       const chatWindow = document.getElementById("chat-window");
       let sessionId = null;
 
+      // G50: Initialize startup greeting with time-based message
+      function initializeGreeting() {
+        if (!window.currentUser) return;
+
+        const hour = new Date().getHours();
+        let timeGreeting = "Good morning";
+        if (hour >= 12 && hour < 18) {
+          timeGreeting = "Good afternoon";
+        } else if (hour >= 18) {
+          timeGreeting = "Good evening";
+        }
+
+        const username = window.currentUser.username || "there";
+        const fullGreeting = `${timeGreeting}, <span class="greeting-username">${username}</span>`;
+
+        const greetingElement = document.getElementById("greeting-text");
+        if (greetingElement) {
+          greetingElement.innerHTML = fullGreeting;
+        }
+
+        // Update the time display (e.g., "Tuesday, 2:35 PM")
+        const timeElement = document.getElementById("greeting-time");
+        if (timeElement) {
+          const now = new Date();
+          const formattedTime = now.toLocaleDateString("en-US", {
+            weekday: "long",
+            hour: "numeric",
+            minute: "2-digit",
+            meridiem: "short"
+          });
+          timeElement.textContent = `It's ${formattedTime}`;
+        }
+      }
+
       // Use DDD bot message renderer for all bot messages
 
       // Wait for DOM and scripts to load
@@ -321,6 +917,7 @@
           "DOM loaded, marked.js available:",
           typeof marked !== "undefined"
         );
+        initializeGreeting();
       });
 
       function appendMessage(html, isUser = false) {
@@ -355,6 +952,40 @@
             container.style.display === "none" ? "block" : "none";
         });
 
+      // Configuration for file uploads
+      const UPLOAD_CONFIG = {
+        MAX_SIZE: 10 * 1024 * 1024, // 10MB
+        ALLOWED_TYPES: [
+          "text/plain",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "text/markdown",
+          "application/json",
+        ],
+      };
+
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (
+          Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+        );
+      }
+
+      function showUploadStatus(message, type) {
+        const statusDiv = document.getElementById("upload-status");
+        statusDiv.textContent = message;
+        statusDiv.className = type;
+        statusDiv.style.display = "block";
+      }
+
+      function hideUploadStatus() {
+        const statusDiv = document.getElementById("upload-status");
+        statusDiv.style.display = "none";
+      }
+
       document
         .getElementById("upload-form")
         .addEventListener("submit", async (e) => {
@@ -362,11 +993,41 @@
           const form = e.target;
           const fileInput = form.querySelector('input[type="file"]');
           const file = fileInput.files[0];
-          if (!file) return;
 
-          const thinkingDiv = appendMessage(`Uploading ${file.name}...`);
-          thinkingDiv.classList.add("thinking");
+          if (!file) {
+            Toast.warning("No File Selected", "Please select a file to upload");
+            showUploadStatus("Please select a file", "error");
+            return;
+          }
 
+          // Client-side validation
+          if (file.size > UPLOAD_CONFIG.MAX_SIZE) {
+            Toast.error("File Too Large", `Maximum file size is 10MB. Your file is ${formatFileSize(file.size)}.`);
+            showUploadStatus(
+              `File too large (${formatFileSize(file.size)}). Maximum is 10MB.`,
+              "error"
+            );
+            return;
+          }
+
+          if (!UPLOAD_CONFIG.ALLOWED_TYPES.includes(file.type)) {
+            Toast.error("Unsupported File Type", `Allowed formats: .txt, .pdf, .docx, .md, .json`);
+            showUploadStatus(
+              `Unsupported file type. Allowed: .txt, .pdf, .docx, .md, .json`,
+              "error"
+            );
+            return;
+          }
+
+          // Show uploading status
+          Loading.overlay(true, `Uploading ${file.name}...`);
+          showUploadStatus(
+            `📤 Uploading ${file.name} (${formatFileSize(file.size)})...`,
+            "info"
+          );
+          document.getElementById("upload-progress").style.display = "block";
+
+          const progressFill = document.getElementById("upload-progress-fill");
           const formData = new FormData();
           formData.append("file", file);
           if (sessionId) {
@@ -374,46 +1035,72 @@
           }
 
           try {
+            // Simulate progress (since we can't track raw bytes)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+              progress += Math.random() * 30;
+              if (progress < 90) {
+                progressFill.style.width = progress + "%";
+                progressFill.textContent = Math.round(progress) + "%";
+              }
+            }, 300);
+
             const response = await fetch(
               `${API_BASE_URL}/api/v1/files/upload`,
               {
                 method: "POST",
                 body: formData,
+                credentials: "include", // Include auth cookies
               }
             );
+
+            clearInterval(progressInterval);
+            progressFill.style.width = "100%";
+            progressFill.textContent = "100%";
+
             const result = await response.json();
-            let botResponseHTML;
 
             if (response.ok && result.file_id) {
-              botResponseHTML = `
-                        <div class="result success">
-                            <strong>✅ Document Uploaded!</strong><br>
-                            <strong>File:</strong> ${result.filename}<br>
-                            <strong>File ID:</strong> ${result.file_id}
-                        </div>`;
+              Toast.success("Document Uploaded", `${result.filename} (${formatFileSize(result.size)}) has been added to your knowledge base`);
+              showUploadStatus(
+                `✅ Document Uploaded! (ID: ${result.file_id})`,
+                "success"
+              );
+
+              // Append message to chat
+              const successMsg = appendMessage(
+                `📎 Document uploaded: ${result.filename} (${formatFileSize(result.size)})`
+              );
+
+              // Clear form and hide progress after delay
+              setTimeout(() => {
+                Loading.overlay(false);
+                form.reset();
+                document.getElementById("upload-progress").style.display = "none";
+                progressFill.style.width = "0%";
+                progressFill.textContent = "0%";
+              }, 2000);
             } else {
-              botResponseHTML = `
-                        <div class="result error">
-                            <strong>❌ Upload Failed</strong><br>
-                            ${result.detail || "An unknown error occurred."}
-                        </div>`;
+              Loading.overlay(false);
+              Toast.error("Upload Failed", result.detail || "An error occurred while uploading the document");
+              showUploadStatus(
+                `❌ Upload failed: ${result.detail || "Unknown error"}`,
+                "error"
+              );
+              document.getElementById("upload-progress").style.display = "none";
             }
-            thinkingDiv.innerHTML = botResponseHTML;
-            thinkingDiv.classList.remove("thinking");
 
             if (result.session_id) {
               sessionId = result.session_id;
             }
           } catch (error) {
-            thinkingDiv.innerHTML = `
-                    <div class="result error">
-                        <strong>❌ Network Error</strong><br>
-                        Could not connect to API: ${error.message}
-                    </div>`;
-            thinkingDiv.classList.add("error");
-            thinkingDiv.classList.remove("thinking");
-          } finally {
-            form.reset();
+            Loading.overlay(false);
+            Toast.error("Network Error", "Failed to upload document: " + error.message);
+            showUploadStatus(
+              `❌ Network error: ${error.message}`,
+              "error"
+            );
+            document.getElementById("upload-progress").style.display = "none";
           }
         });
 
@@ -493,6 +1180,22 @@
           thinkingDiv.classList.add("thinking");
 
           try {
+            // First, try to process as a permission intent (Option C)
+            const permissionResult = await processPermissionIntent(message);
+            if (permissionResult) {
+              // Permission intent was handled
+              if (permissionResult.success) {
+                const botDiv = appendMessage(permissionResult.message, false);
+                botDiv.classList.add("reply");
+              } else {
+                const errorDiv = appendMessage(permissionResult.message, false);
+                errorDiv.classList.add("error");
+              }
+              thinkingDiv.remove();
+              return;
+            }
+
+            // Not a permission intent, send to conversational AI
             const response = await fetch(`${API_BASE_URL}/api/v1/intent`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -534,5 +1237,13 @@
           }
         });
     </script>
+    <script src="/static/js/toast.js"></script>
+    <script src="/static/js/loading.js"></script>
+    <script src="/static/js/session-timeout.js"></script>
+    <script src="/static/js/focus-manager.js"></script>
+    <script src="/static/js/dialog.js"></script>
+    <script src="/static/js/page-transitions.js"></script>
+    <script src="/static/js/permissions.js"></script>
+    <script src="/static/js/permission-intents.js"></script>
   </body>
 </html>

@@ -1,0 +1,58 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: FastAPI (Piper Morgan)",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "web.app:app",
+        "--reload",
+        "--port",
+        "8001",
+        "--host",
+        "127.0.0.1"
+      ],
+      "jinja": true,
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "preLaunchTask": "Create Virtual Environment (if needed)"
+    },
+    {
+      "name": "Python: Pytest (Current File)",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "${file}",
+        "-v",
+        "-s"
+      ],
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "preLaunchTask": "Create Virtual Environment (if needed)"
+    },
+    {
+      "name": "Python: Pytest (All Unit Tests)",
+      "type": "python",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests/unit/",
+        "-v"
+      ],
+      "justMyCode": true,
+      "console": "integratedTerminal",
+      "preLaunchTask": "Create Virtual Environment (if needed)"
+    },
+    {
+      "name": "Python: Debug Main",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

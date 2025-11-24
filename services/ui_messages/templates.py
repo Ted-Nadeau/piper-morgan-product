@@ -1,6 +1,7 @@
 # Create a new module for centralized message templates
 
 from typing import Dict, Optional, Tuple
+from uuid import UUID
 
 from services.shared_types import IntentCategory, WorkflowType
 from services.ui_messages.action_humanizer import ActionHumanizer

@@ -18,4 +18,4 @@ This directory contains internal documentation for implementation, including tea
 
 **Last Updated**: October 1, 2025
 **Maintained By**: Documentation Team
-**Related**: [Documentation Standards](../../standards/documentation-standards.md)
+**Related**: [Documentation Standards](../../../../piper-style-guide.md)

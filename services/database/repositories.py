@@ -176,12 +176,19 @@ class ProjectRepository(BaseRepository):
 
     model = ProjectDB
 
-    async def get_by_id(self, project_id: str) -> Optional[domain.Project]:
-        """Get project by ID with integrations - returns domain model"""
+    async def get_by_id(
+        self,
+        project_id: str,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> Optional[domain.Project]:
+        """Get project by ID with integrations - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [ProjectDB.id == project_id]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ProjectDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(ProjectDB)
-            .options(selectinload(ProjectDB.integrations))
-            .where(ProjectDB.id == project_id)
+            select(ProjectDB).options(selectinload(ProjectDB.integrations)).where(and_(*filters))
         )
         db_project = result.scalar_one_or_none()
         if db_project:
@@ -195,25 +202,49 @@ class ProjectRepository(BaseRepository):
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
-    async def list_active_projects(self) -> List[domain.Project]:
+    async def list_active_projects(
+        self,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> List[domain.Project]:
+        """List active projects - optionally filter by owner (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [ProjectDB.is_archived == False]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ProjectDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(ProjectDB).where(ProjectDB.is_archived == False).order_by(ProjectDB.name)
+            select(ProjectDB).where(and_(*filters)).order_by(ProjectDB.name)
         )
         return [db_project.to_domain() for db_project in result.scalars().all()]
 
-    async def count_active_projects(self) -> int:
-        result = await self.session.execute(
-            select(func.count(ProjectDB.id)).where(ProjectDB.is_archived == False)
-        )
+    async def count_active_projects(
+        self,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> int:
+        """Count active projects - optionally filter by owner (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [ProjectDB.is_archived == False]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ProjectDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(func.count(ProjectDB.id)).where(and_(*filters)))
         return result.scalar() or 0
 
-    async def find_by_name(self, name: str) -> Optional[domain.Project]:
-        result = await self.session.execute(
-            select(ProjectDB).where(
-                func.lower(ProjectDB.name) == name.lower(),
-                ProjectDB.is_archived == False,
-            )
-        )
+    async def find_by_name(
+        self,
+        name: str,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> Optional[domain.Project]:
+        """Find project by name - optionally filter by owner (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [
+            func.lower(ProjectDB.name) == name.lower(),
+            ProjectDB.is_archived == False,
+        ]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ProjectDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(ProjectDB).where(and_(*filters)))
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
@@ -234,14 +265,222 @@ class ProjectRepository(BaseRepository):
         await self.session.refresh(db_project)
         return db_project.to_domain()
 
-    async def get_project_with_integrations(self, project_id: str) -> Optional[domain.Project]:
+    async def get_project_with_integrations(
+        self,
+        project_id: str,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
+    ) -> Optional[domain.Project]:
+        """Get project with integrations - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        filters = [ProjectDB.id == project_id, ProjectDB.is_archived == False]
+        if owner_id and not is_admin:  # Only check ownership if not admin
+            filters.append(ProjectDB.owner_id == owner_id)
+
         result = await self.session.execute(
-            select(ProjectDB)
-            .where(ProjectDB.id == project_id, ProjectDB.is_archived == False)
-            .options(selectinload(ProjectDB.integrations))
+            select(ProjectDB).where(and_(*filters)).options(selectinload(ProjectDB.integrations))
         )
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
+
+    async def share_project(
+        self,
+        project_id: str,
+        owner_id: str,
+        user_to_share_with: str,
+        role: domain.ShareRole = None,
+    ) -> Optional[domain.Project]:
+        """Share a project with another user at specified role (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project to share
+            owner_id: User making the share request (must be owner)
+            user_to_share_with: User to share with
+            role: ShareRole (viewer, editor, admin) - defaults to viewer if None
+
+        Returns:
+            Updated Project with new shared_with entry, or None if not found/not owner
+        """
+        # Default role if not specified
+        if role is None:
+            role = domain.ShareRole.VIEWER
+
+        # Verify the caller is the owner
+        result = await self.session.execute(
+            select(ProjectDB).where(
+                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
+            )
+        )
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return None  # Not found or not owner
+
+        # Prevent owner from sharing with themselves (no-op)
+        if user_to_share_with == owner_id:
+            return db_project.to_domain()
+
+        # Convert to domain object to work with SharePermission objects
+        domain_project = db_project.to_domain()
+
+        # Check if user already shared with - update role if exists, otherwise add new share
+        permission = domain.SharePermission(user_id=user_to_share_with, role=role)
+        existing_index = None
+
+        for idx, perm in enumerate(domain_project.shared_with):
+            if perm.user_id == user_to_share_with:
+                existing_index = idx
+                break
+
+        if existing_index is not None:
+            # Update existing permission
+            domain_project.shared_with[existing_index] = permission
+        else:
+            # Add new permission
+            domain_project.shared_with.append(permission)
+
+        # Convert back to JSONB format for database storage
+        shared_with_jsonb = [perm.to_dict() for perm in domain_project.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ProjectDB)
+            .where(ProjectDB.id == project_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        # Refresh and return updated project
+        await self.session.refresh(db_project)
+        return db_project.to_domain()
+
+    async def unshare_project(self, project_id: str, owner_id: str, user_to_unshare: str) -> bool:
+        """Remove user from project sharing (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project
+            owner_id: User making the unshare request (must be owner)
+            user_to_unshare: User to remove from sharing
+
+        Returns:
+            True if user was unshared, False if not found/not owner
+        """
+        # Verify the caller is the owner
+        result = await self.session.execute(
+            select(ProjectDB).where(
+                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
+            )
+        )
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return False  # Not found or not owner
+
+        # Convert to domain object
+        domain_project = db_project.to_domain()
+
+        # Remove user from shared_with
+        initial_length = len(domain_project.shared_with)
+        domain_project.shared_with = [
+            perm for perm in domain_project.shared_with if perm.user_id != user_to_unshare
+        ]
+
+        # If nothing changed, return False
+        if len(domain_project.shared_with) == initial_length:
+            return False
+
+        # Convert back to JSONB format
+        shared_with_jsonb = [perm.to_dict() for perm in domain_project.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ProjectDB)
+            .where(ProjectDB.id == project_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def update_share_role(
+        self,
+        project_id: str,
+        owner_id: str,
+        target_user_id: str,
+        new_role: domain.ShareRole,
+    ) -> bool:
+        """Update sharing role for a user (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project
+            owner_id: User making the request (must be owner)
+            target_user_id: User whose role to update
+            new_role: New ShareRole (viewer, editor, admin)
+
+        Returns:
+            True if role was updated, False if not found/not owner/user not shared
+        """
+        # Verify the caller is the owner
+        result = await self.session.execute(
+            select(ProjectDB).where(
+                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
+            )
+        )
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return False  # Not found or not owner
+
+        # Convert to domain object
+        domain_project = db_project.to_domain()
+
+        # Find and update the user's role
+        updated = False
+        for perm in domain_project.shared_with:
+            if perm.user_id == target_user_id:
+                perm.role = new_role
+                updated = True
+                break
+
+        if not updated:
+            return False  # User not in shared_with list
+
+        # Convert back to JSONB format
+        shared_with_jsonb = [perm.to_dict() for perm in domain_project.shared_with]
+
+        # Update database
+        await self.session.execute(
+            update(ProjectDB)
+            .where(ProjectDB.id == project_id)
+            .values(shared_with=shared_with_jsonb, updated_at=datetime.now())
+        )
+
+        return True
+
+    async def get_user_role(self, project_id: str, user_id: str) -> Optional[domain.ShareRole]:
+        """Get user's role for a project (owner/viewer/editor/admin) (SEC-RBAC Phase 3)
+
+        Args:
+            project_id: ID of project
+            user_id: User ID to check
+
+        Returns:
+            ShareRole if user has access (owner or in shared_with), None otherwise
+        """
+        result = await self.session.execute(select(ProjectDB).where(ProjectDB.id == project_id))
+        db_project = result.scalar_one_or_none()
+
+        if not db_project:
+            return None
+
+        # Check if user is owner
+        if db_project.owner_id == user_id:
+            return domain.ShareRole.ADMIN  # Owner is treated as admin role
+
+        # Check shared_with
+        if db_project.shared_with:
+            for perm_dict in db_project.shared_with:
+                if perm_dict["user_id"] == user_id:
+                    return domain.ShareRole(perm_dict["role"])
+
+        return None  # User has no access
 
 
 class ProjectIntegrationRepository(BaseRepository):
@@ -250,24 +489,47 @@ class ProjectIntegrationRepository(BaseRepository):
     model = ProjectIntegrationDB
 
     async def get_by_project_and_type(
-        self, project_id: str, integration_type: IntegrationType
+        self, project_id: str, integration_type: IntegrationType, owner_id: Optional[str] = None
     ) -> Optional[domain.ProjectIntegration]:
-        result = await self.session.execute(
-            select(ProjectIntegrationDB).where(
-                ProjectIntegrationDB.project_id == project_id,
-                ProjectIntegrationDB.type == integration_type,
-                ProjectIntegrationDB.is_active == True,
+        """Get integration by project and type - optionally verify project ownership"""
+        filters = [
+            ProjectIntegrationDB.project_id == project_id,
+            ProjectIntegrationDB.type == integration_type,
+            ProjectIntegrationDB.is_active == True,
+        ]
+
+        # If owner_id provided, join with projects to verify ownership
+        if owner_id:
+            from .models import ProjectDB
+
+            result = await self.session.execute(
+                select(ProjectIntegrationDB)
+                .where(and_(*filters))
+                .join(ProjectDB, ProjectIntegrationDB.project_id == ProjectDB.id)
+                .where(ProjectDB.owner_id == owner_id)
             )
-        )
+        else:
+            result = await self.session.execute(select(ProjectIntegrationDB).where(and_(*filters)))
+
         db_integration = result.scalar_one_or_none()
         return db_integration.to_domain() if db_integration else None
 
     async def list_by_project(
-        self, project_id: str, active_only: bool = True
+        self, project_id: str, active_only: bool = True, owner_id: Optional[str] = None
     ) -> List[domain.ProjectIntegration]:
+        """List integrations by project - optionally verify project ownership"""
         query = select(ProjectIntegrationDB).where(ProjectIntegrationDB.project_id == project_id)
         if active_only:
             query = query.where(ProjectIntegrationDB.is_active == True)
+
+        # If owner_id provided, join with projects to verify ownership
+        if owner_id:
+            from .models import ProjectDB
+
+            query = query.join(ProjectDB, ProjectIntegrationDB.project_id == ProjectDB.id).where(
+                ProjectDB.owner_id == owner_id
+            )
+
         result = await self.session.execute(query.order_by(ProjectIntegrationDB.type))
         return [db_integration.to_domain() for db_integration in result.scalars().all()]
 
@@ -286,20 +548,24 @@ class KnowledgeGraphRepository(BaseRepository):
         db_node = KnowledgeNodeDB.from_domain(node)
         return await self.create(**db_node.__dict__)
 
-    async def get_node_by_id(self, node_id: str) -> Optional[domain.KnowledgeNode]:
-        """Get node by ID"""
-        result = await self.session.execute(
-            select(KnowledgeNodeDB).where(KnowledgeNodeDB.id == node_id)
-        )
+    async def get_node_by_id(
+        self, node_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.KnowledgeNode]:
+        """Get node by ID - optionally verify ownership"""
+        filters = [KnowledgeNodeDB.id == node_id]
+        if owner_id:
+            filters.append(KnowledgeNodeDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(KnowledgeNodeDB).where(and_(*filters)))
         db_node = result.scalar_one_or_none()
         return db_node.to_domain() if db_node else None
 
     async def get_nodes_by_session(
         self, session_id: str, limit: int = 100
     ) -> List[domain.KnowledgeNode]:
-        """Get nodes for a session"""
+        """Get nodes for an owner (parameter named session_id for backward compatibility)"""
         result = await self.session.execute(
-            select(KnowledgeNodeDB).where(KnowledgeNodeDB.session_id == session_id).limit(limit)
+            select(KnowledgeNodeDB).where(KnowledgeNodeDB.owner_id == session_id).limit(limit)
         )
         db_nodes = result.scalars().all()
         return [db_node.to_domain() for db_node in db_nodes]
@@ -307,10 +573,10 @@ class KnowledgeGraphRepository(BaseRepository):
     async def get_nodes_by_type(
         self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
     ) -> List[domain.KnowledgeNode]:
-        """Get nodes by type, optionally filtered by session"""
+        """Get nodes by type, optionally filtered by owner (parameter named session_id for backward compatibility)"""
         query = select(KnowledgeNodeDB).where(KnowledgeNodeDB.node_type == node_type)
         if session_id:
-            query = query.where(KnowledgeNodeDB.session_id == session_id)
+            query = query.where(KnowledgeNodeDB.owner_id == session_id)
         query = query.limit(limit)
 
         result = await self.session.execute(query)
@@ -323,29 +589,43 @@ class KnowledgeGraphRepository(BaseRepository):
         db_edge = KnowledgeEdgeDB.from_domain(edge)
         return await self.create(**db_edge.__dict__)
 
-    async def get_edge_by_id(self, edge_id: str) -> Optional[domain.KnowledgeEdge]:
-        """Get edge by ID"""
-        result = await self.session.execute(
-            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.id == edge_id)
-        )
+    async def get_edge_by_id(
+        self, edge_id: str, owner_id: Optional[str] = None
+    ) -> Optional[domain.KnowledgeEdge]:
+        """Get edge by ID - optionally verify ownership"""
+        filters = [KnowledgeEdgeDB.id == edge_id]
+        if owner_id:
+            filters.append(KnowledgeEdgeDB.owner_id == owner_id)
+
+        result = await self.session.execute(select(KnowledgeEdgeDB).where(and_(*filters)))
         db_edge = result.scalar_one_or_none()
         return db_edge.to_domain() if db_edge else None
 
     async def get_edges_by_session(
         self, session_id: str, limit: int = 100
     ) -> List[domain.KnowledgeEdge]:
-        """Get edges for a session"""
+        """Get edges for an owner (parameter named session_id for backward compatibility)"""
         result = await self.session.execute(
-            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.session_id == session_id).limit(limit)
+            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.owner_id == session_id).limit(limit)
         )
         db_edges = result.scalars().all()
         return [db_edge.to_domain() for db_edge in db_edges]
 
     # Graph-specific operations
     async def find_neighbors(
-        self, node_id: str, edge_type: Optional[EdgeType] = None, direction: str = "both"
+        self,
+        node_id: str,
+        edge_type: Optional[EdgeType] = None,
+        direction: str = "both",
+        owner_id: Optional[str] = None,
     ) -> List[domain.KnowledgeNode]:
-        """Find neighboring nodes"""
+        """Find neighboring nodes - optionally verify ownership of root node"""
+        # Verify ownership of the root node if owner_id provided
+        if owner_id:
+            root_node = await self.get_node_by_id(node_id, owner_id)
+            if not root_node:
+                return []  # Node not found or doesn't belong to owner
+
         if direction == "outgoing":
             query = select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.source_node_id == node_id)
         elif direction == "incoming":
@@ -382,12 +662,28 @@ class KnowledgeGraphRepository(BaseRepository):
 
         return []
 
-    async def get_subgraph(self, node_ids: List[str], max_depth: int = 2) -> Dict[str, Any]:
-        """Get a subgraph around specified nodes"""
+    async def get_subgraph(
+        self, node_ids: List[str], max_depth: int = 2, owner_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get a subgraph around specified nodes - optionally verify ownership"""
         nodes = {}
         edges = []
         visited_nodes = set()
         nodes_to_visit = set(node_ids)
+
+        # If owner_id provided, verify all starting nodes belong to owner
+        if owner_id:
+            result = await self.session.execute(
+                select(KnowledgeNodeDB.id).where(
+                    and_(KnowledgeNodeDB.id.in_(node_ids), KnowledgeNodeDB.owner_id == owner_id)
+                )
+            )
+            valid_node_ids = set(row[0] for row in result.fetchall())
+            nodes_to_visit = nodes_to_visit.intersection(valid_node_ids)
+
+            if not nodes_to_visit:
+                # No valid starting nodes
+                return {"nodes": [], "edges": [], "depth": max_depth}
 
         for depth in range(max_depth):
             if not nodes_to_visit:
@@ -435,9 +731,9 @@ class KnowledgeGraphRepository(BaseRepository):
         return {"nodes": list(nodes.values()), "edges": edges, "depth": max_depth}
 
     async def find_paths(
-        self, source_id: str, target_id: str, max_paths: int = 5
+        self, source_id: str, target_id: str, max_paths: int = 5, owner_id: Optional[str] = None
     ) -> List[List[domain.KnowledgeNode]]:
-        """Find paths between two nodes (simplified implementation)"""
+        """Find paths between two nodes - optionally verify ownership"""
         # This is a simplified path finding - in production you'd want a more sophisticated algorithm
         paths = []
 
@@ -453,9 +749,9 @@ class KnowledgeGraphRepository(BaseRepository):
         direct_edges = result.scalars().all()
 
         if direct_edges:
-            # Direct path exists
-            source_node = await self.get_node_by_id(source_id)
-            target_node = await self.get_node_by_id(target_id)
+            # Direct path exists - verify ownership if required
+            source_node = await self.get_node_by_id(source_id, owner_id)
+            target_node = await self.get_node_by_id(target_id, owner_id)
             if source_node and target_node:
                 paths.append([source_node, target_node])
 
@@ -531,21 +827,21 @@ class ConversationRepository(BaseRepository):
         super().__init__(session)
 
     async def get_conversation_turns(
-        self, conversation_id: str, limit: int = 10
+        self, conversation_id: str, limit: int = 10, is_admin: bool = False
     ) -> List[domain.ConversationTurn]:
-        """Get conversation turns for a conversation ID"""
+        """Get conversation turns for a conversation ID (SEC-RBAC Phase 3: admins can access any conversation)"""
         # For now, return empty list since we don't have DB table yet
         # This enables graceful fallback for Phase 3 implementation
         return []
 
-    async def save_turn(self, turn: domain.ConversationTurn) -> None:
-        """Save conversation turn to database"""
+    async def save_turn(self, turn: domain.ConversationTurn, is_admin: bool = False) -> None:
+        """Save conversation turn to database (SEC-RBAC Phase 3: admins can save turns for any conversation)"""
         # For now, this is a no-op since we don't have DB table yet
         # Redis caching will handle persistence in Phase 3
         logger.info(f"ConversationTurn saved (cache-only): {turn.id}")
 
-    async def get_next_turn_number(self, conversation_id: str) -> int:
-        """Get next turn number for conversation"""
+    async def get_next_turn_number(self, conversation_id: str, is_admin: bool = False) -> int:
+        """Get next turn number for conversation (SEC-RBAC Phase 3: admins can get next turn for any conversation)"""
         # For now, return 1 as fallback
         # This enables basic functionality while we build out full DB schema
         return 1

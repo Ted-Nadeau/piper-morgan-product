@@ -44,8 +44,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Python virtual environment
+# Python virtual environment and cache
 venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
 
 # Archive directory for large files and historical assets
 docs/archive/
@@ -58,3 +63,6 @@ docs/comms/blog/*.png
 docs/comms/blog/*.jpg
 docs/comms/blog/*.jpeg
 archive/
+*.dmg
+*.png
+*.docx

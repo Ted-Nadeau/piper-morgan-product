@@ -910,7 +910,21 @@ See `docs/tools/PM-056-schema-validator.md` for complete documentation.
   - Added `Stakeholder.satisfaction` column
   - Renamed `WorkItem.metadata` to `WorkItem.item_metadata` to avoid SQLAlchemy conflicts
   - Added PM-056 Schema Validator tool documentation
+- **November 22, 2025**: Updated SEC-RBAC Phase 1.4 - Shared Resource Access:
+  - Added `List.owner_id` and `List.shared_with` fields for ownership and sharing
+  - Added `Todo.shared_with` field (owner_id already existed) for shared access
+  - Added repository methods: `share_list()`, `unshare_list()`, `get_list_for_read()`, `get_lists_shared_with_me()`
+  - Implemented JSONB array operations for atomic sharing via `array_append()` and `array_remove()`
+  - Read access now checks both ownership and shared_with array membership
+- **November 22, 2025**: Updated SEC-RBAC Phase 2 - Role-Based Permissions:
+  - Added `ShareRole` enum: VIEWER (read-only), EDITOR (can modify), ADMIN (can share)
+  - Added `SharePermission` dataclass: user_id + role with serialization methods
+  - Upgraded `List.shared_with` and `Todo.shared_with` from `List[str]` to `List[SharePermission]`
+  - Added permission check methods: `get_user_role()`, `user_can_read()`, `user_can_write()`, `user_can_share()`
+  - Created Alembic migration: 20251122_upgrade_shared_with_to_roles (converts old format to role-based)
+  - Migration defaults existing shares to "viewer" role for backward compatibility
+  - Updated serialization: `to_dict()` now includes full role information
 
 ---
 
-_Last Updated: July 30, 2025_
+_Last Updated: November 22, 2025_

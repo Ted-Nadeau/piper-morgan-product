@@ -66,7 +66,15 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            # PostgreSQL supports transactional DDL, but we disable it here to allow
+            # individual migrations to fail without rolling back all previous migrations.
+            # This is important for development and testing environments where we want
+            # partial progress even if some migrations fail.
+            transaction_per_migration=True,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -42,6 +43,9 @@ class LinearMCPSpatialAdapter(BaseSpatialAdapter):
         self._linear_token: Optional[str] = None
         self._linear_api_base = "https://api.linear.app/graphql"
         self._session: Optional[aiohttp.ClientSession] = None
+
+        # Token counting for MCP operations (Issue #369)
+        self.token_counter = TokenCounter()
 
         logger.info("LinearMCPSpatialAdapter initialized")
 
@@ -92,271 +96,312 @@ class LinearMCPSpatialAdapter(BaseSpatialAdapter):
 
     async def get_issue_by_id(self, issue_id: str) -> Optional[Dict[str, Any]]:
         """Get Linear issue by ID"""
-        query = """
-        query GetIssue($id: String!) {
-            issue(id: $id) {
-                id
-                number
-                title
-                description
-                priority
-                estimate
-                createdAt
-                updatedAt
-                dueDate
-                state {
-                    id
-                    name
-                    type
-                }
-                assignee {
-                    id
-                    email
-                    name
-                }
-                creator {
-                    id
-                    email
-                    name
-                }
-                team {
-                    id
-                    name
-                    key
-                    organization {
-                        id
-                        name
-                    }
-                }
-                project {
-                    id
-                    name
-                }
-                cycle {
-                    id
-                    name
-                    startsAt
-                    endsAt
-                }
-                labels {
-                    nodes {
-                        id
-                        name
-                        color
-                    }
-                }
-                parent {
-                    id
-                    number
-                    title
-                }
-                children {
-                    nodes {
+        try:
+
+            async def _operation():
+                query = """
+                query GetIssue($id: String!) {
+                    issue(id: $id) {
                         id
                         number
                         title
-                    }
-                }
-                subscribers {
-                    nodes {
-                        id
-                        email
-                        name
-                    }
-                }
-                commentCount
-                relations {
-                    nodes {
-                        id
-                        type
-                        relatedIssue {
-                            id
-                            number
-                            title
-                        }
-                    }
-                }
-            }
-        }
-        """
-
-        result = await self._call_linear_api(query, {"id": issue_id})
-        return result.get("issue") if result else None
-
-    async def get_issue_by_number(
-        self, team_key: str, issue_number: int
-    ) -> Optional[Dict[str, Any]]:
-        """Get Linear issue by team key and issue number"""
-        query = """
-        query GetIssueByNumber($teamKey: String!, $number: Float!) {
-            team(key: $teamKey) {
-                issue(number: $number) {
-                    id
-                    number
-                    title
-                    description
-                    priority
-                    estimate
-                    createdAt
-                    updatedAt
-                    dueDate
-                    state {
-                        id
-                        name
-                        type
-                    }
-                    assignee {
-                        id
-                        email
-                        name
-                    }
-                    creator {
-                        id
-                        email
-                        name
-                    }
-                    team {
-                        id
-                        name
-                        key
-                        organization {
+                        description
+                        priority
+                        estimate
+                        createdAt
+                        updatedAt
+                        dueDate
+                        state {
                             id
                             name
+                            type
                         }
-                    }
-                    project {
-                        id
-                        name
-                    }
-                    cycle {
-                        id
-                        name
-                        startsAt
-                        endsAt
-                    }
-                    labels {
-                        nodes {
-                            id
-                            name
-                            color
-                        }
-                    }
-                    parent {
-                        id
-                        number
-                        title
-                    }
-                    children {
-                        nodes {
-                            id
-                            number
-                            title
-                        }
-                    }
-                    subscribers {
-                        nodes {
+                        assignee {
                             id
                             email
                             name
                         }
-                    }
-                    commentCount
-                    relations {
-                        nodes {
+                        creator {
                             id
-                            type
-                            relatedIssue {
+                            email
+                            name
+                        }
+                        team {
+                            id
+                            name
+                            key
+                            organization {
+                                id
+                                name
+                            }
+                        }
+                        project {
+                            id
+                            name
+                        }
+                        cycle {
+                            id
+                            name
+                            startsAt
+                            endsAt
+                        }
+                        labels {
+                            nodes {
+                                id
+                                name
+                                color
+                            }
+                        }
+                        parent {
+                            id
+                            number
+                            title
+                        }
+                        children {
+                            nodes {
                                 id
                                 number
                                 title
                             }
                         }
+                        subscribers {
+                            nodes {
+                                id
+                                email
+                                name
+                            }
+                        }
+                        commentCount
+                        relations {
+                            nodes {
+                                id
+                                type
+                                relatedIssue {
+                                    id
+                                    number
+                                    title
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        }
-        """
+                """
+                result = await self._call_linear_api(query, {"id": issue_id})
+                return result.get("issue") if result else None
 
-        result = await self._call_linear_api(query, {"teamKey": team_key, "number": issue_number})
-        if result and result.get("team"):
-            return result["team"].get("issue")
-        return None
+            result = await self.token_counter.wrap_mcp_call(
+                "linear_get_issue_by_id",
+                _operation(),
+                input_data=f"issue_id={issue_id}",
+            )
+            logger.info(f"Retrieved Linear issue by ID: {issue_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Error getting Linear issue by ID {issue_id}: {e}")
+            return None
+
+    async def get_issue_by_number(
+        self, team_key: str, issue_number: int
+    ) -> Optional[Dict[str, Any]]:
+        """Get Linear issue by team key and issue number"""
+        try:
+
+            async def _operation():
+                query = """
+                query GetIssueByNumber($teamKey: String!, $number: Float!) {
+                    team(key: $teamKey) {
+                        issue(number: $number) {
+                            id
+                            number
+                            title
+                            description
+                            priority
+                            estimate
+                            createdAt
+                            updatedAt
+                            dueDate
+                            state {
+                                id
+                                name
+                                type
+                            }
+                            assignee {
+                                id
+                                email
+                                name
+                            }
+                            creator {
+                                id
+                                email
+                                name
+                            }
+                            team {
+                                id
+                                name
+                                key
+                                organization {
+                                    id
+                                    name
+                                }
+                            }
+                            project {
+                                id
+                                name
+                            }
+                            cycle {
+                                id
+                                name
+                                startsAt
+                                endsAt
+                            }
+                            labels {
+                                nodes {
+                                    id
+                                    name
+                                    color
+                                }
+                            }
+                            parent {
+                                id
+                                number
+                                title
+                            }
+                            children {
+                                nodes {
+                                    id
+                                    number
+                                    title
+                                }
+                            }
+                            subscribers {
+                                nodes {
+                                    id
+                                    email
+                                    name
+                                }
+                            }
+                            commentCount
+                            relations {
+                                nodes {
+                                    id
+                                    type
+                                    relatedIssue {
+                                        id
+                                        number
+                                        title
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                """
+                result = await self._call_linear_api(
+                    query, {"teamKey": team_key, "number": issue_number}
+                )
+                if result and result.get("team"):
+                    return result["team"].get("issue")
+                return None
+
+            result = await self.token_counter.wrap_mcp_call(
+                "linear_get_issue_by_number",
+                _operation(),
+                input_data=f"team_key={team_key},issue_number={issue_number}",
+            )
+            logger.info(f"Retrieved Linear issue {team_key}-{issue_number}")
+            return result
+        except Exception as e:
+            logger.error(f"Error getting Linear issue {team_key}-{issue_number}: {e}")
+            return None
 
     async def search_issues(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search Linear issues by query"""
-        search_query = """
-        query SearchIssues($query: String!, $first: Int!) {
-            issues(
-                filter: {
-                    or: [
-                        { title: { containsIgnoreCase: $query } },
-                        { description: { containsIgnoreCase: $query } }
-                    ]
-                },
-                first: $first,
-                orderBy: updatedAt
-            ) {
-                nodes {
-                    id
-                    number
-                    title
-                    description
-                    priority
-                    estimate
-                    createdAt
-                    updatedAt
-                    dueDate
-                    state {
-                        id
-                        name
-                        type
-                    }
-                    assignee {
-                        id
-                        email
-                        name
-                    }
-                    creator {
-                        id
-                        email
-                        name
-                    }
-                    team {
-                        id
-                        name
-                        key
-                        organization {
-                            id
-                            name
-                        }
-                    }
-                    project {
-                        id
-                        name
-                    }
-                    cycle {
-                        id
-                        name
-                        startsAt
-                        endsAt
-                    }
-                    labels {
+        try:
+
+            async def _operation():
+                search_query = """
+                query SearchIssues($query: String!, $first: Int!) {
+                    issues(
+                        filter: {
+                            or: [
+                                { title: { containsIgnoreCase: $query } },
+                                { description: { containsIgnoreCase: $query } }
+                            ]
+                        },
+                        first: $first,
+                        orderBy: updatedAt
+                    ) {
                         nodes {
                             id
-                            name
-                            color
+                            number
+                            title
+                            description
+                            priority
+                            estimate
+                            createdAt
+                            updatedAt
+                            dueDate
+                            state {
+                                id
+                                name
+                                type
+                            }
+                            assignee {
+                                id
+                                email
+                                name
+                            }
+                            creator {
+                                id
+                                email
+                                name
+                            }
+                            team {
+                                id
+                                name
+                                key
+                                organization {
+                                    id
+                                    name
+                                }
+                            }
+                            project {
+                                id
+                                name
+                            }
+                            cycle {
+                                id
+                                name
+                                startsAt
+                                endsAt
+                            }
+                            labels {
+                                nodes {
+                                    id
+                                    name
+                                    color
+                                }
+                            }
+                            commentCount
                         }
                     }
-                    commentCount
                 }
-            }
-        }
-        """
+                """
+                result = await self._call_linear_api(search_query, {"query": query, "first": limit})
+                if result and result.get("issues"):
+                    return result["issues"].get("nodes", [])
+                return []
 
-        result = await self._call_linear_api(search_query, {"query": query, "first": limit})
-        if result and result.get("issues"):
-            return result["issues"].get("nodes", [])
-        return []
+            result = await self.token_counter.wrap_mcp_call(
+                "linear_search_issues",
+                _operation(),
+                input_data=f"query={query},limit={limit}",
+            )
+            logger.info(f"Searched Linear issues with query '{query}', found {len(result)} results")
+            return result
+        except Exception as e:
+            logger.error(f"Error searching Linear issues with query '{query}': {e}")
+            return []
 
     async def map_to_position(self, issue_id: str, context: Dict[str, Any]) -> SpatialPosition:
         """Map Linear issue ID to spatial position"""

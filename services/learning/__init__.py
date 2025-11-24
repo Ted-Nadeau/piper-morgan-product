@@ -5,6 +5,7 @@ Provides pattern tracking and learning capabilities between different features
 of the Piper Morgan system for continuous improvement.
 """
 
+from .context_matcher import ContextMatcher
 from .cross_feature_knowledge import (
     ConfidenceLevel,
     CrossFeatureKnowledgeService,
@@ -27,6 +28,8 @@ from .query_learning_loop import (
 
 __version__ = "1.0.0"
 __all__ = [
+    # Context Matching
+    "ContextMatcher",
     # Query Learning Loop
     "QueryLearningLoop",
     "LearnedPattern",

@@ -1,0 +1,22 @@
+# API Key Rotation Policy Configuration
+# Issue #250 CORE-KEYS-ROTATION-REMINDERS
+
+rotation_policies:
+  default:
+    max_age_days: 90
+    warning_days: [60, 75, 85]
+    critical_days: 88
+
+  provider_overrides:
+    openai:
+      max_age_days: 60 # More frequent for high-value keys
+      warning_days: [45, 55]
+      critical_days: 58
+    github:
+      max_age_days: 180 # Less frequent for personal tokens
+      warning_days: [120, 150, 170]
+      critical_days: 175
+    anthropic:
+      max_age_days: 90 # Standard rotation
+      warning_days: [60, 75, 85]
+      critical_days: 88

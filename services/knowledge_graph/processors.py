@@ -5,7 +5,7 @@ File Processors for Knowledge Graph Ingestion
 import abc
 from typing import List
 
-import PyPDF2
+import pypdf
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -28,7 +28,7 @@ class PDFProcessor(BaseProcessor):
         chunks = []
         try:
             with open(file_path, "rb") as file:
-                pdf_reader = PyPDF2.PdfReader(file)
+                pdf_reader = pypdf.PdfReader(file)
 
                 full_text = ""
                 for page in pdf_reader.pages:

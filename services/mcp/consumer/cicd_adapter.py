@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -48,6 +49,9 @@ class CICDMCPSpatialAdapter(BaseSpatialAdapter):
 
         # HTTP session
         self._session: Optional[aiohttp.ClientSession] = None
+
+        # Token counting for MCP operations (Issue #369)
+        self.token_counter = TokenCounter()
 
         logger.info("CICDMCPSpatialAdapter initialized")
 
@@ -127,146 +131,212 @@ class CICDMCPSpatialAdapter(BaseSpatialAdapter):
         self, repository: str, run_id: int
     ) -> Optional[Dict[str, Any]]:
         """Get GitHub Actions workflow run by ID"""
-        result = await self._call_github_actions_api(f"/repos/{repository}/actions/runs/{run_id}")
+        try:
 
-        if result:
-            # Enrich with jobs information
-            jobs_result = await self._call_github_actions_api(
-                f"/repos/{repository}/actions/runs/{run_id}/jobs"
+            async def _operation():
+                result = await self._call_github_actions_api(
+                    f"/repos/{repository}/actions/runs/{run_id}"
+                )
+
+                if result:
+                    # Enrich with jobs information
+                    jobs_result = await self._call_github_actions_api(
+                        f"/repos/{repository}/actions/runs/{run_id}/jobs"
+                    )
+                    if jobs_result:
+                        result["jobs"] = jobs_result.get("jobs", [])
+
+                return result
+
+            result = await self.token_counter.wrap_mcp_call(
+                "cicd_get_github_workflow_run",
+                _operation(),
+                input_data=f"repository={repository},run_id={run_id}",
             )
-            if jobs_result:
-                result["jobs"] = jobs_result.get("jobs", [])
-
-        return result
+            logger.info(f"Retrieved GitHub workflow run {run_id} from {repository}")
+            return result
+        except Exception as e:
+            logger.error(f"Error getting GitHub workflow run {run_id}: {e}")
+            return None
 
     async def get_gitlab_pipeline(
         self, project_id: str, pipeline_id: int
     ) -> Optional[Dict[str, Any]]:
         """Get GitLab CI pipeline by ID"""
-        result = await self._call_gitlab_ci_api(f"/projects/{project_id}/pipelines/{pipeline_id}")
+        try:
 
-        if result:
-            # Enrich with jobs information
-            jobs_result = await self._call_gitlab_ci_api(
-                f"/projects/{project_id}/pipelines/{pipeline_id}/jobs"
+            async def _operation():
+                result = await self._call_gitlab_ci_api(
+                    f"/projects/{project_id}/pipelines/{pipeline_id}"
+                )
+
+                if result:
+                    # Enrich with jobs information
+                    jobs_result = await self._call_gitlab_ci_api(
+                        f"/projects/{project_id}/pipelines/{pipeline_id}/jobs"
+                    )
+                    if jobs_result:
+                        result["jobs"] = jobs_result
+
+                return result
+
+            result = await self.token_counter.wrap_mcp_call(
+                "cicd_get_gitlab_pipeline",
+                _operation(),
+                input_data=f"project_id={project_id},pipeline_id={pipeline_id}",
             )
-            if jobs_result:
-                result["jobs"] = jobs_result
-
-        return result
+            logger.info(f"Retrieved GitLab pipeline {pipeline_id} from project {project_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Error getting GitLab pipeline {pipeline_id}: {e}")
+            return None
 
     async def search_github_workflows(
         self, repository: str, query: str, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Search GitHub Actions workflow runs"""
-        # Get recent workflow runs
-        result = await self._call_github_actions_api(
-            f"/repos/{repository}/actions/runs?per_page={limit}"
-        )
+        try:
 
-        if not result:
+            async def _operation():
+                # Get recent workflow runs
+                result = await self._call_github_actions_api(
+                    f"/repos/{repository}/actions/runs?per_page={limit}"
+                )
+
+                if not result:
+                    return []
+
+                workflow_runs = result.get("workflow_runs", [])
+
+                # Filter by query
+                matching_runs = []
+                query_lower = query.lower()
+
+                for run in workflow_runs:
+                    # Search in workflow name, head commit message, and branch
+                    searchable_text = " ".join(
+                        [
+                            run.get("name", ""),
+                            run.get("head_commit", {}).get("message", ""),
+                            run.get("head_branch", ""),
+                            run.get("event", ""),
+                        ]
+                    ).lower()
+
+                    if query_lower in searchable_text:
+                        # Standardize the format
+                        standardized_run = {
+                            "id": run.get("id"),
+                            "type": "build",  # GitHub Actions are primarily builds
+                            "status": run.get("status"),
+                            "conclusion": run.get("conclusion"),
+                            "workflow_name": run.get("name"),
+                            "branch": run.get("head_branch"),
+                            "repository": {
+                                "full_name": run.get("repository", {}).get("full_name"),
+                                "owner": run.get("repository", {}).get("owner"),
+                            },
+                            "triggered_by": run.get("triggering_actor"),
+                            "created_at": run.get("created_at"),
+                            "updated_at": run.get("updated_at"),
+                            "completed_at": run.get("completed_at"),
+                            "url": run.get("html_url"),
+                            "platform": "github_actions",
+                            "trigger": {
+                                "type": run.get("event"),
+                                "commit": run.get("head_commit"),
+                            },
+                            "environment": self._extract_environment_from_run(run),
+                        }
+                        matching_runs.append(standardized_run)
+
+                return matching_runs[:limit]
+
+            result = await self.token_counter.wrap_mcp_call(
+                "cicd_search_github_workflows",
+                _operation(),
+                input_data=f"repository={repository},query={query},limit={limit}",
+            )
+            logger.info(
+                f"Searched GitHub workflows for '{query}' in {repository}, found {len(result)} results"
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error searching GitHub workflows for '{query}': {e}")
             return []
-
-        workflow_runs = result.get("workflow_runs", [])
-
-        # Filter by query
-        matching_runs = []
-        query_lower = query.lower()
-
-        for run in workflow_runs:
-            # Search in workflow name, head commit message, and branch
-            searchable_text = " ".join(
-                [
-                    run.get("name", ""),
-                    run.get("head_commit", {}).get("message", ""),
-                    run.get("head_branch", ""),
-                    run.get("event", ""),
-                ]
-            ).lower()
-
-            if query_lower in searchable_text:
-                # Standardize the format
-                standardized_run = {
-                    "id": run.get("id"),
-                    "type": "build",  # GitHub Actions are primarily builds
-                    "status": run.get("status"),
-                    "conclusion": run.get("conclusion"),
-                    "workflow_name": run.get("name"),
-                    "branch": run.get("head_branch"),
-                    "repository": {
-                        "full_name": run.get("repository", {}).get("full_name"),
-                        "owner": run.get("repository", {}).get("owner"),
-                    },
-                    "triggered_by": run.get("triggering_actor"),
-                    "created_at": run.get("created_at"),
-                    "updated_at": run.get("updated_at"),
-                    "completed_at": run.get("completed_at"),
-                    "url": run.get("html_url"),
-                    "platform": "github_actions",
-                    "trigger": {
-                        "type": run.get("event"),
-                        "commit": run.get("head_commit"),
-                    },
-                    "environment": self._extract_environment_from_run(run),
-                }
-                matching_runs.append(standardized_run)
-
-        return matching_runs[:limit]
 
     async def search_gitlab_pipelines(
         self, project_id: str, query: str, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Search GitLab CI pipelines"""
-        # Get recent pipelines
-        result = await self._call_gitlab_ci_api(
-            f"/projects/{project_id}/pipelines?per_page={limit}&order_by=updated_at"
-        )
+        try:
 
-        if not result:
+            async def _operation():
+                # Get recent pipelines
+                result = await self._call_gitlab_ci_api(
+                    f"/projects/{project_id}/pipelines?per_page={limit}&order_by=updated_at"
+                )
+
+                if not result:
+                    return []
+
+                # Filter by query
+                matching_pipelines = []
+                query_lower = query.lower()
+
+                for pipeline in result:
+                    # Search in ref (branch), status
+                    searchable_text = " ".join(
+                        [
+                            pipeline.get("ref", ""),
+                            pipeline.get("status", ""),
+                            pipeline.get("source", ""),
+                        ]
+                    ).lower()
+
+                    if query_lower in searchable_text:
+                        # Standardize the format
+                        standardized_pipeline = {
+                            "id": pipeline.get("id"),
+                            "type": "build",  # GitLab pipelines are primarily builds
+                            "status": pipeline.get("status"),
+                            "conclusion": pipeline.get("status"),  # GitLab uses status for both
+                            "workflow_name": f"Pipeline {pipeline.get('id')}",
+                            "branch": pipeline.get("ref"),
+                            "repository": {
+                                "full_name": f"project-{project_id}",  # Simplified
+                                "owner": {"login": "gitlab"},
+                            },
+                            "triggered_by": {
+                                "login": pipeline.get("user", {}).get("username", "unknown")
+                            },
+                            "created_at": pipeline.get("created_at"),
+                            "updated_at": pipeline.get("updated_at"),
+                            "completed_at": pipeline.get("finished_at"),
+                            "url": pipeline.get("web_url"),
+                            "platform": "gitlab_ci",
+                            "trigger": {
+                                "type": pipeline.get("source"),
+                                "commit": {"sha": pipeline.get("sha")},
+                            },
+                            "environment": self._extract_environment_from_pipeline(pipeline),
+                        }
+                        matching_pipelines.append(standardized_pipeline)
+
+                return matching_pipelines[:limit]
+
+            result = await self.token_counter.wrap_mcp_call(
+                "cicd_search_gitlab_pipelines",
+                _operation(),
+                input_data=f"project_id={project_id},query={query},limit={limit}",
+            )
+            logger.info(
+                f"Searched GitLab pipelines for '{query}' in project {project_id}, found {len(result)} results"
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error searching GitLab pipelines for '{query}': {e}")
             return []
-
-        # Filter by query
-        matching_pipelines = []
-        query_lower = query.lower()
-
-        for pipeline in result:
-            # Search in ref (branch), status
-            searchable_text = " ".join(
-                [
-                    pipeline.get("ref", ""),
-                    pipeline.get("status", ""),
-                    pipeline.get("source", ""),
-                ]
-            ).lower()
-
-            if query_lower in searchable_text:
-                # Standardize the format
-                standardized_pipeline = {
-                    "id": pipeline.get("id"),
-                    "type": "build",  # GitLab pipelines are primarily builds
-                    "status": pipeline.get("status"),
-                    "conclusion": pipeline.get("status"),  # GitLab uses status for both
-                    "workflow_name": f"Pipeline {pipeline.get('id')}",
-                    "branch": pipeline.get("ref"),
-                    "repository": {
-                        "full_name": f"project-{project_id}",  # Simplified
-                        "owner": {"login": "gitlab"},
-                    },
-                    "triggered_by": {"login": pipeline.get("user", {}).get("username", "unknown")},
-                    "created_at": pipeline.get("created_at"),
-                    "updated_at": pipeline.get("updated_at"),
-                    "completed_at": pipeline.get("finished_at"),
-                    "url": pipeline.get("web_url"),
-                    "platform": "gitlab_ci",
-                    "trigger": {
-                        "type": pipeline.get("source"),
-                        "commit": {"sha": pipeline.get("sha")},
-                    },
-                    "environment": self._extract_environment_from_pipeline(pipeline),
-                }
-                matching_pipelines.append(standardized_pipeline)
-
-        return matching_pipelines[:limit]
 
     def _extract_environment_from_run(self, run: Dict[str, Any]) -> str:
         """Extract environment from GitHub Actions run"""
@@ -301,25 +371,43 @@ class CICDMCPSpatialAdapter(BaseSpatialAdapter):
         self, query: str, repositories: List[str] = None, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Search CI/CD pipelines across platforms"""
-        all_results = []
+        try:
 
-        # Search GitHub Actions (if repositories specified)
-        if repositories:
-            for repo in repositories:
-                if "/" in repo:  # GitHub repo format owner/name
-                    try:
-                        github_results = await self.search_github_workflows(repo, query, limit // 2)
-                        all_results.extend(github_results)
-                    except Exception as e:
-                        logger.warning(f"Failed to search GitHub workflows for {repo}: {e}")
-                else:  # Might be GitLab project ID
-                    try:
-                        gitlab_results = await self.search_gitlab_pipelines(repo, query, limit // 2)
-                        all_results.extend(gitlab_results)
-                    except Exception as e:
-                        logger.warning(f"Failed to search GitLab pipelines for {repo}: {e}")
+            async def _operation():
+                all_results = []
 
-        return all_results[:limit]
+                # Search GitHub Actions (if repositories specified)
+                if repositories:
+                    for repo in repositories:
+                        if "/" in repo:  # GitHub repo format owner/name
+                            try:
+                                github_results = await self.search_github_workflows(
+                                    repo, query, limit // 2
+                                )
+                                all_results.extend(github_results)
+                            except Exception as e:
+                                logger.warning(f"Failed to search GitHub workflows for {repo}: {e}")
+                        else:  # Might be GitLab project ID
+                            try:
+                                gitlab_results = await self.search_gitlab_pipelines(
+                                    repo, query, limit // 2
+                                )
+                                all_results.extend(gitlab_results)
+                            except Exception as e:
+                                logger.warning(f"Failed to search GitLab pipelines for {repo}: {e}")
+
+                return all_results[:limit]
+
+            result = await self.token_counter.wrap_mcp_call(
+                "cicd_search_pipelines",
+                _operation(),
+                input_data=f"query={query},repositories={repositories},limit={limit}",
+            )
+            logger.info(f"Searched pipelines for '{query}', found {len(result)} results")
+            return result
+        except Exception as e:
+            logger.error(f"Error searching pipelines for '{query}': {e}")
+            return []
 
     async def map_to_position(self, pipeline_id: str, context: Dict[str, Any]) -> SpatialPosition:
         """Map CI/CD pipeline ID to spatial position"""

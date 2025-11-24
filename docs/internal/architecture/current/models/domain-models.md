@@ -1,6 +1,6 @@
 # Domain Models Reference
 
-**Last Updated**: July 31, 2025
+**Last Updated**: November 22, 2025 (SEC-RBAC Phase 3 - Admin bypass pattern in 5 repositories)
 **Status**: ✅ Complete and Current
 **File**: `services/domain/models.py`
 
@@ -201,13 +201,20 @@ class Intent:
 
 **Purpose**: A PM project with multiple tool integrations
 
+**Updates (Phase 3 SEC-RBAC)**:
+- Added `owner_id` field for resource ownership tracking
+- Added `shared_with` field for role-based sharing (VIEWER, EDITOR, ADMIN roles)
+- Enables ownership-based access control and fine-grained role sharing
+
 ```python
 @dataclass
 class Project:
     id: str = field(default_factory=lambda: str(uuid4()))
+    owner_id: str = ""  # User ID of the project owner (SEC-RBAC Phase 3)
     name: str = ""
     description: str = ""
     integrations: List[ProjectIntegration] = field(default_factory=list)
+    shared_with: List[SharePermission] = field(default_factory=list)  # Role-based sharing
     is_default: bool = False
     is_archived: bool = False
     created_at: datetime = field(default_factory=datetime.now)
@@ -237,11 +244,16 @@ class ProjectIntegration:
 
 **Purpose**: Domain model for uploaded files
 
+**Updates (Phase 3 SEC-RBAC)**:
+- Replaced `session_id` with `owner_id` for resource ownership tracking
+- Enables ownership-based access control via FileRepository methods
+- Aligns with SEC-RBAC phase 1 resource ownership pattern (ADR-044)
+
 ```python
 @dataclass
 class UploadedFile:
     id: str = field(default_factory=lambda: str(uuid4()))
-    session_id: str = ""
+    owner_id: str = ""  # User ID of the file owner (SEC-RBAC Phase 3)
     filename: str = ""
     file_type: str = ""  # MIME type
     file_size: int = 0

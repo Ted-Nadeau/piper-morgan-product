@@ -10,6 +10,7 @@ Issue #249 CORE-AUDIT-LOGGING Phase 3C
 import asyncio
 import sys
 from datetime import datetime
+from uuid import UUID, uuid4
 
 # Add project root to path
 sys.path.insert(0, "/Users/xian/Development/piper-morgan")
@@ -30,7 +31,7 @@ async def main():
     print()
 
     # Test user
-    test_user_id = "api_key_audit_test_user"
+    test_user_id = uuid4()
     test_user_email = "api_key_audit@example.com"
 
     # Mock keychain service for testing

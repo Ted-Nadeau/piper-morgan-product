@@ -1,0 +1,150 @@
+#!/bin/bash
+#
+# bd-safe: Wrapper around bd with completion guard rails
+#
+# Usage: bd-safe close <issue-id>
+#        bd-safe <any-other-bd-command> [args...]
+#
+# Adds validation before closing issues/epics to prevent expedience rationalization.
+
+set -euo pipefail
+
+BD_BIN="${BD_BIN:-bd}"
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+error() {
+    echo -e "${RED}❌ ERROR: $1${NC}" >&2
+    exit 1
+}
+
+warning() {
+    echo -e "${YELLOW}⚠️  WARNING: $1${NC}" >&2
+}
+
+success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+# Check if bd is installed
+if ! command -v "$BD_BIN" &> /dev/null; then
+    error "bd not found. Install from https://github.com/steveyegge/beads"
+fi
+
+# If not closing, just pass through to bd
+COMMAND="${1:-}"
+if [ "$COMMAND" != "close" ]; then
+    exec "$BD_BIN" "$@"
+fi
+
+# Validate close operation
+ISSUE_ID="${2:-}"
+if [ -z "$ISSUE_ID" ]; then
+    error "Usage: bd-safe close <issue-id>"
+fi
+
+echo "🔍 Validating close operation for: $ISSUE_ID"
+echo ""
+
+# Get issue details
+ISSUE_JSON=$("$BD_BIN" show "$ISSUE_ID" --json 2>/dev/null) || error "Issue $ISSUE_ID not found"
+ISSUE_TYPE=$(echo "$ISSUE_JSON" | grep -o '"type":"[^"]*"' | cut -d'"' -f4)
+ISSUE_TITLE=$(echo "$ISSUE_JSON" | grep -o '"title":"[^"]*"' | cut -d'"' -f4)
+ISSUE_STATUS=$(echo "$ISSUE_JSON" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+
+echo "Issue: $ISSUE_ID - $ISSUE_TITLE"
+echo "Type: $ISSUE_TYPE"
+echo "Status: $ISSUE_STATUS"
+echo ""
+
+# Guard 1: Check if already closed
+if [ "$ISSUE_STATUS" = "closed" ]; then
+    warning "Issue is already closed"
+    exit 0
+fi
+
+# Guard 2: If epic, check for open children
+if [ "$ISSUE_TYPE" = "epic" ]; then
+    echo "🔍 Checking for open children (this is an epic)..."
+
+    # Get children
+    CHILDREN=$("$BD_BIN" list --parent "$ISSUE_ID" --json 2>/dev/null || echo "[]")
+
+    # Check for open children
+    OPEN_CHILDREN=$(echo "$CHILDREN" | grep -c '"status":"open"' || true)
+    IN_PROGRESS_CHILDREN=$(echo "$CHILDREN" | grep -c '"status":"in_progress"' || true)
+    TOTAL_OPEN=$((OPEN_CHILDREN + IN_PROGRESS_CHILDREN))
+
+    if [ "$TOTAL_OPEN" -gt 0 ]; then
+        echo ""
+        error "Cannot close epic with $TOTAL_OPEN open children!
+
+Epic: $ISSUE_ID - $ISSUE_TITLE
+Open children: $TOTAL_OPEN
+
+Options:
+1. Complete all children first
+2. Get PM approval to defer children:
+   bd edit <child-id> --notes
+   # Add: @PM-approved: defer to <milestone> because <reason>
+3. Close children individually with reasoning
+
+Run: bd list --parent $ISSUE_ID
+"
+    fi
+
+    success "No open children found"
+    echo ""
+fi
+
+# Guard 3: Check for acceptance criteria notes
+echo "📋 Checking for acceptance criteria..."
+NOTES=$(echo "$ISSUE_JSON" | grep -o '"notes":"[^"]*"' | cut -d'"' -f4 || echo "")
+
+if [ -z "$NOTES" ] || ! echo "$NOTES" | grep -qi "acceptance"; then
+    warning "No acceptance criteria found in issue notes"
+    echo ""
+    echo "Before closing, verify:"
+    echo "1. All requirements from gameplan met?"
+    echo "2. Tests passing?"
+    echo "3. Manual testing complete (if required)?"
+    echo ""
+
+    read -p "Have you verified ALL acceptance criteria are met? (yes/no): " confirm
+    if [ "$confirm" != "yes" ]; then
+        error "Aborted. Add acceptance criteria or complete remaining work."
+    fi
+else
+    success "Acceptance criteria found in notes"
+fi
+
+# Guard 4: Prompt for completion confirmation
+echo ""
+echo "📝 Final checks:"
+echo "  - All acceptance criteria met?"
+echo "  - All tests passing?"
+echo "  - No discovered work left unfiled?"
+echo "  - Ready to mark as complete?"
+echo ""
+
+read -p "Close $ISSUE_ID? (yes/no): " final_confirm
+if [ "$final_confirm" != "yes" ]; then
+    echo "Aborted."
+    exit 0
+fi
+
+# All guards passed - close the issue
+echo ""
+echo "✓ All guards passed. Closing issue..."
+"$BD_BIN" close "$ISSUE_ID"
+
+success "Issue $ISSUE_ID closed"
+
+# Reminder: Sync after closing
+echo ""
+echo "💡 Remember to sync when done:"
+echo "   bd sync"

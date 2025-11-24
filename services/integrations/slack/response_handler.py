@@ -14,6 +14,7 @@ import logging
 import time
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set
+from uuid import UUID
 
 import structlog
 

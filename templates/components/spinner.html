@@ -1,0 +1,50 @@
+<!-- Spinner Component - WCAG 2.2 AA Accessible
+     SVG-based spinners with size variants: small (16px), medium (24px), large (48px) -->
+
+<!-- Small Spinner (for buttons, inline) -->
+<template id="spinner-template-sm">
+  <svg class="spinner spinner-sm" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle class="spinner-track" cx="12" cy="12" r="10" fill="none" stroke-width="3"/>
+    <circle class="spinner-head" cx="12" cy="12" r="10" fill="none" stroke-width="3" stroke-dasharray="15.7 50" stroke-dashoffset="0"/>
+  </svg>
+</template>
+
+<!-- Medium Spinner (default size) -->
+<template id="spinner-template-md">
+  <svg class="spinner spinner-md" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle class="spinner-track" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+    <circle class="spinner-head" cx="12" cy="12" r="10" fill="none" stroke-width="2" stroke-dasharray="15.7 50" stroke-dashoffset="0"/>
+  </svg>
+</template>
+
+<!-- Large Spinner (page/overlay) -->
+<template id="spinner-template-lg">
+  <svg class="spinner spinner-lg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle class="spinner-track" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+    <circle class="spinner-head" cx="12" cy="12" r="10" fill="none" stroke-width="2" stroke-dasharray="15.7 50" stroke-dashoffset="0"/>
+  </svg>
+</template>
+
+<!-- Page Spinner Container (centered, with message) -->
+<template id="page-spinner-template">
+  <div class="spinner-container" role="status" aria-live="polite" aria-label="Loading">
+    <svg class="spinner spinner-lg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle class="spinner-track" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+      <circle class="spinner-head" cx="12" cy="12" r="10" fill="none" stroke-width="2" stroke-dasharray="15.7 50" stroke-dashoffset="0"/>
+    </svg>
+    <span class="spinner-text">Loading...</span>
+  </div>
+</template>
+
+<!-- Overlay Spinner (blocks interaction) -->
+<template id="overlay-spinner-template">
+  <div class="spinner-overlay" role="status" aria-live="polite" aria-label="Loading">
+    <div class="spinner-overlay-content">
+      <svg class="spinner spinner-lg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle class="spinner-track" cx="12" cy="12" r="10" fill="none" stroke-width="2"/>
+        <circle class="spinner-head" cx="12" cy="12" r="10" fill="none" stroke-width="2" stroke-dasharray="15.7 50" stroke-dashoffset="0"/>
+      </svg>
+      <span class="spinner-text">Loading...</span>
+    </div>
+  </div>
+</template>

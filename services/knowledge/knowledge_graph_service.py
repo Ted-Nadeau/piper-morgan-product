@@ -5,6 +5,7 @@ High-level business logic for knowledge graph operations
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
+from uuid import UUID
 
 import structlog
 
@@ -54,9 +55,12 @@ class KnowledgeGraphService:
 
         # Privacy check if boundary enforcer is available
         if self.boundary_enforcer:
-            # For now, skip privacy check as BoundaryEnforcer expects Request objects
-            # TODO: Add content-based boundary checking method to BoundaryEnforcer
-            pass
+            # Check node content for boundary violations
+            combined_content = f"{name} {description}"
+            if await self.boundary_enforcer.check_harassment_patterns(combined_content):
+                raise ValueError(f"Node content violates harassment boundaries: {name}")
+            if await self.boundary_enforcer.check_inappropriate_content(combined_content):
+                raise ValueError(f"Node content contains inappropriate material: {name}")
 
         # Create the node
         node = KnowledgeNode(
@@ -79,9 +83,13 @@ class KnowledgeGraphService:
 
         return created_node
 
-    async def get_node(self, node_id: str) -> Optional[KnowledgeNode]:
-        """Get a node by ID"""
-        return await self.repo.get_node_by_id(node_id)
+    async def get_node(
+        self, node_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+    ) -> Optional[KnowledgeNode]:
+        """Get a node by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+        return await self.repo.get_node_by_id(
+            node_id, owner_id if owner_id and not is_admin else None
+        )
 
     async def get_nodes_by_type(
         self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
@@ -96,16 +104,24 @@ class KnowledgeGraphService:
         description: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         properties: Optional[Dict[str, Any]] = None,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Optional[KnowledgeNode]:
-        """Update an existing node"""
-        node = await self.repo.get_node_by_id(node_id)
+        """Update an existing node (SEC-RBAC Phase 3: admins can update any node)"""
+        node = await self.repo.get_node_by_id(
+            node_id, owner_id if owner_id and not is_admin else None
+        )
         if not node:
             return None
 
         # Privacy check for updated content
         if self.boundary_enforcer and (name or description or metadata):
-            # TODO: Add content-based boundary checking method to BoundaryEnforcer
-            pass
+            # Check updated content for boundary violations
+            combined_content = f"{name or node.name} {description or node.description}"
+            if await self.boundary_enforcer.check_harassment_patterns(combined_content):
+                raise ValueError(f"Updated node content violates harassment boundaries")
+            if await self.boundary_enforcer.check_inappropriate_content(combined_content):
+                raise ValueError(f"Updated node content contains inappropriate material")
 
         # Update fields
         if name is not None:
@@ -132,13 +148,19 @@ class KnowledgeGraphService:
         metadata: Optional[Dict[str, Any]] = None,
         properties: Optional[Dict[str, Any]] = None,
         session_id: Optional[str] = None,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> KnowledgeEdge:
         """
-        Create an edge between two nodes with validation
+        Create an edge between two nodes with validation (SEC-RBAC Phase 3: admins can create edges in any graph)
         """
-        # Verify both nodes exist
-        source_node = await self.repo.get_node_by_id(source_node_id)
-        target_node = await self.repo.get_node_by_id(target_node_id)
+        # Verify both nodes exist - with optional ownership verification
+        source_node = await self.repo.get_node_by_id(
+            source_node_id, owner_id if owner_id and not is_admin else None
+        )
+        target_node = await self.repo.get_node_by_id(
+            target_node_id, owner_id if owner_id and not is_admin else None
+        )
 
         if not source_node:
             raise ValueError(f"Source node {source_node_id} not found")
@@ -179,17 +201,26 @@ class KnowledgeGraphService:
 
     # Graph Operations
     async def get_neighbors(
-        self, node_id: str, edge_type: Optional[EdgeType] = None, direction: str = "both"
+        self,
+        node_id: str,
+        edge_type: Optional[EdgeType] = None,
+        direction: str = "both",
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> List[KnowledgeNode]:
         """
-        Find neighboring nodes
+        Find neighboring nodes - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
 
         Args:
             node_id: The node to find neighbors for
             edge_type: Optional filter by edge type
             direction: "incoming", "outgoing", or "both"
+            owner_id: Optional owner ID to verify ownership
+            is_admin: If True, bypass ownership check (SEC-RBAC Phase 3)
         """
-        return await self.repo.find_neighbors(node_id, edge_type, direction)
+        return await self.repo.find_neighbors(
+            node_id, edge_type, direction, owner_id if owner_id and not is_admin else None
+        )
 
     async def extract_subgraph(
         self,
@@ -197,20 +228,25 @@ class KnowledgeGraphService:
         max_depth: int = 2,
         edge_types: Optional[List[EdgeType]] = None,
         node_types: Optional[List[NodeType]] = None,
+        owner_id: Optional[str] = None,
+        is_admin: bool = False,
     ) -> Dict[str, Any]:
         """
-        Extract a subgraph around specified nodes with filtering
+        Extract a subgraph around specified nodes with filtering - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
 
         Args:
             node_ids: Starting nodes for subgraph extraction
             max_depth: How many levels to traverse
             edge_types: Optional filter for edge types to follow
             node_types: Optional filter for node types to include
+            owner_id: Optional owner ID to verify ownership
         """
         self.logger.info("Extracting subgraph", start_nodes=len(node_ids), max_depth=max_depth)
 
-        # Get basic subgraph from repository
-        subgraph = await self.repo.get_subgraph(node_ids, max_depth)
+        # Get basic subgraph from repository (with optional ownership verification)
+        subgraph = await self.repo.get_subgraph(
+            node_ids, max_depth, owner_id if owner_id and not is_admin else None
+        )
 
         # Apply filtering if requested
         if edge_types or node_types:
@@ -256,14 +292,21 @@ class KnowledgeGraphService:
             # Filter nodes based on privacy boundaries
             privacy_filtered_nodes = []
             for node in subgraph["nodes"]:
-                # TODO: Implement proper boundary check
-                # For now, allow all nodes
-                check = type("obj", (object,), {"allowed": True, "reason": None})
-                if check.allowed:
+                # Check node content for boundary violations
+                combined_content = f"{node.name} {node.description}"
+                violates_harassment = await self.boundary_enforcer.check_harassment_patterns(
+                    combined_content
+                )
+                violates_inappropriate = await self.boundary_enforcer.check_inappropriate_content(
+                    combined_content
+                )
+
+                if not (violates_harassment or violates_inappropriate):
                     privacy_filtered_nodes.append(node)
                 else:
+                    reason = "harassment" if violates_harassment else "inappropriate_content"
                     self.logger.debug(
-                        "Node filtered by privacy boundaries", node_id=node.id, reason=check.reason
+                        "Node filtered by privacy boundaries", node_id=node.id, reason=reason
                     )
 
             subgraph["nodes"] = privacy_filtered_nodes
@@ -284,20 +327,26 @@ class KnowledgeGraphService:
         return subgraph
 
     async def find_paths(
-        self, source_id: str, target_id: str, max_paths: int = 5, max_depth: int = 5
+        self,
+        source_id: str,
+        target_id: str,
+        max_paths: int = 5,
+        max_depth: int = 5,
+        owner_id: Optional[str] = None,
     ) -> List[List[KnowledgeNode]]:
         """
-        Find paths between two nodes
+        Find paths between two nodes - optionally verify ownership
 
         Args:
             source_id: Starting node
             target_id: Target node
             max_paths: Maximum number of paths to return
             max_depth: Maximum path length to consider
+            owner_id: Optional owner ID to verify ownership
         """
         # For now, use repository's simple implementation
         # TODO: Implement more sophisticated algorithms (Dijkstra, A*, etc.)
-        return await self.repo.find_paths(source_id, target_id, max_paths)
+        return await self.repo.find_paths(source_id, target_id, max_paths, owner_id)
 
     # Bulk Operations
     async def create_nodes_bulk(
@@ -325,11 +374,12 @@ class KnowledgeGraphService:
         # Privacy check if enforcer available
         if self.boundary_enforcer:
             for node in nodes:
-                # TODO: Implement proper boundary check
-                # For now, allow all nodes
-                check = type("obj", (object,), {"allowed": True, "reason": None})
-                if not check.allowed:
-                    raise ValueError(f"Node '{node.name}' violates boundaries: {check.reason}")
+                # Check node content for boundary violations
+                combined_content = f"{node.name} {node.description}"
+                if await self.boundary_enforcer.check_harassment_patterns(combined_content):
+                    raise ValueError(f"Node '{node.name}' violates harassment boundaries")
+                if await self.boundary_enforcer.check_inappropriate_content(combined_content):
+                    raise ValueError(f"Node '{node.name}' contains inappropriate material")
 
         return await self.repo.create_nodes_bulk(nodes)
 
@@ -442,16 +492,16 @@ class KnowledgeGraphService:
         self,
         node_type: Optional[NodeType] = None,
         search_term: Optional[str] = None,
-        session_id: Optional[str] = None,
+        owner_id: Optional[str] = None,
         limit: int = 10,
     ) -> List[KnowledgeNode]:
         """
-        Search for nodes with boundary enforcement.
+        Search for nodes with boundary enforcement - optionally filter by owner.
 
         Args:
             node_type: Optional node type filter
             search_term: Optional search term
-            session_id: Optional session filter
+            owner_id: Optional owner ID filter (uses session_id internally)
             limit: Maximum results (subject to boundary limits)
 
         Returns:
@@ -465,12 +515,12 @@ class KnowledgeGraphService:
             actual_limit = min(limit, self.kg_boundary_enforcer.boundaries.max_result_size)
 
             # Perform search via repository
-            if node_type and session_id:
-                nodes = await self.repo.get_nodes_by_type(node_type, session_id, actual_limit)
+            if node_type and owner_id:
+                nodes = await self.repo.get_nodes_by_type(node_type, owner_id, actual_limit)
             elif node_type:
                 nodes = await self.repo.get_nodes_by_type(node_type, None, actual_limit)
-            elif session_id:
-                nodes = await self.repo.get_nodes_by_session(session_id)
+            elif owner_id:
+                nodes = await self.repo.get_nodes_by_session(owner_id)
                 nodes = nodes[:actual_limit]  # Limit results
             else:
                 # General search - get nodes by type and filter
@@ -511,14 +561,16 @@ class KnowledgeGraphService:
         start_node_id: str,
         max_depth: Optional[int] = None,
         edge_types: Optional[List[EdgeType]] = None,
+        owner_id: Optional[str] = None,
     ) -> List[Dict]:
         """
-        Traverse relationships with boundary enforcement.
+        Traverse relationships with boundary enforcement - optionally verify ownership.
 
         Args:
             start_node_id: Starting node ID
             max_depth: Optional max depth (overrides boundary default)
             edge_types: Optional filter by edge types
+            owner_id: Optional owner ID to verify ownership
 
         Returns:
             List of related nodes (may be partial if limits hit)
@@ -561,14 +613,14 @@ class KnowledgeGraphService:
 
                 visited.add(node_id)
 
-                # Get node
-                node = await self.repo.get_node_by_id(node_id)
+                # Get node (with optional ownership verification)
+                node = await self.repo.get_node_by_id(node_id, owner_id)
                 if node:
                     results.append({"node": node, "depth": current_depth})
 
                     # Get outgoing edges with limit
                     neighbors = await self.repo.find_neighbors(
-                        node_id, edge_type=None, direction="outgoing"
+                        node_id, edge_type=None, direction="outgoing", owner_id=owner_id
                     )
 
                     # Limit edges per node
@@ -588,3 +640,179 @@ class KnowledgeGraphService:
         self.logger.info(f"Traversal complete: {stats}")
 
         return results
+
+    # Issue #278: Graph-First Retrieval Pattern
+    async def expand(
+        self,
+        node_ids: List[str],
+        max_hops: int = 2,
+        edge_types: Optional[List[str]] = None,
+        owner_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Expand from given nodes to nearby nodes using specified edge types - optionally verify ownership.
+
+        This implements the graph-first retrieval pattern: query graph to gather
+        context before expensive LLM processing.
+
+        Args:
+            node_ids: Starting nodes for expansion
+            max_hops: Maximum depth for traversal (default: 2)
+            edge_types: Filter by these edge types (e.g., ['BECAUSE', 'ENABLES'])
+            owner_id: Optional owner ID to verify ownership
+
+        Returns:
+            Dictionary with expanded nodes and edges
+        """
+        visited_nodes = set(node_ids)
+        nodes_to_expand = list(node_ids)
+        all_edges = []
+
+        for hop in range(max_hops):
+            next_level = []
+
+            for node_id in nodes_to_expand:
+                # Get neighbors (with optional ownership verification)
+                neighbors = await self.repo.find_neighbors(
+                    node_id, edge_type=None, direction="outgoing", owner_id=owner_id
+                )
+
+                for neighbor_edge in neighbors:
+                    # Filter by edge type if specified
+                    if edge_types and neighbor_edge.edge_type.value not in edge_types:
+                        continue
+
+                    # Track edge and node
+                    all_edges.append(neighbor_edge)
+                    neighbor_node_id = neighbor_edge.target_node_id
+
+                    if neighbor_node_id not in visited_nodes:
+                        visited_nodes.add(neighbor_node_id)
+                        next_level.append(neighbor_node_id)
+
+            nodes_to_expand = next_level
+
+            if not nodes_to_expand:
+                break
+
+        # Retrieve all nodes (with optional ownership verification)
+        nodes = []
+        for node_id in visited_nodes:
+            node = await self.repo.get_node_by_id(node_id, owner_id)
+            if node:
+                nodes.append(node)
+
+        return {"nodes": nodes, "edges": all_edges}
+
+    async def extract_reasoning_chains(self, graph_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Extract reasoning chains from graph traversal results.
+
+        Identifies sequences of causal/enables relationships that form
+        logical reasoning paths.
+
+        Args:
+            graph_data: Result from expand() with nodes and edges
+
+        Returns:
+            List of reasoning chains
+        """
+        chains = []
+        edges = graph_data.get("edges", [])
+        nodes = {n.id: n for n in graph_data.get("nodes", [])}
+
+        # Find causal/reasoning edges
+        reasoning_edge_types = ["because", "enables", "requires", "leads_to", "prevents"]
+
+        for edge in edges:
+            if edge.edge_type.value not in reasoning_edge_types:
+                continue
+
+            source_node = nodes.get(edge.source_node_id)
+            target_node = nodes.get(edge.target_node_id)
+
+            if not source_node or not target_node:
+                continue
+
+            # Create reasoning chain entry
+            chain = {
+                "source": source_node.name,
+                "edge_type": edge.edge_type.value,
+                "target": target_node.name,
+                "confidence": getattr(edge, "confidence", 1.0),
+                "explanation": f"{source_node.name} {edge.edge_type.value} {target_node.name}",
+            }
+            chains.append(chain)
+
+        return chains
+
+    async def get_relevant_context(
+        self,
+        user_query: str,
+        user_id: UUID,
+        max_nodes: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Get relevant context from knowledge graph for a user query.
+
+        Implements the graph-first pattern: semantic search + 2-hop expansion
+        + reasoning chain extraction.
+
+        Args:
+            user_query: User's question/request
+            user_id: User ID for personalization (also owner_id for filtering)
+            max_nodes: Maximum nodes to retrieve (default: 10)
+
+        Returns:
+            Dictionary with context nodes, edges, and reasoning chains
+        """
+        self.logger.info(
+            "Getting relevant context from graph",
+            user_query=user_query,
+            user_id=user_id,
+        )
+
+        # Step 1: Search for relevant nodes
+        relevant_nodes = await self.search_nodes(user_query, owner_id=str(user_id), limit=max_nodes)
+
+        if not relevant_nodes:
+            self.logger.debug(
+                "No relevant nodes found in graph",
+                user_query=user_query,
+            )
+            return {
+                "nodes": [],
+                "edges": [],
+                "reasoning_chains": [],
+                "found_context": False,
+            }
+
+        node_ids = [node.id for node in relevant_nodes]
+
+        # Step 2: Expand to nearby nodes (2-hop traversal)
+        causal_types = ["because", "enables", "requires", "prevents", "leads_to"]
+        expanded_graph = await self.expand(
+            node_ids=node_ids,
+            max_hops=2,
+            edge_types=causal_types,
+            owner_id=str(user_id),
+        )
+
+        # Step 3: Extract reasoning chains
+        reasoning_chains = await self.extract_reasoning_chains(expanded_graph)
+
+        context = {
+            "nodes": relevant_nodes,
+            "expanded_nodes": expanded_graph["nodes"],
+            "edges": expanded_graph["edges"],
+            "reasoning_chains": reasoning_chains,
+            "found_context": True,
+        }
+
+        self.logger.info(
+            "Context retrieved from graph",
+            node_count=len(relevant_nodes),
+            chain_count=len(reasoning_chains),
+        )
+
+        return context

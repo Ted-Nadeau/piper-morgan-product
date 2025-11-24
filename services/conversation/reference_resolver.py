@@ -315,7 +315,11 @@ class ConversationMemoryService:
     """
 
     def __init__(self):
-        # Will be integrated with AsyncSessionFactory from Phase 1
+        # Integrate with AsyncSessionFactory from Phase 1
+        from services.database.repositories import ConversationRepository
+        from services.database.session_factory import AsyncSessionFactory
+
+        self.session_factory = AsyncSessionFactory()
         self.reference_resolver = ReferenceResolver()
 
     async def resolve_user_message(
@@ -327,9 +331,8 @@ class ConversationMemoryService:
         Returns:
             Tuple of (resolved_message, resolved_references, metadata)
         """
-        # TODO: Implement database query to get conversation history
-        # For now, mock the integration
-        conversation_history = []  # Will be: await self._get_conversation_history(conversation_id)
+        # Get conversation history from database
+        conversation_history = await self._get_conversation_history(conversation_id)
 
         resolved_message, resolved_refs = self.reference_resolver.resolve_references(
             user_message, conversation_history
@@ -346,6 +349,22 @@ class ConversationMemoryService:
 
     async def _get_conversation_history(self, conversation_id: str) -> List[ConversationTurn]:
         """Retrieve conversation turns from database (Phase 1 foundation)"""
-        # TODO: Implement with AsyncSessionFactory and ConversationTurn repository
-        # This will use the Phase 1 database schema
-        return []
+        try:
+            async with self.session_factory.get_session() as session:
+                # Get recent conversation turns (last 10 for context window)
+                from services.database.repositories import ConversationRepository
+
+                repo = ConversationRepository(session)
+                turns = await repo.get_conversation_turns(conversation_id, limit=10)
+                return turns
+        except Exception as e:
+            # Log error but don't fail - return empty context
+            import structlog
+
+            logger = structlog.get_logger()
+            logger.warning(
+                "Failed to retrieve conversation history",
+                conversation_id=conversation_id,
+                error=str(e),
+            )
+            return []

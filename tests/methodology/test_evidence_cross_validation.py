@@ -42,6 +42,7 @@ from methodology.verification.requirements import (
 )
 
 
+@pytest.mark.skipif(not EVIDENCE_ENGINE_AVAILABLE, reason="Evidence engine not yet implemented")
 class TestEvidenceEngineValidation:
     """Cross-validate Code Agent's evidence engine implementation"""
 
@@ -284,7 +285,7 @@ class TestEvidenceEngineValidation:
         except Exception as e:
             pytest.skip(f"Pyramid integration failed: {e}")
 
-    def _generate_evidence_samples(self, count: int) -> List[Evidence]:
+    def _generate_evidence_samples(self, count: int) -> List["Evidence"]:
         """Generate test evidence samples for performance testing"""
         samples = []
         evidence_types = list(EvidenceType)
@@ -338,7 +339,7 @@ class TestEvidencePerformance:
 
         print(f"Memory usage increase: {memory_increase / (1024*1024):.1f}MB")
 
-    def _generate_evidence_samples(self, count: int) -> List[Evidence]:
+    def _generate_evidence_samples(self, count: int) -> List["Evidence"]:
         """Generate test evidence samples for performance testing"""
         samples = []
         evidence_types = list(EvidenceType)

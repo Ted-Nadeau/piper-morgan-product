@@ -14,17 +14,23 @@ Test Coverage:
 """
 
 import json
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from fastapi.responses import JSONResponse
 
 from web.utils.error_responses import (
+    UUID,
     ErrorCode,
-    error_response,
     bad_request_error,
-    validation_error,
-    not_found_error,
+    error_response,
+    from,
+    import,
     internal_error,
+    not_found_error,
+    uuid,
+    uuid4,
+    validation_error,
 )
 
 

@@ -1,24 +1,68 @@
 """
-Learning API Routes - Pattern Management and Analytics
+================================================================================
+SPRINT A5 ENDPOINTS (Oct 20-21, 2025) - DEPRECATED AS OF NOV 13, 2025
+================================================================================
 
-CORE-LEARN-A (Issue #221)
-Exposes learning system for pattern management, feedback, and analytics.
+These endpoints were a prototype/exploration of learning concepts using
+file-based storage (QueryLearningLoop, CrossFeatureKnowledgeService).
 
-Features:
-- Pattern retrieval and management
-- Feedback submission and tracking
-- Cross-feature knowledge sharing
-- Learning analytics and statistics
+They served their purpose - proved learning value, validated approach - and
+are now superseded by Issue #300's database-backed production system.
 
-Pattern-034: Error Handling Standards (REST-compliant)
-Privacy: Metadata-only learning, no PII
+STATUS: DEPRECATED - Kept for reference only
+REPLACEMENT: Issue #300 endpoints (added below Sprint A5 code)
+DEPRECATION DATE: November 13, 2025
+REMOVAL PLANNED: After MVP launch
+
+Sprint A5 Valuable Insights:
+- Learning system is valuable to users ✓
+- Pattern-based approach works ✓
+- Automatic capture > manual teaching ✓
+- Need for multi-user support (database required) ✓
+- Analytics and collaborative features desired ✓
+
+Future Roadmap (from Sprint A5 learnings):
+- Collaborative learning → Level 3 (if >50 users)
+- Advanced analytics → Post-MVP enhancement
+- Export/import → Data portability feature
+- Manual pattern teaching → Phase 3-4 explicit feedback
+
+DO NOT USE SPRINT A5 ENDPOINTS IN NEW CODE
+
+================================================================================
+ISSUE #300 ENDPOINTS (Nov 12-13, 2025) - PRODUCTION IMPLEMENTATION
+================================================================================
+
+Database-backed learning system with automatic real-time capture.
+
+Architecture:
+- Backend: LearningHandler (services/learning/learning_handler.py)
+- Models: LearnedPattern, LearningSettings (services/database/models.py)
+- Integration: IntentService (automatic capture + outcome recording)
+
+See: gameplan-300-learning-basic-revised.md for complete architecture
+See: dev/active/sprint-a5-vs-phase2-analysis.md for supersession rationale
+
+Phase 2 Endpoints (added after Sprint A5 code below):
+- GET /patterns - List user's learned patterns
+- GET /patterns/{id} - Get pattern details
+- DELETE /patterns/{id} - Delete pattern
+- POST /patterns/{id}/enable - Enable pattern
+- POST /patterns/{id}/disable - Disable pattern
+- GET /settings - Get learning settings
+- PUT /settings - Update learning settings
 """
 
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from services.database.models import LearnedPattern, LearningSettings
+from services.database.session_factory import AsyncSessionFactory
 from services.learning.cross_feature_knowledge import CrossFeatureKnowledgeService
 from services.learning.query_learning_loop import PatternType, QueryLearningLoop
 from web.utils.error_responses import internal_error, not_found_error, validation_error
@@ -64,11 +108,16 @@ def get_cross_feature_service_instance() -> Optional[CrossFeatureKnowledgeServic
 class PatternRequest(BaseModel):
     """Request body for learning a new pattern."""
 
-    pattern_type: str = Field(..., description="Pattern type (query_pattern, response_pattern, workflow_pattern, integration_pattern, user_preference_pattern)")
+    pattern_type: str = Field(
+        ...,
+        description="Pattern type (query_pattern, response_pattern, workflow_pattern, integration_pattern, user_preference_pattern)",
+    )
     source_feature: str = Field(..., description="Feature that generated the pattern")
     pattern_data: Dict[str, Any] = Field(..., description="The actual pattern data")
     initial_confidence: float = Field(0.5, ge=0.0, le=1.0, description="Starting confidence level")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata about the pattern")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata about the pattern"
+    )
 
 
 class FeedbackRequest(BaseModel):
@@ -101,7 +150,7 @@ class KnowledgeSharingRequest(BaseModel):
 # ============================================================================
 
 
-@router.get("/patterns")
+# @router.get("/patterns")
 async def get_patterns(
     source_feature: Optional[str] = Query(None, description="Filter by source feature"),
     min_confidence: float = Query(0.5, ge=0.0, le=1.0, description="Minimum confidence"),
@@ -150,7 +199,7 @@ async def get_patterns(
         )
 
 
-@router.post("/patterns")
+# @router.post("/patterns")
 async def learn_pattern(pattern: PatternRequest) -> Dict[str, Any]:
     """
     Learn a new pattern from query and context.
@@ -201,7 +250,7 @@ async def learn_pattern(pattern: PatternRequest) -> Dict[str, Any]:
         )
 
 
-@router.post("/patterns/apply")
+# @router.post("/patterns/apply")
 async def apply_pattern(request: ApplyPatternRequest) -> Dict[str, Any]:
     """
     Apply a learned pattern to new context.
@@ -250,7 +299,7 @@ async def apply_pattern(request: ApplyPatternRequest) -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.post("/feedback")
+# @router.post("/feedback")
 async def submit_feedback(feedback: FeedbackRequest) -> Dict[str, Any]:
     """
     Submit feedback on a pattern application.
@@ -304,7 +353,7 @@ async def submit_feedback(feedback: FeedbackRequest) -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.get("/analytics")
+# @router.get("/analytics")
 async def get_analytics() -> Dict[str, Any]:
     """
     Get learning system analytics and statistics.
@@ -342,7 +391,7 @@ async def get_analytics() -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.get("/knowledge/shared")
+# @router.get("/knowledge/shared")
 async def get_shared_knowledge(
     source_feature: Optional[str] = Query(None, description="Filter by source feature"),
     target_feature: Optional[str] = Query(None, description="Filter by target feature"),
@@ -383,7 +432,7 @@ async def get_shared_knowledge(
         )
 
 
-@router.post("/knowledge/share")
+# @router.post("/knowledge/share")
 async def share_knowledge(request: KnowledgeSharingRequest) -> Dict[str, Any]:
     """
     Share knowledge between features.
@@ -431,7 +480,7 @@ async def share_knowledge(request: KnowledgeSharingRequest) -> Dict[str, Any]:
         )
 
 
-@router.get("/knowledge/stats")
+# @router.get("/knowledge/stats")
 async def get_knowledge_stats() -> Dict[str, Any]:
     """
     Get cross-feature knowledge sharing statistics.
@@ -476,7 +525,7 @@ async def get_knowledge_stats() -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.get("/health")
+# @router.get("/health")
 async def health_check() -> Dict[str, Any]:
     """
     Learning system health check.
@@ -516,7 +565,7 @@ async def health_check() -> Dict[str, Any]:
 # ============================================================================
 
 
-@router.post("/controls/learning/enable")
+# @router.post("/controls/learning/enable")
 async def enable_learning(user_id: str) -> Dict[str, Any]:
     """
     Enable learning for a user.
@@ -549,7 +598,7 @@ async def enable_learning(user_id: str) -> Dict[str, Any]:
         )
 
 
-@router.post("/controls/learning/disable")
+# @router.post("/controls/learning/disable")
 async def disable_learning(user_id: str) -> Dict[str, Any]:
     """
     Disable learning for a user.
@@ -583,7 +632,7 @@ async def disable_learning(user_id: str) -> Dict[str, Any]:
         )
 
 
-@router.get("/controls/learning/status")
+# @router.get("/controls/learning/status")
 async def get_learning_status(user_id: str) -> Dict[str, Any]:
     """
     Get current learning status for a user.
@@ -613,9 +662,12 @@ async def get_learning_status(user_id: str) -> Dict[str, Any]:
         )
 
 
-@router.delete("/controls/data/clear")
+# @router.delete("/controls/data/clear")
 async def clear_learned_data(
-    user_id: str, data_type: str = Query("all", description="Type of data to clear: all, patterns, preferences, automation")
+    user_id: str,
+    data_type: str = Query(
+        "all", description="Type of data to clear: all, patterns, preferences, automation"
+    ),
 ) -> Dict[str, Any]:
     """
     Clear learned data for a user.
@@ -640,7 +692,9 @@ async def clear_learned_data(
             # Note: Patterns are stored globally, not per-user
             # For user-specific clearing, we'd need to add user filtering
             results["patterns_cleared"] = True
-            results["note"] = "Pattern clearing requires user-specific filtering (future enhancement)"
+            results["note"] = (
+                "Pattern clearing requires user-specific filtering (future enhancement)"
+            )
 
         if data_type in ["all", "preferences"]:
             # Clear user preferences
@@ -656,7 +710,9 @@ async def clear_learned_data(
             audit_trail = get_audit_trail()
             # Note: AuditTrail has global clear, not user-specific
             results["automation_cleared"] = True
-            results["note"] = "Automation data clearing requires user filtering (future enhancement)"
+            results["note"] = (
+                "Automation data clearing requires user filtering (future enhancement)"
+            )
 
         return {
             "status": "success",
@@ -672,7 +728,7 @@ async def clear_learned_data(
         )
 
 
-@router.get("/controls/export")
+# @router.get("/controls/export")
 async def export_preferences(
     user_id: str, format: str = Query("json", description="Export format: json or csv")
 ) -> Dict[str, Any]:
@@ -704,15 +760,9 @@ async def export_preferences(
         }
 
         # Get learning preferences
-        learning_enabled = await preference_manager.get_preference(
-            user_id, "learning_enabled"
-        )
-        automation_enabled = await preference_manager.get_preference(
-            user_id, "automation_enabled"
-        )
-        privacy_settings = await preference_manager.get_preference(
-            user_id, "privacy_settings"
-        )
+        learning_enabled = await preference_manager.get_preference(user_id, "learning_enabled")
+        automation_enabled = await preference_manager.get_preference(user_id, "automation_enabled")
+        privacy_settings = await preference_manager.get_preference(user_id, "privacy_settings")
 
         export_data["preferences"] = {
             "learning_enabled": learning_enabled if learning_enabled is not None else True,
@@ -726,7 +776,11 @@ async def export_preferences(
         )
         export_data["patterns"] = [
             {
-                "pattern_type": p.pattern_type.value if hasattr(p.pattern_type, 'value') else str(p.pattern_type),
+                "pattern_type": (
+                    p.pattern_type.value
+                    if hasattr(p.pattern_type, "value")
+                    else str(p.pattern_type)
+                ),
                 "confidence": p.confidence,
                 "usage_count": p.usage_count,
                 "source_feature": p.source_feature,
@@ -734,7 +788,9 @@ async def export_preferences(
             for p in patterns[:100]  # Limit to 100 patterns
         ]
 
-        export_data["note"] = "Pattern export shows all patterns (user-specific filtering is a future enhancement)"
+        export_data["note"] = (
+            "Pattern export shows all patterns (user-specific filtering is a future enhancement)"
+        )
 
         if format == "json":
             return export_data
@@ -752,15 +808,11 @@ async def export_preferences(
             )
 
     except Exception as e:
-        return internal_error(
-            message=f"Failed to export data: {str(e)}", error_id="EXPORT_ERROR"
-        )
+        return internal_error(message=f"Failed to export data: {str(e)}", error_id="EXPORT_ERROR")
 
 
-@router.post("/controls/privacy/settings")
-async def set_privacy_settings(
-    user_id: str, settings: Dict[str, Any]
-) -> Dict[str, Any]:
+# @router.post("/controls/privacy/settings")
+async def set_privacy_settings(user_id: str, settings: Dict[str, Any]) -> Dict[str, Any]:
     """
     Set privacy settings for user.
 
@@ -810,7 +862,7 @@ async def set_privacy_settings(
         )
 
 
-@router.get("/controls/privacy/settings")
+# @router.get("/controls/privacy/settings")
 async def get_privacy_settings(user_id: str) -> Dict[str, Any]:
     """
     Get current privacy settings for user.
@@ -843,4 +895,615 @@ async def get_privacy_settings(user_id: str) -> Dict[str, Any]:
         return internal_error(
             message=f"Failed to get privacy settings: {str(e)}",
             error_id="GET_PRIVACY_ERROR",
+        )
+
+
+# ============================================================================
+# Issue #300 Phase 2 - Database-backed Pattern Management (PRODUCTION)
+# ============================================================================
+
+# Hardcoded user ID for Phase 2 manual testing (auth integration in Phase 3+)
+TEST_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+
+
+# Pattern Management Endpoints
+
+
+@router.get("/patterns")
+async def list_patterns() -> Dict[str, Any]:
+    """
+    List all learned patterns for the test user.
+
+    Returns patterns ordered by most recently used first.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearnedPattern)
+                .where(LearnedPattern.user_id == TEST_USER_ID)
+                .order_by(LearnedPattern.last_used_at.desc())
+            )
+            patterns = result.scalars().all()
+
+            return {
+                "patterns": [
+                    {
+                        "id": str(pattern.id),
+                        "pattern_type": pattern.pattern_type.value,
+                        "pattern_data": pattern.pattern_data,
+                        "confidence": pattern.confidence,
+                        "usage_count": pattern.usage_count,
+                        "success_count": pattern.success_count,
+                        "failure_count": pattern.failure_count,
+                        "enabled": pattern.enabled,
+                        "last_used_at": (
+                            pattern.last_used_at.isoformat() if pattern.last_used_at else None
+                        ),
+                        "created_at": pattern.created_at.isoformat(),
+                        "updated_at": pattern.updated_at.isoformat(),
+                    }
+                    for pattern in patterns
+                ],
+                "count": len(patterns),
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to list patterns: {str(e)}",
+            error_id="LIST_PATTERNS_ERROR",
+        )
+
+
+@router.get("/patterns/{pattern_id}")
+async def get_pattern(pattern_id: str) -> Dict[str, Any]:
+    """
+    Get details of a specific learned pattern.
+
+    Args:
+        pattern_id: UUID of the pattern
+
+    Returns:
+        Pattern details with full metadata
+    """
+    try:
+        pattern_uuid = UUID(pattern_id)
+    except ValueError:
+        return validation_error(
+            message=f"Invalid pattern ID format: {pattern_id}",
+            details={"error_id": "INVALID_PATTERN_ID", "pattern_id": pattern_id},
+        )
+
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearnedPattern).where(
+                    and_(
+                        LearnedPattern.id == pattern_uuid,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    details={"error_id": "PATTERN_NOT_FOUND", "pattern_id": pattern_id},
+                )
+
+            return {
+                "pattern": {
+                    "id": str(pattern.id),
+                    "pattern_type": pattern.pattern_type.value,
+                    "pattern_data": pattern.pattern_data,
+                    "confidence": pattern.confidence,
+                    "usage_count": pattern.usage_count,
+                    "success_count": pattern.success_count,
+                    "failure_count": pattern.failure_count,
+                    "enabled": pattern.enabled,
+                    "last_used_at": (
+                        pattern.last_used_at.isoformat() if pattern.last_used_at else None
+                    ),
+                    "created_at": pattern.created_at.isoformat(),
+                    "updated_at": pattern.updated_at.isoformat(),
+                }
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to get pattern: {str(e)}",
+            error_id="GET_PATTERN_ERROR",
+        )
+
+
+@router.delete("/patterns/{pattern_id}")
+async def delete_pattern(pattern_id: str) -> Dict[str, Any]:
+    """
+    Delete a learned pattern.
+
+    Args:
+        pattern_id: UUID of the pattern to delete
+
+    Returns:
+        Success confirmation
+    """
+    try:
+        pattern_uuid = UUID(pattern_id)
+    except ValueError:
+        return validation_error(
+            message=f"Invalid pattern ID format: {pattern_id}",
+            details={"error_id": "INVALID_PATTERN_ID", "pattern_id": pattern_id},
+        )
+
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearnedPattern).where(
+                    and_(
+                        LearnedPattern.id == pattern_uuid,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    details={"error_id": "PATTERN_NOT_FOUND", "pattern_id": pattern_id},
+                )
+
+            await session.delete(pattern)
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": f"Pattern {pattern_id} deleted successfully",
+                "pattern_id": pattern_id,
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to delete pattern: {str(e)}",
+            error_id="DELETE_PATTERN_ERROR",
+        )
+
+
+@router.post("/patterns/{pattern_id}/enable")
+async def enable_pattern(pattern_id: str) -> Dict[str, Any]:
+    """
+    Enable a learned pattern.
+
+    Args:
+        pattern_id: UUID of the pattern to enable
+
+    Returns:
+        Updated pattern with enabled=True
+    """
+    try:
+        pattern_uuid = UUID(pattern_id)
+    except ValueError:
+        return validation_error(
+            message=f"Invalid pattern ID format: {pattern_id}",
+            details={"error_id": "INVALID_PATTERN_ID", "pattern_id": pattern_id},
+        )
+
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearnedPattern)
+                .where(
+                    and_(
+                        LearnedPattern.id == pattern_uuid,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+                .with_for_update()
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    details={"error_id": "PATTERN_NOT_FOUND", "pattern_id": pattern_id},
+                )
+
+            pattern.enabled = True
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": f"Pattern {pattern_id} enabled",
+                "pattern": {
+                    "id": str(pattern.id),
+                    "enabled": pattern.enabled,
+                },
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to enable pattern: {str(e)}",
+            error_id="ENABLE_PATTERN_ERROR",
+        )
+
+
+@router.post("/patterns/{pattern_id}/disable")
+async def disable_pattern(pattern_id: str) -> Dict[str, Any]:
+    """
+    Disable a learned pattern.
+
+    Args:
+        pattern_id: UUID of the pattern to disable
+
+    Returns:
+        Updated pattern with enabled=False
+    """
+    try:
+        pattern_uuid = UUID(pattern_id)
+    except ValueError:
+        return validation_error(
+            message=f"Invalid pattern ID format: {pattern_id}",
+            details={"error_id": "INVALID_PATTERN_ID", "pattern_id": pattern_id},
+        )
+
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearnedPattern)
+                .where(
+                    and_(
+                        LearnedPattern.id == pattern_uuid,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+                .with_for_update()
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    details={"error_id": "PATTERN_NOT_FOUND", "pattern_id": pattern_id},
+                )
+
+            pattern.enabled = False
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": f"Pattern {pattern_id} disabled",
+                "pattern": {
+                    "id": str(pattern.id),
+                    "enabled": pattern.enabled,
+                },
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to disable pattern: {str(e)}",
+            error_id="DISABLE_PATTERN_ERROR",
+        )
+
+
+@router.post("/patterns/{pattern_id}/execute")
+async def execute_pattern(pattern_id: str) -> Dict[str, Any]:
+    """
+    Execute a pattern action (Phase 4 - proactive execution).
+
+    Called when user clicks "Execute Now" on a proactive suggestion.
+
+    Args:
+        pattern_id: UUID of the pattern to execute
+
+    Returns:
+        Execution result from ActionRegistry
+    """
+    try:
+        pattern_uuid = UUID(pattern_id)
+    except ValueError:
+        return validation_error(
+            message=f"Invalid pattern ID format: {pattern_id}",
+            details={"error_id": "INVALID_PATTERN_ID", "pattern_id": pattern_id},
+        )
+
+    try:
+        from services.actions.action_registry import ActionRegistry
+
+        async with AsyncSessionFactory.session_scope() as session:
+            # Get pattern
+            result = await session.execute(
+                select(LearnedPattern).where(
+                    and_(
+                        LearnedPattern.id == pattern_uuid,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    details={
+                        "error_id": "PATTERN_NOT_FOUND",
+                        "pattern_id": pattern_id,
+                    },
+                )
+
+            # Extract action from pattern
+            pattern_data = pattern.pattern_data
+            action_type = pattern_data.get("action_type")
+            action_params = pattern_data.get("action_params", {})
+
+            if not action_type:
+                return validation_error(
+                    message="Pattern has no action_type defined",
+                    details={
+                        "error_id": "MISSING_ACTION_TYPE",
+                        "pattern_id": pattern_id,
+                    },
+                )
+
+            # Execute via Action Registry
+            try:
+                context = {"user_id": pattern.user_id, "pattern_id": pattern.id}
+
+                execution_result = await ActionRegistry.execute(
+                    action_type, action_params, context
+                )
+
+                # Record as success
+                pattern.success_count += 1
+                pattern.confidence = min(pattern.confidence * 1.05, 1.0)
+                pattern.updated_at = datetime.utcnow()
+                await session.commit()
+
+                return {
+                    "success": True,
+                    "message": execution_result.get(
+                        "message", "Action executed successfully"
+                    ),
+                    "result": execution_result,
+                    "pattern": {
+                        "id": str(pattern.id),
+                        "confidence": round(pattern.confidence, 2),
+                        "success_count": pattern.success_count,
+                    },
+                }
+
+            except Exception as exec_error:
+                # Record as failure
+                pattern.failure_count += 1
+                pattern.confidence *= 0.9
+                await session.commit()
+
+                return internal_error(
+                    message=f"Execution failed: {str(exec_error)}",
+                    error_id="PATTERN_EXECUTION_ERROR",
+                )
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to execute pattern: {str(e)}",
+            error_id="EXECUTE_PATTERN_ERROR",
+        )
+
+
+# Learning Settings Endpoints
+
+
+@router.get("/settings")
+async def get_settings() -> Dict[str, Any]:
+    """
+    Get learning settings for the test user.
+
+    Returns settings or default values if not yet configured.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
+            )
+            settings = result.scalar_one_or_none()
+
+            if not settings:
+                # Return defaults if no settings exist yet
+                return {
+                    "settings": {
+                        "learning_enabled": True,
+                        "suggestion_threshold": 0.7,
+                        "automation_threshold": 0.9,
+                        "auto_apply_enabled": False,
+                        "notification_enabled": True,
+                    },
+                    "configured": False,
+                }
+
+            return {
+                "settings": {
+                    "learning_enabled": settings.learning_enabled,
+                    "suggestion_threshold": settings.suggestion_threshold,
+                    "automation_threshold": settings.automation_threshold,
+                    "auto_apply_enabled": settings.auto_apply_enabled,
+                    "notification_enabled": settings.notification_enabled,
+                    "created_at": settings.created_at.isoformat() if settings.created_at else None,
+                    "updated_at": settings.updated_at.isoformat() if settings.updated_at else None,
+                },
+                "configured": True,
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to get settings: {str(e)}",
+            error_id="GET_SETTINGS_ERROR",
+        )
+
+
+class SettingsUpdate(BaseModel):
+    """Request model for updating learning settings"""
+
+    learning_enabled: Optional[bool] = None
+    suggestion_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
+    automation_threshold: Optional[float] = Field(None, ge=0.0, le=1.0)
+    auto_apply_enabled: Optional[bool] = None
+    notification_enabled: Optional[bool] = None
+
+
+class PatternFeedback(BaseModel):
+    """Request model for pattern suggestion feedback (Phase 3)"""
+
+    action: str = Field(..., description="Feedback action: 'accept', 'reject', or 'dismiss'")
+    feedback_text: Optional[str] = Field(None, description="Optional user feedback text")
+
+
+@router.put("/settings")
+async def update_settings(settings_update: SettingsUpdate) -> Dict[str, Any]:
+    """
+    Update learning settings for the test user.
+
+    Creates settings if they don't exist, updates if they do.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            result = await session.execute(
+                select(LearningSettings)
+                .where(LearningSettings.user_id == TEST_USER_ID)
+                .with_for_update()
+            )
+            settings = result.scalar_one_or_none()
+
+            if not settings:
+                # Create new settings
+                settings = LearningSettings(
+                    user_id=TEST_USER_ID,
+                    learning_enabled=(
+                        settings_update.learning_enabled
+                        if settings_update.learning_enabled is not None
+                        else True
+                    ),
+                    suggestion_threshold=settings_update.suggestion_threshold or 0.7,
+                    automation_threshold=settings_update.automation_threshold or 0.9,
+                    auto_apply_enabled=settings_update.auto_apply_enabled or False,
+                    notification_enabled=(
+                        settings_update.notification_enabled
+                        if settings_update.notification_enabled is not None
+                        else True
+                    ),
+                )
+                session.add(settings)
+            else:
+                # Update existing settings
+                if settings_update.learning_enabled is not None:
+                    settings.learning_enabled = settings_update.learning_enabled
+                if settings_update.suggestion_threshold is not None:
+                    settings.suggestion_threshold = settings_update.suggestion_threshold
+                if settings_update.automation_threshold is not None:
+                    settings.automation_threshold = settings_update.automation_threshold
+                if settings_update.auto_apply_enabled is not None:
+                    settings.auto_apply_enabled = settings_update.auto_apply_enabled
+                if settings_update.notification_enabled is not None:
+                    settings.notification_enabled = settings_update.notification_enabled
+
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": "Settings updated successfully",
+                "settings": {
+                    "learning_enabled": settings.learning_enabled,
+                    "suggestion_threshold": settings.suggestion_threshold,
+                    "automation_threshold": settings.automation_threshold,
+                    "auto_apply_enabled": settings.auto_apply_enabled,
+                    "notification_enabled": settings.notification_enabled,
+                },
+            }
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to update settings: {str(e)}",
+            error_id="UPDATE_SETTINGS_ERROR",
+        )
+
+
+# ============================================================================
+# Phase 3: Pattern Feedback Endpoint
+# ============================================================================
+
+
+@router.post("/patterns/{pattern_id}/feedback")
+async def provide_pattern_feedback(pattern_id: UUID, feedback: PatternFeedback) -> Dict[str, Any]:
+    """
+    Submit feedback on a pattern suggestion (Phase 3).
+
+    Actions:
+    - 'accept': Increase confidence (* 1.1, cap at 1.0), success_count += 2
+    - 'reject': Decrease confidence (* 0.5), failure_count += 2
+    - 'dismiss': No confidence change, just track dismissal
+
+    This endpoint is called by the frontend suggestion UI when users
+    interact with pattern suggestion cards.
+    """
+    try:
+        async with AsyncSessionFactory.session_scope() as session:
+            # Get pattern with row lock
+            result = await session.execute(
+                select(LearnedPattern)
+                .where(
+                    and_(
+                        LearnedPattern.id == pattern_id,
+                        LearnedPattern.user_id == TEST_USER_ID,
+                    )
+                )
+                .with_for_update()
+            )
+            pattern = result.scalar_one_or_none()
+
+            if not pattern:
+                return not_found_error(
+                    message=f"Pattern {pattern_id} not found",
+                    error_id="PATTERN_NOT_FOUND",
+                )
+
+            # Apply feedback based on action
+            action = feedback.action.lower()
+
+            if action == "accept":
+                # Increase confidence
+                pattern.confidence = min(1.0, pattern.confidence * 1.1)
+                pattern.success_count += 2
+                message = "Pattern accepted - confidence increased"
+
+            elif action == "reject":
+                # Decrease confidence
+                pattern.confidence = pattern.confidence * 0.5
+                pattern.failure_count += 2
+
+                # Auto-disable if confidence falls below threshold
+                if pattern.confidence < 0.3:
+                    pattern.enabled = False
+                    message = "Pattern rejected - confidence decreased and pattern disabled"
+                else:
+                    message = "Pattern rejected - confidence decreased"
+
+            elif action == "dismiss":
+                # No confidence change, just track
+                message = "Pattern dismissed"
+
+            else:
+                return validation_error(
+                    message=f"Invalid action: {action}. Must be 'accept', 'reject', or 'dismiss'",
+                    error_id="INVALID_FEEDBACK_ACTION",
+                )
+
+            await session.commit()
+
+            return {
+                "success": True,
+                "message": message,
+                "pattern": {
+                    "id": str(pattern.id),
+                    "confidence": round(pattern.confidence, 2),
+                    "success_count": pattern.success_count,
+                    "failure_count": pattern.failure_count,
+                    "enabled": pattern.enabled,
+                },
+            }
+
+    except Exception as e:
+        return internal_error(
+            message=f"Failed to submit feedback: {str(e)}",
+            error_id="FEEDBACK_SUBMISSION_ERROR",
         )

@@ -21,7 +21,7 @@ Performance: <2s end-to-end target
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -240,13 +240,17 @@ async def get_current_user_optional(
 
     # Auth enabled (production default) - validate JWT token
     if not credentials:
-        raise HTTPException(
+        # Issue #283: Use APIError so exception handler can convert to friendly message
+        from services.api.errors import APIError
+
+        raise APIError(
             status_code=401,
-            detail="Authentication required",
-            headers={"WWW-Authenticate": "Bearer"},
+            error_code="AUTHENTICATION_REQUIRED",
+            details={"detail": "Authentication required"},
         )
 
     # Validate token
+    from services.api.errors import APIError
     from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
     jwt_service = JWTService()
@@ -255,31 +259,31 @@ async def get_current_user_optional(
         claims = await jwt_service.validate_token(credentials.credentials)
 
         if not claims:
-            raise HTTPException(
+            raise APIError(
                 status_code=401,
-                detail="Invalid or expired token",
-                headers={"WWW-Authenticate": "Bearer"},
+                error_code="INVALID_TOKEN",
+                details={"detail": "Invalid or expired token"},
             )
 
         return claims
 
     except TokenRevoked:
-        raise HTTPException(
+        raise APIError(
             status_code=401,
-            detail="Token has been revoked",
-            headers={"WWW-Authenticate": "Bearer"},
+            error_code="TOKEN_REVOKED",
+            details={"detail": "Token has been revoked"},
         )
     except TokenExpired:
-        raise HTTPException(
+        raise APIError(
             status_code=401,
-            detail="Token has expired",
-            headers={"WWW-Authenticate": "Bearer"},
+            error_code="TOKEN_EXPIRED",
+            details={"detail": "Token has expired"},
         )
     except TokenInvalid:
-        raise HTTPException(
+        raise APIError(
             status_code=401,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
+            error_code="INVALID_TOKEN",
+            details={"detail": "Invalid token"},
         )
 
 
@@ -708,7 +712,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         service="standup-api",
-        timestamp=datetime.now().isoformat(),
+        timestamp=datetime.now(timezone.utc).isoformat(),
         modes_available=5,
         formats_available=4,
     )

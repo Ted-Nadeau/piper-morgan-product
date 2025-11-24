@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 
 import structlog
-from fastapi import FastAPI, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -43,6 +43,129 @@ API_BASE_URL = port_config.get_api_base_url()
 
 # Initialize logger
 logger = structlog.get_logger()
+
+
+# Pattern-007: Graceful degradation helper functions
+def _extract_degradation_message(error: Exception) -> str:
+    """
+    Extract user-friendly degradation message from exception.
+
+    Maps technical exceptions to actionable user guidance following Pattern-007.
+    Never exposes technical details, always provides recovery guidance.
+
+    Args:
+        error: The exception that occurred
+
+    Returns:
+        User-friendly degradation message with recovery guidance
+    """
+    error_msg = str(error).lower()
+
+    # Database connection failures
+    if "database" in error_msg or "connection" in error_msg or "psycopg" in error_msg:
+        return "Database temporarily unavailable. Please ensure Docker is running and try again."
+
+    # File service failures
+    if "file" in error_msg and ("service" in error_msg or "unavailable" in error_msg):
+        return "File service temporarily unavailable. Please try again in a few moments."
+
+    # Circuit breaker failures
+    if "circuit breaker" in error_msg or "circuit" in error_msg:
+        return "Service temporarily overloaded. Please try again in a few moments."
+
+    # Conversation service failures
+    if "conversation" in error_msg and ("service" in error_msg or "unavailable" in error_msg):
+        return "Conversation service temporarily unavailable. Please try again shortly."
+
+    # Generic degradation message
+    return "Service temporarily unavailable. Please try again in a few moments."
+
+
+def _create_degradation_response(message: str, degradation_msg: str) -> dict:
+    """
+    Create structured IntentResponse for graceful degradation.
+
+    Implements Pattern-007 requirement: maintain consistent response structure
+    even when services fail. Returns 200 OK with user-friendly message.
+
+    Args:
+        message: Original user message
+        degradation_msg: User-friendly degradation message
+
+    Returns:
+        Structured IntentResponse dict with degradation message
+    """
+    # Try to infer basic intent from message for better UX
+    message_lower = message.lower()
+    action = "unknown"
+    category = "query"
+
+    # Simple intent inference for common patterns
+    if "list" in message_lower and "project" in message_lower:
+        action = "list_projects"
+    elif (
+        any(word in message_lower for word in ["count", "how many", "number of"])
+        and "project" in message_lower
+    ):
+        action = "count_projects"
+    elif "default project" in message_lower:
+        action = "get_default_project"
+    elif "show" in message_lower and "project" in message_lower:
+        action = "get_default_project"
+    elif "read" in message_lower and "file" in message_lower:
+        action = "read_file_contents"
+    elif any(greeting in message_lower for greeting in ["hello", "hi", "hey"]):
+        action = "greeting"
+        category = "conversation"
+
+    return {
+        "message": degradation_msg,
+        "intent": {
+            "action": action,
+            "category": category,
+            "confidence": 0.0,  # Low confidence due to degradation
+            "context": {},
+        },
+        "workflow_id": None,
+        "requires_clarification": False,
+        "clarification_type": None,
+        "suggestions": [],
+    }
+
+
+def _extract_user_context(request: Request) -> dict:
+    """
+    Extract user context from request state for template injection.
+
+    Retrieves authenticated user information from request.state (set by auth middleware)
+    and returns it as a dict for passing to templates. The navigation component uses this
+    to populate the user dropdown menu with the actual username instead of the default
+    "user" placeholder.
+
+    Args:
+        request: FastAPI Request object with user_claims/user_id in state
+
+    Returns:
+        dict with 'user_id', 'username', and 'is_admin' keys for template context
+    """
+    user_id = getattr(request.state, "user_id", "user")
+
+    # Try to get username from user_claims if available
+    username = user_id  # Default to user_id
+    user_claims = getattr(request.state, "user_claims", None)
+    if user_claims and hasattr(user_claims, "username"):
+        username = user_claims.username
+    elif user_claims and isinstance(user_claims, dict) and "username" in user_claims:
+        username = user_claims["username"]
+
+    # Extract is_admin flag from user claims (SEC-RBAC Phase 3)
+    is_admin = False
+    if user_claims:
+        is_admin = getattr(user_claims, "is_admin", False) or (
+            isinstance(user_claims, dict) and user_claims.get("is_admin", False)
+        )
+
+    return {"user_id": user_id, "username": username, "is_admin": is_admin}
 
 
 @asynccontextmanager
@@ -203,36 +326,27 @@ async def lifespan(app: FastAPI):
         print(f"⚠️ Failed to mount standup API router: {e}")
         print("   Continuing without standup API\n")
 
-    # Mount learning API router (Issue #221 - CORE-LEARN-A)
-    print("\n🧠 Mounting Learning API Router...")
+    # Issue #300 database-backed learning system (Nov 12-13, 2025)
+    # Phase 2.1: Pattern management endpoints enabled
+    print("\n🧠 Learning API Router (Issue #300 Phase 2)...")
     try:
         from web.api.routes.learning import router as learning_router
 
         app.include_router(learning_router)
         print("✅ Learning API router mounted at /api/v1/learning")
-        print("   Endpoints:")
+        print("   Phase 2.1 Endpoints:")
         print("   - GET /api/v1/learning/patterns")
-        print("   - POST /api/v1/learning/patterns")
-        print("   - POST /api/v1/learning/feedback")
-        print("   - GET /api/v1/learning/analytics")
-        print("   - GET /api/v1/learning/knowledge/shared")
-        print("   - GET /api/v1/learning/health")
+        print("   - GET /api/v1/learning/patterns/{id}")
+        print("   - DELETE /api/v1/learning/patterns/{id}")
+        print("   - POST /api/v1/learning/patterns/{id}/enable")
+        print("   - POST /api/v1/learning/patterns/{id}/disable")
     except Exception as e:
         print(f"⚠️ Failed to mount learning API router: {e}")
         print("   Continuing without learning API\n")
 
-    # Mount auth API router (Issue #227 - CORE-USERS-JWT)
-    print("\n🔐 Mounting Auth API Router...")
-    try:
-        from web.api.routes.auth import router as auth_router
-
-        app.include_router(auth_router)
-        print("✅ Auth API router mounted at /api/v1/auth")
-        print("   Endpoints:")
-        print("   - POST /api/v1/auth/logout")
-    except Exception as e:
-        print(f"⚠️ Failed to mount auth API router: {e}")
-        print("   Continuing without auth API\n")
+    # Auth API router mounted at module level (after app creation)
+    # See line ~360 where router is registered before app starts
+    # Files and documents API routers also mounted at module level (below)
 
     # Mount health API router (Issue #229 - CORE-USERS-PROD)
     print("\n❤️ Mounting Health API Router...")
@@ -333,25 +447,244 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Issue #283: Enhanced error handling with user-friendly messages
+# Mount BEFORE other middleware so it catches exceptions from all handlers
+try:
+    from web.middleware.enhanced_error_middleware import EnhancedErrorMiddleware
+
+    app.add_middleware(EnhancedErrorMiddleware)
+    logger.info("✅ EnhancedErrorMiddleware registered (Issue #283 - CORE-ALPHA-ERROR-MESSAGES)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount EnhancedErrorMiddleware: {e}")
+
+# Issue #283: Custom HTTPException handler for friendly error messages
+# This catches FastAPI's built-in HTTPException errors (401, 404, etc) which bypass middleware
+try:
+    from fastapi import HTTPException, Request
+    from fastapi.responses import JSONResponse
+
+    from services.ui_messages.user_friendly_errors import UserFriendlyErrorService
+
+    error_service = UserFriendlyErrorService()
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+        """
+        Convert FastAPI HTTPException to user-friendly messages.
+
+        This handler intercepts FastAPI's built-in error responses (401, 404, etc)
+        that bypass normal middleware exception handling, and converts them using
+        UserFriendlyErrorService for consistent user-friendly messaging.
+        """
+        # Get friendly message based on status code and exception detail
+        friendly_message = None
+
+        if exc.status_code == 401:
+            # Authentication errors
+            friendly_message = "Let's try logging in again. Your session may have expired."
+        elif exc.status_code == 403:
+            # Permission errors
+            friendly_message = "You don't have permission to access that. Please contact your administrator if you think this is incorrect."
+        elif exc.status_code == 404:
+            # Not found errors
+            friendly_message = "I couldn't find that. It may have been moved or deleted."
+        elif exc.status_code == 422:
+            # Validation errors
+            friendly_message = f"I couldn't process that request: {str(exc.detail)}"
+        elif exc.status_code >= 500:
+            # Server errors
+            friendly_message = (
+                "Something went wrong on my end. I've logged the details for debugging."
+            )
+        else:
+            # Fallback to original detail
+            friendly_message = str(exc.detail)
+
+        # CRITICAL: Log technical details server-side for debugging
+        logger.error(
+            "http_exception",
+            status_code=exc.status_code,
+            detail=str(exc.detail),
+            path=request.url.path,
+            method=request.method,
+        )
+
+        # Return friendly message to user
+        return JSONResponse(status_code=exc.status_code, content={"message": friendly_message})
+
+    logger.info(
+        "✅ HTTPException handler registered (Issue #283 - catches 401, 404, 403, 422 errors)"
+    )
+except Exception as e:
+    logger.error(f"⚠️ Failed to register HTTPException handler: {e}")
+
+# Issue #283: APIError exception handler for dependency-level errors
+# Dependencies execute BEFORE middleware, so exceptions raised in Depends() need
+# this handler to be caught and converted to friendly messages
+try:
+    from services.api.errors import APIError
+
+    @app.exception_handler(APIError)
+    async def api_error_handler(request: Request, exc: APIError) -> JSONResponse:
+        """
+        Handle APIError exceptions with user-friendly messages.
+
+        This catches APIError raised anywhere in the application,
+        including from FastAPI dependencies like get_current_user.
+
+        Since dependencies execute before middleware, this exception
+        handler is the appropriate layer to convert APIError to
+        friendly messages for users.
+        """
+        # Get friendly message based on error code and status code
+        friendly_message = None
+
+        if exc.status_code == 401:
+            # Authentication errors
+            friendly_message = "Let's try logging in again. Your session may have expired."
+        elif exc.status_code == 403:
+            # Permission errors
+            friendly_message = (
+                "You don't have permission to access that. Please contact your administrator."
+            )
+        elif exc.status_code == 404:
+            # Not found errors
+            friendly_message = "I couldn't find that. It may have been moved or deleted."
+        elif exc.status_code == 422:
+            # Validation errors
+            friendly_message = (
+                "I couldn't process that request. Please check your input and try again."
+            )
+        elif exc.status_code >= 500:
+            # Server errors
+            friendly_message = (
+                "Something went wrong on my end. I've logged the details for debugging."
+            )
+        else:
+            # Fallback
+            friendly_message = "An error occurred. Please try again."
+
+        # CRITICAL: Log technical details for debugging
+        logger.error(
+            "api_error",
+            error_code=exc.error_code,
+            status_code=exc.status_code,
+            details=exc.details,
+            path=request.url.path,
+            method=request.method,
+        )
+
+        # Return friendly message to user
+        return JSONResponse(status_code=exc.status_code, content={"message": friendly_message})
+
+    logger.info(
+        "✅ APIError exception handler registered (Issue #283 - catches dependency-level errors)"
+    )
+except Exception as e:
+    logger.error(f"⚠️ Failed to register APIError handler: {e}")
+
 # GREAT-4B: Intent Enforcement Middleware
 from web.middleware.intent_enforcement import IntentEnforcementMiddleware
 
 app.add_middleware(IntentEnforcementMiddleware)
 logger.info("✅ IntentEnforcementMiddleware registered (GREAT-4B)")
 
+# Mount auth API router (Issue #227 - CORE-USERS-JWT, Issue #281 - CORE-ALPHA-WEB-AUTH)
+# Register BEFORE app starts to ensure routes are available
+try:
+    from web.api.routes.auth import router as auth_router
+
+    app.include_router(auth_router)
+    logger.info("✅ Auth API router mounted at /auth (login, logout endpoints)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount auth API router: {e}")
+
+# Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
+# Register at module level to ensure routes available for tests
+try:
+    from web.api.routes.files import router as files_router
+
+    app.include_router(files_router)
+    logger.info("✅ Files API router mounted at /api/v1/files")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount files API router: {e}")
+
+# Mount documents API router (Issue #290 - CORE-ALPHA-DOC-PROCESSING)
+# Register at module level to ensure routes available for tests
+try:
+    from web.api.routes.documents import router as documents_router
+
+    app.include_router(documents_router)
+    logger.info("✅ Documents API router mounted at /api/v1/documents")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount documents API router: {e}")
+
+# Mount todos API router (Issue #285 - CORE-ALPHA-TODO-INCOMPLETE)
+# Wires up existing todo infrastructure (PM-081)
+try:
+    from services.api.todo_management import todo_management_router
+
+    app.include_router(todo_management_router)
+    logger.info("✅ Todos API router mounted at /api/v1/todos (PM-081)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount todos API router: {e}")
+
+# Mount lists API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides list CRUD endpoints with ownership validation
+try:
+    from web.api.routes.lists import router as lists_router
+
+    app.include_router(lists_router)
+    logger.info("✅ Lists API router mounted at /api/v1/lists (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount lists API router: {e}")
+
+# Mount todos SEC-RBAC API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides todo CRUD endpoints with ownership validation
+try:
+    from web.api.routes.todos import router as sec_todos_router
+
+    app.include_router(sec_todos_router)
+    logger.info("✅ Todos SEC-RBAC API router mounted at /api/v1/todos (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount todos SEC-RBAC API router: {e}")
+
+# Mount projects API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides project CRUD endpoints with ownership validation
+try:
+    from web.api.routes.projects import router as projects_router
+
+    app.include_router(projects_router)
+    logger.info("✅ Projects API router mounted at /api/v1/projects (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount projects API router: {e}")
+
+# Mount feedback API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides feedback submission endpoints with ownership validation
+try:
+    from web.api.routes.feedback import router as feedback_router
+
+    app.include_router(feedback_router)
+    logger.info("✅ Feedback API router mounted at /api/v1/feedback (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount feedback API router: {e}")
+
+# Mount knowledge graph API router (Issue #357 - SEC-RBAC Phase 1.3)
+# Provides knowledge graph CRUD endpoints with ownership validation
+try:
+    from web.api.routes.knowledge_graph import router as knowledge_graph_router
+
+    app.include_router(knowledge_graph_router)
+    logger.info("✅ Knowledge Graph API router mounted at /api/v1/knowledge (SEC-RBAC Phase 1.3)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to mount knowledge graph API router: {e}")
+
 # Initialize Jinja2 templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(project_root / "templates"))
 
 # Initialize personality components
 config_parser = PiperConfigParser()
 personality_enhancer = PersonalityResponseEnhancer()
-
-# Mount static files
-app.mount(
-    "/assets",
-    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")),
-    name="assets",
-)
 
 
 @app.get("/debug-markdown", response_class=HTMLResponse)
@@ -418,7 +751,8 @@ async def debug_markdown(request: Request):
 @app.get("/")
 async def home(request: Request):
     """Render home page"""
-    return templates.TemplateResponse("home.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
 
 
 # GREAT-1B: Bug #166 Fix - Add missing workflow status endpoint
@@ -443,10 +777,11 @@ async def get_workflow_status(workflow_id: str, request: Request):
 
         # For GREAT-1B, return a simple status response
         # This prevents the infinite polling that causes UI hangs
+        # Bug #xpv: Changed message to not claim completion when status unknown
         return {
             "workflow_id": workflow_id,
-            "status": "completed",  # Simplified for Bug #166 fix
-            "message": "Workflow processing completed",
+            "status": "processing",  # Neutral status (not "completed" - may need clarification)
+            "message": "",  # No message - avoids misleading "completed" claim
             "tasks": [],
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
@@ -563,8 +898,9 @@ async def standup_proxy(
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{API_BASE_URL}/api/standup", params={"format": format, "personality": personality}
+            response = await client.post(
+                f"{API_BASE_URL}/api/v1/standup/generate",
+                params={"format": format, "personality": personality},
             )
             return response.json()
     except httpx.ConnectError as e:
@@ -585,6 +921,11 @@ async def process_intent(request: Request):
     Delegates all business logic to IntentService.
     Route only handles HTTP concerns (request parsing, response formatting, status codes).
 
+    Implements Pattern-007 (Async Error Handling) graceful degradation:
+    - Returns 200 OK with structured response even when services unavailable
+    - Provides user-friendly degradation messages
+    - Maintains consistent IntentResponse structure
+
     Business logic: services/intent/intent_service.py
     """
     try:
@@ -597,10 +938,11 @@ async def process_intent(request: Request):
         intent_service = getattr(request.app.state, "intent_service", None)
 
         if intent_service is None:
-            # Service not initialized - should not happen with proper lifespan
-            return internal_error(
-                "IntentService not available - initialization failed",
-                error_id="intent-service-unavailable",
+            # Pattern-007: Graceful degradation - return 200 with user-friendly message
+            logger.warning("IntentService not available - returning degradation response")
+            return _create_degradation_response(
+                message,
+                "Database temporarily unavailable. Please ensure Docker is running and try again.",
             )
 
         # Delegate to service (all business logic)
@@ -613,6 +955,8 @@ async def process_intent(request: Request):
             "workflow_id": result.workflow_id,
             "requires_clarification": result.requires_clarification,
             "clarification_type": result.clarification_type,
+            "suggestions": result.suggestions,  # Phase 3: Pattern suggestions
+            "preferences": result.preferences,  # Issue #248: Preference detection results
         }
 
         # Add error fields if present (semantic/validation errors from service)
@@ -624,24 +968,231 @@ async def process_intent(request: Request):
         return response
 
     except Exception as e:
-        # Unexpected error - HTTP 500
+        # Pattern-007: Graceful degradation - return 200 with user-friendly message
         logger.error(f"Intent route error: {str(e)}", exc_info=True)
-        return internal_error("Intent processing failed")
+
+        # Extract user-friendly degradation message from exception
+        degradation_msg = _extract_degradation_message(e)
+
+        # Return structured IntentResponse instead of 500 error
+        return _create_degradation_response(
+            request_data.get("message", "") if "request_data" in locals() else "", degradation_msg
+        )
 
 
 @app.get("/standup")
 async def standup_ui(request: Request):
     """Render standup UI"""
-    return templates.TemplateResponse("standup.html", {"request": request})
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("standup.html", {"request": request, "user": user_context})
 
 
 @app.get("/personality-preferences")
-async def personality_preferences_ui():
+async def personality_preferences_ui(request: Request):
     """Serve the personality preferences interface"""
-    return HTMLResponse(
-        content=open(
-            os.path.join(os.path.dirname(__file__), "assets", "personality-preferences.html")
-        ).read()
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "personality-preferences.html", {"request": request, "user": user_context}
+    )
+
+
+@app.get("/learning")
+async def learning_dashboard_ui(request: Request):
+    """Serve the learning dashboard interface"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "learning-dashboard.html", {"request": request, "user": user_context}
+    )
+
+
+@app.get("/settings")
+async def settings_index_ui(request: Request):
+    """Serve the settings index page (G2: Settings Index Page)"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "settings-index.html", {"request": request, "user": user_context}
+    )
+
+
+@app.get("/account")
+async def account_settings_ui(request: Request):
+    """Serve the account settings page (Coming Soon)"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("account.html", {"request": request, "user": user_context})
+
+
+@app.get("/files")
+async def files_ui(request: Request):
+    """Serve the files page (Coming Soon)"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
+
+
+@app.get("/settings/integrations")
+async def integrations_page(request: Request):
+    """Integrations management page - Coming soon"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "integrations.html", {"request": request, "user": user_context}
+    )
+
+
+@app.get("/lists", response_class=HTMLResponse)
+async def lists_ui(request: Request):
+    """Lists management page with permission-aware UI (Issue #376)"""
+    user_context = _extract_user_context(request)
+    lists_data = []
+    return templates.TemplateResponse(
+        "lists.html", {"request": request, "user": user_context, "lists": lists_data}
+    )
+
+
+@app.post("/api/v1/lists", response_model=dict)
+async def create_list(request: Request):
+    """Create a new list owned by current user (Issue #379)"""
+    user_id = request.state.user_id
+    is_admin = getattr(request.state, "is_admin", False)
+
+    try:
+        # Parse JSON body
+        body = await request.json()
+        name = body.get("name", "").strip()
+        description = body.get("description", "").strip()
+
+        if not name:
+            raise HTTPException(status_code=400, detail="List name is required")
+
+        # Import domain model and repository
+        import services.domain.models as domain
+        from services.database.connection import db
+        from services.repositories.universal_list_repository import UniversalListRepository
+
+        # Get database session
+        if not db._initialized:
+            await db.initialize()
+
+        async with await db.get_session() as session:
+            # Create list with owner_id and empty shared_with
+            list_obj = domain.List(
+                name=name,
+                description=description,
+                owner_id=user_id,
+                item_type="todo",  # Default item type
+                shared_with=[],  # Start with no shares
+            )
+
+            # Create list in database
+            list_repo = UniversalListRepository(session)
+            created_list = await list_repo.create_list(list_obj)
+            await session.commit()
+
+        # Return created list data
+        return {
+            "id": str(created_list.id),
+            "name": created_list.name,
+            "description": created_list.description,
+            "owner_id": created_list.owner_id,
+            "created_at": created_list.created_at.isoformat() if created_list.created_at else None,
+            "shared_with": [],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating list: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create list: {str(e)}")
+
+
+@app.get("/todos", response_class=HTMLResponse)
+async def todos_ui(request: Request):
+    """Todos management page with permission-aware UI (Issue #376)"""
+    user_context = _extract_user_context(request)
+    todos_data = []
+    return templates.TemplateResponse(
+        "todos.html", {"request": request, "user": user_context, "todos": todos_data}
+    )
+
+
+@app.post("/api/v1/todos", response_model=dict)
+async def create_todo(request: Request):
+    """Create a new todo owned by current user (Issue #379)"""
+    user_id = request.state.user_id
+    is_admin = getattr(request.state, "is_admin", False)
+
+    try:
+        # Parse JSON body
+        body = await request.json()
+        text = body.get("text", "").strip()
+        due_date = body.get("due_date", "")
+
+        if not text:
+            raise HTTPException(status_code=400, detail="Todo text is required")
+
+        # Import domain model and repository
+        import services.domain.models as domain
+        from services.database.connection import db
+        from services.repositories.universal_list_repository import UniversalListRepository
+
+        # Get database session
+        if not db._initialized:
+            await db.initialize()
+
+        async with await db.get_session() as session:
+            # Create todo with owner_id and empty shared_with
+            todo_obj = domain.List(
+                name=text,  # Store text as name for lists-based todos
+                description=due_date,  # Store due_date as description
+                owner_id=user_id,
+                item_type="todo",
+                shared_with=[],  # Start with no shares
+            )
+
+            # Create todo in database
+            repo = UniversalListRepository(session)
+            created_todo = await repo.create_list(todo_obj)
+            await session.commit()
+
+        # Return created todo data
+        return {
+            "id": str(created_todo.id),
+            "text": created_todo.name,
+            "due_date": created_todo.description,
+            "owner_id": created_todo.owner_id,
+            "status": "pending",
+            "created_at": created_todo.created_at.isoformat() if created_todo.created_at else None,
+            "shared_with": [],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating todo: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create todo: {str(e)}")
+
+
+@app.get("/projects", response_class=HTMLResponse)
+async def projects_ui(request: Request):
+    """Projects management page with permission-aware UI (Issue #376)"""
+    user_context = _extract_user_context(request)
+    projects_data = []
+    return templates.TemplateResponse(
+        "projects.html", {"request": request, "user": user_context, "projects": projects_data}
+    )
+
+
+@app.get("/settings/privacy")
+async def privacy_settings_ui(request: Request):
+    """Serve the privacy & data settings page (Coming Soon)"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "privacy-settings.html", {"request": request, "user": user_context}
+    )
+
+
+@app.get("/settings/advanced")
+async def advanced_settings_ui(request: Request):
+    """Serve the advanced settings page (Coming Soon)"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "advanced-settings.html", {"request": request, "user": user_context}
     )
 
 
@@ -805,6 +1356,21 @@ async def invalidate_user_context(session_id: str):
         "session_id": session_id,
         "message": f"User context for session {session_id} invalidated",
     }
+
+
+# Mount static files (MUST be last - after all routes)
+# FastAPI/Starlette routing: routes are checked first, mounts last
+app.mount(
+    "/assets",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "assets")),
+    name="assets",
+)
+
+app.mount(
+    "/static",
+    StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")),
+    name="static",
+)
 
 
 if __name__ == "__main__":

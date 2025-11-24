@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 
+from services.integrations.mcp.token_counter import TokenCounter
 from services.integrations.spatial_adapter import (
     BaseSpatialAdapter,
     SpatialContext,
@@ -37,6 +38,9 @@ class GitBookMCPAdapter(BaseSpatialAdapter):
         self._page_to_position: Dict[str, int] = {}
         self._position_to_page: Dict[int, str] = {}
         self._context_storage: Dict[str, Dict[str, Any]] = {}
+
+        # Token counting for MCP operations (Issue #306)
+        self.token_counter = TokenCounter()
 
         logger.info("GitBookMCPAdapter initialized")
 
@@ -83,40 +87,67 @@ class GitBookMCPAdapter(BaseSpatialAdapter):
             return None
 
     async def get_spaces(self) -> List[Dict[str, Any]]:
-        """Get accessible GitBook spaces"""
+        """Get accessible GitBook spaces (with token counting)"""
         try:
-            result = await self._call_gitbook_api("/spaces")
-            if result and "data" in result:
-                spaces = result["data"]
-                logger.info(f"Retrieved {len(spaces)} GitBook spaces")
-                return spaces
-            return []
+            # Wrap with token counting (Issue #306)
+            async def _fetch_spaces():
+                result = await self._call_gitbook_api("/spaces")
+                if result and "data" in result:
+                    return result["data"]
+                return []
+
+            spaces = await self.token_counter.wrap_mcp_call(
+                "gitbook_get_spaces",
+                _fetch_spaces(),
+                input_data="",
+            )
+
+            logger.info(f"Retrieved {len(spaces)} GitBook spaces")
+            return spaces
         except Exception as e:
             logger.error(f"Failed to get GitBook spaces: {e}")
             return []
 
     async def get_space_content(self, space_id: str) -> Dict[str, Any]:
-        """Get space content tree (collections + pages)"""
+        """Get space content tree (collections + pages) (with token counting)"""
         try:
-            result = await self._call_gitbook_api(f"/spaces/{space_id}/content")
-            if result and "data" in result:
-                content = result["data"]
-                logger.info(f"Retrieved content tree for space {space_id}")
-                return content
-            return {}
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                result = await self._call_gitbook_api(f"/spaces/{space_id}/content")
+                if result and "data" in result:
+                    return result["data"]
+                return {}
+
+            content = await self.token_counter.wrap_mcp_call(
+                "gitbook_get_space_content",
+                _get(),
+                input_data=f"space_id={space_id}",
+            )
+
+            logger.info(f"Retrieved content tree for space {space_id}")
+            return content
         except Exception as e:
             logger.error(f"Failed to get space content for {space_id}: {e}")
             return {}
 
     async def get_page(self, space_id: str, page_id: str) -> Optional[Dict[str, Any]]:
-        """Get specific page content"""
+        """Get specific page content (with token counting)"""
         try:
-            result = await self._call_gitbook_api(f"/spaces/{space_id}/pages/{page_id}")
-            if result and "data" in result:
-                page = result["data"]
-                logger.info(f"Retrieved page {page_id} from space {space_id}")
-                return page
-            return None
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                result = await self._call_gitbook_api(f"/spaces/{space_id}/pages/{page_id}")
+                if result and "data" in result:
+                    return result["data"]
+                return None
+
+            page = await self.token_counter.wrap_mcp_call(
+                "gitbook_get_page",
+                _get(),
+                input_data=f"space_id={space_id},page_id={page_id}",
+            )
+
+            logger.info(f"Retrieved page {page_id} from space {space_id}")
+            return page
         except Exception as e:
             logger.error(f"Failed to get page {page_id} from space {space_id}: {e}")
             return None
@@ -124,43 +155,70 @@ class GitBookMCPAdapter(BaseSpatialAdapter):
     async def search_pages(
         self, space_id: str, query: str, limit: int = 10
     ) -> List[Dict[str, Any]]:
-        """Search pages within a space"""
+        """Search pages within a space (with token counting)"""
         try:
-            search_data = {"query": query, "limit": limit}
-            result = await self._call_gitbook_api(
-                f"/spaces/{space_id}/search", method="POST", data=search_data
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _search():
+                search_data = {"query": query, "limit": limit}
+                result = await self._call_gitbook_api(
+                    f"/spaces/{space_id}/search", method="POST", data=search_data
+                )
+                if result and "data" in result:
+                    return result["data"].get("results", [])
+                return []
+
+            pages = await self.token_counter.wrap_mcp_call(
+                "gitbook_search_pages",
+                _search(),
+                input_data=str({"space_id": space_id, "query": query, "limit": limit}),
             )
-            if result and "data" in result:
-                pages = result["data"].get("results", [])
-                logger.info(f"Found {len(pages)} pages matching '{query}' in space {space_id}")
-                return pages
-            return []
+
+            logger.info(f"Found {len(pages)} pages matching '{query}' in space {space_id}")
+            return pages
         except Exception as e:
             logger.error(f"Failed to search pages in space {space_id}: {e}")
             return []
 
     async def get_collections(self, space_id: str) -> List[Dict[str, Any]]:
-        """Get collections in a space"""
+        """Get collections in a space (with token counting)"""
         try:
-            result = await self._call_gitbook_api(f"/spaces/{space_id}/collections")
-            if result and "data" in result:
-                collections = result["data"]
-                logger.info(f"Retrieved {len(collections)} collections from space {space_id}")
-                return collections
-            return []
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                result = await self._call_gitbook_api(f"/spaces/{space_id}/collections")
+                if result and "data" in result:
+                    return result["data"]
+                return []
+
+            collections = await self.token_counter.wrap_mcp_call(
+                "gitbook_get_collections",
+                _get(),
+                input_data=f"space_id={space_id}",
+            )
+
+            logger.info(f"Retrieved {len(collections)} collections from space {space_id}")
+            return collections
         except Exception as e:
             logger.error(f"Failed to get collections for space {space_id}: {e}")
             return []
 
     async def get_users(self, space_id: str) -> List[Dict[str, Any]]:
-        """Get space users and permissions"""
+        """Get space users and permissions (with token counting)"""
         try:
-            result = await self._call_gitbook_api(f"/spaces/{space_id}/users")
-            if result and "data" in result:
-                users = result["data"]
-                logger.info(f"Retrieved {len(users)} users from space {space_id}")
-                return users
-            return []
+            # Wrap with token counting (Issue #306 Phase 2)
+            async def _get():
+                result = await self._call_gitbook_api(f"/spaces/{space_id}/users")
+                if result and "data" in result:
+                    return result["data"]
+                return []
+
+            users = await self.token_counter.wrap_mcp_call(
+                "gitbook_get_users",
+                _get(),
+                input_data=f"space_id={space_id}",
+            )
+
+            logger.info(f"Retrieved {len(users)} users from space {space_id}")
+            return users
         except Exception as e:
             logger.error(f"Failed to get users for space {space_id}: {e}")
             return []

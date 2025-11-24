@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Set
 class TerritoryType(Enum):
     """Types of Slack workspace territories"""
 
+    WORKSPACE = "workspace"  # General Slack workspace
     CORPORATE = "corporate"
     COMMUNITY = "community"
     PROJECT = "project"
@@ -321,10 +322,20 @@ class SpatialEvent:
     event_type: str  # join, leave, message_posted, thread_started, etc.
     coordinates: SpatialCoordinates
 
+    # SLACK-SPATIAL Phase 1.1: Event timestamp (optional with default)
+    timestamp: Optional[datetime] = None
+
     # Event details
     actor_id: Optional[str] = None
     affected_objects: List[str] = field(default_factory=list)
     spatial_changes: Dict[str, Any] = field(default_factory=dict)
+
+    # Event-specific domain objects (optional)
+    spatial_object: Optional["SpatialObject"] = None
+    attention_attractor: Optional["AttentionAttractor"] = None
+    emotional_marker: Optional["EmotionalMarker"] = None
+    room: Optional["Room"] = None
+    conversational_path: Optional["ConversationalPath"] = None
 
     # Context
     event_time: Optional[datetime] = None

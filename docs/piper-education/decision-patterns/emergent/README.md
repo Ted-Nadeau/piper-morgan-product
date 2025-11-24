@@ -16,4 +16,4 @@ This directory contains design patterns and best practices for emergent in the P
 
 **Last Updated**: October 1, 2025
 **Maintained By**: Documentation Team
-**Related**: [Documentation Standards](../../standards/documentation-standards.md)
+**Related**: [Documentation Standards](../../../piper-style-guide.md)

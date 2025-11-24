@@ -2,10 +2,11 @@
 Tests for User model and relationships
 
 Issue #228 CORE-USERS-API Phase 1A
+Issue #262 - Updated for UUID migration
 """
 
 from datetime import datetime, timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import select
@@ -13,15 +14,22 @@ from sqlalchemy import select
 from services.database.models import FeedbackDB, PersonalityProfileModel, TokenBlacklist, User
 from services.database.session_factory import AsyncSessionFactory
 
+# Import test UUIDs from conftest
+from tests.conftest import TEST_USER_ID, TEST_USER_ID_2
+
 
 @pytest.mark.asyncio
 async def test_create_user():
-    """Test creating a User record"""
+    """Test creating a User record
+
+    Note: Uses unique email to avoid duplicate key errors from multiple test runs.
+    """
     async with AsyncSessionFactory.session_scope() as session:
+        unique_id = uuid4()
         user = User(
-            id="test_user_create",
-            username="testuser",
-            email="test@example.com",
+            id=unique_id,  # Issue #262 - UUID instead of string
+            username=f"testuser_{unique_id.hex[:8]}",
+            email=f"test_{unique_id.hex[:8]}@example.com",
             is_active=True,
             is_verified=False,
         )
@@ -29,12 +37,12 @@ async def test_create_user():
         await session.commit()
 
         # Verify user created
-        result = await session.execute(select(User).where(User.id == "test_user_create"))
+        result = await session.execute(select(User).where(User.id == user.id))
         retrieved_user = result.scalar_one_or_none()
 
         assert retrieved_user is not None
-        assert retrieved_user.username == "testuser"
-        assert retrieved_user.email == "test@example.com"
+        assert retrieved_user.username == f"testuser_{unique_id.hex[:8]}"
+        assert retrieved_user.email == f"test_{unique_id.hex[:8]}@example.com"
         assert retrieved_user.is_active is True
         assert retrieved_user.is_verified is False
 
@@ -45,10 +53,18 @@ async def test_create_user():
 
 @pytest.mark.asyncio
 async def test_user_personality_profile_relationship():
-    """Test User <-> PersonalityProfile relationship"""
+    """Test User <-> PersonalityProfile relationship
+
+    Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
+    """
     async with AsyncSessionFactory.session_scope() as session:
-        # Create user
-        user = User(id="test_user_profile_rel", username="profileuser", email="profile@example.com")
+        # Create user with unique identifiers
+        unique_id = uuid4()
+        user = User(
+            id=unique_id,
+            username=f"profileuser_{unique_id.hex[:8]}",
+            email=f"profile_{unique_id.hex[:8]}@example.com",
+        )
         session.add(user)
         await session.flush()  # Get user.id assigned
 
@@ -65,7 +81,7 @@ async def test_user_personality_profile_relationship():
         await session.commit()
 
         # Test relationship from User -> PersonalityProfile
-        result = await session.execute(select(User).where(User.id == "test_user_profile_rel"))
+        result = await session.execute(select(User).where(User.id == unique_id))
         retrieved_user = result.scalar_one_or_none()
 
         # Load relationship
@@ -76,15 +92,13 @@ async def test_user_personality_profile_relationship():
 
         # Test relationship from PersonalityProfile -> User
         result = await session.execute(
-            select(PersonalityProfileModel).where(
-                PersonalityProfileModel.user_id == "test_user_profile_rel"
-            )
+            select(PersonalityProfileModel).where(PersonalityProfileModel.user_id == unique_id)
         )
         retrieved_profile = result.scalar_one_or_none()
 
         await session.refresh(retrieved_profile, ["user"])
 
-        assert retrieved_profile.user.username == "profileuser"
+        assert retrieved_profile.user.username == f"profileuser_{unique_id.hex[:8]}"
 
         # Cleanup
         await session.delete(profile)
@@ -94,16 +108,24 @@ async def test_user_personality_profile_relationship():
 
 @pytest.mark.asyncio
 async def test_user_token_blacklist_relationship():
-    """Test User <-> TokenBlacklist relationship"""
+    """Test User <-> TokenBlacklist relationship
+
+    Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
+    """
     async with AsyncSessionFactory.session_scope() as session:
-        # Create user
-        user = User(id="test_user_token_rel", username="tokenuser", email="token@example.com")
+        # Create user with unique identifiers
+        unique_id = uuid4()
+        user = User(
+            id=unique_id,
+            username=f"tokenuser_{unique_id.hex[:8]}",
+            email=f"token_{unique_id.hex[:8]}@example.com",
+        )
         session.add(user)
         await session.flush()
 
         # Create blacklisted token linked to user
         token = TokenBlacklist(
-            token_id="test_token_id_123",
+            token_id=str(uuid4()),
             user_id=user.id,
             reason="test",
             expires_at=datetime.utcnow() + timedelta(days=1),
@@ -113,13 +135,13 @@ async def test_user_token_blacklist_relationship():
         await session.commit()
 
         # Test relationship
-        result = await session.execute(select(User).where(User.id == "test_user_token_rel"))
+        result = await session.execute(select(User).where(User.id == unique_id))
         retrieved_user = result.scalar_one_or_none()
 
         await session.refresh(retrieved_user, ["blacklisted_tokens"])
 
         assert len(retrieved_user.blacklisted_tokens) == 1
-        assert retrieved_user.blacklisted_tokens[0].token_id == "test_token_id_123"
+        assert retrieved_user.blacklisted_tokens[0].reason == "test"
 
         # Cleanup
         await session.delete(token)
@@ -129,19 +151,25 @@ async def test_user_token_blacklist_relationship():
 
 @pytest.mark.asyncio
 async def test_user_feedback_relationship():
-    """Test User <-> Feedback relationship"""
+    """Test User <-> Feedback relationship
+
+    Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
+    """
     async with AsyncSessionFactory.session_scope() as session:
-        # Create user
+        # Create user with unique identifiers
+        unique_id = uuid4()
         user = User(
-            id="test_user_feedback_rel", username="feedbackuser", email="feedback@example.com"
+            id=unique_id,
+            username=f"feedbackuser_{unique_id.hex[:8]}",
+            email=f"feedback_{unique_id.hex[:8]}@example.com",
         )
         session.add(user)
         await session.flush()
 
         # Create feedback linked to user
         feedback = FeedbackDB(
-            id="test_feedback_123",
-            session_id="test_session",
+            id=str(uuid4()),
+            session_id=str(uuid4()),
             feedback_type="bug",
             comment="Test feedback",
             user_id=user.id,
@@ -150,7 +178,7 @@ async def test_user_feedback_relationship():
         await session.commit()
 
         # Test relationship
-        result = await session.execute(select(User).where(User.id == "test_user_feedback_rel"))
+        result = await session.execute(select(User).where(User.id == unique_id))
         retrieved_user = result.scalar_one_or_none()
 
         await session.refresh(retrieved_user, ["feedback"])
@@ -166,18 +194,27 @@ async def test_user_feedback_relationship():
 
 @pytest.mark.asyncio
 async def test_user_unique_constraints():
-    """Test unique constraints on username and email"""
+    """Test unique constraints on username and email
+
+    Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
+    """
     async with AsyncSessionFactory.session_scope() as session:
-        # Create first user
-        user1 = User(id="test_user_unique_1", username="uniqueuser", email="unique@example.com")
+        # Create first user with unique email
+        unique_id = uuid4()
+        user1_id = uuid4()
+        user1 = User(
+            id=user1_id,
+            username=f"uniqueuser_{unique_id.hex[:8]}",
+            email=f"unique_{unique_id.hex[:8]}@example.com",
+        )
         session.add(user1)
         await session.commit()
 
         # Try to create second user with same username
         user2 = User(
-            id="test_user_unique_2",
-            username="uniqueuser",  # Duplicate!
-            email="unique2@example.com",
+            id=uuid4(),
+            username=f"uniqueuser_{unique_id.hex[:8]}",  # Duplicate!
+            email=f"unique2_{unique_id.hex[:8]}@example.com",
         )
         session.add(user2)
 
@@ -188,9 +225,9 @@ async def test_user_unique_constraints():
 
         # Try to create user with same email
         user3 = User(
-            id="test_user_unique_3",
-            username="uniqueuser2",
-            email="unique@example.com",  # Duplicate!
+            id=uuid4(),
+            username=f"uniqueuser2_{unique_id.hex[:8]}",
+            email=f"unique_{unique_id.hex[:8]}@example.com",  # Duplicate!
         )
         session.add(user3)
 
@@ -200,7 +237,7 @@ async def test_user_unique_constraints():
         await session.rollback()
 
         # Cleanup
-        result = await session.execute(select(User).where(User.id == "test_user_unique_1"))
+        result = await session.execute(select(User).where(User.id == user1_id))
         user_to_delete = result.scalar_one_or_none()
         if user_to_delete:
             await session.delete(user_to_delete)
@@ -212,14 +249,12 @@ async def test_user_timestamps():
     """Test that timestamps are set correctly"""
     async with AsyncSessionFactory.session_scope() as session:
         # Create user
-        user = User(
-            id="test_user_timestamps", username="timestampuser", email="timestamp@example.com"
-        )
+        user = User(id=uuid4(), username="timestampuser", email="timestamp@example.com")
         session.add(user)
         await session.commit()
 
         # Verify timestamps
-        result = await session.execute(select(User).where(User.id == "test_user_timestamps"))
+        result = await session.execute(select(User).where(User.id == user.id))
         retrieved_user = result.scalar_one_or_none()
 
         assert retrieved_user.created_at is not None

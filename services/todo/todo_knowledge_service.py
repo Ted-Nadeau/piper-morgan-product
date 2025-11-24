@@ -10,6 +10,7 @@ Provides integration between Todo system and PM-040 Knowledge Graph for:
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 import structlog
 

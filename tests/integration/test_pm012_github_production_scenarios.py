@@ -13,7 +13,6 @@ import pytest
 from services.api.errors import GitHubAuthFailedError, GitHubRateLimitError
 from services.domain.models import Intent, Project, ProjectIntegration, Task, Workflow, WorkItem
 from services.domain.work_item_extractor import WorkItemExtractor
-from services.integrations.github.github_agent import GitHubAgent
 from services.integrations.github.issue_generator import IssueContentGenerator
 from services.orchestration.engine import OrchestrationEngine
 from services.orchestration.workflow_factory import WorkflowFactory

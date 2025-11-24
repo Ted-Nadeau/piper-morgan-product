@@ -10,6 +10,7 @@ Issue #249 CORE-AUDIT-LOGGING Phase 2B
 import asyncio
 import sys
 from datetime import datetime
+from uuid import UUID, uuid4
 
 # Add project root to path
 sys.path.insert(0, "/Users/xian/Development/piper-morgan")
@@ -30,7 +31,7 @@ async def main():
     print()
 
     # Test user
-    test_user_id = "jwt_audit_test_user"
+    test_user_id = uuid4()
     test_user_email = "jwt_audit@example.com"
 
     # Mock token blacklist for testing
@@ -38,7 +39,7 @@ async def main():
         def __init__(self):
             self.blacklisted_tokens = set()
 
-        async def add(self, token_id: str, reason: str, expires_at, user_id: str):
+        async def add(self, token_id: str, reason: str, expires_at, user_id: UUID):
             self.blacklisted_tokens.add(token_id)
             return True
 

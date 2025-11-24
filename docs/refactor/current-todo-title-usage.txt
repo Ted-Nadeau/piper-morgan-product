@@ -1,0 +1,7 @@
+./services/database/models.py:            title=todo.title,
+./services/repositories/todo_repository.py:                or_(TodoDB.title.ilike(f"%{query}%"), TodoDB.description.ilike(f"%{query}%")),
+./services/repositories/todo_repository.py:            query = query.order_by(TodoDB.title.asc())
+./services/todo/todo_knowledge_service.py:                "title": todo.title,
+./services/todo/todo_knowledge_service.py:                "semantic_content": f"{todo.title} {todo.description}".strip(),
+./services/todo/todo_knowledge_service.py:                    "semantic_content": f"{todo.title} {todo.description}".strip(),
+./services/api/todo_management.py:            title=todo_data.title,

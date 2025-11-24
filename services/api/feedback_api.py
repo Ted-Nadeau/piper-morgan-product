@@ -5,6 +5,7 @@ Feedback API endpoints for PM-005 feedback tracking implementation
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -91,7 +92,7 @@ async def list_feedback(
     session_id: Optional[str] = Query(None, description="Filter by session ID"),
     feedback_type: Optional[str] = Query(None, description="Filter by feedback type"),
     status_filter: Optional[str] = Query(None, description="Filter by status"),
-    user_id: Optional[str] = Query(None, description="Filter by user ID"),
+    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
     limit: int = Query(100, ge=1, le=1000, description="Number of feedback items to return"),
     offset: int = Query(0, ge=0, description="Number of feedback items to skip"),
 ):
@@ -144,7 +145,7 @@ async def delete_feedback(feedback_id: str):
 @feedback_router.get("/stats/summary", response_model=Dict)
 async def get_feedback_stats(
     session_id: Optional[str] = Query(None, description="Filter by session ID"),
-    user_id: Optional[str] = Query(None, description="Filter by user ID"),
+    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
     start_date: Optional[datetime] = Query(None, description="Start date for filtering"),
     end_date: Optional[datetime] = Query(None, description="End date for filtering"),
 ):

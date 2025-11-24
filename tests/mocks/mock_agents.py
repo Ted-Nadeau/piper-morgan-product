@@ -80,7 +80,9 @@ class MockCoordinatorAgent:
             output_data={
                 "workflow_ready": True,
                 "coordinated_agents": len(agents),
+                "agents_coordinated": len(agents),  # PM-033d test compatibility
                 "workflow_name": workflow_name,
+                "workflow_id": workflow_name,  # PM-033d test compatibility
             },
         )
 
@@ -126,3 +128,48 @@ def create_mock_agent_pool(agent_types: List[str]) -> List[MockAgent]:
         agents.append(agent)
 
     return agents
+
+
+# Additional specialized mock agents for PM-033d testing
+class MockCodeAgent(MockAgent):
+    """Mock Code Agent for testing implementation scenarios"""
+
+    def __init__(self):
+        super().__init__(agent_type="code", agent_id="code_agent_001")
+
+
+class MockArchitectAgent(MockAgent):
+    """Mock Architect Agent for testing design scenarios"""
+
+    def __init__(self):
+        super().__init__(agent_type="architect", agent_id="architect_agent_001")
+
+
+class MockAnalysisAgent(MockAgent):
+    """Mock Analysis Agent for testing data analysis scenarios"""
+
+    def __init__(self):
+        super().__init__(agent_type="analysis", agent_id="analysis_agent_001")
+
+
+def create_mock_agent(agent_type: str) -> MockAgent:
+    """Create a mock agent of the specified type
+
+    Args:
+        agent_type: Type of agent ("code", "architect", "analysis", "coordinator")
+
+    Returns:
+        MockAgent instance of the specified type
+    """
+    agent_factories = {
+        "code": MockCodeAgent,
+        "architect": MockArchitectAgent,
+        "analysis": MockAnalysisAgent,
+        "coordinator": MockCoordinatorAgent,
+    }
+
+    if agent_type not in agent_factories:
+        # Fall back to generic MockAgent
+        return MockAgent(agent_type=agent_type)
+
+    return agent_factories[agent_type]()

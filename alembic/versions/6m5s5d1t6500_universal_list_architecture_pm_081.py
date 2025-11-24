@@ -12,6 +12,7 @@ Migrates from specialized TodoList to Universal List pattern.
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 
 from alembic import op
@@ -39,12 +40,12 @@ def upgrade() -> None:
         sa.Column("emoji", sa.String(4), nullable=True),
         sa.Column("is_archived", sa.Boolean(), nullable=False, server_default="false"),
         sa.Column("is_default", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("metadata", sa.JSON(), nullable=True),
-        sa.Column("tags", sa.JSON(), nullable=True),
+        sa.Column("metadata", postgresql.JSONB(none_as_null=True), nullable=True),
+        sa.Column("tags", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("owner_id", sa.String(), nullable=False),
-        sa.Column("shared_with", sa.JSON(), nullable=True),
+        sa.Column("shared_with", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("item_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("completed_count", sa.Integer(), nullable=False, server_default="0"),
         sa.PrimaryKeyConstraint("id"),
@@ -71,11 +72,13 @@ def upgrade() -> None:
     op.create_index("idx_lists_owner_type", "lists", ["owner_id", "item_type"], unique=False)
     op.create_index("idx_lists_owner_list_type", "lists", ["owner_id", "list_type"], unique=False)
     op.create_index("idx_lists_owner_archived", "lists", ["owner_id", "is_archived"], unique=False)
-    op.create_index("idx_lists_shared", "lists", ["shared_with"], unique=False)
+    op.create_index(
+        "idx_lists_shared", "lists", ["shared_with"], unique=False, postgresql_using="gin"
+    )
     op.create_index(
         "idx_lists_default", "lists", ["owner_id", "item_type", "is_default"], unique=False
     )
-    op.create_index("idx_lists_tags", "lists", ["tags"], unique=False)
+    op.create_index("idx_lists_tags", "lists", ["tags"], unique=False, postgresql_using="gin")
 
     # Create strategic indexes for list_items table
     op.create_index("idx_unique_list_item", "list_items", ["list_id", "item_id"], unique=True)
@@ -142,25 +145,24 @@ def upgrade() -> None:
         sa.Column("due_date", sa.DateTime(), nullable=True),
         sa.Column("reminder_date", sa.DateTime(), nullable=True),
         sa.Column("scheduled_date", sa.DateTime(), nullable=True),
-        sa.Column("tags", sa.JSON(), nullable=True),
+        sa.Column("tags", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("project_id", sa.String(), nullable=True),
         sa.Column("context", sa.String(), nullable=True),
         sa.Column("estimated_minutes", sa.Integer(), nullable=True),
         sa.Column("actual_minutes", sa.Integer(), nullable=True),
         sa.Column("completion_notes", sa.Text(), nullable=True),
-        sa.Column("metadata", sa.JSON(), nullable=True),
+        sa.Column("metadata", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("knowledge_node_id", sa.String(), nullable=True),
-        sa.Column("related_todos", sa.JSON(), nullable=True),
+        sa.Column("related_todos", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("creation_intent", sa.String(), nullable=True),
         sa.Column("intent_confidence", sa.Float(), nullable=True),
-        sa.Column("external_refs", sa.JSON(), nullable=True),
+        sa.Column("external_refs", postgresql.JSONB(none_as_null=True), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
         sa.Column("owner_id", sa.String(), nullable=False),
         sa.Column("assigned_to", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["parent_id"], ["todos_new.id"]),
-        sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -201,10 +203,12 @@ def upgrade() -> None:
     op.create_index("idx_todos_parent_position", "todos", ["parent_id", "position"], unique=False)
     op.create_index("idx_todos_context", "todos", ["context"], unique=False)
     op.create_index("idx_todos_project", "todos", ["project_id"], unique=False)
-    op.create_index("idx_todos_tags", "todos", ["tags"], unique=False)
+    op.create_index("idx_todos_tags", "todos", ["tags"], unique=False, postgresql_using="gin")
     op.create_index("idx_todos_knowledge_node", "todos", ["knowledge_node_id"], unique=False)
     op.create_index("idx_todos_creation_intent", "todos", ["creation_intent"], unique=False)
-    op.create_index("idx_todos_external_refs", "todos", ["external_refs"], unique=False)
+    op.create_index(
+        "idx_todos_external_refs", "todos", ["external_refs"], unique=False, postgresql_using="gin"
+    )
     op.create_index("idx_todos_owner_created", "todos", ["owner_id", "created_at"], unique=False)
     op.create_index("idx_todos_owner_updated", "todos", ["owner_id", "updated_at"], unique=False)
 

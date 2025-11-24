@@ -17,10 +17,11 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import chromadb
-import PyPDF2
+import pypdf
 import structlog
 from chromadb.utils import embedding_functions
 
+from services.configuration.piper_config_loader import piper_config_loader
 from services.infrastructure.keychain_service import KeychainService
 
 logger = structlog.get_logger()
@@ -94,6 +95,7 @@ Be specific and concise. Extract real concepts from the content."""
                 task_type="relationship_analysis",
                 prompt=prompt,
                 context=existing_metadata,
+                system=piper_config_loader.get_system_prompt(),
             )
 
             parsed = json.loads(response)
@@ -228,7 +230,7 @@ Be specific and concise. Extract real concepts from the content."""
 
         try:
             with open(file_path, "rb") as file:
-                pdf_reader = PyPDF2.PdfReader(file)
+                pdf_reader = pypdf.PdfReader(file)
 
                 # Extract text from all pages
                 full_text = ""
