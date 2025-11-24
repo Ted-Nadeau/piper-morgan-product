@@ -1,49 +1,48 @@
-# EXPLICIT PROJECT NAME - survives directory renames!
+# Production Docker Compose - Infrastructure Only
+# NOTE: Run Piper Morgan with `python main.py` from venv, not as Docker service
 name: piper-morgan-stable
 
 services:
-  # Main Application - Piper Morgan API
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: piper-app
-    environment:
-      - PYTHON_VERSION=3.11
-      - PYTHONPATH=/app
-    ports:
-      - "8001:8001"
-    volumes:
-      - .:/app
-      - ./uploads:/app/uploads
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
-      - "traefik.http.services.api.loadbalancer.server.port=8001"
-    restart: unless-stopped
+  # DISABLED: Build these services separately if needed
+  # The setup wizard expects only infrastructure services
+  # To run Piper Morgan: python main.py (from activated venv)
 
-  # Orchestration Service - Temporal Worker
-  orchestration:
-    build:
-      context: .
-      dockerfile: services/orchestration/Dockerfile
-    container_name: piper-orchestration
-    environment:
-      - PYTHON_VERSION=3.11
-      - PYTHONPATH=/app
-    volumes:
-      - .:/app
-    depends_on:
-      temporal:
-        condition: service_started
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: piper-app
+  #   environment:
+  #     - PYTHON_VERSION=3.12
+  #     - PYTHONPATH=/app
+  #   ports:
+  #     - "8001:8001"
+  #   volumes:
+  #     - .:/app
+  #     - ./uploads:/app/uploads
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  # orchestration:
+  #   build:
+  #     context: .
+  #     dockerfile: services/orchestration/Dockerfile
+  #   container_name: piper-orchestration
+  #   environment:
+  #     - PYTHON_VERSION=3.12
+  #     - PYTHONPATH=/app
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     temporal:
+  #       condition: service_started
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
   # PostgreSQL - Main database
   postgres:
@@ -109,21 +108,21 @@ services:
       postgres:
         condition: service_healthy
 
-  # Traefik - API Gateway (minimal config)
-  traefik:
-    image: traefik:v3.0
-    container_name: piper-traefik
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--log.level=INFO"
-    ports:
-      - "80:80"
-      - "8090:8080" # Traefik dashboard
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+  # DISABLED: Traefik not needed for local development
+  # traefik:
+  #   image: traefik:v3.0
+  #   container_name: piper-traefik
+  #   command:
+  #     - "--api.insecure=true"
+  #     - "--providers.docker=true"
+  #     - "--providers.docker.exposedbydefault=false"
+  #     - "--entrypoints.web.address=:80"
+  #     - "--log.level=INFO"
+  #   ports:
+  #     - "80:80"
+  #     - "8090:8080" # Traefik dashboard
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
 
 networks:
   default:
