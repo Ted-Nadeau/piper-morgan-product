@@ -565,7 +565,11 @@ async def create_user_account() -> Any:
             print("   ✗ Username is required")
             username = input("   Username: ").strip()
 
-        email = input("   Email (optional, press Enter to skip): ").strip() or None
+        email = input("   Email: ").strip()
+
+        while not email:
+            print("   ✗ Email is required")
+            email = input("   Email: ").strip()
 
         # Prompt for password (Issue #297 - Secure password setup)
         print("\n   Create a secure password:")
