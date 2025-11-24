@@ -1028,6 +1028,15 @@ async def files_ui(request: Request):
     return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
 
 
+@app.get("/settings/integrations")
+async def integrations_page(request: Request):
+    """Integrations management page - Coming soon"""
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "integrations.html", {"request": request, "user": user_context}
+    )
+
+
 @app.get("/lists", response_class=HTMLResponse)
 async def lists_ui(request: Request):
     """Lists management page with permission-aware UI (Issue #376)"""
