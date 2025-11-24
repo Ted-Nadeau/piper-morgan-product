@@ -1035,8 +1035,7 @@ async def run_setup_wizard():
         print("   Running database migrations...")
         try:
             # Get project root (setup_wizard.py is in scripts/ subdirectory)
-            import os
-
+            # Note: os is imported at module level (line 14)
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
             migration_result = subprocess.run(

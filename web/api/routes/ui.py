@@ -79,14 +79,14 @@ def _extract_user_context(request: Request) -> dict:
         try:
             # Get user from database
             from services.database import get_db_session
-            from services.database.models import UserDB
+            from services.database.models import User
 
             session = next(get_db_session())
-            user_db = session.query(UserDB).filter(UserDB.user_id == request.state.user_id).first()
+            user_db = session.query(User).filter(User.id == request.state.user_id).first()
 
             if user_db:
                 user_context["user"] = {
-                    "user_id": str(user_db.user_id),
+                    "user_id": str(user_db.id),
                     "username": user_db.username,
                     "email": user_db.email,
                     "is_admin": user_db.is_admin,
