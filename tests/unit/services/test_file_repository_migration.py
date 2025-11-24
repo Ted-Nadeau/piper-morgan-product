@@ -19,7 +19,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-from services.database.models import UploadedFileDB
+from services.database.models import User, UploadedFileDB
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import UploadedFile
 from services.infrastructure.config.file_configuration import FileConfigService
@@ -46,28 +46,52 @@ def create_mock_config_service() -> Mock:
 
 def generate_unique_session_id() -> str:
     """Generate unique session ID for test isolation"""
-    return f"test_session_{uuid4().hex[:8]}"
+    return str(uuid4())
+
+
+async def create_test_user(session, owner_id: str) -> User:
+    """
+    Create a test user for file repository tests.
+
+    Required for SEC-RBAC owner_id foreign key constraint (Issue #262, #357).
+    """
+    user = User(
+        id=owner_id,
+        username=f"test_user_{owner_id[:8]}",
+        email=f"test_{owner_id[:8]}@example.com",
+        role="user",
+        is_active=True,
+        is_verified=True,
+        is_alpha=True,
+    )
+    session.add(user)
+    await session.flush()  # Ensure user exists before file creation
+    return user
 
 
 async def test_file_repository_with_async_session(async_transaction):
     """Test that FileRepository works with AsyncSession following AsyncSessionFactory pattern"""
     # Arrange - Use unique owner ID for isolation
     owner_id = generate_unique_session_id()
-    test_file = UploadedFile(
-        id=str(uuid4()),
-        owner_id=owner_id,
-        filename="test_document.pdf",
-        file_type="application/pdf",
-        file_size=1024,
-        storage_path="/uploads/test_document.pdf",
-        upload_time=datetime.now(),
-        last_referenced=datetime.now(),
-        reference_count=0,
-        metadata={"test": "data"},
-    )
 
     # Act - Save file using AsyncSessionFactory pattern
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
+        test_file = UploadedFile(
+            id=str(uuid4()),
+            owner_id=owner_id,
+            filename="test_document.pdf",
+            file_type="application/pdf",
+            file_size=1024,
+            storage_path="/uploads/test_document.pdf",
+            upload_time=datetime.now(),
+            last_referenced=datetime.now(),
+            reference_count=0,
+            metadata={"test": "data"},
+        )
+
         repo = FileRepository(session)
         saved_file = await repo.save_file_metadata(test_file)
 
@@ -97,6 +121,9 @@ async def test_file_repository_with_config_service(async_transaction):
 
     # Act - Save file using ConfigService injection
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session, config_service=mock_config)
         saved_file = await repo.save_file_metadata(test_file)
 
@@ -125,6 +152,9 @@ async def test_get_file_by_id(async_transaction):
     )
 
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session)
 
         # Act - Save and retrieve file
@@ -145,6 +175,9 @@ async def test_get_files_for_session(async_transaction):
     owner_id = generate_unique_session_id()
 
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session)
 
         # Create multiple files for the owner
@@ -182,6 +215,9 @@ async def test_search_files_by_name(async_transaction):
     owner_id = generate_unique_session_id()
 
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session)
 
         # Create files with different names
@@ -239,6 +275,9 @@ async def test_increment_reference_count(async_transaction):
     )
 
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session)
 
         # Act - Save file and increment reference count
@@ -269,6 +308,9 @@ async def test_delete_file(async_transaction):
     )
 
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session)
 
         # Act - Save and delete file
@@ -309,6 +351,9 @@ async def test_file_repository_returns_domain_models(async_transaction):
     )
 
     async with async_transaction as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
+
         repo = FileRepository(session)
 
         # Act - Save and retrieve file
