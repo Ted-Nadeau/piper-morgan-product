@@ -2,7 +2,7 @@
 """
 Password Setup Script for Alpha Users (Issue #281: CORE-ALPHA-WEB-AUTH)
 
-Sets passwords for alpha_users table entries to enable web authentication.
+Sets passwords for users table entries to enable web authentication.
 
 Usage:
     # Set password for specific user
@@ -40,7 +40,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.auth.password_service import PasswordService
 from services.database.connection import db
-from services.database.models import AlphaUser
+from services.database.models import User
 
 
 async def list_alpha_users():
@@ -49,7 +49,9 @@ async def list_alpha_users():
     print("=" * 60)
 
     async with await db.get_session() as session:
-        result = await session.execute(select(AlphaUser).order_by(AlphaUser.username))
+        result = await session.execute(
+            select(User).where(User.is_alpha == True).order_by(User.username)
+        )
         users = result.scalars().all()
 
         if not users:
@@ -82,11 +84,11 @@ async def set_user_password(username: str, password: str = None, interactive: bo
 
     # Find user
     async with await db.get_session() as session:
-        result = await session.execute(select(AlphaUser).where(AlphaUser.username == username))
+        result = await session.execute(select(User).where(User.username == username))
         user = result.scalar_one_or_none()
 
         if not user:
-            print(f"❌ User '{username}' not found in alpha_users table")
+            print(f"❌ User '{username}' not found in users table")
             return False
 
         # Get password
@@ -139,7 +141,7 @@ async def set_all_passwords(interactive: bool = True):
     print("=" * 60)
 
     async with await db.get_session() as session:
-        result = await session.execute(select(AlphaUser).order_by(AlphaUser.username))
+        result = await session.execute(select(User).order_by(User.username))
         users = result.scalars().all()
 
         if not users:
@@ -174,11 +176,11 @@ async def generate_temp_password_for_user(username: str):
     print("=" * 60)
 
     async with await db.get_session() as session:
-        result = await session.execute(select(AlphaUser).where(AlphaUser.username == username))
+        result = await session.execute(select(User).where(User.username == username))
         user = result.scalar_one_or_none()
 
         if not user:
-            print(f"❌ User '{username}' not found in alpha_users table")
+            print(f"❌ User '{username}' not found in users table")
             return False
 
         # Generate temp password
