@@ -796,6 +796,24 @@ async def get_workflow_status(workflow_id: str, request: Request):
         return internal_error()
 
 
+# Version Endpoint - Single source of truth from pyproject.toml
+@app.get("/api/v1/version")
+async def get_version():
+    """
+    Get application version information
+
+    Returns version from pyproject.toml (single source of truth)
+    plus environment and deployment metadata.
+    """
+    from services.version import get_version_info
+
+    try:
+        return get_version_info()
+    except Exception as e:
+        logger.error(f"Error getting version info: {e}", exc_info=True)
+        return internal_error("Unable to retrieve version information")
+
+
 # Personality Configuration Endpoints
 # Phase 2: REST-compliant error handling (Pattern 034)
 @app.get("/api/personality/profile/{user_id}")

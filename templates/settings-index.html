@@ -114,6 +114,24 @@
         border-radius: 12px;
       }
 
+      .settings-footer {
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid #ecf0f1;
+        text-align: center;
+      }
+
+      .version-info {
+        font-size: 13px;
+        color: #95a5a6;
+        font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+      }
+
+      .version-number {
+        font-weight: 600;
+        color: #7f8c8d;
+      }
+
       /* Responsive */
       @media (max-width: 768px) {
         .settings-container {
@@ -231,6 +249,32 @@
           </div>
         </a>
       </div>
+
+      <!-- Version Footer -->
+      <div class="settings-footer">
+        <div class="version-info" id="version-info">
+          Piper Morgan <span class="version-number" id="version-number">Loading...</span>
+        </div>
+      </div>
     </div>
+
+    <script>
+      // Fetch and display version information
+      fetch('/api/v1/version')
+        .then(response => response.json())
+        .then(data => {
+          const versionEl = document.getElementById('version-number');
+          versionEl.textContent = `v${data.version}`;
+
+          // Add environment if not production
+          if (data.environment && data.environment !== 'production') {
+            versionEl.textContent += ` (${data.environment})`;
+          }
+        })
+        .catch(error => {
+          console.error('Failed to load version:', error);
+          document.getElementById('version-number').textContent = 'unknown';
+        });
+    </script>
   </body>
 </html>
