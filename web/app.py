@@ -1102,6 +1102,62 @@ async def todos_ui(request: Request):
     )
 
 
+@app.post("/api/v1/todos", response_model=dict)
+async def create_todo(request: Request):
+    """Create a new todo owned by current user (Issue #379)"""
+    user_id = request.state.user_id
+    is_admin = getattr(request.state, "is_admin", False)
+
+    try:
+        # Parse JSON body
+        body = await request.json()
+        text = body.get("text", "").strip()
+        due_date = body.get("due_date", "")
+
+        if not text:
+            raise HTTPException(status_code=400, detail="Todo text is required")
+
+        # Import domain model and repository
+        import services.domain.models as domain
+        from services.database.connection import db
+        from services.repositories.universal_list_repository import UniversalListRepository
+
+        # Get database session
+        if not db._initialized:
+            await db.initialize()
+
+        async with await db.get_session() as session:
+            # Create todo with owner_id and empty shared_with
+            todo_obj = domain.List(
+                name=text,  # Store text as name for lists-based todos
+                description=due_date,  # Store due_date as description
+                owner_id=user_id,
+                item_type="todo",
+                shared_with=[],  # Start with no shares
+            )
+
+            # Create todo in database
+            repo = UniversalListRepository(session)
+            created_todo = await repo.create_list(todo_obj)
+            await session.commit()
+
+        # Return created todo data
+        return {
+            "id": str(created_todo.id),
+            "text": created_todo.name,
+            "due_date": created_todo.description,
+            "owner_id": created_todo.owner_id,
+            "status": "pending",
+            "created_at": created_todo.created_at.isoformat() if created_todo.created_at else None,
+            "shared_with": [],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating todo: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create todo: {str(e)}")
+
+
 @app.get("/projects", response_class=HTMLResponse)
 async def projects_ui(request: Request):
     """Projects management page with permission-aware UI (Issue #376)"""

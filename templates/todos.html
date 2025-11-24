@@ -191,16 +191,21 @@
           }
 
           try {
-            // TODO: Call API to create todo
-            // const response = await fetch('/api/v1/todos', {
-            //   method: 'POST',
-            //   headers: {'Content-Type': 'application/json'},
-            //   body: JSON.stringify({ text, due_date: dueDate })
-            // });
+            const response = await fetch('/api/v1/todos', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ text, due_date: dueDate })
+            });
 
-            Toast.success('Todo created successfully');
-            await loadTodos();
-            return true;
+            if (response.ok) {
+              Toast.success('Todo created successfully');
+              await loadTodos();
+              return true;
+            } else {
+              const error = await response.json();
+              Toast.error('Failed to create todo: ' + (error.detail || 'Unknown error'));
+              return false;
+            }
           } catch (error) {
             console.error('Error creating todo:', error);
             Toast.error('Failed to create todo');
