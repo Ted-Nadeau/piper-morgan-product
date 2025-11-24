@@ -14,7 +14,8 @@ from pathlib import Path
 from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -471,4 +472,103 @@ async def delete_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete file",
+        )
+
+
+@router.get("/{file_id}/download")
+async def download_file(
+    file_id: str,
+    request: Request,
+) -> FileResponse:
+    """
+    Download a file by ID with ownership validation (SEC-RBAC).
+
+    Args:
+        file_id: File ID to download
+        request: FastAPI request with user_id in state
+
+    Returns:
+        File content as attachment
+
+    Raises:
+        HTTPException 404: File not found or not owned by current user
+        HTTPException 403: Not authorized to download this file
+        HTTPException 500: Server error during download
+
+    Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
+    """
+    try:
+        user_id = getattr(request.state, "user_id", None)
+        is_admin = getattr(request.state, "is_admin", False)
+
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+            )
+
+        # Initialize database if needed
+        if not db._initialized:
+            await db.initialize()
+
+        # Find file with ownership validation
+        async with await db.get_session() as session:
+            result = await session.execute(
+                select(UploadedFileDB).where(UploadedFileDB.id == file_id)
+            )
+            file = result.scalar_one_or_none()
+
+            if not file:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"File not found: {file_id}",
+                )
+
+            # Check permissions: only owner or admin can download
+            if not is_admin and file.owner_id != user_id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authorized to download this file",
+                )
+
+            # Verify file exists on disk
+            file_path = Path(file.storage_path)
+            if not file_path.exists():
+                logger.error(
+                    "file_not_found_on_disk",
+                    user_id=user_id,
+                    file_id=file_id,
+                    path=file.storage_path,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="File not found on disk",
+                )
+
+            logger.info(
+                "file_download_started",
+                user_id=user_id,
+                file_id=file_id,
+                filename=file.filename,
+            )
+
+            # Return file as downloadable attachment
+            return FileResponse(
+                path=file_path,
+                filename=file.filename,
+                media_type=file.file_type,
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "file_download_error",
+            user_id=getattr(request.state, "user_id", "unknown"),
+            file_id=file_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to download file",
         )
