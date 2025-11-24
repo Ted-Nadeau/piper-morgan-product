@@ -4,16 +4,36 @@ from uuid import uuid4
 
 import pytest
 
+from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent, IntentCategory, UploadedFile
 from services.file_context.file_resolver import FileResolver
 from services.repositories.file_repository import FileRepository
 
 
+async def create_test_user(session, owner_id: str) -> User:
+    """
+    Create a test user for file resolver tests.
+    Required for SEC-RBAC owner_id foreign key constraint.
+    """
+    user = User(
+        id=owner_id,
+        username=f"test_user_{owner_id[:8]}",
+        email=f"test_{owner_id[:8]}@example.com",
+        role="user",
+        is_active=True,
+        is_verified=True,
+        is_alpha=True,
+    )
+    session.add(user)
+    await session.flush()  # Ensure user exists before file creation
+    return user
+
+
 @pytest.mark.asyncio
 async def test_scoring_weight_distribution():
     """Validate that scoring weights produce good distribution"""
-    session_id = f"test_weights_{uuid4().hex}"
+    owner_id = str(uuid4())
     for_test_files = []
     # Create test scenarios
     test_cases = [
@@ -24,10 +44,12 @@ async def test_scoring_weight_distribution():
     ]
     # Create all test files in separate transactions to avoid session conflicts
     async with AsyncSessionFactory.session_scope() as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
         repo = FileRepository(session)
         for filename, file_type, age_minutes, expected_range in test_cases:
             file = UploadedFile(
-                session_id=session_id,
+                owner_id=owner_id,
                 filename=filename,
                 file_type=file_type,
                 file_size=1000,
@@ -46,7 +68,7 @@ async def test_scoring_weight_distribution():
     # Get files and test scoring in a separate session
     async with AsyncSessionFactory.session_scope() as session:
         repo = FileRepository(session)
-        files = await repo.get_files_for_session(session_id)
+        files = await repo.get_files_for_session(owner_id)
         resolver = FileResolver(repo)
         scores = []
         for file in files:
@@ -62,9 +84,9 @@ async def test_scoring_weight_distribution():
 @pytest.mark.asyncio
 async def test_scoring_component_breakdown():
     """Test individual scoring components work correctly"""
-    session_id = f"test_components_{uuid4().hex}"
+    owner_id = str(uuid4())
     file = UploadedFile(
-        session_id=session_id,
+        owner_id=owner_id,
         filename="test_report.pdf",
         file_type="application/pdf",
         file_size=1000,
@@ -72,6 +94,8 @@ async def test_scoring_component_breakdown():
         upload_time=datetime.now() - timedelta(minutes=10),
     )
     async with AsyncSessionFactory.session_scope() as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
         repo = FileRepository(session)
         await repo.save_file_metadata(file)
         await session.commit()
@@ -103,10 +127,10 @@ async def test_scoring_component_breakdown():
 @pytest.mark.asyncio
 async def test_scoring_with_different_intent_types():
     """Test scoring varies appropriately with different intent types"""
-    session_id = f"test_intents_{uuid4().hex}"
+    owner_id = str(uuid4())
     files = [
         UploadedFile(
-            session_id=session_id,
+            owner_id=owner_id,
             filename="data.csv",
             file_type="text/csv",
             file_size=1000,
@@ -114,7 +138,7 @@ async def test_scoring_with_different_intent_types():
             upload_time=datetime.now(),
         ),
         UploadedFile(
-            session_id=session_id,
+            owner_id=owner_id,
             filename="report.pdf",
             file_type="application/pdf",
             file_size=1000,
@@ -122,7 +146,7 @@ async def test_scoring_with_different_intent_types():
             upload_time=datetime.now(),
         ),
         UploadedFile(
-            session_id=session_id,
+            owner_id=owner_id,
             filename="presentation.pptx",
             file_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
             file_size=1000,
@@ -132,6 +156,8 @@ async def test_scoring_with_different_intent_types():
     ]
     # Save all files in one transaction
     async with AsyncSessionFactory.session_scope() as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
         repo = FileRepository(session)
         for file in files:
             await repo.save_file_metadata(file)
@@ -167,9 +193,9 @@ async def test_scoring_with_different_intent_types():
 @pytest.mark.asyncio
 async def test_scoring_edge_cases():
     """Test scoring handles edge cases gracefully"""
-    session_id = f"test_edge_{uuid4().hex}"
+    owner_id = str(uuid4())
     old_file = UploadedFile(
-        session_id=session_id,
+        owner_id=owner_id,
         filename="ancient.pdf",
         file_type="application/pdf",
         file_size=1000,
@@ -177,7 +203,7 @@ async def test_scoring_edge_cases():
         upload_time=datetime.now() - timedelta(days=365),  # 1 year old
     )
     unknown_file = UploadedFile(
-        session_id=session_id,
+        owner_id=owner_id,
         filename="unknown.xyz",
         file_type="application/unknown",
         file_size=1000,
@@ -187,6 +213,8 @@ async def test_scoring_edge_cases():
 
     # Save both files in one transaction
     async with AsyncSessionFactory.session_scope() as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
         repo = FileRepository(session)
         await repo.save_file_metadata(old_file)
         await repo.save_file_metadata(unknown_file)
@@ -219,18 +247,21 @@ async def test_minimal_file_repository_operations():
     from services.domain.models import UploadedFile
     from services.repositories.file_repository import FileRepository
 
+    owner_id = str(uuid4())
     # Test both operations in a single transaction
     async with AsyncSessionFactory.session_scope() as session:
+        # Create test user first (SEC-RBAC requires owner_id FK)
+        await create_test_user(session, owner_id)
         repo = FileRepository(session)
         file1 = UploadedFile(
-            session_id="test_session",
+            owner_id=owner_id,
             filename="test1.txt",
             file_type="text/plain",
             file_size=100,
             storage_path="/tmp/test1.txt",
         )
         file2 = UploadedFile(
-            session_id="test_session",
+            owner_id=owner_id,
             filename="test2.txt",
             file_type="text/plain",
             file_size=200,
@@ -248,10 +279,13 @@ async def test_minimal_file_repository_loop():
     from services.repositories.file_repository import FileRepository
 
     for i in range(20):
+        owner_id = str(uuid4())
         async with AsyncSessionFactory.session_scope() as session:
+            # Create test user first (SEC-RBAC requires owner_id FK)
+            await create_test_user(session, owner_id)
             repo = FileRepository(session)
             file = UploadedFile(
-                session_id=f"test_session_{i}",
+                owner_id=owner_id,
                 filename=f"test{i}.txt",
                 file_type="text/plain",
                 file_size=100 * (i + 1),
