@@ -317,11 +317,13 @@
       <li><a href="/settings" class="nav-link" id="nav-settings">Settings</a></li>
     </ul>
 
-    <!-- User Menu -->
+    <!-- User Menu (if authenticated) or Login link (if not) -->
     <div class="nav-user">
+      {% if user %}
+      <!-- Authenticated: Show user menu with logout -->
       <button class="user-button" aria-haspopup="true" aria-expanded="false" id="user-menu-button">
-        <span class="user-avatar" id="user-avatar">U</span>
-        <span class="user-name" id="user-name">User</span>
+        <span class="user-avatar" id="user-avatar">{{ user.username[0]|upper }}</span>
+        <span class="user-name" id="user-name">{{ user.username }}</span>
         <svg class="user-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 6l4 4 4-4"/>
         </svg>
@@ -348,11 +350,31 @@
           Logout
         </a>
       </div>
+      {% else %}
+      <!-- Not authenticated: Show login link -->
+      <a href="/login" class="user-button" style="text-decoration: none;">
+        <svg viewBox="0 0 16 16" fill="currentColor" style="width: 20px; height: 20px;">
+          <path d="M8 8a3 3 0 100-6 3 3 0 000 6zm.5-9H8c4.418 0 8 1.79 8 4v2c0 2.21-3.582 4-8 4s-8-1.79-8-4V3c0-2.21 3.582-4 8-4z"/>
+        </svg>
+        <span class="user-name">Log In</span>
+      </a>
+      {% endif %}
     </div>
   </div>
 </nav>
 
 <script>
+// Set user context from server (now comes from Jinja2 template)
+{% if user %}
+window.currentUser = {
+    username: "{{ user.username }}",
+    user_id: "{{ user.user_id }}",
+    is_admin: {{ 'true' if user.is_admin else 'false' }}
+};
+{% else %}
+window.currentUser = null;
+{% endif %}
+
 document.addEventListener('DOMContentLoaded', function() {
   // Get user info if available in context (will be passed from server)
   const userButton = document.getElementById('user-menu-button');
