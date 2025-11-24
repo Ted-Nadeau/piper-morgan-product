@@ -673,3 +673,27 @@ WHERE learned_patterns.user_id = $1::UUID ORDER BY learned_patterns.last_used_at
 [cached since 61.99s ago] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)
 2025-11-23 13:44:18,260 INFO sqlalchemy.engine.Engine ROLLBACK
 ROLLBACK
+                 2025-11-23 13:45:35,539 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+BEGIN (implicit)
+2025-11-23 13:45:35,540 INFO sqlalchemy.engine.Engine SELECT learning_settings.id, learning_settings.user_id, learning_settings.learning_enabled, learning_settings.suggestion_threshold, learning_settings.automation_threshold, learning_settings.auto_apply_enabled, learning_settings.notification_enabled, learning_settings.created_at, learning_settings.updated_at 
+FROM learning_settings 
+WHERE learning_settings.user_id = $1::UUID
+SELECT learning_settings.id, learning_settings.user_id, learning_settings.learning_enabled, learning_settings.suggestion_threshold, learning_settings.automation_threshold, learning_settings.auto_apply_enabled, learning_settings.notification_enabled, learning_settings.created_at, learning_settings.updated_at 
+FROM learning_settings 
+WHERE learning_settings.user_id = $1::UUID
+2025-11-23 13:45:35,540 INFO sqlalchemy.engine.Engine [cached since 139.3s ago] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)
+[cached since 139.3s ago] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)
+2025-11-23 13:45:35,543 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+BEGIN (implicit)
+2025-11-23 13:45:35,543 INFO sqlalchemy.engine.Engine SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at 
+FROM learned_patterns 
+WHERE learned_patterns.user_id = $1::UUID ORDER BY learned_patterns.last_used_at DESC
+SELECT learned_patterns.id, learned_patterns.user_id, learned_patterns.pattern_type, learned_patterns.pattern_data, learned_patterns.confidence, learned_patterns.usage_count, learned_patterns.success_count, learned_patterns.failure_count, learned_patterns.enabled, learned_patterns.last_used_at, learned_patterns.created_at, learned_patterns.updated_at 
+FROM learned_patterns 
+WHERE learned_patterns.user_id = $1::UUID ORDER BY learned_patterns.last_used_at DESC
+2025-11-23 13:45:35,543 INFO sqlalchemy.engine.Engine [cached since 139.3s ago] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)
+[cached since 139.3s ago] (UUID('3f4593ae-5bc9-468d-b08d-8c4c02a5b963'),)
+2025-11-23 13:45:35,544 INFO sqlalchemy.engine.Engine ROLLBACK
+ROLLBACK
+2025-11-23 13:45:35,545 INFO sqlalchemy.engine.Engine ROLLBACK
+ROLLBACK

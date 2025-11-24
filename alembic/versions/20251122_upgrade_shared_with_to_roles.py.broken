@@ -1,7 +1,7 @@
 """Upgrade shared_with JSONB to include role-based permissions (SEC-RBAC Phase 2)
 
 Revision ID: 20251122_upgrade_shared_with
-Revises: 6m5s5d1t6500
+Revises: 4d1e2c3b5f7a
 Create Date: 2025-11-22 10:58:00.000000
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20251122_upgrade_shared_with"
-down_revision: Union[str, Sequence[str], None] = "6m5s5d1t6500"
+down_revision: Union[str, Sequence[str], None] = "4d1e2c3b5f7a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -39,10 +39,10 @@ def upgrade() -> None:
     """
     )
 
-    # Upgrade todos table
+    # Upgrade todo_items table (todos was migrated to todo_items in 234aa8ec628c)
     op.execute(
         """
-        UPDATE todos
+        UPDATE todo_items
         SET shared_with = (
             SELECT jsonb_agg(jsonb_build_object('user_id', elem, 'role', 'viewer'))
             FROM jsonb_array_elements_text(shared_with) AS elem

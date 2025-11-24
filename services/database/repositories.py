@@ -563,9 +563,9 @@ class KnowledgeGraphRepository(BaseRepository):
     async def get_nodes_by_session(
         self, session_id: str, limit: int = 100
     ) -> List[domain.KnowledgeNode]:
-        """Get nodes for a session"""
+        """Get nodes for an owner (parameter named session_id for backward compatibility)"""
         result = await self.session.execute(
-            select(KnowledgeNodeDB).where(KnowledgeNodeDB.session_id == session_id).limit(limit)
+            select(KnowledgeNodeDB).where(KnowledgeNodeDB.owner_id == session_id).limit(limit)
         )
         db_nodes = result.scalars().all()
         return [db_node.to_domain() for db_node in db_nodes]
@@ -573,10 +573,10 @@ class KnowledgeGraphRepository(BaseRepository):
     async def get_nodes_by_type(
         self, node_type: NodeType, session_id: Optional[str] = None, limit: int = 100
     ) -> List[domain.KnowledgeNode]:
-        """Get nodes by type, optionally filtered by session"""
+        """Get nodes by type, optionally filtered by owner (parameter named session_id for backward compatibility)"""
         query = select(KnowledgeNodeDB).where(KnowledgeNodeDB.node_type == node_type)
         if session_id:
-            query = query.where(KnowledgeNodeDB.session_id == session_id)
+            query = query.where(KnowledgeNodeDB.owner_id == session_id)
         query = query.limit(limit)
 
         result = await self.session.execute(query)
@@ -604,9 +604,9 @@ class KnowledgeGraphRepository(BaseRepository):
     async def get_edges_by_session(
         self, session_id: str, limit: int = 100
     ) -> List[domain.KnowledgeEdge]:
-        """Get edges for a session"""
+        """Get edges for an owner (parameter named session_id for backward compatibility)"""
         result = await self.session.execute(
-            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.session_id == session_id).limit(limit)
+            select(KnowledgeEdgeDB).where(KnowledgeEdgeDB.owner_id == session_id).limit(limit)
         )
         db_edges = result.scalars().all()
         return [db_edge.to_domain() for db_edge in db_edges]

@@ -19,7 +19,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import select
 
-from services.database.models import User, UploadedFileDB
+from services.database.models import UploadedFileDB, User
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import UploadedFile
 from services.infrastructure.config.file_configuration import FileConfigService

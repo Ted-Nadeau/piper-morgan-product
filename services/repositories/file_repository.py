@@ -252,9 +252,7 @@ class FileRepository(BaseRepository):
         Enhanced search for an owner combining filename and content search.
         Falls back to filename-only search if MCP is disabled.
         """
-        logger.info(
-            f"Searching files with content for owner {owner_id}, query: {query}"
-        )
+        logger.info(f"Searching files with content for owner {owner_id}, query: {query}")
 
         # Get files matching by filename first (always available)
         filename_matches = await self.search_files_by_name_all_sessions(query, owner_id, days)
@@ -288,11 +286,7 @@ class FileRepository(BaseRepository):
             for mcp_result in mcp_results:
                 # Find corresponding file in database
                 db_file = await self.get_file_by_id(mcp_result.file_id)
-                if (
-                    db_file
-                    and db_file.upload_time > cutoff_time
-                    and db_file.owner_id == owner_id
-                ):
+                if db_file and db_file.upload_time > cutoff_time and db_file.owner_id == owner_id:
                     content_matches.append(db_file)
 
             # Combine results: content matches first, then filename matches

@@ -629,7 +629,8 @@ class KnowledgeNodeDB(Base):
     description = Column(Text)
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
-    session_id = Column(String)
+    session_id = Column(String)  # Legacy - kept for backward compatibility
+    owner_id = Column(String, ForeignKey("users.id"), nullable=True)  # SEC-RBAC Issue #357
     embedding_vector = Column(JSON)  # Will be upgraded to pgvector VECTOR type later
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -692,7 +693,8 @@ class KnowledgeEdgeDB(Base):
     weight = Column(Float, default=1.0)
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
-    session_id = Column(String)
+    session_id = Column(String)  # Legacy - kept for backward compatibility
+    owner_id = Column(String, ForeignKey("users.id"), nullable=True)  # SEC-RBAC Issue #357
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
