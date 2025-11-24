@@ -1037,6 +1037,61 @@ async def lists_ui(request: Request):
     )
 
 
+@app.post("/api/v1/lists", response_model=dict)
+async def create_list(request: Request):
+    """Create a new list owned by current user (Issue #379)"""
+    user_id = request.state.user_id
+    is_admin = getattr(request.state, "is_admin", False)
+
+    try:
+        # Parse JSON body
+        body = await request.json()
+        name = body.get("name", "").strip()
+        description = body.get("description", "").strip()
+
+        if not name:
+            raise HTTPException(status_code=400, detail="List name is required")
+
+        # Import domain model and repository
+        import services.domain.models as domain
+        from services.database.connection import db
+        from services.repositories.universal_list_repository import UniversalListRepository
+
+        # Get database session
+        if not db._initialized:
+            await db.initialize()
+
+        async with await db.get_session() as session:
+            # Create list with owner_id and empty shared_with
+            list_obj = domain.List(
+                name=name,
+                description=description,
+                owner_id=user_id,
+                item_type="todo",  # Default item type
+                shared_with=[],  # Start with no shares
+            )
+
+            # Create list in database
+            list_repo = UniversalListRepository(session)
+            created_list = await list_repo.create_list(list_obj)
+            await session.commit()
+
+        # Return created list data
+        return {
+            "id": str(created_list.id),
+            "name": created_list.name,
+            "description": created_list.description,
+            "owner_id": created_list.owner_id,
+            "created_at": created_list.created_at.isoformat() if created_list.created_at else None,
+            "shared_with": [],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating list: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to create list: {str(e)}")
+
+
 @app.get("/todos", response_class=HTMLResponse)
 async def todos_ui(request: Request):
     """Todos management page with permission-aware UI (Issue #376)"""

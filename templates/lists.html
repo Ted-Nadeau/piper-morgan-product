@@ -193,16 +193,21 @@
           }
 
           try {
-            // TODO: Call API to create list
-            // const response = await fetch('/api/v1/lists', {
-            //   method: 'POST',
-            //   headers: {'Content-Type': 'application/json'},
-            //   body: JSON.stringify({ name, description })
-            // });
+            const response = await fetch('/api/v1/lists', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ name, description })
+            });
 
-            Toast.success('List created successfully');
-            await loadLists(); // Refresh list
-            return true; // Close dialog
+            if (response.ok) {
+              Toast.success('List created successfully');
+              await loadLists(); // Refresh list
+              return true; // Close dialog
+            } else {
+              const error = await response.json();
+              Toast.error('Failed to create list: ' + (error.detail || 'Unknown error'));
+              return false;
+            }
           } catch (error) {
             console.error('Error creating list:', error);
             Toast.error('Failed to create list');
