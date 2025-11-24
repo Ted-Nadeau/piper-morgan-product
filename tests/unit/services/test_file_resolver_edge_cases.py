@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from services.database.models import User
 from services.domain.models import Intent, IntentCategory, UploadedFile
 from services.file_context.exceptions import AmbiguousFileReferenceError
 from services.file_context.file_resolver import FileResolver
@@ -20,20 +21,44 @@ from services.repositories.file_repository import FileRepository
 # Current status: 1/5 tests pass in batch (test_no_files_in_session)
 
 
+async def create_test_user(session, owner_id: str) -> User:
+    """
+    Create a test user for file resolver tests.
+
+    Required for SEC-RBAC owner_id foreign key constraint (Issue #262, #357).
+    """
+    user = User(
+        id=owner_id,
+        username=f"test_user_{owner_id[:8]}",
+        email=f"test_{owner_id[:8]}@example.com",
+        role="user",
+        is_active=True,
+        is_verified=True,
+        is_alpha=True,
+    )
+    session.add(user)
+    await session.flush()  # Ensure user exists before file operations
+    return user
+
+
 class TestFileResolverEdgeCases:
 
     async def test_no_files_in_session(self, async_transaction):
         """Test when user references files but none uploaded"""
+        # Use proper UUID for owner_id (SEC-RBAC Issue #357)
+        owner_id = str(uuid4())
+
         async with async_transaction as session:
+            # Create test user first (SEC-RBAC requires owner_id FK)
+            await create_test_user(session, owner_id)
+
             resolver = FileResolver(FileRepository(session))
             intent = Intent(
                 category=IntentCategory.ANALYSIS,
                 action="analyze_document",
                 context={"original_message": "analyze the report"},
             )
-            file_id, confidence = await resolver.resolve_file_reference(
-                intent, f"empty_session_{uuid4().hex}"
-            )
+            file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
             assert file_id is None
             assert confidence == 0.0
 
