@@ -1,6 +1,6 @@
 # Piper Morgan Versioning Strategy
 
-## Current Version: 0.8.0-alpha
+## Current Version: 0.8.1
 
 ## Versioning Scheme
 
@@ -84,10 +84,11 @@ During alpha testing, versions follow this pattern:
 
 ## Version History
 
-| Version     | Date     | Milestone | Notes                               |
-| ----------- | -------- | --------- | ----------------------------------- |
-| 0.8.0-alpha | Oct 2025 | Sprint A8 | Alpha tester onboarding preparation |
-| 1.0.0       | TBD      | MVP       | Target MVP release                  |
+| Version | Date       | Milestone | Notes                                          |
+| ------- | ---------- | --------- | ---------------------------------------------- |
+| 0.8.0   | Oct 2025   | Sprint A8 | Alpha tester onboarding preparation            |
+| 0.8.1   | Nov 2025   | Sprint A9 | Bug fixes and improvements from alpha testing  |
+| 1.0.0   | TBD        | MVP       | Target MVP release                             |
 
 ## Guidelines for Contributors
 
@@ -99,5 +100,5 @@ During alpha testing, versions follow this pattern:
 
 ---
 
-_Last updated: October 24, 2025_
-_Current version: 0.8.0-alpha_
+_Last updated: November 24, 2025_
+_Current version: 0.8.1_
