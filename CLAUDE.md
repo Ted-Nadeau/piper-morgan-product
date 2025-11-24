@@ -1,3 +1,93 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+---
+
+## Build and Development Commands
+
+```bash
+# Start the application (entry point)
+python main.py                    # Start server on http://localhost:8001
+python main.py --verbose          # Verbose startup
+python main.py --no-browser       # Don't auto-launch browser
+
+# CLI commands
+python main.py setup              # Interactive setup wizard
+python main.py status             # Check system health
+python main.py preferences        # Configure user preferences
+python main.py keys add <provider>   # Add API key (openai, anthropic, gemini, perplexity)
+python main.py keys list          # List configured providers
+python main.py keys validate      # Validate all keys
+
+# Run tests
+python -m pytest tests/unit/ -v           # Unit tests
+python -m pytest tests/integration/ -v    # Integration tests
+python -m pytest tests/ -m smoke          # Smoke tests (<5 seconds)
+python -m pytest tests/path/test_file.py::test_name -xvs  # Single test with output
+
+# Database (PostgreSQL on port 5433, not 5432!)
+docker-compose up -d              # Start infrastructure (postgres, redis, chromadb, temporal)
+docker exec -it piper-postgres psql -U piper -d piper_morgan  # DB shell
+alembic upgrade head              # Run migrations
+alembic revision --autogenerate -m "description"  # Create migration
+
+# Pre-commit
+./scripts/fix-newlines.sh         # ALWAYS run before committing (fixes EOF newlines)
+```
+
+## Architecture Overview
+
+### Entry Points
+- `main.py` - Application entry point (NOT web/app.py)
+- `web/app.py` - FastAPI application
+- Server runs on `http://localhost:8001` (not 8080)
+
+### Service Container (DDD Pattern)
+```python
+from services.container import ServiceContainer
+
+container = ServiceContainer()
+await container.initialize()
+llm_service = container.get_service('llm')
+```
+
+### Core Service Directories
+```
+services/
+├── container/          # ServiceContainer - DDD lifecycle management
+├── domain/             # Domain models (services/domain/models.py is truth source)
+├── intent_service/     # Intent classification and routing
+├── integrations/       # External integrations (slack, github, notion, calendar)
+├── llm/                # LLM providers and adapters
+├── orchestration/      # Temporal workflow orchestration
+├── plugins/            # Plugin architecture
+├── knowledge/          # Knowledge graph and document processing
+├── auth/               # Authentication and authorization
+└── shared_types.py     # ALL enums go here
+```
+
+### Key Files
+- `services/shared_types.py` - All enums (IntentCategory, WorkflowType, TaskType, etc.)
+- `services/domain/models.py` - Domain models truth source
+- `services/config.py` - Settings
+- `config/PIPER.user.md` - User configuration (not YAML)
+
+### Test Markers (pytest.ini)
+- `@pytest.mark.smoke` - Critical path tests (<5 seconds)
+- `@pytest.mark.unit` - Unit tests (<30 seconds)
+- `@pytest.mark.integration` - Integration tests (up to 2 minutes)
+- `@pytest.mark.llm` - Requires LLM API keys (skipped in CI without keys)
+- `@pytest.mark.contract` - Plugin interface compliance
+
+### Infrastructure (docker-compose)
+- PostgreSQL: port 5433 (mapped from 5432)
+- Redis: port 6379
+- ChromaDB: port 8000
+- Temporal: port 7233
+
+---
+
 # CLAUDE.md - Claude Code Agent Briefing
 
 ## 🚨 CRITICAL: Repository Information
