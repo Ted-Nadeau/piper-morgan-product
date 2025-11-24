@@ -898,8 +898,9 @@ async def standup_proxy(
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{API_BASE_URL}/api/standup", params={"format": format, "personality": personality}
+            response = await client.post(
+                f"{API_BASE_URL}/api/v1/standup/generate",
+                params={"format": format, "personality": personality},
             )
             return response.json()
     except httpx.ConnectError as e:
