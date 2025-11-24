@@ -127,6 +127,7 @@ class LLMDomainService:
         context: Optional[Dict[str, Any]] = None,
         response_format: Optional[Dict[str, Any]] = None,
         session: Optional[AsyncSession] = None,
+        system: Optional[str] = None,
     ) -> str:
         """
         Generate LLM completion
@@ -140,6 +141,7 @@ class LLMDomainService:
             context: Optional context to include
             response_format: Optional response format specification
             session: Optional database session for usage logging (Issue #271)
+            system: Optional system prompt (Issue #381)
 
         Returns:
             Generated text response
@@ -158,7 +160,11 @@ class LLMDomainService:
         try:
             # Delegate to LLM client
             response = await self._llm_client.complete(
-                task_type=task_type, prompt=prompt, context=context, response_format=response_format
+                task_type=task_type,
+                prompt=prompt,
+                context=context,
+                response_format=response_format,
+                system=system,
             )
 
             # Issue #271: Log usage if session available
