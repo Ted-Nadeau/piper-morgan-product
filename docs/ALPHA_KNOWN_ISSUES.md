@@ -1,8 +1,8 @@
 # Known Issues & Feature Status (v0.8.0)
 
 **Version**: 0.8.0 (First Alpha Release)
-**Last Updated**: October 24, 2025
-**Status**: DRAFT - Pending PM Review
+**Last Updated**: November 23, 2025
+**Status**: Production Ready (Alpha Testing Begins Nov 24)
 
 ---
 
@@ -145,20 +145,92 @@ These features have been tested, completed, and are ready for alpha testing:
   - Skips in CI/SSH environments
   - Disable with `--no-browser` flag
 
+### User Interface (Nov 22-23, 2025)
+
+- ✅ **Lists Management** (/lists)
+  - Create, view, edit, delete lists
+  - Share with other users (Viewer/Editor/Admin roles)
+  - Permission-aware UI with role badges
+  - Breadcrumb navigation
+  - Issue #379-6: Create button fixed (was commented out, now working)
+
+- ✅ **Todos Management** (/todos)
+  - Same functionality as Lists
+  - Separate organization for tasks
+  - Issue #379-7: Create button fixed (pattern reused from Lists)
+
+- ✅ **Projects Management** (/projects)
+  - Same functionality as Lists/Todos
+  - For larger work items
+
+- ✅ **Files Management** (/files)
+  - Upload files (PDF, DOCX, TXT, MD, JSON - max 10MB)
+  - Download files
+  - Delete files
+  - Owner-based access control
+  - Issue #379-8: UI built Nov 23 (backend was ready)
+
+- ✅ **Permission System**
+  - Share resources with specific users
+  - Role-based access (Viewer, Editor, Admin, Owner)
+  - Conversational permission commands ("share my list with alex@example.com as editor")
+  - Visual permission badges in UI
+  - Permission helper functions (canEdit, canDelete, canShare, isOwner)
+
+- ✅ **Authentication UI**
+  - User menu in navigation header
+  - Logout functionality (Issue #379-14: endpoint path corrected)
+  - Token revocation on logout
+  - Multi-user testing enabled
+
+- ✅ **Standup Generation**
+  - Generate daily standup reports
+  - 2-3 second completion time
+  - AI-powered summaries
+  - Issue #379-4: Proxy endpoint fixed (was calling itself, now calls backend)
+
+- ✅ **Navigation Polish** (Issue #379 - 14 fixes total)
+  - Breadcrumb navigation on all pages (Home › Lists, etc.)
+  - Normalized titles (removed "My" prefix from Lists/Todos)
+  - Settings pages on unified grid
+  - Integrations placeholder page (no more 404 errors)
+  - Privacy & Data settings with clear messaging
+  - Learning dashboard cosmetic polish
+  - Home page help shortcut
+
+### Security & Access Control (Nov 21-23, 2025)
+
+- ✅ **SEC-RBAC Phase 1 Complete** (Issue #357)
+  - owner_id validation on 9 resource tables (Files, Lists, Todos, Projects, KnowledgeGraph, etc.)
+  - shared_with JSONB arrays for permission grants
+  - Admin bypass pattern (owner_id checks skip for is_admin users)
+  - All CRUD repositories RBAC-aware
+  - Migration: 5 Alembic migrations (add columns, backfill owner_id, add shared_with)
+  - 22/22 integration tests passing
+  - ADR-044: Lightweight RBAC architecture approved
+
 ---
 
 ## ⚠️ Known Issues
 
 ### Minor Issues (Non-Blocking)
 
-**No critical issues currently known.**
+**Cosmetic Issues** (Low Priority):
+- Settings/Personality page: Minor layout inconsistencies (Issue #379-11 fixed)
+- Some pages had missing breadcrumbs (Issue #379 - all fixed)
 
-All P0/P1 issues resolved as of November 11, 2025:
+**Features with Placeholder Pages**:
+- ⏸️ **Integrations Management UI**: Backend integrations exist (Slack, GitHub, Notion, Calendar) but management UI shows "coming soon" placeholder
+- ⏸️ **Advanced Privacy Controls**: Basic privacy working (owner_id, shared_with), granular controls planned for beta
 
+**All P0/P1 issues resolved** as of November 23, 2025:
 - ✅ Issue #262: UUID Migration - Complete
 - ✅ Issue #291: Token Blacklist FK - Complete
 - ✅ Issue #263: Response Humanization - Complete
 - ✅ Issue #297: Password Setup in Wizard - Complete
+- ✅ Issue #376: Frontend RBAC Awareness - Complete (Nov 22)
+- ✅ Issue #379: UI Quick Fixes - Complete (14 issues fixed, Nov 23)
+- ✅ Issue #357: SEC-RBAC Phase 1 - Complete (Nov 21)
 
 **Note**: This is alpha software. New issues may be discovered during testing.
 
@@ -186,9 +258,10 @@ These features exist but need more alpha testing validation:
 
 ### Morning Standup
 
-- **Status**: Handler exists, needs end-to-end testing
+- **Status**: ✅ Working (Issue #379-4 fixed Nov 23)
 - **Features**: Multi-modal generation (text, Slack), reminder integration
-- **Validation needed**: Real daily usage
+- **Testing**: Proxy endpoint corrected, 2-3 second generation time
+- **Validation needed**: Real daily usage with alpha testers
 
 ---
 
@@ -254,7 +327,15 @@ Features not yet implemented or incomplete:
 | Knowledge Graph      | ✅ Complete     | Yes          | With boundaries          |
 | Learning System      | 🚧 Experimental | Partial      | Needs validation         |
 | Integrations         | 🚧 Experimental | TBD          | PM to review             |
-| Standup Automation   | 🚧 Experimental | Partial      | Needs E2E test           |
+| Standup Automation   | ✅ Complete     | Yes          | Issue #379-4 fixed       |
+| Lists Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
+| Todos Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
+| Projects Management  | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
+| Files Management     | ✅ Complete     | Yes          | Upload/download/delete (Issue #379) |
+| Permission System    | ✅ Complete     | Yes          | RBAC + sharing + conversational |
+| SEC-RBAC             | ✅ Complete     | Yes          | Phase 1 owner_id validation |
+| Logout Functionality | ✅ Complete     | Yes          | Issue #379-14 fixed      |
+| Navigation Polish    | ✅ Complete     | Yes          | 14 QA issues fixed       |
 
 ---
 
@@ -315,6 +396,6 @@ This document will be updated:
 
 ---
 
-_Last Updated: November 11, 2025_
+_Last Updated: November 23, 2025_
 _Status: Production (ready for alpha testing)_
 _Software Version: 0.8.0_
