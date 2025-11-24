@@ -43,7 +43,7 @@
 
 **3:26 PM** - **Chief of Staff** drafts Weekly Ship #016 covering Oct 31 - Nov 6 (P0 blockers resolved, 4 P2 issues closed, alpha readiness confirmed)
 
-**3:40 PM** - PM publishes Weekly Ship #016, discovers "Codewarrior1988" GitHub username fabrication in footer
+**3:40 PM** - PM publishes Weekly Ship #016, discovers incorrect GitHub username in footer
 
 **3:47 PM** - **Chief of Staff** session closes after correcting GitHub info (actual: mediajunkie/piper-morgan-product), PM heads to nephew's play
 

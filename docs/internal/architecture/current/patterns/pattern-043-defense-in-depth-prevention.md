@@ -28,7 +28,7 @@ The Defense-in-Depth Prevention Pattern implements multi-layer prevention system
 - Prevent at recovery (audit trail for learning)
 
 **Real-world Example**: Nov 18, 2025 - GitHub URL Hallucination
-- **Discovery**: Wrong URL `Codewarrior1988/piper-morgan` found in 18 files
+- **Discovery**: Wrong URL (incorrect repository name) found in 18 files
 - **Root Cause**: LLM hallucination in Weekly Ship #002, spread via agent copying
 - **Single-layer fix** (insufficient): Just correct the 18 files
 - **Multi-layer prevention** (implemented):
@@ -190,7 +190,7 @@ class DefenseInDepthPrevention:
 
 hallucination = Vulnerability(
     name="GitHub URL Hallucination",
-    pattern="Codewarrior1988/piper-morgan",  # Wrong URL
+    pattern="incorrect-repository-name",  # Wrong URL
     correct_value="https://github.com/mediajunkie/piper-morgan-product",
     root_cause="LLM hallucination in Weekly Ship #002",
     spread_mechanism="Agent copying from Ship #002"
@@ -253,8 +253,8 @@ hook_code = '''
 def check_hallucinated_urls(staged_files):
     """Prevent commits with hallucinated GitHub URL."""
     hallucinated_patterns = [
-        "Codewarrior1988/piper-morgan",
-        "codewarrior1988/piper-morgan"
+        "incorrect-repository-name",
+        "another-incorrect-name"
     ]
 
     for file_path in staged_files:
@@ -284,7 +284,7 @@ layer4 = prevention.add_layer_4_audit_trail(
 ## GitHub URL Hallucination Incident
 
 **Discovered**: Nov 18, 2025
-**Pattern**: `Codewarrior1988/piper-mormon` (wrong username)
+**Pattern**: Incorrect repository name (wrong username)
 **Correct**: `mediajunkie/piper-morgan-product`
 **Spread**: 18 files (8 critical + 7 historical + 3 templates)
 
@@ -347,7 +347,7 @@ defense_in_depth:
 
   vulnerabilities:
     - name: "GitHub URL Hallucination"
-      pattern: "Codewarrior1988/piper-morgan"
+      pattern: "incorrect-repository-name"
       severity: "high"
 
       layers:
@@ -442,7 +442,7 @@ defense_in_depth:
 ## References
 
 - **Evidence**: Nov 18, 2025 URL Hallucination Eradication
-  - Discovered: 18 files with `Codewarrior1988/piper-morgan`
+  - Discovered: 18 files with incorrect repository name
   - Root cause: LLM hallucination in Weekly Ship #002
   - Spread: Agent copying from codebase search
   - Eradication: 4-layer prevention system

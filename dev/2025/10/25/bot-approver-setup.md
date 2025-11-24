@@ -15,7 +15,7 @@ on:
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
-    if: github.actor == 'Codewarrior1988'  # Only auto-approve your own PRs
+    if: github.actor == 'mediajunkie'  # Only auto-approve your own PRs
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

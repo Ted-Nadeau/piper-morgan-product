@@ -37,9 +37,9 @@
 - Section 2 Step 3 has critical blockers
 
 ### 3:56 PM: **SSH Key Setup Discovery Begins**
-- ❌ **CRITICAL ISSUE**: Guide says `https://github.com/Codewarrior1988/piper-morgan.git`
+- ❌ **CRITICAL ISSUE**: Guide had incorrect repository URL
 - 🔴 **BLOCKER**: Correct URL is `git@github.com:mediajunkie/piper-morgan-product.git`
-- ⚠️ **Issue**: "Codewarrior1988" repository appears to be hallucinated/outdated
+- ⚠️ **Issue**: Repository URL in guide appears to be hallucinated/outdated
 - ⚠️ **Issue**: HTTPS vs SSH approach - guide uses fragile HTTPS, missing SSH key setup
 - 🔴 **BLOCKER**: No SSH key generation instructions for new users
 
@@ -119,7 +119,7 @@
 ### Core Themes
 
 #### 1. **Installation Guide Has Critical Wrong Information** (Confidence: CRITICAL)
-- **Finding**: Repository URL is completely wrong (Codewarrior1988 vs mediajunkie)
+- **Finding**: Repository URL was incorrect (needed mediajunkie/piper-morgan-product)
 - **Finding**: Guide assumes SSH knowledge not present in new users
 - **Finding**: Multiple Python version assumptions conflict with real dependency requirements
 - **Impact**: Installation would fail for Beatrice without these fixes

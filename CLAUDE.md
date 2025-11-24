@@ -4,87 +4,254 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Build and Development Commands
+## Quick Commands
 
 ```bash
-# Start the application (entry point)
+# Application
 python main.py                    # Start server on http://localhost:8001
 python main.py --verbose          # Verbose startup
-python main.py --no-browser       # Don't auto-launch browser
-
-# CLI commands
 python main.py setup              # Interactive setup wizard
 python main.py status             # Check system health
-python main.py preferences        # Configure user preferences
-python main.py keys add <provider>   # Add API key (openai, anthropic, gemini, perplexity)
-python main.py keys list          # List configured providers
-python main.py keys validate      # Validate all keys
 
-# Run tests
-python -m pytest tests/unit/ -v           # Unit tests
-python -m pytest tests/integration/ -v    # Integration tests
-python -m pytest tests/ -m smoke          # Smoke tests (<5 seconds)
-python -m pytest tests/path/test_file.py::test_name -xvs  # Single test with output
+# Testing
+python -m pytest tests/unit/ -v                    # Unit tests
+python -m pytest tests/ -m smoke                   # Smoke tests
+python -m pytest tests/path/test_file.py::test_name -xvs  # Single test
 
-# Database (PostgreSQL on port 5433, not 5432!)
-docker-compose up -d              # Start infrastructure (postgres, redis, chromadb, temporal)
-docker exec -it piper-postgres psql -U piper -d piper_morgan  # DB shell
+# Database (PostgreSQL on port 5433)
+docker-compose up -d              # Start infrastructure
+docker exec -it piper-postgres psql -U piper -d piper_morgan
 alembic upgrade head              # Run migrations
-alembic revision --autogenerate -m "description"  # Create migration
 
-# Pre-commit
-./scripts/fix-newlines.sh         # ALWAYS run before committing (fixes EOF newlines)
+# Pre-commit (ALWAYS before committing)
+./scripts/fix-newlines.sh
 ```
+
+---
 
 ## Architecture Overview
 
-### Entry Points
-- `main.py` - Application entry point (NOT web/app.py)
-- `web/app.py` - FastAPI application
-- Server runs on `http://localhost:8001` (not 8080)
+### High-Level Structure
 
-### Service Container (DDD Pattern)
+```
+Request Flow: Frontend → FastAPI Route → Service → Repository → Database
+
+Startup: main.py → web/app.py → web/startup.py (phases) → ServiceContainer → Services
+```
+
+### Core Directories
+
+```
+services/
+├── domain/models.py        # 40+ domain entities (truth source)
+├── database/models.py      # SQLAlchemy ORM (mirrors domain)
+├── shared_types.py         # ALL enums: IntentCategory, WorkflowType, TaskStatus
+├── repositories/           # Data access layer (Todo, List, Project, File repos)
+├── intent_service/         # Intent classification & routing
+├── integrations/           # Plugins: Slack, GitHub, Notion, Calendar, Spatial, MCP
+├── container/              # ServiceContainer (lifecycle management)
+└── [domain]/service.py     # Business logic (TodoManagement, Feedback, etc.)
+
+web/
+├── app.py                  # FastAPI application setup
+├── startup.py              # Initialization phases
+├── api/routes/             # REST endpoints (intent, todos, lists, projects, files)
+└── static/                 # CSS, JS, assets
+
+templates/                  # Server-rendered HTML (Jinja2)
+└── components/             # Reusable UI components
+
+tests/
+├── unit/                   # Unit tests (isolated, <30s each)
+├── integration/            # Integration tests (with containers, <2min)
+└── manual/                 # Manual tests (hardcoded data, not auto-run)
+```
+
+### Entry Points
+
+- **Application Start**: `main.py` (CLI + server init, NOT `web/app.py`)
+- **Web App**: `web/app.py` (FastAPI, routes, middleware)
+- **Port**: 8001 (not 8080)
+- **Database**: PostgreSQL on 5433 (not 5432)
+
+### Service Access Pattern
+
 ```python
 from services.container import ServiceContainer
 
 container = ServiceContainer()
 await container.initialize()
-llm_service = container.get_service('llm')
+todo_service = container.get_service('todo_management')
 ```
 
-### Core Service Directories
+### Key Files by Frequency
+
+**Frequently Modified**:
+- `web/api/routes/[endpoint].py` - New endpoints
+- `services/[domain]/[service].py` - Business logic
+- `services/repositories/[entity]_repository.py` - Data access
+- `services/domain/models.py` - Domain entities
+- `services/shared_types.py` - Enums (always update here first)
+- `templates/[page].html` - UI changes
+
+**Configuration**:
+- `config/PIPER.user.md` - User config (hot-reloadable, not YAML)
+- `.env` - Environment variables
+- `services/config.py` - Settings loader
+
+---
+
+## Core Design Patterns
+
+### 1. **Repository Pattern** (Data Access Layer)
+```python
+# services/repositories/todo_repository.py
+class TodoRepository:
+    async def get_by_id(todo_id: str) -> Todo
+    async def list_by_owner(owner_id: str) -> List[Todo]
+    async def create(todo: Todo) -> Todo
+    async def update(todo: Todo) -> Todo
+    async def delete(todo_id: str) -> bool
 ```
-services/
-├── container/          # ServiceContainer - DDD lifecycle management
-├── domain/             # Domain models (services/domain/models.py is truth source)
-├── intent_service/     # Intent classification and routing
-├── integrations/       # External integrations (slack, github, notion, calendar)
-├── llm/                # LLM providers and adapters
-├── orchestration/      # Temporal workflow orchestration
-├── plugins/            # Plugin architecture
-├── knowledge/          # Knowledge graph and document processing
-├── auth/               # Authentication and authorization
-└── shared_types.py     # ALL enums go here
+All data access goes through repositories. Never query the database directly from services.
+
+### 2. **Service Layer Pattern** (Business Logic)
+```python
+# services/todo_management/todo_service.py
+class TodoManagementService:
+    async def complete_todo(todo_id: str, user_id: str) -> Todo
+    async def update_priority(todo_id: str, priority: str) -> Todo
+```
+Services call repositories for data access. Routes call services for business logic.
+
+### 3. **Intent Classification Pattern**
+User messages → IntentClassifier (ML-based) → IntentCategory (enum in shared_types) → Canonical handlers → Domain services
+```python
+# IntentCategory values: EXECUTION, ANALYSIS, SYNTHESIS, STRATEGY, PLANNING, REVIEW, LEARNING, QUERY
+# Each category has dedicated canonical handlers
 ```
 
-### Key Files
-- `services/shared_types.py` - All enums (IntentCategory, WorkflowType, TaskType, etc.)
-- `services/domain/models.py` - Domain models truth source
-- `services/config.py` - Settings
-- `config/PIPER.user.md` - User configuration (not YAML)
+### 4. **Plugin Architecture** (Integrations)
+```
+services/integrations/[provider]/
+├── [provider]_plugin.py           # Core logic (implements PiperPlugin)
+├── [provider]_integration_router.py # FastAPI route adapter
+└── config_service.py               # Configuration management
+```
+New integrations: Copy the demo plugin structure, implement PiperPlugin interface.
+
+### 5. **DDD - Domain-Driven Design**
+- Domain models: `services/domain/models.py` (business logic, validation)
+- Database models: `services/database/models.py` (ORM, schema)
+- Repositories: Bridge between domain and database
+- Value Objects and Aggregates: Model relationships correctly
+
+### 6. **Configuration Management**
+- `config/PIPER.md` - Default config (Markdown, not YAML)
+- `config/PIPER.user.md` - User overrides (hot-reloadable)
+- Loader: `PiperConfigLoader` with caching and hot-reload support
+
+### 7. **Session Management** (Authentication)
+- Session tokens (not JWT) stored in database
+- User context available in request.state
+- Middleware: `EnhancedErrorMiddleware` catches and formats errors
 
 ### Test Markers (pytest.ini)
 - `@pytest.mark.smoke` - Critical path tests (<5 seconds)
 - `@pytest.mark.unit` - Unit tests (<30 seconds)
 - `@pytest.mark.integration` - Integration tests (up to 2 minutes)
-- `@pytest.mark.llm` - Requires LLM API keys (skipped in CI without keys)
+- `@pytest.mark.llm` - Requires LLM API keys (skipped without keys)
 - `@pytest.mark.contract` - Plugin interface compliance
 
 ### Infrastructure (docker-compose)
-- PostgreSQL: port 5433 (mapped from 5432)
-- Redis: port 6379
-- ChromaDB: port 8000
-- Temporal: port 7233
+- PostgreSQL: port 5433 (database)
+- Redis: port 6379 (caching/sessions)
+- ChromaDB: port 8000 (vector store)
+- Temporal: port 7233 (workflow orchestration)
+
+---
+
+## Frontend-Backend Integration
+
+### Request Flow
+1. **Frontend** (templates/[page].html) submits to `/api/v1/*` endpoint
+2. **Route** (web/api/routes/[domain].py) handles HTTP request
+3. **Service** (services/[domain]/[service].py) processes business logic
+4. **Repository** (services/repositories/[entity]_repository.py) accesses data
+5. **Response** returned as JSON to frontend
+
+### API Endpoint Pattern
+```python
+# web/api/routes/todos.py
+@router.post("/todos/create")
+async def create_todo(req: CreateTodoRequest, current_user: User) -> TodoResponse:
+    service = container.get_service('todo_management')
+    todo = await service.create_todo(req.title, current_user.id)
+    return TodoResponse.from_domain(todo)
+```
+
+### Frontend Communication
+- **Framework**: Server-rendered HTML (Jinja2) with vanilla JavaScript
+- **JS Utilities**: `toast.js`, `dialog.js`, `permissions.js` in `static/js/`
+- **Components**: Reusable modular components in `templates/components/`
+
+### User Context
+```python
+# Available in routes via dependency injection
+from services.auth.auth_middleware import get_current_user
+from services.auth.jwt_service import JWTClaims
+
+async def endpoint(current_user: JWTClaims = Depends(get_current_user)):
+    print(current_user.sub)  # user_id
+    print(current_user.username)
+```
+
+---
+
+## Common Development Tasks
+
+### Adding a New REST Endpoint
+1. Create route in `web/api/routes/[domain].py`:
+   ```python
+   @router.post("/items/create")
+   async def create_item(req: CreateItemRequest, current_user: JWTClaims = Depends(get_current_user)):
+       service = container.get_service('[domain]_service')
+       item = await service.create_item(req.title, current_user.sub)
+       return ItemResponse.from_domain(item)
+   ```
+2. Add request/response models (use Pydantic)
+3. Call service layer (never query database directly)
+4. Add tests in `tests/unit/web/api/routes/test_[domain].py`
+5. Run: `python -m pytest tests/unit/ -v`
+
+### Adding a New Domain Service
+1. Create `services/[domain]/[service].py`
+2. Implement service class with business logic
+3. Register in `ServiceContainer` (services/container/service_container.py)
+4. Call repositories for data access
+5. Add unit tests in `tests/unit/services/[domain]/`
+
+### Adding a Plugin/Integration
+1. Copy structure from `services/integrations/demo/`
+2. Create `[provider]_plugin.py` implementing `PiperPlugin`
+3. Create `[provider]_integration_router.py` with FastAPI routes
+4. Register in integration discovery system
+5. Add tests for plugin interface compliance (@pytest.mark.contract)
+
+### Modifying Database Schema
+1. Change domain model in `services/domain/models.py`
+2. Update database model in `services/database/models.py`
+3. Create migration: `alembic revision --autogenerate -m "description"`
+4. Review generated migration in `alembic/versions/`
+5. Run migration: `alembic upgrade head`
+6. Test: `docker-compose up -d && python main.py`
+
+### Adding UI Changes
+1. Update `templates/[page].html` or `templates/components/[component].html`
+2. Add CSS to `web/static/css/` or inline in template
+3. JavaScript in `<script>` tag (use existing utilities like `toast.js`, `dialog.js`)
+4. Test in browser: `python main.py` then visit `http://localhost:8001`
+5. Pre-commit: `./scripts/fix-newlines.sh` before committing
 
 ---
 

@@ -353,7 +353,7 @@ Based on this 45-day sweep, we recommend adding **3 new patterns** to the offici
 **Description**: When discovering a risk or hazard (e.g., URL hallucination, security vulnerability), implement prevention at multiple layers rather than single point-of-failure. Layers typically: (1) canonical source of truth, (2) agent education/briefing, (3) automated enforcement (pre-commit hook), (4) documentation/audit trail.
 
 **Evidence from Period**:
-- Nov 18: Discovery of GitHub URL hallucination in 18 files (`Codewarrior1988/piper-morgan`)
+- Nov 18: Discovery of GitHub URL hallucination in 18 files (incorrect repository name)
 - Root cause: LLM hallucination + agent copying from Weekly Ship #002
 - Response: 4-layer prevention:
   1. PROJECT.md canonical source (correct URL at top)
