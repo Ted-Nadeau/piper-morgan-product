@@ -269,6 +269,113 @@ Start with these simple tests to verify everything works:
 
 ---
 
+## Exploring Piper's New Features (Nov 22-23, 2025)
+
+### Lists, Todos, and Projects Management
+
+1. **Create a List**
+   - Navigate to http://localhost:8001/lists
+   - Click "Create New List" button
+   - Enter name: "Alpha Testing Tasks"
+   - Enter description: "Testing the Lists feature"
+   - Verify list appears in the list view
+
+2. **Share a List**
+   - Open the list you just created
+   - Click "Share" button
+   - Enter another user's email (if multi-user testing)
+   - Select role: Editor
+   - Verify sharing modal shows success
+
+3. **Test Permission Badges**
+   - Notice "Owner" badge on your list
+   - If shared with another user, verify their role badge shows
+
+4. **Repeat for Todos and Projects**
+   - Navigate to /todos and /projects
+   - Same CRUD operations available
+   - Test that all three resource types work consistently
+
+### File Management
+
+1. **Upload a File**
+   - Navigate to http://localhost:8001/files
+   - Click "Upload File" or drag-and-drop a file
+   - Supported formats: PDF, DOCX, TXT, MD, JSON (max 10MB)
+   - Verify file appears in file list with correct metadata
+
+2. **Download a File**
+   - Click "Download" button on uploaded file
+   - Verify file downloads correctly
+
+3. **Delete a File**
+   - Click "Delete" button on a file
+   - Verify file is removed from list
+
+4. **Test File Privacy**
+   - Files are owner-based (private to you)
+   - Other users should NOT see your files
+
+### Permission System
+
+1. **Conversational Permission Commands**
+   Try these in the chat interface:
+   - "share my Alpha Testing Tasks list with [email] as editor"
+   - "who can access my Alpha Testing Tasks?"
+   - "show me shared lists"
+   - "give [email] viewer access to my project plan"
+
+2. **Role-Based Access Testing** (requires 2 users)
+   - Create a list as User A
+   - Share with User B as "Viewer"
+   - Log in as User B
+   - Verify: Can view list but NOT edit/delete
+   - Share same list with User C as "Editor"
+   - Log in as User C
+   - Verify: CAN edit and update list
+
+### Standup Generation
+
+1. **Generate a Standup**
+   - Navigate to http://localhost:8001/standup
+   - Click "Generate Standup" button
+   - Wait 2-3 seconds for AI generation
+   - Verify standup report appears with meaningful content
+   - Note: First standup may be generic if no prior activity
+
+2. **Test with Activity**
+   - Create some lists, todos, upload files
+   - Generate standup again
+   - Verify it reflects your recent activity
+
+### Authentication & Logout
+
+1. **Test Logout**
+   - Click user menu (top right corner of page)
+   - Click "Logout" button
+   - Verify you're redirected to login page
+   - Verify session is cleared (can't access /lists without login)
+
+2. **Test Login After Logout**
+   - Enter your credentials on login page
+   - Verify you can log back in
+   - Verify your data is still there (lists, files, etc.)
+
+### Navigation & Polish
+
+1. **Test Breadcrumbs**
+   - Navigate to /lists, /todos, /projects, /files, /standup
+   - Verify each page shows breadcrumb: Home › [Page Name]
+   - Click "Home" in breadcrumb, verify navigation works
+
+2. **Test Page Consistency**
+   - Check that Settings pages are on unified grid
+   - Verify no "My Lists" prefix (should just be "Lists")
+   - Check that Integrations page shows placeholder (not 404)
+   - Check Privacy & Data settings has informative content
+
+---
+
 ## Troubleshooting
 
 ### Setup Wizard Issues
@@ -335,6 +442,38 @@ The setup wizard will guide you through Docker installation with platform-specif
 - Check file isn't corrupted or password-protected
 - Verify you're logged in (file upload requires authentication)
 
+### New Features Troubleshooting (Nov 22-23, 2025)
+
+**Can't create lists/todos?**
+- Issue #379-6, #379-7 fixed Nov 23, 2025
+- Make sure you're on latest commit: `git pull origin main`
+- Refresh browser page
+- Check browser console for errors (F12)
+
+**Files page shows "coming soon"?**
+- Files UI built Nov 23, 2025 (Issue #379-8)
+- Update to latest: `git pull origin main`
+- Restart server: `python main.py`
+- Clear browser cache if needed
+
+**Standup button hangs or does nothing?**
+- Issue #379-4 fixed Nov 23, 2025
+- Proxy endpoint was calling itself, now fixed
+- Update to latest commit
+- Should complete in 2-3 seconds
+
+**Can't log out?**
+- Issue #379-14 fixed Nov 23, 2025
+- Logout now in user menu (top right)
+- Click user menu → "Logout"
+- If still broken, check you're on latest commit
+
+**Permission sharing not working?**
+- Requires multi-user setup (2+ user accounts)
+- Make sure other user exists in database
+- Try conversational command: "share my [resource] with [email] as editor"
+- Check that SEC-RBAC Phase 1 is active (run `python main.py status`)
+
 ---
 
 ## Providing Feedback
@@ -378,6 +517,9 @@ SEVERITY: [blocker/major/minor]
 - Preference data is stored locally in your database
 - You can opt out of analytics in settings
 - Setup wizard completion statistics help us improve onboarding
+- SEC-RBAC Phase 1 ensures owner-based access control (Nov 21-23, 2025)
+- Shared resources require explicit permission grants
+- Your files, lists, todos, and projects are private by default
 
 ---
 
@@ -413,6 +555,6 @@ Thank you for being an early adopter and helping us perfect the onboarding exper
 
 ---
 
-_Last updated: November 11, 2025_
+_Last updated: November 23, 2025_
 _Software version: 0.8.0_
-_Guide version: 2.1 (Guided Setup with Password)_
+_Guide version: 2.2 (Nov 22-23 Features + Testing Scenarios)_
