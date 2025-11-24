@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.database.models import AuditLog, Conversation, ConversationTurn, FeedbackDB, User
+from services.database.models import AuditLog, ConversationDB, ConversationTurnDB, FeedbackDB, User
 
 
 class TestConversationIndexes:
@@ -157,7 +157,7 @@ class TestIndexExplainPlans:
         """
         # Create test data
         user_id = str(uuid.uuid4())
-        conv = Conversation(
+        conv = ConversationDB(
             id=str(uuid.uuid4()),
             user_id=user_id,
             session_id="test-session",
@@ -194,7 +194,7 @@ class TestIndexExplainPlans:
         """
         # Create test data
         conv_id = str(uuid.uuid4())
-        turn = ConversationTurn(
+        turn = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=1,
@@ -254,7 +254,7 @@ class TestIndexEdgeCases:
         conv_id = str(uuid.uuid4())
 
         # Create turn with entities
-        turn = ConversationTurn(
+        turn = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=1,
@@ -352,7 +352,7 @@ class TestPerformanceBaselines:
 
         # Create test conversations
         for i in range(10):
-            conv = Conversation(
+            conv = ConversationDB(
                 id=str(uuid.uuid4()),
                 user_id=user_id,
                 session_id=f"session-{i}",
@@ -391,7 +391,7 @@ class TestPerformanceBaselines:
 
         # Create test turns
         for i in range(10):
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=i,

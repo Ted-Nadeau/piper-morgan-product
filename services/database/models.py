@@ -15,11 +15,13 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
@@ -615,6 +617,115 @@ class UploadedFileDB(Base):
             last_referenced=file.last_referenced,
             reference_count=file.reference_count,
             file_metadata=file.file_metadata,
+        )
+
+
+class ConversationDB(Base):
+    """Database model for conversations"""
+
+    __tablename__ = "conversations"
+
+    id = Column(String, primary_key=True)
+    user_id = Column(String, nullable=False)
+    session_id = Column(String, nullable=False)
+    title = Column(String, nullable=False, default="")
+    context = Column(postgresql.JSONB, nullable=False, default={})
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now())
+    last_activity_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("idx_conversations_user_session", "user_id", "session_id"),
+        Index("idx_conversations_last_activity", "last_activity_at"),
+    )
+
+    def to_domain(self) -> domain.Conversation:
+        return domain.Conversation(
+            id=self.id,
+            user_id=self.user_id,
+            session_id=self.session_id,
+            title=self.title,
+            context=self.context or {},
+            is_active=self.is_active,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+            last_activity_at=self.last_activity_at,
+        )
+
+    @classmethod
+    def from_domain(cls, conversation: domain.Conversation) -> "ConversationDB":
+        return cls(
+            id=conversation.id,
+            user_id=conversation.user_id,
+            session_id=conversation.session_id,
+            title=conversation.title,
+            context=conversation.context,
+            is_active=conversation.is_active,
+            created_at=conversation.created_at,
+            updated_at=conversation.updated_at,
+            last_activity_at=conversation.last_activity_at,
+        )
+
+
+class ConversationTurnDB(Base):
+    """Database model for conversation turns"""
+
+    __tablename__ = "conversation_turns"
+
+    id = Column(String, primary_key=True)
+    conversation_id = Column(String, nullable=False)
+    turn_number = Column(Integer, nullable=False, default=0)
+    user_message = Column(Text, nullable=False, default="")
+    assistant_response = Column(Text, nullable=False, default="")
+    intent = Column(String, nullable=True)
+    entities = Column(postgresql.JSONB, nullable=False, default=[])
+    references = Column(postgresql.JSONB, nullable=False, default={})
+    context_used = Column(postgresql.JSONB, nullable=False, default={})
+    turn_metadata = Column("metadata", postgresql.JSONB, nullable=False, default={})
+    processing_time = Column(Float, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    completed_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        ForeignKeyConstraint(["conversation_id"], ["conversations.id"], ondelete="CASCADE"),
+        Index("idx_conversation_turns_conversation", "conversation_id", "turn_number"),
+        Index("idx_conversation_turns_created", "created_at"),
+    )
+
+    def to_domain(self) -> domain.ConversationTurn:
+        return domain.ConversationTurn(
+            id=self.id,
+            conversation_id=self.conversation_id,
+            turn_number=self.turn_number,
+            user_message=self.user_message,
+            assistant_response=self.assistant_response,
+            intent=self.intent,
+            entities=self.entities or [],
+            references=self.references or {},
+            context_used=self.context_used or {},
+            metadata=self.turn_metadata or {},
+            processing_time=self.processing_time,
+            created_at=self.created_at,
+            completed_at=self.completed_at,
+        )
+
+    @classmethod
+    def from_domain(cls, turn: domain.ConversationTurn) -> "ConversationTurnDB":
+        return cls(
+            id=turn.id,
+            conversation_id=turn.conversation_id,
+            turn_number=turn.turn_number,
+            user_message=turn.user_message,
+            assistant_response=turn.assistant_response,
+            intent=turn.intent,
+            entities=turn.entities,
+            references=turn.references,
+            context_used=turn.context_used,
+            turn_metadata=turn.metadata,
+            processing_time=turn.processing_time,
+            created_at=turn.created_at,
+            completed_at=turn.completed_at,
         )
 
 
