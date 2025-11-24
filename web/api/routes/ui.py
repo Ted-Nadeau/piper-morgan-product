@@ -27,13 +27,12 @@ from pathlib import Path
 
 import structlog
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 logger = structlog.get_logger()
 
 # Router configuration
 router = APIRouter(tags=["ui", "templates"])
-
 
 
 def _get_templates(request: Request):
@@ -61,39 +60,42 @@ def _get_templates(request: Request):
 
     return templates
 
+
 def _extract_user_context(request: Request) -> dict:
     """
-    Extract user context from request state for template injection.
+    Extract user context from request state for template rendering.
 
-    Retrieves authenticated user information from request.state (set by auth middleware)
-    and returns it as a dict for passing to templates. The navigation component uses this
-    to populate the user dropdown menu with the actual username instead of the default
-    "user" placeholder.
-
-    Args:
-        request: FastAPI Request object with user_claims/user_id in state
+    After successful authentication, the auth middleware sets request.state.user_id.
+    This function converts that into template-friendly user context by querying
+    the database for complete user information.
 
     Returns:
-        dict with 'user_id', 'username', and 'is_admin' keys for template context
+        dict: {"user": {...}} if authenticated, {"user": None} if not
     """
-    user_id = getattr(request.state, "user_id", "user")
+    user_context = {"user": None}
 
-    # Try to get username from user_claims if available
-    username = user_id  # Default to user_id
-    user_claims = getattr(request.state, "user_claims", None)
-    if user_claims and hasattr(user_claims, "username"):
-        username = user_claims.username
-    elif user_claims and isinstance(user_claims, dict) and "username" in user_claims:
-        username = user_claims["username"]
+    # Check if user_id is in request state (set by auth middleware)
+    if hasattr(request.state, "user_id") and request.state.user_id:
+        try:
+            # Get user from database
+            from services.database import get_db_session
+            from services.database.models import UserDB
 
-    # Extract is_admin flag from user claims (SEC-RBAC Phase 3)
-    is_admin = False
-    if user_claims:
-        is_admin = getattr(user_claims, "is_admin", False) or (
-            isinstance(user_claims, dict) and user_claims.get("is_admin", False)
-        )
+            session = next(get_db_session())
+            user_db = session.query(UserDB).filter(UserDB.user_id == request.state.user_id).first()
 
-    return {"user_id": user_id, "username": username, "is_admin": is_admin}
+            if user_db:
+                user_context["user"] = {
+                    "user_id": str(user_db.user_id),
+                    "username": user_db.username,
+                    "email": user_db.email,
+                    "is_admin": user_db.is_admin,
+                    "is_alpha": user_db.is_alpha,
+                }
+        except Exception as e:
+            logger.error("Failed to extract user context", error=str(e))
+
+    return user_context
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -101,7 +103,7 @@ async def home(request: Request):
     """Render home page"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
+    return templates.TemplateResponse("home.html", {"request": request, **user_context})
 
 
 @router.get("/standup", response_class=HTMLResponse)
@@ -109,7 +111,7 @@ async def standup_ui(request: Request):
     """Render standup UI"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse("standup.html", {"request": request, "user": user_context})
+    return templates.TemplateResponse("standup.html", {"request": request, **user_context})
 
 
 @router.get("/personality-preferences", response_class=HTMLResponse)
@@ -118,7 +120,7 @@ async def personality_preferences_ui(request: Request):
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
-        "personality-preferences.html", {"request": request, "user": user_context}
+        "personality-preferences.html", {"request": request, **user_context}
     )
 
 
@@ -128,7 +130,7 @@ async def learning_dashboard_ui(request: Request):
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
-        "learning-dashboard.html", {"request": request, "user": user_context}
+        "learning-dashboard.html", {"request": request, **user_context}
     )
 
 
@@ -137,9 +139,7 @@ async def settings_index_ui(request: Request):
     """Serve the settings index page (G2: Settings Index Page)"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse(
-        "settings-index.html", {"request": request, "user": user_context}
-    )
+    return templates.TemplateResponse("settings-index.html", {"request": request, **user_context})
 
 
 @router.get("/account", response_class=HTMLResponse)
@@ -147,7 +147,7 @@ async def account_settings_ui(request: Request):
     """Serve the account settings page (Coming Soon)"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse("account.html", {"request": request, "user": user_context})
+    return templates.TemplateResponse("account.html", {"request": request, **user_context})
 
 
 @router.get("/files", response_class=HTMLResponse)
@@ -155,7 +155,7 @@ async def files_ui(request: Request):
     """Serve the files page (Coming Soon)"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
+    return templates.TemplateResponse("files.html", {"request": request, **user_context})
 
 
 @router.get("/settings/integrations", response_class=HTMLResponse)
@@ -163,9 +163,7 @@ async def integrations_page(request: Request):
     """Integrations management page - Coming soon"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse(
-        "integrations.html", {"request": request, "user": user_context}
-    )
+    return templates.TemplateResponse("integrations.html", {"request": request, **user_context})
 
 
 @router.get("/lists", response_class=HTMLResponse)
@@ -175,7 +173,7 @@ async def lists_ui(request: Request):
     user_context = _extract_user_context(request)
     lists_data = []
     return templates.TemplateResponse(
-        "lists.html", {"request": request, "user": user_context, "lists": lists_data}
+        "lists.html", {"request": request, **user_context, "lists": lists_data}
     )
 
 
@@ -186,7 +184,7 @@ async def todos_ui(request: Request):
     user_context = _extract_user_context(request)
     todos_data = []
     return templates.TemplateResponse(
-        "todos.html", {"request": request, "user": user_context, "todos": todos_data}
+        "todos.html", {"request": request, **user_context, "todos": todos_data}
     )
 
 
@@ -197,7 +195,7 @@ async def projects_ui(request: Request):
     user_context = _extract_user_context(request)
     projects_data = []
     return templates.TemplateResponse(
-        "projects.html", {"request": request, "user": user_context, "projects": projects_data}
+        "projects.html", {"request": request, **user_context, "projects": projects_data}
     )
 
 
@@ -206,9 +204,7 @@ async def privacy_settings_ui(request: Request):
     """Serve the privacy & data settings page (Coming Soon)"""
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
-    return templates.TemplateResponse(
-        "privacy-settings.html", {"request": request, "user": user_context}
-    )
+    return templates.TemplateResponse("privacy-settings.html", {"request": request, **user_context})
 
 
 @router.get("/settings/advanced", response_class=HTMLResponse)
@@ -217,5 +213,23 @@ async def advanced_settings_ui(request: Request):
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
-        "advanced-settings.html", {"request": request, "user": user_context}
+        "advanced-settings.html", {"request": request, **user_context}
     )
+
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """
+    Serve login page
+
+    If user is already authenticated, redirect to homepage.
+    Otherwise, show login form.
+    """
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+
+    # If already logged in, redirect to home
+    if user_context.get("user"):
+        return RedirectResponse(url="/", status_code=302)
+
+    return templates.TemplateResponse("login.html", {"request": request, **user_context})
