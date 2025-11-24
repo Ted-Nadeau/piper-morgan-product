@@ -54,6 +54,55 @@
         color: white;
       }
 
+      .privacy-status {
+        background: #f0f9ff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin: 2rem 0;
+      }
+
+      .privacy-coming-soon {
+        background: #fffbeb;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin: 2rem 0;
+      }
+
+      .privacy-list {
+        text-align: left;
+        margin: 1rem auto;
+        max-width: 600px;
+        line-height: 1.8;
+        list-style: none;
+        padding: 0;
+      }
+
+      .privacy-list li {
+        margin: 0.5rem 0;
+        color: #2c3e50;
+      }
+
+      .privacy-links {
+        margin: 2rem 0;
+      }
+
+      .privacy-link {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .privacy-link:hover {
+        text-decoration: underline;
+      }
+
+      .privacy-status h2,
+      .privacy-coming-soon h2,
+      .privacy-links h2 {
+        color: #2c3e50;
+        margin-top: 0;
+      }
+
       @media (max-width: 768px) {
         .coming-soon-container {
           margin: 50px auto;
@@ -88,11 +137,41 @@
 
     <div class="coming-soon-container">
       <div class="coming-soon-icon">🔒</div>
-      <h1>Privacy & Data</h1>
-      <p class="coming-soon-description">
-        Manage your data, conversation history, and privacy preferences. This feature is coming soon!
-      </p>
-      <a href="/settings" class="back-link">← Back to Settings</a>
+      <h1>Privacy & Data Settings</h1>
+
+      <div class="privacy-status">
+        <h2>Current Privacy Status</h2>
+        <ul class="privacy-list">
+          <li>✅ Your data is private and isolated to your user account</li>
+          <li>✅ All resources (Lists, Todos, Projects, Files) use owner-based access control</li>
+          <li>✅ Shared resources require explicit permission grants</li>
+          <li>✅ Your conversations and uploaded files are stored securely</li>
+          <li>✅ Admin users can access system-wide data for support purposes</li>
+        </ul>
+      </div>
+
+      <div class="privacy-coming-soon">
+        <h2>Advanced Privacy Controls Coming Soon</h2>
+        <p class="coming-soon-description">
+          We're building granular privacy controls that will allow you to:
+        </p>
+        <ul class="privacy-list">
+          <li>Export your data in standard formats</li>
+          <li>Request complete data deletion</li>
+          <li>Configure sharing defaults and restrictions</li>
+          <li>Manage third-party integration permissions</li>
+          <li>Control conversation history retention</li>
+        </ul>
+      </div>
+
+      <div class="privacy-links">
+        <h2>Privacy Resources</h2>
+        <p>For more information about how we handle your data:</p>
+        <ul class="privacy-list">
+          <li><a href="/privacy-policy" class="privacy-link">Privacy Policy</a> (if exists, or link to external)</li>
+          <li><a href="/settings" class="back-link">← Back to Settings</a></li>
+        </ul>
+      </div>
     </div>
   </body>
 </html>
