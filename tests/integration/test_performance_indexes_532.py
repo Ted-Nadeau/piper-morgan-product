@@ -11,7 +11,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from services.database.models import ConversationTurn
+from services.database.models import ConversationTurnDB
 
 
 class TestConversationIntentIndexes:
@@ -76,7 +76,7 @@ class TestIntentFilteringQueries:
         intents = ["question", "statement", "request", "clarification"]
 
         for i, intent in enumerate(intents):
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=i,
@@ -114,7 +114,7 @@ class TestIntentFilteringQueries:
         """
         # Create test data
         conv_id = str(uuid.uuid4())
-        turn = ConversationTurn(
+        turn = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=1,
@@ -161,7 +161,7 @@ class TestIntentAnalyticsQueries:
 
         for intent, count in intent_counts.items():
             for i in range(count):
-                turn = ConversationTurn(
+                turn = ConversationTurnDB(
                     id=str(uuid.uuid4()),
                     conversation_id=conv_id,
                     turn_number=turn_number,
@@ -212,7 +212,7 @@ class TestIntentAnalyticsQueries:
         ]
 
         for i, intent in enumerate(intent_trajectory):
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=i,
@@ -259,7 +259,7 @@ class TestIntentAnalyticsQueries:
 
         # Create 5 questions
         for i in range(5):
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=i,
@@ -272,7 +272,7 @@ class TestIntentAnalyticsQueries:
 
         # Create 3 statements
         for i in range(3):
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=5 + i,
@@ -321,7 +321,7 @@ class TestIntentIndexEdgeCases:
         conv_id = str(uuid.uuid4())
 
         # Create turn with NULL intent
-        turn = ConversationTurn(
+        turn = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=0,
@@ -333,7 +333,7 @@ class TestIntentIndexEdgeCases:
         db_session.add(turn)
 
         # Create turn with intent
-        turn2 = ConversationTurn(
+        turn2 = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=1,
@@ -381,7 +381,7 @@ class TestIntentIndexEdgeCases:
         conv_id = str(uuid.uuid4())
 
         # Create turns with different case intents
-        turn1 = ConversationTurn(
+        turn1 = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=0,
@@ -392,7 +392,7 @@ class TestIntentIndexEdgeCases:
         )
         db_session.add(turn1)
 
-        turn2 = ConversationTurn(
+        turn2 = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=conv_id,
             turn_number=1,
@@ -433,7 +433,7 @@ class TestIntentIndexPerformanceBaselines:
         # Create test dataset (50 turns)
         for i in range(50):
             intent = ["question", "statement", "request", "clarification"][i % 4]
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=i,
@@ -477,7 +477,7 @@ class TestIntentIndexPerformanceBaselines:
         # Create test dataset (100 turns across 4 intents)
         for i in range(100):
             intent = ["question", "statement", "request", "clarification"][i % 4]
-            turn = ConversationTurn(
+            turn = ConversationTurnDB(
                 id=str(uuid.uuid4()),
                 conversation_id=conv_id,
                 turn_number=i,
@@ -522,7 +522,7 @@ class TestIntentIndexPerformanceBaselines:
             conv_id = str(uuid.uuid4())
             for turn_num in range(20):
                 intent = ["question", "statement", "request"][turn_num % 3]
-                turn = ConversationTurn(
+                turn = ConversationTurnDB(
                     id=str(uuid.uuid4()),
                     conversation_id=conv_id,
                     turn_number=turn_num,
@@ -536,7 +536,7 @@ class TestIntentIndexPerformanceBaselines:
 
         # Time composite query on one specific conversation
         test_conv_id = str(uuid.uuid4())
-        turn = ConversationTurn(
+        turn = ConversationTurnDB(
             id=str(uuid.uuid4()),
             conversation_id=test_conv_id,
             turn_number=0,

@@ -67,6 +67,7 @@ class LLMClient:
         prompt: str,
         context: Optional[Dict[str, Any]] = None,
         response_format: Optional[Dict[str, Any]] = None,
+        system: Optional[str] = None,
     ) -> str:
         """
         Get completion for a specific task type with automatic fallback
@@ -75,6 +76,8 @@ class LLMClient:
             task_type: Type of task (intent_classification, reasoning, etc)
             prompt: The prompt to send
             context: Optional context to include
+            response_format: Optional response format (for JSON mode)
+            system: Optional system prompt
 
         Returns:
             The LLM's response
@@ -85,9 +88,11 @@ class LLMClient:
         # Try primary provider first
         try:
             if primary_provider == LLMProvider.ANTHROPIC:
-                return await self._anthropic_complete(prompt, config, response_format, context)
+                return await self._anthropic_complete(
+                    prompt, config, response_format, context, system
+                )
             elif primary_provider == LLMProvider.OPENAI:
-                return await self._openai_complete(prompt, config, response_format, context)
+                return await self._openai_complete(prompt, config, response_format, context, system)
             else:
                 raise ValueError(f"Unknown provider: {primary_provider}")
         except Exception as e:
@@ -113,11 +118,11 @@ class LLMClient:
             try:
                 if fallback_provider == LLMProvider.ANTHROPIC:
                     return await self._anthropic_complete(
-                        prompt, fallback_config, response_format, context
+                        prompt, fallback_config, response_format, context, system
                     )
                 else:
                     return await self._openai_complete(
-                        prompt, fallback_config, response_format, context
+                        prompt, fallback_config, response_format, context, system
                     )
             except Exception as fallback_error:
                 logger.error(
@@ -133,19 +138,27 @@ class LLMClient:
         config: Dict[str, Any],
         response_format: Optional[Dict[str, Any]] = None,
         context: Optional[Dict[str, Any]] = None,
+        system: Optional[str] = None,
     ) -> str:
         """Get completion from Anthropic"""
         if not self.anthropic_client:
             raise RuntimeError("Anthropic client not initialized")
 
+        # Build request parameters
+        request_params = {
+            "model": config["model"].value,
+            "max_tokens": config["max_tokens"],
+            "temperature": config["temperature"],
+            "messages": [{"role": "user", "content": prompt}],
+        }
+
+        # Add system prompt if provided
+        if system:
+            request_params["system"] = system
+
         # Note: Anthropic doesn't support response_format like OpenAI
         # JSON mode must be handled via prompt engineering
-        response = self.anthropic_client.messages.create(
-            model=config["model"].value,
-            max_tokens=config["max_tokens"],
-            temperature=config["temperature"],
-            messages=[{"role": "user", "content": prompt}],
-        )
+        response = self.anthropic_client.messages.create(**request_params)
 
         # Extract actual token counts from response
         prompt_tokens = (
@@ -179,17 +192,28 @@ class LLMClient:
         config: Dict[str, Any],
         response_format: Optional[Dict[str, Any]] = None,
         context: Optional[Dict[str, Any]] = None,
+        system: Optional[str] = None,
     ) -> str:
         """Get completion from OpenAI"""
         if not self.openai_client:
             raise RuntimeError("OpenAI client not initialized")
+
+        # Build messages list
+        messages = []
+
+        # Add system message if provided
+        if system:
+            messages.append({"role": "system", "content": system})
+
+        # Add user message
+        messages.append({"role": "user", "content": prompt})
 
         # Prepare request parameters
         request_params = {
             "model": config["model"].value,
             "max_tokens": config["max_tokens"],
             "temperature": config["temperature"],
-            "messages": [{"role": "user", "content": prompt}],
+            "messages": messages,
         }
 
         # Add response_format if provided (for JSON mode)

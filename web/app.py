@@ -33,6 +33,9 @@ from web.personality_integration import (
     WebPersonalityConfig,
 )
 
+# Startup phase management (Phase 2 of Issue #385 - INFR-MAINT-REFACTOR)
+from web.startup import lifespan
+
 # Import error response utilities (Pattern 034: Error Handling Standards)
 from web.utils.error_responses import internal_error, not_found_error, validation_error
 
@@ -166,278 +169,6 @@ def _extract_user_context(request: Request) -> dict:
         )
 
     return {"user_id": user_id, "username": username, "is_admin": is_admin}
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    FastAPI lifespan context manager for startup/shutdown events
-    Phase 1.5: ServiceContainer initialization (DDD pattern)
-    Phase 3A: OrchestrationEngine dependency injection setup
-    GREAT-2D: Configuration validation at startup
-    """
-    # Phase 1.5: ServiceContainer initialization (DDD pattern)
-    print("\n" + "=" * 60)
-    print("🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)")
-    print("=" * 60)
-
-    from services.container import ServiceContainer
-
-    container = ServiceContainer()
-
-    if not container.is_initialized():
-        logger.info("Container not initialized, initializing now...")
-        await container.initialize()
-        print("✅ Phase 1.5: ServiceContainer initialized successfully")
-        print(f"   Services available: {container.list_services()}")
-    else:
-        logger.info("Container already initialized (started via main.py)")
-        print("✅ Phase 1.5: ServiceContainer already initialized")
-        print(f"   Services available: {container.list_services()}")
-
-    # Store container in app state for access
-    app.state.service_container = container
-
-    # GREAT-2D: Configuration validation
-    print("\n" + "=" * 60)
-    print("🔍 CORE-GREAT-2D: Configuration Validation")
-    print("=" * 60)
-
-    try:
-        from services.infrastructure.config.config_validator import ConfigValidator
-
-        validator = ConfigValidator()
-        validator.validate_all()
-        validator.print_summary()
-
-        # Store validation results in app state
-        app.state.config_validation = validator.get_summary()
-
-        # Warning for invalid configurations (but don't fail startup)
-        if not validator.is_all_valid():
-            invalid_services = validator.get_invalid_services()
-            print("\n⚠️ WARNING: Some service configurations are invalid")
-            print("Services will operate in degraded mode\n")
-        else:
-            print("✅ All service configurations valid\n")
-
-    except Exception as e:
-        print(f"❌ Configuration validation failed: {e}")
-        print("⚠️ Continuing startup without validation\n")
-        app.state.config_validation = {"error": str(e)}
-
-    # Phase 1.5: Get services from ServiceContainer (replaces old Phase 2B/3A)
-    try:
-        print("\n🔧 Phase 1.5: Getting services from ServiceContainer...")
-
-        # Get IntentService from container
-        intent_service = container.get_service("intent")
-        app.state.intent_service = intent_service
-        print(f"✅ IntentService retrieved from container")
-
-        # Get LLM service from container (for backward compatibility)
-        llm_service = container.get_service("llm")
-        app.state.llm_service = llm_service
-        print(f"✅ LLM service retrieved from container")
-
-        # Get OrchestrationEngine from container
-        orchestration_engine = container.get_service("orchestration")
-        app.state.orchestration_engine = orchestration_engine
-        print(f"✅ OrchestrationEngine retrieved from container")
-
-        print("✅ Phase 1.5: All services retrieved from ServiceContainer\n")
-
-    except Exception as e:
-        print(f"❌ Phase 1.5: Failed to get services from container: {e}")
-        print("⚠️ Continuing with degraded service availability\n")
-        app.state.intent_service = None
-        app.state.llm_service = None
-        app.state.orchestration_engine = None
-
-    # Phase 3B: Plugin system initialization
-    print("\n🔌 Phase 3B: Initializing Plugin System...")
-
-    try:
-        from services.plugins import get_plugin_registry
-
-        registry = get_plugin_registry()
-
-        # GREAT-3B Update: Replaced static imports with dynamic loading
-        # - Plugins discovered from services/integrations/*/
-        # - Config in PIPER.user.md controls what loads
-        # - Backwards compatible: all plugins enabled by default
-
-        # Phase 3B: Plugin System (Dynamic Loading - GREAT-3B)
-        print("\n🔌 Initializing Plugin System...")
-
-        # Discover and load enabled plugins from config
-        load_results = registry.load_enabled_plugins()
-
-        success_count = sum(1 for success in load_results.values() if success)
-        total_count = len(load_results)
-
-        if total_count == 0:
-            print("  ⚠️  No plugins enabled in configuration")
-        else:
-            print(f"  📦 Loaded {success_count}/{total_count} plugin(s)")
-            for name, success in load_results.items():
-                status = "✅" if success else "❌"
-                print(f"    {status} {name}")
-
-        # Initialize all registered plugins
-        init_results = await registry.initialize_all()
-
-        success_count = sum(1 for success in init_results.values() if success)
-        total_count = len(init_results)
-
-        print(f"  ✅ Initialized {success_count}/{total_count} plugin(s)")
-
-        # Mount plugin routers
-        routers = registry.get_routers()
-        for router in routers:
-            app.include_router(router)
-
-        print(f"  ✅ Mounted {len(routers)} router(s)")
-
-        # Store registry in app state for access
-        app.state.plugin_registry = registry
-
-        print(f"✅ Plugin system initialized\n")
-
-    except Exception as e:
-        print(f"⚠️ Plugin system initialization failed: {e}")
-        print("   Continuing without plugin system\n")
-        # Don't fail startup if plugin system has issues
-        app.state.plugin_registry = None
-
-    # Mount standup API router (Issue #162 - CORE-STAND-MODES-API)
-    print("\n🎯 Mounting Standup API Router...")
-    try:
-        from web.api.routes.standup import router as standup_router
-
-        app.include_router(standup_router)
-        print("✅ Standup API router mounted at /api/v1/standup")
-        print("   Endpoints:")
-        print("   - POST /api/v1/standup/generate")
-        print("   - GET /api/v1/standup/modes")
-        print("   - GET /api/v1/standup/formats")
-        print("   - GET /api/v1/standup/health")
-    except Exception as e:
-        print(f"⚠️ Failed to mount standup API router: {e}")
-        print("   Continuing without standup API\n")
-
-    # Issue #300 database-backed learning system (Nov 12-13, 2025)
-    # Phase 2.1: Pattern management endpoints enabled
-    print("\n🧠 Learning API Router (Issue #300 Phase 2)...")
-    try:
-        from web.api.routes.learning import router as learning_router
-
-        app.include_router(learning_router)
-        print("✅ Learning API router mounted at /api/v1/learning")
-        print("   Phase 2.1 Endpoints:")
-        print("   - GET /api/v1/learning/patterns")
-        print("   - GET /api/v1/learning/patterns/{id}")
-        print("   - DELETE /api/v1/learning/patterns/{id}")
-        print("   - POST /api/v1/learning/patterns/{id}/enable")
-        print("   - POST /api/v1/learning/patterns/{id}/disable")
-    except Exception as e:
-        print(f"⚠️ Failed to mount learning API router: {e}")
-        print("   Continuing without learning API\n")
-
-    # Auth API router mounted at module level (after app creation)
-    # See line ~360 where router is registered before app starts
-    # Files and documents API routers also mounted at module level (below)
-
-    # Mount health API router (Issue #229 - CORE-USERS-PROD)
-    print("\n❤️ Mounting Health API Router...")
-    try:
-        from web.api.routes.health import router as health_router
-
-        app.include_router(health_router)
-        print("✅ Health API router mounted at /api/v1/health")
-        print("   Endpoints:")
-        print("   - GET /api/v1/health (basic)")
-        print("   - GET /api/v1/health/database (database health)")
-        print("   - GET /api/v1/health/detailed (all components)")
-    except Exception as e:
-        print(f"⚠️ Failed to mount health API router: {e}")
-        print("   Continuing without health API\n")
-
-    # Mount API keys API router (Issue #228 - CORE-USERS-API)
-    print("\n🔑 Mounting API Keys API Router...")
-    try:
-        from web.api.routes.api_keys import router as api_keys_router
-
-        app.include_router(api_keys_router)
-        print("✅ API Keys API router mounted at /api/v1/keys")
-        print("   Endpoints:")
-        print("   - POST /api/v1/keys/store (store API key)")
-        print("   - GET  /api/v1/keys/list (list user's keys)")
-        print("   - DELETE /api/v1/keys/{provider} (delete key)")
-        print("   - POST /api/v1/keys/{provider}/validate (validate key)")
-        print("   - POST /api/v1/keys/{provider}/rotate (rotate key)")
-    except Exception as e:
-        print(f"⚠️ Failed to mount API keys API router: {e}")
-        print("   Continuing without API keys API\n")
-
-    # Start background cleanup job for token blacklist (Issue #227 - CORE-USERS-JWT)
-    print("\n🧹 Starting Background Cleanup Job...")
-    try:
-        import asyncio
-
-        from services.scheduler.blacklist_cleanup_job import BlacklistCleanupJob
-
-        cleanup_job = BlacklistCleanupJob(interval_hours=24)
-        cleanup_task = asyncio.create_task(cleanup_job.start())
-
-        # Store in app state for shutdown
-        app.state.blacklist_cleanup_job = cleanup_job
-        app.state.blacklist_cleanup_task = cleanup_task
-
-        print("✅ Blacklist cleanup job started (runs every 24 hours)")
-    except Exception as e:
-        print(f"⚠️ Failed to start blacklist cleanup job: {e}")
-        print("   Continuing without background cleanup\n")
-
-    print("🚀 Web server startup complete")
-
-    yield
-
-    # Shutdown: cleanup plugins
-    print("\n🔌 Shutting down Plugin System...")
-
-    if hasattr(app.state, "plugin_registry") and app.state.plugin_registry:
-        try:
-            shutdown_results = await app.state.plugin_registry.shutdown_all()
-            success_count = sum(1 for success in shutdown_results.values() if success)
-            print(f"✅ Plugin shutdown: {success_count}/{len(shutdown_results)} successful")
-        except Exception as e:
-            print(f"⚠️ Plugin shutdown error: {e}")
-
-    print("🛑 Plugin system shutdown complete")
-
-    # Shutdown background cleanup job (Issue #227 - CORE-USERS-JWT)
-    print("\n🧹 Shutting down Background Cleanup Job...")
-    if hasattr(app.state, "blacklist_cleanup_job") and app.state.blacklist_cleanup_job:
-        try:
-            await app.state.blacklist_cleanup_job.stop()
-            print("✅ Blacklist cleanup job stopped")
-        except Exception as e:
-            print(f"⚠️ Cleanup job shutdown error: {e}")
-
-    print("🛑 Background cleanup shutdown complete")
-
-    # Phase 1.5: ServiceContainer shutdown
-    print("\n🔧 Shutting down ServiceContainer...")
-    if hasattr(app.state, "service_container") and app.state.service_container:
-        try:
-            app.state.service_container.shutdown()
-            print("✅ ServiceContainer shutdown successful")
-        except Exception as e:
-            print(f"⚠️ ServiceContainer shutdown error: {e}")
-
-    # Cleanup
-    print("🛑 Web server shutdown complete")
 
 
 # Create FastAPI app with lifespan
@@ -589,95 +320,24 @@ from web.middleware.intent_enforcement import IntentEnforcementMiddleware
 app.add_middleware(IntentEnforcementMiddleware)
 logger.info("✅ IntentEnforcementMiddleware registered (GREAT-4B)")
 
-# Mount auth API router (Issue #227 - CORE-USERS-JWT, Issue #281 - CORE-ALPHA-WEB-AUTH)
-# Register BEFORE app starts to ensure routes are available
-try:
-    from web.api.routes.auth import router as auth_router
+# Phase 1: Mount remaining API routers using factory pattern (Issue #385 - INFR-MAINT-REFACTOR)
+# Previously: ~90 lines of duplicate try/catch boilerplate
+# Now: Consolidated calls to RouterInitializer factory for consistency
+from web.router_initializer import RouterInitializer
 
-    app.include_router(auth_router)
-    logger.info("✅ Auth API router mounted at /auth (login, logout endpoints)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount auth API router: {e}")
-
-# Mount files API router (Issue #282 - CORE-ALPHA-FILE-UPLOAD)
-# Register at module level to ensure routes available for tests
-try:
-    from web.api.routes.files import router as files_router
-
-    app.include_router(files_router)
-    logger.info("✅ Files API router mounted at /api/v1/files")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount files API router: {e}")
-
-# Mount documents API router (Issue #290 - CORE-ALPHA-DOC-PROCESSING)
-# Register at module level to ensure routes available for tests
-try:
-    from web.api.routes.documents import router as documents_router
-
-    app.include_router(documents_router)
-    logger.info("✅ Documents API router mounted at /api/v1/documents")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount documents API router: {e}")
-
-# Mount todos API router (Issue #285 - CORE-ALPHA-TODO-INCOMPLETE)
-# Wires up existing todo infrastructure (PM-081)
-try:
-    from services.api.todo_management import todo_management_router
-
-    app.include_router(todo_management_router)
-    logger.info("✅ Todos API router mounted at /api/v1/todos (PM-081)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount todos API router: {e}")
-
-# Mount lists API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides list CRUD endpoints with ownership validation
-try:
-    from web.api.routes.lists import router as lists_router
-
-    app.include_router(lists_router)
-    logger.info("✅ Lists API router mounted at /api/v1/lists (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount lists API router: {e}")
-
-# Mount todos SEC-RBAC API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides todo CRUD endpoints with ownership validation
-try:
-    from web.api.routes.todos import router as sec_todos_router
-
-    app.include_router(sec_todos_router)
-    logger.info("✅ Todos SEC-RBAC API router mounted at /api/v1/todos (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount todos SEC-RBAC API router: {e}")
-
-# Mount projects API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides project CRUD endpoints with ownership validation
-try:
-    from web.api.routes.projects import router as projects_router
-
-    app.include_router(projects_router)
-    logger.info("✅ Projects API router mounted at /api/v1/projects (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount projects API router: {e}")
-
-# Mount feedback API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides feedback submission endpoints with ownership validation
-try:
-    from web.api.routes.feedback import router as feedback_router
-
-    app.include_router(feedback_router)
-    logger.info("✅ Feedback API router mounted at /api/v1/feedback (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount feedback API router: {e}")
-
-# Mount knowledge graph API router (Issue #357 - SEC-RBAC Phase 1.3)
-# Provides knowledge graph CRUD endpoints with ownership validation
-try:
-    from web.api.routes.knowledge_graph import router as knowledge_graph_router
-
-    app.include_router(knowledge_graph_router)
-    logger.info("✅ Knowledge Graph API router mounted at /api/v1/knowledge (SEC-RBAC Phase 1.3)")
-except Exception as e:
-    logger.error(f"⚠️ Failed to mount knowledge graph API router: {e}")
+RouterInitializer.mount_router(app, "web.api.routes.auth", "router", "Auth API")
+RouterInitializer.mount_router(app, "web.api.routes.files", "router", "Files API")
+RouterInitializer.mount_router(app, "web.api.routes.documents", "router", "Documents API")
+RouterInitializer.mount_router(
+    app, "services.api.todo_management", "todo_management_router", "Todos API"
+)
+RouterInitializer.mount_router(app, "web.api.routes.lists", "router", "Lists API")
+RouterInitializer.mount_router(app, "web.api.routes.todos", "router", "Todos SEC-RBAC API")
+RouterInitializer.mount_router(app, "web.api.routes.projects", "router", "Projects API")
+RouterInitializer.mount_router(app, "web.api.routes.feedback", "router", "Feedback API")
+RouterInitializer.mount_router(
+    app, "web.api.routes.knowledge_graph", "router", "Knowledge Graph API"
+)
 
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory=str(project_root / "templates"))
@@ -794,6 +454,24 @@ async def get_workflow_status(workflow_id: str, request: Request):
         # Unexpected errors - log and return 500
         logger.error(f"Error getting workflow {workflow_id}: {e}", exc_info=True)
         return internal_error()
+
+
+# Version Endpoint - Single source of truth from pyproject.toml
+@app.get("/api/v1/version")
+async def get_version():
+    """
+    Get application version information
+
+    Returns version from pyproject.toml (single source of truth)
+    plus environment and deployment metadata.
+    """
+    from services.version import get_version_info
+
+    try:
+        return get_version_info()
+    except Exception as e:
+        logger.error(f"Error getting version info: {e}", exc_info=True)
+        return internal_error("Unable to retrieve version information")
 
 
 # Personality Configuration Endpoints
