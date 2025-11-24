@@ -64,24 +64,37 @@ class TestFileResolverEdgeCases:
 
     async def test_very_old_file_scoring(self, async_transaction):
         """Test that very old files score lower than recent ones"""
-        session_id = f"test_old_{uuid4().hex}"
+        # Use proper UUID for owner_id (SEC-RBAC Issue #357)
+        owner_id = str(uuid4())
+
         old_file = UploadedFile(
-            session_id=session_id,
+            id=str(uuid4()),
+            owner_id=owner_id,
             filename="old_report.pdf",
             file_type="application/pdf",
             file_size=1000,
             storage_path="/test/old_report.pdf",
             upload_time=datetime.now() - timedelta(days=7),  # 1 week old
+            last_referenced=datetime.now() - timedelta(days=7),
+            reference_count=0,
+            metadata={},
         )
         recent_file = UploadedFile(
-            session_id=session_id,
+            id=str(uuid4()),
+            owner_id=owner_id,
             filename="recent_report.pdf",
             file_type="application/pdf",
             file_size=1000,
             storage_path="/test/recent_report.pdf",
             upload_time=datetime.now() - timedelta(minutes=5),
+            last_referenced=datetime.now() - timedelta(minutes=5),
+            reference_count=0,
+            metadata={},
         )
         async with async_transaction as session:
+            # Create test user first (SEC-RBAC requires owner_id FK)
+            await create_test_user(session, owner_id)
+
             repo = FileRepository(session)
             await repo.save_file_metadata(old_file)
             await repo.save_file_metadata(recent_file)
@@ -91,24 +104,33 @@ class TestFileResolverEdgeCases:
                 action="analyze_report",
                 context={"original_message": "analyze the report"},
             )
-            file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+            file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
             assert file_id == recent_file.id
             assert confidence > 0.5
 
     async def test_identical_filenames_different_times(self, async_transaction):
         """Test handling multiple files with same name"""
-        session_id = f"test_dup_{uuid4().hex}"
+        # Use proper UUID for owner_id (SEC-RBAC Issue #357)
+        owner_id = str(uuid4())
         files = []
+
         async with async_transaction as session:
+            # Create test user first (SEC-RBAC requires owner_id FK)
+            await create_test_user(session, owner_id)
+
             repo = FileRepository(session)
             for i in range(3):
                 file = UploadedFile(
-                    session_id=session_id,
+                    id=str(uuid4()),
+                    owner_id=owner_id,
                     filename="report.pdf",  # Same name
                     file_type="application/pdf",
                     file_size=1000,
                     storage_path=f"/test/report_{i}.pdf",
                     upload_time=datetime.now() - timedelta(hours=i),
+                    last_referenced=datetime.now() - timedelta(hours=i),
+                    reference_count=0,
+                    metadata={},
                 )
                 saved = await repo.save_file_metadata(file)
                 files.append(saved)
@@ -118,12 +140,14 @@ class TestFileResolverEdgeCases:
                 action="analyze_report",
                 context={"original_message": "analyze the report"},
             )
-            file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+            file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
             assert file_id == files[0].id  # Most recent
 
     async def test_special_characters_in_filename(self, async_transaction):
         """Test files with spaces, unicode, special chars"""
-        session_id = f"test_special_{uuid4().hex}"
+        # Use proper UUID for owner_id (SEC-RBAC Issue #357)
+        owner_id = str(uuid4())
+
         test_files = [
             ("résumé (final).pdf", "application/pdf"),
             ("2024 Q3 Report - Sales & Marketing.pdf", "application/pdf"),
@@ -137,18 +161,25 @@ class TestFileResolverEdgeCases:
             ),
         ]
         async with async_transaction as session:
+            # Create test user first (SEC-RBAC requires owner_id FK)
+            await create_test_user(session, owner_id)
+
             repo = FileRepository(session)
             base_time = datetime.now()
             for i, (filename, file_type) in enumerate(test_files):
                 # Make résumé (first file) most recent, others much older
                 upload_time = base_time - timedelta(minutes=i * 20)
                 file = UploadedFile(
-                    session_id=session_id,
+                    id=str(uuid4()),
+                    owner_id=owner_id,
                     filename=filename,
                     file_type=file_type,
                     file_size=1000,
                     storage_path=f"/test/{filename}",
                     upload_time=upload_time,
+                    last_referenced=upload_time,
+                    reference_count=0,
+                    metadata={},
                 )
                 await repo.save_file_metadata(file)
             resolver = FileResolver(repo)
@@ -162,11 +193,15 @@ class TestFileResolverEdgeCases:
             from services.file_context.exceptions import AmbiguousFileReferenceError
 
             try:
-                file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+                file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
                 # If resolved without ambiguity, should be the résumé file
                 assert (
                     "résumé"
-                    in [f.filename for f in await repo.get_files(session_id) if f.id == file_id][0]
+                    in [
+                        f.filename
+                        for f in await repo.get_files_for_session(owner_id)
+                        if f.id == file_id
+                    ][0]
                 )
             except AmbiguousFileReferenceError as e:
                 # Ambiguity is acceptable - verify résumé is the top candidate
@@ -176,17 +211,26 @@ class TestFileResolverEdgeCases:
         """Test resolution performance with many files"""
         import time
 
-        session_id = f"test_perf_{uuid4().hex}"
+        # Use proper UUID for owner_id (SEC-RBAC Issue #357)
+        owner_id = str(uuid4())
+
         async with async_transaction as session:
+            # Create test user first (SEC-RBAC requires owner_id FK)
+            await create_test_user(session, owner_id)
+
             repo = FileRepository(session)
             for i in range(100):
                 file = UploadedFile(
-                    session_id=session_id,
+                    id=str(uuid4()),
+                    owner_id=owner_id,
                     filename=f"document_{i}.pdf",
                     file_type="application/pdf",
                     file_size=1000,
                     storage_path=f"/test/document_{i}.pdf",
                     upload_time=datetime.now() - timedelta(minutes=i),
+                    last_referenced=datetime.now() - timedelta(minutes=i),
+                    reference_count=0,
+                    metadata={},
                 )
                 await repo.save_file_metadata(file)
             resolver = FileResolver(repo)
@@ -197,7 +241,7 @@ class TestFileResolverEdgeCases:
             )
             start_time = time.time()
             try:
-                file_id, confidence = await resolver.resolve_file_reference(intent, session_id)
+                file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
                 elapsed = (time.time() - start_time) * 1000  # Convert to ms
                 assert elapsed < 100, f"Resolution took {elapsed:.2f}ms, should be <100ms"
                 assert file_id is not None
