@@ -3,10 +3,8 @@ Piper Morgan Web Interface
 Simple FastAPI app for interacting with the main Piper Morgan Platform API
 """
 
-import asyncio
 import os
 import sys
-from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -14,7 +12,6 @@ import structlog
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 # Add project root to path for imports (same as CLI)
 project_root = Path(__file__).parent.parent
@@ -26,12 +23,7 @@ from services.configuration.piper_config_loader import piper_config_loader
 # Configuration service import - eliminates hardcoded values
 from services.configuration.port_configuration_service import get_port_configuration
 
-# Import personality integration
-from web.personality_integration import (
-    PersonalityResponseEnhancer,
-    PiperConfigParser,
-    WebPersonalityConfig,
-)
+# Personality components are now initialized during startup (Phase 4 - WebComponentsInitializationPhase)
 
 # Startup phase management (Phase 2 of Issue #385 - INFR-MAINT-REFACTOR)
 from web.startup import lifespan
@@ -39,10 +31,7 @@ from web.startup import lifespan
 # Import error response utilities (Pattern 034: Error Handling Standards)
 from web.utils.error_responses import internal_error, not_found_error, validation_error
 
-# Server Configuration - now using centralized configuration service
-port_config = get_port_configuration()
-DEFAULT_PORT = port_config.web_port
-API_BASE_URL = port_config.get_api_base_url()
+# Server Configuration - now accessed via app.state during startup (Phase 4 - WebComponentsInitializationPhase)
 
 # Initialize logger
 logger = structlog.get_logger()
@@ -225,12 +214,8 @@ RouterInitializer.mount_router(app, "web.api.routes.admin", "router", "Admin Rou
 RouterInitializer.mount_router(app, "web.api.routes.ui", "router", "UI Routes")
 RouterInitializer.mount_router(app, "web.api.routes.debug", "router", "Debug Routes")
 
-# Initialize Jinja2 templates
-templates = Jinja2Templates(directory=str(project_root / "templates"))
-
-# Initialize personality components
-config_parser = PiperConfigParser()
-personality_enhancer = PersonalityResponseEnhancer()
+# Web components (Jinja2 templates, config_parser, personality_enhancer) are now initialized
+# in WebComponentsInitializationPhase during startup and stored in app.state (Phase 4)
 
 
 
@@ -252,12 +237,15 @@ app.mount(
 if __name__ == "__main__":
     import uvicorn
 
-    print(f"🚀 Starting Piper Morgan Web Interface on {port_config.get_web_url()}")
-    print(f"📊 Standup API: {port_config.get_web_url()}/api/standup")
-    print(f"🌅 Standup UI: {port_config.get_web_url()}/standup")
-    print(f"📖 API Docs: {port_config.get_web_url()}/docs")
-    print(f"🔗 Backend API: {port_config.get_backend_url()}")
+    # Get port configuration locally for __main__ (Phase 4)
+    local_port_config = get_port_configuration()
+
+    print(f"🚀 Starting Piper Morgan Web Interface on {local_port_config.get_web_url()}")
+    print(f"📊 Standup API: {local_port_config.get_web_url()}/api/standup")
+    print(f"🌅 Standup UI: {local_port_config.get_web_url()}/standup")
+    print(f"📖 API Docs: {local_port_config.get_web_url()}/docs")
+    print(f"🔗 Backend API: {local_port_config.get_backend_url()}")
     print(
-        f"\n🔧 Server Command: PYTHONPATH=. python -m uvicorn web.app:app --host {port_config.web_host} --port {port_config.web_port}"
+        f"\n🔧 Server Command: PYTHONPATH=. python -m uvicorn web.app:app --host {local_port_config.web_host} --port {local_port_config.web_port}"
     )
-    uvicorn.run(app, host=port_config.web_host, port=port_config.web_port)
+    uvicorn.run(app, host=local_port_config.web_host, port=local_port_config.web_port)

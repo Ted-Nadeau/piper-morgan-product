@@ -28,19 +28,38 @@ from pathlib import Path
 import structlog
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 logger = structlog.get_logger()
 
 # Router configuration
 router = APIRouter(tags=["ui", "templates"])
 
-# Initialize Jinja2 templates
-# Note: This creates a local template environment for this module
-# The app-level templates variable in app.py handles template rendering
-project_root = Path(__file__).parent.parent.parent.parent
-templates = Jinja2Templates(directory=str(project_root / "templates"))
 
+
+def _get_templates(request: Request):
+    """
+    Get Jinja2Templates from app state.
+
+    Templates are initialized in WebComponentsInitializationPhase during startup
+    and stored in app.state for dependency injection (Phase 4 - INFR-MAINT-REFACTOR).
+
+    Args:
+        request: FastAPI Request object with templates in app.state
+
+    Returns:
+        Jinja2Templates instance from app.state
+
+    Raises:
+        RuntimeError: If templates not initialized in app state
+    """
+    if not hasattr(request.app.state, "templates"):
+        raise RuntimeError("Jinja2Templates not initialized in app state")
+
+    templates = request.app.state.templates
+    if templates is None:
+        raise RuntimeError("Jinja2Templates initialization failed")
+
+    return templates
 
 def _extract_user_context(request: Request) -> dict:
     """
@@ -80,6 +99,7 @@ def _extract_user_context(request: Request) -> dict:
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Render home page"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
 
@@ -87,6 +107,7 @@ async def home(request: Request):
 @router.get("/standup", response_class=HTMLResponse)
 async def standup_ui(request: Request):
     """Render standup UI"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("standup.html", {"request": request, "user": user_context})
 
@@ -94,6 +115,7 @@ async def standup_ui(request: Request):
 @router.get("/personality-preferences", response_class=HTMLResponse)
 async def personality_preferences_ui(request: Request):
     """Serve the personality preferences interface"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
         "personality-preferences.html", {"request": request, "user": user_context}
@@ -103,6 +125,7 @@ async def personality_preferences_ui(request: Request):
 @router.get("/learning", response_class=HTMLResponse)
 async def learning_dashboard_ui(request: Request):
     """Serve the learning dashboard interface"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
         "learning-dashboard.html", {"request": request, "user": user_context}
@@ -112,6 +135,7 @@ async def learning_dashboard_ui(request: Request):
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_index_ui(request: Request):
     """Serve the settings index page (G2: Settings Index Page)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
         "settings-index.html", {"request": request, "user": user_context}
@@ -121,6 +145,7 @@ async def settings_index_ui(request: Request):
 @router.get("/account", response_class=HTMLResponse)
 async def account_settings_ui(request: Request):
     """Serve the account settings page (Coming Soon)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("account.html", {"request": request, "user": user_context})
 
@@ -128,6 +153,7 @@ async def account_settings_ui(request: Request):
 @router.get("/files", response_class=HTMLResponse)
 async def files_ui(request: Request):
     """Serve the files page (Coming Soon)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
 
@@ -135,6 +161,7 @@ async def files_ui(request: Request):
 @router.get("/settings/integrations", response_class=HTMLResponse)
 async def integrations_page(request: Request):
     """Integrations management page - Coming soon"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
         "integrations.html", {"request": request, "user": user_context}
@@ -144,6 +171,7 @@ async def integrations_page(request: Request):
 @router.get("/lists", response_class=HTMLResponse)
 async def lists_ui(request: Request):
     """Lists management page with permission-aware UI (Issue #376)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     lists_data = []
     return templates.TemplateResponse(
@@ -154,6 +182,7 @@ async def lists_ui(request: Request):
 @router.get("/todos", response_class=HTMLResponse)
 async def todos_ui(request: Request):
     """Todos management page with permission-aware UI (Issue #376)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     todos_data = []
     return templates.TemplateResponse(
@@ -164,6 +193,7 @@ async def todos_ui(request: Request):
 @router.get("/projects", response_class=HTMLResponse)
 async def projects_ui(request: Request):
     """Projects management page with permission-aware UI (Issue #376)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     projects_data = []
     return templates.TemplateResponse(
@@ -174,6 +204,7 @@ async def projects_ui(request: Request):
 @router.get("/settings/privacy", response_class=HTMLResponse)
 async def privacy_settings_ui(request: Request):
     """Serve the privacy & data settings page (Coming Soon)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
         "privacy-settings.html", {"request": request, "user": user_context}
@@ -183,6 +214,7 @@ async def privacy_settings_ui(request: Request):
 @router.get("/settings/advanced", response_class=HTMLResponse)
 async def advanced_settings_ui(request: Request):
     """Serve the advanced settings page (Coming Soon)"""
+    templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse(
         "advanced-settings.html", {"request": request, "user": user_context}

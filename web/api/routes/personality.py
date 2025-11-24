@@ -26,24 +26,21 @@ logger = structlog.get_logger()
 # Router configuration
 router = APIRouter(prefix="/api/personality", tags=["personality"])
 
-# These will be initialized in app.py and injected via request.app.state
-# or imported from app module
-# config_parser: PiperConfigParser
-# personality_enhancer: PersonalityResponseEnhancer
+# These are initialized in WebComponentsInitializationPhase during startup
+# and stored in app.state for dependency injection (Phase 4 - INFR-MAINT-REFACTOR)
+# config_parser: PiperConfigParser (app.state.config_parser)
+# personality_enhancer: PersonalityResponseEnhancer (app.state.personality_enhancer)
 
 
 @router.get("/profile/{user_id}")
 async def get_personality_profile(user_id: str = "default", request: Request = None):
     """Get user's personality preferences"""
     try:
-        # Get config_parser from app state (initialized in app.py)
-        if request and hasattr(request.app.state, "config_parser"):
-            config_parser = request.app.state.config_parser
-        else:
-            # Fallback to importing if not in state
-            from web.app import config_parser as app_config_parser
-            config_parser = app_config_parser
+        # Get config_parser from app state (initialized in WebComponentsInitializationPhase)
+        if not request or not hasattr(request.app.state, "config_parser"):
+            return internal_error("Configuration parser not initialized in app state")
 
+        config_parser = request.app.state.config_parser
         config = config_parser.load_personality_config(user_id)
         return {
             "status": "success",

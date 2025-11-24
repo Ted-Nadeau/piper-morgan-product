@@ -125,6 +125,65 @@ class ServiceRetrievalPhase:
             app.state.orchestration_engine = None
 
 
+class WebComponentsInitializationPhase:
+    """Phase 4: Web component initialization (templates, parsers, enhancers)"""
+
+    @staticmethod
+    async def startup(app) -> None:
+        """Initialize web-specific components and store in app state"""
+        print("\n" + "=" * 60)
+        print("🎨 Phase 4: Initializing Web Components")
+        print("=" * 60)
+
+        try:
+            from pathlib import Path
+
+            from fastapi.templating import Jinja2Templates
+
+            from web.personality_integration import (
+                PersonalityResponseEnhancer,
+                PiperConfigParser,
+            )
+
+            # Get project root for template path
+            project_root = Path(__file__).parent.parent
+
+            # Initialize Jinja2Templates
+            templates = Jinja2Templates(directory=str(project_root / "templates"))
+            app.state.templates = templates
+            print("✅ Jinja2Templates initialized")
+
+            # Initialize PiperConfigParser
+            config_parser = PiperConfigParser()
+            app.state.config_parser = config_parser
+            print("✅ PiperConfigParser initialized")
+
+            # Initialize PersonalityResponseEnhancer
+            personality_enhancer = PersonalityResponseEnhancer()
+            app.state.personality_enhancer = personality_enhancer
+            print("✅ PersonalityResponseEnhancer initialized")
+
+            # Get port configuration (for reference - used in __main__)
+            from services.configuration.port_configuration_service import (
+                get_port_configuration,
+            )
+
+            port_config = get_port_configuration()
+            app.state.port_config = port_config
+            print("✅ Port configuration loaded")
+
+            print("✅ Phase 4: Web Components initialized successfully\n")
+
+        except Exception as e:
+            print(f"❌ Phase 4: Failed to initialize web components: {e}")
+            print("⚠️ Continuing without full web component initialization\n")
+            # Set to None so routes can detect missing components
+            app.state.templates = None
+            app.state.config_parser = None
+            app.state.personality_enhancer = None
+            app.state.port_config = None
+
+
 class PluginInitializationPhase:
     """Phase 3B: Plugin system initialization"""
 
@@ -258,6 +317,7 @@ class StartupManager:
             ServiceContainerPhase,
             ConfigValidationPhase,
             ServiceRetrievalPhase,
+            WebComponentsInitializationPhase,
             PluginInitializationPhase,
             APIRouterMountingPhase,
             BackgroundCleanupPhase,
