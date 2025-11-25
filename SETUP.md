@@ -6,7 +6,7 @@ Complete step-by-step guide to set up the Piper Morgan development environment.
 
 Before you begin, ensure you have the following installed:
 
-- **Python 3.9+** (recommended: 3.11)
+- **Python 3.12+** (required)
   - Check: `python --version`
   - Install: https://www.python.org/downloads/
 

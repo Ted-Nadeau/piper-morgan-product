@@ -13,7 +13,7 @@
 
 ## Prerequisites
 
-- Python 3.9+, Docker, Git installed and working
+- Python 3.12+, Docker, Git installed and working
 - OpenAI or Anthropic API key ready
 - Terminal comfort
 
@@ -25,8 +25,9 @@
 # 1. Clone and setup (using production branch for alpha testing)
 git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
-python3.12 -m venv venv && source venv/bin/activate
-# Requires Python 3.11 or 3.12 - verify with: python --version
+
+# Requires Python 3.12 - verify with: python --version
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
 # 2. Run interactive setup (5 mins)

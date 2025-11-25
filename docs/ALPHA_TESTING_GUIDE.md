@@ -11,7 +11,7 @@
 **Required Software:**
 
 - [ ] Git installed and configured
-- [ ] Python 3.9 or higher
+- [ ] Python 3.12 or higher (3.12+ required)
 - [ ] Docker installed and running
 - [ ] A code editor (VS Code recommended)
 - [ ] Terminal/command line access
@@ -156,7 +156,7 @@ python main.py setup
 
 The setup wizard will:
 
-- ✅ Check your system (Docker, Python 3.9+, port 8001, database)
+- ✅ Check your system (Docker, Python 3.12+, port 8001, database)
 - ✅ Guide you through creating your user account (username, email, password)
 - ✅ Set up secure password (min 8 chars, bcrypt-hashed)
 - ✅ Collect and validate your API keys
@@ -174,7 +174,7 @@ Let's get you set up (takes about 5 minutes)
 
 1. System Check
    ✓ Docker installed
-   ✓ Python 3.9+
+   ✓ Python 3.12+
    ✓ Port 8001 available
    ✓ Database accessible
 
@@ -390,10 +390,10 @@ The setup wizard will guide you through Docker installation with platform-specif
 - On Windows: Check if Docker Desktop service is running
 - Test manually with: `docker --version`
 
-**"Python 3.9+ not found"**
+**"Python 3.12+ not found"**
 
-- Install Python 3.9+: https://www.python.org/downloads/
-- Recommended: Python 3.11+ for best compatibility
+- Install Python 3.12+: https://www.python.org/downloads/
+- Python 3.12 is required (not 3.11 or earlier)
 - Test with: `python --version`
 
 **"Port 8001 not available"**

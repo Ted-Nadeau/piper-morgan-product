@@ -434,7 +434,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 
 ### Prerequisites
 
-- **Python 3.11+** (required)
+- **Python 3.12+** (required)
 - **Docker & Docker Compose**
 - **PostgreSQL 14+**
 - **Redis 7+**
@@ -443,8 +443,8 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 ### Local Development Setup
 
 ```bash
-# Verify Python version (must be 3.11+)
-python --version  # Should show Python 3.11.x
+# Verify Python version (must be 3.12+)
+python --version  # Should show Python 3.12.x
 
 # Clone and setup
 git clone https://github.com/mediajunkie/piper-morgan-product.git
