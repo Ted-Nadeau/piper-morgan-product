@@ -58,10 +58,24 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/redoc",
             "/openapi.json",
             "/health",
-            "/api/v1/auth/login",
-            "/api/v1/auth/register",
+            "/auth/login",
+            "/auth/register",
             "/slack/oauth/callback",
             "/github/oauth/callback",
+        ]
+        # UI routes that support optional authentication (check for auth, but don't require it)
+        self.optional_auth_paths = [
+            "/login",
+            "/",
+            "/standup",
+            "/personality-preferences",
+            "/learning",
+            "/settings",
+            "/account",
+            "/files",
+            "/lists",
+            "/todos",
+            "/projects",
         ]
 
         logger.info("AuthMiddleware initialized", exclude_paths=len(self.exclude_paths))
@@ -80,6 +94,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Skip authentication for excluded paths
         if self._should_exclude_path(request.url.path):
             return await call_next(request)
+
+        # Check if this is an optional auth path (UI routes)
+        is_optional_auth = any(
+            request.url.path.startswith(path) for path in self.optional_auth_paths
+        )
 
         # Extract and validate JWT token
         try:
@@ -109,42 +128,54 @@ class AuthMiddleware(BaseHTTPMiddleware):
                             path=request.url.path,
                         )
                     else:
+                        # Invalid token - block API routes, allow UI routes
+                        if not is_optional_auth:
+                            logger.warning(
+                                "Invalid token provided",
+                                path=request.url.path,
+                                client_ip=self._get_client_ip(request),
+                            )
+                            return self._unauthorized_response("Invalid or expired token")
+
+                except TokenRevoked:
+                    # Revoked token - block API routes, allow UI routes
+                    if not is_optional_auth:
                         logger.warning(
-                            "Invalid token provided",
+                            "Revoked token rejected",
                             path=request.url.path,
                             client_ip=self._get_client_ip(request),
                         )
-                        return self._unauthorized_response("Invalid or expired token")
-
-                except TokenRevoked:
-                    logger.warning(
-                        "Revoked token rejected",
-                        path=request.url.path,
-                        client_ip=self._get_client_ip(request),
-                    )
-                    return self._unauthorized_response("Token has been revoked")
+                        return self._unauthorized_response("Token has been revoked")
                 except TokenExpired:
-                    logger.warning(
-                        "Expired token rejected",
-                        path=request.url.path,
-                        client_ip=self._get_client_ip(request),
-                    )
-                    return self._unauthorized_response("Token has expired")
+                    # Expired token - block API routes, allow UI routes
+                    if not is_optional_auth:
+                        logger.warning(
+                            "Expired token rejected",
+                            path=request.url.path,
+                            client_ip=self._get_client_ip(request),
+                        )
+                        return self._unauthorized_response("Token has expired")
                 except TokenInvalid as e:
-                    logger.warning(
-                        "Invalid token rejected",
-                        path=request.url.path,
-                        client_ip=self._get_client_ip(request),
-                        error=str(e),
-                    )
-                    return self._unauthorized_response("Invalid token")
+                    # Invalid token - block API routes, allow UI routes
+                    if not is_optional_auth:
+                        logger.warning(
+                            "Invalid token rejected",
+                            path=request.url.path,
+                            client_ip=self._get_client_ip(request),
+                            error=str(e),
+                        )
+                        return self._unauthorized_response("Invalid token")
             else:
-                logger.warning("No authentication token provided", path=request.url.path)
-                return self._unauthorized_response("Authentication required")
+                # No token provided - block API routes, allow UI routes
+                if not is_optional_auth:
+                    logger.warning("No authentication token provided", path=request.url.path)
+                    return self._unauthorized_response("Authentication required")
 
         except Exception as e:
-            logger.error("Authentication middleware error", error=str(e), path=request.url.path)
-            return self._unauthorized_response("Authentication error")
+            # Authentication error - block API routes, allow UI routes
+            if not is_optional_auth:
+                logger.error("Authentication middleware error", error=str(e), path=request.url.path)
+                return self._unauthorized_response("Authentication error")
 
         # Process request with authentication context
         response = await call_next(request)
@@ -164,12 +195,17 @@ class AuthMiddleware(BaseHTTPMiddleware):
         """
         Extract JWT token from request.
 
-        Supports both Authorization header and query parameter.
+        Supports Authorization header, cookies, and query parameter.
         """
         # Try Authorization header first (standard OAuth 2.0)
         auth_header = request.headers.get("authorization")
         if auth_header and auth_header.startswith("Bearer "):
             return auth_header[7:]  # Remove "Bearer " prefix
+
+        # Try cookie (for web UI authentication)
+        cookie_token = request.cookies.get("access_token")
+        if cookie_token:
+            return cookie_token
 
         # Try query parameter (for WebSocket or special cases)
         token_param = request.query_params.get("token")
