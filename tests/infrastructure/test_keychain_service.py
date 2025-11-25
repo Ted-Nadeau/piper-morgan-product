@@ -101,6 +101,7 @@ class TestKeychainService:
         assert service1 is service2
 
 
+@pytest.mark.integration
 class TestKeychainIntegration:
     """Integration tests with actual keychain"""
 

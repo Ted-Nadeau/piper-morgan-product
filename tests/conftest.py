@@ -107,6 +107,84 @@ def mock_token_blacklist(request):
         yield
 
 
+@pytest.fixture(autouse=True)
+def mock_keychain_service(request, monkeypatch):
+    """
+    Auto-mock KeychainService for unit tests to prevent macOS keychain password prompts.
+
+    WHY THIS EXISTS:
+    Issue #396, Task #9: During git push, pre-push hook runs pytest → tests call
+    LLMConfigService.get_api_key() → tries macOS keychain → Cursor prompts for password
+    → infinite loop as each test triggers a new prompt.
+
+    WHAT IT DOES:
+    - Automatically mocks KeychainService.get_api_key() to return from environment variables
+    - Prevents real macOS keychain access during tests
+    - Eliminates password prompts in Cursor during git push
+    - Makes tests faster (no OS keychain overhead)
+    - Works in CI/CD environments without keychain
+
+    WHEN IT APPLIES:
+    - Unit tests (no @pytest.mark.integration marker)
+    - Tests that indirectly call KeychainService through LLMConfigService
+
+    WHEN IT DOESN'T APPLY:
+    - Integration tests (marked with @pytest.mark.integration)
+    - tests/infrastructure/test_keychain_service.py::TestKeychainIntegration
+      (explicitly tests real keychain)
+
+    IMPLEMENTATION:
+    - Mocks KeychainService class to return environment variables
+    - Pattern: get_api_key("openai") → os.getenv("OPENAI_API_KEY")
+    - Preserves existing test behavior (tests already use env vars)
+
+    TO DISABLE FOR DEBUGGING:
+    Change autouse=True to autouse=False and run your tests. Re-enable after debugging.
+
+    Related Issues: #396 (Michelle onboarding bugs)
+    """
+    # Skip mock for integration tests - they test real keychain
+    if "integration" in request.keywords:
+        yield
+        return
+
+    # Import the module first to ensure it exists before patching
+    try:
+        from services.infrastructure import keychain_service  # noqa: F401
+    except ImportError:
+        # If module doesn't exist, skip the mock
+        yield
+        return
+
+    # Create mock KeychainService that returns from environment variables
+    mock_service = Mock()
+
+    def mock_get_api_key(provider: str) -> str:
+        """Return API key from environment variable"""
+        # Map provider names to environment variable names
+        env_var_map = {
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "gemini": "GEMINI_API_KEY",
+            "perplexity": "PERPLEXITY_API_KEY",
+        }
+        env_var = env_var_map.get(provider.lower(), f"{provider.upper()}_API_KEY")
+        return os.getenv(env_var)
+
+    mock_service.get_api_key = mock_get_api_key
+    mock_service.store_api_key = Mock(return_value=None)
+    mock_service.delete_api_key = Mock(return_value=True)
+    mock_service.list_stored_keys = Mock(return_value=[])
+
+    # Patch KeychainService class to return our mock
+    monkeypatch.setattr(
+        "services.infrastructure.keychain_service.KeychainService",
+        lambda service_name=None: mock_service,
+    )
+
+    yield
+
+
 @pytest.fixture
 def mock_async_session():
     """Provide a mock async session for tests that need it"""
