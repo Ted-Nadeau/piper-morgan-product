@@ -192,7 +192,7 @@ async def login(
 
         # Set cookie for web clients
         response.set_cookie(
-            key="auth_token",
+            key="access_token",  # Standard OAuth 2.0 name, matches middleware expectations
             value=token,
             httponly=True,
             secure=True,  # HTTPS only in production

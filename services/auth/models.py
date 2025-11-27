@@ -41,7 +41,7 @@ class LoginResponse(BaseModel):
     - username: User's username
 
     Note:
-    - Cookie auth_token also set for web clients
+    - Cookie access_token also set for web clients (httpOnly, secure, sameSite=lax)
     - Token format: Bearer <jwt_token>
     """
 
