@@ -18,7 +18,7 @@ Before we schedule setup, let's make sure you have everything needed. This is st
 
 Technical Requirements:
 □ Comfortable using command line/terminal
-□ Python 3.9+ installed on your machine
+□ Python 3.12+ installed on your machine
 □ Git installed and working
 □ Docker installed and running
 □ About 2GB free disk space

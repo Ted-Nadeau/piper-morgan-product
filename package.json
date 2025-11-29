@@ -9,7 +9,12 @@
     "lint": "next lint",
     "export": "next build && next export",
     "type-check": "tsc --noEmit",
-    "lint:fix": "next lint --fix"
+    "lint:fix": "next lint --fix",
+    "security:audit": "npm audit",
+    "security:audit-fix": "npm audit fix",
+    "security:audit-fix-force": "npm audit fix --force",
+    "security:check": "npm audit --audit-level=moderate",
+    "security:report": "npm audit --json > security-audit-report.json && echo 'Security report saved to security-audit-report.json'"
   },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
