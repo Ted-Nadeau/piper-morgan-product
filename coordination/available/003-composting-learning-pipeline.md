@@ -27,7 +27,7 @@ The Object Model includes an 8-stage lifecycle ending in "Composting" - where de
 - [ ] Integration points with existing systems identified
 
 ## Deliverables
-Create `/mnt/user-data/outputs/composting-learning-architecture.md` containing:
+Create `dev/active/composting-learning-architecture.md` containing:
 1. Conceptual Overview (what composting means)
 2. Technical Architecture (how it works)
 3. Trigger Mechanisms (when it happens)
@@ -37,8 +37,8 @@ Create `/mnt/user-data/outputs/composting-learning-architecture.md` containing:
 7. Integration Points (Morning Standup example)
 
 ## Resources
-- ADR-045 Object Model: `/mnt/user-data/outputs/ADR-045-object-model.md`
-- Object Model Brief v2: `/mnt/project/object-model-brief-v2.md`
+- ADR-045 Object Model: `dev/active/ADR-045-object-model.md`
+- Object Model Brief v2: `dev/active/object-model-brief-v2.md`
 - Learning System docs (if they exist - find them)
 - Insight Journal concept from UX sessions
 

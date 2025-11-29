@@ -35,9 +35,10 @@ Bootstrap opportunity: Ted can build this feature himself, using it to coordinat
 5. `/advisors/ted-nadeau/utils/mailbox.py` (simple utilities)
 
 ## Resources
-- Memo to Ted: `/mnt/user-data/uploads/memo-ted-nadeau-2025-11-29.md`
+- Note: Original memo to Ted is not in local repo (was in sandbox)
 - Agent coordination patterns (for design inspiration)
 - Git workflow documentation (for async patterns)
+- Advisor mailbox readme in `advisors/ted-nadeau/README.md`
 
 ## Special Instructions
 This should be simple enough that Ted can understand and extend it immediately. Think "minimum viable mailbox" that proves the concept. The elegance is in the simplicity, not the features.

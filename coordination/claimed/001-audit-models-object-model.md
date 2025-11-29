@@ -25,16 +25,16 @@ ADR-045 establishes "Entities experience Moments in Places" as Piper's foundatio
 - [ ] Produce remediation plan with effort estimates
 
 ## Deliverables
-Create `/mnt/user-data/outputs/audit-models-object-model.md` containing:
+Create `dev/active/audit-models-object-model.md` containing:
 1. Current State Analysis (what exists)
 2. Gap Analysis (what's missing/misaligned)
 3. Remediation Plan (how to fix, priority order)
 4. Risk Assessment (what breaks if we don't fix)
 
 ## Resources
-- ADR-045: `/mnt/user-data/outputs/ADR-045-object-model.md`
-- Object Model Brief v2: `/mnt/project/object-model-brief-v2.md`
-- Current models: `/domain/models.py` (and related files)
+- ADR-045: `dev/active/ADR-045-object-model.md`
+- Object Model Brief v2: `dev/active/object-model-brief-v2.md`
+- Current models: `services/domain/models.py` (and related files)
 - Morning Standup implementation (reference for consciousness)
 
 ## Verification

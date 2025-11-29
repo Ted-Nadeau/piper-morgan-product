@@ -9,11 +9,11 @@
       "id": "001",
       "title": "Audit models.py for Object Model Alignment",
       "description": "Verify that domain models reflect the Entity/Place/Moment/Situation grammar from ADR-045",
-      "file": "coordination/available/001-audit-models-object-model.md",
-      "status": "available",
+      "file": "coordination/claimed/001-audit-models-object-model.md",
+      "status": "claimed",
       "complexity": "medium",
-      "claimed_by": null,
-      "claimed_at": null,
+      "claimed_by": "2025-11-29-1323-prog-code-opus",
+      "claimed_at": "2025-11-29T21:27:09Z",
       "completed_by": null,
       "completed_at": null
     },
@@ -44,8 +44,8 @@
   ],
   "stats": {
     "total_prompts": 3,
-    "available": 3,
-    "claimed": 0,
+    "available": 2,
+    "claimed": 1,
     "complete": 0,
     "blocked": 0
   }
