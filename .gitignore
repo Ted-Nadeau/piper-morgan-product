@@ -66,3 +66,8 @@ archive/
 *.dmg
 *.png
 *.docx
+
+# Coordination queue - keep structure but ignore local work files
+coordination/claimed/*.tmp
+coordination/blocked/*.tmp
+advisors/*/outbox/*.tmp

@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "system": "async-prompt-queue",
+  "created": "2025-11-29T12:10:00Z",
+  "last_updated": "2025-11-29T12:10:00Z",
+  "description": "Central tracking for async prompt queue - agents claim work, execute, and mark complete",
+  "prompts": [
+    {
+      "id": "001",
+      "title": "Audit models.py for Object Model Alignment",
+      "description": "Verify that domain models reflect the Entity/Place/Moment/Situation grammar from ADR-045",
+      "file": "coordination/available/001-audit-models-object-model.md",
+      "status": "available",
+      "complexity": "medium",
+      "claimed_by": null,
+      "claimed_at": null,
+      "completed_by": null,
+      "completed_at": null
+    },
+    {
+      "id": "002",
+      "title": "Create Advisor Mailbox Implementation for Ted Nadeau",
+      "description": "Build async communication system allowing Ted to participate without real-time presence",
+      "file": "coordination/available/002-advisor-mailbox-ted.md",
+      "status": "available",
+      "complexity": "medium",
+      "claimed_by": null,
+      "claimed_at": null,
+      "completed_by": null,
+      "completed_at": null
+    },
+    {
+      "id": "003",
+      "title": "Document Composting to Learning Pipeline",
+      "description": "Define how deprecated objects decompose into learnings that feed new emergent objects",
+      "file": "coordination/available/003-composting-learning-pipeline.md",
+      "status": "available",
+      "complexity": "medium",
+      "claimed_by": null,
+      "claimed_at": null,
+      "completed_by": null,
+      "completed_at": null
+    }
+  ],
+  "stats": {
+    "total_prompts": 3,
+    "available": 3,
+    "claimed": 0,
+    "complete": 0,
+    "blocked": 0
+  }
+}
