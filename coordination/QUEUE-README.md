@@ -1,120 +1,117 @@
-# Advisor Mailbox - Ted Nadeau
+# Coordination Queue - Agent Instructions
 
-## Purpose
-Enable async participation in Piper Morgan architectural discussions without requiring real-time presence in development sessions.
+## Overview
+This is a self-service prompt queue for AI agents working on Piper Morgan. Instead of waiting for real-time coordination, agents can claim available work, execute it, and mark it complete.
+
+## For Agents: How to Use This System
+
+### 1. Check for Available Work
+```bash
+# Look at the manifest to see available prompts
+cat /coordination/manifest.json | grep -A5 "available"
+
+# Or check the available directory
+ls /coordination/available/
+```
+
+### 2. Claim a Prompt
+When you select a prompt to work on:
+1. Read the full prompt file in `/available/`
+2. Update manifest.json:
+   - Change status from "available" to "claimed"
+   - Add "claimed_by": "[your-session-id]"
+   - Add "claimed_at": "[current-timestamp]"
+3. Move the file from `/available/` to `/claimed/`
+
+### 3. Execute the Work
+- Follow the prompt specifications exactly
+- Stay within defined scope
+- Meet all acceptance criteria
+- Create specified deliverables
+
+### 4. Mark Complete
+When work is verified complete:
+1. Update manifest.json:
+   - Change status from "claimed" to "complete"
+   - Add "completed_at": "[timestamp]"
+   - Add "verification": "passed"
+2. Move prompt file to `/complete/`
+3. Add completion notes to the prompt file
+
+### 5. Handle Blocks
+If you cannot complete due to external dependency:
+1. Update status to "blocked"
+2. Add "blocked_reason": "[explanation]"
+3. Move file to `/blocked/`
+
+## For Humans: Creating Prompts
+
+### Prompt Structure
+Each prompt must include:
+- **Context**: Why this work matters
+- **Scope**: What's in/out of scope
+- **Acceptance Criteria**: Checklist of requirements
+- **Deliverables**: What gets created
+- **Resources**: Links to relevant docs
+- **Verification**: How to confirm completion
+
+### Adding New Prompts
+1. Create new .md file in `/available/`
+2. Add entry to manifest.json
+3. Assign unique ID (increment from highest)
+4. Set appropriate priority and impact scores
 
 ## Directory Structure
 ```
-/advisors/ted-nadeau/
-  manifest.json       # Message tracking and status
-  README.md          # This file
-  /inbox/            # Questions/requests from team
-  /outbox/           # Your responses
-  /context/          # Background documents
-  /archive/          # Processed conversations
+/coordination/
+  manifest.json              # Source of truth for queue state
+  README.md                  # This file
+  /available/                # Prompts ready to claim
+  /claimed/                  # Work in progress
+  /complete/                 # Finished work
+  /blocked/                  # Waiting on dependencies
 ```
 
-## Workflow
-
-### Receiving Messages (Team → Ted)
-1. Team places questions in `/inbox/` with context
-2. Manifest updated with new message metadata
-3. You check inbox at your convenience
-4. Questions include relevant context documents
-
-### Responding (Ted → Team)
-1. Read message in `/inbox/`
-2. Create response in `/outbox/` with same ID
-3. Update manifest.json:
-   - Mark inbox message as "read"
-   - Add outbox entry
-4. Team integrates response in next relevant session
-
-### Message Format
-```markdown
-# Subject Line
-
-**From**: [Sender]
-**To**: [Recipient]
-**Date**: [ISO timestamp]
-**Priority**: [high/medium/low]
-**Context**: [Which discussion/ADR/issue this relates to]
-
----
-
-[Message body]
-
-## Specific Questions
-1. [Numbered questions for clarity]
-
-## Response Needed By
-[Optional deadline if time-sensitive]
-```
-
-## Manifest Structure
+## Manifest Schema
 ```json
 {
-  "messages": {
-    "inbox": [
-      {
-        "id": "001",
-        "subject": "Subject line",
-        "from": "Sender",
-        "date": "ISO timestamp",
-        "status": "unread|read",
-        "priority": "high|medium|low",
-        "file": "inbox/001-filename.md"
-      }
-    ],
-    "outbox": [...],
-    "archive": [...]
-  }
+  "id": "001",                       // Unique identifier
+  "title": "Brief description",      // What the work is
+  "file": "path/to/prompt.md",       // Full prompt details
+  "status": "available",              // available|claimed|complete|blocked
+  "priority": "P1",                   // P0 (urgent) to P3 (nice to have)
+  "impact_score": 8,                  // 1-10 scale of importance
+  "estimated_minutes": 60,            // Time estimate
+  "max_claim_duration": 180,          // Timeout in minutes
+  "dependencies": ["002"],            // IDs of prompts that must complete first
+  "skills_required": ["python"],      // Required capabilities
+  "claimed_by": "session-xyz",        // Who claimed it (when claimed)
+  "claimed_at": "timestamp",          // When claimed
+  "completed_at": "timestamp",        // When completed
+  "verification": "passed"            // Verification status
 }
 ```
 
-## Bootstrap Plan
+## Timeout Policy
+If a prompt is claimed but not completed within `max_claim_duration`:
+- Status automatically reverts to "available"
+- Agent should check if their claim is still valid before marking complete
+- If you need more time, update the claim timestamp
 
-This mailbox itself is the first project you can contribute to:
+## Priority Guidelines
+- **P0**: Blocks other work, urgent production issue
+- **P1**: High impact, should be done soon
+- **P2**: Important but not urgent
+- **P3**: Nice to have, can wait
 
-1. **Use it** - Participate through this interface
-2. **Improve it** - Enhance based on your experience
-3. **Build it** - Create the full implementation
-
-Your improvements become the spec. Your experience shapes the feature.
-
-## Getting Started
-
-1. Read `/inbox/001-bootstrap-feedback.md`
-2. Create `/outbox/001-bootstrap-response.md`
-3. Update manifest.json
-4. Suggest improvements to this workflow
-
-## Integration Points
-
-Your responses will be integrated into:
-- Architecture Decision Records (ADRs)
-- Development session planning
-- Technical implementation guidance
-- Strategic direction discussions
-
-## Async Advantages
-
-- Respond at your convenience
-- Deep thinking time for complex questions
-- Written record of all architectural input
-- No timezone/scheduling constraints
-- Progressive context building
-
-## Future Enhancements (Your Domain)
-
-As you build the full implementation, consider:
-- Notification system (email? Slack?)
-- Web interface for easier interaction
-- Threading for complex discussions
-- Priority/categorization improvements
-- Integration with git workflows
-- Multi-advisor scaling
+## Questions?
+If unclear about a prompt, don't guess:
+1. Check resources section for context
+2. Look for related completed prompts
+3. Ask for clarification in session log
+4. If still blocked, mark as blocked with clear reason
 
 ---
 
-*Welcome to async collaboration! Your first message awaits in the inbox.*
+*System launched: November 29, 2025*
+*Maintainer: PM (xian) with architectural oversight*
