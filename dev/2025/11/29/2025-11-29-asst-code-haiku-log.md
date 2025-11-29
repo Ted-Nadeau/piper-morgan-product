@@ -425,9 +425,48 @@ git push origin main
 
 ---
 
-## Final Session State (Post-Recovery)
+## 1:40 PM - Coordination Prompt Path Corrections
 
-**Duration**: 12:08 PM - 1:30 PM PT (82 minutes)
+### Problem Discovery
+
+User verification question: "are the paths correct in the coordination/ files or do some of them still refer to the mnt/ sandbox paths the chief architect wrote initially?"
+
+**Investigation Result**: Found `/mnt/` sandbox paths in coordination prompts that needed updating:
+- `/mnt/user-data/outputs/` paths (Chief Architect's sandbox output directory)
+- `/mnt/user-data/uploads/` paths (sandbox upload directory)
+- `/mnt/project/` paths (sandbox project directory)
+
+### Path Corrections Applied
+
+**File 1: `coordination/available/002-advisor-mailbox-ted.md`**
+- Line 38: Removed reference to `/mnt/user-data/uploads/memo-ted-nadeau-2025-11-29.md`
+- Added note: "Original memo to Ted is not in local repo (was in sandbox)"
+
+**File 2: `coordination/available/003-composting-learning-pipeline.md`**
+- Line 30: Output path `/mnt/user-data/outputs/composting-learning-architecture.md` → `dev/active/composting-learning-architecture.md`
+- Line 40: ADR-045 reference `/mnt/user-data/outputs/ADR-045-object-model.md` → `dev/active/ADR-045-object-model.md`
+- Line 41: Object Model Brief `/mnt/project/object-model-brief-v2.md` → `dev/active/object-model-brief-v2.md`
+
+**File 3: `coordination/claimed/001-audit-models-object-model.md`**
+- Line 28: Output path `/mnt/user-data/outputs/audit-models-object-model.md` → `dev/active/audit-models-object-model.md`
+- Line 35: ADR-045 reference `/mnt/user-data/outputs/ADR-045-object-model.md` → `dev/active/ADR-045-object-model.md`
+- Line 36: Object Model Brief `/mnt/project/object-model-brief-v2.md` → `dev/active/object-model-brief-v2.md`
+- Line 37: Current models `/domain/models.py` → `services/domain/models.py` (correct local path)
+
+### Verification
+
+- ✅ All `/mnt/` sandbox paths removed from coordination files
+- ✅ All paths now reference local repository locations
+- ✅ Pre-commit checks passed
+- ✅ Push to origin/main successful
+
+**Commit**: `79fad874` - "fix: Update coordination prompt paths from /mnt/ sandbox to local repo paths"
+
+---
+
+## Final Session State (Complete)
+
+**Duration**: 12:08 PM - 1:42 PM PT (94 minutes)
 
 **Accomplishments**:
 1. ✅ Established async coordination queue (3 pilot prompts ready)
@@ -437,23 +476,28 @@ git push origin main
 5. ✅ Discovered and disclosed cleanup error
 6. ✅ Systematically restored all deleted active work (40 files)
 7. ✅ Verified institutional memory integrity
-8. ✅ All changes committed and pushed to main
+8. ✅ Corrected coordination prompt paths (/mnt/ → local repo paths)
+9. ✅ All changes committed and pushed to main
 
-**Final Commits**:
+**Final Commits** (in order):
 - 1d142cd8: feat: Add async prompt queue and advisor mailbox systems
 - 318f545f: fix: Use correct Coordination Queue README
 - a9a461ba: cleanup: Remove archived files from dev/active/ reintroduced by merge
 - 47ffe31c: docs: Complete session log - coordination queue setup and dev/active cleanup
 - 1c65e8b5: docs: Fix session log summary - add final commit and correct end time
 - b8fbad55: restore: Restore all active work files deleted during dev/active cleanup
+- cabd4385: docs: Complete session log - add file restoration & recovery phase
+- 79fad874: fix: Update coordination prompt paths from /mnt/ sandbox to local repo paths
 
 **Final System State**:
-- ✅ Coordination queue operational (3 prompts available for claiming)
+- ✅ Coordination queue fully operational with correct local paths
+- ✅ All 3 pilot prompts ready for agents to claim and execute
 - ✅ Ted Nadeau mailbox ready for async participation
 - ✅ All active work files restored and available for manual review
 - ✅ All work safely committed and pushed to origin/main
 - ✅ Clean git history with no unstaged or uncommitted changes
+- ✅ First prompt (001) already claimed by opus agent
 
 ---
 
-**End of session log**
+**End of session log - FINAL**
