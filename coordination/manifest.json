@@ -44,7 +44,7 @@
       "claimed_at": "2025-11-30T00:55:00Z",
       "completed_by": "2025-11-29-1655-test-code-opus",
       "completed_at": "2025-11-30T01:20:00Z",
-      "deliverable": "dev/active/composting-learning-architecture.md",
+      "deliverable": "docs/internal/architecture/current/composting-learning-architecture.md",
       "verification": "passed"
     }
   ],
