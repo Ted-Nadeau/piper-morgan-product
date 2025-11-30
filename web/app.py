@@ -23,13 +23,14 @@ from services.configuration.piper_config_loader import piper_config_loader
 # Configuration service import - eliminates hardcoded values
 from services.configuration.port_configuration_service import get_port_configuration
 
-# Personality components are now initialized during startup (Phase 4 - WebComponentsInitializationPhase)
-
 # Startup phase management (Phase 2 of Issue #385 - INFR-MAINT-REFACTOR)
 from web.startup import lifespan
 
 # Import error response utilities (Pattern 034: Error Handling Standards)
 from web.utils.error_responses import internal_error, not_found_error, validation_error
+
+# Personality components are now initialized during startup (Phase 4 - WebComponentsInitializationPhase)
+
 
 # Server Configuration - now accessed via app.state during startup (Phase 4 - WebComponentsInitializationPhase)
 
@@ -43,6 +44,21 @@ app = FastAPI(
     description="Web Interface for the Piper Morgan Platform",
     lifespan=lifespan,
 )
+
+# Issue #393: Register AuthMiddleware to enable cookie-based authentication
+# Must be registered before other middleware so it sets request.state.user_id early
+try:
+    from services.auth.auth_middleware import AuthMiddleware
+    from services.auth.jwt_service import JWTService
+    from services.auth.user_service import UserService
+
+    jwt_service = JWTService()
+    user_service = UserService()
+
+    app.add_middleware(AuthMiddleware, jwt_service=jwt_service, user_service=user_service)
+    logger.info("✅ AuthMiddleware registered (Issue #393 - cookie-based authentication)")
+except Exception as e:
+    logger.error(f"⚠️ Failed to register AuthMiddleware: {e}")
 
 # Issue #283: Enhanced error handling with user-friendly messages
 # Mount BEFORE other middleware so it catches exceptions from all handlers
@@ -216,7 +232,6 @@ RouterInitializer.mount_router(app, "web.api.routes.debug", "router", "Debug Rou
 
 # Web components (Jinja2 templates, config_parser, personality_enhancer) are now initialized
 # in WebComponentsInitializationPhase during startup and stored in app.state (Phase 4)
-
 
 
 # Mount static files (MUST be last - after all routes)
