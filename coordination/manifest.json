@@ -9,44 +9,50 @@
       "id": "001",
       "title": "Audit models.py for Object Model Alignment",
       "description": "Verify that domain models reflect the Entity/Place/Moment/Situation grammar from ADR-045",
-      "file": "coordination/claimed/001-audit-models-object-model.md",
-      "status": "claimed",
+      "file": "coordination/complete/001-audit-models-object-model.md",
+      "status": "complete",
       "complexity": "medium",
       "claimed_by": "2025-11-29-1323-prog-code-opus",
       "claimed_at": "2025-11-29T21:27:09Z",
-      "completed_by": null,
-      "completed_at": null
+      "completed_by": "2025-11-29-1323-prog-code-opus",
+      "completed_at": "2025-11-29T21:55:12Z",
+      "deliverable": "dev/active/audit-models-object-model.md",
+      "verification": "passed"
     },
     {
       "id": "002",
       "title": "Create Advisor Mailbox Implementation for Ted Nadeau",
       "description": "Build async communication system allowing Ted to participate without real-time presence",
-      "file": "coordination/available/002-advisor-mailbox-ted.md",
-      "status": "available",
+      "file": "coordination/complete/002-advisor-mailbox-ted.md",
+      "status": "complete",
       "complexity": "medium",
-      "claimed_by": null,
-      "claimed_at": null,
-      "completed_by": null,
-      "completed_at": null
+      "claimed_by": "2025-11-29-1323-prog-code-opus",
+      "claimed_at": "2025-11-30T00:58:44Z",
+      "completed_by": "2025-11-29-1323-prog-code-opus",
+      "completed_at": "2025-11-30T01:01:00Z",
+      "deliverable": "advisors/ted-nadeau/",
+      "verification": "passed"
     },
     {
       "id": "003",
       "title": "Document Composting to Learning Pipeline",
       "description": "Define how deprecated objects decompose into learnings that feed new emergent objects",
-      "file": "coordination/available/003-composting-learning-pipeline.md",
-      "status": "available",
+      "file": "coordination/complete/003-composting-learning-pipeline.md",
+      "status": "complete",
       "complexity": "medium",
-      "claimed_by": null,
-      "claimed_at": null,
-      "completed_by": null,
-      "completed_at": null
+      "claimed_by": "2025-11-29-1655-test-code-opus",
+      "claimed_at": "2025-11-30T00:55:00Z",
+      "completed_by": "2025-11-29-1655-test-code-opus",
+      "completed_at": "2025-11-30T01:20:00Z",
+      "deliverable": "dev/active/composting-learning-architecture.md",
+      "verification": "passed"
     }
   ],
   "stats": {
     "total_prompts": 3,
-    "available": 2,
-    "claimed": 1,
-    "complete": 0,
+    "available": 0,
+    "claimed": 0,
+    "complete": 3,
     "blocked": 0
   }
 }
