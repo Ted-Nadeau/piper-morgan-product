@@ -10,8 +10,10 @@ Enable async participation in Piper Morgan architectural discussions without req
   README.md          # This file
   /inbox/            # Questions/requests from team
   /outbox/           # Your responses
-  /context/          # Background documents
+  /context/          # Background documents for reference
   /archive/          # Processed conversations
+  /utils/            # Helper scripts
+    mailbox.py       # CLI for managing messages
 ```
 
 ## Workflow
@@ -82,20 +84,77 @@ This mailbox itself is the first project you can contribute to:
 
 Your improvements become the spec. Your experience shapes the feature.
 
+## Command Line Tools
+
+The `utils/mailbox.py` script provides convenient mailbox management:
+
+```bash
+cd advisors/ted-nadeau
+
+# Check mailbox status (shows unread count)
+python utils/mailbox.py status
+
+# List messages in inbox or outbox
+python utils/mailbox.py list inbox
+python utils/mailbox.py list outbox
+
+# Mark a message as read
+python utils/mailbox.py read 001
+
+# Create a response template
+python utils/mailbox.py respond 001
+
+# Archive a completed conversation
+python utils/mailbox.py archive 001
+
+# Help
+python utils/mailbox.py help
+```
+
 ## Getting Started
 
-1. Read `/inbox/001-bootstrap-feedback.md`
-2. Create `/outbox/001-bootstrap-response.md`
-3. Update manifest.json
-4. Suggest improvements to this workflow
+1. Run `python utils/mailbox.py status` to see what's waiting
+2. Read `/inbox/001-bootstrap-feedback.md`
+3. Run `python utils/mailbox.py respond 001` to create response template
+4. Edit `/outbox/001-response.md` with your thoughts
+5. Run `python utils/mailbox.py read 001` to mark as read
+6. Suggest improvements to this workflow!
 
 ## Integration Points
+
+### How Your Input Gets Integrated
 
 Your responses will be integrated into:
 - Architecture Decision Records (ADRs)
 - Development session planning
 - Technical implementation guidance
 - Strategic direction discussions
+
+### Agent Session Integration
+
+Claude Code agents are briefed to check for advisor mailbox updates:
+
+1. **Session Start**: Agents check `manifest.json` for unread outbox messages
+2. **Context Loading**: Relevant advisor input is loaded into session context
+3. **Attribution**: Your contributions are attributed in session logs and deliverables
+4. **Follow-up**: New questions arising from your input are placed in inbox
+
+### Coordination Queue Connection
+
+This mailbox connects to the broader coordination system:
+- `/coordination/manifest.json` - Central work queue
+- `/advisors/ted-nadeau/manifest.json` - Your mailbox
+- Session logs reference advisor input when used
+
+### Where Your Input Goes
+
+| Your Input Type | Integration Point |
+|----------------|-------------------|
+| Architecture feedback | ADRs, design docs |
+| Implementation guidance | Gameplans, tickets |
+| Strategic direction | Roadmap discussions |
+| Process improvements | Methodology docs |
+| Code review | PR comments, session logs |
 
 ## Async Advantages
 

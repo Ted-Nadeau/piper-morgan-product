@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: November 22, 2025
-**Total ADRs**: 43
+**Last Updated**: November 29, 2025
+**Total ADRs**: 46
 **Status**: Active
 
 ## Overview
@@ -13,6 +13,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 ### Foundation & Core Platform
 
 - [ADR-000: Meta-Platform](adr-000-meta-platform.md) - Core platform architecture foundation
+- [ADR-045: Object Model - "Entities Experience Moments in Places"](adr-045-object-model.md) - Foundational grammar for Piper's consciousness ("Entities experience Moments in Places")
 
 ### Integration & Communication
 
@@ -80,8 +81,8 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Total**: 43 ADRs
-- **Accepted**: 43 ADRs (all current ADRs are accepted/implemented)
+- **Total**: 46 ADRs
+- **Accepted**: 46 ADRs (all current ADRs are accepted/implemented)
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -89,7 +90,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-044)
+1. Use next sequential number (next: ADR-046)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -103,7 +104,9 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
-- **November 22, 2025**: Added ADR-043 (Application-Layer Stored Procedures) - Documents Piper's stored procedure pattern at application layer (orchestration, workflows, intent handlers) - Total now 43 ADRs (000-043)
+- **November 29, 2025**: Added ADR-045 (Object Model - "Entities Experience Moments in Places") - Foundational conceptual grammar establishing how Piper perceives the world through Entities, Places, Moments, and Situations - Total now 46 ADRs (000-045)
+- **November 24, 2025**: Added ADR-044 (Lightweight RBAC vs Traditional) - Security architecture decision for role-based access control
+- **November 22, 2025**: Added ADR-043 (Application-Layer Stored Procedures) - Documents Piper's stored procedure pattern at application layer (orchestration, workflows, intent handlers) - Total was 43 ADRs (000-043)
 - **November 4, 2025**: Added ADR-041 (Domain Primitives - Item and List Refactoring) - Polymorphic inheritance with Item/List as universal primitives - Total was 42 ADRs (000-041)
 - **November 4, 2025**: Added ADR-040 (Local Database Per Environment) - CODE ≠ DATA architecture for Sprint A8 P0 blockers
 - **October 13, 2025**: Updated index with ADR-037, ADR-038, ADR-039 (PROOF-8 audit) - Total was 42 ADRs
