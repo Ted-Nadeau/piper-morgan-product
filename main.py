@@ -6,6 +6,11 @@ This is the proper way to start Piper Morgan.
 It initializes services via ServiceContainer and starts the web server.
 """
 
+# Load environment variables from .env file FIRST (before any other imports)
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import argparse
 import asyncio
 import logging

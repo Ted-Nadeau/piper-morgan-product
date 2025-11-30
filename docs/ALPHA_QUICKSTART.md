@@ -19,7 +19,7 @@
 
 ---
 
-## 5-Step Setup
+## 6-Step Setup
 
 ```bash
 # 1. Clone and setup (using production branch for alpha testing)
@@ -29,22 +29,29 @@ python3.12 -m venv venv && source venv/bin/activate
 # Requires Python 3.11 or 3.12 - verify with: python --version
 pip install -r requirements.txt
 
-# 2. Run interactive setup (5 mins)
+# 2. Configure environment variables (CRITICAL - 1 min)
+cp .env.example .env
+# Edit .env and set JWT_SECRET_KEY:
+# Generate a secure key: openssl rand -hex 32
+# Add to .env: JWT_SECRET_KEY=your-generated-key-here
+# Note: .env is gitignored and survives git pull operations
+
+# 3. Run interactive setup (5 mins)
 python main.py setup
 # → Follow prompts for:
 #    - Username and email
 #    - Secure password (min 8 chars, bcrypt-hashed)
 #    - API keys (OpenAI/Anthropic)
 
-# 3. Configure preferences (2 mins)
+# 4. Configure preferences (2 mins)
 python main.py preferences
 # → Answer 5 questions about your work style
 
-# 4. Verify (30 secs)
+# 5. Verify (30 secs)
 python main.py status
 # → Should show ✓ all green
 
-# 5. Run
+# 6. Run
 python main.py
 # → Opens http://localhost:8001
 ```
@@ -148,6 +155,27 @@ git pull origin main
 # Fixed Nov 23, 2025 (Issue #379-14)
 # Update to latest commit
 # Logout now in user menu (top right)
+```
+
+### Environment variables not loading after git pull?
+
+```bash
+# Your .env file is gitignored and NEVER deleted by git operations
+# If you see JWT_SECRET_KEY warnings after pulling new code:
+
+# 1. Verify .env exists:
+ls -la .env
+
+# 2. If missing, recreate it:
+cp .env.example .env
+openssl rand -hex 32  # Generate new JWT_SECRET_KEY
+# Add JWT_SECRET_KEY=<generated-key> to .env
+
+# 3. Restart server:
+python main.py
+
+# Note: .env survives git pull, checkout, merge - git never touches it
+# If environment seems lost, check if you're in a different terminal session
 ```
 
 ---
