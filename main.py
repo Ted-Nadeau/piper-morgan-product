@@ -324,5 +324,38 @@ if __name__ == "__main__":
             print("  --no-browser                - Don't auto-launch browser")
             sys.exit(1)
 
+    # Check if setup is complete before starting normally
+    from scripts.setup_wizard import is_setup_complete
+
+    setup_complete = asyncio.run(is_setup_complete())
+
+    if not setup_complete:
+        print("\n" + "=" * 60)
+        print("🚀 Welcome to Piper Morgan!")
+        print("=" * 60)
+        print("\nSetup required before first use.")
+        print("This takes about 5 minutes and will:")
+        print("  • Verify system requirements")
+        print("  • Create your user account")
+        print("  • Configure API keys (OpenAI, Anthropic, GitHub)\n")
+
+        choice = input("Choose an option:\n  [1] Run setup wizard\n  [2] Quit\n\nYour choice: ").strip()
+
+        if choice == "1":
+            print()
+            from scripts.setup_wizard import run_setup_wizard
+
+            success = asyncio.run(run_setup_wizard())
+            if success:
+                print("\n✅ Setup complete! Starting Piper Morgan...\n")
+                # Continue with normal startup
+                asyncio.run(main())
+            else:
+                print("\nSetup failed. Please run 'python main.py setup' to try again.\n")
+                sys.exit(1)
+        else:
+            print("\nRun 'python main.py setup' when ready to configure.\n")
+            sys.exit(0)
+
     # Normal startup (no command specified)
     asyncio.run(main())
