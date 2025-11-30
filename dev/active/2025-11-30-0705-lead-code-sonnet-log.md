@@ -460,3 +460,109 @@ Fixes alpha testing issue reported 2025-11-30
 ✅ **Documentation Complete**
 ✅ **Alpha Tester Experience Improved**
 ⏳ **Awaiting PM**: Create .env file manually + test on alpha laptop
+
+---
+
+## Alpha Testing Issues - Dependency Installation & Venv Prompt (12:08 PM - 12:15 PM)
+
+### Issue Reports from Alpha Laptop
+
+**Issue 1**: `ModuleNotFoundError: No module named 'dotenv'`
+
+**Issue 2**: Recurring venv prompt bug `((venv) )` instead of `(venv)` - local Claude found unmerged fix on branch `fix/venv-activate-prompt`
+
+**PM Request**: "let's investigate any unmerged branches too?"
+
+### Root Cause Analysis
+
+#### Issue 1: Missing dotenv Module ✅ **Simple Fix**
+
+**Investigation**:
+- Checked [requirements.txt:154](requirements.txt#L154) - `python-dotenv==1.0.0` IS present
+- User created fresh venv: `python3.12 -m venv venv`
+- User did NOT run: `pip install -r requirements.txt`
+
+**Resolution**: User needs to install dependencies after creating venv
+
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+
+#### Issue 2: Venv Prompt Bug - Unmerged Fix is WRONG ❌
+
+**Investigation**:
+- Fetched branch `fix/venv-activate-prompt` (commit e277412b)
+- Fix tried to patch **tracked venv files** (venv/bin/activate)
+- Checked git: `venv/` is properly gitignored (NOT tracked)
+- Fix was addressing symptom, not root cause
+
+**Analysis**:
+- Venv prompt malformation is likely Python 3.12 venv generation issue
+- Proper fix: Don't patch venv files (they're user-generated)
+- Current workaround: Delete and recreate venv
+
+**Recommendation**: DO NOT merge `fix/venv-activate-prompt` - it patches files that don't exist in git
+
+### Unmerged Branches Investigation
+
+**Branches unmerged to production** (7 active):
+
+1. **feat/auth-ui-login-393** (5 commits)
+   - Login UI flow with form-encoded data handling
+   - Setup fixes (email requirement, User model)
+   - **Status**: Feature branch for login UI implementation
+
+2. **feat/setup-detection-388** (1 commit)
+   - Prevents unconfigured startup
+   - **Status**: Feature enhancement
+
+3. **fix/venv-activate-prompt** (1 commit - e277412b)
+   - Patches venv/bin/activate (WRONG APPROACH)
+   - **Status**: Should NOT be merged
+
+4. **fix/version-and-venv-docs** (1 commit - 6e697c41)
+   - Documentation for version bumping and venv fixes
+   - **Status**: Documentation improvement
+
+5. **verification/ci-test-1758852617**
+   - CI testing branch
+   - **Status**: Temporary testing branch
+
+6. **gh-pages**
+   - GitHub Pages hosting
+   - **Status**: Infrastructure branch
+
+7. **main-old**
+   - Historical backup
+   - **Status**: Archive branch
+
+### Recommendations for PM
+
+**Immediate Action**:
+1. On alpha laptop: Run `pip install -r requirements.txt` to fix dotenv error
+2. Venv prompt bug is cosmetic - ignore for now or recreate venv
+
+**Branch Cleanup**:
+- `feat/auth-ui-login-393` - Evaluate if needed (login UI work)
+- `feat/setup-detection-388` - Consider merging (prevents unconfigured startup)
+- `fix/venv-activate-prompt` - DELETE (wrong fix approach)
+- `fix/version-and-venv-docs` - Consider merging (helpful docs)
+
+**Documentation Update Needed**:
+Update [ALPHA_QUICKSTART.md](docs/ALPHA_QUICKSTART.md) to emphasize:
+```bash
+# Step 1 should be crystal clear:
+python3.12 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt  # ← Make this more prominent
+```
+
+### Status
+
+✅ **Root Causes Identified**
+✅ **Unmerged Branches Catalogued**
+⏳ **Awaiting PM**:
+   - Install dependencies on alpha laptop
+   - Decide on branch cleanup
+   - Decide if venv prompt bug needs proper fix or can be ignored
