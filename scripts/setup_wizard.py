@@ -1035,8 +1035,7 @@ async def run_setup_wizard():
         print("   Running database migrations...")
         try:
             # Get project root (setup_wizard.py is in scripts/ subdirectory)
-            import os
-
+            # Note: os is imported at module level (line 14)
             project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
             migration_result = subprocess.run(
@@ -1129,13 +1128,12 @@ async def is_setup_complete() -> bool:
     """
     try:
         from sqlalchemy import text
+
         from services.database.session_factory import AsyncSessionFactory
 
         async with AsyncSessionFactory.session_scope() as session:
             # Check if user exists
-            user_result = await session.execute(
-                text("SELECT COUNT(*) FROM users")
-            )
+            user_result = await session.execute(text("SELECT COUNT(*) FROM users"))
             user_count = user_result.scalar_one()
 
             if user_count == 0:
@@ -1155,6 +1153,7 @@ async def is_setup_complete() -> bool:
         # Database might not exist yet (first run)
         # or there might be a connection issue
         import logging
+
         logger = logging.getLogger(__name__)
         logger.debug(f"Setup check failed (likely first run): {e}")
         return False
