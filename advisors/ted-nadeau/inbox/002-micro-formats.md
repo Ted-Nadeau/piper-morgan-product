@@ -75,7 +75,7 @@ Your micro-format proposal emerged from Layer 1 (using the mailbox) and should b
 - Refine routing patterns
 
 ### Phase 2 (Next Sprint - Formalize)
-- Create ADR-046 documenting your architecture
+- Create an ADR documenting your architecture
 - Map to our Moment/Entity model
 - Design extraction algorithms
 
@@ -91,7 +91,7 @@ Your micro-format proposal emerged from Layer 1 (using the mailbox) and should b
 ### ADRs (Architecture Decision Records)
 These document important technical decisions. Example:
 - **ADR-045**: Defined "Entities experience Moments in Places"
-- **ADR-046** (proposed): Will document your micro-format architecture
+- **ADR-046**: Documents the micro-format agent architecture
 
 Format: Context → Decision → Consequences → Status
 
@@ -138,7 +138,7 @@ Would you like to draft the initial specification for this?
 1. **Choose response method**: PR or Google Docs?
 2. **Review glossary**: Note any corrections needed
 3. **Pilot planning**: Which micro-formats to test first?
-4. **Architecture documentation**: We'll create ADR-046 crediting your design
+4. **Architecture documentation**: ADR-046 documents your design approach
 
 ---
 
