@@ -27,13 +27,12 @@ from pathlib import Path
 
 import structlog
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 logger = structlog.get_logger()
 
 # Router configuration
 router = APIRouter(tags=["ui", "templates"])
-
 
 
 def _get_templates(request: Request):
@@ -60,6 +59,7 @@ def _get_templates(request: Request):
         raise RuntimeError("Jinja2Templates initialization failed")
 
     return templates
+
 
 def _extract_user_context(request: Request) -> dict:
     """
@@ -102,6 +102,26 @@ async def home(request: Request):
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
+
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """
+    Serve login page.
+
+    If user is already authenticated, redirect to homepage.
+    Otherwise, show login form.
+
+    Issue #393: CORE-UX-AUTH - Login UI
+    """
+    templates = _get_templates(request)
+
+    # Check if user is already authenticated (has valid user_id in state)
+    user_id = getattr(request.state, "user_id", None)
+    if user_id and user_id != "user":  # "user" is the default placeholder
+        return RedirectResponse(url="/", status_code=302)
+
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @router.get("/standup", response_class=HTMLResponse)
