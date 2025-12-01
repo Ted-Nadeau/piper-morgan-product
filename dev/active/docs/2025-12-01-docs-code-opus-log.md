@@ -153,6 +153,113 @@ PM reports missing omnibus logs from docs/omnibus-logs/. Expected logs for 11/22
 
 **Recovery Method**: All files restored from commit `e14dce53` using `git show` extraction.
 
-**Status**: Ready to commit restored files.
+**Status**: ✅ Committed and pushed (commit `68296fcb`)
+
+---
+
+## 7:15 AM - Omnibus Log Creation (11/28, 11/29)
+
+### Task
+PM requested creation of omnibus logs for November 28 and 29, 2025.
+
+### Methodology
+Followed `methodology-20-OMNIBUS-SESSION-LOGS.md`:
+1. Phase 1: Source Discovery - identified all logs for each date
+2. Phase 2: Chronological Extraction - read each log completely
+3. Phase 3: Verification - cross-referenced timestamps
+4. Phase 4: Intelligent Condensation - compressed to terse summaries
+5. Phase 5: Timeline Formatting - chose appropriate format (Standard/High-Complexity)
+6. Phase 6: Executive Summary Creation
+
+### November 28 (Standard Day - Post-Thanksgiving Synthesis)
+**Source Logs**: 4 logs
+- SecOps (7:31 AM): Shai-Hulud v2 worm analysis - false alarm
+- CXO (7:36 AM): Documentation prep, Nov 27 session log
+- Chief Architect (8:10 AM): Weekly synthesis, Roadmap v12
+- Chief of Staff (4:48 PM): Weekly Ship #019 preparation
+
+**Key Themes**: Security false alarm, weekly synthesis of Nov 21-27 arc
+
+### November 29 (High-Complexity Day - Coordination Queue Launch)
+**Source Logs**: 7 logs spanning 16+ hours
+- Chief of Staff (7:05 AM): Agent Mail research, memos
+- Chief Architect (7:42 AM - 5:15 PM): Coordination queue creation, pilots
+- CXO (7:46 AM): Learning System UX
+- Code Assistant (12:08 PM): Local queue setup
+- Programmer (1:23 PM - 5:03 PM): Prompts 001, 002
+- Test Programmer (4:55 PM): Prompt 003
+- Lead Developer (6:46 PM - 11:30 PM): Production crisis resolution
+
+**Key Themes**: Coordination queue validated (3/3 pilots), parallel execution proven, P0 AuthMiddleware bug fixed
+
+### Deliverables
+| File | Format | Lines |
+|------|--------|-------|
+| 2025-11-28-omnibus-log.md | Standard Day | ~95 |
+| 2025-11-29-omnibus-log.md | High-Complexity | ~145 |
+
+**Status**: ✅ Committed and pushed (commit `62ec50f6`)
+
+---
+
+## Session Summary
+
+### Work Completed
+1. ✅ **Document Recovery**: 140 files restored from commit `e14dce53`
+   - 6 omnibus logs (11/22-27)
+   - 60+ session logs, ADRs, briefs, issues
+   - Commit `68296fcb`
+
+2. ✅ **Omnibus Log Creation**: 2 new omnibus logs
+   - 11/28 (Standard Day): 4 source logs → 95 lines
+   - 11/29 (High-Complexity): 7 source logs → 145 lines
+   - Commit `62ec50f6`
+
+### Session Duration
+6:52 AM - 7:45 AM PT (~53 minutes)
+
+---
+
+## 7:45 AM - Omnibus Log Creation (11/30)
+
+### Task
+PM requested creation of omnibus log for November 30, 2025 (3 source logs).
+
+### Source Logs Read
+1. **Lead Developer** (7:05 AM - 12:15 PM): Production deployment v0.8.1.1, alpha testing issues, .env fixes
+2. **Chief Architect** (12:05 PM - 5:44 PM): Ted Nadeau feedback, micro-format architecture proposal
+3. **Researcher** (5:00 PM - 5:35 PM): Sam Zimmerman ethical architecture analysis
+
+### Key Themes
+- Production v0.8.1.1 deployed (21 commits merged)
+- Alpha tester .env friction fixed (`load_dotenv()` added to main.py)
+- Ted Nadeau's micro-format architecture proposal (11 format types)
+- Sam Zimmerman: relationship-first ethics over multi-agent consensus
+
+### Deliverable
+| File | Format | Lines |
+|------|--------|-------|
+| 2025-11-30-omnibus-log.md | Standard Day | ~110 |
+
+**Status**: ✅ Committed and pushed (commit `b857ad08`)
+
+---
+
+## Updated Session Summary
+
+### Work Completed
+1. ✅ **Document Recovery**: 140 files restored from commit `e14dce53`
+   - 6 omnibus logs (11/22-27)
+   - 60+ session logs, ADRs, briefs, issues
+   - Commit `68296fcb`
+
+2. ✅ **Omnibus Log Creation**: 3 new omnibus logs
+   - 11/28 (Standard Day): 4 source logs → 95 lines
+   - 11/29 (High-Complexity): 7 source logs → 145 lines
+   - 11/30 (Standard Day): 3 source logs → 110 lines
+   - Commits `62ec50f6`, `b857ad08`
+
+### Total Session Duration
+6:52 AM - 7:55 AM PT (~63 minutes)
 
 ---
