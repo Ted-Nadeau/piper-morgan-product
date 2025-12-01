@@ -328,10 +328,10 @@ If PWA limitations block core workflows → Build native (Phase 3).
 
 None. This is the first mobile strategy ADR.
 
-### Future ADRs
+### Related Future Decisions
 
-- **ADR-045** (future): Native App Tech Stack (if Phase 3 proceeds)
-- **ADR-046** (future): Mobile-Specific Features (camera, offline workflows)
+- **ADR documenting Native App Tech Stack**: Planned if Phase 3 proceeds
+- **ADR documenting Mobile-Specific Features**: Document camera, offline workflow capabilities when implemented
 
 ## Measurement
 

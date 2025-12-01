@@ -161,8 +161,8 @@ Anti-Flattening Tests:
 
 ## Related Decisions
 
-- **ADR-046**: Consciousness Model (to be written)
-- **ADR-047**: Standup Pattern Extraction (to be written)
+- **ADR documenting Consciousness Model**: Recommended complement to object model
+- **ADR documenting Standup Pattern Extraction**: Extraction methodology for consciousness patterns
 - **ADR-013**: MCP Spatial Integration (existing, aligns with Places concept)
 - **Pattern-020**: Spatial Metaphor Integration (validates approach)
 
