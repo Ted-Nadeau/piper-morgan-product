@@ -81,6 +81,10 @@ class User(Base):
     is_alpha = Column(Boolean, default=False, nullable=False)  # Issue #262 - alpha user flag
     is_admin = Column(Boolean, default=False, nullable=False)  # Issue #357 - SEC-RBAC admin bypass
 
+    # Setup tracking (Issue #389)
+    setup_complete = Column(Boolean, default=False, nullable=False)
+    setup_completed_at = Column(DateTime, nullable=True)  # When setup was completed
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -1174,6 +1174,23 @@ async def run_setup_wizard():
         api_keys = await collect_and_validate_api_keys(user_id_str)
 
         # Phase 4: Success!
+        # Mark setup as complete in database (Issue #389)
+        try:
+            from sqlalchemy import text
+
+            async with AsyncSessionFactory.session_scope() as session:
+                await session.execute(
+                    text(
+                        "UPDATE users SET setup_complete = true, "
+                        "setup_completed_at = :now WHERE id = :user_id"
+                    ),
+                    {"user_id": str(user.id), "now": datetime.utcnow()},
+                )
+                await session.commit()
+        except Exception as e:
+            # Non-fatal: setup succeeded even if flag update fails
+            print(f"   ℹ️  Could not update setup flag: {e}")
+
         print("\n" + "=" * 50)
         print("✅ Setup Complete!")
         print("=" * 50)
@@ -1219,9 +1236,9 @@ async def is_setup_complete() -> bool:
     """
     Check if setup has been completed.
 
-    Setup is considered complete when:
-    - At least one user exists in the database
-    - At least one active OpenAI API key is configured
+    Setup is considered complete when (Issue #389 - explicit flag):
+    - Primary: setup_complete flag is True in users table
+    - Fallback: Legacy inference (user exists + OpenAI key configured)
 
     Returns:
         bool: True if setup is complete, False otherwise
@@ -1232,6 +1249,16 @@ async def is_setup_complete() -> bool:
         from services.database.session_factory import AsyncSessionFactory
 
         async with AsyncSessionFactory.session_scope() as session:
+            # Primary check: explicit setup_complete flag (Issue #389)
+            complete_result = await session.execute(
+                text("SELECT COUNT(*) FROM users WHERE setup_complete = true")
+            )
+            complete_count = complete_result.scalar_one()
+
+            if complete_count > 0:
+                return True
+
+            # Fallback: legacy inference for backwards compatibility
             # Check if user exists
             user_result = await session.execute(text("SELECT COUNT(*) FROM users"))
             user_count = user_result.scalar_one()
