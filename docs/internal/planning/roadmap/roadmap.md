@@ -1,240 +1,269 @@
-# Piper Morgan Roadmap v11.4
-**Date**: 2025-11-20
+# Piper Morgan Roadmap v12.2
+**Date**: 2025-11-29
 **Author**: Chief Architect
-**Status**: Active - Post-Test Repair Organization
+**Status**: Active - Dual Track Implementation
 
 ---
 
 ## Executive Summary
 
-Major progress on TEST epic (5/11 issues complete), security sprint defined, and Ted Nadeau's architectural review incorporated. Alpha readiness approaching with clear critical path through security issues.
+Major update from v12.1: Establishes dual-track implementation with MUX-VISION (conceptual) and MUX-TECH (technical) running in parallel with defined convergence points. First pilot of coordination queue successful. GitHub issues #432-436 created for technical implementation.
 
-**Key Changes from v11.3**:
-- TEST epic: 45% complete, phantom tests resolved
-- New Sprint S1 (Security) defined as top priority
-- Sprint Q1 (Quick Wins) for parallel work
-- 8 duplicate issues identified for closure
-- Ted's review → 3 patterns, 1 ADR, 2 new issues
+**Key Changes from v12.1**:
+- Added MUX-TECH epic with 4 implementation phases (60 hours total)
+- Established convergence points between vision and technical tracks
+- Coordination queue operational with successful pilot
+- GitHub-coordination pool alignment documented
+
+---
+
+## Dual Track Visualization
+
+```
+Week 1 (Dec 2-6)          Week 2 (Dec 9-13)         Week 3 (Dec 16-20)
+┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
+│   MUX-VISION V1  │      │   MUX-VISION V2  │      │  MUX-INTERACT I1 │
+│   (32 hours)     │      │   (52 hours)     │      │   (48 hours)     │
+├──────────────────┤      ├──────────────────┤      ├──────────────────┤
+│ • OBJECT-MODEL   │──────>• FEATURE-MAP    │      │ • CANONICAL      │
+│ • GRAMMAR-CORE   │      │ • STANDUP-EXTRACT│      │ • RECOGNITION    │
+│ • CONSCIOUSNESS  │──┐   │ • LIFECYCLE-SPEC │──┐   │ • INTENT-BRIDGE  │
+│ • METAPHORS      │  │   │ • LEARNING-UX    │  │   │                  │
+└──────────────────┘  │   └──────────────────┘  │   └──────────────────┘
+                      │                          │
+                      ▼                          ▼
+              ┌──────────────────┐      ┌──────────────────┐
+              │   MUX-TECH X1    │      │   MUX-TECH X2    │
+              │   (24 hours)     │      │   (36 hours)     │
+              ├──────────────────┤      ├──────────────────┤
+              │ • PHASE1-GRAMMAR │──────>• PHASE2-ENTITY   │
+              │   (#433, 16h)    │      │   (#434, 24h)    │
+              │ • PHASE3-OWNERSHIP│      │ • PHASE4-COMPOST │
+              │   (#435, 8h)     │      │   (#436, 12h)    │
+              └──────────────────┘      └──────────────────┘
+
+CONVERGENCE POINTS: V1→X1, V2→X2, LEARNING-UX→PHASE4
+```
 
 ---
 
 ## Sprint Organization
 
-### Current Sprint: T1 - Test Repair (This Week)
-**Status**: In Progress
-**Focus**: Complete test infrastructure repair
+### COMPLETED Sprints ✅
+- Sprint S1: Security Foundation (Nov 22-23)
+- Sprint A9: Final Alpha Prep (Nov 23)
+- Alpha v0.8.1 deployed, Michelle testing
 
-**Active**:
-- SLACK-SPATIAL (#361) - 14 hrs - NEW, alpha blocker
-- TEST (#341) - Super epic coordination
-
-**Can Defer** (Code's analysis):
-- TEST-PHANTOM-VALIDATOR (#348) - P2
-- TEST-INFRA-FIXTURES (#349) - P2
-- TEST-PHANTOM-AUDIT (#351) - P3
-- TEST-SMOKE-E2E (#352) - P3
-- TEST-SMOKE-STATIC (#350) - P3
+### ACTIVE Work (Nov 29)
+- ✅ Coordination queue established
+- ✅ First pilot successful (audit completed)
+- ✅ MUX-TECH issues created (#432-436)
+- ✅ Roadmap v12.2 created
 
 ---
 
-### Sprint S1: Security Foundation (Next Week)
-**Status**: Critical Path
-**MUST COMPLETE before alpha testing**
+## MUX Super-Epic Structure
 
-| Issue | Hours | Priority | Impact |
-|-------|-------|----------|---------|
-| SEC-RBAC (#357) | 24 | P0 | Blocks multi-user |
-| SEC-ENCRYPT-ATREST (#358) | 24 | P0 | Compliance required |
-| BUG: Windows Clone (#353) | 3 | P0 | Blocks Windows devs |
-| PERF-INDEX (#356) | 6 | P1 | Performance cliff |
-| DEV-PYTHON-311 (#360) | 8 | P1 | Security patches expired |
-| ARCH-SINGLETON (#322) | 16 | P2 | Blocks scaling |
+### MUX-VISION: Conceptual Architecture
+**Purpose**: Define consciousness model and patterns
+**Status**: Ready to begin Dec 2
 
-**Total**: ~81 hours (2 developer-weeks)
+#### Sprint V1: Formalization (Dec 2-6)
+- VISION-OBJECT-MODEL (8h) - ADR-045 formalization
+- VISION-GRAMMAR-CORE (12h) - "Entities experience Moments in Places"
+- VISION-CONSCIOUSNESS (8h) - Extract from Morning Standup
+- VISION-METAPHORS (4h) - Native/Federated/Synthetic
+
+#### Sprint V2: Integration (Dec 9-13)
+- VISION-FEATURE-MAP (12h) - Map features to model
+- VISION-STANDUP-EXTRACT (16h) - Pattern extraction
+- VISION-LIFECYCLE-SPEC (8h) - 8-stage with composting
+- MUX-VISION-LEARNING-UX (16h) - Complete learning system
+
+### MUX-TECH: Technical Implementation
+**Purpose**: Implement consciousness-aware models
+**Status**: Begins after V1 completes
+**GitHub Issues**: #433-436
+
+#### Sprint X1: Core Models (Dec 9-13)
+**Dependencies**: V1 must complete first
+- MUX-TECH-PHASE1-GRAMMAR (#433, 16h)
+  - Moment, Situation models
+  - 8-stage LifecycleStage enum
+  - Links to VISION-OBJECT-MODEL
+- MUX-TECH-PHASE3-OWNERSHIP (#435, 8h)
+  - Native/Federated/Synthetic types
+  - Can start after VISION-METAPHORS
+  - Independent of PHASE1
+
+#### Sprint X2: Entity & Learning (Dec 16-20)
+**Dependencies**: PHASE1 complete, V2 complete
+- MUX-TECH-PHASE2-ENTITY (#434, 24h)
+  - PiperEntity model
+  - Consciousness attributes
+  - Requires PHASE1 models
+- MUX-TECH-PHASE4-COMPOSTING (#436, 12h)
+  - Learning pipeline
+  - Connects to MUX-VISION-LEARNING-UX
+  - Needs PHASE1 lifecycle
+
+### MUX-INTERACT: Interaction Design
+**Starts**: Dec 16 (overlaps with X2)
+- Recognition patterns, trust gradient, spatial navigation
+
+### MUX-IMPLEMENT: UI Polish
+**Starts**: Jan 13
+- Navigation crisis, document management, cross-channel unity
 
 ---
 
-### Sprint Q1: Quick Wins (Parallel)
-**Status**: Can be done in gaps
-**Low effort, high value**
+## Coordination Mechanisms
 
-| Issue | Hours | Score | Value |
-|-------|-------|-------|--------|
-| DEV-VSCODE-SETUP (#362) | 3 | 2.67 | Developer onboarding |
-| DX-OS-DETECT (#325) | 6 | - | Cross-platform |
-| ARCH (#359) | 4 | - | Remove timeout wrapper |
-| BUG-TEST-SECURITY (#363) | 1 | - | Fix async warning |
-| DESIGN-TOKENS (#354) | 8 | - | CSS consistency |
-| STOP-GAP-DOCS (#355) | 12 | - | Artifact persistence |
+### GitHub ↔ Coordination Pool Alignment
 
-**Total**: ~34 hours
+**Pattern for Breaking Down Large Issues**:
+```yaml
+GitHub Issue: #433 (MUX-TECH-PHASE1-GRAMMAR)
+Coordination Prompts:
+  - 001-implement-moment-model.md (4h)
+  - 002-implement-situation-model.md (4h)
+  - 003-implement-lifecycle-enum.md (4h)
+  - 004-integrate-with-existing.md (4h)
+```
+
+**Documentation Requirements per Issue**:
+- Update domain-models.md with changes
+- Update architecture.md if structure changes
+- Update dependency diagrams if needed
+- Update ADRs for decision evolution
+
+### Convergence Points
+
+1. **V1 → X1**: Vision defines, Tech implements
+2. **V2 → X2**: Integration patterns inform entity work
+3. **LEARNING-UX → PHASE4**: UX design guides pipeline
+4. **X1 + X2 → I1**: Models enable interaction patterns
 
 ---
 
-### Sprints M1-M6 (As Planned)
-
-**M1**: Foundation work (in progress)
-**M2**: Integration & smoke tests
-**M3**: Skills & multi-agent
-**M4**: Document management
-**M5**: Advanced features
-**M6**: Strategic & ethics
-
-*These remain as organized but validate after S1 completes*
-
----
-
-## Critical Path to Alpha
+## Critical Path & Dependencies
 
 ```mermaid
 graph LR
-    T1[Test Repair T1] --> S1[Security S1]
-    S1 --> ALPHA[Alpha Launch]
-    Q1[Quick Wins Q1] -.-> ALPHA
-    M1[Sprint M1] --> ALPHA
+    V1[Vision V1] --> X1[Tech Phase 1]
+    X1 --> X2E[Phase 2 Entity]
+    V1 --> X1O[Phase 3 Ownership]
+    V2[Vision V2] --> X2C[Phase 4 Composting]
+    X2E --> I1[Interact I1]
 ```
 
-**Blockers**:
-1. ✅ TEST epic (45% complete, on track)
-2. 🔴 RBAC (not started, 24 hrs)
-3. 🔴 Encryption (not started, 24 hrs)
-4. 🟡 Slack integration (gameplan ready, 14 hrs)
+**Must Complete in Order**:
+1. VISION-OBJECT-MODEL → PHASE1-GRAMMAR
+2. PHASE1-GRAMMAR → PHASE2-ENTITY
+3. VISION-LEARNING-UX → PHASE4-COMPOSTING
+
+**Can Parallelize**:
+- PHASE3-OWNERSHIP (after VISION-METAPHORS)
+- MUX-INTERACT (after core models exist)
 
 ---
 
-## Issue Management
+## Resource Allocation
 
-### Duplicates to Close (8 pairs)
+### Model Strategy (Updated)
+- **Vision Work**: Opus 4.5 (conceptual depth)
+- **Technical Implementation**: Sonnet 4.5 via coordination queue
+- **Simple Tasks**: Haiku 4.5 sub-agents
+- **Validation**: Cursor Agent with Sonnet 4.5
 
-| Close | Keep | Canonical Name |
-|-------|------|----------------|
-| #323 | #357 | SEC-RBAC |
-| #324 | #358 | SEC-ENCRYPT-ATREST |
-| #320 | #356 | PERF-INDEX |
-| #319 | #353 | BUG (Windows) |
-| #333 | #336 | DATA-SOFT-DELETE |
-| #331 | #332 | DOCS-STORED-PROCS |
-| #334 | #338 | INFRA-MIGRATION-ROLLBACK |
-| #335 | #339 | STYLE-PK-PREFIX |
-| #337 | #340 | STYLE-TABLE-SINGULAR |
-
-### New Canonical Names
-
-- #326 → ARCH-MULTI-ORG
-- #329 → ARCH-ANNOTATION (Ted's innovation)
-- #322 → ARCH-SINGLETON
-- #363 → BUG-TEST-SECURITY
-- #321 → DATA-AUDIT-FIELDS
-- #325 → DX-OS-DETECT
-- #327 → PROCESS-AI-ACCOUNTS
-- #328 → OBSERVABILITY-CENTRAL
-- #330 → INTEGRATION-EMAIL-MCP
+### Coordination Queue Usage
+- Large issues broken into 2-8 hour prompts
+- Agents claim work autonomously
+- PM reviews completed work async
+- Documentation updates with code
 
 ---
 
-## Milestone Structure
+## Success Metrics
 
-### MVP (Current Focus)
-- Sprint T1: Test Repair
-- Sprint S1: Security Foundation
-- Sprint Q1: Quick Wins
-- Sprints M1-M6: Core features
+### December 2025
+- [ ] V1 Vision sprint complete (32h)
+- [ ] X1 Core models implemented (24h)
+- [ ] Morning Standup uses new models
+- [ ] Coordination queue processing 5+ prompts/week
 
-### POST-MVP (New Milestone)
-- Architecture improvements (ARCH-*)
-- Style conventions (STYLE-*)
-- Data patterns (DATA-*)
-- Process improvements (PROCESS-*)
-- Observability (OBSERVABILITY-*)
+### January 2026
+- [ ] Entity consciousness visible in code
+- [ ] Learning pipeline operational
+- [ ] Recognition patterns designed
+- [ ] Trust gradient implemented
 
-### ENTERPRISE (Future)
-- ENT-KEYS-TEAM-SHARING (#251)
-- MVP-QUALITY-ENHANCE (#213)
-- FEAT-* advanced features
-
----
-
-## Risk Assessment
-
-### High Risk (Must Mitigate)
-- 🔴 **No RBAC** = Cannot have multiple users
-- 🔴 **No encryption** = Compliance failure
-- 🔴 **Python 3.9.6** = Security patches expired
-
-### Medium Risk (Should Address)
-- 🟡 **Slack broken** = Major feature unavailable
-- 🟡 **No indexes** = Performance degradation
-- 🟡 **Singleton pattern** = Cannot scale horizontally
-
-### Low Risk (Can Defer)
-- 🟢 Style conventions
-- 🟢 Documentation gaps
-- 🟢 Process improvements
+### February 2026
+- [ ] 75% features use consciousness models
+- [ ] Navigation crisis resolved
+- [ ] v1.0 launch ready
 
 ---
 
-## Metrics & Progress
+## Risk Mitigation
 
-### Test Infrastructure
-- **Phantom tests eliminated**: 332 → 0 ✅
-- **Known failures documented**: 55 tests
-- **Test reliability**: Improving daily
-- **Smoke tests**: Defined, not yet implemented
+### Technical Risks
+- **Model complexity**: Start with Moment, validate, then expand
+- **Breaking changes**: Feature flags for new models
+- **Performance**: Profile consciousness overhead
 
-### Documentation
-- **Patterns**: 40 documented (was 35)
-- **ADRs**: 44 documented (including mobile strategy)
-- **Session logs**: Current through Nov 20
-
-### External Validation
-- **Ted Nadeau review**: Completed, incorporated
-- **Alpha testers identified**: Beatrice + others
-- **Security audit prep**: In progress (Sprint S1)
+### Process Risks
+- **Coordination overhead**: Queue reduces sync needs
+- **Documentation drift**: Updates required per issue
+- **Vision-tech mismatch**: Convergence checkpoints
 
 ---
 
 ## Next Actions
 
-### This Week (Nov 20-24)
-1. ✅ Complete SLACK-SPATIAL implementation
-2. ✅ Close TEST epic items that are done
-3. ✅ Synthesize duplicate issues
-4. ✅ Start Sprint S1 planning
+### This Week (Nov 29-Dec 1)
+- ✅ Set up coordination queue
+- ✅ Create MUX-TECH issues
+- ✅ Update roadmap to v12.2
+- ⏱️ Complete second pilot test
+- ⏱️ Brief team on dual-track approach
 
-### Next Week (Nov 25-Dec 1)
-1. 🔲 Execute Sprint S1 (Security)
-2. 🔲 Parallel Quick Wins (Q1)
-3. 🔲 Prepare for alpha testing
-4. 🔲 Security audit prep
+### Next Week (Dec 2-8)
+- 🔲 Execute Vision Sprint V1
+- 🔲 Prepare Tech Sprint X1 prompts
+- 🔲 Continue alpha testing
+- 🔲 First convergence checkpoint
 
 ---
 
-## Success Criteria for Alpha
+## Change Log
 
-**Must Have**:
-- ✅ Core workflows functional
-- ✅ Test infrastructure stable
-- 🔲 RBAC implemented
-- 🔲 Encryption at rest
-- 🔲 Slack integration working
-- 🔲 Performance acceptable
+### v12.2 (Nov 29, 2025, 4:45 PM)
+- Added MUX-TECH epic with 4 phases
+- Established dual-track visualization
+- Documented convergence points
+- Added GitHub-coordination alignment
+- Successful first pilot noted
 
-**Nice to Have**:
-- 🔲 VSCode setup package
-- 🔲 Python 3.11 upgrade
-- 🔲 Design tokens extracted
-- 🔲 Artifact persistence
+### v12.1 (Nov 29, 2025, 11:40 AM)
+- Integrated MUX-VISION-LEARNING-UX
+- Added "Filing dreams" metaphor
+- Two-layer journal architecture
+
+### v12.0 (Nov 28, 2025)
+- Initial UX 2.0 integration
+- Discovered core grammar
 
 ---
 
 ## Notes
 
-- Security Sprint S1 is absolute priority - cannot launch alpha without it
-- TEST epic nearly complete, great progress
-- Ted's review validated architecture, identified key gaps
-- Quick wins can be done in parallel or gaps between major work
-- Consider hiring help for security sprint (81 hours of work)
+**Inchworm Principle**: Each phase completes 100% before next begins. Convergence points allow validation without blocking parallel work.
+
+**Morning Standup**: Remains our North Star example of consciousness working despite model limitations.
+
+**Coordination Queue**: Enables async work distribution, reducing real-time coordination needs.
 
 ---
 
-*Roadmap v11.4 - Updated after test infrastructure success and Ted Nadeau review*
+*Roadmap v12.2 - Dual tracks converging toward consciousness*
