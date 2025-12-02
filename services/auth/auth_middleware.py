@@ -59,12 +59,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/health",
             "/login",  # Issue #393: Login UI page
+            "/setup",  # Issue #390: Setup wizard UI page
+            "/api/setup",  # Issue #390: Setup wizard API endpoints
             "/auth/login",  # Issue #393: Login API endpoint
             "/api/v1/auth/login",
             "/api/v1/auth/register",
             "/slack/oauth/callback",
             "/github/oauth/callback",
             "/static/",  # Static assets don't need auth
+            "/assets/",  # Image assets (logo, favicon) don't need auth
         ]
 
         logger.info("AuthMiddleware initialized", exclude_paths=len(self.exclude_paths))
