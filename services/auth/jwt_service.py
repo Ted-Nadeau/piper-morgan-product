@@ -55,6 +55,11 @@ class TokenType(Enum):
     REFRESH = "refresh"
     API = "api"
     FEDERATION = "federation"
+    CLI_SESSION = "cli_session"  # Issue #397
+
+
+# Default CLI token expiry (90 days) - Issue #397
+CLI_TOKEN_EXPIRE_DAYS = 90
 
 
 @dataclass
@@ -237,6 +242,57 @@ class JWTService:
         token = jwt.encode(claims_dict, self.secret_key, algorithm=self.algorithm)
 
         logger.info("Refresh token generated", user_id=user_id, expires_at=expire.isoformat())
+
+        return token
+
+    def generate_cli_token(
+        self,
+        user_id: UUID,
+        user_email: str,
+    ) -> str:
+        """
+        Generate long-lived JWT token for CLI auto-authentication (Issue #397).
+
+        Args:
+            user_id: User identifier
+            user_email: User email
+
+        Returns:
+            Encoded JWT token string (90-day expiry)
+        """
+        now = datetime.now(timezone.utc)
+        expire = now + timedelta(days=CLI_TOKEN_EXPIRE_DAYS)
+
+        claims = JWTClaims(
+            iss=self.issuer,
+            aud=self.audience,
+            sub=str(user_id),
+            exp=int(expire.timestamp()),
+            iat=int(now.timestamp()),
+            jti=str(uuid.uuid4()),
+            user_id=user_id,
+            user_email=user_email,
+            scopes=["cli:access"],  # Limited scope for CLI
+            token_type=TokenType.CLI_SESSION.value,
+            session_id=None,
+            workspace_id=None,
+        )
+
+        claims_dict = {}
+        for field in claims.__dataclass_fields__.values():
+            value = getattr(claims, field.name)
+            if isinstance(value, UUID):
+                claims_dict[field.name] = str(value)
+            else:
+                claims_dict[field.name] = value
+
+        token = jwt.encode(claims_dict, self.secret_key, algorithm=self.algorithm)
+
+        logger.info(
+            "CLI session token generated",
+            user_id=user_id,
+            expires_at=expire.isoformat(),
+        )
 
         return token
 

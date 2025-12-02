@@ -1191,6 +1191,21 @@ async def run_setup_wizard():
             # Non-fatal: setup succeeded even if flag update fails
             print(f"   ℹ️  Could not update setup flag: {e}")
 
+        # Generate and store CLI session token (Issue #397)
+        try:
+            from services.auth.jwt_service import JWTService
+            from services.infrastructure.keychain_service import KeychainService
+
+            jwt_service = JWTService()
+            keychain = KeychainService()
+
+            cli_token = jwt_service.generate_cli_token(user_id=user.id, user_email=user.email or "")
+            keychain.store_cli_token(str(user.id), cli_token)
+            print("   ✓ CLI auto-authentication configured")
+        except Exception as e:
+            # Non-fatal: CLI auth is optional
+            print(f"   ℹ️  CLI auto-auth skipped: {e}")
+
         print("\n" + "=" * 50)
         print("✅ Setup Complete!")
         print("=" * 50)
