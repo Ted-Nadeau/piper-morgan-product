@@ -6,18 +6,19 @@ AI Product Management Assistant - Python/FastAPI backend with plugin architectur
 
 **Entry Point**: `main.py` → NOT `web/app.py` directly
 - Run: `python main.py` (starts server on http://localhost:8001)
-- FastAPI app defined in `web/app.py` (~1000 lines)
+- FastAPI app defined in `web/app.py` (~1066 lines)
 - Service initialization via `ServiceContainer` (DDD pattern)
 
-**Service Container Pattern**:
+**Service Container Pattern** (Singleton with explicit lifecycle):
 ```python
 from services.container import ServiceContainer
 container = ServiceContainer()
-await container.initialize()
+await container.initialize()  # MUST call before using services
 llm_service = container.get_service('llm')
 ```
+⚠️ **Never bypass ServiceContainer** - it manages dependencies and initialization order
 
-**Hub-and-Spoke Model**: `IntentService` orchestrates 39 domain models from `services/domain/models.py` (source of truth)
+**Hub-and-Spoke Model**: `IntentService` (5200+ lines) orchestrates 39 domain models from `services/domain/models.py` (1312 lines - single source of truth)
 
 ## Critical File Locations
 
@@ -70,20 +71,31 @@ alembic revision --autogenerate -m "desc"
 ## Project-Specific Patterns
 
 ### Intent Handler Convention
-Intent handlers follow naming: `_handle_{intent_type}` in `IntentService`:
-- Query intents → `_handle_query_intent()`
-- Execution → `_handle_execution_intent()`
-- Analysis → `_handle_analysis_intent()`
-- Synthesis → `_handle_synthesis_intent()`
+Intent handlers in `IntentService` follow strict naming: `_handle_{intent_type}_intent()`
 
-Action names from classifier may differ from handler names - see `ActionMapper` (Issue #284)
+**8 Primary Intent Categories**:
+- `_handle_query_intent()` - Read-only data retrieval (CQRS-lite)
+- `_handle_execution_intent()` - Create/update operations
+- `_handle_analysis_intent()` - Data analysis workflows
+- `_handle_synthesis_intent()` - Content generation
+- `_handle_strategy_intent()` - Strategic planning
+- `_handle_learning_intent()` - Pattern learning
+- `_handle_unknown_intent()` - Fallback handling
+- `_handle_summarize()` - Document summarization
+
+**Action Mapper**: Classifier action names ≠ handler method names (Issue #284)
+- Maps external action names to internal handler methods
+- Located in `services/intent_service/action_mapper.py`
 
 ### Plugin Architecture
 All plugins extend `PiperPlugin` from `services/plugins/plugin_interface.py`:
-- Metadata: name, version, capabilities
-- Capabilities: "routes", "webhooks", "spatial", "mcp", "background"
-- Contract tests verify plugin compliance (`@pytest.mark.contract`)
-- Integrations in `services/integrations/`: slack, github, notion, calendar, mcp
+- **Metadata**: name, version, description, author
+- **Capabilities**: "routes", "webhooks", "spatial", "mcp", "background"
+- **Contract Tests**: `@pytest.mark.contract` verifies interface compliance
+- **7 Active Integrations**: slack, github, notion, calendar, demo, mcp, spatial
+  - Each in `services/integrations/{integration_name}/`
+  - Plugin registration via `PluginRegistry`
+  - Version tracking for compatibility
 
 ### Two-Tier Response Pattern
 - **Canonical Handlers**: Fast (<1ms) for direct queries - no orchestration
@@ -100,13 +112,24 @@ def _create_degradation_response(message: str, degradation_msg: str) -> dict:
 ## Testing Philosophy
 
 **Marker hierarchy** (pytest.ini):
-- `@pytest.mark.smoke` - Critical path, <5 sec total
+- `@pytest.mark.smoke` - Critical path, <5 sec total (highest priority)
 - `@pytest.mark.unit` - Unit tests, <30 sec
-- `@pytest.mark.integration` - Up to 2 minutes
-- `@pytest.mark.llm` - Requires API keys (skipped in CI)
+- `@pytest.mark.integration` - Up to 2 minutes (database, external services)
+- `@pytest.mark.llm` - Requires API keys (skipped in CI without keys)
 - `@pytest.mark.contract` - Plugin interface compliance
+- `@pytest.mark.performance` - Performance and benchmark tests
 
 **Async configuration**: Session-scoped event loops prevent "Task attached to different loop" errors (Issue #290)
+```ini
+asyncio_mode = auto
+asyncio_default_fixture_loop_scope = session
+```
+
+**Test Failure Protocol** (from CLAUDE.md):
+- STOP immediately if ANY test fails
+- DO NOT rationalize as "minor" or "not blocking"
+- Report: failing count, passing count, exact errors, options
+- Wait for PM decision
 
 ## Common Gotchas
 
@@ -143,13 +166,21 @@ services/
 - **Personality injection**: Markdown config parsed and applied to LLM responses
 - **Temporal orchestration**: Complex workflows use Temporal activities (not direct calls)
 
-## Documentation
+## Documentation & Navigation
 
-- Technical: `docs/TECHNICAL-DEVELOPERS.md` (575 lines)
-- Architecture: `docs/NAVIGATION.md`
-- Testing: `docs/testing/` and `COMPREHENSIVE-TESTING-GUIDE.md`
-- Claude conventions: `CLAUDE.md` (792 lines - debugging protocols, anti-completion-bias)
-- Public docs: https://pmorgan.tech
+**Essential Navigation**:
+- `docs/NAVIGATION.md` - Role-based navigation hub (337 lines)
+- `CLAUDE.md` - Agent protocols, debugging, anti-completion-bias (792 lines)
+- `docs/TECHNICAL-DEVELOPERS.md` - Developer technical reference (575 lines)
+- `docs/DATABASE_SCHEMA.md` - Complete SQL DDL for 28 tables
+- `COMPREHENSIVE-TESTING-GUIDE.md` - Testing procedures and E2E protocols
+
+**Role-Based Briefings** (Progressive Loading):
+- `knowledge/BRIEFING-ESSENTIAL-{ROLE}.md` - Lead Dev, Architect, Chief of Staff, Agent
+- Each briefing: 2-2.5K tokens (vs. 39K for full context)
+- Load additional context progressively as needed
+
+**Public Documentation**: https://pmorgan.tech
 
 ## When Adding Features
 
@@ -162,8 +193,28 @@ services/
 
 ## Anti-Patterns to Avoid
 
-- Don't create new enum files - use `shared_types.py`
-- Don't bypass ServiceContainer - use `container.get_service()`
-- Don't skip pre-commit newline fixes - causes CI failures
-- Don't use port 5432 - PostgreSQL is on 5433
-- Don't declare completion without passing tests (see CLAUDE.md anti-completion-bias protocol)
+- ❌ Don't create new enum files - use `shared_types.py`
+- ❌ Don't bypass ServiceContainer - use `container.get_service()`
+- ❌ Don't skip pre-commit newline fixes - causes CI failures
+- ❌ Don't use port 5432 - PostgreSQL is on 5433
+- ❌ Don't declare completion without passing tests (anti-completion-bias protocol)
+- ❌ Don't fix symptoms - always find root cause (see CLAUDE.md debugging framework)
+- ❌ Don't implement patterns without reading reference implementation
+- ❌ Don't add multiple fixes at once - test after each change
+
+## Agent Protocols (CRITICAL)
+
+**From CLAUDE.md - MUST follow**:
+
+1. **STOP Conditions**: 17 mandatory conditions that require immediate escalation
+2. **No Exceptions Rule**: Get PM approval before breaking any rule
+3. **Test Failure**: STOP immediately, report, await decision
+4. **Root Cause First**: Never fix symptoms, always diagnose root cause
+5. **Progressive Loading**: Use role-based briefings, load context as needed
+6. **Time Lord Alert**: Say this when uncertain - it's your escape hatch
+
+**Live System State** (Query with Serena MCP):
+- Intent handlers: `mcp__serena__find_symbol("IntentService", depth=1)`
+- Active plugins: `mcp__serena__list_dir("services/integrations")`
+- Pattern catalog: `mcp__serena__list_dir("docs/internal/architecture/current/patterns")`
+- Benefits: 79% token savings, always accurate

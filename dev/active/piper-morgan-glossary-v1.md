@@ -1,6 +1,6 @@
 # Piper Morgan Glossary
 
-**Version**: 1.0
+**Version**: 1.1 - 2025.12.02 - Ted Nadeau
 **Date**: November 30, 2025
 **Purpose**: Define project terminology, jargon, and concepts
 **Invocation Question(s)**: "What are the terms in use at Piper Morgan that are necessary to understand or have a specific meaning in this context? Especially any terms that there might be some confusion about."
