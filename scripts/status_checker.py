@@ -33,8 +33,8 @@ class StatusChecker:
                 # Check basic connectivity
                 await session.execute(text("SELECT 1"))
 
-                # Count alpha users (during alpha phase)
-                user_count_result = await session.execute(text("SELECT COUNT(*) FROM alpha_users"))
+                # Count users
+                user_count_result = await session.execute(text("SELECT COUNT(*) FROM users"))
                 user_count = user_count_result.scalar_one()
 
                 # Get database size (optional, might not work on all setups)
@@ -74,16 +74,16 @@ class StatusChecker:
             reminder_service = reminder_service or KeyRotationReminder(service)
 
             async with AsyncSessionFactory.session_scope() as session:
-                # Get most recent alpha user (during alpha phase - Issue #259)
+                # Get most recent user
                 user_result = await session.execute(
-                    text("SELECT id, username FROM alpha_users ORDER BY created_at DESC LIMIT 1")
+                    text("SELECT id, username FROM users ORDER BY created_at DESC LIMIT 1")
                 )
                 user = user_result.first()
 
                 if not user:
                     return {
                         "status": "⚠",
-                        "message": "No alpha users found. Run setup wizard first.",
+                        "message": "No users found. Run setup wizard first.",
                         "details": {},
                     }
 
