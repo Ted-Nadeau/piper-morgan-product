@@ -40,18 +40,26 @@ def get_cli_auth_token() -> Optional[str]:
         # CLI tokens are stored with format: {user_id}_cli_session_api_key
         # We need to find user IDs by checking the database
         try:
-            import asyncio
+            import os
 
-            from sqlalchemy import text
+            from sqlalchemy import create_engine, text
 
-            from services.database.session_factory import AsyncSessionFactory
+            # Build sync database URL from environment (same as connection.py)
+            user = os.getenv("POSTGRES_USER", "piper")
+            password = os.getenv("POSTGRES_PASSWORD", "dev_changeme_in_production")
+            host = os.getenv("POSTGRES_HOST", "localhost")
+            port = os.getenv("POSTGRES_PORT", "5433")
+            database = os.getenv("POSTGRES_DB", "piper_morgan")
+            sync_url = f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
-            async def get_user_ids():
-                async with AsyncSessionFactory.session_scope() as session:
-                    result = await session.execute(text("SELECT id FROM users LIMIT 10"))
-                    return [str(row[0]) for row in result.fetchall()]
+            engine = create_engine(sync_url)
 
-            user_ids = asyncio.run(get_user_ids())
+            with engine.connect() as conn:
+                # Order by most recent first - CLI token was stored for most recent user
+                result = conn.execute(
+                    text("SELECT id FROM users ORDER BY created_at DESC LIMIT 10")
+                )
+                user_ids = [str(row[0]) for row in result.fetchall()]
 
             for user_id in user_ids:
                 token = keychain.get_cli_token(user_id)
