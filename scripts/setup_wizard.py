@@ -12,6 +12,7 @@ Issue #218 CORE-USERS-ONBOARD Phase 1A
 
 import asyncio
 import os
+import platform
 import socket
 import subprocess
 import sys
@@ -22,6 +23,30 @@ from typing import Any, Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, ".")
+
+# =============================================================================
+# Module-level constants (Issue #438: Setup Wizard Code Hygiene)
+# =============================================================================
+
+# Service check names (used in check_system and run_setup_wizard)
+SERVICE_DOCKER = "Docker installed"
+SERVICE_PYTHON = "Python 3.9+"
+SERVICE_PORT = "Port 8001 available"
+SERVICE_POSTGRES = "PostgreSQL (5433)"
+SERVICE_REDIS = "Redis (6379)"
+SERVICE_CHROMADB = "ChromaDB (8000)"
+SERVICE_TEMPORAL = "Temporal (7233)"
+
+# Core services required for setup (Temporal is optional)
+CORE_SERVICES = [SERVICE_POSTGRES, SERVICE_REDIS, SERVICE_CHROMADB]
+OPTIONAL_SERVICES = [SERVICE_TEMPORAL]
+
+# API provider names (used in collect_and_validate_api_keys)
+PROVIDER_OPENAI = "openai"
+PROVIDER_ANTHROPIC = "anthropic"
+PROVIDER_GITHUB = "github"
+
+# =============================================================================
 
 # Check for required dependencies
 try:
@@ -39,8 +64,6 @@ except ImportError:
 
 def get_platform() -> str:
     """Detect the current platform"""
-    import platform
-
     system = platform.system().lower()
     if system == "darwin":
         return "macos"
@@ -68,8 +91,6 @@ def check_python312_available() -> bool:
 
 def setup_virtual_environment() -> bool:
     """Set up Python virtual environment with requirements"""
-    import os
-
     print("\n" + "=" * 50)
     print("🔧 Setting Up Virtual Environment")
     print("=" * 50)
@@ -80,7 +101,7 @@ def setup_virtual_environment() -> bool:
         try:
             subprocess.run(["rm", "-rf", "venv"], check=True, timeout=10)
             print("   ✓ Old venv removed")
-        except Exception as e:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
             print(f"   ⚠ Could not remove old venv: {e}")
             return False
 
@@ -93,7 +114,7 @@ def setup_virtual_environment() -> bool:
             timeout=60,
         )
         print("   ✓ Virtual environment created")
-    except Exception as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
         print(f"   ✗ Failed to create venv: {e}")
         return False
 
@@ -106,7 +127,7 @@ def setup_virtual_environment() -> bool:
             timeout=60,
         )
         print("   ✓ pip upgraded")
-    except Exception as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
         print(f"   ⚠ pip upgrade had issues: {e}")
 
     # Install requirements
@@ -128,15 +149,13 @@ def setup_virtual_environment() -> bool:
     except subprocess.TimeoutExpired:
         print("   ✗ Installation timed out (>5 minutes)")
         return False
-    except Exception as e:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
         print(f"   ✗ Installation failed: {e}")
         return False
 
 
 def setup_ssh_key() -> bool:
     """Generate SSH key if missing and guide user to add it to GitHub"""
-    import os
-
     print("\n" + "=" * 50)
     print("🔐 SSH Key Setup")
     print("=" * 50)
@@ -198,7 +217,7 @@ def setup_ssh_key() -> bool:
                 )
                 print("   ✓ Public key copied to clipboard")
             # Linux: no auto-copy, just display
-        except Exception as e:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError) as e:
             print(f"   ⚠ Could not copy to clipboard: {e}")
 
         # Display instructions
@@ -222,7 +241,12 @@ def setup_ssh_key() -> bool:
         ready = input("Have you added the SSH key to GitHub? (y/n): ").lower().strip()
         return ready == "y"
 
-    except Exception as e:
+    except (
+        subprocess.CalledProcessError,
+        subprocess.TimeoutExpired,
+        FileNotFoundError,
+        OSError,
+    ) as e:
         print(f"   ✗ Failed to generate SSH key: {e}")
         return False
 
@@ -310,7 +334,7 @@ async def start_docker_services() -> bool:
         print("   ✗ docker-compose command not found")
         print("   Please install Docker Compose: https://docs.docker.com/compose/install/")
         return False
-    except Exception as e:
+    except (subprocess.CalledProcessError, OSError) as e:
         print(f"   ✗ Error starting services: {e}")
         return False
 
@@ -471,13 +495,13 @@ async def check_system() -> Dict[str, bool]:
     print("\n1. System Check")
 
     checks = {
-        "Docker installed": await check_docker(),
-        "Python 3.9+": await check_python_version(),
-        "Port 8001 available": await check_port_available(),
-        "PostgreSQL (5433)": await check_database(),
-        "Redis (6379)": await check_redis(),
-        "ChromaDB (8000)": await check_chromadb(),
-        "Temporal (7233)": await check_temporal(),
+        SERVICE_DOCKER: await check_docker(),
+        SERVICE_PYTHON: await check_python_version(),
+        SERVICE_PORT: await check_port_available(),
+        SERVICE_POSTGRES: await check_database(),
+        SERVICE_REDIS: await check_redis(),
+        SERVICE_CHROMADB: await check_chromadb(),
+        SERVICE_TEMPORAL: await check_temporal(),
     }
 
     for name, result in checks.items():
@@ -936,22 +960,14 @@ async def run_setup_wizard():
                 print("\n❌ Setup cannot continue without Docker.")
                 return False
             # Re-check Docker after guided installation
-            checks["Docker installed"] = await check_docker()
+            checks[SERVICE_DOCKER] = await check_docker()
 
         # Check if Docker services need to be started
-        # Core services (required for setup)
-        core_services = [
-            "PostgreSQL (5433)",
-            "Redis (6379)",
-            "ChromaDB (8000)",
-        ]
-        # Optional services (Temporal can fail without blocking setup)
-        optional_services = ["Temporal (7233)"]
+        # Use module-level constants for service names
+        services_down = [k for k in CORE_SERVICES if not checks.get(k, False)]
+        optional_down = [k for k in OPTIONAL_SERVICES if not checks.get(k, False)]
 
-        services_down = [k for k in core_services if not checks.get(k, False)]
-        optional_down = [k for k in optional_services if not checks.get(k, False)]
-
-        if (services_down or optional_down) and checks.get("Docker installed", False):
+        if (services_down or optional_down) and checks.get(SERVICE_DOCKER, False):
             all_down = services_down + optional_down
             print(f"\n⚠️  {len(all_down)} service(s) not running:")
             for service in all_down:
@@ -962,14 +978,14 @@ async def run_setup_wizard():
 
             if services_started:
                 # Re-check services after starting
-                checks["PostgreSQL (5433)"] = await check_database()
-                checks["Redis (6379)"] = await check_redis()
-                checks["ChromaDB (8000)"] = await check_chromadb()
-                checks["Temporal (7233)"] = await check_temporal()
+                checks[SERVICE_POSTGRES] = await check_database()
+                checks[SERVICE_REDIS] = await check_redis()
+                checks[SERVICE_CHROMADB] = await check_chromadb()
+                checks[SERVICE_TEMPORAL] = await check_temporal()
 
                 # Update services_down list (only core services)
-                services_down = [k for k in core_services if not checks.get(k, False)]
-                optional_down = [k for k in optional_services if not checks.get(k, False)]
+                services_down = [k for k in CORE_SERVICES if not checks.get(k, False)]
+                optional_down = [k for k in OPTIONAL_SERVICES if not checks.get(k, False)]
 
                 if optional_down:
                     print(f"\n   ⚠  Optional service not ready: {', '.join(optional_down)}")
@@ -979,17 +995,17 @@ async def run_setup_wizard():
         remaining_issues = {
             k: v
             for k, v in checks.items()
-            if not v and k != "Docker installed" and k not in optional_services
+            if not v and k != SERVICE_DOCKER and k not in OPTIONAL_SERVICES
         }
 
         if remaining_issues:
             print("\n❌ Setup cannot continue. Please fix the issues above.")
             print("\nTroubleshooting:")
 
-            if not checks.get("Python 3.9+", True) is False:
+            if not checks.get(SERVICE_PYTHON, True) is False:
                 print("  • Install Python 3.9+: https://www.python.org/downloads/")
                 print("  • Recommended: Python 3.11+ for best compatibility")
-            if not checks.get("Port 8001 available", True) is False:
+            if not checks.get(SERVICE_PORT, True) is False:
                 print("  • Free up port 8001 or stop other Piper Morgan instances")
                 print("  • Run: lsof -i :8001 to see what's using the port")
 
