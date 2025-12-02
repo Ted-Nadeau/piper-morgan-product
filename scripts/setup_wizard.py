@@ -19,7 +19,7 @@ import sys
 import uuid
 from datetime import datetime
 from getpass import getpass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, ".")
@@ -655,6 +655,30 @@ async def create_user_account() -> Any:
                 raise
 
 
+def _check_global_keychain_key(provider: str) -> Optional[str]:
+    """
+    Check for global keychain key (migration from 0.8.0).
+
+    In 0.8.0, keys were stored globally as '{provider}_api_key'.
+    In 0.8.1+, keys are user-scoped as '{user_id}_{provider}_api_key'.
+    This function checks for the old global format to support migration.
+
+    Args:
+        provider: Provider name (openai, anthropic, github)
+
+    Returns:
+        API key if found in global keychain format, None otherwise
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        keychain = KeychainService()
+        # Check without username = global format (0.8.0 style)
+        return keychain.get_api_key(provider, username=None)
+    except Exception:
+        return None
+
+
 async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     """Collect API keys with real-time validation"""
     from services.database.session_factory import AsyncSessionFactory
@@ -681,6 +705,26 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
                 openai_key = existing_key  # Mark as found
             else:
                 print("   ℹ️  No existing key found in keychain")
+                # Check for global key (migration from 0.8.0)
+                global_key = _check_global_keychain_key("openai")
+                if global_key:
+                    print("   ✓ Found existing global key (migrating to user-scoped)")
+                    openai_key = global_key
+                    # Migrate: store as user-scoped
+                    try:
+                        await service.store_user_key(
+                            user_id=user_id,
+                            provider="openai",
+                            api_key=global_key,
+                            session=session,
+                            validate=True,
+                        )
+                        await session.commit()
+                        stored_keys["openai"] = global_key
+                        print("   ✓ Migrated to user-scoped storage")
+                    except Exception as migrate_err:
+                        print(f"   ℹ️  Using key (migration skipped: {migrate_err})")
+                        stored_keys["openai"] = global_key
     except Exception as e:
         print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
         pass  # Keychain check failed, continue to other methods
@@ -769,6 +813,26 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
                 anthropic_key = existing_key  # Mark as found
             else:
                 print("   ℹ️  No existing key found in keychain")
+                # Check for global key (migration from 0.8.0)
+                global_key = _check_global_keychain_key("anthropic")
+                if global_key:
+                    print("   ✓ Found existing global key (migrating to user-scoped)")
+                    anthropic_key = global_key
+                    # Migrate: store as user-scoped
+                    try:
+                        await service.store_user_key(
+                            user_id=user_id,
+                            provider="anthropic",
+                            api_key=global_key,
+                            session=session,
+                            validate=True,
+                        )
+                        await session.commit()
+                        stored_keys["anthropic"] = global_key
+                        print("   ✓ Migrated to user-scoped storage")
+                    except Exception as migrate_err:
+                        print(f"   ℹ️  Using key (migration skipped: {migrate_err})")
+                        stored_keys["anthropic"] = global_key
     except Exception as e:
         print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
         pass  # Keychain check failed, continue to other methods
@@ -842,6 +906,26 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
                 github_token = existing_key  # Mark as found
             else:
                 print("   ℹ️  No existing token found in keychain")
+                # Check for global key (migration from 0.8.0)
+                global_key = _check_global_keychain_key("github")
+                if global_key:
+                    print("   ✓ Found existing global token (migrating to user-scoped)")
+                    github_token = global_key
+                    # Migrate: store as user-scoped
+                    try:
+                        await service.store_user_key(
+                            user_id=user_id,
+                            provider="github",
+                            api_key=global_key,
+                            session=session,
+                            validate=False,  # Skip validation for GitHub
+                        )
+                        await session.commit()
+                        stored_keys["github"] = global_key
+                        print("   ✓ Migrated to user-scoped storage")
+                    except Exception as migrate_err:
+                        print(f"   ℹ️  Using token (migration skipped: {migrate_err})")
+                        stored_keys["github"] = global_key
     except Exception as e:
         print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
         pass  # Keychain check failed, continue to other methods
@@ -1164,7 +1248,20 @@ async def is_setup_complete() -> bool:
             )
             openai_key_count = key_result.scalar_one()
 
-            return openai_key_count > 0
+            if openai_key_count > 0:
+                return True
+
+            # Fallback: check global keychain (migration from 0.8.0)
+            # User exists but no key in database - maybe key is in global keychain
+            global_openai = _check_global_keychain_key("openai")
+            if global_openai:
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.debug("Found global OpenAI key in keychain (0.8.0 format)")
+                return True
+
+            return False
     except Exception as e:
         # Database might not exist yet (first run)
         # or there might be a connection issue
