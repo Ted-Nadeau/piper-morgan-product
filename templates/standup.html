@@ -144,36 +144,43 @@
 
         try {
           const startTime = Date.now();
-          const response = await fetch("/api/standup?format=human-readable", {
+          // POST to the correct API endpoint with JSON body
+          const response = await fetch("/api/v1/standup/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: "standard", format: "json" }),
             credentials: "include"
           });
           const data = await response.json();
           const endTime = Date.now();
 
-          if (data.status === "success") {
+          // API returns { success: true, standup: {...}, performance_metrics: {...}, metadata: {...} }
+          if (data.success) {
             Toast.success("Standup Generated", "Your morning standup is ready!");
+            const standup = data.standup || {};
+            const metrics = data.performance_metrics || {};
             results.innerHTML = `
                         <div class="success">✅ Standup generated successfully!</div>
 
                         <div class="metrics">
                             <div class="metric">
                                 <div class="metric-value">${
-                                  data.data.generation_time_with_context ||
-                                  data.data.generation_time_formatted ||
-                                  data.data.generation_time_ms + "ms"
+                                  metrics.generation_time_with_context ||
+                                  metrics.generation_time_formatted ||
+                                  metrics.generation_time_ms + "ms"
                                 }</div>
                                 <div class="metric-label">Generation Time</div>
                             </div>
                             <div class="metric">
                                 <div class="metric-value">${
-                                  data.data.time_saved_formatted ||
-                                  data.data.time_saved_minutes + " min"
+                                  metrics.time_saved_formatted ||
+                                  (standup.time_saved_minutes ? standup.time_saved_minutes + " min" : "N/A")
                                 }</div>
                                 <div class="metric-label">Time Saved</div>
                             </div>
                             <div class="metric">
                                 <div class="metric-value">${
-                                  data.data.efficiency_multiplier || "N/A"
+                                  metrics.efficiency_multiplier || "N/A"
                                 }</div>
                                 <div class="metric-label">Efficiency</div>
                             </div>
@@ -187,14 +194,14 @@
 
                         <div class="section">
                             <h2>📋 Yesterday's Accomplishments</h2>
-                            <ul>${(data.data.yesterday_accomplishments || [])
+                            <ul>${(standup.yesterday_accomplishments || [])
                               .map((item) => `<li>${item}</li>`)
                               .join("")}</ul>
                         </div>
 
                         <div class="section">
                             <h2>🎯 Today's Priorities</h2>
-                            <ul>${(data.data.today_priorities || [])
+                            <ul>${(standup.today_priorities || [])
                               .map((item) => `<li>${item}</li>`)
                               .join("")}</ul>
                         </div>
@@ -202,9 +209,9 @@
                         <div class="section">
                             <h2>⚠️ Blockers</h2>
                             ${
-                              data.data.blockers &&
-                              data.data.blockers.length > 0
-                                ? `<ul>${data.data.blockers
+                              standup.blockers &&
+                              standup.blockers.length > 0
+                                ? `<ul>${standup.blockers
                                     .map((item) => `<li>${item}</li>`)
                                     .join("")}</ul>`
                                 : "<p>✅ No blockers identified</p>"
@@ -217,10 +224,10 @@
                         </div>
                     `;
           } else {
-            Toast.error("Generation Failed", data.error || "Failed to generate standup");
+            Toast.error("Generation Failed", data.detail || "Failed to generate standup");
             results.innerHTML = `
                         <div class="error">❌ Error generating standup: ${
-                          data.error
+                          data.detail || "Unknown error"
                         }</div>
                         <div class="section">
                             <h2>Debug Information</h2>
