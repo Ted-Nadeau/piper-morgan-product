@@ -192,11 +192,14 @@ async def login(
         )
 
         # Set cookie for web clients
+        # Detect if request is HTTPS to set secure flag appropriately
+        # This allows HTTP development while enforcing HTTPS cookies in production
+        is_https = request.url.scheme == "https"
         response.set_cookie(
             key="auth_token",
             value=token,
             httponly=True,
-            secure=True,  # HTTPS only in production
+            secure=is_https,  # Only set secure flag for HTTPS requests
             samesite="lax",
             max_age=3600,  # 1 hour (matches JWT expiry)
         )
