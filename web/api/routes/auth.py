@@ -116,7 +116,8 @@ async def login(
             await db.initialize()
 
         # Query user and update last_login in single session
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Query user by username
             result = await session.execute(select(User).where(User.username == username))
             user = result.scalar_one_or_none()
@@ -267,8 +268,9 @@ async def logout(
         if not db._initialized:
             await db.initialize()
 
-        # Revoke the token via blacklist with audit logging (use db.get_session like login does)
-        async with await db.get_session() as session:
+        # Revoke the token via blacklist with audit logging
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             success = await jwt_service.revoke_token(
                 token=token,
                 reason="logout",
@@ -327,7 +329,8 @@ async def get_me(
             await db.initialize()
 
         # Query user by ID from token
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(select(User).where(User.id == current_user.user_id))
             user = result.scalar_one_or_none()
 
@@ -419,7 +422,8 @@ async def change_password(
             )
 
         # Get database session for password update
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Hash new password
             password_service = PasswordService()
             new_password_hash = password_service.hash_password(data.new_password)

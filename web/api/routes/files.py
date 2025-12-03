@@ -23,6 +23,7 @@ from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims
 from services.database.connection import db
 from services.database.models import UploadedFileDB
+from services.database.session_factory import AsyncSessionFactory
 from services.file_context.storage import save_file_to_storage
 
 router = APIRouter(prefix="/api/v1/files", tags=["files"])
@@ -164,7 +165,8 @@ async def upload_file(
                 await db.initialize()
 
             # Create database record with SEC-RBAC owner_id
-            async with await db.get_session() as session:
+            # Use fresh session to avoid event loop mismatch (#442)
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 uploaded_file = UploadedFileDB(
                     id=file_id,
                     session_id=current_user.sub,  # Legacy session field (kept for compatibility)
@@ -259,7 +261,8 @@ async def list_files(
             await db.initialize()
 
         # Query user's files using owner_id for SEC-RBAC compliance
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(UploadedFileDB).where(UploadedFileDB.owner_id == current_user.sub)
             )
@@ -332,7 +335,8 @@ async def get_file(
             await db.initialize()
 
         # Find file with ownership validation
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(UploadedFileDB).where(
                     UploadedFileDB.id == file_id,
@@ -406,7 +410,8 @@ async def delete_file(
             await db.initialize()
 
         # Find file using owner_id for SEC-RBAC compliance
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(UploadedFileDB).where(
                     UploadedFileDB.id == file_id,
@@ -511,7 +516,8 @@ async def download_file(
             await db.initialize()
 
         # Find file with ownership validation
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(UploadedFileDB).where(UploadedFileDB.id == file_id)
             )

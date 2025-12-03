@@ -84,9 +84,8 @@ jobs:
                 - [ ] docs/internal/architecture/current/patterns/README.md (if modified)
                 - [ ] docs/internal/development/methodology-core/ files (if modified)
                 - [ ] docs/briefing/METHODOLOGY.md (if modified)
-                - [ ] .cursorrules and docs/cursorrules/ files (if modified)
+                - [ ] .cursor/rules/ files (if modified) - Note: NOT docs/cursorrules/
                 - [ ] docs/internal/planning/roadmap/roadmap.md (if modified)
-                - [ ] backlog.md (DEPRECATED - moved to trash)
                 - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
                 - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
@@ -110,7 +109,9 @@ jobs:
               - [ ] Verify port 8001 documented everywhere: \`grep -r "8080" docs/ --include="*.md"\` (should be empty)
               - [ ] Check for mock fallbacks: \`grep -r "mock_\\|fallback" services/ --include="*.py"\`
               - [ ] Verify AsyncSessionFactory pattern: \`grep -r "DatabasePool" services/ --include="*.py"\` (should be empty)
-              - [ ] Check cursor rules synchronization: \`diff .cursor/rules/ docs/cursorrules/active-rules.md\` (should be identical)
+              - [ ] Check cursor rules exist: \`ls -la .cursor/rules/\` (5 rule files expected)
+              - [ ] Verify pattern count matches: \`ls -1 docs/internal/architecture/current/patterns/pattern-*.md | wc -l\` should match README
+              - [ ] Verify ADR naming convention: \`ls docs/internal/architecture/current/adrs/adr-*.md\` (all lowercase)
 
               ### 📁 Session Log Management & Omnibus Synthesis
 
@@ -235,6 +236,20 @@ jobs:
               - Explain any items that couldn't be completed (don't just skip)
               - Create separate review documents for complex analyses
               - Update this "Lessons Learned" section if new patterns discovered
+
+              ### ❓ FAQ (Accumulated from Agent Questions)
+
+              **Q: Should I use subagents or manual verification?**
+              A: Use your judgment for efficiency. Haiku subagents are token-efficient for straightforward tasks like finding duplicates or broken links. Manual is fine for quick checks.
+
+              **Q: How much time should this take?**
+              A: Thoroughness over speed. This is part of the Excellence Flywheel - take as long as needed for a proper audit. Can span multiple days if needed.
+
+              **Q: What's the priority order?**
+              A: 1) Claude Knowledge Updates (prevents drift), 2) Infrastructure checks (prevents assumption cascades), 3) Everything else
+
+              **Q: What about files in dev/active/ vs dev/2025/MM/DD/?**
+              A: dev/active/ is for current work-in-progress. Completed work should move to dated folders. Duplicates in dev/ are common and should be cleaned up.
 
               ### References
               - [CLAUDE.md Project Instructions](../CLAUDE.md)

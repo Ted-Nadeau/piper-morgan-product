@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup - Piper Morgan</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/auth.css" />
+    <style>
+        /* Inline critical CSS for faster load */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Wizard-specific styles */
+        .setup-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        .setup-progress .step {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background: #e0e0e0;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .setup-progress .step.active {
+            background: #3498db;
+            color: white;
+        }
+        .setup-progress .step.completed {
+            background: #28a745;
+            color: white;
+        }
+        .setup-step {
+            display: none;
+        }
+        .setup-step.active {
+            display: block;
+        }
+        .setup-step h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 8px 0;
+        }
+        .setup-step p {
+            font-size: 15px;
+            color: #7f8c8d;
+            margin: 0 0 24px 0;
+        }
+        .service-status {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .service-status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        .service-status.not-ready {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .key-validation {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        .key-validation input {
+            flex: 1;
+        }
+        .key-validation button {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            background: #6c757d;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .key-validation button:hover {
+            background: #5a6268;
+        }
+        .key-validation button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .key-validation .keychain-btn {
+            background: #17a2b8;
+        }
+        .key-validation .keychain-btn:hover {
+            background: #138496;
+        }
+        .key-validation .keychain-btn:disabled {
+            background: #bdc3c7;
+        }
+        .key-validation .keychain-btn.hidden {
+            display: none;
+        }
+        .validation-status {
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+        .validation-status.valid {
+            color: #28a745;
+        }
+        .validation-status.invalid {
+            color: #dc3545;
+        }
+        .form-group small {
+            display: block;
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 4px;
+        }
+        #system-status {
+            margin: 24px 0;
+        }
+        .auth-button + .auth-button {
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container" style="max-width: 600px;">
+        <!-- Header -->
+        <div class="auth-header">
+            <img src="/assets/pm-logo.png" alt="Piper Morgan" class="auth-logo">
+            <h1>Welcome to Piper Morgan</h1>
+            <p>Let's get you set up in just a few steps</p>
+        </div>
+
+        <!-- Progress indicator -->
+        <div class="setup-progress">
+            <div class="step active" data-step="1">1. System</div>
+            <div class="step" data-step="2">2. API Keys</div>
+            <div class="step" data-step="3">3. Account</div>
+            <div class="step" data-step="4">4. Complete</div>
+        </div>
+
+        <!-- Step 1: System Check -->
+        <div id="step-1" class="setup-step active">
+            <h2>System Requirements</h2>
+            <p id="step-1-description">Click the button below to verify all required services are running.</p>
+            <div id="system-status"></div>
+            <button id="check-system-btn" class="auth-button">Check System</button>
+            <button id="next-1" class="auth-button" style="display:none;">Continue</button>
+        </div>
+
+        <!-- Step 2: API Keys -->
+        <div id="step-2" class="setup-step">
+            <h2>API Keys</h2>
+            <p>Enter your API keys to enable AI features.</p>
+
+            <div class="form-group">
+                <label for="openai-key">OpenAI API Key (required for alpha)</label>
+                <div class="key-validation">
+                    <input type="password" id="openai-key" placeholder="sk-..." />
+                    <button type="button" class="validate-key-btn" data-provider="openai">Validate</button>
+                    <button type="button" class="keychain-btn hidden" data-provider="openai">Use Keychain</button>
+                </div>
+                <div id="openai-status" class="validation-status"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="anthropic-key">Anthropic API Key (optional)</label>
+                <div class="key-validation">
+                    <input type="password" id="anthropic-key" placeholder="sk-ant-..." />
+                    <button type="button" class="validate-key-btn" data-provider="anthropic">Validate</button>
+                    <button type="button" class="keychain-btn hidden" data-provider="anthropic">Use Keychain</button>
+                </div>
+                <div id="anthropic-status" class="validation-status"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="gemini-key">Google Gemini API Key (optional)</label>
+                <div class="key-validation">
+                    <input type="password" id="gemini-key" placeholder="AIza..." />
+                    <button type="button" class="validate-key-btn" data-provider="gemini">Validate</button>
+                    <button type="button" class="keychain-btn hidden" data-provider="gemini">Use Keychain</button>
+                </div>
+                <div id="gemini-status" class="validation-status"></div>
+            </div>
+
+            <button id="next-2" class="auth-button" disabled>Continue</button>
+        </div>
+
+        <!-- Step 3: Account Creation -->
+        <div id="step-3" class="setup-step">
+            <h2>Create Your Account</h2>
+            <form id="account-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required minlength="3" maxlength="50" />
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="8" />
+                    <small>At least 8 characters</small>
+                </div>
+                <div class="form-group">
+                    <label for="password-confirm">Confirm Password</label>
+                    <input type="password" id="password-confirm" name="password_confirm" required />
+                </div>
+                <button type="submit" class="auth-button">Create Account</button>
+            </form>
+        </div>
+
+        <!-- Step 4: Complete -->
+        <div id="step-4" class="setup-step">
+            <h2>Setup Complete!</h2>
+            <p>Your Piper Morgan is ready to use.</p>
+            <a href="/login" class="auth-button" style="display: inline-block; text-align: center; text-decoration: none;">Log In</a>
+        </div>
+
+        <!-- Error display -->
+        <div id="error-message" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script src="/static/js/setup.js"></script>
+</body>
+</html>

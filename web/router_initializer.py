@@ -30,6 +30,7 @@ class RouterInitializer:
         ("web.api.routes.api_keys", "router", "API Keys API", "/api/v1/keys"),
         # Routers previously at module level (lines 592-680)
         ("web.api.routes.auth", "router", "Auth API", "/auth"),
+        ("web.api.routes.setup", "router", "Setup Wizard API", "/setup"),  # Issue #390
         ("web.api.routes.files", "router", "Files API", "/api/v1/files"),
         ("web.api.routes.documents", "router", "Documents API", "/api/v1/documents"),
         ("services.api.todo_management", "todo_management_router", "Todos API", "/api/v1/todos"),

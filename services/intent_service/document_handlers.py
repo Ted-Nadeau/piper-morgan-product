@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.analysis.document_analyzer import DocumentAnalyzer
 from services.database.connection import db
 from services.database.models import UploadedFileDB
+from services.database.session_factory import AsyncSessionFactory
 from services.knowledge_graph.document_service import DocumentService
 from services.llm.clients import llm_client
 
@@ -76,7 +77,7 @@ async def handle_analyze_document(file_id: str, user_id: str) -> Dict:
     logger.info("Analyzing document", file_id=file_id, user_id=user_id)
 
     # 1. Retrieve file metadata with user isolation
-    async with await db.get_session() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:  # Issue #442 fix
         file_record = await _get_uploaded_file(file_id, user_id, session)
 
         if not file_record:
@@ -123,7 +124,7 @@ async def handle_question_document(file_id: str, question: str, user_id: str) ->
     logger.info("Answering question about document", file_id=file_id, user_id=user_id)
 
     # 1. Retrieve document with user isolation
-    async with await db.get_session() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:  # Issue #442 fix
         file_record = await _get_uploaded_file(file_id, user_id, session)
 
         if not file_record:
@@ -241,7 +242,7 @@ async def handle_compare_documents(file_ids: List[str], user_id: str) -> Dict:
 
     # 1. Retrieve all documents with user isolation
     documents = []
-    async with await db.get_session() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:  # Issue #442 fix
         for file_id in file_ids[:5]:  # Limit to 5 docs to avoid token overflow
             file_record = await _get_uploaded_file(file_id, user_id, session)
 
@@ -365,7 +366,7 @@ async def handle_reference_in_conversation(
 
     # 1. If no file_id provided, try to find recently uploaded file
     if not file_id:
-        async with await db.get_session() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:  # Issue #442 fix
             # Get most recently uploaded file for user (session_id = user_id)
             stmt = (
                 select(UploadedFileDB)
@@ -390,7 +391,7 @@ async def handle_reference_in_conversation(
             )
 
     # 2. Retrieve document content
-    async with await db.get_session() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:  # Issue #442 fix
         file_record = await _get_uploaded_file(file_id, user_id, session)
 
         if not file_record:

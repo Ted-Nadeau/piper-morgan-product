@@ -24,7 +24,9 @@ parser.add_argument(
     "--verbose", "-v", action="store_true", help="Show detailed startup information"
 )
 parser.add_argument(
-    "--no-browser", action="store_true", help="Don't auto-launch browser on startup"
+    "--browser",
+    action="store_true",
+    help="Auto-launch browser on startup (Issue #451: off by default)",
 )
 parser.add_argument(
     "command",
@@ -54,9 +56,9 @@ logger = logging.getLogger(__name__)
 
 
 def should_open_browser() -> bool:
-    """Check if browser should be opened (Issue #256 CORE-UX-BROWSER)"""
-    # Don't open if explicitly disabled
-    if args.no_browser:
+    """Check if browser should be opened (Issue #451: off by default)"""
+    # Only open if explicitly requested with --browser flag
+    if not args.browser:
         return False
 
     # Don't open if no display (CI/CD, SSH)
@@ -128,7 +130,7 @@ async def main():
             print("\nPress Ctrl+C to stop the server")
             print("=" * 60 + "\n")
 
-        # Auto-launch browser if appropriate (Issue #256 CORE-UX-BROWSER)
+        # Auto-launch browser if --browser flag specified (Issue #451: off by default)
         if should_open_browser():
             asyncio.create_task(open_browser_delayed())
             if not args.verbose:
@@ -339,7 +341,9 @@ if __name__ == "__main__":
         print("  • Create your user account")
         print("  • Configure API keys (OpenAI, Anthropic, GitHub)\n")
 
-        choice = input("Choose an option:\n  [1] Run setup wizard\n  [2] Quit\n\nYour choice: ").strip()
+        choice = input(
+            "Choose an option:\n  [1] Run setup wizard\n  [2] Quit\n\nYour choice: "
+        ).strip()
 
         if choice == "1":
             print()

@@ -170,7 +170,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
         """
         Extract JWT token from request.
 
-        Supports both Authorization header and query parameter.
+        Supports Authorization header, query parameter, and auth_token cookie.
+        Issue #390: Added cookie support for web UI authentication.
         """
         # Try Authorization header first (standard OAuth 2.0)
         auth_header = request.headers.get("authorization")
@@ -181,6 +182,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         token_param = request.query_params.get("token")
         if token_param:
             return token_param
+
+        # Try auth_token cookie (for web UI, Issue #390)
+        auth_cookie = request.cookies.get("auth_token")
+        if auth_cookie:
+            return auth_cookie
 
         return None
 

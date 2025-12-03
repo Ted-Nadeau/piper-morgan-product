@@ -208,6 +208,9 @@ logger.info("✅ IntentEnforcementMiddleware registered (GREAT-4B)")
 from web.router_initializer import RouterInitializer
 
 RouterInitializer.mount_router(app, "web.api.routes.auth", "router", "Auth API")
+RouterInitializer.mount_router(
+    app, "web.api.routes.setup", "router", "Setup Wizard API"
+)  # Issue #390
 RouterInitializer.mount_router(app, "web.api.routes.files", "router", "Files API")
 RouterInitializer.mount_router(app, "web.api.routes.documents", "router", "Documents API")
 RouterInitializer.mount_router(
