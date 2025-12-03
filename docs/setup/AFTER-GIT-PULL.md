@@ -37,20 +37,28 @@ This guide helps you verify everything still works after pulling updates.
 ### 1. Verify Environment File Intact
 
 ```bash
-# Your .env should still exist (git doesn't touch gitignored files)
+# Your .env should exist (git doesn't touch gitignored files)
 ls -la .env
 ```
 
-**Expected**: File exists with your JWT_SECRET_KEY and API keys
+**Expected**: File exists with your JWT_SECRET_KEY
 
-**If missing**:
+**If missing - COMMON ISSUE FOR FIRST-TIME SETUP**:
 ```bash
-# This should NEVER happen, but if it does:
+# If you never created .env during initial setup, create it now:
 cp .env.example .env
-openssl rand -hex 32  # Generate new JWT_SECRET_KEY
-# Edit .env to add: JWT_SECRET_KEY=<generated-key>
-# Re-add your API keys (OpenAI, Anthropic, GitHub)
+
+# Generate JWT secret key:
+openssl rand -hex 32
+
+# Edit .env in your IDE/text editor and add the generated key:
+# JWT_SECRET_KEY=<paste-generated-key-here>
+
+# Note: API keys are stored in secure system keyring by the wizard
+# You don't need to add API keys to .env (wizard handles that)
 ```
+
+**Why this happens**: The setup wizard stores API keys in the system keyring (not .env). But JWT_SECRET_KEY must be in .env for authentication to work. If you skipped Step 2 during initial setup, you'll need to create .env now.
 
 ---
 

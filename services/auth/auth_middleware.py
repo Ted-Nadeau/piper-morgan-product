@@ -58,10 +58,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/redoc",
             "/openapi.json",
             "/health",
+            "/login",  # Issue #393: Login UI page
+            "/setup",  # Issue #390: Setup wizard UI page
+            "/api/setup",  # Issue #390: Setup wizard API endpoints
+            "/auth/login",  # Issue #393: Login API endpoint
             "/api/v1/auth/login",
             "/api/v1/auth/register",
             "/slack/oauth/callback",
             "/github/oauth/callback",
+            "/static/",  # Static assets don't need auth
+            "/assets/",  # Image assets (logo, favicon) don't need auth
         ]
 
         logger.info("AuthMiddleware initialized", exclude_paths=len(self.exclude_paths))
@@ -114,7 +120,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                             path=request.url.path,
                             client_ip=self._get_client_ip(request),
                         )
-                        return self._unauthorized_response("Invalid or expired token")
+                        return self._unauthorized_response("Invalid or expired token", request)
 
                 except TokenRevoked:
                     logger.warning(
@@ -122,14 +128,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
                         path=request.url.path,
                         client_ip=self._get_client_ip(request),
                     )
-                    return self._unauthorized_response("Token has been revoked")
+                    return self._unauthorized_response("Token has been revoked", request)
                 except TokenExpired:
                     logger.warning(
                         "Expired token rejected",
                         path=request.url.path,
                         client_ip=self._get_client_ip(request),
                     )
-                    return self._unauthorized_response("Token has expired")
+                    return self._unauthorized_response("Token has expired", request)
                 except TokenInvalid as e:
                     logger.warning(
                         "Invalid token rejected",
@@ -137,14 +143,14 @@ class AuthMiddleware(BaseHTTPMiddleware):
                         client_ip=self._get_client_ip(request),
                         error=str(e),
                     )
-                    return self._unauthorized_response("Invalid token")
+                    return self._unauthorized_response("Invalid token", request)
             else:
                 logger.warning("No authentication token provided", path=request.url.path)
-                return self._unauthorized_response("Authentication required")
+                return self._unauthorized_response("Authentication required", request)
 
         except Exception as e:
             logger.error("Authentication middleware error", error=str(e), path=request.url.path)
-            return self._unauthorized_response("Authentication error")
+            return self._unauthorized_response("Authentication error", request)
 
         # Process request with authentication context
         response = await call_next(request)
@@ -164,7 +170,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
         """
         Extract JWT token from request.
 
-        Supports both Authorization header and query parameter.
+        Supports Authorization header, query parameter, and auth_token cookie.
+        Issue #390: Added cookie support for web UI authentication.
         """
         # Try Authorization header first (standard OAuth 2.0)
         auth_header = request.headers.get("authorization")
@@ -175,6 +182,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         token_param = request.query_params.get("token")
         if token_param:
             return token_param
+
+        # Try auth_token cookie (for web UI, Issue #390)
+        auth_cookie = request.cookies.get("auth_token")
+        if auth_cookie:
+            return auth_cookie
 
         return None
 
@@ -188,9 +200,30 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Fall back to direct client IP
         return request.client.host if request.client else "unknown"
 
-    def _unauthorized_response(self, message: str) -> Response:
-        """Create unauthorized response"""
-        from fastapi.responses import JSONResponse
+    def _unauthorized_response(self, message: str, request: Request = None) -> Response:
+        """
+        Create unauthorized response.
+
+        For browser requests to UI routes (non-API), redirect to /login.
+        For API requests, return JSON 401.
+        """
+        from fastapi.responses import JSONResponse, RedirectResponse
+
+        # Check if this is a browser request to a UI route (should redirect to login)
+        if request:
+            path = request.url.path
+            accept_header = request.headers.get("accept", "")
+
+            # If it's not an API route and browser accepts HTML, redirect to login
+            is_api_route = path.startswith("/api/")
+            accepts_html = "text/html" in accept_header
+
+            if not is_api_route and accepts_html:
+                # Redirect to login with return URL
+                return_url = str(request.url.path)
+                if request.url.query:
+                    return_url += f"?{request.url.query}"
+                return RedirectResponse(url=f"/login?next={return_url}", status_code=302)
 
         return JSONResponse(
             status_code=status.HTTP_401_UNAUTHORIZED,

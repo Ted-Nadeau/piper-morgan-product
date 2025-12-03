@@ -23,6 +23,9 @@ logger = structlog.get_logger(__name__)
 # Service name for keychain entries
 SERVICE_NAME = "piper-morgan"
 
+# CLI session token provider name (Issue #397)
+CLI_SESSION_PROVIDER = "cli_session"
+
 
 @dataclass
 class KeychainEntry:
@@ -227,6 +230,56 @@ class KeychainService:
             Environment variable name
         """
         return f"{provider.upper()}_API_KEY"
+
+    # CLI Session Token Methods (Issue #397)
+
+    def store_cli_token(self, user_id: str, token: str) -> None:
+        """
+        Store CLI session token in keychain (Issue #397).
+
+        Args:
+            user_id: User identifier for scoping
+            token: JWT session token for CLI authentication
+
+        Raises:
+            ValueError: If user_id or token is empty
+            RuntimeError: If storage fails
+        """
+        if not user_id:
+            raise ValueError("User ID cannot be empty")
+        if not token:
+            raise ValueError("Token cannot be empty")
+
+        self.store_api_key(CLI_SESSION_PROVIDER, token, username=user_id)
+        logger.info(f"Stored CLI session token for user {user_id}")
+
+    def get_cli_token(self, user_id: str) -> Optional[str]:
+        """
+        Retrieve CLI session token from keychain (Issue #397).
+
+        Args:
+            user_id: User identifier for scoping
+
+        Returns:
+            Token string if found, None otherwise
+        """
+        if not user_id:
+            return None
+        return self.get_api_key(CLI_SESSION_PROVIDER, username=user_id)
+
+    def delete_cli_token(self, user_id: str) -> bool:
+        """
+        Delete CLI session token from keychain (Issue #397).
+
+        Args:
+            user_id: User identifier for scoping
+
+        Returns:
+            True if deleted, False if not found
+        """
+        if not user_id:
+            return False
+        return self.delete_api_key(CLI_SESSION_PROVIDER, username=user_id)
 
 
 # Convenience instance for global access

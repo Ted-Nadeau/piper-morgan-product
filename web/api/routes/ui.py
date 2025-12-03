@@ -5,6 +5,8 @@ Provides endpoints for rendering UI pages with Jinja2 templates.
 
 Routes:
 - GET / - Home page
+- GET /login - Login page (Issue #393)
+- GET /setup - Setup wizard page (Issue #390)
 - GET /standup - Standup UI
 - GET /personality-preferences - Personality preferences configuration
 - GET /learning - Learning dashboard
@@ -27,13 +29,12 @@ from pathlib import Path
 
 import structlog
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 logger = structlog.get_logger()
 
 # Router configuration
 router = APIRouter(tags=["ui", "templates"])
-
 
 
 def _get_templates(request: Request):
@@ -61,6 +62,7 @@ def _get_templates(request: Request):
 
     return templates
 
+
 def _extract_user_context(request: Request) -> dict:
     """
     Extract user context from request state for template injection.
@@ -79,12 +81,25 @@ def _extract_user_context(request: Request) -> dict:
     user_id = getattr(request.state, "user_id", "user")
 
     # Try to get username from user_claims if available
-    username = user_id  # Default to user_id
+    # JWTClaims has user_email but not username, so we try multiple sources
+    username = user_id  # Default to user_id (UUID)
     user_claims = getattr(request.state, "user_claims", None)
-    if user_claims and hasattr(user_claims, "username"):
-        username = user_claims.username
-    elif user_claims and isinstance(user_claims, dict) and "username" in user_claims:
-        username = user_claims["username"]
+    if user_claims:
+        # First try username attribute (if it exists)
+        if hasattr(user_claims, "username") and user_claims.username:
+            username = user_claims.username
+        # Then try user_email - extract username part before @ for display
+        elif hasattr(user_claims, "user_email") and user_claims.user_email:
+            email = user_claims.user_email
+            # Use part before @ as username for display
+            username = email.split("@")[0] if "@" in email else email
+        # Also handle dict-style claims
+        elif isinstance(user_claims, dict):
+            if "username" in user_claims:
+                username = user_claims["username"]
+            elif "user_email" in user_claims:
+                email = user_claims["user_email"]
+                username = email.split("@")[0] if "@" in email else email
 
     # Extract is_admin flag from user claims (SEC-RBAC Phase 3)
     is_admin = False
@@ -102,6 +117,38 @@ async def home(request: Request):
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
+
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """
+    Serve login page.
+
+    If user is already authenticated, redirect to homepage.
+    Otherwise, show login form.
+
+    Issue #393: CORE-UX-AUTH - Login UI
+    """
+    templates = _get_templates(request)
+
+    # Check if user is already authenticated (has valid user_id in state)
+    user_id = getattr(request.state, "user_id", None)
+    if user_id and user_id != "user":  # "user" is the default placeholder
+        return RedirectResponse(url="/", status_code=302)
+
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@router.get("/setup", response_class=HTMLResponse)
+async def setup_page(request: Request):
+    """
+    Setup wizard page (Issue #390).
+
+    Renders multi-step setup wizard for new installations.
+    Accessible without authentication.
+    """
+    templates = _get_templates(request)
+    return templates.TemplateResponse("setup.html", {"request": request})
 
 
 @router.get("/standup", response_class=HTMLResponse)

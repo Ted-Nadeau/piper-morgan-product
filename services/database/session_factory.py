@@ -1,22 +1,50 @@
 """
 Async Session Factory
 Provides standardized session management with automatic resource cleanup
+
+Issue #442 Fix: Creates fresh engines per-request to avoid event loop mismatch.
+The global `db` singleton may be initialized in a different event loop than
+HTTP request handlers, causing "Future attached to a different loop" errors.
 """
 
+import os
 from contextlib import asynccontextmanager
-from typing import AsyncContextManager
+from typing import AsyncContextManager, Optional, Tuple
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from .connection import db
 
 
+def _get_database_url() -> str:
+    """Build PostgreSQL URL from environment variables.
+
+    Duplicated from connection.py to avoid importing the global db instance
+    for fresh engine creation.
+    """
+    user = os.getenv("POSTGRES_USER", "piper")
+    password = os.getenv("POSTGRES_PASSWORD", "dev_changeme_in_production")
+    host = os.getenv("POSTGRES_HOST", "localhost")
+    port = os.getenv("POSTGRES_PORT", "5433")
+    database = os.getenv("POSTGRES_DB", "piper_morgan")
+    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{database}"
+
+
 class AsyncSessionFactory:
-    """Factory for creating async database sessions with automatic resource management"""
+    """Factory for creating async database sessions with automatic resource management
+
+    Note on Event Loop Handling (#442):
+        This factory provides two modes:
+        1. Default: Uses global db singleton (fast, for normal app code)
+        2. Fresh engine: Creates new engine per-request (for setup wizard endpoints
+           where the global engine may be bound to a different event loop)
+
+        Use session_scope_fresh() when you need to avoid event loop mismatch errors.
+    """
 
     @staticmethod
     async def create_session() -> AsyncSession:
-        """Create a new async session
+        """Create a new async session using global db singleton
 
         Returns:
             AsyncSession: New database session
@@ -24,8 +52,26 @@ class AsyncSessionFactory:
         Note:
             Caller is responsible for closing the session.
             Prefer using session_scope() context manager for automatic cleanup.
+            For setup endpoints, use session_scope_fresh() instead.
         """
         return await db.get_session()
+
+    @staticmethod
+    def _create_fresh_engine_and_session() -> Tuple[any, AsyncSession]:
+        """Create a fresh engine and session bound to current event loop.
+
+        Returns:
+            Tuple of (engine, session) - caller must dispose engine after use.
+        """
+        engine = create_async_engine(
+            _get_database_url(),
+            echo=False,
+            pool_pre_ping=False,  # Avoid event loop conflicts
+            pool_size=1,  # Minimal pool for single-use
+            max_overflow=0,
+        )
+        session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        return engine, session_factory()
 
     @staticmethod
     @asynccontextmanager
@@ -56,6 +102,43 @@ class AsyncSessionFactory:
                 await session.close()
             except Exception:
                 # Ignore close errors during cleanup
+                pass
+
+    @staticmethod
+    @asynccontextmanager
+    async def session_scope_fresh() -> AsyncContextManager[AsyncSession]:
+        """Context manager that creates a fresh engine bound to current event loop.
+
+        Use this for endpoints that may run in a different event loop than
+        the app startup (e.g., setup wizard endpoints).
+
+        Issue #442: Fixes "Future attached to a different loop" errors.
+
+        Yields:
+            AsyncSession: Database session with fresh engine
+
+        Example:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                # Safe to use even when global db was initialized in different loop
+                await session.execute(text("SELECT 1"))
+        """
+        engine, session = AsyncSessionFactory._create_fresh_engine_and_session()
+        try:
+            yield session
+        except Exception:
+            try:
+                await session.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                await session.close()
+            except Exception:
+                pass
+            try:
+                await engine.dispose()
+            except Exception:
                 pass
 
     @staticmethod

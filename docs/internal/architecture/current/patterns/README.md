@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 43 patterns (001-043) + template (000)
+**Total Patterns**: 44 patterns (001-044) + template (000)
 
 ## Pattern Categories
 
@@ -76,6 +76,7 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-041: Systematic Fix Planning](pattern-041-systematic-fix-planning.md) - Phase-based approach to multi-issue resolution
 - [Pattern-042: Investigation-Only Protocol](pattern-042-investigation-only-protocol.md) - Separation of bug investigation from fixing
 - [Pattern-043: Defense-in-Depth Prevention](pattern-043-defense-in-depth-prevention.md) - Multi-layer protection against discovered vulnerabilities
+- [Pattern-044: MCP Skill Testing](pattern-044-mcp-skill-testing.md) - Testing patterns for MCP skill development
 
 ## Pattern Development
 
@@ -103,6 +104,6 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: November 21, 2025_
-_All 43 patterns now included with logical categorization_
-_Latest additions: Pattern-041 (Systematic Fix Planning), Pattern-042 (Investigation-Only Protocol), Pattern-043 (Defense-in-Depth Prevention)_
+_Last updated: December 1, 2025_
+_All 44 patterns now included with logical categorization_
+_Latest addition: Pattern-044 (MCP Skill Testing)_

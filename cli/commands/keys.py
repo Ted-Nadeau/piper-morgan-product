@@ -124,11 +124,11 @@ async def rotate_key_interactive(provider: str, user_id: Optional[str] = None) -
                 from sqlalchemy import text
 
                 user_result = await session.execute(
-                    text("SELECT id FROM alpha_users ORDER BY created_at DESC LIMIT 1")
+                    text("SELECT id FROM users ORDER BY created_at DESC LIMIT 1")
                 )
                 user_row = user_result.first()
                 if not user_row:
-                    print("\n❌ No alpha users found. Run setup wizard first.")
+                    print("\n❌ No users found. Run setup wizard first.")
                     return False
                 user_id = str(user_row[0])
 
@@ -301,11 +301,11 @@ async def list_keys(user_id: Optional[str] = None) -> bool:
                 from sqlalchemy import text
 
                 user_result = await session.execute(
-                    text("SELECT id FROM alpha_users ORDER BY created_at DESC LIMIT 1")
+                    text("SELECT id FROM users ORDER BY created_at DESC LIMIT 1")
                 )
                 user_row = user_result.first()
                 if not user_row:
-                    print("\n❌ No alpha users found.")
+                    print("\n❌ No users found.")
                     return False
                 user_id = str(user_row[0])
 

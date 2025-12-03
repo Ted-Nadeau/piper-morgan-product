@@ -4,10 +4,11 @@
 
 This directory contains Architecture Decision Records (ADRs) that document significant architectural decisions, their context, rationale, and consequences.
 
-**Total ADRs**: 46 records (000-045)
+**Total ADRs**: 47 records (000-046)
 
 ## Recent ADRs
 
+- **[ADR-046: Micro-Format Agent Architecture](adr-046-micro-format-agent-architecture.md)** (Nov 2025) - Typed input decomposition and specialized agent routing
 - **[ADR-045: Object Model - "Entities Experience Moments in Places"](adr-045-object-model.md)** (Nov 2025) - Foundational conceptual grammar for Piper's consciousness
 - **[ADR-044: Lightweight RBAC vs Traditional Role-Permission Tables](ADR-044-lightweight-rbac-vs-traditional.md)** (Nov 2025) - Security architecture decision
 - **[ADR-042: Mobile Strategy - Progressive Enhancement](adr-042-mobile-strategy-progressive-enhancement.md)** (Nov 2025) - Mobile support phased approach
@@ -38,6 +39,6 @@ See [adr-000-meta-platform.md](adr-000-meta-platform.md) for the standard ADR te
 
 ---
 
-**Last Updated**: November 29, 2025
+**Last Updated**: November 30, 2025
 **Maintained By**: Documentation Team
 **Purpose**: Directory navigation and content overview

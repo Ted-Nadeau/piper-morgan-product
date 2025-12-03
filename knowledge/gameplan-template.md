@@ -1,6 +1,6 @@
-# Gameplan Template v9.0 - Complete Phase Documentation
-*Last Updated: September 23, 2025*
-*Key Addition: Phase Z formalized*
+# Gameplan Template v9.1 - Complete Phase Documentation
+*Last Updated: December 2, 2025*
+*Key Addition: Phase 0.5 - Frontend-Backend Contract Verification (Issue #390 learning)*
 
 ---
 
@@ -9,6 +9,7 @@
 ### Complete Phase Sequence
 - **Phase -1**: Infrastructure Verification (with PM)
 - **Phase 0**: Initial Bookending (GitHub investigation)
+- **Phase 0.5**: Frontend-Backend Contract Verification (MANDATORY for UI work)
 - **Phases 1-N**: Development Work (progressive bookending)
 - **Phase Z**: Final Bookending & Handoff
 
@@ -113,6 +114,72 @@ Establish context, verify issue exists, understand current state
 - Issue doesn't exist or is wrong number
 - Feature already implemented
 - Different problem than described
+
+---
+
+## Phase 0.5: Frontend-Backend Contract Verification (MANDATORY for UI work)
+
+### Purpose
+Prevent path mismatches between backend routes and frontend API calls. This phase is REQUIRED when the issue involves both backend API routes AND frontend JavaScript/templates.
+
+### When to Apply
+- ✅ Creating new API endpoints + UI that calls them
+- ✅ Modifying existing API paths
+- ✅ Adding JavaScript that makes fetch() calls
+- ❌ Backend-only changes (skip this phase)
+- ❌ Frontend-only styling changes (skip this phase)
+
+### Required Actions
+
+#### 1. After Backend Routes Created, BEFORE Frontend Work
+```bash
+# Get all endpoint paths from new route file
+grep -n "@router\." web/api/routes/[new_file].py
+
+# Get the mount prefix from app.py or router_initializer.py
+grep -n "include_router\|mount_router" web/app.py | grep [module_name]
+# OR
+grep -n "[module_name]" web/router_initializer.py
+```
+
+#### 2. Calculate Full Paths
+```markdown
+| Endpoint | Route Path | Mount Prefix | Full Path |
+|----------|------------|--------------|-----------|
+| status   | /status    | /setup       | /setup/status |
+| create   | /create    | /api/v1/todos | /api/v1/todos/create |
+```
+
+#### 3. Verify Paths Work (Server Running)
+```bash
+# Test each endpoint BEFORE writing frontend
+curl -s http://localhost:8001/[full-path]
+# Must NOT return {"detail":"Not Found"}
+```
+
+#### 4. Static File Verification
+```bash
+# Verify where static files are served from
+grep -n "StaticFiles" web/app.py
+# Note the directory path (e.g., web/static vs static)
+
+# If creating JS/CSS files, verify location matches
+ls -la web/static/js/  # or wherever app.py points
+```
+
+### STOP Conditions
+- If ANY endpoint returns 404 → fix backend before frontend
+- If static file path is wrong → fix mount before creating files
+- If mount prefix unclear → verify in app.py or ask PM
+
+### Evidence Required
+```bash
+# Document verified paths in gameplan or session log
+echo "Verified paths:"
+echo "  /setup/status → HTTP 200"
+echo "  /setup/check-system → HTTP 200"
+echo "  Static files: web/static/ → /static/"
+```
 
 ---
 

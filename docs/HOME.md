@@ -74,7 +74,7 @@ python main.py
 
 ## 🎯 Choose Your Path
 
-**🚀 New to Piper?** Start with our [15-minute getting started guide](user-guides/getting-started-conversational-ai.md)
+**🚀 New to Piper?** Start with our [15-minute getting started guide](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)
 
 **👥 Team Lead or PM?** See [key capabilities](#-key-features) and [performance metrics](#-performance-metrics)
 
@@ -86,7 +86,7 @@ python main.py
 
 For daily standup routine:
 
-- **[Mac Dock Integration](./setup/mac-dock-integration.md)** - Add Piper to your dock
+- **[Mac Dock Integration](public/getting-started/setup/mac-dock-integration.md)** - Add Piper to your dock
 - **Start Script**: `./start-piper.sh` - One-command startup with health checks
 - **Requirements**: Docker Desktop running
 
@@ -116,7 +116,7 @@ python main.py standup
 - **Cross-Feature Learning**: Issue patterns enhance morning standups
 - **Real-time GitHub Data**: Live API integration with your repositories
 
-[📖 Full CLI Documentation](user-guides/cli-commands.md) | [📊 Issue Intelligence Features](features/issue-intelligence.md)
+[📖 Full CLI Documentation](public/user-guides/legacy-user-guides/cli-commands.md) | [📊 Issue Intelligence Features](public/user-guides/features/issue-intelligence.md)
 
 ## 🌅 Morning Standup Web Interface
 
@@ -150,34 +150,33 @@ PYTHONPATH=. python -m uvicorn web.app:app --host 127.0.0.1 --port 8001
 - 📁 **Project context** and repository information
 - 🔄 **Multi-user support** with personalized configurations
 
-[📖 Technical Documentation](features/morning-standup-web.md) | [📋 User Guide](features/morning-standup-ui-guide.md)
+[📖 Technical Documentation](public/user-guides/features/morning-standup.md) | [📋 User Guide](public/user-guides/features/morning-standup.md)
 
 ## 📚 Complete Documentation
 
 ### 🎯 User Guides
 
-- **[🚀 Getting Started](user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
-- **[⌨️ CLI Commands](user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
-- **[🎯 Understanding References](user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
-- **[🧠 Conversation Memory](user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
-- **[🔄 Upgrading from Commands](user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
-- **[📖 Real Examples](user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
+- **[🚀 Getting Started](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)** - 15-minute introduction to conversational AI
+- **[⌨️ CLI Commands](public/user-guides/legacy-user-guides/cli-commands.md)** - Master command-line interface and Issue Intelligence
+- **[🎯 Understanding References](public/user-guides/legacy-user-guides/understanding-anaphoric-references.md)** - Master "that issue", "the document" patterns
+- **[🧠 Conversation Memory](public/user-guides/legacy-user-guides/conversation-memory-guide.md)** - How Piper's 10-turn memory works
+- **[🔄 Upgrading from Commands](public/user-guides/legacy-user-guides/upgrading-from-command-mode.md)** - Migration guide for existing users
+- **[📖 Real Examples](public/user-guides/legacy-user-guides/conversation-scenario-examples.md)** - 6 complete PM workflow scenarios
 
 ### 🔧 Developer Resources
 
 - **[📚 Complete Documentation](https://pmorgan.tech)** - Full project documentation and homepage
-- **[🔌 API Documentation](development/PM-034-conversation-api-documentation.md)** - Complete endpoint reference
-- **[⚡ Developer Quick Start](development/PM-034-developer-integration-quick-start.md)** - 15-minute setup guide
-- **[🌿 Branch Management](development/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
-- **[🧪 Test Guide](development/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
+- **[🔌 PM-034 Implementation Guide](internal/development/tools/implementation-guides/PM-034-implementation-guide.md)** - PM-034 feature implementation
+- **[🌿 Branch Management](internal/development/tools/BRANCH-MANAGEMENT.md)** - Git workflow and branch strategy
+- **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md)** - Smart test execution and Excellence Flywheel integration
 
 ### 🏗️ Architecture & Design Documentation
 
-#### **[Architecture Patterns](patterns/README.md)** - Implementation Patterns Library
-*30 proven patterns* organized by functional category: Infrastructure & Architecture (001-010), Context & Session Management (011-017), Integration & Adapters (018-022), Query & Data Patterns (023-027), and AI & Orchestration (028-030). Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
+#### **[Architecture Patterns](internal/architecture/current/patterns/README.md)** - Implementation Patterns Library
+*44 proven patterns* organized by functional category: Infrastructure & Architecture, Context & Session Management, Integration & Adapters, Query & Data Patterns, and AI & Orchestration. Each pattern follows ADR-style documentation with Context, Implementation, Usage Guidelines, and Examples in Codebase.
 
-#### **[Architectural Decision Records](architecture/adr/adr-index.md)** - Decision History & Rationale
-*34 architectural decisions* documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
+#### **[Architectural Decision Records](internal/architecture/current/adrs/adr-index.md)** - Decision History & Rationale
+*46 architectural decisions* documenting the evolution from initial MCP integration through current multi-agent coordination. Organized by category: Foundation & Core Platform, Integration & Communication, Service Enhancement, Data & Repository Management, Infrastructure & Operations, Testing & Quality Assurance, Spatial Intelligence, and Methodological Architecture. Essential reading for understanding system architecture rationale.
 
 ## 🧪 Testing & Quality Assurance
 
@@ -206,7 +205,7 @@ git push      # Runs fast tests via pre-push hook
 
 **Excellence Flywheel Integration**: All testing follows Verification First → Implementation → Evidence-based progress → GitHub tracking methodology.
 
-See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
+See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md)** for complete documentation.
 
 ## 🚀 Recent Infrastructure Activations
 
@@ -264,12 +263,12 @@ See **[🧪 Test Guide](development/TEST-GUIDE.md)** for complete documentation.
 
 - **[Excellence Flywheel Methodology](internal/development/methodology-core/methodology-00-EXCELLENCE-FLYWHEEL.md)** - Systematic development approach
 - **[Multi-Agent Coordination](internal/development/methodology-core/methodology-02-AGENT-COORDINATION.md)** - Intelligent coordination patterns
-- **[Multi-Agent Quick Start](development/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
-- **[Test Infrastructure Guide](development/TEST-GUIDE.md)** - Smart test execution patterns
+- **[Multi-Agent Quick Start](internal/development/methodology-core/MULTI_AGENT_QUICK_START.md)** - 5-minute deployment
+- **[Test Infrastructure Guide](internal/development/active/pending-review/TEST-GUIDE.md)** - Smart test execution patterns
 
 ### Implementation Guides
-- **[Multi-Agent Integration Plan](development/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
-- **[Persistent Context Research](development/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
+- **[Multi-Agent Integration Plan](internal/development/methodology-core/MULTI_AGENT_INTEGRATION_GUIDE.md)** - Complete operational deployment
+- **[Persistent Context Research](internal/development/active/pending-review/PERSISTENT_CONTEXT_RESEARCH.md)** - Foundation architecture analysis
 - **Enhanced Autonomy Patterns** - (coming soon) - Advanced development workflows
 
 ### Operations & Automation
@@ -447,13 +446,13 @@ This project is licensed under the MIT License - see the LICENSE (coming soon) f
 
 Choose your path:
 
-**[🚀 New User? Start Here](user-guides/getting-started-conversational-ai.md)**
+**[🚀 New User? Start Here](public/user-guides/legacy-user-guides/getting-started-conversational-ai.md)**
 
-**[🔄 Existing User? Upgrade Here](user-guides/upgrading-from-command-mode.md)**
+**[🔄 Existing User? Upgrade Here](public/user-guides/legacy-user-guides/upgrading-from-command-mode.md)**
 
-**[📖 Want Examples? See Scenarios](user-guides/conversation-scenario-examples.md)**
+**[📖 Want Examples? See Scenarios](public/user-guides/legacy-user-guides/conversation-scenario-examples.md)**
 
-**[🔧 Technical Details? API Docs](development/PM-034-conversation-api-documentation.md)**
+**[🔧 Technical Details? PM-034 Implementation](internal/development/tools/implementation-guides/PM-034-implementation-guide.md)**
 
 ---
 [![Tests](https://github.com/mediajunkie/piper-morgan-product/actions/workflows/Tests/badge.svg)](https://github.com/mediajunkie/piper-morgan-product/actions)

@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 
@@ -71,7 +71,8 @@ async def get_jwt_service(request: Request) -> JWTService:
 async def login(
     request: Request,
     response: Response,
-    credentials: LoginRequest,
+    username: str = Form(..., min_length=1),
+    password: str = Form(..., min_length=1),
     jwt_service: JWTService = Depends(get_jwt_service),
 ):
     """
@@ -87,7 +88,8 @@ async def login(
     Args:
         request: FastAPI Request object for audit context
         response: FastAPI Response object for setting cookies
-        credentials: Username and password
+        username: Username from form data
+        password: Password from form data
         jwt_service: JWT service for token generation
 
     Returns:
@@ -98,25 +100,33 @@ async def login(
         HTTPException 500: Server error during authentication
 
     Issue #281: CORE-ALPHA-WEB-AUTH
+    Issue #393: Auth UI Phase 1 - Form data support
     """
     try:
+        # Validate credentials are not empty
+        username = username.strip()
+        if not username or not password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password",
+            )
+
         # Initialize database if needed
         if not db._initialized:
             await db.initialize()
 
         # Query user and update last_login in single session
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Query user by username
-            result = await session.execute(
-                select(User).where(User.username == credentials.username)
-            )
+            result = await session.execute(select(User).where(User.username == username))
             user = result.scalar_one_or_none()
 
             # User not found - generic error message for security
             if not user:
                 logger.warning(
                     "login_failed_user_not_found",
-                    username=credentials.username,
+                    username=username,
                     ip_address=request.client.host if request.client else None,
                 )
                 raise HTTPException(
@@ -150,7 +160,7 @@ async def login(
 
             # Verify password
             password_service = PasswordService()
-            is_valid = password_service.verify_password(credentials.password, user.password_hash)
+            is_valid = password_service.verify_password(password, user.password_hash)
 
             if not is_valid:
                 logger.warning(
@@ -211,7 +221,7 @@ async def login(
         # Unexpected errors
         logger.error(
             "login_error",
-            username=credentials.username,
+            username=username,
             error=str(e),
             exc_info=True,
         )
@@ -258,8 +268,9 @@ async def logout(
         if not db._initialized:
             await db.initialize()
 
-        # Revoke the token via blacklist with audit logging (use db.get_session like login does)
-        async with await db.get_session() as session:
+        # Revoke the token via blacklist with audit logging
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             success = await jwt_service.revoke_token(
                 token=token,
                 reason="logout",
@@ -318,7 +329,8 @@ async def get_me(
             await db.initialize()
 
         # Query user by ID from token
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(select(User).where(User.id == current_user.user_id))
             user = result.scalar_one_or_none()
 
@@ -410,7 +422,8 @@ async def change_password(
             )
 
         # Get database session for password update
-        async with await db.get_session() as session:
+        # Use fresh session to avoid event loop mismatch (#442)
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Hash new password
             password_service = PasswordService()
             new_password_hash = password_service.hash_password(data.new_password)

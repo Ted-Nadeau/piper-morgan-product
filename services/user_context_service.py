@@ -167,13 +167,15 @@ class UserContextService:
 
             from services.database.connection import db
             from services.database.models import User
+            from services.database.session_factory import AsyncSessionFactory
 
             # Initialize DB if needed
             if not db._initialized:
                 await db.initialize()
 
             # Query user preferences (Issue #262 - alpha_users merged into users)
-            async with await db.get_session() as session:
+            # Use fresh session to avoid event loop mismatch (#442)
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 result = await session.execute(select(User).where(User.id == user_id))
                 user = result.scalar_one_or_none()
 

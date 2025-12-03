@@ -166,16 +166,21 @@ git pull origin main
 # 1. Verify .env exists:
 ls -la .env
 
-# 2. If missing, recreate it:
+# 2. If missing, CREATE it (this is required for all setups):
 cp .env.example .env
-openssl rand -hex 32  # Generate new JWT_SECRET_KEY
-# Add JWT_SECRET_KEY=<generated-key> to .env
+
+# Edit .env in your IDE or text editor and add:
+# JWT_SECRET_KEY=<paste-generated-key-here>
+
+# Generate the key:
+openssl rand -hex 32
 
 # 3. Restart server:
 python main.py
 
 # Note: .env survives git pull, checkout, merge - git never touches it
-# If environment seems lost, check if you're in a different terminal session
+# If you never created .env, that's the issue - Step 2 above is mandatory
+# The setup wizard stores API keys separately (in secure keyring)
 ```
 
 ---
