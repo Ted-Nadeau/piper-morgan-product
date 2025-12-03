@@ -692,7 +692,9 @@
          */
         async function loadLearningStatus() {
             try {
-                const response = await fetch(`${API_BASE}/settings`);
+                const response = await fetch(`${API_BASE}/settings`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
 
                 const badge = document.getElementById('statusBadge');
@@ -724,7 +726,9 @@
          */
         async function loadMetrics() {
             try {
-                const response = await fetch(`${API_BASE}/patterns`);
+                const response = await fetch(`${API_BASE}/patterns`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
                 const patterns = data.patterns || [];
 
@@ -850,7 +854,8 @@
                 const response = await fetch(`${API_BASE}/settings`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ learning_enabled: !currentlyEnabled })
+                    body: JSON.stringify({ learning_enabled: !currentlyEnabled }),
+                    credentials: 'include'
                 });
 
                 if (!response.ok) throw new Error('Failed to toggle learning');
@@ -907,7 +912,9 @@
          */
         async function exportData() {
             try {
-                const response = await fetch(`${API_BASE}/controls/export?user_id=${USER_ID}&format=json`);
+                const response = await fetch(`${API_BASE}/controls/export?user_id=${USER_ID}&format=json`, {
+                    credentials: 'include'
+                });
                 const data = await response.json();
 
                 // Create download
@@ -938,7 +945,7 @@
             try {
                 const response = await fetch(
                     `${API_BASE}/controls/data/clear?user_id=${USER_ID}&data_type=${dataType}`,
-                    { method: 'DELETE' }
+                    { method: 'DELETE', credentials: 'include' }
                 );
 
                 if (!response.ok) throw new Error('Failed to clear data');

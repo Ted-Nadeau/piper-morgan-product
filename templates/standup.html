@@ -144,7 +144,9 @@
 
         try {
           const startTime = Date.now();
-          const response = await fetch("/api/standup?format=human-readable");
+          const response = await fetch("/api/standup?format=human-readable", {
+            credentials: "include"
+          });
           const data = await response.json();
           const endTime = Date.now();
 

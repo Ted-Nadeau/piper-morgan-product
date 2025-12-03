@@ -253,7 +253,9 @@
       // Fetch current shares
       let currentShares = [];
       try {
-        const response = await fetch(`/api/v1/${resourceType}/${resourceId}/shares`);
+        const response = await fetch(`/api/v1/${resourceType}/${resourceId}/shares`, {
+          credentials: 'include'
+        });
         if (response.ok) {
           currentShares = await response.json();
         }
@@ -338,7 +340,8 @@
           body: JSON.stringify({
             user_to_share_with: userInput,
             role: role
-          })
+          }),
+          credentials: 'include'
         });
 
         if (response.ok) {
@@ -360,7 +363,7 @@
       try {
         const response = await fetch(
           `/api/v1/${resourceType}/${resourceId}/share/${userId}`,
-          { method: 'DELETE' }
+          { method: 'DELETE', credentials: 'include' }
         );
 
         if (response.ok) {
