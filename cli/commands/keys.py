@@ -120,7 +120,8 @@ async def rotate_key_interactive(provider: str, user_id: Optional[str] = None) -
 
         # Get user ID if not provided
         if not user_id:
-            async with AsyncSessionFactory.session_scope() as session:
+            # Issue #453: CLI commands use session_scope_fresh() for event loop safety
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 from sqlalchemy import text
 
                 user_result = await session.execute(
@@ -132,7 +133,8 @@ async def rotate_key_interactive(provider: str, user_id: Optional[str] = None) -
                     return False
                 user_id = str(user_row[0])
 
-        async with AsyncSessionFactory.session_scope() as session:
+        # Issue #453: CLI commands use session_scope_fresh() for event loop safety
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Step 1: Show current status
             print(f"\n🔄 Key Rotation Workflow: {provider_lower.upper()}")
             print("=" * 60)
@@ -297,7 +299,8 @@ async def list_keys(user_id: Optional[str] = None) -> bool:
         reminder_service = KeyRotationReminder(key_service)
 
         if not user_id:
-            async with AsyncSessionFactory.session_scope() as session:
+            # Issue #453: CLI commands use session_scope_fresh() for event loop safety
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 from sqlalchemy import text
 
                 user_result = await session.execute(
@@ -309,7 +312,8 @@ async def list_keys(user_id: Optional[str] = None) -> bool:
                     return False
                 user_id = str(user_row[0])
 
-        async with AsyncSessionFactory.session_scope() as session:
+        # Issue #453: CLI commands use session_scope_fresh() for event loop safety
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             print(f"\n🔑 Configured API Keys")
             print("=" * 60)
 
