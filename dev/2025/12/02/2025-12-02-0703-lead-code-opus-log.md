@@ -164,4 +164,81 @@ These should be filed as follow-up issue for Phase 2 hardening.
 
 ---
 
+## Session 2: Bug Fixes & Release (Evening ~18:00 - 19:00)
+
+Continuation session after PM testing revealed bugs in setup wizard.
+
+### Critical Bugs Fixed
+
+| Issue | Problem | Solution |
+|-------|---------|----------|
+| #442 | DB event loop mismatch - "Future attached to different loop" | Created `AsyncSessionFactory.session_scope_fresh()` for isolated sessions |
+| #452 | `db.get_session()` calls failing in HTTP handlers | Migrated all calls to use `AsyncSessionFactory` |
+| #393 | Login form POST not working | Changed Content-Type to form-urlencoded |
+| - | Username showing as UUID | Fixed to extract email prefix |
+| - | Setup redirect going to `/` not `/login` | Fixed redirect chain |
+
+### Cookie Auth Fix
+
+The middleware wasn't reading JWT from cookies. Fixed flow:
+1. Login sets `auth_token` cookie
+2. Middleware checks cookie before Authorization header
+3. User context properly populated from cookie token
+
+### Additional Quick Fixes
+
+| Issue | Title | Resolution |
+|-------|-------|------------|
+| #451 | Browser auto-open | Changed `--no-browser` to `--browser` (opt-in) |
+| #446 | base.css missing | Error pages now use `tokens.css` |
+| #444 | Browser redirect | Same root cause as #451 |
+
+### Issues Closed (Today Total: 5)
+- #390 ALPHA-SETUP-UI
+- #442 DB event loop mismatch
+- #451 Browser auto-open
+- #446 base.css missing
+- #444 Browser redirect
+
+### Deferred to A11 (Polish)
+- #439: Setup wizard Phase 3 refactor
+- #440: Setup wizard integration tests
+- #441: Auth Phase 2 (registration, password reset)
+- #447: System check micro-animation
+- #448: Gemini API key in CLI
+- #449: Scan/archive deprecated folders
+
+---
+
+## Release v0.8.2
+
+- Committed all changes to main
+- Force-pushed to production
+- Created GitHub release: https://github.com/mediajunkie/piper-morgan-product/releases/tag/v0.8.2
+
+### Key Files Modified
+
+**New Files:**
+- `web/api/routes/setup.py` - Setup wizard API endpoints
+- `templates/setup.html` - Setup wizard UI
+- `web/static/js/setup.js` - Wizard JavaScript
+
+**Modified:**
+- `services/database/session_factory.py` - Added `session_scope_fresh()`
+- `web/api/routes/auth.py` - Migrated to AsyncSessionFactory
+- `services/auth/auth_middleware.py` - Cookie-based auth
+- `main.py` - Browser auto-open flag inversion
+- `templates/404.html`, `500.html`, `network-error.html` - CSS fix
+
+---
+
+## Next Session
+
+- Continue alpha testing on remaining screens
+- Chat UI bug (messages reload screen without sending)
+- File any new bugs found to A10
+- Polish items in A11 can wait
+
+---
+
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

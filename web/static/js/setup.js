@@ -15,10 +15,15 @@
     const errorDiv = document.getElementById('error-message');
 
     // Utility functions
-    function showError(message) {
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+    function showError(message, title = 'Error') {
+        if (typeof Toast !== 'undefined') {
+            Toast.error(title, message);
+        } else {
+            // Fallback for when Toast not loaded
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+        }
     }
 
     function showStep(stepNum) {
@@ -85,12 +90,16 @@
                 document.getElementById('next-1').style.display = 'block';
                 this.style.display = 'none';
             } else {
-                showError('Some required services are not running. Please start Docker services.');
+                showError('Required services are offline. Run: docker-compose up -d', 'Services Not Running');
                 this.disabled = false;
                 this.textContent = 'Retry Check';
             }
         } catch (err) {
-            showError('Failed to check system: ' + err.message);
+            if (!navigator.onLine) {
+                showError('Check your internet connection and try again.', 'No Connection');
+            } else {
+                showError('Unable to reach server. Please try again.', 'Connection Failed');
+            }
             this.disabled = false;
             this.textContent = 'Retry Check';
         }
@@ -141,6 +150,11 @@
             } catch (err) {
                 statusDiv.textContent = '✗ Validation failed';
                 statusDiv.className = 'validation-status invalid';
+                if (!navigator.onLine) {
+                    showError('Check your internet connection and try again.', 'No Connection');
+                } else {
+                    showError('Unable to validate API key. Please try again.', 'Validation Failed');
+                }
             }
             this.disabled = false;
         });
@@ -190,6 +204,7 @@
             } catch (err) {
                 statusDiv.textContent = '✗ Keychain access failed';
                 statusDiv.className = 'validation-status invalid';
+                showError('Unable to access system keychain. Enter key manually instead.', 'Keychain Error');
             }
             this.disabled = false;
         });
@@ -197,17 +212,41 @@
 
     document.getElementById('next-2').addEventListener('click', () => showStep(3));
 
-    // Step 3: Account Creation
+    // Step 3: Account Creation - Initialize form validation
+    if (typeof FormValidation !== 'undefined' && typeof Validators !== 'undefined') {
+        FormValidation.init('account-form', {
+            username: [Validators.required(), Validators.minLength(3)],
+            email: [Validators.required(), Validators.email()],
+            password: [Validators.required(), Validators.minLength(8)],
+            'password-confirm': [
+                Validators.required(),
+                Validators.custom(
+                    (value) => value === document.getElementById('password').value,
+                    'Passwords do not match'
+                )
+            ]
+        });
+    }
+
     document.getElementById('account-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+
+        // Use FormValidation if available
+        if (typeof FormValidation !== 'undefined') {
+            if (!FormValidation.validateForm('account-form')) {
+                showError('Please fix the form errors before continuing.', 'Validation Error');
+                return;
+            }
+        }
 
         const username = document.getElementById('username').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
         const passwordConfirm = document.getElementById('password-confirm').value;
 
-        if (password !== passwordConfirm) {
-            showError('Passwords do not match');
+        // Fallback password check if FormValidation not loaded
+        if (typeof FormValidation === 'undefined' && password !== passwordConfirm) {
+            showError('Passwords do not match.', 'Validation Error');
             return;
         }
 
@@ -228,12 +267,16 @@
                 // Complete setup
                 await completeSetup();
             } else {
-                showError(data.message || 'Failed to create account');
+                showError(data.message || 'Failed to create account.', 'Account Creation Failed');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
             }
         } catch (err) {
-            showError('Failed to create account: ' + err.message);
+            if (!navigator.onLine) {
+                showError('Check your internet connection and try again.', 'No Connection');
+            } else {
+                showError('Unable to create account. Please try again.', 'Account Creation Failed');
+            }
             submitBtn.disabled = false;
             submitBtn.textContent = 'Create Account';
         }
@@ -257,10 +300,14 @@
             if (data.success) {
                 showStep(4);
             } else {
-                showError(data.message || 'Setup completion failed');
+                showError(data.message || 'Unable to complete setup.', 'Setup Failed');
             }
         } catch (err) {
-            showError('Setup completion failed: ' + err.message);
+            if (!navigator.onLine) {
+                showError('Check your internet connection and try again.', 'No Connection');
+            } else {
+                showError('Unable to complete setup. Please try again.', 'Setup Failed');
+            }
         }
     }
 

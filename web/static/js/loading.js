@@ -10,11 +10,17 @@
  *   Loading.overlay(true, 'Uploading file...') // Show overlay
  *   Loading.overlay(false) // Hide overlay
  *
+ *   // With timeout warnings (warning at 10s, error at 30s):
+ *   const control = Loading.buttonWithTimeout(button, { timeout: 30000 });
+ *   await someOperation();
+ *   control.stop();
+ *
  * Accessibility:
  * - Buttons disabled while loading (prevents double-click)
  * - aria-busy attribute announced
  * - Screen readers notify user of loading state
  * - Overlay traps focus and blocks interaction
+ * - Timeout warnings via accessible toast notifications
  */
 
 const Loading = {
@@ -116,6 +122,72 @@ const Loading = {
         overlay.style.display = 'none';
       }
     }
+  },
+
+  /**
+   * Set button to loading state with timeout warnings
+   * Shows warning after warningAt ms, error after timeout ms
+   *
+   * Usage:
+   *   const control = Loading.buttonWithTimeout(button, { timeout: 30000 });
+   *   try {
+   *     await someAsyncOperation();
+   *     control.stop();
+   *   } catch (error) {
+   *     control.stop();
+   *   }
+   *
+   * @param {HTMLElement} button - Button element
+   * @param {Object} options - Configuration options
+   * @param {number} options.timeout - Error timeout in ms (default: 30000)
+   * @param {number} options.warningAt - Warning timeout in ms (default: 10000)
+   * @param {Function} options.onWarning - Callback when warning fires
+   * @param {Function} options.onTimeout - Callback when timeout fires
+   * @returns {{ stop: Function }} Control object with stop method
+   */
+  buttonWithTimeout(button, options = {}) {
+    if (!button) {
+      console.warn('Loading: button element not found');
+      return { stop: () => {} };
+    }
+
+    const timeout = options.timeout || 30000;
+    const warningAt = options.warningAt || 10000;
+
+    this.button(button, true);
+
+    let warningTimeoutId = null;
+    let errorTimeoutId = null;
+    let stopped = false;
+
+    // Show warning after warningAt ms
+    warningTimeoutId = setTimeout(() => {
+      if (stopped) return;
+      if (typeof Toast !== 'undefined') {
+        Toast.warning('Taking longer than expected', 'Please wait...');
+      }
+      if (options.onWarning) options.onWarning();
+    }, warningAt);
+
+    // Show error and stop after timeout ms
+    errorTimeoutId = setTimeout(() => {
+      if (stopped) return;
+      this.button(button, false);
+      if (typeof Toast !== 'undefined') {
+        Toast.error('Request Failed', 'The operation timed out. Please try again.');
+      }
+      if (options.onTimeout) options.onTimeout();
+    }, timeout);
+
+    return {
+      stop: () => {
+        if (stopped) return;
+        stopped = true;
+        clearTimeout(warningTimeoutId);
+        clearTimeout(errorTimeoutId);
+        this.button(button, false);
+      }
+    };
   },
 
   /**
