@@ -481,7 +481,7 @@ async def check_database() -> bool:
 
         from services.database.session_factory import AsyncSessionFactory
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             await session.execute(text("SELECT 1"))
 
         return True
@@ -525,7 +525,7 @@ async def check_for_incomplete_setup() -> Any:
     from services.database.session_factory import AsyncSessionFactory
 
     try:
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Find alpha users with no API keys (during alpha phase)
             result = await session.execute(
                 select(AlphaUser)
@@ -567,7 +567,7 @@ async def create_user_account() -> Any:
             try:
                 from sqlalchemy import delete
 
-                async with AsyncSessionFactory.session_scope() as session:
+                async with AsyncSessionFactory.session_scope_fresh() as session:
                     # Delete the incomplete user account
                     await session.execute(delete(User).where(User.id == existing_user.id))
                     await session.commit()
@@ -627,7 +627,7 @@ async def create_user_account() -> Any:
         )
 
         try:
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 session.add(user)
                 await session.commit()
 
@@ -697,7 +697,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     print("   Checking keychain for existing key...")
     openai_key = None
     try:
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             existing_key = await service.retrieve_user_key(session, user_id, "openai")
             if existing_key:
                 print("   ✓ Using existing key from keychain")
@@ -738,7 +738,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
         # Store and validate the key from environment
         try:
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 await service.store_user_key(
                     user_id=user_id,
                     provider="openai",
@@ -772,7 +772,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
         try:
             # Validate with provider API (uses #228 infrastructure)
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 # Store the key first
                 await service.store_user_key(
                     user_id=user_id,
@@ -805,7 +805,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     print("   Checking keychain for existing key...")
     anthropic_key = None
     try:
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             existing_key = await service.retrieve_user_key(session, user_id, "anthropic")
             if existing_key:
                 print("   ✓ Using existing key from keychain")
@@ -844,7 +844,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
         print("   ℹ️  Using ANTHROPIC_API_KEY from environment")
         print("   Validating...")
         try:
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 await service.store_user_key(
                     user_id=user_id,
                     provider="anthropic",
@@ -871,7 +871,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
         if anthropic_key:
             print("   Validating...")
             try:
-                async with AsyncSessionFactory.session_scope() as session:
+                async with AsyncSessionFactory.session_scope_fresh() as session:
                     await service.store_user_key(
                         user_id=user_id,
                         provider="anthropic",
@@ -898,7 +898,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     print("   Checking keychain for existing token...")
     github_token = None
     try:
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             existing_key = await service.retrieve_user_key(session, user_id, "github")
             if existing_key:
                 print("   ✓ Using existing token from keychain")
@@ -936,7 +936,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     if github_token:
         print("   ℹ️  Using GITHUB_TOKEN from environment")
         try:
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 await service.store_user_key(
                     user_id=user_id,
                     provider="github",
@@ -958,7 +958,7 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
         if github_token:
             try:
-                async with AsyncSessionFactory.session_scope() as session:
+                async with AsyncSessionFactory.session_scope_fresh() as session:
                     await service.store_user_key(
                         user_id=user_id,
                         provider="github",
@@ -1119,7 +1119,7 @@ async def run_setup_wizard():
 
         # Check if tables exist by trying a simple query (check alpha_users for alpha phase)
         try:
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 from sqlalchemy import text
 
                 result = await session.execute(text("SELECT 1 FROM alpha_users LIMIT 1"))
@@ -1178,7 +1178,7 @@ async def run_setup_wizard():
         try:
             from sqlalchemy import text
 
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 await session.execute(
                     text(
                         "UPDATE users SET setup_complete = true, "
@@ -1263,7 +1263,7 @@ async def is_setup_complete() -> bool:
 
         from services.database.session_factory import AsyncSessionFactory
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Primary check: explicit setup_complete flag (Issue #389)
             complete_result = await session.execute(
                 text("SELECT COUNT(*) FROM users WHERE setup_complete = true")
