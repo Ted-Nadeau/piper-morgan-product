@@ -1113,7 +1113,8 @@
 
           try {
             const response = await fetch(
-              `${API_BASE_URL}/api/v1/workflows/${workflowId}`
+              `${API_BASE_URL}/api/v1/workflows/${workflowId}`,
+              { credentials: "include" }
             );
 
             if (!response.ok) {
@@ -1203,6 +1204,7 @@
                 message: message,
                 session_id: sessionId,
               }),
+              credentials: "include",
             });
 
             const result = await response.json();

@@ -258,7 +258,9 @@
     <script src="/static/js/toast.js"></script>
     <script>
       // Fetch and display version information
-      fetch('/api/v1/version')
+      fetch('/api/v1/version', {
+        credentials: 'include'
+      })
         .then(response => response.json())
         .then(data => {
           const versionEl = document.getElementById('version-number');

@@ -173,7 +173,9 @@
     // Load files from API
     async function loadFiles() {
       try {
-        const response = await fetch('/api/v1/files/list');
+        const response = await fetch('/api/v1/files/list', {
+          credentials: 'include'
+        });
         if (!response.ok) throw new Error('Failed to fetch files');
 
         const data = await response.json();
@@ -298,7 +300,8 @@
 
             const response = await fetch('/api/v1/files/upload', {
               method: 'POST',
-              body: formData
+              body: formData,
+              credentials: 'include'
             });
 
             if (response.ok) {
@@ -338,7 +341,8 @@
         onConfirm: async () => {
           try {
             const response = await fetch(`/api/v1/files/${fileId}`, {
-              method: 'DELETE'
+              method: 'DELETE',
+              credentials: 'include'
             });
 
             if (response.ok) {
