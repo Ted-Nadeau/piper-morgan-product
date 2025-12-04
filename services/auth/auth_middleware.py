@@ -241,6 +241,7 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> JWTClaims:
     """
@@ -252,8 +253,7 @@ async def get_current_user(
             return {"user_id": current_user.user_id}
 
     Args:
-        jwt_service: JWT service dependency
-        user_service: User service dependency
+        request: FastAPI request object (for cookie access)
         credentials: HTTP bearer credentials
 
     Returns:
@@ -261,12 +261,24 @@ async def get_current_user(
 
     Raises:
         APIError: If authentication fails (Issue #283 - for friendly error messages)
+
+    Note:
+        Issue #455: Now checks both Authorization header AND auth_token cookie
+        to support web UI authentication with credentials: 'include'.
     """
     from services.api.errors import APIError
     from services.auth.container import AuthContainer
     from services.auth.jwt_service import TokenExpired, TokenInvalid, TokenRevoked
 
-    if not credentials:
+    # Extract token from Authorization header or cookie (Issue #455)
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        # Try auth_token cookie (for web UI)
+        token = request.cookies.get("auth_token")
+
+    if not token:
         # Issue #283: Use APIError so exception handler can convert to friendly message
         raise APIError(
             status_code=401,
@@ -278,7 +290,7 @@ async def get_current_user(
     jwt_service = AuthContainer.get_jwt_service()
 
     try:
-        claims = await jwt_service.validate_token(credentials.credentials)
+        claims = await jwt_service.validate_token(token)
         if not claims:
             raise APIError(
                 status_code=401,

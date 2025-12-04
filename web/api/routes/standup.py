@@ -215,13 +215,14 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user_optional(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> Optional[JWTClaims]:
     """
     Authentication dependency with optional bypass for testing.
 
     When REQUIRE_AUTH=true (DEFAULT/PRODUCTION - Task 3):
-    - JWT auth required via Authorization: Bearer header
+    - JWT auth required via Authorization: Bearer header OR auth_token cookie
     - Full JWT validation per ADR-012
     - Returns JWTClaims with user_id, user_email, scopes, etc.
     - Raises 401 Unauthorized if token missing or invalid
@@ -231,6 +232,10 @@ async def get_current_user_optional(
     - For development/testing purposes only
     - Not for production use
 
+    Note:
+        Issue #455: Now checks both Authorization header AND auth_token cookie
+        to support web UI authentication with credentials: 'include'.
+
     See: dev/active/code-auth-testing-guidance.md
     See: ADR-012: Protocol-Ready JWT Authentication
     """
@@ -238,8 +243,15 @@ async def get_current_user_optional(
         # Auth disabled for testing only (not for production)
         return None
 
-    # Auth enabled (production default) - validate JWT token
-    if not credentials:
+    # Extract token from Authorization header or cookie (Issue #455)
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        # Try auth_token cookie (for web UI)
+        token = request.cookies.get("auth_token")
+
+    if not token:
         # Issue #283: Use APIError so exception handler can convert to friendly message
         from services.api.errors import APIError
 
@@ -256,7 +268,7 @@ async def get_current_user_optional(
     jwt_service = JWTService()
 
     try:
-        claims = await jwt_service.validate_token(credentials.credentials)
+        claims = await jwt_service.validate_token(token)
 
         if not claims:
             raise APIError(
