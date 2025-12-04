@@ -944,13 +944,16 @@
           element.textContent.trim();
       }
 
-      document
-        .getElementById("upload-toggle-btn")
-        .addEventListener("click", () => {
-          const container = document.getElementById("upload-form-container");
-          container.style.display =
-            container.style.display === "none" ? "block" : "none";
-        });
+      // TODO: Remove this - upload UI was moved to /files page (Issue #462)
+      // The HTML element is commented out but this JS wasn't, causing TypeError
+      // that breaks all subsequent JS including chat form handler
+      // document
+      //   .getElementById("upload-toggle-btn")
+      //   .addEventListener("click", () => {
+      //     const container = document.getElementById("upload-form-container");
+      //     container.style.display =
+      //       container.style.display === "none" ? "block" : "none";
+      //   });
 
       // Configuration for file uploads
       const UPLOAD_CONFIG = {
