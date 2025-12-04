@@ -977,6 +977,9 @@
         );
       }
 
+      // TODO: Remove this entire upload form JS block - moved to /files page (Issue #462)
+      // The HTML is commented out but this JS wasn't, causing TypeError that breaks chat
+      /*
       function showUploadStatus(message, type) {
         const statusDiv = document.getElementById("upload-status");
         statusDiv.textContent = message;
@@ -1106,6 +1109,7 @@
             document.getElementById("upload-progress").style.display = "none";
           }
         });
+      */ // End of commented-out upload form JS
 
       async function pollWorkflowStatus(workflowId, elementToUpdate) {
         let pollCount = 0;
