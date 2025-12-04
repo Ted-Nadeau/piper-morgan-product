@@ -174,7 +174,9 @@
     // Create new project
     function createNewProject() {
       Dialog.show({
+        mode: 'form',
         title: 'Create New Project',
+        confirmText: 'Create',
         content: `
           <div class="form-group">
             <label>Project Name</label>
@@ -274,7 +276,9 @@
       }
 
       Dialog.show({
+        mode: 'form',
         title: `Share ${resourceName}`,
+        confirmText: 'Done',
         width: '500px',
         content: `
           <div class="share-modal-content">
