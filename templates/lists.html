@@ -61,6 +61,8 @@
 <body>
   <!-- Include navigation component -->
   {% include 'components/navigation.html' %}
+  {% include 'components/toast.html' %}
+  {% include 'components/confirmation-dialog.html' %}
 
   <div class="container">
     <nav class="breadcrumb">
@@ -109,12 +111,14 @@
     // Load lists from API
     async function loadLists() {
       try {
-        // TODO: Call backend API
-        // const response = await fetch('/api/v1/lists');
-        // const lists = await response.json();
-
-        // For now, use empty array
-        const lists = [];
+        const response = await fetch('/api/v1/lists', {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to load lists');
+        }
+        const data = await response.json();
+        const lists = data.lists || [];
 
         renderLists(lists);
       } catch (error) {

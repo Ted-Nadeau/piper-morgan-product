@@ -14,7 +14,8 @@ const Dialog = {
    * Show confirmation dialog
    * @param {Object} config - Configuration object
    * @param {string} config.title - Dialog title (e.g., "Delete Standup?")
-   * @param {string} config.message - Warning message
+   * @param {string} config.message - Warning message (text only)
+   * @param {string} config.content - HTML content for form dialogs (Issue #462)
    * @param {string} config.confirmText - Button text (e.g., "Delete", "Reset", "Clear")
    * @param {string} config.cancelText - Cancel button text (default: "Cancel")
    * @param {Function} config.onConfirm - Callback when user confirms
@@ -31,7 +32,17 @@ const Dialog = {
     const cancelBtn = dialog.querySelector('[onclick="Dialog.cancel()"]').closest('button');
 
     if (title) title.textContent = config.title || 'Confirm Action';
-    if (message) message.textContent = config.message || 'Are you sure you want to proceed? This action cannot be undone.';
+    // Support both 'content' (HTML for forms) and 'message' (text for confirmations)
+    // Issue #462: Form dialogs pass HTML in 'content', confirmation dialogs use 'message'
+    if (message) {
+      if (config.content) {
+        // HTML content for form dialogs (e.g., create todo/list/project)
+        message.innerHTML = config.content;
+      } else {
+        // Text message for confirmation dialogs
+        message.textContent = config.message || 'Are you sure you want to proceed? This action cannot be undone.';
+      }
+    }
     if (confirmBtn) confirmBtn.textContent = config.confirmText || 'Confirm';
     if (cancelBtn) cancelBtn.textContent = config.cancelText || 'Cancel';
 
@@ -47,9 +58,15 @@ const Dialog = {
     dialog.setAttribute('aria-hidden', 'false');
     Dialog.isOpen = true;
 
-    // Focus confirm button
+    // Focus: for form dialogs, focus first input; for confirmations, focus confirm button
     setTimeout(() => {
-      if (confirmBtn) confirmBtn.focus();
+      if (config.content) {
+        // Form dialog: focus first input field
+        const firstInput = dialog.querySelector('input, select, textarea');
+        if (firstInput) firstInput.focus();
+      } else if (confirmBtn) {
+        confirmBtn.focus();
+      }
     }, 100);
 
     // Set up keyboard handler for Escape key
@@ -63,15 +80,21 @@ const Dialog = {
 
   /**
    * Confirm action and close dialog
+   * For form dialogs, callback can return false to keep dialog open (validation failed)
    */
-  confirm() {
+  async confirm() {
     if (!Dialog.isOpen) return;
 
-    Dialog.close();
-
     if (Dialog.confirmCallback && typeof Dialog.confirmCallback === 'function') {
-      Dialog.confirmCallback();
+      // Call the callback and check return value
+      // If callback returns false, don't close the dialog (validation failed)
+      const result = await Dialog.confirmCallback();
+      if (result === false) {
+        return; // Keep dialog open
+      }
     }
+
+    Dialog.close();
   },
 
   /**

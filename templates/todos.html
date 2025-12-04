@@ -61,6 +61,8 @@
 <body>
   <!-- Include navigation component -->
   {% include 'components/navigation.html' %}
+  {% include 'components/toast.html' %}
+  {% include 'components/confirmation-dialog.html' %}
 
   <div class="container">
     <nav class="breadcrumb">
@@ -109,12 +111,14 @@
     // Load todos from API
     async function loadTodos() {
       try {
-        // TODO: Call backend API
-        // const response = await fetch('/api/v1/todos');
-        // const todos = await response.json();
-
-        // For now, use empty array
-        const todos = [];
+        const response = await fetch('/api/v1/todos', {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to load todos');
+        }
+        const data = await response.json();
+        const todos = data.todos || [];
 
         renderTodos(todos);
       } catch (error) {
@@ -224,7 +228,7 @@
             const response = await fetch('/api/v1/todos', {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ text, due_date: dueDate }),
+              body: JSON.stringify({ title: text, due_date: dueDate }),
               credentials: 'include'
             });
 

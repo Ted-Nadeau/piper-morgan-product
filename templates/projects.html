@@ -37,6 +37,8 @@
 <body>
   <!-- Include navigation component -->
   {% include 'components/navigation.html' %}
+  {% include 'components/toast.html' %}
+  {% include 'components/confirmation-dialog.html' %}
 
   <div class="container">
     <div class="page-header">
@@ -79,12 +81,14 @@
     // Load projects from API
     async function loadProjects() {
       try {
-        // TODO: Call backend API
-        // const response = await fetch('/api/v1/projects');
-        // const projects = await response.json();
-
-        // For now, use empty array
-        const projects = [];
+        const response = await fetch('/api/v1/projects', {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to load projects');
+        }
+        const data = await response.json();
+        const projects = data.projects || [];
 
         renderProjects(projects);
       } catch (error) {
@@ -198,16 +202,22 @@
           }
 
           try {
-            // TODO: Call API to create project
-            // const response = await fetch('/api/v1/projects', {
-            //   method: 'POST',
-            //   headers: {'Content-Type': 'application/json'},
-            //   body: JSON.stringify({ name, description, start_date: startDate })
-            // });
+            const response = await fetch('/api/v1/projects', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ name, description, start_date: startDate }),
+              credentials: 'include'
+            });
 
-            Toast.success('Project created successfully');
-            await loadProjects();
-            return true;
+            if (response.ok) {
+              Toast.success('Project created successfully');
+              await loadProjects();
+              return true;
+            } else {
+              const error = await response.json();
+              Toast.error('Failed to create project: ' + (error.detail || 'Unknown error'));
+              return false;
+            }
           } catch (error) {
             console.error('Error creating project:', error);
             Toast.error('Failed to create project');
