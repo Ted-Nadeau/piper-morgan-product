@@ -247,7 +247,7 @@ async def list_todos(
             "todos": [
                 {
                     "id": t.id,
-                    "title": t.title,
+                    "text": t.title,  # Frontend expects 'text' field
                     "status": t.status,
                     "priority": t.priority,
                     "owner_id": t.owner_id,
