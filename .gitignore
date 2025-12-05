@@ -71,3 +71,7 @@ archive/
 coordination/claimed/*.tmp
 coordination/blocked/*.tmp
 advisors/*/outbox/*.tmp
+
+# Git worktrees for multi-agent isolation
+# Each agent gets an isolated worktree in .trees/<prompt-id>-<session>/
+.trees/

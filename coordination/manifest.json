@@ -1,9 +1,9 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "system": "async-prompt-queue",
   "created": "2025-11-29T12:10:00Z",
-  "last_updated": "2025-11-29T12:10:00Z",
-  "description": "Central tracking for async prompt queue - agents claim work, execute, and mark complete",
+  "last_updated": "2025-12-04T20:00:00Z",
+  "description": "Central tracking for async prompt queue - agents claim work, execute, and mark complete. v1.1 adds worktree support.",
   "prompts": [
     {
       "id": "001",
@@ -17,7 +17,11 @@
       "completed_by": "2025-11-29-1323-prog-code-opus",
       "completed_at": "2025-11-29T21:55:12Z",
       "deliverable": "dev/active/audit-models-object-model.md",
-      "verification": "passed"
+      "verification": "passed",
+      "branch_name": null,
+      "worktree_path": null,
+      "worktree_created_at": null,
+      "cleanup_approved": null
     },
     {
       "id": "002",
@@ -31,7 +35,11 @@
       "completed_by": "2025-11-29-1323-prog-code-opus",
       "completed_at": "2025-11-30T01:01:00Z",
       "deliverable": "advisors/ted-nadeau/",
-      "verification": "passed"
+      "verification": "passed",
+      "branch_name": null,
+      "worktree_path": null,
+      "worktree_created_at": null,
+      "cleanup_approved": null
     },
     {
       "id": "003",
@@ -45,7 +53,11 @@
       "completed_by": "2025-11-29-1655-test-code-opus",
       "completed_at": "2025-11-30T01:20:00Z",
       "deliverable": "docs/internal/architecture/current/composting-learning-architecture.md",
-      "verification": "passed"
+      "verification": "passed",
+      "branch_name": null,
+      "worktree_path": null,
+      "worktree_created_at": null,
+      "cleanup_approved": null
     }
   ],
   "stats": {

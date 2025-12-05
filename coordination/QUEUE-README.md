@@ -8,14 +8,41 @@ This is a self-service prompt queue for AI agents working on Piper Morgan. Inste
 ### 1. Check for Available Work
 ```bash
 # Look at the manifest to see available prompts
-cat /coordination/manifest.json | grep -A5 "available"
+cat coordination/manifest.json | jq '.prompts[] | select(.status=="available")'
 
 # Or check the available directory
-ls /coordination/available/
+ls coordination/available/
 ```
 
-### 2. Claim a Prompt
-When you select a prompt to work on:
+### 2. Claim a Prompt with Worktree (RECOMMENDED)
+
+Using worktrees gives you an isolated directory to work in, preventing conflicts with other agents:
+
+```bash
+# Claim and create isolated worktree
+./scripts/worktree-setup.sh <prompt-id> <your-session-id>
+
+# Example:
+./scripts/worktree-setup.sh 004 2025-12-04-0732-spec-code-opus
+```
+
+This will:
+- Create `.trees/004-073253/` with your isolated working directory
+- Create branch `claude/<prompt-title>-<session-id>`
+- Update manifest.json with claim + worktree info
+
+Then:
+```bash
+# Navigate to your isolated worktree
+cd .trees/<prompt-id>-<short-session>/
+
+# Verify you're on the right branch
+git branch
+```
+
+### 2b. Claim a Prompt (Manual - Legacy)
+
+If not using worktrees:
 1. Read the full prompt file in `/available/`
 2. Update manifest.json:
    - Change status from "available" to "claimed"
@@ -28,15 +55,19 @@ When you select a prompt to work on:
 - Stay within defined scope
 - Meet all acceptance criteria
 - Create specified deliverables
+- **If using worktree**: Work entirely within `.trees/<your-worktree>/`
 
 ### 4. Mark Complete
 When work is verified complete:
-1. Update manifest.json:
+1. Commit and push your changes to the feature branch
+2. Update manifest.json:
    - Change status from "claimed" to "complete"
    - Add "completed_at": "[timestamp]"
    - Add "verification": "passed"
-2. Move prompt file to `/complete/`
-3. Add completion notes to the prompt file
+3. Move prompt file to `/complete/`
+4. Add completion notes to the prompt file
+
+**Note**: Worktree cleanup requires PM approval. Set `cleanup_approved: true` in manifest after PM review, then run `./scripts/worktree-teardown.sh <prompt-id>`
 
 ### 5. Handle Blocks
 If you cannot complete due to external dependency:
@@ -88,8 +119,27 @@ Each prompt must include:
   "claimed_by": "session-xyz",        // Who claimed it (when claimed)
   "claimed_at": "timestamp",          // When claimed
   "completed_at": "timestamp",        // When completed
-  "verification": "passed"            // Verification status
+  "verification": "passed",           // Verification status
+
+  // Worktree fields (optional, added when using worktree workflow)
+  "branch_name": "claude/title-session",  // Git branch for this work
+  "worktree_path": ".trees/001-abc123",   // Isolated worktree directory
+  "worktree_created_at": "timestamp",     // When worktree was created
+  "cleanup_approved": false               // PM must approve before teardown
 }
+```
+
+## Worktree Commands
+
+```bash
+# Check status of all worktrees
+./scripts/worktree-status.sh
+
+# Setup worktree for a prompt
+./scripts/worktree-setup.sh <prompt-id> <session-id>
+
+# Teardown (requires cleanup_approved: true in manifest)
+./scripts/worktree-teardown.sh <prompt-id>
 ```
 
 ## Timeout Policy
@@ -113,5 +163,14 @@ If unclear about a prompt, don't guess:
 
 ---
 
+## See Also
+
+- `.trees/README.md` - Worktree directory documentation
+- `methodology/coordination/` - Python enforcement protocol (future integration)
+- `scripts/worktree-*.sh` - Worktree management scripts
+
+---
+
 *System launched: November 29, 2025*
+*Worktree support added: December 4, 2025*
 *Maintainer: PM (xian) with architectural oversight*
