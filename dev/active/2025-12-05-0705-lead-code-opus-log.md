@@ -150,3 +150,35 @@ Searched for all `session_scope()` vs `session_scope_fresh()` usage:
 ### Verification
 - Smoke test passed: `test_file_scoring_weights.py` - 6 passed
 - No remaining `session_scope()` in tests
+
+---
+
+## Issue #458: Menu Restructure (08:30)
+
+### Changes Implemented
+
+1. **Removed "Home" from nav menu** - Logo already links to `/`
+2. **Created "Stuff" dropdown** containing:
+   - Todos
+   - Projects
+   - Files
+   - Lists
+3. **Removed "Settings" from nav menu** - Already in user dropdown
+4. **Top-level nav now shows**: Standup → Stuff ▾ → Learning
+
+### Technical Details
+
+- Added `.nav-dropdown` CSS for dropdown styling
+- Full keyboard navigation (Arrow keys, Escape)
+- Mobile-responsive with hamburger menu support
+- Active state highlighting for dropdown items
+- Stuff button highlights when sub-item is active
+
+### Files Modified
+- `templates/components/navigation.html` (CSS + HTML + JS)
+
+### Acceptance Criteria
+- [x] Logo/name links to home
+- [x] Stuff dropdown contains Todos, Projects, Files, Lists
+- [x] No duplicate nav items
+- [x] Works on mobile (hamburger menu)
