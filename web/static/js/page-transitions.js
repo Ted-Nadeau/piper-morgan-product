@@ -6,7 +6,7 @@
 const PageTransition = {
   // Configuration
   config: {
-    duration: 300, // Duration of transition in milliseconds
+    duration: 150, // Duration of transition in milliseconds (reduced for snappier feel)
     type: 'fade', // 'fade' or 'slide'
     disableForReducedMotion: true,
   },
@@ -88,7 +88,7 @@ const PageTransition = {
     // Remove animation class after animation completes
     setTimeout(() => {
       document.body.classList.remove('page-entering');
-    }, 400);
+    }, 200);
   },
 
   /**
