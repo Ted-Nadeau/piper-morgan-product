@@ -269,3 +269,49 @@ This follows the pattern used throughout the codebase (see `web/api/routes/files
 - ✅ 4/4 contract tests pass
 
 ---
+
+## Issue #470 - Missing CSS Design Tokens + DB Commit (21:00)
+
+PM testing revealed two deeper issues after #468/#469:
+
+### Root Cause Analysis
+
+**Pattern Category 1: CSS Design System Incomplete Integration**
+- `tokens.css` defines all CSS variables (`--color-*`, `--space-*`, `--z-index-*`)
+- `dialog.css` and `toast.css` USE these variables
+- But templates included `dialog.css` without including `tokens.css` first
+- Result: All CSS variable references resolve to nothing → invisible/broken UI
+
+**Affected Templates** (all fixed):
+- `lists.html` - missing tokens.css
+- `todos.html` - missing tokens.css
+- `projects.html` - missing tokens.css
+- `files.html` - missing tokens.css
+- `home.html` - missing tokens.css
+
+**Pattern Category 2: DI Session Lifecycle Incomplete**
+- `session_scope_fresh()` creates a fresh session
+- Repository does `flush()` but session never `commit()`
+- Session closes → all changes rolled back
+- Result: "List created successfully" but list doesn't appear
+
+**Fix**: Added `await session.commit()` after `yield` in all 6 DI functions
+
+### Deeper Lessons
+
+These represent **integration gaps** - components that work individually but fail when combined:
+
+1. **CSS**: Design system defined but not linked
+2. **Database**: Session pattern defined but commit step missing
+3. **Both**: "75% complete" pattern - scaffolded but not finished
+
+### Files Modified
+
+- `templates/lists.html` - Added tokens.css
+- `templates/todos.html` - Added tokens.css
+- `templates/projects.html` - Added tokens.css
+- `templates/files.html` - Added tokens.css
+- `templates/home.html` - Added tokens.css
+- `web/api/dependencies.py` - Added session.commit() to all 6 functions
+
+---

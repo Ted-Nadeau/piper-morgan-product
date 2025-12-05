@@ -28,9 +28,12 @@ async def get_file_repository() -> AsyncGenerator[FileRepository, None]:
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
+    Issue #470: Added commit after yield to persist changes.
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield FileRepository(session)
+        # Commit changes after successful route execution
+        await session.commit()
 
 
 async def get_list_repository() -> AsyncGenerator[UniversalListRepository, None]:
@@ -40,9 +43,12 @@ async def get_list_repository() -> AsyncGenerator[UniversalListRepository, None]
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
+    Issue #470: Added commit after yield to persist changes.
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield UniversalListRepository(session)
+        # Commit changes after successful route execution
+        await session.commit()
 
 
 async def get_todo_repository() -> AsyncGenerator[TodoListRepository, None]:
@@ -52,9 +58,12 @@ async def get_todo_repository() -> AsyncGenerator[TodoListRepository, None]:
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
+    Issue #470: Added commit after yield to persist changes.
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield TodoListRepository(session)
+        # Commit changes after successful route execution
+        await session.commit()
 
 
 async def get_knowledge_graph_service() -> AsyncGenerator[KnowledgeGraphService, None]:
@@ -64,9 +73,12 @@ async def get_knowledge_graph_service() -> AsyncGenerator[KnowledgeGraphService,
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
+    Issue #470: Added commit after yield to persist changes.
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield KnowledgeGraphService(session)
+        # Commit changes after successful route execution
+        await session.commit()
 
 
 async def get_project_repository() -> AsyncGenerator[ProjectRepository, None]:
@@ -76,9 +88,12 @@ async def get_project_repository() -> AsyncGenerator[ProjectRepository, None]:
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
+    Issue #470: Added commit after yield to persist changes.
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield ProjectRepository(session)
+        # Commit changes after successful route execution
+        await session.commit()
 
 
 async def get_feedback_service() -> AsyncGenerator[FeedbackService, None]:
@@ -88,6 +103,9 @@ async def get_feedback_service() -> AsyncGenerator[FeedbackService, None]:
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
+    Issue #470: Added commit after yield to persist changes.
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield FeedbackService(session)
+        # Commit changes after successful route execution
+        await session.commit()
