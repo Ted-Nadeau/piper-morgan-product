@@ -69,10 +69,16 @@ class SharedListsResponse(BaseModel):
     count: int
 
 
+class CreateListRequest(BaseModel):
+    """Request model for creating a list (Issue #468)"""
+
+    name: str
+    description: Optional[str] = None
+
+
 @router.post("")
 async def create_list(
-    name: str,
-    description: Optional[str] = None,
+    request: CreateListRequest,
     current_user: JWTClaims = Depends(get_current_user),
     list_repo=Depends(get_list_repository),
 ) -> dict:
@@ -80,8 +86,7 @@ async def create_list(
     Create a new list with ownership validation (SEC-RBAC).
 
     Args:
-        name: List name
-        description: Optional list description
+        request: CreateListRequest with name and optional description
         current_user: Current authenticated user
         list_repo: List repository (injected)
 
@@ -93,9 +98,10 @@ async def create_list(
         HTTPException 500: Server error
 
     Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
+    Issue #468: Accept JSON body instead of query params
     """
     try:
-        if not name or not name.strip():
+        if not request.name or not request.name.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="List name is required",
@@ -103,8 +109,8 @@ async def create_list(
 
         # Create list with ownership
         new_list = domain.List(
-            name=name,
-            description=description or "",
+            name=request.name,
+            description=request.description or "",
             owner_id=current_user.sub,
         )
 
@@ -114,7 +120,7 @@ async def create_list(
             "list_created",
             user_id=current_user.sub,
             list_id=created_list.id,
-            name=name,
+            name=request.name,
         )
 
         return {
