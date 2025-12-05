@@ -95,7 +95,7 @@
         renderProjects(projects);
       } catch (error) {
         console.error('Error loading projects:', error);
-        Toast.error('Failed to load projects');
+        Toast.error('Load Error', 'Failed to load projects');
       }
     }
 
@@ -201,7 +201,7 @@
           const startDate = document.getElementById('new-project-start-date').value;
 
           if (!name) {
-            Toast.error('Project name is required');
+            Toast.error('Validation Error', 'Project name is required');
             return false;
           }
 
@@ -214,17 +214,17 @@
             });
 
             if (response.ok) {
-              Toast.success('Project created successfully');
+              Toast.success('Success', 'Project created successfully');
               await loadProjects();
               return true;
             } else {
               const error = await response.json();
-              Toast.error('Failed to create project: ' + (error.detail || 'Unknown error'));
+              Toast.error('Create Error', 'Failed to create project: ' + (error.detail || 'Unknown error'));
               return false;
             }
           } catch (error) {
             console.error('Error creating project:', error);
-            Toast.error('Failed to create project');
+            Toast.error('Create Error', 'Failed to create project');
             return false;
           }
         }
@@ -234,7 +234,7 @@
     // Edit project
     function editProject(projectId) {
       // TODO: Implement edit functionality
-      Toast.info('Edit functionality coming soon');
+      Toast.info('Coming Soon', 'Edit functionality coming soon');
     }
 
     // Delete project
@@ -247,11 +247,11 @@
             // TODO: Call API to delete
             // await fetch(`/api/v1/projects/${projectId}`, { method: 'DELETE' });
 
-            Toast.success('Project deleted successfully');
+            Toast.success('Success', 'Project deleted successfully');
             await loadProjects();
           } catch (error) {
             console.error('Error deleting project:', error);
-            Toast.error('Failed to delete project');
+            Toast.error('Delete Error', 'Failed to delete project');
           }
         }
       });
@@ -345,7 +345,7 @@
       const role = document.getElementById('share-role-select').value;
 
       if (!userInput) {
-        Toast.error('Please enter a user email or ID');
+        Toast.error('Validation Error', 'Please enter a user email or ID');
         return;
       }
 
@@ -361,16 +361,16 @@
         });
 
         if (response.ok) {
-          Toast.success('Shared successfully');
+          Toast.success('Success', 'Shared successfully');
           Dialog.close();
           await loadProjects();
         } else {
           const error = await response.json();
-          Toast.error(error.message || 'Failed to share');
+          Toast.error('Share Error', error.message || 'Failed to share');
         }
       } catch (error) {
         console.error('Error sharing:', error);
-        Toast.error('Failed to share');
+        Toast.error('Share Error', 'Failed to share');
       }
     }
 
@@ -383,15 +383,15 @@
         );
 
         if (response.ok) {
-          Toast.success('Share removed');
+          Toast.success('Success', 'Share removed');
           Dialog.close();
           await loadProjects();
         } else {
-          Toast.error('Failed to remove share');
+          Toast.error('Remove Error', 'Failed to remove share');
         }
       } catch (error) {
         console.error('Error removing share:', error);
-        Toast.error('Failed to remove share');
+        Toast.error('Remove Error', 'Failed to remove share');
       }
     }
   </script>

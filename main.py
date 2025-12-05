@@ -24,9 +24,9 @@ parser.add_argument(
     "--verbose", "-v", action="store_true", help="Show detailed startup information"
 )
 parser.add_argument(
-    "--browser",
+    "--no-browser",
     action="store_true",
-    help="Auto-launch browser on startup (Issue #451: off by default)",
+    help="Don't auto-launch browser on startup (Issue #461: on by default)",
 )
 parser.add_argument(
     "command",
@@ -56,9 +56,9 @@ logger = logging.getLogger(__name__)
 
 
 def should_open_browser() -> bool:
-    """Check if browser should be opened (Issue #451: off by default)"""
-    # Only open if explicitly requested with --browser flag
-    if not args.browser:
+    """Check if browser should be opened (Issue #461: on by default)"""
+    # Don't open if explicitly disabled with --no-browser flag
+    if args.no_browser:
         return False
 
     # Don't open if no display (CI/CD, SSH)
@@ -130,7 +130,7 @@ async def main():
             print("\nPress Ctrl+C to stop the server")
             print("=" * 60 + "\n")
 
-        # Auto-launch browser if --browser flag specified (Issue #451: off by default)
+        # Auto-launch browser by default unless --no-browser flag specified (Issue #461)
         if should_open_browser():
             asyncio.create_task(open_browser_delayed())
             if not args.verbose:
@@ -323,7 +323,7 @@ if __name__ == "__main__":
             print()
             print("Options:")
             print("  --verbose, -v               - Show detailed startup information")
-            print("  --no-browser                - Don't auto-launch browser")
+            print("  --no-browser                - Don't auto-launch browser (on by default)")
             sys.exit(1)
 
     # Check if setup is complete before starting normally
