@@ -86,7 +86,7 @@ async def test_multi_user_key_isolation(test_users, mock_keychain):
     # Create service with mock keychain (skip validation)
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create users in database
         session.add(user_a)
         session.add(user_b)
@@ -221,7 +221,7 @@ async def test_delete_user_key_isolation(test_users, mock_keychain):
     user_a, user_b = test_users
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create users in database
         session.add(user_a)
         session.add(user_b)
@@ -312,7 +312,7 @@ async def test_list_user_keys_isolation(test_users, mock_keychain):
     user_a, user_b = test_users
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create users in database
         session.add(user_a)
         session.add(user_b)
@@ -403,7 +403,7 @@ async def test_store_user_key_update_existing(test_users, mock_keychain):
     user_a, user_b = test_users
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user in database
         session.add(user_a)
         await session.commit()
@@ -491,7 +491,7 @@ async def test_validate_user_key_per_user(test_users, mock_keychain):
     user_a, user_b = test_users
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create users in database
         session.add(user_a)
         session.add(user_b)
@@ -602,7 +602,7 @@ async def test_keychain_reference_format(test_users, mock_keychain):
     user_a, user_b = test_users
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user in database
         session.add(user_a)
         await session.commit()
@@ -670,7 +670,7 @@ async def test_retrieve_nonexistent_key_returns_none(test_users, mock_keychain):
     user_a, user_b = test_users
     service = UserAPIKeyService(keychain_service=mock_keychain)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Try to retrieve key that doesn't exist
         key = await service.retrieve_user_key(
             session=session, user_id=user_a.id, provider="nonexistent"

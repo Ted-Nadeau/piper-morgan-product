@@ -43,7 +43,7 @@ async def test_scoring_weight_distribution():
         ("no_match.xlsx", "application/vnd.ms-excel", 120, (0.0, 0.3)),  # Low
     ]
     # Create all test files in separate transactions to avoid session conflicts
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create test user first (SEC-RBAC requires owner_id FK)
         await create_test_user(session, owner_id)
         repo = FileRepository(session)
@@ -66,7 +66,7 @@ async def test_scoring_weight_distribution():
         context={"original_message": "analyze exact_match"},
     )
     # Get files and test scoring in a separate session
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         repo = FileRepository(session)
         files = await repo.get_files_for_session(owner_id)
         resolver = FileResolver(repo)
@@ -93,7 +93,7 @@ async def test_scoring_component_breakdown():
         storage_path="/test/test_report.pdf",
         upload_time=datetime.now() - timedelta(minutes=10),
     )
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create test user first (SEC-RBAC requires owner_id FK)
         await create_test_user(session, owner_id)
         repo = FileRepository(session)
@@ -107,7 +107,7 @@ async def test_scoring_component_breakdown():
     )
 
     # Test scoring components in a separate session
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         repo = FileRepository(session)
         resolver = FileResolver(repo)
         recency_score = resolver._calculate_recency_score(file.upload_time)
@@ -155,7 +155,7 @@ async def test_scoring_with_different_intent_types():
         ),
     ]
     # Save all files in one transaction
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create test user first (SEC-RBAC requires owner_id FK)
         await create_test_user(session, owner_id)
         repo = FileRepository(session)
@@ -177,7 +177,7 @@ async def test_scoring_with_different_intent_types():
             action=intent_action,
             context={"original_message": f"perform {intent_action}"},
         )
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             repo = FileRepository(session)
             resolver = FileResolver(repo)
             file_scores = []
@@ -212,7 +212,7 @@ async def test_scoring_edge_cases():
     )
 
     # Save both files in one transaction
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create test user first (SEC-RBAC requires owner_id FK)
         await create_test_user(session, owner_id)
         repo = FileRepository(session)
@@ -227,7 +227,7 @@ async def test_scoring_edge_cases():
     )
 
     # Test scoring in separate session
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         repo = FileRepository(session)
         resolver = FileResolver(repo)
 
@@ -249,7 +249,7 @@ async def test_minimal_file_repository_operations():
 
     owner_id = str(uuid4())
     # Test both operations in a single transaction
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create test user first (SEC-RBAC requires owner_id FK)
         await create_test_user(session, owner_id)
         repo = FileRepository(session)
@@ -280,7 +280,7 @@ async def test_minimal_file_repository_loop():
 
     for i in range(20):
         owner_id = str(uuid4())
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Create test user first (SEC-RBAC requires owner_id FK)
             await create_test_user(session, owner_id)
             repo = FileRepository(session)

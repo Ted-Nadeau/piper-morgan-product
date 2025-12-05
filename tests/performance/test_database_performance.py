@@ -53,7 +53,7 @@ async def test_connection_pool_acquisition():
     for _ in range(NUM_ITERATIONS):
         start = time.perf_counter()
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Connection acquired from pool
             pass
 
@@ -208,14 +208,14 @@ async def test_transaction_performance():
 # --- Helper Functions ---
 async def _execute_simple_query():
     """Execute a simple SELECT query"""
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         result = await session.execute(text("SELECT 1 as health_check"))
         return result.scalar()
 
 
 async def _execute_transaction(test_id: str):
     """Execute a transaction with INSERT"""
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Use token_blacklist table for testing (temporary data)
         from datetime import datetime, timedelta
 
@@ -261,7 +261,7 @@ async def test_concurrent_connections():
     async def concurrent_query(query_id: int):
         """Execute a query concurrently"""
         start = time.perf_counter()
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(text("SELECT 1 as health_check"))
             value = result.scalar()
         latency_ms = (time.perf_counter() - start) * 1000

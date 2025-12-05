@@ -37,7 +37,7 @@ async def main():
         # Test 1: Create Test User
         # ====================================================================
         print("Test 1: Creating test user...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Clean up any existing test user first
             result = await session.execute(select(User).where(User.id == test_user_id))
             existing_user = result.scalar_one_or_none()
@@ -60,7 +60,7 @@ async def main():
         # Test 2: Log Authentication Event (Success)
         # ====================================================================
         print("\nTest 2: Logging successful authentication event...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             log = await audit_logger.log_auth_event(
                 action=Action.LOGIN,
                 status="success",
@@ -105,7 +105,7 @@ async def main():
         # Test 3: Log Failed Authentication Event
         # ====================================================================
         print("\nTest 3: Logging failed authentication event...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             log = await audit_logger.log_auth_event(
                 action=Action.LOGIN_FAILED,
                 status="failed",
@@ -135,7 +135,7 @@ async def main():
         # Test 4: Log API Key Event (Store)
         # ====================================================================
         print("\nTest 4: Logging API key storage event...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             log = await audit_logger.log_api_key_event(
                 action=Action.KEY_STORED,
                 provider="openai",
@@ -167,7 +167,7 @@ async def main():
         # Test 5: Log API Key Rotation (with old/new values)
         # ====================================================================
         print("\nTest 5: Logging API key rotation event...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             log = await audit_logger.log_api_key_event(
                 action=Action.KEY_ROTATED,
                 provider="openai",
@@ -197,7 +197,7 @@ async def main():
         # Test 6: Log Security Event
         # ====================================================================
         print("\nTest 6: Logging security event...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             log = await audit_logger.log_security_event(
                 action=Action.SUSPICIOUS_ACTIVITY,
                 severity=Severity.CRITICAL,
@@ -230,7 +230,7 @@ async def main():
         # Test 7: Query Audit Logs by User
         # ====================================================================
         print("\nTest 7: Querying audit logs for user...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(AuditLog)
                 .where(AuditLog.user_id == test_user_id)
@@ -256,7 +256,7 @@ async def main():
         # Test 8: Query Failed Authentications (no user_id)
         # ====================================================================
         print("\nTest 8: Querying failed authentication attempts...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(AuditLog).where(
                     AuditLog.event_type == EventType.AUTH, AuditLog.action == Action.LOGIN_FAILED
@@ -300,7 +300,7 @@ async def main():
     finally:
         # Cleanup
         print("Cleaning up test data...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Delete all test audit logs
             result = await session.execute(select(AuditLog).where(AuditLog.user_id == test_user_id))
             logs = result.scalars().all()

@@ -34,7 +34,7 @@ async def verify_knowledge_graph_crud():
         print("🔧 Testing Knowledge Graph CRUD Operations...")
         print()
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             repo = KnowledgeGraphRepository(session)
 
             # Test 1: Create a node

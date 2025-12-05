@@ -348,5 +348,5 @@ async def db_session():
     """Provide database session for tests"""
     from services.database.session_factory import AsyncSessionFactory
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         yield session

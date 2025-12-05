@@ -33,14 +33,14 @@ TEST_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
 @pytest.fixture
 async def clean_test_patterns():
     """Clean up test patterns before and after each test."""
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Delete test patterns before test
         await session.execute(delete(LearnedPattern).where(LearnedPattern.user_id == TEST_USER_ID))
         await session.commit()
 
     yield
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Delete test patterns after test
         await session.execute(delete(LearnedPattern).where(LearnedPattern.user_id == TEST_USER_ID))
         await session.commit()
@@ -74,7 +74,7 @@ class TestLearningCyclePhase3:
         - Reject feedback decreases confidence
         """
         # Step 1: Capture first action (creates pattern)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern_id = await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.EXECUTION,
@@ -93,7 +93,7 @@ class TestLearningCyclePhase3:
         assert pattern_id is not None
 
         # Verify pattern created in database
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(LearnedPattern).where(LearnedPattern.id == pattern_id)
             )
@@ -106,7 +106,7 @@ class TestLearningCyclePhase3:
             assert pattern.success_count == 0  # New patterns start with 0
 
         # Step 2: Capture second similar action (updates existing pattern)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern_id_2 = await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.EXECUTION,
@@ -149,7 +149,7 @@ class TestLearningCyclePhase3:
         assert result["pattern"]["confidence"] > suggestion["confidence"]
 
         # Verify confidence increased
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(LearnedPattern).where(LearnedPattern.id == pattern_id)
             )
@@ -166,7 +166,7 @@ class TestLearningCyclePhase3:
         assert result["success"] is True
 
         # Verify confidence decreased
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(LearnedPattern).where(LearnedPattern.id == pattern_id)
             )
@@ -187,7 +187,7 @@ class TestLearningCyclePhase3:
         - Context matching works correctly
         """
         # Create initial pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern_id_1 = await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.EXECUTION,
@@ -196,7 +196,7 @@ class TestLearningCyclePhase3:
             )
 
         # Capture similar action (same type, similar params)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern_id_2 = await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.EXECUTION,
@@ -208,7 +208,7 @@ class TestLearningCyclePhase3:
         assert pattern_id_2 == pattern_id_1
 
         # Capture dissimilar action (different type)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern_id_3 = await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.QUERY,
@@ -229,7 +229,7 @@ class TestLearningCyclePhase3:
         - Threshold can be customized via settings
         """
         # Create low-confidence pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             low_pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -257,7 +257,7 @@ class TestLearningCyclePhase3:
         assert str(low_pattern_id) not in pattern_ids
 
         # Create high-confidence pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             high_pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -301,7 +301,7 @@ class TestLearningCyclePhase4:
         - auto_triggered flag set correctly
         """
         # Create high-confidence pattern (>= 0.9 for automation)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             auto_pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -374,7 +374,7 @@ class TestLearningCyclePhase4:
         - Pattern disabled when confidence < 0.3
         """
         # Create pattern with moderate confidence
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -415,7 +415,7 @@ class TestLearningCyclePerformance:
         import time
 
         # Warm up (first call may be slower due to DB connection)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.EXECUTION,
@@ -426,7 +426,7 @@ class TestLearningCyclePerformance:
         # Measure performance
         start = time.perf_counter()
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             await learning_handler.capture_action(
                 user_id=TEST_USER_ID,
                 action_type=IntentCategory.EXECUTION,
@@ -452,7 +452,7 @@ class TestLearningCyclePerformance:
 
         # Create some patterns first
         for i in range(5):
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 pattern = LearnedPattern(
                     user_id=TEST_USER_ID,
                     pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -495,7 +495,7 @@ class TestLearningCyclePerformance:
 
         # Create automation patterns
         for i in range(3):
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 pattern = LearnedPattern(
                     user_id=TEST_USER_ID,
                     pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -544,7 +544,7 @@ class TestLearningSettings:
         - Settings respected in LearningHandler
         """
         # Create settings with learning disabled
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             settings = LearningSettings(
                 user_id=TEST_USER_ID,
                 learning_enabled=False,  # Disabled globally
@@ -561,7 +561,7 @@ class TestLearningSettings:
         # This is a TODO for Phase 5 - settings enforcement
         # For now, just verify settings exist
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
             )
@@ -580,7 +580,7 @@ class TestLearningSettings:
         - Disabled patterns don't trigger proactively
         """
         # Create disabled pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,

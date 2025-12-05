@@ -51,7 +51,7 @@ async def main():
         # Test 1: Create Test User
         # ====================================================================
         print("Test 1: Creating test user...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Clean up any existing test user first
             result = await session.execute(select(User).where(User.id == test_user_id))
             existing_user = result.scalar_one_or_none()
@@ -89,7 +89,7 @@ async def main():
         print(f"✅ Generated access token")
 
         # Revoke token WITH audit logging
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             success = await jwt_service.revoke_token(
                 token=access_token,
                 reason="logout",
@@ -155,7 +155,7 @@ async def main():
         print(f"✅ Generated refresh token")
 
         # Refresh token WITH audit logging
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             new_access_token = await jwt_service.refresh_access_token(
                 refresh_token=refresh_token,
                 session=session,  # Enable audit logging
@@ -228,7 +228,7 @@ async def main():
         assert success, "Token revocation without audit should still work"
 
         # Verify no new audit log was created for this revocation
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(AuditLog).where(
                     AuditLog.event_type == EventType.AUTH,
@@ -246,7 +246,7 @@ async def main():
         # Test 5: Query All JWT Audit Logs
         # ====================================================================
         print("\nTest 5: Querying all JWT audit logs for user...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(AuditLog)
                 .where(
@@ -292,7 +292,7 @@ async def main():
     finally:
         # Cleanup
         print("Cleaning up test data...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Delete JWT audit logs
             result = await session.execute(
                 select(AuditLog).where(

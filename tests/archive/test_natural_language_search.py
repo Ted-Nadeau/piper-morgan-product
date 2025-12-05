@@ -50,7 +50,7 @@ async def test_natural_language_search():
         # Add session_id to context for testing
         intent.context["session_id"] = "test_session"
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Set up query services
             project_repo = ProjectRepository(session)
             file_repo = FileRepository(session)
@@ -99,7 +99,7 @@ async def test_api_endpoint():
     print("=" * 30)
 
     try:
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             file_repo = FileRepository(session)
             file_query_service = FileQueryService(file_repo)
 

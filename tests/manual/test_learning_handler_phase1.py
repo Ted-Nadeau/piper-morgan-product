@@ -33,7 +33,7 @@ async def test_pattern_capture():
 
     handler = LearningHandler()
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Capture an action
         pattern_id = await handler.capture_action(
             user_id=TEST_USER_ID,
@@ -85,7 +85,7 @@ async def test_outcome_recording(pattern_id: UUID):
     handler = LearningHandler()
 
     # Get initial confidence
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         from sqlalchemy import select
 
         from services.database.models import LearnedPattern
@@ -98,7 +98,7 @@ async def test_outcome_recording(pattern_id: UUID):
         print(f"Initial confidence: {initial_confidence}")
 
     # Record a successful outcome
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         success = await handler.record_outcome(
             user_id=TEST_USER_ID,
             pattern_id=pattern_id,
@@ -109,7 +109,7 @@ async def test_outcome_recording(pattern_id: UUID):
         print(f"✓ Outcome recorded: {success}")
 
     # Check updated confidence
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         result = await session.execute(
             select(LearnedPattern).where(LearnedPattern.id == pattern_id)
         )
@@ -139,7 +139,7 @@ async def test_similar_pattern_detection():
     handler = LearningHandler()
 
     # Capture first pattern
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         pattern_id_1 = await handler.capture_action(
             user_id=TEST_USER_ID,
             action_type=IntentCategory.QUERY,
@@ -149,7 +149,7 @@ async def test_similar_pattern_detection():
         print(f"✓ First pattern captured: {pattern_id_1}")
 
     # Capture similar pattern (same action type)
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         pattern_id_2 = await handler.capture_action(
             user_id=TEST_USER_ID,
             action_type=IntentCategory.QUERY,
@@ -164,7 +164,7 @@ async def test_similar_pattern_detection():
         print(f"⚠ Different pattern IDs (may be expected if similarity logic is strict)")
 
     # Check usage count increased
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         from sqlalchemy import select
 
         from services.database.models import LearnedPattern
@@ -189,7 +189,7 @@ async def test_suggestions():
     handler = LearningHandler()
 
     # Create a pattern and record multiple successes to boost confidence
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         pattern_id = await handler.capture_action(
             user_id=TEST_USER_ID,
             action_type=IntentCategory.STATUS,
@@ -200,7 +200,7 @@ async def test_suggestions():
 
     # Record multiple successful outcomes to boost confidence
     for i in range(8):
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             await handler.record_outcome(
                 user_id=TEST_USER_ID,
                 pattern_id=pattern_id,
@@ -210,7 +210,7 @@ async def test_suggestions():
     print(f"✓ Recorded 8 successful outcomes")
 
     # Check confidence after multiple successes
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         from sqlalchemy import select
 
         from services.database.models import LearnedPattern
@@ -222,7 +222,7 @@ async def test_suggestions():
         print(f"  - Confidence after 8 successes: {pattern.confidence}")
 
     # Get suggestions
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         suggestions = await handler.get_suggestions(
             user_id=TEST_USER_ID,
             context={},
@@ -243,7 +243,7 @@ async def cleanup():
     print("CLEANUP: Removing test patterns")
     print("=" * 60)
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         from sqlalchemy import delete
 
         from services.database.models import LearnedPattern

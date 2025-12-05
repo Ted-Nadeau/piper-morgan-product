@@ -39,7 +39,7 @@ class TestAlphaOnboardingE2E:
 
         # Cleanup: Remove test user if it exists
         try:
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 result = await session.execute(select(User).where(User.username == test_username))
                 user = result.scalar_one_or_none()
                 if user:
@@ -72,7 +72,7 @@ class TestAlphaOnboardingE2E:
             updated_at=datetime.utcnow(),
         )
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             session.add(user)
             await session.commit()
 
@@ -103,7 +103,7 @@ class TestAlphaOnboardingE2E:
         user_id = uuid.uuid4()
 
         # Create user in first session
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             user = User(
                 id=user_id,
                 username=username,
@@ -116,7 +116,7 @@ class TestAlphaOnboardingE2E:
             await session.commit()
 
         # Verify in separate session
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Simulate what status_checker.check_database() does
             result = await session.execute(text("SELECT 1"))
             assert result.scalar_one() == 1
@@ -160,7 +160,7 @@ class TestAlphaOnboardingE2E:
         user_id = uuid.uuid4()
 
         # Create user
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             user = User(
                 id=user_id,
                 username=username,
@@ -182,7 +182,7 @@ class TestAlphaOnboardingE2E:
             "configured_at": datetime.utcnow().isoformat(),
         }
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Simulate what store_user_preferences() does
             await session.execute(
                 text(
@@ -200,7 +200,7 @@ class TestAlphaOnboardingE2E:
             await session.commit()
 
         # Verify preferences were stored in separate session
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 text("SELECT preferences FROM alpha_users WHERE id = :user_id"),
                 {"user_id": user_id},
@@ -233,7 +233,7 @@ class TestAlphaOnboardingE2E:
         test_key = "sk-proj-test123abc456def789"
 
         # Create user
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             user = User(
                 id=user_id,
                 username=username,
@@ -247,7 +247,7 @@ class TestAlphaOnboardingE2E:
 
         # Store API key (user_id converted to string for compatibility)
         service = UserAPIKeyService()
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             try:
                 # This is what wizard does: convert UUID to string
                 user_id_str = str(user_id)
@@ -298,7 +298,7 @@ class TestAlphaOnboardingE2E:
         user_id = uuid.uuid4()
 
         # STEP 1: Create user (setup wizard)
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             user = User(
                 id=user_id,
                 username=username,
@@ -311,7 +311,7 @@ class TestAlphaOnboardingE2E:
             await session.commit()
 
         # STEP 2: Check status (should find user) - in new session
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 text(
                     "SELECT id, username FROM users WHERE is_alpha = true ORDER BY created_at DESC LIMIT 1"
@@ -335,7 +335,7 @@ class TestAlphaOnboardingE2E:
         # User model no longer has preferences JSONB column
         # This test needs redesign to use PersonalityProfile or separate preferences table
         #
-        # async with AsyncSessionFactory.session_scope() as session:
+        # async with AsyncSessionFactory.session_scope_fresh() as session:
         #     await session.execute(
         #         text(
         #             """
@@ -352,7 +352,7 @@ class TestAlphaOnboardingE2E:
         #     await session.commit()
 
         # STEP 4: Verify final state - in new session
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(select(User).where(User.id == user_id))
             final_user = result.scalar_one()
 
