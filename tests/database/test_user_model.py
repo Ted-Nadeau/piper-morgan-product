@@ -24,7 +24,7 @@ async def test_create_user():
 
     Note: Uses unique email to avoid duplicate key errors from multiple test runs.
     """
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         unique_id = uuid4()
         user = User(
             id=unique_id,  # Issue #262 - UUID instead of string
@@ -57,7 +57,7 @@ async def test_user_personality_profile_relationship():
 
     Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
     """
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user with unique identifiers
         unique_id = uuid4()
         user = User(
@@ -112,7 +112,7 @@ async def test_user_token_blacklist_relationship():
 
     Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
     """
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user with unique identifiers
         unique_id = uuid4()
         user = User(
@@ -155,7 +155,7 @@ async def test_user_feedback_relationship():
 
     Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
     """
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user with unique identifiers
         unique_id = uuid4()
         user = User(
@@ -198,7 +198,7 @@ async def test_user_unique_constraints():
 
     Note: Uses unique identifiers to avoid duplicate key errors from multiple test runs.
     """
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create first user with unique email
         unique_id = uuid4()
         user1_id = uuid4()
@@ -247,7 +247,7 @@ async def test_user_unique_constraints():
 @pytest.mark.asyncio
 async def test_user_timestamps():
     """Test that timestamps are set correctly"""
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user
         user = User(id=uuid4(), username="timestampuser", email="timestamp@example.com")
         session.add(user)

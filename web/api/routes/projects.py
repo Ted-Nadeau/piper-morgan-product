@@ -38,10 +38,16 @@ class UpdateShareRoleRequest(BaseModel):
     role: str  # viewer, editor, admin
 
 
+class CreateProjectRequest(BaseModel):
+    """Request model for creating a project (Issue #468)"""
+
+    name: str
+    description: Optional[str] = None
+
+
 @router.post("")
 async def create_project(
-    name: str,
-    description: Optional[str] = None,
+    request: CreateProjectRequest,
     current_user: JWTClaims = Depends(get_current_user),
     project_repo=Depends(get_project_repository),
 ) -> dict:
@@ -49,8 +55,7 @@ async def create_project(
     Create a new project with ownership validation (SEC-RBAC).
 
     Args:
-        name: Project name
-        description: Optional project description
+        request: CreateProjectRequest with name and optional description
         current_user: Current authenticated user
         project_repo: Project repository (injected)
 
@@ -62,9 +67,10 @@ async def create_project(
         HTTPException 500: Server error
 
     Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
+    Issue #468: Accept JSON body instead of query params
     """
     try:
-        if not name or not name.strip():
+        if not request.name or not request.name.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Project name is required",
@@ -72,8 +78,8 @@ async def create_project(
 
         # Create project with ownership
         new_project = domain.Project(
-            name=name,
-            description=description or "",
+            name=request.name,
+            description=request.description or "",
             owner_id=current_user.sub,
         )
 
@@ -83,7 +89,7 @@ async def create_project(
             "project_created",
             user_id=current_user.sub,
             project_id=created_project.id,
-            name=name,
+            name=request.name,
         )
 
         return {

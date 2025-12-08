@@ -21,7 +21,7 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
 /* Show overlay during transition */
@@ -55,7 +55,7 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(40px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -71,13 +71,13 @@
   }
   to {
     opacity: 0;
-    transform: translateY(40px);
+    transform: translateY(16px);
   }
 }
 
 .page-transition-content {
   text-align: center;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.15s ease;
 }
 
 .transition-spinner {
@@ -97,11 +97,11 @@
 
 /* Page content animation on entry */
 body.page-entering {
-  animation: slideUp 0.4s ease;
+  animation: slideUp 0.2s ease;
 }
 
 body.page-exiting {
-  animation: slideDown 0.3s ease;
+  animation: slideDown 0.15s ease;
 }
 
 /* Mobile optimizations */

@@ -63,7 +63,7 @@ async def main():
         # Test 1: Create Test User
         # ====================================================================
         print("Test 1: Creating test user...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Clean up any existing test user first
             result = await session.execute(select(User).where(User.id == test_user_id))
             existing_user = result.scalar_one_or_none()
@@ -99,7 +99,7 @@ async def main():
         api_key_service = UserAPIKeyService(keychain_service=mock_keychain)
         api_key_service._llm_config = MockLLMConfigService()
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             user_key = await api_key_service.store_user_key(
                 session=session,
                 user_id=test_user_id,
@@ -158,7 +158,7 @@ async def main():
         # ====================================================================
         print("\nTest 3: Testing API key update audit logging...")
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             user_key = await api_key_service.store_user_key(
                 session=session,
                 user_id=test_user_id,
@@ -200,7 +200,7 @@ async def main():
         # ====================================================================
         print("\nTest 4: Testing API key rotation audit logging...")
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             rotated_key = await api_key_service.rotate_user_key(
                 session=session,
                 user_id=test_user_id,
@@ -253,7 +253,7 @@ async def main():
         # ====================================================================
         print("\nTest 5: Testing API key deletion audit logging...")
 
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             deleted = await api_key_service.delete_user_key(
                 session=session,
                 user_id=test_user_id,
@@ -300,7 +300,7 @@ async def main():
         # Test 6: Query All API Key Audit Logs
         # ====================================================================
         print("\nTest 6: Querying all API key audit logs for user...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             result = await session.execute(
                 select(AuditLog)
                 .where(
@@ -352,7 +352,7 @@ async def main():
     finally:
         # Cleanup
         print("Cleaning up test data...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Delete API key audit logs
             result = await session.execute(
                 select(AuditLog).where(

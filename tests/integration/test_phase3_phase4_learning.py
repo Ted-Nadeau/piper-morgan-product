@@ -34,7 +34,7 @@ TEST_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
 @pytest.fixture
 async def clean_test_data():
     """Clean up test data before and after each test."""
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         await session.execute(delete(LearnedPattern).where(LearnedPattern.user_id == TEST_USER_ID))
         await session.execute(
             delete(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
@@ -43,7 +43,7 @@ async def clean_test_data():
 
     yield
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         await session.execute(delete(LearnedPattern).where(LearnedPattern.user_id == TEST_USER_ID))
         await session.execute(
             delete(LearningSettings).where(LearningSettings.user_id == TEST_USER_ID)
@@ -58,7 +58,7 @@ class TestPhase3FeedbackCycle:
     async def test_accept_feedback_increases_confidence(self, clean_test_data):
         """Test accepting a pattern increases confidence."""
         # Create test pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -85,7 +85,7 @@ class TestPhase3FeedbackCycle:
     async def test_reject_feedback_decreases_confidence(self, clean_test_data):
         """Test rejecting a pattern decreases confidence."""
         # Create test pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -112,7 +112,7 @@ class TestPhase3FeedbackCycle:
     async def test_low_confidence_auto_disables(self, clean_test_data):
         """Test patterns auto-disable when confidence drops below 0.3."""
         # Create pattern near disable threshold
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -164,7 +164,7 @@ class TestLearningSettings:
     async def test_update_existing_settings(self, clean_test_data):
         """Test updating existing settings."""
         # Create initial settings
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             settings = LearningSettings(
                 user_id=TEST_USER_ID,
                 learning_enabled=True,
@@ -192,7 +192,7 @@ class TestPatternEnableDisable:
     async def test_disable_pattern(self, clean_test_data):
         """Test disabling a pattern."""
         # Create pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -217,7 +217,7 @@ class TestPatternEnableDisable:
     async def test_enable_pattern(self, clean_test_data):
         """Test enabling a pattern."""
         # Create disabled pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,
@@ -248,7 +248,7 @@ class TestPerformanceRequirements:
         import time
 
         # Create pattern
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             pattern = LearnedPattern(
                 user_id=TEST_USER_ID,
                 pattern_type=PatternType.COMMAND_SEQUENCE,

@@ -3,6 +3,8 @@
   <head>
     <title>Piper Morgan - AI PM Assistant</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <!-- tokens.css MUST be first - defines CSS variables used by other stylesheets -->
+    <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/spinner.css" />
     <link rel="stylesheet" href="/static/css/session-timeout.css" />
@@ -69,7 +71,7 @@
         background: #2980b9;
       }
       #chat-window {
-        height: 400px;
+        height: 200px;
         min-height: 150px;
         max-height: 80vh;
         resize: vertical;
@@ -77,7 +79,7 @@
         border: 1px solid #ecf0f1;
         padding: 20px;
         border-radius: 8px;
-        margin-bottom: 20px;
+        margin-top: 20px;
         background: #fdfdfd;
       }
       .message {
@@ -809,14 +811,6 @@
       </div>
       {% endif %}
 
-      <div id="chat-window">
-        <div class="message-container">
-          <div class="message bot-message">
-            What can I help you with today?
-          </div>
-        </div>
-      </div>
-
       <form class="chat-form" id="chatForm">
         <input
           type="text"
@@ -827,6 +821,14 @@
         />
         <button type="submit" class="submit-btn">Send</button>
       </form>
+
+      <div id="chat-window">
+        <div class="message-container">
+          <div class="message bot-message">
+            What can I help you with today?
+          </div>
+        </div>
+      </div>
 
       <!-- TODO: Remove old upload UI - replaced by /files page with new upload dialog -->
       <!-- The quick-action "Upload a document" button above now directs to /files -->

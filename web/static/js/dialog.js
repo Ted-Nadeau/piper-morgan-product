@@ -34,7 +34,7 @@ const Dialog = {
     const title = dialog.querySelector('.confirmation-dialog-title');
     const message = dialog.querySelector('.confirmation-dialog-message');
     const confirmBtn = dialog.querySelector('#dialog-confirm-btn');
-    const cancelBtn = dialog.querySelector('[onclick="Dialog.cancel()"]').closest('button');
+    const cancelBtn = dialog.querySelector('.confirmation-dialog-actions [onclick="Dialog.cancel()"]');
     const iconEl = dialog.querySelector('.confirmation-dialog-icon');
 
     // Icon visibility based on mode (Issue #462)
@@ -55,6 +55,17 @@ const Dialog = {
         confirmBtn.classList.remove('btn-primary');
         confirmBtn.classList.add('btn-danger');
       }
+    }
+
+    // Title and border styling based on mode (Issue #478)
+    // - 'confirm' mode: danger red title and border
+    // - 'form' mode: primary blue title and neutral border
+    const dialogContent = dialog.querySelector('.confirmation-dialog-content');
+    if (title) {
+      title.style.color = mode === 'form' ? '#2c3e50' : '';  // Dark text for forms, default (red) for confirm
+    }
+    if (dialogContent) {
+      dialogContent.style.borderColor = mode === 'form' ? '#ecf0f1' : '';  // Neutral border for forms, default (red) for confirm
     }
 
     if (title) title.textContent = config.title || 'Confirm Action';

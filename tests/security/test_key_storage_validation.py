@@ -89,7 +89,7 @@ async def test_invalid_format_key_rejected(test_user, mock_keychain, mock_llm_co
     service = UserAPIKeyService(keychain_service=mock_keychain)
     service._llm_config = mock_llm_config
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Use invalid format key (wrong prefix for OpenAI)
         invalid_key = "invalid-key-12345"
 
@@ -131,7 +131,7 @@ async def test_weak_key_rejected(test_user, mock_keychain, mock_llm_config):
     service = UserAPIKeyService(keychain_service=mock_keychain)
     service._llm_config = mock_llm_config
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Use low-entropy key (repetitive characters)
         weak_key = "sk-" + "a" * 48  # Valid format but weak entropy
 
@@ -202,7 +202,7 @@ async def test_leaked_key_rejected(test_user, mock_keychain, mock_llm_config):
     service = UserAPIKeyService(keychain_service=mock_keychain)
     service._llm_config = mock_llm_config
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Use a test/demo key pattern
         test_key = "sk-test-demo-key-12345"
 
@@ -277,7 +277,7 @@ async def test_valid_key_stored_successfully(test_user, mock_keychain, mock_llm_
     service._llm_config = mock_llm_config
 
     # Create test user in database first
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         # Create user
         user = User(
             id=test_user.id,
@@ -370,7 +370,7 @@ async def test_validation_integration_with_mock_llm_config(
     service._llm_config = mock_llm_config
 
     # Create user in database first
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         user = User(
             id=test_user.id,
             username=test_user.username,
@@ -441,7 +441,7 @@ async def test_multiple_validation_failures_reported(test_user, mock_keychain, m
     service = UserAPIKeyService(keychain_service=mock_keychain)
     service._llm_config = mock_llm_config
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         bad_key = "invalid_format_and_weak"
 
         # Mock validator to indicate multiple failures
@@ -506,7 +506,7 @@ async def test_validation_exception_handling(test_user, mock_keychain, mock_llm_
     service = UserAPIKeyService(keychain_service=mock_keychain)
     service._llm_config = mock_llm_config
 
-    async with AsyncSessionFactory.session_scope() as session:
+    async with AsyncSessionFactory.session_scope_fresh() as session:
         test_key = "sk-12345"
 
         # Mock validator to raise an exception

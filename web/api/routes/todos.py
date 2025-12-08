@@ -67,12 +67,18 @@ class SharedTodosResponse(BaseModel):
     count: int
 
 
+class CreateTodoRequest(BaseModel):
+    """Request model for creating a todo (Issue #468)"""
+
+    title: str
+    description: Optional[str] = None
+    status: Optional[str] = "pending"
+    priority: Optional[str] = "medium"
+
+
 @router.post("")
 async def create_todo(
-    title: str,
-    description: Optional[str] = None,
-    status: Optional[str] = "pending",
-    priority: Optional[str] = "medium",
+    request: CreateTodoRequest,
     current_user: JWTClaims = Depends(get_current_user),
     todo_repo=Depends(get_todo_repository),
 ) -> dict:
@@ -80,10 +86,7 @@ async def create_todo(
     Create a new todo with ownership validation (SEC-RBAC).
 
     Args:
-        title: Todo title
-        description: Optional todo description
-        status: Todo status (pending, in_progress, completed, etc.)
-        priority: Todo priority (low, medium, high, urgent)
+        request: CreateTodoRequest with title and optional fields
         current_user: Current authenticated user
         todo_repo: Todo repository (injected)
 
@@ -95,20 +98,22 @@ async def create_todo(
         HTTPException 500: Server error
 
     Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
+    Issue #468: Accept JSON body instead of query params
     """
     try:
-        if not title or not title.strip():
+        if not request.title or not request.title.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Todo title is required",
             )
 
         # Create todo with ownership
+        # Note: Todo domain model uses 'text' not 'title' (title is a property)
         new_todo = domain.Todo(
-            title=title,
-            description=description or "",
-            status=status or "pending",
-            priority=priority or "medium",
+            text=request.title,
+            description=request.description or "",
+            status=request.status or "pending",
+            priority=request.priority or "medium",
             owner_id=current_user.sub,
         )
 
@@ -118,7 +123,7 @@ async def create_todo(
             "todo_created",
             user_id=current_user.sub,
             todo_id=created_todo.id,
-            title=title,
+            title=request.title,
         )
 
         return {
@@ -242,7 +247,7 @@ async def list_todos(
             "todos": [
                 {
                     "id": t.id,
-                    "title": t.title,
+                    "text": t.title,  # Frontend expects 'text' field
                     "status": t.status,
                     "priority": t.priority,
                     "owner_id": t.owner_id,

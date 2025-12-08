@@ -10,6 +10,9 @@
   top: 0;
   z-index: 1000;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* Full-width: break out of body padding (#475) */
+  margin: -20px -20px 0 -20px;
+  width: calc(100% + 40px);
 }
 
 .nav-container {
@@ -47,6 +50,12 @@
   padding: 0;
   flex: 1;
   margin-left: 48px;
+  align-items: center;
+}
+
+.nav-menu > li {
+  display: flex;
+  align-items: center;
 }
 
 .nav-link {
@@ -65,6 +74,89 @@
 }
 
 .nav-link.active {
+  background: #e3f2fd;
+  color: #3498db;
+  font-weight: 600;
+}
+
+/* Stuff Dropdown Styles */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #2c3e50;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-dropdown-button:hover {
+  background: #f5f5f5;
+  color: #3498db;
+}
+
+.nav-dropdown-button:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.nav-dropdown-chevron {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.2s;
+}
+
+.nav-dropdown-button[aria-expanded="true"] .nav-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 160px;
+  background: white;
+  border: 1px solid #ecf0f1;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  z-index: 1001;
+}
+
+.nav-dropdown-menu[hidden] {
+  display: none;
+}
+
+.nav-dropdown-item {
+  display: block;
+  padding: 10px 16px;
+  color: #2c3e50;
+  text-decoration: none;
+  transition: background 0.2s;
+  font-size: 14px;
+}
+
+.nav-dropdown-item:hover {
+  background: #f5f5f5;
+  color: #3498db;
+}
+
+.nav-dropdown-item:focus {
+  outline: 2px solid #3498db;
+  outline-offset: -2px;
+}
+
+.nav-dropdown-item.active {
   background: #e3f2fd;
   color: #3498db;
   font-weight: 600;
@@ -187,44 +279,28 @@
   border-top: 1px solid #ecf0f1;
 }
 
-/* Responsive */
+/* Responsive - Tablets and Mobile (≤768px) */
 @media (max-width: 768px) {
   .nav-container {
     padding: 0 16px;
     height: 56px;
-  }
-
-  .nav-menu {
-    gap: 16px;
-    margin-left: 24px;
-  }
-
-  .nav-link {
-    padding: 6px 10px;
-    font-size: 13px;
+    flex-wrap: wrap;
   }
 
   .nav-brand {
     font-size: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .nav-menu {
-    gap: 12px;
-    margin-left: 12px;
+    order: 1;
   }
 
-  .nav-link {
-    padding: 4px 8px;
-    font-size: 12px;
+  .nav-user {
+    order: 4;  /* User menu at far right */
   }
 
   .user-name {
     display: none;
   }
 
-  /* Hamburger menu for mobile */
+  /* Hamburger menu for tablets/mobile */
   .hamburger-button {
     display: flex;
     flex-direction: column;
@@ -233,7 +309,9 @@
     border: none;
     cursor: pointer;
     padding: 8px;
-    margin-right: 8px;
+    order: 3;  /* Position after nav-menu (order 2), before user-menu */
+    margin-left: auto;  /* Push to the right */
+    margin-right: 12px;
   }
 
   .hamburger-button span {
@@ -244,7 +322,7 @@
     display: block;
   }
 
-  /* Hide nav-menu on mobile by default */
+  /* Hide nav-menu by default, show via hamburger */
   .nav-menu {
     position: absolute;
     top: 56px;
@@ -259,24 +337,80 @@
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
+    order: 5;  /* Below the nav bar */
+    width: 100%;
+  }
+
+  .nav-menu > li {
+    width: 100%;
+    display: block;  /* Override base flex display */
   }
 
   /* Show nav-menu when hamburger is active */
   .nav-menu.active {
-    max-height: 300px;
+    max-height: 400px;
+    overflow: visible;
   }
 
   .nav-link {
     padding: 12px 0;
     border-bottom: 1px solid #f5f5f5;
+    text-align: left;
+    display: block;
+    width: 100%;
   }
 
   .nav-link:last-child {
     border-bottom: none;
   }
+
+  /* Stuff dropdown mobile styles */
+  .nav-dropdown {
+    width: 100%;
+    display: block;  /* Force block layout so submenu appears below */
+  }
+
+  .nav-dropdown-button {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+    text-align: left;
+  }
+
+  .nav-dropdown-button .nav-dropdown-chevron {
+    margin-left: 8px;
+  }
+
+  .nav-dropdown-menu {
+    position: static;
+    box-shadow: none;
+    border: none;
+    background: #fafafa;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    width: 100%;
+    display: none;  /* Hidden by default */
+  }
+
+  .nav-dropdown-menu:not([hidden]) {
+    display: block;  /* Show when not hidden */
+  }
+
+  .nav-dropdown-item {
+    padding: 10px 0 10px 24px;  /* Indent submenu items */
+    border-bottom: 1px solid #f5f5f5;
+    display: block;
+    text-align: left;
+  }
+
+  .nav-dropdown-item:last-child {
+    border-bottom: none;
+  }
 }
 
-@media (min-width: 481px) {
+@media (min-width: 769px) {
   .hamburger-button {
     display: none !important;
   }
@@ -300,14 +434,22 @@
 
     <!-- Main Navigation -->
     <ul class="nav-menu" id="nav-menu">
-      <li><a href="/" class="nav-link" id="nav-home">Home</a></li>
       <li><a href="/standup" class="nav-link" id="nav-standup">Standup</a></li>
-      <li><a href="/lists" class="nav-link" id="nav-lists">Lists</a></li>
-      <li><a href="/todos" class="nav-link" id="nav-todos">Todos</a></li>
-      <li><a href="/projects" class="nav-link" id="nav-projects">Projects</a></li>
-      <li><a href="/files" class="nav-link" id="nav-files">Files</a></li>
+      <li class="nav-dropdown">
+        <button class="nav-dropdown-button" id="stuff-dropdown-button" aria-haspopup="true" aria-expanded="false">
+          Stuff
+          <svg class="nav-dropdown-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6l4 4 4-4"/>
+          </svg>
+        </button>
+        <div class="nav-dropdown-menu" id="stuff-dropdown-menu" hidden>
+          <a href="/todos" class="nav-dropdown-item" id="nav-todos">Todos</a>
+          <a href="/projects" class="nav-dropdown-item" id="nav-projects">Projects</a>
+          <a href="/files" class="nav-dropdown-item" id="nav-files">Files</a>
+          <a href="/lists" class="nav-dropdown-item" id="nav-lists">Lists</a>
+        </div>
+      </li>
       <li><a href="/learning" class="nav-link" id="nav-learning">Learning</a></li>
-      <li><a href="/settings" class="nav-link" id="nav-settings">Settings</a></li>
     </ul>
 
     <!-- User Menu -->
@@ -383,21 +525,105 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Handle Stuff dropdown
+  const stuffButton = document.getElementById('stuff-dropdown-button');
+  const stuffMenu = document.getElementById('stuff-dropdown-menu');
+
+  if (stuffButton && stuffMenu) {
+    stuffButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isExpanded = stuffButton.getAttribute('aria-expanded') === 'true';
+      stuffButton.setAttribute('aria-expanded', !isExpanded);
+      stuffMenu.hidden = isExpanded;
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!stuffButton.contains(e.target) && !stuffMenu.contains(e.target)) {
+        stuffButton.setAttribute('aria-expanded', 'false');
+        stuffMenu.hidden = true;
+      }
+    });
+
+    // Close on escape key
+    stuffButton.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        stuffButton.setAttribute('aria-expanded', 'false');
+        stuffMenu.hidden = true;
+      }
+    });
+
+    // Arrow key navigation in Stuff dropdown
+    const stuffItems = stuffMenu.querySelectorAll('.nav-dropdown-item');
+    let stuffFocus = -1;
+
+    stuffButton.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        stuffButton.setAttribute('aria-expanded', 'true');
+        stuffMenu.hidden = false;
+        stuffFocus = 0;
+        if (stuffItems[stuffFocus]) {
+          stuffItems[stuffFocus].focus();
+        }
+      }
+    });
+
+    stuffItems.forEach((item, index) => {
+      item.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          stuffFocus = (index + 1) % stuffItems.length;
+          stuffItems[stuffFocus].focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          stuffFocus = (index - 1 + stuffItems.length) % stuffItems.length;
+          stuffItems[stuffFocus].focus();
+        } else if (e.key === 'Escape') {
+          stuffButton.setAttribute('aria-expanded', 'false');
+          stuffMenu.hidden = true;
+          stuffButton.focus();
+        }
+      });
+    });
+  }
+
   // Set active nav link based on current path
   const currentPath = window.location.pathname;
   const navLinks = {
-    '/': 'nav-home',
     '/standup': 'nav-standup',
+    '/learning': 'nav-learning'
+  };
+
+  // Stuff dropdown items
+  const stuffLinks = {
+    '/todos': 'nav-todos',
+    '/projects': 'nav-projects',
     '/files': 'nav-files',
-    '/learning': 'nav-learning',
-    '/settings': 'nav-settings'
+    '/lists': 'nav-lists'
   };
 
   for (const [path, id] of Object.entries(navLinks)) {
     const link = document.getElementById(id);
     if (link) {
-      if (currentPath === path || (currentPath === '/' && path === '/')) {
+      if (currentPath === path) {
         link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    }
+  }
+
+  // Handle Stuff dropdown item active states
+  for (const [path, id] of Object.entries(stuffLinks)) {
+    const link = document.getElementById(id);
+    if (link) {
+      if (currentPath === path) {
+        link.classList.add('active');
+        // Also highlight the Stuff button when a sub-item is active
+        if (stuffButton) {
+          stuffButton.style.color = '#3498db';
+        }
       } else {
         link.classList.remove('active');
       }

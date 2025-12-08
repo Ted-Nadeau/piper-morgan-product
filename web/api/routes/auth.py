@@ -201,7 +201,7 @@ async def login(
             httponly=True,
             secure=is_https,  # Only set secure flag for HTTPS requests
             samesite="lax",
-            max_age=3600,  # 1 hour (matches JWT expiry)
+            max_age=28800,  # 8 hours for better alpha testing UX
         )
 
         logger.info(

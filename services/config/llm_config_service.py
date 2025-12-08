@@ -198,7 +198,7 @@ class LLMConfigService:
         # Priority 1: Try keychain (secure storage)
         key = self._keychain_service.get_api_key(provider)
         if key:
-            logger.debug(f"Retrieved {provider} key from keychain (secure)")
+            # Note: keychain_service already logs the retrieval
             return key
 
         # Priority 2: Try environment (migration fallback)

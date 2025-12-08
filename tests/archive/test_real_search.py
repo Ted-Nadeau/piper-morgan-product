@@ -42,7 +42,7 @@ async def test_real_content_search():
             # Add context and route
             intent.context["session_id"] = None  # Search all sessions
 
-            async with AsyncSessionFactory.session_scope() as session:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
                 file_repo = FileRepository(session)
                 file_query_service = FileQueryService(file_repo)
 

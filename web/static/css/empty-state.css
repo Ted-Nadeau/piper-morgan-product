@@ -12,10 +12,10 @@
 }
 
 .empty-state-icon {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   margin-bottom: var(--space-lg);
-  font-size: var(--font-size-5xl);
+  font-size: 48px;
   display: flex;
   align-items: center;
   justify-content: center;

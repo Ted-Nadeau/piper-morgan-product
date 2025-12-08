@@ -41,7 +41,7 @@ async def main():
         # Test 1: Create Test Users
         # ====================================================================
         print("Test 1: Creating test users...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Clean up any existing test users first
             result = await session.execute(select(User).where(User.id.in_([user_a_id, user_b_id])))
             existing_users = result.scalars().all()
@@ -71,7 +71,7 @@ async def main():
         # Test 2: Store Keys for Both Users (Same Provider)
         # ====================================================================
         print("\nTest 2: Storing keys for both users (same provider: github)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # User A stores GitHub key
             key_a = await service.store_user_key(
                 session=session,
@@ -102,7 +102,7 @@ async def main():
         # Test 3: Retrieve Keys (Verify Isolation)
         # ====================================================================
         print("\nTest 3: Retrieving keys (verify isolation)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Retrieve user A's key
             retrieved_key_a = await service.retrieve_user_key(
                 session=session, user_id=user_a_id, provider="github"
@@ -127,7 +127,7 @@ async def main():
         # Test 4: List Keys (Verify User-Specific Lists)
         # ====================================================================
         print("\nTest 4: Listing keys (verify user-specific lists)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Store additional key for user A
             await service.store_user_key(
                 session=session,
@@ -163,7 +163,7 @@ async def main():
         # Test 5: Delete Key (Verify Isolation)
         # ====================================================================
         print("\nTest 5: Deleting key (verify deletion doesn't affect other user)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Delete user A's GitHub key
             deleted = await service.delete_user_key(
                 session=session, user_id=user_a_id, provider="github"
@@ -193,7 +193,7 @@ async def main():
         # Test 6: Update Existing Key (Verify Update, Not Create)
         # ====================================================================
         print("\nTest 6: Updating existing key (verify update behavior)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Get current count
             result = await session.execute(
                 select(UserAPIKey).where(
@@ -240,7 +240,7 @@ async def main():
         # Test 7: Key Rotation (Zero-Downtime)
         # ====================================================================
         print("\nTest 7: Key rotation (zero-downtime strategy)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Store initial key for user A
             await service.store_user_key(
                 session=session,
@@ -312,7 +312,7 @@ async def main():
         # Test 8: Rotate Non-Existent Key (Error Handling)
         # ====================================================================
         print("\nTest 8: Rotate non-existent key (error handling)...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Try to rotate key that doesn't exist
             try:
                 await service.rotate_user_key(
@@ -355,7 +355,7 @@ async def main():
     finally:
         # Cleanup
         print("Cleaning up test data...")
-        async with AsyncSessionFactory.session_scope() as session:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
             # Delete all test keys
             result = await session.execute(
                 select(UserAPIKey).where(UserAPIKey.user_id.in_([user_a_id, user_b_id]))

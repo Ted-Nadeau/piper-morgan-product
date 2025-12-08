@@ -3,6 +3,8 @@
 <head>
   <title>Files - Piper Morgan</title>
   <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+  <!-- tokens.css MUST be first - defines CSS variables used by other stylesheets -->
+  <link rel="stylesheet" href="/static/css/tokens.css" />
   <link rel="stylesheet" href="/static/css/toast.css" />
   <link rel="stylesheet" href="/static/css/dialog.css" />
   <link rel="stylesheet" href="/static/css/permissions.css" />
@@ -186,7 +188,7 @@
         renderFiles(files);
       } catch (error) {
         console.error('Error loading files:', error);
-        Toast.error('Failed to load files');
+        Toast.error('Load Error', 'Failed to load files');
       }
     }
 
@@ -288,13 +290,13 @@
           const file = fileInput.files[0];
 
           if (!file) {
-            Toast.error('Please select a file');
+            Toast.error('Validation Error', 'Please select a file');
             return false;
           }
 
           // Validate file size (10MB)
           if (file.size > 10 * 1024 * 1024) {
-            Toast.error('File too large. Max size: 10MB');
+            Toast.error('Validation Error', 'File too large. Max size: 10MB');
             return false;
           }
 
@@ -309,17 +311,17 @@
             });
 
             if (response.ok) {
-              Toast.success('File uploaded successfully');
+              Toast.success('Success', 'File uploaded successfully');
               await loadFiles();
               return true;
             } else {
               const error = await response.json();
-              Toast.error('Failed to upload file: ' + (error.detail || 'Unknown error'));
+              Toast.error('Upload Error', 'Failed to upload file: ' + (error.detail || 'Unknown error'));
               return false;
             }
           } catch (error) {
             console.error('Error uploading file:', error);
-            Toast.error('Failed to upload file');
+            Toast.error('Upload Error', 'Failed to upload file');
             return false;
           }
         }
@@ -333,7 +335,7 @@
         window.location.href = `/api/v1/files/${fileId}/download`;
       } catch (error) {
         console.error('Download error:', error);
-        Toast.error('Failed to download file');
+        Toast.error('Download Error', 'Failed to download file');
       }
     }
 
@@ -350,14 +352,14 @@
             });
 
             if (response.ok) {
-              Toast.success('File deleted successfully');
+              Toast.success('Success', 'File deleted successfully');
               await loadFiles();
             } else {
-              Toast.error('Failed to delete file');
+              Toast.error('Delete Error', 'Failed to delete file');
             }
           } catch (error) {
             console.error('Error deleting file:', error);
-            Toast.error('Failed to delete file');
+            Toast.error('Delete Error', 'Failed to delete file');
           }
         }
       });

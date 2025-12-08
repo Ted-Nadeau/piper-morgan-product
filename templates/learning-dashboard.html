@@ -61,7 +61,7 @@
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
+            gap: 24px;
             margin-bottom: 20px;
         }
 
@@ -69,23 +69,15 @@
             grid-column: 1 / -1;
         }
 
-        /* Card Styles */
+        /* Card Styles - Simple, no effects */
         .card {
             background: var(--bg-secondary, #f8f9fa);
             padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            border: 1px solid var(--border-color, #ecf0f1);
             border-left: 4px solid var(--primary-color, #3498db);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            width: 100%;
-            min-height: 200px;
             display: flex;
             flex-direction: column;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.15);
         }
 
         .card-header {
@@ -189,7 +181,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Buttons */
+        /* Buttons - Simple, no hover transforms */
         button {
             background: var(--primary-color, #3498db);
             color: white;
@@ -199,7 +191,6 @@
             cursor: pointer;
             font-size: 0.95em;
             font-weight: 600;
-            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -207,11 +198,6 @@
 
         button:hover:not(:disabled) {
             background: var(--primary-color-hover, #2980b9);
-            transform: translateY(-1px);
-        }
-
-        button:active:not(:disabled) {
-            transform: translateY(0);
         }
 
         button:disabled {
@@ -451,27 +437,13 @@
             }
         }
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-
-        .empty-state-icon {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            max-width: 80px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+        /* Empty State - styling handled by /static/css/empty-state.css */
     </style>
 </head>
 <body>
     {% include 'components/skip-link.html' %}
     {% include 'components/page-transition.html' %}
     {% include 'components/navigation.html' %}
-    {% include 'components/empty-state.html' %}
     {% set breadcrumbs = [
       {"label": "Settings", "url": "/settings"},
       {"label": "Learning", "url": None}
@@ -504,7 +476,7 @@
         <!-- Card Grid -->
         <div class="card-grid">
             <!-- Learning Status Card -->
-            <div class="card">
+            <div class="card no-hover">
                 <div class="card-header">
                     <h2 class="card-title">Learning Status</h2>
                     <div id="statusBadge" class="status-badge loading">
@@ -528,7 +500,7 @@
             </div>
 
             <!-- Metrics Card -->
-            <div class="card">
+            <div class="card no-hover">
                 <div class="card-header">
                     <h2 class="card-title">Learning Metrics</h2>
                 </div>
@@ -553,7 +525,7 @@
             </div>
 
             <!-- Pattern Distribution Card -->
-            <div class="card card-full-width">
+            <div class="card card-full-width no-hover">
                 <div class="card-header">
                     <h2 class="card-title">Pattern Distribution</h2>
                 </div>
@@ -566,7 +538,7 @@
             </div>
 
             <!-- Privacy Settings Card -->
-            <div class="card">
+            <div class="card no-hover">
                 <div class="card-header">
                     <h2 class="card-title">Privacy Settings</h2>
                 </div>
@@ -618,7 +590,7 @@
             </div>
 
             <!-- Data Management Card -->
-            <div class="card">
+            <div class="card no-hover">
                 <div class="card-header">
                     <h2 class="card-title">Data Management</h2>
                 </div>
@@ -655,15 +627,12 @@
         // Configuration
         const API_BASE = '/api/v1/learning';
         const USER_ID = 'current_user'; // TODO: Make configurable
-        const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
 
-        let autoRefreshTimer = null;
         let privacySettingsChanged = false;
 
         // Initialize dashboard on load
         window.addEventListener('load', async () => {
             await loadDashboard();
-            startAutoRefresh();
         });
 
         /**
@@ -680,8 +649,6 @@
                 ]);
 
                 hideMessage('error');
-                showSuccess('Dashboard loaded successfully');
-                setTimeout(() => hideMessage('success'), 3000);
             } catch (error) {
                 showError(`Failed to load dashboard: ${error.message}`);
             }
@@ -965,14 +932,6 @@
          */
         async function refreshDashboard() {
             await loadDashboard();
-        }
-
-        /**
-         * Start auto-refresh timer
-         */
-        function startAutoRefresh() {
-            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-            autoRefreshTimer = setInterval(refreshDashboard, AUTO_REFRESH_INTERVAL);
         }
 
         /**
