@@ -248,7 +248,7 @@ class LLMDomainService:
 
                 # Get default model for provider
                 if provider_name == "anthropic":
-                    model = "claude-3-5-sonnet-20241022"
+                    model = "claude-sonnet-4-20250514"
                 elif provider_name == "openai":
                     model = "gpt-4-turbo-preview"
                 elif provider_name == "gemini":

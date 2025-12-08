@@ -17,7 +17,7 @@ from services.database.session_factory import AsyncSessionFactory
 from services.feedback.feedback_service import FeedbackService
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
 from services.repositories.file_repository import FileRepository
-from services.repositories.todo_repository import TodoListRepository
+from services.repositories.todo_repository import TodoListRepository, TodoRepository
 from services.repositories.universal_list_repository import UniversalListRepository
 
 
@@ -51,17 +51,18 @@ async def get_list_repository() -> AsyncGenerator[UniversalListRepository, None]
         await session.commit()
 
 
-async def get_todo_repository() -> AsyncGenerator[TodoListRepository, None]:
-    """Dependency injection for TodoListRepository.
+async def get_todo_repository() -> AsyncGenerator[TodoRepository, None]:
+    """Dependency injection for TodoRepository.
 
-    Provides TodoListRepository with database session for todo operations.
+    Provides TodoRepository with database session for todo CRUD operations.
     Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
 
     Issue #469: Fixed to use session factory instead of request.state.db.
     Issue #470: Added commit after yield to persist changes.
+    Issue #479: Fixed to return TodoRepository (for Todos), not TodoListRepository (for TodoLists).
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
-        yield TodoListRepository(session)
+        yield TodoRepository(session)
         # Commit changes after successful route execution
         await session.commit()
 

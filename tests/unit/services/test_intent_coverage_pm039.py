@@ -39,6 +39,7 @@ from services.intent_service.classifier import IntentClassifier
 
 
 @pytest.mark.asyncio
+@pytest.mark.llm  # Requires real LLM API calls
 @pytest.mark.parametrize(
     "message,expected_action,expected_query",
     [

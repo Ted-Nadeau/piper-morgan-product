@@ -78,6 +78,7 @@ class GitHubIntegrationRouter:
 
         # Feature flags
         self.use_mcp = self._get_boolean_flag("USE_MCP_GITHUB", True)
+        self.allow_legacy = FeatureFlags.is_legacy_github_allowed()
         self.use_spatial = FeatureFlags.should_use_spatial_github()
 
         # Initialize integrations (MCP preferred, spatial fallback)

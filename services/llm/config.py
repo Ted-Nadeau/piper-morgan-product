@@ -17,7 +17,7 @@ class LLMProvider(Enum):
 class LLMModel(Enum):
     # Anthropic models
     CLAUDE_OPUS = "claude-3-opus-20240229"
-    CLAUDE_SONNET = "claude-3-5-sonnet-20241022"
+    CLAUDE_SONNET = "claude-sonnet-4-20250514"
 
     # OpenAI models
     GPT4 = "gpt-4-turbo-preview"

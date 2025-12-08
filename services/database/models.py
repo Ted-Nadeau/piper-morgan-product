@@ -472,7 +472,8 @@ class ProjectDB(Base):
     __tablename__ = "projects"
 
     id = Column(String, primary_key=True)
-    owner_id = Column(String, nullable=True)
+    # owner_id is UUID in database - must match schema (Issue #479)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False, unique=True)
     description = Column(Text)
     shared_with = Column(JSON, default=lambda: [])
@@ -745,7 +746,8 @@ class KnowledgeNodeDB(Base):
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
     session_id = Column(String)  # Legacy - kept for backward compatibility
-    owner_id = Column(String, ForeignKey("users.id"), nullable=True)  # SEC-RBAC Issue #357
+    # owner_id is UUID in database - must match schema (Issue #479)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     embedding_vector = Column(JSON)  # Will be upgraded to pgvector VECTOR type later
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -809,7 +811,8 @@ class KnowledgeEdgeDB(Base):
     node_metadata = Column(JSON, default=dict)
     properties = Column(JSON, default=dict)
     session_id = Column(String)  # Legacy - kept for backward compatibility
-    owner_id = Column(String, ForeignKey("users.id"), nullable=True)  # SEC-RBAC Issue #357
+    # owner_id is UUID in database - must match schema (Issue #479)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -985,6 +988,9 @@ class ListMembershipDB(Base):
     list_priority = Column(Enum(TodoPriority))
     list_due_date = Column(DateTime)
     list_notes = Column(Text, default="")
+
+    # SEC-RBAC ownership - owner_id is UUID in database (Issue #479)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
 
     # Relationships
     todo_list = relationship("TodoListDB", back_populates="memberships")
@@ -1171,6 +1177,9 @@ class ListItemDB(Base):
     list_priority = Column(String)  # Override item's default priority
     list_due_date = Column(DateTime)  # Override item's default due date
     list_notes = Column(Text, default="")
+
+    # SEC-RBAC ownership - owner_id is UUID in database (Issue #479)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
 
     # Relationships
     list = relationship("ListDB", back_populates="items")

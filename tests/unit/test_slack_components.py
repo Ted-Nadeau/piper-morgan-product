@@ -30,23 +30,27 @@ class TestSlackResponseHandler:
     @pytest.fixture
     async def mock_dependencies(self):
         """Create mocked dependencies for response handler"""
+        import time
+
+        # Use unique timestamp for each test to avoid duplicate event detection
+        unique_ts = str(time.time())
+
         spatial_adapter = AsyncMock(spec=SlackSpatialAdapter)
         # Add _lock attribute to prevent AttributeError
         spatial_adapter._lock = MagicMock()
-        # Add _timestamp_to_position method to prevent AttributeError
-        spatial_adapter._timestamp_to_position = MagicMock(return_value=123)
 
         # Set up proper mock behavior for spatial adapter
-        # Create a mock timestamp-to-position mapping
-        spatial_adapter._timestamp_to_position = {"1234567890.123456": 123}
-        spatial_adapter._position_to_timestamp = {123: "1234567890.123456"}
+        # Create a mock timestamp-to-position mapping with unique timestamp
+        spatial_adapter._timestamp_to_position = {unique_ts: 123}
+        spatial_adapter._position_to_timestamp = {123: unique_ts}
         spatial_adapter._context_storage = {
-            "1234567890.123456": {
+            unique_ts: {
                 "channel_id": "C1234567890",
                 "user_id": "U1234567890",
                 "workspace_id": "T1234567890",
                 "thread_ts": None,
                 "content": "Test message",
+                "ts": unique_ts,  # Include ts for duplicate detection
             }
         }
 
@@ -128,7 +132,12 @@ class TestSlackResponseHandler:
         # Assert: No orchestration for monitoring intents
         mock_dependencies["orchestration_engine"].create_workflow_from_intent.assert_not_called()
 
-    @pytest.mark.skip(reason="Complex mocking issue with spatial adapter. Tracked in piper-morgan-i98")
+    @pytest.mark.skip(
+        reason="Complex mocking issue with spatial adapter - requires full integration "
+        "refactoring. Tracked in piper-morgan-i98. Issues found: 1) context_storage not "
+        "synced with _timestamp_to_position, 2) EXECUTION category required for workflow, "
+        "3) Silent exceptions in async flow. Needs proper integration test approach."
+    )
     @pytest.mark.smoke
     async def test_response_handler_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
@@ -138,8 +147,9 @@ class TestSlackResponseHandler:
 
         This ensures all operations are tracked and observable.
         """
-        # Arrange: Set up successful processing
-        intent = Intent(action="analyze_request", category=IntentCategory.ANALYSIS, confidence=0.95)
+        # Arrange: Set up successful processing with EXECUTION category
+        # Note: Only EXECUTION intents trigger workflow creation per emergency fix
+        intent = Intent(action="create_task", category=IntentCategory.EXECUTION, confidence=0.95)
         mock_dependencies["intent_classifier"].classify.return_value = intent
 
         # Use unique timestamp to avoid duplicate detection
@@ -158,12 +168,19 @@ class TestSlackResponseHandler:
         async_lock.__aexit__ = AsyncMock(return_value=None)
         mock_dependencies["spatial_adapter"]._lock = async_lock
 
-        # Mock get_response_context to return proper Slack context when called with our timestamp
-        mock_dependencies["spatial_adapter"].get_response_context.return_value = {
+        # Update context storage with our unique timestamp
+        context_data = {
             "channel_id": "C1234567890",
             "user_id": "U1234567890",
             "ts": unique_ts,
         }
+        mock_dependencies["spatial_adapter"]._context_storage[unique_ts] = context_data
+
+        # Mock get_response_context as async function to return proper Slack context
+        async def mock_get_response_context(timestamp):
+            return mock_dependencies["spatial_adapter"]._context_storage.get(timestamp)
+
+        mock_dependencies["spatial_adapter"].get_response_context = mock_get_response_context
 
         mock_dependencies["orchestration_engine"].create_workflow_from_intent.return_value = (
             MagicMock(id="test_workflow")
@@ -192,7 +209,6 @@ class TestSlackResponseHandler:
         # Assert: Slack message was sent
         mock_dependencies["slack_client"].send_message.assert_called_once()
 
-    @pytest.mark.skip(reason="Duplicate event detection issue. Tracked in piper-morgan-8yz")
     @pytest.mark.smoke
     async def test_response_handler_error_observability(
         self, response_handler, mock_spatial_event, mock_dependencies
@@ -262,7 +278,6 @@ class TestSlackAdapter:
         assert response_context is not None, "Response context should be available"
         assert response_context.get("channel_id") == "C1234567890", "Channel ID should be preserved"
 
-    @pytest.mark.skip(reason="Async/await issue in spatial adapter. Tracked in piper-morgan-65k")
     @pytest.mark.smoke
     async def test_bidirectional_mapping_observability(self, spatial_adapter):
         """
@@ -294,7 +309,6 @@ class TestSlackAdapter:
         stats = await spatial_adapter.get_mapping_stats()
         assert stats["timestamp_mappings"] > 0, "Mapping should be recorded in stats"
 
-    @pytest.mark.skip(reason="Context storage issue in spatial adapter. Tracked in piper-morgan-7bn")
     @pytest.mark.smoke
     async def test_context_storage_observability(self, spatial_adapter):
         """
@@ -311,8 +325,8 @@ class TestSlackAdapter:
         }
         timestamp = "1234567890.123456"
 
-        # Act: Store context
-        await spatial_adapter.store_mapping(timestamp, MagicMock(position=123))
+        # Act: Store context via map_to_position (which stores context for routing)
+        await spatial_adapter.map_to_position(timestamp, context)
 
         # Assert: Context should be retrievable
         stored_context = await spatial_adapter.get_context(timestamp)
@@ -441,7 +455,6 @@ class TestRobustTaskManager:
         assert task_summary["total_tasks_created"] > 0, "Task creation should be tracked"
 
 
-@pytest.mark.skip(reason="SlackPipelineMetrics initialization issue. Tracked in piper-morgan-ev7")
 class TestSlackPipelineMetrics:
     """
     Test SlackPipelineMetrics with correlation tracking.
@@ -452,8 +465,14 @@ class TestSlackPipelineMetrics:
 
     @pytest.fixture
     async def pipeline_metrics(self):
-        """Create pipeline metrics instance"""
-        return SlackPipelineMetrics()
+        """Create pipeline metrics instance with required arguments"""
+        from datetime import datetime
+
+        return SlackPipelineMetrics(
+            correlation_id="test_correlation_id",
+            slack_event_id="test_event_id",
+            started_at=datetime.utcnow(),
+        )
 
     @pytest.mark.smoke
     async def test_correlation_tracking(self, pipeline_metrics):
@@ -473,9 +492,9 @@ class TestSlackPipelineMetrics:
 
         # Assert: Correlation should be tracked in all stages
         for stage in pipeline_metrics.processing_stages:
-            assert hasattr(stage, "correlation_id"), "Stage should have correlation_id"
+            assert "correlation_id" in stage, "Stage should have correlation_id"
             assert (
-                stage.correlation_id == correlation_id
+                stage["correlation_id"] == correlation_id
             ), "Stage should have correct correlation_id"
 
     @pytest.mark.smoke
@@ -538,8 +557,8 @@ class TestSlackPipelineMetrics:
         # Assert: Stage data should be preserved
         for i, (stage_name, stage_data) in enumerate(stages):
             stage = pipeline_metrics.processing_stages[i]
-            assert stage.name == stage_name, f"Stage {i} should have correct name"
-            assert stage.data == stage_data, f"Stage {i} should have correct data"
+            assert stage["name"] == stage_name, f"Stage {i} should have correct name"
+            assert stage["data"] == stage_data, f"Stage {i} should have correct data"
 
     @pytest.mark.smoke
     async def test_error_recording_observability(self, pipeline_metrics):
@@ -563,13 +582,17 @@ class TestSlackPipelineMetrics:
         pipeline_metrics.end_pipeline()
 
         # Assert: Error should be recorded
-        error_stages = [s for s in pipeline_metrics.processing_stages if "error" in s.name.lower()]
+        error_stages = [
+            s for s in pipeline_metrics.processing_stages if "error" in s["name"].lower()
+        ]
         assert len(error_stages) == 1, "Error stage should be recorded"
 
         error_stage = error_stages[0]
-        assert error_stage.data["error_type"] == "slack_api_error", "Error type should be recorded"
         assert (
-            error_stage.data["error_message"] == "Rate limit exceeded"
+            error_stage["data"]["error_type"] == "slack_api_error"
+        ), "Error type should be recorded"
+        assert (
+            error_stage["data"]["error_message"] == "Rate limit exceeded"
         ), "Error message should be recorded"
 
         # Assert: Pipeline should still be observable even with errors

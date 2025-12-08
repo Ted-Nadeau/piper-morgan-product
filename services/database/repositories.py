@@ -197,7 +197,9 @@ class ProjectRepository(BaseRepository):
 
     async def get_default_project(self) -> Optional[domain.Project]:
         result = await self.session.execute(
-            select(ProjectDB).where(ProjectDB.is_default == True, ProjectDB.is_archived == False)
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .where(ProjectDB.is_default == True, ProjectDB.is_archived == False)
         )
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
@@ -213,7 +215,10 @@ class ProjectRepository(BaseRepository):
             filters.append(ProjectDB.owner_id == owner_id)
 
         result = await self.session.execute(
-            select(ProjectDB).where(and_(*filters)).order_by(ProjectDB.name)
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .where(and_(*filters))
+            .order_by(ProjectDB.name)
         )
         return [db_project.to_domain() for db_project in result.scalars().all()]
 
@@ -244,7 +249,11 @@ class ProjectRepository(BaseRepository):
         if owner_id and not is_admin:  # Only check ownership if not admin
             filters.append(ProjectDB.owner_id == owner_id)
 
-        result = await self.session.execute(select(ProjectDB).where(and_(*filters)))
+        result = await self.session.execute(
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .where(and_(*filters))
+        )
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
@@ -306,9 +315,9 @@ class ProjectRepository(BaseRepository):
 
         # Verify the caller is the owner
         result = await self.session.execute(
-            select(ProjectDB).where(
-                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
-            )
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .where(and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id))
         )
         db_project = result.scalar_one_or_none()
 
@@ -365,9 +374,9 @@ class ProjectRepository(BaseRepository):
         """
         # Verify the caller is the owner
         result = await self.session.execute(
-            select(ProjectDB).where(
-                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
-            )
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .where(and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id))
         )
         db_project = result.scalar_one_or_none()
 
@@ -419,9 +428,9 @@ class ProjectRepository(BaseRepository):
         """
         # Verify the caller is the owner
         result = await self.session.execute(
-            select(ProjectDB).where(
-                and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id)
-            )
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))  # Eager load for async
+            .where(and_(ProjectDB.id == project_id, ProjectDB.owner_id == owner_id))
         )
         db_project = result.scalar_one_or_none()
 

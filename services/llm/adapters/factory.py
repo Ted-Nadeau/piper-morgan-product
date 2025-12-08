@@ -8,15 +8,17 @@ Pattern-012: LLM Adapter Pattern
 See: docs/internal/architecture/current/patterns/pattern-012-llm-adapter.md
 """
 
-from typing import Dict, Type, List
+from typing import Dict, List, Type
+
 import structlog
+
+from services.llm.config import LLMProvider
 
 from .base import LLMAdapter
 from .claude_adapter import ClaudeAdapter
-from .openai_adapter import OpenAIAdapter
 from .gemini_adapter import GeminiAdapter
+from .openai_adapter import OpenAIAdapter
 from .perplexity_adapter import PerplexityAdapter
-from services.llm.config import LLMProvider
 
 logger = structlog.get_logger()
 
@@ -61,9 +63,7 @@ class LLMFactory:
     }
 
     @classmethod
-    def create(
-        cls, provider: LLMProvider, api_key: str, model: str, **kwargs
-    ) -> LLMAdapter:
+    def create(cls, provider: LLMProvider, api_key: str, model: str, **kwargs) -> LLMAdapter:
         """
         Create adapter for specified provider.
 
@@ -86,7 +86,7 @@ class LLMFactory:
             adapter = LLMFactory.create(
                 provider=LLMProvider.ANTHROPIC,
                 api_key="sk-ant-...",
-                model="claude-3-5-sonnet-20241022",
+                model="claude-sonnet-4-20250514",
                 timeout=30.0
             )
 
@@ -108,7 +108,10 @@ class LLMFactory:
 
         try:
             logger.debug(
-                "factory_creating_adapter", provider=provider.value, model=model, adapter_class=adapter_class.__name__
+                "factory_creating_adapter",
+                provider=provider.value,
+                model=model,
+                adapter_class=adapter_class.__name__,
             )
 
             adapter = adapter_class(api_key=api_key, model=model, **kwargs)
@@ -138,14 +141,10 @@ class LLMFactory:
                 model=model,
                 error=str(e),
             )
-            raise ValueError(
-                f"Failed to create {provider.value} adapter: {str(e)}"
-            ) from e
+            raise ValueError(f"Failed to create {provider.value} adapter: {str(e)}") from e
 
     @classmethod
-    def register_adapter(
-        cls, provider: LLMProvider, adapter_class: Type[LLMAdapter]
-    ):
+    def register_adapter(cls, provider: LLMProvider, adapter_class: Type[LLMAdapter]):
         """
         Register custom adapter.
 
@@ -172,9 +171,7 @@ class LLMFactory:
             )
         """
         if not issubclass(adapter_class, LLMAdapter):
-            raise TypeError(
-                f"{adapter_class.__name__} must inherit from LLMAdapter"
-            )
+            raise TypeError(f"{adapter_class.__name__} must inherit from LLMAdapter")
 
         logger.info(
             "factory_registering_adapter",
