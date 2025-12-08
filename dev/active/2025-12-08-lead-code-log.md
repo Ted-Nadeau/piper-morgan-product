@@ -338,25 +338,81 @@ While fixing issues, discovered:
 - Follows existing patterns exactly
 - Uses same validation infrastructure as web UI
 
-### #439: ALPHA-SETUP-REFACTOR (ANALYSIS COMPLETE - DEFER IMPLEMENTATION)
+### #439: ALPHA-SETUP-REFACTOR (PLAN COMPLETE - READY FOR NEXT SESSION)
 
 **Status**: READY FOR IMPLEMENTATION (Full plan documented)
 **Time Spent**: ~45 minutes (analysis + plan creation)
-**Decision**: Defer full implementation - focus on #447 instead
+**Decision**: Defer full implementation - plan created for next dedicated session
 
 **What Was Done**:
 - Analyzed setup_wizard.py structure (1427 lines, 21 functions)
-- Identified duplication pattern: 4 API key sections (OpenAI, Anthropic, Gemini, GitHub) with ~400 lines each following same pattern
+- Identified duplication pattern: 4 API key sections (OpenAI, Anthropic, Gemini, GitHub) with ~400 lines total following same pattern
 - Created detailed refactoring plan with 3 phases: API key helper, wizard function split, validation
 - Documented in: `dev/2025/12/08/PLAN-439-REFACTOR.md`
+- Acceptance criteria documented: no duplication >10 lines, no function >50 lines, all tests pass
 
 **Why Defer**:
 - Full refactoring requires replacing 400+ lines of duplicate code
-- Needs careful testing to avoid breaking existing functionality
-- Helper function approach identified but integration complexity higher than estimated
-- Better to defer and focus on delivering #447 (smaller, cleaner win)
+- Integration complexity higher than initial estimate
+- Better to have dedicated 3-4 hour session with focus
+- Allowed us to deliver #447 instead (smaller, immediate win)
 
 **For Next Session**:
-- Plan document ready for implementation
-- Recommend scheduling dedicated 3-4 hour session for #439
+- Plan document ready for implementation (all 3 phases specified)
+- Estimated effort: 3-4 hours
 - Helper function pattern understood and can be extracted quickly
+- Full test strategy documented
+
+---
+
+### ✅ #447: ALPHA-UX-ENHANCE (COMPLETED)
+
+**Status**: ✅ COMPLETED
+**Time**: ~20 minutes
+**Complexity**: Low - UI/JavaScript only
+
+**What Changed**:
+- Modified `web/static/js/setup.js` system check button handler
+- Added sequential animation for service status display
+- Each service result appears with 200ms delay between them
+- Slide-in animation (opacity + transform) as each service result appears
+- Shows initial "Checking..." progress while API call is in flight
+- 400ms final delay before showing "Next" button (satisfaction delay)
+
+**Implementation Details**:
+- Initial state shows 5 "⏳ Checking..." lines for all services
+- After API returns, clears and reveals results sequentially
+- Uses `requestAnimationFrame` for smooth animation
+- Each service element has: opacity 0→1, transform translateY(10px)→0
+- Transition: 300ms ease on opacity and transform
+- Delay between services: 200ms `setTimeout`
+
+**UX Impact**:
+- Instant feedback changed to "you're watching something happen"
+- Builds confidence that checks are actually running
+- Provides visual rhythm instead of jarring instant results
+- Satisfying micro-interaction
+
+**Files**:
+- `web/static/js/setup.js` (lines 64-135)
+
+---
+
+### Summary: Session Completed (2:31 PM - 2:45 PM)
+
+**Completed**:
+1. ✅ Committed beads fixes (tu7, 40n) + #448 Gemini support
+2. ✅ Analyzed and planned #439 (detailed plan document)
+3. ✅ Implemented and committed #447 (micro-animation)
+
+**Commits**:
+- `97624d21` - fix(tu7, 40n, #448): Toast z-index, nav alignment, Gemini support
+- `d8bfbd5e` - feat(#447, #439): System check animation + #439 plan
+
+**Ready for Discussion**:
+- #440 ALPHA-SETUP-TEST (scope/environment clarification)
+- #441 CORE-UX-AUTH-PHASE2 (MVP boundary decisions)
+- #439 approach (if ready to schedule)
+
+**Outstanding**:
+- None - all assigned work completed or planned
