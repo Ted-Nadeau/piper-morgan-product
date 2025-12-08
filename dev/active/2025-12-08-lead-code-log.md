@@ -337,3 +337,26 @@ While fixing issues, discovered:
 - No syntax errors
 - Follows existing patterns exactly
 - Uses same validation infrastructure as web UI
+
+### #439: ALPHA-SETUP-REFACTOR (ANALYSIS COMPLETE - DEFER IMPLEMENTATION)
+
+**Status**: READY FOR IMPLEMENTATION (Full plan documented)
+**Time Spent**: ~45 minutes (analysis + plan creation)
+**Decision**: Defer full implementation - focus on #447 instead
+
+**What Was Done**:
+- Analyzed setup_wizard.py structure (1427 lines, 21 functions)
+- Identified duplication pattern: 4 API key sections (OpenAI, Anthropic, Gemini, GitHub) with ~400 lines each following same pattern
+- Created detailed refactoring plan with 3 phases: API key helper, wizard function split, validation
+- Documented in: `dev/2025/12/08/PLAN-439-REFACTOR.md`
+
+**Why Defer**:
+- Full refactoring requires replacing 400+ lines of duplicate code
+- Needs careful testing to avoid breaking existing functionality
+- Helper function approach identified but integration complexity higher than estimated
+- Better to defer and focus on delivering #447 (smaller, cleaner win)
+
+**For Next Session**:
+- Plan document ready for implementation
+- Recommend scheduling dedicated 3-4 hour session for #439
+- Helper function pattern understood and can be extracted quickly
