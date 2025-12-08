@@ -13,6 +13,7 @@ const Dialog = {
   /**
    * Show confirmation dialog
    * @param {Object} config - Configuration object
+   * @param {string} config.mode - Dialog mode: 'confirm' (default) or 'form' (Issue #462)
    * @param {string} config.title - Dialog title (e.g., "Delete Standup?")
    * @param {string} config.message - Warning message (text only)
    * @param {string} config.content - HTML content for form dialogs (Issue #462)
@@ -25,11 +26,36 @@ const Dialog = {
     const dialog = document.getElementById('confirmation-dialog');
     if (!dialog) return;
 
+    // Determine mode: 'confirm' (default) for destructive actions, 'form' for create/edit
+    // Issue #462: Mode controls icon visibility and button styling
+    const mode = config.mode || 'confirm';
+
     // Update dialog text and buttons
     const title = dialog.querySelector('.confirmation-dialog-title');
     const message = dialog.querySelector('.confirmation-dialog-message');
     const confirmBtn = dialog.querySelector('#dialog-confirm-btn');
     const cancelBtn = dialog.querySelector('[onclick="Dialog.cancel()"]').closest('button');
+    const iconEl = dialog.querySelector('.confirmation-dialog-icon');
+
+    // Icon visibility based on mode (Issue #462)
+    // - 'confirm' mode: Show warning icon for destructive actions
+    // - 'form' mode: Hide icon for create/edit actions
+    if (iconEl) {
+      iconEl.style.display = mode === 'form' ? 'none' : 'block';
+    }
+
+    // Button styling based on mode (Issue #462)
+    // - 'confirm' mode: btn-danger (red) for destructive actions
+    // - 'form' mode: btn-primary (blue) for positive actions
+    if (confirmBtn) {
+      if (mode === 'form') {
+        confirmBtn.classList.remove('btn-danger');
+        confirmBtn.classList.add('btn-primary');
+      } else {
+        confirmBtn.classList.remove('btn-primary');
+        confirmBtn.classList.add('btn-danger');
+      }
+    }
 
     if (title) title.textContent = config.title || 'Confirm Action';
     // Support both 'content' (HTML for forms) and 'message' (text for confirmations)
@@ -43,7 +69,8 @@ const Dialog = {
         message.textContent = config.message || 'Are you sure you want to proceed? This action cannot be undone.';
       }
     }
-    if (confirmBtn) confirmBtn.textContent = config.confirmText || 'Confirm';
+    // Button text: use provided text, or default based on mode
+    if (confirmBtn) confirmBtn.textContent = config.confirmText || (mode === 'form' ? 'Create' : 'Confirm');
     if (cancelBtn) cancelBtn.textContent = config.cancelText || 'Cancel';
 
     // Store callbacks

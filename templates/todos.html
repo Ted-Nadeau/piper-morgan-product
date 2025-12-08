@@ -204,7 +204,9 @@
     // Create new todo
     function createNewTodo() {
       Dialog.show({
+        mode: 'form',
         title: 'Create New Todo',
+        confirmText: 'Create',
         content: `
           <div class="form-group">
             <label>Todo Text</label>
@@ -297,7 +299,9 @@
       }
 
       Dialog.show({
+        mode: 'form',
         title: `Share ${resourceName}`,
+        confirmText: 'Done',
         width: '500px',
         content: `
           <div class="share-modal-content">

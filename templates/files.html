@@ -270,7 +270,9 @@
     // Open upload dialog
     function openUploadDialog() {
       Dialog.show({
+        mode: 'form',
         title: 'Upload File',
+        confirmText: 'Upload',
         content: `
           <div class="form-group">
             <label>Select File</label>
