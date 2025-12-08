@@ -891,6 +891,113 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
         else:
             print("   Skipped (you can add this later)")
 
+    # Gemini (optional)
+    print("\n   Google Gemini API key (optional, press Enter to skip):")
+
+    # Check keychain first
+    print("   Checking keychain for existing key...")
+    gemini_key = None
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            existing_key = await service.retrieve_user_key(session, user_id, "gemini")
+            if existing_key:
+                print("   ✓ Using existing key from keychain")
+                stored_keys["gemini"] = existing_key
+                gemini_key = existing_key  # Mark as found
+            else:
+                print("   ℹ️  No existing key found in keychain")
+                # Check for global key (migration from 0.8.0)
+                global_key = _check_global_keychain_key("gemini")
+                if global_key:
+                    print("   ✓ Found existing global key (migrating to user-scoped)")
+                    gemini_key = global_key
+                    # Migrate: store as user-scoped
+                    try:
+                        await service.store_user_key(
+                            user_id=user_id,
+                            provider="gemini",
+                            api_key=global_key,
+                            session=session,
+                            validate=True,
+                        )
+                        await session.commit()
+                        stored_keys["gemini"] = global_key
+                        print("   ✓ Migrated to user-scoped storage")
+                    except Exception as migrate_err:
+                        print(f"   ℹ️  Using key (migration skipped: {migrate_err})")
+                        stored_keys["gemini"] = global_key
+    except Exception as e:
+        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
+        pass  # Keychain check failed, continue to other methods
+
+    # Check for environment variable if not in keychain
+    if not gemini_key:
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+    if gemini_key:
+        print("   ℹ️  Using GEMINI_API_KEY from environment")
+        print("   Validating...")
+
+        # Store and validate the key from environment
+        try:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                await service.store_user_key(
+                    user_id=user_id,
+                    provider="gemini",
+                    api_key=gemini_key,
+                    session=session,
+                    validate=True,
+                )
+                await session.commit()
+
+            print("   ✓ Valid (gemini-pro access confirmed)")
+            stored_keys["gemini"] = gemini_key
+        except ValueError as e:
+            print(f"   ✗ {str(e)}")
+            print("   Key from environment is invalid. Please update GEMINI_API_KEY")
+            gemini_key = None  # Force manual entry
+        except Exception as e:
+            print(f"   ✗ Validation error: {e}")
+            print("   Continuing with manual entry...")
+            gemini_key = None  # Force manual entry
+
+    # Manual entry loop if env var not set or failed
+    while not gemini_key:
+        gemini_key = getpass("   Enter key (AIza...): ")
+
+        if not gemini_key:
+            print("   Skipped (you can add this later)")
+            break
+
+        print("   Validating...")
+
+        try:
+            # Validate with provider API
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                # Store the key first
+                await service.store_user_key(
+                    user_id=user_id,
+                    provider="gemini",
+                    api_key=gemini_key,
+                    session=session,
+                    validate=True,  # This will validate during store
+                )
+                await session.commit()
+
+            # If we got here, validation succeeded
+            print("   ✓ Valid (gemini-pro access confirmed)")
+            stored_keys["gemini"] = gemini_key
+            break
+
+        except ValueError as e:
+            # Validation failed
+            print(f"   ✗ {str(e)}")
+            print("   Please check your key and try again.")
+            gemini_key = None  # Reset to retry
+        except Exception as e:
+            print(f"   ✗ Validation error: {e}")
+            print("   Please check your key and try again.")
+            gemini_key = None  # Reset to retry
+
     # GitHub (optional)
     print("\n   GitHub token (optional, press Enter to skip):")
 
