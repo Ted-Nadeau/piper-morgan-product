@@ -6,6 +6,7 @@ Run this in your working environment with: python simple_test.py
 import asyncio
 import os
 
+import pytest
 from dotenv import load_dotenv
 
 # Load environment variables
