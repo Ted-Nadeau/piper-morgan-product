@@ -277,6 +277,7 @@ class TestLLMIntentClassifier:
             assert "Detected PM domains: project" in prompt
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_confidence_threshold_configuration(self):
         """Test custom confidence threshold configuration"""
         # Create classifier with high threshold

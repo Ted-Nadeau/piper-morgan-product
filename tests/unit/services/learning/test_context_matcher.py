@@ -11,12 +11,14 @@ class TestContextMatcher:
     """Test ContextMatcher pattern matching"""
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_empty_pattern_context_matches(self):
         """Empty pattern context should match any current context"""
         result = await ContextMatcher.matches({}, {"anything": "here"})
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_empty_current_context_with_pattern(self):
         """Empty current context should fail if pattern has triggers"""
         pattern_context = {"trigger_time": "after standup"}
@@ -26,6 +28,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_standup_match(self):
         """Test 'after standup' temporal matching"""
         pattern_context = {"trigger_time": "after standup"}
@@ -35,6 +38,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_eod_match(self):
         """Test 'end of day' temporal matching"""
         pattern_context = {"trigger_time": "end of day"}
@@ -44,6 +48,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_eod_variant(self):
         """Test 'eod' matches 'end_of_day' event"""
         pattern_context = {"trigger_time": "eod"}
@@ -53,6 +58,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_no_match(self):
         """Test temporal trigger doesn't match wrong event"""
         pattern_context = {"trigger_time": "after standup"}
@@ -62,6 +68,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_morning_time_match(self):
         """Test morning time matching"""
         pattern_context = {"trigger_time": "9am"}
@@ -71,6 +78,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_morning_keyword_match(self):
         """Test 'morning' keyword matches morning hours"""
         pattern_context = {"trigger_time": "morning"}
@@ -80,6 +88,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_temporal_time_no_match(self):
         """Test time trigger doesn't match afternoon"""
         pattern_context = {"trigger_time": "9am"}
@@ -89,6 +98,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_sequential_after_action(self):
         """Test sequential 'after action' matching"""
         pattern_context = {"after_action": "create_github_issue"}
@@ -98,6 +108,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_sequential_wrong_action(self):
         """Test sequential trigger doesn't match wrong action"""
         pattern_context = {"after_action": "create_github_issue"}
@@ -107,6 +118,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_sequential_missing_action(self):
         """Test sequential trigger fails when no last_action"""
         pattern_context = {"after_action": "create_github_issue"}
@@ -116,6 +128,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_intent_matching(self):
         """Test intent-based matching"""
         pattern_context = {"trigger_intent": "GITHUB_ISSUE_CREATE"}
@@ -125,6 +138,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_intent_wrong_match(self):
         """Test intent trigger doesn't match wrong intent"""
         pattern_context = {"trigger_intent": "GITHUB_ISSUE_CREATE"}
@@ -134,6 +148,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_intent_missing(self):
         """Test intent trigger fails when no intent in context"""
         pattern_context = {"trigger_intent": "GITHUB_ISSUE_CREATE"}
@@ -143,6 +158,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_multiple_conditions_all_match(self):
         """Test all conditions must match"""
         pattern_context = {
@@ -158,6 +174,7 @@ class TestContextMatcher:
         assert result is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_multiple_conditions_one_fails(self):
         """Test any failing condition returns False"""
         pattern_context = {
@@ -173,6 +190,7 @@ class TestContextMatcher:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_multiple_conditions_all_types(self):
         """Test all trigger types together"""
         pattern_context = {
@@ -193,6 +211,7 @@ class TestContextMatcher:
 class TestCheckTemporal:
     """Test _check_temporal helper method"""
 
+    @pytest.mark.smoke
     def test_standup_event_match(self):
         """Test standup event matching"""
         result = ContextMatcher._check_temporal(
@@ -200,6 +219,7 @@ class TestCheckTemporal:
         )
         assert result is True
 
+    @pytest.mark.smoke
     def test_case_insensitive_matching(self):
         """Test case-insensitive event matching"""
         result = ContextMatcher._check_temporal(
@@ -207,6 +227,7 @@ class TestCheckTemporal:
         )
         assert result is True
 
+    @pytest.mark.smoke
     def test_eod_variations(self):
         """Test various end-of-day trigger formats"""
         # Test "eod" trigger
@@ -217,6 +238,7 @@ class TestCheckTemporal:
         assert ContextMatcher._check_temporal("end of day", {"current_event": "eod"})
         assert ContextMatcher._check_temporal("end of day", {"current_event": "end_of_day"})
 
+    @pytest.mark.smoke
     def test_no_match_returns_false(self):
         """Test unmatched triggers return False"""
         result = ContextMatcher._check_temporal(
@@ -224,11 +246,13 @@ class TestCheckTemporal:
         )
         assert result is False
 
+    @pytest.mark.smoke
     def test_missing_event_returns_false(self):
         """Test missing current_event returns False"""
         result = ContextMatcher._check_temporal("after standup", {})
         assert result is False
 
+    @pytest.mark.smoke
     def test_morning_time_range(self):
         """Test morning time range (7-11am)"""
         # Should match
@@ -254,6 +278,7 @@ class TestCheckTemporal:
 class TestCalculateSimilarity:
     """Test _calculate_similarity helper method (placeholder for future)"""
 
+    @pytest.mark.smoke
     def test_returns_default_similarity(self):
         """Test placeholder returns 1.0 for alpha"""
         result = ContextMatcher._calculate_similarity({}, {})

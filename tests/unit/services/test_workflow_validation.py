@@ -20,6 +20,7 @@ from services.shared_types import WorkflowType
 class TestWorkflowContextValidator:
     """Test workflow context validation rules"""
 
+    @pytest.mark.smoke
     def test_create_ticket_with_project_context(self):
         """Test CREATE_TICKET workflow with valid project context"""
         context = {
@@ -30,6 +31,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception
         workflow_validator.validate_workflow_context(WorkflowType.CREATE_TICKET, context)
 
+    @pytest.mark.smoke
     def test_create_ticket_without_project_context(self):
         """Test CREATE_TICKET workflow without project context - should pass with default repo"""
         context = {"original_message": "create ticket for bug fix"}
@@ -37,6 +39,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception (uses default repository)
         workflow_validator.validate_workflow_context(WorkflowType.CREATE_TICKET, context)
 
+    @pytest.mark.smoke
     def test_create_ticket_missing_original_message(self):
         """Test CREATE_TICKET workflow missing required original_message"""
         context = {"project_id": "test-project-123"}
@@ -49,6 +52,7 @@ class TestWorkflowContextValidator:
         assert "create a ticket" in error.user_message
         assert "need to know what you want me to do" in error.user_message
 
+    @pytest.mark.smoke
     def test_analyze_file_with_file_reference(self):
         """Test ANALYZE_FILE workflow with valid file reference"""
         context = {"original_message": "analyze the uploaded report.pdf", "file_id": "file-123"}
@@ -56,6 +60,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception
         workflow_validator.validate_workflow_context(WorkflowType.ANALYZE_FILE, context)
 
+    @pytest.mark.smoke
     def test_analyze_file_without_file_reference(self):
         """Test ANALYZE_FILE workflow without file reference - should pass but provide suggestions"""
         context = {"original_message": "analyze file"}
@@ -63,6 +68,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception (file_id is conditional, not required)
         workflow_validator.validate_workflow_context(WorkflowType.ANALYZE_FILE, context)
 
+    @pytest.mark.smoke
     def test_analyze_file_missing_original_message(self):
         """Test ANALYZE_FILE workflow missing required original_message"""
         context = {"file_id": "file-123"}
@@ -74,6 +80,7 @@ class TestWorkflowContextValidator:
         assert "original_message" in error.details["missing_fields"]
         assert "analyze a file" in error.user_message
 
+    @pytest.mark.smoke
     def test_list_projects_minimal_context(self):
         """Test LIST_PROJECTS workflow with minimal context"""
         context = {"original_message": "list projects"}
@@ -81,6 +88,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception
         workflow_validator.validate_workflow_context(WorkflowType.LIST_PROJECTS, context)
 
+    @pytest.mark.smoke
     def test_list_projects_missing_original_message(self):
         """Test LIST_PROJECTS workflow missing required original_message"""
         context = {}
@@ -92,6 +100,7 @@ class TestWorkflowContextValidator:
         assert "original_message" in error.details["missing_fields"]
         assert "list projects" in error.user_message
 
+    @pytest.mark.smoke
     def test_review_item_with_github_url(self):
         """Test REVIEW_ITEM workflow with GitHub URL"""
         context = {
@@ -102,6 +111,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception
         workflow_validator.validate_workflow_context(WorkflowType.REVIEW_ITEM, context)
 
+    @pytest.mark.smoke
     def test_review_item_without_github_url(self):
         """Test REVIEW_ITEM workflow without GitHub URL - should pass but provide suggestions"""
         context = {"original_message": "review item"}
@@ -109,6 +119,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception (github_url is conditional, not required)
         workflow_validator.validate_workflow_context(WorkflowType.REVIEW_ITEM, context)
 
+    @pytest.mark.smoke
     def test_generate_report_with_context(self):
         """Test GENERATE_REPORT workflow with various context options"""
         context = {
@@ -120,6 +131,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception
         workflow_validator.validate_workflow_context(WorkflowType.GENERATE_REPORT, context)
 
+    @pytest.mark.smoke
     def test_plan_strategy_with_project_context(self):
         """Test PLAN_STRATEGY workflow with project context"""
         context = {"original_message": "plan strategy for Q4", "project_id": "project-123"}
@@ -127,6 +139,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception
         workflow_validator.validate_workflow_context(WorkflowType.PLAN_STRATEGY, context)
 
+    @pytest.mark.smoke
     def test_empty_context_values(self):
         """Test validation with empty context values"""
         context = {
@@ -142,6 +155,7 @@ class TestWorkflowContextValidator:
         error = exc_info.value
         assert "original_message" in error.details["missing_fields"]
 
+    @pytest.mark.smoke
     def test_unknown_workflow_type(self):
         """Test validation with unknown workflow type"""
         context = {"original_message": "test message"}
@@ -149,6 +163,7 @@ class TestWorkflowContextValidator:
         # Should not raise an exception for unknown workflow types
         workflow_validator.validate_workflow_context("UNKNOWN_WORKFLOW", context)
 
+    @pytest.mark.smoke
     def test_validation_summary_valid_context(self):
         """Test validation summary with valid context"""
         context = {
@@ -162,6 +177,7 @@ class TestWorkflowContextValidator:
         assert summary["missing_fields"] == []
         assert "suggestions" in summary
 
+    @pytest.mark.smoke
     def test_validation_summary_invalid_context(self):
         """Test validation summary with invalid context"""
         context = {
@@ -176,6 +192,7 @@ class TestWorkflowContextValidator:
         assert "user_message" in summary
         assert "create a ticket" in summary["user_message"]
 
+    @pytest.mark.smoke
     def test_github_url_validation(self):
         """Test GitHub URL validation"""
         validator = WorkflowContextValidator()
@@ -195,6 +212,7 @@ class TestWorkflowContextValidator:
 class TestContextValidationError:
     """Test ContextValidationError user message generation"""
 
+    @pytest.mark.smoke
     def test_create_ticket_error_message(self):
         """Test error message for CREATE_TICKET missing project"""
         error = ContextValidationError(
@@ -207,6 +225,7 @@ class TestContextValidationError:
         assert "project" in error.user_message
         assert "Try:" in error.user_message
 
+    @pytest.mark.smoke
     def test_analyze_file_error_message(self):
         """Test error message for ANALYZE_FILE missing file reference"""
         error = ContextValidationError(
@@ -219,6 +238,7 @@ class TestContextValidationError:
         assert "file" in error.user_message
         assert "Try:" in error.user_message
 
+    @pytest.mark.smoke
     def test_review_item_error_message(self):
         """Test error message for REVIEW_ITEM missing GitHub URL"""
         error = ContextValidationError(
@@ -231,6 +251,7 @@ class TestContextValidationError:
         assert "GitHub URL" in error.user_message
         assert "Try:" in error.user_message
 
+    @pytest.mark.smoke
     def test_generic_error_message(self):
         """Test generic error message for unknown workflow type"""
         error = ContextValidationError(

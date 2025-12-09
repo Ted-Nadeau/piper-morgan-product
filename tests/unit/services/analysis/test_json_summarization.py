@@ -15,6 +15,7 @@ from services.domain.models import DocumentSummary, SummarySection
 class TestSummarySection:
     """Test SummarySection domain model"""
 
+    @pytest.mark.smoke
     def test_empty_section_to_markdown(self):
         """Empty section should generate proper markdown"""
         section = SummarySection(heading="Test Section")
@@ -23,6 +24,7 @@ class TestSummarySection:
         expected = "### Test Section\n\nNo items found.\n"
         assert markdown == expected
 
+    @pytest.mark.smoke
     def test_section_with_points_to_markdown(self):
         """Section with points should generate clean bullet list"""
         section = SummarySection(
@@ -33,6 +35,7 @@ class TestSummarySection:
         expected = "### Key Points\n\n- First point\n- Second point\n- Third point\n\n"
         assert markdown == expected
 
+    @pytest.mark.smoke
     def test_section_with_special_characters(self):
         """Section should handle special characters properly"""
         section = SummarySection(
@@ -49,6 +52,7 @@ class TestSummarySection:
 class TestDocumentSummary:
     """Test DocumentSummary domain model"""
 
+    @pytest.mark.smoke
     def test_minimal_summary_to_markdown(self):
         """Minimal summary should generate clean markdown"""
         summary = DocumentSummary(title="Test Document", document_type="Requirements")
@@ -57,6 +61,7 @@ class TestDocumentSummary:
         expected = "# Test Document\n\n**Document Type:** Requirements\n\n"
         assert markdown == expected
 
+    @pytest.mark.smoke
     def test_summary_with_key_findings(self):
         """Summary with key findings should format properly"""
         summary = DocumentSummary(
@@ -72,6 +77,7 @@ class TestDocumentSummary:
         assert "- Critical bug found\n" in markdown
         assert "- Performance issues identified\n" in markdown
 
+    @pytest.mark.smoke
     def test_summary_with_sections(self):
         """Summary with additional sections should format properly"""
         summary = DocumentSummary(
@@ -93,6 +99,7 @@ class TestDocumentSummary:
         assert "### Authentication\n\n" in markdown
         assert "- Bearer token required\n" in markdown
 
+    @pytest.mark.smoke
     def test_get_section_by_heading(self):
         """Should be able to retrieve sections by heading"""
         summary = DocumentSummary(title="Test Doc", document_type="Test")
@@ -107,6 +114,7 @@ class TestDocumentSummary:
         missing_section = summary.get_section("Non-existent")
         assert missing_section is None
 
+    @pytest.mark.smoke
     def test_clean_bullet_formatting_in_output(self):
         """Generated markdown should use clean ASCII hyphens for bullets"""
         summary = DocumentSummary(
@@ -130,6 +138,7 @@ class TestDocumentSummary:
 class TestSummaryParser:
     """Test SummaryParser service (TDD - these will fail initially)"""
 
+    @pytest.mark.smoke
     def test_parse_valid_json_to_summary(self):
         """Should parse valid JSON into DocumentSummary"""
         json_response = {
@@ -165,6 +174,7 @@ class TestSummaryParser:
         assert features_section is not None
         assert "User registration" in features_section.points
 
+    @pytest.mark.smoke
     def test_parse_minimal_json(self):
         """Should handle minimal JSON with just title and document_type"""
         json_response = {"title": "Simple Doc", "document_type": "Note"}
@@ -177,6 +187,7 @@ class TestSummaryParser:
         assert len(summary.key_findings) == 0
         assert len(summary.sections) == 0
 
+    @pytest.mark.smoke
     def test_parse_invalid_json_returns_error_summary(self):
         """Should gracefully handle malformed JSON"""
         invalid_json = "{ invalid json structure"
@@ -190,6 +201,7 @@ class TestSummaryParser:
         assert len(summary.key_findings) > 0
         assert "JSON parsing failed" in summary.key_findings[0]
 
+    @pytest.mark.smoke
     def test_parse_json_missing_required_fields(self):
         """Should handle JSON missing required fields"""
         incomplete_json = {
@@ -203,6 +215,7 @@ class TestSummaryParser:
         assert summary.title == "Test Doc"
         assert summary.document_type == "Unknown"  # Should default
 
+    @pytest.mark.smoke
     def test_parse_json_with_empty_sections(self):
         """Should handle sections with no points"""
         json_response = {
@@ -222,6 +235,7 @@ class TestSummaryParser:
         markdown = summary.to_markdown()
         assert "### Empty Section\n\nNo items found.\n" in markdown
 
+    @pytest.mark.smoke
     def test_parse_json_with_malformed_key_findings_string(self):
         """Should handle key_findings as a single string with Unicode bullets"""
         json_response = {
@@ -246,6 +260,7 @@ class TestSummaryParser:
         assert "- Third finding\n" in markdown
         assert "•" not in markdown  # No Unicode bullets in output
 
+    @pytest.mark.smoke
     def test_parse_json_with_inline_bold_headings(self):
         """Should handle inline bold headings that lost line breaks"""
         json_response = {
@@ -269,6 +284,7 @@ class TestSummaryParser:
         assert "- **Another topic** more details\n" in markdown
         assert "- **Final topic** end details\n" in markdown
 
+    @pytest.mark.smoke
     def test_parse_json_with_numbered_lists(self):
         """Should handle numbered lists that lost line breaks"""
         json_response = {
@@ -286,6 +302,7 @@ class TestSummaryParser:
         assert "Second item" in summary.key_findings
         assert "Third item" in summary.key_findings
 
+    @pytest.mark.smoke
     def test_parse_json_with_malformed_section_points(self):
         """Should handle section points as strings with formatting issues"""
         json_response = {
@@ -321,6 +338,7 @@ class TestSummaryParser:
 class TestEndToEndMarkdownGeneration:
     """Test complete flow from JSON to clean markdown"""
 
+    @pytest.mark.smoke
     def test_complex_document_generates_clean_markdown(self):
         """Complex document should generate clean, readable markdown"""
         json_response = {
@@ -382,6 +400,7 @@ class TestEndToEndMarkdownGeneration:
         assert "- Python backend\n" in markdown
         assert "- 99.9% uptime\n" in markdown
 
+    @pytest.mark.smoke
     def test_no_malformed_headers_in_output(self):
         """Should never generate malformed headers like '• ##'"""
         json_response = {

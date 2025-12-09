@@ -18,6 +18,7 @@ from services.shared_types import WorkflowStatus, WorkflowType
 class TestWorkflowRepositoryMigration:
     """Test WorkflowRepository Pattern #1 compliance and find_by_id() method"""
 
+    @pytest.mark.smoke
     async def test_repository_inherits_from_base(self, async_transaction):
         """Test that WorkflowRepository inherits from BaseRepository"""
         from services.database.repositories import BaseRepository
@@ -27,6 +28,7 @@ class TestWorkflowRepositoryMigration:
             assert isinstance(repo, BaseRepository)
             assert repo.model == WorkflowDB
 
+    @pytest.mark.smoke
     async def test_find_by_id_method_exists(self, async_transaction):
         """Test that find_by_id() method exists and has correct signature"""
         async with async_transaction as session:
@@ -38,6 +40,7 @@ class TestWorkflowRepositoryMigration:
             # Should be callable
             assert callable(getattr(repo, "find_by_id"))
 
+    @pytest.mark.smoke
     async def test_find_by_id_returns_domain_workflow(self, async_transaction):
         """Test that find_by_id() returns domain Workflow object"""
         async with async_transaction as session:
@@ -68,6 +71,7 @@ class TestWorkflowRepositoryMigration:
             assert result.status == WorkflowStatus.COMPLETED
             assert result.context == {"project": "test"}
 
+    @pytest.mark.smoke
     async def test_find_by_id_returns_none_for_nonexistent(self, async_transaction):
         """Test that find_by_id() returns None for non-existent workflow"""
         async with async_transaction as session:
@@ -78,6 +82,7 @@ class TestWorkflowRepositoryMigration:
 
             assert result is None
 
+    @pytest.mark.smoke
     async def test_find_by_id_handles_database_conversion(self, async_transaction):
         """Test that find_by_id() properly converts DB model to domain model"""
         async with async_transaction as session:
@@ -115,6 +120,7 @@ class TestWorkflowRepositoryMigration:
             assert domain_workflow.error is None
             assert domain_workflow.created_at == created_time
 
+    @pytest.mark.smoke
     async def test_find_by_id_compatible_with_legacy_interface(self, async_transaction):
         """Test that find_by_id() provides same interface as legacy version"""
         async with async_transaction as session:

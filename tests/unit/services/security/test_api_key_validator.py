@@ -27,6 +27,7 @@ class TestAPIKeyValidator:
         return APIKeyValidator()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_openai_key_valid_format(self, validator):
         """Test OpenAI key with valid format"""
         # Valid OpenAI key format: sk- + 48+ mixed characters
@@ -41,6 +42,7 @@ class TestAPIKeyValidator:
         assert report.api_key_preview.startswith("sk-")
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_openai_key_invalid_format(self, validator):
         """Test OpenAI key with invalid format (too short)"""
         invalid_key = "sk-short"
@@ -54,6 +56,7 @@ class TestAPIKeyValidator:
         assert len(report.warnings) > 0 or len(report.recommendations) > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_anthropic_key_valid_format(self, validator):
         """Test Anthropic key with valid format"""
         # Valid Anthropic key format: sk-ant- + 100+ mixed characters
@@ -71,6 +74,7 @@ class TestAPIKeyValidator:
         assert report.format_result.valid is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_anthropic_key_invalid_format(self, validator):
         """Test Anthropic key with invalid format"""
         invalid_key = "sk-ant-short"
@@ -82,6 +86,7 @@ class TestAPIKeyValidator:
         assert report.overall_valid is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_github_token_valid_format(self, validator):
         """Test GitHub personal access token format"""
         # Valid GitHub PAT: ghp_ + 36+ mixed characters (40+ total)
@@ -93,6 +98,7 @@ class TestAPIKeyValidator:
         assert report.format_valid is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_slack_token_valid_format(self, validator):
         """Test Slack bot token format"""
         # Valid Slack bot token: xoxb- + numbers + dash + mixed characters
@@ -104,6 +110,7 @@ class TestAPIKeyValidator:
         assert report.format_valid is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_unknown_provider(self, validator):
         """Test validation with unknown provider"""
         report = await validator.validate_api_key("unknown_provider", "test-key-12345")
@@ -114,6 +121,7 @@ class TestAPIKeyValidator:
         assert isinstance(report.overall_valid, bool)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_key_strength_validation(self, validator):
         """Test key strength checking"""
         # Weak key (too short, simple pattern)
@@ -126,6 +134,7 @@ class TestAPIKeyValidator:
         assert report.strength_result is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_leak_detection(self, validator):
         """Test leak detection for potentially compromised keys"""
         # Test key with common test pattern
@@ -138,6 +147,7 @@ class TestAPIKeyValidator:
         assert report.leak_result is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_overall_validation_logic(self, validator):
         """Test that overall_valid reflects all validation checks"""
         # Valid format, good strength, no leaks
@@ -152,6 +162,7 @@ class TestAPIKeyValidator:
             assert report.overall_valid is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_security_level_assignment(self, validator):
         """Test that security_level is assigned correctly"""
         valid_key = "sk-X7k9mP2nQ5tR8wY3jL6hN4vC1bM0sD9fG8eA7zK5x2W4uT"
@@ -162,6 +173,7 @@ class TestAPIKeyValidator:
         assert report.security_level in ["high", "medium", "low", "critical"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_recommendations_populated(self, validator):
         """Test that recommendations list is populated for issues"""
         # Invalid format should generate recommendations
@@ -174,6 +186,7 @@ class TestAPIKeyValidator:
         assert isinstance(report.warnings, list)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_warnings_populated(self, validator):
         """Test that warnings list is populated appropriately"""
         # Weak key should generate warnings (repetitive pattern)
@@ -184,6 +197,7 @@ class TestAPIKeyValidator:
         assert isinstance(report.warnings, list)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_strict_mode_parameter(self, validator):
         """Test strict_mode parameter affects validation"""
         borderline_key = "sk-X7k9mP2nQ5tR8wY3jL6hN4vC1bM0sD9fG8eA7zK5x2W4uT"
@@ -201,6 +215,7 @@ class TestAPIKeyValidator:
         assert strict_report is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_api_key_preview_privacy(self, validator):
         """Test that API key preview doesn't expose full key"""
         full_key = "sk-" + "X7k9mP2nQ5tR8wY3jL6hN4vC1bM0sD9fG8eA7zK5x2W4u"
@@ -216,6 +231,7 @@ class TestAPIKeyValidator:
 class TestValidationReport:
     """Test ValidationReport structure and fields"""
 
+    @pytest.mark.smoke
     def test_validation_report_has_required_fields(self):
         """Test that ValidationReport has all required fields"""
         from services.security.key_leak_detector import LeakCheckResult
@@ -259,6 +275,7 @@ class TestValidationReport:
         assert hasattr(report, "recommendations")
         assert hasattr(report, "warnings")
 
+    @pytest.mark.smoke
     def test_validation_report_types(self):
         """Test that ValidationReport fields have correct types"""
         from services.security.key_leak_detector import LeakCheckResult
@@ -305,6 +322,7 @@ class TestValidationReport:
 class TestValidationResult:
     """Test ValidationResult dataclass"""
 
+    @pytest.mark.smoke
     def test_validation_result_creation(self):
         """Test ValidationResult creation and fields"""
         result = ValidationResult(
@@ -316,6 +334,7 @@ class TestValidationResult:
         assert result.provider == "openai"
         assert isinstance(result.warnings, list)
 
+    @pytest.mark.smoke
     def test_validation_result_with_warnings(self):
         """Test ValidationResult with warnings"""
         result = ValidationResult(

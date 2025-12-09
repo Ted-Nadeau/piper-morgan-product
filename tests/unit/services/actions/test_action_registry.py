@@ -10,6 +10,7 @@ class TestActionRegistry:
     """Test ActionRegistry functionality"""
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_github_issue_command(self):
         """Test GitHub issue creation command"""
         params = {
@@ -30,6 +31,7 @@ class TestActionRegistry:
         assert result["issue_id"] == "mock-123"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_github_issue_command_defaults(self):
         """Test GitHub issue creation with default parameters"""
         params = {}
@@ -42,6 +44,7 @@ class TestActionRegistry:
         assert result["labels"] == ["standup", "action-item"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_unknown_action(self):
         """Test unknown action raises ValueError"""
         params = {}
@@ -53,11 +56,13 @@ class TestActionRegistry:
         assert "Unknown action type: unknown_action" in str(exc_info.value)
         assert "Available: create_github_issue" in str(exc_info.value)
 
+    @pytest.mark.smoke
     def test_is_registered(self):
         """Test checking if action is registered"""
         assert ActionRegistry.is_registered("create_github_issue") is True
         assert ActionRegistry.is_registered("unknown_action") is False
 
+    @pytest.mark.smoke
     def test_list_actions(self):
         """Test listing all registered actions"""
         actions = ActionRegistry.list_actions()
@@ -70,6 +75,7 @@ class TestGithubIssueCommand:
     """Test GithubIssueCommand directly"""
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_success(self):
         """Test successful execution"""
         params = {"title": "Direct test", "labels": ["direct"]}
@@ -83,6 +89,7 @@ class TestGithubIssueCommand:
         assert result["labels"] == ["direct"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_validate_params(self):
         """Test parameter validation (currently no-op but should not raise)"""
         params = {}
@@ -93,6 +100,7 @@ class TestGithubIssueCommand:
         command.validate_params()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_rollback_not_implemented(self):
         """Test rollback raises NotImplementedError for alpha"""
         params = {}
@@ -109,11 +117,13 @@ class TestGithubIssueCommand:
 class TestBaseCommand:
     """Test BaseCommand abstract class"""
 
+    @pytest.mark.smoke
     def test_cannot_instantiate_directly(self):
         """Test that BaseCommand cannot be instantiated directly"""
         with pytest.raises(TypeError):
             BaseCommand({}, {})
 
+    @pytest.mark.smoke
     def test_subclass_must_implement_execute(self):
         """Test that subclass must implement execute()"""
 

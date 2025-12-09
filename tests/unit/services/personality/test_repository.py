@@ -42,6 +42,7 @@ class TestPersonalityProfileRepository:
 
     @pytest.mark.asyncio
     @patch("services.personality.repository.AsyncSessionFactory")
+    @pytest.mark.smoke
     async def test_get_by_user_id_success(self, mock_session_factory, repository, test_profile):
         """Test successful profile retrieval from database"""
         # Arrange
@@ -74,6 +75,7 @@ class TestPersonalityProfileRepository:
 
     @pytest.mark.asyncio
     @patch("services.personality.repository.AsyncSessionFactory")
+    @pytest.mark.smoke
     async def test_get_by_user_id_not_found_creates_default(self, mock_session_factory, repository):
         """Test that get_by_user_id creates default profile when not found"""
         # Arrange
@@ -96,6 +98,7 @@ class TestPersonalityProfileRepository:
 
     @pytest.mark.asyncio
     @patch("services.personality.repository.AsyncSessionFactory")
+    @pytest.mark.smoke
     async def test_save_new_profile(self, mock_session_factory, repository, test_profile):
         """Test saving new profile to database"""
         # Arrange
@@ -115,6 +118,7 @@ class TestPersonalityProfileRepository:
 
     @pytest.mark.asyncio
     @patch("services.personality.repository.AsyncSessionFactory")
+    @pytest.mark.smoke
     async def test_save_existing_profile_updates(
         self, mock_session_factory, repository, test_profile
     ):
@@ -136,6 +140,7 @@ class TestPersonalityProfileRepository:
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_piper_config_parsing_success(self, repository):
         """Test successful PIPER.user.md configuration parsing"""
         yaml_content = """
@@ -157,6 +162,7 @@ personality:
         assert config["profile"]["confidence_style"] == "high"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_piper_config_file_not_found(self, repository):
         """Test handling when PIPER.user.md doesn't exist"""
         with patch("os.path.exists", return_value=False):
@@ -165,6 +171,7 @@ personality:
         assert config is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_piper_config_invalid_yaml(self, repository):
         """Test handling of invalid YAML in PIPER.user.md"""
         invalid_yaml = "personality:\n  invalid: yaml: content:"
@@ -176,6 +183,7 @@ personality:
 
         assert config is None
 
+    @pytest.mark.smoke
     def test_apply_overrides_valid_values(self, repository, test_profile):
         """Test applying valid PIPER.user.md overrides"""
         overrides = {
@@ -192,6 +200,7 @@ personality:
         assert result.action_orientation == ActionLevel.LOW
         assert result.technical_depth == TechnicalPreference.SIMPLIFIED
 
+    @pytest.mark.smoke
     def test_apply_overrides_invalid_values(self, repository, test_profile):
         """Test applying invalid override values falls back to defaults"""
         overrides = {
@@ -211,6 +220,7 @@ personality:
         )  # Invalid action reverted
         assert result.technical_depth == test_profile.technical_depth  # Invalid depth reverted
 
+    @pytest.mark.smoke
     def test_apply_overrides_partial_values(self, repository, test_profile):
         """Test applying partial overrides keeps existing values"""
         overrides = {
@@ -226,6 +236,7 @@ personality:
         assert result.technical_depth == test_profile.technical_depth  # Preserved
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_delete_profile_success(self, repository):
         """Test successful profile deletion"""
         with patch("services.personality.repository.AsyncSessionFactory") as mock_session_factory:
@@ -243,6 +254,7 @@ personality:
             mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_delete_profile_not_found(self, repository):
         """Test deletion when profile doesn't exist"""
         with patch("services.personality.repository.AsyncSessionFactory") as mock_session_factory:

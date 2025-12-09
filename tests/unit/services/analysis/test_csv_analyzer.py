@@ -16,6 +16,7 @@ class TestCSVAnalyzer:
         self.analyzer = CSVAnalyzer()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_basic_csv_analysis(self):
         """Test row count and column detection on a normal CSV"""
         csv_path = os.path.join(FIXTURE_DIR, "sample_data.csv")
@@ -24,6 +25,7 @@ class TestCSVAnalyzer:
         assert set(result.metadata["columns"]) == {"id", "name", "age", "score"}
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_statistical_summary_numeric_columns(self):
         """Test statistical summary for numeric columns"""
         csv_path = os.path.join(FIXTURE_DIR, "sample_data.csv")
@@ -33,6 +35,7 @@ class TestCSVAnalyzer:
         assert "mean" in stats["age"] and "std" in stats["score"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_missing_data_detection(self):
         """Test missing data count and percentage"""
         csv_path = os.path.join(FIXTURE_DIR, "sample_data.csv")
@@ -47,6 +50,7 @@ class TestCSVAnalyzer:
         assert "percent_missing" in missing["summary"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_empty_csv_handling(self):
         """Test that empty CSV (headers only) does not crash and returns zero rows"""
         csv_path = os.path.join(FIXTURE_DIR, "empty.csv")
@@ -55,6 +59,7 @@ class TestCSVAnalyzer:
         assert len(result.metadata["columns"]) > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_malformed_csv_handling(self):
         """Test that malformed CSV returns error gracefully"""
         csv_path = os.path.join(FIXTURE_DIR, "malformed.csv")
@@ -65,11 +70,13 @@ class TestCSVAnalyzer:
             or "error" in result.metadata.get("error", "").lower()
         )
 
+    @pytest.mark.smoke
     def test_inherits_from_base_analyzer(self):
         """Test that CSVAnalyzer inherits from BaseAnalyzer"""
         assert issubclass(CSVAnalyzer, BaseAnalyzer)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_analyze_returns_analysis_result(self):
         """Test that analyze method returns AnalysisResult"""
         csv_path = os.path.join(FIXTURE_DIR, "sample_data.csv")
@@ -160,6 +167,7 @@ async def test_csv_malformed_handling():
 
 
 # 6. Inheritance from BaseAnalyzer
+@pytest.mark.smoke
 def test_csv_inherits_base_analyzer():
     from services.analysis.base_analyzer import BaseAnalyzer
     from services.analysis.csv_analyzer import CSVAnalyzer

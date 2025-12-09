@@ -93,6 +93,7 @@ async def test_pm039_patterns(initialized_container, message, expected_action, e
     # If no search_query in context, that's okay - LLM might structure it differently
 
 
+@pytest.mark.smoke
 def test_fuzzy_match_typo_tolerance():
     from services.intent_service.fuzzy_matcher import fuzzy_match
 

@@ -55,6 +55,7 @@ class TestPersonalityProfile:
             response_type=ResponseType.CLI,
         )
 
+    @pytest.mark.smoke
     def test_profile_creation_with_valid_values(self):
         """Test creating PersonalityProfile with valid parameters"""
         from datetime import datetime
@@ -75,6 +76,7 @@ class TestPersonalityProfile:
         assert profile.action_orientation == ActionLevel.HIGH
         assert profile.technical_depth == TechnicalPreference.DETAILED
 
+    @pytest.mark.smoke
     def test_profile_warmth_level_bounds(self):
         """Test warmth_level is properly bounded between 0.0-1.0"""
         from datetime import datetime
@@ -104,6 +106,7 @@ class TestPersonalityProfile:
         assert profile_min.warmth_level == 0.0
         assert profile_max.warmth_level == 1.0
 
+    @pytest.mark.smoke
     def test_adjust_for_context_low_confidence(self, default_profile, low_confidence_context):
         """Test profile adaptation for low confidence context"""
         adapted = default_profile.adjust_for_context(low_confidence_context)
@@ -113,6 +116,7 @@ class TestPersonalityProfile:
         assert adapted.confidence_style == ConfidenceDisplayStyle.HIDDEN
         assert adapted.action_orientation == ActionLevel.HIGH
 
+    @pytest.mark.smoke
     def test_adjust_for_context_high_confidence(self, default_profile, high_confidence_context):
         """Test profile adaptation for high confidence context"""
         adapted = default_profile.adjust_for_context(high_confidence_context)
@@ -124,6 +128,7 @@ class TestPersonalityProfile:
         # Technical depth doesn't change automatically
         assert adapted.technical_depth == default_profile.technical_depth
 
+    @pytest.mark.smoke
     def test_get_default_creates_valid_profile(self):
         """Test get_default creates a valid default profile"""
         profile = PersonalityProfile.get_default("test_user")
@@ -137,6 +142,7 @@ class TestPersonalityProfile:
 class TestResponseContext:
     """Test ResponseContext validation and behavior"""
 
+    @pytest.mark.smoke
     def test_valid_context_creation(self):
         """Test creating valid ResponseContext"""
         context = ResponseContext(
@@ -151,6 +157,7 @@ class TestResponseContext:
         assert context.intent_action == "investigate_issue"
         assert context.response_type == ResponseType.CLI
 
+    @pytest.mark.smoke
     def test_invalid_confidence_bounds(self):
         """Test ResponseContext validates confidence bounds"""
         with pytest.raises(ValueError, match="intent_confidence must be 0.0-1.0"):

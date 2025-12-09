@@ -39,6 +39,7 @@ class TestOAuthSpatialIntegration:
         event_handler = Mock()
         return SlackSpatialAgent(config_service, event_handler)
 
+    @pytest.mark.smoke
     def test_oauth_success_initializes_spatial_territory(self, oauth_handler, spatial_agent):
         """Test that successful OAuth initializes spatial territory"""
         # Arrange
@@ -58,6 +59,7 @@ class TestOAuthSpatialIntegration:
         assert spatial_territory.type == TerritoryType.WORKSPACE
         assert spatial_territory.access_token == "xoxb-test-token"
 
+    @pytest.mark.smoke
     def test_oauth_failure_does_not_initialize_spatial_territory(
         self, oauth_handler, spatial_agent
     ):
@@ -69,6 +71,7 @@ class TestOAuthSpatialIntegration:
         with pytest.raises(ValueError, match="OAuth failed"):
             oauth_handler.initialize_spatial_territory(oauth_response)
 
+    @pytest.mark.smoke
     def test_spatial_agent_recognizes_oauth_territory(self, oauth_handler, spatial_agent):
         """Test that spatial agent recognizes OAuth-initialized territory"""
         # Arrange
@@ -86,6 +89,7 @@ class TestOAuthSpatialIntegration:
         assert spatial_agent.spatial_state.current_territory == "T123456"
         assert spatial_agent.get_spatial_summary()["current_position"]["territory"] == "T123456"
 
+    @pytest.mark.smoke
     def test_oauth_scopes_affect_spatial_capabilities(self, oauth_handler, spatial_agent):
         """Test that OAuth scopes determine spatial capabilities"""
         # Arrange
@@ -105,6 +109,7 @@ class TestOAuthSpatialIntegration:
         assert "users:read" in capabilities
         assert len(capabilities) == 3
 
+    @pytest.mark.smoke
     def test_oauth_token_refresh_updates_spatial_territory(self, oauth_handler, spatial_agent):
         """Test that token refresh updates spatial territory"""
         # Arrange
@@ -127,6 +132,7 @@ class TestOAuthSpatialIntegration:
         assert initial_territory.access_token != updated_territory.access_token
         assert updated_territory.access_token == "xoxb-new-token"
 
+    @pytest.mark.smoke
     def test_oauth_state_validation_prevents_spatial_initialization(
         self, oauth_handler, spatial_agent
     ):
@@ -142,6 +148,7 @@ class TestOAuthSpatialIntegration:
         with pytest.raises(ValueError, match="Invalid OAuth state"):
             oauth_handler.validate_and_initialize_spatial_territory(oauth_response, "valid-state")
 
+    @pytest.mark.smoke
     def test_oauth_user_context_integration(self, oauth_handler, spatial_agent):
         """Test that OAuth user context integrates with spatial system"""
         # Arrange
@@ -161,6 +168,7 @@ class TestOAuthSpatialIntegration:
         assert user_context["territory_id"] == "T123456"
         assert "chat:write" in user_context["capabilities"]
 
+    @pytest.mark.smoke
     def test_oauth_workspace_switching(self, oauth_handler, spatial_agent):
         """Test switching between workspaces via OAuth"""
         # Arrange
@@ -186,6 +194,7 @@ class TestOAuthSpatialIntegration:
         assert spatial_agent.spatial_state.current_territory == "T789012"
         assert spatial_agent.get_spatial_summary()["current_position"]["territory"] == "T789012"
 
+    @pytest.mark.smoke
     def test_oauth_error_handling_integration(self, oauth_handler, spatial_agent):
         """Test OAuth error handling integration with spatial system"""
         # Arrange
@@ -202,6 +211,7 @@ class TestOAuthSpatialIntegration:
                 oauth_handler.initialize_spatial_territory(error_response)
             assert "OAuth failed" in str(exc_info.value)
 
+    @pytest.mark.smoke
     def test_oauth_spatial_territory_persistence(self, oauth_handler, spatial_agent):
         """Test that OAuth-initialized territories persist in spatial memory"""
         # Arrange

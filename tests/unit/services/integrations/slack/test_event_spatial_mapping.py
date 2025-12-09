@@ -47,6 +47,7 @@ class TestEventSpatialMapping:
         """Spatial mapper instance"""
         return SlackSpatialMapper()
 
+    @pytest.mark.smoke
     async def test_message_event_maps_to_spatial_object(self, event_handler, spatial_mapper):
         """Test that message events map to spatial objects"""
         # Arrange
@@ -72,6 +73,7 @@ class TestEventSpatialMapping:
         assert "1234567890.123456" in result.spatial_event.event_id
         assert "1234567890.123456" in result.spatial_event.affected_objects
 
+    @pytest.mark.smoke
     async def test_mention_event_maps_to_attention_attractor(self, event_handler, spatial_mapper):
         """Test that mention events map to attention attractors"""
         # Arrange
@@ -96,6 +98,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.attention_attractor is not None
         assert result.spatial_event.attention_attractor.attractor_type == AttentionLevel.URGENT
 
+    @pytest.mark.smoke
     async def test_reaction_event_maps_to_emotional_marker(self, event_handler, spatial_mapper):
         """Test that reaction events map to emotional markers"""
         # Arrange
@@ -118,6 +121,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.emotional_marker.reaction_type == "thumbsup"
         assert result.emotional_valence in [EmotionalValence.POSITIVE, EmotionalValence.NEUTRAL]
 
+    @pytest.mark.smoke
     async def test_channel_created_event_maps_to_room(self, event_handler, spatial_mapper):
         """Test that channel creation events map to rooms"""
         # Arrange
@@ -139,6 +143,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.room.id == "C789012"
         assert result.spatial_event.room.name == "new-channel"
 
+    @pytest.mark.smoke
     async def test_thread_event_maps_to_conversational_path(self, event_handler, spatial_mapper):
         """Test that thread events map to conversational paths"""
         # Arrange
@@ -160,6 +165,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.coordinates.path_id == "1234567890.123456"
         assert result.spatial_event.coordinates.room_id == "C123456"
 
+    @pytest.mark.smoke
     async def test_user_joined_event_updates_spatial_state(self, event_handler, spatial_mapper):
         """Test that user joined events update spatial state"""
         # Arrange
@@ -179,6 +185,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "inhabitant_joined"
         assert result.spatial_event.coordinates.room_id == "C123456"
 
+    @pytest.mark.smoke
     async def test_negative_reaction_maps_to_negative_emotional_marker(
         self, event_handler, spatial_mapper
     ):
@@ -202,6 +209,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.emotional_marker.reaction_type == "thumbsdown"
         assert result.emotional_valence == EmotionalValence.NEGATIVE
 
+    @pytest.mark.smoke
     async def test_channel_deleted_event_removes_room(self, event_handler, spatial_mapper):
         """Test that channel deletion events remove rooms from spatial state"""
         # Arrange
@@ -216,6 +224,7 @@ class TestEventSpatialMapping:
         assert result.spatial_event.event_type == "room_deleted"
         assert result.spatial_event.coordinates.room_id == "C789012"
 
+    @pytest.mark.smoke
     async def test_multiple_events_update_spatial_state_sequentially(
         self, event_handler, spatial_mapper
     ):
@@ -263,6 +272,7 @@ class TestEventSpatialMapping:
         assert "attention_attractors" in spatial_state
         assert "emotional_markers" in spatial_state
 
+    @pytest.mark.smoke
     async def test_unsupported_event_returns_error(self, event_handler, spatial_mapper):
         """Test that unsupported events return error"""
         # Arrange
@@ -275,6 +285,7 @@ class TestEventSpatialMapping:
         assert result.success is False
         assert "Unsupported event type" in result.error
 
+    @pytest.mark.smoke
     async def test_spatial_coordinates_are_consistent(self, event_handler, spatial_mapper):
         """Test that spatial coordinates are consistent across events"""
         # Arrange
@@ -298,6 +309,7 @@ class TestEventSpatialMapping:
         )  # Message ID in affected_objects
         assert coords.path_id is None  # No thread
 
+    @pytest.mark.smoke
     async def test_spatial_event_timestamps_are_preserved(self, event_handler, spatial_mapper):
         """Test that spatial event timestamps are preserved"""
         # Arrange
@@ -317,6 +329,7 @@ class TestEventSpatialMapping:
         assert spatial_event.event_time is not None
         assert isinstance(spatial_event.event_time, datetime)
 
+    @pytest.mark.smoke
     async def test_spatial_changes_are_tracked(self, event_handler, spatial_mapper):
         """Test that spatial changes are tracked in results"""
         # Arrange

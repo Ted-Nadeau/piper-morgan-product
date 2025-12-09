@@ -117,6 +117,7 @@ class TestCompleteWorkflowPipeline:
     # TDD Test 1: SLACK HELP REQUEST → PIPER TASK WORKFLOW
     # Should FAIL initially - complete pipeline integration
 
+    @pytest.mark.smoke
     async def test_slack_help_request_creates_piper_task_workflow(
         self,
         spatial_mapper,
@@ -305,6 +306,7 @@ class TestCompleteWorkflowPipeline:
     # TDD Test 2: SLACK BUG REPORT → INCIDENT RESPONSE WORKFLOW
     # Should FAIL initially - incident response pipeline
 
+    @pytest.mark.smoke
     async def test_slack_bug_report_creates_incident_workflow(
         self,
         spatial_mapper,
@@ -489,6 +491,7 @@ class TestCompleteWorkflowPipeline:
     # TDD Test 3: SLACK FEATURE REQUEST → PRODUCT DEVELOPMENT WORKFLOW
     # Should FAIL initially - product development pipeline
 
+    @pytest.mark.smoke
     async def test_slack_feature_request_creates_product_workflow(
         self,
         spatial_mapper,
@@ -709,6 +712,7 @@ class TestWorkflowIntegrationEdgeCases:
     # TDD Test 4: WORKFLOW CREATION FAILURE HANDLING
     # Should FAIL initially - error handling pipeline
 
+    @pytest.mark.smoke
     async def test_workflow_creation_failure_graceful_handling(
         self, spatial_mapper, attention_model, workflow_factory_with_failures
     ):
@@ -818,6 +822,7 @@ class TestTDDVerification:
     TDD Verification: Tests that validate our TDD approach is working
     """
 
+    @pytest.mark.smoke
     def test_tdd_tests_are_comprehensive(self):
         """Verify TDD tests cover all critical workflow pipeline paths"""
 

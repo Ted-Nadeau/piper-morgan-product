@@ -56,6 +56,7 @@ def base_preferences():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_concise_communication_style():
     """
     Test that concise communication preference maps to lower warmth level.
@@ -87,6 +88,7 @@ def test_concise_communication_style():
     print(f"✓ Concise communication: warmth={profile.warmth_level}, guidance={guidance}")
 
 
+@pytest.mark.smoke
 def test_balanced_communication_style():
     """
     Test that balanced communication preference maps to moderate warmth level.
@@ -116,6 +118,7 @@ def test_balanced_communication_style():
     print(f"✓ Balanced communication: warmth={profile.warmth_level}, guidance={guidance}")
 
 
+@pytest.mark.smoke
 def test_detailed_communication_style():
     """
     Test that detailed communication preference maps to higher warmth level.
@@ -152,6 +155,7 @@ def test_detailed_communication_style():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_structured_work_style():
     """
     Test that structured work preference maps to HIGH action orientation.
@@ -183,6 +187,7 @@ def test_structured_work_style():
     print(f"✓ Structured work: action_orientation={profile.action_orientation.value}")
 
 
+@pytest.mark.smoke
 def test_exploratory_work_style():
     """
     Test that exploratory work preference maps to LOW action orientation.
@@ -219,6 +224,7 @@ def test_exploratory_work_style():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_data_driven_decision_making():
     """
     Test that data-driven preference maps to NUMERIC confidence style.
@@ -250,6 +256,7 @@ def test_data_driven_decision_making():
     print(f"✓ Data-driven: confidence_style={profile.confidence_style.value}")
 
 
+@pytest.mark.smoke
 def test_intuitive_decision_making():
     """
     Test that intuitive preference maps to CONTEXTUAL confidence style.
@@ -286,6 +293,7 @@ def test_intuitive_decision_making():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_examples_learning_style():
     """
     Test that examples learning preference maps to BALANCED technical depth.
@@ -311,6 +319,7 @@ def test_examples_learning_style():
     print(f"✓ Examples learning: technical_depth={profile.technical_depth.value}")
 
 
+@pytest.mark.smoke
 def test_explanations_learning_style():
     """
     Test that explanations learning preference maps to DETAILED technical depth.
@@ -342,6 +351,7 @@ def test_explanations_learning_style():
     print(f"✓ Explanations learning: technical_depth={profile.technical_depth.value}")
 
 
+@pytest.mark.smoke
 def test_exploration_learning_style():
     """
     Test that exploration learning preference maps to SIMPLIFIED technical depth.
@@ -378,6 +388,7 @@ def test_exploration_learning_style():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_response_guidance_varies_by_warmth():
     """
     Test that response guidance changes based on warmth level from preferences.
@@ -429,6 +440,7 @@ def test_response_guidance_varies_by_warmth():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_default_behavior_no_preferences():
     """
     Test that graceful defaults work when user has no preferences set.
@@ -457,6 +469,7 @@ def test_default_behavior_no_preferences():
     print(f"✓ Default behavior: warmth={profile.warmth_level}, guidance={guidance[:50]}...")
 
 
+@pytest.mark.smoke
 def test_partial_preferences():
     """
     Test that missing preference fields fall back to defaults.
@@ -488,6 +501,7 @@ def test_partial_preferences():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_all_dimensions_applied():
     """
     Test that all 5 preference dimensions are loaded and applied together.
@@ -526,6 +540,7 @@ def test_all_dimensions_applied():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_internal_create_from_preferences_integration():
     """
     Test the internal _create_from_preferences method which is used by load_with_preferences.
@@ -568,6 +583,7 @@ def test_internal_create_from_preferences_integration():
     print(f"✓ Internal preference mapping: all 4 preferences applied correctly")
 
 
+@pytest.mark.smoke
 def test_load_with_preferences_fallback_to_defaults():
     """
     Test that when preferences are missing or empty, defaults are used.
@@ -601,6 +617,7 @@ def test_load_with_preferences_fallback_to_defaults():
 # ============================================================================
 
 
+@pytest.mark.smoke
 def test_context_adjustment_with_preferences():
     """
     Test that PersonalityProfile.adjust_for_context() still works after loading preferences.

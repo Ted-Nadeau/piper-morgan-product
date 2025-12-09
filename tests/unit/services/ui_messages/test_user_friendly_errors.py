@@ -20,6 +20,7 @@ class TestUserFriendlyErrorService:
         """UserFriendlyErrorService instance for testing"""
         return UserFriendlyErrorService()
 
+    @pytest.mark.smoke
     def test_database_connection_error(self, error_service):
         """Test database connection error conversion"""
         error = Exception("connection to database refused")
@@ -30,6 +31,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.WARNING
         assert result["category"] == "database"
 
+    @pytest.mark.smoke
     def test_database_table_not_found(self, error_service):
         """Test database table not found error"""
         error = Exception("relation 'users' does not exist")
@@ -40,6 +42,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.ERROR
         assert result["category"] == "database"
 
+    @pytest.mark.smoke
     def test_http_404_error(self, error_service):
         """Test HTTP 404 error conversion"""
         error = Exception("HTTP 404 Not Found")
@@ -50,6 +53,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.INFO
         assert result["category"] == "api"
 
+    @pytest.mark.smoke
     def test_http_401_unauthorized(self, error_service):
         """Test HTTP 401 unauthorized error"""
         error = Exception("HTTP 401 Unauthorized")
@@ -60,6 +64,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.WARNING
         assert result["category"] == "auth"
 
+    @pytest.mark.smoke
     def test_github_rate_limit_error(self, error_service):
         """Test GitHub rate limit error"""
         error = Exception("GitHub API rate limit exceeded")
@@ -70,6 +75,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.INFO
         assert result["category"] == "github"
 
+    @pytest.mark.smoke
     def test_file_not_found_error(self, error_service):
         """Test file not found error"""
         error = FileNotFoundError("No such file or directory: /path/to/file")
@@ -80,6 +86,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.INFO
         assert result["category"] == "file"
 
+    @pytest.mark.smoke
     def test_permission_denied_error(self, error_service):
         """Test permission denied error"""
         error = PermissionError("Permission denied")
@@ -90,6 +97,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.WARNING
         assert result["category"] == "file"
 
+    @pytest.mark.smoke
     def test_timeout_error(self, error_service):
         """Test timeout error"""
         error = TimeoutError("Operation timed out after 30 seconds")
@@ -100,6 +108,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.WARNING
         assert result["category"] == "timeout"
 
+    @pytest.mark.smoke
     def test_validation_error(self, error_service):
         """Test validation error"""
         error = ValueError("required field 'name' is missing")
@@ -110,6 +119,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.INFO
         assert result["category"] == "validation"
 
+    @pytest.mark.smoke
     def test_error_with_context(self, error_service):
         """Test error message with context"""
         error = Exception("connection refused")
@@ -118,6 +128,7 @@ class TestUserFriendlyErrorService:
         assert "While fetching github issues:" in result["message"]
         assert "can't connect to the database" in result["message"]
 
+    @pytest.mark.smoke
     def test_error_with_user_action(self, error_service):
         """Test error message with user action context"""
         error = Exception("HTTP 404 Not Found")
@@ -126,6 +137,7 @@ class TestUserFriendlyErrorService:
         assert "couldn't find what you're looking for" in result["message"]
         assert "Try different search terms" in result["recovery"]
 
+    @pytest.mark.smoke
     def test_unknown_error_fallback(self, error_service):
         """Test fallback for unknown error patterns"""
         error = Exception("Some completely unknown error message")
@@ -136,6 +148,7 @@ class TestUserFriendlyErrorService:
         assert result["severity"] == ErrorSeverity.ERROR
         assert result["category"] == "unknown"
 
+    @pytest.mark.smoke
     def test_format_error_response_basic(self, error_service):
         """Test basic error response formatting"""
         error = Exception("HTTP 404 Not Found")
@@ -147,6 +160,7 @@ class TestUserFriendlyErrorService:
         assert "category" in response
         assert "technical_error" not in response  # Should not include by default
 
+    @pytest.mark.smoke
     def test_format_error_response_with_technical_details(self, error_service):
         """Test error response with technical details"""
         error = ValueError("Some validation error")
@@ -157,6 +171,7 @@ class TestUserFriendlyErrorService:
         assert response["technical_error"] == "Some validation error"
         assert response["error_type"] == "ValueError"
 
+    @pytest.mark.smoke
     def test_conversational_error_info_severity(self, error_service):
         """Test conversational error for INFO severity"""
         error = Exception("HTTP 404 Not Found")
@@ -167,6 +182,7 @@ class TestUserFriendlyErrorService:
         assert not message.startswith("I'm sorry,")
         assert "couldn't find what you're looking for" in message
 
+    @pytest.mark.smoke
     def test_conversational_error_warning_severity(self, error_service):
         """Test conversational error for WARNING severity"""
         error = Exception("connection refused")
@@ -176,6 +192,7 @@ class TestUserFriendlyErrorService:
         assert message.startswith("Hmm,")
         assert "can't connect to the database" in message
 
+    @pytest.mark.smoke
     def test_conversational_error_error_severity(self, error_service):
         """Test conversational error for ERROR severity"""
         error = Exception("relation 'users' does not exist")
@@ -185,6 +202,7 @@ class TestUserFriendlyErrorService:
         assert message.startswith("I'm sorry,")
         assert "trouble accessing the database" in message
 
+    @pytest.mark.smoke
     def test_convenience_function_make_error_user_friendly(self):
         """Test convenience function for making errors user-friendly"""
         error = Exception("HTTP 401 Unauthorized")
@@ -193,6 +211,7 @@ class TestUserFriendlyErrorService:
         assert "need permission" in result["message"]
         assert "While accessing github:" in result["message"]
 
+    @pytest.mark.smoke
     def test_convenience_function_get_conversational_error(self):
         """Test convenience function for conversational errors"""
         error = Exception("operation timed out")
@@ -201,6 +220,7 @@ class TestUserFriendlyErrorService:
         assert isinstance(message, str)
         assert "taking longer than expected" in message
 
+    @pytest.mark.smoke
     def test_multiple_pattern_matches(self, error_service):
         """Test that first matching pattern is used"""
         # This error could match both timeout and HTTP patterns
@@ -211,6 +231,7 @@ class TestUserFriendlyErrorService:
         assert result["category"] == "timeout"
         assert "taking longer than expected" in result["message"]
 
+    @pytest.mark.smoke
     def test_case_insensitive_matching(self, error_service):
         """Test that pattern matching is case insensitive"""
         error = Exception("PERMISSION DENIED")
@@ -219,6 +240,7 @@ class TestUserFriendlyErrorService:
         assert result["category"] == "file"
         assert "don't have permission" in result["message"]
 
+    @pytest.mark.smoke
     def test_contextual_suggestions_integration(self, error_service):
         """Test that contextual suggestions are properly integrated"""
         error = Exception("HTTP 404 Not Found")

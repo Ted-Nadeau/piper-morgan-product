@@ -46,6 +46,7 @@ class TestKeyRotationService:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_start_rotation_success(self, rotation_service, rotation_config):
         """Test starting a successful rotation"""
         # Mock existing key
@@ -64,6 +65,7 @@ class TestKeyRotationService:
         assert status.phase == RotationPhase.PREPARING
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_start_rotation_no_existing_key(self, rotation_service, rotation_config):
         """Test starting rotation with no existing key"""
         # Mock no existing key
@@ -73,6 +75,7 @@ class TestKeyRotationService:
             await rotation_service.start_rotation("openai", "new-key-456", rotation_config)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_start_rotation_user_specific_not_implemented(
         self, rotation_service, rotation_config
     ):
@@ -83,6 +86,7 @@ class TestKeyRotationService:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_phase_validate_new_key_success(self, rotation_service):
         """Test successful new key validation phase"""
         # Mock successful validation
@@ -113,6 +117,7 @@ class TestKeyRotationService:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_phase_validate_new_key_failure(self, rotation_service):
         """Test new key validation failure"""
         # Mock validation failure
@@ -139,6 +144,7 @@ class TestKeyRotationService:
             await rotation_service._phase_validate_new_key(status, key_pair)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_phase_begin_transition_gradual(self, rotation_service):
         """Test beginning gradual transition"""
         status = RotationStatus(
@@ -164,6 +170,7 @@ class TestKeyRotationService:
         assert weights["new"] == 0.1
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_phase_begin_transition_immediate(self, rotation_service):
         """Test immediate transition strategy"""
         status = RotationStatus(
@@ -188,6 +195,7 @@ class TestKeyRotationService:
         assert status.progress_percentage == 80
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_phase_begin_transition_canary(self, rotation_service):
         """Test canary transition strategy"""
         config = RotationConfig(strategy=RotationStrategy.CANARY, canary_percentage=20)
@@ -212,6 +220,7 @@ class TestKeyRotationService:
         assert weights["new"] == 0.2
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_test_key_health_success(self, rotation_service):
         """Test successful key health check"""
         rotation_service.llm_config.validate_api_key.return_value = True
@@ -222,6 +231,7 @@ class TestKeyRotationService:
         rotation_service.llm_config.validate_api_key.assert_called_once_with("openai", "test-key")
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_test_key_health_failure(self, rotation_service):
         """Test failed key health check"""
         rotation_service.llm_config.validate_api_key.return_value = False
@@ -231,6 +241,7 @@ class TestKeyRotationService:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_test_key_health_exception(self, rotation_service):
         """Test key health check with exception"""
         rotation_service.llm_config.validate_api_key.side_effect = Exception("Network error")
@@ -240,6 +251,7 @@ class TestKeyRotationService:
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_perform_health_check_both_keys(self, rotation_service):
         """Test health check with both keys active"""
         # Mock successful health checks
@@ -271,6 +283,7 @@ class TestKeyRotationService:
         assert status.metrics.new_key_failures == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_perform_health_check_with_callback(self, rotation_service):
         """Test health check with custom callback"""
         # Mock successful API health checks
@@ -302,6 +315,7 @@ class TestKeyRotationService:
         callback_mock.assert_called_once_with("openai", "test-123")
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_perform_health_check_callback_failure(self, rotation_service):
         """Test health check with failing callback"""
         # Mock successful API health checks
@@ -331,6 +345,7 @@ class TestKeyRotationService:
 
         assert result is False  # Should fail because callback returned False
 
+    @pytest.mark.smoke
     def test_get_rotation_status(self, rotation_service):
         """Test getting rotation status"""
         status = RotationStatus(
@@ -354,6 +369,7 @@ class TestKeyRotationService:
         result = rotation_service.get_rotation_status("non-existent")
         assert result is None
 
+    @pytest.mark.smoke
     def test_get_active_rotations(self, rotation_service):
         """Test getting all active rotations"""
         status1 = RotationStatus(
@@ -388,6 +404,7 @@ class TestKeyRotationService:
         assert status1 in active
         assert status2 in active
 
+    @pytest.mark.smoke
     def test_get_rotation_history(self, rotation_service):
         """Test getting rotation history"""
         # Add some history
@@ -414,6 +431,7 @@ class TestKeyRotationService:
         assert history[2].rotation_id == "test-4"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_cancel_rotation_success(self, rotation_service):
         """Test successful rotation cancellation"""
         status = RotationStatus(
@@ -438,12 +456,14 @@ class TestKeyRotationService:
         assert "User requested" in status.errors[0]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_cancel_rotation_not_found(self, rotation_service):
         """Test cancelling non-existent rotation"""
         result = await rotation_service.cancel_rotation("non-existent")
         assert result is False
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_cancel_rotation_already_completed(self, rotation_service):
         """Test cancelling already completed rotation"""
         status = RotationStatus(
@@ -463,6 +483,7 @@ class TestKeyRotationService:
         result = await rotation_service.cancel_rotation("test-123")
         assert result is False
 
+    @pytest.mark.smoke
     def test_get_key_for_request_no_rotation(self, rotation_service):
         """Test getting key when no rotation is active"""
         rotation_service.llm_config.get_api_key.return_value = "normal-key"
@@ -472,6 +493,7 @@ class TestKeyRotationService:
         assert key == "normal-key"
         rotation_service.llm_config.get_api_key.assert_called_once_with("openai")
 
+    @pytest.mark.smoke
     def test_get_key_for_request_during_rotation(self, rotation_service):
         """Test getting key during rotation"""
         rotation_service.llm_config.get_api_key.return_value = "current-key"
@@ -483,6 +505,7 @@ class TestKeyRotationService:
 
         assert key == "current-key"
 
+    @pytest.mark.smoke
     def test_cleanup_completed_rotations(self, rotation_service):
         """Test cleaning up completed rotations"""
         # Add active rotation
@@ -520,6 +543,7 @@ class TestKeyRotationService:
         assert "active-123" in rotation_service.active_rotations
         assert "completed-123" not in rotation_service.active_rotations
 
+    @pytest.mark.smoke
     def test_add_health_callback(self, rotation_service):
         """Test adding health callback"""
         callback = Mock()
@@ -532,6 +556,7 @@ class TestKeyRotationService:
 class TestKeyPair:
     """Test KeyPair dataclass"""
 
+    @pytest.mark.smoke
     def test_key_pair_creation(self):
         """Test KeyPair creation and hash generation"""
         key_pair = KeyPair("old-key-123", "new-key-456", "openai")
@@ -549,6 +574,7 @@ class TestConvenienceFunctions:
 
     @pytest.mark.asyncio
     @patch("services.security.key_rotation_service.key_rotation_service")
+    @pytest.mark.smoke
     async def test_rotate_api_key_convenience(self, mock_service):
         """Test rotate_api_key convenience function"""
         mock_service.start_rotation = AsyncMock(return_value="rotation-123")
@@ -565,6 +591,7 @@ class TestConvenienceFunctions:
         assert config.transition_duration_minutes == 45
 
     @patch("services.security.key_rotation_service.key_rotation_service")
+    @pytest.mark.smoke
     def test_get_rotation_status_convenience(self, mock_service):
         """Test get_rotation_status convenience function"""
         mock_status = Mock()

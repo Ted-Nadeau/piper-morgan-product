@@ -57,6 +57,7 @@ class TestSlackEventHandler:
         return mapper
 
     @patch("services.integrations.slack.event_handler.SlackSpatialMapper")
+    @pytest.mark.smoke
     async def test_process_message_event(
         self, mock_mapper_class, event_handler, mock_spatial_mapper
     ):
@@ -87,6 +88,7 @@ class TestSlackEventHandler:
         assert result.spatial_changes[0]["type"] == "message_placed"
 
     @patch("services.integrations.slack.event_handler.SlackSpatialMapper")
+    @pytest.mark.smoke
     async def test_process_mention_event(
         self, mock_mapper_class, event_handler, mock_spatial_mapper
     ):
@@ -118,6 +120,7 @@ class TestSlackEventHandler:
         assert len(result.navigation_suggestions) == 0  # Fixed: actual behavior
 
     @patch("services.integrations.slack.event_handler.SlackSpatialMapper")
+    @pytest.mark.smoke
     async def test_process_reaction_event(
         self, mock_mapper_class, event_handler, mock_spatial_mapper
     ):
@@ -145,6 +148,7 @@ class TestSlackEventHandler:
         assert result.attention_level == AttentionLevel.FOCUSED
         assert result.emotional_valence == EmotionalValence.POSITIVE
 
+    @pytest.mark.smoke
     async def test_process_unsupported_event(self, event_handler):
         """Test processing unsupported event type"""
         unsupported_event = {"type": "unsupported_event_type", "data": "some data"}
@@ -154,12 +158,14 @@ class TestSlackEventHandler:
         assert result.success is False
         assert "Unsupported event type" in result.error
 
+    @pytest.mark.smoke
     def test_get_spatial_state(self, event_handler):
         """Test getting spatial state"""
         state = event_handler.get_spatial_state()
         assert isinstance(state, dict)
         # Empty dict initially (keys added as events are processed)
 
+    @pytest.mark.smoke
     def test_get_recent_events(self, event_handler):
         """Test getting recent events"""
         events = event_handler.get_recent_events(limit=5)
@@ -185,6 +191,7 @@ class TestSlackSpatialAgent:
         """Spatial agent instance"""
         return SlackSpatialAgent(config_service, event_handler)
 
+    @pytest.mark.smoke
     async def test_process_spatial_event_no_event(self, spatial_agent):
         """Test processing spatial event with no valid event"""
         result = EventProcessingResult(success=False, spatial_event=None, error="No event")
@@ -195,6 +202,7 @@ class TestSlackSpatialAgent:
         assert decision.confidence == 0.0
         assert "No valid spatial event" in decision.reasoning
 
+    @pytest.mark.smoke
     async def test_process_high_attention_event(self, spatial_agent):
         """Test processing high attention event"""
         # Create mock spatial event
@@ -218,6 +226,7 @@ class TestSlackSpatialAgent:
         assert decision.urgency == 0.9
         assert "requires immediate response" in decision.reasoning
 
+    @pytest.mark.smoke
     async def test_process_emotional_event(self, spatial_agent):
         """Test processing emotional event"""
         # Create mock spatial event
@@ -241,6 +250,7 @@ class TestSlackSpatialAgent:
         assert decision.urgency == 0.6
         assert "requires investigation" in decision.reasoning
 
+    @pytest.mark.smoke
     async def test_process_new_room_event(self, spatial_agent):
         """Test processing new room creation event"""
         # Create mock spatial event
@@ -264,6 +274,7 @@ class TestSlackSpatialAgent:
         assert decision.urgency == 0.5
         assert "exploring new territory" in decision.reasoning
 
+    @pytest.mark.smoke
     def test_get_spatial_summary(self, spatial_agent):
         """Test getting spatial summary"""
         summary = spatial_agent.get_spatial_summary()
@@ -276,6 +287,7 @@ class TestSlackSpatialAgent:
         assert "navigation_history" in summary
         assert "last_activity" in summary
 
+    @pytest.mark.smoke
     def test_get_navigation_suggestions(self, spatial_agent):
         """Test getting navigation suggestions"""
         # Add some test data to spatial state
@@ -300,6 +312,7 @@ class TestSlackSpatialAgent:
         assert any("high-priority attention attractors" in suggestion for suggestion in suggestions)
         assert any("rooms with recent activity" in suggestion for suggestion in suggestions)
 
+    @pytest.mark.smoke
     def test_clear_attention_focus(self, spatial_agent):
         """Test clearing attention focus"""
         # Add test attention attractors
@@ -346,6 +359,7 @@ class TestSpatialIntegration:
         """Spatial agent with mocked dependencies"""
         return SlackSpatialAgent(config_service, event_handler)
 
+    @pytest.mark.smoke
     async def test_end_to_end_message_processing(self, event_handler, spatial_agent):
         """Test end-to-end message processing through spatial metaphors"""
         # Process message event
@@ -368,6 +382,7 @@ class TestSpatialIntegration:
         assert navigation_decision.intent == NavigationIntent.PATROL  # General workspace monitoring
         assert navigation_decision.target_room == "general"  # Fixed: actual behavior
 
+    @pytest.mark.smoke
     async def test_end_to_end_mention_processing(self, event_handler, spatial_agent):
         """Test end-to-end mention processing through spatial metaphors"""
         # Process mention event

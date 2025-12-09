@@ -18,6 +18,7 @@ from services.integrations.slack.config_service import (
 class TestSlackConfig:
     """Test Slack configuration dataclass"""
 
+    @pytest.mark.smoke
     def test_default_config(self):
         """Test default configuration values"""
         config = SlackConfig()
@@ -32,6 +33,7 @@ class TestSlackConfig:
         assert config.enable_socket_mode is False
         assert config.enable_spatial_mapping is True
 
+    @pytest.mark.smoke
     def test_config_validation_valid(self):
         """Test configuration validation with valid settings"""
         config = SlackConfig(
@@ -40,12 +42,14 @@ class TestSlackConfig:
 
         assert config.validate() is True
 
+    @pytest.mark.smoke
     def test_config_validation_missing_bot_token(self):
         """Test configuration validation with missing bot token"""
         config = SlackConfig(webhook_url="https://hooks.slack.com/test")
 
         assert config.validate() is False
 
+    @pytest.mark.smoke
     def test_config_validation_webhooks_enabled_no_url(self):
         """Test configuration validation with webhooks enabled but no URL"""
         config = SlackConfig(bot_token="xoxb-test-token", enable_webhooks=True, webhook_url="")
@@ -56,6 +60,7 @@ class TestSlackConfig:
 class TestSlackConfigService:
     """Test Slack configuration service"""
 
+    @pytest.mark.smoke
     def test_init_with_feature_flags(self):
         """Test initialization with feature flags"""
         mock_flags = Mock()
@@ -64,6 +69,7 @@ class TestSlackConfigService:
         assert service.feature_flags == mock_flags
         assert service._config is None
 
+    @pytest.mark.smoke
     def test_init_without_feature_flags(self):
         """Test initialization without feature flags"""
         service = SlackConfigService()
@@ -82,6 +88,7 @@ class TestSlackConfigService:
             "SLACK_MAX_RETRIES": "5",
         },
     )
+    @pytest.mark.smoke
     def test_load_config_from_environment(self):
         """Test loading configuration from environment variables"""
         service = SlackConfigService()
@@ -94,6 +101,7 @@ class TestSlackConfigService:
         assert config.timeout_seconds == 60
         assert config.max_retries == 5
 
+    @pytest.mark.smoke
     def test_load_config_defaults(self):
         """Test loading configuration with default values"""
         with patch.dict(os.environ, {}, clear=True):
@@ -105,6 +113,7 @@ class TestSlackConfigService:
             assert config.timeout_seconds == 30
             assert config.environment == SlackEnvironment.DEVELOPMENT
 
+    @pytest.mark.smoke
     def test_config_caching(self):
         """Test that configuration is cached after first load"""
         service = SlackConfigService()
@@ -117,6 +126,7 @@ class TestSlackConfigService:
         config2 = service.get_config()
         assert config1 is config2
 
+    @pytest.mark.smoke
     def test_is_configured_valid(self):
         """Test is_configured with valid configuration"""
         # Set all required env vars for valid configuration
@@ -131,24 +141,28 @@ class TestSlackConfigService:
             service = SlackConfigService()
             assert service.is_configured() is True
 
+    @pytest.mark.smoke
     def test_is_configured_invalid(self):
         """Test is_configured with invalid configuration"""
         with patch.dict(os.environ, {}, clear=True):
             service = SlackConfigService()
             assert service.is_configured() is False
 
+    @pytest.mark.smoke
     def test_get_environment(self):
         """Test getting current environment"""
         with patch.dict(os.environ, {"SLACK_ENVIRONMENT": "staging"}):
             service = SlackConfigService()
             assert service.get_environment() == SlackEnvironment.STAGING
 
+    @pytest.mark.smoke
     def test_is_production_true(self):
         """Test is_production when in production environment"""
         with patch.dict(os.environ, {"SLACK_ENVIRONMENT": "production"}):
             service = SlackConfigService()
             assert service.is_production() is True
 
+    @pytest.mark.smoke
     def test_is_production_false(self):
         """Test is_production when not in production environment"""
         with patch.dict(os.environ, {"SLACK_ENVIRONMENT": "development"}):
@@ -159,12 +173,14 @@ class TestSlackConfigService:
 class TestSlackEnvironment:
     """Test Slack environment enum"""
 
+    @pytest.mark.smoke
     def test_environment_values(self):
         """Test environment enum values"""
         assert SlackEnvironment.DEVELOPMENT.value == "development"
         assert SlackEnvironment.STAGING.value == "staging"
         assert SlackEnvironment.PRODUCTION.value == "production"
 
+    @pytest.mark.smoke
     def test_environment_from_string(self):
         """Test creating environment from string"""
         assert SlackEnvironment("development") == SlackEnvironment.DEVELOPMENT
