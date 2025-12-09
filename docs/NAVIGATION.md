@@ -57,6 +57,12 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Handoffs](internal/development/handoffs/)** - Agent coordination protocols
 - **[Session Templates](internal/development/tools/session-log-templates/)** - Session documentation
 
+### 🚀 DevOps / Release Engineering
+
+- **[CI/CD Smoke Test Runbook](internal/operations/ci-cd-smoke-test-runbook.md)** - Smoke test suite deployment and operations guide
+- **[Deployment Operations](internal/operations/deployment/)** - Production deployment procedures
+- **[Legacy Runbooks](internal/operations/legacy-operations/)** - Archived operational procedures
+
 ### 📚 Researchers & Historians
 
 - **[Session Logs Archive](dev/2025/)** - Chronological development history (dev/2025/MM/DD/ structure)
