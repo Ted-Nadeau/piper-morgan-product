@@ -22,28 +22,33 @@ class TestTokenCounter:
         """Create TokenCounter instance for testing"""
         return TokenCounter()
 
+    @pytest.mark.smoke
     def test_estimate_tokens_empty_string(self, token_counter):
         """Test token estimation with empty string"""
         assert token_counter.estimate_tokens("") == 0
 
+    @pytest.mark.smoke
     def test_estimate_tokens_short_text(self, token_counter):
         """Test token estimation with short text"""
         # 4 chars = 1 token
         result = token_counter.estimate_tokens("test")
         assert result == 1
 
+    @pytest.mark.smoke
     def test_estimate_tokens_exact_multiple(self, token_counter):
         """Test token estimation with exact multiple of 4"""
         # 16 chars = 4 tokens
         result = token_counter.estimate_tokens("0123456789abcdef")
         assert result == 4
 
+    @pytest.mark.smoke
     def test_estimate_tokens_partial(self, token_counter):
         """Test token estimation with partial token"""
         # 5 chars = 1 token (uses max() to avoid 0)
         result = token_counter.estimate_tokens("12345")
         assert result == 1
 
+    @pytest.mark.smoke
     def test_estimate_tokens_large_text(self, token_counter):
         """Test token estimation with large text"""
         # 1000 chars = ~250 tokens
@@ -51,12 +56,14 @@ class TestTokenCounter:
         result = token_counter.estimate_tokens(large_text)
         assert result == 250
 
+    @pytest.mark.smoke
     def test_estimate_tokens_converts_to_string(self, token_counter):
         """Test token estimation converts non-string input to string"""
         result = token_counter.estimate_tokens({"key": "value"})
         assert result > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_wrap_mcp_call_basic(self, token_counter):
         """Test wrapping MCP call with token counting"""
 
@@ -73,6 +80,7 @@ class TestTokenCounter:
         assert len(token_counter.metrics) == 1
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_wrap_mcp_call_records_metrics(self, token_counter):
         """Test that wrap_mcp_call records metrics correctly"""
 
@@ -93,6 +101,7 @@ class TestTokenCounter:
         assert metrics.execution_time_ms >= 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_wrap_mcp_call_exception_handling(self, token_counter):
         """Test exception handling in wrap_mcp_call"""
 
@@ -107,6 +116,7 @@ class TestTokenCounter:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_wrap_mcp_call_counts_operations(self, token_counter):
         """Test that operation counts are tracked"""
 
@@ -124,6 +134,7 @@ class TestTokenCounter:
         assert token_counter._operation_counts["op_a"] == 2
         assert token_counter._operation_counts["op_b"] == 1
 
+    @pytest.mark.smoke
     def test_get_baseline_metrics_empty(self, token_counter):
         """Test baseline metrics with no data"""
         baseline = token_counter.get_baseline_metrics()
@@ -132,6 +143,7 @@ class TestTokenCounter:
         assert baseline["total_tokens_consumed"] == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_baseline_metrics_populated(self, token_counter):
         """Test baseline metrics with data"""
 
@@ -157,6 +169,7 @@ class TestTokenCounter:
         assert baseline["operation_frequency"]["query_database"] == 1
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_top_5_operations_ranking(self, token_counter):
         """Test that top 5 operations are correctly ranked by tokens"""
 
@@ -190,6 +203,7 @@ class TestTokenCounter:
         assert top_5[0]["operation"] == "expensive_op"
         assert top_5[1]["operation"] == "cheap_op"
 
+    @pytest.mark.smoke
     def test_export_metrics_json(self, token_counter):
         """Test exporting metrics as JSON"""
         token_counter.metrics = [
@@ -210,6 +224,7 @@ class TestTokenCounter:
         assert data[0]["operation"] == "test_op"
         assert data[0]["total_tokens"] == 30
 
+    @pytest.mark.smoke
     def test_clear_metrics(self, token_counter):
         """Test clearing metrics"""
         token_counter.metrics = [
@@ -229,6 +244,7 @@ class TestTokenCounter:
         assert len(token_counter._operation_counts) == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_metrics_summary_output(self, token_counter):
         """Test human-readable metrics summary"""
 
@@ -245,6 +261,7 @@ class TestTokenCounter:
         assert "Total Tokens Consumed:" in summary
         assert "Top 5 Most Expensive Operations:" in summary
 
+    @pytest.mark.smoke
     def test_token_metrics_to_dict(self):
         """Test TokenMetrics conversion to dict"""
         metrics = TokenMetrics(
@@ -265,6 +282,7 @@ class TestTokenCounter:
         assert "timestamp" in result
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_no_performance_impact(self, token_counter):
         """Test that token counting has minimal performance impact"""
         import time
