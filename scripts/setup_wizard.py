@@ -1036,7 +1036,7 @@ async def _wizard_database_setup() -> bool:
         async with AsyncSessionFactory.session_scope_fresh() as session:
             from sqlalchemy import text
 
-            result = await session.execute(text("SELECT 1 FROM alpha_users LIMIT 1"))
+            result = await session.execute(text("SELECT 1 FROM users LIMIT 1"))
         print("   ✓ Database tables already exist")
     except Exception:
         # Tables don't exist, create them

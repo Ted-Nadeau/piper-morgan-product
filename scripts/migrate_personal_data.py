@@ -1,8 +1,8 @@
 """
-Personal Data Migration: Move user data from PIPER.md to alpha_users.preferences
+Personal Data Migration: Move user data from PIPER.md to users.preferences
 
 This script migrates personal context from the old PIPER.md file (which was shared
-across all users) to a specific user's alpha_users.preferences JSONB field, enabling
+across all users) to a specific user's users.preferences JSONB field, enabling
 proper user data isolation.
 
 Usage:
@@ -38,7 +38,7 @@ async def migrate_personal_data(
     username: str = "xian", data_file: str = None, skip_migration: bool = False
 ):
     """
-    Move user's personal data to alpha_users.preferences JSONB field.
+    Move user's personal data to users.preferences JSONB field.
 
     Args:
         username: Username to migrate data for
@@ -49,7 +49,7 @@ async def migrate_personal_data(
         str: User ID if successful, None if failed
     """
     print("=" * 70)
-    print(f"Personal Data Migration: PIPER.md → alpha_users.preferences")
+    print(f"Personal Data Migration: PIPER.md → users.preferences")
     print(f"User: {username}")
     if skip_migration:
         print("Mode: VERIFICATION ONLY (no data migration)")
@@ -63,12 +63,12 @@ async def migrate_personal_data(
     async with await db.get_session() as session:
         try:
             # 1. Find user record
-            print(f"1. Looking up user '{username}' in alpha_users table...")
+            print(f"1. Looking up user '{username}' in users table...")
             result = await session.execute(select(AlphaUser).where(AlphaUser.username == username))
             user = result.scalar_one_or_none()
 
             if not user:
-                print(f"❌ ERROR: User '{username}' not found in alpha_users table")
+                print(f"❌ ERROR: User '{username}' not found in users table")
                 print()
                 print("Available users:")
                 all_users_result = await session.execute(select(AlphaUser))
@@ -123,7 +123,7 @@ async def migrate_personal_data(
             print()
 
             # 4. Update user record
-            print("4. Updating alpha_users.preferences...")
+            print("4. Updating users.preferences...")
             user.preferences = updated_prefs
             await session.commit()
             print("✅ Database commit successful")
@@ -152,7 +152,7 @@ async def migrate_personal_data(
             print(f"Preferences keys: {list(user.preferences.keys())}")
             print()
             print("Next steps:")
-            print("1. Update UserContextService to load from alpha_users.preferences")
+            print("1. Update UserContextService to load from users.preferences")
             print("2. Test multi-user isolation")
             print("3. Verify no personal data in generic PIPER.md")
             print()
@@ -341,7 +341,7 @@ def _get_default_christian_data():
 async def main():
     """Main entry point with CLI argument parsing"""
     parser = argparse.ArgumentParser(
-        description="Migrate personal data from PIPER.md to alpha_users.preferences"
+        description="Migrate personal data from PIPER.md to users.preferences"
     )
     parser.add_argument(
         "--username",
