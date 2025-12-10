@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-We're implementing field-level AES-256-GCM encryption for sensitive user data to meet GDPR Article 32 and SOC2 Type II compliance requirements. This document is a request for architectural review before we proceed to implementation ADR (ADR-043) and code.
+We're implementing field-level AES-256-GCM encryption for sensitive user data to meet GDPR Article 32 and SOC2 Type II compliance requirements. This document is a request for architectural review before we proceed to the implementation ADR and code.
 
 **Timeline**: Implementation in S2 (Security Polish sprint), starting after this review.
 **Scope**: 6 sensitive fields in alpha, with phase 2 deferred for email and search-on-encrypted-data.
@@ -310,7 +310,7 @@ assert retrieved.content == "Tell me about my medical history"  # ✅ Correct de
 | "appropriate technical measures" | AES-256-GCM (NIST standard) |
 | "level of security appropriate to risk" | 256-bit encryption (highest strength) |
 | "encryption of personal data" | All PII encrypted (content, files, patterns) |
-| "documented measures" | ADR-043 + key management guide |
+| "documented measures" | Implementation ADR + key management guide |
 
 **Status**: ✅ Compliant with Article 32
 
@@ -329,7 +329,7 @@ assert retrieved.content == "Tell me about my medical history"  # ✅ Correct de
 
 ## Questions for Ted
 
-Before we proceed to ADR-043 and implementation, please review and confirm:
+Before we proceed to the implementation ADR and implementation, please review and confirm:
 
 ### Cryptographic Soundness
 1. ✅ Is AES-256-GCM with HKDF key derivation the right choice for our threat model?
@@ -360,7 +360,7 @@ Before we proceed to ADR-043 and implementation, please review and confirm:
 ## Deliverables Timeline
 
 **S2 (Security Polish - This Sprint)**:
-- ✅ ADR-043: Encryption at Rest Strategy (after your review)
+- ✅ Implementation ADR: Encryption at Rest Strategy (after your review)
 - ✅ FieldEncryptionService implementation
 - ✅ @encrypted_column SQLAlchemy decorator
 - ✅ Data migration with rollback
@@ -399,7 +399,7 @@ Before we proceed to ADR-043 and implementation, please review and confirm:
 **Review Questions**: 13 questions above (marked with ✅)
 
 **Next Step**: Based on your feedback:
-1. If approved: Proceed to ADR-043 and implementation
+1. If approved: Proceed to implementation ADR and code implementation
 2. If modifications needed: Update architecture and resubmit
 3. If blocked: Document concerns and escalate to team
 

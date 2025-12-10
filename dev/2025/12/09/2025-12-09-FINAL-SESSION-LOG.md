@@ -189,7 +189,7 @@ Pre-commit Hooks: ✅ ALL PASSING
 ### ⏸️ Awaiting Input
 - **Primary**: Ted Nadeau's architectural review (13 approval questions)
   - Expected response: 12:54 PM (per PM note at 12:08 PM)
-  - Action upon approval: Create ADR-043, delegate Phase 0 to Code agent
+  - Action upon approval: Create implementation ADR, delegate Phase 0 to Code agent
 
 - **Secondary**: GitHub CLI auth (resolved with UI workaround)
   - Action: Create S3 child issues via GitHub UI or retry CLI
@@ -262,7 +262,7 @@ Pre-commit Hooks: ✅ ALL PASSING
 ### Upon Ted's Approval (Expected Decision)
 1. Review his feedback on 13 architectural approval questions
 2. Incorporate any architectural modifications
-3. Create ADR-043 (Encryption at Rest Strategy)
+3. Create implementation ADR (Encryption at Rest Strategy)
 4. Delegate Phase 0 to Code agent
 
 ### If Additional Prep Needed
@@ -271,7 +271,7 @@ Pre-commit Hooks: ✅ ALL PASSING
 - Update implementation timeline if needed
 
 ### If Modifications Needed
-- Ted's feedback will guide ADR-043
+- Ted's feedback will guide the implementation ADR
 - Code gameplan remains valid (architecture-agnostic)
 - Risk mitigation may need adjustment
 - Timeline may shift (documented in gameplan flexibility)
@@ -326,7 +326,7 @@ Pre-commit Hooks: ✅ ALL PASSING
 
 ### Next Steps
 1. **Monitor for Ted's feedback** (13 architectural questions)
-2. **Upon approval**: Create ADR-043 + delegate Phase 0
+2. **Upon approval**: Create implementation ADR + delegate Phase 0
 3. **In parallel**: Create S3 child issues (templates ready)
 4. **Post-S2**: Close #358, begin S3 sprint planning
 

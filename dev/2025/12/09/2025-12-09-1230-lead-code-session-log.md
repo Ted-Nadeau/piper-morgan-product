@@ -121,7 +121,7 @@ Prepare comprehensive documentation and execution plans for S2 Sprint while awai
    - Expected response: 12:54 PM (per PM note)
    - 13 architectural approval questions ready
    - Complete architecture package submitted
-   - Once approved: ADR-043 creation → Phase 0 execution
+   - Once approved: Implementation ADR creation → Phase 0 execution
 
 2. **GitHub CLI auth issue** (secondary)
    - Workaround: Use GitHub UI for manual issue creation
@@ -141,7 +141,7 @@ Prepare comprehensive documentation and execution plans for S2 Sprint while awai
 
 ### 1. Upon Ted's Approval (Expected 12:54 PM)
 1. Incorporate any architectural modifications
-2. Create ADR-043 documenting approved approach
+2. Create implementation ADR documenting approved approach
 3. Delegate Phase 0 to Code agent
 4. Code agent executes 6 phases systematically
 
@@ -269,7 +269,7 @@ Pre-commit Hooks: ✅ ALL PASSING
 **Session Lead**: Claude Code (Lead Developer Agent)
 **Date**: December 9, 2025
 **Time**: 12:30 PM - 1:00 PM
-**Next Milestone**: Ted Nadeau's approval → ADR-043 → Phase 0 execution
+**Next Milestone**: Ted Nadeau's approval → Implementation ADR → Phase 0 execution
 
 ---
 

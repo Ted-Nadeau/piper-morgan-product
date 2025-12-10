@@ -720,7 +720,7 @@ class TestEncryptionPerformance:
 
 #### 4.3 Document performance characteristics (1 hour)
 
-**Location**: [docs/internal/architecture/current/ADRs/ADR-043-encryption-at-rest.md](docs/internal/architecture/)
+**Location**: [docs/internal/architecture/current/adrs/](docs/internal/architecture/current/adrs/) (ADR number to be assigned)
 
 **Content**:
 ```markdown
@@ -773,7 +773,7 @@ Comprehensive test coverage and documentation.
 #### 5.3 Documentation (2 hours)
 
 **Files to Create**:
-1. **ADR-043**: Encryption at Rest Strategy (architecture decision record)
+1. **Implementation ADR**: Encryption at Rest Strategy (architecture decision record - number TBD)
 2. **OPERATION-GUIDE**: How to manage encryption in production
 3. **TROUBLESHOOTING**: Common encryption issues and fixes
 4. **KEY-ROTATION**: 90-day key rotation procedure
@@ -824,7 +824,7 @@ Final validation, cleanup, and handoff documentation.
 
 #### 6.3 GitHub issue closure (30 min)
 - Update #358 with completion summary
-- Link to ADR-043
+- Link to implementation ADR
 - Link to final report
 - Close issue with evidence
 
