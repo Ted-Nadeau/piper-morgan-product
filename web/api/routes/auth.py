@@ -201,7 +201,7 @@ async def login(
             httponly=True,
             secure=is_https,  # Only set secure flag for HTTPS requests
             samesite="lax",
-            max_age=28800,  # 8 hours for better alpha testing UX
+            max_age=86400,  # 24 hours for alpha testing UX
         )
 
         logger.info(

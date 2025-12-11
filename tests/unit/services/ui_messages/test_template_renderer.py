@@ -21,6 +21,7 @@ class TestTemplateRenderer:
         return TemplateRenderer(humanizer=mock_humanizer)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_template_renderer_calls_action_humanizer(
         self, template_renderer, mock_humanizer
     ):
@@ -48,6 +49,7 @@ class TestTemplateRenderer:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_human_action_placeholder_replacement(self, template_renderer, mock_humanizer):
         """Test that {human_action} placeholder gets replaced with humanized action"""
         # Arrange
@@ -64,6 +66,7 @@ class TestTemplateRenderer:
         assert result == "Working on create a ticket for you."
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_fallback_when_humanizer_not_available(self):
         """Test fallback behavior when humanizer is not available"""
         # Arrange
@@ -78,6 +81,7 @@ class TestTemplateRenderer:
         assert result == "Working on create_ticket for you."
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_no_human_action_placeholder_no_humanizer_call(
         self, template_renderer, mock_humanizer
     ):
@@ -96,6 +100,7 @@ class TestTemplateRenderer:
         assert result == "Workflow completed successfully!"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_preserves_original_action_placeholder(self, template_renderer, mock_humanizer):
         """Test that {action} placeholder is preserved and {human_action} is added"""
         # Arrange
@@ -112,6 +117,7 @@ class TestTemplateRenderer:
         assert result == "Original: investigate_crash, Humanized: investigate a crash"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_additional_kwargs_passed_through(self, template_renderer, mock_humanizer):
         """Test that additional kwargs are passed through to template formatting"""
         # Arrange

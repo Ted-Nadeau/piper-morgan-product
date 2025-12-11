@@ -14,6 +14,7 @@ from services.repositories.file_repository import FileRepository
 class TestFileQueryService:
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_read_file_contents(self):
         # Arrange
         file_id = "test-file-id"

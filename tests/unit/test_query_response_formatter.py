@@ -12,6 +12,7 @@ from services.api.query_response_formatter import QueryResponseFormatter
 class TestQueryResponseFormatter:
     """Test response formatting for different QueryRouter response types"""
 
+    @pytest.mark.smoke
     def test_format_string_response(self):
         """Test formatting of string responses (degradation messages)"""
         # Degradation message
@@ -30,6 +31,7 @@ class TestQueryResponseFormatter:
         )
         assert result == "Hello! I'm Piper Morgan."
 
+    @pytest.mark.smoke
     def test_format_dict_response_error(self):
         """Test formatting of dictionary error responses from file services"""
         error_response = {
@@ -44,6 +46,7 @@ class TestQueryResponseFormatter:
         expected = "Unable to read file contents. File service temporarily unavailable. Please check that the file exists and try again in a few moments. You can read_file_contents."
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_dict_response_no_results(self):
         """Test formatting of dictionary responses with no results"""
         no_results_response = {
@@ -58,6 +61,7 @@ class TestQueryResponseFormatter:
         expected = "Unable to search files. Search service temporarily unavailable. File search is temporarily unavailable. Please try again shortly."
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_dict_response_with_results(self):
         """Test formatting of dictionary responses with search results"""
         results_response = {
@@ -74,6 +78,7 @@ class TestQueryResponseFormatter:
         expected = "Found 3 results for 'project documentation'. Here are the matches: project-plan.md, requirements.txt, architecture.md"
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_dict_response_single_result(self):
         """Test formatting of dictionary responses with single result"""
         single_result_response = {
@@ -88,6 +93,7 @@ class TestQueryResponseFormatter:
         expected = "Found 1 result for 'project plan': project-plan.md"
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_dict_response_message_field(self):
         """Test formatting of dictionary responses with message field"""
         message_response = {
@@ -102,6 +108,7 @@ class TestQueryResponseFormatter:
         expected = "File contents retrieved successfully"
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_list_response_projects(self):
         """Test formatting of list responses for projects"""
 
@@ -119,12 +126,14 @@ class TestQueryResponseFormatter:
         expected = "I found 3 projects: Web App, Mobile App, API Service"
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_list_response_empty(self):
         """Test formatting of empty list responses"""
         result = QueryResponseFormatter.format_query_response([], "list_projects")
         expected = "No items found for list_projects."
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_list_response_generic(self):
         """Test formatting of generic list responses"""
         results = ["result1", "result2", "result3", "result4", "result5"]
@@ -133,6 +142,7 @@ class TestQueryResponseFormatter:
         expected = "Found 5 results for search_content. Here are the first few: result1, result2, result3..."
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_object_response_with_to_dict(self):
         """Test formatting of single object responses"""
 
@@ -145,6 +155,7 @@ class TestQueryResponseFormatter:
         expected = "Found project: Test Project"
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_object_response_generic(self):
         """Test formatting of generic object responses"""
 
@@ -157,12 +168,14 @@ class TestQueryResponseFormatter:
         expected = "Found the requested get_status information."
         assert result == expected
 
+    @pytest.mark.smoke
     def test_format_object_response_primitive(self):
         """Test formatting of primitive object responses"""
         result = QueryResponseFormatter.format_query_response(42, "count_projects")
         expected = "42"
         assert result == expected
 
+    @pytest.mark.smoke
     def test_is_degradation_response_string(self):
         """Test degradation detection for string responses"""
         # Degradation messages
@@ -176,6 +189,7 @@ class TestQueryResponseFormatter:
         assert not QueryResponseFormatter.is_degradation_response("Hello! I'm Piper Morgan.")
         assert not QueryResponseFormatter.is_degradation_response("I found 3 projects")
 
+    @pytest.mark.smoke
     def test_is_degradation_response_dict(self):
         """Test degradation detection for dictionary responses"""
         # Error response
@@ -190,6 +204,7 @@ class TestQueryResponseFormatter:
         other_response = {"message": "Hello"}
         assert not QueryResponseFormatter.is_degradation_response(other_response)
 
+    @pytest.mark.smoke
     def test_extract_user_action_hint(self):
         """Test extraction of actionable guidance from responses"""
         # Docker hint
@@ -211,6 +226,7 @@ class TestQueryResponseFormatter:
         hint = QueryResponseFormatter.extract_user_action_hint("Some other message")
         assert hint == "Please try again later."
 
+    @pytest.mark.smoke
     def test_error_handling_formatting(self):
         """Test that formatter handles errors gracefully"""
 
@@ -224,6 +240,7 @@ class TestQueryResponseFormatter:
         expected = "I processed your test_action request. The response is available."
         assert result == expected
 
+    @pytest.mark.smoke
     def test_backward_compatibility_project_lists(self):
         """Test backward compatibility with existing project list handling"""
         # Test with project dicts (existing format)

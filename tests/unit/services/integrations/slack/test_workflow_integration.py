@@ -55,6 +55,7 @@ class TestSpatialIntentClassifier:
         decision.confidence = 0.9
         return decision
 
+    @pytest.mark.smoke
     def test_create_intent_patterns(self, intent_classifier):
         """Test creation of intent patterns"""
         patterns = intent_classifier.intent_patterns
@@ -69,6 +70,7 @@ class TestSpatialIntentClassifier:
         bug_patterns = [p for p in patterns if "bug" in p.keywords]
         assert len(bug_patterns) > 0
 
+    @pytest.mark.smoke
     def test_classify_spatial_event_help_request(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -85,6 +87,7 @@ class TestSpatialIntentClassifier:
             or "bug" in result.classification_reason.lower()
         )
 
+    @pytest.mark.smoke
     def test_classify_spatial_event_bug_report(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -100,6 +103,7 @@ class TestSpatialIntentClassifier:
         assert result.confidence > 0.0
         assert result.intent.action == "create_ticket"
 
+    @pytest.mark.smoke
     def test_classify_spatial_event_feature_request(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -115,6 +119,7 @@ class TestSpatialIntentClassifier:
         assert result.confidence > 0.0
         assert result.intent.action == "create_feature"
 
+    @pytest.mark.smoke
     def test_classify_spatial_event_status_update(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -128,6 +133,7 @@ class TestSpatialIntentClassifier:
         assert result.confidence > 0.0
         assert result.intent.action == "generate_report"
 
+    @pytest.mark.smoke
     def test_classify_spatial_event_unknown(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -141,6 +147,7 @@ class TestSpatialIntentClassifier:
         assert result.intent.category == IntentCategory.UNKNOWN
         assert result.confidence == 0.3
 
+    @pytest.mark.smoke
     def test_extract_text_content_from_message(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -149,6 +156,7 @@ class TestSpatialIntentClassifier:
 
         assert text == "hello world"
 
+    @pytest.mark.smoke
     def test_extract_text_content_from_spatial_changes(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -157,6 +165,7 @@ class TestSpatialIntentClassifier:
 
         assert "help" in text.lower() and "bug" in text.lower()
 
+    @pytest.mark.smoke
     def test_find_best_pattern(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -168,6 +177,7 @@ class TestSpatialIntentClassifier:
         assert pattern is not None
         assert "help" in pattern.keywords or "bug" in pattern.keywords
 
+    @pytest.mark.smoke
     def test_calculate_pattern_score(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -187,6 +197,7 @@ class TestSpatialIntentClassifier:
         assert score > 0.0
         assert score <= 1.0
 
+    @pytest.mark.smoke
     def test_create_intent_from_pattern(
         self, intent_classifier, mock_event_result, mock_navigation_decision
     ):
@@ -209,6 +220,7 @@ class TestSpatialIntentClassifier:
         assert intent.confidence == 0.8
         assert "spatial_event_type" in intent.context
 
+    @pytest.mark.smoke
     def test_get_intent_patterns(self, intent_classifier):
         """Test getting intent patterns"""
         patterns = intent_classifier.get_intent_patterns()
@@ -216,6 +228,7 @@ class TestSpatialIntentClassifier:
         assert len(patterns) > 0
         assert all(isinstance(pattern, SpatialIntentPattern) for pattern in patterns)
 
+    @pytest.mark.smoke
     def test_get_classification_stats(self, intent_classifier):
         """Test getting classification statistics"""
         stats = intent_classifier.get_classification_stats()
@@ -230,6 +243,7 @@ class TestSpatialIntentClassifier:
         assert len(stats["intent_categories"]) > 0
         assert len(stats["actions"]) > 0
 
+    @pytest.mark.smoke
     def test_classify_batch(self, intent_classifier, mock_event_result, mock_navigation_decision):
         """Test batch classification"""
         events = [
@@ -342,6 +356,7 @@ class TestWorkflowIntegration:
             navigation_intent="respond",
         )
 
+    @pytest.mark.smoke
     async def test_end_to_end_workflow_creation(
         self,
         slack_workflow_factory,
@@ -377,6 +392,7 @@ class TestWorkflowIntegration:
         assert workflow.id == "wf-123"
         assert "spatial_integration" in workflow.context
 
+    @pytest.mark.smoke
     def test_spatial_context_enrichment(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):

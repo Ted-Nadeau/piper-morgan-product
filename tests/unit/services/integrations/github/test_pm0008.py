@@ -6,12 +6,14 @@ Run this in your working environment with: python simple_test.py
 import asyncio
 import os
 
+import pytest
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 
+@pytest.mark.smoke
 def test_url_parsing():
     """Test URL parsing without GitHub API calls"""
     print("🔧 Testing URL parsing...")
@@ -59,6 +61,7 @@ def check_environment():
             print(f"  ❌ {var}: Not set")
 
 
+@pytest.mark.smoke
 def test_imports():
     """Test if we can import the required modules"""
     print("\n📦 Testing imports...")

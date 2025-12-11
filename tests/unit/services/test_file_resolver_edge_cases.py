@@ -43,6 +43,7 @@ async def create_test_user(session, owner_id: str) -> User:
 
 class TestFileResolverEdgeCases:
 
+    @pytest.mark.smoke
     async def test_no_files_in_session(self, async_transaction):
         """Test when user references files but none uploaded"""
         async with async_transaction as session:
@@ -58,6 +59,7 @@ class TestFileResolverEdgeCases:
             assert file_id is None
             assert confidence == 0.0
 
+    @pytest.mark.smoke
     async def test_very_old_file_scoring(self, async_transaction):
         """Test that very old files score lower than recent ones"""
         owner_id = str(uuid4())
@@ -93,6 +95,7 @@ class TestFileResolverEdgeCases:
             assert file_id == recent_file.id
             assert confidence > 0.5
 
+    @pytest.mark.smoke
     async def test_identical_filenames_different_times(self, async_transaction):
         """Test handling multiple files with same name"""
         owner_id = str(uuid4())
@@ -121,6 +124,7 @@ class TestFileResolverEdgeCases:
             file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
             assert file_id == files[0].id  # Most recent
 
+    @pytest.mark.smoke
     async def test_special_characters_in_filename(self, async_transaction):
         """Test files with spaces, unicode, special chars"""
         owner_id = str(uuid4())
@@ -174,6 +178,7 @@ class TestFileResolverEdgeCases:
                 # Ambiguity is acceptable - verify résumé is the top candidate
                 assert "résumé" in e.files[0].filename  # First candidate should be résumé
 
+    @pytest.mark.smoke
     async def test_performance_with_many_files(self, async_transaction):
         """Test resolution performance with many files"""
         import time

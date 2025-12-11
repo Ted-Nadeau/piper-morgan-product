@@ -76,14 +76,12 @@ async def create_project(
                 detail="Project name is required",
             )
 
-        # Create project with ownership
-        new_project = domain.Project(
+        # Create project with ownership using kwargs (BaseRepository.create signature)
+        created_project = await project_repo.create(
             name=request.name,
             description=request.description or "",
             owner_id=current_user.sub,
         )
-
-        created_project = await project_repo.create_project(new_project)
 
         logger.info(
             "project_created",
@@ -143,7 +141,7 @@ async def get_project(
     Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
     """
     try:
-        project_obj = await project_repo.get_project_by_id(project_id, owner_id=current_user.sub)
+        project_obj = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
 
         if not project_obj:
             raise HTTPException(
@@ -199,7 +197,7 @@ async def list_projects(
     Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
     """
     try:
-        projects = await project_repo.get_projects_by_owner(current_user.sub)
+        projects = await project_repo.list_active_projects(owner_id=current_user.sub)
 
         logger.info(
             "projects_retrieved",
@@ -266,7 +264,7 @@ async def update_project(
     """
     try:
         # Verify ownership
-        project_obj = await project_repo.get_project_by_id(project_id, owner_id=current_user.sub)
+        project_obj = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
 
         if not project_obj:
             raise HTTPException(
@@ -274,19 +272,21 @@ async def update_project(
                 detail=f"Project not found: {project_id}",
             )
 
-        # Update fields
+        # Build update kwargs
+        update_kwargs = {}
         if name is not None:
             if not name.strip():
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Project name cannot be empty",
                 )
-            project_obj.name = name
+            update_kwargs["name"] = name
 
         if description is not None:
-            project_obj.description = description
+            update_kwargs["description"] = description
 
-        updated = await project_repo.update_project(project_obj)
+        # Update using BaseRepository.update(id, **kwargs) signature
+        updated = await project_repo.update(project_id, **update_kwargs)
 
         logger.info(
             "project_updated",
@@ -345,7 +345,7 @@ async def delete_project(
     """
     try:
         # Verify ownership before deleting
-        project_obj = await project_repo.get_project_by_id(project_id, owner_id=current_user.sub)
+        project_obj = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
 
         if not project_obj:
             raise HTTPException(
@@ -353,7 +353,7 @@ async def delete_project(
                 detail=f"Project not found: {project_id}",
             )
 
-        await project_repo.delete_project(project_id, owner_id=current_user.sub)
+        await project_repo.delete(project_id)
 
         logger.info(
             "project_deleted",

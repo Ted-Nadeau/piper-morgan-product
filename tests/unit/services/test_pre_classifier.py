@@ -5,6 +5,7 @@ from services.shared_types import IntentCategory
 
 
 class TestPreClassifier:
+    @pytest.mark.smoke
     def test_greeting_patterns(self):
         """Test each greeting pattern returns correct intent"""
         greeting_patterns = [
@@ -27,6 +28,7 @@ class TestPreClassifier:
             assert intent.confidence == 1.0
             assert intent.context["original_message"] == pattern
 
+    @pytest.mark.smoke
     def test_farewell_patterns(self):
         """Test each farewell pattern returns correct intent"""
         farewell_patterns = ["goodbye", "bye", "see you", "later", "farewell"]
@@ -39,6 +41,7 @@ class TestPreClassifier:
             assert intent.confidence == 1.0
             assert intent.context["original_message"] == pattern
 
+    @pytest.mark.smoke
     def test_thanks_patterns(self):
         """Test each thanks pattern returns correct intent"""
         thanks_patterns = ["thanks", "thank you", "ty", "thx", "much appreciated"]
@@ -51,6 +54,7 @@ class TestPreClassifier:
             assert intent.confidence == 1.0
             assert intent.context["original_message"] == pattern
 
+    @pytest.mark.smoke
     def test_greeting_with_punctuation(self):
         """Test greetings with punctuation and emojis"""
         greeting_with_punct = [
@@ -79,6 +83,7 @@ class TestPreClassifier:
             assert intent.action == "greeting"
             assert intent.confidence == 1.0
 
+    @pytest.mark.smoke
     def test_farewell_with_punctuation(self):
         """Test farewells with punctuation and emojis"""
         farewell_with_punct = [
@@ -106,6 +111,7 @@ class TestPreClassifier:
             assert intent.action == "farewell"
             assert intent.confidence == 1.0
 
+    @pytest.mark.smoke
     def test_thanks_with_punctuation(self):
         """Test thanks with punctuation and emojis"""
         thanks_with_punct = [
@@ -133,6 +139,7 @@ class TestPreClassifier:
             assert intent.action == "thanks"
             assert intent.confidence == 1.0
 
+    @pytest.mark.smoke
     def test_non_conversational_patterns(self):
         """Test patterns that should NOT be pre-classified, except for those Piper now recognizes as greetings, farewells, or thanks."""
         non_conversational = [
@@ -183,6 +190,7 @@ class TestPreClassifier:
             else:
                 assert intent is None, f"Expected None for '{pattern}', got {intent}"
 
+    @pytest.mark.smoke
     def test_case_insensitivity(self):
         """Test that patterns work regardless of case"""
         case_variations = [
@@ -205,6 +213,7 @@ class TestPreClassifier:
             assert intent is not None
             assert intent.confidence == 1.0
 
+    @pytest.mark.smoke
     def test_whitespace_handling(self):
         """Test that whitespace is handled correctly"""
         whitespace_variations = [
@@ -223,6 +232,7 @@ class TestPreClassifier:
             assert intent is not None
             assert intent.confidence == 1.0
 
+    @pytest.mark.smoke
     def test_empty_and_edge_cases(self):
         """Test empty and edge case patterns"""
         edge_cases = [
@@ -246,6 +256,7 @@ class TestPreClassifier:
             else:
                 assert intent is None, f"Expected None for '{pattern}', got {intent}"
 
+    @pytest.mark.smoke
     def test_partial_matches_should_fail(self):
         """Test that partial matches do not trigger pre-classification"""
         partial_matches = ["hello world", "hi there how are you"]
@@ -257,6 +268,7 @@ class TestPreClassifier:
             else:
                 assert intent is None, f"Expected None for non-match '{pattern}', got {intent}"
 
+    @pytest.mark.smoke
     def test_greeting_with_follow_up(self):
         """Test greeting with follow-up message"""
         pattern = "hi there how are you"
@@ -264,6 +276,7 @@ class TestPreClassifier:
         # Test updated to match improved behavior: Pre-classifier now recognizes greetings
         assert intent is not None and intent.action == "greeting"
 
+    @pytest.mark.smoke
     def test_yes_no_not_preclassified(self):
         """Test that yes/no patterns are NOT pre-classified (removed from pre-classifier)"""
         yes_no_patterns = [

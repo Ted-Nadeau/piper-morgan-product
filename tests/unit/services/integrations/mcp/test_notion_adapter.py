@@ -20,6 +20,7 @@ class TestNotionAdapterGetCurrentUser:
             self.adapter._notion_client = MagicMock()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_success_person(self):
         """Test successful retrieval of person user information."""
         # Mock the Notion client response for person user
@@ -44,6 +45,7 @@ class TestNotionAdapterGetCurrentUser:
         self.adapter._notion_client.users.me.assert_called_once()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_success_bot(self):
         """Test retrieval of bot user with workspace info."""
         # Mock bot user response
@@ -66,6 +68,7 @@ class TestNotionAdapterGetCurrentUser:
         assert result["workspace"]["name"] == "Test Workspace"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_api_error(self):
         """Test handling of Notion API errors."""
         # Mock API error
@@ -80,6 +83,7 @@ class TestNotionAdapterGetCurrentUser:
             await self.adapter.get_current_user()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_timeout(self):
         """Test handling of request timeout."""
         # Mock timeout
@@ -90,6 +94,7 @@ class TestNotionAdapterGetCurrentUser:
             await self.adapter.get_current_user()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_no_client(self):
         """Test behavior when Notion client is not initialized."""
         # Set client to None
@@ -101,6 +106,7 @@ class TestNotionAdapterGetCurrentUser:
         assert result is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_empty_response(self):
         """Test handling of empty user info response."""
         # Mock empty response
@@ -111,6 +117,7 @@ class TestNotionAdapterGetCurrentUser:
         assert result is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_missing_email(self):
         """Test user without email field (edge case)."""
         # Mock user without person.email
@@ -131,6 +138,7 @@ class TestNotionAdapterGetCurrentUser:
         assert result.get("email") is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_missing_workspace(self):
         """Test bot user without workspace info (edge case)."""
         # Mock bot user without workspace
@@ -153,6 +161,7 @@ class TestNotionAdapterGetCurrentUser:
             assert result["workspace"]["name"] is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_unexpected_exception(self):
         """Test handling of unexpected exceptions."""
         # Mock unexpected exception
@@ -164,6 +173,7 @@ class TestNotionAdapterGetCurrentUser:
         assert result is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_current_user_with_real_api_key(self):
         """
         Test get_current_user() with real Notion API key.

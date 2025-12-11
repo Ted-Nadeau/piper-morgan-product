@@ -11,6 +11,7 @@ import pytest
 class TestTimezoneMapping:
     """Test the timezone abbreviation mapping"""
 
+    @pytest.mark.smoke
     def test_common_us_timezones(self):
         """Test mapping for common US timezones"""
         from services.intent_service.canonical_handlers import TIMEZONE_ABBREVIATIONS
@@ -20,6 +21,7 @@ class TestTimezoneMapping:
         assert TIMEZONE_ABBREVIATIONS["America/Chicago"] == "CT"
         assert TIMEZONE_ABBREVIATIONS["America/Denver"] == "MT"
 
+    @pytest.mark.smoke
     def test_international_timezones(self):
         """Test mapping for international timezones"""
         from services.intent_service.canonical_handlers import TIMEZONE_ABBREVIATIONS
@@ -28,6 +30,7 @@ class TestTimezoneMapping:
         assert TIMEZONE_ABBREVIATIONS["Asia/Tokyo"] == "JST"
         assert TIMEZONE_ABBREVIATIONS["Australia/Sydney"] == "AEDT"
 
+    @pytest.mark.smoke
     def test_fallback_to_utc(self):
         """Unknown timezones should fallback gracefully"""
         from services.intent_service.canonical_handlers import TIMEZONE_ABBREVIATIONS
@@ -41,6 +44,7 @@ class TestTimezoneMapping:
 class TestTimezoneAbbreviationDisplay:
     """Test that timezone abbreviations are used instead of city names"""
 
+    @pytest.mark.smoke
     def test_timezone_abbreviations_constant_exists(self):
         """Verify TIMEZONE_ABBREVIATIONS constant exists and is properly structured"""
         from services.intent_service.canonical_handlers import TIMEZONE_ABBREVIATIONS

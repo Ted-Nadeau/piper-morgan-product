@@ -68,6 +68,7 @@ class TestOrchestrationEngine:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_create_workflow_from_intent_success(self, engine, mock_intent):
         """Test successful workflow creation from intent"""
         # Mock the factory to return a workflow
@@ -93,6 +94,7 @@ class TestOrchestrationEngine:
         mock_factory.assert_called_once_with(mock_intent)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_create_workflow_from_intent_failure(self, engine, mock_intent):
         """Test workflow creation when factory returns None"""
         with patch.object(
@@ -107,6 +109,7 @@ class TestOrchestrationEngine:
         assert len(engine.workflows) == 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_workflow_not_found(self, engine):
         """Test executing a non-existent workflow"""
         with pytest.raises(ValueError, match="Workflow test-missing not found"):
@@ -125,6 +128,7 @@ class TestOrchestrationEngine:
     # DELETED: test_placeholder_handler - OrchestrationEngine._placeholder_handler method no longer exists
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_workflow_state_transitions(self, engine):
         """Test workflow state transitions through execution using real domain models"""
         from services.domain.models import (
@@ -172,6 +176,7 @@ class TestOrchestrationEngine:
         assert workflow.is_complete() or all(t.status != TaskStatus.PENDING for t in workflow.tasks)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_workflow_error_handling(self, engine):
         """Test workflow error handling and status updates using real domain models"""
         from services.domain.models import (

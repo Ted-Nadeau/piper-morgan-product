@@ -25,6 +25,7 @@ class TestLoadingStatesService:
         """LoadingStatesService instance for testing"""
         return LoadingStatesService()
 
+    @pytest.mark.smoke
     def test_start_operation(self, service):
         """Test starting a loading operation"""
         operation_id = service.start_operation(
@@ -41,6 +42,7 @@ class TestLoadingStatesService:
         assert operation.current_state == LoadingState.STARTING
         assert len(operation.progress_updates) == 1
 
+    @pytest.mark.smoke
     def test_update_progress(self, service):
         """Test updating operation progress"""
         operation_id = service.start_operation(OperationType.WORKFLOW_EXECUTION, "Running workflow")
@@ -67,6 +69,7 @@ class TestLoadingStatesService:
         assert latest_update.total_steps == 3
         assert latest_update.current_step_number == 1
 
+    @pytest.mark.smoke
     def test_complete_operation_success(self, service):
         """Test completing operation successfully"""
         operation_id = service.start_operation(OperationType.GITHUB_API, "Fetching GitHub data")
@@ -87,6 +90,7 @@ class TestLoadingStatesService:
         assert latest_update.progress_percent == 100
         assert latest_update.metadata["items_count"] == 42
 
+    @pytest.mark.smoke
     def test_complete_operation_failure(self, service):
         """Test completing operation with failure"""
         operation_id = service.start_operation(OperationType.DATABASE_QUERY, "Searching database")
@@ -102,6 +106,7 @@ class TestLoadingStatesService:
         assert latest_update.state == LoadingState.FAILED
         assert latest_update.message == "Database connection failed"
 
+    @pytest.mark.smoke
     def test_get_operation_status(self, service):
         """Test getting operation status"""
         operation_id = service.start_operation(OperationType.FILE_PROCESSING, "Processing file")
@@ -114,6 +119,7 @@ class TestLoadingStatesService:
         # Test non-existent operation
         assert service.get_operation_status("non-existent") is None
 
+    @pytest.mark.smoke
     def test_get_latest_progress(self, service):
         """Test getting latest progress update"""
         operation_id = service.start_operation(OperationType.ANALYSIS, "Analyzing data")
@@ -158,6 +164,7 @@ class TestLoadingStatesService:
         assert updates[1].message == "Step 1"
         assert updates[2].message == "Step 2"
 
+    @pytest.mark.smoke
     def test_cancel_operation(self, service):
         """Test cancelling an operation"""
         operation_id = service.start_operation(OperationType.SLACK_API, "Sending message")
@@ -174,6 +181,7 @@ class TestLoadingStatesService:
         # Test cancelling non-existent operation
         assert service.cancel_operation("non-existent") is False
 
+    @pytest.mark.smoke
     def test_get_active_operations(self, service):
         """Test getting all active operations"""
         assert len(service.get_active_operations()) == 0
@@ -186,6 +194,7 @@ class TestLoadingStatesService:
         assert any(op.operation_id == id1 for op in active)
         assert any(op.operation_id == id2 for op in active)
 
+    @pytest.mark.smoke
     def test_operation_type_configs(self, service):
         """Test that all operation types have proper configurations"""
         for op_type in OperationType:
@@ -197,6 +206,7 @@ class TestLoadingStatesService:
             assert LoadingState.IN_PROGRESS in config["messages"]
             assert LoadingState.COMPLETED in config["messages"]
 
+    @pytest.mark.smoke
     def test_default_messages(self, service):
         """Test default message generation"""
         for op_type in OperationType:
@@ -206,6 +216,7 @@ class TestLoadingStatesService:
                 assert len(message) > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_track_loading_operation_decorator_success(self):
         """Test the track_loading_operation decorator with successful operation"""
 
@@ -218,6 +229,7 @@ class TestLoadingStatesService:
         assert result == "success"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_track_loading_operation_decorator_failure(self):
         """Test the track_loading_operation decorator with failed operation"""
 
@@ -229,6 +241,7 @@ class TestLoadingStatesService:
         with pytest.raises(ValueError, match="Test error"):
             await failing_function()
 
+    @pytest.mark.smoke
     def test_convenience_functions(self):
         """Test convenience functions"""
         # Test start_loading
@@ -275,6 +288,7 @@ class TestLoadingStatesService:
         assert len(timeout_updates) > 0
         assert "timed out" in timeout_updates[0].message.lower()
 
+    @pytest.mark.smoke
     def test_update_unknown_operation(self, service):
         """Test updating progress for unknown operation"""
         # Should not raise exception, just log warning
@@ -283,6 +297,7 @@ class TestLoadingStatesService:
         # Should not create the operation
         assert "unknown-id" not in service.active_operations
 
+    @pytest.mark.smoke
     def test_complete_unknown_operation(self, service):
         """Test completing unknown operation"""
         # Should not raise exception, just log warning

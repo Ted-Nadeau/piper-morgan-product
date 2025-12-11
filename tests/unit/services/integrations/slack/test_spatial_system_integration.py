@@ -87,6 +87,7 @@ class TestCompleteOAuthToSpatialWorkflow:
     # This test should FAIL initially - we need to implement the complete flow
 
     @patch("httpx.AsyncClient.post")
+    @pytest.mark.smoke
     async def test_oauth_flow_creates_spatial_workspace_territory(
         self, mock_post, oauth_handler, workspace_navigator, spatial_memory_store
     ):
@@ -139,6 +140,7 @@ class TestCompleteOAuthToSpatialWorkflow:
     # TDD Test 2: SLACK EVENT TO SPATIAL PROCESSING TO WORKFLOW
     # This test should FAIL initially - complete event processing chain
 
+    @pytest.mark.smoke
     async def test_slack_event_to_spatial_to_workflow_pipeline(
         self, workspace_navigator, attention_model, spatial_memory_store
     ):

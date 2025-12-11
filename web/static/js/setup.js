@@ -67,26 +67,55 @@
         document.getElementById('step-1-description').textContent = 'Checking that all required services are running...';
 
         try {
+            const statusDiv = document.getElementById('system-status');
+
+            // Show progress animation while checking
+            statusDiv.innerHTML = `
+                <div class="service-status checking">⏳ Checking Docker...</div>
+                <div class="service-status checking">⏳ Checking PostgreSQL...</div>
+                <div class="service-status checking">⏳ Checking Redis...</div>
+                <div class="service-status checking">⏳ Checking ChromaDB...</div>
+                <div class="service-status checking">⏳ Checking Temporal...</div>
+            `;
+
             const response = await fetch('/setup/check-system', { method: 'POST' });
             const data = await response.json();
 
-            const statusDiv = document.getElementById('system-status');
-            statusDiv.innerHTML = `
-                <div class="service-status ${data.postgres_ready ? 'ready' : 'not-ready'}">
-                    ${data.postgres_ready ? '✓' : '✗'} PostgreSQL
-                </div>
-                <div class="service-status ${data.redis_ready ? 'ready' : 'not-ready'}">
-                    ${data.redis_ready ? '✓' : '✗'} Redis
-                </div>
-                <div class="service-status ${data.chromadb_ready ? 'ready' : 'not-ready'}">
-                    ${data.chromadb_ready ? '✓' : '✗'} ChromaDB
-                </div>
-                <div class="service-status ${data.temporal_ready ? 'ready' : 'not-ready'}">
-                    ${data.temporal_ready ? '✓' : '✗'} Temporal (optional)
-                </div>
-            `;
+            // Animate results appearing sequentially
+            const services = [
+                { name: 'Docker', ready: data.docker_available },
+                { name: 'PostgreSQL', ready: data.postgres_ready },
+                { name: 'Redis', ready: data.redis_ready },
+                { name: 'ChromaDB', ready: data.chromadb_ready },
+                { name: 'Temporal (optional)', ready: data.temporal_ready },
+            ];
+
+            statusDiv.innerHTML = '';
+
+            // Reveal each service result with 200ms delay for visual feedback
+            for (let i = 0; i < services.length; i++) {
+                const service = services[i];
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                const serviceEl = document.createElement('div');
+                serviceEl.className = `service-status ${service.ready ? 'ready' : 'not-ready'}`;
+                serviceEl.style.opacity = '0';
+                serviceEl.style.transform = 'translateY(10px)';
+                serviceEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                serviceEl.textContent = `${service.ready ? '✓' : '✗'} ${service.name}`;
+
+                statusDiv.appendChild(serviceEl);
+
+                // Trigger animation
+                requestAnimationFrame(() => {
+                    serviceEl.style.opacity = '1';
+                    serviceEl.style.transform = 'translateY(0)';
+                });
+            }
 
             if (data.all_required_ready) {
+                // Small delay before showing next button for satisfaction
+                await new Promise(resolve => setTimeout(resolve, 400));
                 document.getElementById('next-1').style.display = 'block';
                 this.style.display = 'none';
             } else {

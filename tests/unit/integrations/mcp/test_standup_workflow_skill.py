@@ -66,11 +66,13 @@ def sample_standup():
 class TestStandupWorkflowSkillValidation:
     """Test parameter validation"""
 
+    @pytest.mark.smoke
     def test_validate_params_requires_user_id(self, skill):
         """Missing user_id should fail validation"""
         assert not skill.validate_params({})
         assert not skill.validate_params({"other_param": "value"})
 
+    @pytest.mark.smoke
     def test_validate_params_accepts_user_id(self, skill):
         """Valid user_id should pass validation"""
         assert skill.validate_params({"user_id": str(uuid4())})
@@ -81,6 +83,7 @@ class TestStandupWorkflowSkillExecution:
     """Test main skill execution"""
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_success_with_defaults(self, skill, sample_standup):
         """Execution with default parameters should succeed"""
         skill.workflow = AsyncMock()
@@ -94,6 +97,7 @@ class TestStandupWorkflowSkillExecution:
         skill.workflow.generate_standup.assert_called_once()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_validation_failure(self, skill):
         """Invalid parameters should return error"""
         result = await skill.execute({})
@@ -102,6 +106,7 @@ class TestStandupWorkflowSkillExecution:
         assert "message" in result
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_respects_include_flags(self, skill, sample_standup):
         """Should respect include_slack, include_github, include_notion flags"""
         skill.workflow = AsyncMock()
@@ -127,6 +132,7 @@ class TestStandupWorkflowSkillExecution:
         assert "notion" not in result["posted_to"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_returns_issue_counts(self, skill, sample_standup):
         """Should return created and closed issue counts"""
         skill.workflow = AsyncMock()
@@ -144,6 +150,7 @@ class TestStandupWorkflowSkillExecution:
 class TestStandupFormatting:
     """Test output formatting"""
 
+    @pytest.mark.smoke
     def test_format_standup_markdown(self, skill, sample_standup):
         """Should format standup as markdown"""
         result = skill._format_standup(sample_standup, format_type="markdown")
@@ -154,6 +161,7 @@ class TestStandupFormatting:
         assert "Blockers" in result["content"]
         assert result["format"] == "markdown"
 
+    @pytest.mark.smoke
     def test_format_standup_plain_text(self, skill, sample_standup):
         """Should format standup as plain text"""
         result = skill._format_standup(sample_standup, format_type="plain")
@@ -161,12 +169,14 @@ class TestStandupFormatting:
         assert "DAILY STANDUP" in result["content"]
         assert result["format"] == "plain"
 
+    @pytest.mark.smoke
     def test_format_standup_json(self, skill, sample_standup):
         """Should return standup as-is for JSON"""
         result = skill._format_standup(sample_standup, format_type="json")
 
         assert result == sample_standup
 
+    @pytest.mark.smoke
     def test_format_for_slack_creates_blocks(self, skill, sample_standup):
         """Should create Slack message blocks"""
         result = skill._format_for_slack(sample_standup)
@@ -176,6 +186,7 @@ class TestStandupFormatting:
         assert len(result["blocks"]) > 0
         assert result["blocks"][0]["type"] == "header"
 
+    @pytest.mark.smoke
     def test_list_items_formatting(self, skill):
         """Should format lists correctly"""
         items = ["Item 1", "Item 2", "Item 3"]
@@ -186,6 +197,7 @@ class TestStandupFormatting:
         assert "- Item 1" in markdown
         assert "• Item 1" in plain
 
+    @pytest.mark.smoke
     def test_list_items_empty(self, skill):
         """Should handle empty lists"""
         assert skill._list_items([]) == "None"
@@ -195,6 +207,7 @@ class TestStandupFormatting:
 class TestActionItemExtraction:
     """Test extracting action items from standup"""
 
+    @pytest.mark.smoke
     def test_extract_action_items(self, skill, sample_standup):
         """Should extract priorities and blockers as action items"""
         items = skill._extract_action_items(sample_standup)
@@ -205,6 +218,7 @@ class TestActionItemExtraction:
         # Should have items from blockers
         assert any("BLOCKER" in item["title"] for item in items)
 
+    @pytest.mark.smoke
     def test_extract_action_items_categorization(self, skill, sample_standup):
         """Should categorize items correctly"""
         items = skill._extract_action_items(sample_standup)
@@ -219,6 +233,7 @@ class TestActionItemExtraction:
 class TestTokenEstimation:
     """Test token usage estimation"""
 
+    @pytest.mark.smoke
     def test_estimate_tokens_saved(self, skill):
         """Should estimate tokens saved"""
         tokens = skill.estimate_tokens_saved({"user_id": "test"})
@@ -228,6 +243,7 @@ class TestTokenEstimation:
         # Should be significant savings
         assert tokens >= 10000
 
+    @pytest.mark.smoke
     def test_token_savings_consistent(self, skill):
         """Token savings should be consistent across calls"""
         tokens1 = skill.estimate_tokens_saved({"user_id": "user1"})
@@ -241,6 +257,7 @@ class TestErrorHandling:
     """Test error handling and graceful degradation"""
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_execute_slack_failure_continues(self, skill, sample_standup):
         """Slack failure should not stop entire workflow"""
         skill.workflow = AsyncMock()
@@ -266,6 +283,7 @@ class TestErrorHandling:
         assert "github" in result["posted_to"]
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_on_error_handling(self, skill):
         """Error handling should return proper error response"""
         error = ValueError("Test error")
@@ -279,6 +297,7 @@ class TestErrorHandling:
 class TestGitHubIssueFormatting:
     """Test GitHub issue body formatting"""
 
+    @pytest.mark.smoke
     def test_format_github_issue_body(self, skill, sample_standup):
         """Should create well-formatted GitHub issue body"""
         item = {"title": "Deploy changes to staging", "category": "priority"}
@@ -290,6 +309,7 @@ class TestGitHubIssueFormatting:
         assert "Deploy changes" in body
         assert "**Category**:" in body
 
+    @pytest.mark.smoke
     def test_github_issue_includes_context(self, skill, sample_standup):
         """GitHub issue body should include standup context"""
         item = {"title": "Test item", "category": "blocker"}
@@ -303,6 +323,7 @@ class TestGitHubIssueFormatting:
 class TestSkillIntegration:
     """Integration-level tests"""
 
+    @pytest.mark.smoke
     def test_skill_has_required_attributes(self, skill):
         """Skill should have required attributes"""
         assert hasattr(skill, "name")
@@ -310,6 +331,7 @@ class TestSkillIntegration:
         assert skill.name == "standup"
         assert len(skill.description) > 0
 
+    @pytest.mark.smoke
     def test_skill_methods_exist(self, skill):
         """Skill should have all required methods"""
         assert hasattr(skill, "execute")

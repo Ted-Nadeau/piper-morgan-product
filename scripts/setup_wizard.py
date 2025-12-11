@@ -679,8 +679,158 @@ def _check_global_keychain_key(provider: str) -> Optional[str]:
         return None
 
 
+async def _collect_single_api_key(
+    user_id: str,
+    service,
+    provider: str,
+    env_var_name: str,
+    format_hint: str,
+    validation_msg: str,
+    is_required: bool = False,
+    skip_validation: bool = False,
+) -> Optional[str]:
+    """
+    Generic API key collection with keychain, env var, and manual entry.
+
+    Handles the common pattern for all API key collection:
+    1. Check keychain for existing user-scoped key
+    2. Check for old global key and migrate if found
+    3. Check environment variable
+    4. Manual entry with retry loop
+    5. Validate and store in keychain
+
+    Args:
+        user_id: User ID for keychain storage
+        service: UserAPIKeyService instance
+        provider: Provider name (openai, anthropic, gemini, github)
+        env_var_name: Environment variable name (e.g., OPENAI_API_KEY)
+        format_hint: Format hint for manual entry (e.g., sk-...)
+        validation_msg: Success message (e.g., "gpt-4 access confirmed")
+        is_required: If False, allow skipping by pressing Enter
+        skip_validation: Skip validation during store (for GitHub)
+
+    Returns:
+        API key if successful or skipped, None otherwise
+    """
+    from services.database.session_factory import AsyncSessionFactory
+
+    api_key = None
+
+    # Step 1: Check keychain for existing key
+    print(f"   Checking keychain for existing key...")
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            existing_key = await service.retrieve_user_key(session, user_id, provider)
+            if existing_key:
+                print("   ✓ Using existing key from keychain")
+                return existing_key
+            else:
+                print("   ℹ️  No existing key found in keychain")
+                # Check for global key (migration from 0.8.0)
+                global_key = _check_global_keychain_key(provider)
+                if global_key:
+                    print("   ✓ Found existing global key (migrating to user-scoped)")
+                    api_key = global_key
+                    # Migrate: store as user-scoped
+                    try:
+                        await service.store_user_key(
+                            user_id=user_id,
+                            provider=provider,
+                            api_key=global_key,
+                            session=session,
+                            validate=not skip_validation,
+                        )
+                        await session.commit()
+                        print("   ✓ Migrated to user-scoped storage")
+                        return global_key
+                    except Exception as migrate_err:
+                        print(f"   ℹ️  Using key (migration skipped: {migrate_err})")
+                        return global_key
+    except Exception as e:
+        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
+        pass  # Keychain check failed, continue to other methods
+
+    # Step 2: Check for environment variable if not in keychain
+    if not api_key:
+        api_key = os.environ.get(env_var_name)
+    if api_key:
+        print(f"   ℹ️  Using {env_var_name} from environment")
+        print("   Validating...")
+
+        # Store and validate the key from environment
+        try:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                await service.store_user_key(
+                    user_id=user_id,
+                    provider=provider,
+                    api_key=api_key,
+                    session=session,
+                    validate=not skip_validation,
+                )
+                await session.commit()
+
+            print(f"   ✓ Valid ({validation_msg})")
+            return api_key
+        except ValueError as e:
+            print(f"   ✗ {str(e)}")
+            print(f"   Key from environment is invalid. Please update {env_var_name}")
+            api_key = None  # Force manual entry
+        except Exception as e:
+            print(f"   ✗ Validation error: {e}")
+            print("   Continuing with manual entry...")
+            api_key = None  # Force manual entry
+
+    # Step 3: Manual entry loop if env var not set or failed
+    while not api_key:
+        prompt = f"   Enter key ({format_hint}): "
+        if not is_required:
+            prompt = f"   Enter key ({format_hint}, or press Enter to skip): "
+
+        api_key = getpass(prompt)
+
+        if not api_key:
+            if is_required:
+                print(f"   ✗ {provider.title()} key is required")
+                print(f"   💡 Tip: Set {env_var_name} environment variable to avoid paste issues")
+                continue
+            else:
+                print(f"   Skipped (you can add this later)")
+                return None
+
+        print("   Validating...")
+
+        try:
+            # Validate with provider API
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                # Store the key first
+                await service.store_user_key(
+                    user_id=user_id,
+                    provider=provider,
+                    api_key=api_key,
+                    session=session,
+                    validate=not skip_validation,
+                )
+                await session.commit()
+
+            # If we got here, validation succeeded
+            print(f"   ✓ Valid ({validation_msg})")
+            return api_key
+
+        except ValueError as e:
+            # Validation failed
+            print(f"   ✗ {str(e)}")
+            print("   Please check your key and try again.")
+            api_key = None  # Reset to retry
+        except Exception as e:
+            print(f"   ✗ Validation error: {e}")
+            print("   Please check your key and try again.")
+            api_key = None  # Reset to retry
+
+    return api_key
+
+
 async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
-    """Collect API keys with real-time validation"""
+    """Collect API keys with real-time validation using DRY helper pattern"""
     from services.database.session_factory import AsyncSessionFactory
     from services.security.user_api_key_service import UserAPIKeyService
 
@@ -692,294 +842,282 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
 
     # OpenAI (required)
     print("\n   OpenAI API key (required):")
-
-    # Check keychain first (in case wizard was run before)
-    print("   Checking keychain for existing key...")
-    openai_key = None
-    try:
-        async with AsyncSessionFactory.session_scope_fresh() as session:
-            existing_key = await service.retrieve_user_key(session, user_id, "openai")
-            if existing_key:
-                print("   ✓ Using existing key from keychain")
-                stored_keys["openai"] = existing_key
-                openai_key = existing_key  # Mark as found
-            else:
-                print("   ℹ️  No existing key found in keychain")
-                # Check for global key (migration from 0.8.0)
-                global_key = _check_global_keychain_key("openai")
-                if global_key:
-                    print("   ✓ Found existing global key (migrating to user-scoped)")
-                    openai_key = global_key
-                    # Migrate: store as user-scoped
-                    try:
-                        await service.store_user_key(
-                            user_id=user_id,
-                            provider="openai",
-                            api_key=global_key,
-                            session=session,
-                            validate=True,
-                        )
-                        await session.commit()
-                        stored_keys["openai"] = global_key
-                        print("   ✓ Migrated to user-scoped storage")
-                    except Exception as migrate_err:
-                        print(f"   ℹ️  Using key (migration skipped: {migrate_err})")
-                        stored_keys["openai"] = global_key
-    except Exception as e:
-        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
-        pass  # Keychain check failed, continue to other methods
-
-    # Check for environment variable if not in keychain
-    if not openai_key:
-        openai_key = os.environ.get("OPENAI_API_KEY")
+    openai_key = await _collect_single_api_key(
+        user_id=user_id,
+        service=service,
+        provider="openai",
+        env_var_name="OPENAI_API_KEY",
+        format_hint="sk-...",
+        validation_msg="gpt-4 access confirmed",
+        is_required=True,
+        skip_validation=False,
+    )
     if openai_key:
-        print("   ℹ️  Using OPENAI_API_KEY from environment")
-        print("   Validating...")
-
-        # Store and validate the key from environment
-        try:
-            async with AsyncSessionFactory.session_scope_fresh() as session:
-                await service.store_user_key(
-                    user_id=user_id,
-                    provider="openai",
-                    api_key=openai_key,
-                    session=session,
-                    validate=True,
-                )
-                await session.commit()
-
-            print("   ✓ Valid (gpt-4 access confirmed)")
-            stored_keys["openai"] = openai_key
-        except ValueError as e:
-            print(f"   ✗ {str(e)}")
-            print("   Key from environment is invalid. Please update OPENAI_API_KEY")
-            openai_key = None  # Force manual entry
-        except Exception as e:
-            print(f"   ✗ Validation error: {e}")
-            print("   Continuing with manual entry...")
-            openai_key = None  # Force manual entry
-
-    # Manual entry loop if env var not set or failed
-    while not openai_key:
-        openai_key = getpass("   Enter key (sk-...): ")
-
-        if not openai_key:
-            print("   ✗ OpenAI key is required")
-            print("   💡 Tip: Set OPENAI_API_KEY environment variable to avoid paste issues")
-            continue
-
-        print("   Validating...")
-
-        try:
-            # Validate with provider API (uses #228 infrastructure)
-            async with AsyncSessionFactory.session_scope_fresh() as session:
-                # Store the key first
-                await service.store_user_key(
-                    user_id=user_id,
-                    provider="openai",
-                    api_key=openai_key,
-                    session=session,
-                    validate=True,  # This will validate during store
-                )
-                await session.commit()
-
-            # If we got here, validation succeeded
-            print("   ✓ Valid (gpt-4 access confirmed)")
-            stored_keys["openai"] = openai_key
-            break
-
-        except ValueError as e:
-            # Validation failed
-            print(f"   ✗ {str(e)}")
-            print("   Please check your key and try again.")
-            openai_key = None  # Reset to retry
-        except Exception as e:
-            print(f"   ✗ Validation error: {e}")
-            print("   Please check your key and try again.")
-            openai_key = None  # Reset to retry
+        stored_keys["openai"] = openai_key
 
     # Anthropic (optional)
     print("\n   Anthropic API key (optional, press Enter to skip):")
-
-    # Check keychain first
-    print("   Checking keychain for existing key...")
-    anthropic_key = None
-    try:
-        async with AsyncSessionFactory.session_scope_fresh() as session:
-            existing_key = await service.retrieve_user_key(session, user_id, "anthropic")
-            if existing_key:
-                print("   ✓ Using existing key from keychain")
-                stored_keys["anthropic"] = existing_key
-                anthropic_key = existing_key  # Mark as found
-            else:
-                print("   ℹ️  No existing key found in keychain")
-                # Check for global key (migration from 0.8.0)
-                global_key = _check_global_keychain_key("anthropic")
-                if global_key:
-                    print("   ✓ Found existing global key (migrating to user-scoped)")
-                    anthropic_key = global_key
-                    # Migrate: store as user-scoped
-                    try:
-                        await service.store_user_key(
-                            user_id=user_id,
-                            provider="anthropic",
-                            api_key=global_key,
-                            session=session,
-                            validate=True,
-                        )
-                        await session.commit()
-                        stored_keys["anthropic"] = global_key
-                        print("   ✓ Migrated to user-scoped storage")
-                    except Exception as migrate_err:
-                        print(f"   ℹ️  Using key (migration skipped: {migrate_err})")
-                        stored_keys["anthropic"] = global_key
-    except Exception as e:
-        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
-        pass  # Keychain check failed, continue to other methods
-
-    # Check for environment variable if not in keychain
-    if not anthropic_key:
-        anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
+    anthropic_key = await _collect_single_api_key(
+        user_id=user_id,
+        service=service,
+        provider="anthropic",
+        env_var_name="ANTHROPIC_API_KEY",
+        format_hint="sk-ant-...",
+        validation_msg="claude access confirmed",
+        is_required=False,
+        skip_validation=False,
+    )
     if anthropic_key:
-        print("   ℹ️  Using ANTHROPIC_API_KEY from environment")
-        print("   Validating...")
-        try:
-            async with AsyncSessionFactory.session_scope_fresh() as session:
-                await service.store_user_key(
-                    user_id=user_id,
-                    provider="anthropic",
-                    api_key=anthropic_key,
-                    session=session,
-                    validate=True,
-                )
-                await session.commit()
+        stored_keys["anthropic"] = anthropic_key
 
-            print("   ✓ Valid (claude-3.5 access confirmed)")
-            stored_keys["anthropic"] = anthropic_key
+    # Gemini (optional)
+    print("\n   Google Gemini API key (optional, press Enter to skip):")
+    gemini_key = await _collect_single_api_key(
+        user_id=user_id,
+        service=service,
+        provider="gemini",
+        env_var_name="GEMINI_API_KEY",
+        format_hint="AIza...",
+        validation_msg="gemini-pro access confirmed",
+        is_required=False,
+        skip_validation=False,
+    )
+    if gemini_key:
+        stored_keys["gemini"] = gemini_key
 
-        except ValueError as e:
-            print(f"   ✗ {str(e)}. Continuing with manual entry...")
-            anthropic_key = None  # Force manual entry
-        except Exception as e:
-            print(f"   ✗ Validation error: {e}. Continuing with manual entry...")
-            anthropic_key = None  # Force manual entry
-
-    # Manual entry if env var not set or failed
-    if not anthropic_key:
-        anthropic_key = getpass("   Enter key (sk-ant-...): ")
-
-        if anthropic_key:
-            print("   Validating...")
-            try:
-                async with AsyncSessionFactory.session_scope_fresh() as session:
-                    await service.store_user_key(
-                        user_id=user_id,
-                        provider="anthropic",
-                        api_key=anthropic_key,
-                        session=session,
-                        validate=True,
-                    )
-                    await session.commit()
-
-                print("   ✓ Valid (claude-3.5 access confirmed)")
-                stored_keys["anthropic"] = anthropic_key
-
-            except ValueError as e:
-                print(f"   ✗ {str(e)}. Skipping Anthropic setup.")
-            except Exception as e:
-                print(f"   ✗ Validation error: {e}. Skipping Anthropic setup.")
-        else:
-            print("   Skipped (you can add this later)")
-
-    # GitHub (optional)
+    # GitHub (optional, no validation)
     print("\n   GitHub token (optional, press Enter to skip):")
-
-    # Check keychain first
-    print("   Checking keychain for existing token...")
-    github_token = None
-    try:
-        async with AsyncSessionFactory.session_scope_fresh() as session:
-            existing_key = await service.retrieve_user_key(session, user_id, "github")
-            if existing_key:
-                print("   ✓ Using existing token from keychain")
-                stored_keys["github"] = existing_key
-                github_token = existing_key  # Mark as found
-            else:
-                print("   ℹ️  No existing token found in keychain")
-                # Check for global key (migration from 0.8.0)
-                global_key = _check_global_keychain_key("github")
-                if global_key:
-                    print("   ✓ Found existing global token (migrating to user-scoped)")
-                    github_token = global_key
-                    # Migrate: store as user-scoped
-                    try:
-                        await service.store_user_key(
-                            user_id=user_id,
-                            provider="github",
-                            api_key=global_key,
-                            session=session,
-                            validate=False,  # Skip validation for GitHub
-                        )
-                        await session.commit()
-                        stored_keys["github"] = global_key
-                        print("   ✓ Migrated to user-scoped storage")
-                    except Exception as migrate_err:
-                        print(f"   ℹ️  Using token (migration skipped: {migrate_err})")
-                        stored_keys["github"] = global_key
-    except Exception as e:
-        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
-        pass  # Keychain check failed, continue to other methods
-
-    # Check for environment variable if not in keychain
-    if not github_token:
-        github_token = os.environ.get("GITHUB_TOKEN")
+    github_token = await _collect_single_api_key(
+        user_id=user_id,
+        service=service,
+        provider="github",
+        env_var_name="GITHUB_TOKEN",
+        format_hint="ghp_...",
+        validation_msg="github token stored",
+        is_required=False,
+        skip_validation=True,  # GitHub tokens are validated differently
+    )
     if github_token:
-        print("   ℹ️  Using GITHUB_TOKEN from environment")
-        try:
-            async with AsyncSessionFactory.session_scope_fresh() as session:
-                await service.store_user_key(
-                    user_id=user_id,
-                    provider="github",
-                    api_key=github_token,
-                    session=session,
-                    validate=False,  # Skip validation for GitHub (expensive)
-                )
-                await session.commit()
-
-            print("   ✓ GitHub token saved (validation will happen on first use)")
-            stored_keys["github"] = github_token
-        except Exception as e:
-            print(f"   ✗ Error saving GitHub token: {e}. Continuing with manual entry...")
-            github_token = None  # Force manual entry
-
-    # Manual entry if env var not set or failed
-    if not github_token:
-        github_token = getpass("   Enter token (ghp_...): ")
-
-        if github_token:
-            try:
-                async with AsyncSessionFactory.session_scope_fresh() as session:
-                    await service.store_user_key(
-                        user_id=user_id,
-                        provider="github",
-                        api_key=github_token,
-                        session=session,
-                        validate=False,  # Skip validation for GitHub (expensive)
-                    )
-                    await session.commit()
-
-                print("   ✓ GitHub token saved (validation will happen on first use)")
-                stored_keys["github"] = github_token
-            except Exception as e:
-                print(f"   ✗ Error saving GitHub token: {e}. Skipping GitHub setup.")
-        else:
-            print("   Skipped (you can add this later)")
+        stored_keys["github"] = github_token
 
     return stored_keys
 
 
+async def _wizard_preflight_checks() -> bool:
+    """Check Python 3.12, setup venv, SSH key - returns False if critical failure"""
+    # Check Python 3.12
+    print("\n1️⃣  Checking for Python 3.12...")
+    if not check_python312_available():
+        print("   ✗ Python 3.12 not found")
+        print("   📥 Please install from: https://www.python.org/downloads/release/python-31210/")
+        print("   ⏸  Install Python 3.12.10 and run this wizard again.")
+        return False
+    print("   ✓ Python 3.12 found")
+
+    # Set up virtual environment (only if not already in one)
+    in_venv = hasattr(sys, "real_prefix") or (
+        hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
+    )
+
+    if not in_venv:
+        print("\n2️⃣  Setting up virtual environment...")
+        if not setup_virtual_environment():
+            print("   ✗ Failed to set up virtual environment")
+            return False
+
+        # Restart wizard in the new venv
+        print("\n🔄 Restarting wizard in virtual environment...")
+        print("   (This ensures all dependencies are available)")
+        venv_python = os.path.join(os.getcwd(), "venv", "bin", "python")
+        os.execv(venv_python, [venv_python, "main.py", "setup"])
+        # execv doesn't return - the process is replaced
+    else:
+        print("\n2️⃣  Virtual environment: ✓ Active")
+
+    # Set up SSH (optional but recommended)
+    print("\n3️⃣  Setting up SSH key...")
+    ssh_ready = setup_ssh_key()
+    if not ssh_ready:
+        print("   ⚠  SSH setup skipped (you can set this up later manually)")
+
+    return True
+
+
+async def _wizard_system_checks() -> bool:
+    """Perform system checks (Docker, PostgreSQL, Redis, etc.) - returns False if critical failure"""
+    print("\n" + "=" * 50)
+    print("📋 System Checks")
+    print("=" * 50)
+    checks = await check_system()
+
+    # Handle Docker installation separately with guided setup
+    if not checks["Docker installed"]:
+        print("\n🐳 Docker is not installed or not running.")
+        docker_success = await guide_docker_installation()
+        if not docker_success:
+            print("\n❌ Setup cannot continue without Docker.")
+            return False
+        # Re-check Docker after guided installation
+        checks[SERVICE_DOCKER] = await check_docker()
+
+    # Check if Docker services need to be started
+    services_down = [k for k in CORE_SERVICES if not checks.get(k, False)]
+    optional_down = [k for k in OPTIONAL_SERVICES if not checks.get(k, False)]
+
+    if (services_down or optional_down) and checks.get(SERVICE_DOCKER, False):
+        all_down = services_down + optional_down
+        print(f"\n⚠️  {len(all_down)} service(s) not running:")
+        for service in all_down:
+            print(f"   ✗ {service}")
+
+        # Try to start services automatically
+        services_started = await start_docker_services()
+
+        if services_started:
+            # Re-check services after starting
+            checks[SERVICE_POSTGRES] = await check_database()
+            checks[SERVICE_REDIS] = await check_redis()
+            checks[SERVICE_CHROMADB] = await check_chromadb()
+            checks[SERVICE_TEMPORAL] = await check_temporal()
+
+            # Update services_down list
+            services_down = [k for k in CORE_SERVICES if not checks.get(k, False)]
+            optional_down = [k for k in OPTIONAL_SERVICES if not checks.get(k, False)]
+
+            if optional_down:
+                print(f"\n   ⚠  Optional service not ready: {', '.join(optional_down)}")
+                print("   (This won't prevent setup from continuing)")
+
+    # Check other requirements (exclude optional services from blocking)
+    remaining_issues = {
+        k: v
+        for k, v in checks.items()
+        if not v and k != SERVICE_DOCKER and k not in OPTIONAL_SERVICES
+    }
+
+    if remaining_issues:
+        print("\n❌ Setup cannot continue. Please fix the issues above.")
+        print("\nTroubleshooting:")
+        if not checks.get(SERVICE_PYTHON, True) is False:
+            print("  • Install Python 3.9+: https://www.python.org/downloads/")
+            print("  • Recommended: Python 3.11+ for best compatibility")
+        if not checks.get(SERVICE_PORT, True) is False:
+            print("  • Free up port 8001 or stop other Piper Morgan instances")
+            print("  • Run: lsof -i :8001 to see what's using the port")
+
+        if services_down:
+            print("  • Docker services not running:")
+            print("    1. Launch Docker Desktop application (check menu bar icon)")
+            print("    2. Wait for Docker to fully start (icon stops animating)")
+            print("    3. Try: docker-compose up -d")
+            print("    4. Wait 30 seconds for services to start")
+            print("    5. Re-run this wizard")
+            print("  • After system restart:")
+            print("    - Docker Desktop doesn't auto-start by default")
+            print("    - You must manually launch it from Applications")
+
+        return False
+
+    return True
+
+
+async def _wizard_database_setup() -> bool:
+    """Initialize database schema and run migrations"""
+    print("\n" + "=" * 50)
+    print("📊 Database Schema")
+    print("=" * 50)
+    print("   Checking for existing tables...")
+
+    from services.database.connection import db
+    from services.database.session_factory import AsyncSessionFactory
+
+    # Check if tables exist
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            from sqlalchemy import text
+
+            result = await session.execute(text("SELECT 1 FROM users LIMIT 1"))
+        print("   ✓ Database tables already exist")
+    except Exception:
+        # Tables don't exist, create them
+        print("   Creating database tables...")
+        await db.initialize()
+        await db.create_tables()
+        print("   ✓ Database tables created")
+
+    # Run database migrations
+    print("   Running database migrations...")
+    try:
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        migration_result = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=project_root,
+        )
+        if migration_result.returncode == 0:
+            print("   ✓ Database schema up to date")
+        else:
+            print(f"   ⚠️  Migration had issues:")
+            if migration_result.stderr:
+                print(f"      {migration_result.stderr.strip()}")
+            if migration_result.stdout:
+                print(f"      {migration_result.stdout.strip()}")
+            print("   Continuing setup...")
+    except subprocess.TimeoutExpired:
+        print("   ⚠️  Migration timeout (taking longer than expected)")
+        print("   Continuing setup...")
+    except FileNotFoundError:
+        print("   ⚠️  Alembic not found in PATH")
+        print("   Please run 'alembic upgrade head' manually after setup")
+    except Exception as e:
+        print(f"   ⚠️  Unexpected error running migrations: {e}")
+        print("   Please run 'alembic upgrade head' manually after setup")
+
+    return True
+
+
+async def _wizard_mark_complete(user: object) -> bool:
+    """Mark setup as complete and generate CLI token"""
+    try:
+        from sqlalchemy import text
+
+        from services.database.session_factory import AsyncSessionFactory
+
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            await session.execute(
+                text(
+                    "UPDATE users SET setup_complete = true, "
+                    "setup_completed_at = :now WHERE id = :user_id"
+                ),
+                {"user_id": str(user.id), "now": datetime.utcnow()},
+            )
+            await session.commit()
+    except Exception as e:
+        # Non-fatal: setup succeeded even if flag update fails
+        print(f"   ℹ️  Could not update setup flag: {e}")
+
+    # Generate and store CLI session token
+    try:
+        from services.auth.jwt_service import JWTService
+        from services.infrastructure.keychain_service import KeychainService
+
+        jwt_service = JWTService()
+        keychain = KeychainService()
+
+        cli_token = jwt_service.generate_cli_token(user_id=user.id, user_email=user.email or "")
+        keychain.store_cli_token(str(user.id), cli_token)
+        print("   ✓ CLI auto-authentication configured")
+    except Exception as e:
+        # Non-fatal: CLI auth is optional
+        print(f"   ℹ️  CLI auto-auth skipped: {e}")
+
+    return True
+
+
 async def run_setup_wizard():
-    """Main setup wizard entry point"""
+    """Main setup wizard entry point - orchestrates all setup phases"""
 
     print("\n" + "=" * 50)
     print("Welcome to Piper Morgan Alpha!")
@@ -993,219 +1131,28 @@ async def run_setup_wizard():
         print("🚀 Pre-Flight Checks")
         print("=" * 50)
 
-        # Check Python 3.12
-        print("\n1️⃣  Checking for Python 3.12...")
-        if not check_python312_available():
-            print("   ✗ Python 3.12 not found")
-            print(
-                "   📥 Please install from: https://www.python.org/downloads/release/python-31210/"
-            )
-            print("   ⏸  Install Python 3.12.10 and run this wizard again.")
+        if not await _wizard_preflight_checks():
             return False
-        print("   ✓ Python 3.12 found")
-
-        # Set up virtual environment (only if not already in one)
-        in_venv = hasattr(sys, "real_prefix") or (
-            hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix
-        )
-
-        if not in_venv:
-            print("\n2️⃣  Setting up virtual environment...")
-            if not setup_virtual_environment():
-                print("   ✗ Failed to set up virtual environment")
-                return False
-
-            # Restart wizard in the new venv
-            print("\n🔄 Restarting wizard in virtual environment...")
-            print("   (This ensures all dependencies are available)")
-            venv_python = os.path.join(os.getcwd(), "venv", "bin", "python")
-            os.execv(venv_python, [venv_python, "main.py", "setup"])
-            # execv doesn't return - the process is replaced
-        else:
-            print("\n2️⃣  Virtual environment: ✓ Active")
-
-        # Set up SSH (optional but recommended)
-        print("\n3️⃣  Setting up SSH key...")
-        ssh_ready = setup_ssh_key()
-        if not ssh_ready:
-            print("   ⚠  SSH setup skipped (you can set this up later manually)")
 
         # Phase 1: System checks
-        print("\n" + "=" * 50)
-        print("📋 System Checks")
-        print("=" * 50)
-        checks = await check_system()
-
-        # Handle Docker installation separately with guided setup
-        if not checks["Docker installed"]:
-            print("\n🐳 Docker is not installed or not running.")
-            docker_success = await guide_docker_installation()
-            if not docker_success:
-                print("\n❌ Setup cannot continue without Docker.")
-                return False
-            # Re-check Docker after guided installation
-            checks[SERVICE_DOCKER] = await check_docker()
-
-        # Check if Docker services need to be started
-        # Use module-level constants for service names
-        services_down = [k for k in CORE_SERVICES if not checks.get(k, False)]
-        optional_down = [k for k in OPTIONAL_SERVICES if not checks.get(k, False)]
-
-        if (services_down or optional_down) and checks.get(SERVICE_DOCKER, False):
-            all_down = services_down + optional_down
-            print(f"\n⚠️  {len(all_down)} service(s) not running:")
-            for service in all_down:
-                print(f"   ✗ {service}")
-
-            # Try to start services automatically
-            services_started = await start_docker_services()
-
-            if services_started:
-                # Re-check services after starting
-                checks[SERVICE_POSTGRES] = await check_database()
-                checks[SERVICE_REDIS] = await check_redis()
-                checks[SERVICE_CHROMADB] = await check_chromadb()
-                checks[SERVICE_TEMPORAL] = await check_temporal()
-
-                # Update services_down list (only core services)
-                services_down = [k for k in CORE_SERVICES if not checks.get(k, False)]
-                optional_down = [k for k in OPTIONAL_SERVICES if not checks.get(k, False)]
-
-                if optional_down:
-                    print(f"\n   ⚠  Optional service not ready: {', '.join(optional_down)}")
-                    print("   (This won't prevent setup from continuing)")
-
-        # Check other requirements (exclude optional services from blocking)
-        remaining_issues = {
-            k: v
-            for k, v in checks.items()
-            if not v and k != SERVICE_DOCKER and k not in OPTIONAL_SERVICES
-        }
-
-        if remaining_issues:
-            print("\n❌ Setup cannot continue. Please fix the issues above.")
-            print("\nTroubleshooting:")
-
-            if not checks.get(SERVICE_PYTHON, True) is False:
-                print("  • Install Python 3.9+: https://www.python.org/downloads/")
-                print("  • Recommended: Python 3.11+ for best compatibility")
-            if not checks.get(SERVICE_PORT, True) is False:
-                print("  • Free up port 8001 or stop other Piper Morgan instances")
-                print("  • Run: lsof -i :8001 to see what's using the port")
-
-            # Service-specific troubleshooting
-            if services_down:
-                print("  • Docker services not running:")
-                print("    1. Launch Docker Desktop application (check menu bar icon)")
-                print("    2. Wait for Docker to fully start (icon stops animating)")
-                print("    3. Try: docker-compose up -d")
-                print("    4. Wait 30 seconds for services to start")
-                print("    5. Re-run this wizard")
-                print("  • After system restart:")
-                print("    - Docker Desktop doesn't auto-start by default")
-                print("    - You must manually launch it from Applications")
-
+        if not await _wizard_system_checks():
             return False
 
-        # Phase 1.5: Initialize database schema
-        print("\n" + "=" * 50)
-        print("📊 Database Schema")
-        print("=" * 50)
-        print("   Checking for existing tables...")
-
-        from services.database.connection import db
-        from services.database.models import Base
-        from services.database.session_factory import AsyncSessionFactory
-
-        # Check if tables exist by trying a simple query (check alpha_users for alpha phase)
-        try:
-            async with AsyncSessionFactory.session_scope_fresh() as session:
-                from sqlalchemy import text
-
-                result = await session.execute(text("SELECT 1 FROM alpha_users LIMIT 1"))
-            print("   ✓ Database tables already exist")
-        except Exception:
-            # Tables don't exist, create them
-            print("   Creating database tables...")
-            await db.initialize()
-            await db.create_tables()
-            print("   ✓ Database tables created")
-
-        # Run database migrations to ensure schema is up to date
-        print("   Running database migrations...")
-        try:
-            # Get project root (setup_wizard.py is in scripts/ subdirectory)
-            # Note: os is imported at module level (line 14)
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-            migration_result = subprocess.run(
-                ["alembic", "upgrade", "head"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-                cwd=project_root,  # Run from project root where alembic.ini lives
-            )
-            if migration_result.returncode == 0:
-                print("   ✓ Database schema up to date")
-            else:
-                # Show actual error for debugging
-                print(f"   ⚠️  Migration had issues:")
-                if migration_result.stderr:
-                    print(f"      {migration_result.stderr.strip()}")
-                if migration_result.stdout:
-                    print(f"      {migration_result.stdout.strip()}")
-                print("   Continuing setup...")
-        except subprocess.TimeoutExpired:
-            print("   ⚠️  Migration timeout (taking longer than expected)")
-            print("   Continuing setup...")
-        except FileNotFoundError:
-            print("   ⚠️  Alembic not found in PATH")
-            print("   Please run 'alembic upgrade head' manually after setup")
-        except Exception as e:
-            print(f"   ⚠️  Unexpected error running migrations: {e}")
-            print("   Please run 'alembic upgrade head' manually after setup")
+        # Phase 1.5: Database setup
+        if not await _wizard_database_setup():
+            return False
 
         # Phase 2: Create user first (need user_id for API keys)
         user = await create_user_account()
 
         # Phase 3: API keys
-        # Convert UUID to string for UserAPIKey foreign key compatibility
         user_id_str = str(user.id)
         api_keys = await collect_and_validate_api_keys(user_id_str)
 
-        # Phase 4: Success!
-        # Mark setup as complete in database (Issue #389)
-        try:
-            from sqlalchemy import text
+        # Phase 4: Mark setup complete and generate CLI token
+        await _wizard_mark_complete(user)
 
-            async with AsyncSessionFactory.session_scope_fresh() as session:
-                await session.execute(
-                    text(
-                        "UPDATE users SET setup_complete = true, "
-                        "setup_completed_at = :now WHERE id = :user_id"
-                    ),
-                    {"user_id": str(user.id), "now": datetime.utcnow()},
-                )
-                await session.commit()
-        except Exception as e:
-            # Non-fatal: setup succeeded even if flag update fails
-            print(f"   ℹ️  Could not update setup flag: {e}")
-
-        # Generate and store CLI session token (Issue #397)
-        try:
-            from services.auth.jwt_service import JWTService
-            from services.infrastructure.keychain_service import KeychainService
-
-            jwt_service = JWTService()
-            keychain = KeychainService()
-
-            cli_token = jwt_service.generate_cli_token(user_id=user.id, user_email=user.email or "")
-            keychain.store_cli_token(str(user.id), cli_token)
-            print("   ✓ CLI auto-authentication configured")
-        except Exception as e:
-            # Non-fatal: CLI auth is optional
-            print(f"   ℹ️  CLI auto-auth skipped: {e}")
-
+        # Success message
         print("\n" + "=" * 50)
         print("✅ Setup Complete!")
         print("=" * 50)

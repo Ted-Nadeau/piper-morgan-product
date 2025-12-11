@@ -8,7 +8,8 @@ Pattern-012: LLM Adapter Pattern
 See: docs/internal/architecture/current/patterns/pattern-012-llm-adapter.md
 """
 
-from typing import List, Tuple, AsyncIterator, Dict, Any
+from typing import Any, AsyncIterator, Dict, List, Tuple
+
 import structlog
 from anthropic import Anthropic, AsyncAnthropic
 
@@ -26,9 +27,8 @@ class ClaudeAdapter(LLMAdapter):
 
     Supported models:
         - claude-3-opus-20240229 (most capable)
-        - claude-3-5-sonnet-20241022 (best balance, newest)
-        - claude-3-5-sonnet-20240620 (previous version)
-        - claude-3-sonnet-20240229 (original sonnet)
+        - claude-sonnet-4-20250514 (best balance, newest)
+        - claude-3-5-sonnet-20241022 (previous version, deprecated)
         - claude-3-haiku-20240307 (fastest, most affordable)
 
     Features:
@@ -41,13 +41,13 @@ class ClaudeAdapter(LLMAdapter):
     Example:
         adapter = ClaudeAdapter(
             api_key="sk-ant-...",
-            model="claude-3-5-sonnet-20241022"
+            model="claude-sonnet-4-20250514"
         )
         response = await adapter.complete("Explain quantum computing")
         print(response.content)
     """
 
-    def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-20241022", **kwargs):
+    def __init__(self, api_key: str, model: str = "claude-sonnet-4-20250514", **kwargs):
         """
         Initialize Claude adapter.
 

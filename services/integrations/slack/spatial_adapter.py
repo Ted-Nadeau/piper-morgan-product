@@ -279,7 +279,8 @@ class SlackSpatialAdapter(BaseSpatialAdapter):
     async def get_mapping_stats(self) -> Dict[str, Any]:
         """Get statistics about current mappings"""
         async with self._lock:
-            stats = await super().get_mapping_stats()
+            # Parent's get_mapping_stats is sync, don't await
+            stats = super().get_mapping_stats()
             stats.update(
                 {
                     "timestamp_mappings": len(self._timestamp_to_position),

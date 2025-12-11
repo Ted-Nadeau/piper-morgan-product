@@ -168,9 +168,9 @@
   --z-index-dropdown: 100;
   --z-index-sticky: 500;
   --z-index-navbar: 1000;
-  --z-index-toast: 1100;
   --z-index-spinner: 2000;
   --z-index-modal: 2999;
+  --z-index-toast: 3000; /* Above modal for notification visibility */
 
   /* ===== FOCUS STATES ===== */
 

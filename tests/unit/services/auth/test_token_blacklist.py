@@ -98,6 +98,7 @@ def jwt_service(blacklist):
 class TestTokenBlacklistOperations:
     """Test token blacklist basic operations"""
 
+    @pytest.mark.smoke
     async def test_initialize_with_redis_available(
         self, mock_redis_factory, mock_db_session_factory
     ):
@@ -107,6 +108,7 @@ class TestTokenBlacklistOperations:
 
         assert bl._redis_available is True
 
+    @pytest.mark.smoke
     async def test_initialize_with_redis_unavailable(
         self, mock_redis_factory, mock_db_session_factory
     ):
@@ -121,6 +123,7 @@ class TestTokenBlacklistOperations:
 
         assert bl._redis_available is False
 
+    @pytest.mark.smoke
     async def test_add_to_blacklist_redis(self, blacklist):
         """Should add token to Redis blacklist"""
         token_id = "test-token-123"
@@ -134,6 +137,7 @@ class TestTokenBlacklistOperations:
         is_blacklisted = await blacklist.is_blacklisted(token_id)
         assert is_blacklisted is True
 
+    @pytest.mark.smoke
     async def test_add_expired_token_skipped(self, blacklist):
         """Should skip adding already-expired tokens"""
         token_id = "expired-token"
@@ -144,6 +148,7 @@ class TestTokenBlacklistOperations:
         # Should return True (no-op for expired)
         assert success is True
 
+    @pytest.mark.smoke
     async def test_is_blacklisted_true(self, blacklist):
         """Should detect blacklisted tokens"""
         token_id = "blacklisted-token"
@@ -156,6 +161,7 @@ class TestTokenBlacklistOperations:
 
         assert result is True
 
+    @pytest.mark.smoke
     async def test_is_blacklisted_false(self, blacklist):
         """Should allow non-blacklisted tokens"""
         token_id = "valid-token"
@@ -165,6 +171,7 @@ class TestTokenBlacklistOperations:
 
         assert result is False
 
+    @pytest.mark.smoke
     async def test_security_fail_closed_on_error(self, mock_redis_factory, mock_db_session_factory):
         """Should fail closed (assume blacklisted) on errors"""
         # Mock db_session_factory.session_scope to raise an error when used
@@ -181,6 +188,7 @@ class TestTokenBlacklistOperations:
         result = await bl.is_blacklisted("any-token")
         assert result is True
 
+    @pytest.mark.smoke
     async def test_remove_expired_redis_noop(self, blacklist):
         """Should be no-op for Redis (auto-expires via TTL)"""
         count = await blacklist.remove_expired()
@@ -197,6 +205,7 @@ class TestTokenBlacklistOperations:
 class TestJWTServiceIntegration:
     """Test blacklist integration with JWT service"""
 
+    @pytest.mark.smoke
     async def test_validate_token_checks_blacklist(self, jwt_service, blacklist):
         """Should check blacklist during token validation"""
         # Create a valid token
@@ -219,6 +228,7 @@ class TestJWTServiceIntegration:
         with pytest.raises(TokenRevoked):
             await jwt_service.validate_token(token)
 
+    @pytest.mark.smoke
     async def test_revoke_token_adds_to_blacklist(self, jwt_service):
         """Should add token to blacklist on revocation"""
         token = jwt_service.generate_access_token(
@@ -235,6 +245,7 @@ class TestJWTServiceIntegration:
         with pytest.raises(TokenRevoked):
             await jwt_service.validate_token(token)
 
+    @pytest.mark.smoke
     async def test_revoke_token_without_blacklist(self):
         """Should fail gracefully when blacklist not configured"""
         # Create service without blacklist
@@ -250,6 +261,7 @@ class TestJWTServiceIntegration:
         success = await service.revoke_token(token)
         assert success is False
 
+    @pytest.mark.smoke
     async def test_validate_token_with_expired_signature(self, jwt_service):
         """Should raise TokenExpired for expired tokens"""
         # Create token with very short expiration
@@ -268,6 +280,7 @@ class TestJWTServiceIntegration:
         with pytest.raises(TokenExpired):
             await service.validate_token(token)  # Use same service for validation
 
+    @pytest.mark.smoke
     async def test_validate_token_with_invalid_token(self, jwt_service):
         """Should raise TokenInvalid for malformed tokens"""
         # Should raise TokenInvalid
@@ -284,6 +297,7 @@ class TestJWTServiceIntegration:
 class TestMiddlewareIntegration:
     """Test middleware handling of token exceptions"""
 
+    @pytest.mark.smoke
     async def test_middleware_rejects_revoked_token(self, jwt_service):
         """Should reject revoked tokens with 401"""
         # This would be tested with actual middleware
@@ -309,12 +323,14 @@ class TestMiddlewareIntegration:
 class TestEdgeCases:
     """Test edge cases and error handling"""
 
+    @pytest.mark.smoke
     async def test_blacklist_token_without_jti(self, jwt_service):
         """Should handle tokens without JTI claim"""
         # This is a malformed scenario that shouldn't happen with our JWT service
         # but we test the error handling
         pass  # JWTService always adds JTI
 
+    @pytest.mark.smoke
     async def test_concurrent_blacklist_operations(self, blacklist, mock_redis):
         """Should handle concurrent operations safely"""
         import asyncio
@@ -332,6 +348,7 @@ class TestEdgeCases:
         # All should succeed
         assert all(results)
 
+    @pytest.mark.smoke
     async def test_refresh_access_token_with_blacklist(self, jwt_service):
         """Should check blacklist when refreshing tokens"""
         # Create refresh token

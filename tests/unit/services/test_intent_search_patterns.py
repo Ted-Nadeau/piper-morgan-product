@@ -19,6 +19,7 @@ def classifier():
 class TestFallbackSearchPatterns:
     """Test new search patterns using fallback classification"""
 
+    @pytest.mark.smoke
     def test_find_technical_specifications_pattern(self, classifier):
         """Test 'find technical specifications' pattern"""
         message = "find technical specifications"
@@ -31,6 +32,7 @@ class TestFallbackSearchPatterns:
         assert "search_query" in result_intent.context
         assert "technical specifications" in result_intent.context["search_query"]
 
+    @pytest.mark.smoke
     def test_search_for_type_files_pattern(self, classifier):
         """Test 'search for [type] files' pattern variations"""
         test_cases = [
@@ -51,6 +53,7 @@ class TestFallbackSearchPatterns:
                 for word in expected_content.lower().split()
             )
 
+    @pytest.mark.smoke
     def test_locate_files_patterns(self, classifier):
         """Test 'locate files' patterns"""
         message = "locate files with MCP integration"
@@ -62,6 +65,7 @@ class TestFallbackSearchPatterns:
         assert "search_query" in result_intent.context
         assert "MCP integration".lower() in result_intent.context["search_query"].lower()
 
+    @pytest.mark.smoke
     def test_look_for_files_patterns(self, classifier):
         """Test 'look for files' patterns"""
         message = "look for files about deployment"
@@ -72,6 +76,7 @@ class TestFallbackSearchPatterns:
         assert result_intent.action == "find_documents"
         assert "search_query" in result_intent.context
 
+    @pytest.mark.smoke
     def test_files_containing_patterns(self, classifier):
         """Test 'files containing' patterns"""
         message = "find files containing API endpoints"
@@ -83,6 +88,7 @@ class TestFallbackSearchPatterns:
         assert "search_query" in result_intent.context
         assert "API endpoints".lower() in result_intent.context["search_query"].lower()
 
+    @pytest.mark.smoke
     def test_show_me_patterns(self, classifier):
         """Test 'show me' patterns"""
         test_cases = [
@@ -101,6 +107,7 @@ class TestFallbackSearchPatterns:
 class TestQueryExtractionMethods:
     """Test query extraction methods for new patterns"""
 
+    @pytest.mark.smoke
     def test_extract_search_query_with_new_patterns(self, classifier):
         """Test query extraction with new trigger phrases"""
         test_cases = [
@@ -115,6 +122,7 @@ class TestQueryExtractionMethods:
             # Should extract some meaningful query content
             assert len(result.strip()) > 0
 
+    @pytest.mark.smoke
     def test_extract_search_query_about_patterns(self, classifier):
         """Test extraction of 'about' patterns"""
         test_cases = [
@@ -127,6 +135,7 @@ class TestQueryExtractionMethods:
             result = classifier._extract_search_query_about(message)
             assert expected_query.lower() in result.lower()
 
+    @pytest.mark.smoke
     def test_extract_search_query_show_me(self, classifier):
         """Test extraction of 'show me' patterns"""
         test_cases = [
@@ -142,6 +151,7 @@ class TestQueryExtractionMethods:
 class TestErrorPatternElimination:
     """Test that new patterns eliminate 'Unknown query action' errors"""
 
+    @pytest.mark.smoke
     def test_no_learning_fallback_for_target_phrases(self, classifier):
         """Test that target phrases don't fall back to learning actions"""
         target_phrases = [

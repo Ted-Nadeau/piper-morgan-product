@@ -14,6 +14,7 @@ class TestEnhancedActionHumanizer:
         return ActionHumanizer()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_conversational_verb_mappings(self, humanizer):
         """Test that verbs are converted to more conversational forms"""
         test_cases = [
@@ -34,6 +35,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_special_patterns(self, humanizer):
         """Test special pattern overrides"""
         test_cases = [
@@ -49,6 +51,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_contextual_noun_phrasing(self, humanizer):
         """Test that nouns use contextual phrasing"""
         test_cases = [
@@ -66,6 +69,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_three_part_actions(self, humanizer):
         """Test verb_adjective_noun patterns"""
         test_cases = [
@@ -81,6 +85,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_single_word_conversational_mapping(self, humanizer):
         """Test single words get conversational mappings"""
         test_cases = [
@@ -100,6 +105,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_fallback_behavior(self, humanizer):
         """Test fallback for unknown patterns"""
         test_cases = [
@@ -115,6 +121,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_pm_realistic_queries(self, humanizer):
         """Test with realistic PM queries from handoff prompt"""
         test_cases = [
@@ -138,6 +145,7 @@ class TestEnhancedActionHumanizer:
             ), f"Expected '{expected}' but got '{result}' for action '{action}'"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_maintains_technical_accuracy(self, humanizer):
         """Test that conversational mapping maintains technical accuracy"""
         # These should still be clear about what they do

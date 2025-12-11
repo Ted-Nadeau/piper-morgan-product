@@ -43,6 +43,7 @@ class TestTemplatePersonalityIntegration:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_template_rendering_without_personality(self, template_renderer, mock_humanizer):
         """Test template rendering without user_id (no personality enhancement)"""
         # Act
@@ -59,6 +60,7 @@ class TestTemplatePersonalityIntegration:
 
     @pytest.mark.asyncio
     @patch("services.ui_messages.templates.PERSONALITY_AVAILABLE", True)
+    @pytest.mark.smoke
     async def test_template_rendering_with_personality_success(
         self, template_renderer, mock_humanizer
     ):
@@ -101,6 +103,7 @@ class TestTemplatePersonalityIntegration:
 
     @pytest.mark.asyncio
     @patch("services.ui_messages.templates.PERSONALITY_AVAILABLE", True)
+    @pytest.mark.smoke
     async def test_template_rendering_with_personality_failure_fallback(
         self, template_renderer, mock_humanizer
     ):
@@ -141,6 +144,7 @@ class TestTemplatePersonalityIntegration:
 
     @pytest.mark.asyncio
     @patch("services.ui_messages.templates.PERSONALITY_AVAILABLE", True)
+    @pytest.mark.smoke
     async def test_template_rendering_with_personality_exception_fallback(
         self, template_renderer, mock_humanizer
     ):
@@ -163,6 +167,7 @@ class TestTemplatePersonalityIntegration:
         assert result == "I understand you want to create a ticket."
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_response_type_determination(self, template_renderer):
         """Test ResponseType determination from intent categories"""
         renderer = template_renderer
@@ -175,6 +180,7 @@ class TestTemplatePersonalityIntegration:
 
     @pytest.mark.asyncio
     @patch("services.ui_messages.templates.PERSONALITY_AVAILABLE", False)
+    @pytest.mark.smoke
     async def test_template_rendering_personality_not_available(
         self, template_renderer, mock_humanizer
     ):

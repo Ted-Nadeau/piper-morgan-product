@@ -93,6 +93,7 @@ class TestSpatialWorkflowFactory:
             navigation_intent="respond",
         )
 
+    @pytest.mark.smoke
     async def test_high_attention_event_creates_task_workflow(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
@@ -116,6 +117,7 @@ class TestSpatialWorkflowFactory:
         assert workflow.id == "wf-123"
         assert "spatial_integration" in workflow.context
 
+    @pytest.mark.smoke
     async def test_medium_attention_event_creates_report_workflow(
         self, slack_workflow_factory, workflow_factory
     ):
@@ -158,6 +160,7 @@ class TestSpatialWorkflowFactory:
         assert workflow is not None
         assert workflow.id == "wf-report"
 
+    @pytest.mark.smoke
     async def test_emotional_event_creates_feedback_workflow(
         self, slack_workflow_factory, workflow_factory
     ):
@@ -200,6 +203,7 @@ class TestSpatialWorkflowFactory:
         assert workflow is not None
         assert workflow.id == "wf-feedback"
 
+    @pytest.mark.smoke
     async def test_new_room_event_creates_pattern_workflow(
         self, slack_workflow_factory, workflow_factory
     ):
@@ -242,6 +246,7 @@ class TestSpatialWorkflowFactory:
         assert workflow is not None
         assert workflow.id == "wf-pattern"
 
+    @pytest.mark.smoke
     async def test_no_mapping_returns_none(self, slack_workflow_factory):
         """Test that events without mappings return None"""
         # Arrange
@@ -273,6 +278,7 @@ class TestSpatialWorkflowFactory:
         # Assert
         assert workflow is None
 
+    @pytest.mark.smoke
     async def test_workflow_context_enrichment(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
@@ -312,6 +318,7 @@ class TestSpatialWorkflowFactory:
             assert "spatial_context" in task.result
             assert task.result["spatial_context"]["room_id"] == "C123456"
 
+    @pytest.mark.smoke
     def test_mapping_score_calculation(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
@@ -336,6 +343,7 @@ class TestSpatialWorkflowFactory:
         assert score <= 1.0
         assert score >= mapping.confidence_threshold
 
+    @pytest.mark.smoke
     def test_intent_creation_from_spatial_event(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
@@ -363,6 +371,7 @@ class TestSpatialWorkflowFactory:
         assert intent.context["spatial_context"]["room_id"] == "C123456"
         assert intent.context["spatial_context"]["territory_id"] == "T123456"
 
+    @pytest.mark.smoke
     def test_workflow_mapping_registry(self, slack_workflow_factory):
         """Test that workflow mappings are properly registered"""
         # Arrange & Act
@@ -379,6 +388,7 @@ class TestSpatialWorkflowFactory:
         message_mappings = [m for m in mappings if m.spatial_event_type == "message_placed"]
         assert len(message_mappings) > 0
 
+    @pytest.mark.smoke
     async def test_workflow_factory_error_handling(
         self, slack_workflow_factory, mock_event_result, mock_navigation_decision, spatial_context
     ):
@@ -396,6 +406,7 @@ class TestSpatialWorkflowFactory:
         # Assert
         assert workflow is None
 
+    @pytest.mark.smoke
     def test_spatial_workflow_statistics(self, slack_workflow_factory):
         """Test that spatial workflow statistics are generated correctly"""
         # Act

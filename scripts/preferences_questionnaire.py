@@ -61,7 +61,7 @@ def parse_choice(input_str: str, options: List[str]) -> str:
 
 async def store_user_preferences(user_id: str, preferences: Dict) -> bool:
     """
-    Store preferences in alpha_users.preferences JSONB column
+    Store preferences in users.preferences JSONB column
 
     Args:
         user_id: User ID to update
@@ -78,23 +78,23 @@ async def store_user_preferences(user_id: str, preferences: Dict) -> bool:
         preferences["configured_at"] = datetime.utcnow().isoformat()
 
         async with AsyncSessionFactory.session_scope() as session:
-            # Convert string to UUID for alpha_users table
+            # Convert string to UUID for users table
             uid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
 
-            # Check if user exists in alpha_users table
+            # Check if user exists in users table
             result = await session.execute(
-                text("SELECT id FROM alpha_users WHERE id = :user_id"), {"user_id": uid}
+                text("SELECT id FROM users WHERE id = :user_id"), {"user_id": uid}
             )
 
             if not result.fetchone():
-                logger.error(f"User {user_id} not found in alpha_users table")
+                logger.error(f"User {user_id} not found in users table")
                 return False
 
             # Update preferences - use CAST for proper JSONB binding
             await session.execute(
                 text(
                     """
-                    UPDATE alpha_users
+                    UPDATE users
                     SET preferences = CAST(:prefs AS jsonb)
                     WHERE id = :user_id
                 """
@@ -114,9 +114,9 @@ async def get_current_user_id() -> str:
     """Get the current user ID from the database"""
     try:
         async with AsyncSessionFactory.session_scope() as session:
-            # Get the most recent alpha user
+            # Get the most recent user
             result = await session.execute(
-                text("SELECT id FROM alpha_users ORDER BY created_at DESC LIMIT 1")
+                text("SELECT id FROM users ORDER BY created_at DESC LIMIT 1")
             )
 
             user = result.fetchone()
@@ -124,7 +124,7 @@ async def get_current_user_id() -> str:
                 # Convert UUID to string for consistency
                 return str(user[0])
 
-            logger.error("No alpha users found in database")
+            logger.error("No users found in database")
             return None
 
     except Exception as e:
@@ -133,15 +133,15 @@ async def get_current_user_id() -> str:
 
 
 async def get_existing_preferences(user_id: str) -> Dict:
-    """Get existing preferences for alpha user"""
+    """Get existing preferences for user"""
     import uuid
 
     try:
         async with AsyncSessionFactory.session_scope() as session:
-            # Convert string to UUID for alpha_users table
+            # Convert string to UUID for users table
             uid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
             result = await session.execute(
-                text("SELECT preferences FROM alpha_users WHERE id = :user_id"),
+                text("SELECT preferences FROM users WHERE id = :user_id"),
                 {"user_id": uid},
             )
 

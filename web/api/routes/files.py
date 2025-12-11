@@ -169,7 +169,6 @@ async def upload_file(
             async with AsyncSessionFactory.session_scope_fresh() as session:
                 uploaded_file = UploadedFileDB(
                     id=file_id,
-                    session_id=current_user.sub,  # Legacy session field (kept for compatibility)
                     owner_id=current_user.sub,  # SEC-RBAC ownership
                     filename=file.filename,
                     file_type=file.content_type,
@@ -194,15 +193,23 @@ async def upload_file(
             )
 
         except Exception as e:
-            logger.warning(
+            logger.error(
                 "file_metadata_storage_failed",
                 user_id=current_user.sub,
                 file_id=file_id,
                 filename=file.filename,
                 error=str(e),
+                exc_info=True,
             )
-            # File is saved on disk, but metadata storage failed
-            # This is not critical - return success but log warning
+            # Clean up the file from disk since DB write failed
+            try:
+                safe_file_path.unlink(missing_ok=True)
+            except Exception:
+                pass  # Best effort cleanup
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save file metadata to database",
+            )
 
         # 10. Return response
         response = {

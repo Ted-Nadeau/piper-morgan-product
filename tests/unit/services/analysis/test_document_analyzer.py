@@ -23,6 +23,7 @@ class TestDocumentAnalyzer:
         self.analyzer = DocumentAnalyzer(llm_client=self.mock_llm)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_basic_pdf_analysis(self):
         """Test page count and text extraction from a normal PDF"""
         pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
@@ -32,6 +33,7 @@ class TestDocumentAnalyzer:
         assert isinstance(result.metadata["text"], str)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_summary_generation_with_llm(self):
         """Test summary generation using LLM (mocked)"""
         pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
@@ -44,6 +46,7 @@ class TestDocumentAnalyzer:
         assert result.metadata["summary"] is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_key_points_extraction(self):
         """Test key points extraction from PDF using LLM (mocked)"""
         pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
@@ -65,6 +68,7 @@ class TestDocumentAnalyzer:
         assert isinstance(result.metadata["text"], str)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_corrupted_pdf_handling(self):
         """Test that corrupted PDF returns error gracefully"""
         pdf_path = os.path.join(FIXTURE_DIR, "corrupted_document.pdf")
@@ -75,17 +79,20 @@ class TestDocumentAnalyzer:
             or "error" in result.metadata.get("error", "").lower()
         )
 
+    @pytest.mark.smoke
     def test_inherits_from_base_analyzer(self):
         from services.analysis.document_analyzer import DocumentAnalyzer
 
         assert issubclass(DocumentAnalyzer, BaseAnalyzer)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_analyze_returns_analysis_result(self):
         pdf_path = os.path.join(FIXTURE_DIR, "chapter.pdf")
         result = await self.analyzer.analyze(pdf_path)
         assert isinstance(result, AnalysisResult)
 
+    @pytest.mark.smoke
     def test_llm_dependency_injection(self):
         from services.analysis.document_analyzer import DocumentAnalyzer
 
@@ -161,6 +168,7 @@ async def test_document_corrupted_pdf_handling():
 
 
 # 6. Inheritance from BaseAnalyzer
+@pytest.mark.smoke
 def test_document_inherits_base_analyzer():
     from services.analysis.base_analyzer import BaseAnalyzer
     from services.analysis.document_analyzer import DocumentAnalyzer
@@ -179,6 +187,7 @@ async def test_document_analyze_returns_analysis_result():
 
 
 # 8. LLM dependency injection
+@pytest.mark.smoke
 def test_document_llm_dependency_injection():
     from services.analysis.document_analyzer import DocumentAnalyzer
 

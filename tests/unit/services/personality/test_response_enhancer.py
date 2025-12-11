@@ -85,6 +85,7 @@ class TestResponsePersonalityEnhancer:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enhance_response_success(
         self, enhancer, mock_repository, test_profile, test_context
     ):
@@ -109,6 +110,7 @@ class TestResponsePersonalityEnhancer:
         mock_repository.get_by_user_id.assert_called_once_with(user_id)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enhance_response_profile_not_found(
         self, enhancer, mock_repository, test_context
     ):
@@ -129,6 +131,7 @@ class TestResponsePersonalityEnhancer:
         mock_repository.save.assert_called_once()  # Default profile should be saved
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enhance_response_circuit_breaker_open(self, enhancer, test_context):
         """Test enhancement when circuit breaker is open"""
         # Arrange
@@ -149,6 +152,7 @@ class TestResponsePersonalityEnhancer:
         assert "Circuit breaker open" in result.error_message
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enhance_response_input_validation_large_content(self, enhancer, test_context):
         """Test that excessively large content is rejected by input validation"""
         # Arrange
@@ -163,6 +167,7 @@ class TestResponsePersonalityEnhancer:
         assert "Content too large" in result.error_message
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enhance_response_input_validation_max_content_length(
         self, enhancer, mock_repository, test_profile, test_context
     ):
@@ -179,6 +184,7 @@ class TestResponsePersonalityEnhancer:
         assert result.processing_time_ms > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enhance_response_context_history_truncation(
         self, enhancer, mock_repository, test_profile, test_context
     ):
@@ -200,6 +206,7 @@ class TestResponsePersonalityEnhancer:
         assert original_history_length > enhancer.MAX_CONTEXT_HISTORY
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_cache_hit_scenario(self, enhancer, mock_cache, test_profile, test_context):
         """Test response enhancement with cache hit"""
         # Arrange
@@ -216,6 +223,7 @@ class TestResponsePersonalityEnhancer:
         assert enhancer.cache_hits > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_metrics_tracking(self, enhancer, mock_repository, test_profile, test_context):
         """Test that metrics are properly tracked"""
         # Arrange
@@ -243,11 +251,13 @@ class TestCircuitBreaker:
         """CircuitBreaker with test settings"""
         return CircuitBreaker(failure_threshold=3, timeout_seconds=1)
 
+    @pytest.mark.smoke
     def test_initial_state_closed(self, circuit_breaker):
         """Test circuit breaker starts in CLOSED state"""
         assert circuit_breaker.get_state() == "CLOSED"
         assert circuit_breaker.is_open() is False
 
+    @pytest.mark.smoke
     def test_failure_threshold_opens_circuit(self, circuit_breaker):
         """Test that reaching failure threshold opens circuit"""
         # Record failures up to threshold
@@ -257,6 +267,7 @@ class TestCircuitBreaker:
         assert circuit_breaker.get_state() == "OPEN"
         assert circuit_breaker.is_open() is True
 
+    @pytest.mark.smoke
     def test_success_resets_failure_count(self, circuit_breaker):
         """Test that success resets failure count in CLOSED state (Bug Fix: piper-morgan-3qz)"""
         circuit_breaker.record_failure()
@@ -265,6 +276,7 @@ class TestCircuitBreaker:
         assert circuit_breaker.failure_count == 0
         assert circuit_breaker.get_state() == "CLOSED"
 
+    @pytest.mark.smoke
     def test_half_open_transition(self, circuit_breaker):
         """Test transition from OPEN to HALF_OPEN after timeout"""
         # Open the circuit
@@ -281,6 +293,7 @@ class TestCircuitBreaker:
         assert circuit_breaker.is_open() is False
         assert circuit_breaker.get_state() == "HALF_OPEN"
 
+    @pytest.mark.smoke
     def test_half_open_to_closed_on_success(self, circuit_breaker):
         """Test HALF_OPEN to CLOSED on success"""
         # Set to HALF_OPEN state

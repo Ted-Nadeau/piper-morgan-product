@@ -21,6 +21,7 @@ class TestTodoService:
         """Test list ID."""
         return uuid4()
 
+    @pytest.mark.smoke
     async def test_create_todo(self, service, list_id):
         """Can create todo with priority."""
         todo = await service.create_todo(text="Test todo", list_id=list_id, priority="high")
@@ -30,6 +31,7 @@ class TestTodoService:
         assert todo.priority == "high"
         assert todo.completed is False
 
+    @pytest.mark.smoke
     async def test_complete_todo(self, service, list_id):
         """Can complete todo."""
         todo = await service.create_todo(text="Complete me", list_id=list_id)
@@ -40,6 +42,7 @@ class TestTodoService:
         assert completed.status == "completed"
         assert completed.completed_at is not None
 
+    @pytest.mark.smoke
     async def test_reopen_todo(self, service, list_id):
         """Can reopen completed todo."""
         # Create and complete
@@ -53,6 +56,7 @@ class TestTodoService:
         assert reopened.status == "pending"
         assert reopened.completed_at is None
 
+    @pytest.mark.smoke
     async def test_set_priority(self, service, list_id):
         """Can change todo priority."""
         todo = await service.create_todo(text="Task", list_id=list_id, priority="low")
@@ -61,6 +65,7 @@ class TestTodoService:
 
         assert updated.priority == "urgent"
 
+    @pytest.mark.smoke
     async def test_inherited_operations(self, service, list_id):
         """TodoService inherits generic operations."""
         # Create todo using inherited method
@@ -80,6 +85,7 @@ class TestTodoService:
         updated = await service.update_item_text(UUID(todo.id), "Updated")
         assert updated.text == "Updated"
 
+    @pytest.mark.smoke
     async def test_get_todos_in_list(self, service, list_id):
         """Can get all todos in a list."""
         # Create multiple todos
@@ -96,6 +102,7 @@ class TestTodoService:
         assert todos[1].text == "Todo 2"
         assert todos[2].text == "Todo 3"
 
+    @pytest.mark.smoke
     async def test_todo_defaults(self, service, list_id):
         """Todos have correct default values."""
         todo = await service.create_todo(text="Default test", list_id=list_id)

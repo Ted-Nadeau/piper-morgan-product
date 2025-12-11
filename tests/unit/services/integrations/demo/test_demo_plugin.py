@@ -12,6 +12,7 @@ from services.integrations.demo.demo_plugin import DemoPlugin
 class TestDemoPlugin:
     """Test suite for Demo plugin"""
 
+    @pytest.mark.smoke
     def test_plugin_metadata(self):
         """Test plugin metadata is correct"""
         plugin = DemoPlugin()
@@ -22,6 +23,7 @@ class TestDemoPlugin:
         assert metadata.description == "Demo integration template for developers"
         assert "routes" in metadata.capabilities
 
+    @pytest.mark.smoke
     def test_plugin_has_router(self):
         """Test plugin provides router"""
         plugin = DemoPlugin()
@@ -31,6 +33,7 @@ class TestDemoPlugin:
         assert router.prefix == "/api/integrations/demo"
         assert "demo" in router.tags
 
+    @pytest.mark.smoke
     def test_plugin_is_configured(self):
         """Test plugin configuration check"""
         plugin = DemoPlugin()
@@ -39,6 +42,7 @@ class TestDemoPlugin:
         assert plugin.is_configured() is True
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_plugin_lifecycle(self):
         """Test plugin initialization and shutdown"""
         plugin = DemoPlugin()
@@ -47,6 +51,7 @@ class TestDemoPlugin:
         await plugin.initialize()
         await plugin.shutdown()
 
+    @pytest.mark.smoke
     def test_plugin_status(self):
         """Test plugin status reporting"""
         plugin = DemoPlugin()
@@ -59,6 +64,7 @@ class TestDemoPlugin:
         assert status["router_prefix"] == "/api/integrations/demo"
         assert status["routes"] >= 3  # At least health, echo, status
 
+    @pytest.mark.smoke
     def test_router_has_expected_routes(self):
         """Test router has all expected endpoints"""
         plugin = DemoPlugin()
@@ -75,17 +81,20 @@ class TestDemoPlugin:
 class TestDemoConfigService:
     """Test suite for Demo config service"""
 
+    @pytest.mark.smoke
     def test_config_service_creation(self):
         """Test config service can be created"""
         config = DemoConfigService()
         assert config is not None
 
+    @pytest.mark.smoke
     def test_config_is_configured(self):
         """Test is_configured method"""
         config = DemoConfigService()
         # Demo should always be configured
         assert config.is_configured() is True
 
+    @pytest.mark.smoke
     def test_config_get_endpoint(self):
         """Test endpoint retrieval"""
         config = DemoConfigService()

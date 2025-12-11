@@ -76,6 +76,7 @@ class TestListCreateContract:
     These tests verify the endpoint accepts JSON body, not query params.
     """
 
+    @pytest.mark.smoke
     def test_create_list_accepts_json_body(self, mock_current_user, mock_list_repository):
         """
         POST /api/v1/lists must accept JSON body with name and description.
@@ -115,6 +116,7 @@ class TestListCreateContract:
             "This proves Issue #468: endpoint expects query params but frontend sends JSON body."
         )
 
+    @pytest.mark.smoke
     def test_create_list_name_only_json(self, mock_current_user, mock_list_repository):
         """
         POST /api/v1/lists with only name in JSON body (description optional).
@@ -147,6 +149,7 @@ class TestTodoCreateContract:
     Tests for POST /api/v1/todos API contract (Issue #468)
     """
 
+    @pytest.mark.smoke
     def test_create_todo_accepts_json_body(self, mock_current_user):
         """
         POST /api/v1/todos must accept JSON body with title and description.
@@ -200,6 +203,7 @@ class TestProjectCreateContract:
     Tests for POST /api/v1/projects API contract (Issue #468)
     """
 
+    @pytest.mark.smoke
     def test_create_project_accepts_json_body(self, mock_current_user):
         """
         POST /api/v1/projects must accept JSON body with name and description.

@@ -1090,6 +1090,7 @@ class TestAttentionModelTDDValidation:
     TDD Validation: Ensure attention model tests comprehensively define behavior
     """
 
+    @pytest.mark.smoke
     def test_attention_model_tdd_coverage_validation(self):
         """Validate TDD coverage of attention model behavior"""
 

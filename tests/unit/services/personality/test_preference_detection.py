@@ -34,6 +34,7 @@ from services.personality.preference_detection import (
 class TestPreferenceHintStructure:
     """Test PreferenceHint data structure and methods"""
 
+    @pytest.mark.smoke
     def test_preference_hint_creation(self):
         """Verify PreferenceHint can be created with required fields"""
         hint = PreferenceHint(
@@ -54,6 +55,7 @@ class TestPreferenceHintStructure:
         assert hint.confidence_score == 0.85
         assert hint.source_text == "Please be more friendly"
 
+    @pytest.mark.smoke
     def test_preference_hint_to_dict(self):
         """PreferenceHint.to_dict() returns dict representation"""
         hint = PreferenceHint(
@@ -73,6 +75,7 @@ class TestPreferenceHintStructure:
         assert hint_dict["confidence_score"] == 0.85
         assert hint_dict["user_id"] == "user123"
 
+    @pytest.mark.smoke
     def test_confidence_level_classification(self):
         """Test confidence_level() method classifies scores correctly"""
         # Very High confidence (≥0.9)
@@ -127,6 +130,7 @@ class TestPreferenceHintStructure:
         )
         assert hint_low.confidence_level() == ConfidenceLevel.LOW
 
+    @pytest.mark.smoke
     def test_is_ready_for_suggestion(self):
         """Test is_ready_for_suggestion() checks confidence threshold (≥0.4)"""
         # Suggestion-ready (≥0.4)
@@ -155,6 +159,7 @@ class TestPreferenceHintStructure:
         )
         assert hint_not_ready.is_ready_for_suggestion() is False
 
+    @pytest.mark.smoke
     def test_is_ready_for_auto_apply(self):
         """Test is_ready_for_auto_apply() checks high confidence threshold (≥0.9)"""
         # Auto-apply ready (≥0.9 + explicit feedback)
@@ -183,6 +188,7 @@ class TestPreferenceHintStructure:
         )
         assert hint_no_auto.is_ready_for_auto_apply() is False
 
+    @pytest.mark.smoke
     def test_confidence_score_validation(self):
         """Test that invalid confidence scores are rejected"""
         with pytest.raises(ValueError):
@@ -201,6 +207,7 @@ class TestPreferenceHintStructure:
 class TestPreferenceConfirmation:
     """Test PreferenceConfirmation data structure"""
 
+    @pytest.mark.smoke
     def test_preference_confirmation_creation(self):
         """Verify PreferenceConfirmation records user decision"""
         confirmation = PreferenceConfirmation(
@@ -240,6 +247,7 @@ class TestConversationAnalyzerDetection:
         profile.technical_depth = TechnicalPreference.BALANCED
         return profile
 
+    @pytest.mark.smoke
     def test_analyzer_initialization(self, analyzer):
         """ConversationAnalyzer initializes with required components"""
         assert analyzer is not None
@@ -247,6 +255,7 @@ class TestConversationAnalyzerDetection:
         assert hasattr(analyzer, "analyze_response")
         assert hasattr(analyzer, "analyze_feedback")
 
+    @pytest.mark.smoke
     def test_detect_technical_preference_from_message(self, analyzer, sample_profile):
         """Detect 'more technical' preference from message"""
         # Use actual technical words that trigger detection
@@ -260,6 +269,7 @@ class TestConversationAnalyzerDetection:
         technical_hints = [h for h in result.hints if h.dimension == PreferenceDimension.TECHNICAL]
         assert len(technical_hints) > 0
 
+    @pytest.mark.smoke
     def test_detect_warmth_preference_from_message(self, analyzer, sample_profile):
         """Detect 'be more friendly' preference from message"""
         # Use actual warmth words that trigger detection
@@ -272,6 +282,7 @@ class TestConversationAnalyzerDetection:
         warmth_hints = [h for h in result.hints if h.dimension == PreferenceDimension.WARMTH]
         assert len(warmth_hints) > 0
 
+    @pytest.mark.smoke
     def test_confidence_score_bounds(self, analyzer, sample_profile):
         """All confidence scores are in valid range [0.0, 1.0]"""
         message = "Please be more professional and include technical details"
@@ -282,6 +293,7 @@ class TestConversationAnalyzerDetection:
                 0.0 <= hint.confidence_score <= 1.0
             ), f"Confidence score {hint.confidence_score} out of bounds"
 
+    @pytest.mark.smoke
     def test_multiple_preferences_in_single_message(self, analyzer, sample_profile):
         """Detect multiple preferences in single message"""
         # Combine preference triggers: warm + technical + action words
@@ -293,6 +305,7 @@ class TestConversationAnalyzerDetection:
 
         assert len(result.hints) >= 2, "Should detect multiple preferences"
 
+    @pytest.mark.smoke
     def test_no_false_positives_for_neutral_message(self, analyzer, sample_profile):
         """Neutral message shouldn't trigger false preference detections"""
         message = "What's the weather like today?"
@@ -306,6 +319,7 @@ class TestConversationAnalyzerDetection:
                     hint.confidence_score < 0.6
                 ), "Neutral message shouldn't have high confidence hints"
 
+    @pytest.mark.smoke
     def test_analysis_result_has_required_fields(self, analyzer, sample_profile):
         """Analysis result has all required fields"""
         message = "Please be more technical"
@@ -316,6 +330,7 @@ class TestConversationAnalyzerDetection:
         assert hasattr(result, "auto_apply_hints")
         assert hasattr(result, "analysis_summary")
 
+    @pytest.mark.smoke
     def test_analysis_summary_generated(self, analyzer, sample_profile):
         """Analysis includes human-readable summary"""
         message = "Please provide more technical detail"
@@ -334,6 +349,7 @@ class TestSessionHintStorage:
         return PreferenceDetectionHandler()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_store_and_retrieve_hint(self, handler):
         """Store hint in session and retrieve it"""
         session_id = "session_001"
@@ -359,6 +375,7 @@ class TestSessionHintStorage:
         assert retrieved["confidence_score"] == 0.85
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_store_multiple_hints(self, handler):
         """Store multiple hints and retrieve them individually"""
         session_id = "session_002"
@@ -395,6 +412,7 @@ class TestSessionHintStorage:
         assert h2 is not None and h2["id"] == "hint_002"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_retrieve_nonexistent_hint(self, handler):
         """Retrieve non-existent hint returns None"""
         session_id = "session_003"
@@ -402,6 +420,7 @@ class TestSessionHintStorage:
         assert retrieved is None
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_hint_stored_with_timestamp(self, handler):
         """Stored hints include timestamp for TTL checking"""
         session_id = "session_004"
@@ -424,6 +443,7 @@ class TestSessionHintStorage:
         datetime.fromisoformat(retrieved["stored_at"])
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_empty_hint_list_not_stored(self, handler):
         """Empty hint list doesn't cause errors"""
         session_id = "session_005"
@@ -442,6 +462,7 @@ class TestPreferenceApplicationLogic:
         return PreferenceDetectionHandler()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_confirm_preference_rejection(self, handler):
         """Test rejection path (no storage)"""
         result = await handler.confirm_preference(
@@ -456,6 +477,7 @@ class TestPreferenceApplicationLogic:
         assert result["hint_id"] == "hint_001"
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_confirm_preference_missing_hint(self, handler):
         """Test acceptance when hint not in session"""
         result = await handler.confirm_preference(
@@ -469,6 +491,7 @@ class TestPreferenceApplicationLogic:
         assert "not found" in result["error"].lower()
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_suggest_preferences_generates_suggestions(self, handler):
         """Test preference suggestion generation"""
         hints = [
@@ -501,6 +524,7 @@ class TestPreferenceApplicationLogic:
         assert len(result["suggestions"]) >= 1
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_apply_auto_preferences_high_confidence(self, handler):
         """Test auto-application of high-confidence hints"""
         hints = [
@@ -531,6 +555,7 @@ class TestConversationAnalyzerExplanationGeneration:
         """Fixture providing PreferenceDetectionHandler"""
         return PreferenceDetectionHandler()
 
+    @pytest.mark.smoke
     def test_language_patterns_explanation(self, handler):
         """Generate explanation for language pattern detection"""
         hint = PreferenceHint(
@@ -548,6 +573,7 @@ class TestConversationAnalyzerExplanationGeneration:
         assert isinstance(explanation, str)
         assert len(explanation) > 0
 
+    @pytest.mark.smoke
     def test_explicit_feedback_explanation(self, handler):
         """Generate explanation for explicit feedback detection"""
         hint = PreferenceHint(
@@ -564,6 +590,7 @@ class TestConversationAnalyzerExplanationGeneration:
         explanation = handler._generate_suggestion_explanation(hint)
         assert isinstance(explanation, str)
 
+    @pytest.mark.smoke
     def test_behavioral_signals_explanation(self, handler):
         """Generate explanation for behavioral signal detection"""
         hint = PreferenceHint(

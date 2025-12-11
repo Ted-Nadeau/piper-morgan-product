@@ -34,6 +34,7 @@ class TestEnhancedContextTracker:
         return tracker
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_enrich_conversation_context_basic(self, mock_services):
         """Test basic conversation context enrichment"""
         # Setup mocks
@@ -97,6 +98,7 @@ class TestEnhancedContextTracker:
             assert issue_entities[0].mention_count >= 1
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_conversation_flow_tracking(self, mock_services):
         """Test conversation flow classification"""
         mock_services.memory_service.resolve_user_message.return_value = ("Hello!", [], {})
@@ -126,6 +128,7 @@ class TestEnhancedContextTracker:
         assert "request" in result.conversation_state.conversation_flow
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_confidence_score_calculation(self, mock_services):
         """Test confidence score calculation"""
         # High confidence: resolved references + entities
@@ -153,6 +156,7 @@ class TestEnhancedContextTracker:
         assert low_confidence < high_confidence
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_error_handling(self, mock_services):
         """Test error handling in context enrichment"""
         # Make memory service fail
@@ -195,6 +199,7 @@ class TestEnhancedContextTracker:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_conversation_summary(self, mock_services):
         """Test conversation summary generation"""
         # Setup conversation with entities
@@ -218,11 +223,13 @@ class TestEnhancedContextTracker:
         assert summary["stats"]["total_turns"] > 0
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_get_conversation_summary_not_found(self, mock_services):
         """Test conversation summary for non-existent conversation"""
         summary = await mock_services.get_conversation_summary("non-existent")
         assert "error" in summary
 
+    @pytest.mark.smoke
     def test_performance_stats(self, mock_services):
         """Test performance statistics"""
         stats = mock_services.get_performance_stats()
@@ -234,6 +241,7 @@ class TestEnhancedContextTracker:
         assert "active_conversations" in stats
         assert "success_rate" in stats
 
+    @pytest.mark.smoke
     def test_entity_patterns_loading(self, tracker):
         """Test entity patterns are properly loaded"""
         patterns = tracker.entity_patterns
@@ -249,6 +257,7 @@ class TestEnhancedContextTracker:
             assert all(isinstance(p, str) for p in pattern_list)
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_entity_mention_aliases(self, mock_services):
         """Test entity mention alias tracking"""
         # First mention
@@ -283,6 +292,7 @@ class TestEnhancedContextTracker:
             assert entity.mention_count >= 1
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_conversation_flow_limit(self, mock_services):
         """Test conversation flow history is limited"""
         mock_services.memory_service.resolve_user_message.return_value = ("Test", [], {})
@@ -296,6 +306,7 @@ class TestEnhancedContextTracker:
         assert len(conv_state.conversation_flow) <= 20
 
     @pytest.mark.asyncio
+    @pytest.mark.smoke
     async def test_context_snippets_limit(self, mock_services):
         """Test context snippets are limited per entity"""
         mock_services.memory_service.resolve_user_message.return_value = (
@@ -365,6 +376,7 @@ class TestConvenienceFunctions:
 class TestEntityMention:
     """Test EntityMention dataclass"""
 
+    @pytest.mark.smoke
     def test_entity_mention_creation(self):
         """Test EntityMention creation and defaults"""
         now = datetime.now()
@@ -387,6 +399,7 @@ class TestEntityMention:
 class TestConversationState:
     """Test ConversationState dataclass"""
 
+    @pytest.mark.smoke
     def test_conversation_state_creation(self):
         """Test ConversationState creation and defaults"""
         state = ConversationState(conversation_id="test-123")

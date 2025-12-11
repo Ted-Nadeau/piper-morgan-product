@@ -182,3 +182,176 @@ Searched for all `session_scope()` vs `session_scope_fresh()` usage:
 - [x] Stuff dropdown contains Todos, Projects, Files, Lists
 - [x] No duplicate nav items
 - [x] Works on mobile (hamburger menu)
+
+---
+
+## P1 Fixes (08:45)
+
+Deployed 4 subagents to fix P1 issues in parallel. All completed successfully.
+
+### #459: Chat Text Entry Below Fold
+**Problem**: Chat input was below the visible area on the home page
+**Fix**:
+- Reordered DOM to place chat form BEFORE chat window
+- Reduced chat window height from 400px to 200px
+**File**: `templates/home.html`
+
+### #460: Learning Page Giant Emoji
+**Problem**: Empty state emoji was oversized (inherited container sizing)
+**Fix**:
+- Set explicit font-size: 48px in CSS
+- Added 64x64px container constraints
+- Removed duplicate inline styles from template
+**Files**: `web/static/css/empty-state.css`, `templates/learning-dashboard.html`
+
+### #461: Browser Auto-Open Regression
+**Problem**: Browser required explicit `--browser` flag (inverted default)
+**Fix**: Changed to `--no-browser` for opt-out, auto-open by default
+**File**: `main.py`
+
+### #466: Toast API Signature Mismatch
+**Problem**: Templates called `Toast.error('message')` but API requires `(title, message)`
+**Fix**: Updated 47 Toast calls across 4 templates to use two-argument signature
+**Files**: `templates/todos.html`, `templates/projects.html`, `templates/lists.html`, `templates/files.html`
+
+### Commit
+- **Hash**: 39e3d17e
+- **Issues Closed**: #459, #460, #461, #466
+
+---
+
+## Session Summary
+
+### Completed Today
+| Task | Status |
+|------|--------|
+| Beads backlog audit | ✅ |
+| Closed 6 already-fixed issues | ✅ |
+| Consolidated 22 beads → 4 GitHub epics | ✅ |
+| #453: session_scope audit | ✅ |
+| #458: Menu restructure | ✅ |
+| #459: Chat text entry layout | ✅ |
+| #460: Learning page emoji | ✅ |
+| #461: Browser auto-open | ✅ |
+| #466: Toast API signature | ✅ |
+
+### Commits
+1. d48eb4b1 - #453 session_scope conversions
+2. ac524cd1 - #458 menu restructure
+3. 39e3d17e - P1 fixes (#459, #460, #461, #466)
+4. 1844d47a - P2 fixes (#457, #467)
+
+---
+
+## P2 Fixes (08:50)
+
+### #457: Page Transition Too Slow
+**Problem**: Navigation caused ~700ms flash/redraw
+**Fix**: Reduced total transition time to ~350ms
+- JS config: 300ms → 150ms
+- CSS transitions: 0.3s → 0.15s
+- Page enter: 0.4s → 0.2s
+- Slide distance: 40px → 16px (subtler motion)
+**Files**: `web/static/js/page-transitions.js`, `web/static/css/page-transitions.css`
+
+### #467: Duplicate API Key Logs
+**Problem**: Each key retrieval logged twice during startup
+**Root Cause**: Both keychain_service and llm_config_service logged the same operation
+**Fix**: Removed duplicate log in llm_config_service (keychain_service is the source of truth)
+**File**: `services/config/llm_config_service.py`
+
+---
+
+## Updated Session Summary
+
+### Completed Today
+| Task | Status |
+|------|--------|
+| Beads backlog audit | ✅ |
+| Closed 6 already-fixed issues | ✅ |
+| Consolidated 22 beads → 4 GitHub epics | ✅ |
+| #453: session_scope audit | ✅ |
+| #458: Menu restructure | ✅ |
+| #459: Chat text entry layout | ✅ |
+| #460: Learning page emoji | ✅ |
+| #461: Browser auto-open | ✅ |
+| #466: Toast API signature | ✅ |
+| #457: Page transition speed | ✅ |
+| #467: Duplicate API key logs | ✅ |
+
+### Ready for Alpha Testing
+PM can now test:
+- Home page chat flow (above-fold input)
+- Navigation dropdown (Stuff menu)
+- Learning page empty state
+- Browser auto-open behavior
+- Toast notifications across all entity pages
+- Faster page navigation transitions
+
+---
+
+## PM Alpha Testing Feedback (12:00)
+
+PM reported 3 issues during alpha testing session:
+
+### Issue 1: Frequent Re-login (P1)
+**Symptom**: User had to re-login frequently during testing
+**Root Cause**: Cookie `max_age=3600` (1 hour)
+**Fix**: Increased to 8 hours (28800s)
+**File**: `web/api/routes/auth.py`
+
+### Issue 2: Nav Menu Alignment (P2)
+**Symptom**: "Stuff" dropdown appeared misaligned with other nav items
+**Root Cause**: Missing explicit vertical alignment on nav list items
+**Fix**: Added `align-items: center` to `.nav-menu` and `.nav-menu > li`
+**File**: `templates/components/navigation.html`
+
+### Issue 3: Todos Page Load Error (P0 - Critical)
+**Symptom**: "Failed to load todos" error on /todos page
+**Root Cause**: Field name mismatch - backend returned `title`, frontend expected `text`
+**Fix**: Changed `todos.py` response to use `"text": t.title`
+**File**: `web/api/routes/todos.py`
+
+### Commit
+- **Hash**: 3a25fd55
+- **All 3 issues fixed in single commit**
+
+---
+
+## Final Session Summary
+
+### Issues Fixed Today: 13 total
+
+| Issue | Description | Priority |
+|-------|-------------|----------|
+| #453 | session_scope audit | A10 |
+| #455 | Chat submit 401 (closed) | A10 |
+| #456 | Standup endpoint (closed) | A10 |
+| #457 | Page transition speed | P2 |
+| #458 | Menu restructure | A10 |
+| #459 | Chat text below fold | P1 |
+| #460 | Learning page emoji | P1 |
+| #461 | Browser auto-open | P1 |
+| #462 | Component integration (closed) | A10 |
+| #464 | FLY-COORD-TREES (closed) | A10 |
+| #466 | Toast API signature | P1 |
+| #467 | Duplicate API key logs | P2 |
+| #468 | API contract (closed) | A10 |
+| #469 | DI provider (closed) | A10 |
+| - | Todos field name mismatch | P0 |
+| - | Session timeout (8hrs) | P1 |
+| - | Nav alignment | P2 |
+
+### Commits Today: 5
+1. d48eb4b1 - #453 session_scope conversions
+2. ac524cd1 - #458 menu restructure
+3. 39e3d17e - P1 fixes (#459, #460, #461, #466)
+4. 1844d47a - P2 fixes (#457, #467)
+5. 3a25fd55 - Alpha testing fixes (todos, session, nav)
+
+### Beads Cleanup
+- Consolidated 22 open beads → 4 GitHub epics (#470-473)
+- Clean slate: 0 open beads
+
+### Session End: 1:19 PM
+PM in meetings, will test later today.
