@@ -2,7 +2,7 @@
 
 **Purpose**: Ground truth for alpha testing - what Piper can actually do
 **Related**: ADR-039 (Canonical Query Architecture), Issue #492 (Canonical test matrix)
-**Last Updated**: December 21, 2025
+**Last Updated**: December 22, 2025
 
 ## Overview
 
@@ -14,12 +14,12 @@ This test matrix provides the definitive reference for testing Piper's canonical
 
 | Category | Total | PASS | PARTIAL | FAIL | NOT IMPL |
 |----------|-------|------|---------|------|----------|
-| Identity | 5 | 3 | 2 | 0 | 0 |
+| Identity | 5 | 5 | 0 | 0 | 0 |
 | Temporal | 5 | 5 | 0 | 0 | 0 |
 | Spatial | 5 | 1 | 3 | 0 | 1 |
 | Capability | 5 | 0 | 2 | 0 | 3 |
 | Predictive | 5 | 0 | 1 | 0 | 4 |
-| **Total** | **25** | **9** | **8** | **0** | **8** |
+| **Total** | **25** | **11** | **6** | **0** | **8** |
 
 **Legend:**
 - **PASS**: Fully functional, returns real data
@@ -34,15 +34,15 @@ This test matrix provides the definitive reference for testing Piper's canonical
 ### Identity Queries (1-5)
 
 **Handler**: `canonical_handlers.py::_handle_identity_query()`
-**Status**: Partially implemented (hardcoded capabilities)
+**Status**: ✅ COMPLETE (5/5 PASS)
 
 | # | Query | Expected Behavior | Actual Behavior | Status | Notes |
 |---|-------|------------------|-----------------|--------|-------|
 | 1 | What's your name? | Name + role description | "I'm Piper Morgan, your AI Product Management assistant..." | ✅ PASS | Works correctly with spatial awareness |
 | 2 | What can you help me with? | Dynamic capability list from active plugins | Queries PluginRegistry for active integrations, returns core capabilities + dynamic plugin list | ✅ PASS | Issue #493 - Complete with tests |
 | 3 | Are you working properly? | System health check | Checks database + integrations, returns health status with spatial formatting | ✅ PASS | Issue #506 - Complete with tests |
-| 4 | How do I get help? | Onboarding/help guidance | Same as query #1 (identity response) | ⚠️ PARTIAL | Needs dedicated help/onboarding handler |
-| 5 | What makes you different? | Unique value proposition | Same as query #1 (identity response) | ⚠️ PARTIAL | Needs dedicated differentiation handler |
+| 4 | How do I get help? | Onboarding/help guidance | Returns help resources, getting started guides, example queries with spatial formatting | ✅ PASS | Issue #507 - Complete with tests |
+| 5 | What makes you different? | Unique value proposition | Returns unique features, positioning vs other tools, dynamic capabilities with spatial formatting | ✅ PASS | Issue #508 - Complete with tests |
 
 **Current Implementation**:
 ```python
@@ -59,8 +59,10 @@ capabilities = self._get_dynamic_capabilities()
 **What Needs to Happen**:
 1. ~~Query #2: Query active integrations to build dynamic capability list~~ ✅ DONE (Issue #493)
 2. ~~Query #3: Add health check handler (ping services, check config)~~ ✅ DONE (Issue #506)
-3. Query #4: Add help/onboarding handler (link to docs, show first steps)
-4. Query #5: Add differentiation handler (unique features vs other tools)
+3. ~~Query #4: Add help/onboarding handler (link to docs, show first steps)~~ ✅ DONE (Issue #507)
+4. ~~Query #5: Add differentiation handler (unique features vs other tools)~~ ✅ DONE (Issue #508)
+
+**Identity Category: 100% COMPLETE** 🎉
 
 ---
 
