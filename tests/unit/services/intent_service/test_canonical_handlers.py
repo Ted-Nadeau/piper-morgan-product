@@ -821,3 +821,157 @@ class TestLastActivityFormatting:
         assert "No recent activity found for **TestProject**" in result
         assert "No commits, issues, or PRs in the last 30 days" in result
         assert "GitHub integration not configured" in result
+
+
+class TestSetupRequestDetection:
+    """Tests for _detect_setup_request() method - Issue #498."""
+
+    def test_detects_project_setup(self, canonical_handlers):
+        """Detects 'set up my projects' as projects setup."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Help me set up my projects",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup_guidance",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result == "projects"
+
+    def test_detects_configure_projects(self, canonical_handlers):
+        """Detects 'configure my projects' as projects setup."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="I want to configure my project portfolio",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup_guidance",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result == "projects"
+
+    def test_detects_integration_setup(self, canonical_handlers):
+        """Detects 'set up integrations' as integrations setup."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Help me set up my integrations",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup_guidance",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result == "integrations"
+
+    def test_detects_connect_github(self, canonical_handlers):
+        """Detects 'connect github' as integrations setup."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="I want to connect my GitHub account",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup_guidance",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result == "integrations"
+
+    def test_detects_general_setup(self, canonical_handlers):
+        """Detects 'get started with piper' as general setup."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I get started with Piper?",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup_guidance",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result == "general"
+
+    def test_returns_none_for_non_setup(self, canonical_handlers):
+        """Returns None for non-setup queries."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's on my agenda today?",
+            category=IntentCategoryEnum.QUERY,
+            action="query_agenda",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result is None
+
+    def test_handles_empty_intent(self, canonical_handlers):
+        """Returns None for empty/None intent."""
+        result = canonical_handlers._detect_setup_request(None)
+        assert result is None
+
+    def test_handles_missing_message(self, canonical_handlers):
+        """Returns None for intent without message."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message=None,
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_guidance",
+            confidence=0.9,
+        )
+
+        result = canonical_handlers._detect_setup_request(intent)
+        assert result is None
+
+
+class TestSetupGuidanceFormatting:
+    """Tests for setup guidance formatting methods - Issue #498."""
+
+    def test_project_setup_no_existing_projects(self, canonical_handlers):
+        """Project setup guidance when user has no projects."""
+        result = canonical_handlers._format_project_setup_guidance(None)
+
+        assert "message" in result
+        assert "set up your projects" in result["message"].lower()
+        assert "/settings/projects" in result["message"]
+        assert result["intent"]["action"] == "provide_setup_guidance"
+        assert result["setup_type"] == "projects"
+
+    def test_project_setup_with_existing_projects(self, canonical_handlers):
+        """Project setup guidance when user has projects."""
+        user_context = MagicMock()
+        user_context.projects = ["Project A", "Project B"]
+
+        result = canonical_handlers._format_project_setup_guidance(user_context)
+
+        assert "message" in result
+        assert "2 project(s)" in result["message"]
+        assert "Project A" in result["message"]
+        assert "/settings/projects" in result["message"]
+
+    def test_integration_setup_guidance(self, canonical_handlers):
+        """Integration setup guidance."""
+        result = canonical_handlers._format_integration_setup_guidance()
+
+        assert "message" in result
+        assert result["setup_type"] == "integrations"
+
+    def test_general_setup_guidance(self, canonical_handlers):
+        """General setup guidance."""
+        result = canonical_handlers._format_general_setup_guidance()
+
+        assert "message" in result
+        assert result["setup_type"] == "general"
