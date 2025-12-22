@@ -14,12 +14,12 @@ This test matrix provides the definitive reference for testing Piper's canonical
 
 | Category | Total | PASS | PARTIAL | FAIL | NOT IMPL |
 |----------|-------|------|---------|------|----------|
-| Identity | 5 | 2 | 3 | 0 | 0 |
+| Identity | 5 | 3 | 2 | 0 | 0 |
 | Temporal | 5 | 5 | 0 | 0 | 0 |
 | Spatial | 5 | 1 | 3 | 0 | 1 |
 | Capability | 5 | 0 | 2 | 0 | 3 |
 | Predictive | 5 | 0 | 1 | 0 | 4 |
-| **Total** | **25** | **8** | **9** | **0** | **8** |
+| **Total** | **25** | **9** | **8** | **0** | **8** |
 
 **Legend:**
 - **PASS**: Fully functional, returns real data
@@ -40,7 +40,7 @@ This test matrix provides the definitive reference for testing Piper's canonical
 |---|-------|------------------|-----------------|--------|-------|
 | 1 | What's your name? | Name + role description | "I'm Piper Morgan, your AI Product Management assistant..." | ✅ PASS | Works correctly with spatial awareness |
 | 2 | What can you help me with? | Dynamic capability list from active plugins | Queries PluginRegistry for active integrations, returns core capabilities + dynamic plugin list | ✅ PASS | Issue #493 - Complete with tests |
-| 3 | Are you working properly? | System health check | Same as query #1 (identity response) | ⚠️ PARTIAL | Needs dedicated health check handler |
+| 3 | Are you working properly? | System health check | Checks database + integrations, returns health status with spatial formatting | ✅ PASS | Issue #506 - Complete with tests |
 | 4 | How do I get help? | Onboarding/help guidance | Same as query #1 (identity response) | ⚠️ PARTIAL | Needs dedicated help/onboarding handler |
 | 5 | What makes you different? | Unique value proposition | Same as query #1 (identity response) | ⚠️ PARTIAL | Needs dedicated differentiation handler |
 
@@ -58,7 +58,7 @@ capabilities = self._get_dynamic_capabilities()
 
 **What Needs to Happen**:
 1. ~~Query #2: Query active integrations to build dynamic capability list~~ ✅ DONE (Issue #493)
-2. Query #3: Add health check handler (ping services, check config)
+2. ~~Query #3: Add health check handler (ping services, check config)~~ ✅ DONE (Issue #506)
 3. Query #4: Add help/onboarding handler (link to docs, show first steps)
 4. Query #5: Add differentiation handler (unique features vs other tools)
 
@@ -402,6 +402,14 @@ curl -X POST http://localhost:8001/api/v1/intent \
 **Behavior**: Queries PIPER.user.md for project created_at, calculates duration in months/weeks/days, formats with spatial awareness (EMBEDDED/STANDARD/GRANULAR)
 **Tests**: 18 tests in `tests/unit/services/intent_service/test_canonical_handlers.py` (6 detection, 4 calculation, 8 formatting)
 
+### Issue #506: Health Check Identity Query
+**Status**: ✅ RESOLVED
+**Issue**: "Are you working properly?" returned generic identity response
+**Resolution**: Added `_detect_health_check_request()` + `_handle_identity_health_check()` + `_get_system_health()` + formatting methods
+**File**: `services/intent_service/canonical_handlers.py`
+**Behavior**: Checks database connection + plugin status, returns health report with spatial awareness (EMBEDDED/STANDARD/GRANULAR)
+**Tests**: 13 tests in `tests/unit/services/intent_service/test_canonical_handlers.py` (7 detection, 6 formatting)
+
 ---
 
 ## Additional Capabilities (Beyond 25 Canonical Queries)
@@ -422,13 +430,13 @@ The following capabilities have been added beyond the original 25 canonical quer
 
 ## Verification
 
-**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504, #505)
+**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504, #505, #506)
 **Verification Method**: Code inspection + handler tracing + manual testing
 **Files Reviewed**:
-- `services/intent_service/canonical_handlers.py` (~2750 lines, updated with setup detection + agenda aggregation + project-specific status + historical retrospective + last activity + project duration)
+- `services/intent_service/canonical_handlers.py` (~2920 lines, updated with setup detection + agenda aggregation + project-specific status + historical retrospective + last activity + project duration + health check)
 - `services/intent/intent_service.py` (5219 lines)
 - `dev/active/canonical-queries-list.md` (25 queries)
-- `tests/unit/services/intent_service/test_canonical_handlers.py` (41 tests total: 9 capabilities, 14 last activity, 18 project duration)
+- `tests/unit/services/intent_service/test_canonical_handlers.py` (66 tests total: 9 capabilities, 14 last activity, 18 project duration, 13 health check)
 
 **Next Verification**: After each implementation phase (Phase 1-5 above)
 
@@ -446,6 +454,7 @@ The following capabilities have been added beyond the original 25 canonical quer
 - **Issue #501**: Historical retrospective query (resolved)
 - **Issue #504**: Last activity temporal query (resolved)
 - **Issue #505**: Project duration temporal query (resolved)
+- **Issue #506**: Health check identity query (resolved)
 - **Canonical Query List**: `dev/active/canonical-queries-list.md`
 - **Handler Implementation**: `services/intent_service/canonical_handlers.py`
 - **Intent Router**: `services/intent/intent_service.py`

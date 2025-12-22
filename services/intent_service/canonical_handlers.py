@@ -171,7 +171,20 @@ class CanonicalHandlers:
 
         GREAT-4C Phase 1: Minimal spatial intelligence (identity is fixed).
         Issue #493: Dynamic capability list from PluginRegistry.
+        Issue #506: Routes health check requests to dedicated handler.
         """
+        # Issue #506: Check if this is a health check request
+        if self._detect_health_check_request(intent):
+            return await self._handle_identity_health_check(intent, session_id)
+
+        # Issue #508: Check if this is a differentiation request
+        if self._detect_differentiation_request(intent):
+            return await self._handle_identity_differentiation(intent, session_id)
+
+        # Issue #507: Check if this is a help request
+        if self._detect_help_request(intent):
+            return await self._handle_identity_help(intent, session_id)
+
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
         spatial_pattern = None
         if hasattr(intent, "spatial_context") and intent.spatial_context:
@@ -257,6 +270,390 @@ class CanonicalHandlers:
 
         core_msg += " Think of me as your intelligent PM partner!"
         return core_msg
+
+    def _detect_health_check_request(self, intent: Intent) -> bool:
+        """
+        Issue #506: Detect if this is a health check query.
+        Returns True if asking about system health/status.
+        """
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        health_patterns = [
+            "working properly",
+            "are you ok",
+            "are you working",
+            "health",
+            "system status",
+            "are you alive",
+            "functioning",
+            "operational",
+        ]
+
+        return any(pattern in query for pattern in health_patterns)
+
+    def _detect_differentiation_request(self, intent: Intent) -> bool:
+        """
+        Issue #508: Detect if asking about unique features/differentiation.
+        Returns True if asking what makes Piper different/special.
+        """
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        diff_patterns = [
+            "what makes you different",
+            "what's different about you",
+            "what's special about you",
+            "how are you different",
+            "unique about you",
+            "vs chatgpt",
+            "vs gpt",
+            "compared to",
+            "why should i use you",
+            "why use piper",
+            "what's unique",
+        ]
+
+        return any(pattern in query for pattern in diff_patterns)
+
+    async def _handle_identity_health_check(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Handle 'Are you working properly?' queries.
+        Issue #506: Returns actual system health status.
+        """
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Get health data
+        health_data = await self._get_system_health()
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_health_embedded(health_data)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_health_granular(health_data)
+        else:
+            message = self._format_health_standard(health_data)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.IDENTITY.value,
+                "action": "provide_health_status",
+                "confidence": 1.0,
+                "context": {
+                    "health_status": health_data.get("overall_status", "unknown"),
+                    "components": health_data.get("components", {}),
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    async def _get_system_health(self) -> Dict:
+        """Get system health from various sources."""
+        health_data = {
+            "overall_status": "healthy",
+            "components": {},
+            "integrations": [],
+        }
+
+        try:
+            # Get plugin status
+            from services.plugins.plugin_registry import get_plugin_registry
+
+            registry = get_plugin_registry()
+            plugin_status = registry.get_status_all()
+
+            active_count = 0
+            for name, status in plugin_status.items():
+                is_active = status.get("active", False) or status.get("configured", False)
+                health_data["integrations"].append(
+                    {
+                        "name": name,
+                        "status": "active" if is_active else "inactive",
+                    }
+                )
+                if is_active:
+                    active_count += 1
+
+            health_data["components"]["integrations"] = {
+                "status": "healthy",
+                "active_count": active_count,
+                "total_count": len(plugin_status),
+            }
+
+        except Exception as e:
+            logger.warning(f"Could not get plugin health: {e}")
+            health_data["components"]["integrations"] = {"status": "unknown"}
+
+        # Check database (simple check)
+        try:
+            from sqlalchemy import text
+
+            from services.database.db_session import get_async_session
+
+            async for session in get_async_session():
+                await session.execute(text("SELECT 1"))
+                health_data["components"]["database"] = {"status": "healthy"}
+                break
+        except Exception as e:
+            logger.warning(f"Database health check failed: {e}")
+            health_data["components"]["database"] = {
+                "status": "unhealthy",
+                "error": str(e),
+            }
+            health_data["overall_status"] = "degraded"
+
+        return health_data
+
+    def _format_health_embedded(self, health_data: Dict) -> str:
+        """Brief health status."""
+        status = health_data.get("overall_status", "unknown")
+        if status == "healthy":
+            return "All systems operational"
+        elif status == "degraded":
+            return "Some issues detected"
+        return "Status unknown"
+
+    def _format_health_standard(self, health_data: Dict) -> str:
+        """Standard health status with key info."""
+        status = health_data.get("overall_status", "unknown")
+
+        if status == "healthy":
+            message = "Yes, I'm working properly! All systems are operational.\n\n"
+        elif status == "degraded":
+            message = "I'm mostly working, but some components have issues.\n\n"
+        else:
+            message = "I'm having some trouble checking my status.\n\n"
+
+        # Add integration count
+        integrations = health_data.get("integrations", [])
+        active_integrations = [i for i in integrations if i.get("status") == "active"]
+        if active_integrations:
+            names = [i["name"].capitalize() for i in active_integrations[:3]]
+            message += f"**Active integrations**: {', '.join(names)}"
+            if len(active_integrations) > 3:
+                message += f" (+{len(active_integrations) - 3} more)"
+
+        return message
+
+    def _format_health_granular(self, health_data: Dict) -> str:
+        """Detailed health breakdown."""
+        status = health_data.get("overall_status", "unknown")
+
+        message = f"**System Health Report**\n\n"
+        message += f"**Overall Status**: {status.upper()}\n\n"
+
+        # Components
+        components = health_data.get("components", {})
+        message += "**Components**:\n"
+        for name, comp_data in components.items():
+            comp_status = comp_data.get("status", "unknown")
+            emoji = "✅" if comp_status == "healthy" else "⚠️" if comp_status == "degraded" else "❌"
+            message += f"- {name.capitalize()}: {emoji} {comp_status}\n"
+
+        # Integrations
+        integrations = health_data.get("integrations", [])
+        if integrations:
+            message += "\n**Integrations**:\n"
+            for integ in integrations:
+                status_emoji = "✅" if integ.get("status") == "active" else "⚪"
+                message += f"- {integ['name'].capitalize()}: {status_emoji} {integ.get('status', 'unknown')}\n"
+
+        return message
+
+    async def _handle_identity_help(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Handle 'How do I get help?' queries.
+        Issue #507: Returns help resources and getting started guidance.
+        """
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_help_embedded()
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_help_granular()
+        else:
+            message = self._format_help_standard()
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.IDENTITY.value,
+                "action": "provide_help",
+                "confidence": 1.0,
+                "context": {
+                    "help_type": "getting_started",
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    def _format_help_embedded(self) -> str:
+        """Brief help pointer."""
+        return "Try asking 'What's on my agenda?' or 'What projects are we working on?'"
+
+    def _format_help_standard(self) -> str:
+        """Standard help with key resources."""
+        return """Here's how to get the most out of Piper:
+
+**Quick Start Queries**:
+- "What's on my agenda today?" - See your schedule
+- "What projects are we working on?" - View your portfolio
+- "What can you help me with?" - See my capabilities
+
+**Settings**: [Settings](/settings) to configure projects and integrations
+
+**Need more help?** Just ask me anything! I'm here to help with product management tasks."""
+
+    def _format_help_granular(self) -> str:
+        """Detailed getting started guide."""
+        return """**Getting Started with Piper**
+
+I'm your AI Product Management assistant. Here's everything you can do:
+
+**Identity Queries** (About me):
+- "What's your name?" - Learn about me
+- "What can you help me with?" - See my capabilities
+- "Are you working properly?" - Check system status
+
+**Time & Schedule**:
+- "What day is it?" - Current date with calendar context
+- "What's on the agenda today?" - Today's schedule and priorities
+- "What did we accomplish yesterday?" - Yesterday's progress
+
+**Projects & Status**:
+- "What projects are we working on?" - View portfolio
+- "What's the status of [project]?" - Specific project details
+- "Which project should I focus on?" - Priority recommendation
+
+**Actions**:
+- "Create a GitHub issue about [topic]" - Create issues
+- "Help me set up my projects" - Configure your portfolio
+
+**Settings & Configuration**:
+- [Settings](/settings) - Configure projects and integrations
+- [Projects](/settings/projects) - Manage your project portfolio
+
+**Tips**:
+- I adapt my responses to context (brief in Slack, detailed in chat)
+- I remember your projects and priorities from your configuration
+- Ask me anything - I'll let you know if I can't help yet!"""
+
+    async def _handle_identity_differentiation(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Handle 'What makes you different?' queries.
+        Issue #508: Returns unique value proposition.
+        """
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Get dynamic capabilities for context
+        capabilities_data = self._get_dynamic_capabilities()
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_differentiation_embedded()
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_differentiation_granular(capabilities_data)
+        else:
+            message = self._format_differentiation_standard(capabilities_data)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.IDENTITY.value,
+                "action": "provide_differentiation",
+                "confidence": 1.0,
+                "context": {
+                    "differentiators": [
+                        "pm_specialized",
+                        "integrated",
+                        "context_aware",
+                        "spatial_intelligence",
+                    ],
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    def _format_differentiation_embedded(self) -> str:
+        """Brief differentiation."""
+        return "PM-specialized AI with GitHub, Slack, and Calendar integration"
+
+    def _format_differentiation_standard(self, capabilities_data: Dict) -> str:
+        """Standard differentiation with key points."""
+        integrations = capabilities_data.get("integrations", [])
+        integration_names = [i["name"].capitalize() for i in integrations[:3]]
+
+        message = """Unlike general-purpose AI assistants, I'm built specifically for product management.
+
+**Key Differences**:
+1. **PM-Specialized**: I understand product development workflows, not just general tasks
+2. **Integrated**: I connect to your actual tools"""
+
+        if integration_names:
+            message += f" ({', '.join(integration_names)})"
+
+        message += """
+3. **Context-Aware**: I know your projects, priorities, and deadlines
+4. **Adaptive**: I adjust my responses based on where we're talking (Slack vs web)
+
+I'm not trying to be everything to everyone - I'm focused on making product managers more effective."""
+
+        return message
+
+    def _format_differentiation_granular(self, capabilities_data: Dict) -> str:
+        """Detailed differentiation with examples."""
+        integrations = capabilities_data.get("integrations", [])
+
+        message = """**What Makes Piper Different?**
+
+**1. Purpose-Built for Product Management**
+- General AI: "How can I help you today?"
+- Piper: "Good morning! You have 3 meetings today, and the HealthTrack MVP deadline is in 5 days. Should we review the open issues?"
+
+**2. Real Tool Integration**
+Unlike chatbots that just talk, I connect to your actual tools:
+"""
+
+        if integrations:
+            for integ in integrations:
+                message += (
+                    f"- **{integ['name'].capitalize()}**: {integ.get('description', 'Connected')}\n"
+                )
+        else:
+            message += "- GitHub, Slack, Calendar, Notion (when configured)\n"
+
+        message += """
+**3. Project Context Awareness**
+I remember your projects, their repos, and their priorities. When you ask "What's the status?", I know which project you mean.
+
+**4. Spatial Intelligence**
+I adapt my communication style:
+- Slack: Brief, actionable responses
+- Web chat: Balanced detail
+- Reports: Comprehensive analysis
+
+**5. Learning & Memory**
+I learn your preferences and patterns over time to become more helpful.
+
+**The Bottom Line**
+General AI assistants are great for general tasks. I'm specifically designed to make product managers more effective at their unique challenges."""
+
+        return message
 
     async def _handle_temporal_query(self, intent: Intent, session_id: str) -> Dict:
         """
@@ -1533,6 +1930,35 @@ class CanonicalHandlers:
                 return topic
 
         return None
+
+    def _detect_help_request(self, intent: Intent) -> bool:
+        """
+        Issue #507: Detect if this is a help/onboarding query.
+        Returns True if asking for help or getting started guidance.
+        """
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        help_patterns = [
+            "get help",
+            "how do i",
+            "getting started",
+            "help me",
+            "what can i ask",
+            "how to use",
+            "tutorial",
+            "guide me",
+            "show me how",
+        ]
+
+        # Exclude setup requests (handled by _detect_setup_request)
+        setup_words = ["set up", "setup", "configure", "connect"]
+        if any(sw in query for sw in setup_words):
+            return False
+
+        return any(pattern in query for pattern in help_patterns)
 
     def _format_project_setup_guidance(self, user_context=None) -> Dict:
         """

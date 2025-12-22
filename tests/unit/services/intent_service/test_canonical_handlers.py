@@ -975,3 +975,226 @@ class TestSetupGuidanceFormatting:
 
         assert "message" in result
         assert result["setup_type"] == "general"
+
+
+class TestHealthCheckDetection:
+    """Test suite for _detect_health_check_request() method (Issue #506)"""
+
+    def test_detects_working_properly_pattern(self, canonical_handlers):
+        """Test detection of 'are you working properly' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Are you working properly?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_health",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_health_check_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_are_you_ok_pattern(self, canonical_handlers):
+        """Test detection of 'are you ok' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Are you ok?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_health",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_health_check_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_health_keyword(self, canonical_handlers):
+        """Test detection of 'health' keyword."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's your health status?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_health",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_health_check_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_system_status_pattern(self, canonical_handlers):
+        """Test detection of 'system status' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Show me system status",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_health",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_health_check_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_health_query(self, canonical_handlers):
+        """Test that non-health queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's your name?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_identity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_health_check_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_health_check_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_none_intent(self, canonical_handlers):
+        """Test that None intent returns False."""
+        # Act
+        result = canonical_handlers._detect_health_check_request(None)
+
+        # Assert
+        assert result is False
+
+
+class TestHealthCheckFormatting:
+    """Test suite for health check formatting methods (Issue #506)"""
+
+    def test_format_embedded_healthy(self, canonical_handlers):
+        """Test EMBEDDED format with healthy status."""
+        # Arrange
+        health_data = {"overall_status": "healthy", "components": {}, "integrations": []}
+
+        # Act
+        result = canonical_handlers._format_health_embedded(health_data)
+
+        # Assert
+        assert result == "All systems operational"
+
+    def test_format_embedded_degraded(self, canonical_handlers):
+        """Test EMBEDDED format with degraded status."""
+        # Arrange
+        health_data = {"overall_status": "degraded", "components": {}, "integrations": []}
+
+        # Act
+        result = canonical_handlers._format_health_embedded(health_data)
+
+        # Assert
+        assert result == "Some issues detected"
+
+    def test_format_embedded_unknown(self, canonical_handlers):
+        """Test EMBEDDED format with unknown status."""
+        # Arrange
+        health_data = {"overall_status": "unknown", "components": {}, "integrations": []}
+
+        # Act
+        result = canonical_handlers._format_health_embedded(health_data)
+
+        # Assert
+        assert result == "Status unknown"
+
+    def test_format_standard_healthy(self, canonical_handlers):
+        """Test STANDARD format with healthy status."""
+        # Arrange
+        health_data = {
+            "overall_status": "healthy",
+            "components": {},
+            "integrations": [
+                {"name": "github", "status": "active"},
+                {"name": "slack", "status": "active"},
+            ],
+        }
+
+        # Act
+        result = canonical_handlers._format_health_standard(health_data)
+
+        # Assert
+        assert "Yes, I'm working properly!" in result
+        assert "All systems are operational" in result
+        assert "Github" in result
+        assert "Slack" in result
+
+    def test_format_standard_degraded(self, canonical_handlers):
+        """Test STANDARD format with degraded status."""
+        # Arrange
+        health_data = {
+            "overall_status": "degraded",
+            "components": {},
+            "integrations": [],
+        }
+
+        # Act
+        result = canonical_handlers._format_health_standard(health_data)
+
+        # Assert
+        assert "mostly working" in result
+        assert "some components have issues" in result
+
+    def test_format_granular_healthy(self, canonical_handlers):
+        """Test GRANULAR format with healthy components."""
+        # Arrange
+        health_data = {
+            "overall_status": "healthy",
+            "components": {
+                "database": {"status": "healthy"},
+                "integrations": {"status": "healthy", "active_count": 2, "total_count": 3},
+            },
+            "integrations": [
+                {"name": "github", "status": "active"},
+                {"name": "slack", "status": "active"},
+                {"name": "notion", "status": "inactive"},
+            ],
+        }
+
+        # Act
+        result = canonical_handlers._format_health_granular(health_data)
+
+        # Assert
+        assert "**System Health Report**" in result
+        assert "**Overall Status**: HEALTHY" in result
+        assert "**Components**:" in result
+        assert "Database: ✅ healthy" in result
+        assert "**Integrations**:" in result
+        assert "Github: ✅ active" in result
+        assert "Slack: ✅ active" in result
+        assert "Notion: ⚪ inactive" in result
