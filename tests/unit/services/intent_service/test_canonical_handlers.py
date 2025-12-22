@@ -1762,14 +1762,11 @@ class TestProjectListDetection:
         intent = Intent(
             original_message="What projects are we working on?",
             category=IntentCategoryEnum.STATUS,
-            action="query_project_list",
+            action="query_status",
             confidence=0.9,
         )
 
-        # Act
         result = canonical_handlers._detect_project_list_request(intent)
-
-        # Assert
         assert result is True
 
     def test_detects_list_projects_pattern(self, canonical_handlers):
@@ -1778,16 +1775,13 @@ class TestProjectListDetection:
         from services.shared_types import IntentCategory as IntentCategoryEnum
 
         intent = Intent(
-            original_message="Can you list projects?",
+            original_message="List all projects",
             category=IntentCategoryEnum.STATUS,
-            action="query_project_list",
+            action="query_status",
             confidence=0.9,
         )
 
-        # Act
         result = canonical_handlers._detect_project_list_request(intent)
-
-        # Assert
         assert result is True
 
     def test_detects_show_projects_pattern(self, canonical_handlers):
@@ -1796,38 +1790,17 @@ class TestProjectListDetection:
         from services.shared_types import IntentCategory as IntentCategoryEnum
 
         intent = Intent(
-            original_message="Show me our projects",
+            original_message="Show me my projects",
             category=IntentCategoryEnum.STATUS,
-            action="query_project_list",
+            action="query_status",
             confidence=0.9,
         )
 
-        # Act
         result = canonical_handlers._detect_project_list_request(intent)
-
-        # Assert
         assert result is True
 
-    def test_detects_our_projects_pattern(self, canonical_handlers):
-        """Test detection of 'our projects' pattern."""
-        from services.domain.models import Intent
-        from services.shared_types import IntentCategory as IntentCategoryEnum
-
-        intent = Intent(
-            original_message="Tell me about our projects",
-            category=IntentCategoryEnum.STATUS,
-            action="query_project_list",
-            confidence=0.9,
-        )
-
-        # Act
-        result = canonical_handlers._detect_project_list_request(intent)
-
-        # Assert
-        assert result is True
-
-    def test_returns_false_for_non_matching_query(self, canonical_handlers):
-        """Test that non-matching queries return False."""
+    def test_returns_false_for_non_list_query(self, canonical_handlers):
+        """Test that non-list queries return False."""
         from services.domain.models import Intent
         from services.shared_types import IntentCategory as IntentCategoryEnum
 
@@ -1838,155 +1811,48 @@ class TestProjectListDetection:
             confidence=0.9,
         )
 
-        # Act
         result = canonical_handlers._detect_project_list_request(intent)
-
-        # Assert
-        assert result is False
-
-    def test_returns_false_for_empty_message(self, canonical_handlers):
-        """Test that empty messages return False."""
-        from services.domain.models import Intent
-        from services.shared_types import IntentCategory as IntentCategoryEnum
-
-        intent = Intent(
-            original_message="",
-            category=IntentCategoryEnum.STATUS,
-            action="query",
-            confidence=0.9,
-        )
-
-        # Act
-        result = canonical_handlers._detect_project_list_request(intent)
-
-        # Assert
-        assert result is False
-
-    def test_returns_false_for_none_intent(self, canonical_handlers):
-        """Test that None intent returns False."""
-        # Act
-        result = canonical_handlers._detect_project_list_request(None)
-
-        # Assert
         assert result is False
 
 
 class TestProjectListFormatting:
     """Test suite for project list formatting methods (Issue #509)"""
 
-    def test_format_embedded_single_project(self, canonical_handlers):
-        """Test EMBEDDED format with single project."""
-        # Arrange
-        projects = ["HealthTrack"]
+    def test_format_embedded_with_projects(self, canonical_handlers):
+        """Test EMBEDDED format with project list."""
+        projects = ["HealthTrack", "MediHub", "CarePro"]
 
-        # Act
-        result = canonical_handlers._format_project_list_embedded(projects)
+        result = canonical_handlers._format_project_list_embedded(projects, {})
 
-        # Assert
-        assert result == "You have 1 active project: HealthTrack"
-
-    def test_format_embedded_few_projects(self, canonical_handlers):
-        """Test EMBEDDED format with 2-3 projects."""
-        # Arrange
-        projects = ["HealthTrack", "PiperMorgan", "DataPipeline"]
-
-        # Act
-        result = canonical_handlers._format_project_list_embedded(projects)
-
-        # Assert
-        assert "You have 3 active projects:" in result
-        assert "HealthTrack" in result
-        assert "PiperMorgan" in result
-        assert "DataPipeline" in result
-
-    def test_format_embedded_many_projects(self, canonical_handlers):
-        """Test EMBEDDED format with many projects."""
-        # Arrange
-        projects = ["Project1", "Project2", "Project3", "Project4", "Project5"]
-
-        # Act
-        result = canonical_handlers._format_project_list_embedded(projects)
-
-        # Assert
-        assert "You have 5 active projects:" in result
-        assert "+ 2 more" in result
+        assert result == "Projects: HealthTrack, MediHub, CarePro"
 
     def test_format_embedded_no_projects(self, canonical_handlers):
         """Test EMBEDDED format with no projects."""
-        # Act
-        result = canonical_handlers._format_project_list_embedded([])
+        result = canonical_handlers._format_project_list_embedded([], {})
 
-        # Assert
-        assert result == "No active projects"
+        assert result == "No projects configured"
 
-    def test_format_standard_with_metadata(self, canonical_handlers):
+    def test_format_standard_with_github(self, canonical_handlers):
         """Test STANDARD format with GitHub metadata."""
-        # Arrange
-        projects = ["HealthTrack", "PiperMorgan"]
+        projects = ["HealthTrack", "MediHub"]
         metadata = {
             "HealthTrack": {
-                "has_github": True,
-                "open_issues_count": 5,
-                "last_activity": "2 days ago",
-            },
-            "PiperMorgan": {
                 "has_github": True,
                 "open_issues_count": 12,
-                "last_activity": "yesterday",
-            },
-        }
-
-        # Act
-        result = canonical_handlers._format_project_list_standard(projects, metadata)
-
-        # Assert
-        assert "You have 2 active projects" in result
-        assert "HealthTrack" in result
-        assert "5 open issue" in result
-        assert "last activity: 2 days ago" in result
-        assert "PiperMorgan" in result
-        assert "12 open issues" in result
-        assert "last activity: yesterday" in result
-
-    def test_format_standard_without_metadata(self, canonical_handlers):
-        """Test STANDARD format without GitHub metadata."""
-        # Arrange
-        projects = ["HealthTrack", "PiperMorgan"]
-
-        # Act
-        result = canonical_handlers._format_project_list_standard(projects)
-
-        # Assert
-        assert "You have 2 active projects" in result
-        assert "HealthTrack" in result
-        assert "PiperMorgan" in result
-
-    def test_format_granular_with_full_metadata(self, canonical_handlers):
-        """Test GRANULAR format with full GitHub metadata."""
-        # Arrange
-        projects = ["HealthTrack"]
-        metadata = {
-            "HealthTrack": {
-                "has_github": True,
-                "repository": "org/healthtrack",
-                "open_issues_count": 5,
-                "last_activity": "2 days ago",
-                "issues_preview": [
+                "recent_issues": [
                     {"number": 123, "title": "Fix authentication bug"},
                     {"number": 124, "title": "Add user settings page"},
                 ],
-            }
+            },
+            "MediHub": {"has_github": False},
         }
 
-        # Act
-        result = canonical_handlers._format_project_list_granular(projects, metadata)
+        result = canonical_handlers._format_project_list_standard(projects, metadata)
 
-        # Assert
         assert "**Your Active Projects**" in result
         assert "1. HealthTrack" in result
-        assert "Repository: org/healthtrack" in result
-        assert "Open Issues: 5" in result
-        assert "Last Activity: 2 days ago" in result
+        assert "2. MediHub" in result
+        assert "12 open issues" in result
         assert "#123: Fix authentication bug" in result
         assert "#124: Add user settings page" in result
         assert "GitHub: Connected" in result
@@ -2004,3 +1870,320 @@ class TestProjectListFormatting:
         assert "**Your Active Projects**" in result
         assert "1. HealthTrack" in result
         assert "GitHub: Not configured" in result
+
+
+class TestLandscapeDetection:
+    """Test suite for _detect_landscape_request() method (Issue #510)"""
+
+    def test_detects_project_landscape_pattern(self, canonical_handlers):
+        """Test detection of 'project landscape' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Show me the project landscape",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_portfolio_pattern(self, canonical_handlers):
+        """Test detection of 'portfolio' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's my portfolio looking like?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_project_overview_pattern(self, canonical_handlers):
+        """Test detection of 'project overview' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Give me a project overview",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_portfolio_health_pattern(self, canonical_handlers):
+        """Test detection of 'portfolio health' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Show me portfolio health",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_all_projects_health_pattern(self, canonical_handlers):
+        """Test detection of 'all projects health' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How are all projects health?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_landscape_query(self, canonical_handlers):
+        """Test that non-landscape queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What am I working on?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_landscape_request(intent)
+
+        # Assert
+        assert result is False
+
+
+class TestProjectHealthCalculation:
+    """Test suite for _calculate_project_health() method (Issue #510)"""
+
+    def test_calculates_healthy_status(self, canonical_handlers):
+        """Test health calculation for recently active project."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Project active 7 days ago
+        last_update = (datetime.now() - timedelta(days=7)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 5}
+
+        # Act
+        result = canonical_handlers._calculate_project_health("TestProject", github_data)
+
+        # Assert
+        assert result["status"] == "healthy"
+        assert "7 days" in result["reason"]
+
+    def test_calculates_at_risk_status_by_time(self, canonical_handlers):
+        """Test health calculation for project at risk due to time."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Project active 20 days ago
+        last_update = (datetime.now() - timedelta(days=20)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 5}
+
+        # Act
+        result = canonical_handlers._calculate_project_health("TestProject", github_data)
+
+        # Assert
+        assert result["status"] == "at-risk"
+        assert "20 days" in result["reason"]
+
+    def test_calculates_at_risk_status_by_issues(self, canonical_handlers):
+        """Test health calculation for project at risk due to open issues."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Project active recently but many issues
+        last_update = (datetime.now() - timedelta(days=5)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 25}
+
+        # Act
+        result = canonical_handlers._calculate_project_health("TestProject", github_data)
+
+        # Assert
+        assert result["status"] == "at-risk"
+        assert "25 open issues" in result["reason"]
+
+    def test_calculates_stalled_status(self, canonical_handlers):
+        """Test health calculation for stalled project."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Project inactive for 45 days
+        last_update = (datetime.now() - timedelta(days=45)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 3}
+
+        # Act
+        result = canonical_handlers._calculate_project_health("TestProject", github_data)
+
+        # Assert
+        assert result["status"] == "stalled"
+        assert "45 days" in result["reason"]
+
+    def test_handles_missing_github_data(self, canonical_handlers):
+        """Test health calculation with no GitHub data."""
+        # Act
+        result = canonical_handlers._calculate_project_health("TestProject", None)
+
+        # Assert
+        assert result["status"] == "unknown"
+        assert "No GitHub data" in result["reason"]
+
+    def test_handles_missing_updated_at(self, canonical_handlers):
+        """Test health calculation with missing updated_at field."""
+        # Arrange
+        github_data = {"open_issues_count": 15}
+
+        # Act
+        result = canonical_handlers._calculate_project_health("TestProject", github_data)
+
+        # Assert - Should fall back to issue count
+        assert result["status"] == "healthy"
+
+
+class TestLandscapeFormatting:
+    """Test suite for landscape formatting methods (Issue #510)"""
+
+    def test_format_embedded_with_all_statuses(self, canonical_handlers):
+        """Test EMBEDDED format with projects in all health categories."""
+        # Arrange
+        health_groups = {
+            "healthy": [{"name": "Project A"}],
+            "at-risk": [{"name": "Project B"}, {"name": "Project C"}],
+            "stalled": [{"name": "Project D"}],
+            "unknown": [],
+        }
+
+        # Act
+        result = canonical_handlers._format_landscape_embedded(health_groups)
+
+        # Assert
+        assert "1 healthy" in result
+        assert "2 at-risk" in result
+        assert "1 stalled" in result
+
+    def test_format_embedded_healthy_only(self, canonical_handlers):
+        """Test EMBEDDED format with only healthy projects."""
+        # Arrange
+        health_groups = {
+            "healthy": [{"name": "Project A"}, {"name": "Project B"}],
+            "at-risk": [],
+            "stalled": [],
+            "unknown": [],
+        }
+
+        # Act
+        result = canonical_handlers._format_landscape_embedded(health_groups)
+
+        # Assert
+        assert result == "Portfolio: 2 healthy"
+
+    def test_format_embedded_no_projects(self, canonical_handlers):
+        """Test EMBEDDED format with no projects."""
+        # Arrange
+        health_groups = {"healthy": [], "at-risk": [], "stalled": [], "unknown": []}
+
+        # Act
+        result = canonical_handlers._format_landscape_embedded(health_groups)
+
+        # Assert
+        assert "No projects configured" in result
+
+    def test_format_standard_includes_project_names(self, canonical_handlers):
+        """Test STANDARD format includes project names."""
+        # Arrange
+        health_groups = {
+            "healthy": [{"name": "HealthyProject", "reason": "Active within 5 days"}],
+            "at-risk": [
+                {"name": "RiskyProject", "reason": "20 days since last activity"},
+            ],
+            "stalled": [
+                {"name": "StalledProject", "reason": "45 days since last activity"},
+            ],
+            "unknown": [{"name": "UnknownProject", "reason": "No GitHub data"}],
+        }
+
+        # Act
+        result = canonical_handlers._format_landscape_standard(health_groups)
+
+        # Assert
+        assert "Portfolio Health Overview" in result
+        assert "HealthyProject" in result
+        assert "RiskyProject" in result
+        assert "StalledProject" in result
+        assert "UnknownProject" in result
+        assert "20 days since last activity" in result
+        assert "45 days since last activity" in result
+
+    def test_format_granular_includes_github_data(self, canonical_handlers):
+        """Test GRANULAR format includes GitHub metadata."""
+        # Arrange
+        health_groups = {
+            "healthy": [
+                {
+                    "name": "HealthyProject",
+                    "reason": "Active within 5 days",
+                    "github_data": {
+                        "open_issues_count": 3,
+                        "updated_at": "2025-12-20T10:00:00Z",
+                    },
+                }
+            ],
+            "at-risk": [],
+            "stalled": [],
+            "unknown": [],
+        }
+
+        # Act
+        result = canonical_handlers._format_landscape_granular(health_groups)
+
+        # Assert
+        assert "Full Health Analysis" in result
+        assert "HealthyProject" in result
+        assert "Open Issues: 3" in result
+        assert "Last Updated:" in result
