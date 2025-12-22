@@ -1421,6 +1421,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         GREAT-4C Phase 1: Adds spatial intelligence for response granularity.
         GREAT-4C Phase 2: Adds error handling for missing configuration.
+        Issue #511: Routes priority recommendation queries to dedicated handler.
         """
         # Try to get user context with error handling
         try:
@@ -1444,6 +1445,12 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         spatial_pattern = None
         if hasattr(intent, "spatial_context") and intent.spatial_context:
             spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Issue #511: Check if this is a priority recommendation request
+        if self._detect_priority_recommendation_request(intent):
+            return await self._handle_spatial_priority_recommendation(
+                intent, session_id, user_context, spatial_pattern
+            )
 
         # Get priorities from user context
         priorities = user_context.priorities
@@ -3055,6 +3062,206 @@ What would you like to set up first?"""
             "requires_clarification": False,
         }
 
+    async def _handle_spatial_priority_recommendation(
+        self, intent: Intent, session_id: str, user_context, spatial_pattern: Optional[str]
+    ) -> Dict:
+        """
+        Issue #511: Handle 'Which project should I focus on?' queries.
+        Provides intelligent priority recommendation based on project health and activity.
+        """
+        projects = user_context.projects if user_context else []
+
+        if not projects:
+            return {
+                "message": "You don't have any projects configured yet. "
+                "Visit /settings/projects to add your project portfolio.",
+                "intent": {
+                    "category": IntentCategoryEnum.PRIORITY.value,
+                    "action": "provide_priority_recommendation",
+                    "confidence": 1.0,
+                },
+                "requires_clarification": False,
+            }
+
+        # Fetch GitHub metadata for all projects
+        project_metadata = await self._get_project_metadata(projects)
+
+        # Calculate priority score for each project
+        ranked_projects = []
+        for project in projects:
+            github_data = project_metadata.get(project, {})
+            priority_score = self._calculate_priority_score(project, github_data)
+            ranked_projects.append(
+                {
+                    "name": project,
+                    "score": priority_score["score"],
+                    "top_reason": priority_score["top_reason"],
+                    "breakdown": priority_score["breakdown"],
+                    "github_data": github_data,
+                }
+            )
+
+        # Sort by priority score (highest first)
+        ranked_projects.sort(key=lambda x: x["score"], reverse=True)
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_priority_embedded(ranked_projects)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_priority_granular(ranked_projects)
+        else:
+            message = self._format_priority_standard(ranked_projects)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.PRIORITY.value,
+                "action": "provide_priority_recommendation",
+                "confidence": 1.0,
+                "context": {
+                    "top_recommendation": ranked_projects[0]["name"] if ranked_projects else None,
+                    "ranked_projects": [
+                        {"name": p["name"], "score": p["score"]} for p in ranked_projects
+                    ],
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    def _calculate_priority_score(
+        self, project: str, github_data: Optional[Dict], calendar_context: Optional[Dict] = None
+    ) -> Dict:
+        """
+        Issue #511: Calculate priority score (0-100) for a project.
+
+        Scoring criteria:
+        - Staleness (0-40 points): Longer gap since last activity = higher priority
+        - Issue count (0-30 points): More open issues = higher priority
+        - Urgency (0-30 points): High-priority/critical labels = higher priority
+
+        Returns:
+        - score: int (0-100)
+        - top_reason: str (main reason for this score)
+        - breakdown: dict (detailed scoring)
+        """
+        from datetime import datetime
+
+        score = 0
+        breakdown = {"staleness": 0, "issue_count": 0, "urgency": 0}
+        reasons = []
+
+        if not github_data:
+            return {
+                "score": 0,
+                "top_reason": "No GitHub data available",
+                "breakdown": breakdown,
+            }
+
+        # Staleness factor (0-40 points)
+        last_activity = github_data.get("updated_at")
+        if last_activity:
+            try:
+                dt = datetime.fromisoformat(last_activity.replace("Z", "+00:00"))
+                days_since_activity = (datetime.now(dt.tzinfo) - dt).days
+
+                if days_since_activity > 14:
+                    staleness_score = min(40, days_since_activity)
+                    breakdown["staleness"] = staleness_score
+                    score += staleness_score
+                    reasons.append(f"{days_since_activity} days since last activity")
+            except Exception:
+                pass
+
+        # Issue count factor (0-30 points)
+        open_issues = github_data.get("open_issues_count", 0)
+        if open_issues > 0:
+            issue_score = min(30, open_issues * 3)
+            breakdown["issue_count"] = issue_score
+            score += issue_score
+            reasons.append(f"{open_issues} open issues")
+
+        # Urgency factor (0-30 points) - Check for high-priority issues
+        # This would require labels data from issues_preview
+        issues_preview = github_data.get("issues_preview", [])
+        high_priority_count = 0
+        for issue in issues_preview:
+            labels = issue.get("labels", [])
+            if any(
+                label.get("name", "").lower() in ["high-priority", "critical", "urgent"]
+                for label in labels
+            ):
+                high_priority_count += 1
+
+        if high_priority_count > 0:
+            urgency_score = min(30, high_priority_count * 10)
+            breakdown["urgency"] = urgency_score
+            score += urgency_score
+            reasons.append(f"{high_priority_count} high-priority issues")
+
+        # Determine top reason
+        if not reasons:
+            top_reason = "Active and low issue count"
+        else:
+            top_reason = reasons[0]
+
+        return {"score": score, "top_reason": top_reason, "breakdown": breakdown}
+
+    def _format_priority_embedded(self, ranked_projects: List[Dict]) -> str:
+        """Issue #511: Brief format for embedded contexts."""
+        if not ranked_projects:
+            return "No projects to prioritize"
+
+        top_project = ranked_projects[0]
+        return f"Focus on: {top_project['name']}"
+
+    def _format_priority_standard(self, ranked_projects: List[Dict]) -> str:
+        """Issue #511: Standard format with top 3 priorities."""
+        if not ranked_projects:
+            return "No projects to prioritize"
+
+        lines = ["## Priority Recommendation\n"]
+
+        # Show top 3
+        for i, proj in enumerate(ranked_projects[:3], 1):
+            lines.append(f"{i}. **{proj['name']}** (Score: {proj['score']})")
+            lines.append(f"   - {proj['top_reason']}")
+            lines.append("")
+
+        if len(ranked_projects) > 3:
+            lines.append(f"_Plus {len(ranked_projects) - 3} more projects_")
+
+        return "\n".join(lines)
+
+    def _format_priority_granular(self, ranked_projects: List[Dict]) -> str:
+        """Issue #511: Detailed format with full priority analysis."""
+        if not ranked_projects:
+            return "No projects to prioritize"
+
+        lines = ["## Full Priority Analysis\n"]
+        lines.append(f"**Total Projects Analyzed**: {len(ranked_projects)}\n")
+
+        for i, proj in enumerate(ranked_projects, 1):
+            lines.append(f"### {i}. {proj['name']}")
+            lines.append(f"**Priority Score**: {proj['score']}/100")
+            lines.append(f"**Top Reason**: {proj['top_reason']}")
+            lines.append("\n**Score Breakdown**:")
+            breakdown = proj["breakdown"]
+            lines.append(f"  - Staleness: {breakdown['staleness']}/40 points")
+            lines.append(f"  - Issue Count: {breakdown['issue_count']}/30 points")
+            lines.append(f"  - Urgency: {breakdown['urgency']}/30 points")
+
+            github_data = proj.get("github_data", {})
+            if github_data:
+                lines.append(f"\n**GitHub Data**:")
+                lines.append(f"  - Open Issues: {github_data.get('open_issues_count', 0)}")
+                last_update = github_data.get("updated_at", "Unknown")
+                lines.append(f"  - Last Updated: {last_update}")
+
+            lines.append("")
+
+        return "\n".join(lines)
+
     def _format_last_activity_embedded(self, project_name: str, activity: Optional[Dict]) -> str:
         """Issue #504: Brief format for embedded contexts."""
         if not activity:
@@ -3224,6 +3431,40 @@ What would you like to set up first?"""
                 lines.append("")
 
         return "\n".join(lines)
+
+    def _detect_priority_recommendation_request(self, intent: Intent) -> bool:
+        """
+        Issue #511: Detect if this is a priority recommendation request.
+        Returns True if priority recommendation pattern detected.
+
+        Patterns recognized:
+        - "which project should I focus on"
+        - "what project should I work on"
+        - "what should I prioritize"
+        - "what's most important"
+        - "what should I focus on"
+        """
+        import re
+
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        # Patterns for priority recommendation
+        patterns = [
+            r"which\s+project.*(?:focus|work|prioritize)",
+            r"what\s+project.*(?:focus|work|prioritize)",
+            r"what.*should.*(?:focus|prioritize)",
+            r"what.*most\s+important",
+            r"where.*should.*(?:focus|attention)",
+        ]
+
+        for pattern in patterns:
+            if re.search(pattern, query, re.IGNORECASE):
+                return True
+
+        return False
 
     def _detect_duration_request(self, intent: Intent) -> Optional[str]:
         """

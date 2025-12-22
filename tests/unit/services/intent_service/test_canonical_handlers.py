@@ -525,6 +525,346 @@ class TestProjectDurationDetection:
         assert result is None
 
 
+class TestPriorityRecommendationDetection:
+    """Test suite for _detect_priority_recommendation_request() method (Issue #511)"""
+
+    def test_detects_which_project_focus_pattern(self, canonical_handlers):
+        """Test detection of 'which project should I focus on' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Which project should I focus on?",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_project_work_pattern(self, canonical_handlers):
+        """Test detection of 'what project should I work on' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What project should I work on next?",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_should_prioritize_pattern(self, canonical_handlers):
+        """Test detection of 'what should I prioritize' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What should I prioritize this week?",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_most_important_pattern(self, canonical_handlers):
+        """Test detection of 'what's most important' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's most important to work on?",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_focus_on_pattern(self, canonical_handlers):
+        """Test detection of 'what should I focus on' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What should I focus on right now?",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_matching_query(self, canonical_handlers):
+        """Test that non-matching queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What are my priorities?",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.PRIORITY,
+            action="query_priority",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_priority_recommendation_request(intent)
+
+        # Assert
+        assert result is False
+
+
+class TestPriorityScoreCalculation:
+    """Test suite for _calculate_priority_score() method (Issue #511)"""
+
+    def test_calculates_score_with_staleness(self, canonical_handlers):
+        """Test priority score calculation with staleness factor."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Project inactive for 20 days
+        last_update = (datetime.now() - timedelta(days=20)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 5}
+
+        # Act
+        result = canonical_handlers._calculate_priority_score("TestProject", github_data)
+
+        # Assert
+        assert result["score"] >= 20  # Should have staleness points
+        assert result["breakdown"]["staleness"] == 20
+        assert "days since last activity" in result["top_reason"]
+
+    def test_calculates_score_with_many_issues(self, canonical_handlers):
+        """Test priority score calculation with high issue count."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Recent activity but many issues
+        last_update = (datetime.now() - timedelta(days=5)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 15}
+
+        # Act
+        result = canonical_handlers._calculate_priority_score("TestProject", github_data)
+
+        # Assert
+        assert result["score"] > 0
+        assert result["breakdown"]["issue_count"] > 0
+        assert "open issues" in result["top_reason"]
+
+    def test_calculates_score_with_urgency(self, canonical_handlers):
+        """Test priority score calculation with high-priority issues."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Project with high-priority issues
+        last_update = (datetime.now() - timedelta(days=10)).isoformat()
+        github_data = {
+            "updated_at": last_update,
+            "open_issues_count": 8,
+            "issues_preview": [
+                {
+                    "number": 1,
+                    "title": "Critical bug",
+                    "labels": [{"name": "critical"}],
+                },
+                {
+                    "number": 2,
+                    "title": "High priority feature",
+                    "labels": [{"name": "high-priority"}],
+                },
+            ],
+        }
+
+        # Act
+        result = canonical_handlers._calculate_priority_score("TestProject", github_data)
+
+        # Assert
+        assert result["breakdown"]["urgency"] > 0
+        # Top reason will be first reason added (issue count in this case)
+        assert "open issues" in result["top_reason"]
+
+    def test_handles_missing_github_data(self, canonical_handlers):
+        """Test priority score calculation with no GitHub data."""
+        # Act
+        result = canonical_handlers._calculate_priority_score("TestProject", None)
+
+        # Assert
+        assert result["score"] == 0
+        assert result["top_reason"] == "No GitHub data available"
+
+    def test_handles_active_project_low_issues(self, canonical_handlers):
+        """Test priority score for active project with few issues."""
+        from datetime import datetime, timedelta
+
+        # Arrange - Recent activity, few issues
+        last_update = (datetime.now() - timedelta(days=3)).isoformat()
+        github_data = {"updated_at": last_update, "open_issues_count": 2}
+
+        # Act
+        result = canonical_handlers._calculate_priority_score("TestProject", github_data)
+
+        # Assert
+        assert result["score"] < 20  # Should have low score
+        # With 2 issues, we get "2 open issues" as reason
+        assert "2 open issues" in result["top_reason"]
+
+
+class TestPriorityRecommendationFormatting:
+    """Test suite for priority recommendation formatting methods (Issue #511)"""
+
+    def test_format_embedded_with_projects(self, canonical_handlers):
+        """Test EMBEDDED format with ranked projects."""
+        # Arrange
+        ranked_projects = [
+            {
+                "name": "HighPriority",
+                "score": 80,
+                "top_reason": "30 days since last activity",
+                "breakdown": {"staleness": 30, "issue_count": 30, "urgency": 20},
+            },
+            {
+                "name": "LowPriority",
+                "score": 10,
+                "top_reason": "Active and low issue count",
+                "breakdown": {"staleness": 0, "issue_count": 10, "urgency": 0},
+            },
+        ]
+
+        # Act
+        result = canonical_handlers._format_priority_embedded(ranked_projects)
+
+        # Assert
+        assert result == "Focus on: HighPriority"
+
+    def test_format_embedded_no_projects(self, canonical_handlers):
+        """Test EMBEDDED format with no projects."""
+        # Act
+        result = canonical_handlers._format_priority_embedded([])
+
+        # Assert
+        assert result == "No projects to prioritize"
+
+    def test_format_standard_with_projects(self, canonical_handlers):
+        """Test STANDARD format with ranked projects."""
+        # Arrange
+        ranked_projects = [
+            {
+                "name": "Project1",
+                "score": 70,
+                "top_reason": "25 days since last activity",
+                "breakdown": {"staleness": 25, "issue_count": 30, "urgency": 15},
+            },
+            {
+                "name": "Project2",
+                "score": 50,
+                "top_reason": "15 open issues",
+                "breakdown": {"staleness": 0, "issue_count": 30, "urgency": 20},
+            },
+            {
+                "name": "Project3",
+                "score": 30,
+                "top_reason": "10 open issues",
+                "breakdown": {"staleness": 0, "issue_count": 30, "urgency": 0},
+            },
+        ]
+
+        # Act
+        result = canonical_handlers._format_priority_standard(ranked_projects)
+
+        # Assert
+        assert "Priority Recommendation" in result
+        assert "1. **Project1**" in result
+        assert "2. **Project2**" in result
+        assert "3. **Project3**" in result
+        assert "(Score: 70)" in result
+        assert "25 days since last activity" in result
+
+    def test_format_standard_with_many_projects(self, canonical_handlers):
+        """Test STANDARD format shows only top 3 plus count."""
+        # Arrange
+        ranked_projects = [
+            {
+                "name": f"Project{i}",
+                "score": 100 - i * 10,
+                "top_reason": "Test reason",
+                "breakdown": {},
+            }
+            for i in range(5)
+        ]
+
+        # Act
+        result = canonical_handlers._format_priority_standard(ranked_projects)
+
+        # Assert
+        assert "Plus 2 more projects" in result
+
+    def test_format_granular_with_projects(self, canonical_handlers):
+        """Test GRANULAR format with full details."""
+        # Arrange
+        ranked_projects = [
+            {
+                "name": "DetailedProject",
+                "score": 90,
+                "top_reason": "35 days since last activity",
+                "breakdown": {"staleness": 35, "issue_count": 30, "urgency": 25},
+                "github_data": {
+                    "open_issues_count": 12,
+                    "updated_at": "2025-11-15T10:00:00Z",
+                },
+            }
+        ]
+
+        # Act
+        result = canonical_handlers._format_priority_granular(ranked_projects)
+
+        # Assert
+        assert "Full Priority Analysis" in result
+        assert "DetailedProject" in result
+        assert "Priority Score**: 90/100" in result
+        assert "Staleness: 35/40 points" in result
+        assert "Issue Count: 30/30 points" in result
+        assert "Urgency: 25/30 points" in result
+        assert "Open Issues: 12" in result
+
+
 class TestProjectDurationCalculation:
     """Test suite for project duration calculation (Issue #505)"""
 
