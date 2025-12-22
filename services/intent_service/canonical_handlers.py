@@ -172,6 +172,8 @@ class CanonicalHandlers:
         GREAT-4C Phase 1: Minimal spatial intelligence (identity is fixed).
         Issue #493: Dynamic capability list from PluginRegistry.
         Issue #506: Routes health check requests to dedicated handler.
+        Issue #507: Routes help/onboarding requests to dedicated handler.
+        Issue #508: Routes differentiation requests to dedicated handler.
         """
         # Issue #506: Check if this is a health check request
         if self._detect_health_check_request(intent):
@@ -313,7 +315,7 @@ class CanonicalHandlers:
             "vs chatgpt",
             "vs gpt",
             "compared to",
-            "why should i use you",
+            "why should i use",
             "why use piper",
             "what's unique",
         ]

@@ -1198,3 +1198,554 @@ class TestHealthCheckFormatting:
         assert "Github: ✅ active" in result
         assert "Slack: ✅ active" in result
         assert "Notion: ⚪ inactive" in result
+
+
+class TestDifferentiationDetection:
+    """Test suite for _detect_differentiation_request() method (Issue #508)"""
+
+    def test_detects_what_makes_you_different(self, canonical_handlers):
+        """Test detection of 'what makes you different' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What makes you different from other AI assistants?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_differentiation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_is_special(self, canonical_handlers):
+        """Test detection of 'what's special about you' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's special about you?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_differentiation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_vs_chatgpt(self, canonical_handlers):
+        """Test detection of 'vs chatgpt' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How are you different vs chatgpt?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_differentiation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_why_use_piper(self, canonical_handlers):
+        """Test detection of 'why use piper' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Why should I use Piper instead of other tools?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_differentiation_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_matching_query(self, canonical_handlers):
+        """Test that non-matching queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's your name?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_identity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_differentiation_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_identity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_differentiation_request(intent)
+
+        # Assert
+        assert result is False
+
+
+class TestDifferentiationFormatting:
+    """Test suite for differentiation formatting methods (Issue #508)"""
+
+    def test_format_embedded(self, canonical_handlers):
+        """Test EMBEDDED format is brief."""
+        result = canonical_handlers._format_differentiation_embedded()
+
+        assert "PM-specialized" in result
+        assert len(result) < 100  # Should be brief
+
+    def test_format_standard_with_integrations(self, canonical_handlers, mock_plugin_registry):
+        """Test STANDARD format includes integrations."""
+        with patch(
+            "services.intent_service.canonical_handlers.get_plugin_registry",
+            return_value=mock_plugin_registry,
+        ):
+            capabilities_data = canonical_handlers._get_dynamic_capabilities()
+
+        result = canonical_handlers._format_differentiation_standard(capabilities_data)
+
+        assert "PM-Specialized" in result
+        assert "Integrated" in result
+        assert "Context-Aware" in result
+        assert "Adaptive" in result
+        # Should mention at least one integration
+        assert any(name in result for name in ["Slack", "Github", "GitHub"])
+
+    def test_format_standard_without_integrations(self, canonical_handlers):
+        """Test STANDARD format works without integrations."""
+        capabilities_data = {"integrations": [], "core": [], "capabilities_list": []}
+
+        result = canonical_handlers._format_differentiation_standard(capabilities_data)
+
+        assert "PM-Specialized" in result
+        assert "product management" in result.lower()
+
+    def test_format_granular_with_integrations(self, canonical_handlers, mock_plugin_registry):
+        """Test GRANULAR format includes detailed examples."""
+        with patch(
+            "services.intent_service.canonical_handlers.get_plugin_registry",
+            return_value=mock_plugin_registry,
+        ):
+            capabilities_data = canonical_handlers._get_dynamic_capabilities()
+
+        result = canonical_handlers._format_differentiation_granular(capabilities_data)
+
+        assert "What Makes Piper Different?" in result
+        assert "Purpose-Built for Product Management" in result
+        assert "Real Tool Integration" in result
+        assert "Project Context Awareness" in result
+        assert "Spatial Intelligence" in result
+        # Should list actual integrations
+        assert "Slack" in result or "Github" in result
+
+    def test_format_granular_without_integrations(self, canonical_handlers):
+        """Test GRANULAR format works without integrations."""
+        capabilities_data = {"integrations": [], "core": [], "capabilities_list": []}
+
+        result = canonical_handlers._format_differentiation_granular(capabilities_data)
+
+        assert "What Makes Piper Different?" in result
+        assert "GitHub, Slack, Calendar, Notion (when configured)" in result
+
+
+class TestDifferentiationHandler:
+    """Test suite for _handle_identity_differentiation() method (Issue #508)"""
+
+    @pytest.mark.asyncio
+    async def test_handler_returns_correct_structure(
+        self, canonical_handlers, mock_plugin_registry
+    ):
+        """Test handler returns expected response structure."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What makes you different?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+
+        with patch(
+            "services.intent_service.canonical_handlers.get_plugin_registry",
+            return_value=mock_plugin_registry,
+        ):
+            result = await canonical_handlers._handle_identity_differentiation(
+                intent, "test_session"
+            )
+
+        # Assert structure
+        assert "message" in result
+        assert "intent" in result
+        assert result["intent"]["category"] == "identity"
+        assert result["intent"]["action"] == "provide_differentiation"
+        assert result["intent"]["confidence"] == 1.0
+        assert "differentiators" in result["intent"]["context"]
+        assert result["requires_clarification"] is False
+
+    @pytest.mark.asyncio
+    async def test_handler_respects_spatial_pattern_embedded(
+        self, canonical_handlers, mock_plugin_registry
+    ):
+        """Test handler uses EMBEDDED format for embedded spatial pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What makes you different?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+        intent.spatial_context = {"pattern": "EMBEDDED"}
+
+        with patch(
+            "services.intent_service.canonical_handlers.get_plugin_registry",
+            return_value=mock_plugin_registry,
+        ):
+            result = await canonical_handlers._handle_identity_differentiation(
+                intent, "test_session"
+            )
+
+        # Should use brief embedded format
+        assert len(result["message"]) < 100
+        assert result["spatial_pattern"] == "EMBEDDED"
+
+    @pytest.mark.asyncio
+    async def test_handler_respects_spatial_pattern_granular(
+        self, canonical_handlers, mock_plugin_registry
+    ):
+        """Test handler uses GRANULAR format for granular spatial pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What makes you different?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_differentiation",
+            confidence=0.9,
+        )
+        intent.spatial_context = {"pattern": "GRANULAR"}
+
+        with patch(
+            "services.intent_service.canonical_handlers.get_plugin_registry",
+            return_value=mock_plugin_registry,
+        ):
+            result = await canonical_handlers._handle_identity_differentiation(
+                intent, "test_session"
+            )
+
+        # Should use detailed granular format
+        assert "What Makes Piper Different?" in result["message"]
+        assert result["spatial_pattern"] == "GRANULAR"
+
+
+class TestHelpRequestDetection:
+    """Test suite for _detect_help_request() method (Issue #507)"""
+
+    def test_detects_get_help_pattern(self, canonical_handlers):
+        """Test detection of 'get help' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I get help?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_how_do_i_pattern(self, canonical_handlers):
+        """Test detection of 'how do i' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I use this tool?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_getting_started_pattern(self, canonical_handlers):
+        """Test detection of 'getting started' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="I'm getting started with Piper",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_can_i_ask_pattern(self, canonical_handlers):
+        """Test detection of 'what can i ask' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What can I ask you?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_excludes_setup_requests(self, canonical_handlers):
+        """Test that setup requests are excluded from help detection."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Help me set up my projects",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert - Should be False because it contains "set up"
+        assert result is False
+
+    def test_excludes_configure_requests(self, canonical_handlers):
+        """Test that configure requests are excluded from help detection."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Help me configure my integrations",
+            category=IntentCategoryEnum.GUIDANCE,
+            action="request_setup",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert - Should be False because it contains "configure"
+        assert result is False
+
+    def test_returns_false_for_non_matching_query(self, canonical_handlers):
+        """Test that non-matching queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's your name?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_identity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_help_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_none_intent(self, canonical_handlers):
+        """Test that None intent returns False."""
+        # Act
+        result = canonical_handlers._detect_help_request(None)
+
+        # Assert
+        assert result is False
+
+
+class TestHelpFormatting:
+    """Test suite for help formatting methods (Issue #507)"""
+
+    def test_format_embedded(self, canonical_handlers):
+        """Test EMBEDDED format is brief."""
+        result = canonical_handlers._format_help_embedded()
+
+        assert "agenda" in result.lower()
+        assert "projects" in result.lower()
+        assert len(result) < 150  # Should be brief
+
+    def test_format_standard_includes_key_sections(self, canonical_handlers):
+        """Test STANDARD format includes key sections."""
+        result = canonical_handlers._format_help_standard()
+
+        assert "Quick Start Queries" in result
+        assert "Settings" in result
+        assert "What's on my agenda" in result
+        assert "What projects are we working on" in result
+        assert "/settings" in result
+
+    def test_format_granular_includes_all_sections(self, canonical_handlers):
+        """Test GRANULAR format includes all help sections."""
+        result = canonical_handlers._format_help_granular()
+
+        assert "Getting Started with Piper" in result
+        assert "Identity Queries" in result
+        assert "Time & Schedule" in result
+        assert "Projects & Status" in result
+        assert "Actions" in result
+        assert "Settings & Configuration" in result
+        assert "Tips" in result
+        # Check some example queries
+        assert "What's your name?" in result
+        assert "What day is it?" in result
+        assert "What projects are we working on?" in result
+        assert "/settings" in result
+        assert "/settings/projects" in result
+
+
+class TestHelpHandler:
+    """Test suite for _handle_identity_help() method (Issue #507)"""
+
+    @pytest.mark.asyncio
+    async def test_handler_returns_correct_structure(self, canonical_handlers):
+        """Test handler returns expected response structure."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I get help?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+
+        result = await canonical_handlers._handle_identity_help(intent, "test_session")
+
+        # Assert structure
+        assert "message" in result
+        assert "intent" in result
+        assert result["intent"]["category"] == "identity"
+        assert result["intent"]["action"] == "provide_help"
+        assert result["intent"]["confidence"] == 1.0
+        assert result["intent"]["context"]["help_type"] == "getting_started"
+        assert result["requires_clarification"] is False
+
+    @pytest.mark.asyncio
+    async def test_handler_respects_spatial_pattern_embedded(self, canonical_handlers):
+        """Test handler uses EMBEDDED format for embedded spatial pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I get help?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+        intent.spatial_context = {"pattern": "EMBEDDED"}
+
+        result = await canonical_handlers._handle_identity_help(intent, "test_session")
+
+        # Should use brief embedded format
+        assert len(result["message"]) < 150
+        assert result["spatial_pattern"] == "EMBEDDED"
+
+    @pytest.mark.asyncio
+    async def test_handler_respects_spatial_pattern_granular(self, canonical_handlers):
+        """Test handler uses GRANULAR format for granular spatial pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I get help?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+        intent.spatial_context = {"pattern": "GRANULAR"}
+
+        result = await canonical_handlers._handle_identity_help(intent, "test_session")
+
+        # Should use detailed granular format
+        assert "Getting Started with Piper" in result["message"]
+        assert result["spatial_pattern"] == "GRANULAR"
+
+    @pytest.mark.asyncio
+    async def test_handler_uses_standard_format_by_default(self, canonical_handlers):
+        """Test handler uses STANDARD format when no spatial pattern is set."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How do I get help?",
+            category=IntentCategoryEnum.IDENTITY,
+            action="query_help",
+            confidence=0.9,
+        )
+
+        result = await canonical_handlers._handle_identity_help(intent, "test_session")
+
+        # Should use standard format
+        assert "Quick Start Queries" in result["message"]
+        assert result["spatial_pattern"] is None
