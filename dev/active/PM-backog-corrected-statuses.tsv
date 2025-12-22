@@ -1,0 +1,86 @@
+Title	URL	Status	Sprint
+ALPHA-SETUP-TEST: Setup wizard integration test and KeychainService mocking	https://github.com/mediajunkie/piper-morgan-product/issues/440	Review for accuracy	A11 - Alpha Polish
+ARCH-FIX-SINGLETON: Replace ServiceContainer singleton to enable horizontal scaling	https://github.com/mediajunkie/piper-morgan-product/issues/322	Sprint Backlog	S2 (Security Polish)
+SEC-ENCRYPT-ATREST: Implement Encryption at Rest for Sensitive Data	https://github.com/mediajunkie/piper-morgan-product/issues/358	Sprint Backlog	S2 (Security Polish)
+MUX-VISION: Conceptual architecture	https://github.com/mediajunkie/piper-morgan-product/issues/401	Sprint Backlog	V1 - MUX Vision Formalization
+MUX-VISION-OBJECT-MODEL: Formalize the Object Model Discovery	https://github.com/mediajunkie/piper-morgan-product/issues/399	Sprint Backlog	V1 - MUX Vision Formalization
+MUX-VISION-GRAMMAR-CORE: Implement "Entities experience Moments in Places"	https://github.com/mediajunkie/piper-morgan-product/issues/404	Sprint Backlog	V1 - MUX Vision Formalization
+MUX-VISION-CONSCIOUSNESS: Extract and Document Embodied AI Patterns from Morning Standup	https://github.com/mediajunkie/piper-morgan-product/issues/400	Sprint Backlog	V1 - MUX Vision Formalization
+MUX-VISION-METAPHORS: Formalize ownership metaphors (Mind/Senses/Understanding)	https://github.com/mediajunkie/piper-morgan-product/issues/405	Sprint Backlog	V1 - MUX Vision Formalization
+Enable full list management (add/edit/delete items)	https://github.com/mediajunkie/piper-morgan-product/issues/474	Sprint Backlog	V1 - MUX Vision Formalization
+Refine todo list UX and paradigm	https://github.com/mediajunkie/piper-morgan-product/issues/477	Sprint Backlog	V1 - MUX Vision Formalization
+MUX-VISION-FEATURE-MAP: Map existing features to object model	https://github.com/mediajunkie/piper-morgan-product/issues/406	Product Backlog	V2 - MUX Integration Mapping
+MUX-VISION-STANDUP-EXTRACT: Extract consciousness patterns from morning standup	https://github.com/mediajunkie/piper-morgan-product/issues/407	Product Backlog	V2 - MUX Integration Mapping
+MUX-VISION-LIFECYCLE-SPEC: Formalize 8-stage lifecycle with composting	https://github.com/mediajunkie/piper-morgan-product/issues/408	Product Backlog	V2 - MUX Integration Mapping
+MUX-VISION-LEARN: Learning System Experience Design	https://github.com/mediajunkie/piper-morgan-product/issues/431	Product Backlog	V2 - MUX Integration Mapping
+MUX-TECH	https://github.com/mediajunkie/piper-morgan-product/issues/432	Product Backlog	X1 - MUX Tech
+MUX-TECH-PHASE1-GRAMMAR: Implement Core Object Model Grammar	https://github.com/mediajunkie/piper-morgan-product/issues/433	Product Backlog	X1 - MUX Tech
+MUX-TECH-PHASE2-ENTITY: Implement Piper as Entity with Consciousness	https://github.com/mediajunkie/piper-morgan-product/issues/434	Product Backlog	X1 - MUX Tech
+MUX-TECH-PHASE3-OWNERSHIP: Implement Ownership Model	https://github.com/mediajunkie/piper-morgan-product/issues/435	Product Backlog	X1 - MUX Tech
+MUX-TECH-PHASE4-COMPOSTING: Implement Composting to Learning Pipeline	https://github.com/mediajunkie/piper-morgan-product/issues/436	Product Backlog	X1 - MUX Tech
+MUX-INTERACT: Interaction Design	https://github.com/mediajunkie/piper-morgan-product/issues/402	Product Backlog	I1 - MUX Recognition Patterns
+MUX-INTERACT-CANONICAL-ENHANCE: Evolve canonical queries to orientation system	https://github.com/mediajunkie/piper-morgan-product/issues/410	Product Backlog	I1 - MUX Recognition Patterns
+MUX-INTERACT-RECOGNITION: Design "did you mean..." interface patterns	https://github.com/mediajunkie/piper-morgan-product/issues/411	Product Backlog	I1 - MUX Recognition Patterns
+MUX-INTERACT-INTENT-BRIDGE: Bridge current intent classification to recognition	https://github.com/mediajunkie/piper-morgan-product/issues/412	Product Backlog	I1 - MUX Recognition Patterns
+MUX-INTERACT-TRUST-LEVELS: Define trust gradient mechanics	https://github.com/mediajunkie/piper-morgan-product/issues/413	Product Backlog	I2 - MUX Trust Gradient
+MUX-INTERACT-DELEGATION: System-initiated vs user-initiated patterns	https://github.com/mediajunkie/piper-morgan-product/issues/414	Product Backlog	I2 - MUX Trust Gradient
+MUX-INTERACT-PREMONITION: When/how Piper surfaces insights	https://github.com/mediajunkie/piper-morgan-product/issues/415	Product Backlog	I2 - MUX Trust Gradient
+MUX-INTERACT-WORKSPACE: How Piper navigates between contexts	https://github.com/mediajunkie/piper-morgan-product/issues/416	Product Backlog	I3 - MUX Spatial Navigation
+MUX-INTERACT-ATTENTION: Attention algorithms based on spatial metaphors	https://github.com/mediajunkie/piper-morgan-product/issues/417	Product Backlog	I3 - MUX Spatial Navigation
+MUX-INTERACT-MOMENT-UI: How Moments appear in interface	https://github.com/mediajunkie/piper-morgan-product/issues/418	Product Backlog	I3 - MUX Spatial Navigation
+MUX-IMPLEMENT: UI Polish	https://github.com/mediajunkie/piper-morgan-product/issues/403	Product Backlog	P1 - MUX Navigation Crisis
+MUX-IMPLEMENT-NAV-GAP: Address top 10 of 68 identified gaps	https://github.com/mediajunkie/piper-morgan-product/issues/419	Product Backlog	P1 - MUX Navigation Crisis
+MUX-IMPLEMENT-NAV-GLOBAL: Global nav implementation	https://github.com/mediajunkie/piper-morgan-product/issues/420	Product Backlog	P1 - MUX Navigation Crisis
+MUX-IMPLEMENT-NAV-DISCOVER: Feature discovery improvements	https://github.com/mediajunkie/piper-morgan-product/issues/421	Product Backlog	P1 - MUX Navigation Crisis
+MUX-IMPLEMENT-DOCS-ACCESS: Implement document retrieval UI	https://github.com/mediajunkie/piper-morgan-product/issues/422	Product Backlog	P2 - MUX Document Management
+MUX-IMPLEMENT-LIFECYCLE: Object lifecycle visualization	https://github.com/mediajunkie/piper-morgan-product/issues/423	Product Backlog	P2 - MUX Document Management
+MUX-IMPLEMENT-COMPOST: Composting interface	https://github.com/mediajunkie/piper-morgan-product/issues/424	Product Backlog	P2 - MUX Document Management
+MUX-IMPLEMENT-MEMORY-SYNC: Memory sync between touchpoints	https://github.com/mediajunkie/piper-morgan-product/issues/425	Product Backlog	P3 - MUX Cross-channel Unity
+MUX-IMPLEMENT-CONSISTENT: Consistent personality across channels	https://github.com/mediajunkie/piper-morgan-product/issues/426	Product Backlog	P3 - MUX Cross-channel Unity
+MUX-IMPLEMENT-CONVERSE-MODEL: Unified conversation model	https://github.com/mediajunkie/piper-morgan-product/issues/427	Product Backlog	P3 - MUX Cross-channel Unity
+MUX-IMPLEMENT-ARIA: ARIA labels	https://github.com/mediajunkie/piper-morgan-product/issues/428	Product Backlog	P4 - MUX A11y and Polish
+MUX-IMPLEMENT-CONTRAST-TESTS: Contrast testing	https://github.com/mediajunkie/piper-morgan-product/issues/429	Product Backlog	P4 - MUX A11y and Polish
+MUX-IMPLEMENT-THEME-CONSISTENCY: Theme consistency	https://github.com/mediajunkie/piper-morgan-product/issues/430	Product Backlog	P4 - MUX A11y and Polish
+BUG-TEST-ASYNC: AsyncSessionFactory causes event loop conflicts in performance tests	https://github.com/mediajunkie/piper-morgan-product/issues/247	Product Backlog	M1 (MVP Foundation)
+TEST-QUALITY: Test Reliability for Production Confidence	https://github.com/mediajunkie/piper-morgan-product/issues/190	Product Backlog	M1 (MVP Foundation)
+TEST-SMOKE-E2E: Create core user journey smoke tests	https://github.com/mediajunkie/piper-morgan-product/issues/352	Product Backlog	M1 (MVP Foundation)
+CORE-LEARN-PHASE-3: Implement Roadmap Phase 3 Learning Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/372	Product Backlog	M1 (MVP Foundation)
+QA: Manual testing for preference detection system	https://github.com/mediajunkie/piper-morgan-product/issues/375	Product Backlog	M1 (MVP Foundation)
+EPIC: SEC-RBAC Phases 4-5 - Projects and Files Ownership	https://github.com/mediajunkie/piper-morgan-product/issues/470	Product Backlog	M1 (MVP Foundation)
+EPIC: Slack Integration TDD Gaps - OAuth and Spatial Methods	https://github.com/mediajunkie/piper-morgan-product/issues/472	Product Backlog	M1 (MVP Foundation)
+INFR-TEST: Review regression testing for gaps	https://github.com/mediajunkie/piper-morgan-product/issues/167	Product Backlog	M2 (MVP Activation)
+CONV-UX-GREET: Calendar Scanning on Greeting	https://github.com/mediajunkie/piper-morgan-product/issues/102	Product Backlog	M2 (MVP Activation)
+POST-TEST-E2E: Web UI End-to-End Testing Enhancement	https://github.com/mediajunkie/piper-morgan-product/issues/191	Product Backlog	M2 (MVP Activation)
+CONV-MCP-STANDUP-INTERACTIVE: Interactive Standup Assistant	https://github.com/mediajunkie/piper-morgan-product/issues/242	Product Backlog	M2 (MVP Activation)
+TEST-SMOKE-CI: Integrate smoke tests into GitHub Actions CI pipeline	https://github.com/mediajunkie/piper-morgan-product/issues/276	Product Backlog	M2 (MVP Activation)
+TEST-SMOKE: Smoke test epic on the Testing track	https://github.com/mediajunkie/piper-morgan-product/issues/273	Product Backlog	M2 (MVP Activation)
+CONV-INFR-NOTN: Activate Existing Notion Integration	https://github.com/mediajunkie/piper-morgan-product/issues/304	Product Backlog	M2 (MVP Activation)
+CONV-MCP-PROTO: DocumentAnalysisSkill Prototype	https://github.com/mediajunkie/piper-morgan-product/issues/309	Product Backlog	M2 (MVP Activation)
+CONV-UX-QUICK: Settings & Startup Quick Wins	https://github.com/mediajunkie/piper-morgan-product/issues/310	Product Backlog	M2 (MVP Activation)
+SLACK-ATTENTION-DECAY: Implement pattern learning for attention models	https://github.com/mediajunkie/piper-morgan-product/issues/365	Product Backlog	M2 (MVP Activation)
+SLACK-MEMORY: Persist spatial patterns over time	https://github.com/mediajunkie/piper-morgan-product/issues/366	Product Backlog	M2 (MVP Activation)
+INFRA-TIMESERIES: Implement Time-Series Database Infrastructure	https://github.com/mediajunkie/piper-morgan-product/issues/371	Product Backlog	M2 (MVP Activation)
+EPIC: Infrastructure - OAuth, Learning, TimeSeries, Conversation	https://github.com/mediajunkie/piper-morgan-product/issues/471	Product Backlog	M2 (MVP Activation)
+INFR-AGENT: Multi-Agent Coordinator Operational Deployment	https://github.com/mediajunkie/piper-morgan-product/issues/118	Product Backlog	M3 (MVP Skills)
+CONV-UX-DESIGN: Unified Design System & Token Migration	https://github.com/mediajunkie/piper-morgan-product/issues/312	Product Backlog	M3 (MVP Skills)
+CONV-MCP-LIBRARY: Core Skills Library Implementation	https://github.com/mediajunkie/piper-morgan-product/issues/315	Product Backlog	M3 (MVP Skills)
+CONV-MCP-DOCS: Unified Document Processing via Skills	https://github.com/mediajunkie/piper-morgan-product/issues/302	Product Backlog	M4 (MVP Document Revolution)
+CONV-UX-DOCS: File Browser & Document Management UI	https://github.com/mediajunkie/piper-morgan-product/issues/313	Product Backlog	M4 (MVP Document Revolution)
+CONV-UX-PERSIST: Conversation History & Persistence	https://github.com/mediajunkie/piper-morgan-product/issues/314	Product Backlog	M4 (MVP Document Revolution)
+DOCS-STOPGAP: Basic Artifact Persistence	https://github.com/mediajunkie/piper-morgan-product/issues/355	Product Backlog	M4 (MVP Document Revolution)
+FLY-VERIFY: Implement Three-Tier Verification Pyramid	https://github.com/mediajunkie/piper-morgan-product/issues/146	Product Backlog	M5 (MVP Polish)
+FLY-VERIFY-HAND: Implement Mandatory Handoff Protocol with Verification	https://github.com/mediajunkie/piper-morgan-product/issues/147	Product Backlog	M5 (MVP Polish)
+FLY-VERIFY-CONFIG: Extract Configuration Layer from Mandatory Handoff Protocol	https://github.com/mediajunkie/piper-morgan-product/issues/148	Product Backlog	M5 (MVP Polish)
+CONV-FEAT-PROJ: Project Portfolio Awareness	https://github.com/mediajunkie/piper-morgan-product/issues/100	Product Backlog	M5 (MVP Polish)
+CONV-FEAT-TIME:Temporal Context System	https://github.com/mediajunkie/piper-morgan-product/issues/101	Product Backlog	M5 (MVP Polish)
+CONV-FEAT-PRIOR: Priority Calculation Engine	https://github.com/mediajunkie/piper-morgan-product/issues/103	Product Backlog	M5 (MVP Polish)
+CONV-UX-SLACK: Interactive Slack Standup Features	https://github.com/mediajunkie/piper-morgan-product/issues/244	Product Backlog	M5 (MVP Polish)
+RESEARCH-TOKENS-THINKING: Investigate Thinking Token Optimization for Chain of Drafts	https://github.com/mediajunkie/piper-morgan-product/issues/272	Product Backlog	M5 (MVP Polish)
+INFRA-MIGRATION-ROLLBACK - Comprehensive Database Migration Rollback Testing	https://github.com/mediajunkie/piper-morgan-product/issues/338	Product Backlog	M5 (MVP Polish)
+CORE-UX-AUTH-PHASE2: Registration, Password Reset, and Security Polish	https://github.com/mediajunkie/piper-morgan-product/issues/441	Product Backlog	M5 (MVP Polish)
+FLY-MAINT-CLEANUP: Scan and archive deprecated folders	https://github.com/mediajunkie/piper-morgan-product/issues/449	Product Backlog	M5 (MVP Polish)
+FLY-COORD-TREES-2: Phase 3-5 Python Integration (Future)	https://github.com/mediajunkie/piper-morgan-product/issues/465	Product Backlog	M5 (MVP Polish)
+CONV-FEAT-STRAT: Strategic Recommendations	https://github.com/mediajunkie/piper-morgan-product/issues/106	Product Backlog	M6 - MVP Future
+CONV-FEAT-ALLOC: Time Allocation Analysis	https://github.com/mediajunkie/piper-morgan-product/issues/104	Product Backlog	M6 - MVP Future
+CORE-ETHICS-TUNE: Post-Alpha Ethics Optimization	https://github.com/mediajunkie/piper-morgan-product/issues/241	Product Backlog	M6 - MVP Future
+MUX: Modeled User Experience	https://github.com/mediajunkie/piper-morgan-product/issues/398	Product Backlog

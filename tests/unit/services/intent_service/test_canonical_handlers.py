@@ -413,6 +413,295 @@ class TestLastActivityDetection:
         assert result is None
 
 
+class TestProjectDurationDetection:
+    """Test suite for _detect_duration_request() method (Issue #505)"""
+
+    def test_detects_how_long_working_on_pattern(self, canonical_handlers):
+        """Test detection of 'how long have we been working on X' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How long have we been working on project alpha?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_project_duration",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_duration_request(intent)
+
+        # Assert
+        assert result == "project alpha"
+
+    def test_detects_how_long_been_on_pattern(self, canonical_handlers):
+        """Test detection of 'how long have we been on X' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How long have we been on HealthTrack?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_project_duration",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_duration_request(intent)
+
+        # Assert
+        assert result == "healthtrack"
+
+    def test_detects_when_did_we_start_pattern(self, canonical_handlers):
+        """Test detection of 'when did we start X' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="When did we start the backend project?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_project_duration",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_duration_request(intent)
+
+        # Assert
+        assert result == "the backend project"
+
+    def test_detects_this_project_pattern(self, canonical_handlers):
+        """Test detection of 'how long this project' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How long have we been on this project?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_project_duration",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_duration_request(intent)
+
+        # Assert
+        assert result == "this project"
+
+    def test_returns_none_for_non_matching_query(self, canonical_handlers):
+        """Test that non-matching queries return None."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What is the project status?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_duration_request(intent)
+
+        # Assert
+        assert result is None
+
+    def test_returns_none_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return None."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_time",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_duration_request(intent)
+
+        # Assert
+        assert result is None
+
+
+class TestProjectDurationCalculation:
+    """Test suite for project duration calculation (Issue #505)"""
+
+    def test_calculate_duration_with_valid_date(self, canonical_handlers):
+        """Test duration calculation with a valid ISO date string."""
+        from datetime import datetime, timedelta
+
+        # Arrange - 45 days ago
+        start_date = datetime.now() - timedelta(days=45)
+        created_at = start_date.isoformat()
+
+        # Act
+        result = canonical_handlers._calculate_duration(created_at)
+
+        # Assert
+        assert result is not None
+        assert result["total_days"] == 45
+        assert result["months"] == 1  # 45 // 30 = 1
+        assert result["weeks"] == 2  # (45 % 30) // 7 = 2
+        assert result["days"] == 1  # ((45 % 30) % 7) = 1
+
+    def test_calculate_duration_with_datetime_object(self, canonical_handlers):
+        """Test duration calculation with a datetime object."""
+        from datetime import datetime, timedelta
+
+        # Arrange - 10 days ago
+        start_date = datetime.now() - timedelta(days=10)
+
+        # Act
+        result = canonical_handlers._calculate_duration(start_date)
+
+        # Assert
+        assert result is not None
+        assert result["total_days"] == 10
+        assert result["months"] == 0
+        assert result["weeks"] == 1
+        assert result["days"] == 3
+
+    def test_calculate_duration_with_recent_start(self, canonical_handlers):
+        """Test duration calculation with very recent start date."""
+        from datetime import datetime, timedelta
+
+        # Arrange - 2 days ago
+        start_date = datetime.now() - timedelta(days=2)
+        created_at = start_date.isoformat()
+
+        # Act
+        result = canonical_handlers._calculate_duration(created_at)
+
+        # Assert
+        assert result is not None
+        assert result["total_days"] == 2
+        assert result["months"] == 0
+        assert result["weeks"] == 0
+        assert result["days"] == 2
+
+    def test_calculate_duration_handles_invalid_date(self, canonical_handlers):
+        """Test that invalid dates return None."""
+        # Act
+        result = canonical_handlers._calculate_duration("not-a-date")
+
+        # Assert
+        assert result is None
+
+
+class TestProjectDurationFormatting:
+    """Test suite for project duration formatting methods (Issue #505)"""
+
+    def test_format_embedded_with_months(self, canonical_handlers):
+        """Test EMBEDDED format with duration in months."""
+        # Arrange
+        duration = {"total_days": 90, "months": 3, "weeks": 0, "days": 0}
+
+        # Act
+        result = canonical_handlers._format_duration_embedded("TestProject", duration)
+
+        # Assert
+        assert result == "TestProject: 3 months"
+
+    def test_format_embedded_with_single_month(self, canonical_handlers):
+        """Test EMBEDDED format with single month (no 's')."""
+        # Arrange
+        duration = {"total_days": 30, "months": 1, "weeks": 0, "days": 0}
+
+        # Act
+        result = canonical_handlers._format_duration_embedded("TestProject", duration)
+
+        # Assert
+        assert result == "TestProject: 1 month"
+
+    def test_format_embedded_with_days(self, canonical_handlers):
+        """Test EMBEDDED format with duration in days only."""
+        # Arrange
+        duration = {"total_days": 15, "months": 0, "weeks": 2, "days": 1}
+
+        # Act
+        result = canonical_handlers._format_duration_embedded("TestProject", duration)
+
+        # Assert
+        assert result == "TestProject: 15 days"
+
+    def test_format_embedded_without_duration(self, canonical_handlers):
+        """Test EMBEDDED format with no duration data."""
+        # Act
+        result = canonical_handlers._format_duration_embedded("TestProject", None)
+
+        # Assert
+        assert result == "TestProject: unknown duration"
+
+    def test_format_standard_with_duration(self, canonical_handlers):
+        """Test STANDARD format with duration data."""
+        from datetime import datetime
+
+        # Arrange
+        start_date = datetime(2025, 11, 1)
+        duration = {
+            "total_days": 51,
+            "months": 1,
+            "weeks": 3,
+            "days": 0,
+            "start_date": start_date,
+        }
+
+        # Act
+        result = canonical_handlers._format_duration_standard("TestProject", duration, None)
+
+        # Assert
+        assert "You've been working on **TestProject**" in result
+        assert "1 month and 3 weeks" in result
+        assert "started November 01, 2025" in result
+
+    def test_format_standard_without_duration(self, canonical_handlers):
+        """Test STANDARD format with no duration data."""
+        # Act
+        result = canonical_handlers._format_duration_standard("TestProject", None, None)
+
+        # Assert
+        assert "I don't have start date information for **TestProject**" in result
+        assert "Check if the project is configured" in result
+
+    def test_format_granular_with_duration(self, canonical_handlers):
+        """Test GRANULAR format with duration data."""
+        from datetime import datetime
+
+        # Arrange
+        start_date = datetime(2025, 10, 15)
+        duration = {
+            "total_days": 68,
+            "months": 2,
+            "weeks": 1,
+            "days": 1,
+            "start_date": start_date,
+        }
+
+        # Act
+        result = canonical_handlers._format_duration_granular("TestProject", duration, None)
+
+        # Assert
+        assert "**Project Duration: TestProject**" in result
+        assert "**Started**: Wednesday, October 15, 2025" in result
+        assert "**Total Days**: 68" in result
+        assert "**Breakdown**:" in result
+        assert "- Months: 2" in result
+        assert "- Weeks: 1" in result
+        assert "- Days: 1" in result
+
+    def test_format_granular_without_duration(self, canonical_handlers):
+        """Test GRANULAR format with no duration data."""
+        # Act
+        result = canonical_handlers._format_duration_granular("TestProject", None, None)
+
+        # Assert
+        assert "**TestProject** duration unknown" in result
+        assert "may not be configured with a start date" in result
+        assert "Check Settings → Projects" in result
+
+
 class TestLastActivityFormatting:
     """Test suite for last activity formatting methods (Issue #504)"""
 

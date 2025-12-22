@@ -15,11 +15,11 @@ This test matrix provides the definitive reference for testing Piper's canonical
 | Category | Total | PASS | PARTIAL | FAIL | NOT IMPL |
 |----------|-------|------|---------|------|----------|
 | Identity | 5 | 2 | 3 | 0 | 0 |
-| Temporal | 5 | 4 | 0 | 0 | 1 |
+| Temporal | 5 | 5 | 0 | 0 | 0 |
 | Spatial | 5 | 1 | 3 | 0 | 1 |
 | Capability | 5 | 0 | 2 | 0 | 3 |
 | Predictive | 5 | 0 | 1 | 0 | 4 |
-| **Total** | **25** | **7** | **9** | **0** | **9** |
+| **Total** | **25** | **8** | **9** | **0** | **8** |
 
 **Legend:**
 - **PASS**: Fully functional, returns real data
@@ -75,7 +75,7 @@ capabilities = self._get_dynamic_capabilities()
 | 7 | What did we accomplish yesterday? | Todo/commit summary from yesterday | Queries completed todos from yesterday with spatial formatting | ✅ PASS | Issue #501 - Historical retrospective |
 | 8 | What's on the agenda for today? | Today's todos + calendar + priorities | Aggregates calendar + todos + priorities with spatial formatting | ✅ PASS | Issue #499 - Full agenda aggregation |
 | 9 | When was the last time we worked on this? | Last modified timestamp for project/issue | Queries GitHub for recent activity, formats with spatial awareness | ✅ PASS | Issue #504 - Last activity temporal query |
-| 10 | How long have we been working on this project? | Project duration calculation | Routes to TEMPORAL handler but returns datetime only | ❌ NOT IMPL | Needs project timeline handler |
+| 10 | How long have we been working on this project? | Project duration calculation | Calculates duration from project created_at with spatial formatting | ✅ PASS | Issue #505 - Project duration temporal query |
 
 **Current Implementation**:
 ```python
@@ -98,6 +98,14 @@ if project_name:
     # Queries: GitHub recent activity (last 30 days)
     # Formats: EMBEDDED (brief) / STANDARD (balanced) / GRANULAR (detailed)
 
+# Issue #505: Project duration detection routes to _handle_temporal_project_duration()
+duration_project = self._detect_duration_request(intent)
+if duration_project:
+    return await self._handle_temporal_project_duration(intent, session_id, duration_project)
+    # Queries: PIPER.user.md for project created_at
+    # Calculates: Duration in months/weeks/days
+    # Formats: EMBEDDED (brief) / STANDARD (balanced) / GRANULAR (detailed)
+
 # Otherwise: handles datetime queries
 current_date = datetime.now().strftime("%A, %B %d, %Y")
 current_time = datetime.now().strftime(f"%I:%M %p {timezone_short}")
@@ -108,7 +116,7 @@ current_time = datetime.now().strftime(f"%I:%M %p {timezone_short}")
 1. ~~Query #7: Add `_handle_retrospective_query()` - query todos/commits from yesterday~~ ✅ DONE (Issue #501)
 2. ~~Query #8: Add `_handle_agenda_query()` - aggregate todos + calendar + priorities~~ ✅ DONE (Issue #499)
 3. ~~Query #9: Add `_handle_temporal_last_activity()` - query last modified timestamp~~ ✅ DONE (Issue #504)
-4. Query #10: Add `_handle_temporal_project_duration()` - calculate project timeline
+4. ~~Query #10: Add `_handle_temporal_project_duration()` - calculate project timeline~~ ✅ DONE (Issue #505)
 
 ---
 
@@ -297,13 +305,13 @@ curl -X POST http://localhost:8001/api/v1/intent \
 - [ ] Query #21: Enhance guidance with calendar/deadline awareness
 
 ### Phase 2: Add Missing Temporal Handlers
-**Priority**: MEDIUM (Post-alpha)
-**Effort**: 1-2 days (reduced - #7, #8, #9 complete)
+**Priority**: ✅ COMPLETE
+**Effort**: N/A (all temporal queries implemented)
 
 - [x] Query #7: Historical retrospective handler ✅ Issue #501
 - [x] Query #8: Daily agenda aggregation handler ✅ Issue #499
 - [x] Query #9: Last activity tracker ✅ Issue #504
-- [ ] Query #10: Project duration calculator
+- [x] Query #10: Project duration calculator ✅ Issue #505
 
 ### Phase 3: Add Missing Spatial Handlers
 **Priority**: MEDIUM (Post-alpha)
@@ -386,6 +394,14 @@ curl -X POST http://localhost:8001/api/v1/intent \
 **Behavior**: Queries GitHub for recent activity (last 30 days), formats with spatial awareness (EMBEDDED/STANDARD/GRANULAR)
 **Tests**: 14 tests in `tests/unit/services/intent_service/test_canonical_handlers.py`
 
+### Issue #505: Project Duration Temporal Query
+**Status**: ✅ RESOLVED
+**Issue**: "How long have we been working on X?" returned datetime only
+**Resolution**: Added `_detect_duration_request()` + `_handle_temporal_project_duration()` + `_calculate_duration()` + formatting methods
+**File**: `services/intent_service/canonical_handlers.py`
+**Behavior**: Queries PIPER.user.md for project created_at, calculates duration in months/weeks/days, formats with spatial awareness (EMBEDDED/STANDARD/GRANULAR)
+**Tests**: 18 tests in `tests/unit/services/intent_service/test_canonical_handlers.py` (6 detection, 4 calculation, 8 formatting)
+
 ---
 
 ## Additional Capabilities (Beyond 25 Canonical Queries)
@@ -406,13 +422,13 @@ The following capabilities have been added beyond the original 25 canonical quer
 
 ## Verification
 
-**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504)
+**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504, #505)
 **Verification Method**: Code inspection + handler tracing + manual testing
 **Files Reviewed**:
-- `services/intent_service/canonical_handlers.py` (~2270 lines, updated with setup detection + agenda aggregation + project-specific status + historical retrospective + last activity)
+- `services/intent_service/canonical_handlers.py` (~2750 lines, updated with setup detection + agenda aggregation + project-specific status + historical retrospective + last activity + project duration)
 - `services/intent/intent_service.py` (5219 lines)
 - `dev/active/canonical-queries-list.md` (25 queries)
-- `tests/unit/services/intent_service/test_canonical_handlers.py` (14 new tests for Issue #504)
+- `tests/unit/services/intent_service/test_canonical_handlers.py` (41 tests total: 9 capabilities, 14 last activity, 18 project duration)
 
 **Next Verification**: After each implementation phase (Phase 1-5 above)
 
@@ -429,6 +445,7 @@ The following capabilities have been added beyond the original 25 canonical quer
 - **Issue #500**: Project-specific status query (resolved)
 - **Issue #501**: Historical retrospective query (resolved)
 - **Issue #504**: Last activity temporal query (resolved)
+- **Issue #505**: Project duration temporal query (resolved)
 - **Canonical Query List**: `dev/active/canonical-queries-list.md`
 - **Handler Implementation**: `services/intent_service/canonical_handlers.py`
 - **Intent Router**: `services/intent/intent_service.py`

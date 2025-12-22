@@ -280,6 +280,13 @@ class CanonicalHandlers:
         if project_name:
             return await self._handle_temporal_last_activity(intent, session_id, project_name)
 
+        # Issue #505: Check if this is a duration request
+        duration_project = self._detect_duration_request(intent)
+        if duration_project:
+            return await self._handle_temporal_project_duration(
+                intent, session_id, duration_project
+            )
+
         from services.configuration.piper_config_loader import piper_config_loader
 
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
@@ -2351,6 +2358,197 @@ What would you like to set up first?"""
         result += f"**Type**: {activity_type}\n"
         if title:
             result += f"**Description**: {title}\n"
+
+        return result
+
+    def _detect_duration_request(self, intent: Intent) -> Optional[str]:
+        """
+        Detect if this is a 'how long have we been working on X' query.
+        Returns project name if detected, None otherwise.
+        Issue #505: Project duration temporal query.
+        """
+        import re
+
+        if not intent or not intent.original_message:
+            return None
+
+        query = intent.original_message.lower()
+
+        # Patterns for duration queries
+        patterns = [
+            r"how\s+long.*work(?:ing|ed)?\s+on\s+(.+?)(?:\?|$)",
+            r"how\s+long.*been\s+on\s+(.+?)(?:\?|$)",
+            r"(?:project|how\s+old\s+is)\s+(.+?)\s+duration",
+            r"when\s+did\s+(?:we\s+)?start\s+(.+?)(?:\?|$)",
+            r"how\s+long.*this\s+project",  # Generic "this project"
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                project_name = match.group(1).strip() if match.lastindex else "this project"
+                return project_name
+
+        return None
+
+    async def _handle_temporal_project_duration(
+        self, intent: Intent, session_id: str, project_name: str
+    ) -> Dict:
+        """
+        Handle 'How long have we been working on X?' queries.
+        Issue #505: Calculate project duration from created_at.
+        """
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Try to find project in user_context
+        from services.configuration.piper_config_loader import piper_config_loader
+
+        user_context = piper_config_loader.get_user_context()
+
+        project_data = None
+        created_at = None
+
+        # Search for matching project
+        if user_context and user_context.projects:
+            project_name_lower = project_name.lower()
+            for project in user_context.projects:
+                if project_name_lower in project.get("name", "").lower():
+                    project_data = project
+                    created_at = project.get("created_at")
+                    break
+
+        # Calculate duration if we have a date
+        duration_data = None
+        if created_at:
+            duration_data = self._calculate_duration(created_at)
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_duration_embedded(project_name, duration_data)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_duration_granular(project_name, duration_data, created_at)
+        else:
+            message = self._format_duration_standard(project_name, duration_data, created_at)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.TEMPORAL.value,
+                "action": "provide_project_duration",
+                "confidence": 1.0,
+                "context": {
+                    "project_name": project_name,
+                    "duration": duration_data,
+                    "created_at": created_at,
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    def _calculate_duration(self, created_at: str) -> Optional[Dict]:
+        """Calculate human-readable duration from a date string."""
+        from datetime import datetime
+
+        try:
+            if isinstance(created_at, str):
+                # Handle ISO format
+                dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            else:
+                dt = created_at
+
+            now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+            delta = now - dt
+
+            total_days = delta.days
+            months = total_days // 30
+            remaining_days = total_days % 30
+            weeks = remaining_days // 7
+            days = remaining_days % 7
+
+            return {
+                "total_days": total_days,
+                "months": months,
+                "weeks": weeks,
+                "days": days,
+                "start_date": dt,
+            }
+        except Exception as e:
+            logger.warning(f"Could not calculate duration: {e}")
+            return None
+
+    def _format_duration_embedded(self, project_name: str, duration: Optional[Dict]) -> str:
+        """Brief format for embedded contexts."""
+        if not duration:
+            return f"{project_name}: unknown duration"
+
+        months = duration.get("months", 0)
+        if months > 0:
+            return f"{project_name}: {months} month{'s' if months != 1 else ''}"
+
+        total_days = duration.get("total_days", 0)
+        if total_days > 0:
+            return f"{project_name}: {total_days} day{'s' if total_days != 1 else ''}"
+
+        return f"{project_name}: just started"
+
+    def _format_duration_standard(
+        self, project_name: str, duration: Optional[Dict], created_at: str
+    ) -> str:
+        """Standard format with context."""
+        if not duration:
+            return f"I don't have start date information for **{project_name}**. Check if the project is configured in your settings."
+
+        # Build human-readable duration
+        parts = []
+        months = duration.get("months", 0)
+        weeks = duration.get("weeks", 0)
+        days = duration.get("days", 0)
+
+        if months > 0:
+            parts.append(f"{months} month{'s' if months != 1 else ''}")
+        if weeks > 0:
+            parts.append(f"{weeks} week{'s' if weeks != 1 else ''}")
+        if days > 0:
+            parts.append(f"{days} day{'s' if days != 1 else ''}")
+
+        duration_str = " and ".join(parts) if parts else "just started"
+
+        # Format start date
+        start_date = duration.get("start_date")
+        date_str = ""
+        if start_date:
+            date_str = f" (started {start_date.strftime('%B %d, %Y')})"
+
+        return f"You've been working on **{project_name}** for {duration_str}{date_str}."
+
+    def _format_duration_granular(
+        self, project_name: str, duration: Optional[Dict], created_at: str
+    ) -> str:
+        """Detailed format with full timeline."""
+        if not duration:
+            return f"**{project_name}** duration unknown.\n\nThe project may not be configured with a start date. Check Settings → Projects to add project details."
+
+        result = f"**Project Duration: {project_name}**\n\n"
+
+        start_date = duration.get("start_date")
+        if start_date:
+            result += f"**Started**: {start_date.strftime('%A, %B %d, %Y')}\n"
+
+        total_days = duration.get("total_days", 0)
+        result += f"**Total Days**: {total_days}\n"
+
+        # Detailed breakdown
+        months = duration.get("months", 0)
+        weeks = duration.get("weeks", 0)
+        days = duration.get("days", 0)
+
+        result += "\n**Breakdown**:\n"
+        result += f"- Months: {months}\n"
+        result += f"- Weeks: {weeks}\n"
+        result += f"- Days: {days}\n"
 
         return result
 
