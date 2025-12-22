@@ -16,10 +16,10 @@ This test matrix provides the definitive reference for testing Piper's canonical
 |----------|-------|------|---------|------|----------|
 | Identity | 5 | 5 | 0 | 0 | 0 |
 | Temporal | 5 | 5 | 0 | 0 | 0 |
-| Spatial | 5 | 1 | 3 | 0 | 1 |
+| Spatial | 5 | 4 | 0 | 0 | 1 |
 | Capability | 5 | 0 | 2 | 0 | 3 |
 | Predictive | 5 | 0 | 1 | 0 | 4 |
-| **Total** | **25** | **11** | **6** | **0** | **8** |
+| **Total** | **25** | **14** | **3** | **0** | **8** |
 
 **Legend:**
 - **PASS**: Fully functional, returns real data
@@ -125,13 +125,13 @@ current_time = datetime.now().strftime(f"%I:%M %p {timezone_short}")
 ### Spatial Queries (11-15)
 
 **Handler**: `canonical_handlers.py::_handle_status_query()` (queries 11-14), `canonical_handlers.py::_handle_priority_query()` (query 13)
-**Status**: Returns PIPER.md data (projects/priorities), project-specific status works; no lifecycle tracking
+**Status**: ✅ 4/5 PASS (only #15 lifecycle detection NOT IMPL)
 
 | # | Query | Expected Behavior | Actual Behavior | Status | Notes |
 |---|-------|------------------|-----------------|--------|-------|
-| 11 | What projects are we working on? | List of active projects from PIPER.md | Returns project list if configured, else "No active projects configured" | ⚠️ PARTIAL | Works if PIPER.md exists, but limited metadata |
-| 12 | Show me the project landscape | Project portfolio with status/health | Same as #11 - just lists project names | ⚠️ PARTIAL | Needs project status/health data |
-| 13 | Which project should I focus on? | Priority recommendation based on context | Returns generic priority from PIPER.md | ⚠️ PARTIAL | Needs intelligent recommendation engine |
+| 11 | What projects are we working on? | List of active projects from PIPER.md | Returns project list with GitHub metadata (open issues, recent activity) | ✅ PASS | Issue #509 - Complete with tests |
+| 12 | Show me the project landscape | Project portfolio with status/health | Groups projects by health status (healthy/at-risk/stalled) with spatial formatting | ✅ PASS | Issue #510 - Complete with tests |
+| 13 | Which project should I focus on? | Priority recommendation based on context | Calculates priority score (staleness + issues + urgency), returns ranked recommendations | ✅ PASS | Issue #511 - Complete with tests |
 | 14 | What's the status of project X? | Specific project status/progress | Extracts project name, shows detailed status with GitHub issues | ✅ PASS | Issue #500 - Project-specific detection + formatting |
 | 15 | Where are we in the project lifecycle? | Lifecycle phase detection | Not implemented | ❌ NOT IMPL | Needs workflow state tracking |
 
@@ -148,10 +148,11 @@ projects = user_context.projects  # List with GitHub metadata
 ```
 
 **What Needs to Happen**:
-1. Query #12: Add project health metrics (commits, issues, activity)
-2. Query #13: Add priority recommendation engine (context-aware)
-3. ~~Query #14: Add project-specific status handler (extract project name from query)~~ ✅ DONE (Issue #500)
-4. Query #15: Add lifecycle tracking (detect phase from workflow state)
+1. ~~Query #11: Add project metadata (issues, activity)~~ ✅ DONE (Issue #509)
+2. ~~Query #12: Add project health metrics (commits, issues, activity)~~ ✅ DONE (Issue #510)
+3. ~~Query #13: Add priority recommendation engine (context-aware)~~ ✅ DONE (Issue #511)
+4. ~~Query #14: Add project-specific status handler (extract project name from query)~~ ✅ DONE (Issue #500)
+5. Query #15: Add lifecycle tracking (detect phase from workflow state) - **Deferred** (may remove from canonical list)
 
 ---
 
@@ -412,6 +413,30 @@ curl -X POST http://localhost:8001/api/v1/intent \
 **Behavior**: Checks database connection + plugin status, returns health report with spatial awareness (EMBEDDED/STANDARD/GRANULAR)
 **Tests**: 13 tests in `tests/unit/services/intent_service/test_canonical_handlers.py` (7 detection, 6 formatting)
 
+### Issue #509: Project List with Metadata
+**Status**: ✅ RESOLVED
+**Issue**: "What projects are we working on?" returned names only without metadata
+**Resolution**: Added `_detect_project_list_request()` + `_handle_spatial_project_list()` + formatting methods
+**File**: `services/intent_service/canonical_handlers.py`
+**Behavior**: Returns project list with GitHub metadata (open issues, recent activity) with spatial awareness
+**Tests**: 8 tests in `tests/unit/services/intent_service/test_canonical_handlers.py`
+
+### Issue #510: Project Landscape Health View
+**Status**: ✅ RESOLVED
+**Issue**: "Show me the project landscape" returned same as project list
+**Resolution**: Added `_detect_landscape_request()` + `_calculate_project_health()` + `_handle_spatial_project_landscape()` + formatting methods
+**File**: `services/intent_service/canonical_handlers.py`
+**Behavior**: Groups projects by health status (healthy/at-risk/stalled), calculates based on activity and issue count
+**Tests**: 18 tests in `tests/unit/services/intent_service/test_canonical_handlers.py`
+
+### Issue #511: Priority Recommendation
+**Status**: ✅ RESOLVED
+**Issue**: "Which project should I focus on?" returned generic priority list
+**Resolution**: Added `_detect_priority_recommendation_request()` + `_calculate_priority_score()` + `_handle_spatial_priority_recommendation()` + formatting methods
+**File**: `services/intent_service/canonical_handlers.py`
+**Behavior**: Calculates priority score (staleness + issues + urgency), returns ranked recommendations with reasoning
+**Tests**: 17 tests in `tests/unit/services/intent_service/test_canonical_handlers.py`
+
 ---
 
 ## Additional Capabilities (Beyond 25 Canonical Queries)
@@ -432,7 +457,7 @@ The following capabilities have been added beyond the original 25 canonical quer
 
 ## Verification
 
-**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504, #505, #506)
+**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504, #505, #506, #507, #508, #509, #510, #511)
 **Verification Method**: Code inspection + handler tracing + manual testing
 **Files Reviewed**:
 - `services/intent_service/canonical_handlers.py` (~2920 lines, updated with setup detection + agenda aggregation + project-specific status + historical retrospective + last activity + project duration + health check)
