@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.0)
+# Known Issues & Feature Status (v0.8.2)
 
-**Version**: 0.8.0 (First Alpha Release)
-**Last Updated**: November 23, 2025
-**Status**: Production Ready (Alpha Testing Begins Nov 24)
+**Version**: 0.8.2
+**Last Updated**: December 21, 2025
+**Status**: Stable Core (Setup/Login/Chat Ready - Focus Testing on Workflows)
 
 ---
 
@@ -12,14 +12,21 @@ These features have been tested, completed, and are ready for alpha testing:
 
 ### Core Infrastructure
 
-- ✅ **Interactive setup wizard** (`python main.py setup`)
+- ✅ **GUI Setup Wizard** (New in 0.8.2)
 
-  - System verification (Docker, Python, ports)
-  - User account creation with secure password (bcrypt-hashed)
-  - Password confirmation and validation (min 8 chars)
-  - API key validation and storage
-  - Database initialization
-  - Docker installation guidance (platform-specific)
+  - Visual web interface at http://localhost:8001/setup
+  - System health checks with visual indicators (Docker, Python, ports, database)
+  - API key configuration via web form (much easier than CLI)
+  - User account creation with real-time validation
+  - Support for OpenAI, Anthropic, and Google Gemini
+  - Alternative CLI wizard still available: `python main.py setup`
+
+- ✅ **Quality Validation** (New in 0.8.2)
+
+  - 602 automated smoke tests (<5 seconds)
+  - CI/CD quality gates with GitHub Actions
+  - 100% pass rate on critical path tests
+  - UI stability improvements across navigation and forms
 
 - ✅ **System health checker** (`python main.py status`)
 
@@ -62,12 +69,20 @@ These features have been tested, completed, and are ready for alpha testing:
 
 - ✅ **API key management**
 
-  - Multi-provider support (OpenAI, Anthropic)
+  - Multi-provider support (OpenAI, Anthropic, Google Gemini)
   - Key validation before storage
   - Zero-downtime rotation
   - Strength validation
   - Cost tracking and usage analytics
   - Rotation reminders
+  - Secure keychain storage (API keys never stored in plain text)
+
+- ⚠️ **Data Encryption Status** (Important Security Note)
+  - **API keys**: Encrypted in system keychain ✅
+  - **Passwords**: Bcrypt-hashed (12 rounds) ✅
+  - **Data at rest**: NOT yet fully encrypted ❌
+  - **Recommendation**: Use test data only, no sensitive information
+  - **Planned**: Full encryption at rest for beta (0.9.0)
 
 - ✅ **Boundary enforcement (ethics layer)**
   - Content-based harassment checking
@@ -208,6 +223,59 @@ These features have been tested, completed, and are ready for alpha testing:
   - Migration: 5 Alembic migrations (add columns, backfill owner_id, add shared_with)
   - 22/22 integration tests passing
   - ADR-044: Lightweight RBAC architecture approved
+
+---
+
+## 🗣️ Chat Capabilities (Canonical Query Status)
+
+**Reference**: [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
+
+Piper understands 25 canonical queries across 5 categories. Here's what actually works:
+
+### What Works in Chat
+
+| Query Type | Example | Status |
+|------------|---------|--------|
+| **Identity** | "What's your name?" | ✅ Works |
+| **Time/Date** | "What day is it?" | ✅ Works |
+| **Capability discovery** | "What can you do?" | ⚠️ Hardcoded list (3 items) |
+| **GitHub issues** | "Create a GitHub issue about X" | ⚠️ Works if repo configured |
+| **Project list** | "What projects am I working on?" | ⚠️ Reads from PIPER.md |
+
+### What Returns Placeholder Responses
+
+These queries route correctly but return generic/time-based advice instead of specific help:
+
+| Query Type | Example | What Happens |
+|------------|---------|--------------|
+| **Project setup** | "Help me set up my projects" | Returns time-of-day focus advice |
+| **Status queries** | "What am I working on?" | Returns "your key priorities" placeholder |
+| **Priority queries** | "What's my top priority?" | Returns "your key priorities" placeholder |
+| **Focus guidance** | "What should I focus on?" | Returns time-based generic advice |
+
+**Why**: Handlers exist but need PIPER.md configuration or aren't fully implemented yet.
+
+### What's Not Yet Implemented
+
+These queries return a graceful "not yet implemented" message (no crashes):
+
+| Query Type | Example | Related Epic |
+|------------|---------|--------------|
+| **Historical queries** | "What did we do yesterday?" | #490 FTUX-PORTFOLIO |
+| **Agenda queries** | "What's on the agenda today?" | #490 FTUX-PORTFOLIO |
+| **Pattern recognition** | "What patterns do you see?" | Future |
+| **Risk analysis** | "What risks should I be aware of?" | Future |
+| **Document analysis** | "Analyze this document" | Needs file reference |
+| **Search** | "Search for X in our documents" | Future |
+
+### Summary: 2/25 Fully Work, 10 Partial, 13 Not Implemented
+
+**For detailed testing**: See [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
+
+**Related Issues**:
+- #490 - FTUX-PORTFOLIO: Project Portfolio Onboarding
+- #491 - FTUX-CONCIERGE: Capability Concierge
+- #492 - FTUX-TESTPLAN: Canonical Query Test Matrix
 
 ---
 
@@ -390,12 +458,13 @@ This document will be updated:
 ## See Also
 
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
-- `ALPHA_AGREEMENT.md` - Legal terms and conditions
-- `VERSION_NUMBERING.md` - Understanding version 0.8.0
+- `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
+- `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
+- `VERSION_NUMBERING.md` - Understanding version 0.8.2
 - GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
 ---
 
-_Last Updated: November 23, 2025_
-_Status: Production (ready for alpha testing)_
-_Software Version: 0.8.0_
+_Last Updated: December 21, 2025_
+_Status: Stable core (setup, login, chat ready - focus testing on workflows)_
+_Software Version: 0.8.2_

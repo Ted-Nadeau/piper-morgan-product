@@ -18,9 +18,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 import structlog
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.conversation.conversation_handler import ConversationHandler
+from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent
 from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
@@ -220,18 +222,31 @@ class IntentService:
                     # For Phase 1, using test user "xian"
                     user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
 
-                    pattern_id = await self.learning_handler.capture_action(
-                        user_id=user_id,
-                        action_type=intent.category,
-                        context={"intent": intent.action, "message": message[:100]},
-                        session=db_session,
+                    # Issue #485: Check if user exists before capturing patterns
+                    # During fresh install, user may not exist yet - skip learning in that case
+                    user_result = await db_session.execute(
+                        select(User.id).where(User.id == str(user_id))
                     )
+                    user_exists = user_result.scalar_one_or_none() is not None
 
-                    self.logger.info(
-                        "Learning Handler: Action captured",
-                        pattern_id=str(pattern_id) if pattern_id else None,
-                        action_type=intent.category.value,
-                    )
+                    if not user_exists:
+                        self.logger.info(
+                            "Learning Handler: Skipping capture - user not found",
+                            user_id=str(user_id),
+                        )
+                    else:
+                        pattern_id = await self.learning_handler.capture_action(
+                            user_id=user_id,
+                            action_type=intent.category,
+                            context={"intent": intent.action, "message": message[:100]},
+                            session=db_session,
+                        )
+
+                        self.logger.info(
+                            "Learning Handler: Action captured",
+                            pattern_id=str(pattern_id) if pattern_id else None,
+                            action_type=intent.category.value,
+                        )
             except Exception as e:
                 self.logger.error(f"Learning Handler: Capture failed: {e}")
                 # Continue processing even if learning fails
@@ -704,23 +719,29 @@ class IntentService:
             )
 
         else:
-            # Generic execution handler - indicate not yet implemented
-            self.logger.warning(
-                f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action})"
+            # Issue #489: Graceful degradation for unhandled EXECUTION actions
+            # Return user-friendly message instead of 422 error
+            self.logger.info(
+                f"Unhandled EXECUTION action: {mapped_action} (original: {intent.action}) - returning graceful fallback"
             )
             return IntentProcessingResult(
-                success=False,
-                message=f"EXECUTION action '{intent.action}' is not yet implemented.",
+                success=True,  # Changed from False to prevent 422
+                message=(
+                    "I don't have that capability yet, but I'm learning! "
+                    "Try asking 'What can you do?' to see what I can help with, "
+                    "or let me know if there's something else I can assist with."
+                ),
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
                     "mapped_action": mapped_action,
                     "confidence": intent.confidence,
+                    "unhandled": True,  # Flag for analytics
                 },
                 workflow_id=workflow.id,
                 requires_clarification=False,
-                error=f"No handler for action: {intent.action}",
-                error_type="NotImplementedError",
+                error=None,  # No error - graceful degradation
+                error_type=None,
             )
 
     async def _handle_create_issue(
@@ -732,43 +753,49 @@ class IntentService:
         Creates GitHub issue using domain service.
 
         GREAT-4D Phase 1: First EXECUTION handler implementation.
+        Issue #494: Added better defaults from PIPER.md config.
         """
         try:
+            from services.configuration.piper_config_loader import piper_config_loader
             from services.domain.github_domain_service import GitHubDomainService
 
             github_service = GitHubDomainService()
+
+            # Issue #494: Load GitHub config for defaults
+            github_config = piper_config_loader.load_github_config()
 
             # Extract issue details from intent
             title = intent.context.get("title") or f"Issue: {intent.original_message[:50]}"
             description = intent.context.get("description") or intent.original_message
             repository = intent.context.get("repository") or intent.context.get("repo")
 
-            # Require repository
+            # Issue #494: Fall back to default repository from config
             if not repository:
-                return IntentProcessingResult(
-                    success=False,
-                    message="Cannot create issue: repository not specified. Please specify which repository.",
-                    intent_data={
-                        "category": intent.category.value,
-                        "action": intent.action,
-                    },
-                    workflow_id=workflow_id,
-                    requires_clarification=True,
-                    clarification_type="repository_required",
+                repository = github_config.default_repository
+                self.logger.info(
+                    f"Using default repository from config: {repository}",
+                    extra={"repository": repository, "session_id": session_id},
                 )
+
+            # Issue #494: Use default labels from config if none specified
+            labels = intent.context.get("labels")
+            if not labels and github_config.default_labels:
+                labels = github_config.default_labels
 
             # Create issue
             issue = await github_service.create_issue(
                 repo_name=repository,
                 title=title,
                 body=description,
-                labels=intent.context.get("labels", []),
+                labels=labels or [],
                 assignees=intent.context.get("assignees", []),
             )
 
+            # Issue #494: Include repository info in success message
+            repo_short = repository.split("/")[-1] if "/" in repository else repository
             return IntentProcessingResult(
                 success=True,
-                message=f"Created issue #{issue.get('number')}: {issue.get('title')}",
+                message=f"Created issue #{issue.get('number')} in {repo_short}: {issue.get('title')}",
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
@@ -776,6 +803,9 @@ class IntentService:
                     "issue_number": issue.get("number"),
                     "issue_url": issue.get("html_url"),
                     "repository": repository,
+                    "used_default_repo": not intent.context.get(
+                        "repository"
+                    ),  # Issue #494: Track if default was used
                 },
                 workflow_id=workflow_id,
                 requires_clarification=False,

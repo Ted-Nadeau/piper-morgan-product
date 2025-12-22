@@ -113,10 +113,41 @@ def _extract_user_context(request: Request) -> dict:
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Render home page"""
-    templates = _get_templates(request)
-    user_context = _extract_user_context(request)
-    return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
+    """
+    Render home page or redirect to setup/login as needed.
+
+    If user is authenticated: show home page
+    If no users exist: redirect to setup wizard
+    If setup complete but not authenticated: redirect to login
+
+    Issue #390: Smart setup/login routing
+    """
+    from sqlalchemy import text
+
+    from services.database.session_factory import AsyncSessionFactory
+
+    user_id = getattr(request.state, "user_id", None)
+
+    # If user is authenticated, show home page
+    if user_id and user_id != "user":
+        templates = _get_templates(request)
+        user_context = _extract_user_context(request)
+        return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
+
+    # Check if any users exist in database
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            result = await session.execute(text("SELECT COUNT(*) FROM users"))
+            user_count = result.scalar_one()
+
+        # If no users exist, show setup wizard
+        if user_count == 0:
+            return RedirectResponse(url="/setup", status_code=302)
+    except Exception as e:
+        logger.warning(f"Error checking user count: {e}, defaulting to login")
+
+    # Otherwise redirect to login
+    return RedirectResponse(url="/login", status_code=302)
 
 
 @router.get("/login", response_class=HTMLResponse)

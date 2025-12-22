@@ -291,3 +291,103 @@ async def db_session(db_engine):
     async with async_session_factory() as session:
         yield session
         # Session cleanup happens automatically via context manager
+
+
+# ============================================================================
+# State Transition Testing Fixtures (Issue #485)
+# ============================================================================
+# These fixtures support testing state transitions like fresh-install flows,
+# catching temporal/ordering bugs that steady-state tests miss.
+
+
+@pytest_asyncio.fixture(scope="function")
+async def fresh_database(db_session):
+    """
+    Provides a database with schema but NO user data.
+    Use for testing fresh-install flows where no users exist yet.
+
+    Unlike other fixtures, this does NOT create test users.
+    This catches temporal bugs where operations assume users exist.
+
+    Issue #485: Created to test setup wizard FK violation bug
+    """
+    from sqlalchemy import text
+
+    # Clear all user-related data to simulate fresh install
+    # Order matters due to FK constraints - clear child tables first
+    await db_session.execute(text("DELETE FROM user_api_keys"))
+    await db_session.execute(text("DELETE FROM learned_patterns"))
+    await db_session.execute(text("DELETE FROM learning_settings"))
+    await db_session.execute(text("DELETE FROM audit_logs"))
+    await db_session.execute(text("DELETE FROM users"))
+    await db_session.commit()
+
+    yield db_session
+
+
+class TransitionState:
+    """
+    Helper for testing state transitions.
+    Tracks before/after state for assertions about database changes.
+
+    Usage:
+        async def test_something(fresh_database, transition_state):
+            await transition_state.capture_before(fresh_database)
+            # ... do some operations ...
+            await transition_state.capture_after(fresh_database)
+            transition_state.assert_no_new_records('user_api_keys')
+
+    Issue #485: Created for state transition testing
+    """
+
+    def __init__(self):
+        self.before_counts = {}
+        self.after_counts = {}
+
+    async def capture_before(self, session):
+        """Capture table row counts before the operation under test."""
+        self.before_counts = await self._get_counts(session)
+
+    async def capture_after(self, session):
+        """Capture table row counts after the operation under test."""
+        self.after_counts = await self._get_counts(session)
+
+    async def _get_counts(self, session):
+        """Get row counts for key tables."""
+        from sqlalchemy import text
+
+        counts = {}
+        tables = ["users", "user_api_keys", "audit_logs", "learned_patterns"]
+        for table in tables:
+            result = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
+            counts[table] = result.scalar()
+        return counts
+
+    def assert_no_new_records(self, *tables):
+        """Assert that no new records were created in the specified tables."""
+        for table in tables:
+            before = self.before_counts.get(table, 0)
+            after = self.after_counts.get(table, 0)
+            assert before == after, (
+                f"Unexpected records created in {table}: " f"before={before}, after={after}"
+            )
+
+    def assert_new_records(self, table, count=1):
+        """Assert that exactly N new records were created in the table."""
+        before = self.before_counts.get(table, 0)
+        after = self.after_counts.get(table, 0)
+        actual_new = after - before
+        assert actual_new == count, (
+            f"Expected {count} new record(s) in {table}, "
+            f"got {actual_new} (before={before}, after={after})"
+        )
+
+
+@pytest.fixture
+def transition_state():
+    """
+    Provide a TransitionState helper for tests.
+
+    Issue #485: Created for state transition testing
+    """
+    return TransitionState()

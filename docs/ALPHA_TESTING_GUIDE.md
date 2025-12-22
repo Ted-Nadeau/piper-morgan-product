@@ -1,8 +1,8 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.0 (First Alpha Release)
-**Last Updated**: October 24, 2025
-**For**: Alpha Wave 2 Testers
+**Version**: 0.8.2
+**Last Updated**: December 11, 2025
+**For**: Alpha Testers
 
 ---
 
@@ -11,7 +11,7 @@
 **Required Software:**
 
 - [ ] Git installed and configured
-- [ ] Python 3.9 or higher
+- [ ] Python 3.11 or higher
 - [ ] Docker installed and running
 - [ ] A code editor (VS Code recommended)
 - [ ] Terminal/command line access
@@ -66,13 +66,41 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
 
+## What's New in 0.8.2
+
+**GUI Setup Wizard** - Initial setup now uses a visual web interface instead of command-line prompts. The wizard guides you through system checks, API key configuration, and user account creation with a clearer, more user-friendly interface.
+
+**Stable Core Features** - Setup, login, and the chat interface are stable and fully functional in 0.8.2. **Focus your testing on workflows**: lists, todos, projects, file management, and integrations. These are the areas that need the most attention now.
+
+**Quality Improvements** - 602 automated smoke tests now validate core functionality. These tests run in under 5 seconds and serve as CI/CD quality gates. UI stability has improved with fixes across navigation, forms, and visual consistency.
+
+**Multi-Provider LLM Support** - Now supports OpenAI (GPT-4), Anthropic (Claude), and Google Gemini. Configure any combination during setup.
+
+---
+
 ## Windows Alpha Tester Setup
 
-**For Windows testers, we recommend using WSL2 (Windows Subsystem for Linux).**
+**Best Option: Use the Automated Setup Script**
 
-### Quick Start: Windows with WSL2
+We've created a Windows batch file that automates the entire setup process:
 
-WSL2 provides the smoothest setup experience on Windows:
+```cmd
+git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+.\scripts\alpha-setup.bat
+```
+
+The script will:
+- Check for Python 3.11/3.12 and Docker
+- Create a virtual environment
+- Install all dependencies
+- Generate a secure JWT key
+- Start Docker containers
+- Launch the setup wizard at http://localhost:8001/setup
+
+### Alternative: WSL2 (Windows Subsystem for Linux)
+
+If you prefer a Linux-like environment on Windows, WSL2 provides a smooth setup experience:
 
 ```powershell
 # 1. Run as Administrator
@@ -84,21 +112,16 @@ wsl --install -d Ubuntu-22.04
 sudo apt update && sudo apt upgrade -y
 sudo apt install python3.11 python3.11-venv git
 
-# 3. Clone and setup
-git clone https://github.com/mediajunkie/piper-morgan-product.git
+# 3. Clone and setup (uses bash script - faster)
+git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
-python3.11 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# 4. Run setup wizard (same as below)
-python main.py setup
+./scripts/alpha-setup.sh
 ```
 
-### Alternative: Native Windows Setup
+### Manual Setup (If You Prefer Full Control)
 
-If you prefer not to use WSL2, follow the guided setup below but use:
-- PowerShell instead of bash
+If you prefer not to use automated scripts, follow the guided setup below. On Windows, use:
+- PowerShell or Command Prompt
 - `venv\Scripts\Activate.ps1` to activate (Windows-style path)
 - See [Windows Setup Guide](installation/windows-setup-guide.md) for troubleshooting
 
@@ -111,13 +134,20 @@ If you prefer not to use WSL2, follow the guided setup below but use:
      -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
    ```
 
-2. **Python not found**: Reinstall from https://www.python.org/downloads and check "Add Python to PATH"
+2. **Python not found**:
+   - Reinstall from https://www.python.org/downloads
+   - **IMPORTANT**: Check "Add Python to PATH" during installation
+   - Restart Command Prompt/PowerShell after installing
 
 3. **Path errors in commands**: Use backslashes (Windows-native) or quotes with forward slashes:
    ```powershell
    python main.py setup              # Works on all platforms
    python -c "import sys; print(sys.version)"  # Also works
    ```
+
+4. **Docker Desktop not running**: The setup script will fail if Docker Desktop isn't running
+   - Start Docker Desktop before running the setup script
+   - Wait for it to fully initialize (check system tray)
 
 ---
 
@@ -146,52 +176,33 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Step 4: Run Interactive Setup Wizard
+### Step 4: Start Server for First-Time Setup
 
-**This is the key difference from manual setup!**
+**New in 0.8.2**: Setup now uses a visual web interface by default.
+
+```bash
+python main.py
+# → Opens http://localhost:8001/setup (GUI setup wizard)
+```
+
+The GUI setup wizard will automatically open in your browser and guide you through:
+
+- ✅ System health checks (Docker, Python, Port, Database)
+- ✅ API key configuration (OpenAI, Anthropic, Gemini)
+- ✅ User account creation (username, email, password)
+- ✅ Setup verification and confirmation
+
+**See the Setup Wizard Walkthrough section below** for detailed screenshots and step-by-step guidance.
+
+#### Alternative: Command-Line Setup
+
+If you prefer the original command-line interface:
 
 ```bash
 python main.py setup
 ```
 
-The setup wizard will:
-
-- ✅ Check your system (Docker, Python 3.9+, port 8001, database)
-- ✅ Guide you through creating your user account (username, email, password)
-- ✅ Set up secure password (min 8 chars, bcrypt-hashed)
-- ✅ Collect and validate your API keys
-- ✅ Initialize the database and services
-- ✅ Verify everything is working
-
-**Expected output:**
-
-```
-==================================================
-Welcome to Piper Morgan Alpha!
-==================================================
-
-Let's get you set up (takes about 5 minutes)
-
-1. System Check
-   ✓ Docker installed
-   ✓ Python 3.9+
-   ✓ Port 8001 available
-   ✓ Database accessible
-
-2. User Account Setup
-   Username: [you'll enter this]
-   Email: [you'll enter this]
-   Password: [secure, hidden input - min 8 chars]
-   Confirm password: [must match]
-   ✓ Password set securely
-   ✓ Account created
-
-3. API Key Configuration
-   [Guided prompts for OpenAI/Anthropic keys]
-   ✓ API keys validated and stored
-
-✅ Setup Complete!
-```
+This will run the CLI setup wizard with prompts in your terminal. Both methods configure the same settings - use whichever you're comfortable with.
 
 ### Step 5: Configure Your Preferences
 
@@ -255,7 +266,79 @@ After login, you'll see the Piper Morgan chat interface.
 
 ---
 
+## Setup Wizard Walkthrough (New in 0.8.2)
+
+The GUI setup wizard provides a visual, step-by-step interface for configuration. Here's what to expect at each stage:
+
+### Step 1: Welcome Screen
+
+![Setup Wizard - Welcome](assets/images/alpha-onboarding/setup-wizard-welcome.png)
+
+The welcome screen introduces the setup process and explains what will be configured. Click "Get Started" to begin.
+
+### Step 2: System Health Check
+
+![Setup Wizard - Health Check](assets/images/alpha-onboarding/setup-wizard-health-check.png)
+
+Automatic validation of your system:
+- ✓ Docker installed and running
+- ✓ Python version correct (3.11 or 3.12)
+- ✓ Port 8001 available
+- ✓ Database accessible
+
+If any checks fail, the wizard provides specific guidance on how to fix them.
+
+### Step 3: API Key Configuration
+
+![Setup Wizard - API Keys](assets/images/alpha-onboarding/setup-wizard-api-keys.png)
+
+Configure your LLM API keys through a web form interface. This is **much easier** than the command-line method - you can see what you're typing, correct mistakes easily, and get immediate validation feedback.
+
+Supports:
+- OpenAI (GPT-4, GPT-3.5)
+- Anthropic (Claude)
+- Google Gemini
+
+You can configure one, two, or all three providers. At least one is required.
+
+### Step 4: User Account Creation
+
+![Setup Wizard - User Creation](assets/images/alpha-onboarding/setup-wizard-user-creation.png)
+
+Create your admin account:
+- Username (alphanumeric, unique)
+- Email address (valid format required)
+- Secure password (min 8 chars, bcrypt-hashed)
+- Password confirmation with validation
+
+The form provides real-time feedback on password strength and format requirements.
+
+### Step 5: Setup Complete
+
+![Setup Wizard - Success](assets/images/alpha-onboarding/setup-wizard-success.png)
+
+Setup confirmation screen with:
+- Summary of what was configured
+- Next steps and quick links
+- "Start Using Piper" button to proceed to login
+
+Click the button to go to the login page and start using Piper Morgan.
+
+---
+
 ## Test Scenarios to Try
+
+**Note for 0.8.2 Testers**: Setup, login, and the chat interface are stable and fully functional. **Focus your testing on the following workflows and features** - these areas need the most attention:
+
+### Priority Testing Areas
+
+1. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
+2. **File Handling** - Upload, download, analysis, edge cases
+3. **Integrations** - Slack, GitHub, Notion connections and functionality
+4. **Permission System** - Sharing resources, role-based access, edge cases
+5. **Learning System** - Preference detection, personalization behavior
+
+### Basic Functionality Tests
 
 Start with these simple tests to verify everything works:
 
@@ -269,7 +352,7 @@ Start with these simple tests to verify everything works:
 
 ---
 
-## Exploring Piper's New Features (Nov 22-23, 2025)
+## Exploring Piper's Features
 
 ### Lists, Todos, and Projects Management
 
@@ -380,9 +463,16 @@ Start with these simple tests to verify everything works:
 
 ### Setup Wizard Issues
 
+**GUI setup wizard not loading?**
+
+- Make sure you ran `python main.py` (not `python main.py setup`)
+- Check that http://localhost:8001/setup opens in your browser
+- If browser didn't auto-open, manually navigate to http://localhost:8001/setup
+- Alternative: Use CLI setup with `python main.py setup`
+
 **"Docker not installed" or "Docker not running"**
 
-The setup wizard will guide you through Docker installation with platform-specific instructions. If you encounter issues:
+The setup wizard (GUI or CLI) will guide you through Docker installation with platform-specific instructions. If you encounter issues:
 
 - Make sure Docker Desktop is running (look for whale icon in system tray/menu bar)
 - Restart Docker Desktop if it seems stuck
@@ -412,8 +502,9 @@ The setup wizard will guide you through Docker installation with platform-specif
 
 **"No LLM provider configured"**
 
-- Re-run setup wizard: `python main.py setup`
-- Verify API keys are valid in your provider dashboard
+- Re-run GUI setup wizard: Navigate to http://localhost:8001/setup
+- Or use CLI setup: `python main.py setup`
+- Verify API keys are valid in your provider dashboard (OpenAI, Anthropic, Google)
 - Check status: `python main.py status`
 
 **High API costs**
@@ -442,37 +533,40 @@ The setup wizard will guide you through Docker installation with platform-specif
 - Check file isn't corrupted or password-protected
 - Verify you're logged in (file upload requires authentication)
 
-### New Features Troubleshooting (Nov 22-23, 2025)
+### Feature-Specific Troubleshooting
 
-**Can't create lists/todos?**
-- Issue #379-6, #379-7 fixed Nov 23, 2025
-- Make sure you're on latest commit: `git pull origin main`
+**Can't create lists/todos/projects?**
+- Make sure you're on the `production` branch: `git status`
+- Update to latest: `git pull origin production`
 - Refresh browser page
 - Check browser console for errors (F12)
+- Verify you're logged in (authentication required for CRUD operations)
 
-**Files page shows "coming soon"?**
-- Files UI built Nov 23, 2025 (Issue #379-8)
-- Update to latest: `git pull origin main`
+**Files page not loading or shows errors?**
+- Update to latest: `git pull origin production`
 - Restart server: `python main.py`
 - Clear browser cache if needed
+- Check file size limit: 10MB maximum
+- Verify supported formats: PDF, DOCX, TXT, MD, JSON
 
-**Standup button hangs or does nothing?**
-- Issue #379-4 fixed Nov 23, 2025
-- Proxy endpoint was calling itself, now fixed
-- Update to latest commit
+**Standup generation hangs or fails?**
 - Should complete in 2-3 seconds
+- If hanging, check API key configuration: `python main.py status`
+- Verify you have activity data (lists, todos, files created)
+- Try refreshing the page and generating again
 
-**Can't log out?**
-- Issue #379-14 fixed Nov 23, 2025
-- Logout now in user menu (top right)
+**Logout not working?**
+- Logout is in the user menu (top right corner)
 - Click user menu → "Logout"
-- If still broken, check you're on latest commit
+- Verify redirect to login page after logout
+- If session persists, clear browser cookies
 
 **Permission sharing not working?**
 - Requires multi-user setup (2+ user accounts)
 - Make sure other user exists in database
 - Try conversational command: "share my [resource] with [email] as editor"
-- Check that SEC-RBAC Phase 1 is active (run `python main.py status`)
+- Verify resource ownership (you must own the resource to share it)
+- Check that SEC-RBAC is active: `python main.py status`
 
 ---
 
@@ -513,13 +607,14 @@ SEVERITY: [blocker/major/minor]
 
 - We collect anonymous usage analytics to improve the product
 - Error logs may be transmitted (no personal data included)
-- Your LLM API keys are stored locally in system keychain, never transmitted
+- Your LLM API keys are stored securely in system keychain, never transmitted
 - Preference data is stored locally in your database
 - You can opt out of analytics in settings
 - Setup wizard completion statistics help us improve onboarding
-- SEC-RBAC Phase 1 ensures owner-based access control (Nov 21-23, 2025)
+- SEC-RBAC Phase 1 ensures owner-based access control
 - Shared resources require explicit permission grants
 - Your files, lists, todos, and projects are private by default
+- **Note**: Data is not yet fully encrypted at rest (see `ALPHA_KNOWN_ISSUES.md` for details)
 
 ---
 
@@ -538,23 +633,22 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.0) with a guided setup experience. The wizard handles most complexity, but you're still testing early prototype software.
+Remember: This is alpha software (version 0.8.2). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for 2026.
 
-Thank you for being an early adopter and helping us perfect the onboarding experience! 🚀
+Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
 ## See Also
 
 - `VERSION_NUMBERING.md` - Understanding Piper Morgan's version scheme
-- `ALPHA_AGREEMENT.md` - Legal terms and conditions
+- `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
 - `ALPHA_KNOWN_ISSUES.md` - Current bugs and limitations
-- `ALPHA_QUICKSTART.md` - Minimal 2-minute setup guide
+- `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
 
 ---
 
-_Last updated: November 23, 2025_
-_Software version: 0.8.0_
-_Guide version: 2.2 (Nov 22-23 Features + Testing Scenarios)_
+_Last updated: December 11, 2025_
+_Software version: 0.8.2_

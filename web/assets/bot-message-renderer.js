@@ -99,8 +99,14 @@ function renderSuggestions(suggestions) {
  * @returns {string} - Rendered HTML
  */
 function renderSuggestionCard(suggestion, index) {
-    const confidence = Math.round(suggestion.confidence * 100);
-    const patternType = suggestion.pattern_type.replace('_', ' ').toLowerCase();
+    // Issue #485: Defensive null checks for malformed responses
+    if (!suggestion || typeof suggestion !== 'object') {
+        console.warn('renderSuggestionCard: Invalid suggestion object', suggestion);
+        return '';
+    }
+
+    const confidence = Math.round((suggestion.confidence || 0) * 100);
+    const patternType = (suggestion.pattern_type || 'unknown').replace('_', ' ').toLowerCase();
     const usageText = `Used ${suggestion.usage_count} time${suggestion.usage_count === 1 ? '' : 's'}`;
 
     // Phase 4: Check for auto-triggered flag

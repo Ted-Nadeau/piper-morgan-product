@@ -298,3 +298,237 @@ class TestGetDynamicCapabilities:
         assert len(result["core"]) == 3
         assert len(result["integrations"]) == 0
         assert len(result["capabilities_list"]) == 3
+
+
+class TestLastActivityDetection:
+    """Test suite for _detect_last_activity_request() method (Issue #504)"""
+
+    def test_detects_last_time_worked_on_pattern(self, canonical_handlers):
+        """Test detection of 'last time we worked on X' pattern."""
+        # Arrange
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="When was the last time we worked on project alpha?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_last_activity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_last_activity_request(intent)
+
+        # Assert
+        assert result == "project alpha"
+
+    def test_detects_when_did_we_work_on_pattern(self, canonical_handlers):
+        """Test detection of 'when did we work on X' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="When did we work on HealthTrack?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_last_activity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_last_activity_request(intent)
+
+        # Assert (note: detection returns lowercase from regex)
+        assert result == "healthtrack"
+
+    def test_detects_last_worked_on_pattern(self, canonical_handlers):
+        """Test detection of 'last worked on X' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="When was the last worked on the backend?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_last_activity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_last_activity_request(intent)
+
+        # Assert
+        assert result == "the backend"
+
+    def test_detects_last_touched_pattern(self, canonical_handlers):
+        """Test detection of 'last touched X' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="When was the last time we touched the API?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_last_activity",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_last_activity_request(intent)
+
+        # Assert (note: detection returns lowercase from regex)
+        assert result == "the api"
+
+    def test_returns_none_for_non_matching_query(self, canonical_handlers):
+        """Test that non-matching queries return None."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What day is it?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_current_time",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_last_activity_request(intent)
+
+        # Assert
+        assert result is None
+
+    def test_returns_none_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return None."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_time",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_last_activity_request(intent)
+
+        # Assert
+        assert result is None
+
+
+class TestLastActivityFormatting:
+    """Test suite for last activity formatting methods (Issue #504)"""
+
+    def test_format_embedded_with_activity_today(self, canonical_handlers):
+        """Test EMBEDDED format with activity from today."""
+        from datetime import datetime
+
+        # Arrange
+        activity = {
+            "type": "commit",
+            "date": datetime.now().isoformat(),
+            "title": "Fix bug in handler",
+        }
+
+        # Act
+        result = canonical_handlers._format_last_activity_embedded("TestProject", activity)
+
+        # Assert
+        assert "TestProject: today" == result
+
+    def test_format_embedded_with_activity_yesterday(self, canonical_handlers):
+        """Test EMBEDDED format with activity from yesterday."""
+        from datetime import datetime, timedelta
+
+        # Arrange
+        yesterday = datetime.now() - timedelta(days=1)
+        activity = {
+            "type": "commit",
+            "date": yesterday.isoformat(),
+            "title": "Update documentation",
+        }
+
+        # Act
+        result = canonical_handlers._format_last_activity_embedded("TestProject", activity)
+
+        # Assert
+        assert "TestProject: yesterday" == result
+
+    def test_format_embedded_with_activity_days_ago(self, canonical_handlers):
+        """Test EMBEDDED format with activity from several days ago."""
+        from datetime import datetime, timedelta
+
+        # Arrange
+        five_days_ago = datetime.now() - timedelta(days=5)
+        activity = {"type": "commit", "date": five_days_ago.isoformat(), "title": "Refactor code"}
+
+        # Act
+        result = canonical_handlers._format_last_activity_embedded("TestProject", activity)
+
+        # Assert
+        assert "TestProject: 5 days ago" == result
+
+    def test_format_embedded_without_activity(self, canonical_handlers):
+        """Test EMBEDDED format with no activity data."""
+        # Act
+        result = canonical_handlers._format_last_activity_embedded("TestProject", None)
+
+        # Assert
+        assert result == "TestProject: no recent activity"
+
+    def test_format_standard_with_activity(self, canonical_handlers):
+        """Test STANDARD format with activity data."""
+        from datetime import datetime
+
+        # Arrange
+        activity = {
+            "type": "pull_request",
+            "date": "2025-12-21T10:30:00Z",
+            "title": "Add new feature for user authentication",
+        }
+
+        # Act
+        result = canonical_handlers._format_last_activity_standard("TestProject", activity)
+
+        # Assert
+        assert "Last activity on **TestProject**" in result
+        assert "pull_request" in result
+        assert "December 21, 2025" in result
+        assert "Add new feature for user authentication" in result
+
+    def test_format_standard_without_activity(self, canonical_handlers):
+        """Test STANDARD format with no activity data."""
+        # Act
+        result = canonical_handlers._format_last_activity_standard("TestProject", None)
+
+        # Assert
+        assert "I don't have recent activity data for TestProject" in result
+        assert "GitHub integration may need to be configured" in result
+
+    def test_format_granular_with_activity(self, canonical_handlers):
+        """Test GRANULAR format with activity data."""
+        from datetime import datetime
+
+        # Arrange
+        activity = {
+            "type": "issue",
+            "date": "2025-12-20T15:45:00Z",
+            "title": "Bug: Application crashes on startup",
+        }
+
+        # Act
+        result = canonical_handlers._format_last_activity_granular("TestProject", activity)
+
+        # Assert
+        assert "**Last Activity on TestProject**" in result
+        assert "**Date**:" in result
+        assert "**Time Since**:" in result
+        assert "**Type**: issue" in result
+        assert "**Description**: Bug: Application crashes on startup" in result
+
+    def test_format_granular_without_activity(self, canonical_handlers):
+        """Test GRANULAR format with no activity data."""
+        # Act
+        result = canonical_handlers._format_last_activity_granular("TestProject", None)
+
+        # Assert
+        assert "No recent activity found for **TestProject**" in result
+        assert "No commits, issues, or PRs in the last 30 days" in result
+        assert "GitHub integration not configured" in result

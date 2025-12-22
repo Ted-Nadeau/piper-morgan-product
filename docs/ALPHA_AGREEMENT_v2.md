@@ -1,8 +1,8 @@
 # ALPHA TESTING AGREEMENT v2.0
 
-**Effective Date: October 24, 2025**
+**Effective Date: December 11, 2025**
 **Software: Piper Morgan AI PM Assistant**
-**Version: 0.8.0-alpha**
+**Version: 0.8.2-alpha**
 
 ## 1. Acceptance of Terms
 
@@ -12,12 +12,13 @@ By cloning, downloading, installing, or using this software, you acknowledge tha
 
 You acknowledge that:
 
-- This is pre-release, experimental software (version 0.8.0-alpha)
+- This is pre-release, experimental software (version 0.8.2-alpha)
 - It contains known and unknown bugs, errors, and incomplete features
 - It may crash, lose data, or behave unpredictably
 - Features may be added, removed, or changed without notice
 - Documentation may be incomplete or incorrect
-- The interactive setup wizard and preference system are part of the alpha test
+- The GUI setup wizard, preference system, and workflow features are part of the alpha test
+- **Data is not yet fully encrypted at rest** (use test data only, no sensitive information)
 
 ## 3. Acceptable Use
 
@@ -89,11 +90,13 @@ The software may collect the following data:
 
 **Your API keys and personal data:**
 
-- Passwords are hashed with bcrypt (12 rounds) and stored locally
-- API keys are stored locally in your system keychain and never transmitted
+- Passwords are hashed with bcrypt (12 rounds) and stored locally ✅
+- API keys are encrypted in your system keychain and never transmitted ✅
 - User preferences are stored locally in your database
 - Resources (Lists, Todos, Projects, Files) use owner-based access control
 - Sharing permissions are stored locally with explicit grants
+- **Data at rest is NOT yet fully encrypted** ❌ (planned for beta 0.9.0)
+- **IMPORTANT**: Use test data only. Do NOT process sensitive, confidential, or personal information
 - You may opt out of analytics collection in settings
 - No personal or sensitive data is transmitted to our servers
 
@@ -145,6 +148,6 @@ GitHub: https://github.com/mediajunkie/piper-morgan-product
 
 ---
 
-_Last Updated: November 23, 2025_
-_Version: 2.1_
-_Software Version: 0.8.0-alpha_
+_Last Updated: December 11, 2025_
+_Version: 2.2_
+_Software Version: 0.8.2-alpha_

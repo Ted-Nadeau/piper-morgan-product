@@ -45,8 +45,9 @@ class UserAPIKeyService:
         provider: str,
         api_key: str,
         validate: bool = True,
+        store: bool = True,
         audit_context: Optional[Dict[str, Any]] = None,
-    ) -> UserAPIKey:
+    ) -> Optional[UserAPIKey]:
         """
         Store API key for user in keychain with database metadata.
 
@@ -56,15 +57,17 @@ class UserAPIKeyService:
             provider: Service provider (openai, anthropic, github, etc)
             api_key: API key to store
             validate: Whether to validate key with provider API
+            store: Whether to actually store the key (False for validation-only)
             audit_context: Optional request context for audit logging
 
         Returns:
-            UserAPIKey database record
+            UserAPIKey database record, or None if store=False
 
         Raises:
             ValueError: If validation fails or key invalid
 
         Issue #249: Added audit logging
+        Issue #485: Added store parameter for validation-only mode
         """
         logger.info(f"Storing API key for user {user_id}, provider {provider}")
 
@@ -119,9 +122,23 @@ class UserAPIKeyService:
                 is_valid = await self._llm_config.validate_api_key(provider, api_key)
                 if not is_valid:
                     logger.warning(f"Provider API validation failed for {provider}")
+                    # Issue #485: For validation-only mode, raise error on invalid key
+                    if not store:
+                        raise ValueError(f"API key validation failed for {provider}")
                 logger.info(f"Provider API validation result for {provider}: {is_valid}")
+            except ValueError:
+                # Re-raise validation errors
+                raise
             except Exception as e:
                 logger.warning(f"Provider API validation error for {provider}: {e}")
+                # Issue #485: For validation-only mode, raise error on validation failure
+                if not store:
+                    raise ValueError(f"API key validation error for {provider}: {e}")
+
+        # Issue #485: If store=False, return early after validation (no DB writes)
+        if not store:
+            logger.info(f"Validation-only mode: key validated for {provider}, not storing")
+            return None
 
         # Generate keychain reference
         key_reference = self._generate_key_reference(user_id, provider)

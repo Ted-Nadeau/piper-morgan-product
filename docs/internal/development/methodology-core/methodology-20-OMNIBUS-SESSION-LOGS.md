@@ -223,6 +223,65 @@ Example: `2025-09-16-omnibus-log.md`
 - **Milestone Completions**: Major features or fixes
 - **Retrospective Periods**: Monthly/quarterly reviews
 
+## Days Off (No Work Scheduled)
+
+### Recognition & Documentation
+
+**Scenario**: PM (xian) may explicitly clarify that a particular date was scheduled as a day off with no agents working. This is a valid state distinct from "missing logs" or incomplete documentation.
+
+### Process for Agents Creating Omnibus Logs
+
+**If PM pre-clarifies a day off:**
+- Create minimal omnibus marker file following the format below
+- No investigation needed - trusted clarification from PM
+- File serves as explicit record that day was intentionally unworked
+
+**If you discover a gap in logs (no source logs found, no work logs created):**
+- **Do NOT assume it was a day off**
+- **Ask PM to clarify**: "I found no logs for [DATE]. Did agents work that day, or was it a scheduled day off?"
+- Wait for PM clarification before creating anything
+- If PM confirms day off → create marker file
+- If PM indicates work happened → investigate further or ask PM for source logs
+
+### Format for Day-Off Omnibus
+
+Create a minimal omnibus file (YYYY-MM-DD-omnibus-log.md) with this structure:
+
+```markdown
+# Omnibus Log: [DAY], [DATE]
+
+**Date**: [YYYY-MM-DD]
+**Status**: Day of Rest - No Scheduled Work
+
+Intentional day off. No agents worked, no development sessions, no operations.
+
+---
+
+*No detailed timeline or themes for this date.*
+```
+
+**Example**: `2025-12-06-omnibus-log.md`
+```markdown
+# Omnibus Log: Saturday, December 6, 2025
+
+**Date**: Saturday, December 6, 2025
+**Status**: Day of Rest - No Scheduled Work
+
+Intentional day off. No agents worked, no development sessions, no operations.
+
+---
+
+*No detailed timeline or themes for this date.*
+```
+
+### Key Principles
+
+- **Distinguish from missing logs**: Day-off markers prove intentional non-work, not incomplete documentation
+- **Ask before assuming**: Gap in logs ≠ day off. Always confirm with PM.
+- **Minimal overhead**: Day-off omnibus files are 5-10 lines only
+- **Preserve naming convention**: Follows standard omnibus naming so discoverable in omnibus-logs/
+- **Trust PM clarification**: If PM says "day off", create marker. If PM says "work happened", find/create logs.
+
 ## Validation Checklist
 Before finalizing an omnibus log:
 - [ ] All parallel sessions identified and read completely

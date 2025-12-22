@@ -1,9 +1,9 @@
 # Alpha Tester Pre-Qualification Email Template
 
-**Version**: 2.0
-**For**: Piper Morgan 0.8.0 Alpha Release
+**Version**: 2.1
+**For**: Piper Morgan 0.8.2 Alpha Release
 **Purpose**: Internal template for PM to send to potential alpha testers
-**Last Updated**: October 24, 2025
+**Last Updated**: December 11, 2025
 
 ---
 
@@ -22,44 +22,49 @@ Hey [Name],
 
 You mentioned interest in testing Piper Morgan - excited to have you as an early alpha tester!
 
-Before we schedule setup, let's make sure you have everything needed. The good news: we've built an interactive setup wizard that handles most of the complexity for you.
+Before we schedule setup, let's make sure you have everything needed. The good news: we've built a visual setup wizard that makes initial configuration much easier.
 
 **PREREQUISITES CHECKLIST**
 
 Technical Requirements:
-□ Comfortable using command line/terminal
-□ Python 3.9+ installed on your machine
+□ Comfortable using command line/terminal (for initial clone and install)
+□ Python 3.11 or 3.12 installed on your machine
 □ Docker installed and running
 □ Git installed and working
 □ About 1GB free disk space
-□ 45-60 minutes available for guided setup (includes Docker installation if needed)
+□ 30-45 minutes available for guided setup (includes Docker installation if needed)
 
 Accounts & API Keys You'll Need:
 □ GitHub account
 □ At least one LLM API key:
   - OpenAI (GPT-4 preferred) -OR-
-  - Anthropic (Claude)
+  - Anthropic (Claude) -OR-
+  - Google Gemini
+  (You can configure multiple providers)
 □ Budget $5-20 for API testing costs
 □ Notion account (optional but recommended)
 
-**WHAT MAKES THIS EASY**
+**WHAT MAKES THIS EASY (New in 0.8.2)**
 
-Our setup wizard (`python main.py setup`) will:
-- Check your system automatically (Docker, Python, ports)
-- Guide you through Docker installation if needed (with platform-specific instructions)
-- Guide you through account creation
+Our GUI setup wizard (`python main.py` → opens in browser) will:
+- Check your system automatically (Docker, Python, ports, database)
+- Show results visually with clear status indicators
+- Guide you through API key configuration in a web form (much easier than CLI)
+- Guide you through account creation with real-time validation
 - Validate your API keys before storing them
 - Set up the database and services for you
-- Take about 15-20 minutes total (or 45-60 minutes if Docker installation is needed)
+- Take about 10-15 minutes total (or 30-45 minutes if Docker installation is needed)
 
-After setup, you'll configure your preferences (`python main.py preferences`) to personalize how Piper works for you.
+The visual interface makes API key management much easier - you can see what you're typing and get immediate feedback.
+
+After setup, you can optionally configure your preferences (`python main.py preferences`) to personalize how Piper works for you.
 
 **CRITICAL DISCLAIMERS**
 
-This is ALPHA software (version 0.8.0). That means:
+This is ALPHA software (version 0.8.2). That means:
 - It will have bugs and rough edges
 - It might crash or lose data
-- Security is not fully audited
+- Security is not fully audited (data not yet encrypted at rest)
 - You're responsible for your API charges
 - Not for mission-critical work
 - Not for employer machines (without permission)
@@ -70,7 +75,7 @@ Week 1: Guided setup call (30 mins) + initial testing
 Week 2-3: You test, I fix bugs you find
 Week 4+: Quick weekly check-ins
 
-The goal is finding PM workflows that delight you, despite the rough edges.
+Setup, login, and the chat interface are stable in 0.8.2. **Focus your testing on workflows**: lists, todos, projects, file management, and integrations. The goal is finding PM workflows that delight you, despite the rough edges.
 
 **STILL INTERESTED?**
 
@@ -110,13 +115,13 @@ Perfect! You're confirmed for Piper Morgan alpha access.
 - Patience for alpha software quirks
 
 **SETUP PREVIEW:**
-We'll run `python main.py setup` together, which handles:
-- System verification (Docker, Python, database)
-- Account creation
-- API key configuration and validation
+We'll run `python main.py` together, which opens the GUI setup wizard in your browser. It handles:
+- System verification (Docker, Python, database) with visual indicators
+- API key configuration via web form (much easier than CLI)
+- Account creation with real-time validation
 - Service initialization
 
-Then `python main.py preferences` to personalize your experience.
+The visual interface makes setup straightforward. Optionally, you can run `python main.py preferences` to personalize your experience.
 
 Looking forward to your feedback! You're helping shape the future of AI-assisted PM work.
 
@@ -149,10 +154,11 @@ Attachments:
 Before sending:
 
 - [ ] Personalize name and tester number
-- [ ] Verify all technical claims are current for version 0.8.0
+- [ ] Verify all technical claims are current for version 0.8.2
 - [ ] Attach current documentation (from docs/)
 - [ ] Schedule setup call before sending confirmation
 - [ ] Update internal tracking (who's in alpha cohort)
+- [ ] Mention GUI setup wizard improvement (new in 0.8.2)
 
 ---
 
@@ -162,8 +168,8 @@ Before sending:
 
 **Documentation References**: Always reference official docs by filename:
 - `ALPHA_TESTING_GUIDE.md` (not "the guide")
-- `ALPHA_AGREEMENT.md` (not "the legal doc")
-- Version 0.8.0 (not "alpha" or "latest")
+- `ALPHA_AGREEMENT_v2.md` (not "the legal doc")
+- Version 0.8.2 (not "alpha" or "latest")
 
 **Support Commitment**: Only promise what you can deliver. Small cohort (2-5) is manageable for close support.
 
@@ -174,11 +180,12 @@ Before sending:
 ## See Also
 
 - `../../ALPHA_TESTING_GUIDE.md` - Reference for what testers will receive
-- `../../ALPHA_AGREEMENT.md` - Legal terms testers will see
+- `../../ALPHA_AGREEMENT_v2.md` - Legal terms testers will see
 - `../../VERSION_NUMBERING.md` - Version scheme documentation
+- `../../ALPHA_QUICKSTART.md` - Quick reference guide for testers
 
 ---
 
-_Template Version: 2.0_
-_For Software Version: 0.8.0_
-_Last Updated: October 24, 2025_
+_Template Version: 2.1_
+_For Software Version: 0.8.2_
+_Last Updated: December 11, 2025_

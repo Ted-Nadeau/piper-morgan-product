@@ -49,6 +49,20 @@ class PreClassifier:
         r"\btell me about yourself\b",
         r"\bintroduce yourself\b",
         r"\bwhat are your capabilities\b",
+        # Issue #487: Added capability discovery patterns for alpha onboarding
+        r"\bwhat services\b",
+        r"\bwhat do you offer\b",
+        r"\bwhat features\b",
+        r"\bwhat can you help\b",
+        r"\bshow me your capabilities\b",
+        r"\bwhat can you do\b",
+        r"\bmenu of services\b",
+        r"\blist.*capabilities\b",
+        r"\byour capabilities\b",
+        # Issue #487 follow-up: Additional patterns from manual testing
+        r"\bcapability menu\b",
+        r"\bcapabilities menu\b",
+        r"\bshow.*menu\b",
     ]
 
     TEMPORAL_PATTERNS = [
@@ -248,6 +262,20 @@ class PreClassifier:
         r"\bwhat should (i|we) do (about|with)\b",  # Advice-seeking questions
         r"\badvise (me|us) on\b",  # Direct advice requests
         r"\bwhat('?s| is) the process for\b",  # Process/how-to questions
+        # Issue #487: Added setup/configuration patterns for alpha onboarding
+        r"\bhelp.*setup\b",
+        r"\bhelp.*configure\b",
+        r"\bsetup.*projects?\b",  # matches "setup project" or "setup projects"
+        r"\bconfigure.*projects?\b",  # matches "configure project" or "configure projects"
+        r"\bhow do i.*setup\b",
+        r"\bhow do i.*configure\b",
+        r"\bget started\b",
+        r"\bgetting started\b",
+        # Issue #487 follow-up: "set up" with space (common user spelling)
+        r"\bhelp.*set up\b",
+        r"\bset up.*projects?\b",
+        r"\bhow do i.*set up\b",
+        r"\bset up.*portfolio\b",
     ]
 
     # File reference patterns (with variations and typo tolerance)
@@ -357,6 +385,16 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
+        # Issue #487: Check GUIDANCE before STATUS to catch "help setup my projects"
+        # before "my projects" triggers STATUS. More specific patterns should match first.
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.GUIDANCE_PATTERNS):
+            return Intent(
+                category=IntentCategory.GUIDANCE,
+                action="get_contextual_guidance",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.STATUS_PATTERNS):
             return Intent(
                 category=IntentCategory.STATUS,
@@ -369,14 +407,6 @@ class PreClassifier:
             return Intent(
                 category=IntentCategory.PRIORITY,
                 action="get_top_priority",
-                confidence=1.0,
-                context={"original_message": message},
-            )
-
-        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.GUIDANCE_PATTERNS):
-            return Intent(
-                category=IntentCategory.GUIDANCE,
-                action="get_contextual_guidance",
                 confidence=1.0,
                 context={"original_message": message},
             )

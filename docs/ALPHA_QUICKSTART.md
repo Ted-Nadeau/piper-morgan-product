@@ -1,9 +1,9 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.0
+**Version**: 0.8.2
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
-**Time**: 2-5 minutes (assumes everything works)
+**Time**: 2-5 minutes setup, plus initial configuration
 
 > 📍 **Branch Info**: This quickstart uses the `production` branch, which receives stable alpha releases. The `main` branch is for active development and may have bugs.
 
@@ -11,15 +11,57 @@
 
 ---
 
-## Prerequisites
+## What's New in 0.8.2
 
-- Python 3.9+, Docker, Git installed and working
-- OpenAI or Anthropic API key ready
-- Terminal comfort
+**GUI Setup Wizard** - Initial setup now uses a visual interface instead of command-line prompts. Makes API key configuration easier.
+
+**Stable Core** - Setup, login, and chat interface are stable. Focus your testing on workflows (lists, todos, file management, integrations).
+
+**Quality Improvements** - 602 automated smoke tests validate core functionality. UI polish improvements throughout.
 
 ---
 
-## 6-Step Setup
+## Prerequisites
+
+- Python 3.11 or 3.12, Docker, Git installed and working
+- OpenAI or Anthropic API key ready
+- Terminal comfort (for initial clone and install)
+
+---
+
+## Automated Setup (Recommended - 2 minutes)
+
+**For macOS/Linux/WSL2:**
+```bash
+git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+./scripts/alpha-setup.sh
+# Script will:
+# → Check requirements (Python 3.11/3.12, Docker, Git)
+# → Create virtual environment
+# → Install dependencies
+# → Generate JWT secret automatically
+# → Start Docker containers
+# → Launch the setup wizard at http://localhost:8001/setup
+```
+
+**For Windows (Command Prompt or PowerShell):**
+```cmd
+git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+cd piper-morgan-product
+.\scripts\alpha-setup.bat
+REM Script will:
+REM → Check requirements (Python 3.11/3.12, Docker, Git)
+REM → Create virtual environment
+REM → Install dependencies
+REM → Generate JWT secret automatically
+REM → Start Docker containers
+REM → Launch the setup wizard at http://localhost:8001/setup
+```
+
+---
+
+## Manual Setup (If You Prefer Full Control)
 
 ```bash
 # 1. Clone and setup (using production branch for alpha testing)
@@ -36,25 +78,87 @@ cp .env.example .env
 # Add to .env: JWT_SECRET_KEY=your-generated-key-here
 # Note: .env is gitignored and survives git pull operations
 
-# 3. Run interactive setup (5 mins)
+# 3. Start Docker containers
+docker-compose up -d
+
+# 4. Start server for first-time setup
+python main.py
+# → Opens http://localhost:8001/setup (GUI setup wizard)
+
+# 5. Complete setup wizard (web browser)
+# → Navigate through visual setup screens
+# → Configure API keys, create user account
+# → See "Setup Wizard Walkthrough" below for details
+
+# 6. Configure preferences (optional, 2 mins)
+python main.py preferences
+# → Answer 5 questions about your work style
+# → Or skip and configure later via Settings page
+```
+
+---
+
+## Setup Wizard Walkthrough (New in 0.8.2)
+
+The GUI setup wizard guides you through configuration with a visual interface:
+
+### Step 1: Welcome Screen
+
+![Setup Wizard - Welcome](assets/images/alpha-onboarding/setup-wizard-welcome.png)
+
+The setup wizard welcome screen explains what will be configured and gives you a clear starting point.
+
+### Step 2: System Health Check
+
+![Setup Wizard - Health Check](assets/images/alpha-onboarding/setup-wizard-health-check.png)
+
+Automatic validation of your system:
+- ✓ Docker installed and running
+- ✓ Python version correct
+- ✓ Port 8001 available
+- ✓ Database accessible
+
+### Step 3: API Key Configuration
+
+![Setup Wizard - API Keys](assets/images/alpha-onboarding/setup-wizard-api-keys.png)
+
+Configure your LLM API keys through a form interface. Much easier than pasting in the terminal - you can see what you're typing, correct mistakes, and get immediate validation feedback.
+
+Supports:
+- OpenAI (GPT-4, GPT-3.5)
+- Anthropic (Claude)
+- Google Gemini (new in 0.8.2)
+
+### Step 4: User Account Creation
+
+![Setup Wizard - User Creation](assets/images/alpha-onboarding/setup-wizard-user-creation.png)
+
+Create your admin account:
+- Username and email
+- Secure password (min 8 chars, bcrypt-hashed)
+- Confirmation and validation
+
+### Step 5: Setup Complete
+
+![Setup Wizard - Success](assets/images/alpha-onboarding/setup-wizard-success.png)
+
+Setup confirmation with next steps and quick links to start using Piper.
+
+---
+
+## Alternative: Command-Line Setup
+
+If you prefer the original command-line setup wizard:
+
+```bash
 python main.py setup
 # → Follow prompts for:
 #    - Username and email
 #    - Secure password (min 8 chars, bcrypt-hashed)
-#    - API keys (OpenAI/Anthropic)
-
-# 4. Configure preferences (2 mins)
-python main.py preferences
-# → Answer 5 questions about your work style
-
-# 5. Verify (30 secs)
-python main.py status
-# → Should show ✓ all green
-
-# 6. Run
-python main.py
-# → Opens http://localhost:8001
+#    - API keys (OpenAI/Anthropic/Gemini)
 ```
+
+Both methods configure the same settings. Use whichever you're comfortable with.
 
 ---
 
@@ -69,7 +173,7 @@ python main.py
 "Upload a document and summarize it"
 ```
 
-### Via New UI Features (Nov 22-23, 2025)
+### Via UI Features
 
 After logging in to http://localhost:8001:
 
@@ -96,6 +200,23 @@ After logging in to http://localhost:8001:
 
 ---
 
+## Testing Focus for 0.8.2
+
+**What's Stable** (light testing recommended):
+- ✅ Setup wizard (GUI and CLI)
+- ✅ Login/authentication
+- ✅ Chat interface
+- ✅ Basic navigation
+
+**Where to Focus Testing** (these need your attention):
+- 🔍 **Workflows**: Creating/managing lists, todos, projects
+- 🔍 **File handling**: Upload, download, analysis
+- 🔍 **Integrations**: Slack, GitHub, Notion connections
+- 🔍 **Permission system**: Sharing resources, role-based access
+- 🔍 **Learning system**: Preference detection, personalization
+
+---
+
 ## If Something Breaks
 
 ### Docker not running?
@@ -116,7 +237,12 @@ kill -9 [PID]     # Kill it
 ### API key issues?
 
 ```bash
-python main.py setup  # Re-run setup
+# Web UI method (easier):
+# Navigate to http://localhost:8001/setup
+# Re-enter your API keys in the form
+
+# Or command-line method:
+python main.py setup  # Re-run setup wizard
 python main.py status # Verify keys
 ```
 
@@ -129,32 +255,6 @@ python main.py setup
 # Can't access http://localhost:8001?
 # Check server is running: python main.py
 # Try: http://127.0.0.1:8001
-```
-
-### Can't create lists/todos?
-
-```bash
-# Fixed Nov 23, 2025 (Issue #379)
-# Make sure you're on latest commit:
-git pull origin main  # or production branch
-# Refresh browser page
-```
-
-### Files page shows "coming soon"?
-
-```bash
-# Files UI built Nov 23, 2025 (Issue #379)
-# Update to latest:
-git pull origin main
-# Restart server: python main.py
-```
-
-### Logout button doesn't work?
-
-```bash
-# Fixed Nov 23, 2025 (Issue #379-14)
-# Update to latest commit
-# Logout now in user menu (top right)
 ```
 
 ### Environment variables not loading after git pull?
@@ -188,10 +288,11 @@ python main.py
 ## Key Commands Reference
 
 ```bash
-python main.py setup       # Interactive setup wizard
-python main.py preferences # Configure your preferences
-python main.py status      # System health check
-python main.py --verbose   # Show detailed logs
+python main.py              # Start server (opens browser automatically)
+python main.py setup        # CLI setup wizard (alternative to GUI)
+python main.py preferences  # Configure your preferences
+python main.py status       # System health check
+python main.py --verbose    # Show detailed logs
 python main.py --no-browser # Don't auto-open browser
 ```
 
@@ -199,26 +300,40 @@ python main.py --no-browser # Don't auto-open browser
 
 After `python main.py` starts the server at http://localhost:8001:
 
+- **Setup** → http://localhost:8001/setup (first-time setup only)
+- **Home** → http://localhost:8001/ (chat interface)
 - **Lists** → http://localhost:8001/lists (manage lists)
 - **Todos** → http://localhost:8001/todos (manage todos)
 - **Projects** → http://localhost:8001/projects (manage projects)
 - **Files** → http://localhost:8001/files (upload/download files)
 - **Standup** → http://localhost:8001/standup (generate daily standup)
+- **Settings** → http://localhost:8001/settings (preferences, integrations)
 - **User Menu** (top right) → Logout, profile settings
 
 ---
 
-## What's Working in 0.8.0
+## What's Working in 0.8.2
 
-✅ Setup wizard with secure password setup, preferences, health checks
-✅ Multi-user support, JWT auth with bcrypt, API keys
-✅ Database (PostgreSQL via Docker) with UUID-based user IDs
-✅ Token blacklist with CASCADE delete (Issue #291)
-✅ File upload and document processing (PDF, DOCX, TXT, MD, JSON)
-✅ Knowledge graph, boundary enforcement
-✅ Audit logging, test coverage 100%
+✅ **Setup & Onboarding** (Dec 11, 2025):
+   - GUI setup wizard with visual interface
+   - System health checks
+   - API key validation (OpenAI, Anthropic, Gemini)
+   - User account creation
+   - CLI setup wizard (alternative method)
 
-✅ **User Interface** (Nov 22-23, 2025):
+✅ **Authentication & Security**:
+   - Multi-user support, JWT auth with bcrypt
+   - Token blacklist with CASCADE delete
+   - Secure password requirements
+   - Session management
+
+✅ **Core Features**:
+   - Database (PostgreSQL via Docker) with UUID-based user IDs
+   - File upload and document processing (PDF, DOCX, TXT, MD, JSON)
+   - Knowledge graph, boundary enforcement
+   - Audit logging
+
+✅ **User Interface** (Stable):
    - Lists, Todos, Projects management with CRUD operations
    - Files upload/download/delete (10MB max, 5 formats)
    - Permission system (share resources, role-based access)
@@ -226,14 +341,20 @@ After `python main.py` starts the server at http://localhost:8001:
    - Standup generation (2-3 sec)
    - Logout functionality
    - Breadcrumb navigation
+   - Theme support (light/dark mode)
 
-✅ **SEC-RBAC Phase 1** (Nov 21, 2025):
+✅ **Quality Validation** (New in 0.8.2):
+   - 602 automated smoke tests (<5 seconds)
+   - CI/CD quality gates
+   - UI stability improvements
+
+✅ **SEC-RBAC Phase 1**:
    - Owner-based access control (owner_id validation)
    - Permission grants (shared_with JSONB)
    - Admin bypass pattern
    - 9 resource tables RBAC-aware
 
-See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status.
+See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known limitations.
 
 ---
 
@@ -241,17 +362,19 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status.
 
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
-- **Legal**: [ALPHA_AGREEMENT.md](ALPHA_AGREEMENT.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.0 means)
+- **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.2 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.0). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT.md` for details.
+This is **alpha software** (0.8.2). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+
+**Testing Focus**: Setup, login, and chat are stable. Focus your testing on workflows, file handling, and integrations.
 
 ---
 
 **Happy testing!** 🚀
 
-_Last Updated: November 23, 2025_
+_Last Updated: December 11, 2025_

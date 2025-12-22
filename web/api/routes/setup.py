@@ -347,22 +347,19 @@ async def validate_api_key(req: ApiKeyValidateRequest):
         # For OpenAI and Anthropic, use UserAPIKeyService validation
         service = UserAPIKeyService()
 
-        # Create temporary user_id for validation (not stored)
-        temp_user_id = str(uuid.uuid4())
-
         # Use fresh session to avoid event loop mismatch (#442)
         async with AsyncSessionFactory.session_scope_fresh() as session:
             try:
-                # Validate the key (don't store it yet)
+                # Issue #485: Validate the key WITHOUT storing (store=False)
+                # No temp_user_id needed - validation-only mode doesn't touch DB
                 await service.store_user_key(
-                    user_id=temp_user_id,
+                    user_id="validation-only",  # Placeholder, not used when store=False
                     provider=req.provider,
                     api_key=req.api_key,
                     session=session,
-                    validate=True,  # This triggers validation
+                    validate=True,
+                    store=False,  # Issue #485: Don't create DB records during validation
                 )
-                # Rollback to avoid storing temp user key
-                await session.rollback()
 
                 # Validation succeeded
                 model_info = "gpt-4" if req.provider == "openai" else "claude-3.5"

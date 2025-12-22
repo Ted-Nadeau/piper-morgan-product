@@ -13,13 +13,14 @@ Issue #286: CONVERSATION added to canonical section (was handled separately)
 
 import logging
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 
 from services.configuration.piper_config_loader import piper_config_loader
 from services.conversation.conversation_handler import ConversationHandler
 from services.domain.models import Intent, IntentCategory
+from services.plugins import get_plugin_registry
 from services.shared_types import IntentCategory as IntentCategoryEnum
 from services.user_context_service import user_context_service
 
@@ -56,6 +57,59 @@ class CanonicalHandlers:
 
     def __init__(self):
         self.config_loader = piper_config_loader
+
+    def _get_dynamic_capabilities(self) -> Dict[str, list]:
+        """
+        Issue #493: Get dynamic capabilities from PluginRegistry.
+
+        Returns a dict with:
+        - core: Core PM capabilities (always present)
+        - integrations: Active integrations from plugins
+        - capabilities_list: Flat list for API response
+        """
+        # Core capabilities always available
+        core_capabilities = [
+            "development coordination",
+            "issue tracking",
+            "strategic planning",
+        ]
+
+        # Get active integrations from plugin registry
+        integrations = []
+        try:
+            registry = get_plugin_registry()
+            plugin_status = registry.get_status_all()
+
+            for name, status in plugin_status.items():
+                # Include plugin if configured or active
+                is_configured = status.get("configured", False)
+                is_active = status.get("active", False) or status.get("status") == "active"
+
+                if is_configured or is_active:
+                    # Get plugin metadata for description
+                    plugin = registry.get_plugin(name)
+                    if plugin:
+                        metadata = plugin.get_metadata()
+                        integrations.append(
+                            {
+                                "name": name,
+                                "description": metadata.description,
+                                "capabilities": metadata.capabilities,
+                            }
+                        )
+        except Exception as e:
+            logger.warning(f"Could not get plugin capabilities: {e}")
+
+        # Build flat capabilities list for API response
+        capabilities_list = core_capabilities.copy()
+        for integration in integrations:
+            capabilities_list.append(f"{integration['name']} integration")
+
+        return {
+            "core": core_capabilities,
+            "integrations": integrations,
+            "capabilities_list": capabilities_list,
+        }
 
     def can_handle(self, intent: Intent) -> bool:
         """Check if this handler can process the intent"""
@@ -116,19 +170,23 @@ class CanonicalHandlers:
         Handle 'What's your name and role?' queries with spatial awareness.
 
         GREAT-4C Phase 1: Minimal spatial intelligence (identity is fixed).
+        Issue #493: Dynamic capability list from PluginRegistry.
         """
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
         spatial_pattern = None
         if hasattr(intent, "spatial_context") and intent.spatial_context:
             spatial_pattern = intent.spatial_context.get("pattern")
 
+        # Issue #493: Get dynamic capabilities from plugins
+        capabilities_data = self._get_dynamic_capabilities()
+
         # Adjust response detail based on spatial pattern
         if spatial_pattern == "GRANULAR":
-            message = self._format_detailed_identity()
+            message = self._format_detailed_identity(capabilities_data)
         elif spatial_pattern == "EMBEDDED":
             message = self._format_consolidated_identity()
         else:
-            message = self._format_standard_identity()
+            message = self._format_standard_identity(capabilities_data)
 
         return {
             "message": message,
@@ -139,28 +197,41 @@ class CanonicalHandlers:
                 "context": {
                     "name": "Piper Morgan",
                     "role": "AI PM Assistant",
-                    "capabilities": [
-                        "development coordination",
-                        "issue tracking",
-                        "strategic planning",
-                    ],
+                    "capabilities": capabilities_data["capabilities_list"],
+                    "integrations": capabilities_data["integrations"],
                 },
             },
             "spatial_pattern": spatial_pattern,
             "requires_clarification": False,
         }
 
-    def _format_detailed_identity(self) -> str:
-        """GRANULAR: Full identity with comprehensive capabilities."""
+    def _format_detailed_identity(self, capabilities_data: Dict[str, list]) -> str:
+        """
+        GRANULAR: Full identity with comprehensive capabilities.
+        Issue #493: Uses dynamic capabilities from PluginRegistry.
+        """
         details = ["I'm **Piper Morgan**, your AI Product Management assistant.\n"]
         details.append("**Core Capabilities**:")
         details.append("  - Development coordination and team synchronization")
         details.append("  - Issue tracking and GitHub integration")
         details.append("  - Strategic planning and roadmap management")
-        details.append("  - Calendar integration for meeting coordination")
-        details.append("  - Notion integration for documentation management")
-        details.append("  - Slack integration for team communication\n")
-        details.append("**Role**: I serve as your intelligent PM partner, helping you stay")
+
+        # Issue #493: Add active integrations dynamically
+        if capabilities_data.get("integrations"):
+            details.append("\n**Active Integrations**:")
+            for integration in capabilities_data["integrations"]:
+                name = integration["name"].capitalize()
+                desc = integration.get("description", f"{name} integration")
+                details.append(f"  - {name}: {desc}")
+        else:
+            # Fallback to default integrations if none configured
+            details.append("\n**Available Integrations** (configure to enable):")
+            details.append("  - Calendar integration for meeting coordination")
+            details.append("  - Notion integration for documentation management")
+            details.append("  - Slack integration for team communication")
+            details.append("  - GitHub integration for issue tracking")
+
+        details.append("\n**Role**: I serve as your intelligent PM partner, helping you stay")
         details.append("organized, focused, and productive across all your development work.")
         return "\n".join(details)
 
@@ -168,16 +239,47 @@ class CanonicalHandlers:
         """EMBEDDED: Brief identity for embedded context."""
         return "Piper Morgan, AI PM Assistant"
 
-    def _format_standard_identity(self) -> str:
-        """DEFAULT: Moderate detail for standard identity queries."""
-        return "I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning. Think of me as your intelligent PM partner!"
+    def _format_standard_identity(self, capabilities_data: Dict[str, list]) -> str:
+        """
+        DEFAULT: Moderate detail for standard identity queries.
+        Issue #493: Uses dynamic capabilities from PluginRegistry.
+        """
+        core_msg = "I'm Piper Morgan, your AI Product Management assistant. I help with development coordination, issue tracking, and strategic planning."
+
+        # Issue #493: Mention active integrations if any
+        integrations = capabilities_data.get("integrations", [])
+        if integrations:
+            integration_names = [i["name"].capitalize() for i in integrations[:3]]  # Limit to 3
+            if len(integrations) > 3:
+                integration_names.append(f"and {len(integrations) - 3} more")
+            integrations_text = ", ".join(integration_names)
+            core_msg += f" I'm connected to {integrations_text}."
+
+        core_msg += " Think of me as your intelligent PM partner!"
+        return core_msg
 
     async def _handle_temporal_query(self, intent: Intent, session_id: str) -> Dict:
         """
         Handle 'What day is it?' and time-related queries with spatial awareness.
 
         GREAT-4C Phase 1: Adds spatial intelligence for calendar detail level.
+        Issue #499: Routes agenda requests to dedicated handler.
+        Issue #501: Routes retrospective requests to dedicated handler.
+        Issue #504: Routes last activity requests to dedicated handler.
         """
+        # Issue #499: Check if this is an agenda request first
+        if self._detect_agenda_request(intent):
+            return await self._handle_agenda_query(intent, session_id)
+
+        # Issue #501: Check if this is a retrospective request
+        if self._detect_retrospective_request(intent):
+            return await self._handle_retrospective_query(intent, session_id)
+
+        # Issue #504: Check if this is a last activity request
+        project_name = self._detect_last_activity_request(intent)
+        if project_name:
+            return await self._handle_temporal_last_activity(intent, session_id, project_name)
+
         from services.configuration.piper_config_loader import piper_config_loader
 
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
@@ -321,12 +423,107 @@ class CanonicalHandlers:
             "requires_clarification": False,
         }
 
+    def _detect_project_specific_query(self, intent: Intent, projects: List[str]) -> Optional[str]:
+        """
+        Issue #500: Detect if query asks about a specific project.
+
+        Returns the matched project name if found, None otherwise.
+        Patterns recognized:
+        - "What's the status of HealthTrack?"
+        - "How is the HealthTrack project going?"
+        - "Status of HealthTrack"
+        - "Tell me about HealthTrack"
+        """
+        if not intent or not intent.original_message or not projects:
+            return None
+
+        query = intent.original_message.lower()
+
+        # Patterns that indicate project-specific query
+        specific_patterns = [
+            r"status of\s+(.+?)(?:\?|$|\s+project)",
+            r"how is\s+(.+?)\s+(?:going|doing|project)",
+            r"tell me about\s+(.+?)(?:\?|$)",
+            r"update on\s+(.+?)(?:\?|$)",
+            r"(.+?)\s+status(?:\?|$)",
+            r"what about\s+(.+?)(?:\?|$)",
+        ]
+
+        import re
+
+        for pattern in specific_patterns:
+            match = re.search(pattern, query)
+            if match:
+                potential_project = match.group(1).strip()
+                # Try to match against known projects (case-insensitive)
+                for project in projects:
+                    if project.lower() == potential_project.lower():
+                        return project
+                    # Fuzzy match: project name contains the query term or vice versa
+                    if (
+                        potential_project.lower() in project.lower()
+                        or project.lower() in potential_project.lower()
+                    ):
+                        return project
+
+        return None
+
+    def _format_project_specific_status(
+        self, project: str, metadata: Dict, user_context, spatial_pattern: Optional[str] = None
+    ) -> str:
+        """
+        Issue #500: Format detailed status for a single project.
+        """
+        if spatial_pattern == "EMBEDDED":
+            # Brief format
+            issues_count = metadata.get("open_issues_count")
+            if issues_count is not None:
+                return f"{project}: {issues_count} open issues"
+            return f"{project}: Active"
+
+        # Standard/Granular format
+        lines = [f"**{project} Status**\n"]
+
+        # GitHub metadata if available
+        if metadata.get("has_github"):
+            issues_count = metadata.get("open_issues_count")
+            if issues_count is not None:
+                lines.append(f"📋 **Open Issues**: {issues_count}")
+
+                # Show issue previews
+                issues_preview = metadata.get("issues_preview", [])
+                if issues_preview and spatial_pattern != "EMBEDDED":
+                    for issue in issues_preview[: 5 if spatial_pattern == "GRANULAR" else 3]:
+                        title = issue.get("title", "Untitled")[:60]
+                        number = issue.get("number", "?")
+                        lines.append(f"  - #{number}: {title}")
+
+            repo = metadata.get("repository", "")
+            if repo:
+                lines.append(f"\n🔗 **Repository**: {repo}")
+        else:
+            lines.append("📊 **Status**: Active development")
+            lines.append("ℹ️ No GitHub repository linked - add one in Settings → Projects")
+
+        # Add organization context
+        if user_context and user_context.organization:
+            lines.append(f"\n🏢 **Organization**: {user_context.organization}")
+
+        # Add priorities if GRANULAR
+        if spatial_pattern == "GRANULAR" and user_context and user_context.priorities:
+            lines.append("\n🎯 **Current Priorities**:")
+            for priority in user_context.priorities[:3]:
+                lines.append(f"  - {priority}")
+
+        return "\n".join(lines)
+
     async def _handle_status_query(self, intent: Intent, session_id: str) -> Dict:
         """
         Handle 'What am I working on?' queries with spatial awareness.
 
         GREAT-4C Phase 1: Adds spatial intelligence for response granularity.
         GREAT-4C Phase 2: Adds error handling for missing configuration.
+        Issue #500: Routes project-specific queries to dedicated handler.
         """
         # Try to get user context with error handling
         try:
@@ -367,21 +564,51 @@ class CanonicalHandlers:
                 },
             }
 
+        # Issue #500: Check for project-specific query first
+        specific_project = self._detect_project_specific_query(intent, projects)
+        if specific_project:
+            # Fetch metadata for just this project
+            project_metadata = await self._get_project_metadata([specific_project])
+            metadata = project_metadata.get(specific_project, {})
+            message = self._format_project_specific_status(
+                specific_project, metadata, user_context, spatial_pattern
+            )
+            return {
+                "message": message,
+                "intent": {
+                    "category": IntentCategoryEnum.STATUS.value,
+                    "action": "provide_project_specific_status",
+                    "confidence": 1.0,
+                    "context": {
+                        "project": specific_project,
+                        "spatial_pattern": spatial_pattern,
+                        "has_github": metadata.get("has_github", False),
+                    },
+                },
+                "spatial_pattern": spatial_pattern,
+                "project_specific": True,
+                "requires_clarification": False,
+            }
+
+        # Issue #18: Fetch project metadata from GitHub (for all projects)
+        project_metadata = await self._get_project_metadata(projects)
+
         # Adjust response detail based on spatial pattern
         if spatial_pattern == "GRANULAR":
             # Detailed status with full project breakdown
-            message = self._format_detailed_status(projects, user_context)
+            message = self._format_detailed_status(projects, user_context, project_metadata)
         elif spatial_pattern == "EMBEDDED":
             # Brief consolidated status
-            message = self._format_consolidated_status(projects, user_context)
+            message = self._format_consolidated_status(projects, user_context, project_metadata)
         else:
             # Standard moderate detail
-            message = self._format_standard_status(projects, user_context)
+            message = self._format_standard_status(projects, user_context, project_metadata)
 
         project_context = {
             "projects": projects,
             "spatial_pattern": spatial_pattern,
             "organization": user_context.organization,
+            "project_metadata": project_metadata,  # Issue #18: Include metadata
         }
 
         return {
@@ -393,48 +620,111 @@ class CanonicalHandlers:
                 "context": project_context,
             },
             "spatial_pattern": spatial_pattern,
+            "has_github_metadata": bool(project_metadata),  # Issue #18: Flag for metadata
             "requires_clarification": False,
         }
 
-    def _format_detailed_status(self, projects: list, user_context) -> str:
-        """GRANULAR: Full project details with comprehensive breakdown."""
+    def _format_detailed_status(
+        self, projects: list, user_context, project_metadata: Dict = None
+    ) -> str:
+        """GRANULAR: Full project details with comprehensive breakdown.
+
+        Issue #18: Enhanced with real project metadata from GitHub when available.
+        """
         if not projects:
             return "No active projects configured in your PIPER.md."
 
+        project_metadata = project_metadata or {}
         details = ["Here's your detailed project status:\n"]
+
         for i, project in enumerate(projects, 1):
             details.append(f"\n**{i}. {project}**")
-            details.append(f"  - Status: Active development")
+
+            # Issue #18: Use real metadata if available
+            metadata = project_metadata.get(project, {})
+            if metadata.get("has_github"):
+                repo = metadata.get("repository", "")
+                issues_count = metadata.get("open_issues_count")
+                if issues_count is not None:
+                    details.append(f"  - Open Issues: {issues_count}")
+                    # Show issue previews in detailed view
+                    issues_preview = metadata.get("issues_preview", [])
+                    if issues_preview:
+                        details.append("  - Recent issues:")
+                        for issue in issues_preview[:3]:
+                            title = issue.get("title", "Untitled")[:50]
+                            number = issue.get("number", "?")
+                            details.append(f"    • #{number}: {title}")
+                if repo:
+                    details.append(f"  - Repository: {repo}")
+            else:
+                details.append(f"  - Status: Active development")
+
             details.append(f"  - Organization: {user_context.organization or 'Not specified'}")
-            details.append(f"  - Next steps: Continue implementation")
 
         if user_context.priorities:
             details.append(f"\n\nCurrent priorities: {', '.join(user_context.priorities[:3])}")
 
         return "\n".join(details)
 
-    def _format_consolidated_status(self, projects: list, user_context) -> str:
-        """EMBEDDED: Brief overview suitable for embedded context."""
+    def _format_consolidated_status(
+        self, projects: list, user_context, project_metadata: Dict = None
+    ) -> str:
+        """EMBEDDED: Brief overview suitable for embedded context.
+
+        Issue #18: Enhanced with total open issues count when available.
+        """
         if not projects:
             return "No active projects."
 
-        if len(projects) == 1:
-            return f"Working on: {projects[0]}"
-        elif len(projects) <= 3:
-            return f"Working on {len(projects)} projects: {', '.join(projects)}"
-        else:
-            return f"Working on {len(projects)} projects: {', '.join(projects[:3])} + {len(projects)-3} more"
+        project_metadata = project_metadata or {}
 
-    def _format_standard_status(self, projects: list, user_context) -> str:
-        """DEFAULT: Moderate detail level for standard queries."""
+        # Issue #18: Calculate total open issues if metadata available
+        total_issues = 0
+        has_metadata = False
+        for project in projects:
+            metadata = project_metadata.get(project, {})
+            if metadata.get("has_github"):
+                has_metadata = True
+                issues_count = metadata.get("open_issues_count")
+                if issues_count is not None:
+                    total_issues += issues_count
+
+        # Build response with optional issue count
+        if len(projects) == 1:
+            base = f"Working on: {projects[0]}"
+        elif len(projects) <= 3:
+            base = f"Working on {len(projects)} projects: {', '.join(projects)}"
+        else:
+            base = f"Working on {len(projects)} projects: {', '.join(projects[:3])} + {len(projects)-3} more"
+
+        if has_metadata and total_issues > 0:
+            return f"{base} ({total_issues} open issues)"
+        return base
+
+    def _format_standard_status(
+        self, projects: list, user_context, project_metadata: Dict = None
+    ) -> str:
+        """DEFAULT: Moderate detail level for standard queries.
+
+        Issue #18: Enhanced with open issues count per project when available.
+        """
         if not projects:
             return "No active projects configured in your PIPER.md. Add projects to the 'Projects' section to see them here."
 
+        project_metadata = project_metadata or {}
         summary = [
             f"You're working on {len(projects)} active project{'s' if len(projects) != 1 else ''}:\n"
         ]
+
         for project in projects[:5]:  # Top 5
-            summary.append(f"- {project}")
+            # Issue #18: Add issue count if available
+            metadata = project_metadata.get(project, {})
+            issues_count = metadata.get("open_issues_count")
+            if issues_count is not None:
+                summary.append(f"- {project} ({issues_count} open issues)")
+            else:
+                summary.append(f"- {project}")
 
         if len(projects) > 5:
             summary.append(f"- ... and {len(projects) - 5} more")
@@ -490,21 +780,27 @@ class CanonicalHandlers:
                 },
             }
 
+        # Issue #496: Fetch priority metadata from GitHub
+        priority_metadata = await self._get_priority_metadata()
+
         # Adjust response detail based on spatial pattern
         if spatial_pattern == "GRANULAR":
             # Detailed priorities with breakdown
-            message = self._format_detailed_priorities(priorities, user_context)
+            message = self._format_detailed_priorities(priorities, user_context, priority_metadata)
         elif spatial_pattern == "EMBEDDED":
             # Brief priority statement
-            message = self._format_consolidated_priorities(priorities, user_context)
+            message = self._format_consolidated_priorities(
+                priorities, user_context, priority_metadata
+            )
         else:
             # Standard moderate detail
-            message = self._format_standard_priorities(priorities, user_context)
+            message = self._format_standard_priorities(priorities, user_context, priority_metadata)
 
         priority_context = {
             "priorities": priorities,
             "spatial_pattern": spatial_pattern,
             "organization": user_context.organization,
+            "priority_metadata": priority_metadata,  # Issue #496: Include metadata
         }
 
         return {
@@ -516,40 +812,78 @@ class CanonicalHandlers:
                 "context": priority_context,
             },
             "spatial_pattern": spatial_pattern,
+            "has_github_metadata": bool(priority_metadata.get("has_github")),  # Issue #496
             "requires_clarification": False,
         }
 
-    def _format_detailed_priorities(self, priorities: list, user_context) -> str:
-        """GRANULAR: Detailed priority breakdown."""
+    def _format_detailed_priorities(
+        self, priorities: list, user_context, priority_metadata: Dict = None
+    ) -> str:
+        """GRANULAR: Detailed priority breakdown.
+
+        Issue #496: Enhanced with GitHub high-priority issues when available.
+        """
         if not priorities:
             return "No priorities configured in your PIPER.md."
 
+        priority_metadata = priority_metadata or {}
         details = ["Here are your priorities in detail:\n"]
+
         for i, priority in enumerate(priorities, 1):
             details.append(f"\n**Priority {i}: {priority}**")
             details.append(f"  - Status: Active")
-            details.append(f"  - Focus area: Implementation and delivery")
+
+        # Issue #496: Add high-priority GitHub issues if available
+        high_priority_issues = priority_metadata.get("high_priority_issues", [])
+        if high_priority_issues:
+            details.append("\n\n**GitHub High-Priority Issues:**")
+            for issue in high_priority_issues[:5]:
+                number = issue.get("number", "?")
+                title = issue.get("title", "Untitled")
+                labels = ", ".join(issue.get("labels", []))
+                details.append(f"  • #{number}: {title}")
+                if labels:
+                    details.append(f"    Labels: {labels}")
+        elif priority_metadata.get("has_github"):
+            details.append("\n\n*No high-priority (P0/P1) GitHub issues found.*")
 
         if user_context.organization:
             details.append(f"\n\nOrganization context: {user_context.organization}")
 
         return "\n".join(details)
 
-    def _format_consolidated_priorities(self, priorities: list, user_context) -> str:
-        """EMBEDDED: Brief priority summary."""
+    def _format_consolidated_priorities(
+        self, priorities: list, user_context, priority_metadata: Dict = None
+    ) -> str:
+        """EMBEDDED: Brief priority summary.
+
+        Issue #496: Enhanced with high-priority issue count when available.
+        """
         if not priorities:
             return "No priorities set."
 
-        if len(priorities) == 1:
-            return f"Top priority: {priorities[0]}"
-        else:
-            return f"Top priority: {priorities[0]} ({len(priorities)} total)"
+        priority_metadata = priority_metadata or {}
+        high_priority_count = len(priority_metadata.get("high_priority_issues", []))
 
-    def _format_standard_priorities(self, priorities: list, user_context) -> str:
-        """DEFAULT: Moderate detail for priorities."""
+        base = f"Top priority: {priorities[0]}"
+        if len(priorities) > 1:
+            base += f" ({len(priorities)} total)"
+
+        if high_priority_count > 0:
+            return f"{base} + {high_priority_count} urgent GitHub issues"
+        return base
+
+    def _format_standard_priorities(
+        self, priorities: list, user_context, priority_metadata: Dict = None
+    ) -> str:
+        """DEFAULT: Moderate detail for priorities.
+
+        Issue #496: Enhanced with high-priority GitHub issues when available.
+        """
         if not priorities:
             return "No priorities configured in your PIPER.md. Add priorities to the 'Priorities' section to see them here."
 
+        priority_metadata = priority_metadata or {}
         message = [f"Your top priority today is: **{priorities[0]}**\n"]
 
         if len(priorities) > 1:
@@ -559,6 +893,15 @@ class CanonicalHandlers:
 
             if len(priorities) > 4:
                 message.append(f"- ... and {len(priorities) - 4} more")
+
+        # Issue #496: Add high-priority GitHub issues if available
+        high_priority_issues = priority_metadata.get("high_priority_issues", [])
+        if high_priority_issues:
+            message.append("\n\n**Urgent GitHub Issues:**")
+            for issue in high_priority_issues[:3]:  # Top 3 in standard view
+                number = issue.get("number", "?")
+                title = issue.get("title", "Untitled")
+                message.append(f"- #{number}: {title}")
 
         if user_context.organization:
             message.append(f"\n\nOrganization: {user_context.organization}")
@@ -588,8 +931,364 @@ class CanonicalHandlers:
         else:
             return "Flexible time - consider strategic planning or methodology refinement."
 
-    def _format_detailed_guidance(self, current_hour: int, user_context) -> str:
-        """GRANULAR: Comprehensive guidance with all timeframes and context."""
+    async def _get_calendar_context(self) -> Optional[Dict]:
+        """
+        Issue #495: Get calendar context for meeting-aware guidance.
+
+        Returns next meeting and free time blocks if calendar is configured.
+        Falls back gracefully if calendar is not available.
+        """
+        try:
+            # Check if calendar plugin is registered and configured
+            registry = get_plugin_registry()
+            calendar_plugin = registry.get_plugin("calendar")
+
+            if not calendar_plugin or not calendar_plugin.is_configured():
+                return None
+
+            # Get calendar router from plugin
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
+
+            calendar_router = CalendarIntegrationRouter()
+
+            # Get next meeting
+            next_meeting = await calendar_router.get_next_meeting()
+            free_blocks = await calendar_router.get_free_time_blocks()
+
+            calendar_context = {
+                "has_calendar": True,
+            }
+
+            if next_meeting:
+                calendar_context["next_meeting"] = {
+                    "title": next_meeting.get("title", next_meeting.get("summary", "Untitled")),
+                    "start": next_meeting.get("start"),
+                    "end": next_meeting.get("end"),
+                }
+
+            if free_blocks:
+                # Get first free block
+                first_free = free_blocks[0] if free_blocks else None
+                if first_free:
+                    calendar_context["next_free_block"] = {
+                        "start": first_free.get("start"),
+                        "duration_minutes": first_free.get("duration_minutes"),
+                    }
+                calendar_context["free_blocks_count"] = len(free_blocks)
+
+            return calendar_context
+
+        except Exception as e:
+            logger.debug(f"Calendar context unavailable: {e}")
+            return None
+
+    async def _get_project_metadata(self, projects: list) -> Dict[str, Dict]:
+        """
+        Issue #18: Get real project metadata from GitHub.
+
+        Returns metadata for each project including:
+        - open_issues_count: Number of open issues
+        - has_github: Whether GitHub is connected
+        - repository: Repository name if matched
+
+        Falls back gracefully if GitHub is not available.
+        """
+        project_metadata = {}
+
+        try:
+            # Check if GitHub plugin is registered and configured
+            registry = get_plugin_registry()
+            github_plugin = registry.get_plugin("github")
+
+            if not github_plugin or not github_plugin.is_configured():
+                logger.debug("GitHub not configured, returning empty project metadata")
+                return {}
+
+            # Import and instantiate GitHub domain service
+            from services.domain.github_domain_service import GitHubDomainService
+
+            github_service = GitHubDomainService()
+
+            # Check connection status
+            connection_status = github_service.get_connection_status()
+            if not connection_status.get("connected"):
+                logger.debug("GitHub not connected, returning empty project metadata")
+                return {}
+
+            # Get repositories list
+            repos = github_service.list_repositories()
+            repo_names = {repo.get("name", "").lower(): repo for repo in repos}
+
+            # Try to match projects to repositories
+            for project in projects:
+                project_lower = project.lower().replace(" ", "-").replace("_", "-")
+
+                # Look for matching repository
+                matched_repo = None
+                for repo_name, repo_data in repo_names.items():
+                    if project_lower in repo_name or repo_name in project_lower:
+                        matched_repo = repo_data
+                        break
+
+                if matched_repo:
+                    # Get open issues for this repository
+                    try:
+                        full_name = matched_repo.get("full_name", "")
+                        open_issues = await github_service.get_open_issues(full_name, days_back=30)
+                        project_metadata[project] = {
+                            "has_github": True,
+                            "repository": full_name,
+                            "open_issues_count": len(open_issues),
+                            "issues_preview": open_issues[:3] if open_issues else [],
+                        }
+                    except Exception as e:
+                        logger.debug(f"Could not get issues for {project}: {e}")
+                        project_metadata[project] = {
+                            "has_github": True,
+                            "repository": matched_repo.get("full_name", ""),
+                            "open_issues_count": None,
+                        }
+                else:
+                    project_metadata[project] = {
+                        "has_github": False,
+                        "repository": None,
+                    }
+
+            return project_metadata
+
+        except Exception as e:
+            logger.debug(f"Project metadata unavailable: {e}")
+            return {}
+
+    async def _get_priority_metadata(self) -> Dict[str, Any]:
+        """
+        Issue #496: Get priority-related metadata from GitHub.
+
+        Returns metadata including:
+        - high_priority_issues: List of P0/P1 labeled issues
+        - has_github: Whether GitHub is connected
+        - milestone_info: Current milestone if any
+
+        Falls back gracefully if GitHub is not available.
+        """
+        try:
+            # Check if GitHub plugin is registered and configured
+            registry = get_plugin_registry()
+            github_plugin = registry.get_plugin("github")
+
+            if not github_plugin or not github_plugin.is_configured():
+                logger.debug("GitHub not configured, returning empty priority metadata")
+                return {}
+
+            # Import and instantiate GitHub domain service
+            from services.configuration.piper_config_loader import piper_config_loader
+            from services.domain.github_domain_service import GitHubDomainService
+
+            github_service = GitHubDomainService()
+
+            # Check connection status
+            connection_status = github_service.get_connection_status()
+            if not connection_status.get("connected"):
+                logger.debug("GitHub not connected, returning empty priority metadata")
+                return {}
+
+            # Get default repository from config
+            github_config = piper_config_loader.load_github_config()
+            default_repo = github_config.default_repository
+
+            if not default_repo:
+                return {"has_github": True, "high_priority_issues": []}
+
+            # Get open issues and filter by priority labels
+            try:
+                open_issues = await github_service.get_open_issues(default_repo, days_back=30)
+
+                # Filter for high-priority issues (P0, P1, priority-high, urgent, critical)
+                priority_labels = {
+                    "p0",
+                    "p1",
+                    "priority-high",
+                    "high-priority",
+                    "urgent",
+                    "critical",
+                }
+                high_priority_issues = []
+
+                for issue in open_issues:
+                    issue_labels = {label.lower() for label in issue.get("labels", [])}
+                    if issue_labels & priority_labels:  # Intersection
+                        high_priority_issues.append(
+                            {
+                                "number": issue.get("number"),
+                                "title": issue.get("title", "")[:60],
+                                "labels": issue.get("labels", []),
+                                "url": issue.get("url", issue.get("html_url", "")),
+                            }
+                        )
+
+                return {
+                    "has_github": True,
+                    "repository": default_repo,
+                    "high_priority_issues": high_priority_issues[:5],  # Top 5
+                    "total_open_issues": len(open_issues),
+                }
+
+            except Exception as e:
+                logger.debug(f"Could not get priority issues: {e}")
+                return {"has_github": True, "high_priority_issues": []}
+
+        except Exception as e:
+            logger.debug(f"Priority metadata unavailable: {e}")
+            return {}
+
+    def _synthesize_focus_recommendation(
+        self,
+        current_hour: int,
+        user_context,
+        calendar_context: Optional[Dict],
+        project_metadata: Optional[Dict],
+        priority_metadata: Optional[Dict],
+    ) -> Dict[str, Any]:
+        """
+        Issue #497: Synthesize focus recommendation from all available context.
+
+        Combines calendar, projects, and priorities to provide personalized guidance.
+        Suggests missing integrations when appropriate.
+
+        Returns:
+            Dict with:
+            - recommendation: Primary focus recommendation
+            - time_available: Minutes until next commitment (if known)
+            - urgent_items: Count of urgent items needing attention
+            - missing_integrations: List of integrations that would help
+            - context_level: "rich" | "partial" | "minimal"
+        """
+        recommendation = {
+            "primary_focus": None,
+            "time_available": None,
+            "urgent_items": 0,
+            "open_issues": 0,
+            "missing_integrations": [],
+            "context_level": "minimal",
+            "suggestions": [],
+        }
+
+        # Determine context richness
+        has_calendar = bool(calendar_context and calendar_context.get("has_calendar"))
+        has_projects = bool(project_metadata)
+        has_priorities = bool(priority_metadata and priority_metadata.get("has_github"))
+        has_user_priorities = bool(user_context and user_context.priorities)
+
+        if has_calendar and has_projects and has_priorities:
+            recommendation["context_level"] = "rich"
+        elif has_calendar or has_projects or has_priorities:
+            recommendation["context_level"] = "partial"
+
+        # Suggest missing integrations
+        if not has_calendar:
+            recommendation["missing_integrations"].append("calendar")
+        if not has_priorities and not has_projects:
+            recommendation["missing_integrations"].append("github")
+
+        # Calculate time available until next meeting
+        if calendar_context and calendar_context.get("next_meeting"):
+            next_meeting = calendar_context["next_meeting"]
+            start_time = next_meeting.get("start")
+            if start_time:
+                # Try to parse and calculate minutes
+                try:
+                    from datetime import datetime
+
+                    # Handle ISO format or time string
+                    if "T" in str(start_time):
+                        meeting_time = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+                        now = (
+                            datetime.now(meeting_time.tzinfo)
+                            if meeting_time.tzinfo
+                            else datetime.now()
+                        )
+                        delta = meeting_time - now
+                        recommendation["time_available"] = max(0, int(delta.total_seconds() / 60))
+                except Exception:
+                    pass  # Can't parse, skip time calculation
+
+        # Count urgent items
+        if priority_metadata:
+            urgent_issues = priority_metadata.get("high_priority_issues", [])
+            recommendation["urgent_items"] = len(urgent_issues)
+            recommendation["open_issues"] = priority_metadata.get("total_open_issues", 0)
+
+        # Generate primary focus recommendation
+        time_available = recommendation["time_available"]
+        urgent_count = recommendation["urgent_items"]
+
+        # Build contextual recommendation
+        if time_available is not None and time_available < 30:
+            # Less than 30 minutes - quick tasks only
+            recommendation["primary_focus"] = "quick-tasks"
+            recommendation["suggestions"].append(
+                "Short time window - handle quick tasks or prepare for your meeting"
+            )
+        elif time_available is not None and time_available < 60:
+            # 30-60 minutes - focused but short
+            if urgent_count > 0:
+                recommendation["primary_focus"] = "urgent-issues"
+                recommendation["suggestions"].append(
+                    f"Address {urgent_count} urgent issue(s) before your meeting"
+                )
+            else:
+                recommendation["primary_focus"] = "focused-work"
+                recommendation["suggestions"].append(
+                    "Good window for focused work on your top priority"
+                )
+        elif urgent_count > 0:
+            # Has urgent items
+            recommendation["primary_focus"] = "urgent-issues"
+            recommendation["suggestions"].append(
+                f"You have {urgent_count} urgent GitHub issue(s) requiring attention"
+            )
+        elif has_user_priorities:
+            # Focus on top priority
+            recommendation["primary_focus"] = "top-priority"
+            top_priority = user_context.priorities[0]
+            recommendation["suggestions"].append(f"Focus on your top priority: {top_priority}")
+        else:
+            # Generic time-based recommendation
+            recommendation["primary_focus"] = "time-based"
+
+        # Add integration suggestions
+        if recommendation["missing_integrations"]:
+            missing = recommendation["missing_integrations"]
+            if "calendar" in missing and "github" in missing:
+                recommendation["suggestions"].append(
+                    "Tip: Connect your calendar and GitHub for more personalized guidance"
+                )
+            elif "calendar" in missing:
+                recommendation["suggestions"].append(
+                    "Tip: Connect your calendar for meeting-aware recommendations"
+                )
+            elif "github" in missing:
+                recommendation["suggestions"].append(
+                    "Tip: Connect GitHub to see your project issues and priorities"
+                )
+
+        return recommendation
+
+    def _format_detailed_guidance(
+        self,
+        current_hour: int,
+        user_context,
+        calendar_context: Optional[Dict] = None,
+        project_metadata: Optional[Dict] = None,
+        priority_metadata: Optional[Dict] = None,
+        focus_recommendation: Optional[Dict] = None,
+    ) -> str:
+        """GRANULAR: Comprehensive guidance with all timeframes and context.
+
+        Issue #497: Enhanced with synthesized focus recommendation.
+        """
         focus = self._get_immediate_focus(current_hour, user_context)
         priority_text = (
             user_context.priorities[0]
@@ -602,9 +1301,43 @@ class CanonicalHandlers:
             else "your projects"
         )
 
+        focus_recommendation = focus_recommendation or {}
         details = ["Here's comprehensive guidance for your focus:\n"]
+
+        # Issue #497: Show synthesized recommendation first if available
+        suggestions = focus_recommendation.get("suggestions", [])
+        if suggestions:
+            details.append("**Recommended Focus**:")
+            for suggestion in suggestions[:2]:  # Top 2 suggestions
+                details.append(f"  → {suggestion}")
+            details.append("")
+
         details.append(f"**Immediate Focus (Right Now)**:")
         details.append(f"  {focus}\n")
+
+        # Issue #495: Add calendar context if available
+        if calendar_context and calendar_context.get("next_meeting"):
+            next_meeting = calendar_context["next_meeting"]
+            meeting_title = next_meeting.get("title", "Upcoming meeting")
+            time_available = focus_recommendation.get("time_available")
+            details.append(f"**Next Meeting**: {meeting_title}")
+            if time_available is not None:
+                details.append(f"  Time available: {time_available} minutes\n")
+            elif next_meeting.get("start"):
+                details.append(f"  Starting at: {next_meeting['start']}\n")
+            else:
+                details.append("")
+
+        # Issue #497: Show urgent issues if available
+        urgent_count = focus_recommendation.get("urgent_items", 0)
+        if urgent_count > 0 and priority_metadata:
+            high_priority_issues = priority_metadata.get("high_priority_issues", [])
+            details.append(f"**Urgent Items ({urgent_count})**:")
+            for issue in high_priority_issues[:3]:
+                number = issue.get("number", "?")
+                title = issue.get("title", "Untitled")
+                details.append(f"  • #{number}: {title}")
+            details.append("")
 
         details.append(f"**Today's Key Focus**:")
         details.append(f"  - Primary priority: {priority_text}")
@@ -615,10 +1348,16 @@ class CanonicalHandlers:
 
         details.append(f"\n**This Week**:")
         details.append(f"  - Continue work on {org_text}")
-        if user_context.projects:
+        if user_context and user_context.projects:
             details.append(f"  - Active projects:")
             for project in user_context.projects[:3]:
-                details.append(f"    • {project}")
+                # Issue #497: Add issue count from project metadata
+                meta = (project_metadata or {}).get(project, {})
+                issues_count = meta.get("open_issues_count")
+                if issues_count is not None:
+                    details.append(f"    • {project} ({issues_count} issues)")
+                else:
+                    details.append(f"    • {project}")
 
         details.append(f"\n**Strategic Direction**:")
         details.append(
@@ -627,10 +1366,40 @@ class CanonicalHandlers:
         details.append(f"  - Balance deep focus work with collaboration and coordination")
         details.append(f"  - Maintain quality standards throughout implementation")
 
+        # Issue #497: Add integration tips if missing
+        missing = focus_recommendation.get("missing_integrations", [])
+        if missing:
+            tip = suggestions[-1] if suggestions and "Tip:" in suggestions[-1] else None
+            if tip:
+                details.append(f"\n*{tip}*")
+
         return "\n".join(details)
 
-    def _format_consolidated_guidance(self, current_hour: int, user_context) -> str:
-        """EMBEDDED: Brief guidance suitable for embedded context."""
+    def _format_consolidated_guidance(
+        self,
+        current_hour: int,
+        user_context,
+        calendar_context: Optional[Dict] = None,
+        focus_recommendation: Optional[Dict] = None,
+    ) -> str:
+        """EMBEDDED: Brief guidance suitable for embedded context.
+
+        Issue #497: Uses synthesized focus recommendation when available.
+        """
+        focus_recommendation = focus_recommendation or {}
+        suggestions = focus_recommendation.get("suggestions", [])
+
+        # Issue #497: Use synthesized recommendation if available
+        if suggestions:
+            # Get first actionable suggestion (not a tip)
+            for suggestion in suggestions:
+                if not suggestion.startswith("Tip:"):
+                    # Shorten for embedded context
+                    if len(suggestion) > 50:
+                        return f"Focus: {suggestion[:47]}..."
+                    return f"Focus: {suggestion}"
+
+        # Fallback to time-based focus
         focus = self._get_immediate_focus(current_hour, user_context)
 
         # Extract just the key action from the focus
@@ -645,8 +1414,19 @@ class CanonicalHandlers:
         else:
             return "Focus: Strategic planning"
 
-    def _format_standard_guidance(self, current_hour: int, user_context) -> str:
-        """DEFAULT: Moderate detail for standard guidance queries."""
+    def _format_standard_guidance(
+        self,
+        current_hour: int,
+        user_context,
+        calendar_context: Optional[Dict] = None,
+        priority_metadata: Optional[Dict] = None,
+        focus_recommendation: Optional[Dict] = None,
+    ) -> str:
+        """
+        DEFAULT: Moderate detail for standard guidance queries.
+        Issue #495: Includes calendar context when available.
+        Issue #497: Enhanced with synthesized focus recommendation.
+        """
         focus = self._get_immediate_focus(current_hour, user_context)
         priority_text = (
             user_context.priorities[0]
@@ -659,15 +1439,920 @@ class CanonicalHandlers:
             else "your projects"
         )
 
-        message = [f"Based on your current priorities and the time of day:\n"]
+        focus_recommendation = focus_recommendation or {}
+        message = []
+
+        # Issue #497: Show synthesized recommendation first if available
+        suggestions = focus_recommendation.get("suggestions", [])
+        if suggestions:
+            # Get actionable suggestions (not tips)
+            actionable = [s for s in suggestions if not s.startswith("Tip:")]
+            if actionable:
+                message.append(f"**Recommended**: {actionable[0]}\n")
+
+        message.append(f"Based on your current priorities and the time of day:\n")
         message.append(f"**Right Now**: {focus}\n")
+
+        # Issue #495: Add meeting context if available
+        if calendar_context and calendar_context.get("next_meeting"):
+            next_meeting = calendar_context["next_meeting"]
+            meeting_title = next_meeting.get("title", "Upcoming meeting")
+            time_available = focus_recommendation.get("time_available")
+            if time_available is not None:
+                message.append(
+                    f'**Note**: You have "{meeting_title}" in {time_available} minutes.\n'
+                )
+            else:
+                message.append(f'**Note**: You have "{meeting_title}" coming up.\n')
+
+        # Issue #497: Show urgent items if available
+        urgent_count = focus_recommendation.get("urgent_items", 0)
+        if urgent_count > 0:
+            message.append(
+                f"**Urgent**: {urgent_count} high-priority GitHub issue(s) need attention.\n"
+            )
+
         message.append(f"**Today's Key Focus**: {priority_text}\n")
         message.append(f"**This Week**: Continue work on {org_text}\n")
         message.append(
             f"**Strategic Direction**: Deliver on your priorities while maintaining progress across all projects."
         )
 
+        # Issue #497: Add integration tips if missing
+        tips = [s for s in suggestions if s.startswith("Tip:")]
+        if tips:
+            message.append(f"\n*{tips[0]}*")
+
         return "\n".join(message)
+
+    def _detect_setup_request(self, intent: Intent) -> Optional[str]:
+        """
+        Issue #498: Detect if the intent is asking about setting up or configuring something.
+
+        Returns the setup topic if detected, None otherwise.
+        Recognizes common setup patterns:
+        - "help me set up my projects"
+        - "set up my project portfolio"
+        - "configure my projects"
+        - "set up integrations"
+        """
+        if not intent or not intent.original_message:
+            return None
+
+        raw_input = intent.original_message.lower()
+
+        # Setup patterns with their topics
+        setup_patterns = [
+            # Project setup
+            (["set up", "setup", "configure"], ["project", "projects", "portfolio"], "projects"),
+            # Integration setup
+            (
+                ["set up", "setup", "configure", "connect"],
+                ["integration", "integrations", "github", "slack", "calendar", "notion"],
+                "integrations",
+            ),
+            # General setup
+            (
+                ["set up", "setup", "configure", "get started"],
+                ["piper", "everything", "system"],
+                "general",
+            ),
+        ]
+
+        for verbs, nouns, topic in setup_patterns:
+            has_verb = any(verb in raw_input for verb in verbs)
+            has_noun = any(noun in raw_input for noun in nouns)
+            if has_verb and has_noun:
+                return topic
+
+        return None
+
+    def _format_project_setup_guidance(self, user_context=None) -> Dict:
+        """
+        Issue #498: Format guidance response for project setup requests.
+
+        Returns structured guidance with link to settings page.
+        """
+        has_projects = user_context and user_context.projects
+
+        if has_projects:
+            # User already has projects - offer to manage them
+            project_count = len(user_context.projects)
+            message = f"""I see you already have {project_count} project(s) configured!
+
+**Your Current Projects:**
+"""
+            for project in user_context.projects[:5]:
+                message += f"- {project}\n"
+
+            if len(user_context.projects) > 5:
+                message += f"- ... and {len(user_context.projects) - 5} more\n"
+
+            message += """
+To add or manage projects, visit the **Projects** settings page:
+→ [Settings → Projects](/settings/projects)
+
+From there you can:
+1. Add new projects
+2. Edit existing project details
+3. Link projects to GitHub repositories
+
+Would you like me to explain what information to include for each project?"""
+        else:
+            # No projects yet - guide through setup
+            message = """I'd be happy to help you set up your projects!
+
+To configure your project portfolio:
+1. Visit the **Projects** settings page: [Settings → Projects](/settings/projects)
+2. Click "Add Project" to create a new project
+3. Optionally link it to a GitHub repository for issue tracking
+
+**What to include for each project:**
+- **Name**: A clear, descriptive project name
+- **Description**: Brief summary of the project's purpose
+- **Repository**: (Optional) GitHub repo for issue integration
+
+Would you like me to explain more about how Piper uses project context, or are you ready to set up your first project?"""
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.GUIDANCE.value,
+                "action": "provide_setup_guidance",
+                "confidence": 1.0,
+                "context": {
+                    "setup_topic": "projects",
+                    "has_existing_projects": has_projects,
+                    "settings_link": "/settings/projects",
+                },
+            },
+            "setup_type": "projects",
+            "requires_clarification": False,
+        }
+
+    def _format_integration_setup_guidance(self) -> Dict:
+        """
+        Issue #498: Format guidance response for integration setup requests.
+
+        Returns structured guidance with link to settings page.
+        """
+        # Check which integrations are configured
+        integrations_status = []
+        try:
+            registry = get_plugin_registry()
+            plugin_status = registry.get_status_all()
+
+            for name, status in plugin_status.items():
+                is_configured = status.get("configured", False)
+                integrations_status.append(
+                    {
+                        "name": name,
+                        "configured": is_configured,
+                    }
+                )
+        except Exception as e:
+            logger.debug(f"Could not check integration status: {e}")
+
+        configured = [i["name"] for i in integrations_status if i.get("configured")]
+        not_configured = [i["name"] for i in integrations_status if not i.get("configured")]
+
+        message = """I'd be happy to help you set up integrations!
+
+**Available Integrations:**
+"""
+        if configured:
+            message += "\n✅ **Connected:**\n"
+            for name in configured[:5]:
+                message += f"  - {name.title()}\n"
+
+        if not_configured:
+            message += "\n⚪ **Not connected:**\n"
+            for name in not_configured[:5]:
+                message += f"  - {name.title()}\n"
+
+        message += """
+To connect integrations, visit the **Settings** hub:
+→ [Settings](/settings)
+
+**Popular integrations to connect:**
+1. **GitHub** - Issue tracking and project management
+2. **Slack** - Team communication and notifications
+3. **Calendar** - Meeting awareness and scheduling
+4. **Notion** - Documentation and knowledge base
+
+Each integration has its own setup process. Would you like guidance on setting up a specific integration?"""
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.GUIDANCE.value,
+                "action": "provide_setup_guidance",
+                "confidence": 1.0,
+                "context": {
+                    "setup_topic": "integrations",
+                    "configured_integrations": configured,
+                    "available_integrations": not_configured,
+                    "settings_link": "/settings",
+                },
+            },
+            "setup_type": "integrations",
+            "requires_clarification": False,
+        }
+
+    def _format_general_setup_guidance(self) -> Dict:
+        """
+        Issue #498: Format guidance response for general setup requests.
+
+        Returns overview of all setup options.
+        """
+        message = """I'd be happy to help you get set up with Piper!
+
+**Getting Started Checklist:**
+
+1. **Configure your profile** ⚙️
+   → [Settings](/settings)
+   Set your name, timezone, and preferences
+
+2. **Set up your projects** 📁
+   → [Settings → Projects](/settings/projects)
+   Add the projects you're working on
+
+3. **Connect integrations** 🔗
+   → [Settings](/settings)
+   - GitHub for issue tracking
+   - Slack for notifications
+   - Calendar for meeting awareness
+
+4. **Define your priorities** 🎯
+   Edit your PIPER.md file to set daily priorities
+
+**Quick Tips:**
+- Ask "What can you help me with?" to see my capabilities
+- Ask "What am I working on?" to see your project status
+- Ask "What should I focus on?" for personalized guidance
+
+What would you like to set up first?"""
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.GUIDANCE.value,
+                "action": "provide_setup_guidance",
+                "confidence": 1.0,
+                "context": {
+                    "setup_topic": "general",
+                    "settings_link": "/settings",
+                },
+            },
+            "setup_type": "general",
+            "requires_clarification": False,
+        }
+
+    def _detect_agenda_request(self, intent: Intent) -> bool:
+        """
+        Issue #499: Detect if the intent is asking about today's agenda or schedule.
+
+        Returns True if agenda request detected, False otherwise.
+        Recognizes patterns like:
+        - "What's on the agenda for today?"
+        - "What's my schedule today?"
+        - "What do I have today?"
+        - "Show me today's agenda"
+        """
+        if not intent or not intent.original_message:
+            return False
+
+        raw_input = intent.original_message.lower()
+
+        # Agenda/schedule keywords combined with today reference
+        agenda_patterns = [
+            # Direct agenda questions
+            ("agenda", "today"),
+            ("schedule", "today"),
+            ("on for today", None),
+            ("have today", None),
+            ("have on today", None),
+            ("today's agenda", None),
+            ("today's schedule", None),
+            ("today's plan", None),
+            ("planned for today", None),
+            ("lined up for today", None),
+            ("coming up today", None),
+        ]
+
+        for pattern, required_suffix in agenda_patterns:
+            if pattern in raw_input:
+                if required_suffix is None or required_suffix in raw_input:
+                    return True
+
+        return False
+
+    async def _get_todays_todos(self, session_id: str, limit: int = 10) -> List[Dict]:
+        """
+        Issue #499: Fetch today's pending todos for agenda aggregation.
+
+        Returns a list of todo dictionaries with title, priority, and due info.
+        """
+        try:
+            from services.database.models import TodoPriority, TodoStatus
+            from services.database.session import async_session_factory
+            from services.repositories.todo_repository import TodoRepository
+
+            async with async_session_factory() as session:
+                todo_repo = TodoRepository(session)
+
+                # Get pending todos ordered by priority
+                todos = await todo_repo.get_todos_by_owner(
+                    owner_id=session_id,
+                    status=TodoStatus.PENDING,
+                    limit=limit,
+                )
+
+                return [
+                    {
+                        "title": todo.title,
+                        "priority": todo.priority.value if todo.priority else "medium",
+                        "due_date": todo.due_date.isoformat() if todo.due_date else None,
+                        "context": todo.context,
+                    }
+                    for todo in todos
+                ]
+        except Exception as e:
+            logger.warning(f"Could not fetch todos for agenda: {e}")
+            return []
+
+    def _format_agenda_embedded(
+        self, calendar_context: Optional[Dict], todos: List[Dict], priorities: List[str]
+    ) -> str:
+        """Issue #499: Format minimal agenda for EMBEDDED spatial pattern."""
+        parts = []
+
+        # Calendar summary (brief)
+        if calendar_context:
+            if calendar_context.get("current_meeting"):
+                parts.append(
+                    f"In meeting: {calendar_context['current_meeting'].get('title', 'Meeting')}"
+                )
+            elif calendar_context.get("next_meeting"):
+                next_time = calendar_context["next_meeting"].get("start_time", "TBD")
+                parts.append(f"Next: {next_time}")
+
+        # Todo count
+        if todos:
+            parts.append(f"{len(todos)} tasks")
+
+        # Top priority
+        if priorities:
+            parts.append(f"Focus: {priorities[0][:30]}...")
+
+        return " | ".join(parts) if parts else "No agenda items"
+
+    def _format_agenda_standard(
+        self, calendar_context: Optional[Dict], todos: List[Dict], priorities: List[str]
+    ) -> str:
+        """Issue #499: Format standard agenda response."""
+        message = "Here's your agenda for today:\n\n"
+
+        # Calendar section
+        if calendar_context:
+            if calendar_context.get("current_meeting"):
+                meeting = calendar_context["current_meeting"]
+                message += f"**Now**: {meeting.get('title', 'Meeting')}\n"
+            if calendar_context.get("next_meeting"):
+                next_meeting = calendar_context["next_meeting"]
+                message += f"**Next Meeting**: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}\n"
+            if calendar_context.get("meeting_count"):
+                message += f"**Total Meetings**: {calendar_context['meeting_count']} today\n"
+            message += "\n"
+
+        # Tasks section
+        if todos:
+            message += "**Tasks**:\n"
+            for todo in todos[:5]:
+                priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(
+                    todo["priority"], "⚪"
+                )
+                message += f"- {priority_icon} {todo['title']}\n"
+            if len(todos) > 5:
+                message += f"  ... and {len(todos) - 5} more\n"
+        else:
+            message += "**Tasks**: No pending tasks\n"
+
+        # Priorities section
+        if priorities:
+            message += f"\n**Focus Priority**: {priorities[0]}\n"
+
+        return message
+
+    def _format_agenda_granular(
+        self, calendar_context: Optional[Dict], todos: List[Dict], priorities: List[str]
+    ) -> str:
+        """Issue #499: Format detailed agenda for GRANULAR spatial pattern."""
+        message = "# Today's Full Agenda\n\n"
+
+        # Calendar section with full details
+        message += "## 📅 Calendar\n"
+        if calendar_context:
+            if calendar_context.get("current_meeting"):
+                meeting = calendar_context["current_meeting"]
+                message += f"**Currently In**: {meeting.get('title', 'Meeting')}\n"
+                if meeting.get("duration"):
+                    message += f"  Duration: {meeting['duration']}\n"
+
+            if calendar_context.get("next_meeting"):
+                next_meeting = calendar_context["next_meeting"]
+                message += f"\n**Next Up**: {next_meeting.get('title', 'Meeting')}\n"
+                message += f"  Time: {next_meeting.get('start_time', 'TBD')}\n"
+
+            if calendar_context.get("free_blocks"):
+                message += "\n**Focus Time Available**:\n"
+                for block in calendar_context["free_blocks"][:3]:
+                    message += f"  - {block.get('duration_minutes', 0)} min at {block.get('start', 'TBD')}\n"
+
+            if calendar_context.get("meeting_count"):
+                message += f"\n**Meeting Load**: {calendar_context['meeting_count']} meetings"
+                if calendar_context.get("meeting_hours"):
+                    message += f" ({calendar_context['meeting_hours']:.1f} hours)"
+                message += "\n"
+        else:
+            message += "Calendar data not available.\n"
+
+        # Tasks section with priority grouping
+        message += "\n## ✅ Tasks\n"
+        if todos:
+            # Group by priority
+            high = [t for t in todos if t["priority"] == "high"]
+            medium = [t for t in todos if t["priority"] == "medium"]
+            low = [t for t in todos if t["priority"] == "low"]
+
+            if high:
+                message += "**High Priority**:\n"
+                for todo in high:
+                    message += f"  - 🔴 {todo['title']}\n"
+
+            if medium:
+                message += "**Medium Priority**:\n"
+                for todo in medium[:5]:
+                    message += f"  - 🟡 {todo['title']}\n"
+                if len(medium) > 5:
+                    message += f"  ... and {len(medium) - 5} more\n"
+
+            if low:
+                message += "**Low Priority**:\n"
+                for todo in low[:3]:
+                    message += f"  - 🟢 {todo['title']}\n"
+                if len(low) > 3:
+                    message += f"  ... and {len(low) - 3} more\n"
+
+            message += f"\n**Total**: {len(todos)} pending tasks\n"
+        else:
+            message += "No pending tasks - great day for deep work!\n"
+
+        # Priorities section
+        message += "\n## 🎯 Priorities\n"
+        if priorities:
+            for i, priority in enumerate(priorities[:3], 1):
+                message += f"{i}. {priority}\n"
+        else:
+            message += "No priorities configured.\n"
+
+        return message
+
+    async def _handle_agenda_query(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Issue #499: Handle "What's on the agenda today?" queries.
+
+        Aggregates calendar, todos, and priorities into a unified agenda view.
+        Uses spatial awareness patterns for response granularity.
+        """
+        from services.configuration.piper_config_loader import piper_config_loader
+
+        # Get spatial pattern
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Load timezone
+        standup_config = piper_config_loader.load_standup_config()
+        timezone = standup_config["timing"]["timezone"]
+        timezone_short = TIMEZONE_ABBREVIATIONS.get(timezone, "UTC")
+
+        # 1. Get calendar context (reuse existing helper)
+        calendar_context = await self._get_calendar_context()
+
+        # 2. Get todos
+        todos = await self._get_todays_todos(session_id)
+
+        # 3. Get priorities from user context
+        priorities = []
+        try:
+            user_context = await user_context_service.get_user_context(session_id)
+            priorities = user_context.priorities if user_context else []
+        except Exception as e:
+            logger.warning(f"Could not get user context for agenda: {e}")
+
+        # Format based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_agenda_embedded(calendar_context, todos, priorities)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_agenda_granular(calendar_context, todos, priorities)
+        else:
+            message = self._format_agenda_standard(calendar_context, todos, priorities)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.TEMPORAL.value,
+                "action": "provide_agenda",
+                "confidence": 1.0,
+                "context": {
+                    "timezone": timezone_short,
+                    "has_calendar": bool(calendar_context),
+                    "todo_count": len(todos),
+                    "has_priorities": bool(priorities),
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "agenda_sources": {
+                "calendar": bool(calendar_context),
+                "todos": len(todos),
+                "priorities": len(priorities),
+            },
+            "requires_clarification": False,
+        }
+
+    def _detect_retrospective_request(self, intent: Intent) -> bool:
+        """
+        Issue #501: Detect if the intent is asking about past accomplishments.
+
+        Returns True if retrospective request detected, False otherwise.
+        Patterns recognized:
+        - "What did we accomplish yesterday?"
+        - "What did we do yesterday?"
+        - "What got done yesterday?"
+        - "Yesterday's accomplishments"
+        """
+        if not intent or not intent.original_message:
+            return False
+
+        raw_input = intent.original_message.lower()
+
+        # Retrospective patterns
+        retrospective_patterns = [
+            "accomplish",
+            "accomplished",
+            "did we do yesterday",
+            "did i do yesterday",
+            "got done yesterday",
+            "finished yesterday",
+            "completed yesterday",
+            "yesterday's accomplishments",
+            "yesterday's progress",
+            "what happened yesterday",
+        ]
+
+        return any(pattern in raw_input for pattern in retrospective_patterns)
+
+    async def _get_completed_todos_for_date(
+        self, session_id: str, target_date: datetime, limit: int = 20
+    ) -> List[Dict]:
+        """
+        Issue #501: Fetch todos completed on a specific date.
+
+        Returns a list of completed todo dictionaries.
+        """
+        try:
+            from sqlalchemy import and_, select
+
+            from services.database.models import TodoDB, TodoStatus
+            from services.database.session import async_session_factory
+            from services.repositories.todo_repository import TodoRepository
+
+            # Calculate date range for target date
+            start_of_day = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_of_day = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+            async with async_session_factory() as session:
+                # Query todos completed on target date
+                query = (
+                    select(TodoDB)
+                    .where(
+                        and_(
+                            TodoDB.owner_id == session_id,
+                            TodoDB.status == TodoStatus.COMPLETED,
+                            TodoDB.completed_at >= start_of_day,
+                            TodoDB.completed_at <= end_of_day,
+                        )
+                    )
+                    .order_by(TodoDB.completed_at.desc())
+                    .limit(limit)
+                )
+
+                result = await session.execute(query)
+                db_todos = result.scalars().all()
+
+                return [
+                    {
+                        "title": todo.title,
+                        "priority": todo.priority.value if todo.priority else "medium",
+                        "completed_at": (
+                            todo.completed_at.isoformat() if todo.completed_at else None
+                        ),
+                        "context": todo.context,
+                    }
+                    for todo in db_todos
+                ]
+        except Exception as e:
+            logger.warning(f"Could not fetch completed todos for retrospective: {e}")
+            return []
+
+    def _format_retrospective_embedded(
+        self, completed_todos: List[Dict], target_date: datetime
+    ) -> str:
+        """Issue #501: Format minimal retrospective for EMBEDDED spatial pattern."""
+        date_str = target_date.strftime("%B %d")
+        if completed_todos:
+            return f"{date_str}: {len(completed_todos)} tasks completed"
+        return f"{date_str}: No completed tasks"
+
+    def _format_retrospective_standard(
+        self, completed_todos: List[Dict], target_date: datetime
+    ) -> str:
+        """Issue #501: Format standard retrospective response."""
+        date_str = target_date.strftime("%A, %B %d, %Y")
+
+        if not completed_todos:
+            return f"**Yesterday's Accomplishments** ({date_str})\n\nNo completed tasks found for yesterday. Keep up the momentum today!"
+
+        message = f"**Yesterday's Accomplishments** ({date_str})\n\n"
+        message += f"✅ **Completed Tasks** ({len(completed_todos)}):\n"
+
+        for todo in completed_todos[:8]:
+            priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(todo["priority"], "⚪")
+            message += f"  - {priority_icon} {todo['title']}\n"
+
+        if len(completed_todos) > 8:
+            message += f"  - ... and {len(completed_todos) - 8} more\n"
+
+        message += f"\n📊 **Summary**: Productive day with {len(completed_todos)} tasks completed!"
+        return message
+
+    def _format_retrospective_granular(
+        self, completed_todos: List[Dict], target_date: datetime
+    ) -> str:
+        """Issue #501: Format detailed retrospective for GRANULAR spatial pattern."""
+        date_str = target_date.strftime("%A, %B %d, %Y")
+
+        if not completed_todos:
+            return f"# Yesterday's Accomplishments\n**Date**: {date_str}\n\n📋 No completed tasks found.\n\n*Consider reviewing your task list to ensure work is being tracked.*"
+
+        message = f"# Yesterday's Accomplishments\n**Date**: {date_str}\n\n"
+
+        # Group by priority
+        high = [t for t in completed_todos if t["priority"] == "high"]
+        medium = [t for t in completed_todos if t["priority"] == "medium"]
+        low = [t for t in completed_todos if t["priority"] == "low"]
+
+        if high:
+            message += "## 🔴 High Priority Completed\n"
+            for todo in high:
+                message += f"  - {todo['title']}\n"
+            message += "\n"
+
+        if medium:
+            message += "## 🟡 Medium Priority Completed\n"
+            for todo in medium:
+                message += f"  - {todo['title']}\n"
+            message += "\n"
+
+        if low:
+            message += "## 🟢 Low Priority Completed\n"
+            for todo in low:
+                message += f"  - {todo['title']}\n"
+            message += "\n"
+
+        # Summary stats
+        message += "---\n"
+        message += f"## 📊 Summary\n"
+        message += f"- **Total Completed**: {len(completed_todos)} tasks\n"
+        message += f"- **High Priority**: {len(high)} tasks\n"
+        message += f"- **Medium Priority**: {len(medium)} tasks\n"
+        message += f"- **Low Priority**: {len(low)} tasks\n"
+
+        return message
+
+    async def _handle_retrospective_query(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Issue #501: Handle "What did we accomplish yesterday?" queries.
+
+        Returns a summary of completed todos from the previous day.
+        """
+        from datetime import timedelta
+
+        # Get spatial pattern
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Calculate yesterday's date
+        today = datetime.now()
+        yesterday = today - timedelta(days=1)
+
+        # Fetch completed todos from yesterday
+        completed_todos = await self._get_completed_todos_for_date(session_id, yesterday)
+
+        # Format based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_retrospective_embedded(completed_todos, yesterday)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_retrospective_granular(completed_todos, yesterday)
+        else:
+            message = self._format_retrospective_standard(completed_todos, yesterday)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.TEMPORAL.value,
+                "action": "provide_retrospective",
+                "confidence": 1.0,
+                "context": {
+                    "target_date": yesterday.strftime("%Y-%m-%d"),
+                    "completed_count": len(completed_todos),
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "retrospective": {
+                "date": yesterday.strftime("%Y-%m-%d"),
+                "completed_tasks": len(completed_todos),
+            },
+            "requires_clarification": False,
+        }
+
+    def _detect_last_activity_request(self, intent: Intent) -> Optional[str]:
+        """
+        Issue #504: Detect if this is a 'when did we last work on X' query.
+        Returns project name if detected, None otherwise.
+        """
+        import re
+
+        if not intent or not intent.original_message:
+            return None
+
+        query = intent.original_message.lower()
+
+        # Patterns for last activity queries
+        patterns = [
+            r"last\s+time.*work(?:ed)?\s+on\s+(.+?)(?:\?|$)",
+            r"when\s+did\s+we.*work\s+on\s+(.+?)(?:\?|$)",
+            r"last\s+work(?:ed)?\s+on\s+(.+?)(?:\?|$)",
+            r"when.*last.*touch(?:ed)?\s+(.+?)(?:\?|$)",
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+
+        return None
+
+    async def _handle_temporal_last_activity(
+        self, intent: Intent, session_id: str, project_name: str
+    ) -> Dict:
+        """
+        Issue #504: Handle 'When did we last work on X?' queries.
+        Query GitHub for last project activity.
+        """
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Try to get GitHub activity for the project
+        activity_data = None
+        try:
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            github = GitHubIntegrationRouter()
+            await github.initialize()
+
+            # Get recent activity (last 30 days)
+            activity = await github.get_recent_activity(days=30)
+
+            # Find most recent activity
+            all_activities = []
+            for activity_type, items in activity.items():
+                for item in items:
+                    all_activities.append(
+                        {
+                            "type": activity_type,
+                            "date": item.get("created_at") or item.get("updated_at"),
+                            "title": item.get("title") or item.get("message", ""),
+                            **item,
+                        }
+                    )
+
+            if all_activities:
+                # Sort by date descending
+                all_activities.sort(key=lambda x: x.get("date", ""), reverse=True)
+                activity_data = all_activities[0]
+
+        except Exception as e:
+            logger.warning(f"Could not get GitHub activity: {e}")
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_last_activity_embedded(project_name, activity_data)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_last_activity_granular(project_name, activity_data)
+        else:
+            message = self._format_last_activity_standard(project_name, activity_data)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.TEMPORAL.value,
+                "action": "provide_last_activity",
+                "confidence": 1.0,
+                "context": {
+                    "project_name": project_name,
+                    "activity": activity_data,
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    def _format_last_activity_embedded(self, project_name: str, activity: Optional[Dict]) -> str:
+        """Issue #504: Brief format for embedded contexts."""
+        if not activity:
+            return f"{project_name}: no recent activity"
+
+        from datetime import datetime
+
+        activity_date = activity.get("date", "")
+        if activity_date:
+            try:
+                dt = datetime.fromisoformat(activity_date.replace("Z", "+00:00"))
+                days_ago = (datetime.now(dt.tzinfo) - dt).days
+                if days_ago == 0:
+                    return f"{project_name}: today"
+                elif days_ago == 1:
+                    return f"{project_name}: yesterday"
+                else:
+                    return f"{project_name}: {days_ago} days ago"
+            except Exception:
+                pass
+        return f"{project_name}: recently"
+
+    def _format_last_activity_standard(self, project_name: str, activity: Optional[Dict]) -> str:
+        """Issue #504: Standard format with context."""
+        if not activity:
+            return f"I don't have recent activity data for {project_name}. The GitHub integration may need to be configured."
+
+        from datetime import datetime
+
+        activity_type = activity.get("type", "activity")
+        title = activity.get("title", "")[:50]
+        activity_date = activity.get("date", "")
+
+        date_str = "recently"
+        if activity_date:
+            try:
+                dt = datetime.fromisoformat(activity_date.replace("Z", "+00:00"))
+                date_str = dt.strftime("%B %d, %Y")
+            except Exception:
+                pass
+
+        return f'Last activity on **{project_name}**: {activity_type} on {date_str}\n\n"{title}"'
+
+    def _format_last_activity_granular(self, project_name: str, activity: Optional[Dict]) -> str:
+        """Issue #504: Detailed format with full activity breakdown."""
+        if not activity:
+            return f"No recent activity found for **{project_name}**.\n\nThis could mean:\n- No commits, issues, or PRs in the last 30 days\n- GitHub integration not configured for this project"
+
+        from datetime import datetime
+
+        result = f"**Last Activity on {project_name}**\n\n"
+
+        activity_type = activity.get("type", "activity")
+        title = activity.get("title", "")
+        activity_date = activity.get("date", "")
+
+        if activity_date:
+            try:
+                dt = datetime.fromisoformat(activity_date.replace("Z", "+00:00"))
+                result += f"**Date**: {dt.strftime('%A, %B %d, %Y at %I:%M %p')}\n"
+                days_ago = (datetime.now(dt.tzinfo) - dt).days
+                result += f"**Time Since**: {days_ago} days ago\n"
+            except Exception:
+                result += f"**Date**: {activity_date}\n"
+
+        result += f"**Type**: {activity_type}\n"
+        if title:
+            result += f"**Description**: {title}\n"
+
+        return result
 
     async def _handle_guidance_query(self, intent: Intent, session_id: str) -> Dict:
         """
@@ -675,7 +2360,25 @@ class CanonicalHandlers:
 
         GREAT-4C Phase 1: Adds spatial intelligence for guidance granularity.
         GREAT-4C Phase 2: Adds error handling with fallback guidance.
+        Issue #495: Adds calendar context for meeting-aware guidance.
+        Issue #497: Synthesizes calendar + projects + priorities for personalized focus.
+        Issue #498: Detects and routes setup requests to appropriate guidance.
         """
+        # Issue #498: Check if this is a setup request first
+        setup_topic = self._detect_setup_request(intent)
+        if setup_topic:
+            # Route to appropriate setup guidance
+            if setup_topic == "projects":
+                try:
+                    user_context = await user_context_service.get_user_context(session_id)
+                except Exception:
+                    user_context = None
+                return self._format_project_setup_guidance(user_context)
+            elif setup_topic == "integrations":
+                return self._format_integration_setup_guidance()
+            else:  # general
+                return self._format_general_setup_guidance()
+
         current_time = datetime.now()
         current_hour = current_time.hour
 
@@ -686,18 +2389,47 @@ class CanonicalHandlers:
         except Exception as e:
             logger.warning(f"Using generic guidance, user context unavailable: {e}")
 
+        # Issue #495: Try to get calendar context for meeting-aware guidance
+        calendar_context = await self._get_calendar_context()
+
+        # Issue #497: Gather project and priority metadata for rich context
+        projects = user_context.projects if user_context else []
+        project_metadata = await self._get_project_metadata(projects) if projects else {}
+        priority_metadata = await self._get_priority_metadata()
+
+        # Issue #497: Synthesize focus recommendation from all context
+        focus_recommendation = self._synthesize_focus_recommendation(
+            current_hour, user_context, calendar_context, project_metadata, priority_metadata
+        )
+
         # Get spatial pattern (GREAT-4C Phase 1: Spatial intelligence)
         spatial_pattern = None
         if hasattr(intent, "spatial_context") and intent.spatial_context:
             spatial_pattern = intent.spatial_context.get("pattern")
 
         # Adjust response detail based on spatial pattern
+        # Issue #497: Pass focus_recommendation to format methods
         if spatial_pattern == "GRANULAR":
-            message = self._format_detailed_guidance(current_hour, user_context)
+            message = self._format_detailed_guidance(
+                current_hour,
+                user_context,
+                calendar_context,
+                project_metadata,
+                priority_metadata,
+                focus_recommendation,
+            )
         elif spatial_pattern == "EMBEDDED":
-            message = self._format_consolidated_guidance(current_hour, user_context)
+            message = self._format_consolidated_guidance(
+                current_hour, user_context, calendar_context, focus_recommendation
+            )
         else:
-            message = self._format_standard_guidance(current_hour, user_context)
+            message = self._format_standard_guidance(
+                current_hour,
+                user_context,
+                calendar_context,
+                priority_metadata,
+                focus_recommendation,
+            )
 
         # Load timezone from configuration (same for all users)
         from services.configuration.piper_config_loader import piper_config_loader
@@ -726,7 +2458,18 @@ class CanonicalHandlers:
             "weekly_focus": f"Continue work on {org_text}",
             "strategic_direction": "Deliver on your priorities while maintaining progress across all projects",
             "time_context": f"{current_hour}:00 {timezone_short}",
+            "focus_recommendation": focus_recommendation,  # Issue #497
         }
+
+        # Issue #495: Add calendar context if available
+        if calendar_context:
+            guidance_context["calendar"] = calendar_context
+
+        # Issue #497: Add project and priority metadata
+        if project_metadata:
+            guidance_context["project_metadata"] = project_metadata
+        if priority_metadata:
+            guidance_context["priority_metadata"] = priority_metadata
 
         return {
             "message": message,
@@ -739,6 +2482,8 @@ class CanonicalHandlers:
             "spatial_pattern": spatial_pattern,
             "personalized": bool(user_context),
             "fallback_guidance": not user_context,
+            "calendar_aware": bool(calendar_context),  # Issue #495
+            "context_level": focus_recommendation.get("context_level", "minimal"),  # Issue #497
             "requires_clarification": False,
         }
 

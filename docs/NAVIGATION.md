@@ -46,6 +46,9 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[ADRs](internal/architecture/current/adrs/)** - Architectural Decision Records
 - **[Patterns](internal/architecture/current/patterns/)** - Established architectural patterns
 - **[Technical Evolution](internal/architecture/evolution/)** - Architecture development history
+- **[Canonical Queries](internal/architecture/current/canonical-queries.md)** - Reference list of canonical query types (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
+  - See also: [ADR-039 Investigation Appendix](internal/architecture/current/adrs/adr-039-appendix-investigation.md) for routing analysis
+  - Test matrix: To be created (validation coverage for all 25 canonical query patterns)
 
 ### 👨‍💻 Developers
 
@@ -74,6 +77,15 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Getting Started](public/getting-started/)** - Public onboarding materials
 - **[API Reference](public/api-reference/)** - Public API documentation
 - **[User Guides](public/user-guides/)** - End-user documentation
+
+### 🧪 Alpha Testers
+
+- **[Alpha Quickstart](ALPHA_QUICKSTART.md)** - Quick 2-5 minute setup guide
+- **[Alpha Testing Guide](ALPHA_TESTING_GUIDE.md)** - Comprehensive testing guide
+- **[Alpha Known Issues](ALPHA_KNOWN_ISSUES.md)** - Current bugs and feature status
+- **[Alpha Agreement](ALPHA_AGREEMENT_v2.md)** - Legal terms and conditions
+- **[Email Templates](operations/alpha-onboarding/email-template.md)** - Internal onboarding communications
+- **[Setup Screenshots](assets/images/alpha-onboarding/)** - GUI setup wizard screenshots (5 images for documentation)
 
 ---
 
@@ -192,10 +204,11 @@ knowledge/
 - **Artifacts**: Generated reports, PM files, historical deliverables
 - **Decisions**: Completed ADRs and historical planning decisions
 
-### 🎨 Assets (`assets/`)
+### 🎨 Assets (`assets/` and `docs/assets/`)
 
 **Binary files and multimedia content with size management**
 
+#### Root Assets (`assets/`)
 ```
 ├── images/                   # Organized by purpose
 │   ├── architecture/         # System diagrams
@@ -208,6 +221,13 @@ knowledge/
     ├── templates/            # Document boilerplates
     └── exports/              # Generated documentation
 ```
+
+#### Documentation Assets (`docs/assets/`)
+```
+└── images/                   # Documentation images
+    └── alpha-onboarding/     # GUI setup wizard screenshots (5 images)
+```
+**Note**: `docs/assets/` is for documentation-embedded images (alpha guides, user docs). Root `assets/` is for general project assets.
 
 ---
 
