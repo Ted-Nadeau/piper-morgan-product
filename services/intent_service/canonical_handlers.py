@@ -874,6 +874,122 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         return None
 
+    def _detect_landscape_request(self, intent: Intent) -> bool:
+        """
+        Issue #510: Detect if this is a 'show me the project landscape' query.
+        Returns True if landscape pattern detected, False otherwise.
+        """
+        import re
+
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        # Patterns for landscape/portfolio queries
+        patterns = [
+            r"project\s+landscape",
+            r"portfolio",
+            r"project\s+overview",
+            r"all\s+projects?\s+health",
+            r"project\s+health",
+            r"portfolio\s+health",
+        ]
+
+        for pattern in patterns:
+            if re.search(pattern, query, re.IGNORECASE):
+                return True
+
+        return False
+
+    def _calculate_project_health(
+        self, project_name: str, github_data: Optional[Dict]
+    ) -> Dict[str, str]:
+        """
+        Issue #510: Calculate project health status.
+
+        Returns dict with:
+        - status: "healthy", "at-risk", or "stalled"
+        - reason: Human-readable explanation
+
+        Health criteria:
+        - Healthy: Activity within 14 days
+        - At-risk: 14-30 days since last activity OR >20 open issues
+        - Stalled: >30 days since last activity
+        """
+        from datetime import datetime
+
+        if not github_data:
+            return {"status": "unknown", "reason": "No GitHub data available"}
+
+        # Check days since last activity
+        last_activity = github_data.get("updated_at")
+        days_since_activity = None
+
+        if last_activity:
+            try:
+                dt = datetime.fromisoformat(last_activity.replace("Z", "+00:00"))
+                days_since_activity = (datetime.now(dt.tzinfo) - dt).days
+            except Exception:
+                pass
+
+        # Check open issues count
+        open_issues = github_data.get("open_issues_count", 0)
+
+        # Determine health status
+        if days_since_activity is not None:
+            if days_since_activity > 30:
+                return {
+                    "status": "stalled",
+                    "reason": f"{days_since_activity} days since last activity",
+                }
+            elif days_since_activity > 14 or open_issues > 20:
+                reasons = []
+                if days_since_activity > 14:
+                    reasons.append(f"{days_since_activity} days since last activity")
+                if open_issues > 20:
+                    reasons.append(f"{open_issues} open issues")
+                return {"status": "at-risk", "reason": ", ".join(reasons)}
+            else:
+                return {
+                    "status": "healthy",
+                    "reason": f"Active within {days_since_activity} days",
+                }
+
+        # Fallback to issue count only
+        if open_issues > 20:
+            return {"status": "at-risk", "reason": f"{open_issues} open issues"}
+
+        return {"status": "healthy", "reason": "Recent activity"}
+
+    def _detect_project_list_request(self, intent: Intent) -> bool:
+        """
+        Issue #509: Detect if this is a project list query.
+        Returns True if asking for list of projects.
+
+        Patterns recognized:
+        - "what projects are we working on"
+        - "list projects"
+        - "show projects"
+        - "our projects"
+        """
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        project_list_patterns = [
+            "what projects",
+            "list projects",
+            "show projects",
+            "our projects",
+            "my projects",
+            "all projects",
+            "which projects",
+        ]
+
+        return any(pattern in query for pattern in project_list_patterns)
+
     def _format_project_specific_status(
         self, project: str, metadata: Dict, user_context, spatial_pattern: Optional[str] = None
     ) -> str:
@@ -970,7 +1086,19 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 },
             }
 
-        # Issue #500: Check for project-specific query first
+        # Issue #509: Check for project list request first
+        if self._detect_project_list_request(intent):
+            return await self._handle_spatial_project_list(
+                intent, session_id, user_context, spatial_pattern
+            )
+
+        # Issue #510: Check for landscape/portfolio health request
+        if self._detect_landscape_request(intent):
+            return await self._handle_spatial_project_landscape(
+                intent, session_id, user_context, spatial_pattern
+            )
+
+        # Issue #500: Check for project-specific query
         specific_project = self._detect_project_specific_query(intent, projects)
         if specific_project:
             # Fetch metadata for just this project
@@ -1139,6 +1267,153 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             summary.append(f"\nOrganization: {user_context.organization}")
 
         return "\n".join(summary)
+
+    def _format_project_list_embedded(self, projects: list, project_metadata: Dict = None) -> str:
+        """
+        Issue #509: EMBEDDED format for project list - brief overview.
+        Returns: "You have X active projects: [names]"
+        """
+        if not projects:
+            return "No active projects"
+
+        project_count = len(projects)
+        if project_count == 1:
+            return f"You have 1 active project: {projects[0]}"
+        elif project_count <= 3:
+            return f"You have {project_count} active projects: {', '.join(projects)}"
+        else:
+            return f"You have {project_count} active projects: {', '.join(projects[:3])} + {project_count - 3} more"
+
+    def _format_project_list_standard(self, projects: list, project_metadata: Dict = None) -> str:
+        """
+        Issue #509: STANDARD format for project list - names + issue counts + last activity.
+        """
+        if not projects:
+            return "You don't have any active projects configured in your PIPER.md yet."
+
+        project_metadata = project_metadata or {}
+        lines = [f"You have {len(projects)} active project{'s' if len(projects) != 1 else ''}:\n"]
+
+        for project in projects:
+            metadata = project_metadata.get(project, {})
+
+            # Build project line with metadata
+            project_line = f"- **{project}**"
+
+            # Add issue count if available
+            issues_count = metadata.get("open_issues_count")
+            if issues_count is not None:
+                project_line += f" - {issues_count} open issue{'s' if issues_count != 1 else ''}"
+
+            # Add last activity if available
+            last_activity = metadata.get("last_activity")
+            if last_activity:
+                project_line += f", last activity: {last_activity}"
+
+            lines.append(project_line)
+
+        return "\n".join(lines)
+
+    def _format_project_list_granular(self, projects: list, project_metadata: Dict = None) -> str:
+        """
+        Issue #509: GRANULAR format for project list - full details per project.
+        """
+        if not projects:
+            return "You don't have any active projects configured in your PIPER.md yet."
+
+        project_metadata = project_metadata or {}
+        lines = ["**Your Active Projects**\n"]
+
+        for i, project in enumerate(projects, 1):
+            metadata = project_metadata.get(project, {})
+
+            lines.append(f"\n**{i}. {project}**")
+
+            # Repository info
+            repo = metadata.get("repository")
+            if repo:
+                lines.append(f"   - Repository: {repo}")
+
+            # Open issues
+            issues_count = metadata.get("open_issues_count")
+            if issues_count is not None:
+                lines.append(f"   - Open Issues: {issues_count}")
+
+                # Show issue previews
+                issues_preview = metadata.get("issues_preview", [])
+                if issues_preview:
+                    lines.append("   - Recent issues:")
+                    for issue in issues_preview[:3]:
+                        title = issue.get("title", "Untitled")[:50]
+                        number = issue.get("number", "?")
+                        lines.append(f"     • #{number}: {title}")
+
+            # Last activity
+            last_activity = metadata.get("last_activity")
+            if last_activity:
+                lines.append(f"   - Last Activity: {last_activity}")
+
+            # GitHub status
+            if metadata.get("has_github"):
+                lines.append("   - GitHub: Connected")
+            else:
+                lines.append("   - GitHub: Not configured")
+
+        return "\n".join(lines)
+
+    async def _handle_spatial_project_list(
+        self, intent: Intent, session_id: str, user_context, spatial_pattern: Optional[str]
+    ) -> Dict:
+        """
+        Issue #509: Handle "What projects are we working on?" queries with enhanced metadata.
+
+        Returns formatted list of projects with GitHub metadata (issue counts, last activity).
+        Response format varies based on spatial_pattern (EMBEDDED/STANDARD/GRANULAR).
+        """
+        # Get projects from user context
+        projects = user_context.projects
+
+        # Check if we have projects
+        if not projects:
+            return {
+                "message": "You don't have any active projects configured in your PIPER.md yet. "
+                "Would you like me to help you set up your project portfolio?",
+                "action_required": "configure_projects",
+                "intent": {
+                    "category": IntentCategoryEnum.STATUS.value,
+                    "action": "provide_project_list",
+                    "confidence": 1.0,
+                },
+                "spatial_pattern": spatial_pattern,
+                "requires_clarification": False,
+            }
+
+        # Fetch project metadata from GitHub
+        project_metadata = await self._get_project_metadata(projects)
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_project_list_embedded(projects, project_metadata)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_project_list_granular(projects, project_metadata)
+        else:
+            message = self._format_project_list_standard(projects, project_metadata)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.STATUS.value,
+                "action": "provide_project_list",
+                "confidence": 1.0,
+                "context": {
+                    "projects": projects,
+                    "spatial_pattern": spatial_pattern,
+                    "has_github_metadata": bool(project_metadata),
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
 
     async def _handle_priority_query(self, intent: Intent, session_id: str) -> Dict:
         """
@@ -2718,6 +2993,68 @@ What would you like to set up first?"""
             "requires_clarification": False,
         }
 
+    async def _handle_spatial_project_landscape(
+        self, intent: Intent, session_id: str, user_context, spatial_pattern: Optional[str]
+    ) -> Dict:
+        """
+        Issue #510: Handle 'Show me the project landscape' queries.
+        Provides portfolio health view with projects grouped by health status.
+        """
+        projects = user_context.projects if user_context else []
+
+        if not projects:
+            return {
+                "message": "You don't have any projects configured yet. "
+                "Visit /settings/projects to add your project portfolio.",
+                "intent": {
+                    "category": IntentCategoryEnum.STATUS.value,
+                    "action": "provide_landscape",
+                    "confidence": 1.0,
+                },
+                "requires_clarification": False,
+            }
+
+        # Fetch GitHub metadata for all projects
+        project_metadata = await self._get_project_metadata(projects)
+
+        # Calculate health for each project
+        health_groups = {"healthy": [], "at-risk": [], "stalled": [], "unknown": []}
+
+        for project in projects:
+            github_data = project_metadata.get(project, {})
+            health = self._calculate_project_health(project, github_data)
+            status = health["status"]
+            health_groups[status].append(
+                {"name": project, "reason": health["reason"], "github_data": github_data}
+            )
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_landscape_embedded(health_groups)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_landscape_granular(health_groups)
+        else:
+            message = self._format_landscape_standard(health_groups)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.STATUS.value,
+                "action": "provide_landscape",
+                "confidence": 1.0,
+                "context": {
+                    "health_summary": {
+                        "healthy": len(health_groups["healthy"]),
+                        "at-risk": len(health_groups["at-risk"]),
+                        "stalled": len(health_groups["stalled"]),
+                        "unknown": len(health_groups["unknown"]),
+                    }
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
     def _format_last_activity_embedded(self, project_name: str, activity: Optional[Dict]) -> str:
         """Issue #504: Brief format for embedded contexts."""
         if not activity:
@@ -2788,6 +3125,105 @@ What would you like to set up first?"""
             result += f"**Description**: {title}\n"
 
         return result
+
+    def _format_landscape_embedded(self, health_groups: Dict[str, list]) -> str:
+        """Issue #510: Brief format for embedded contexts."""
+        healthy = len(health_groups["healthy"])
+        at_risk = len(health_groups["at-risk"])
+        stalled = len(health_groups["stalled"])
+
+        parts = []
+        if healthy > 0:
+            parts.append(f"{healthy} healthy")
+        if at_risk > 0:
+            parts.append(f"{at_risk} at-risk")
+        if stalled > 0:
+            parts.append(f"{stalled} stalled")
+
+        if not parts:
+            return "Portfolio: No projects configured"
+
+        return f"Portfolio: {', '.join(parts)}"
+
+    def _format_landscape_standard(self, health_groups: Dict[str, list]) -> str:
+        """Issue #510: Standard format with project lists."""
+        lines = ["## Portfolio Health Overview\n"]
+
+        total = sum(len(group) for group in health_groups.values())
+        lines.append(f"**Total Projects**: {total}\n")
+
+        # Healthy projects
+        if health_groups["healthy"]:
+            lines.append(f"✅ **Healthy** ({len(health_groups['healthy'])}):")
+            for proj in health_groups["healthy"]:
+                lines.append(f"  - {proj['name']}")
+            lines.append("")
+
+        # At-risk projects
+        if health_groups["at-risk"]:
+            lines.append(f"⚠️ **At Risk** ({len(health_groups['at-risk'])}):")
+            for proj in health_groups["at-risk"]:
+                lines.append(f"  - {proj['name']} ({proj['reason']})")
+            lines.append("")
+
+        # Stalled projects
+        if health_groups["stalled"]:
+            lines.append(f"🛑 **Stalled** ({len(health_groups['stalled'])}):")
+            for proj in health_groups["stalled"]:
+                lines.append(f"  - {proj['name']} ({proj['reason']})")
+            lines.append("")
+
+        # Unknown status
+        if health_groups["unknown"]:
+            lines.append(f"❓ **Unknown** ({len(health_groups['unknown'])}):")
+            for proj in health_groups["unknown"]:
+                lines.append(f"  - {proj['name']} (No GitHub data)")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def _format_landscape_granular(self, health_groups: Dict[str, list]) -> str:
+        """Issue #510: Detailed format with full health analysis."""
+        lines = ["## Project Portfolio - Full Health Analysis\n"]
+
+        total = sum(len(group) for group in health_groups.values())
+        lines.append(f"**Total Projects**: {total}")
+        lines.append(
+            f"**Health Summary**: "
+            f"{len(health_groups['healthy'])} healthy, "
+            f"{len(health_groups['at-risk'])} at-risk, "
+            f"{len(health_groups['stalled'])} stalled"
+        )
+        lines.append("")
+
+        # Detailed breakdown by health status
+        for status_name, emoji in [
+            ("healthy", "✅"),
+            ("at-risk", "⚠️"),
+            ("stalled", "🛑"),
+            ("unknown", "❓"),
+        ]:
+            projects = health_groups[status_name]
+            if not projects:
+                continue
+
+            lines.append(f"### {emoji} {status_name.replace('-', ' ').title()} Projects\n")
+
+            for proj in projects:
+                lines.append(f"**{proj['name']}**")
+                lines.append(f"  - Status: {status_name}")
+                lines.append(f"  - Reason: {proj['reason']}")
+
+                github_data = proj.get("github_data", {})
+                if github_data:
+                    open_issues = github_data.get("open_issues_count", 0)
+                    lines.append(f"  - Open Issues: {open_issues}")
+                    last_update = github_data.get("updated_at", "Unknown")
+                    lines.append(f"  - Last Updated: {last_update}")
+
+                lines.append("")
+
+        return "\n".join(lines)
 
     def _detect_duration_request(self, intent: Intent) -> Optional[str]:
         """

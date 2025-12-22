@@ -1749,3 +1749,258 @@ class TestHelpHandler:
         # Should use standard format
         assert "Quick Start Queries" in result["message"]
         assert result["spatial_pattern"] is None
+
+
+class TestProjectListDetection:
+    """Test suite for _detect_project_list_request() method (Issue #509)"""
+
+    def test_detects_what_projects_pattern(self, canonical_handlers):
+        """Test detection of 'what projects' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What projects are we working on?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_project_list",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_project_list_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_list_projects_pattern(self, canonical_handlers):
+        """Test detection of 'list projects' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Can you list projects?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_project_list",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_project_list_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_show_projects_pattern(self, canonical_handlers):
+        """Test detection of 'show projects' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Show me our projects",
+            category=IntentCategoryEnum.STATUS,
+            action="query_project_list",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_project_list_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_our_projects_pattern(self, canonical_handlers):
+        """Test detection of 'our projects' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Tell me about our projects",
+            category=IntentCategoryEnum.STATUS,
+            action="query_project_list",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_project_list_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_matching_query(self, canonical_handlers):
+        """Test that non-matching queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of HealthTrack?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_project_list_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.STATUS,
+            action="query",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_project_list_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_none_intent(self, canonical_handlers):
+        """Test that None intent returns False."""
+        # Act
+        result = canonical_handlers._detect_project_list_request(None)
+
+        # Assert
+        assert result is False
+
+
+class TestProjectListFormatting:
+    """Test suite for project list formatting methods (Issue #509)"""
+
+    def test_format_embedded_single_project(self, canonical_handlers):
+        """Test EMBEDDED format with single project."""
+        # Arrange
+        projects = ["HealthTrack"]
+
+        # Act
+        result = canonical_handlers._format_project_list_embedded(projects)
+
+        # Assert
+        assert result == "You have 1 active project: HealthTrack"
+
+    def test_format_embedded_few_projects(self, canonical_handlers):
+        """Test EMBEDDED format with 2-3 projects."""
+        # Arrange
+        projects = ["HealthTrack", "PiperMorgan", "DataPipeline"]
+
+        # Act
+        result = canonical_handlers._format_project_list_embedded(projects)
+
+        # Assert
+        assert "You have 3 active projects:" in result
+        assert "HealthTrack" in result
+        assert "PiperMorgan" in result
+        assert "DataPipeline" in result
+
+    def test_format_embedded_many_projects(self, canonical_handlers):
+        """Test EMBEDDED format with many projects."""
+        # Arrange
+        projects = ["Project1", "Project2", "Project3", "Project4", "Project5"]
+
+        # Act
+        result = canonical_handlers._format_project_list_embedded(projects)
+
+        # Assert
+        assert "You have 5 active projects:" in result
+        assert "+ 2 more" in result
+
+    def test_format_embedded_no_projects(self, canonical_handlers):
+        """Test EMBEDDED format with no projects."""
+        # Act
+        result = canonical_handlers._format_project_list_embedded([])
+
+        # Assert
+        assert result == "No active projects"
+
+    def test_format_standard_with_metadata(self, canonical_handlers):
+        """Test STANDARD format with GitHub metadata."""
+        # Arrange
+        projects = ["HealthTrack", "PiperMorgan"]
+        metadata = {
+            "HealthTrack": {
+                "has_github": True,
+                "open_issues_count": 5,
+                "last_activity": "2 days ago",
+            },
+            "PiperMorgan": {
+                "has_github": True,
+                "open_issues_count": 12,
+                "last_activity": "yesterday",
+            },
+        }
+
+        # Act
+        result = canonical_handlers._format_project_list_standard(projects, metadata)
+
+        # Assert
+        assert "You have 2 active projects" in result
+        assert "HealthTrack" in result
+        assert "5 open issue" in result
+        assert "last activity: 2 days ago" in result
+        assert "PiperMorgan" in result
+        assert "12 open issues" in result
+        assert "last activity: yesterday" in result
+
+    def test_format_standard_without_metadata(self, canonical_handlers):
+        """Test STANDARD format without GitHub metadata."""
+        # Arrange
+        projects = ["HealthTrack", "PiperMorgan"]
+
+        # Act
+        result = canonical_handlers._format_project_list_standard(projects)
+
+        # Assert
+        assert "You have 2 active projects" in result
+        assert "HealthTrack" in result
+        assert "PiperMorgan" in result
+
+    def test_format_granular_with_full_metadata(self, canonical_handlers):
+        """Test GRANULAR format with full GitHub metadata."""
+        # Arrange
+        projects = ["HealthTrack"]
+        metadata = {
+            "HealthTrack": {
+                "has_github": True,
+                "repository": "org/healthtrack",
+                "open_issues_count": 5,
+                "last_activity": "2 days ago",
+                "issues_preview": [
+                    {"number": 123, "title": "Fix authentication bug"},
+                    {"number": 124, "title": "Add user settings page"},
+                ],
+            }
+        }
+
+        # Act
+        result = canonical_handlers._format_project_list_granular(projects, metadata)
+
+        # Assert
+        assert "**Your Active Projects**" in result
+        assert "1. HealthTrack" in result
+        assert "Repository: org/healthtrack" in result
+        assert "Open Issues: 5" in result
+        assert "Last Activity: 2 days ago" in result
+        assert "#123: Fix authentication bug" in result
+        assert "#124: Add user settings page" in result
+        assert "GitHub: Connected" in result
+
+    def test_format_granular_without_github(self, canonical_handlers):
+        """Test GRANULAR format without GitHub connection."""
+        # Arrange
+        projects = ["HealthTrack"]
+        metadata = {"HealthTrack": {"has_github": False}}
+
+        # Act
+        result = canonical_handlers._format_project_list_granular(projects, metadata)
+
+        # Assert
+        assert "**Your Active Projects**" in result
+        assert "1. HealthTrack" in result
+        assert "GitHub: Not configured" in result
