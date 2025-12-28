@@ -278,8 +278,8 @@ class TestLLMIntentClassifier:
 
     @pytest.mark.asyncio
     @pytest.mark.smoke
-    async def test_confidence_threshold_configuration(self):
-        """Test custom confidence threshold configuration"""
+    async def test_confidence_threshold_configuration(self, initialized_container):
+        """Test custom confidence threshold configuration (Issue #512: Added initialized_container fixture)"""
         # Create classifier with high threshold
         high_threshold_classifier = await LLMClassifierFactory.create_for_testing(
             confidence_threshold=0.95

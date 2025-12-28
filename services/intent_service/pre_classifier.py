@@ -194,6 +194,113 @@ class PreClassifier:
         r"\bshow.*assignments\b",
     ]
 
+    # Issue #521: Contextual Intelligence query patterns
+    # MUST be checked BEFORE PRIORITY to avoid pattern collision
+    CONTEXTUAL_QUERY_PATTERNS = [
+        # Changes query - Query #29
+        r"\bwhat changed since\b",
+        r"\bwhat'?s changed since\b",
+        r"\bshow.*changes since\b",
+        r"\bshow me.*changed\b",
+        r"\bchanges since\b",
+        r"\bactivity since\b",
+        r"\bupdates since\b",
+        # Attention query - Query #30
+        r"\bwhat needs my attention\b",
+        r"\bwhat needs attention\b",
+        r"\bneeds my attention\b",
+        r"\bshow.*needs.*attention\b",
+        r"\bitems.*need.*attention\b",
+        r"\battention items\b",
+    ]
+
+    # Issue #523: Phase A Canonical Query patterns
+    # Calendar queries - Queries #34, #35, #61
+    CALENDAR_QUERY_PATTERNS = [
+        # Meeting time query - Query #34
+        r"\bhow much time in meetings\b",
+        r"\bhow much time.*meetings\b",
+        r"\btime spent in meetings\b",
+        r"\bmeeting time\b",
+        # Recurring meetings query - Query #35
+        r"\breview.*recurring meetings\b",
+        r"\bshow.*recurring meetings\b",
+        r"\baudit.*standing meetings\b",
+        r"\brecurring meetings\b",
+        # Week calendar query - Query #61
+        r"\bwhat'?s my week look like\b",
+        r"\bshow.*my week\b",
+        r"\bweek ahead\b",
+        r"\bweek calendar\b",
+    ]
+
+    # GitHub queries - Queries #41, #42, #45, #59, #60
+    GITHUB_QUERY_PATTERNS = [
+        # Shipped query - Query #41
+        r"\bwhat did we ship\b",
+        r"\bwhat shipped\b",
+        r"\bshow.*what.*shipped\b",
+        r"\bwhat.*shipped.*week\b",
+        # Stale PRs query - Query #42
+        r"\bshow.*stale prs\b",
+        r"\bstale pull requests\b",
+        r"\bold prs\b",
+        r"\bprs.*needing review\b",
+        # Close issue query - Query #45
+        r"\bclose issue\s*#?\d+\b",
+        r"\bclose.*completed.*issue\b",
+        r"\bclose.*issue\b",
+        # Comment issue query - Query #59
+        r"\bcomment on issue\s*#?\d+\b",
+        r"\badd comment to issue\s*#?\d+\b",
+        r"\breply to issue\s*#?\d+\b",
+        r"\bcomment\s+on\s+#?\d+\b",
+        # Review issue query - Query #60
+        r"\breview issue\s*#?\d+\b",
+        r"\bshow.*issue\s*#?\d+\b",
+        r"\bissue\s*#?\d+\s*details\b",
+        r"\bget issue\s*#?\d+\b",
+    ]
+
+    # Productivity query - Query #51
+    PRODUCTIVITY_QUERY_PATTERNS = [
+        r"\bwhat'?s my productivity\b",
+        r"\bshow.*productivity\b",
+        r"\bproductivity metrics\b",
+        r"\bmy productivity\b",
+    ]
+
+    # Todo queries - Queries #56, #57
+    TODO_QUERY_PATTERNS = [
+        # List todos query - Query #56
+        r"\bshow my todos\b",
+        r"\blist my todos\b",
+        r"\bwhat are my todos\b",
+        r"\bmy todos\b",
+        # Next todo query - Query #57
+        r"\bwhat'?s my next todo\b",
+        r"\bnext todo\b",
+        r"\bwhat should i do next\b",
+        r"\bwhat.*next.*do\b",
+    ]
+
+    # Issue #522: Document update query patterns - Query #40
+    DOCUMENT_QUERY_PATTERNS = [
+        # Update document patterns
+        r"\bupdate\s+(?:the\s+)?[\w\s]+\s+doc(?:ument)?\b",
+        r"\bedit\s+(?:the\s+)?[\w\s]+\s+doc(?:ument)?\b",
+        r"\bmodify\s+(?:the\s+)?[\w\s]+\s+doc(?:ument)?\b",
+        r"\bchange\s+(?:the\s+)?[\w\s]+\s+doc(?:ument)?\b",
+        # Add to document patterns
+        r"\badd\s+(?:to\s+)?(?:the\s+)?[\w\s]+\s+doc(?:ument)?\b",
+        r"\bappend\s+(?:to\s+)?(?:the\s+)?[\w\s]+\s+doc(?:ument)?\b",
+        # Update with content patterns (e.g., "update X with Y", "edit X with Y")
+        r"\bupdate\s+(?:the\s+)?[\w\s]+\s+with\b",
+        r"\bedit\s+(?:the\s+)?[\w\s]+\s+with\b",
+        r"\bmodify\s+(?:the\s+)?[\w\s]+\s+with\b",
+        r"\bchange\s+(?:the\s+)?[\w\s]+\s+to\b",
+    ]
+
     PRIORITY_PATTERNS = [
         # Priority queries
         r"\bmy priorities\b",
@@ -230,7 +337,6 @@ class PreClassifier:
         r"\burgent items\b",
         r"\burgent work\b",
         r"\bmost urgent\b",
-        r"\bneeds.*attention\b",
         r"\bneeds.*focus\b",
         r"\brequires attention\b",
         # Critical queries
@@ -373,6 +479,170 @@ class PreClassifier:
             return Intent(
                 category=IntentCategory.IDENTITY,
                 action="get_identity",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #521: Check CONTEXTUAL_QUERY before TEMPORAL to prevent pattern collision
+        # "what changed since yesterday" would match r"\bwhat.*yesterday\b" in TEMPORAL
+        # but should route to changes_query instead
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.CONTEXTUAL_QUERY_PATTERNS
+        ):
+            # Determine specific action based on which pattern matched
+            if any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bwhat changed since\b",
+                    r"\bwhat'?s changed since\b",
+                    r"\bshow.*changes since\b",
+                    r"\bshow me.*changed\b",
+                    r"\bchanges since\b",
+                    r"\bactivity since\b",
+                    r"\bupdates since\b",
+                ]
+            ):
+                action = "changes_query"
+            else:
+                action = "attention_query"
+
+            return Intent(
+                category=IntentCategory.QUERY,
+                action=action,
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #523: Phase A Canonical Query patterns
+        # Check Calendar queries (Queries #34, #35, #61)
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.CALENDAR_QUERY_PATTERNS
+        ):
+            # Determine specific action based on which pattern matched
+            if any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bhow much time in meetings\b",
+                    r"\bhow much time.*meetings\b",
+                    r"\btime spent in meetings\b",
+                    r"\bmeeting time\b",
+                ]
+            ):
+                action = "meeting_time_query"
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\breview.*recurring meetings\b",
+                    r"\bshow.*recurring meetings\b",
+                    r"\baudit.*standing meetings\b",
+                    r"\brecurring meetings\b",
+                ]
+            ):
+                action = "recurring_meetings_query"
+            else:
+                action = "week_calendar_query"
+
+            return Intent(
+                category=IntentCategory.QUERY,
+                action=action,
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Check GitHub queries (Queries #41, #42, #45, #59, #60)
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.GITHUB_QUERY_PATTERNS):
+            # Determine specific action based on which pattern matched
+            if any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bwhat did we ship\b",
+                    r"\bwhat shipped\b",
+                    r"\bshow.*what.*shipped\b",
+                    r"\bwhat.*shipped.*week\b",
+                ]
+            ):
+                action = "shipped_query"
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bshow.*stale prs\b",
+                    r"\bstale pull requests\b",
+                    r"\bold prs\b",
+                    r"\bprs.*needing review\b",
+                ]
+            ):
+                action = "stale_prs_query"
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bclose issue\s*#?\d+\b",
+                    r"\bclose.*completed.*issue\b",
+                    r"\bclose.*issue\b",
+                ]
+            ):
+                action = "close_issue_query"
+            elif any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bcomment on issue\s*#?\d+\b",
+                    r"\badd comment to issue\s*#?\d+\b",
+                    r"\breply to issue\s*#?\d+\b",
+                    r"\bcomment\s+on\s+#?\d+\b",
+                ]
+            ):
+                action = "comment_issue_query"
+            else:
+                # Review issue query - Query #60
+                action = "review_issue_query"
+
+            return Intent(
+                category=IntentCategory.QUERY,
+                action=action,
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Check Productivity query (Query #51)
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.PRODUCTIVITY_QUERY_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="productivity_query",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Check Todo queries (Queries #56, #57)
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.TODO_QUERY_PATTERNS):
+            # Determine specific action based on which pattern matched
+            if any(
+                re.search(pattern, clean_for_matching)
+                for pattern in [
+                    r"\bshow my todos\b",
+                    r"\blist my todos\b",
+                    r"\bwhat are my todos\b",
+                    r"\bmy todos\b",
+                ]
+            ):
+                action = "list_todos_query"
+            else:
+                action = "next_todo_query"
+
+            return Intent(
+                category=IntentCategory.QUERY,
+                action=action,
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #522: Check Document query patterns - Query #40
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.DOCUMENT_QUERY_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="update_document_query",
                 confidence=1.0,
                 context={"original_message": message},
             )

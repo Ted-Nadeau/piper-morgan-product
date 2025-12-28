@@ -110,6 +110,46 @@ class TodoIntentHandlers:
             logger.error("Todo list retrieval failed", error=str(e), user_id=user_id, exc_info=True)
             return "I had trouble getting your todos. Could you try again?"
 
+    async def handle_next_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
+        """Handle: "what's my next todo?" or "next task" - shows highest priority todo."""
+        try:
+            # Get active todos from database (already sorted by priority)
+            todos = await self.todo_service.list_todos(user_id=user_id, include_completed=False)
+
+            logger.info("Next todo retrieved", user_id=user_id, has_todos=len(todos) > 0)
+
+            if not todos:
+                return "You don't have any active todos. Try: 'add todo: [task]'"
+
+            # Get the first todo (highest priority due to sorting in repository)
+            next_todo = todos[0]
+
+            # Format priority icon
+            priority_marker = ""
+            if next_todo.priority == "urgent":
+                priority_marker = " 🔴"
+            elif next_todo.priority == "high":
+                priority_marker = " 🟡"
+            elif next_todo.priority == "low":
+                priority_marker = " 🟢"
+
+            # Format response
+            response = f"Your next todo:{priority_marker}\n\n{next_todo.text}"
+
+            # Add due date if present
+            if next_todo.due_date:
+                response += f"\n\nDue: {next_todo.due_date.strftime('%Y-%m-%d')}"
+
+            # Add context if present
+            if next_todo.context:
+                response += f"\n\nContext: {next_todo.context}"
+
+            return response
+
+        except Exception as e:
+            logger.error("Next todo retrieval failed", error=str(e), user_id=user_id, exc_info=True)
+            return "I had trouble getting your next todo. Could you try again?"
+
     async def handle_complete_todo(self, intent: Intent, session_id: str, user_id: UUID) -> str:
         """Handle: "mark todo 1 as complete" or "complete todo about PR"""
         todo_number = self._extract_todo_id(intent.original_message)

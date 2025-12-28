@@ -10,6 +10,39 @@
 
 Fixed CORE-QUERY-1 architecture pattern violations in calendar-related intent handlers.
 
+## Methodological Observations
+
+### The System Worked (In the Breach)
+
+The pre-commit hook architecture enforcement caught the violation before it could be merged. This demonstrates:
+
+1. **Defense in depth working**: Even though the gameplan review failed, the technical guardrails caught it
+2. **Pre-commit hooks as safety net**: The "Prevent Direct Adapter Imports" check blocked the bad code
+3. **Violation visible at commit time**: Not silently merged, forced immediate attention
+
+### Process Gaps Identified
+
+1. **Gameplan-to-Pattern Audit Missing**: No step verifies gameplan approach against pattern catalog
+2. **"Missing Method" Escalation Path Unclear**: When router lacks a method, agents don't know to extend it
+3. **Expediency Pressure**: Time pressure led to shortcut (bypass router) instead of correct fix (extend router)
+
+### Resilience Demonstrated
+
+- Pre-commit caught violation → forced stop
+- Root cause analysis completed within same session
+- Fix applied properly (extended infrastructure, didn't just remove the check)
+- Retro issue filed (#525) for process improvement
+
+### Recommendation
+
+Add to gameplan template:
+```markdown
+## Infrastructure Compatibility Check
+- [ ] Does the router have all required methods?
+- [ ] If not, is "extend router" in scope, or should we STOP?
+- [ ] CORE-QUERY-1 pattern compliance verified?
+```
+
 ## Root Cause Analysis
 
 ### What Happened

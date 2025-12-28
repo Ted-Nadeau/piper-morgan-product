@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 44 patterns (001-044) + template (000)
+**Total Patterns**: 47 patterns (001-047) + template (000)
 
 ## Pattern Categories
 
@@ -77,6 +77,9 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-042: Investigation-Only Protocol](pattern-042-investigation-only-protocol.md) - Separation of bug investigation from fixing
 - [Pattern-043: Defense-in-Depth Prevention](pattern-043-defense-in-depth-prevention.md) - Multi-layer protection against discovered vulnerabilities
 - [Pattern-044: MCP Skill Testing](pattern-044-mcp-skill-testing.md) - Testing patterns for MCP skill development
+- [Pattern-045: Green Tests, Red User](pattern-045-green-tests-red-user.md) - Anti-pattern: tests pass but users fail (COMPLETION DISCIPLINE TRIAD)
+- [Pattern-046: Beads Completion Discipline](pattern-046-beads-completion-discipline.md) - Systematic completion enforcement using `bd` CLI (COMPLETION DISCIPLINE TRIAD)
+- [Pattern-047: Time Lord Alert](pattern-047-time-lord-alert.md) - Uncertainty signaling for AI agents (COMPLETION DISCIPLINE TRIAD)
 
 ## Pattern Development
 
@@ -104,6 +107,6 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: December 1, 2025_
-_All 44 patterns now included with logical categorization_
-_Latest addition: Pattern-044 (MCP Skill Testing)_
+_Last updated: December 27, 2025_
+_All 47 patterns now included with logical categorization_
+_Latest additions: Pattern-045, 046, 047 (Completion Discipline Triad) - ratified by Chief Architect_

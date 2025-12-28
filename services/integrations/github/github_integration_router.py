@@ -232,6 +232,10 @@ class GitHubIntegrationRouter:
             repo_name, issue_number, title, body, state, labels, assignees
         )
 
+    async def add_comment(self, repo_name: str, issue_number: int, body: str) -> Dict[str, Any]:
+        """Add comment to GitHub issue."""
+        return await self._get_integration("add_comment").add_comment(repo_name, issue_number, body)
+
     def get_integration_status(self) -> Dict[str, Any]:
         """Get current integration status for monitoring and debugging."""
         integration = self._get_integration("get_integration_status")

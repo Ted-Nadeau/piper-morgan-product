@@ -16,9 +16,9 @@ async def test_intent_enricher_high_confidence():
     mock_repo = Mock(spec=FileRepository)
     mock_file_resolver = Mock()
 
-    # Create test file
+    # Create test file (Issue #512: Changed session_id to owner_id per SEC-RBAC Phase 3)
     test_file = UploadedFile(
-        session_id="test_session",
+        owner_id="test_owner",
         filename="report.pdf",
         file_type="application/pdf",
         file_size=1000,
@@ -63,9 +63,9 @@ async def test_intent_enricher_medium_confidence():
     mock_repo = Mock(spec=FileRepository)
     mock_file_resolver = Mock()
 
-    # Create test file
+    # Create test file (Issue #512: Changed session_id to owner_id per SEC-RBAC Phase 3)
     test_file = UploadedFile(
-        session_id="test_session",
+        owner_id="test_owner",
         filename="report.pdf",
         file_type="application/pdf",
         file_size=1000,

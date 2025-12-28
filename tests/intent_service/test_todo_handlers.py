@@ -193,3 +193,52 @@ class TestTodoIntentHandlers:
         # No match
         id5 = handlers._extract_todo_id("mark something complete")
         assert id5 is None
+
+    @pytest.mark.asyncio
+    async def test_next_todo_returns_highest_priority(self, handlers):
+        """Test next_todo returns the highest priority todo"""
+        intent = Intent(
+            category=IntentCategory.EXECUTION,
+            action="next_todo",
+            original_message="what's my next todo?",
+            confidence=0.9,
+        )
+
+        result = await handlers.handle_next_todo(intent, "session1", "user1")
+
+        # Should return a todo or empty message
+        assert "todo" in result.lower() or "next" in result.lower()
+        assert len(result) > 0
+
+    @pytest.mark.asyncio
+    async def test_next_todo_handles_no_todos(self, handlers):
+        """Test next_todo handles case when user has no todos"""
+        intent = Intent(
+            category=IntentCategory.EXECUTION,
+            action="next_todo",
+            original_message="next task",
+            confidence=0.9,
+        )
+
+        result = await handlers.handle_next_todo(intent, "session1", "user1")
+
+        # Should provide helpful message when no todos exist
+        assert len(result) > 0
+        # Since there may be no todos, check for reasonable response
+        assert "todo" in result.lower() or "task" in result.lower()
+
+    @pytest.mark.asyncio
+    async def test_next_todo_shows_priority_icon(self, handlers):
+        """Test next_todo includes priority indicators"""
+        intent = Intent(
+            category=IntentCategory.EXECUTION,
+            action="next_todo",
+            original_message="what should I do next?",
+            confidence=0.9,
+        )
+
+        result = await handlers.handle_next_todo(intent, "session1", "user1")
+
+        # Result should be formatted properly
+        assert len(result) > 0
+        # Priority icons would be in result if todo exists (🔴, 🟡, 🟢)

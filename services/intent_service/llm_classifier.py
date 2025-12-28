@@ -154,6 +154,10 @@ class LLMIntentClassifier:
         # Remove extra whitespace
         cleaned = " ".join(message.split())
 
+        # Validate non-empty (Issue #514: Empty messages should fail classification)
+        if not cleaned:
+            raise IntentClassificationFailedError("Cannot classify empty message")
+
         # Correct common typos
         corrected = correct_common_typos(cleaned)
 

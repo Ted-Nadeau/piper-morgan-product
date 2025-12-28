@@ -2,7 +2,7 @@
 
 **Purpose**: Ground truth for alpha testing - what Piper can actually do
 **Related**: ADR-039 (Canonical Query Architecture), Issue #492 (Canonical test matrix)
-**Last Updated**: December 22, 2025
+**Last Updated**: December 24, 2025
 
 ## Overview
 
@@ -17,9 +17,9 @@ This test matrix provides the definitive reference for testing Piper's canonical
 | Identity | 5 | 5 | 0 | 0 | 0 |
 | Temporal | 5 | 5 | 0 | 0 | 0 |
 | Spatial | 5 | 4 | 0 | 0 | 1 |
-| Capability | 5 | 0 | 2 | 0 | 3 |
+| Capability | 5 | 5 | 0 | 0 | 0 |
 | Predictive | 5 | 0 | 1 | 0 | 4 |
-| **Total** | **25** | **14** | **3** | **0** | **8** |
+| **Total** | **25** | **19** | **1** | **0** | **5** |
 
 **Legend:**
 - **PASS**: Fully functional, returns real data
@@ -159,43 +159,69 @@ projects = user_context.projects  # List with GitHub metadata
 ### Capability Queries (16-20)
 
 **Handler**: `intent_service.py::_handle_execution_intent()` + various domain handlers
-**Status**: Some work (GitHub issues, todos), others return graceful fallback
+**Status**: ✅ COMPLETE (5/5 PASS)
 
 | # | Query | Expected Behavior | Actual Behavior | Status | Notes |
 |---|-------|------------------|-----------------|--------|-------|
-| 16 | Create a GitHub issue about X | Create issue via GitHub integration | Requires repository specification, else returns clarification request | ⚠️ PARTIAL | Works if repo specified |
-| 17 | Analyze this document | Document analysis via MCP or Notion | Returns graceful fallback: "I don't have that capability yet..." | ❌ NOT IMPL | Needs document analysis handler |
-| 18 | List all my projects | Return project list | Same as query #11 (spatial query) | ⚠️ PARTIAL | Works via STATUS handler |
-| 19 | Generate a status report | Create markdown status report | Returns graceful fallback for most cases (SYNTHESIS handler exists but needs specific params) | ❌ NOT IMPL | Needs simplified status report handler |
-| 20 | Search for X in our documents | Document search via Notion/MCP | Returns graceful fallback: "I don't have that capability yet..." | ❌ NOT IMPL | Needs document search handler |
+| 16 | Create a GitHub issue about X | Create issue via GitHub integration | Uses default repo from PIPER.md, auto-generates title from message, applies default labels | ✅ PASS | Issue #494 - Full defaults from config |
+| 17 | Analyze this document | Document analysis via MCP or Notion | Routes to `_handle_analyze_document_notion()` - fetches page content and provides analysis summary. Graceful fallback if Notion not configured. | ✅ PASS | Issue #515 - Complete with 13 tests |
+| 18 | List all my projects | Return project list | Routes to Query #11 handler - returns project list with GitHub metadata | ✅ PASS | Detected by _detect_project_list_request() |
+| 19 | Give me a status report | Create aggregated status report | Aggregates project health + open todos with spatial formatting | ✅ PASS | Issue #513 - Complete with tests |
+| 20 | Search for X in our documents | Document search via Notion/MCP | Routes to `_handle_search_documents_notion()` - searches Notion and returns formatted results. Graceful fallback if Notion not configured. | ✅ PASS | Issue #516 - Complete with 13 tests |
 
 **Current Implementation** (Query #16):
 ```python
-# GitHub issue creation works
+# Issue #494: GitHub issue creation with full defaults from PIPER.md
 if mapped_action in ["create_issue", "create_ticket"]:
     return await self._handle_create_issue(intent, workflow.id, session_id)
-    # Requires: repository, title (optional), description (optional)
-    # Returns: Issue URL or clarification request
+    # Defaults:
+    # - repository: github_config.default_repository from PIPER.md
+    # - title: First 50 chars of message if not specified
+    # - labels: github_config.default_labels from PIPER.md
+    # Returns: Issue URL with repository info
 ```
 
-**Current Implementation** (Unhandled queries #17, #19, #20):
+**Current Implementation** (Query #17 - Document Analysis via Notion):
 ```python
-# Graceful degradation (Issue #489)
-return IntentProcessingResult(
-    success=True,
-    message=(
-        "I don't have that capability yet, but I'm learning! "
-        "Try asking 'What can you do?' to see what I can help with, "
-        "or let me know if there's something else I can assist with."
-    ),
-    unhandled=True,
-)
+# Issue #515: Document analysis via Notion
+# In intent_service.py::_handle_analysis_intent()
+if intent.action in ["analyze_document", "analyze_file"]:
+    return await self._handle_analyze_document_notion(intent, workflow.id, session_id)
+    # Checks: NotionIntegrationRouter.is_configured()
+    # Searches: For document if no document_id in context
+    # Fetches: Page data and blocks via get_page() and get_page_blocks()
+    # Returns: Analysis summary with extracted text content
+    # Fallback: Graceful message if Notion not configured
+```
+
+**Current Implementation** (Query #20 - Document Search via Notion):
+```python
+# Issue #516: Document search via Notion
+# In intent_service.py::_handle_query_intent()
+if intent.action in ["search_documents", "find_documents", "search_notion"]:
+    return await self._handle_search_documents_notion(intent, workflow.id, session_id)
+    # Checks: NotionIntegrationRouter.is_configured()
+    # Extracts: Search query from context
+    # Calls: NotionIntegrationRouter.search_notion()
+    # Returns: Formatted results with titles and URLs
+    # Fallback: Graceful message if Notion not configured
+```
+
+**Current Implementation** (Query #19):
+```python
+# Issue #513: Status report detection routes to _handle_status_report()
+if self._detect_status_report_request(intent):
+    return await self._handle_status_report(intent, session_id, user_context, spatial_pattern)
+    # Aggregates: project health summary + open todos count
+    # Formats: EMBEDDED (brief) / STANDARD (balanced) / GRANULAR (detailed)
 ```
 
 **What Needs to Happen**:
-1. Query #17: Add document analysis handler (integrate with MCP/Notion)
-2. Query #19: Add simplified status report handler (no params required)
-3. Query #20: Add document search handler (integrate with Notion/MCP)
+1. ~~Query #17: Add document analysis handler (integrate with MCP/Notion)~~ ✅ DONE (Issue #515)
+2. ~~Query #19: Add simplified status report handler (no params required)~~ ✅ DONE (Issue #513)
+3. ~~Query #20: Add document search handler (integrate with Notion/MCP)~~ ✅ DONE (Issue #516)
+
+**Capability Category: 100% COMPLETE** 🎉
 
 ---
 
@@ -246,20 +272,21 @@ def _get_immediate_focus(self, current_hour: int, user_context):
    **Expected**: Correct, complete responses
 
 2. **Test Tier 2: PARTIAL Queries** (Works with limitations)
-   - Query #2: "What can you help me with?" (hardcoded capabilities)
-   - Query #11: "What projects are we working on?" (needs PIPER.md)
-   - Query #16: "Create a GitHub issue" (needs repo specified)
    - Query #21: "What should I focus on today?" (time-based only)
 
    **Expected**: Functional but limited responses
 
 3. **Test Tier 3: NOT IMPL Queries** (Graceful fallback)
-   - Queries #9-10: Activity tracking, project duration
    - Query #15: Lifecycle phase detection
-   - Queries #17, #19-20: Document analysis/search
    - Queries #22-25: Pattern/risk/opportunity/milestone detection
 
    **Expected**: Friendly "not yet implemented" message
+
+4. **Test Tier 4: Notion-Dependent Queries** (Works with Notion configured)
+   - Query #17: Document analysis (via Notion)
+   - Query #20: Document search (via Notion)
+
+   **Expected**: Returns Notion results if configured, graceful fallback if not
 
 ### For Developers
 
@@ -299,13 +326,13 @@ curl -X POST http://localhost:8001/api/v1/intent \
 ## Implementation Roadmap
 
 ### Phase 1: Complete Partial Features
-**Priority**: HIGH (Alpha blocker)
-**Effort**: 2-3 days
+**Priority**: ✅ COMPLETE (Alpha blocker resolved)
+**Effort**: N/A (all high-priority features implemented)
 
 - [x] Query #2: Dynamic capability list from active integrations ✅ Issue #493
-- [ ] Query #11: Add project metadata (status, health, activity)
-- [ ] Query #16: Improve GitHub issue creation UX (better defaults)
-- [ ] Query #21: Enhance guidance with calendar/deadline awareness
+- [x] Query #11: Add project metadata (status, health, activity) ✅ Issue #509
+- [x] Query #16: GitHub issue creation with full defaults ✅ Issue #494
+- [ ] Query #21: Enhance guidance with calendar/deadline awareness (PARTIAL - time-based only)
 
 ### Phase 2: Add Missing Temporal Handlers
 **Priority**: ✅ COMPLETE
@@ -326,12 +353,12 @@ curl -X POST http://localhost:8001/api/v1/intent \
 - [ ] Query #15: Lifecycle phase detection
 
 ### Phase 4: Add Missing Capability Handlers
-**Priority**: LOW (Future enhancement)
-**Effort**: 4-5 days
+**Priority**: ✅ COMPLETE
+**Effort**: N/A (all capability queries implemented)
 
-- [ ] Query #17: Document analysis (MCP/Notion integration)
-- [ ] Query #19: Simplified status report generator
-- [ [ Query #20: Document search (Notion/MCP integration)
+- [x] Query #17: Document analysis (MCP/Notion integration) ✅ Issue #515
+- [x] Query #19: Simplified status report generator ✅ Issue #513
+- [x] Query #20: Document search (Notion/MCP integration) ✅ Issue #516
 
 ### Phase 5: Add Predictive Handlers
 **Priority**: LOW (Future enhancement)
@@ -437,6 +464,30 @@ curl -X POST http://localhost:8001/api/v1/intent \
 **Behavior**: Calculates priority score (staleness + issues + urgency), returns ranked recommendations with reasoning
 **Tests**: 17 tests in `tests/unit/services/intent_service/test_canonical_handlers.py`
 
+### Issue #513: Status Report Generator
+**Status**: ✅ RESOLVED
+**Issue**: "Give me a status report" returned graceful fallback or required specific params
+**Resolution**: Added `_detect_status_report_request()` + `_handle_status_report()` + formatting methods (embedded/standard/granular)
+**File**: `services/intent_service/canonical_handlers.py`
+**Behavior**: Aggregates project health summary (healthy/at-risk/stalled) + open todos count, formats with spatial awareness
+**Tests**: 15 tests in `tests/unit/services/intent_service/test_canonical_handlers.py` (8 detection, 7 formatting)
+
+### Issue #515: Document Analysis via Notion
+**Status**: ✅ RESOLVED
+**Issue**: "Analyze this document" returned graceful fallback instead of using Notion
+**Resolution**: Added routing in `_handle_analysis_intent()` + `_handle_analyze_document_notion()` handler
+**File**: `services/intent/intent_service.py`
+**Behavior**: Checks Notion configuration, searches for document, fetches page content and blocks, returns analysis summary. Graceful fallback if Notion not configured.
+**Tests**: 13 tests in `tests/unit/services/intent_service/test_document_handlers.py`
+
+### Issue #516: Document Search via Notion
+**Status**: ✅ RESOLVED
+**Issue**: "Search for X in our documents" returned graceful fallback instead of using Notion
+**Resolution**: Added routing in `_handle_query_intent()` + `_handle_search_documents_notion()` handler
+**File**: `services/intent/intent_service.py`
+**Behavior**: Checks Notion configuration, extracts search query, calls Notion search API, formats results with titles and URLs. Graceful fallback if Notion not configured.
+**Tests**: 13 tests in `tests/unit/services/intent_service/test_document_handlers.py`
+
 ---
 
 ## Additional Capabilities (Beyond 25 Canonical Queries)
@@ -457,13 +508,14 @@ The following capabilities have been added beyond the original 25 canonical quer
 
 ## Verification
 
-**Last Verified**: December 22, 2025 (Updated with Issues #498, #499, #500, #501, #504, #505, #506, #507, #508, #509, #510, #511)
-**Verification Method**: Code inspection + handler tracing + manual testing
+**Last Verified**: December 24, 2025 (Updated with Issues #515, #516 - Document analysis and search via Notion)
+**Verification Method**: Code inspection + handler tracing + unit tests
 **Files Reviewed**:
-- `services/intent_service/canonical_handlers.py` (~2920 lines, updated with setup detection + agenda aggregation + project-specific status + historical retrospective + last activity + project duration + health check)
-- `services/intent/intent_service.py` (5219 lines)
+- `services/intent_service/canonical_handlers.py` (~4015 lines)
+- `services/intent/intent_service.py` (updated with document handlers)
 - `dev/active/canonical-queries-list.md` (25 queries)
-- `tests/unit/services/intent_service/test_canonical_handlers.py` (66 tests total: 9 capabilities, 14 last activity, 18 project duration, 13 health check)
+- `tests/unit/services/intent_service/test_canonical_handlers.py` (227 tests total, all passing)
+- `tests/unit/services/intent_service/test_document_handlers.py` (13 tests, all passing)
 
 **Next Verification**: After each implementation phase (Phase 1-5 above)
 
@@ -482,6 +534,14 @@ The following capabilities have been added beyond the original 25 canonical quer
 - **Issue #504**: Last activity temporal query (resolved)
 - **Issue #505**: Project duration temporal query (resolved)
 - **Issue #506**: Health check identity query (resolved)
+- **Issue #507**: Help request identity query (resolved)
+- **Issue #508**: Differentiation identity query (resolved)
+- **Issue #509**: Project list with metadata (resolved)
+- **Issue #510**: Project landscape health view (resolved)
+- **Issue #511**: Priority recommendation (resolved)
+- **Issue #513**: Status report generator (resolved)
+- **Issue #515**: Document analysis via Notion (resolved)
+- **Issue #516**: Document search via Notion (resolved)
 - **Canonical Query List**: `dev/active/canonical-queries-list.md`
 - **Handler Implementation**: `services/intent_service/canonical_handlers.py`
 - **Intent Router**: `services/intent/intent_service.py`

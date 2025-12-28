@@ -1,7 +1,7 @@
 # Known Issues & Feature Status (v0.8.2)
 
 **Version**: 0.8.2
-**Last Updated**: December 21, 2025
+**Last Updated**: December 24, 2025
 **Status**: Stable Core (Setup/Login/Chat Ready - Focus Testing on Workflows)
 
 ---
@@ -229,53 +229,86 @@ These features have been tested, completed, and are ready for alpha testing:
 ## 🗣️ Chat Capabilities (Canonical Query Status)
 
 **Reference**: [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
+**Last Verified**: December 24, 2025 (240 unit tests passing)
 
 Piper understands 25 canonical queries across 5 categories. Here's what actually works:
 
-### What Works in Chat
+### Summary: 19/25 PASS (76%), 1 PARTIAL, 5 NOT IMPL
 
-| Query Type | Example | Status |
-|------------|---------|--------|
-| **Identity** | "What's your name?" | ✅ Works |
-| **Time/Date** | "What day is it?" | ✅ Works |
-| **Capability discovery** | "What can you do?" | ⚠️ Hardcoded list (3 items) |
-| **GitHub issues** | "Create a GitHub issue about X" | ⚠️ Works if repo configured |
-| **Project list** | "What projects am I working on?" | ⚠️ Reads from PIPER.md |
+| Category | Status | Coverage |
+|----------|--------|----------|
+| Identity (1-5) | ✅ **100%** | 5/5 PASS |
+| Temporal (6-10) | ✅ **100%** | 5/5 PASS |
+| Spatial (11-15) | ✅ 80% | 4/5 PASS, 1 NOT IMPL |
+| Capability (16-20) | ✅ **100%** | 5/5 PASS |
+| Predictive (21-25) | ⚠️ 20% | 1 PARTIAL, 4 NOT IMPL |
 
-### What Returns Placeholder Responses
+### What Works in Chat (19 queries)
 
-These queries route correctly but return generic/time-based advice instead of specific help:
+**Identity Queries** (all 5 work):
+| Query | Example | Status |
+|-------|---------|--------|
+| Name/role | "What's your name?" | ✅ Works |
+| Capabilities | "What can you do?" | ✅ Dynamic list from PluginRegistry |
+| Health check | "Are you working properly?" | ✅ Checks database + integrations |
+| Help/onboarding | "How do I get help?" | ✅ Returns resources + examples |
+| Differentiation | "What makes you different?" | ✅ Unique features + positioning |
 
-| Query Type | Example | What Happens |
-|------------|---------|--------------|
-| **Project setup** | "Help me set up my projects" | Returns time-of-day focus advice |
-| **Status queries** | "What am I working on?" | Returns "your key priorities" placeholder |
-| **Priority queries** | "What's my top priority?" | Returns "your key priorities" placeholder |
-| **Focus guidance** | "What should I focus on?" | Returns time-based generic advice |
+**Temporal Queries** (all 5 work):
+| Query | Example | Status |
+|-------|---------|--------|
+| Date/time | "What day is it?" | ✅ With calendar context |
+| Retrospective | "What did we accomplish yesterday?" | ✅ Completed todos from yesterday |
+| Agenda | "What's on the agenda today?" | ✅ Calendar + todos + priorities |
+| Last activity | "When did we last work on this?" | ✅ GitHub activity lookup |
+| Duration | "How long have we been working on this?" | ✅ Project duration calculation |
 
-**Why**: Handlers exist but need PIPER.md configuration or aren't fully implemented yet.
+**Spatial Queries** (4 of 5 work):
+| Query | Example | Status |
+|-------|---------|--------|
+| Project list | "What projects are we working on?" | ✅ With GitHub metadata |
+| Landscape | "Show me the project landscape" | ✅ Health status grouping |
+| Priority | "Which project should I focus on?" | ✅ Smart recommendations |
+| Project status | "What's the status of [project]?" | ✅ Detailed with issues |
+| Lifecycle | "Where are we in the project lifecycle?" | ❌ Not implemented |
 
-### What's Not Yet Implemented
+**Capability Queries** (all 5 work):
+| Query | Example | Status |
+|-------|---------|--------|
+| GitHub issues | "Create a GitHub issue about X" | ✅ Uses defaults from PIPER.md |
+| Project list | "List all my projects" | ✅ Routes to spatial handler |
+| Status report | "Give me a status report" | ✅ Aggregated health + todos |
+| Document analysis | "Analyze this document" | ✅ Via Notion (Issue #515) |
+| Document search | "Search for X in our documents" | ✅ Via Notion (Issue #516) |
 
-These queries return a graceful "not yet implemented" message (no crashes):
+### What's Partially Implemented (1 query)
 
-| Query Type | Example | Related Epic |
-|------------|---------|--------------|
-| **Historical queries** | "What did we do yesterday?" | #490 FTUX-PORTFOLIO |
-| **Agenda queries** | "What's on the agenda today?" | #490 FTUX-PORTFOLIO |
-| **Pattern recognition** | "What patterns do you see?" | Future |
-| **Risk analysis** | "What risks should I be aware of?" | Future |
-| **Document analysis** | "Analyze this document" | Needs file reference |
-| **Search** | "Search for X in our documents" | Future |
+| Query | Example | Current Behavior |
+|-------|---------|------------------|
+| Focus guidance | "What should I focus on today?" | Returns time-based advice (no calendar integration yet) |
 
-### Summary: 2/25 Fully Work, 10 Partial, 13 Not Implemented
+### What's Not Yet Implemented (5 queries)
+
+These return a graceful fallback message (no errors):
+
+| Query | Example | Reason |
+|-------|---------|--------|
+| Lifecycle detection | "Where are we in the project lifecycle?" | Needs workflow state tracking (may remove from canonical list) |
+| Pattern recognition | "What patterns do you see?" | Future v1.1 feature |
+| Risk analysis | "What risks should I be aware of?" | Future v1.1 feature |
+| Opportunity detection | "What opportunities should I pursue?" | Future v1.1 feature |
+| Milestone tracking | "What's the next milestone?" | Future v1.1 feature |
 
 **For detailed testing**: See [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
 
-**Related Issues**:
-- #490 - FTUX-PORTFOLIO: Project Portfolio Onboarding
-- #491 - FTUX-CONCIERGE: Capability Concierge
-- #492 - FTUX-TESTPLAN: Canonical Query Test Matrix
+**Related Issues** (all resolved Dec 21-24, 2025):
+- #499 - Agenda aggregation ✅
+- #500 - Project-specific status ✅
+- #501 - Historical retrospective ✅
+- #504-#511 - Various temporal/spatial queries ✅
+- #513 - Status report generator ✅
+- #515 - Document analysis via Notion ✅ (Dec 24)
+- #516 - Document search via Notion ✅ (Dec 24)
 
 ---
 
@@ -465,6 +498,6 @@ This document will be updated:
 
 ---
 
-_Last Updated: December 21, 2025_
-_Status: Stable core (setup, login, chat ready - focus testing on workflows)_
+_Last Updated: December 24, 2025_
+_Status: Stable core (setup, login, chat ready - 76% canonical query coverage)_
 _Software Version: 0.8.2_

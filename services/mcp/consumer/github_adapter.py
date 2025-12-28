@@ -101,6 +101,40 @@ class GitHubMCPSpatialAdapter(BaseSpatialAdapter):
             logger.error(f"Error calling GitHub API: {e}")
             return None
 
+    async def _post_github_api(
+        self, endpoint: str, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Make GitHub API POST call"""
+        try:
+            if not self._session:
+                logger.warning("GitHub API session not configured")
+                return None
+
+            url = f"{self._github_api_base}/{endpoint}"
+            async with self._session.post(url, json=data) as response:
+                if response.status in (200, 201):
+                    return await response.json()
+                elif response.status == 401:
+                    logger.error("GitHub API authentication failed")
+                    return None
+                elif response.status == 403:
+                    logger.error("GitHub API rate limit exceeded")
+                    return None
+                else:
+                    logger.error(f"GitHub API error: {response.status}")
+                    return None
+
+        except Exception as e:
+            logger.error(f"Error calling GitHub API: {e}")
+            return None
+
+    async def add_comment(
+        self, repo_name: str, issue_number: int, body: str
+    ) -> Optional[Dict[str, Any]]:
+        """Add comment to GitHub issue"""
+        endpoint = f"repos/mediajunkie/{repo_name}/issues/{issue_number}/comments"
+        return await self._post_github_api(endpoint, {"body": body})
+
     async def list_github_issues_direct(
         self, repo: str = "piper-morgan-product", owner: str = "mediajunkie"
     ) -> List[Dict[str, Any]]:

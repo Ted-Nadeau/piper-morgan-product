@@ -2524,3 +2524,1261 @@ class TestLandscapeFormatting:
         assert "HealthyProject" in result
         assert "Open Issues: 3" in result
         assert "Last Updated:" in result
+
+
+class TestStatusReportDetection:
+    """Test suite for _detect_status_report_request() method (Issue #513)"""
+
+    def test_detects_status_report_pattern(self, canonical_handlers):
+        """Test detection of 'status report' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Give me a status report",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_give_me_status_pattern(self, canonical_handlers):
+        """Test detection of 'give me status' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Give me a status",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_project_status_pattern(self, canonical_handlers):
+        """Test detection of 'project status' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the project status?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_current_status_pattern(self, canonical_handlers):
+        """Test detection of 'current status' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the current status?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_how_are_things_going_pattern(self, canonical_handlers):
+        """Test detection of 'how are things going' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How are things going?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_status_report_query(self, canonical_handlers):
+        """Test that non-status-report queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Show me my projects",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_none_intent(self, canonical_handlers):
+        """Test that None intent returns False."""
+        # Act
+        result = canonical_handlers._detect_status_report_request(None)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty message returns False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_status_report_request(intent)
+
+        # Assert
+        assert result is False
+
+
+class TestRetrospectiveQuery:
+    """Test suite for retrospective query detection and handling (Issue #501)"""
+
+    def test_detects_what_did_we_accomplish_yesterday(self, canonical_handlers):
+        """Test detection of 'what did we accomplish yesterday' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What did we accomplish yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_did_we_do_yesterday(self, canonical_handlers):
+        """Test detection of 'what did we do yesterday' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What did we do yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_got_done_yesterday(self, canonical_handlers):
+        """Test detection of 'what got done yesterday' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What got done yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_finished_yesterday(self, canonical_handlers):
+        """Test detection of 'finished yesterday' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What tasks finished yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_completed_yesterday(self, canonical_handlers):
+        """Test detection of 'completed yesterday' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What tasks were completed yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_yesterdays_accomplishments(self, canonical_handlers):
+        """Test detection of 'yesterday's accomplishments' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Show me yesterday's accomplishments",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_yesterdays_progress(self, canonical_handlers):
+        """Test detection of 'yesterday's progress' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What was yesterday's progress?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_detects_what_happened_yesterday(self, canonical_handlers):
+        """Test detection of 'what happened yesterday' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What happened yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is True
+
+    def test_returns_false_for_non_retrospective_query(self, canonical_handlers):
+        """Test that non-retrospective queries return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's on my agenda today?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_agenda",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_empty_message(self, canonical_handlers):
+        """Test that empty messages return False."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = canonical_handlers._detect_retrospective_request(intent)
+
+        # Assert
+        assert result is False
+
+    def test_returns_false_for_none_intent(self, canonical_handlers):
+        """Test that None intent returns False."""
+        # Act
+        result = canonical_handlers._detect_retrospective_request(None)
+
+        # Assert
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_handler_returns_correct_structure(self, canonical_handlers):
+        """Test handler returns expected response structure."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What did we accomplish yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = await canonical_handlers._handle_retrospective_query(intent, "test_session")
+
+        # Assert structure
+        assert "message" in result
+        assert "intent" in result
+        assert result["intent"]["category"] == "temporal"
+        assert result["intent"]["action"] == "provide_retrospective"
+        assert result["intent"]["confidence"] == 1.0
+        assert "retrospective" in result
+        assert "completed_tasks" in result["retrospective"]
+        assert result["requires_clarification"] is False
+
+    @pytest.mark.asyncio
+    async def test_handler_respects_spatial_pattern_embedded(self, canonical_handlers):
+        """Test handler uses EMBEDDED format for embedded spatial pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What did we accomplish yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+        intent.spatial_context = {"pattern": "EMBEDDED"}
+
+        # Act
+        result = await canonical_handlers._handle_retrospective_query(intent, "test_session")
+
+        # Assert - EMBEDDED format should be brief
+        assert result["spatial_pattern"] == "EMBEDDED"
+        # Should match format: "Month Day: N tasks completed"
+        assert "tasks completed" in result["message"] or "No completed tasks" in result["message"]
+        assert len(result["message"]) < 100  # Brief format
+
+    @pytest.mark.asyncio
+    async def test_handler_respects_spatial_pattern_granular(self, canonical_handlers):
+        """Test handler uses GRANULAR format for granular spatial pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What did we accomplish yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+        intent.spatial_context = {"pattern": "GRANULAR"}
+
+        # Act
+        result = await canonical_handlers._handle_retrospective_query(intent, "test_session")
+
+        # Assert - GRANULAR format should be detailed
+        assert result["spatial_pattern"] == "GRANULAR"
+        # Should match format: "# Yesterday's Accomplishments"
+        assert "Yesterday's Accomplishments" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_handler_uses_standard_format_by_default(self, canonical_handlers):
+        """Test handler uses STANDARD format when no spatial pattern is set."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What did we accomplish yesterday?",
+            category=IntentCategoryEnum.TEMPORAL,
+            action="query_retrospective",
+            confidence=0.9,
+        )
+
+        # Act
+        result = await canonical_handlers._handle_retrospective_query(intent, "test_session")
+
+        # Assert - STANDARD format should be used
+        assert result["spatial_pattern"] is None
+        # Should match format: "**Yesterday's Accomplishments**"
+        assert "Yesterday's Accomplishments" in result["message"]
+
+    def test_format_embedded_with_tasks(self, canonical_handlers):
+        """Test EMBEDDED format with completed tasks."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = [
+            {"title": "Task 1", "priority": "high"},
+            {"title": "Task 2", "priority": "medium"},
+            {"title": "Task 3", "priority": "low"},
+        ]
+
+        # Act
+        result = canonical_handlers._format_retrospective_embedded(completed_todos, target_date)
+
+        # Assert
+        assert result == "December 21: 3 tasks completed"
+
+    def test_format_embedded_no_tasks(self, canonical_handlers):
+        """Test EMBEDDED format with no completed tasks."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = []
+
+        # Act
+        result = canonical_handlers._format_retrospective_embedded(completed_todos, target_date)
+
+        # Assert
+        assert result == "December 21: No completed tasks"
+
+    def test_format_standard_with_tasks(self, canonical_handlers):
+        """Test STANDARD format with completed tasks."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = [
+            {"title": "Fix authentication bug", "priority": "high"},
+            {"title": "Update documentation", "priority": "medium"},
+            {"title": "Review PR #42", "priority": "low"},
+        ]
+
+        # Act
+        result = canonical_handlers._format_retrospective_standard(completed_todos, target_date)
+
+        # Assert
+        assert "Yesterday's Accomplishments" in result
+        assert "Sunday, December 21, 2025" in result
+        assert "Completed Tasks" in result
+        assert "3" in result
+        assert "Fix authentication bug" in result
+        assert "Update documentation" in result
+        assert "Review PR #42" in result
+        assert "Productive day" in result
+
+    def test_format_standard_no_tasks(self, canonical_handlers):
+        """Test STANDARD format with no completed tasks."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = []
+
+        # Act
+        result = canonical_handlers._format_retrospective_standard(completed_todos, target_date)
+
+        # Assert
+        assert "Yesterday's Accomplishments" in result
+        assert "Sunday, December 21, 2025" in result
+        assert "No completed tasks found" in result
+
+    def test_format_standard_with_many_tasks(self, canonical_handlers):
+        """Test STANDARD format with more than 8 tasks."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = [{"title": f"Task {i}", "priority": "medium"} for i in range(12)]
+
+        # Act
+        result = canonical_handlers._format_retrospective_standard(completed_todos, target_date)
+
+        # Assert
+        assert "Yesterday's Accomplishments" in result
+        assert "12" in result
+        assert "and 4 more" in result
+
+    def test_format_granular_with_tasks_grouped_by_priority(self, canonical_handlers):
+        """Test GRANULAR format groups tasks by priority."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = [
+            {"title": "Critical fix", "priority": "high"},
+            {"title": "Important feature", "priority": "high"},
+            {"title": "Documentation update", "priority": "medium"},
+            {"title": "Code cleanup", "priority": "low"},
+        ]
+
+        # Act
+        result = canonical_handlers._format_retrospective_granular(completed_todos, target_date)
+
+        # Assert
+        assert "# Yesterday's Accomplishments" in result
+        assert "Sunday, December 21, 2025" in result
+        assert "## 🔴 High Priority Completed" in result
+        assert "Critical fix" in result
+        assert "Important feature" in result
+        assert "## 🟡 Medium Priority Completed" in result
+        assert "Documentation update" in result
+        assert "## 🟢 Low Priority Completed" in result
+        assert "Code cleanup" in result
+        assert "## 📊 Summary" in result
+        assert "**Total Completed**: 4 tasks" in result
+        assert "**High Priority**: 2 tasks" in result
+        assert "**Medium Priority**: 1 tasks" in result
+        assert "**Low Priority**: 1 tasks" in result
+
+    def test_format_granular_no_tasks(self, canonical_handlers):
+        """Test GRANULAR format with no completed tasks."""
+        from datetime import datetime
+
+        # Arrange
+        target_date = datetime(2025, 12, 21)
+        completed_todos = []
+
+        # Act
+        result = canonical_handlers._format_retrospective_granular(completed_todos, target_date)
+
+        # Assert
+        assert "# Yesterday's Accomplishments" in result
+        assert "Sunday, December 21, 2025" in result
+        assert "📋 No completed tasks found" in result
+        assert "Consider reviewing your task list" in result
+
+
+class TestStatusReportFormatting:
+    """Test suite for status report formatting methods (Issue #513)"""
+
+    def test_format_embedded_with_all_data(self, canonical_handlers):
+        """Test EMBEDDED format with projects and todos."""
+        # Arrange
+        report_data = {
+            "total_projects": 3,
+            "health_summary": {
+                "healthy": 2,
+                "at-risk": 1,
+                "stalled": 0,
+                "unknown": 0,
+            },
+            "open_todos": 5,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_embedded(report_data)
+
+        # Assert
+        assert "2 healthy" in result
+        assert "1 at-risk" in result
+        assert "5 open todos" in result
+
+    def test_format_embedded_no_data(self, canonical_handlers):
+        """Test EMBEDDED format with no projects or todos."""
+        # Arrange
+        report_data = {
+            "total_projects": 0,
+            "health_summary": {
+                "healthy": 0,
+                "at-risk": 0,
+                "stalled": 0,
+                "unknown": 0,
+            },
+            "open_todos": 0,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_embedded(report_data)
+
+        # Assert
+        assert "No projects or todos" in result
+
+    def test_format_standard_includes_sections(self, canonical_handlers):
+        """Test STANDARD format includes all sections."""
+        # Arrange
+        report_data = {
+            "total_projects": 3,
+            "health_summary": {
+                "healthy": 1,
+                "at-risk": 1,
+                "stalled": 1,
+                "unknown": 0,
+            },
+            "open_todos": 7,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_standard(report_data)
+
+        # Assert
+        assert "Status Report" in result
+        assert "Projects" in result
+        assert "3 total" in result
+        assert "Healthy: 1" in result
+        assert "At Risk: 1" in result
+        assert "Stalled: 1" in result
+        assert "Open Todos**: 7" in result
+
+    def test_format_granular_includes_breakdown(self, canonical_handlers):
+        """Test GRANULAR format includes detailed breakdown."""
+        # Arrange
+        report_data = {
+            "total_projects": 4,
+            "health_summary": {
+                "healthy": 2,
+                "at-risk": 1,
+                "stalled": 1,
+                "unknown": 0,
+            },
+            "open_todos": 10,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_granular(report_data)
+
+        # Assert
+        assert "Detailed Status Report" in result
+        assert "Overview" in result
+        assert "Total Projects**: 4" in result
+        assert "Open Todos**: 10" in result
+        assert "Project Health Breakdown" in result
+        assert "Healthy**: 2 projects" in result
+        assert "At Risk**: 1 projects" in result
+        assert "Stalled**: 1 projects" in result
+        assert "Summary" in result
+
+    def test_format_granular_all_healthy(self, canonical_handlers):
+        """Test GRANULAR format when all projects are healthy."""
+        # Arrange
+        report_data = {
+            "total_projects": 3,
+            "health_summary": {
+                "healthy": 3,
+                "at-risk": 0,
+                "stalled": 0,
+                "unknown": 0,
+            },
+            "open_todos": 2,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_granular(report_data)
+
+        # Assert
+        assert "All projects are healthy!" in result
+
+    def test_format_granular_with_stalled(self, canonical_handlers):
+        """Test GRANULAR format shows attention needed for stalled projects."""
+        # Arrange
+        report_data = {
+            "total_projects": 3,
+            "health_summary": {
+                "healthy": 1,
+                "at-risk": 0,
+                "stalled": 2,
+                "unknown": 0,
+            },
+            "open_todos": 5,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_granular(report_data)
+
+        # Assert
+        assert "Attention needed" in result
+        assert "2 stalled project(s)" in result
+
+    def test_format_standard_only_healthy(self, canonical_handlers):
+        """Test STANDARD format with only healthy projects."""
+        # Arrange
+        report_data = {
+            "total_projects": 2,
+            "health_summary": {
+                "healthy": 2,
+                "at-risk": 0,
+                "stalled": 0,
+                "unknown": 0,
+            },
+            "open_todos": 3,
+        }
+
+        # Act
+        result = canonical_handlers._format_status_report_standard(report_data)
+
+        # Assert
+        assert "Healthy: 2" in result
+        assert "At Risk" not in result or "At Risk: 0" not in result  # Should not show 0 counts
+
+
+class TestProjectSpecificQuery:
+    """Test suite for project-specific query detection and formatting (Issue #500)"""
+
+    def test_detects_status_of_pattern(self, canonical_handlers):
+        """Test detection of 'status of ProjectName' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of HealthTrack?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "HealthTrack"
+
+    def test_detects_how_is_project_going_pattern(self, canonical_handlers):
+        """Test detection of 'how is project going' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How is the MediHub project going?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "MediHub"
+
+    def test_detects_how_is_project_doing_pattern(self, canonical_handlers):
+        """Test detection of 'how is project doing' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="How is CarePro doing?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "CarePro"
+
+    def test_detects_tell_me_about_pattern(self, canonical_handlers):
+        """Test detection of 'tell me about' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Tell me about HealthTrack",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "HealthTrack"
+
+    def test_detects_update_on_pattern(self, canonical_handlers):
+        """Test detection of 'update on' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="Give me an update on MediHub?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "MediHub"
+
+    def test_detects_project_status_pattern(self, canonical_handlers):
+        """Test detection of 'ProjectName status' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="CarePro status?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "CarePro"
+
+    def test_detects_what_about_pattern(self, canonical_handlers):
+        """Test detection of 'what about' pattern."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What about HealthTrack?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result == "HealthTrack"
+
+    def test_case_insensitive_exact_match(self, canonical_handlers):
+        """Test case-insensitive exact match for project names."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of healthtrack?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert - Should match HealthTrack despite case difference
+        assert result == "HealthTrack"
+
+    def test_fuzzy_match_project_contains_query(self, canonical_handlers):
+        """Test fuzzy match when project name contains query term."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of Health?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert - Should match HealthTrack (contains "health")
+        assert result == "HealthTrack"
+
+    def test_fuzzy_match_query_contains_project(self, canonical_handlers):
+        """Test fuzzy match when query contains project name."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of MediHub platform?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert - Should match MediHub
+        assert result == "MediHub"
+
+    def test_returns_none_for_unknown_project(self, canonical_handlers):
+        """Test returns None when project name is not recognized."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of UnknownProject?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result is None
+
+    def test_returns_none_for_empty_projects_list(self, canonical_handlers):
+        """Test returns None when projects list is empty."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What's the status of HealthTrack?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = []
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result is None
+
+    def test_returns_none_for_none_intent(self, canonical_handlers):
+        """Test returns None when intent is None."""
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(None, projects)
+
+        # Assert
+        assert result is None
+
+    def test_returns_none_for_empty_message(self, canonical_handlers):
+        """Test returns None when message is empty."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result is None
+
+    def test_returns_none_for_non_project_specific_query(self, canonical_handlers):
+        """Test returns None for general status queries."""
+        from services.domain.models import Intent
+        from services.shared_types import IntentCategory as IntentCategoryEnum
+
+        intent = Intent(
+            original_message="What am I working on?",
+            category=IntentCategoryEnum.STATUS,
+            action="query_status",
+            confidence=0.9,
+        )
+        projects = ["HealthTrack", "MediHub", "CarePro"]
+
+        # Act
+        result = canonical_handlers._detect_project_specific_query(intent, projects)
+
+        # Assert
+        assert result is None
+
+    def test_format_embedded_with_github_metadata(self, canonical_handlers):
+        """Test EMBEDDED format with GitHub metadata."""
+        # Arrange
+        metadata = {"has_github": True, "open_issues_count": 12}
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="EMBEDDED"
+        )
+
+        # Assert
+        assert result == "HealthTrack: 12 open issues"
+
+    def test_format_embedded_without_issues_count(self, canonical_handlers):
+        """Test EMBEDDED format without issues count."""
+        # Arrange
+        metadata = {"has_github": True}
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="EMBEDDED"
+        )
+
+        # Assert
+        assert result == "HealthTrack: Active"
+
+    def test_format_embedded_no_github(self, canonical_handlers):
+        """Test EMBEDDED format without GitHub connection."""
+        # Arrange
+        metadata = {"has_github": False}
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="EMBEDDED"
+        )
+
+        # Assert
+        assert result == "HealthTrack: Active"
+
+    def test_format_standard_with_github_metadata(self, canonical_handlers):
+        """Test STANDARD format with GitHub metadata."""
+        # Arrange
+        metadata = {
+            "has_github": True,
+            "open_issues_count": 8,
+            "issues_preview": [
+                {"number": 101, "title": "Fix authentication bug"},
+                {"number": 102, "title": "Add user settings page"},
+                {"number": 103, "title": "Update documentation"},
+            ],
+            "repository": "https://github.com/org/healthtrack",
+        }
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="STANDARD"
+        )
+
+        # Assert
+        assert "**HealthTrack Status**" in result
+        assert "📋 **Open Issues**: 8" in result
+        assert "#101: Fix authentication bug" in result
+        assert "#102: Add user settings page" in result
+        assert "#103: Update documentation" in result
+        assert "🔗 **Repository**: https://github.com/org/healthtrack" in result
+
+    def test_format_standard_without_github(self, canonical_handlers):
+        """Test STANDARD format without GitHub connection."""
+        # Arrange
+        metadata = {"has_github": False}
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="STANDARD"
+        )
+
+        # Assert
+        assert "**HealthTrack Status**" in result
+        assert "📊 **Status**: Active development" in result
+        assert "ℹ️ No GitHub repository linked - add one in Settings → Projects" in result
+
+    def test_format_granular_with_full_metadata(self, canonical_handlers):
+        """Test GRANULAR format with full metadata and user context."""
+        # Arrange
+        metadata = {
+            "has_github": True,
+            "open_issues_count": 15,
+            "issues_preview": [
+                {"number": 201, "title": "Critical: Database connection fails on startup"},
+                {"number": 202, "title": "Feature: Add export functionality"},
+                {"number": 203, "title": "Bug: UI glitch in settings page"},
+                {"number": 204, "title": "Enhancement: Improve search performance"},
+                {"number": 205, "title": "Documentation: Update API reference"},
+                {"number": 206, "title": "Refactor: Simplify authentication flow"},
+            ],
+            "repository": "https://github.com/org/healthtrack",
+        }
+        user_context = MagicMock()
+        user_context.organization = "HealthCare Inc."
+        user_context.priorities = ["Q1 Launch", "Security Audit", "Performance Optimization"]
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, user_context, spatial_pattern="GRANULAR"
+        )
+
+        # Assert
+        assert "**HealthTrack Status**" in result
+        assert "📋 **Open Issues**: 15" in result
+        # GRANULAR should show 5 issues
+        assert "#201:" in result
+        assert "#202:" in result
+        assert "#203:" in result
+        assert "#204:" in result
+        assert "#205:" in result
+        assert "🔗 **Repository**: https://github.com/org/healthtrack" in result
+        assert "🏢 **Organization**: HealthCare Inc." in result
+        assert "🎯 **Current Priorities**:" in result
+        assert "Q1 Launch" in result
+        assert "Security Audit" in result
+        assert "Performance Optimization" in result
+
+    def test_format_granular_limits_issue_preview_to_five(self, canonical_handlers):
+        """Test GRANULAR format shows maximum 5 issue previews."""
+        # Arrange
+        metadata = {
+            "has_github": True,
+            "open_issues_count": 10,
+            "issues_preview": [{"number": i, "title": f"Issue {i}"} for i in range(1, 11)],
+            "repository": "https://github.com/org/healthtrack",
+        }
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="GRANULAR"
+        )
+
+        # Assert - Should only show first 5 issues
+        assert "#1:" in result
+        assert "#2:" in result
+        assert "#3:" in result
+        assert "#4:" in result
+        assert "#5:" in result
+        assert "#6:" not in result
+
+    def test_format_standard_limits_issue_preview_to_three(self, canonical_handlers):
+        """Test STANDARD format shows maximum 3 issue previews."""
+        # Arrange
+        metadata = {
+            "has_github": True,
+            "open_issues_count": 10,
+            "issues_preview": [{"number": i, "title": f"Issue {i}"} for i in range(1, 11)],
+            "repository": "https://github.com/org/healthtrack",
+        }
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="STANDARD"
+        )
+
+        # Assert - Should only show first 3 issues
+        assert "#1:" in result
+        assert "#2:" in result
+        assert "#3:" in result
+        assert "#4:" not in result
+
+    def test_format_truncates_long_issue_titles(self, canonical_handlers):
+        """Test that issue titles longer than 60 chars are truncated."""
+        # Arrange
+        long_title = "This is a very long issue title that should definitely be truncated because it exceeds sixty characters"
+        metadata = {
+            "has_github": True,
+            "open_issues_count": 1,
+            "issues_preview": [
+                {"number": 999, "title": long_title},
+            ],
+            "repository": "https://github.com/org/healthtrack",
+        }
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="STANDARD"
+        )
+
+        # Assert - Title should be truncated to 60 chars
+        assert "#999:" in result
+        # The title in result should be truncated
+        truncated_title = long_title[:60]
+        assert truncated_title in result
+        assert long_title not in result
+
+    def test_format_handles_missing_issue_title(self, canonical_handlers):
+        """Test format handles missing issue title gracefully."""
+        # Arrange
+        metadata = {
+            "has_github": True,
+            "open_issues_count": 1,
+            "issues_preview": [
+                {"number": 999},  # No title field
+            ],
+            "repository": "https://github.com/org/healthtrack",
+        }
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, None, spatial_pattern="STANDARD"
+        )
+
+        # Assert
+        assert "#999: Untitled" in result
+
+    def test_format_without_user_context_organization(self, canonical_handlers):
+        """Test format without organization in user context."""
+        # Arrange
+        metadata = {"has_github": True, "open_issues_count": 5}
+        user_context = MagicMock()
+        user_context.organization = None
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, user_context, spatial_pattern="STANDARD"
+        )
+
+        # Assert - Should not include organization section
+        assert "🏢 **Organization**:" not in result
+
+    def test_format_without_user_context_priorities(self, canonical_handlers):
+        """Test GRANULAR format without priorities in user context."""
+        # Arrange
+        metadata = {"has_github": True, "open_issues_count": 5}
+        user_context = MagicMock()
+        user_context.priorities = None
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, user_context, spatial_pattern="GRANULAR"
+        )
+
+        # Assert - Should not include priorities section
+        assert "🎯 **Current Priorities**:" not in result
+
+    def test_format_standard_does_not_show_priorities(self, canonical_handlers):
+        """Test STANDARD format does not show priorities even if available."""
+        # Arrange
+        metadata = {"has_github": True, "open_issues_count": 5}
+        user_context = MagicMock()
+        user_context.priorities = ["Priority 1", "Priority 2"]
+
+        # Act
+        result = canonical_handlers._format_project_specific_status(
+            "HealthTrack", metadata, user_context, spatial_pattern="STANDARD"
+        )
+
+        # Assert - STANDARD should not show priorities (only GRANULAR does)
+        assert "🎯 **Current Priorities**:" not in result

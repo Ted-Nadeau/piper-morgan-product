@@ -902,6 +902,34 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         return False
 
+    def _detect_status_report_request(self, intent: Intent) -> bool:
+        """
+        Issue #513: Detect if this is a 'give me a status report' query.
+        Returns True if status report pattern detected, False otherwise.
+        """
+        import re
+
+        if not intent or not intent.original_message:
+            return False
+
+        query = intent.original_message.lower()
+
+        # Patterns for status report queries
+        patterns = [
+            r"status\s+report",
+            r"give\s+me\s+(?:a\s+)?status",
+            r"project\s+status",
+            r"what'?s?\s+the\s+status",
+            r"current\s+status",
+            r"how\s+are\s+things\s+going",
+        ]
+
+        for pattern in patterns:
+            if re.search(pattern, query, re.IGNORECASE):
+                return True
+
+        return False
+
     def _calculate_project_health(
         self, project_name: str, github_data: Optional[Dict]
     ) -> Dict[str, str]:
@@ -1095,6 +1123,12 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         # Issue #510: Check for landscape/portfolio health request
         if self._detect_landscape_request(intent):
             return await self._handle_spatial_project_landscape(
+                intent, session_id, user_context, spatial_pattern
+            )
+
+        # Issue #513: Check for status report request
+        if self._detect_status_report_request(intent):
+            return await self._handle_status_report(
                 intent, session_id, user_context, spatial_pattern
             )
 
@@ -3062,6 +3096,84 @@ What would you like to set up first?"""
             "requires_clarification": False,
         }
 
+    async def _handle_status_report(
+        self, intent: Intent, session_id: str, user_context, spatial_pattern: Optional[str]
+    ) -> Dict:
+        """
+        Issue #513: Handle 'Give me a status report' queries.
+        Provides aggregated status including projects and todos.
+        """
+        projects = user_context.projects if user_context else []
+
+        # Fetch GitHub metadata for all projects
+        project_metadata = await self._get_project_metadata(projects)
+
+        # Calculate health for each project
+        health_summary = {"healthy": 0, "at-risk": 0, "stalled": 0, "unknown": 0}
+
+        for project in projects:
+            github_data = project_metadata.get(project, {})
+            health = self._calculate_project_health(project, github_data)
+            status = health["status"]
+            health_summary[status] += 1
+
+        # Try to get open todos count
+        open_todos_count = 0
+        try:
+            from services.database.models import TodoStatus
+            from services.database.session import async_session_factory
+            from services.repositories.todo_repository import TodoRepository
+
+            async with async_session_factory() as session:
+                todo_repo = TodoRepository(session)
+
+                # Get user_id from user_context
+                user_id = user_context.user_id if hasattr(user_context, "user_id") else None
+
+                if user_id:
+                    # Get all pending todos for the user
+                    from sqlalchemy import select
+
+                    from services.database.models import TodoDB
+
+                    result = await session.execute(
+                        select(TodoDB).where(
+                            TodoDB.owner_id == user_id, TodoDB.status == TodoStatus.PENDING
+                        )
+                    )
+                    todos = result.scalars().all()
+                    open_todos_count = len(todos)
+        except Exception as e:
+            logger.warning(f"Could not fetch todos count: {e}")
+            open_todos_count = 0
+
+        # Build report data
+        report_data = {
+            "total_projects": len(projects),
+            "health_summary": health_summary,
+            "open_todos": open_todos_count,
+        }
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "EMBEDDED":
+            message = self._format_status_report_embedded(report_data)
+        elif spatial_pattern == "GRANULAR":
+            message = self._format_status_report_granular(report_data)
+        else:
+            message = self._format_status_report_standard(report_data)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.STATUS.value,
+                "action": "provide_status_report",
+                "confidence": 1.0,
+                "context": report_data,
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
     async def _handle_spatial_priority_recommendation(
         self, intent: Intent, session_id: str, user_context, spatial_pattern: Optional[str]
     ) -> Dict:
@@ -3429,6 +3541,89 @@ What would you like to set up first?"""
                     lines.append(f"  - Last Updated: {last_update}")
 
                 lines.append("")
+
+        return "\n".join(lines)
+
+    def _format_status_report_embedded(self, report_data: Dict) -> str:
+        """Issue #513: Brief format for embedded contexts."""
+        total = report_data["total_projects"]
+        health = report_data["health_summary"]
+        todos = report_data["open_todos"]
+
+        parts = []
+        if total > 0:
+            healthy = health["healthy"]
+            at_risk = health["at-risk"]
+            if healthy > 0:
+                parts.append(f"{healthy} healthy")
+            if at_risk > 0:
+                parts.append(f"{at_risk} at-risk")
+
+        if todos > 0:
+            parts.append(f"{todos} open todos")
+
+        if not parts:
+            return "Status: No projects or todos"
+
+        return f"Status: {', '.join(parts)}"
+
+    def _format_status_report_standard(self, report_data: Dict) -> str:
+        """Issue #513: Standard format with project and todo summary."""
+        lines = ["## Status Report\n"]
+
+        total = report_data["total_projects"]
+        health = report_data["health_summary"]
+        todos = report_data["open_todos"]
+
+        # Project summary
+        lines.append(f"**Projects**: {total} total")
+        if total > 0:
+            lines.append(f"  - ✅ Healthy: {health['healthy']}")
+            if health["at-risk"] > 0:
+                lines.append(f"  - ⚠️ At Risk: {health['at-risk']}")
+            if health["stalled"] > 0:
+                lines.append(f"  - 🛑 Stalled: {health['stalled']}")
+        lines.append("")
+
+        # Todo summary
+        lines.append(f"**Open Todos**: {todos}")
+        lines.append("")
+
+        return "\n".join(lines)
+
+    def _format_status_report_granular(self, report_data: Dict) -> str:
+        """Issue #513: Detailed format with full breakdown."""
+        lines = ["## Detailed Status Report\n"]
+
+        total = report_data["total_projects"]
+        health = report_data["health_summary"]
+        todos = report_data["open_todos"]
+
+        # Overview section
+        lines.append("### Overview\n")
+        lines.append(f"**Total Projects**: {total}")
+        lines.append(f"**Open Todos**: {todos}")
+        lines.append("")
+
+        # Project health breakdown
+        if total > 0:
+            lines.append("### Project Health Breakdown\n")
+            lines.append(f"✅ **Healthy**: {health['healthy']} projects")
+            lines.append(f"⚠️ **At Risk**: {health['at-risk']} projects")
+            lines.append(f"🛑 **Stalled**: {health['stalled']} projects")
+            if health["unknown"] > 0:
+                lines.append(f"❓ **Unknown**: {health['unknown']} projects")
+            lines.append("")
+
+        # Summary
+        lines.append("### Summary\n")
+        if health["healthy"] == total and total > 0:
+            lines.append("All projects are healthy!")
+        elif health["stalled"] > 0:
+            lines.append(f"⚠️ Attention needed: {health['stalled']} stalled project(s)")
+        elif health["at-risk"] > 0:
+            lines.append(f"⚠️ Watch: {health['at-risk']} project(s) at risk")
+        lines.append("")
 
         return "\n".join(lines)
 
