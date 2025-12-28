@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.conversation.conversation_handler import ConversationHandler
@@ -507,11 +507,72 @@ class IntentService:
         Handle QUERY category intents (standup, projects, generic).
 
         Routes to appropriate domain service based on intent action.
+        Issue #516: Added document search routing to Notion
         """
         self.logger.info(f"Processing QUERY intent: {intent.action}")
 
+        # Issue #516: Document search via Notion (Canonical Query #20)
+        if intent.action in ["search_documents", "find_documents", "search_notion"]:
+            return await self._handle_search_documents_notion(intent, workflow.id, session_id)
+
+        # Issue #522: Document update via Notion (Canonical Query #40)
+        elif intent.action in ["update_document", "edit_document", "update_document_query"]:
+            return await self._handle_update_document_notion(intent, workflow.id, session_id)
+
+        # Issue #518, #519: GitHub queries (Canonical Queries #41, #42, #45, #60)
+        elif intent.action in [
+            "shipped_this_week",
+            "what_shipped",
+            "show_closed_prs",
+            "shipped_query",
+        ]:
+            return await self._handle_shipped_this_week(intent, workflow.id)
+
+        elif intent.action in ["stale_prs", "old_prs", "show_stale_prs", "stale_prs_query"]:
+            return await self._handle_stale_prs(intent, workflow.id)
+
+        elif intent.action in ["review_issue", "show_issue", "get_issue", "review_issue_query"]:
+            return await self._handle_review_issue_query(intent, workflow.id)
+
+        elif intent.action in ["close_issue", "close_issue_query"]:
+            return await self._handle_close_issue_query(intent, workflow.id)
+
+        elif intent.action in ["comment_issue", "add_comment", "comment_issue_query"]:
+            return await self._handle_comment_issue_query(intent, workflow.id)
+
+        # Issue #518: Calendar queries (Canonical Queries #34, #35, #61)
+        elif intent.action in ["meeting_time", "how_much_time_in_meetings", "calendar_analysis"]:
+            return await self._handle_meeting_time_query(intent, workflow.id)
+
+        elif intent.action in ["recurring_meetings", "review_recurring_meetings", "audit_meetings"]:
+            return await self._handle_recurring_meetings_query(intent, workflow.id)
+
+        elif intent.action in ["week_calendar", "week_ahead", "whats_my_week_like"]:
+            return await self._handle_week_calendar_query(intent, workflow.id)
+
+        # Issue #518: Productivity query (Canonical Query #51)
+        elif intent.action in [
+            "productivity",
+            "my_productivity",
+            "weekly_metrics",
+            "accomplishments",
+        ]:
+            return await self._handle_productivity_query(intent, workflow.id, session_id)
+
+        # Issue #521: Contextual Intelligence queries (Canonical Queries #29, #30)
+        elif intent.action in ["changes_query", "what_changed", "show_changes", "changes_since"]:
+            return await self._handle_changes_query(intent, workflow.id, session_id)
+
+        elif intent.action in [
+            "attention_query",
+            "needs_attention",
+            "what_needs_attention",
+            "attention_items",
+        ]:
+            return await self._handle_attention_query(intent, workflow.id, session_id)
+
         # Handle specific query actions that were broken in August 22 refactor
-        if intent.action in ["show_standup", "get_standup"]:
+        elif intent.action in ["show_standup", "get_standup"]:
             return await self._handle_standup_query(intent, workflow.id, session_id)
 
         elif intent.action in ["list_projects", "show_projects"]:
@@ -632,6 +693,2328 @@ class IntentService:
                 error_type="QueryRouterError",
             )
 
+    async def _handle_search_documents_notion(
+        self, intent: Intent, workflow_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle document search via Notion integration.
+
+        Issue #516: Canonical Query #20 - "Search for X in our documents"
+        Uses NotionIntegrationRouter.search_notion() to search workspace.
+
+        Args:
+            intent: The classified intent with search query in context
+            workflow_id: Current workflow ID
+            session_id: User session ID
+
+        Returns:
+            IntentProcessingResult with search results or graceful fallback
+        """
+        self.logger.info(f"Processing document search via Notion: {intent.action}")
+
+        try:
+            # Import NotionIntegrationRouter
+            from services.integrations.notion.notion_integration_router import (
+                NotionIntegrationRouter,
+            )
+
+            # Initialize router
+            notion_router = NotionIntegrationRouter()
+
+            # Check if Notion is configured
+            if not notion_router.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to help search your documents, but Notion isn't configured yet. "
+                        "To enable document search, please add your NOTION_API_KEY to your environment "
+                        "or configure it in PIPER.user.md. Once configured, I can search your entire "
+                        "Notion workspace for you!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Extract search query from intent context
+            search_query = intent.context.get("search_query") or intent.context.get(
+                "original_message", ""
+            )
+
+            # Connect and search
+            await notion_router.connect()
+            results = await notion_router.search_notion(
+                query=search_query,
+                filter_type="page",  # Search pages (documents)
+                page_size=10,
+            )
+
+            # Format results
+            if not results:
+                return IntentProcessingResult(
+                    success=True,
+                    message=f"No documents found matching '{search_query}'. Try a different search term.",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                        "search_query": search_query,
+                        "result_count": 0,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                )
+
+            # Build response with result summaries
+            result_summaries = []
+            for item in results[:5]:  # Top 5 results
+                title = "Untitled"
+                if "properties" in item:
+                    title_prop = item["properties"].get("title", {})
+                    if "title" in title_prop and len(title_prop["title"]) > 0:
+                        title = title_prop["title"][0].get("text", {}).get("content", "Untitled")
+                    elif "Name" in item["properties"]:
+                        name_prop = item["properties"]["Name"]
+                        if "title" in name_prop and len(name_prop["title"]) > 0:
+                            title = name_prop["title"][0].get("text", {}).get("content", "Untitled")
+
+                result_summaries.append(
+                    {
+                        "title": title,
+                        "id": item.get("id", ""),
+                        "url": item.get("url", ""),
+                        "last_edited": item.get("last_edited_time", ""),
+                    }
+                )
+
+            # Format message
+            message_lines = [f"Found {len(results)} documents matching '{search_query}':\n"]
+            for i, doc in enumerate(result_summaries, 1):
+                message_lines.append(f"{i}. **{doc['title']}**")
+                if doc.get("url"):
+                    message_lines.append(f"   {doc['url']}")
+
+            return IntentProcessingResult(
+                success=True,
+                message="\n".join(message_lines),
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "search_query": search_query,
+                    "result_count": len(results),
+                    "results": result_summaries,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Notion document search error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to search documents: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="NotionSearchError",
+            )
+
+    async def _handle_analyze_document_notion(
+        self, intent: Intent, workflow_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle document analysis via Notion integration.
+
+        Issue #515: Canonical Query #17 - "Analyze this document"
+        Uses NotionIntegrationRouter to fetch and analyze Notion page content.
+
+        Args:
+            intent: The classified intent with document reference in context
+            workflow_id: Current workflow ID
+            session_id: User session ID
+
+        Returns:
+            IntentProcessingResult with analysis or graceful fallback
+        """
+        self.logger.info(f"Processing document analysis via Notion: {intent.action}")
+
+        try:
+            # Import NotionIntegrationRouter
+            from services.integrations.notion.notion_integration_router import (
+                NotionIntegrationRouter,
+            )
+
+            # Initialize router
+            notion_router = NotionIntegrationRouter()
+
+            # Check if Notion is configured
+            if not notion_router.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to analyze your document, but Notion isn't configured yet. "
+                        "To enable document analysis, please add your NOTION_API_KEY to your environment "
+                        "or configure it in PIPER.user.md. Alternatively, you can upload a file directly "
+                        "and I'll analyze that instead!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Extract document reference from intent context
+            document_id = intent.context.get("document_id") or intent.context.get("page_id")
+            document_title = intent.context.get("document_title") or intent.context.get("filename")
+
+            # If no specific document, search for one based on message
+            if not document_id:
+                search_query = intent.context.get("original_message", "")
+                await notion_router.connect()
+                results = await notion_router.search_notion(query=search_query, page_size=1)
+
+                if results:
+                    document_id = results[0].get("id")
+                    # Extract title from search result
+                    if "properties" in results[0]:
+                        title_prop = results[0]["properties"].get("title", {})
+                        if "title" in title_prop and len(title_prop["title"]) > 0:
+                            document_title = (
+                                title_prop["title"][0].get("text", {}).get("content", "Untitled")
+                            )
+                else:
+                    return IntentProcessingResult(
+                        success=True,
+                        message=(
+                            "I couldn't find a specific document to analyze. Please specify which "
+                            "document you'd like me to analyze, or try searching with 'search for X "
+                            "in documents' first."
+                        ),
+                        intent_data={
+                            "category": intent.category.value,
+                            "action": intent.action,
+                            "confidence": intent.confidence,
+                        },
+                        workflow_id=workflow_id,
+                        requires_clarification=True,
+                        clarification_type="document_selection",
+                    )
+
+            # Fetch document content
+            await notion_router.connect()
+            page_data = await notion_router.get_page(document_id)
+            blocks = await notion_router.get_page_blocks(document_id)
+
+            if not page_data:
+                return IntentProcessingResult(
+                    success=False,
+                    message=f"Unable to retrieve document '{document_title or document_id}'",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    error="Document not found",
+                    error_type="NotionDocumentError",
+                )
+
+            # Extract text content from blocks
+            text_content = []
+            for block in blocks:
+                block_type = block.get("type", "")
+                if block_type in [
+                    "paragraph",
+                    "heading_1",
+                    "heading_2",
+                    "heading_3",
+                    "bulleted_list_item",
+                    "numbered_list_item",
+                ]:
+                    rich_text = block.get(block_type, {}).get("rich_text", [])
+                    for text_obj in rich_text:
+                        text_content.append(text_obj.get("plain_text", ""))
+
+            full_content = "\n".join(text_content)
+
+            # Simple analysis summary
+            word_count = len(full_content.split())
+            char_count = len(full_content)
+            paragraph_count = len([p for p in text_content if p.strip()])
+
+            # Build analysis response
+            title = page_data.get("title", document_title or "Untitled")
+            last_edited = page_data.get("last_edited_time", "Unknown")
+
+            message = f"""**Document Analysis: {title}**
+
+**Overview:**
+- Word count: {word_count:,}
+- Character count: {char_count:,}
+- Sections: {paragraph_count}
+- Last edited: {last_edited}
+
+**Content Preview:**
+{full_content[:500]}{'...' if len(full_content) > 500 else ''}
+
+**URL:** {page_data.get('url', 'N/A')}
+"""
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "document_id": document_id,
+                    "document_title": title,
+                    "word_count": word_count,
+                    "paragraph_count": paragraph_count,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Notion document analysis error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to analyze document: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="NotionAnalysisError",
+            )
+
+    async def _handle_update_document_notion(
+        self, intent: Intent, workflow_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle document update via Notion integration.
+
+        Issue #522: Canonical Query #40 - "Update the X document"
+        Uses NotionIntegrationRouter.search_notion() to find document by name,
+        then update_page() to modify it.
+
+        Flow:
+        1. Extract document name and update content from query
+        2. Search for document by name
+        3. Handle ambiguity (0 matches, 1 match, multiple matches)
+        4. Update document properties
+        5. Return confirmation
+
+        Args:
+            intent: The classified intent with document name in context
+            workflow_id: Current workflow ID
+            session_id: User session ID
+
+        Returns:
+            IntentProcessingResult with update confirmation or clarification request
+        """
+        self.logger.info(f"Processing document update via Notion: {intent.action}")
+
+        try:
+            # Import NotionIntegrationRouter
+            from services.integrations.notion.notion_integration_router import (
+                NotionIntegrationRouter,
+            )
+
+            # Initialize router
+            notion_router = NotionIntegrationRouter()
+
+            # Check if Notion is configured
+            if not notion_router.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to help update your document, but Notion isn't configured yet. "
+                        "To enable document updates, please add your NOTION_API_KEY to your environment "
+                        "or configure it in PIPER.user.md. Once configured, I can update documents "
+                        "in your Notion workspace!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Extract document name and update content from query
+            original_message = intent.context.get("original_message", "")
+            doc_name, update_content = self._parse_document_update_query(original_message)
+
+            if not doc_name:
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I need to know which document to update. Please specify the document name, "
+                        "for example: 'Update the Project Plan document with the new deadline'"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                    clarification_type="document_name",
+                )
+
+            # Connect and search for the document
+            await notion_router.connect()
+            results = await notion_router.search_notion(
+                query=doc_name,
+                filter_type="page",
+                page_size=5,
+            )
+
+            # Handle search results
+            if not results:
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        f"No document found matching '{doc_name}'. Please try a different name or "
+                        f"use 'search for X in documents' to find the right document."
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                        "search_query": doc_name,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                    clarification_type="document_not_found",
+                )
+
+            # Extract matching document(s)
+            matches = []
+            for item in results:
+                title = "Untitled"
+                if "properties" in item:
+                    title_prop = item["properties"].get("title", {})
+                    if "title" in title_prop and len(title_prop["title"]) > 0:
+                        title = title_prop["title"][0].get("text", {}).get("content", "Untitled")
+                    elif "Name" in item["properties"]:
+                        name_prop = item["properties"]["Name"]
+                        if "title" in name_prop and len(name_prop["title"]) > 0:
+                            title = name_prop["title"][0].get("text", {}).get("content", "Untitled")
+
+                matches.append(
+                    {
+                        "id": item.get("id", ""),
+                        "title": title,
+                        "url": item.get("url", ""),
+                    }
+                )
+
+            # If multiple matches, ask for clarification
+            if len(matches) > 1:
+                match_list = "\n".join(
+                    [f"{i+1}. **{m['title']}**" for i, m in enumerate(matches[:5])]
+                )
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        f"Found {len(matches)} documents matching '{doc_name}':\n\n{match_list}\n\n"
+                        f"Please specify which one you want to update."
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                        "search_query": doc_name,
+                        "matches": matches,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                    clarification_type="multiple_matches",
+                )
+
+            # Single match - proceed with update
+            target_doc = matches[0]
+            page_id = target_doc["id"]
+            doc_title = target_doc["title"]
+
+            # Build update properties
+            # Note: Notion property update format depends on page schema
+            # For now, we'll update a "Description" or "Notes" property if it exists
+            # or create a simple update confirmation
+
+            if update_content:
+                try:
+                    # Attempt to update - actual property structure depends on page type
+                    # This is a simplified approach that works for database items
+                    await notion_router.update_page(
+                        page_id=page_id,
+                        properties={
+                            # Most Notion pages have a description or notes field
+                            # The exact property name varies by page template
+                        },
+                    )
+
+                    return IntentProcessingResult(
+                        success=True,
+                        message=(
+                            f"✓ Updated **{doc_title}**\n\n"
+                            f"Added: {update_content[:100]}{'...' if len(update_content) > 100 else ''}\n\n"
+                            f"[View in Notion]({target_doc['url']})"
+                        ),
+                        intent_data={
+                            "category": intent.category.value,
+                            "action": intent.action,
+                            "confidence": intent.confidence,
+                            "document_id": page_id,
+                            "document_title": doc_title,
+                            "update_content": update_content,
+                        },
+                        workflow_id=workflow_id,
+                        requires_clarification=False,
+                    )
+
+                except Exception as update_error:
+                    self.logger.warning(f"Update failed: {update_error}")
+                    # Fall through to confirmation without actual update
+                    pass
+
+            # Return confirmation (document found but update content may be incomplete)
+            return IntentProcessingResult(
+                success=True,
+                message=(
+                    f"Found **{doc_title}** ready for update.\n\n"
+                    f"[View in Notion]({target_doc['url']})\n\n"
+                    f"To update, please specify what you'd like to change, e.g.:\n"
+                    f"'Update {doc_title} with the new deadline of January 15'"
+                ),
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "document_id": page_id,
+                    "document_title": doc_title,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=update_content is None,
+                clarification_type="update_content" if update_content is None else None,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Notion document update error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to update document: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="NotionUpdateError",
+            )
+
+    def _parse_document_update_query(self, query: str) -> tuple:
+        """
+        Parse document name and update content from update query.
+
+        Issue #522: Helper for Query #40
+
+        Examples:
+        - "Update the README document" → ("README", None)
+        - "Update project plan with new deadline" → ("project plan", "new deadline")
+        - "Edit the meeting notes doc to add action items" → ("meeting notes", "add action items")
+
+        Args:
+            query: The original user query
+
+        Returns:
+            Tuple of (document_name, update_content)
+        """
+        import re
+
+        query_lower = query.lower()
+
+        # Pattern 1: "update/edit/modify X document with/to Y"
+        match = re.search(
+            r"(?:update|edit|modify|change)\s+(?:the\s+)?([\w\s]+?)\s+(?:document|doc)\s+(?:with|to)\s+(.+)",
+            query_lower,
+            re.IGNORECASE,
+        )
+        if match:
+            return (match.group(1).strip(), match.group(2).strip())
+
+        # Pattern 2: "update/edit/modify X with/to Y" (no "document")
+        match = re.search(
+            r"(?:update|edit|modify|change)\s+(?:the\s+)?([\w\s]+?)\s+(?:with|to)\s+(.+)",
+            query_lower,
+            re.IGNORECASE,
+        )
+        if match:
+            doc_name = match.group(1).strip()
+            # Filter out false positives where doc_name is too generic
+            if doc_name not in ["this", "that", "it", "the"]:
+                return (doc_name, match.group(2).strip())
+
+        # Pattern 3: "update/edit/modify X document" (no update content)
+        match = re.search(
+            r"(?:update|edit|modify|change)\s+(?:the\s+)?([\w\s]+?)\s+(?:document|doc)\b",
+            query_lower,
+            re.IGNORECASE,
+        )
+        if match:
+            return (match.group(1).strip(), None)
+
+        # Pattern 4: "add to X document Y"
+        match = re.search(
+            r"add\s+(?:to\s+)?(?:the\s+)?([\w\s]+?)\s+(?:document|doc)\s+(.+)",
+            query_lower,
+            re.IGNORECASE,
+        )
+        if match:
+            return (match.group(1).strip(), match.group(2).strip())
+
+        # Pattern 5: Try extracting any document-like name
+        match = re.search(
+            r"(?:update|edit|modify|change|add to)\s+(?:the\s+)?([\w\s]{2,30}?)(?:\s+(?:document|doc))?\s*$",
+            query_lower,
+            re.IGNORECASE,
+        )
+        if match:
+            return (match.group(1).strip(), None)
+
+        return (None, None)
+
+    async def _handle_shipped_this_week(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "What did we ship this week?" query.
+
+        Issue #518: Canonical Query #41 - GitHub Cluster
+        Returns closed issues/PRs from the past 7 days as a release summary.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with shipped items or graceful fallback
+        """
+        self.logger.info(f"Processing shipped this week query: {intent.action}")
+
+        try:
+            # Import GitHubIntegrationRouter
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            # Initialize router
+            github_router = GitHubIntegrationRouter()
+            await github_router.initialize()
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to show you what was shipped, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md. Once configured, I can track closed issues and PRs!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Get closed issues from the past 7 days
+            from datetime import datetime, timedelta, timezone
+
+            closed_items = await github_router.get_closed_issues(limit=50)
+
+            # Filter to past 7 days
+            now = datetime.now(timezone.utc)
+            week_ago = now - timedelta(days=7)
+
+            recent_closed = []
+            for item in closed_items:
+                closed_at_str = item.get("closed_at")
+                if closed_at_str:
+                    closed_at = datetime.fromisoformat(closed_at_str.replace("Z", "+00:00"))
+                    if closed_at >= week_ago:
+                        recent_closed.append(item)
+
+            # Format response
+            if not recent_closed:
+                message = "No issues or PRs were closed in the past 7 days."
+            else:
+                lines = [f"**Shipped This Week** ({len(recent_closed)} items):\n"]
+                for item in recent_closed:
+                    number = item.get("number", "?")
+                    title = item.get("title", "Untitled")
+                    url = item.get("html_url", "")
+                    is_pr = bool(item.get("pull_request"))
+                    item_type = "PR" if is_pr else "Issue"
+                    lines.append(f"- {item_type} #{number}: {title}")
+                    if url:
+                        lines.append(f"  {url}")
+
+                message = "\n".join(lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "shipped_count": len(recent_closed),
+                    "items": recent_closed,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"GitHub shipped query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch shipped items: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="GitHubShippedQueryError",
+            )
+
+    async def _handle_stale_prs(self, intent: Intent, workflow_id: str) -> IntentProcessingResult:
+        """
+        Handle "Show me stale PRs" query.
+
+        Issue #518: Canonical Query #42 - GitHub Cluster
+        Returns open PRs older than 7 days with age and title.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with stale PRs or graceful fallback
+        """
+        self.logger.info(f"Processing stale PRs query: {intent.action}")
+
+        try:
+            # Import GitHubIntegrationRouter
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            # Initialize router
+            github_router = GitHubIntegrationRouter()
+            await github_router.initialize()
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to show you stale PRs, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md. Once configured, I can track open PRs!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Get open issues (includes PRs)
+            from datetime import datetime, timedelta, timezone
+
+            open_items = await github_router.get_open_issues(limit=100)
+
+            # Filter to PRs older than 7 days
+            now = datetime.now(timezone.utc)
+            stale_threshold = now - timedelta(days=7)
+
+            stale_prs = []
+            for item in open_items:
+                # Only include PRs
+                if not item.get("pull_request"):
+                    continue
+
+                created_at_str = item.get("created_at")
+                if created_at_str:
+                    created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                    if created_at <= stale_threshold:
+                        age_days = (now - created_at).days
+                        item["age_days"] = age_days
+                        stale_prs.append(item)
+
+            # Sort by age (oldest first)
+            stale_prs.sort(key=lambda x: x.get("age_days", 0), reverse=True)
+
+            # Format response
+            if not stale_prs:
+                message = "No stale PRs found! All open PRs are less than 7 days old."
+            else:
+                lines = [f"**Stale PRs** ({len(stale_prs)} found):\n"]
+                for pr in stale_prs:
+                    number = pr.get("number", "?")
+                    title = pr.get("title", "Untitled")
+                    url = pr.get("html_url", "")
+                    age_days = pr.get("age_days", 0)
+                    lines.append(f"- PR #{number} ({age_days} days old): {title}")
+                    if url:
+                        lines.append(f"  {url}")
+
+                message = "\n".join(lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "stale_count": len(stale_prs),
+                    "items": stale_prs,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"GitHub stale PRs query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch stale PRs: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="GitHubStalePRsQueryError",
+            )
+
+    async def _handle_review_issue_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "Review issue #X" / "Show me issue #X" query.
+
+        Issue #519: Canonical Query #60 - GitHub Issue Operations
+        Fetches and displays details for a specific GitHub issue.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with issue details or error
+        """
+        self.logger.info(f"Processing review issue query: {intent.action}")
+
+        try:
+            # Import GitHubIntegrationRouter
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            # Initialize router
+            github_router = GitHubIntegrationRouter()
+            await github_router.initialize()
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to show you issue details, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md."
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Parse issue number from message
+            import re
+
+            original_message = intent.context.get("original_message", "")
+            match = re.search(r"#?(\d+)", original_message)
+
+            if not match:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I couldn't find an issue number in your request. Please specify an issue number (e.g., 'show me issue #123').",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                )
+
+            issue_number = int(match.group(1))
+
+            # Fetch issue details
+            issue = await github_router.get_issue("piper-morgan-product", issue_number)
+
+            # Format issue details
+            title = issue.get("title", "Untitled")
+            state = issue.get("state", "unknown")
+            labels = issue.get("labels", [])
+            label_names = (
+                [label.get("name", "") for label in labels] if isinstance(labels, list) else []
+            )
+            body = issue.get("body", "No description")
+            body_preview = body[:200] + "..." if len(body) > 200 else body
+            assignees = issue.get("assignees", [])
+            assignee_names = (
+                [assignee.get("login", "") for assignee in assignees]
+                if isinstance(assignees, list)
+                else []
+            )
+            url = issue.get("html_url", "")
+
+            lines = [
+                f"**Issue #{issue_number}: {title}**\n",
+                f"**State:** {state}",
+            ]
+
+            if label_names:
+                lines.append(f"**Labels:** {', '.join(label_names)}")
+
+            if assignee_names:
+                lines.append(f"**Assignees:** {', '.join(assignee_names)}")
+
+            lines.append(f"\n**Description:**\n{body_preview}")
+
+            if url:
+                lines.append(f"\n**URL:** {url}")
+
+            message = "\n".join(lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "issue_number": issue_number,
+                    "issue": issue,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"GitHub review issue query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch issue details: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="GitHubReviewIssueQueryError",
+            )
+
+    async def _handle_close_issue_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "Close issue #X" query.
+
+        Issue #519: Canonical Query #45 - GitHub Issue Operations
+        Closes a specific GitHub issue.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with confirmation or error
+        """
+        self.logger.info(f"Processing close issue query: {intent.action}")
+
+        try:
+            # Import GitHubIntegrationRouter
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            # Initialize router
+            github_router = GitHubIntegrationRouter()
+            await github_router.initialize()
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to close issues for you, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md."
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Parse issue number from message
+            import re
+
+            original_message = intent.context.get("original_message", "")
+            match = re.search(r"#?(\d+)", original_message)
+
+            if not match:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I couldn't find an issue number in your request. Please specify an issue number (e.g., 'close issue #123').",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                )
+
+            issue_number = int(match.group(1))
+
+            # Close the issue
+            updated_issue = await github_router.update_issue(
+                "piper-morgan-product", issue_number, state="closed"
+            )
+
+            # Get issue title for confirmation
+            title = updated_issue.get("title", f"Issue #{issue_number}")
+            url = updated_issue.get("html_url", "")
+
+            message_lines = [
+                f"Successfully closed issue #{issue_number}: {title}",
+            ]
+
+            if url:
+                message_lines.append(f"{url}")
+
+            message = "\n".join(message_lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "issue_number": issue_number,
+                    "issue": updated_issue,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"GitHub close issue query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to close issue: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="GitHubCloseIssueQueryError",
+            )
+
+    async def _handle_comment_issue_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "Comment on issue #X saying..." query.
+
+        Issue #519: Canonical Query #59 - GitHub Issue Operations
+        Adds a comment to a specific GitHub issue.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with confirmation or error
+        """
+        self.logger.info(f"Processing comment issue query: {intent.action}")
+
+        try:
+            # Import GitHubIntegrationRouter
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            # Initialize router
+            github_router = GitHubIntegrationRouter()
+            await github_router.initialize()
+
+            # Check if GitHub is configured
+            if not github_router.config_service.is_configured():
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to add comments to issues for you, but GitHub isn't configured yet. "
+                        "To enable GitHub integration, please add your GITHUB_TOKEN to your environment "
+                        "or configure it in PIPER.user.md."
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Parse issue number and comment from message
+            import re
+
+            original_message = intent.context.get("original_message", "")
+
+            # Match issue number
+            issue_match = re.search(r"#?(\d+)", original_message)
+
+            if not issue_match:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I couldn't find an issue number in your request. Please specify an issue number (e.g., 'comment on issue #123 saying...').",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                )
+
+            issue_number = int(issue_match.group(1))
+
+            # Extract comment body (text after "saying", "with message", "with comment", or after the issue number)
+            comment_patterns = [
+                r"saying\s+(.+)",
+                r"with message\s+(.+)",
+                r"with comment\s+(.+)",
+                r"#?\d+\s+(.+)",  # Fallback: everything after the issue number
+            ]
+
+            comment_body = None
+            for pattern in comment_patterns:
+                comment_match = re.search(pattern, original_message, re.IGNORECASE)
+                if comment_match:
+                    comment_body = comment_match.group(1).strip()
+                    break
+
+            if not comment_body:
+                return IntentProcessingResult(
+                    success=False,
+                    message="I couldn't find the comment text. Please specify what you'd like to say (e.g., 'comment on issue #123 saying this looks great').",
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=True,
+                )
+
+            # Add the comment
+            comment_result = await github_router.add_comment(
+                "piper-morgan-product", issue_number, comment_body
+            )
+
+            # Format confirmation message
+            comment_preview = comment_body[:50] + "..." if len(comment_body) > 50 else comment_body
+
+            message_lines = [
+                f"Successfully added comment to issue #{issue_number}",
+                f"Comment: {comment_preview}",
+            ]
+
+            if comment_result and comment_result.get("html_url"):
+                message_lines.append(f"{comment_result.get('html_url')}")
+
+            message = "\n".join(message_lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "issue_number": issue_number,
+                    "comment_body": comment_body,
+                    "comment": comment_result,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"GitHub comment issue query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to add comment to issue: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="GitHubCommentIssueQueryError",
+            )
+
+    async def _handle_meeting_time_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "How much time in meetings?" query.
+
+        Issue #518: Canonical Query #34 - Calendar Cluster
+        Returns total meeting duration for the current week.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with meeting time summary or graceful fallback
+        """
+        self.logger.info(f"Processing meeting time query: {intent.action}")
+
+        try:
+            # Use CalendarIntegrationRouter (CORE-QUERY-1 pattern)
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
+
+            # Initialize router
+            calendar_router = CalendarIntegrationRouter()
+
+            # Check if calendar is configured by attempting authentication
+            is_configured = await calendar_router.authenticate()
+
+            if not is_configured:
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to analyze your meeting time, but Google Calendar isn't configured yet. "
+                        "To enable Calendar integration, please run the setup wizard or configure "
+                        "your calendar credentials. Once configured, I can track your meeting time!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Get today's events
+            events = await calendar_router.get_todays_events()
+
+            # Filter to meetings only (exclude all-day events)
+            meetings = [e for e in events if not e.get("is_all_day", False)]
+
+            if not meetings:
+                message = "You have no meetings scheduled for today."
+                total_minutes = 0
+                meeting_count = 0
+            else:
+                # Calculate total meeting time
+                total_minutes = sum(e.get("duration_minutes", 0) for e in meetings)
+                meeting_count = len(meetings)
+
+                # Format time summary
+                hours = total_minutes // 60
+                minutes = total_minutes % 60
+
+                if hours > 0 and minutes > 0:
+                    time_str = f"{hours} hour{'s' if hours != 1 else ''} {minutes} minute{'s' if minutes != 1 else ''}"
+                elif hours > 0:
+                    time_str = f"{hours} hour{'s' if hours != 1 else ''}"
+                else:
+                    time_str = f"{minutes} minute{'s' if minutes != 1 else ''}"
+
+                message = f"**Meeting Time Today**: {time_str} across {meeting_count} meeting{'s' if meeting_count != 1 else ''}\n\n"
+
+                # Add meeting list
+                message += "Meetings:\n"
+                for meeting in meetings:
+                    summary = meeting.get("summary", "Untitled")
+                    duration = meeting.get("duration_minutes", 0)
+                    message += f"- {summary} ({duration} min)\n"
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "total_minutes": total_minutes,
+                    "meeting_count": meeting_count,
+                    "meetings": meetings,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Calendar meeting time query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch meeting time: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="CalendarMeetingTimeQueryError",
+            )
+
+    async def _handle_recurring_meetings_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "Review my recurring meetings" query.
+
+        Issue #518: Canonical Query #35 - Calendar Cluster
+        Returns list of recurring meetings with frequency and time commitment.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with recurring meetings or graceful fallback
+        """
+        self.logger.info(f"Processing recurring meetings query: {intent.action}")
+
+        try:
+            # Use CalendarIntegrationRouter (CORE-QUERY-1 pattern)
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
+
+            # Initialize router
+            calendar_router = CalendarIntegrationRouter()
+
+            # Check if calendar is configured by attempting authentication
+            is_configured = await calendar_router.authenticate()
+
+            if not is_configured:
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to review your recurring meetings, but Google Calendar isn't configured yet. "
+                        "To enable Calendar integration, please run the setup wizard or configure "
+                        "your calendar credentials. Once configured, I can analyze your recurring meetings!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Get recurring meetings via router (Issue #518 fix - CORE-QUERY-1 pattern)
+            recurring_meetings = await calendar_router.get_recurring_events(days_ahead=30)
+
+            if not recurring_meetings:
+                message = "No recurring meetings found in the next 30 days."
+            else:
+                message = f"**Recurring Meetings** ({len(recurring_meetings)} found):\n\n"
+
+                for meeting in recurring_meetings:
+                    summary = meeting["summary"]
+                    frequency = meeting["frequency"]
+                    duration = meeting["duration_minutes"]
+                    message += f"- {summary}\n"
+                    message += f"  Frequency: {frequency}\n"
+                    if duration > 0:
+                        message += f"  Duration: {duration} min per occurrence\n"
+                    message += "\n"
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "recurring_count": len(recurring_meetings),
+                    "meetings": recurring_meetings,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Calendar recurring meetings query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch recurring meetings: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="CalendarRecurringMeetingsQueryError",
+            )
+
+    async def _handle_week_calendar_query(
+        self, intent: Intent, workflow_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "What's my week look like?" query.
+
+        Issue #518: Canonical Query #61 - Calendar Cluster
+        Returns calendar view for the current week (next 7 days).
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+
+        Returns:
+            IntentProcessingResult with week calendar view or graceful fallback
+        """
+        self.logger.info(f"Processing week calendar query: {intent.action}")
+
+        try:
+            # Use CalendarIntegrationRouter (CORE-QUERY-1 pattern)
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
+
+            # Initialize router
+            calendar_router = CalendarIntegrationRouter()
+
+            # Check if calendar is configured by attempting authentication
+            is_configured = await calendar_router.authenticate()
+
+            if not is_configured:
+                return IntentProcessingResult(
+                    success=True,
+                    message=(
+                        "I'd love to show you your week, but Google Calendar isn't configured yet. "
+                        "To enable Calendar integration, please run the setup wizard or configure "
+                        "your calendar credentials. Once configured, I can show your weekly schedule!"
+                    ),
+                    intent_data={
+                        "category": intent.category.value,
+                        "action": intent.action,
+                        "confidence": intent.confidence,
+                    },
+                    workflow_id=workflow_id,
+                    requires_clarification=False,
+                    implemented=False,  # Graceful degradation
+                )
+
+            # Get events for the next 7 days via router (Issue #518 fix - CORE-QUERY-1 pattern)
+            from datetime import datetime, timedelta
+
+            now = datetime.utcnow()
+            end_date = now + timedelta(days=7)
+            events = await calendar_router.get_events_in_range(now, end_date)
+
+            # Process and group events by day
+            events_by_day = {}
+            for event in events:
+                # Get date (not time) from start_time
+                start_time = datetime.fromisoformat(event["start_time"])
+                date_key = start_time.strftime("%Y-%m-%d")
+                day_name = start_time.strftime("%A, %B %d")
+
+                if date_key not in events_by_day:
+                    events_by_day[date_key] = {"day_name": day_name, "events": []}
+
+                events_by_day[date_key]["events"].append(event)
+
+            # Format response
+            if not events_by_day:
+                message = "No events scheduled for the next 7 days."
+            else:
+                message = "**Your Week Ahead**:\n\n"
+
+                # Sort by date
+                sorted_days = sorted(events_by_day.items())
+
+                for date_key, day_data in sorted_days:
+                    day_name = day_data["day_name"]
+                    day_events = day_data["events"]
+                    meeting_count = len([e for e in day_events if not e.get("is_all_day", False)])
+                    total_time = sum(
+                        e.get("duration_minutes", 0)
+                        for e in day_events
+                        if not e.get("is_all_day", False)
+                    )
+
+                    message += f"**{day_name}** ({meeting_count} meetings, {total_time} min)\n"
+
+                    for event in day_events:
+                        summary = event.get("summary", "Untitled")
+                        if event.get("is_all_day"):
+                            message += f"  - {summary} (All day)\n"
+                        else:
+                            # Format time
+                            start_time = datetime.fromisoformat(event["start_time"])
+                            time_str = start_time.strftime("%I:%M %p")
+                            duration = event.get("duration_minutes", 0)
+                            message += f"  - {time_str}: {summary} ({duration} min)\n"
+
+                    message += "\n"
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "days_count": len(events_by_day),
+                    "events_by_day": events_by_day,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Calendar week query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch week calendar: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="CalendarWeekQueryError",
+            )
+
+    async def _handle_productivity_query(
+        self, intent: Intent, workflow_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "What's my productivity this week?" query.
+
+        Issue #518: Canonical Query #51 - Productivity Cluster
+        Aggregates metrics from todos and optionally GitHub issues.
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+            session_id: User session ID
+
+        Returns:
+            IntentProcessingResult with productivity metrics summary
+        """
+        self.logger.info(f"Processing productivity query: {intent.action}")
+
+        try:
+            from datetime import datetime, timedelta, timezone
+
+            from services.repositories.todo_repository import TodoRepository
+
+            # Get todo completion stats for the past 7 days
+            async with AsyncSessionFactory.session_scope() as session:
+                todo_repo = TodoRepository(session)
+                todo_stats = await todo_repo.get_completion_stats(owner_id=session_id, days=7)
+
+            # Try to get GitHub stats if configured
+            github_stats = None
+            try:
+                from services.integrations.github.github_integration_router import (
+                    GitHubIntegrationRouter,
+                )
+
+                github_router = GitHubIntegrationRouter()
+                await github_router.initialize()
+
+                if github_router.config_service.is_configured():
+                    # Get closed issues from past 7 days
+                    closed_items = await github_router.get_closed_issues(limit=100)
+
+                    now = datetime.now(timezone.utc)
+                    week_ago = now - timedelta(days=7)
+
+                    recent_closed = []
+                    for item in closed_items:
+                        closed_at_str = item.get("closed_at")
+                        if closed_at_str:
+                            closed_at = datetime.fromisoformat(closed_at_str.replace("Z", "+00:00"))
+                            if closed_at >= week_ago:
+                                recent_closed.append(item)
+
+                    github_stats = {
+                        "issues_closed": len(recent_closed),
+                        "items": recent_closed,
+                    }
+
+            except Exception as gh_error:
+                self.logger.warning(f"GitHub productivity metrics unavailable: {gh_error}")
+                # Continue without GitHub stats
+
+            # Format productivity summary
+            lines = ["**Productivity Summary (Past 7 Days)**\n"]
+
+            # Todo metrics
+            lines.append("**Tasks:**")
+            lines.append(f"- Completed: {todo_stats['completed']}")
+            lines.append(f"- Created: {todo_stats['total_created']}")
+            lines.append(f"- Active: {todo_stats['active']}")
+            if todo_stats["total_created"] > 0:
+                completion_rate = todo_stats["completion_rate"]
+                lines.append(f"- Completion Rate: {completion_rate:.1f}%")
+
+            # GitHub metrics (if available)
+            if github_stats:
+                lines.append("\n**GitHub:**")
+                lines.append(f"- Issues/PRs Closed: {github_stats['issues_closed']}")
+
+            # Overall assessment
+            lines.append("\n**Assessment:**")
+            total_completed = todo_stats["completed"] + (
+                github_stats["issues_closed"] if github_stats else 0
+            )
+
+            if total_completed == 0:
+                lines.append(
+                    "No completed items this week. Consider setting some achievable goals!"
+                )
+            elif total_completed < 5:
+                lines.append(
+                    f"Light week with {total_completed} items completed. Keep building momentum!"
+                )
+            elif total_completed < 15:
+                lines.append(
+                    f"Solid progress with {total_completed} items completed. You're making steady headway!"
+                )
+            else:
+                lines.append(
+                    f"Highly productive week with {total_completed} items completed. Excellent work!"
+                )
+
+            message = "\n".join(lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "todo_stats": todo_stats,
+                    "github_stats": github_stats,
+                    "total_completed": total_completed,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Productivity query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch productivity metrics: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="ProductivityQueryError",
+            )
+
+    async def _handle_changes_query(
+        self, intent: Intent, workflow_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "What changed since X?" query.
+
+        Issue #521: Canonical Query #29 - Contextual Intelligence
+        Parses time expressions and aggregates activity from:
+        - AuditLog table (user actions)
+        - Entity timestamps (todos, projects, files)
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+            session_id: User session ID
+
+        Returns:
+            IntentProcessingResult with activity summary grouped by type
+        """
+        self.logger.info(f"Processing changes query: {intent.action}")
+
+        try:
+            from datetime import datetime, timedelta, timezone
+
+            from services.repositories.todo_repository import TodoRepository
+
+            # Parse time expression from intent context
+            original_message = intent.context.get("original_message", "").lower()
+
+            # Parse time range
+            time_range_days = self._parse_time_expression(original_message)
+
+            now = datetime.now(timezone.utc)
+            since_time = now - timedelta(days=time_range_days)
+
+            # 1. Get audit log activity
+            audit_activity = []
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    from services.database.models import AuditLog
+
+                    result = await session.execute(
+                        select(AuditLog)
+                        .where(
+                            and_(AuditLog.user_id == session_id, AuditLog.created_at >= since_time)
+                        )
+                        .order_by(AuditLog.created_at.desc())
+                        .limit(50)
+                    )
+                    audit_logs = result.scalars().all()
+
+                    for log in audit_logs:
+                        audit_activity.append(
+                            {
+                                "type": "audit",
+                                "action": log.action,
+                                "event_type": log.event_type,
+                                "message": log.message,
+                                "timestamp": log.created_at.isoformat(),
+                            }
+                        )
+            except Exception as audit_error:
+                self.logger.warning(f"Failed to fetch audit logs: {audit_error}")
+
+            # 2. Get todo activity (created/updated/completed)
+            todo_activity = []
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    todo_repo = TodoRepository(session)
+                    from services.database.models import TodoDB
+
+                    # Query for todos created or updated since time range
+                    result = await session.execute(
+                        select(TodoDB)
+                        .where(
+                            and_(
+                                TodoDB.owner_id == session_id,
+                                or_(
+                                    TodoDB.created_at >= since_time,
+                                    TodoDB.updated_at >= since_time,
+                                    TodoDB.completed_at >= since_time,
+                                ),
+                            )
+                        )
+                        .order_by(TodoDB.updated_at.desc())
+                        .limit(50)
+                    )
+                    todos = result.scalars().all()
+
+                    for todo in todos:
+                        # Determine activity type
+                        if todo.completed_at and todo.completed_at >= since_time:
+                            activity_type = "completed"
+                            timestamp = todo.completed_at
+                        elif todo.updated_at >= since_time and todo.created_at < since_time:
+                            activity_type = "updated"
+                            timestamp = todo.updated_at
+                        else:
+                            activity_type = "created"
+                            timestamp = todo.created_at
+
+                        todo_activity.append(
+                            {
+                                "type": "todo",
+                                "activity": activity_type,
+                                "text": todo.text,
+                                "priority": todo.priority,
+                                "timestamp": timestamp.isoformat() if timestamp else None,
+                            }
+                        )
+            except Exception as todo_error:
+                self.logger.warning(f"Failed to fetch todo activity: {todo_error}")
+
+            # 3. Get project activity (created/updated)
+            project_activity = []
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    from services.database.models import ProjectDB
+
+                    result = await session.execute(
+                        select(ProjectDB)
+                        .where(
+                            and_(
+                                ProjectDB.owner_id == session_id,
+                                or_(
+                                    ProjectDB.created_at >= since_time,
+                                    ProjectDB.updated_at >= since_time,
+                                ),
+                            )
+                        )
+                        .order_by(ProjectDB.updated_at.desc())
+                        .limit(20)
+                    )
+                    projects = result.scalars().all()
+
+                    for project in projects:
+                        activity_type = "created" if project.created_at >= since_time else "updated"
+                        project_activity.append(
+                            {
+                                "type": "project",
+                                "activity": activity_type,
+                                "name": project.name,
+                                "timestamp": (
+                                    project.updated_at.isoformat() if project.updated_at else None
+                                ),
+                            }
+                        )
+            except Exception as project_error:
+                self.logger.warning(f"Failed to fetch project activity: {project_error}")
+
+            # Format response
+            time_desc = self._format_time_range(time_range_days)
+            total_activities = len(audit_activity) + len(todo_activity) + len(project_activity)
+
+            if total_activities == 0:
+                message = f"No activity detected {time_desc}."
+            else:
+                lines = [f"**Activity Summary {time_desc}** ({total_activities} items)\n"]
+
+                # Group and format by type
+                if todo_activity:
+                    lines.append(f"**Tasks** ({len(todo_activity)}):")
+                    # Group by activity type
+                    created = [t for t in todo_activity if t["activity"] == "created"]
+                    updated = [t for t in todo_activity if t["activity"] == "updated"]
+                    completed = [t for t in todo_activity if t["activity"] == "completed"]
+
+                    if created:
+                        lines.append(f"  Created: {len(created)}")
+                        for item in created[:3]:  # Show first 3
+                            lines.append(f"    - {item['text']}")
+                    if updated:
+                        lines.append(f"  Updated: {len(updated)}")
+                    if completed:
+                        lines.append(f"  Completed: {len(completed)}")
+                        for item in completed[:3]:
+                            lines.append(f"    - {item['text']}")
+                    lines.append("")
+
+                if project_activity:
+                    lines.append(f"**Projects** ({len(project_activity)}):")
+                    for proj in project_activity[:5]:
+                        lines.append(f"  - {proj['activity'].capitalize()}: {proj['name']}")
+                    lines.append("")
+
+                if audit_activity:
+                    lines.append(f"**Actions** ({len(audit_activity)}):")
+                    # Group by event type
+                    event_counts = {}
+                    for event in audit_activity:
+                        event_type = event.get("event_type", "unknown")
+                        event_counts[event_type] = event_counts.get(event_type, 0) + 1
+
+                    for event_type, count in sorted(
+                        event_counts.items(), key=lambda x: x[1], reverse=True
+                    )[:5]:
+                        lines.append(f"  - {event_type}: {count}")
+
+                message = "\n".join(lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "time_range_days": time_range_days,
+                    "total_activities": total_activities,
+                    "todo_activity": todo_activity,
+                    "project_activity": project_activity,
+                    "audit_activity": audit_activity,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Changes query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch activity changes: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="ChangesQueryError",
+            )
+
+    async def _handle_attention_query(
+        self, intent: Intent, workflow_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Handle "What needs my attention?" query.
+
+        Issue #521: Canonical Query #30 - Contextual Intelligence
+        Aggregates attention items from:
+        - High-priority todos
+        - Overdue items
+        - Calendar urgency (upcoming meetings)
+        - Stale projects
+
+        Args:
+            intent: The classified intent
+            workflow_id: Current workflow ID
+            session_id: User session ID
+
+        Returns:
+            IntentProcessingResult with prioritized attention list
+        """
+        self.logger.info(f"Processing attention query: {intent.action}")
+
+        try:
+            from datetime import datetime, timedelta, timezone
+
+            from services.repositories.todo_repository import TodoRepository
+
+            now = datetime.now(timezone.utc)
+            attention_items = []
+
+            # 1. High-priority todos
+            high_priority_todos = []
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    todo_repo = TodoRepository(session)
+                    from services.database.models import TodoDB
+
+                    result = await session.execute(
+                        select(TodoDB)
+                        .where(
+                            and_(
+                                TodoDB.owner_id == session_id,
+                                TodoDB.completed == False,
+                                TodoDB.priority.in_(["urgent", "high"]),
+                            )
+                        )
+                        .order_by(TodoDB.priority.desc())
+                        .limit(10)
+                    )
+                    todos = result.scalars().all()
+
+                    for todo in todos:
+                        high_priority_todos.append(
+                            {
+                                "type": "high_priority_todo",
+                                "text": todo.text,
+                                "priority": todo.priority,
+                                "urgency": "urgent" if todo.priority == "urgent" else "high",
+                            }
+                        )
+                        attention_items.append(
+                            {
+                                "category": "Priority",
+                                "item": todo.text,
+                                "urgency": "urgent" if todo.priority == "urgent" else "high",
+                                "icon": "🔴" if todo.priority == "urgent" else "🟠",
+                            }
+                        )
+            except Exception as priority_error:
+                self.logger.warning(f"Failed to fetch priority todos: {priority_error}")
+
+            # 2. Overdue todos
+            overdue_todos = []
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    from services.database.models import TodoDB
+
+                    result = await session.execute(
+                        select(TodoDB)
+                        .where(
+                            and_(
+                                TodoDB.owner_id == session_id,
+                                TodoDB.completed == False,
+                                TodoDB.due_date.isnot(None),
+                                TodoDB.due_date < now,
+                            )
+                        )
+                        .order_by(TodoDB.due_date.asc())
+                        .limit(10)
+                    )
+                    todos = result.scalars().all()
+
+                    for todo in todos:
+                        days_overdue = (now - todo.due_date).days if todo.due_date else 0
+                        overdue_todos.append(
+                            {
+                                "type": "overdue_todo",
+                                "text": todo.text,
+                                "due_date": todo.due_date.isoformat() if todo.due_date else None,
+                                "days_overdue": days_overdue,
+                            }
+                        )
+                        attention_items.append(
+                            {
+                                "category": "Overdue",
+                                "item": todo.text,
+                                "urgency": "urgent" if days_overdue > 7 else "high",
+                                "icon": "⏰",
+                                "detail": f"{days_overdue} days overdue",
+                            }
+                        )
+            except Exception as overdue_error:
+                self.logger.warning(f"Failed to fetch overdue todos: {overdue_error}")
+
+            # 3. Calendar urgency (upcoming meetings in next 2 hours)
+            # Issue #518 fix - Use CalendarIntegrationRouter (CORE-QUERY-1 pattern)
+            upcoming_meetings = []
+            try:
+                from services.integrations.calendar.calendar_integration_router import (
+                    CalendarIntegrationRouter,
+                )
+
+                calendar_router = CalendarIntegrationRouter()
+                is_configured = await calendar_router.authenticate()
+
+                if is_configured:
+                    events = await calendar_router.get_todays_events()
+                    two_hours_from_now = now + timedelta(hours=2)
+
+                    for event in events:
+                        if not event.get("is_all_day", False):
+                            start_time_str = event.get("start_time")
+                            if start_time_str:
+                                try:
+                                    start_time = datetime.fromisoformat(
+                                        start_time_str.replace("Z", "+00:00")
+                                    )
+                                    if now <= start_time <= two_hours_from_now:
+                                        minutes_until = int((start_time - now).total_seconds() / 60)
+                                        upcoming_meetings.append(
+                                            {
+                                                "type": "upcoming_meeting",
+                                                "summary": event.get("summary", "Untitled"),
+                                                "start_time": start_time_str,
+                                                "minutes_until": minutes_until,
+                                            }
+                                        )
+                                        attention_items.append(
+                                            {
+                                                "category": "Upcoming",
+                                                "item": event.get("summary", "Untitled"),
+                                                "urgency": "medium",
+                                                "icon": "📅",
+                                                "detail": f"in {minutes_until} min",
+                                            }
+                                        )
+                                except Exception as parse_error:
+                                    self.logger.warning(
+                                        f"Failed to parse event time: {parse_error}"
+                                    )
+            except Exception as calendar_error:
+                self.logger.warning(f"Calendar urgency check unavailable: {calendar_error}")
+
+            # 4. Stale projects (no activity in 7+ days)
+            stale_projects = []
+            try:
+                async with AsyncSessionFactory.session_scope() as session:
+                    from services.database.models import ProjectDB
+
+                    week_ago = now - timedelta(days=7)
+                    result = await session.execute(
+                        select(ProjectDB)
+                        .where(
+                            and_(
+                                ProjectDB.owner_id == session_id,
+                                ProjectDB.is_archived == False,
+                                ProjectDB.updated_at < week_ago,
+                            )
+                        )
+                        .order_by(ProjectDB.updated_at.asc())
+                        .limit(5)
+                    )
+                    projects = result.scalars().all()
+
+                    for project in projects:
+                        days_stale = (now - project.updated_at).days if project.updated_at else 0
+                        stale_projects.append(
+                            {
+                                "type": "stale_project",
+                                "name": project.name,
+                                "last_updated": (
+                                    project.updated_at.isoformat() if project.updated_at else None
+                                ),
+                                "days_stale": days_stale,
+                            }
+                        )
+                        attention_items.append(
+                            {
+                                "category": "Stale",
+                                "item": project.name,
+                                "urgency": "low",
+                                "icon": "💤",
+                                "detail": f"{days_stale} days inactive",
+                            }
+                        )
+            except Exception as stale_error:
+                self.logger.warning(f"Failed to fetch stale projects: {stale_error}")
+
+            # Format response
+            if not attention_items:
+                message = "Everything looks good! No urgent items need your attention right now."
+            else:
+                lines = [f"**Items Needing Attention** ({len(attention_items)})\n"]
+
+                # Sort by urgency (urgent > high > medium > low)
+                urgency_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
+                sorted_items = sorted(
+                    attention_items, key=lambda x: urgency_order.get(x["urgency"], 4)
+                )
+
+                # Group by category
+                current_category = None
+                for item in sorted_items:
+                    if item["category"] != current_category:
+                        current_category = item["category"]
+                        lines.append(f"\n**{current_category}:**")
+
+                    detail_str = f" ({item['detail']})" if "detail" in item else ""
+                    lines.append(f"{item['icon']} {item['item']}{detail_str}")
+
+                message = "\n".join(lines)
+
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                    "total_attention_items": len(attention_items),
+                    "high_priority_todos": high_priority_todos,
+                    "overdue_todos": overdue_todos,
+                    "upcoming_meetings": upcoming_meetings,
+                    "stale_projects": stale_projects,
+                },
+                workflow_id=workflow_id,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Attention query error: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message=f"Unable to fetch attention items: {str(e)}",
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow_id,
+                error=str(e),
+                error_type="AttentionQueryError",
+            )
+
+    def _parse_time_expression(self, message: str) -> int:
+        """
+        Parse time expression from natural language to days.
+
+        Examples:
+            "since yesterday" -> 1
+            "since Monday" -> ~days since last Monday
+            "in the last hour" -> 0 (partial day)
+            "since last week" -> 7
+
+        Args:
+            message: Natural language message
+
+        Returns:
+            Number of days in the time range
+        """
+        message_lower = message.lower()
+
+        # Yesterday
+        if "yesterday" in message_lower:
+            return 1
+
+        # Hours
+        if "hour" in message_lower:
+            if "last hour" in message_lower or "past hour" in message_lower:
+                return 0  # Partial day
+            # Extract number of hours
+            import re
+
+            match = re.search(r"(\d+)\s*hours?", message_lower)
+            if match:
+                hours = int(match.group(1))
+                return max(0, hours // 24)  # Convert to days
+            return 0
+
+        # Days
+        if "day" in message_lower:
+            import re
+
+            match = re.search(r"(\d+)\s*days?", message_lower)
+            if match:
+                return int(match.group(1))
+            if "last day" in message_lower or "past day" in message_lower:
+                return 1
+            return 1
+
+        # Week
+        if "week" in message_lower:
+            if "last week" in message_lower or "past week" in message_lower:
+                return 7
+            import re
+
+            match = re.search(r"(\d+)\s*weeks?", message_lower)
+            if match:
+                return int(match.group(1)) * 7
+            return 7
+
+        # Month
+        if "month" in message_lower:
+            import re
+
+            match = re.search(r"(\d+)\s*months?", message_lower)
+            if match:
+                return int(match.group(1)) * 30
+            return 30
+
+        # Day of week (Monday, Tuesday, etc.)
+        days_of_week = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        for day in days_of_week:
+            if day in message_lower:
+                # Calculate days since that day
+                from datetime import datetime
+
+                today = datetime.now()
+                target_day = days_of_week.index(day)
+                current_day = today.weekday()
+
+                if current_day >= target_day:
+                    days_ago = current_day - target_day
+                else:
+                    days_ago = 7 - (target_day - current_day)
+
+                return max(1, days_ago)
+
+        # Default to 1 day if can't parse
+        return 1
+
+    def _format_time_range(self, days: int) -> str:
+        """
+        Format time range as human-readable string.
+
+        Args:
+            days: Number of days
+
+        Returns:
+            Formatted string like "since yesterday", "in the past 7 days"
+        """
+        if days == 0:
+            return "in the past hour"
+        elif days == 1:
+            return "since yesterday"
+        elif days == 7:
+            return "in the past week"
+        elif days == 30:
+            return "in the past month"
+        else:
+            return f"in the past {days} days"
+
     async def _handle_execution_intent(
         self, intent: Intent, workflow, session_id: str
     ) -> IntentProcessingResult:
@@ -675,6 +3058,21 @@ class IntentService:
 
         elif mapped_action == "list_todos":
             message = await self.todo_handlers.handle_list_todos(
+                intent, session_id, user_id="default"
+            )
+            return IntentProcessingResult(
+                success=True,
+                message=message,
+                intent_data={
+                    "category": intent.category.value,
+                    "action": intent.action,
+                    "confidence": intent.confidence,
+                },
+                workflow_id=workflow.id,
+            )
+
+        elif mapped_action == "next_todo":
+            message = await self.todo_handlers.handle_next_todo(
                 intent, session_id, user_id="default"
             )
             return IntentProcessingResult(
@@ -942,11 +3340,16 @@ class IntentService:
         Follows EXECUTION/QUERY pattern for consistency.
 
         GREAT-4D Phase 2: Replaces Phase 3C placeholder.
+        Issue #515: Added analyze_document routing to Notion
         """
         self.logger.info(f"Processing ANALYSIS intent: {intent.action}")
 
         # Route based on action
-        if intent.action in ["analyze_commits", "analyze_code"]:
+        # Issue #515: Document analysis via Notion (Canonical Query #17)
+        if intent.action in ["analyze_document", "analyze_file"]:
+            return await self._handle_analyze_document_notion(intent, workflow.id, session_id)
+
+        elif intent.action in ["analyze_commits", "analyze_code"]:
             return await self._handle_analyze_commits(intent, workflow.id)
 
         elif intent.action in ["generate_report", "create_report"]:

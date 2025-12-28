@@ -431,6 +431,165 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         logger.info("Generated temporal summary")
         return result
 
+    async def get_events_in_range(
+        self, start_date: datetime, end_date: datetime
+    ) -> List[Dict[str, Any]]:
+        """
+        Get calendar events within a date range.
+
+        Issue #518: Added for Query #61 (week calendar) to support router pattern.
+
+        Args:
+            start_date: Start of date range (datetime)
+            end_date: End of date range (datetime)
+
+        Returns:
+            List[Dict[str, Any]]: List of processed calendar events
+        """
+        if self._circuit_open:
+            logger.warning("Google Calendar circuit breaker is open")
+            return []
+
+        if not self._service:
+            if not await self.authenticate():
+                return []
+
+        try:
+
+            async def _get_events():
+                time_min = start_date.isoformat() + "Z"
+                time_max = end_date.isoformat() + "Z"
+
+                events_result = (
+                    self._service.events()
+                    .list(
+                        calendarId=self._calendar_id,
+                        timeMin=time_min,
+                        timeMax=time_max,
+                        singleEvents=True,
+                        orderBy="startTime",
+                    )
+                    .execute()
+                )
+
+                events = events_result.get("items", [])
+                processed_events = []
+                for event in events:
+                    processed_event = self._process_event(event)
+                    if processed_event:
+                        processed_events.append(processed_event)
+
+                return processed_events
+
+            events = await self.token_counter.wrap_mcp_call(
+                "calendar_get_events_in_range",
+                _get_events(),
+                input_data="",
+            )
+
+            logger.info(f"Retrieved {len(events)} events in range")
+            self._reset_circuit_breaker()
+            return events
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve calendar events in range: {e}")
+            self._handle_error()
+            return []
+
+    async def get_recurring_events(self, days_ahead: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get recurring calendar events.
+
+        Issue #518: Added for Query #35 (recurring meetings) to support router pattern.
+
+        Args:
+            days_ahead: Number of days to look ahead (default 30)
+
+        Returns:
+            List[Dict[str, Any]]: List of recurring events with frequency info
+        """
+        if self._circuit_open:
+            logger.warning("Google Calendar circuit breaker is open")
+            return []
+
+        if not self._service:
+            if not await self.authenticate():
+                return []
+
+        try:
+
+            async def _get_recurring():
+                now = datetime.utcnow()
+                time_min = now.isoformat() + "Z"
+                time_max = (now + timedelta(days=days_ahead)).isoformat() + "Z"
+
+                # Get events without expanding recurring (singleEvents=False)
+                events_result = (
+                    self._service.events()
+                    .list(
+                        calendarId=self._calendar_id,
+                        timeMin=time_min,
+                        timeMax=time_max,
+                        singleEvents=False,  # Don't expand recurring events
+                    )
+                    .execute()
+                )
+
+                raw_events = events_result.get("items", [])
+                recurring_events = []
+
+                for event in raw_events:
+                    if "recurrence" in event:
+                        summary = event.get("summary", "Untitled")
+                        recurrence_rules = event.get("recurrence", [])
+
+                        # Parse RRULE to get frequency
+                        frequency = "Unknown"
+                        for rule in recurrence_rules:
+                            if "FREQ=" in rule:
+                                freq_part = rule.split("FREQ=")[1].split(";")[0]
+                                frequency = freq_part.capitalize()
+
+                        # Estimate duration from start/end
+                        start = event.get("start", {})
+                        end = event.get("end", {})
+                        duration_minutes = 0
+
+                        if "dateTime" in start and "dateTime" in end:
+                            start_time = datetime.fromisoformat(
+                                start["dateTime"].replace("Z", "+00:00")
+                            )
+                            end_time = datetime.fromisoformat(
+                                end["dateTime"].replace("Z", "+00:00")
+                            )
+                            duration_minutes = int((end_time - start_time).total_seconds() / 60)
+
+                        recurring_events.append(
+                            {
+                                "summary": summary,
+                                "frequency": frequency,
+                                "duration_minutes": duration_minutes,
+                                "recurrence_rules": recurrence_rules,
+                            }
+                        )
+
+                return recurring_events
+
+            events = await self.token_counter.wrap_mcp_call(
+                "calendar_get_recurring_events",
+                _get_recurring(),
+                input_data="",
+            )
+
+            logger.info(f"Retrieved {len(events)} recurring events")
+            self._reset_circuit_breaker()
+            return events
+
+        except Exception as e:
+            logger.error(f"Failed to retrieve recurring events: {e}")
+            self._handle_error()
+            return []
+
     def _generate_recommendations(
         self, current_meeting: Optional[Dict], next_meeting: Optional[Dict], free_blocks: List[Dict]
     ) -> List[str]:

@@ -240,6 +240,55 @@ class CalendarIntegrationRouter:
         else:
             raise RuntimeError("No calendar integration available for health_check")
 
+    async def get_events_in_range(self, start_date, end_date) -> List[Dict[str, Any]]:
+        """
+        Get calendar events within a date range.
+
+        Issue #518: Added for Query #61 (week calendar) to support router pattern.
+
+        Args:
+            start_date: Start of date range (datetime)
+            end_date: End of date range (datetime)
+
+        Returns:
+            List[Dict[str, Any]]: List of calendar events in range
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_events_in_range")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_events_in_range", is_legacy)
+            return await integration.get_events_in_range(start_date, end_date)
+        else:
+            raise RuntimeError("No calendar integration available for get_events_in_range")
+
+    async def get_recurring_events(self, days_ahead: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get recurring calendar events.
+
+        Issue #518: Added for Query #35 (recurring meetings) to support router pattern.
+
+        Args:
+            days_ahead: Number of days to look ahead (default 30)
+
+        Returns:
+            List[Dict[str, Any]]: List of recurring events with frequency info
+
+        Raises:
+            RuntimeError: If no calendar integration is available
+        """
+        integration, is_legacy = self._get_preferred_integration("get_recurring_events")
+
+        if integration:
+            if is_legacy:
+                self._warn_deprecation_if_needed("get_recurring_events", is_legacy)
+            return await integration.get_recurring_events(days_ahead)
+        else:
+            raise RuntimeError("No calendar integration available for get_recurring_events")
+
     # Spatial Intelligence Methods (from BaseSpatialAdapter)
 
     def get_context(self, external_id: str):
