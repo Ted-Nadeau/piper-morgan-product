@@ -400,6 +400,22 @@ Stop immediately and escalate if:
 - Performance degrades unacceptably
 - Security issues discovered
 - Assumptions prove wrong
+- **Router/adapter methods missing** (Issue #525 learning)
+
+### Infrastructure Compatibility Check (Issue #525 Learning)
+
+**For any work involving integration handlers (Calendar, GitHub, Slack, Notion):**
+
+Before implementing handlers that call integration adapters:
+- [ ] Does the router have all required methods?
+- [ ] If not, is "extend router" in scope, or should we STOP?
+- [ ] CORE-QUERY-1 pattern compliance verified?
+
+**Why this matters:** Issue #518 Phase A bypassed `CalendarIntegrationRouter` because it lacked `get_events_in_range()` and `get_recurring_events()`. The correct fix was to extend the router, not bypass it. Pre-commit hooks caught the violation but the gameplan should have prevented it.
+
+**Pattern Enforcement:**
+- ✅ Handler → Router → Adapter (correct)
+- ❌ Handler → Adapter directly (violates CORE-QUERY-1)
 
 ---
 
