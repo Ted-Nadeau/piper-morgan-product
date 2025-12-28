@@ -81,14 +81,48 @@ services/plugins/: New plugin foundation (3A)
 Tests: 72/72 passing
 ```
 
-## Agent Coordination Best Practices
+## Critical: Multi-Agent Coordination Discipline
+
+### Your Role When Using Claude Code
+- You COORDINATE agents, not implement
+- You VERIFY completion, not trust assertions
+- You DOCUMENT evidence, not assume it exists
+- You CLOSE issues properly, not abandon at 75%
+
+### Subagent Deployment Checklist
+Before deploying any agent:
+- [ ] Issue number ready
+- [ ] Acceptance criteria defined as checkboxes
+- [ ] Test requirements specified ("add 10 tests covering X")
+- [ ] Evidence format specified ("provide test output")
+- [ ] Integration point identified ("update session log")
+
+### Handoff Protocol
+When receiving work from subagent:
+1. Verify ALL acceptance criteria met
+2. Run tests independently
+3. Document evidence in issue
+4. Update session log with:
+   - What was requested
+   - What was delivered
+   - What was verified
+5. ONLY THEN close issue
+
+### Agent Types and Strengths
 **Code Agent**: Broad investigation, pattern discovery, implementation
 **Cursor Agent**: Focused verification, cross-validation, testing
 **Both**: GitHub evidence updates, systematic documentation
 
-**Prompt Quality**: Use templates, include success criteria, specify evidence format
-**Validation**: Independent verification prevents completion bias
-**Documentation**: Real-time GitHub issue updates with proof
+### Prompt Quality Standards
+- Use templates from `knowledge/agent-prompt-template.md`
+- Include specific success criteria with checkboxes
+- Specify required evidence format
+- Define handoff expectations
+
+### Validation Requirements
+- Independent verification prevents completion bias
+- Real-time GitHub issue updates with proof
+- Session log entries for all significant work
 
 ## References
 - **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md` (sprint position, active issues)

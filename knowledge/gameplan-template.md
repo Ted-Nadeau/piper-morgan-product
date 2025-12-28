@@ -336,6 +336,62 @@ Please review and close if satisfied.
 
 ---
 
+## Multi-Agent Coordination Plan
+
+### Agent Deployment Map
+| Phase | Agent Type | Issue | Evidence Required | Handoff |
+|-------|------------|-------|------------------|---------|
+| 1 | Code Agent | #XXX | 10 tests, coverage report | Test locations |
+| 2 | Cursor Agent | #XXY | File modifications | Diff summary |
+| 3 | Lead Dev | #XXZ | Integration verified | User test |
+
+*(Copy and customize for each gameplan)*
+
+### Verification Gates
+- [ ] Phase 1: Unit tests passing
+- [ ] Phase 2: Integration tests passing
+- [ ] Phase 2a: **Routing integration tests** (for intent/handler work)
+- [ ] Phase 3: User verification complete
+- [ ] Phase 4: Documentation updated
+
+### CRITICAL: Routing Integration Tests (Issue #521 Learning)
+
+**For any work involving intent handlers, classifiers, or query routing:**
+
+Unit tests that mock routing are NOT sufficient. You MUST include **routing integration tests** that verify the full path:
+
+```python
+# BAD: Tests handler in isolation (mocked routing)
+async def test_handler_works():
+    result = await handler._handle_attention_query(mock_intent, session_id)
+    assert "attention" in result  # ✅ Passes but doesn't prove routing works
+
+# GOOD: Tests full routing path (pre-classifier → intent service → handler)
+async def test_routing_reaches_handler():
+    pre_classifier = PreClassifier()
+    intent = pre_classifier.pre_classify("what needs my attention")
+    assert intent.category == IntentCategory.QUERY
+    assert intent.action == "attention_query"  # ✅ Proves routing works
+```
+
+**Why this matters:** Issue #521 had 17 passing unit tests but the queries failed in production because the pre-classifier intercepted them before reaching the handlers. Routing integration tests catch this.
+
+### Evidence Collection Points
+1. **After each subagent returns**: Collect evidence immediately
+2. **Before phase transition**: Verify accumulated evidence
+3. **Before issue closure**: Compile all evidence into issue
+4. **At session end**: Update omnibus log and session log
+
+### Handoff Quality Checklist
+Before accepting handoff from any agent:
+- [ ] All acceptance criteria checkboxes addressed
+- [ ] Test output provided (not just "tests pass")
+- [ ] Files modified list included
+- [ ] User verification steps documented
+- [ ] Blockers explicitly stated (if any)
+
+---
+
 ## STOP Conditions (Apply Throughout)
 
 Stop immediately and escalate if:

@@ -14,6 +14,59 @@ Standardized template for deploying agents with complete methodology transfer, i
 
 ---
 
+## CRITICAL: Evidence and Handoff Requirements
+
+You are being deployed to complete a GitHub Issue. Your work is part of a multi-agent coordination chain.
+
+### Your Acceptance Criteria Format
+When you receive acceptance criteria, they will look like:
+- [ ] [Specific criterion 1]
+- [ ] [Specific criterion 2]
+- [ ] [Test requirement - e.g., "Add 10 tests covering X"]
+
+**Every checkbox must be addressed in your handoff.**
+
+### Evidence You MUST Provide
+1. **Test count**: "Added X tests in [file path]"
+2. **Test verification**: "All tests passing" with actual output below
+3. **Files modified**: Complete list with approximate line counts
+4. **How to verify**: Step-by-step instructions for user testing
+
+### Your Handoff Format
+Return your work with this structure:
+```
+## Issue #XXX Completion Report
+**Status**: Complete/Partial/Blocked
+
+**Tests**:
+- X tests added in [location]
+- `pytest [path] -v` output: [paste actual output]
+
+**Verification**:
+[Actual command output showing success]
+
+**Files Modified**:
+- [file1.py] (+X/-Y lines)
+- [file2.py] (+X/-Y lines)
+
+**User Testing Steps**:
+1. [Step 1]
+2. [Step 2]
+3. [Expected result]
+
+**Blockers** (if any):
+- [Blocker description and why it prevents completion]
+```
+
+### Remember
+- You're part of a coordination chain
+- Your output enables the next step
+- Incomplete handoff = failed task
+- Evidence > assertions
+- The Lead Developer will verify your work independently
+
+---
+
 # [Claude Code / Cursor Agent] Prompt: [TASK DESCRIPTION]
 
 ## Your Identity [IF first prompt of session]
