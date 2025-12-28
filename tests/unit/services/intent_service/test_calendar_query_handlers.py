@@ -450,18 +450,28 @@ class TestRecurringMeetingsQueryResults:
             },
         ]
 
+        # Issue #518: Handler now uses CalendarIntegrationRouter (CORE-QUERY-1 pattern)
+        # Mock the router's get_recurring_events method directly
+        mock_processed_events = [
+            {
+                "summary": "Daily Standup",
+                "frequency": "Daily",
+                "duration_minutes": 30,
+            },
+            {
+                "summary": "Weekly Team Sync",
+                "frequency": "Weekly",
+                "duration_minutes": 60,
+            },
+        ]
+
         with patch(
-            "services.mcp.consumer.google_calendar_adapter.GoogleCalendarMCPAdapter"
-        ) as MockAdapter:
-            mock_adapter = MagicMock()
-            mock_adapter.authenticate = AsyncMock(return_value=True)
-            mock_adapter.get_todays_events = AsyncMock(return_value=[])
-            mock_adapter._service = MagicMock()
-            mock_adapter._service.events.return_value.list.return_value.execute.return_value = {
-                "items": mock_events
-            }
-            mock_adapter._calendar_id = "primary"
-            MockAdapter.return_value = mock_adapter
+            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.authenticate = AsyncMock(return_value=True)
+            mock_router.get_recurring_events = AsyncMock(return_value=mock_processed_events)
+            MockRouter.return_value = mock_router
 
             result = await intent_service._handle_recurring_meetings_query(intent, "workflow-id")
 
@@ -482,18 +492,14 @@ class TestRecurringMeetingsQueryResults:
             context={"original_message": "review recurring meetings"},
         )
 
+        # Issue #518: Handler now uses CalendarIntegrationRouter (CORE-QUERY-1 pattern)
         with patch(
-            "services.mcp.consumer.google_calendar_adapter.GoogleCalendarMCPAdapter"
-        ) as MockAdapter:
-            mock_adapter = MagicMock()
-            mock_adapter.authenticate = AsyncMock(return_value=True)
-            mock_adapter.get_todays_events = AsyncMock(return_value=[])
-            mock_adapter._service = MagicMock()
-            mock_adapter._service.events.return_value.list.return_value.execute.return_value = {
-                "items": []
-            }
-            mock_adapter._calendar_id = "primary"
-            MockAdapter.return_value = mock_adapter
+            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.authenticate = AsyncMock(return_value=True)
+            mock_router.get_recurring_events = AsyncMock(return_value=[])
+            MockRouter.return_value = mock_router
 
             result = await intent_service._handle_recurring_meetings_query(intent, "workflow-id")
 
@@ -533,32 +539,36 @@ class TestWeekCalendarQueryResults:
             },
         ]
 
+        # Issue #518: Handler now uses CalendarIntegrationRouter (CORE-QUERY-1 pattern)
+        # The router's get_events_in_range returns processed events
+        mock_processed_events = [
+            {
+                "id": "event-1",
+                "summary": "Morning Meeting",
+                "start_time": now.isoformat(),
+                "end_time": (now + timedelta(hours=1)).isoformat(),
+                "duration_minutes": 60,
+                "is_all_day": False,
+                "date": now.strftime("%Y-%m-%d"),
+            },
+            {
+                "id": "event-2",
+                "summary": "Afternoon Review",
+                "start_time": tomorrow.isoformat(),
+                "end_time": (tomorrow + timedelta(hours=2)).isoformat(),
+                "duration_minutes": 120,
+                "is_all_day": False,
+                "date": tomorrow.strftime("%Y-%m-%d"),
+            },
+        ]
+
         with patch(
-            "services.mcp.consumer.google_calendar_adapter.GoogleCalendarMCPAdapter"
-        ) as MockAdapter:
-            mock_adapter = MagicMock()
-            mock_adapter.authenticate = AsyncMock(return_value=True)
-            mock_adapter._service = MagicMock()
-            mock_adapter._service.events.return_value.list.return_value.execute.return_value = {
-                "items": mock_events
-            }
-            mock_adapter._calendar_id = "primary"
-
-            # Mock _process_event to return processed events
-            def mock_process_event(event):
-                start = datetime.fromisoformat(event["start"]["dateTime"].replace("Z", "+00:00"))
-                end = datetime.fromisoformat(event["end"]["dateTime"].replace("Z", "+00:00"))
-                return {
-                    "id": event["id"],
-                    "summary": event["summary"],
-                    "start_time": start.isoformat(),
-                    "end_time": end.isoformat(),
-                    "duration_minutes": int((end - start).total_seconds() / 60),
-                    "is_all_day": False,
-                }
-
-            mock_adapter._process_event = mock_process_event
-            MockAdapter.return_value = mock_adapter
+            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.authenticate = AsyncMock(return_value=True)
+            mock_router.get_events_in_range = AsyncMock(return_value=mock_processed_events)
+            MockRouter.return_value = mock_router
 
             result = await intent_service._handle_week_calendar_query(intent, "workflow-id")
 
@@ -577,17 +587,14 @@ class TestWeekCalendarQueryResults:
             context={"original_message": "what's my week look like"},
         )
 
+        # Issue #518: Handler now uses CalendarIntegrationRouter (CORE-QUERY-1 pattern)
         with patch(
-            "services.mcp.consumer.google_calendar_adapter.GoogleCalendarMCPAdapter"
-        ) as MockAdapter:
-            mock_adapter = MagicMock()
-            mock_adapter.authenticate = AsyncMock(return_value=True)
-            mock_adapter._service = MagicMock()
-            mock_adapter._service.events.return_value.list.return_value.execute.return_value = {
-                "items": []
-            }
-            mock_adapter._calendar_id = "primary"
-            MockAdapter.return_value = mock_adapter
+            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.authenticate = AsyncMock(return_value=True)
+            mock_router.get_events_in_range = AsyncMock(return_value=[])
+            MockRouter.return_value = mock_router
 
             result = await intent_service._handle_week_calendar_query(intent, "workflow-id")
 
