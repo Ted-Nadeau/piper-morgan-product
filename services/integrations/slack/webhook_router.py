@@ -1043,27 +1043,195 @@ class SlackWebhookRouter:
             return {"text": "Error processing interaction"}
 
     async def _process_slash_command(self, command_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process slash command"""
+        """
+        Process slash command and route to appropriate handler.
 
+        Issue #520: Implements routing for Canonical Queries #49, #50
+        - /piper help → _handle_piper_command()
+        - /standup → _handle_standup_command()
+
+        Args:
+            command_data: Slack command payload with command, text, user_id, channel_id
+
+        Returns:
+            Dict with response_type and text/blocks for Slack response
+        """
         try:
-            command = command_data.get("command")
-            text = command_data.get("text", "")
+            command = command_data.get("command", "")
+            text = command_data.get("text", "").strip().lower()
             channel_id = command_data.get("channel_id")
             user_id = command_data.get("user_id")
 
             logger.info(f"Slash command {command} from user {user_id} in channel {channel_id}")
 
-            # Here would route to appropriate command handler
-            # For now, return a simple response
-
-            return {
-                "response_type": "ephemeral",
-                "text": f"Command `{command}` received with text: {text}",
-            }
+            # Route based on command
+            if command == "/piper":
+                return await self._handle_piper_command(text, user_id, channel_id)
+            elif command == "/standup":
+                return await self._handle_standup_command(user_id, channel_id)
+            else:
+                return {
+                    "response_type": "ephemeral",
+                    "text": f"Unknown command: {command}. Try `/piper help` for available commands.",
+                }
 
         except Exception as e:
             logger.error(f"Error processing slash command: {e}")
             return {"response_type": "ephemeral", "text": "Error processing command"}
+
+    async def _handle_piper_command(
+        self, text: str, user_id: str, channel_id: str
+    ) -> Dict[str, Any]:
+        """
+        Handle /piper commands.
+
+        Issue #520: Query #50 - "/piper help"
+
+        Subcommands:
+        - help: Show available commands and capabilities
+        - (empty): Same as help
+
+        Args:
+            text: Command text after /piper
+            user_id: Slack user ID
+            channel_id: Slack channel ID
+
+        Returns:
+            Ephemeral response with help information
+        """
+        if text == "help" or text == "":
+            return await self._build_help_response()
+        else:
+            return {
+                "response_type": "ephemeral",
+                "text": f"Unknown subcommand: {text}. Try `/piper help`.",
+            }
+
+    async def _build_help_response(self) -> Dict[str, Any]:
+        """
+        Build help response with dynamic capabilities.
+
+        Issue #520: Query #50 - Uses _get_dynamic_capabilities() from canonical_handlers
+        """
+        from services.intent_service.canonical_handlers import CanonicalHandlers
+
+        handlers = CanonicalHandlers()
+        capabilities = handlers._get_dynamic_capabilities()
+
+        # Format capabilities
+        core = capabilities.get("core", [])
+        integrations = capabilities.get("integrations", [])
+
+        help_text = "*Piper Morgan - Your AI Development Partner*\n\n"
+        help_text += "*Available Commands:*\n"
+        help_text += "• `/piper help` - Show this help message\n"
+        help_text += "• `/standup` - Generate your daily standup\n\n"
+
+        help_text += "*Core Capabilities:*\n"
+        for cap in core:
+            help_text += f"• {cap}\n"
+
+        if integrations:
+            help_text += "\n*Active Integrations:*\n"
+            for integration in integrations:
+                name = integration.get("name", "Unknown")
+                help_text += f"• {name}\n"
+
+        return {
+            "response_type": "ephemeral",
+            "text": help_text,
+        }
+
+    async def _handle_standup_command(self, user_id: str, channel_id: str) -> Dict[str, Any]:
+        """
+        Handle /standup command.
+
+        Issue #520: Query #49 - "/standup"
+
+        Generates standup from:
+        1. Completed items since yesterday
+        2. High-priority todos for today
+        3. Current blockers
+
+        Args:
+            user_id: Slack user ID
+            channel_id: Slack channel ID
+
+        Returns:
+            In-channel response with standup format
+        """
+        try:
+            standup_parts = []
+
+            # 1. What I did yesterday (completed items)
+            yesterday_items = await self._get_completed_since_yesterday()
+            if yesterday_items:
+                standup_parts.append("*Yesterday:*")
+                for item in yesterday_items[:3]:
+                    standup_parts.append(f"• {item}")
+            else:
+                standup_parts.append("*Yesterday:*\n• No completed items recorded")
+
+            # 2. What I'm doing today (high-priority todos)
+            today_items = await self._get_today_priorities()
+            standup_parts.append("\n*Today:*")
+            if today_items:
+                for item in today_items[:3]:
+                    standup_parts.append(f"• {item}")
+            else:
+                standup_parts.append("• No high-priority items scheduled")
+
+            # 3. Blockers
+            blockers = await self._get_blockers()
+            standup_parts.append("\n*Blockers:*")
+            if blockers:
+                for blocker in blockers[:2]:
+                    standup_parts.append(f"• {blocker}")
+            else:
+                standup_parts.append("• None")
+
+            return {
+                "response_type": "in_channel",  # Share with team
+                "text": "\n".join(standup_parts),
+            }
+
+        except Exception as e:
+            logger.error(f"Error generating standup: {e}")
+            return {
+                "response_type": "ephemeral",
+                "text": "Unable to generate standup. Please try again.",
+            }
+
+    async def _get_completed_since_yesterday(self) -> list:
+        """
+        Get items completed since yesterday.
+
+        Issue #520: Helper for /standup command.
+        Uses TodoManagementService or audit log when available.
+        Returns placeholder for now - will integrate with real service.
+        """
+        # TODO: Integrate with TodoManagementService when user context available
+        return []
+
+    async def _get_today_priorities(self) -> list:
+        """
+        Get high-priority items for today.
+
+        Issue #520: Helper for /standup command.
+        Uses TodoManagementService when available.
+        """
+        # TODO: Integrate with TodoManagementService when user context available
+        return []
+
+    async def _get_blockers(self) -> list:
+        """
+        Get current blockers.
+
+        Issue #520: Helper for /standup command.
+        Could use todos marked as blocked or specific label.
+        """
+        # TODO: Integrate with blocker detection when available
+        return []
 
     def get_router(self) -> APIRouter:
         """Get the FastAPI router for integration with main app"""
