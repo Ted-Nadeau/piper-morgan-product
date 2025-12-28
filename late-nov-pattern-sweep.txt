@@ -1,0 +1,49 @@
+================================================================================
+BREAKTHROUGH DETECTION REPORT
+================================================================================
+
+Analysis Period: 2025-11-26T00:00:00 to 2025-11-30T00:00:00
+
+================================================================================
+SUMMARY
+================================================================================
+Total Breakthroughs Detected: 1
+Total Signals Detected: 3
+
+Signal Types Detected:
+  - parallel_work
+  - semantic_emergence
+  - refactoring_event
+
+================================================================================
+BREAKTHROUGH EVENTS
+================================================================================
+
+1. DISCOVERY_BREAKTHROUGH (2025-11-29)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: temporal, semantic, structural
+
+   Required Signals:
+     ✓ semantic_emergence
+
+   Supporting Signals:
+     + parallel_work
+
+================================================================================
+ANALYSIS METADATA
+================================================================================
+
+Temporal Analysis:
+  Baseline velocity: 2.71 commits/day
+  Total commits: 19
+
+Semantic Analysis:
+  Concepts emerged: 6
+  High-validation concepts: 0
+
+Structural Analysis:
+  ADRs created: 0
+  Refactoring events: 3
+
+================================================================================

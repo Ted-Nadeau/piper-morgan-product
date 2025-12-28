@@ -1,0 +1,659 @@
+{
+  "breakthroughs": [
+    {
+      "date": "2025-12-22",
+      "type": "implementation_breakthrough",
+      "signals": [
+        "refactoring_event",
+        "semantic_emergence",
+        "adr_creation"
+      ],
+      "required_signals": [
+        "adr_creation"
+      ],
+      "supporting_signals": [
+        "refactoring_event"
+      ],
+      "signal_count": 3,
+      "supporting_count": 1,
+      "confidence": 1.0,
+      "analyzers_involved": [
+        "structural",
+        "semantic"
+      ]
+    }
+  ],
+  "signals": {
+    "semantic_emergence": {
+      "count": 12,
+      "concepts": [
+        "multi-agent coordination",
+        "AsyncSessionFactory",
+        "parallel execution",
+        "completion matrix",
+        "spatial intelligence",
+        "boundary enforcement",
+        "cross-validation",
+        "verification-first",
+        "systematic verification",
+        "CODE \u2260 DATA",
+        "WorkflowFactory",
+        "evidence-based"
+      ],
+      "contexts": [
+        "omnibus",
+        "code",
+        "session_log",
+        "adr",
+        "doc"
+      ],
+      "dates": [
+        "2025-12-22",
+        "2025-12-22",
+        "2025-12-16",
+        "2025-12-22",
+        "2025-12-22",
+        "2025-12-22",
+        "2025-12-22",
+        "2025-12-25",
+        "2025-12-22",
+        "2025-12-22",
+        "2025-12-21",
+        "2025-12-23"
+      ],
+      "events": [
+        {
+          "date": "2025-12-22T11:36:35.286453",
+          "term": "multi-agent coordination"
+        },
+        {
+          "date": "2025-12-22T11:36:35.287185",
+          "term": "AsyncSessionFactory"
+        },
+        {
+          "date": "2025-12-16T08:41:37.339490",
+          "term": "parallel execution"
+        },
+        {
+          "date": "2025-12-22T11:36:35.286453",
+          "term": "completion matrix"
+        },
+        {
+          "date": "2025-12-22T11:36:35.286520",
+          "term": "spatial intelligence"
+        },
+        {
+          "date": "2025-12-22T11:36:35.286208",
+          "term": "boundary enforcement"
+        },
+        {
+          "date": "2025-12-22T11:43:34.929964",
+          "term": "cross-validation"
+        },
+        {
+          "date": "2025-12-25T11:47:26.573732",
+          "term": "verification-first"
+        },
+        {
+          "date": "2025-12-22T11:36:35.286520",
+          "term": "systematic verification"
+        },
+        {
+          "date": "2025-12-22T11:36:35.286453",
+          "term": "CODE \u2260 DATA"
+        },
+        {
+          "date": "2025-12-21T10:51:33.258945",
+          "term": "WorkflowFactory"
+        },
+        {
+          "date": "2025-12-23T12:47:09.762688",
+          "term": "evidence-based"
+        }
+      ]
+    },
+    "adr_creation": {
+      "count": 1,
+      "adrs": [
+        {
+          "number": "039",
+          "title": "appendix-investigation",
+          "date": "2025-12-22T11:43:54"
+        }
+      ]
+    },
+    "refactoring_event": {
+      "count": 2,
+      "max_files_changed": 67,
+      "events": [
+        {
+          "date": "2025-12-22T11:43:54",
+          "files_changed": 67,
+          "type": "architectural_overhaul"
+        },
+        {
+          "date": "2025-12-22T11:38:13",
+          "files_changed": 41,
+          "type": "major_refactoring"
+        }
+      ]
+    }
+  },
+  "signals_by_date": {
+    "2025-12-22": [
+      [
+        "semantic_emergence",
+        {
+          "count": 12,
+          "concepts": [
+            "multi-agent coordination",
+            "AsyncSessionFactory",
+            "parallel execution",
+            "completion matrix",
+            "spatial intelligence",
+            "boundary enforcement",
+            "cross-validation",
+            "verification-first",
+            "systematic verification",
+            "CODE \u2260 DATA",
+            "WorkflowFactory",
+            "evidence-based"
+          ],
+          "contexts": [
+            "omnibus",
+            "code",
+            "session_log",
+            "adr",
+            "doc"
+          ],
+          "dates": [
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-16",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-25",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-21",
+            "2025-12-23"
+          ],
+          "events": [
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "multi-agent coordination"
+            },
+            {
+              "date": "2025-12-22T11:36:35.287185",
+              "term": "AsyncSessionFactory"
+            },
+            {
+              "date": "2025-12-16T08:41:37.339490",
+              "term": "parallel execution"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "completion matrix"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "spatial intelligence"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286208",
+              "term": "boundary enforcement"
+            },
+            {
+              "date": "2025-12-22T11:43:34.929964",
+              "term": "cross-validation"
+            },
+            {
+              "date": "2025-12-25T11:47:26.573732",
+              "term": "verification-first"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "systematic verification"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "CODE \u2260 DATA"
+            },
+            {
+              "date": "2025-12-21T10:51:33.258945",
+              "term": "WorkflowFactory"
+            },
+            {
+              "date": "2025-12-23T12:47:09.762688",
+              "term": "evidence-based"
+            }
+          ]
+        }
+      ],
+      [
+        "adr_creation",
+        {
+          "count": 1,
+          "adrs": [
+            {
+              "number": "039",
+              "title": "appendix-investigation",
+              "date": "2025-12-22T11:43:54"
+            }
+          ]
+        }
+      ],
+      [
+        "refactoring_event",
+        {
+          "count": 2,
+          "max_files_changed": 67,
+          "events": [
+            {
+              "date": "2025-12-22T11:43:54",
+              "files_changed": 67,
+              "type": "architectural_overhaul"
+            },
+            {
+              "date": "2025-12-22T11:38:13",
+              "files_changed": 41,
+              "type": "major_refactoring"
+            }
+          ]
+        }
+      ]
+    ],
+    "2025-12-21": [
+      [
+        "semantic_emergence",
+        {
+          "count": 12,
+          "concepts": [
+            "multi-agent coordination",
+            "AsyncSessionFactory",
+            "parallel execution",
+            "completion matrix",
+            "spatial intelligence",
+            "boundary enforcement",
+            "cross-validation",
+            "verification-first",
+            "systematic verification",
+            "CODE \u2260 DATA",
+            "WorkflowFactory",
+            "evidence-based"
+          ],
+          "contexts": [
+            "omnibus",
+            "code",
+            "session_log",
+            "adr",
+            "doc"
+          ],
+          "dates": [
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-16",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-25",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-21",
+            "2025-12-23"
+          ],
+          "events": [
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "multi-agent coordination"
+            },
+            {
+              "date": "2025-12-22T11:36:35.287185",
+              "term": "AsyncSessionFactory"
+            },
+            {
+              "date": "2025-12-16T08:41:37.339490",
+              "term": "parallel execution"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "completion matrix"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "spatial intelligence"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286208",
+              "term": "boundary enforcement"
+            },
+            {
+              "date": "2025-12-22T11:43:34.929964",
+              "term": "cross-validation"
+            },
+            {
+              "date": "2025-12-25T11:47:26.573732",
+              "term": "verification-first"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "systematic verification"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "CODE \u2260 DATA"
+            },
+            {
+              "date": "2025-12-21T10:51:33.258945",
+              "term": "WorkflowFactory"
+            },
+            {
+              "date": "2025-12-23T12:47:09.762688",
+              "term": "evidence-based"
+            }
+          ]
+        }
+      ]
+    ],
+    "2025-12-25": [
+      [
+        "semantic_emergence",
+        {
+          "count": 12,
+          "concepts": [
+            "multi-agent coordination",
+            "AsyncSessionFactory",
+            "parallel execution",
+            "completion matrix",
+            "spatial intelligence",
+            "boundary enforcement",
+            "cross-validation",
+            "verification-first",
+            "systematic verification",
+            "CODE \u2260 DATA",
+            "WorkflowFactory",
+            "evidence-based"
+          ],
+          "contexts": [
+            "omnibus",
+            "code",
+            "session_log",
+            "adr",
+            "doc"
+          ],
+          "dates": [
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-16",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-25",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-21",
+            "2025-12-23"
+          ],
+          "events": [
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "multi-agent coordination"
+            },
+            {
+              "date": "2025-12-22T11:36:35.287185",
+              "term": "AsyncSessionFactory"
+            },
+            {
+              "date": "2025-12-16T08:41:37.339490",
+              "term": "parallel execution"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "completion matrix"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "spatial intelligence"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286208",
+              "term": "boundary enforcement"
+            },
+            {
+              "date": "2025-12-22T11:43:34.929964",
+              "term": "cross-validation"
+            },
+            {
+              "date": "2025-12-25T11:47:26.573732",
+              "term": "verification-first"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "systematic verification"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "CODE \u2260 DATA"
+            },
+            {
+              "date": "2025-12-21T10:51:33.258945",
+              "term": "WorkflowFactory"
+            },
+            {
+              "date": "2025-12-23T12:47:09.762688",
+              "term": "evidence-based"
+            }
+          ]
+        }
+      ]
+    ],
+    "2025-12-23": [
+      [
+        "semantic_emergence",
+        {
+          "count": 12,
+          "concepts": [
+            "multi-agent coordination",
+            "AsyncSessionFactory",
+            "parallel execution",
+            "completion matrix",
+            "spatial intelligence",
+            "boundary enforcement",
+            "cross-validation",
+            "verification-first",
+            "systematic verification",
+            "CODE \u2260 DATA",
+            "WorkflowFactory",
+            "evidence-based"
+          ],
+          "contexts": [
+            "omnibus",
+            "code",
+            "session_log",
+            "adr",
+            "doc"
+          ],
+          "dates": [
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-16",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-25",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-21",
+            "2025-12-23"
+          ],
+          "events": [
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "multi-agent coordination"
+            },
+            {
+              "date": "2025-12-22T11:36:35.287185",
+              "term": "AsyncSessionFactory"
+            },
+            {
+              "date": "2025-12-16T08:41:37.339490",
+              "term": "parallel execution"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "completion matrix"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "spatial intelligence"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286208",
+              "term": "boundary enforcement"
+            },
+            {
+              "date": "2025-12-22T11:43:34.929964",
+              "term": "cross-validation"
+            },
+            {
+              "date": "2025-12-25T11:47:26.573732",
+              "term": "verification-first"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "systematic verification"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "CODE \u2260 DATA"
+            },
+            {
+              "date": "2025-12-21T10:51:33.258945",
+              "term": "WorkflowFactory"
+            },
+            {
+              "date": "2025-12-23T12:47:09.762688",
+              "term": "evidence-based"
+            }
+          ]
+        }
+      ]
+    ],
+    "2025-12-16": [
+      [
+        "semantic_emergence",
+        {
+          "count": 12,
+          "concepts": [
+            "multi-agent coordination",
+            "AsyncSessionFactory",
+            "parallel execution",
+            "completion matrix",
+            "spatial intelligence",
+            "boundary enforcement",
+            "cross-validation",
+            "verification-first",
+            "systematic verification",
+            "CODE \u2260 DATA",
+            "WorkflowFactory",
+            "evidence-based"
+          ],
+          "contexts": [
+            "omnibus",
+            "code",
+            "session_log",
+            "adr",
+            "doc"
+          ],
+          "dates": [
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-16",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-25",
+            "2025-12-22",
+            "2025-12-22",
+            "2025-12-21",
+            "2025-12-23"
+          ],
+          "events": [
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "multi-agent coordination"
+            },
+            {
+              "date": "2025-12-22T11:36:35.287185",
+              "term": "AsyncSessionFactory"
+            },
+            {
+              "date": "2025-12-16T08:41:37.339490",
+              "term": "parallel execution"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "completion matrix"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "spatial intelligence"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286208",
+              "term": "boundary enforcement"
+            },
+            {
+              "date": "2025-12-22T11:43:34.929964",
+              "term": "cross-validation"
+            },
+            {
+              "date": "2025-12-25T11:47:26.573732",
+              "term": "verification-first"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286520",
+              "term": "systematic verification"
+            },
+            {
+              "date": "2025-12-22T11:36:35.286453",
+              "term": "CODE \u2260 DATA"
+            },
+            {
+              "date": "2025-12-21T10:51:33.258945",
+              "term": "WorkflowFactory"
+            },
+            {
+              "date": "2025-12-23T12:47:09.762688",
+              "term": "evidence-based"
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "analysis_metadata": {
+    "temporal": {
+      "baseline_velocity": 1.5714285714285714,
+      "total_commits": 11
+    },
+    "semantic": {
+      "total_concepts_emerged": 12,
+      "high_validation_concepts": 0
+    },
+    "structural": {
+      "total_adrs_created": 1,
+      "refactoring_events": 2
+    }
+  },
+  "analysis_period": {
+    "start": "2025-12-15T00:00:00",
+    "end": "2025-12-26T00:00:00"
+  }
+}

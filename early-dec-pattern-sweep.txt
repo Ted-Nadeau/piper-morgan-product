@@ -1,0 +1,172 @@
+================================================================================
+BREAKTHROUGH DETECTION REPORT
+================================================================================
+
+Analysis Period: 2025-12-01T00:00:00 to 2025-12-15T00:00:00
+
+================================================================================
+SUMMARY
+================================================================================
+Total Breakthroughs Detected: 12
+Total Signals Detected: 6
+
+Signal Types Detected:
+  - velocity_spike
+  - parallel_work
+  - semantic_emergence
+  - architectural_insight
+  - adr_creation
+  - refactoring_event
+
+================================================================================
+BREAKTHROUGH EVENTS
+================================================================================
+
+1. DISCOVERY_BREAKTHROUGH (2025-12-04)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: semantic, temporal
+
+   Required Signals:
+     ✓ semantic_emergence
+
+   Supporting Signals:
+     + parallel_work
+
+2. COORDINATION_BREAKTHROUGH (2025-12-04)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: semantic, temporal
+
+   Required Signals:
+     ✓ parallel_work
+
+   Supporting Signals:
+     + velocity_spike
+
+3. VELOCITY_BREAKTHROUGH (2025-12-04)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: semantic, temporal
+
+   Required Signals:
+     ✓ velocity_spike
+
+   Supporting Signals:
+     + parallel_work
+
+4. IMPLEMENTATION_BREAKTHROUGH (2025-12-03)
+   Confidence: 100%
+   Signals: 5 total
+   Analyzers: structural, semantic, temporal
+
+   Required Signals:
+     ✓ adr_creation
+
+   Supporting Signals:
+     + velocity_spike
+     + refactoring_event
+
+5. DISCOVERY_BREAKTHROUGH (2025-12-03)
+   Confidence: 100%
+   Signals: 5 total
+   Analyzers: structural, semantic, temporal
+
+   Required Signals:
+     ✓ semantic_emergence
+
+   Supporting Signals:
+     + architectural_insight
+
+6. ARCHITECTURAL_BREAKTHROUGH (2025-12-03)
+   Confidence: 100%
+   Signals: 5 total
+   Analyzers: structural, semantic, temporal
+
+   Required Signals:
+     ✓ architectural_insight
+
+   Supporting Signals:
+     + adr_creation
+     + refactoring_event
+
+7. VELOCITY_BREAKTHROUGH (2025-12-03)
+   Confidence: 100%
+   Signals: 5 total
+   Analyzers: structural, semantic, temporal
+
+   Required Signals:
+     ✓ velocity_spike
+
+8. COORDINATION_BREAKTHROUGH (2025-12-02)
+   Confidence: 60%
+   Signals: 2 total
+   Analyzers: temporal
+
+   Required Signals:
+     ✓ parallel_work
+
+   Supporting Signals:
+     + velocity_spike
+
+9. VELOCITY_BREAKTHROUGH (2025-12-02)
+   Confidence: 60%
+   Signals: 2 total
+   Analyzers: temporal
+
+   Required Signals:
+     ✓ velocity_spike
+
+   Supporting Signals:
+     + parallel_work
+
+10. DISCOVERY_BREAKTHROUGH (2025-12-01)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: semantic, temporal
+
+   Required Signals:
+     ✓ semantic_emergence
+
+   Supporting Signals:
+     + parallel_work
+
+11. COORDINATION_BREAKTHROUGH (2025-12-01)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: semantic, temporal
+
+   Required Signals:
+     ✓ parallel_work
+
+   Supporting Signals:
+     + velocity_spike
+
+12. VELOCITY_BREAKTHROUGH (2025-12-01)
+   Confidence: 100%
+   Signals: 3 total
+   Analyzers: semantic, temporal
+
+   Required Signals:
+     ✓ velocity_spike
+
+   Supporting Signals:
+     + parallel_work
+
+================================================================================
+ANALYSIS METADATA
+================================================================================
+
+Temporal Analysis:
+  Baseline velocity: 3.86 commits/day
+  Total commits: 72
+
+Semantic Analysis:
+  Concepts emerged: 22
+  High-validation concepts: 1
+
+Structural Analysis:
+  ADRs created: 1
+  Refactoring events: 8
+
+================================================================================
