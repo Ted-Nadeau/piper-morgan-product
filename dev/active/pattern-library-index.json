@@ -1,0 +1,791 @@
+{
+  "generated": "2025-12-27",
+  "pattern_count": 44,
+  "patterns": [
+    {
+      "id": "pattern-001",
+      "name": "Repository Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "repository",
+        "abstraction",
+        "data access",
+        "persistence"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-005"
+      ],
+      "description": "The Repository Pattern encapsulates data access logic and provides a clean interface between domain models and database implementation, with automatic resource "
+    },
+    {
+      "id": "pattern-002",
+      "name": "Service Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "orchestration",
+        "business logic",
+        "service",
+        "operations"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-003",
+        "pattern-004"
+      ],
+      "description": "The Service Pattern encapsulates business logic in dedicated service classes, providing a clear separation between controllers/handlers and data access layers."
+    },
+    {
+      "id": "pattern-003",
+      "name": "Factory Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "object creation",
+        "dependencies",
+        "factory",
+        "configuration"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-002",
+        "pattern-004"
+      ],
+      "description": "The Factory Pattern creates complex objects without exposing construction logic, maintaining stateless design for concurrency safety."
+    },
+    {
+      "id": "pattern-004",
+      "name": "CQRS-lite Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "query",
+        "separation",
+        "command",
+        "cqrs-lite"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-002",
+        "pattern-003"
+      ],
+      "description": "CQRS-lite Pattern separates read operations from write operations, providing optimized paths for simple data retrieval without the full complexity of CQRS event"
+    },
+    {
+      "id": "pattern-005",
+      "name": "Transaction Management Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "transaction",
+        "management",
+        "session management",
+        "consistency",
+        "commit/rollback"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-002",
+        "pattern-007"
+      ],
+      "description": "The Transaction Management Pattern ensures consistent transaction handling with automatic commit/rollback, eliminating manual transaction management and reducin"
+    },
+    {
+      "id": "pattern-006",
+      "name": "Verification-First Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "reliability",
+        "testing",
+        "validation",
+        "verification-first"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-009",
+        "pattern-010"
+      ],
+      "description": "The Verification-First Pattern ensures reliability by implementing systematic verification gates before executing AI-generated solutions. The pattern establishe"
+    },
+    {
+      "id": "pattern-007",
+      "name": "Async Error Handling Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "validation",
+        "handling",
+        "async",
+        "error",
+        "recovery"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-006",
+        "pattern-008"
+      ],
+      "description": "The Async Error Handling Pattern provides systematic error management for asynchronous operations through structured exception hierarchies, graceful degradation"
+    },
+    {
+      "id": "pattern-008",
+      "name": "DDD Service Layer Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "service",
+        "layer",
+        "orchestration",
+        "business logic",
+        "operations"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-002",
+        "pattern-007"
+      ],
+      "description": "The DDD Service Layer Pattern creates domain services that mediate all external system access, providing clean domain interfaces while encapsulating integration"
+    },
+    {
+      "id": "pattern-009",
+      "name": "GitHub Issue Tracking Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "integration",
+        "issue tracking",
+        "work management",
+        "tracking",
+        "issue"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-006",
+        "pattern-008",
+        "pattern-010"
+      ],
+      "description": "The GitHub Issue Tracking Pattern provides systematic work item management through structured GitHub issues that serve as single sources of truth for developmen"
+    },
+    {
+      "id": "pattern-010",
+      "name": "Cross-Validation Protocol Pattern",
+      "category": "Core Architecture",
+      "signature_terms": [
+        "cross-validation",
+        "cross-feature",
+        "protocol",
+        "verification"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-006",
+        "pattern-008",
+        "pattern-009"
+      ],
+      "description": "The Cross-Validation Protocol Pattern provides systematic quality assurance through structured validation checkpoints, evidence collection, and multi-perspectiv"
+    },
+    {
+      "id": "pattern-011",
+      "name": "Context Resolution Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "resolution",
+        "inheritance",
+        "context",
+        "enrichment"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-003",
+        "pattern-013"
+      ],
+      "description": "The Context Resolution Pattern resolves implicit context from multiple sources using clear precedence rules, ensuring predictable and consistent context determi"
+    },
+    {
+      "id": "pattern-012",
+      "name": "LLM Adapter Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "provider switching",
+        "adapter",
+        "placeholders"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-003",
+        "pattern-014",
+        "pattern-018"
+      ],
+      "description": "The LLM Adapter Pattern creates a common interface for all LLM providers, allowing applications to switch between providers without code changes and enabling ca"
+    },
+    {
+      "id": "pattern-013",
+      "name": "Database Session Management Pattern",
+      "category": "Development & Process",
+      "signature_terms": [
+        "authentication",
+        "database",
+        "management",
+        "lifecycle",
+        "session"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-005",
+        "pattern-011",
+        "pattern-021"
+      ],
+      "description": "The Database Session Management Pattern manages session lifecycle consistently for database and user application sessions with proper cleanup, transaction handl"
+    },
+    {
+      "id": "pattern-014",
+      "name": "Error Handling Pattern (API Contract)",
+      "category": "Data & Query",
+      "signature_terms": [
+        "validation",
+        "handling",
+        "error",
+        "contract",
+        "recovery"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-002",
+        "pattern-018"
+      ],
+      "description": "The Error Handling Pattern creates centralized error handling that converts domain exceptions into consistent API responses with both technical details for debu"
+    },
+    {
+      "id": "pattern-015",
+      "name": "Internal Task Handler Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "internal",
+        "handler",
+        "task"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-003",
+        "pattern-004"
+      ],
+      "description": "The Internal Task Handler Pattern handles orchestration tasks using internal engine methods rather than separate handler classes, ensuring direct access to engi"
+    },
+    {
+      "id": "pattern-016",
+      "name": "Repository Context Enrichment Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "data access",
+        "context",
+        "persistence",
+        "abstraction",
+        "enrichment"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-003",
+        "pattern-007",
+        "pattern-008"
+      ],
+      "description": "The Repository Context Enrichment Pattern automatically enriches workflow context with repository information and other required contextual data, enabling seaml"
+    },
+    {
+      "id": "pattern-017",
+      "name": "Background Task Error Handling Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "validation",
+        "task",
+        "error",
+        "recovery",
+        "exception handling"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-007",
+        "pattern-008",
+        "pattern-010"
+      ],
+      "description": "The Background Task Error Handling Pattern provides robust error handling and lifecycle management for background tasks through comprehensive task tracking, con"
+    },
+    {
+      "id": "pattern-018",
+      "name": "Configuration Access Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "configuration",
+        "dependency injection",
+        "boundaries",
+        "access"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-003",
+        "pattern-005",
+        "pattern-008"
+      ],
+      "description": "The Configuration Access Pattern provides layer-appropriate configuration access that maintains architectural boundaries through dependency injection of configu"
+    },
+    {
+      "id": "pattern-019",
+      "name": "LLM Placeholder Instruction Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "placeholder",
+        "instruction",
+        "placeholders",
+        "adapter",
+        "provider switching"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-006",
+        "pattern-007",
+        "pattern-009",
+        "pattern-010"
+      ],
+      "description": "The LLM Placeholder Instruction Pattern prevents LLM hallucination by providing explicit instructions to use structured placeholders when information is missing"
+    },
+    {
+      "id": "pattern-020",
+      "name": "Spatial Metaphor Integration Pattern (PM-074)",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "integration",
+        "spatial",
+        "metaphor",
+        "environment",
+        "embodiment"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-007",
+        "pattern-016",
+        "pattern-017"
+      ],
+      "description": "The Spatial Metaphor Integration Pattern processes external system events as spatial changes to an AI agent's environment, creating embodied AI experiences thro"
+    },
+    {
+      "id": "pattern-021",
+      "name": "Development Session Management Pattern",
+      "category": "Development & Process",
+      "signature_terms": [
+        "authentication",
+        "management",
+        "lifecycle",
+        "development",
+        "session"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-008",
+        "pattern-010",
+        "pattern-013"
+      ],
+      "description": "The Development Session Management Pattern manages development session logging and progress tracking for workflow accountability, agent coordination, and develo"
+    },
+    {
+      "id": "pattern-022",
+      "name": "MCP+Spatial Intelligence Integration Pattern",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "integration",
+        "model context protocol",
+        "skills",
+        "intelligence",
+        "mcp+spatial"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-004",
+        "pattern-012",
+        "pattern-014",
+        "pattern-017"
+      ],
+      "description": "The MCP+Spatial Intelligence Integration Pattern enables external tool integration through MCP (Model Context Protocol) combined with 8-dimensional spatial inte"
+    },
+    {
+      "id": "pattern-023",
+      "name": "Query Layer Patterns",
+      "category": "Data & Query",
+      "signature_terms": [
+        "query",
+        "layer",
+        "patterns",
+        "handlers",
+        "extensions"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-004",
+        "pattern-014",
+        "pattern-017"
+      ],
+      "description": "The Query Layer Patterns provide a comprehensive set of patterns for implementing optimized read-only operations with clean separation of concerns, effective er"
+    },
+    {
+      "id": "pattern-024",
+      "name": "Methodology Patterns",
+      "category": "Development & Process",
+      "signature_terms": [
+        "discovery",
+        "patterns",
+        "methodology",
+        "development"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-001",
+        "pattern-005",
+        "pattern-010",
+        "pattern-021"
+      ],
+      "description": "The Methodology Patterns represent the systematic application of development methodologies across the codebase, discovered through pattern sweep analysis. They "
+    },
+    {
+      "id": "pattern-025",
+      "name": "Canonical Query Extension Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "query",
+        "extension",
+        "canonical",
+        "handlers",
+        "extensions"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-004",
+        "pattern-017",
+        "pattern-022",
+        "pattern-023"
+      ],
+      "description": "The Canonical Query Extension Pattern extends existing canonical query systems with additional intelligence while preserving original functionality and maintain"
+    },
+    {
+      "id": "pattern-026",
+      "name": "Cross-Feature Learning Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "decision",
+        "prioritization",
+        "cross-feature",
+        "scorecard",
+        "learning"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-012",
+        "pattern-021",
+        "pattern-023",
+        "pattern-025"
+      ],
+      "description": "The Cross-Feature Learning Pattern enables learning systems to share patterns and insights across different features while maintaining feature isolation and pro"
+    },
+    {
+      "id": "pattern-027",
+      "name": "CLI Integration Pattern",
+      "category": "Data & Query",
+      "signature_terms": [
+        "formatting",
+        "integration",
+        "command-line"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-002",
+        "pattern-003",
+        "pattern-007",
+        "pattern-008",
+        "pattern-019"
+      ],
+      "description": "The CLI Integration Pattern integrates command-line interfaces with underlying service architectures while providing beautiful output formatting, learning syste"
+    },
+    {
+      "id": "pattern-028",
+      "name": "Intent Classification",
+      "category": "AI & Intelligence",
+      "signature_terms": [
+        "routing",
+        "intent",
+        "processing",
+        "classification"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-006",
+        "pattern-017",
+        "pattern-029",
+        "pattern-032"
+      ],
+      "description": "class IntentType(Enum):"
+    },
+    {
+      "id": "pattern-029",
+      "name": "Multi-Agent Coordination",
+      "category": "AI & Intelligence",
+      "signature_terms": [
+        "workflow",
+        "collaboration",
+        "multi-agent",
+        "coordination"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-017",
+        "pattern-028",
+        "pattern-030"
+      ],
+      "description": "class AgentRole(Enum):"
+    },
+    {
+      "id": "pattern-030",
+      "name": "Plugin Interface",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "extensibility",
+        "integration",
+        "plugin",
+        "interface"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-009",
+        "pattern-028",
+        "pattern-029"
+      ],
+      "description": "from abc import ABC, abstractmethod"
+    },
+    {
+      "id": "pattern-031",
+      "name": "Plugin Wrapper Pattern",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "integration",
+        "wrapper",
+        "interface",
+        "extensibility",
+        "plugin"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "A[Plugin Wrapper] -->|wraps| B[Integration Router]"
+    },
+    {
+      "id": "pattern-032",
+      "name": "Intent Pattern Catalog",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "processing",
+        "catalog",
+        "routing",
+        "intent",
+        "classification"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-006",
+        "pattern-025",
+        "pattern-028"
+      ],
+      "description": "The Intent Pattern Catalog pattern organizes intent classification patterns into category-specific collections with standardized regex conventions, performance "
+    },
+    {
+      "id": "pattern-033",
+      "name": "Notion Publishing",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "notion",
+        "integration",
+        "sync",
+        "publishing"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-007",
+        "pattern-014",
+        "pattern-018",
+        "pattern-022",
+        "pattern-030"
+      ],
+      "description": "The Notion Publishing pattern implements a three-layer architecture:"
+    },
+    {
+      "id": "pattern-034",
+      "name": "Error Handling Standards",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "validation",
+        "handling",
+        "error",
+        "standards",
+        "recovery"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "All API endpoints MUST return appropriate HTTP status codes for errors. The response body format remains consistent for backward compatibility."
+    },
+    {
+      "id": "pattern-035",
+      "name": "MCP Integration Router with Adapter Methods",
+      "category": "Integration & Platform",
+      "signature_terms": [
+        "integration",
+        "model context protocol",
+        "with",
+        "skills",
+        "router"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [
+        "pattern-008",
+        "pattern-022",
+        "pattern-031"
+      ],
+      "description": "Add thin adapter methods to integration routers that:"
+    },
+    {
+      "id": "pattern-036",
+      "name": "Signal Convergence for Breakthrough Detection",
+      "category": "Development & Process",
+      "signature_terms": [
+        "convergence",
+        "signal",
+        "detection",
+        "breakthrough",
+        "learning"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "No description available"
+    },
+    {
+      "id": "pattern-037",
+      "name": "Cross-Context Validation",
+      "category": "Development & Process",
+      "signature_terms": [
+        "validation",
+        "enrichment",
+        "cross-context",
+        "inheritance",
+        "resolution"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "No description available"
+    },
+    {
+      "id": "pattern-038",
+      "name": "Temporal Clustering for Coordination Analysis",
+      "category": "Development & Process",
+      "signature_terms": [
+        "collaboration",
+        "multi-agent",
+        "temporal",
+        "workflow",
+        "clustering"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "No description available"
+    },
+    {
+      "id": "pattern-039",
+      "name": "Feature Prioritization Scorecard",
+      "category": "Development & Process",
+      "signature_terms": [
+        "prioritization",
+        "scorecard",
+        "decision",
+        "feature"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "The **Feature Prioritization Scorecard** is a quantified decision framework that scores features on six factors: three cost factors (Effort, Risk, Support Cost)"
+    },
+    {
+      "id": "pattern-040",
+      "name": "Integration Swappability Guide",
+      "category": "Development & Process",
+      "signature_terms": [
+        "guide",
+        "integration",
+        "swappability",
+        "vendor independence",
+        "router abstraction"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "The **Integration Swappability Pattern** uses a Router layer to abstract external integrations. Business logic depends on the Router interface, not specific pro"
+    },
+    {
+      "id": "pattern-041",
+      "name": "Systematic Fix Planning",
+      "category": "Development & Process",
+      "signature_terms": [
+        "fix planning",
+        "planning",
+        "systematic",
+        "phase execution",
+        "verification"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "Systematic Fix Planning groups related issues into **phases based on issue type**, executes each phase completely before moving to the next, and verifies all fi"
+    },
+    {
+      "id": "pattern-042",
+      "name": "Investigation-Only Protocol",
+      "category": "Development & Process",
+      "signature_terms": [
+        "protocol",
+        "root cause",
+        "investigation-only",
+        "debugging"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "The Investigation-Only Protocol enforces a strict separation between bug investigation and bug fixing into three distinct phases, each with different agents/rol"
+    },
+    {
+      "id": "pattern-043",
+      "name": "Defense-in-Depth Prevention",
+      "category": "Development & Process",
+      "signature_terms": [
+        "vulnerability",
+        "prevention",
+        "defense-in-depth",
+        "protection"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "Defense-in-Depth Prevention builds multiple independent layers of protection against a discovered vulnerability. Each layer is effective independently; together"
+    },
+    {
+      "id": "pattern-044",
+      "name": "MCP Skill Testing Pattern",
+      "category": "Development & Process",
+      "signature_terms": [
+        "model context protocol",
+        "skill",
+        "skills",
+        "testing",
+        "adapter"
+      ],
+      "first_documented": "Unknown",
+      "related_patterns": [],
+      "description": "Testing pattern for MCP Skills (reusable workflow components that handle specific tasks with minimal token usage)."
+    }
+  ]
+}
