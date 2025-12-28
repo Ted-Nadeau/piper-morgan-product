@@ -1,0 +1,1075 @@
+"""
+Unit tests for GitHub query handlers in IntentService.
+
+Issue #518: Phase A Quick Wins - GitHub Cluster (Canonical Queries #41, #42)
+
+Tests cover:
+- Handler routing for GitHub query actions
+- Graceful fallback when GitHub is not configured
+- Shipped items result formatting (Query #41)
+- Stale PRs result formatting (Query #42)
+"""
+
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from services.domain.models import Intent
+from services.intent.intent_service import IntentProcessingResult, IntentService
+from services.shared_types import IntentCategory
+
+
+@pytest.fixture
+def mock_workflow():
+    """Mock workflow object"""
+    workflow = MagicMock()
+    workflow.id = "test-workflow-id"
+    return workflow
+
+
+@pytest.fixture
+def intent_service():
+    """Create IntentService instance for testing"""
+    # Patch dependencies to avoid initialization issues
+    with patch("services.intent.intent_service.OrchestrationEngine"):
+        with patch("services.intent.intent_service.LearningHandler"):
+            with patch("services.intent.intent_service.ConversationKnowledgeGraphIntegration"):
+                service = IntentService()
+                return service
+
+
+class TestShippedThisWeekRouting:
+    """Test routing to shipped this week handler"""
+
+    @pytest.mark.asyncio
+    async def test_routes_shipped_this_week_action(self, intent_service, mock_workflow):
+        """Test that shipped_this_week action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="shipped_this_week",
+            context={"original_message": "what did we ship this week"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_shipped_this_week", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Shipped 3 items",
+                intent_data={"category": "query", "action": "shipped_this_week"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+
+    @pytest.mark.asyncio
+    async def test_routes_what_shipped_action(self, intent_service, mock_workflow):
+        """Test that what_shipped action also routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="what_shipped",
+            context={"original_message": "show me what shipped"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_shipped_this_week", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Shipped 5 items",
+                intent_data={"category": "query", "action": "what_shipped"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_routes_show_closed_prs_action(self, intent_service, mock_workflow):
+        """Test that show_closed_prs action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="show_closed_prs",
+            context={"original_message": "show closed PRs"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_shipped_this_week", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Shipped 2 items",
+                intent_data={"category": "query", "action": "show_closed_prs"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+
+class TestStalePRsRouting:
+    """Test routing to stale PRs handler"""
+
+    @pytest.mark.asyncio
+    async def test_routes_stale_prs_action(self, intent_service, mock_workflow):
+        """Test that stale_prs action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="stale_prs",
+            context={"original_message": "show me stale PRs"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_stale_prs", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Found 4 stale PRs",
+                intent_data={"category": "query", "action": "stale_prs"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+
+    @pytest.mark.asyncio
+    async def test_routes_old_prs_action(self, intent_service, mock_workflow):
+        """Test that old_prs action also routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="old_prs",
+            context={"original_message": "show old pull requests"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_stale_prs", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Found 2 stale PRs",
+                intent_data={"category": "query", "action": "old_prs"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_routes_show_stale_prs_action(self, intent_service, mock_workflow):
+        """Test that show_stale_prs action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="show_stale_prs",
+            context={"original_message": "show stale PRs needing review"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_stale_prs", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Found 6 stale PRs",
+                intent_data={"category": "query", "action": "show_stale_prs"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+
+class TestGitHubNotConfiguredGracefulDegradation:
+    """Test graceful fallback when GitHub is not configured"""
+
+    @pytest.mark.asyncio
+    async def test_shipped_returns_graceful_message_when_github_not_configured(
+        self, intent_service
+    ):
+        """Test shipped handler returns helpful message when GitHub not configured"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="shipped_this_week",
+            context={"original_message": "what did we ship"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = False
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_shipped_this_week(intent, "workflow-id")
+
+            assert result.success is True
+            assert "GitHub isn't configured yet" in result.message
+            assert "GITHUB_TOKEN" in result.message
+            assert result.implemented is False
+
+    @pytest.mark.asyncio
+    async def test_stale_prs_returns_graceful_message_when_github_not_configured(
+        self, intent_service
+    ):
+        """Test stale PRs handler returns helpful message when GitHub not configured"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="stale_prs",
+            context={"original_message": "show stale PRs"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = False
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_stale_prs(intent, "workflow-id")
+
+            assert result.success is True
+            assert "GitHub isn't configured yet" in result.message
+            assert "GITHUB_TOKEN" in result.message
+            assert result.implemented is False
+
+
+class TestShippedThisWeekResults:
+    """Test shipped this week result formatting"""
+
+    @pytest.mark.asyncio
+    async def test_formats_shipped_items_correctly(self, intent_service):
+        """Test shipped items are formatted properly"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="shipped_this_week",
+            context={"original_message": "what did we ship"},
+        )
+
+        now = datetime.now(timezone.utc)
+        recent = (now - timedelta(days=2)).isoformat().replace("+00:00", "Z")
+
+        mock_closed_items = [
+            {
+                "number": 123,
+                "title": "Fix login bug",
+                "html_url": "https://github.com/org/repo/issues/123",
+                "closed_at": recent,
+                "pull_request": None,  # Issue
+            },
+            {
+                "number": 456,
+                "title": "Add new feature",
+                "html_url": "https://github.com/org/repo/pull/456",
+                "closed_at": recent,
+                "pull_request": {"url": "https://api.github.com/repos/org/repo/pulls/456"},  # PR
+            },
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_closed_issues = AsyncMock(return_value=mock_closed_items)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_shipped_this_week(intent, "workflow-id")
+
+            assert result.success is True
+            assert "2 items" in result.message
+            assert "Fix login bug" in result.message
+            assert "Add new feature" in result.message
+            assert result.intent_data["shipped_count"] == 2
+
+    @pytest.mark.asyncio
+    async def test_handles_no_shipped_items(self, intent_service):
+        """Test handling when no items were shipped"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="shipped_this_week",
+            context={"original_message": "what shipped"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_closed_issues = AsyncMock(return_value=[])
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_shipped_this_week(intent, "workflow-id")
+
+            assert result.success is True
+            assert "No issues or PRs were closed" in result.message
+            assert result.intent_data["shipped_count"] == 0
+
+
+class TestStalePRsResults:
+    """Test stale PRs result formatting"""
+
+    @pytest.mark.asyncio
+    async def test_formats_stale_prs_correctly(self, intent_service):
+        """Test stale PRs are formatted properly with age"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="stale_prs",
+            context={"original_message": "show stale PRs"},
+        )
+
+        now = datetime.now(timezone.utc)
+        old_date = (now - timedelta(days=14)).isoformat().replace("+00:00", "Z")
+
+        mock_open_items = [
+            {
+                "number": 789,
+                "title": "Refactor database layer",
+                "html_url": "https://github.com/org/repo/pull/789",
+                "created_at": old_date,
+                "pull_request": {"url": "https://api.github.com/repos/org/repo/pulls/789"},
+            },
+            {
+                "number": 234,
+                "title": "Recent issue (not a PR)",
+                "html_url": "https://github.com/org/repo/issues/234",
+                "created_at": old_date,
+                "pull_request": None,  # Not a PR, should be filtered out
+            },
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_items)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_stale_prs(intent, "workflow-id")
+
+            assert result.success is True
+            assert "1 found" in result.message  # Only 1 PR (not the issue)
+            assert "Refactor database layer" in result.message
+            assert "14 days old" in result.message
+            assert result.intent_data["stale_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_handles_no_stale_prs(self, intent_service):
+        """Test handling when no stale PRs found"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="stale_prs",
+            context={"original_message": "show stale PRs"},
+        )
+
+        now = datetime.now(timezone.utc)
+        recent = (now - timedelta(days=2)).isoformat().replace("+00:00", "Z")
+
+        mock_open_items = [
+            {
+                "number": 999,
+                "title": "Recent PR",
+                "html_url": "https://github.com/org/repo/pull/999",
+                "created_at": recent,
+                "pull_request": {"url": "https://api.github.com/repos/org/repo/pulls/999"},
+            },
+        ]
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(return_value=mock_open_items)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_stale_prs(intent, "workflow-id")
+
+            assert result.success is True
+            assert "No stale PRs found" in result.message
+            assert result.intent_data["stale_count"] == 0
+
+
+class TestGitHubHandlerErrors:
+    """Test error handling in GitHub handlers"""
+
+    @pytest.mark.asyncio
+    async def test_shipped_handles_github_error(self, intent_service):
+        """Test shipped handler gracefully handles GitHub API errors"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="shipped_this_week",
+            context={"original_message": "what shipped"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_closed_issues = AsyncMock(
+                side_effect=Exception("API connection failed")
+            )
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_shipped_this_week(intent, "workflow-id")
+
+            assert result.success is False
+            assert "Unable to fetch shipped items" in result.message
+            assert result.error is not None
+            assert result.error_type == "GitHubShippedQueryError"
+
+    @pytest.mark.asyncio
+    async def test_stale_prs_handles_github_error(self, intent_service):
+        """Test stale PRs handler gracefully handles GitHub API errors"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="stale_prs",
+            context={"original_message": "show stale PRs"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_open_issues = AsyncMock(side_effect=Exception("Rate limit exceeded"))
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_stale_prs(intent, "workflow-id")
+
+            assert result.success is False
+            assert "Unable to fetch stale PRs" in result.message
+            assert result.error is not None
+            assert result.error_type == "GitHubStalePRsQueryError"
+
+
+class TestReviewIssueRouting:
+    """Test routing to review issue handler (Issue #519 Query #60)"""
+
+    @pytest.mark.asyncio
+    async def test_routes_review_issue_action(self, intent_service, mock_workflow):
+        """Test that review_issue_query action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="review_issue_query",
+            context={"original_message": "show me issue #123"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_review_issue_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Issue details here",
+                intent_data={"category": "query", "action": "review_issue_query"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+
+    @pytest.mark.asyncio
+    async def test_routes_show_issue_action(self, intent_service, mock_workflow):
+        """Test that show_issue action also routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="show_issue",
+            context={"original_message": "show issue #456"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_review_issue_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Issue details",
+                intent_data={"category": "query", "action": "show_issue"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+
+class TestCloseIssueRouting:
+    """Test routing to close issue handler (Issue #519 Query #45)"""
+
+    @pytest.mark.asyncio
+    async def test_routes_close_issue_action(self, intent_service, mock_workflow):
+        """Test that close_issue_query action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close issue #123"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_close_issue_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Issue closed",
+                intent_data={"category": "query", "action": "close_issue_query"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+
+    @pytest.mark.asyncio
+    async def test_routes_close_issue_variant(self, intent_service, mock_workflow):
+        """Test that close_issue action variant also routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue",
+            context={"original_message": "close issue 456"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_close_issue_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Closed",
+                intent_data={"category": "query", "action": "close_issue"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+
+class TestReviewIssueResults:
+    """Test review issue result formatting (Issue #519 Query #60)"""
+
+    @pytest.mark.asyncio
+    async def test_formats_issue_details_correctly(self, intent_service):
+        """Test issue details are formatted properly"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="review_issue_query",
+            context={"original_message": "show me issue #123"},
+        )
+
+        mock_issue = {
+            "number": 123,
+            "title": "Fix authentication bug",
+            "state": "open",
+            "html_url": "https://github.com/org/repo/issues/123",
+            "body": "This is a detailed description of the bug that needs to be fixed.",
+            "labels": [{"name": "bug"}, {"name": "priority-high"}],
+            "assignees": [{"login": "developer1"}, {"login": "developer2"}],
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_issue = AsyncMock(return_value=mock_issue)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_review_issue_query(intent, "workflow-id")
+
+            assert result.success is True
+            assert "Issue #123: Fix authentication bug" in result.message
+            assert "open" in result.message
+            assert "bug, priority-high" in result.message
+            assert "developer1, developer2" in result.message
+            assert result.intent_data["issue_number"] == 123
+
+    @pytest.mark.asyncio
+    async def test_handles_missing_issue_number(self, intent_service):
+        """Test handling when issue number is missing from request"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="review_issue_query",
+            context={"original_message": "show me the issue"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_review_issue_query(intent, "workflow-id")
+
+            assert result.success is False
+            assert "couldn't find an issue number" in result.message
+            assert result.requires_clarification is True
+
+    @pytest.mark.asyncio
+    async def test_review_issue_returns_graceful_message_when_github_not_configured(
+        self, intent_service
+    ):
+        """Test review issue handler returns helpful message when GitHub not configured"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="review_issue_query",
+            context={"original_message": "show me issue #123"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = False
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_review_issue_query(intent, "workflow-id")
+
+            assert result.success is True
+            assert "GitHub isn't configured yet" in result.message
+            assert "GITHUB_TOKEN" in result.message
+            assert result.implemented is False
+
+
+class TestCloseIssueResults:
+    """Test close issue result formatting (Issue #519 Query #45)"""
+
+    @pytest.mark.asyncio
+    async def test_formats_close_confirmation_correctly(self, intent_service):
+        """Test close confirmation is formatted properly"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close issue #123"},
+        )
+
+        mock_updated_issue = {
+            "number": 123,
+            "title": "Fix authentication bug",
+            "state": "closed",
+            "html_url": "https://github.com/org/repo/issues/123",
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.update_issue = AsyncMock(return_value=mock_updated_issue)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
+
+            assert result.success is True
+            assert "Successfully closed issue #123" in result.message
+            assert "Fix authentication bug" in result.message
+            assert result.intent_data["issue_number"] == 123
+
+    @pytest.mark.asyncio
+    async def test_handles_missing_issue_number_for_close(self, intent_service):
+        """Test handling when issue number is missing from close request"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close the issue"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
+
+            assert result.success is False
+            assert "couldn't find an issue number" in result.message
+            assert result.requires_clarification is True
+
+    @pytest.mark.asyncio
+    async def test_close_issue_returns_graceful_message_when_github_not_configured(
+        self, intent_service
+    ):
+        """Test close issue handler returns helpful message when GitHub not configured"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close issue #123"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = False
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
+
+            assert result.success is True
+            assert "GitHub isn't configured yet" in result.message
+            assert "GITHUB_TOKEN" in result.message
+            assert result.implemented is False
+
+
+class TestCommentIssueRouting:
+    """Test routing to comment issue handler (Issue #519 Query #59)"""
+
+    @pytest.mark.asyncio
+    async def test_routes_comment_issue_action(self, intent_service, mock_workflow):
+        """Test that comment_issue_query action routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="comment_issue_query",
+            context={"original_message": "comment on issue #123 saying looks good"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_comment_issue_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Comment added",
+                intent_data={"category": "query", "action": "comment_issue_query"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+
+    @pytest.mark.asyncio
+    async def test_routes_comment_issue_variant(self, intent_service, mock_workflow):
+        """Test that add_comment action variant also routes to GitHub handler"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="add_comment",
+            context={"original_message": "add comment to issue 456"},
+        )
+
+        with patch.object(
+            intent_service, "_handle_comment_issue_query", new_callable=AsyncMock
+        ) as mock_handler:
+            mock_handler.return_value = IntentProcessingResult(
+                success=True,
+                message="Comment added",
+                intent_data={"category": "query", "action": "add_comment"},
+            )
+
+            result = await intent_service._handle_query_intent(
+                intent, mock_workflow, "test-session"
+            )
+
+            mock_handler.assert_called_once()
+
+
+class TestCommentIssueResults:
+    """Test comment issue result formatting (Issue #519 Query #59)"""
+
+    @pytest.mark.asyncio
+    async def test_formats_comment_confirmation_correctly(self, intent_service):
+        """Test comment confirmation is formatted properly"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="comment_issue_query",
+            context={"original_message": "comment on issue #123 saying this looks great"},
+        )
+
+        mock_comment_result = {
+            "id": 987654,
+            "body": "this looks great",
+            "html_url": "https://github.com/org/repo/issues/123#issuecomment-987654",
+        }
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.add_comment = AsyncMock(return_value=mock_comment_result)
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_comment_issue_query(intent, "workflow-id")
+
+            assert result.success is True
+            assert "Successfully added comment to issue #123" in result.message
+            assert "this looks great" in result.message
+            assert result.intent_data["issue_number"] == 123
+            assert result.intent_data["comment_body"] == "this looks great"
+
+    @pytest.mark.asyncio
+    async def test_handles_missing_issue_number(self, intent_service):
+        """Test handling when issue number is missing from comment request"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="comment_issue_query",
+            context={"original_message": "comment on the issue saying good job"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_comment_issue_query(intent, "workflow-id")
+
+            assert result.success is False
+            assert "couldn't find an issue number" in result.message
+            assert result.requires_clarification is True
+
+    @pytest.mark.asyncio
+    async def test_comment_issue_returns_graceful_message_when_github_not_configured(
+        self, intent_service
+    ):
+        """Test comment issue handler returns helpful message when GitHub not configured"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="comment_issue_query",
+            context={"original_message": "comment on issue #123 saying looks good"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = False
+            mock_router.initialize = AsyncMock()
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_comment_issue_query(intent, "workflow-id")
+
+            assert result.success is True
+            assert "GitHub isn't configured yet" in result.message
+            assert "GITHUB_TOKEN" in result.message
+            assert result.implemented is False
+
+
+class TestGitHubIssueHandlerErrors:
+    """Test error handling in GitHub issue handlers (Issue #519)"""
+
+    @pytest.mark.asyncio
+    async def test_review_issue_handles_github_error(self, intent_service):
+        """Test review issue handler gracefully handles GitHub API errors"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="review_issue_query",
+            context={"original_message": "show me issue #123"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.get_issue = AsyncMock(side_effect=Exception("Issue not found"))
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_review_issue_query(intent, "workflow-id")
+
+            assert result.success is False
+            assert "Unable to fetch issue details" in result.message
+            assert result.error is not None
+            assert result.error_type == "GitHubReviewIssueQueryError"
+
+    @pytest.mark.asyncio
+    async def test_close_issue_handles_github_error(self, intent_service):
+        """Test close issue handler gracefully handles GitHub API errors"""
+        intent = Intent(
+            category=IntentCategory.QUERY,
+            action="close_issue_query",
+            context={"original_message": "close issue #123"},
+        )
+
+        with patch(
+            "services.integrations.github.github_integration_router.GitHubIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.config_service.is_configured.return_value = True
+            mock_router.initialize = AsyncMock()
+            mock_router.update_issue = AsyncMock(side_effect=Exception("Permission denied"))
+            MockRouter.return_value = mock_router
+
+            result = await intent_service._handle_close_issue_query(intent, "workflow-id")
+
+            assert result.success is False
+            assert "Unable to close issue" in result.message
+            assert result.error is not None
+            assert result.error_type == "GitHubCloseIssueQueryError"
+
+
+class TestPreClassifierRoutingIntegration:
+    """Test full routing path from pre-classifier to handlers (Issue #521)"""
+
+    def test_shipped_query_routes_to_query_category(self):
+        """Test 'what did we ship this week' routes to QUERY category"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        result = PreClassifier.pre_classify("what did we ship this week")
+
+        assert result is not None
+        assert result.category == IntentCategory.QUERY
+        assert result.action == "shipped_query"
+        assert result.confidence == 1.0
+
+    def test_shipped_query_variants(self):
+        """Test shipped query pattern variants all route correctly"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "what did we ship this week",
+            "what shipped",
+            "show me what we shipped",
+        ]
+
+        for query in test_cases:
+            result = PreClassifier.pre_classify(query)
+            assert result is not None, f"Failed to classify: {query}"
+            assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
+            assert result.action == "shipped_query", f"Wrong action for: {query}"
+
+    def test_stale_prs_query_routes_to_query_category(self):
+        """Test 'show me stale PRs' routes to QUERY category"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        result = PreClassifier.pre_classify("show me stale PRs")
+
+        assert result is not None
+        assert result.category == IntentCategory.QUERY
+        assert result.action == "stale_prs_query"
+        assert result.confidence == 1.0
+
+    def test_stale_prs_query_variants(self):
+        """Test stale PRs query pattern variants all route correctly"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "show me stale PRs",
+            "stale pull requests",
+            "old PRs needing review",
+        ]
+
+        for query in test_cases:
+            result = PreClassifier.pre_classify(query)
+            assert result is not None, f"Failed to classify: {query}"
+            assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
+            assert result.action == "stale_prs_query", f"Wrong action for: {query}"
+
+    def test_review_issue_query_routes_to_query_category(self):
+        """Test 'show me issue #123' routes to QUERY category (Issue #519 Query #60)"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        result = PreClassifier.pre_classify("show me issue #123")
+
+        assert result is not None
+        assert result.category == IntentCategory.QUERY
+        assert result.action == "review_issue_query"
+        assert result.confidence == 1.0
+
+    def test_review_issue_query_variants(self):
+        """Test review issue query pattern variants all route correctly"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "review issue #123",
+            "show me issue #456",
+            "issue #789 details",
+            "get issue #999",
+        ]
+
+        for query in test_cases:
+            result = PreClassifier.pre_classify(query)
+            assert result is not None, f"Failed to classify: {query}"
+            assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
+            assert result.action == "review_issue_query", f"Wrong action for: {query}"
+
+    def test_close_issue_query_routes_to_query_category(self):
+        """Test 'close issue #123' routes to QUERY category (Issue #519 Query #45)"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        result = PreClassifier.pre_classify("close issue #123")
+
+        assert result is not None
+        assert result.category == IntentCategory.QUERY
+        assert result.action == "close_issue_query"
+        assert result.confidence == 1.0
+
+    def test_close_issue_query_variants(self):
+        """Test close issue query pattern variants all route correctly"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "close issue #123",
+            "close issue 456",
+            "close completed issue",
+        ]
+
+        for query in test_cases:
+            result = PreClassifier.pre_classify(query)
+            assert result is not None, f"Failed to classify: {query}"
+            assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
+            assert result.action == "close_issue_query", f"Wrong action for: {query}"
+
+    def test_comment_issue_query_routes_to_query_category(self):
+        """Test 'comment on issue #123' routes to QUERY category (Issue #519 Query #59)"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        result = PreClassifier.pre_classify("comment on issue #123 saying looks good")
+
+        assert result is not None
+        assert result.category == IntentCategory.QUERY
+        assert result.action == "comment_issue_query"
+        assert result.confidence == 1.0
+
+    def test_comment_issue_query_variants(self):
+        """Test comment issue query pattern variants all route correctly"""
+        from services.intent_service.pre_classifier import PreClassifier
+
+        test_cases = [
+            "comment on issue #123 saying this is great",
+            "add comment to issue #456 with message well done",
+            "reply to issue #789 with good progress",
+            "comment on #999 with nice work",
+        ]
+
+        for query in test_cases:
+            result = PreClassifier.pre_classify(query)
+            assert result is not None, f"Failed to classify: {query}"
+            assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
+            assert result.action == "comment_issue_query", f"Wrong action for: {query}"
