@@ -190,11 +190,51 @@ Given roadmap dependencies:
 
 | Issue | Title | Status | Notes |
 |-------|-------|--------|-------|
-| #522 | Document Update | Open | Phase A/B documentation |
-| #525 | Architecture Violation Retro | Open | Process improvement |
+| #522 | Document Update | Open | Implementation complete, awaiting PM approval |
+| #525 | Architecture Violation Retro | Open | Process improvements implemented, awaiting PM approval |
+
+---
+
+## 12:15 PM - Issue #525 Process Improvements Implemented
+
+Updated `knowledge/gameplan-template.md` with Issue #525 learnings:
+
+1. **New STOP condition added**: "Router/adapter methods missing"
+2. **Infrastructure Compatibility Check section** with checklist:
+   - Does the router have all required methods?
+   - Is "extend router" in scope, or should we STOP?
+   - CORE-QUERY-1 pattern compliance verified?
+3. **Pattern enforcement guidance**: Handler → Router → Adapter (correct path)
+
+Committed: `2ede1cf4`
+
+Updated Issue #525 body to mark 2 of 3 process improvements complete. Third item (pattern compliance check in approval process) is a PM workflow decision.
+
+---
+
+## Session Summary
+
+**Completed this session:**
+1. ✅ Synced main with production (41 commits)
+2. ✅ Fixed 4 calendar tests broken by Dec 27 architecture fix
+3. ✅ Verified build (1072 tests passing)
+4. ✅ Reviewed roadmap v12.3 - identified discovery as bottleneck
+5. ✅ Implemented #525 process improvements in gameplan template
+6. ✅ Updated both #522 and #525 issues for PM review
+
+**Key insight from roadmap:**
+Pattern-045 shows 19 canonical queries work but users can't discover them. Conversational glue is the priority, not more query implementations.
+
+**Issues ready for PM approval:**
+- #522: Document Update (implementation complete)
+- #525: Architecture Violation Retro (process improvements done)
+
+**Commits this session:**
+- `fe6b692e` - fix(tests): Update calendar test mocks for router pattern
+- `2ede1cf4` - docs(#525): Add infrastructure compatibility check to gameplan template
 
 ---
 
 ## Ready for Next Task
 
-Build verified, roadmap reviewed. Key insight: Discovery (conversational glue) is the bottleneck, not more query implementations. Awaiting PM direction on #522/#525 or next priorities.
+Session work complete. Both #522 and #525 are ready for PM review. Canonical query Phase C is on hold pending Conversational Glue implementation per roadmap v12.3 dependencies.
