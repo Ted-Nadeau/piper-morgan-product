@@ -90,3 +90,41 @@ Add to gameplan template:
 - All `GoogleCalendarMCPAdapter` direct imports removed from `intent_service.py`
 - Pre-commit hook "Prevent Direct Adapter Imports" now passes
 - Calendar handlers still function through router abstraction
+
+---
+
+## Session Timeline
+
+### December 27, 2025
+
+- **~8:29 PM**: Architecture fix completed and committed (`e7ed77b8`)
+- **~9:28 PM**: User observed "the system works, even if in the breach" - pre-commit hooks caught violations
+- **~9:32 PM**: User requested systematic cleanup of uncommitted work
+- **~9:45 PM - 11:00 PM**: Systematic commits executed:
+  - `d761e26e` - File reorganization (dev/active/ to dated folders)
+  - `1afc5e26` - Code changes (Issues #518, #519)
+  - `26436f26` - Knowledge base templates
+  - `4afb63cc` - CLAUDE.md updates
+  - `3db31a3b` - Minor script updates
+  - `ee8c7ebe` - Omnibus logs Dec 16-24
+  - `a6c64075` - Dev session logs Dec 23-27
+- **~11:00 PM**: Session paused awaiting user approval for remaining commits
+- **User rest period**: Dec 27 ~11:00 PM → Dec 28 ~11:21 AM
+
+### Work State at Session End
+
+**Completed:**
+- Architecture violation fix committed and pushed
+- File reorganization committed
+- Code changes committed
+- Major documentation updates committed
+
+**Remaining (carried to Dec 28):**
+- ~50 untracked files still need commits (dev/active/, docs/internal/, knowledge/, .beads/, .github/)
+- Final push to remote pending
+
+---
+
+## Next Session (Dec 28)
+
+Continuing from: `2025-12-28-1121-lead-code-opus-log.md`
