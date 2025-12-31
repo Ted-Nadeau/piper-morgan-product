@@ -223,6 +223,9 @@ RouterInitializer.mount_router(app, "web.api.routes.feedback", "router", "Feedba
 RouterInitializer.mount_router(
     app, "web.api.routes.knowledge_graph", "router", "Knowledge Graph API"
 )
+RouterInitializer.mount_router(
+    app, "web.api.routes.integrations", "router", "Integrations API"  # Issue #530
+)
 
 # Phase 3: Mount extracted route modules (Issue #385 - INFR-MAINT-REFACTOR)
 # Previously: Inline routes scattered throughout web/app.py

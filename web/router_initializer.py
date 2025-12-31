@@ -39,6 +39,12 @@ class RouterInitializer:
         ("web.api.routes.projects", "router", "Projects API", "/api/v1/projects"),
         ("web.api.routes.feedback", "router", "Feedback API", "/api/v1/feedback"),
         ("web.api.routes.knowledge_graph", "router", "Knowledge Graph API", "/api/v1/knowledge"),
+        (
+            "web.api.routes.integrations",
+            "router",
+            "Integrations API",
+            "/api/v1/integrations",
+        ),  # Issue #530
     ]
 
     @staticmethod

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Integrations - Piper Morgan</title>
+    <title>Integration Health - Piper Morgan</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/toast.css" />
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -11,64 +12,279 @@
         background: #f5f5f5;
       }
 
-      .coming-soon-container {
-        max-width: 600px;
-        margin: 100px auto;
-        padding: 40px;
+      .integrations-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .page-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 8px 0;
+      }
+
+      .page-description {
+        font-size: 15px;
+        color: #7f8c8d;
+        margin: 0;
+      }
+
+      /* Overall Status Card */
+      .overall-status {
         background: white;
         border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        text-align: center;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
 
-      .coming-soon-icon {
-        font-size: 64px;
-        margin-bottom: 20px;
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 16px;
       }
 
-      h1 {
+      .status-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+      }
+
+      .status-icon.healthy { background: #d4edda; }
+      .status-icon.degraded { background: #fff3cd; }
+      .status-icon.unhealthy { background: #f8d7da; }
+      .status-icon.unknown { background: #e9ecef; }
+
+      .status-text h2 {
+        margin: 0 0 4px 0;
+        font-size: 20px;
         color: #2c3e50;
-        margin: 0 0 10px 0;
-        font-size: 28px;
       }
 
-      .coming-soon-description {
-        color: #7f8c8d;
-        margin: 0 0 16px 0;
-        font-size: 16px;
-        line-height: 1.5;
-      }
-
-      .coming-soon-hint {
-        color: #95a5a6;
-        margin: 0 0 30px 0;
+      .status-text p {
+        margin: 0;
         font-size: 14px;
-        font-style: italic;
+        color: #7f8c8d;
       }
 
-      .back-link {
-        display: inline-block;
-        color: #3498db;
-        text-decoration: none;
-        padding: 10px 20px;
-        border: 1px solid #3498db;
-        border-radius: 6px;
+      .test-all-btn {
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        color: white;
+        background: #3498db;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
         transition: all 0.2s;
       }
 
-      .back-link:hover {
+      .test-all-btn:hover {
+        background: #2980b9;
+      }
+
+      .test-all-btn:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .test-all-btn.testing {
+        background: #95a5a6;
+      }
+
+      /* Integration Cards */
+      .integrations-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .integration-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s;
+      }
+
+      .integration-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+
+      .integration-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+      }
+
+      .integration-icon {
+        font-size: 32px;
+        width: 48px;
+        text-align: center;
+      }
+
+      .integration-details h3 {
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .integration-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .status-dot.healthy { background: #28a745; }
+      .status-dot.degraded { background: #ffc107; }
+      .status-dot.failed { background: #dc3545; }
+      .status-dot.unknown { background: #6c757d; }
+      .status-dot.not_configured { background: #adb5bd; }
+
+      .status-message {
+        color: #7f8c8d;
+      }
+
+      .status-message.error {
+        color: #dc3545;
+      }
+
+      .integration-actions {
+        display: flex;
+        gap: 12px;
+      }
+
+      .action-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+
+      .test-btn {
+        color: #3498db;
+        background: transparent;
+        border: 1px solid #3498db;
+      }
+
+      .test-btn:hover {
         background: #3498db;
         color: white;
       }
 
+      .test-btn:disabled {
+        color: #bdc3c7;
+        border-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .test-btn.testing {
+        color: #95a5a6;
+        border-color: #95a5a6;
+      }
+
+      .configure-btn {
+        color: #7f8c8d;
+        background: #f5f5f5;
+        border: none;
+      }
+
+      .configure-btn:hover {
+        background: #ecf0f1;
+        color: #2c3e50;
+      }
+
+      /* Error/Fix Suggestion */
+      .fix-suggestion {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #fff3cd;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #856404;
+      }
+
+      .fix-suggestion::before {
+        content: "💡 ";
+      }
+
+      /* Loading State */
+      .loading {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #ecf0f1;
+        border-top-color: #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Last Updated */
+      .last-updated {
+        text-align: center;
+        margin-top: 24px;
+        font-size: 13px;
+        color: #95a5a6;
+      }
+
+      /* Responsive */
       @media (max-width: 768px) {
-        .coming-soon-container {
-          margin: 50px auto;
-          padding: 30px 20px;
+        .integrations-container {
+          padding: 32px 16px;
         }
 
-        h1 {
-          font-size: 24px;
+        .overall-status {
+          flex-direction: column;
+          gap: 20px;
+          text-align: center;
+        }
+
+        .integration-card {
+          flex-direction: column;
+          gap: 16px;
+          align-items: stretch;
+        }
+
+        .integration-actions {
+          justify-content: center;
         }
       }
     </style>
@@ -78,7 +294,7 @@
     {% set breadcrumbs = [{"label": "Settings", "url": "/settings"}, {"label": "Integrations", "url": None}] %}
     {% include 'components/breadcrumbs.html' %}
     <script>
-      // G8: Logged-in User Indicator - Pass user context from server to navigation
+      // G8: Logged-in User Indicator
       {% if user %}
       window.currentUser = {
         username: "{{ user.username }}",
@@ -90,17 +306,271 @@
       {% endif %}
     </script>
 
-    <div class="coming-soon-container">
-      <div class="coming-soon-icon">🔗</div>
-      <h1>Integrations</h1>
-      <p class="coming-soon-description">
-        Connect and manage your integrations with Slack, GitHub, Notion, Calendar, and more.
-        Full integration management UI coming soon!
-      </p>
-      <p class="coming-soon-hint">
-        Current integrations can be configured via the conversational interface.
-      </p>
-      <a href="/settings" class="back-link">← Back to Settings</a>
+    <div class="integrations-container">
+      <div class="page-header">
+        <h1>Integration Health</h1>
+        <p class="page-description">
+          Monitor and test your connected services
+        </p>
+      </div>
+
+      <!-- Overall Status -->
+      <div class="overall-status" id="overall-status">
+        <div class="status-indicator">
+          <div class="status-icon unknown" id="overall-icon">?</div>
+          <div class="status-text">
+            <h2 id="overall-title">Checking...</h2>
+            <p id="overall-subtitle">Loading integration status</p>
+          </div>
+        </div>
+        <button class="test-all-btn" id="test-all-btn" onclick="testAllConnections()">
+          Test All Connections
+        </button>
+      </div>
+
+      <!-- Integration Cards -->
+      <div class="integrations-list" id="integrations-list">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <p>Loading integrations...</p>
+        </div>
+      </div>
+
+      <div class="last-updated" id="last-updated"></div>
     </div>
+
+    <script src="/static/js/toast.js"></script>
+    <script>
+      // Integration icons mapping
+      const ICONS = {
+        notion: '📝',
+        slack: '💬',
+        github: '🐙',
+        calendar: '📅'
+      };
+
+      // Status icons for overall health
+      const STATUS_ICONS = {
+        healthy: '✅',
+        degraded: '⚠️',
+        unhealthy: '❌',
+        unknown: '❓'
+      };
+
+      // Load health status on page load
+      document.addEventListener('DOMContentLoaded', loadIntegrationsHealth);
+
+      async function loadIntegrationsHealth() {
+        try {
+          const response = await fetch('/api/v1/integrations/health');
+          if (!response.ok) throw new Error('Failed to load health status');
+
+          const data = await response.json();
+          renderOverallStatus(data);
+          renderIntegrations(data.integrations);
+          updateLastUpdated(data.timestamp);
+        } catch (error) {
+          console.error('Failed to load integrations health:', error);
+          showError('Failed to load integration status');
+        }
+      }
+
+      function renderOverallStatus(data) {
+        const icon = document.getElementById('overall-icon');
+        const title = document.getElementById('overall-title');
+        const subtitle = document.getElementById('overall-subtitle');
+
+        // Update icon
+        icon.className = `status-icon ${data.overall_status}`;
+        icon.textContent = STATUS_ICONS[data.overall_status] || '❓';
+
+        // Update text
+        const statusText = {
+          healthy: 'All Systems Healthy',
+          degraded: 'Some Issues Detected',
+          unhealthy: 'Multiple Issues',
+          unknown: 'Status Unknown'
+        };
+        title.textContent = statusText[data.overall_status] || 'Unknown Status';
+        subtitle.textContent = `${data.healthy_count} of ${data.total_count} integrations healthy`;
+      }
+
+      function renderIntegrations(integrations) {
+        const container = document.getElementById('integrations-list');
+
+        if (!integrations || integrations.length === 0) {
+          container.innerHTML = '<p class="loading">No integrations configured</p>';
+          return;
+        }
+
+        container.innerHTML = integrations.map(integration => `
+          <div class="integration-card" id="card-${integration.name}">
+            <div class="integration-info">
+              <div class="integration-icon">${ICONS[integration.name] || '🔌'}</div>
+              <div class="integration-details">
+                <h3>${integration.display_name}</h3>
+                <div class="integration-status">
+                  <span class="status-dot ${integration.status}"></span>
+                  <span class="status-message ${integration.error ? 'error' : ''}" id="status-${integration.name}">
+                    ${integration.status_message}
+                  </span>
+                </div>
+                ${integration.fix_suggestion ? `
+                  <div class="fix-suggestion" id="fix-${integration.name}">
+                    ${integration.fix_suggestion}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            <div class="integration-actions">
+              <button
+                class="action-btn test-btn"
+                id="test-btn-${integration.name}"
+                onclick="testConnection('${integration.name}')"
+                ${!integration.can_test ? 'disabled' : ''}
+              >
+                Test
+              </button>
+              ${integration.configure_url ? `
+                <a href="${integration.configure_url}" class="action-btn configure-btn">
+                  Configure
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      async function testConnection(integrationName) {
+        const btn = document.getElementById(`test-btn-${integrationName}`);
+        const statusEl = document.getElementById(`status-${integrationName}`);
+        const card = document.getElementById(`card-${integrationName}`);
+
+        // Set loading state
+        btn.disabled = true;
+        btn.classList.add('testing');
+        btn.textContent = 'Testing...';
+        statusEl.textContent = 'Testing connection...';
+        statusEl.classList.remove('error');
+
+        try {
+          const response = await fetch(`/api/v1/integrations/test/${integrationName}`, {
+            method: 'POST'
+          });
+          const result = await response.json();
+
+          // Update status
+          const dot = card.querySelector('.status-dot');
+          dot.className = `status-dot ${result.success ? 'healthy' : 'failed'}`;
+
+          if (result.success) {
+            statusEl.textContent = `Connected (${result.latency_ms}ms)`;
+            statusEl.classList.remove('error');
+            // Remove any existing fix suggestion
+            const fixEl = document.getElementById(`fix-${integrationName}`);
+            if (fixEl) fixEl.remove();
+
+            showToast('success', `${integrationName} connection successful`);
+          } else {
+            statusEl.textContent = result.message;
+            statusEl.classList.add('error');
+
+            // Show fix suggestion if available
+            if (result.fix_suggestion) {
+              let fixEl = document.getElementById(`fix-${integrationName}`);
+              if (!fixEl) {
+                fixEl = document.createElement('div');
+                fixEl.id = `fix-${integrationName}`;
+                fixEl.className = 'fix-suggestion';
+                card.querySelector('.integration-details').appendChild(fixEl);
+              }
+              fixEl.textContent = result.fix_suggestion;
+            }
+
+            showToast('error', result.message);
+          }
+        } catch (error) {
+          statusEl.textContent = 'Test failed';
+          statusEl.classList.add('error');
+          showToast('error', `Failed to test ${integrationName}`);
+        } finally {
+          btn.disabled = false;
+          btn.classList.remove('testing');
+          btn.textContent = 'Test';
+        }
+      }
+
+      async function testAllConnections() {
+        const btn = document.getElementById('test-all-btn');
+        btn.disabled = true;
+        btn.classList.add('testing');
+        btn.textContent = 'Testing...';
+
+        try {
+          const response = await fetch('/api/v1/integrations/test-all', {
+            method: 'POST'
+          });
+          const results = await response.json();
+
+          // Update each integration
+          for (const result of results) {
+            const card = document.getElementById(`card-${result.integration}`);
+            if (!card) continue;
+
+            const dot = card.querySelector('.status-dot');
+            const statusEl = document.getElementById(`status-${result.integration}`);
+
+            dot.className = `status-dot ${result.success ? 'healthy' : 'failed'}`;
+            statusEl.textContent = result.success
+              ? `Connected (${result.latency_ms}ms)`
+              : result.message;
+            statusEl.classList.toggle('error', !result.success);
+          }
+
+          // Count successes
+          const successCount = results.filter(r => r.success).length;
+          showToast(
+            successCount === results.length ? 'success' : 'warning',
+            `${successCount} of ${results.length} connections successful`
+          );
+
+          // Reload overall status
+          loadIntegrationsHealth();
+        } catch (error) {
+          showToast('error', 'Failed to test connections');
+        } finally {
+          btn.disabled = false;
+          btn.classList.remove('testing');
+          btn.textContent = 'Test All Connections';
+        }
+      }
+
+      function updateLastUpdated(timestamp) {
+        const el = document.getElementById('last-updated');
+        const date = new Date(timestamp);
+        el.textContent = `Last updated: ${date.toLocaleTimeString()}`;
+      }
+
+      function showError(message) {
+        const container = document.getElementById('integrations-list');
+        container.innerHTML = `
+          <div class="loading" style="color: #dc3545;">
+            <p>⚠️ ${message}</p>
+            <button onclick="loadIntegrationsHealth()" class="test-all-btn" style="margin-top: 16px;">
+              Retry
+            </button>
+          </div>
+        `;
+      }
+
+      function showToast(type, message) {
+        // Use existing toast system if available
+        if (typeof Toast !== 'undefined') {
+          Toast.show(message, type);
+        } else {
+          console.log(`[${type}] ${message}`);
+        }
+      }
+    </script>
   </body>
 </html>
