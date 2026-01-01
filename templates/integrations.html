@@ -3,6 +3,7 @@
   <head>
     <title>Integration Health - Piper Morgan</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/toast.css" />
     <style>
       body {
@@ -222,6 +223,38 @@
         color: #2c3e50;
       }
 
+      .connect-btn {
+        color: white;
+        background: #27ae60;
+        border: none;
+      }
+
+      .connect-btn:hover {
+        background: #219a52;
+      }
+
+      .connect-btn:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .disconnect-btn {
+        color: #e74c3c;
+        background: transparent;
+        border: 1px solid #e74c3c;
+      }
+
+      .disconnect-btn:hover {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .disconnect-btn:disabled {
+        color: #bdc3c7;
+        border-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
       /* Error/Fix Suggestion */
       .fix-suggestion {
         margin-top: 8px;
@@ -350,6 +383,9 @@
         calendar: '📅'
       };
 
+      // OAuth-based integrations that support Connect/Disconnect
+      const OAUTH_INTEGRATIONS = ['slack', 'calendar'];
+
       // Status icons for overall health
       const STATUS_ICONS = {
         healthy: '✅',
@@ -359,7 +395,39 @@
       };
 
       // Load health status on page load
-      document.addEventListener('DOMContentLoaded', loadIntegrationsHealth);
+      document.addEventListener('DOMContentLoaded', () => {
+        // Check for OAuth callback params first
+        checkOAuthCallbackParams();
+        // Then load integrations
+        loadIntegrationsHealth();
+      });
+
+      function checkOAuthCallbackParams() {
+        const params = new URLSearchParams(window.location.search);
+
+        // Check Slack OAuth callback
+        if (params.get('slack_success') === 'true') {
+          const workspace = params.get('slack_workspace') || 'Workspace';
+          showToast('success', `Connected to ${decodeURIComponent(workspace)}`, 'Slack Connected');
+          // Clean up URL
+          window.history.replaceState({}, document.title, '/settings/integrations');
+        } else if (params.get('slack_error')) {
+          const error = params.get('slack_error');
+          showToast('error', `Failed to connect: ${error}`, 'Slack Connection Failed');
+          window.history.replaceState({}, document.title, '/settings/integrations');
+        }
+
+        // Check Calendar OAuth callback
+        if (params.get('calendar_success') === 'true') {
+          const email = params.get('calendar_email') || 'Calendar';
+          showToast('success', `Connected as ${decodeURIComponent(email)}`, 'Calendar Connected');
+          window.history.replaceState({}, document.title, '/settings/integrations');
+        } else if (params.get('calendar_error')) {
+          const error = params.get('calendar_error');
+          showToast('error', `Failed to connect: ${error}`, 'Calendar Connection Failed');
+          window.history.replaceState({}, document.title, '/settings/integrations');
+        }
+      }
 
       async function loadIntegrationsHealth() {
         try {
@@ -404,42 +472,63 @@
           return;
         }
 
-        container.innerHTML = integrations.map(integration => `
-          <div class="integration-card" id="card-${integration.name}">
-            <div class="integration-info">
-              <div class="integration-icon">${ICONS[integration.name] || '🔌'}</div>
-              <div class="integration-details">
-                <h3>${integration.display_name}</h3>
-                <div class="integration-status">
-                  <span class="status-dot ${integration.status}"></span>
-                  <span class="status-message ${integration.error ? 'error' : ''}" id="status-${integration.name}">
-                    ${integration.status_message}
-                  </span>
-                </div>
-                ${integration.fix_suggestion ? `
-                  <div class="fix-suggestion" id="fix-${integration.name}">
-                    ${integration.fix_suggestion}
+        container.innerHTML = integrations.map(integration => {
+          const isOAuth = OAUTH_INTEGRATIONS.includes(integration.name);
+          const isConnected = integration.status !== 'not_configured';
+
+          return `
+            <div class="integration-card" id="card-${integration.name}">
+              <div class="integration-info">
+                <div class="integration-icon">${ICONS[integration.name] || '🔌'}</div>
+                <div class="integration-details">
+                  <h3>${integration.display_name}</h3>
+                  <div class="integration-status">
+                    <span class="status-dot ${integration.status}"></span>
+                    <span class="status-message ${integration.error ? 'error' : ''}" id="status-${integration.name}">
+                      ${integration.status_message}
+                    </span>
                   </div>
-                ` : ''}
+                  ${integration.fix_suggestion ? `
+                    <div class="fix-suggestion" id="fix-${integration.name}">
+                      ${integration.fix_suggestion}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="integration-actions">
+                <button
+                  class="action-btn test-btn"
+                  id="test-btn-${integration.name}"
+                  onclick="testConnection('${integration.name}')"
+                  ${!integration.can_test ? 'disabled' : ''}
+                >
+                  Test
+                </button>
+                ${isOAuth ? (isConnected ? `
+                  <button
+                    class="action-btn disconnect-btn"
+                    id="disconnect-btn-${integration.name}"
+                    onclick="disconnectIntegration('${integration.name}')"
+                  >
+                    Disconnect
+                  </button>
+                ` : `
+                  <button
+                    class="action-btn connect-btn"
+                    id="connect-btn-${integration.name}"
+                    onclick="connectIntegration('${integration.name}')"
+                  >
+                    Connect
+                  </button>
+                `) : (integration.configure_url ? `
+                  <a href="${integration.configure_url}" class="action-btn configure-btn">
+                    Configure
+                  </a>
+                ` : '')}
               </div>
             </div>
-            <div class="integration-actions">
-              <button
-                class="action-btn test-btn"
-                id="test-btn-${integration.name}"
-                onclick="testConnection('${integration.name}')"
-                ${!integration.can_test ? 'disabled' : ''}
-              >
-                Test
-              </button>
-              ${integration.configure_url ? `
-                <a href="${integration.configure_url}" class="action-btn configure-btn">
-                  Configure
-                </a>
-              ` : ''}
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
       async function testConnection(integrationName) {
@@ -471,7 +560,7 @@
             const fixEl = document.getElementById(`fix-${integrationName}`);
             if (fixEl) fixEl.remove();
 
-            showToast('success', `${integrationName} connection successful`);
+            showToast('success', `${integrationName} connection successful`, 'Test Passed');
           } else {
             statusEl.textContent = result.message;
             statusEl.classList.add('error');
@@ -488,12 +577,12 @@
               fixEl.textContent = result.fix_suggestion;
             }
 
-            showToast('error', result.message);
+            showToast('error', result.message, 'Test Failed');
           }
         } catch (error) {
           statusEl.textContent = 'Test failed';
           statusEl.classList.add('error');
-          showToast('error', `Failed to test ${integrationName}`);
+          showToast('error', `Failed to test ${integrationName}`, 'Test Error');
         } finally {
           btn.disabled = false;
           btn.classList.remove('testing');
@@ -530,15 +619,17 @@
 
           // Count successes
           const successCount = results.filter(r => r.success).length;
+          const allPassed = successCount === results.length;
           showToast(
-            successCount === results.length ? 'success' : 'warning',
-            `${successCount} of ${results.length} connections successful`
+            allPassed ? 'success' : 'warning',
+            `${successCount} of ${results.length} connections successful`,
+            allPassed ? 'All Tests Passed' : 'Some Tests Failed'
           );
 
           // Reload overall status
           loadIntegrationsHealth();
         } catch (error) {
-          showToast('error', 'Failed to test connections');
+          showToast('error', 'Failed to test connections', 'Test Error');
         } finally {
           btn.disabled = false;
           btn.classList.remove('testing');
@@ -550,6 +641,84 @@
         const el = document.getElementById('last-updated');
         const date = new Date(timestamp);
         el.textContent = `Last updated: ${date.toLocaleTimeString()}`;
+      }
+
+      async function connectIntegration(integrationName) {
+        const btn = document.getElementById(`connect-btn-${integrationName}`);
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Connecting...';
+        }
+
+        try {
+          const response = await fetch(`/api/v1/settings/integrations/${integrationName}/connect`);
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Connection failed');
+          }
+
+          const data = await response.json();
+
+          if (data.auth_url) {
+            // Redirect to OAuth provider
+            window.location.href = data.auth_url;
+          } else {
+            showToast('error', 'No authorization URL returned', 'Connection Error');
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Connect';
+            }
+          }
+        } catch (error) {
+          console.error('Connect failed:', error);
+          showToast('error', error.message, 'Connection Failed');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Connect';
+          }
+        }
+      }
+
+      async function disconnectIntegration(integrationName) {
+        const btn = document.getElementById(`disconnect-btn-${integrationName}`);
+
+        // Confirm disconnection
+        if (!confirm(`Are you sure you want to disconnect ${integrationName}? You can reconnect anytime.`)) {
+          return;
+        }
+
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Disconnecting...';
+        }
+
+        try {
+          const response = await fetch(`/api/v1/settings/integrations/${integrationName}/disconnect`, {
+            method: 'POST'
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Disconnect failed');
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast('success', data.message || `${integrationName} disconnected`, 'Disconnected');
+            // Reload integrations to update UI
+            loadIntegrationsHealth();
+          } else {
+            throw new Error(data.message || 'Disconnect failed');
+          }
+        } catch (error) {
+          console.error('Disconnect failed:', error);
+          showToast('error', error.message, 'Disconnect Failed');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Disconnect';
+          }
+        }
       }
 
       function showError(message) {
@@ -564,10 +733,27 @@
         `;
       }
 
-      function showToast(type, message) {
-        // Use existing toast system if available
+      function showToast(type, message, title = null) {
+        // Use existing toast system - matches pattern from todos.html, files.html, etc.
+        // Toast has convenience methods: Toast.error(title, message), Toast.success(title, message), etc.
         if (typeof Toast !== 'undefined') {
-          Toast.show(message, type);
+          // Use provided title or generate a contextual one
+          const toastTitle = title || {
+            'error': 'Connection Error',
+            'success': 'Connection Successful',
+            'warning': 'Connection Warning',
+            'info': 'Connection Status'
+          }[type] || 'Integration Status';
+
+          if (type === 'error' && Toast.error) {
+            Toast.error(toastTitle, message);
+          } else if (type === 'success' && Toast.success) {
+            Toast.success(toastTitle, message);
+          } else if (type === 'warning' && Toast.warning) {
+            Toast.warning(toastTitle, message);
+          } else if (Toast.info) {
+            Toast.info(toastTitle, message);
+          }
         } else {
           console.log(`[${type}] ${message}`);
         }

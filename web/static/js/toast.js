@@ -24,8 +24,8 @@ const Toast = {
     info: 'ⓘ'
   },
 
-  // Default duration (milliseconds)
-  defaultDuration: 5000,
+  // Default duration (milliseconds) - 7s for better readability
+  defaultDuration: 7000,
 
   /**
    * Show toast notification
