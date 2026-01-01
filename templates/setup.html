@@ -134,6 +134,59 @@
         .auth-button + .auth-button {
             margin-top: 12px;
         }
+        /* Slack OAuth styles (Issue #528: ALPHA-SETUP-SLACK) */
+        .slack-connect-btn {
+            background: #4A154B !important;  /* Slack purple */
+            color: white !important;
+        }
+        .slack-connect-btn:hover {
+            background: #3E1041 !important;
+        }
+        /* Google Calendar OAuth styles (Issue #529: ALPHA-SETUP-CALENDAR) */
+        .calendar-connect-btn {
+            background: #4285F4 !important;  /* Google blue */
+            color: white !important;
+        }
+        .calendar-connect-btn:hover {
+            background: #3367D6 !important;
+        }
+        .connected-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: #d4edda;
+            border-radius: 8px;
+            color: #155724;
+            font-weight: 500;
+        }
+        .connected-status .status-icon {
+            font-size: 18px;
+        }
+        .oauth-status {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .btn-secondary {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            background: #e9ecef;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+            align-self: flex-start;
+        }
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -195,6 +248,63 @@
                     <button type="button" class="keychain-btn hidden" data-provider="gemini">Use Keychain</button>
                 </div>
                 <div id="gemini-status" class="validation-status"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="notion-key">Notion API Key (optional)</label>
+                <div class="key-validation">
+                    <input type="password" id="notion-key" placeholder="secret_..." />
+                    <button type="button" class="validate-key-btn" data-provider="notion">Validate</button>
+                    <button type="button" class="keychain-btn hidden" data-provider="notion">Use Keychain</button>
+                </div>
+                <div id="notion-status" class="validation-status"></div>
+                <small><a href="https://www.notion.so/my-integrations" target="_blank">Get your Notion API key</a></small>
+            </div>
+
+            <!-- Slack OAuth Integration (Issue #528: ALPHA-SETUP-SLACK) -->
+            <div class="form-group">
+                <label>Slack Integration (optional)</label>
+                <div class="slack-oauth-section">
+                    <div id="slack-not-connected" class="oauth-status">
+                        <button type="button" id="connect-slack-btn" class="auth-button slack-connect-btn">
+                            Connect to Slack
+                        </button>
+                        <small>Connect your Slack workspace to enable messaging</small>
+                    </div>
+                    <div id="slack-connected" class="oauth-status" style="display: none;">
+                        <div class="connected-status">
+                            <span class="status-icon">✓</span>
+                            <span id="slack-workspace-name">Connected</span>
+                        </div>
+                        <button type="button" id="disconnect-slack-btn" class="btn-secondary btn-sm">
+                            Disconnect
+                        </button>
+                    </div>
+                    <div id="slack-error" class="validation-status invalid" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Google Calendar OAuth Integration (Issue #529: ALPHA-SETUP-CALENDAR) -->
+            <div class="form-group">
+                <label>Google Calendar (optional)</label>
+                <div class="calendar-oauth-section">
+                    <div id="calendar-not-connected" class="oauth-status">
+                        <button type="button" id="connect-calendar-btn" class="auth-button calendar-connect-btn">
+                            Connect Calendar
+                        </button>
+                        <small>Connect your Google Calendar for scheduling awareness</small>
+                    </div>
+                    <div id="calendar-connected" class="oauth-status" style="display: none;">
+                        <div class="connected-status">
+                            <span class="status-icon">✓</span>
+                            <span id="calendar-email">Connected</span>
+                        </div>
+                        <button type="button" id="disconnect-calendar-btn" class="btn-secondary btn-sm">
+                            Disconnect
+                        </button>
+                    </div>
+                    <div id="calendar-error" class="validation-status invalid" style="display: none;"></div>
+                </div>
             </div>
 
             <button id="next-2" class="auth-button" disabled>Continue</button>

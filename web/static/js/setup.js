@@ -1,4 +1,4 @@
-// Setup Wizard JavaScript (Issue #390)
+// Setup Wizard JavaScript (Issue #390, #528)
 (function() {
     'use strict';
 
@@ -6,8 +6,9 @@
     let currentStep = 1;
     let openaiValid = false;
     let userId = null;
-    const apiKeys = { openai: null, anthropic: null, gemini: null };
-    const keychainKeys = { openai: false, anthropic: false, gemini: false }; // Track which keys came from keychain
+    let slackConnected = false;  // Issue #528: Track Slack OAuth status
+    const apiKeys = { openai: null, anthropic: null, gemini: null, notion: null };
+    const keychainKeys = { openai: false, anthropic: false, gemini: false, notion: false }; // Track which keys came from keychain
 
     // DOM elements
     const steps = document.querySelectorAll('.setup-step');
@@ -44,7 +45,7 @@
 
     // Check if keys exist in keychain and show buttons
     async function checkKeychainAvailability() {
-        const providers = ['openai', 'anthropic', 'gemini'];
+        const providers = ['openai', 'anthropic', 'gemini', 'notion'];
         for (const provider of providers) {
             try {
                 const response = await fetch(`/setup/check-keychain/${provider}`);
@@ -163,7 +164,11 @@
                 const data = await response.json();
 
                 if (data.valid) {
-                    statusDiv.textContent = '✓ Valid';
+                    // Use workspace_name for Notion, otherwise use generic message
+                    const message = data.workspace_name
+                        ? `✓ Valid (Connected to '${data.workspace_name}')`
+                        : `✓ ${data.message}`;
+                    statusDiv.textContent = message;
                     statusDiv.className = 'validation-status valid';
                     apiKeys[provider] = apiKey;
                     keychainKeys[provider] = false; // Manually entered
@@ -321,7 +326,8 @@
                     user_id: userId,
                     openai_key: keychainKeys.openai ? null : apiKeys.openai,
                     anthropic_key: keychainKeys.anthropic ? null : apiKeys.anthropic,
-                    gemini_key: keychainKeys.gemini ? null : apiKeys.gemini
+                    gemini_key: keychainKeys.gemini ? null : apiKeys.gemini,
+                    notion_key: keychainKeys.notion ? null : apiKeys.notion
                 })
             });
             const data = await response.json();
@@ -352,6 +358,216 @@
             // Ignore - just continue with setup
         }
     }
+
+    // =========================================================================
+    // Slack OAuth Functions (Issue #528: ALPHA-SETUP-SLACK)
+    // =========================================================================
+
+    // Check for OAuth callback params in URL (after redirect from Slack)
+    function checkSlackCallbackParams() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('slack_success') === 'true') {
+            const workspace = params.get('slack_workspace') || 'Workspace';
+            showSlackConnected(decodeURIComponent(workspace));
+            // Clean URL by removing OAuth params
+            window.history.replaceState({}, document.title, '/setup#step-2');
+        } else if (params.get('slack_error')) {
+            const error = params.get('slack_error');
+            showSlackError(getSlackErrorMessage(error));
+            window.history.replaceState({}, document.title, '/setup#step-2');
+        }
+    }
+
+    // Check if Slack is already configured
+    async function checkSlackStatus() {
+        try {
+            const response = await fetch('/setup/slack/status');
+            const data = await response.json();
+
+            if (data.configured) {
+                showSlackConnected(data.workspace_name || 'Connected');
+            }
+        } catch (err) {
+            console.log('Slack status check failed:', err);
+        }
+    }
+
+    // Start OAuth flow - redirects to Slack
+    async function connectSlack() {
+        const btn = document.getElementById('connect-slack-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Connecting...';
+        }
+
+        try {
+            const response = await fetch('/setup/slack/oauth/start');
+            const data = await response.json();
+
+            if (data.auth_url) {
+                // Redirect to Slack OAuth
+                window.location.href = data.auth_url;
+            } else {
+                showSlackError('Failed to start OAuth flow');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Connect to Slack';
+                }
+            }
+        } catch (err) {
+            showSlackError('Connection failed. Please try again.');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Connect to Slack';
+            }
+        }
+    }
+
+    function showSlackConnected(workspace) {
+        const notConnected = document.getElementById('slack-not-connected');
+        const connected = document.getElementById('slack-connected');
+        const workspaceName = document.getElementById('slack-workspace-name');
+        const errorDiv = document.getElementById('slack-error');
+
+        if (notConnected) notConnected.style.display = 'none';
+        if (connected) connected.style.display = 'flex';
+        if (workspaceName) workspaceName.textContent = `Connected to ${workspace}`;
+        if (errorDiv) errorDiv.style.display = 'none';
+        slackConnected = true;
+    }
+
+    function showSlackError(message) {
+        const errorDiv = document.getElementById('slack-error');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    function getSlackErrorMessage(error) {
+        const messages = {
+            'access_denied': 'Authorization was denied. Please try again.',
+            'missing_params': 'OAuth callback missing parameters.',
+            'callback_failed': 'Failed to complete authorization.',
+            'invalid_state': 'Session expired. Please try again.',
+        };
+        return messages[error] || 'An error occurred. Please try again.';
+    }
+
+    // Event listeners for Slack OAuth
+    const connectSlackBtn = document.getElementById('connect-slack-btn');
+    if (connectSlackBtn) {
+        connectSlackBtn.addEventListener('click', connectSlack);
+    }
+
+    // Initialize Slack OAuth on page load
+    checkSlackCallbackParams();
+    checkSlackStatus();
+
+    // =========================================================================
+    // Google Calendar OAuth Functions (Issue #529: ALPHA-SETUP-CALENDAR)
+    // =========================================================================
+
+    // Check for OAuth callback params in URL (after redirect from Google)
+    function checkCalendarCallbackParams() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('calendar_success') === 'true') {
+            const email = params.get('calendar_email') || 'Calendar';
+            showCalendarConnected(decodeURIComponent(email));
+            // Clean URL by removing OAuth params
+            window.history.replaceState({}, document.title, '/setup#step-2');
+        } else if (params.get('calendar_error')) {
+            const error = params.get('calendar_error');
+            showCalendarError(getCalendarErrorMessage(error));
+            window.history.replaceState({}, document.title, '/setup#step-2');
+        }
+    }
+
+    // Check if Calendar is already configured
+    async function checkCalendarStatus() {
+        try {
+            const response = await fetch('/setup/calendar/status');
+            const data = await response.json();
+
+            if (data.configured) {
+                showCalendarConnected(data.email || 'Connected');
+            }
+        } catch (err) {
+            console.log('Calendar status check failed:', err);
+        }
+    }
+
+    // Start OAuth flow - redirects to Google
+    async function connectCalendar() {
+        const btn = document.getElementById('connect-calendar-btn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Connecting...';
+        }
+
+        try {
+            const response = await fetch('/setup/calendar/oauth/start');
+            const data = await response.json();
+
+            if (data.auth_url) {
+                // Redirect to Google OAuth
+                window.location.href = data.auth_url;
+            } else {
+                showCalendarError('Failed to start OAuth flow');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Connect Calendar';
+                }
+            }
+        } catch (err) {
+            showCalendarError('Connection failed. Please try again.');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Connect Calendar';
+            }
+        }
+    }
+
+    function showCalendarConnected(email) {
+        const notConnected = document.getElementById('calendar-not-connected');
+        const connected = document.getElementById('calendar-connected');
+        const emailSpan = document.getElementById('calendar-email');
+        const errorDiv = document.getElementById('calendar-error');
+
+        if (notConnected) notConnected.style.display = 'none';
+        if (connected) connected.style.display = 'flex';
+        if (emailSpan) emailSpan.textContent = `Connected: ${email}`;
+        if (errorDiv) errorDiv.style.display = 'none';
+    }
+
+    function showCalendarError(message) {
+        const errorDiv = document.getElementById('calendar-error');
+        if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    }
+
+    function getCalendarErrorMessage(error) {
+        const messages = {
+            'access_denied': 'Authorization was denied. Please try again.',
+            'missing_params': 'OAuth callback missing parameters.',
+            'callback_failed': 'Failed to complete authorization.',
+        };
+        return messages[error] || 'An error occurred. Please try again.';
+    }
+
+    // Event listeners for Calendar OAuth
+    const connectCalendarBtn = document.getElementById('connect-calendar-btn');
+    if (connectCalendarBtn) {
+        connectCalendarBtn.addEventListener('click', connectCalendar);
+    }
+
+    // Initialize Calendar OAuth on page load
+    checkCalendarCallbackParams();
+    checkCalendarStatus();
 
     checkSetupStatus();
 })();

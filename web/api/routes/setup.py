@@ -57,14 +57,14 @@ class SystemCheckResponse(BaseModel):
 class ApiKeyValidateRequest(BaseModel):
     """Request model for API key validation"""
 
-    provider: str = Field(description="API provider: openai, anthropic, or github")
+    provider: str = Field(description="API provider: openai, anthropic, github, or notion")
     api_key: str = Field(description="API key to validate")
 
     @field_validator("provider")
     @classmethod
     def validate_provider(cls, v: str) -> str:
-        if v not in ["openai", "anthropic", "github"]:
-            raise ValueError("provider must be one of: openai, anthropic, github")
+        if v not in ["openai", "anthropic", "github", "notion"]:
+            raise ValueError("provider must be one of: openai, anthropic, github, notion")
         return v
 
 
@@ -74,6 +74,9 @@ class ApiKeyValidateResponse(BaseModel):
     provider: str = Field(description="API provider that was validated")
     valid: bool = Field(description="Whether the key is valid")
     message: str = Field(description="Validation result message")
+    workspace_name: Optional[str] = Field(
+        default=None, description="Workspace name (for Notion integration)"
+    )
 
 
 class CreateUserRequest(BaseModel):
@@ -111,13 +114,13 @@ class KeychainCheckResponse(BaseModel):
 class KeychainUseRequest(BaseModel):
     """Request model for using key from keychain"""
 
-    provider: str = Field(description="API provider: openai, anthropic, or gemini")
+    provider: str = Field(description="API provider: openai, anthropic, gemini, or notion")
 
     @field_validator("provider")
     @classmethod
     def validate_provider(cls, v: str) -> str:
-        if v not in ["openai", "anthropic", "gemini"]:
-            raise ValueError("provider must be one of: openai, anthropic, gemini")
+        if v not in ["openai", "anthropic", "gemini", "notion"]:
+            raise ValueError("provider must be one of: openai, anthropic, gemini, notion")
         return v
 
 
@@ -136,6 +139,7 @@ class SetupCompleteRequest(BaseModel):
     user_id: str = Field(description="User ID (UUID) to mark as setup complete")
     openai_key: Optional[str] = Field(default=None, description="OpenAI API key (optional)")
     anthropic_key: Optional[str] = Field(default=None, description="Anthropic API key (optional)")
+    notion_key: Optional[str] = Field(default=None, description="Notion API key (optional)")
 
 
 class SetupCompleteResponse(BaseModel):
@@ -319,6 +323,84 @@ async def check_system():
         )
 
 
+async def validate_notion_key_and_get_workspace(
+    api_key: str,
+) -> tuple[bool, Optional[str], Optional[str]]:
+    """
+    Validate a Notion API key and get workspace name.
+
+    Issue #527: ALPHA-SETUP-NOTION
+
+    Uses the official Notion SDK to test the API key by calling users.me()
+    endpoint, which returns workspace information for bot integrations.
+
+    Args:
+        api_key: Notion API key (starts with 'secret_' or 'ntn_')
+
+    Returns:
+        Tuple of (is_valid, workspace_name, error_message)
+        - is_valid: True if key is valid and has workspace access
+        - workspace_name: Name of the workspace, or None if invalid
+        - error_message: Human-friendly error message, or None if valid
+    """
+    try:
+        from notion_client import Client
+        from notion_client.client import ClientOptions
+        from notion_client.errors import APIResponseError
+
+        # Create a temporary client with the provided key
+        options = ClientOptions(auth=api_key, notion_version="2025-09-03")
+        client = Client(options=options)
+
+        # Test the key by calling users.me()
+        user_info = client.users.me()
+
+        # Extract workspace name from bot info
+        workspace_name = user_info.get("bot", {}).get("workspace", {}).get("name")
+
+        # If no workspace name in bot info, fall back to user name
+        if not workspace_name:
+            workspace_name = user_info.get("name", "Unknown Workspace")
+
+        logger.info(
+            "notion_key_validated",
+            workspace=workspace_name,
+            user_type=user_info.get("type", "unknown"),
+        )
+
+        return True, workspace_name, None
+
+    except APIResponseError as e:
+        # Issue #527: Provide specific error guidance based on error code
+        error_code = getattr(e, "code", "unknown")
+        error_str = str(e).lower()
+        logger.warning("notion_key_invalid", error=str(e), error_code=error_code)
+
+        # Map Notion API errors to user-friendly messages
+        if "unauthorized" in error_str or error_code == "unauthorized":
+            error_msg = "Invalid API key. Check your key at notion.so/my-integrations"
+        elif "forbidden" in error_str or error_code == "restricted_resource":
+            error_msg = "Key lacks required permissions. Ensure integration has workspace access"
+        elif "rate_limited" in error_str:
+            error_msg = "Rate limited by Notion. Wait a moment and try again"
+        else:
+            error_msg = "Invalid API key or insufficient permissions"
+
+        return False, None, error_msg
+    except ImportError:
+        logger.error("notion_sdk_not_installed")
+        return False, None, "Notion SDK not installed. Contact support."
+    except Exception as e:
+        error_str = str(e).lower()
+        logger.error("notion_key_validation_error", error=str(e), exc_info=True)
+
+        # Network errors
+        if "connect" in error_str or "network" in error_str or "timeout" in error_str:
+            return False, None, "Could not reach Notion API. Check your internet connection"
+
+        return False, None, "Validation failed. Please try again"
+
+
 @router.post("/validate-key", response_model=ApiKeyValidateResponse)
 async def validate_api_key(req: ApiKeyValidateRequest):
     """
@@ -328,6 +410,7 @@ async def validate_api_key(req: ApiKeyValidateRequest):
     - OpenAI: Tests gpt-4 access with minimal request
     - Anthropic: Tests claude-3.5 access with minimal request
     - GitHub: Skipped (validated on first use)
+    - Notion: Tests workspace access with users.me() (#527)
 
     Args:
         req: ApiKeyValidateRequest with provider and api_key
@@ -343,6 +426,25 @@ async def validate_api_key(req: ApiKeyValidateRequest):
                 valid=True,
                 message="GitHub token saved (validation on first use)",
             )
+
+        # Notion validation uses dedicated helper (#527)
+        if req.provider == "notion":
+            is_valid, workspace_name, error_msg = await validate_notion_key_and_get_workspace(
+                req.api_key
+            )
+            if is_valid:
+                return ApiKeyValidateResponse(
+                    provider=req.provider,
+                    valid=True,
+                    message=f"Valid (Connected to '{workspace_name}')",
+                    workspace_name=workspace_name,
+                )
+            else:
+                return ApiKeyValidateResponse(
+                    provider=req.provider,
+                    valid=False,
+                    message=error_msg or "Invalid API key or insufficient permissions",
+                )
 
         # For OpenAI and Anthropic, use UserAPIKeyService validation
         service = UserAPIKeyService()
@@ -398,12 +500,12 @@ async def check_keychain(provider: str):
     user action (triggers OS keychain permission dialog).
 
     Args:
-        provider: API provider (openai, anthropic, gemini)
+        provider: API provider (openai, anthropic, gemini, notion)
 
     Returns:
         KeychainCheckResponse with exists status
     """
-    if provider not in ["openai", "anthropic", "gemini"]:
+    if provider not in ["openai", "anthropic", "gemini", "notion"]:
         return KeychainCheckResponse(
             provider=provider,
             exists=False,
@@ -475,6 +577,7 @@ async def use_keychain(req: KeychainUseRequest):
             "openai": "gpt-4",
             "anthropic": "claude-3.5",
             "gemini": "gemini-pro",
+            "notion": "workspace",
         }
         model_info = provider_models.get(req.provider, req.provider)
 
@@ -567,7 +670,7 @@ async def complete_setup(req: SetupCompleteRequest):
     Finalize setup by storing API keys and marking user as setup complete.
 
     This endpoint:
-    1. Stores provided API keys (OpenAI, Anthropic) in keychain
+    1. Stores provided API keys (OpenAI, Anthropic, Notion) in keychain
     2. Updates user.setup_complete flag to true
     3. Generates CLI auto-auth token
 
@@ -576,6 +679,8 @@ async def complete_setup(req: SetupCompleteRequest):
 
     Returns:
         SetupCompleteResponse with success status and redirect URL
+
+    Issue #527: Added Notion key storage support
     """
     try:
         # Store API keys if provided
@@ -610,6 +715,19 @@ async def complete_setup(req: SetupCompleteRequest):
                     logger.warning(
                         "anthropic_key_storage_failed", user_id=req.user_id, error=str(e)
                     )
+
+            # Store Notion key (Issue #527: ALPHA-SETUP-NOTION)
+            if req.notion_key:
+                try:
+                    await service.store_user_key(
+                        user_id=req.user_id,
+                        provider="notion",
+                        api_key=req.notion_key,
+                        session=session,
+                        validate=False,  # Already validated in previous step
+                    )
+                except Exception as e:
+                    logger.warning("notion_key_storage_failed", user_id=req.user_id, error=str(e))
 
             # Mark setup as complete (Issue #389)
             await session.execute(
@@ -658,3 +776,307 @@ async def complete_setup(req: SetupCompleteRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Setup completion failed: {str(e)}",
         )
+
+
+# ============================================================================
+# Slack OAuth Endpoints (Issue #528: ALPHA-SETUP-SLACK)
+# ============================================================================
+
+
+@router.get("/slack/oauth/start")
+async def start_slack_oauth():
+    """
+    Generate Slack OAuth URL for setup wizard.
+
+    Returns authorization URL and state token for CSRF protection.
+    User redirects to Slack, authorizes, then returns to callback.
+
+    Issue #528: ALPHA-SETUP-SLACK
+
+    Returns:
+        dict with auth_url and state
+    """
+    try:
+        from services.integrations.slack.oauth_handler import SlackOAuthHandler
+
+        handler = SlackOAuthHandler()
+
+        # Use setup-specific redirect URI if available
+        # This returns user to wizard instead of general callback
+        redirect_uri = os.getenv("SLACK_SETUP_REDIRECT_URI", os.getenv("SLACK_REDIRECT_URI", ""))
+
+        # Generate OAuth URL with state for CSRF protection
+        auth_url, state = handler.generate_authorization_url(
+            redirect_uri=redirect_uri if redirect_uri else None
+        )
+
+        logger.info("slack_oauth_started", state=state[:8] + "...")
+
+        return {
+            "auth_url": auth_url,
+            "state": state,
+        }
+
+    except Exception as e:
+        logger.error("slack_oauth_start_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start Slack OAuth: {str(e)}",
+        )
+
+
+@router.get("/slack/oauth/callback")
+async def handle_slack_oauth_callback(
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+):
+    """
+    Handle Slack OAuth callback for setup wizard.
+
+    Exchanges authorization code for tokens and redirects back to
+    setup wizard with success/error status in query params.
+
+    Issue #528: ALPHA-SETUP-SLACK
+
+    Args:
+        code: Authorization code from Slack
+        state: State token for CSRF verification
+        error: Error from Slack (if authorization denied)
+
+    Returns:
+        RedirectResponse to setup wizard with status
+    """
+    from urllib.parse import quote
+
+    from starlette.responses import RedirectResponse
+
+    # Handle OAuth error (user denied, etc.)
+    if error:
+        logger.warning("slack_oauth_denied", error=error)
+        return RedirectResponse(url=f"/setup?slack_error={error}#step-2", status_code=302)
+
+    # Handle missing parameters
+    if not code or not state:
+        logger.warning("slack_oauth_missing_params", has_code=bool(code), has_state=bool(state))
+        return RedirectResponse(url="/setup?slack_error=missing_params#step-2", status_code=302)
+
+    try:
+        from services.integrations.slack.oauth_handler import SlackOAuthHandler
+
+        handler = SlackOAuthHandler()
+        result = await handler.handle_oauth_callback(code, state)
+
+        # Extract workspace name from result
+        workspace_name = result.get("workspace", {}).get("workspace_name", "Workspace")
+        workspace_name_encoded = quote(workspace_name)
+
+        logger.info("slack_oauth_success", workspace=workspace_name)
+
+        # Redirect back to setup wizard with success
+        return RedirectResponse(
+            url=f"/setup?slack_success=true&slack_workspace={workspace_name_encoded}#step-2",
+            status_code=302,
+        )
+
+    except ValueError as e:
+        # Invalid state or other validation error
+        logger.warning("slack_oauth_validation_error", error=str(e))
+        return RedirectResponse(url="/setup?slack_error=callback_failed#step-2", status_code=302)
+    except Exception as e:
+        logger.error("slack_oauth_callback_error", error=str(e), exc_info=True)
+        return RedirectResponse(url="/setup?slack_error=callback_failed#step-2", status_code=302)
+
+
+@router.get("/slack/status")
+async def get_slack_status():
+    """
+    Get Slack configuration status for setup wizard.
+
+    Checks if Slack bot token exists and returns connection status.
+
+    Issue #528: ALPHA-SETUP-SLACK
+
+    Returns:
+        dict with configured status and optional workspace info
+    """
+    try:
+        from services.integrations.slack.config_service import SlackConfigService
+
+        config_service = SlackConfigService()
+        slack_config = config_service.get_config()
+
+        if slack_config.bot_token:
+            return {
+                "configured": True,
+                "message": "Slack connected",
+            }
+        else:
+            return {
+                "configured": False,
+                "message": "Not connected",
+            }
+
+    except Exception as e:
+        logger.error("slack_status_check_failed", error=str(e), exc_info=True)
+        return {
+            "configured": False,
+            "message": "Status check failed",
+        }
+
+
+# ============================================================================
+# Google Calendar OAuth Endpoints (Issue #529: ALPHA-SETUP-CALENDAR)
+# ============================================================================
+
+
+@router.get("/calendar/oauth/start")
+async def start_calendar_oauth():
+    """
+    Generate Google Calendar OAuth URL for setup wizard.
+
+    Returns authorization URL and state token for CSRF protection.
+    User redirects to Google, authorizes, then returns to callback.
+
+    Issue #529: ALPHA-SETUP-CALENDAR
+
+    Returns:
+        dict with auth_url and state
+    """
+    try:
+        from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
+
+        handler = GoogleCalendarOAuthHandler()
+
+        # Verify credentials are configured
+        if not handler.client_id or not handler.client_secret:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Google Calendar OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
+            )
+
+        auth_url, state = handler.generate_authorization_url()
+
+        logger.info("calendar_oauth_started", state=state[:8] + "...")
+
+        return {
+            "auth_url": auth_url,
+            "state": state,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("calendar_oauth_start_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start Calendar OAuth: {str(e)}",
+        )
+
+
+@router.get("/calendar/oauth/callback")
+async def handle_calendar_oauth_callback(
+    code: Optional[str] = None,
+    state: Optional[str] = None,
+    error: Optional[str] = None,
+):
+    """
+    Handle Google Calendar OAuth callback.
+
+    Exchanges authorization code for tokens and redirects back to
+    setup wizard with success/error status in query params.
+
+    Issue #529: ALPHA-SETUP-CALENDAR
+
+    Args:
+        code: Authorization code from Google
+        state: State token for CSRF verification
+        error: Error from Google (if authorization denied)
+
+    Returns:
+        RedirectResponse to setup wizard with status
+    """
+    from urllib.parse import quote
+
+    from starlette.responses import RedirectResponse
+
+    # Handle OAuth error (user denied, etc.)
+    if error:
+        logger.warning("calendar_oauth_denied", error=error)
+        return RedirectResponse(url=f"/setup?calendar_error={error}#step-2", status_code=302)
+
+    # Handle missing parameters
+    if not code or not state:
+        logger.warning("calendar_oauth_missing_params", has_code=bool(code), has_state=bool(state))
+        return RedirectResponse(url="/setup?calendar_error=missing_params#step-2", status_code=302)
+
+    try:
+        from services.infrastructure.keychain_service import KeychainService
+        from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
+
+        handler = GoogleCalendarOAuthHandler()
+        result = await handler.handle_oauth_callback(code, state)
+
+        # Store refresh token securely
+        tokens = result["tokens"]
+        if tokens.refresh_token:
+            keychain = KeychainService()
+            keychain.store_api_key("google_calendar", tokens.refresh_token)
+            logger.info("calendar_refresh_token_stored")
+
+        # Get user email for display
+        user_email = result["user"].get("email", "Calendar")
+        email_encoded = quote(user_email)
+
+        logger.info("calendar_oauth_success", email=user_email)
+
+        # Redirect back to setup wizard with success
+        return RedirectResponse(
+            url=f"/setup?calendar_success=true&calendar_email={email_encoded}#step-2",
+            status_code=302,
+        )
+
+    except ValueError as e:
+        # Invalid state or other validation error
+        logger.warning("calendar_oauth_validation_error", error=str(e))
+        return RedirectResponse(url="/setup?calendar_error=callback_failed#step-2", status_code=302)
+    except Exception as e:
+        logger.error("calendar_oauth_callback_error", error=str(e), exc_info=True)
+        return RedirectResponse(url="/setup?calendar_error=callback_failed#step-2", status_code=302)
+
+
+@router.get("/calendar/status")
+async def get_calendar_status():
+    """
+    Get Calendar configuration status for setup wizard.
+
+    Checks if refresh token exists in keychain.
+
+    Issue #529: ALPHA-SETUP-CALENDAR
+
+    Returns:
+        dict with configured status
+    """
+    try:
+        from services.infrastructure.keychain_service import KeychainService
+
+        keychain = KeychainService()
+        refresh_token = keychain.get_api_key("google_calendar")
+
+        if refresh_token:
+            return {
+                "configured": True,
+                "message": "Calendar connected",
+            }
+        else:
+            return {
+                "configured": False,
+                "message": "Not connected",
+            }
+
+    except Exception as e:
+        logger.error("calendar_status_check_failed", error=str(e), exc_info=True)
+        return {
+            "configured": False,
+            "message": "Status check failed",
+        }

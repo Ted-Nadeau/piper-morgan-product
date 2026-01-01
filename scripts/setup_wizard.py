@@ -45,6 +45,7 @@ OPTIONAL_SERVICES = [SERVICE_TEMPORAL]
 PROVIDER_OPENAI = "openai"
 PROVIDER_ANTHROPIC = "anthropic"
 PROVIDER_GITHUB = "github"
+PROVIDER_NOTION = "notion"  # Issue #527: ALPHA-SETUP-NOTION
 
 # =============================================================================
 
@@ -679,6 +680,169 @@ def _check_global_keychain_key(provider: str) -> Optional[str]:
         return None
 
 
+async def _validate_notion_key(api_key: str) -> tuple[bool, Optional[str], Optional[str]]:
+    """
+    Validate a Notion API key and get workspace name.
+
+    Issue #527: ALPHA-SETUP-NOTION
+
+    Uses the official Notion SDK to test the API key by calling users.me()
+    endpoint, which returns workspace information for bot integrations.
+
+    Args:
+        api_key: Notion API key (starts with 'secret_' or 'ntn_')
+
+    Returns:
+        Tuple of (is_valid, workspace_name, error_message)
+        - is_valid: True if key is valid and has workspace access
+        - workspace_name: Name of the workspace, or None if invalid
+        - error_message: Human-friendly error message, or None if valid
+    """
+    try:
+        from notion_client import Client
+        from notion_client.client import ClientOptions
+        from notion_client.errors import APIResponseError
+
+        # Create a temporary client with the provided key
+        options = ClientOptions(auth=api_key, notion_version="2025-09-03")
+        client = Client(options=options)
+
+        # Test the key by calling users.me()
+        user_info = client.users.me()
+
+        # Extract workspace name from bot info
+        workspace_name = user_info.get("bot", {}).get("workspace", {}).get("name")
+
+        # If no workspace name in bot info, fall back to user name
+        if not workspace_name:
+            workspace_name = user_info.get("name", "Unknown Workspace")
+
+        return True, workspace_name, None
+
+    except APIResponseError as e:
+        # Issue #527: Provide specific error guidance
+        error_str = str(e).lower()
+        if "unauthorized" in error_str:
+            return False, None, "Invalid API key. Check your key at notion.so/my-integrations"
+        elif "forbidden" in error_str:
+            return (
+                False,
+                None,
+                "Key lacks required permissions. Ensure integration has workspace access",
+            )
+        elif "rate_limited" in error_str:
+            return False, None, "Rate limited by Notion. Wait a moment and try again"
+        return False, None, "Invalid API key or insufficient permissions"
+    except ImportError:
+        return False, None, "Notion SDK not installed"
+    except Exception as e:
+        error_str = str(e).lower()
+        if "connect" in error_str or "network" in error_str or "timeout" in error_str:
+            return False, None, "Could not reach Notion API. Check your internet connection"
+        return False, None, "Validation failed. Please try again"
+
+
+async def _collect_notion_api_key(user_id: str, service) -> Optional[str]:
+    """
+    Collect and validate Notion API key.
+
+    Issue #527: ALPHA-SETUP-NOTION
+
+    Notion uses custom validation (not LLM provider), so we handle it separately
+    from _collect_single_api_key.
+
+    Args:
+        user_id: User ID for keychain storage
+        service: UserAPIKeyService instance
+
+    Returns:
+        API key if successful or None if skipped
+    """
+    from services.database.session_factory import AsyncSessionFactory
+
+    provider = "notion"
+    env_var_name = "NOTION_API_KEY"
+    api_key = None
+
+    # Step 1: Check keychain for existing key
+    print("   Checking keychain for existing key...")
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            existing_key = await service.retrieve_user_key(session, user_id, provider)
+            if existing_key:
+                print("   ✓ Using existing key from keychain")
+                return existing_key
+            else:
+                print("   ℹ️  No existing key found in keychain")
+    except Exception as e:
+        print(f"   ℹ️  Keychain check skipped ({type(e).__name__})")
+
+    # Step 2: Check environment variable
+    api_key = os.environ.get(env_var_name)
+    if api_key:
+        print(f"   ℹ️  Using {env_var_name} from environment")
+        print("   Validating...")
+
+        is_valid, workspace_name, error_msg = await _validate_notion_key(api_key)
+        if is_valid:
+            # Store the validated key
+            try:
+                async with AsyncSessionFactory.session_scope_fresh() as session:
+                    await service.store_user_key(
+                        user_id=user_id,
+                        provider=provider,
+                        api_key=api_key,
+                        session=session,
+                        validate=False,  # Already validated above
+                    )
+                    await session.commit()
+                print(f"   ✓ Valid (Connected to '{workspace_name}')")
+                return api_key
+            except Exception as e:
+                print(f"   ⚠ Storage error: {e}")
+                print("   Continuing with manual entry...")
+        else:
+            print(f"   ✗ {error_msg or 'Invalid API key or insufficient permissions'}")
+            print(f"   Key from environment is invalid. Please update {env_var_name}")
+        api_key = None  # Force manual entry
+
+    # Step 3: Manual entry loop
+    while not api_key:
+        prompt = "   Enter key (secret_..., or press Enter to skip): "
+        api_key = getpass(prompt)
+
+        if not api_key:
+            print("   Skipped (you can add this later)")
+            return None
+
+        print("   Validating...")
+
+        is_valid, workspace_name, error_msg = await _validate_notion_key(api_key)
+        if is_valid:
+            # Store the validated key
+            try:
+                async with AsyncSessionFactory.session_scope_fresh() as session:
+                    await service.store_user_key(
+                        user_id=user_id,
+                        provider=provider,
+                        api_key=api_key,
+                        session=session,
+                        validate=False,  # Already validated above
+                    )
+                    await session.commit()
+                print(f"   ✓ Valid (Connected to '{workspace_name}')")
+                return api_key
+            except Exception as e:
+                print(f"   ✗ Storage error: {e}")
+                api_key = None
+        else:
+            print(f"   ✗ {error_msg or 'Invalid API key or insufficient permissions'}")
+            print("   Please check your key and try again.")
+            api_key = None  # Reset to retry
+
+    return api_key
+
+
 async def _collect_single_api_key(
     user_id: str,
     service,
@@ -899,6 +1063,28 @@ async def collect_and_validate_api_keys(user_id: str) -> Dict[str, str]:
     )
     if github_token:
         stored_keys["github"] = github_token
+
+    # Notion (optional) - Issue #527: ALPHA-SETUP-NOTION
+    # Notion uses custom validation (not LLM provider), so we handle it specially
+    print("\n   Notion API key (optional, press Enter to skip):")
+    print("   Get your key at: https://www.notion.so/my-integrations")
+    notion_key = await _collect_notion_api_key(user_id=user_id, service=service)
+    if notion_key:
+        stored_keys["notion"] = notion_key
+
+    # Slack (optional) - Issue #528: ALPHA-SETUP-SLACK
+    # Slack uses OAuth, which requires a browser redirect flow
+    print("\n   Slack Integration (optional):")
+    print("   Note: Slack requires OAuth authorization via web browser.")
+    print("   Run 'python main.py' and visit http://localhost:8001/setup to connect Slack,")
+    print("   or set SLACK_BOT_TOKEN environment variable directly.")
+
+    # Check if already configured
+    slack_token = os.environ.get("SLACK_BOT_TOKEN")
+    if slack_token:
+        print("   ✓ Slack already configured (SLACK_BOT_TOKEN found)")
+    else:
+        print("   ℹ️  Slack not configured (connect via web setup wizard)")
 
     return stored_keys
 
