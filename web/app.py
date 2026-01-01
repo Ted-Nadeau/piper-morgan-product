@@ -226,6 +226,9 @@ RouterInitializer.mount_router(
 RouterInitializer.mount_router(
     app, "web.api.routes.integrations", "router", "Integrations API"  # Issue #530
 )
+RouterInitializer.mount_router(
+    app, "web.api.routes.settings_integrations", "router", "Settings Integrations API"  # Issue #529
+)
 
 # Phase 3: Mount extracted route modules (Issue #385 - INFR-MAINT-REFACTOR)
 # Previously: Inline routes scattered throughout web/app.py

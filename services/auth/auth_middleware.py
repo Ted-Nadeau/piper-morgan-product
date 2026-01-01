@@ -68,6 +68,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/github/oauth/callback",
             "/static/",  # Static assets don't need auth
             "/assets/",  # Image assets (logo, favicon) don't need auth
+            # Issue #528: Settings integrations OAuth endpoints
+            "/api/v1/settings/integrations/slack/connect",
+            "/api/v1/settings/integrations/slack/callback",
+            "/api/v1/settings/integrations/calendar/connect",
+            "/api/v1/settings/integrations/calendar/callback",
         ]
 
         logger.info("AuthMiddleware initialized", exclude_paths=len(self.exclude_paths))
