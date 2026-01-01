@@ -1,5 +1,5 @@
 # Methodology 20: Omnibus Session Log Creation
-*Living document - Last updated: November 6, 2025*
+*Living document - Last updated: January 1, 2026*
 
 ## Purpose
 Omnibus logs synthesize multiple parallel session logs into a single **token-efficient chronological summary**, revealing the multi-agent "dance" of collaboration and the complete story of a day's work.
@@ -45,6 +45,13 @@ Omnibus logs synthesize multiple parallel session logs into a single **token-eff
 - **High-Complexity Day**: MAX 600 lines
 - **Over 600 lines**: Requires PM approval - source logs have details, omnibus must stay terse
 
+**Space Allocation Strategy**:
+- **STANDARD Days** (300 lines): Aim for ~60 lines timeline + ~200 lines executive summary
+  - Single goal/agent focus means timeline can be brief, summary carries the narrative
+- **HIGH-COMPLEXITY Days** (600 lines): Aim for ~250 lines timeline + ~280 lines executive summary
+  - Multiple parallel streams need timeline visibility; executive summary adds thematic analysis
+- These are guidelines, not strict rules - adjust based on complexity patterns, but deviation should be intentional, not accidental
+
 ### Terse Timeline Rule (APPLIES TO BOTH FORMATS)
 Timeline entries must be **1-2 lines maximum per event**:
 ```markdown
@@ -83,6 +90,8 @@ Narrative explanation belongs in Phase sections (High-Complexity format) or Exec
 
 **Quality Check**: Did you actually read every log? Can you spot-check random timestamps against sources?
 
+**CRITICAL FOR HIGH-COMPLEXITY DAYS**: Reading 100% vs. 30% of source logs creates drastically different omnibus quality. On HIGH-COMPLEXITY days with 4+ parallel streams, skipping even one log means losing an entire work stream's context. Spot-check by finding 3+ timestamps from each source log in your omnibus timeline.
+
 ### Phase 3: Verification & Reconciliation
 1. **Check for timeline conflicts** between parallel logs
 2. **Verify actor consistency** (same person using different agents)
@@ -107,15 +116,46 @@ Narrative explanation belongs in Phase sections (High-Complexity format) or Exec
    - Internal monologue or thinking steps
    - Repetitive status updates
    - Implementation details available in source logs
-4. **Compress ruthlessly**:
-   - Timeline entry = 1-2 lines max
-   - Executive summary bullets = 1 line max
-   - Full context lives in source logs, not omnibus
+4. **Compress strategically** (rules vary by format):
+   - **STANDARD Days**: Compress ruthlessly to stay under 300 lines
+   - **HIGH-COMPLEXITY Days**: Compress strategically - prioritize preservation of coordination moments and decisions over implementation details (which live in source logs)
+   - Timeline entry = 1-2 lines max (applies to both)
+   - Executive summary bullets = 1 line max (applies to both)
+   - Full context lives in source logs, not omnibus (applies to both)
 
 **Quality Check**:
 - Can someone understand the day's flow from your timeline alone?
 - Is this under the line limit for format type?
 - Would adding more detail help, or just bloat?
+
+#### HIGH-COMPLEXITY Days: Preservation vs. Compression Balance
+
+For **HIGH-COMPLEXITY days** (600-line budget), compression follows a different principle:
+
+**Detail Preservation Strategy**:
+1. **Timeline Detail Level**: HIGH-COMPLEXITY timelines should capture ~60-70% of key events from source logs
+   - Include more granular timeline entries (but still 1-2 lines max)
+   - Preserve agent names, handoffs, strategic pivots, problem discoveries
+   - This is not a bug list - every significant interaction matters
+   - Example: "**Chief Architect** discovers schema violation in Phase A gameplan, creates Issue #525" (preserved coordination discovery)
+
+2. **Compression Ratio Awareness**:
+   - STANDARD days typically compress 30-50% of source log detail (appropriate for single-goal work)
+   - HIGH-COMPLEXITY days should compress only 20-30% of source log detail (preserving 70-80%)
+   - If finding yourself under 30% capture (source logs 5x+ larger than omnibus), you're likely over-compressing
+
+3. **Space Allocation within 600-line Budget**:
+   - Reserve ~50% for timeline (parallel work streams need visibility)
+   - Reserve ~40% for executive summary (multi-objective days need thematic analysis)
+   - Use remaining ~10% for context/justification
+   - This differs from STANDARD days which can allocate 20% timeline / 80% summary
+
+4. **When to Preserve Full Detail**:
+   - Architectural decisions with lasting impact
+   - Multi-agent coordination breakthroughs
+   - Process improvements or pattern discoveries
+   - Cross-workstream handoffs and dependencies
+   - Strategic pivots caused by new information
 
 ### Phase 5: Timeline Formatting
 
@@ -204,12 +244,27 @@ After timeline, add thematic summary with:
 ### The Single-Agent Perspective
 Each agent has limited visibility. A comprehensive omnibus requires reading ALL perspectives.
 
-### The Detail Bloat ⚠️ NEW
-**Remember**: Source logs contain full details. Omnibus is a **token-efficient summary**.
+### The Detail Bloat ⚠️ (Format-Dependent)
+**For STANDARD days**: Source logs contain full details. Omnibus is a **token-efficient summary**.
 - Timeline entries: 1-2 lines max
 - Executive summary bullets: 1 line max
 - Resist the urge to explain everything - link to source logs instead
-- If over line limit, compress further - don't request format upgrade
+- If over 300 lines, compress further - don't request format upgrade
+
+**For HIGH-COMPLEXITY days**, this principle inverts:
+- More timeline detail is appropriate (240-280 lines is not bloat)
+- Preserve agent interactions and handoffs even if they take 1-2 lines each
+- Executive summary should synthesize themes, not just bullet facts
+- If under 400 lines total, check if you've actually captured all parallel streams
+- The goal is not brevity but **accurate representation of complexity**
+
+### HIGH-COMPLEXITY Day Red Flags ⚠️
+- **Compression <30%**: If your omnibus is <20% the size of source logs, you may be over-compressing
+- **Missing workstreams**: 4+ parallel streams mentioned in source logs but only 1-2 appear in timeline = incomplete capture
+- **Timeline <150 lines**: HIGH-COMPLEXITY days typically need 240+ lines for timeline alone to show coordination
+- **All events rushed together**: "10:15-11:30 AM" blocks with 5+ events compressed = loss of handoff visibility
+- **No problem discoveries preserved**: If you can't see where agents changed direction, you missed the story
+- **Phase headers not functional**: If phase groupings don't reflect actual work patterns, revise to match reality
 
 ## File Naming Convention
 ```
@@ -295,7 +350,15 @@ Before finalizing an omnibus log:
 - [ ] Executive summary captures themes not just events
 - [ ] Spot-check 5 random timestamps against source logs
 - [ ] File follows naming convention (YYYY-MM-DD-omnibus-log.md)
-- [ ] Compressed ruthlessly - remember source logs have details
+- [ ] Compressed appropriately (ruthlessly for STANDARD, strategically for HIGH-COMPLEXITY)
+
+### Additional checks for HIGH-COMPLEXITY days:
+- [ ] Timeline captures ALL parallel work streams distinctly (not collapsed into single stream)
+- [ ] Phase groupings reflect actual work patterns (not arbitrary time slices)
+- [ ] Compression ratio check: Source logs / Omnibus lines > 3 but < 10 (healthy range)
+- [ ] Handoff moments preserved: Can reader see coordination points and who handed off to whom?
+- [ ] Strategic pivots captured: If work direction changed, is the reason visible?
+- [ ] No collapsed events: Each agent handoff or discovery is its own line item (not buried in paragraph)
 
 ## Example Output Structures
 
@@ -382,6 +445,7 @@ Before finalizing an omnibus log:
 
 ---
 *Method developed: September 17, 2025*
-*Last updated: November 6, 2025*
+*Last updated: January 1, 2026*
+*Updates in this revision: HIGH-COMPLEXITY day rigor enhancements (space allocation strategy, compression ratio awareness, detail preservation guidance, red flag detection)*
 *Next review: After next weekly docs audit*
 *Owner: Documentation team with PM oversight*
