@@ -161,6 +161,47 @@ class StatusChecker:
                 "details": {},
             }
 
+    async def check_integrations(self) -> Dict[str, Any]:
+        """Check integration health status (Issue #530 ALPHA-SETUP-VERIFY)"""
+        try:
+            from web.api.routes.integrations import get_integrations_health
+
+            response = await get_integrations_health()
+
+            # Build details dictionary
+            details = {}
+            for integration in response.integrations:
+                status_icons = {
+                    "healthy": "✓",
+                    "degraded": "⚠",
+                    "failed": "✗",
+                    "unknown": "○",
+                    "not_configured": "○",
+                }
+                details[integration.display_name] = {
+                    "status": status_icons.get(integration.status, "○"),
+                    "message": integration.status_message,
+                }
+
+            overall_icons = {
+                "healthy": "✓",
+                "degraded": "⚠",
+                "unhealthy": "✗",
+            }
+
+            return {
+                "status": overall_icons.get(response.overall_status, "○"),
+                "message": f"{response.healthy_count}/{response.total_count} integrations healthy",
+                "details": details,
+            }
+
+        except Exception as e:
+            return {
+                "status": "✗",
+                "message": f"Error checking integrations: {str(e)[:100]}",
+                "details": {},
+            }
+
     async def check_performance(self) -> Dict[str, Any]:
         """Check basic performance metrics"""
         try:
@@ -242,6 +283,13 @@ async def run_status_check():
         for provider, status in key_status.items():
             print(f"  {status['status']} {provider}: {status['message']}")
 
+    # Integrations (Issue #530 ALPHA-SETUP-VERIFY)
+    print("\nIntegrations:")
+    integration_status = await checker.check_integrations()
+    print(f"  {integration_status['status']} {integration_status['message']}")
+    for name, status in integration_status.get("details", {}).items():
+        print(f"    {status['status']} {name}: {status['message']}")
+
     # Performance
     print("\nPerformance:")
     perf_status = await checker.check_performance()
@@ -286,6 +334,14 @@ async def run_status_check():
     if perf_status["status"] in ["⚠", "✗"]:
         recommendations.append("  • System performance is slow - check database load")
         recommendations.append("  • Try: docker-compose restart")
+
+    # Integration recommendations (Issue #530 ALPHA-SETUP-VERIFY)
+    if integration_status["status"] in ["⚠", "✗"]:
+        for name, status in integration_status.get("details", {}).items():
+            if status["status"] in ["✗", "○"]:
+                recommendations.append(
+                    f"  • Configure {name}: Visit /settings/integrations/{name.lower()}"
+                )
 
     # Add rotation recommendations (Issue #250 CORE-KEYS-ROTATION-REMINDERS)
     if isinstance(key_status, dict) and "username" in key_status:

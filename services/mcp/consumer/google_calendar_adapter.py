@@ -98,6 +98,11 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         """
         Authenticate with Google Calendar API using OAuth 2.0
 
+        Priority:
+        1. Keychain refresh token (web OAuth from setup wizard - Issue #529)
+        2. File-based token (legacy)
+        3. Interactive OAuth flow (manual setup)
+
         Returns:
             bool: True if authentication successful, False otherwise
         """
@@ -108,7 +113,12 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                     "Google Calendar libraries not installed. Install with: pip install google-auth google-auth-oauthlib google-api-python-client"
                 )
                 return False
-            # Try to load existing credentials
+
+            # Issue #529: Try keychain first (web OAuth flow)
+            if await self._authenticate_from_keychain():
+                return True
+
+            # Try to load existing credentials from file (legacy)
             if os.path.exists(self._token_file):
                 self._credentials = Credentials.from_authorized_user_file(
                     self._token_file, self._scopes
@@ -151,6 +161,56 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         except Exception as e:
             logger.error(f"Google Calendar authentication failed: {e}")
             self._handle_error()
+            return False
+
+    async def _authenticate_from_keychain(self) -> bool:
+        """
+        Authenticate using refresh token stored in keychain (Issue #529).
+
+        This is the preferred method when user connected via web OAuth flow
+        in the setup wizard.
+
+        Returns:
+            bool: True if authentication successful, False otherwise
+        """
+        try:
+            from services.infrastructure.keychain_service import KeychainService
+            from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
+
+            keychain = KeychainService()
+            refresh_token = keychain.get_api_key("google_calendar")
+
+            if not refresh_token:
+                return False
+
+            # Use OAuth handler to refresh the access token
+            handler = GoogleCalendarOAuthHandler()
+            tokens = await handler.refresh_access_token(refresh_token)
+
+            if not tokens:
+                logger.warning("Failed to refresh calendar access token from keychain")
+                return False
+
+            # Create credentials object from the refreshed tokens
+            self._credentials = Credentials(
+                token=tokens.access_token,
+                refresh_token=refresh_token,
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=os.getenv("GOOGLE_CLIENT_ID", ""),
+                client_secret=os.getenv("GOOGLE_CLIENT_SECRET", ""),
+                scopes=self._scopes,
+            )
+
+            # Initialize Calendar service
+            self._service = build("calendar", "v3", credentials=self._credentials)
+            logger.info("Google Calendar authenticated via keychain (Issue #529)")
+            return True
+
+        except ImportError:
+            logger.debug("Keychain service not available, falling back to file-based auth")
+            return False
+        except Exception as e:
+            logger.debug(f"Keychain auth failed, falling back to file-based: {e}")
             return False
 
     async def get_todays_events(self) -> List[Dict[str, Any]]:

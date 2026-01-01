@@ -6,14 +6,14 @@ Provides API endpoints for checking and testing integration health status.
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import structlog
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from services.health.integration_health_monitor import ComponentStatus
+from services.health.integration_health_monitor import ComponentStatus, IntegrationHealthMonitor
 
 logger = structlog.get_logger()
 
@@ -45,7 +45,7 @@ class IntegrationHealthResponse(BaseModel):
     total_count: int
 
 
-class TestConnectionResponse(BaseModel):
+class ConnectionTestResponse(BaseModel):
     """Response model for testing a single connection"""
 
     integration: str
@@ -61,7 +61,7 @@ INTEGRATION_REGISTRY = {
     "notion": {
         "display_name": "Notion",
         "icon": "📝",
-        "configure_url": "/settings/integrations/notion",
+        "configure_url": "/setup#step-2",  # Issue #527: Redirect to setup wizard API Keys step
         "errors": {
             "api_key_invalid": {
                 "message": "Invalid Notion API key",
@@ -80,7 +80,7 @@ INTEGRATION_REGISTRY = {
     "slack": {
         "display_name": "Slack",
         "icon": "💬",
-        "configure_url": "/settings/integrations/slack",
+        "configure_url": None,  # Issue #529: OAuth handled via Connect button
         "errors": {
             "token_expired": {
                 "message": "Slack OAuth token has expired",
@@ -118,7 +118,7 @@ INTEGRATION_REGISTRY = {
     "calendar": {
         "display_name": "Google Calendar",
         "icon": "📅",
-        "configure_url": "/settings/integrations/calendar",
+        "configure_url": None,  # Issue #529: OAuth handled via Connect button
         "errors": {
             "auth_failed": {
                 "message": "Calendar authentication failed",
@@ -131,6 +131,20 @@ INTEGRATION_REGISTRY = {
         },
     },
 }
+
+# Module-level health monitor instance for tracking test results
+_health_monitor: Optional[IntegrationHealthMonitor] = None
+
+
+def _get_health_monitor() -> IntegrationHealthMonitor:
+    """Get or create the health monitor singleton"""
+    global _health_monitor
+    if _health_monitor is None:
+        _health_monitor = IntegrationHealthMonitor()
+        # Register all integrations
+        for integration_id in INTEGRATION_REGISTRY.keys():
+            _health_monitor.register_component(integration_id, ComponentStatus.UNKNOWN)
+    return _health_monitor
 
 
 def _get_error_guidance(integration: str, error_type: str) -> tuple[str, Optional[str]]:
@@ -175,7 +189,7 @@ async def get_integrations_health():
 
         return IntegrationHealthResponse(
             overall_status=overall,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             integrations=integrations,
             healthy_count=healthy_count,
             total_count=total,
@@ -189,8 +203,8 @@ async def get_integrations_health():
         )
 
 
-@router.post("/test/{integration_name}", response_model=TestConnectionResponse)
-async def test_integration_connection(integration_name: str):
+@router.post("/test/{integration_name}", response_model=ConnectionTestResponse)
+async def check_integration_connection(integration_name: str):
     """
     Test connection to a specific integration.
 
@@ -205,23 +219,29 @@ async def test_integration_connection(integration_name: str):
 
     metadata = INTEGRATION_REGISTRY[integration_name]
     start_time = time.time()
+    health_monitor = _get_health_monitor()
 
     try:
         result = await _test_integration(integration_name)
         latency_ms = (time.time() - start_time) * 1000
 
         if result["success"]:
-            return TestConnectionResponse(
+            # Record success in health monitor
+            health_monitor.record_success(integration_name, latency_ms)
+            return ConnectionTestResponse(
                 integration=integration_name,
                 success=True,
                 message=f"{metadata['display_name']} connection successful",
                 latency_ms=round(latency_ms, 2),
             )
         else:
+            # Record failure in health monitor
+            error_msg = result.get("error", result.get("error_type", "Unknown error"))
+            health_monitor.record_failure(integration_name, error_msg)
             message, fix = _get_error_guidance(
                 integration_name, result.get("error_type", "unknown")
             )
-            return TestConnectionResponse(
+            return ConnectionTestResponse(
                 integration=integration_name,
                 success=False,
                 message=message,
@@ -232,8 +252,10 @@ async def test_integration_connection(integration_name: str):
 
     except Exception as e:
         latency_ms = (time.time() - start_time) * 1000
+        # Record failure in health monitor
+        health_monitor.record_failure(integration_name, str(e))
         logger.error(f"Integration test failed: {integration_name}", error=str(e))
-        return TestConnectionResponse(
+        return ConnectionTestResponse(
             integration=integration_name,
             success=False,
             message=f"Test failed: {str(e)}",
@@ -243,8 +265,8 @@ async def test_integration_connection(integration_name: str):
         )
 
 
-@router.post("/test-all", response_model=List[TestConnectionResponse])
-async def test_all_connections():
+@router.post("/test-all", response_model=List[ConnectionTestResponse])
+async def check_all_connections():
     """
     Test all configured integrations.
 
@@ -253,11 +275,11 @@ async def test_all_connections():
     results = []
     for integration_name in INTEGRATION_REGISTRY.keys():
         try:
-            result = await test_integration_connection(integration_name)
+            result = await check_integration_connection(integration_name)
             results.append(result)
         except Exception as e:
             results.append(
-                TestConnectionResponse(
+                ConnectionTestResponse(
                     integration=integration_name,
                     success=False,
                     message=f"Test failed: {str(e)}",
@@ -285,8 +307,44 @@ async def _check_integration_health(
                 can_test=False,
             )
 
-        # For configured integrations, return last known status
-        # In production, this would check the IntegrationHealthMonitor
+        # Get cached health status from IntegrationHealthMonitor
+        health_monitor = _get_health_monitor()
+        component_health = health_monitor.get_component_health(integration_id)
+
+        if component_health and component_health.last_check > 0:
+            # Map ComponentStatus to our status strings
+            status_map = {
+                ComponentStatus.HEALTHY: "healthy",
+                ComponentStatus.DEGRADED: "degraded",
+                ComponentStatus.FAILED: "failed",
+                ComponentStatus.UNKNOWN: "unknown",
+            }
+            status_str = status_map.get(component_health.status, "unknown")
+
+            # Convert timestamp to ISO string
+            last_check_dt = datetime.fromtimestamp(component_health.last_check, tz=timezone.utc)
+            last_check_str = last_check_dt.isoformat()
+
+            # Build status message based on last check
+            if status_str == "healthy":
+                status_message = f"Healthy (last checked: {last_check_str[:16]})"
+            elif status_str == "failed":
+                status_message = component_health.last_error or "Connection failed"
+            else:
+                status_message = f"Status: {status_str}"
+
+            return IntegrationStatus(
+                name=integration_id,
+                display_name=metadata["display_name"],
+                status=status_str,
+                status_message=status_message,
+                last_check=last_check_str,
+                error=component_health.last_error,
+                configure_url=metadata.get("configure_url"),
+                can_test=True,
+            )
+
+        # Fallback for configured but never-tested integrations
         return IntegrationStatus(
             name=integration_id,
             display_name=metadata["display_name"],
@@ -325,7 +383,16 @@ async def _get_integration_config_status(integration_id: str) -> str:
             if os.environ.get("GITHUB_TOKEN") or os.environ.get("GITHUB_ACCESS_TOKEN"):
                 return "configured"
         elif integration_id == "calendar":
-            # Calendar uses MCP or Google Calendar credentials
+            # Calendar uses keychain token (Issue #529) or legacy MCP/credentials
+            try:
+                from services.infrastructure.keychain_service import KeychainService
+
+                keychain = KeychainService()
+                if keychain.get_api_key("google_calendar"):
+                    return "configured"
+            except Exception:
+                pass
+            # Fallback to legacy check
             if os.environ.get("GOOGLE_CALENDAR_CREDENTIALS") or os.environ.get("MCP_ENABLED"):
                 return "configured"
 
