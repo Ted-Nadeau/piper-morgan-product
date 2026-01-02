@@ -1,5 +1,8 @@
 # Alpha Tester Pre-Qualification Email Template
 
+**Version**: 0.8.3
+**Last Updated**: January 2, 2026
+
 ## Subject Lines (A/B test these)
 
 - "Ready to test Piper Morgan? Check requirements first"
@@ -18,11 +21,11 @@ Before we schedule setup, let's make sure you have everything needed. This is st
 
 Technical Requirements:
 □ Comfortable using command line/terminal
-□ Python 3.9+ installed on your machine
+□ Python 3.11+ installed on your machine (3.12 preferred)
 □ Git installed and working
 □ Docker installed and running
 □ About 2GB free disk space
-□ 1-2 hours available for initial setup
+□ 45-60 minutes available for initial setup
 □ Password manager recommended for secure password storage
 
 Accounts & API Keys You'll Need:
@@ -31,7 +34,9 @@ Accounts & API Keys You'll Need:
   - OpenAI (GPT-4 preferred) -OR-
   - Anthropic (Claude)
 □ Budget $5-20 for API testing costs
-□ Notion account (optional but recommended)
+□ Notion account (optional but recommended for full feature testing)
+□ Slack workspace (optional, for notification features)
+□ Google account (optional, for Calendar integration)
 
 **CRITICAL DISCLAIMERS**
 
@@ -45,16 +50,19 @@ This is ALPHA software. That means:
 
 **WHAT TO EXPECT**
 
-Week 1: Interactive setup wizard guides you through account and password creation
-Week 2-3: You test real PM workflows, I fix bugs you find
-Week 4+: Quick weekly check-ins
+Day 1: Interactive GUI setup wizard guides you through configuration
+Week 1-2: You test real PM workflows, I fix bugs you find
+Week 3+: Quick weekly check-ins
 
 The goal is finding PM workflows that delight you, despite the rough edges.
 
-**SETUP HIGHLIGHTS**
-- New: Secure password setup during wizard (bcrypt-hashed)
+**SETUP HIGHLIGHTS (v0.8.3)**
+- GUI setup wizard with visual interface (no command line needed for setup!)
+- Integration health dashboard to monitor connected services
+- One-click OAuth connect for Slack and Google Calendar
+- Notion API key validation during setup
+- Secure password setup (bcrypt-hashed)
 - Automatic browser launch to http://localhost:8001
-- File upload and document processing ready to test
 
 **STILL INTERESTED?**
 
@@ -63,7 +71,7 @@ Reply with:
 2. Your biggest PM pain point you hope Piper helps with
 3. Best time for a 30-min setup call (optional but helpful)
 
-If this feels like too much technical setup, totally understand! We're planning a hosted version for early 2026.
+If this feels like too much technical setup, totally understand! We're planning a hosted version for 2026.
 
 Best,
 Christian

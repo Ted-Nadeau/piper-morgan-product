@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.2
-**Last Updated**: December 11, 2025
+**Version**: 0.8.3
+**Last Updated**: January 2, 2026
 **For**: Alpha Testers
 
 ---
@@ -51,7 +51,7 @@
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.0). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.3). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -66,15 +66,17 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
 
-## What's New in 0.8.2
+## What's New in 0.8.3
 
-**GUI Setup Wizard** - Initial setup now uses a visual web interface instead of command-line prompts. The wizard guides you through system checks, API key configuration, and user account creation with a clearer, more user-friendly interface.
+**Integration Health Dashboard** - New dashboard at Settings → Integrations showing real-time status of all integrations. One-click "Test" buttons let you verify each integration is working. Visual status indicators show healthy, degraded, or failed states with helpful fix suggestions.
 
-**Stable Core Features** - Setup, login, and the chat interface are stable and fully functional in 0.8.2. **Focus your testing on workflows**: lists, todos, projects, file management, and integrations. These are the areas that need the most attention now.
+**OAuth Connection Management** - Connect and disconnect Slack and Google Calendar directly from the Settings page. No more editing environment variables - just click "Connect" and authorize through the OAuth flow. Connected integrations show account details (workspace name, email).
 
-**Quality Improvements** - 602 automated smoke tests now validate core functionality. These tests run in under 5 seconds and serve as CI/CD quality gates. UI stability has improved with fixes across navigation, forms, and visual consistency.
+**Notion in Setup Wizard** - The setup wizard now includes Notion API key configuration. Enter your key and see immediate validation with workspace name confirmation before saving.
 
-**Multi-Provider LLM Support** - Now supports OpenAI (GPT-4), Anthropic (Claude), and Google Gemini. Configure any combination during setup.
+**Stable Core Features** - Setup, login, chat, lists, todos, and file management are stable. **Focus your testing on the new integration features**: the dashboard, OAuth connections, and Notion setup.
+
+**Bug Fixes** - Calendar OAuth now works reliably (state persistence fix). Toast notifications are visible and readable (7-second duration). Breadcrumb navigation no longer overlaps.
 
 ---
 
@@ -178,7 +180,7 @@ pip install -r requirements.txt
 
 ### Step 4: Start Server for First-Time Setup
 
-**New in 0.8.2**: Setup now uses a visual web interface by default.
+**New in 0.8.2+**: Setup now uses a visual web interface by default.
 
 ```bash
 python main.py
@@ -328,15 +330,15 @@ Click the button to go to the login page and start using Piper Morgan.
 
 ## Test Scenarios to Try
 
-**Note for 0.8.2 Testers**: Setup, login, and the chat interface are stable and fully functional. **Focus your testing on the following workflows and features** - these areas need the most attention:
+**Note for 0.8.3 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new integration features** - the Integration Dashboard, OAuth connections (Slack/Calendar), and Notion setup. These are the newest features and need the most attention:
 
 ### Priority Testing Areas
 
-1. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
-2. **File Handling** - Upload, download, analysis, edge cases
-3. **Integrations** - Slack, GitHub, Notion connections and functionality
-4. **Permission System** - Sharing resources, role-based access, edge cases
-5. **Learning System** - Preference detection, personalization behavior
+1. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
+2. **OAuth Connections** - Connect/disconnect Slack and Calendar from Settings
+3. **Notion Setup** - Re-run setup wizard to test Notion configuration
+4. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
+5. **File Handling** - Upload, download, analysis, edge cases
 
 ### Basic Functionality Tests
 
@@ -633,7 +635,7 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.2). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.3). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for 2026.
 
@@ -650,5 +652,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: December 11, 2025_
-_Software version: 0.8.2_
+_Last updated: January 2, 2026_
+_Software version: 0.8.3_

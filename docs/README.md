@@ -15,6 +15,7 @@
 - **[Testing Guide](ALPHA_TESTING_GUIDE.md)** - What to test and how to provide feedback
 - **[Known Issues](ALPHA_KNOWN_ISSUES.md)** - Current limitations and workarounds
 - **[Alpha Agreement](ALPHA_AGREEMENT_v2.md)** - Terms and expectations
+- **[Release Notes v0.8.3](RELEASE-NOTES-v0.8.3.md)** - What's new in the latest release
 
 ### New to the Project?
 
@@ -245,60 +246,29 @@ git push      # Runs fast tests via pre-push hook
 
 See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md)** for complete documentation.
 
-## 🚀 Recent Infrastructure Activations
+## 🚀 Recent Releases
 
-### 🏗️ GREAT-3A: Plugin Architecture Foundation (October 2, 2025)
+### v0.8.3 - Integration Health Dashboard (January 2, 2026)
 
-- **GREAT-3A Complete**: Plugin foundation, config standardization, and app.py refactoring ([Issue #197-198](https://github.com/mediajunkie/piper-morgan-product/issues/197))
-- **Architecture Achievement**: web/app.py refactored from 1,052 to 467 lines (55% reduction)
-- **Plugin System**: 4 operational plugins (Slack, GitHub, Notion, Calendar) with standardized interfaces
-- **Config Services**: Unified configuration architecture across all integrations
-- **Quality Maintained**: 72/72 tests passing throughout refactoring
+- **Integration Health Dashboard**: Real-time status for all integrations with one-click testing
+- **OAuth Connection Management**: Connect/disconnect Slack and Calendar directly from Settings
+- **Notion in Setup Wizard**: Configure Notion during initial setup with validation
+- **Bug Fixes**: Calendar OAuth state persistence, toast visibility, breadcrumb overlap
 
-### ✅ GREAT-2 Epic Completion (September 30, 2025)
+See [Release Notes v0.8.3](RELEASE-NOTES-v0.8.3.md) for details.
 
-- **Spatial Intelligence**: Three patterns discovered and documented (Granular, Embedded, Delegated)
-- **Router Architecture**: 100% completion across all 4 integrations (Calendar, GitHub, Notion, Slack)
-- **CORE-QUERY-1**: Complete integration router infrastructure with feature flag control
-- **Security Resolution**: TBD-SECURITY-02 vulnerability fixed with zero functionality impact
-- **Documentation**: Comprehensive architectural guidance and ADR-038 spatial patterns
+### v0.8.2 - GUI Setup Wizard (December 11, 2025)
 
-### 🔧 Multi-User Configuration System (September 6, 2025)
+- **GUI Setup Wizard**: Visual web interface for initial configuration
+- **602 Smoke Tests**: CI/CD quality gate validation
+- **UI Stabilization**: Toast z-index, navigation, dialog styling fixes
 
-- **PM-123 Complete**: Per-user GitHub repository and PM number format configuration ([Issue PM-123](https://github.com/mediajunkie/piper-morgan-product/issues/123))
-- **CLI Architecture Fix**: All 6 commands now accessible (create, verify, sync, triage, status, patterns)
-- **Configuration Integration**: GitHubConfiguration dataclass with YAML parsing in PIPER.user.md
-- **Auto-Detection**: Prefers user config, gracefully falls back to defaults
-- **Test Coverage**: 31 unit tests + 10 orchestration tests passing
+See [Release Notes v0.8.2](RELEASE-NOTES-v0.8.2.md) for details.
 
-### 📚 Notion Integration (August 26, 2025)
+### Previous Releases
 
-- **Knowledge Management**: Complete Notion workspace integration activated ([Issue #134](https://github.com/mediajunkie/piper-morgan-product/issues/134))
-- **MCP+Spatial Intelligence**: 8-dimensional spatial analysis for Notion pages
-- **CLI Commands**: `piper notion status/test/search/pages` for workspace management
-- **Performance**: <200ms enhancement target exceeded (0.1ms actual)
-- **Test Coverage**: 652 lines of comprehensive test coverage activated
-
-### 🧪 Test Infrastructure (August 20, 2025)
-
-- **Smart Test Execution**: ../scripts/run_tests.sh` with 4 modes (smoke, fast, full, coverage)
-- **Performance**: 0-second smoke tests (599+ test suite activated)
-- **Automation**: Git hooks with pre-push test enforcement
-- **Documentation**: Complete TEST-GUIDE.md for developers
-
-### 🔄 Multi-Agent Coordination (August 20, 2025)
-
-- **Operational Deployment**: Complete implementation plan ready ([Issue PM-118](https://github.com/mediajunkie/piper-morgan-product/issues/118))
-- **Automation Scripts**: Deployment and validation scripts created
-- **Quick Start**: [5-minute deployment guide](internal/development/methodology-core/MULTI_AGENT_QUICK_START.md) available
-- **Integration**: REST API design for coordination triggers
-
-### 💾 Persistent Context Foundation (August 20, 2025)
-
-- **MVP Foundation**: Complete user preference and session persistence ([Issue PM-119](https://github.com/mediajunkie/piper-morgan-product/issues/119))
-- **Performance**: <500ms operations supporting 1000+ concurrent users
-- **API Integration**: REST endpoints with validation and security
-- **Test Coverage**: 100% TDD methodology with comprehensive test suites
+- [v0.8.1.3](dev/2025/11/30/RELEASE-NOTES-v0.8.1.3.md) - Alpha setup refinements
+- [v0.8.1.2](dev/2025/11/30/RELEASE-NOTES-v0.8.1.2.md) - Bug fixes
 
 ## 📚 Enhanced Development Documentation
 

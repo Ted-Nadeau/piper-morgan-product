@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.2
+**Version**: 0.8.3
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes setup, plus initial configuration
@@ -11,13 +11,15 @@
 
 ---
 
-## What's New in 0.8.2
+## What's New in 0.8.3
 
-**GUI Setup Wizard** - Initial setup now uses a visual interface instead of command-line prompts. Makes API key configuration easier.
+**Integration Health Dashboard** - New dashboard at Settings → Integrations. See real-time health status, test connections with one click, and connect/disconnect integrations.
 
-**Stable Core** - Setup, login, and chat interface are stable. Focus your testing on workflows (lists, todos, file management, integrations).
+**OAuth Connection Management** - Connect Slack and Google Calendar directly from the web UI. No more editing environment variables - just click "Connect" and authorize.
 
-**Quality Improvements** - 602 automated smoke tests validate core functionality. UI polish improvements throughout.
+**Notion in Setup Wizard** - Configure Notion API key during initial setup with automatic validation.
+
+**Stable Core** - Setup, login, chat, and workflows are stable. Focus your testing on the new integration features.
 
 ---
 
@@ -200,20 +202,20 @@ After logging in to http://localhost:8001:
 
 ---
 
-## Testing Focus for 0.8.2
+## Testing Focus for 0.8.3
 
 **What's Stable** (light testing recommended):
 - ✅ Setup wizard (GUI and CLI)
 - ✅ Login/authentication
 - ✅ Chat interface
-- ✅ Basic navigation
+- ✅ Lists, todos, projects, files
 
 **Where to Focus Testing** (these need your attention):
-- 🔍 **Workflows**: Creating/managing lists, todos, projects
+- 🔍 **Integration Dashboard**: Settings → Integrations, test buttons, health status
+- 🔍 **OAuth Connections**: Connect/disconnect Slack and Calendar from Settings
+- 🔍 **Notion Setup**: Re-run setup wizard to test Notion configuration
 - 🔍 **File handling**: Upload, download, analysis
-- 🔍 **Integrations**: Slack, GitHub, Notion connections
 - 🔍 **Permission system**: Sharing resources, role-based access
-- 🔍 **Learning system**: Preference detection, personalization
 
 ---
 
@@ -312,12 +314,18 @@ After `python main.py` starts the server at http://localhost:8001:
 
 ---
 
-## What's Working in 0.8.2
+## What's Working in 0.8.3
 
-✅ **Setup & Onboarding** (Dec 11, 2025):
+✅ **Integration Dashboard** (New in 0.8.3):
+   - Real-time health status for all integrations
+   - One-click test buttons
+   - OAuth connect/disconnect for Slack and Calendar
+   - Visual status indicators with fix suggestions
+
+✅ **Setup & Onboarding**:
    - GUI setup wizard with visual interface
    - System health checks
-   - API key validation (OpenAI, Anthropic, Gemini)
+   - API key validation (OpenAI, Anthropic, Gemini, Notion)
    - User account creation
    - CLI setup wizard (alternative method)
 
@@ -343,16 +351,10 @@ After `python main.py` starts the server at http://localhost:8001:
    - Breadcrumb navigation
    - Theme support (light/dark mode)
 
-✅ **Quality Validation** (New in 0.8.2):
-   - 602 automated smoke tests (<5 seconds)
+✅ **Quality Validation**:
+   - 602+ automated smoke tests (<5 seconds)
    - CI/CD quality gates
    - UI stability improvements
-
-✅ **SEC-RBAC Phase 1**:
-   - Owner-based access control (owner_id validation)
-   - Permission grants (shared_with JSONB)
-   - Admin bypass pattern
-   - 9 resource tables RBAC-aware
 
 See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known limitations.
 
@@ -363,18 +365,18 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
 - **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.2 means)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.3 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.2). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+This is **alpha software** (0.8.3). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
 
-**Testing Focus**: Setup, login, and chat are stable. Focus your testing on workflows, file handling, and integrations.
+**Testing Focus**: Core features are stable. Focus your testing on the new Integration Dashboard and OAuth connections.
 
 ---
 
 **Happy testing!** 🚀
 
-_Last Updated: December 11, 2025_
+_Last Updated: January 2, 2026_
