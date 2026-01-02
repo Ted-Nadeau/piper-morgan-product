@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.2)
+# Known Issues & Feature Status (v0.8.3)
 
-**Version**: 0.8.2
-**Last Updated**: December 24, 2025
-**Status**: Stable Core (Setup/Login/Chat Ready - Focus Testing on Workflows)
+**Version**: 0.8.3
+**Last Updated**: January 2, 2026
+**Status**: Stable Core (Setup/Login/Chat Ready - Focus Testing on Integrations)
 
 ---
 
@@ -12,13 +12,29 @@ These features have been tested, completed, and are ready for alpha testing:
 
 ### Core Infrastructure
 
-- ✅ **GUI Setup Wizard** (New in 0.8.2)
+- ✅ **Integration Health Dashboard** (New in 0.8.3)
+
+  - Real-time health status at Settings → Integrations
+  - One-click "Test" button for each integration
+  - "Test All" button for comprehensive health check
+  - Visual status indicators (healthy, degraded, failed, not configured)
+  - Error messages with fix suggestions
+
+- ✅ **OAuth Connection Management** (New in 0.8.3)
+
+  - Connect/disconnect Slack directly from Settings UI
+  - Connect/disconnect Google Calendar from Settings UI
+  - OAuth 2.0 with PKCE and state tokens (CSRF protection)
+  - Refresh tokens stored in secure keychain
+  - No more editing environment variables for integrations
+
+- ✅ **GUI Setup Wizard** (Enhanced in 0.8.3)
 
   - Visual web interface at http://localhost:8001/setup
   - System health checks with visual indicators (Docker, Python, ports, database)
   - API key configuration via web form (much easier than CLI)
   - User account creation with real-time validation
-  - Support for OpenAI, Anthropic, and Google Gemini
+  - Support for OpenAI, Anthropic, Google Gemini, and **Notion** (new)
   - Alternative CLI wizard still available: `python main.py setup`
 
 - ✅ **Quality Validation** (New in 0.8.2)
@@ -321,8 +337,8 @@ These return a graceful fallback message (no errors):
 - Some pages had missing breadcrumbs (Issue #379 - all fixed)
 
 **Features with Placeholder Pages**:
-- ⏸️ **Integrations Management UI**: Backend integrations exist (Slack, GitHub, Notion, Calendar) but management UI shows "coming soon" placeholder
 - ⏸️ **Advanced Privacy Controls**: Basic privacy working (owner_id, shared_with), granular controls planned for beta
+- ⏸️ **GitHub OAuth**: GitHub integration uses PAT tokens; OAuth connect flow planned for 0.8.4
 
 **All P0/P1 issues resolved** as of November 23, 2025:
 - ✅ Issue #262: UUID Migration - Complete
@@ -348,14 +364,15 @@ These features exist but need more alpha testing validation:
 - **Workflow optimization**: Chain-of-Draft implemented, needs testing
 - **Intelligent automation**: Safety-first system complete, needs alpha validation
 
-### Integrations (Status TBD)
+### Integrations (Updated in 0.8.3)
 
-**[PM: Please review these with Chief Architect]**
+**Now with OAuth and Health Dashboard!**
 
-- **GitHub**: Issue creation, updates, search
-- **Slack**: Message sending, channel reading
-- **Notion**: Page creation, search
-- **Calendar**: Schedule checking, event creation
+- ✅ **Slack**: OAuth connect from Settings UI, message sending, channel reading
+- ✅ **Google Calendar**: OAuth connect from Settings UI, schedule checking, event creation
+- ✅ **Notion**: API key in setup wizard, page creation, search
+- ✅ **GitHub**: PAT token configuration, issue creation, updates, search
+- ✅ **Health Dashboard**: Real-time status monitoring for all integrations
 
 ### Morning Standup
 
@@ -416,7 +433,9 @@ Features not yet implemented or incomplete:
 
 | Feature Category     | Status          | Alpha Ready? | Notes                    |
 | -------------------- | --------------- | ------------ | ------------------------ |
-| Setup Wizard         | ✅ Complete     | Yes          | With password setup (A8) |
+| Setup Wizard         | ✅ Complete     | Yes          | With Notion support (0.8.3) |
+| Integration Dashboard| ✅ Complete     | Yes          | Health status + testing (0.8.3) |
+| OAuth Connections    | ✅ Complete     | Yes          | Slack + Calendar (0.8.3) |
 | User Management      | ✅ Complete     | Yes          | UUID-based IDs (#262)    |
 | Authentication       | ✅ Complete     | Yes          | JWT + bcrypt + blacklist |
 | Password Security    | ✅ Complete     | Yes          | Bcrypt 12 rounds (#297)  |
@@ -427,7 +446,7 @@ Features not yet implemented or incomplete:
 | Boundary Enforcement | ✅ Complete     | Yes          | Ethics layer             |
 | Knowledge Graph      | ✅ Complete     | Yes          | With boundaries          |
 | Learning System      | 🚧 Experimental | Partial      | Needs validation         |
-| Integrations         | 🚧 Experimental | TBD          | PM to review             |
+| Integrations         | ✅ Complete     | Yes          | OAuth + health dashboard (0.8.3) |
 | Standup Automation   | ✅ Complete     | Yes          | Issue #379-4 fixed       |
 | Lists Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
 | Todos Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
@@ -493,11 +512,12 @@ This document will be updated:
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
 - `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
 - `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
-- `VERSION_NUMBERING.md` - Understanding version 0.8.2
+- `VERSION_NUMBERING.md` - Understanding version 0.8.3
+- `RELEASE-NOTES-v0.8.3.md` - What changed in this release
 - GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
 ---
 
-_Last Updated: December 24, 2025_
-_Status: Stable core (setup, login, chat ready - 76% canonical query coverage)_
-_Software Version: 0.8.2_
+_Last Updated: January 2, 2026_
+_Status: Stable core (setup, login, chat, integrations ready - 76% canonical query coverage)_
+_Software Version: 0.8.3_
