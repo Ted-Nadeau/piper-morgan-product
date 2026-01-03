@@ -386,6 +386,9 @@
       // OAuth-based integrations that support Connect/Disconnect
       const OAUTH_INTEGRATIONS = ['slack', 'calendar'];
 
+      // API key integrations with dedicated settings pages (Issue #540, #541)
+      const API_KEY_INTEGRATIONS = ['notion', 'github'];
+
       // Status icons for overall health
       const STATUS_ICONS = {
         healthy: '✅',
@@ -474,7 +477,57 @@
 
         container.innerHTML = integrations.map(integration => {
           const isOAuth = OAUTH_INTEGRATIONS.includes(integration.name);
+          const isAPIKey = API_KEY_INTEGRATIONS.includes(integration.name);
           const isConnected = integration.status !== 'not_configured';
+
+          // Determine action buttons based on integration type
+          let actionButtons = '';
+
+          if (isOAuth) {
+            // OAuth integrations: Connect/Disconnect via OAuth flow
+            actionButtons = isConnected ? `
+              <button
+                class="action-btn disconnect-btn"
+                id="disconnect-btn-${integration.name}"
+                onclick="disconnectIntegration('${integration.name}')"
+              >
+                Disconnect
+              </button>
+            ` : `
+              <button
+                class="action-btn connect-btn"
+                id="connect-btn-${integration.name}"
+                onclick="connectIntegration('${integration.name}')"
+              >
+                Connect
+              </button>
+            `;
+          } else if (isAPIKey) {
+            // API key integrations: Connect/Disconnect via settings page (Issue #540)
+            actionButtons = isConnected ? `
+              <button
+                class="action-btn disconnect-btn"
+                id="disconnect-btn-${integration.name}"
+                onclick="disconnectAPIKeyIntegration('${integration.name}')"
+              >
+                Disconnect
+              </button>
+              <a href="${integration.configure_url}" class="action-btn configure-btn">
+                Settings
+              </a>
+            ` : `
+              <a href="${integration.configure_url}" class="action-btn connect-btn">
+                Connect
+              </a>
+            `;
+          } else if (integration.configure_url) {
+            // Other integrations with configure URL
+            actionButtons = `
+              <a href="${integration.configure_url}" class="action-btn configure-btn">
+                Configure
+              </a>
+            `;
+          }
 
           return `
             <div class="integration-card" id="card-${integration.name}">
@@ -504,27 +557,7 @@
                 >
                   Test
                 </button>
-                ${isOAuth ? (isConnected ? `
-                  <button
-                    class="action-btn disconnect-btn"
-                    id="disconnect-btn-${integration.name}"
-                    onclick="disconnectIntegration('${integration.name}')"
-                  >
-                    Disconnect
-                  </button>
-                ` : `
-                  <button
-                    class="action-btn connect-btn"
-                    id="connect-btn-${integration.name}"
-                    onclick="connectIntegration('${integration.name}')"
-                  >
-                    Connect
-                  </button>
-                `) : (integration.configure_url ? `
-                  <a href="${integration.configure_url}" class="action-btn configure-btn">
-                    Configure
-                  </a>
-                ` : '')}
+                ${actionButtons}
               </div>
             </div>
           `;
@@ -680,6 +713,49 @@
       }
 
       async function disconnectIntegration(integrationName) {
+        const btn = document.getElementById(`disconnect-btn-${integrationName}`);
+
+        // Confirm disconnection
+        if (!confirm(`Are you sure you want to disconnect ${integrationName}? You can reconnect anytime.`)) {
+          return;
+        }
+
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Disconnecting...';
+        }
+
+        try {
+          const response = await fetch(`/api/v1/settings/integrations/${integrationName}/disconnect`, {
+            method: 'POST'
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Disconnect failed');
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast('success', data.message || `${integrationName} disconnected`, 'Disconnected');
+            // Reload integrations to update UI
+            loadIntegrationsHealth();
+          } else {
+            throw new Error(data.message || 'Disconnect failed');
+          }
+        } catch (error) {
+          console.error('Disconnect failed:', error);
+          showToast('error', error.message, 'Disconnect Failed');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Disconnect';
+          }
+        }
+      }
+
+      // Disconnect API key integration (Issue #540: Notion, GitHub, etc.)
+      async function disconnectAPIKeyIntegration(integrationName) {
         const btn = document.getElementById(`disconnect-btn-${integrationName}`);
 
         // Confirm disconnection

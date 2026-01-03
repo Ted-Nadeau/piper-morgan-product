@@ -246,6 +246,26 @@ async def integrations_page(request: Request):
     )
 
 
+@router.get("/settings/integrations/notion", response_class=HTMLResponse)
+async def notion_settings_page(request: Request):
+    """Notion API key settings page (Issue #540)"""
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "settings_notion.html", {"request": request, "user": user_context}
+    )
+
+
+@router.get("/settings/integrations/github", response_class=HTMLResponse)
+async def github_settings_page(request: Request):
+    """GitHub token settings page (Issue #541)"""
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "settings_github.html", {"request": request, "user": user_context}
+    )
+
+
 @router.get("/lists", response_class=HTMLResponse)
 async def lists_ui(request: Request):
     """Lists management page with permission-aware UI (Issue #376)"""

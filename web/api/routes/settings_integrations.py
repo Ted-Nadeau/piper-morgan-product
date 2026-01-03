@@ -361,3 +361,306 @@ async def get_all_oauth_status():
         logger.error("oauth_status_check_failed", error=str(e))
 
     return status_result
+
+
+# ============================================================================
+# Notion API Key Management (Issue #540)
+# ============================================================================
+
+
+@router.get("/notion")
+async def get_notion_settings():
+    """
+    Get Notion integration status.
+
+    Returns whether Notion is configured and any workspace info.
+    Issue #540: ALPHA-SETUP-NOTION stuck state recovery
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        keychain = KeychainService()
+        api_key = keychain.get_api_key("notion")
+
+        if api_key:
+            # Validate the key and get workspace info
+            from services.security.user_api_key_service import UserAPIKeyService
+            from web.api.routes.setup import validate_notion_key_and_get_workspace
+
+            is_valid, workspace_name, error_msg = await validate_notion_key_and_get_workspace(
+                api_key
+            )
+
+            return {
+                "configured": True,
+                "valid": is_valid,
+                "workspace": workspace_name if is_valid else None,
+                "error": error_msg if not is_valid else None,
+            }
+        else:
+            return {
+                "configured": False,
+                "valid": False,
+                "workspace": None,
+                "error": None,
+            }
+
+    except Exception as e:
+        logger.error("notion_settings_check_failed", error=str(e), exc_info=True)
+        return {
+            "configured": False,
+            "valid": False,
+            "workspace": None,
+            "error": str(e),
+        }
+
+
+@router.post("/notion/save")
+async def save_notion_key(api_key: str):
+    """
+    Save or update Notion API key.
+
+    Validates the key first, then stores in keychain.
+    Issue #540: ALPHA-SETUP-NOTION stuck state recovery
+    """
+    from services.database.session_factory import AsyncSessionFactory
+    from services.security.user_api_key_service import UserAPIKeyService
+    from web.api.routes.setup import validate_notion_key_and_get_workspace
+
+    # Validate the key first
+    is_valid, workspace_name, error_msg = await validate_notion_key_and_get_workspace(api_key)
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg or "Invalid Notion API key",
+        )
+
+    # Store in keychain using UserAPIKeyService
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            service = UserAPIKeyService()
+
+            # Get current user from session context (simplified - use system user for now)
+            # In production, this should get the authenticated user
+            await service.store_user_key(
+                session=session,
+                user_id="system",  # TODO: Get from auth context
+                provider="notion",
+                api_key=api_key,
+                validate=False,  # Already validated above
+            )
+
+        logger.info("notion_key_saved", workspace=workspace_name)
+
+        return {
+            "success": True,
+            "workspace": workspace_name,
+            "message": f"Connected to {workspace_name}",
+        }
+
+    except Exception as e:
+        logger.error("notion_key_save_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save Notion key: {str(e)}",
+        )
+
+
+@router.post("/notion/disconnect")
+async def disconnect_notion():
+    """
+    Disconnect Notion integration.
+
+    Removes API key from keychain.
+    Issue #540: ALPHA-SETUP-NOTION stuck state recovery
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        keychain = KeychainService()
+
+        # Remove from keychain
+        try:
+            keychain.delete_api_key("notion")
+        except Exception:
+            pass  # Key might not exist
+
+        logger.info("notion_disconnected")
+
+        return {
+            "success": True,
+            "message": "Notion disconnected",
+        }
+
+    except Exception as e:
+        logger.error("notion_disconnect_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to disconnect Notion: {str(e)}",
+        )
+
+
+# ============================================================================
+# GitHub Token Management (Issue #541)
+# ============================================================================
+
+
+@router.get("/github")
+async def get_github_settings():
+    """
+    Get GitHub integration status.
+
+    Returns whether GitHub is configured and validates token if present.
+    Issue #541: ALPHA-SETUP-GITHUB stuck state recovery
+    """
+    try:
+        from services.integrations.github.config_service import GitHubConfigService
+
+        config_service = GitHubConfigService()
+        token = config_service.get_authentication_token()
+
+        if token:
+            # Validate the token by testing connection
+            from services.integrations.github.github_integration_router import (
+                GitHubIntegrationRouter,
+            )
+
+            router_instance = GitHubIntegrationRouter()
+            test_result = router_instance.test_connection()
+
+            is_valid = test_result.get("authenticated", False)
+
+            return {
+                "configured": True,
+                "valid": is_valid,
+                "username": test_result.get("username") if is_valid else None,
+                "error": test_result.get("error") if not is_valid else None,
+            }
+        else:
+            return {
+                "configured": False,
+                "valid": False,
+                "username": None,
+                "error": None,
+            }
+
+    except Exception as e:
+        logger.error("github_settings_check_failed", error=str(e), exc_info=True)
+        return {
+            "configured": False,
+            "valid": False,
+            "username": None,
+            "error": str(e),
+        }
+
+
+@router.post("/github/save")
+async def save_github_token(token: str):
+    """
+    Save or update GitHub personal access token.
+
+    Validates the token first, then stores in keychain and environment.
+    Issue #541: ALPHA-SETUP-GITHUB stuck state recovery
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    # Validate the token by testing connection
+    try:
+        # Temporarily set the token for validation
+        original_token = os.environ.get("GITHUB_TOKEN")
+        os.environ["GITHUB_TOKEN"] = token
+
+        # Clear config cache to pick up new token
+        from services.integrations.github.config_service import GitHubConfigService
+
+        config_service = GitHubConfigService()
+        config_service.clear_cache()
+
+        # Test connection
+        from services.integrations.github.github_integration_router import GitHubIntegrationRouter
+
+        router_instance = GitHubIntegrationRouter()
+        test_result = router_instance.test_connection()
+
+        is_valid = test_result.get("authenticated", False)
+
+        if not is_valid:
+            # Restore original token
+            if original_token:
+                os.environ["GITHUB_TOKEN"] = original_token
+            else:
+                os.environ.pop("GITHUB_TOKEN", None)
+            config_service.clear_cache()
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=test_result.get("error", "Invalid GitHub token"),
+            )
+
+        # Token is valid - store in keychain for persistence
+        keychain = KeychainService()
+        keychain.store_api_key("github_token", token)
+
+        username = test_result.get("username", "GitHub User")
+        logger.info("github_token_saved", username=username)
+
+        return {
+            "success": True,
+            "username": username,
+            "message": f"Connected as {username}",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("github_token_save_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save GitHub token: {str(e)}",
+        )
+
+
+@router.post("/github/disconnect")
+async def disconnect_github():
+    """
+    Disconnect GitHub integration.
+
+    Removes token from keychain and environment.
+    Issue #541: ALPHA-SETUP-GITHUB stuck state recovery
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        keychain = KeychainService()
+
+        # Remove from keychain
+        try:
+            keychain.delete_api_key("github_token")
+        except Exception:
+            pass  # Key might not exist
+
+        # Clear from environment
+        os.environ.pop("GITHUB_TOKEN", None)
+        os.environ.pop("GITHUB_API_TOKEN", None)
+        os.environ.pop("GH_TOKEN", None)
+
+        # Clear config cache
+        from services.integrations.github.config_service import GitHubConfigService
+
+        config_service = GitHubConfigService()
+        config_service.clear_cache()
+
+        logger.info("github_disconnected")
+
+        return {
+            "success": True,
+            "message": "GitHub disconnected",
+        }
+
+    except Exception as e:
+        logger.error("github_disconnect_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to disconnect GitHub: {str(e)}",
+        )

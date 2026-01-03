@@ -61,7 +61,7 @@ INTEGRATION_REGISTRY = {
     "notion": {
         "display_name": "Notion",
         "icon": "📝",
-        "configure_url": "/setup#step-2",  # Issue #527: Redirect to setup wizard API Keys step
+        "configure_url": "/settings/integrations/notion",  # Issue #540: Dedicated settings page
         "errors": {
             "api_key_invalid": {
                 "message": "Invalid Notion API key",

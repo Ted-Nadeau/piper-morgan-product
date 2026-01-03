@@ -94,6 +94,96 @@ Lead Developer tasks:
 - `web/api/routes/integrations.py` - `_test_calendar()` function
 - `tests/unit/web/api/routes/test_integrations.py` - Calendar tests + registry test
 
+### 10:45 AM - Issue #540: Notion Stuck State Recovery
+
+**Problem**: Notion integration has no recovery path when API key becomes invalid
+- `configure_url` pointed to `/setup#step-2` (setup wizard) - not helpful post-setup
+- User stuck if Notion key expires or becomes invalid
+
+**Solution Approved**: Option A - Dedicated `/settings/integrations/notion` page
+
+### 10:50 AM - Implementation
+
+**1. Added Notion API endpoints** to [settings_integrations.py](web/api/routes/settings_integrations.py):
+- `GET /api/v1/settings/integrations/notion` - Check status (configured/valid/workspace)
+- `POST /api/v1/settings/integrations/notion/save` - Validate and save API key
+- `POST /api/v1/settings/integrations/notion/disconnect` - Remove API key from keychain
+
+**2. Created Notion settings page** [templates/settings_notion.html](templates/settings_notion.html):
+- Shows connection status (connected/disconnected/stuck)
+- API key input with validation
+- Connect/Disconnect buttons
+- Proper breadcrumb navigation
+
+**3. Added UI route** in [ui.py:249-256](web/api/routes/ui.py#L249-L256):
+- `GET /settings/integrations/notion` renders the settings page
+
+**4. Updated INTEGRATION_REGISTRY** in [integrations.py:64](web/api/routes/integrations.py#L64):
+- Changed `configure_url` from `/setup#step-2` to `/settings/integrations/notion`
+
+**5. Updated Integration Dashboard** [integrations.html](templates/integrations.html):
+- Added `API_KEY_INTEGRATIONS` array for non-OAuth integrations with settings pages
+- Notion now shows Connect/Disconnect buttons + Settings link when connected
+- Added `disconnectAPIKeyIntegration()` function for API key-based disconnect
+
+**6. Added tests** [test_settings_notion.py](tests/unit/web/api/routes/test_settings_notion.py):
+- 8 new tests covering all endpoints
+- Tests for: not configured, configured+valid, configured+invalid (stuck state)
+- Tests for save validation, disconnect, registry URL change
+
+**Test Results:**
+- 38 tests pass (30 existing + 8 new)
+
+**Files Modified:**
+- `web/api/routes/settings_integrations.py` - Added 3 Notion endpoints
+- `web/api/routes/ui.py` - Added Notion settings page route
+- `web/api/routes/integrations.py` - Updated INTEGRATION_REGISTRY configure_url
+- `templates/integrations.html` - Added API_KEY_INTEGRATIONS handling
+- `templates/settings_notion.html` - NEW: Notion settings page template
+- `tests/unit/web/api/routes/test_settings_notion.py` - NEW: 8 tests
+
+### 11:30 AM - Issue #541: GitHub Stuck State Recovery
+
+**Problem**: GitHub integration had `configure_url` pointing to `/settings/integrations/github` but the page didn't exist
+- Users with expired/invalid GitHub tokens had no recovery path
+
+**Solution**: Created dedicated GitHub settings page (same approach as Notion)
+
+### 11:35 AM - Implementation
+
+**1. Added GitHub API endpoints** to [settings_integrations.py:509-668](web/api/routes/settings_integrations.py#L509-L668):
+- `GET /api/v1/settings/integrations/github` - Check status (configured/valid/username)
+- `POST /api/v1/settings/integrations/github/save` - Validate and save token
+- `POST /api/v1/settings/integrations/github/disconnect` - Remove token from keychain + env
+
+**2. Created GitHub settings page** [templates/settings_github.html](templates/settings_github.html):
+- Shows connection status (connected/disconnected/stuck)
+- Token input with format validation (ghp_* or github_pat_*)
+- Connect/Disconnect buttons
+- Proper breadcrumb navigation
+
+**3. Added UI route** in [ui.py:259-266](web/api/routes/ui.py#L259-L266):
+- `GET /settings/integrations/github` renders the settings page
+
+**4. Updated Integration Dashboard** [integrations.html:390](templates/integrations.html#L390):
+- Added 'github' to `API_KEY_INTEGRATIONS` array
+- GitHub now shows Connect/Disconnect buttons + Settings link when connected
+
+**5. Added tests** [test_settings_github.py](tests/unit/web/api/routes/test_settings_github.py):
+- 8 new tests covering all endpoints
+- Tests for: not configured, configured+valid, configured+invalid (stuck state)
+- Tests for save validation, disconnect, registry URL verification
+
+**Test Results:**
+- 46 tests pass (30 existing integrations + 8 Notion + 8 GitHub)
+
+**Files Modified:**
+- `web/api/routes/settings_integrations.py` - Added 3 GitHub endpoints
+- `web/api/routes/ui.py` - Added GitHub settings page route
+- `templates/integrations.html` - Added 'github' to API_KEY_INTEGRATIONS
+- `templates/settings_github.html` - NEW: GitHub settings page template
+- `tests/unit/web/api/routes/test_settings_github.py` - NEW: 8 tests
+
 ---
 
-*Last updated: January 3, 2026, 10:30 AM PT*
+*Last updated: January 3, 2026, 11:45 AM PT*

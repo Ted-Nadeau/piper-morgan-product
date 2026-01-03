@@ -1,0 +1,188 @@
+"""
+Unit tests for Notion Settings API
+Issue #540: ALPHA-SETUP-NOTION stuck state recovery
+
+Tests the Notion API key management endpoints in settings_integrations.py.
+"""
+
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from web.api.routes.settings_integrations import (
+    disconnect_notion,
+    get_notion_settings,
+    save_notion_key,
+)
+
+
+class TestGetNotionSettings:
+    """Tests for GET /api/v1/settings/integrations/notion"""
+
+    @pytest.mark.asyncio
+    async def test_returns_not_configured_when_no_key(self):
+        """Should return configured=False when no API key in keychain"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            result = await get_notion_settings()
+
+            assert result["configured"] is False
+            assert result["valid"] is False
+            assert result["workspace"] is None
+            assert result["error"] is None
+            mock_keychain.get_api_key.assert_called_once_with("notion")
+
+    @pytest.mark.asyncio
+    async def test_returns_configured_and_valid_when_key_valid(self):
+        """Should return configured=True, valid=True when API key validates"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "secret_test_key"
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch(
+                "web.api.routes.setup.validate_notion_key_and_get_workspace",
+                new_callable=AsyncMock,
+                return_value=(True, "Test Workspace", None),
+            ) as mock_validate,
+        ):
+            result = await get_notion_settings()
+
+            assert result["configured"] is True
+            assert result["valid"] is True
+            assert result["workspace"] == "Test Workspace"
+            assert result["error"] is None
+            mock_validate.assert_called_once_with("secret_test_key")
+
+    @pytest.mark.asyncio
+    async def test_returns_configured_but_invalid_when_key_fails(self):
+        """Should return configured=True, valid=False when API key is invalid (stuck state)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "secret_expired_key"
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch(
+                "web.api.routes.setup.validate_notion_key_and_get_workspace",
+                new_callable=AsyncMock,
+                return_value=(False, None, "API key is invalid"),
+            ),
+        ):
+            result = await get_notion_settings()
+
+            assert result["configured"] is True
+            assert result["valid"] is False
+            assert result["workspace"] is None
+            assert result["error"] == "API key is invalid"
+
+
+class TestSaveNotionKey:
+    """Tests for POST /api/v1/settings/integrations/notion/save"""
+
+    @pytest.mark.asyncio
+    async def test_rejects_invalid_key(self):
+        """Should return 400 when API key validation fails"""
+        with patch(
+            "web.api.routes.setup.validate_notion_key_and_get_workspace",
+            new_callable=AsyncMock,
+            return_value=(False, None, "Invalid API key"),
+        ):
+            from fastapi import HTTPException
+
+            with pytest.raises(HTTPException) as exc_info:
+                await save_notion_key("secret_invalid_key")
+
+            assert exc_info.value.status_code == 400
+            assert "Invalid API key" in str(exc_info.value.detail)
+
+    @pytest.mark.asyncio
+    async def test_saves_valid_key_and_returns_success(self):
+        """Should store key and return success when validation passes"""
+        mock_service = MagicMock()
+        mock_service.store_user_key = AsyncMock(return_value=MagicMock())
+
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session.__aexit__ = AsyncMock(return_value=None)
+
+        with (
+            patch(
+                "web.api.routes.setup.validate_notion_key_and_get_workspace",
+                new_callable=AsyncMock,
+                return_value=(True, "My Workspace", None),
+            ),
+            patch("services.database.session_factory.AsyncSessionFactory") as mock_session_factory,
+            patch(
+                "services.security.user_api_key_service.UserAPIKeyService",
+                return_value=mock_service,
+            ),
+        ):
+            # Setup session context manager
+            mock_session_factory.session_scope_fresh.return_value = mock_session
+
+            result = await save_notion_key("secret_valid_key")
+
+            assert result["success"] is True
+            assert result["workspace"] == "My Workspace"
+            assert "My Workspace" in result["message"]
+
+
+class TestDisconnectNotion:
+    """Tests for POST /api/v1/settings/integrations/notion/disconnect"""
+
+    @pytest.mark.asyncio
+    async def test_disconnects_and_returns_success(self):
+        """Should remove key from keychain and return success"""
+        mock_keychain = MagicMock()
+        mock_keychain.delete_api_key.return_value = None
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            result = await disconnect_notion()
+
+            assert result["success"] is True
+            assert result["message"] == "Notion disconnected"
+            mock_keychain.delete_api_key.assert_called_once_with("notion")
+
+    @pytest.mark.asyncio
+    async def test_handles_missing_key_gracefully(self):
+        """Should succeed even if no key exists to delete"""
+        mock_keychain = MagicMock()
+        mock_keychain.delete_api_key.side_effect = KeyError("notion")
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            result = await disconnect_notion()
+
+            # Should still succeed - key not existing is fine
+            assert result["success"] is True
+            assert result["message"] == "Notion disconnected"
+
+
+class TestIntegrationRegistryNotionUrl:
+    """Tests for Notion configure_url in INTEGRATION_REGISTRY (Issue #540)"""
+
+    def test_notion_configure_url_points_to_settings_page(self):
+        """Notion configure_url should point to dedicated settings page, not setup wizard"""
+        from web.api.routes.integrations import INTEGRATION_REGISTRY
+
+        notion_config = INTEGRATION_REGISTRY.get("notion")
+        assert notion_config is not None
+        assert notion_config["configure_url"] == "/settings/integrations/notion"
+        # Should NOT point to setup wizard
+        assert notion_config["configure_url"] != "/setup#step-2"
