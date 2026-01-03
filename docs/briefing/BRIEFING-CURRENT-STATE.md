@@ -9,41 +9,52 @@
 
 ## 📊 STATUS BANNER
 
-**Current Position**: 2.9.3.3.2.7.2.1 (Complete the Build of CORE - Sprint A8 Active, P1 Polish Phase)
-**Last Updated**: November 4, 2025, 10:30 AM PDT
-**Great Refactor**: ✅ COMPLETE
-**CORE-CRAFT**: ✅ COMPLETE (Oct 14)
-**Sprint A5**: ✅ COMPLETE (Oct 20) - CORE-LEARN
-**Sprint A6**: ✅ COMPLETE (Oct 22) - CORE-USERS (Onboarding)
-**Sprint A7**: ✅ COMPLETE (Oct 23) - Polish & Buffer (7 issues completed)
-**Sprint A8**: ✅ MOSTLY COMPLETE - P0 Blockers Complete (Nov 1), P1 Polish Sprint (Nov 3)
+**Current Position**: 3.3.7 - Completed Great Refactor (GREAT), Core functionality (CORE), and am now in ALPHA testing against version 0.8.3
+**Last Updated**: January 3, 2026, 08:43 AM PDT
+
+**Sprint A12**: 🐛 IN PROGRESS
 
 ---
 
 
 ```
-1. ✅ The Great Refactor (Sept 20 - Oct 8, 2025)
-2. ➡️ Complete the build of CORE
-    1. ✅ A1: Critical Infrastructure (Oct 8-11)
-    2. ✅ CORE-CRAFT (Oct 11-14)
-        - ✅ CRAFT-GAP
-        - ✅ CRAFT-PROOF
-        - ✅ CRAFT-VALID
-    3. ✅ A2: Notion & Errors (Oct 15-16)
-        - ✅ Pattern 034 REST-compliant error handling
-        - ✅ All 15+ endpoints updated
-        - ✅ GitHub legacy deprecation
-    4. ✅ A3: Ethics & Knowledge Integration (Oct 17+)
-        - ✅ 🔥 Activate ethics layer (PM-087)
-        - ✅ 🧠 Connect knowledge graph (PM-040)
-        - ✅ 🔌 Complete MCP migration
-    5. ✅ A4: Standup Epic
-    6. ✅ A5: Learning System
-    7. ✅ A6: User Onboarding
-    8. ✅ A7: Polish & Buffer (7 issues)
-    9. ➡️ A8: Alpha Prep & Launch (P0 Blockers + P1 Polish - IN PROGRESS)
-3. Start alpha testing on 0.1 (Alpha Wave 2)
+1. ✅ The Great Refactor
+2. ✅ CORE functionality
+3. 🐛 ALPHA testing
+    1. ✅Initial alpha testing - 0.8.0
+    2. ✅ Alpha onboarding/auth testing - 0.8.1, 0.8.1.1-3, 0.8.2
+    3. 🐛Alpha Setup evolution - 0.8.3
+        1. ✅ BUG: test_intent_enricher_high_confidence fails - UploadedFile model schema mismatch
+        2. ✅ BUG-P0: Unhandled EXECUTION actions return 422 instead of graceful message
+        3. ✅ TEST-FIX: test_bypass_prevention.py fails with 401 - TestClient missing auth
+        4. ✅ALPHA-SETUP-VERIFY: Integration health check dashboard
+        5. ✅ALPHA-SETUP-NOTION: Add Notion integration to setup wizard
+        6. ✅ALPHA-SETUP-SLACK: Add Slack OAuth to setup wizard
+        7. 🐛 ALPHA-SETUP-CALENDAR: Add Google Calendar to setup wizard
+        8. ALPHA-SETUP-MANAGE: Integration Management Post-Setup
+        9. ALPHA-SETTINGS-INTEGRATIONS: Enhanced Integration Management
+        10. BUG: Integration Test button uses MCP instead of OAuth token
+        11. Notion integration stuck with no recovery path
+        12. GitHub integration stuck with no recovery path
+        13. ARCH-SCHEMA-VALID: Add Schema Validation Check on Startup
+        14. FLY-MAINT-CLEANUP: Scan and archive deprecated folders
+        15. FLY-COORD-TREES: Git Worktrees for Multi-Agent Coordination
+        16. FTUX-TESTPLAN: Canonical Query Test Matrix for Alpha Testing
+        17. 🛑 SEC-ENCRYPT-ATREST: Implement Encryption at Rest for Sensitive Data
+        ARCH-FIX-SINGLETON: Replace ServiceContainer singleton to enable horizontal scaling
 4. Complete MVP track
+    1. B2 - Beta Enablers
+        1. CONV-UX-GREET: Calendar Scanning on Greeting
+        2. CONV-MCP-STANDUP-INTERACTIVE: Interactive Standup Assistant
+        3. CONV-UX-PERSIST: Conversation History & Persistence
+        4. SLACK-ATTENTION-DECAY: Implement pattern learning for attention models
+        5. MUX-INTERACT-DISCOVERY: Discovery-Oriented Intent Architecture
+        6. FTUX-PORTFOLIO: Project Portfolio Onboarding - Multi-Layer User Project Setup
+        7. FTUX-CONCIERGE: Capability Concierge - Self-Aware Capability Discovery & Communication
+        8. FTUX-QUICK-2: Better defaults for GitHub issue creation
+        9. FTUX-QUICK-3: Add calendar context to focus guidance
+    2. MUX: Modeled User Experience
+    3. MVP: Minimum Valuable Product
 5. Start beta testing on 0.9
 6. Launch 1.0
 ```
@@ -52,181 +63,133 @@
 
 ## 📈 SYSTEM CAPABILITY
 
-**Working (~90%)** - Higher than previous estimate!:
-- ✅ Intent classification (13 categories, 98.62% accuracy)
-- ✅ All integrations via plugin architecture
-- ✅ Orchestration pipeline (Intent → Engine → Router)
-- ✅ Configuration validation with spatial patterns
-- ✅ Performance (602K req/sec sustained)
-- ✅ Multi-user context isolation
-- ✅ Quality gates and CI/CD (13/13 workflows operational)
-- ✅ Zero bypass routes
-- ✅ 22 production handlers implemented (discovered in CRAFT)
-- ✅ Pattern learning handler operational
-- ✅ Standup handler exists (needs testing)
-- ✅ Notion connectivity (A2 complete)
-- ✅ Complex workflow orchestration (partially done?)
-- ✅ Learning system integration (handler exists, needs wiring)
-- ✅ Full standup automation (handler exists, needs testing)
-- ✅ Error standardization (Pattern 034 complete Oct 16)
-- ✅ MCP migration (A3 in progress)
-- ✅ Ethics layer activation (A3 in progress)
-- ✅ Knowledge graph connection (A3 in progress)
+> **Use Serena for live state**: `mcp__serena__find_symbol`, `mcp__serena__list_dir`
+> See CLAUDE.md "Live System State" section for query patterns.
 
+### Current Capabilities (January 2026)
 
-**Remaining CORE Work (~1%)** - Nearly complete!:
-- ✅ User onboarding (A6 - COMPLETE Oct 22)
-- ✅ Polish & Buffer (A7 - COMPLETE Oct 23)
-- ➡️ Alpha Prep & Launch (A8 - P0 COMPLETE Nov 1, P1 POLISH COMPLETE Nov 3)
+**Intent Classification**: 15 categories
+- EXECUTION, ANALYSIS, SYNTHESIS, STRATEGY, PLANNING, REVIEW, LEARNING
+- QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 
----
+**Active Integrations**: 7 plugins
+- Slack (OAuth connect from Settings)
+- GitHub (PAT token configuration)
+- Notion (API key in setup wizard)
+- Google Calendar (OAuth connect from Settings)
+- MCP (Model Context Protocol)
+- Spatial (spatial intelligence)
+- Demo (reference implementation)
 
-**Key Insight**: CORE infrastructure is complete! Sprints A7-A8 focus on polish, API key lifecycle, user architecture, and Alpha Wave 2 launch.
+**Pattern Catalog**: 47 patterns across 5 categories
+- Core Architecture (repository, service, factory, etc.)
+- Data & Query (CQRS-lite, query layer, context resolution)
+- AI & Intelligence (intent classification, LLM adapter)
+- Integration & Platform (plugin interface, MCP)
+- Development & Process (verification first, session management, Beads discipline)
 
-### Current Sprint (A8)
-
-**A8: Alpha Prep & Launch** - Active (Nov 1-3, P0 Blockers + P1 Polish)
-
-#### ✅ P0 BLOCKERS (November 1, 2025)
-**Status**: COMPLETE - 2 critical issues resolved
-
-**Completed Issues**:
-- Issue #280: CORE-ALPHA-DATA-LEAK - Fixed (5/5 sub-tasks)
-- Issue #282: CORE-ALPHA-FILE-UPLOAD - Fixed (5/5 sub-tasks)
-
-**Architectural Decision**:
-- **ADR-040**: Local Database Per Environment (CODE ≠ DATA principle)
-  - CODE (application): Managed via git (version control)
-  - DATA (user data): Managed via PostgreSQL per environment
-  - Enables parallel development with isolated state
-
-**Critical Infrastructure**:
-- Anti-80% Protocol Enforcement: Completion matrix preventing incomplete work
-- Session log discipline established (mandatory infrastructure)
-- Issue #281, #290 completed with 6/6 acceptance criteria
-
-**Known Issues Discovered**:
-- FK constraint issue #291 on token blacklist (post-#263, low priority)
+**Canonical Queries**: 19/25 working (76%)
+- Identity: 5/5 ✅
+- Temporal: 5/5 ✅
+- Spatial: 4/5 ✅
+- Capability: 5/5 ✅
+- Predictive: 1/5 (partial)
 
 ---
 
-#### ✅ P1 POLISH SPRINT (November 3, 2025)
-**Status**: MOSTLY COMPLETE - 2/3 issues complete, 1/3 at architectural ceiling
+### Current Sprint (A12)
 
-**Completed Issues**:
-- **Issue #284: CORE-ALPHA-ACTION-MAPPING** ✅ COMPLETE
-  - Resolved classifier output → handler name mismatches
-  - Created action mapping layer for systematic routing
-  - Tests passing
+**A12: Alpha Setup Evolution** - Active (January 2026)
 
-- **Issue #285: CORE-ALPHA-TODO-INCOMPLETE** ✅ COMPLETE
-  - Wired TodoKnowledgeService to web routes
-  - Chat handlers created and tested
-  - Todo CRUD operations fully functional
-  - Both API and chat integration working
+#### ✅ COMPLETED in v0.8.3 (January 2, 2026)
+- **#527**: ALPHA-SETUP-NOTION - Notion API key in setup wizard with validation
+- **#528**: ALPHA-SETTINGS-INTEGRATIONS - OAuth endpoints for Slack/Calendar from Settings
+- **#529**: Calendar OAuth singleton fix (state persistence)
+- **#530**: Integration Health Dashboard with real-time status and test buttons
 
-**Partial Issue**:
-- **Issue #283: CORE-ALPHA-ERROR-MESSAGES** ⚠️ 4/6 COMPLETE
-  - Empty input errors ✅
-  - Unknown action errors ✅
-  - Timeout errors ✅
-  - Unknown intent errors ✅
-  - Invalid token errors ❌ (architectural limitation: FastAPI dependency injection phase before exception handlers)
-  - No token errors ❌ (architectural limitation: FastAPI dependency injection phase)
-  - **Architectural Decision**: Accept 4/6 as complete. Auth errors are <5% of scenarios, and FastAPI's design intentionally fails dependencies early for security. Options A/B (moving auth to routes or ASGI middleware) would cost 4-12 hours with high risk for marginal UX gain. Decision: Document limitation honestly and proceed.
+#### 🐛 IN PROGRESS
+- **ALPHA-SETUP-CALENDAR**: Google Calendar OAuth refinements
+- **BUG**: Integration Test button uses MCP instead of OAuth token
+- **Notion/GitHub stuck state**: No recovery path when integration fails
 
-**Key Discoveries**:
-- ActionHumanizer + EnhancedErrorMiddleware were 75% complete and simply needed wiring
-- Archaeological investigation saved 6+ hours of redundant implementation
-- Critical system bug reported to Anthropic (false "Human:" responses in interface)
+#### ⏳ QUEUED (from roadmap banner)
+- ALPHA-SETUP-MANAGE: Integration Management Post-Setup
+- ARCH-SCHEMA-VALID: Schema Validation Check on Startup
+- FLY-MAINT-CLEANUP: Scan and archive deprecated folders
+- FLY-COORD-TREES: Git Worktrees for Multi-Agent Coordination
+- SEC-ENCRYPT-ATREST: Encryption at Rest (blocked - requires architecture decision)
+- ARCH-FIX-SINGLETON: ServiceContainer singleton replacement
 
 ---
 
-**Execution Summary**:
-- Wall time: 9.5 hours actual (Nov 3, 5:53 AM - 3:15 PM)
-- Team: 5 simultaneous agent sessions (Lead Dev, Code, Cursor, Architect, Executive)
-- Methodology: Phase -1 investigation before implementation
-- Quality: 75% pattern applied 3 times, all tests passing
-- Technical debt: Minimal (FK constraint issue low priority)
+## 📊 METRICS SNAPSHOT (January 2026)
 
-### Next Steps (A8 Continuation)
+### Quality Metrics
+- **Test Count**: 2,733 collected
+- **Smoke Tests**: 602+ (<5 seconds)
+- **Pass Rate**: 100% (CI/CD gates)
+- **Canonical Query Coverage**: 76% (19/25)
 
-**Remaining for Alpha Launch**:
-1. ⏳ End-to-end workflow testing
-2. ⏳ Performance validation
-3. ⏳ Security audit
-4. ⏳ Alpha deployment communications
-5. ⏳ Baseline Piper Education completion (90% from Sprint A5)
-
-**Documentation Gap**: ADR-040 added to knowledge/ by PM
-
-**Target**: Alpha Wave 2 launch readiness (early Nov)
-
----
-
-## 📊 METRICS SNAPSHOT (Post-CRAFT)
-
-### Performance Locked In
-- **Throughput**: 602K req/sec
-- **Canonical Response**: ~1ms
+### Performance (locked in from CRAFT)
 - **Workflow Response**: 2-3s
 - **Cache Hit Rate**: 84.6%
 - **CI/CD Pipeline**: 100% operational (13/13)
 
-### Quality Achieved
-- **Test Count**: 2,336 total
-- **Pass Rate**: 100%
-- **Classification Accuracy**: 98.62%
-- **Documentation Accuracy**: 99%+ (Serena-verified)
-- **Technical Debt**: Zero
-- **Regression Rate**: 0%
+### Alpha Status
+- **Version**: 0.8.3
+- **Active Testers**: 2 (lasko onboarded Jan 2)
+- **Branch Strategy**: main (dev) → production (stable alpha)
 
 ---
 
-## 🔄 NEXT STEPS
+## 🔄 ROADMAP ALIGNMENT (v12.3)
 
-### Short-term (Sprints A7-A8)
-1. **Execute Sprint A7** (12 issues across 4 categories)
-2. **Execute Sprint A8** (Alpha prep activities)
-3. **Maintain 100% completion standard**
-4. **Launch Alpha Wave 2** (late Oct / early Nov)
+### January 2026: Foundation & Discovery
+**Week 1-2: Alpha Critical** ← WE ARE HERE
+- ✅ ALPHA-SETUP-NOTION, SLACK, VERIFY complete
+- 🐛 Calendar refinements in progress
+- Security issues (#358, #322, #484) queued
 
-### Medium-term (Post-Alpha Launch)
-1. **Alpha testing with Wave 2 users**
-2. **MVP configuration sprint** (API keys, OAuth)
-3. **User feedback integration**
-4. **Beta preparation**
+**Week 3-4: Beta Enablers**
+- Conversational Glue implementation
+- Canonical Queries B1 (#519 - GitHub operations)
+- Canonical Queries B2 (#520 - Slack commands)
 
----
+### February 2026: MUX Foundation
+- V1 Vision Sprint → GATE-1
+- X1 Tech Phase (Grammar, Entity, Ownership) → GATE-2
 
-## 🎭 MVP Path Clarity
+### March 2026: MUX Integration & Interaction
+- V2 Vision mapping → GATE-3
+- I1 Recognition patterns → GATE-4
 
-### What MVP Needs (from VALID-2)
-**Configuration** (1 week):
-- GitHub API token
-- OpenAI/Anthropic API keys
-- Slack OAuth setup
-- Notion API credentials
-- Google Calendar credentials
-
-**Testing** (1 week):
-- E2E with real APIs
-- User journey validation
-- Performance under load
-
-**Polish** (1 week):
-- Greeting/help content
-- Error messages
-- User documentation
-
-### MVP Features to Verify in Alpha
-All features listed in original plan still need verification:
-- Chitchat (greeting, help)
-- Knowledge (upload, summarize, analyze)
-- Lists (todos)
-- Integrations (GitHub, Slack, Notion, Calendar)
-- Jobs (updates, standup)
+### April 2026: Beta Launch
+- v0.9 release
+- Expanded user base
 
 ---
 
-*Last Updated: November 4, 2025, 10:30 AM PDT - Sprint A8 P0/P1 Status*
+## 🎯 ALPHA TESTING FOCUS
+
+### What's Stable (light testing)
+- Setup wizard (GUI and CLI)
+- Login/authentication
+- Chat interface with 19 canonical queries
+- Lists, todos, projects, files CRUD
+- Permission system with conversational commands
+
+### Where to Focus Testing (v0.8.3)
+- 🔍 Integration Health Dashboard (Settings → Integrations)
+- 🔍 OAuth Connections (Slack, Calendar connect/disconnect)
+- 🔍 Notion setup in wizard
+- 🔍 File handling edge cases
+- 🔍 Permission sharing workflows
+
+### Known Limitations
+- Predictive queries (4/5 not implemented - roadmap v1.1)
+- GitHub OAuth (uses PAT, OAuth planned for 0.8.4)
+- Encryption at rest (planned for beta)
+
+---
+
+*Last Updated: January 3, 2026, 9:00 AM PDT - Sprint A12 Status*

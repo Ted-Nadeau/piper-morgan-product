@@ -92,7 +92,85 @@ Ready to discuss arc structure and narrative approach across the complete 12-day
 
 ## Discussion: Where Does the Arc Split?
 
+**9:50 AM** - PM's instinct: Two narrative sequences possible, unclear where to inflect
 
+**11:25 AM** - Agreement on Option 1/3: Split at Dec 10
+- **Sequence 1**: Dec 5-9 (systematic execution)
+- **Sequence 2**: Dec 11-15 (production milestone + earned rest)
+
+PM requests: Narrative pitches for Dec 5-9 sequence first
+
+---
+
+## Narrative Pitches: Dec 5-9 "The Week After"
+
+[Four pitches documented above - see full session log]
+
+**11:25 AM** - PM selects: "The Week After" (Pitch 1) - rhythm-focused narrative
+
+---
+
+## Narrative Pitches: Dec 11-15 "Production and Rest"
+
+[Four pitches documented above - see full session log]
+
+**Decision**: "The Milestone Pause" (Pitch 2) - rest-focused narrative
+
+---
+
+## Posts to Draft
+
+1. **"The Week After"** (Dec 5-9) - Systematic execution post-crisis
+2. **"The Milestone Pause"** (Dec 11-15) - Earned rest after v0.8.2 milestone
+
+**2:13 PM** - PM requests drafts of both posts
+
+---
+
+## Posts Drafted This Session
+
+1. **"The Week After"** (Dec 5-9, ~2,400 words)
+   - Theme: Systematic execution post-crisis
+   - Arc: Consolidation → UUID debugging → refactoring → epic completion
+   - Tone: Productive, deliberate, showing what sustainable building looks like
+   - File: `/mnt/user-data/outputs/the-week-after-draft.md`
+   - Placeholders: 2 (Weekly Ship details, Mobile PoC completion)
+
+2. **"The Milestone Pause"** (Dec 11-15, ~2,300 words)
+   - Theme: Earned rest after production milestone
+   - Arc: v0.8.2 release → album party → first break since May → resumption
+   - Tone: Quieter, reflective, about sustainability and building for distance
+   - File: `/mnt/user-data/outputs/the-milestone-pause-draft.md`
+   - Placeholders: 3 (Screenshot checklist, Newsletter stats, Workstream status)
+
+**2:30 PM** - Both drafts complete and presented
+
+**4:22 PM** - PM requests revisions per blog format standards:
+- Review voice/tone guide and blog template
+- Apply proper formatting (title case titles, sentence case headings)
+- Add italic work date line under title
+- Include proper two-paragraph footer format
+- Use placeholders for personal/factual/reflective content (not fabricate)
+
+**5:15 PM** (estimated) - Revised drafts complete:
+
+1. **"The Week After"** (Dec 5-9, ~2,300 words) - REVISED
+   - Proper formatting applied
+   - 3 key placeholders for personal content
+   - Sentence case headings throughout
+   - Proper footer format with "Next on Building Piper Morgan" + reader question
+   - File: `/mnt/user-data/outputs/the-week-after-draft-v2.md`
+
+2. **"The Milestone Pause"** (Dec 11-15, ~2,400 words) - REVISED
+   - Proper formatting applied
+   - 5 key placeholders for personal content (album context, break reflection, newsletter stats, workstream insights, next phase)
+   - Sentence case headings throughout
+   - Proper footer format
+   - File: `/mnt/user-data/outputs/the-milestone-pause-draft-v2.md`
+
+Both drafts now prompt PM for authentic personal/factual content rather than fabricating plausible-but-potentially-incorrect material.
+
+---
 
 ## Arc Analysis in Progress
 

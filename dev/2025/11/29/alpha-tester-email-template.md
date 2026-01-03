@@ -31,16 +31,18 @@ Technical Requirements:
 Accounts & API Keys You'll Need:
 □ GitHub account
 □ At least one LLM API key:
-  - OpenAI (GPT-4 preferred) -OR-
-  - Anthropic (Claude)
-□ Budget $5-20 for API testing costs
-□ Notion account (optional but recommended for full feature testing)
-□ Slack workspace (optional, for notification features)
-□ Google account (optional, for Calendar integration)
+
+- OpenAI (GPT-4 preferred) -OR-
+- Anthropic (Claude)
+  □ Budget $5-20 for API testing costs
+  □ Notion account (optional but recommended for full feature testing)
+  □ Slack workspace (optional, for notification features)
+  □ Google account (optional, for Calendar integration)
 
 **CRITICAL DISCLAIMERS**
 
 This is ALPHA software. That means:
+
 - It will have bugs and rough edges
 - It might crash or lose data
 - Security is not fully audited
@@ -57,6 +59,7 @@ Week 3+: Quick weekly check-ins
 The goal is finding PM workflows that delight you, despite the rough edges.
 
 **SETUP HIGHLIGHTS (v0.8.3)**
+
 - GUI setup wizard with visual interface (no command line needed for setup!)
 - Integration health dashboard to monitor connected services
 - One-click OAuth connect for Slack and Google Calendar
@@ -67,6 +70,7 @@ The goal is finding PM workflows that delight you, despite the rough edges.
 **STILL INTERESTED?**
 
 Reply with:
+
 1. Which LLM provider you'll use (OpenAI/Anthropic)
 2. Your biggest PM pain point you hope Piper helps with
 3. Best time for a 30-min setup call (optional but helpful)
@@ -99,8 +103,7 @@ Perfect! You're confirmed for Piper Morgan alpha access.
 
 Looking forward to your feedback! You're helping shape the future of AI-assisted PM work.
 
-Best,
-Christian
+    --xian
 
 Attachments:
 - ALPHA_TESTING_GUIDE.pdf
