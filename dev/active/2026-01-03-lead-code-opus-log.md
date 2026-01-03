@@ -229,6 +229,63 @@ Lead Developer tasks:
 - `templates/settings_slack.html` - NEW: Slack settings page template
 - `tests/unit/web/api/routes/test_settings_slack.py` - NEW: 9 tests
 
+### 3:20 PM - Issue #537: Integration Management Post-Setup (Calendar)
+
+**Problem**: Issue #537 requested integration management post-setup but Calendar was the only integration missing a dedicated settings page.
+
+**Analysis**: After completing #540 (Notion), #541 (GitHub), and #528 (Slack), only Calendar lacked:
+- Dedicated settings page
+- Status endpoint (`GET /calendar`)
+- UI route (`/settings/integrations/calendar`)
+- `configure_url` in `INTEGRATION_REGISTRY`
+
+### 3:30 PM - Implementation
+
+**1. Added Calendar status endpoint** to [settings_integrations.py:166-225](web/api/routes/settings_integrations.py#L166-L225):
+- `GET /api/v1/settings/integrations/calendar` - Check status (configured/valid/email)
+- Validates by attempting token refresh via `GoogleCalendarOAuthHandler`
+
+**2. Created Calendar settings page** [templates/settings_calendar.html](templates/settings_calendar.html):
+- Shows connection status (connected/disconnected/stuck state)
+- "Connect with Google" button with Google branding
+- Permissions list explaining OAuth scopes
+- OAuth callback handling with toast notifications
+- Connect/Disconnect functionality
+
+**3. Added UI route** in [ui.py:279-286](web/api/routes/ui.py#L279-L286):
+- `GET /settings/integrations/calendar` renders the settings page
+
+**4. Updated INTEGRATION_REGISTRY** in [integrations.py:121](web/api/routes/integrations.py#L121):
+- Changed `configure_url` from `None` to `/settings/integrations/calendar`
+
+**5. Added tests** [test_settings_calendar.py](tests/unit/web/api/routes/test_settings_calendar.py):
+- 7 tests covering status and disconnect endpoints
+- Tests for: not configured, valid token, invalid token (stuck state)
+- Disconnect success and error handling
+- Registry URL verification
+
+**Test Results:**
+- 62 tests pass (30 integrations + 8 Notion + 8 GitHub + 9 Slack + 7 Calendar)
+
+**Files Modified:**
+- `web/api/routes/settings_integrations.py` - Added Calendar status endpoint
+- `web/api/routes/ui.py` - Added Calendar settings page route
+- `web/api/routes/integrations.py` - Updated Calendar configure_url
+- `templates/settings_calendar.html` - NEW: Calendar settings page template
+- `tests/unit/web/api/routes/test_settings_calendar.py` - NEW: 7 tests
+
+### Issue #537 Complete
+
+All acceptance criteria met:
+- ✅ `/settings/integrations` index page exists
+- ✅ `/settings/integrations/{name}` pages for all 4 integrations
+- ✅ Update/reconfigure capability for each integration
+- ✅ OAuth re-auth flow for Slack and Calendar
+- ✅ API key update for Notion and GitHub
+- ✅ "Disconnect" option for all integrations
+- ✅ "Test Connection" button reuses #530 infrastructure
+- ✅ Links from #530 health dashboard work correctly
+
 ---
 
-*Last updated: January 3, 2026, 1:50 PM PT*
+*Last updated: January 3, 2026, 3:45 PM PT*

@@ -118,7 +118,7 @@ INTEGRATION_REGISTRY = {
     "calendar": {
         "display_name": "Google Calendar",
         "icon": "📅",
-        "configure_url": None,  # Issue #529: OAuth handled via Connect button
+        "configure_url": "/settings/integrations/calendar",  # Issue #537: Dedicated settings page
         "errors": {
             "auth_failed": {
                 "message": "Calendar authentication failed",

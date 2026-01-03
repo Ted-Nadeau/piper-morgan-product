@@ -159,8 +159,70 @@ async def disconnect_slack():
 
 
 # ============================================================================
-# Google Calendar OAuth for Settings
+# Google Calendar OAuth for Settings (Issue #537)
 # ============================================================================
+
+
+@router.get("/calendar")
+async def get_calendar_settings():
+    """
+    Get Google Calendar integration status.
+
+    Returns whether Calendar is configured and validates connection if token present.
+    Issue #537: ALPHA-SETUP-MANAGE - Integration Management Post-Setup
+    """
+    try:
+        from services.infrastructure.keychain_service import KeychainService
+        from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
+
+        keychain = KeychainService()
+        refresh_token = keychain.get_api_key("google_calendar")
+
+        if refresh_token:
+            # Validate the token by attempting to refresh it
+            handler = GoogleCalendarOAuthHandler()
+            try:
+                tokens = await handler.refresh_access_token(refresh_token)
+
+                if tokens:
+                    # Token is valid - try to get user info if possible
+                    return {
+                        "configured": True,
+                        "valid": True,
+                        "email": None,  # Would need additional API call to get email
+                        "error": None,
+                    }
+                else:
+                    return {
+                        "configured": True,
+                        "valid": False,
+                        "email": None,
+                        "error": "Token expired or revoked",
+                    }
+            except Exception as token_error:
+                logger.warning("calendar_token_validation_failed", error=str(token_error))
+                return {
+                    "configured": True,
+                    "valid": False,
+                    "email": None,
+                    "error": str(token_error),
+                }
+        else:
+            return {
+                "configured": False,
+                "valid": False,
+                "email": None,
+                "error": None,
+            }
+
+    except Exception as e:
+        logger.error("calendar_settings_check_failed", error=str(e), exc_info=True)
+        return {
+            "configured": False,
+            "valid": False,
+            "email": None,
+            "error": str(e),
+        }
 
 
 @router.get("/calendar/connect")
