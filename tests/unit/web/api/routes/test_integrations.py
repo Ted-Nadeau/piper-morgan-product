@@ -340,38 +340,75 @@ class TestSlackIntegration:
 
 
 class TestCalendarIntegration:
-    """Tests for Calendar-specific test logic"""
+    """Tests for Calendar-specific test logic (Issue #539: OAuth token validation)"""
 
     @pytest.mark.asyncio
-    async def test_calendar_success_when_healthy(self):
-        """Calendar test should succeed when status=healthy"""
-        mock_router = MagicMock()
-        mock_router.health_check = AsyncMock(return_value={"status": "healthy"})
+    async def test_calendar_success_when_token_valid(self):
+        """Calendar test should succeed when OAuth token can be refreshed"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "valid_refresh_token"
 
-        with patch(
-            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter",
-            return_value=mock_router,
+        mock_handler = MagicMock()
+        mock_handler.refresh_access_token = AsyncMock(
+            return_value=MagicMock(access_token="new_access_token")
+        )
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch(
+                "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
+                return_value=mock_handler,
+            ),
         ):
             result = await _test_calendar()
 
             assert result["success"] is True
+            mock_keychain.get_api_key.assert_called_once_with("google_calendar")
+            mock_handler.refresh_access_token.assert_called_once_with("valid_refresh_token")
 
     @pytest.mark.asyncio
-    async def test_calendar_failure_when_not_healthy(self):
-        """Calendar test should fail when status != healthy"""
-        mock_router = MagicMock()
-        mock_router.health_check = AsyncMock(
-            return_value={"status": "failed", "error": "MCP not running"}
-        )
+    async def test_calendar_failure_when_not_configured(self):
+        """Calendar test should fail when no refresh token in keychain"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
 
         with patch(
-            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter",
-            return_value=mock_router,
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
         ):
             result = await _test_calendar()
 
             assert result["success"] is False
-            assert result["error_type"] == "mcp_not_running"
+            assert result["error_type"] == "not_configured"
+            assert "not connected" in result["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_calendar_failure_when_token_invalid(self):
+        """Calendar test should fail when token refresh fails (Issue #539)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "expired_refresh_token"
+
+        mock_handler = MagicMock()
+        mock_handler.refresh_access_token = AsyncMock(return_value=None)
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch(
+                "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler",
+                return_value=mock_handler,
+            ),
+        ):
+            result = await _test_calendar()
+
+            assert result["success"] is False
+            assert result["error_type"] == "token_invalid"
+            assert "expired" in result["error"].lower() or "revoked" in result["error"].lower()
 
 
 class TestIntegrationRegistry:
@@ -391,12 +428,14 @@ class TestIntegrationRegistry:
             assert isinstance(config["display_name"], str)
 
     def test_registry_has_configure_urls(self):
-        """Each integration should have a configure_url"""
+        """Each integration should have a configure_url key (may be None for OAuth)"""
         for name, config in INTEGRATION_REGISTRY.items():
             assert "configure_url" in config
-            # Configure URLs can be settings pages or setup wizard (Issue #527)
+            # Configure URLs can be settings pages, setup wizard (Issue #527), or
+            # None for OAuth integrations (Issue #529 - Slack, Calendar)
             url = config["configure_url"]
-            assert url.startswith("/settings/integrations/") or url.startswith("/setup")
+            if url is not None:
+                assert url.startswith("/settings/integrations/") or url.startswith("/setup")
 
     def test_registry_has_error_guidance(self):
         """Each integration should have error guidance"""

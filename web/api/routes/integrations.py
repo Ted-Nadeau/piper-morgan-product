@@ -480,22 +480,34 @@ async def _test_github() -> Dict[str, Any]:
 
 
 async def _test_calendar() -> Dict[str, Any]:
-    """Test Google Calendar MCP connection"""
+    """Test Google Calendar OAuth connection (Issue #539)"""
     try:
-        from services.integrations.calendar.calendar_integration_router import (
-            CalendarIntegrationRouter,
-        )
+        from services.infrastructure.keychain_service import KeychainService
+        from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
 
-        router = CalendarIntegrationRouter()
-        result = await router.health_check()
-        if result.get("status") == "healthy":
+        keychain = KeychainService()
+        refresh_token = keychain.get_api_key("google_calendar")
+
+        if not refresh_token:
+            return {
+                "success": False,
+                "error": "Calendar not connected. Click Connect to authorize.",
+                "error_type": "not_configured",
+            }
+
+        # Validate by attempting to refresh the token (Issue #539)
+        handler = GoogleCalendarOAuthHandler()
+        tokens = await handler.refresh_access_token(refresh_token)
+
+        if tokens:
             return {"success": True}
         else:
             return {
                 "success": False,
-                "error": result.get("error", "MCP not healthy"),
-                "error_type": "mcp_not_running",
+                "error": "Token expired or revoked. Please reconnect.",
+                "error_type": "token_invalid",
             }
+
     except ImportError:
         return {"success": False, "error": "Calendar integration not available"}
     except Exception as e:

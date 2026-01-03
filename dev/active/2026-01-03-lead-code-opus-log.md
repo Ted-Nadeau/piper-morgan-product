@@ -43,6 +43,57 @@ Lead Developer tasks:
   - Added Alpha Testing Focus section
 - Removed obsolete A7-A8 content (Nov 2025)
 
+### 9:08 AM - Codebase Metrics Analysis
+- Assigned subagent to calculate LOC metrics
+- Initial report: 11,121 Python files, 1.17M LOC (inflated)
+- Investigation: `.venv/` directory (10,006 files) not excluded by pattern
+- Corrected metrics: ~1,045 authored files, ~286K LOC
+  - Production: 502 files / 145K LOC
+  - Tests: 403 files / 116K LOC
+  - Other: ~140 files / ~25K LOC
+
+### 9:25 AM - Memory Created
+- Created Serena memory `metrics-task-sanity-checks.md`
+- Documents correct exclusion patterns and sanity check protocol for future tasks
+
+### 9:28 AM - Sprint A12 Review (Pre-Breakfast)
+- Reviewed current sprint status for PM
+
+**Completed in v0.8.3:**
+- #527: ALPHA-SETUP-NOTION
+- #528: ALPHA-SETTINGS-INTEGRATIONS
+- #529: Calendar OAuth singleton fix
+- #530: Integration Health Dashboard
+
+**In Progress:**
+1. BUG: Integration Test button uses MCP instead of OAuth token
+2. Notion/GitHub stuck state: No recovery path
+3. ALPHA-SETUP-CALENDAR: OAuth refinements
+
+**Recommended priority for next session:**
+1. Integration Test button bug (affects shipped #530)
+2. Stuck state recovery paths
+3. Calendar OAuth polish
+
+### 10:23 AM - Issue #539: Integration Test Button Fix
+- Reviewed issue: Test button uses MCP health_check() instead of OAuth token
+- Root cause: `_test_calendar()` called `CalendarIntegrationRouter.health_check()` which checks MCP status, not keychain token
+- Proposed Option A: Direct OAuth token validation via `refresh_access_token()`
+- PM approved Option A
+
+### 10:27 AM - Implementation
+- Replaced `_test_calendar()` in [integrations.py:482-514](web/api/routes/integrations.py#L482-L514)
+  - Now checks keychain for refresh token
+  - Validates by attempting token refresh via `GoogleCalendarOAuthHandler`
+  - Returns appropriate error types: `not_configured`, `token_invalid`, `connection_failed`
+- Updated 3 calendar tests to match new OAuth validation approach
+- Fixed unrelated test failure (configure_url can be None for OAuth integrations)
+- All 30 tests pass
+
+**Files Modified:**
+- `web/api/routes/integrations.py` - `_test_calendar()` function
+- `tests/unit/web/api/routes/test_integrations.py` - Calendar tests + registry test
+
 ---
 
-*Last updated: January 3, 2026, 9:05 AM PT*
+*Last updated: January 3, 2026, 10:30 AM PT*
