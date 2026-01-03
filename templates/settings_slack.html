@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Slack Settings - Piper Morgan</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link rel="stylesheet" href="/static/css/tokens.css" />
+    <link rel="stylesheet" href="/static/css/toast.css" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+
+      .settings-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .page-header h1 {
+        font-size: 28px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .page-description {
+        font-size: 15px;
+        color: #7f8c8d;
+        margin: 0;
+      }
+
+      /* Status Card */
+      .status-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .status-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .status-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+      }
+
+      .status-icon.connected { background: #d4edda; }
+      .status-icon.disconnected { background: #f8d7da; }
+      .status-icon.loading { background: #e9ecef; }
+
+      .status-text h2 {
+        margin: 0 0 4px 0;
+        font-size: 18px;
+        color: #2c3e50;
+      }
+
+      .status-text p {
+        margin: 0;
+        font-size: 14px;
+        color: #7f8c8d;
+      }
+
+      /* OAuth Card */
+      .oauth-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .oauth-card h3 {
+        margin: 0 0 16px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .oauth-description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 20px;
+        line-height: 1.5;
+      }
+
+      .permissions-list {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+
+      .permissions-list h4 {
+        font-size: 13px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0 0 12px 0;
+      }
+
+      .permissions-list ul {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 13px;
+        color: #7f8c8d;
+      }
+
+      .permissions-list li {
+        margin-bottom: 4px;
+      }
+
+      /* Buttons */
+      .button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn-slack {
+        background: #4A154B;
+        color: white;
+      }
+
+      .btn-slack:hover {
+        background: #611f69;
+      }
+
+      .btn-slack:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .btn-danger {
+        background: transparent;
+        color: #e74c3c;
+        border: 1px solid #e74c3c;
+      }
+
+      .btn-danger:hover {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .btn-danger:disabled {
+        color: #bdc3c7;
+        border-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      /* Back Link */
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #7f8c8d;
+        text-decoration: none;
+        font-size: 14px;
+        margin-bottom: 24px;
+      }
+
+      .back-link:hover {
+        color: #2c3e50;
+      }
+
+      /* Loading State */
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ecf0f1;
+        border-top-color: #4A154B;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Slack Logo SVG */
+      .slack-logo {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .settings-container {
+          padding: 32px 16px;
+        }
+
+        .button-group {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {% include 'components/navigation.html' %}
+    {% set breadcrumbs = [
+      {"label": "Settings", "url": "/settings"},
+      {"label": "Integrations", "url": "/settings/integrations"},
+      {"label": "Slack", "url": None}
+    ] %}
+    {% include 'components/breadcrumbs.html' %}
+    <script>
+      // G8: Logged-in User Indicator
+      {% if user %}
+      window.currentUser = {
+        username: "{{ user.username }}",
+        user_id: "{{ user.user_id }}",
+        is_admin: {{ 'true' if user.is_admin else 'false' }}
+      };
+      {% else %}
+      window.currentUser = null;
+      {% endif %}
+    </script>
+
+    <div class="settings-container">
+      <a href="/settings/integrations" class="back-link">
+        <span>&larr;</span> Back to Integrations
+      </a>
+
+      <div class="page-header">
+        <h1><span>💬</span> Slack Integration</h1>
+        <p class="page-description">
+          Connect Piper Morgan to your Slack workspace for seamless communication
+        </p>
+      </div>
+
+      <!-- Status Card -->
+      <div class="status-card" id="status-card">
+        <div class="status-header">
+          <div class="status-icon loading" id="status-icon">?</div>
+          <div class="status-text">
+            <h2 id="status-title">Checking...</h2>
+            <p id="status-subtitle">Loading connection status</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OAuth Card -->
+      <div class="oauth-card" id="oauth-card">
+        <h3 id="oauth-title">Connect to Slack</h3>
+
+        <p class="oauth-description" id="oauth-description">
+          Connect your Slack workspace to enable Piper Morgan to receive messages,
+          respond to queries, and help coordinate your team's work.
+        </p>
+
+        <div class="permissions-list">
+          <h4>Permissions Requested</h4>
+          <ul>
+            <li>Read messages in channels where Piper is added</li>
+            <li>Send messages as Piper Morgan</li>
+            <li>Read workspace and channel information</li>
+            <li>Read user profiles</li>
+            <li>Respond to @mentions</li>
+          </ul>
+        </div>
+
+        <div class="button-group">
+          <button class="btn btn-slack" id="connect-btn" onclick="connectSlack()">
+            <svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+            </svg>
+            Add to Slack
+          </button>
+          <button class="btn btn-danger" id="disconnect-btn" onclick="disconnectSlack()" style="display: none;">
+            Disconnect
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {% include 'components/toast.html' %}
+    <script src="/static/js/toast.js"></script>
+    <script>
+      // Check for OAuth callback result
+      document.addEventListener('DOMContentLoaded', function() {
+        checkOAuthCallback();
+        loadSlackStatus();
+      });
+
+      function checkOAuthCallback() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('success') === 'true') {
+          const workspace = params.get('workspace') || 'Workspace';
+          showToast('success', `Connected to ${decodeURIComponent(workspace)}`, 'Slack Connected');
+          window.history.replaceState({}, document.title, '/settings/integrations/slack');
+        } else if (params.get('error')) {
+          const error = params.get('error');
+          showToast('error', `Failed to connect: ${error}`, 'Connection Failed');
+          window.history.replaceState({}, document.title, '/settings/integrations/slack');
+        }
+      }
+
+      async function loadSlackStatus() {
+        try {
+          const response = await fetch('/api/v1/settings/integrations/slack');
+          if (!response.ok) throw new Error('Failed to load status');
+
+          const data = await response.json();
+          updateStatusUI(data);
+        } catch (error) {
+          console.error('Failed to load Slack status:', error);
+          showToast('error', 'Failed to load connection status', 'Error');
+        }
+      }
+
+      function updateStatusUI(data) {
+        const iconEl = document.getElementById('status-icon');
+        const titleEl = document.getElementById('status-title');
+        const subtitleEl = document.getElementById('status-subtitle');
+        const oauthTitleEl = document.getElementById('oauth-title');
+        const oauthDescEl = document.getElementById('oauth-description');
+        const connectBtnEl = document.getElementById('connect-btn');
+        const disconnectBtnEl = document.getElementById('disconnect-btn');
+
+        if (data.configured && data.valid) {
+          // Connected and valid
+          iconEl.className = 'status-icon connected';
+          iconEl.textContent = '✅';
+          titleEl.textContent = 'Connected';
+          subtitleEl.textContent = data.workspace ? `Workspace: ${data.workspace}` : 'Slack is connected';
+          oauthTitleEl.textContent = 'Reconnect Slack';
+          oauthDescEl.textContent = 'You can reconnect to a different workspace or refresh your connection.';
+          connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Reconnect';
+          disconnectBtnEl.style.display = 'block';
+        } else if (data.configured && !data.valid) {
+          // Configured but invalid (stuck state)
+          iconEl.className = 'status-icon disconnected';
+          iconEl.textContent = '⚠️';
+          titleEl.textContent = 'Connection Issue';
+          subtitleEl.textContent = data.error || 'Token is invalid or expired';
+          oauthTitleEl.textContent = 'Reconnect Slack';
+          oauthDescEl.textContent = 'Your Slack connection has expired. Please reconnect to restore functionality.';
+          connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Reconnect';
+          disconnectBtnEl.style.display = 'block';
+        } else {
+          // Not configured
+          iconEl.className = 'status-icon disconnected';
+          iconEl.textContent = '❌';
+          titleEl.textContent = 'Not Connected';
+          subtitleEl.textContent = 'Connect your Slack workspace to enable integration';
+          oauthTitleEl.textContent = 'Connect to Slack';
+          oauthDescEl.textContent = 'Connect your Slack workspace to enable Piper Morgan to receive messages, respond to queries, and help coordinate your team\'s work.';
+          connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Add to Slack';
+          disconnectBtnEl.style.display = 'none';
+        }
+      }
+
+      async function connectSlack() {
+        const connectBtnEl = document.getElementById('connect-btn');
+        connectBtnEl.disabled = true;
+        connectBtnEl.innerHTML = '<span class="loading-spinner"></span>Connecting...';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/slack/authorize');
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to get authorization URL');
+          }
+
+          const data = await response.json();
+
+          if (data.success && data.authorization_url) {
+            // Redirect to Slack OAuth
+            window.location.href = data.authorization_url;
+          } else {
+            throw new Error('No authorization URL received');
+          }
+        } catch (error) {
+          console.error('Connect failed:', error);
+          showToast('error', error.message, 'Connection Failed');
+          connectBtnEl.disabled = false;
+          connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Add to Slack';
+        }
+      }
+
+      async function disconnectSlack() {
+        if (!confirm('Are you sure you want to disconnect Slack? You can reconnect anytime.')) {
+          return;
+        }
+
+        const disconnectBtnEl = document.getElementById('disconnect-btn');
+        disconnectBtnEl.disabled = true;
+        disconnectBtnEl.textContent = 'Disconnecting...';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/slack/disconnect', {
+            method: 'POST'
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to disconnect');
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast('success', 'Slack disconnected', 'Disconnected');
+            loadSlackStatus();  // Refresh status
+          } else {
+            throw new Error(data.message || 'Failed to disconnect');
+          }
+        } catch (error) {
+          console.error('Disconnect failed:', error);
+          showToast('error', error.message, 'Disconnect Failed');
+          disconnectBtnEl.disabled = false;
+          disconnectBtnEl.textContent = 'Disconnect';
+        }
+      }
+
+      function showToast(type, message, title = null) {
+        if (typeof Toast !== 'undefined') {
+          const toastTitle = title || {
+            'error': 'Error',
+            'success': 'Success',
+            'warning': 'Warning',
+            'info': 'Info'
+          }[type] || 'Slack';
+
+          if (type === 'error' && Toast.error) {
+            Toast.error(toastTitle, message);
+          } else if (type === 'success' && Toast.success) {
+            Toast.success(toastTitle, message);
+          } else if (type === 'warning' && Toast.warning) {
+            Toast.warning(toastTitle, message);
+          } else if (Toast.info) {
+            Toast.info(toastTitle, message);
+          }
+        } else {
+          console.log(`[${type}] ${message}`);
+        }
+      }
+    </script>
+  </body>
+</html>

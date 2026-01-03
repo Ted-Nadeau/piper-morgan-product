@@ -80,7 +80,7 @@ INTEGRATION_REGISTRY = {
     "slack": {
         "display_name": "Slack",
         "icon": "💬",
-        "configure_url": None,  # Issue #529: OAuth handled via Connect button
+        "configure_url": "/settings/integrations/slack",  # Issue #528: Dedicated settings page
         "errors": {
             "token_expired": {
                 "message": "Slack OAuth token has expired",

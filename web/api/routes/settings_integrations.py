@@ -664,3 +664,137 @@ async def disconnect_github():
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disconnect GitHub: {str(e)}",
         )
+
+
+# ============================================================================
+# Slack OAuth Management (Issue #528)
+# ============================================================================
+
+
+@router.get("/slack")
+async def get_slack_settings():
+    """
+    Get Slack integration status.
+
+    Returns whether Slack is configured and validates connection if token present.
+    Issue #528: ALPHA-SETUP-SLACK - Add Slack OAuth to setup wizard
+    """
+    try:
+        # Check if bot token is configured
+        bot_token = os.environ.get("SLACK_BOT_TOKEN")
+
+        if bot_token:
+            # Validate the token by testing connection
+            from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
+
+            router_instance = SlackIntegrationRouter()
+            test_result = await router_instance.test_auth()
+
+            is_valid = test_result.get("ok", False)
+            team_name = test_result.get("team")
+            bot_id = test_result.get("bot_id")
+
+            return {
+                "configured": True,
+                "valid": is_valid,
+                "workspace": team_name if is_valid else None,
+                "bot_id": bot_id if is_valid else None,
+                "error": test_result.get("error") if not is_valid else None,
+            }
+        else:
+            return {
+                "configured": False,
+                "valid": False,
+                "workspace": None,
+                "bot_id": None,
+                "error": None,
+            }
+
+    except Exception as e:
+        logger.error("slack_settings_check_failed", error=str(e), exc_info=True)
+        return {
+            "configured": False,
+            "valid": False,
+            "workspace": None,
+            "bot_id": None,
+            "error": str(e),
+        }
+
+
+@router.get("/slack/authorize")
+async def get_slack_oauth_url():
+    """
+    Get Slack OAuth authorization URL.
+
+    Generates a secure OAuth URL to initiate Slack workspace connection.
+    Issue #528: ALPHA-SETUP-SLACK
+    """
+    try:
+        from services.integrations.slack.config_service import SlackConfigService
+        from services.integrations.slack.oauth_handler import SlackOAuthHandler
+
+        config_service = SlackConfigService()
+        oauth_handler = SlackOAuthHandler(config_service)
+
+        auth_url, state = oauth_handler.generate_authorization_url()
+
+        return {
+            "success": True,
+            "authorization_url": auth_url,
+            "state": state,
+        }
+
+    except Exception as e:
+        logger.error("slack_oauth_url_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate Slack OAuth URL: {str(e)}",
+        )
+
+
+@router.post("/slack/disconnect")
+async def disconnect_slack():
+    """
+    Disconnect Slack integration.
+
+    Revokes OAuth access and removes stored tokens.
+    Issue #528: ALPHA-SETUP-SLACK
+    """
+    try:
+        # Get workspace ID if available
+        workspace_id = os.environ.get("SLACK_TEAM_ID", "default")
+
+        # Try to revoke via OAuth handler
+        try:
+            from services.integrations.slack.config_service import SlackConfigService
+            from services.integrations.slack.oauth_handler import SlackOAuthHandler
+
+            config_service = SlackConfigService()
+            oauth_handler = SlackOAuthHandler(config_service)
+            await oauth_handler.revoke_workspace_access(workspace_id)
+        except Exception as revoke_error:
+            logger.warning(
+                "slack_revoke_warning",
+                error=str(revoke_error),
+                message="Could not revoke via API, clearing local config",
+            )
+
+        # Clear environment variables (they'll need to be re-set on restart)
+        # Note: In production, this would clear from secure storage
+        os.environ.pop("SLACK_BOT_TOKEN", None)
+        os.environ.pop("SLACK_TEAM_ID", None)
+        os.environ.pop("SLACK_APP_TOKEN", None)
+
+        logger.info("slack_disconnected", workspace_id=workspace_id)
+
+        return {
+            "success": True,
+            "message": "Slack disconnected",
+        }
+
+    except Exception as e:
+        logger.error("slack_disconnect_failed", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to disconnect Slack: {str(e)}",
+        )

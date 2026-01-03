@@ -266,6 +266,16 @@ async def github_settings_page(request: Request):
     )
 
 
+@router.get("/settings/integrations/slack", response_class=HTMLResponse)
+async def slack_settings_page(request: Request):
+    """Slack OAuth settings page (Issue #528)"""
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "settings_slack.html", {"request": request, "user": user_context}
+    )
+
+
 @router.get("/lists", response_class=HTMLResponse)
 async def lists_ui(request: Request):
     """Lists management page with permission-aware UI (Issue #376)"""

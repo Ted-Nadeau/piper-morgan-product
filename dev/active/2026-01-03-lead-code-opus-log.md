@@ -184,6 +184,51 @@ Lead Developer tasks:
 - `templates/settings_github.html` - NEW: GitHub settings page template
 - `tests/unit/web/api/routes/test_settings_github.py` - NEW: 8 tests
 
+### 1:35 PM - Issue #528: Slack OAuth Settings Page
+
+**Problem**: Slack integration had `configure_url: None` and no dedicated settings page
+- Users could not easily connect/disconnect Slack workspaces
+- OAuth flow existed in webhook_router but no UI integration
+
+**Solution**: Created dedicated Slack settings page with OAuth integration
+
+### 1:45 PM - Implementation
+
+**1. Added Slack API endpoints** to [settings_integrations.py:674-802](web/api/routes/settings_integrations.py#L674-L802):
+- `GET /api/v1/settings/integrations/slack` - Check status (configured/valid/workspace)
+- `GET /api/v1/settings/integrations/slack/authorize` - Generate OAuth authorization URL
+- `POST /api/v1/settings/integrations/slack/disconnect` - Revoke access and clear tokens
+
+**2. Created Slack settings page** [templates/settings_slack.html](templates/settings_slack.html):
+- Shows connection status (connected/disconnected/stuck)
+- "Add to Slack" button with Slack branding
+- Permissions list explaining what access is requested
+- OAuth callback handling with toast notifications
+- Connect/Disconnect buttons
+
+**3. Added UI route** in [ui.py:269-276](web/api/routes/ui.py#L269-L276):
+- `GET /settings/integrations/slack` renders the settings page
+
+**4. Updated INTEGRATION_REGISTRY** [integrations.py:83](web/api/routes/integrations.py#L83):
+- Changed `configure_url` from `None` to `/settings/integrations/slack`
+
+**5. Added tests** [test_settings_slack.py](tests/unit/web/api/routes/test_settings_slack.py):
+- 9 tests covering all endpoints
+- Tests for: not configured, configured+valid, configured+invalid (stuck state)
+- OAuth URL generation tests
+- Disconnect tests including API failure handling
+- Registry URL verification
+
+**Test Results:**
+- 55 tests pass (30 integrations + 8 Notion + 8 GitHub + 9 Slack)
+
+**Files Modified:**
+- `web/api/routes/settings_integrations.py` - Added 3 Slack endpoints
+- `web/api/routes/ui.py` - Added Slack settings page route
+- `web/api/routes/integrations.py` - Updated Slack configure_url
+- `templates/settings_slack.html` - NEW: Slack settings page template
+- `tests/unit/web/api/routes/test_settings_slack.py` - NEW: 9 tests
+
 ---
 
-*Last updated: January 3, 2026, 11:45 AM PT*
+*Last updated: January 3, 2026, 1:50 PM PT*
