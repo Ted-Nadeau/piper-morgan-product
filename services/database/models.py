@@ -895,8 +895,8 @@ class TodoListDB(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # Ownership and sharing
-    owner_id = Column(String, nullable=False)
+    # Ownership and sharing - owner_id is UUID in database (Issue #484)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
     shared_with = Column(postgresql.JSONB, default=list)  # Array of user IDs
 
     # Performance optimization - cached counts
@@ -1082,8 +1082,8 @@ class ListDB(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    # Ownership and sharing
-    owner_id = Column(String, nullable=False)
+    # Ownership and sharing - owner_id is UUID in database (Issue #484)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
     shared_with = Column(postgresql.JSONB, default=list)  # Array of user IDs
 
     # Performance optimization - cached counts
@@ -1561,8 +1561,8 @@ class TodoDB(ItemDB):
     # Timestamps (inherited: created_at, updated_at from ItemDB)
     completed_at = Column(DateTime)
 
-    # Ownership
-    owner_id = Column(String, nullable=False)
+    # Ownership - owner_id is UUID in database (Issue #484)
+    owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
     assigned_to = Column(String)
 
     # Polymorphic configuration - TodoDB is a specialized ItemDB

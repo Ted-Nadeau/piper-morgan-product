@@ -89,6 +89,57 @@ class ConfigValidationPhase:
             app.state.config_validation = {"error": str(e)}
 
 
+class SchemaValidationPhase:
+    """Issue #484: Schema validation at startup
+
+    Validates that SQLAlchemy models match actual database schema.
+    Catches model/schema drift before runtime failures occur.
+
+    Can be disabled via PIPER_SKIP_SCHEMA_VALIDATION=1 env var.
+    """
+
+    @staticmethod
+    async def startup(app) -> None:
+        """Validate database schema against models"""
+        from services.infrastructure.schema_validator import SchemaValidator, is_validation_disabled
+
+        print("\n" + "=" * 60)
+        print("🔍 Issue #484: Database Schema Validation")
+        print("=" * 60)
+
+        if is_validation_disabled():
+            print("⏭️ Schema validation skipped (PIPER_SKIP_SCHEMA_VALIDATION=1)")
+            app.state.schema_validation = {"skipped": True}
+            return
+
+        try:
+            validator = SchemaValidator()
+            result = await validator.validate()
+            validator.print_report()
+
+            # Store validation results in app state
+            app.state.schema_validation = {
+                "is_valid": result.is_valid,
+                "tables_checked": result.tables_checked,
+                "columns_checked": result.columns_checked,
+                "mismatches": len(result.mismatches),
+            }
+
+            if not result.is_valid:
+                # Log mismatches but don't fail startup (yet)
+                # In future, could make this configurable to fail-fast
+                print("\n⚠️ WARNING: Schema drift detected!")
+                print("Database may not match models. Check logs for details.")
+                print("This could cause runtime errors.\n")
+            else:
+                print("✅ All models match database schema\n")
+
+        except Exception as e:
+            print(f"❌ Schema validation failed: {e}")
+            print("⚠️ Continuing startup without schema validation\n")
+            app.state.schema_validation = {"error": str(e)}
+
+
 class ServiceRetrievalPhase:
     """Phase 1.5: Get services from ServiceContainer"""
 
@@ -140,10 +191,7 @@ class WebComponentsInitializationPhase:
 
             from fastapi.templating import Jinja2Templates
 
-            from web.personality_integration import (
-                PersonalityResponseEnhancer,
-                PiperConfigParser,
-            )
+            from web.personality_integration import PersonalityResponseEnhancer, PiperConfigParser
 
             # Get project root for template path
             project_root = Path(__file__).parent.parent
@@ -164,9 +212,7 @@ class WebComponentsInitializationPhase:
             print("✅ PersonalityResponseEnhancer initialized")
 
             # Get port configuration (for reference - used in __main__)
-            from services.configuration.port_configuration_service import (
-                get_port_configuration,
-            )
+            from services.configuration.port_configuration_service import get_port_configuration
 
             port_config = get_port_configuration()
             app.state.port_config = port_config
@@ -316,6 +362,7 @@ class StartupManager:
         self.phases = [
             ServiceContainerPhase,
             ConfigValidationPhase,
+            SchemaValidationPhase,  # Issue #484: Validate models match DB schema
             ServiceRetrievalPhase,
             WebComponentsInitializationPhase,
             PluginInitializationPhase,
