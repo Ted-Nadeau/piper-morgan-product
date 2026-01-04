@@ -77,10 +77,24 @@ class IntentClassifier:
 
     @property
     def llm(self):
-        """Lazy-load LLM service from ServiceContainer if not injected"""
+        """Lazy-load LLM service from ServiceContainer if not injected.
+
+        DEPRECATION WARNING (Issue #322):
+        Direct ServiceContainer() access is deprecated. Pass llm_service
+        via constructor instead. This fallback will be removed when
+        horizontal scaling is enabled.
+        """
         if self._llm is None:
+            import warnings
+
             from services.container import ServiceContainer
 
+            warnings.warn(
+                "IntentClassifier: Direct ServiceContainer() access is deprecated. "
+                "Pass llm_service via constructor. (Issue #322 - ARCH-FIX-SINGLETON)",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             container = ServiceContainer()
             self._llm = container.get_service("llm")
         return self._llm

@@ -50,11 +50,13 @@ ADRS_DIR="docs/internal/architecture/current/adrs"
 if git diff --cached --name-only --diff-filter=A | grep -q "^$ADRS_DIR/adr-.*\.md$"; then
     echo "🔍 Checking new ADR numbering..."
 
-    # Get highest existing ADR number
+    # Get highest existing ADR number (use 10# prefix to force decimal interpretation)
     HIGHEST_ADR=$(find "$ADRS_DIR" -name "adr-[0-9][0-9][0-9]-*.md" \
         | sed 's/.*adr-\([0-9][0-9][0-9]\)-.*/\1/' \
         | sort -n \
         | tail -1)
+    # Strip leading zeros for arithmetic (bash treats 08/09 as invalid octal)
+    HIGHEST_ADR=$((10#$HIGHEST_ADR))
 
     # Check each new ADR file
     git diff --cached --name-only --diff-filter=A | grep "^$ADRS_DIR/adr-.*\.md$" | while read -r file; do

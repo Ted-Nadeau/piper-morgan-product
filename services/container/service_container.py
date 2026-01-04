@@ -1,6 +1,17 @@
-"""Service container with singleton pattern."""
+"""Service container for DDD service lifecycle management.
+
+Issue #322 (ARCH-FIX-SINGLETON): The singleton pattern has been removed to enable
+horizontal scaling with multiple uvicorn workers. Each worker now gets its own
+container instance via FastAPI's lifespan/app.state pattern.
+
+Migration:
+- In FastAPI routes: Use `get_container()` from `web/api/dependencies.py`
+- In services: Accept dependencies via constructor injection
+- See ADR-048 for architectural context
+"""
 
 import logging
+import warnings
 from typing import Any, Optional
 
 from services.container.exceptions import ContainerNotInitializedError, ServiceNotFoundError
@@ -9,36 +20,46 @@ from services.container.service_registry import ServiceRegistry
 logger = logging.getLogger(__name__)
 
 
+# Legacy singleton state for backward compatibility during migration
+# This will be removed in a future release after all tests are updated
+_legacy_instance: Optional["ServiceContainer"] = None
+
+
 class ServiceContainer:
     """
-    Singleton container for service lifecycle management.
+    Application-scoped container for service lifecycle management.
+
+    NOT a singleton (Issue #322) - one instance per application via FastAPI lifespan.
+    For tests, create fresh instances directly.
 
     Usage:
-        # Get container instance
+        # In FastAPI routes (preferred):
+        from web.api.dependencies import get_container
+        container = Depends(get_container)
+
+        # In startup (web/startup.py):
         container = ServiceContainer()
+        await container.initialize()
+        app.state.service_container = container
 
-        # Initialize (first time only)
-        container.initialize()
+        # In services (constructor injection):
+        def __init__(self, llm_service=None):
+            self._llm = llm_service
 
-        # Get services
+        # Get services (after initialization):
         llm_service = container.get_service('llm')
     """
 
-    _instance: Optional["ServiceContainer"] = None
-    _initialized: bool = False
-
-    def __new__(cls):
-        """Enforce singleton pattern."""
-        if cls._instance is None:
-            logger.info("Creating ServiceContainer instance")
-            cls._instance = super().__new__(cls)
-            cls._instance._registry = ServiceRegistry()
-        return cls._instance
-
     def __init__(self):
-        """Initialize instance (only once due to singleton)."""
-        # Don't reinitialize
-        pass
+        """Initialize container with fresh registry."""
+        global _legacy_instance
+
+        logger.info("Creating ServiceContainer instance")
+        self._registry = ServiceRegistry()
+        self._initialized = False  # Instance variable, not class variable
+
+        # Track for legacy reset() compatibility (will be removed)
+        _legacy_instance = self
 
     async def initialize(self) -> None:
         """
@@ -130,13 +151,26 @@ class ServiceContainer:
     @classmethod
     def reset(cls) -> None:
         """
-        Reset singleton instance (FOR TESTING ONLY).
+        DEPRECATED: Reset legacy singleton state (FOR TESTING ONLY).
 
-        This allows tests to create fresh containers.
+        Issue #322: The singleton pattern has been removed. In new tests,
+        create fresh ServiceContainer() instances instead of calling reset().
+
+        This method is maintained for backward compatibility during migration
+        and will be removed in a future release.
         """
-        if cls._instance is not None:
-            if cls._instance._initialized:
-                cls._instance.shutdown()
-            cls._instance = None
-            cls._initialized = False
-            logger.info("Container reset (testing)")
+        global _legacy_instance
+
+        warnings.warn(
+            "ServiceContainer.reset() is deprecated. "
+            "Create fresh ServiceContainer() instances in tests instead. "
+            "(Issue #322 - ARCH-FIX-SINGLETON)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        if _legacy_instance is not None:
+            if _legacy_instance._initialized:
+                _legacy_instance.shutdown()
+            _legacy_instance = None
+            logger.info("Container reset (testing - deprecated)")

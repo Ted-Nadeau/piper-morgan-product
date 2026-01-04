@@ -8,9 +8,18 @@ Issue #469: Fixed to use AsyncSessionFactory instead of non-existent request.sta
 The original implementation expected middleware to set request.state.db, but that
 middleware was never created. Now uses async generators with session_scope_fresh()
 for proper session lifecycle management.
+
+Issue #322: Added get_container() for ServiceContainer dependency injection.
+This is part of the ARCH-FIX-SINGLETON work to remove the singleton pattern
+and enable horizontal scaling with multiple uvicorn workers.
 """
 
-from typing import AsyncGenerator
+from typing import TYPE_CHECKING, AsyncGenerator
+
+from fastapi import HTTPException, Request
+
+if TYPE_CHECKING:
+    from services.container import ServiceContainer
 
 from services.database.repositories import ProjectRepository
 from services.database.session_factory import AsyncSessionFactory
@@ -19,6 +28,63 @@ from services.knowledge.knowledge_graph_service import KnowledgeGraphService
 from services.repositories.file_repository import FileRepository
 from services.repositories.todo_repository import TodoListRepository, TodoRepository
 from services.repositories.universal_list_repository import UniversalListRepository
+
+# =============================================================================
+# ServiceContainer Dependency (Issue #322: ARCH-FIX-SINGLETON)
+# =============================================================================
+
+
+def get_container(request: Request) -> "ServiceContainer":
+    """Get ServiceContainer from application state.
+
+    This is the standard dependency injection path for accessing the
+    ServiceContainer in FastAPI routes. The container is created during
+    application startup (web/startup.py) and stored in app.state.
+
+    Usage in routes:
+        from fastapi import Depends
+        from web.api.dependencies import get_container
+
+        @router.get("/example")
+        async def example_route(
+            container: ServiceContainer = Depends(get_container)
+        ):
+            service = container.get_service("my_service")
+            ...
+
+    Args:
+        request: FastAPI Request object (injected automatically)
+
+    Returns:
+        ServiceContainer: The application's service container
+
+    Raises:
+        HTTPException: 503 if container not initialized (startup incomplete)
+
+    Issue #322: Part of ARCH-FIX-SINGLETON to enable horizontal scaling.
+    The container is application-scoped (one per uvicorn worker), not a
+    process-wide singleton, allowing multiple workers to run independently.
+    """
+    if not hasattr(request.app.state, "service_container"):
+        raise HTTPException(
+            status_code=503,
+            detail="ServiceContainer not initialized. Application startup may be incomplete.",
+        )
+
+    container = request.app.state.service_container
+
+    if container is None:
+        raise HTTPException(
+            status_code=503,
+            detail="ServiceContainer is None. Application startup may have failed.",
+        )
+
+    return container
+
+
+# =============================================================================
+# Repository Dependencies (Issue #469, #470)
+# =============================================================================
 
 
 async def get_file_repository() -> AsyncGenerator[FileRepository, None]:

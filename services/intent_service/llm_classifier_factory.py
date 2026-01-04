@@ -91,6 +91,7 @@ class LLMClassifierFactory:
     async def create_for_testing(
         mock_knowledge_graph_service=None,
         mock_semantic_indexing_service=None,
+        mock_llm_service=None,
         confidence_threshold: float = 0.75,
     ) -> LLMIntentClassifier:
         """
@@ -99,6 +100,7 @@ class LLMClassifierFactory:
         Args:
             mock_knowledge_graph_service: Mock KnowledgeGraphService
             mock_semantic_indexing_service: Mock SemanticIndexingService
+            mock_llm_service: Mock LLM service (Issue #322 - required for DI)
             confidence_threshold: Minimum confidence for classification
 
         Returns:
@@ -106,6 +108,7 @@ class LLMClassifierFactory:
         """
 
         return LLMIntentClassifier(
+            llm_service=mock_llm_service,
             knowledge_graph_service=mock_knowledge_graph_service,
             semantic_indexing_service=mock_semantic_indexing_service,
             confidence_threshold=confidence_threshold,

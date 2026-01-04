@@ -70,10 +70,24 @@ class OrchestrationEngine:
     """
 
     def __init__(self, llm_client: Optional[LLMClient] = None):
+        """Initialize OrchestrationEngine.
+
+        Args:
+            llm_client: LLM client instance. If not provided, will fall back
+                       to ServiceContainer (deprecated - Issue #322).
+        """
         # Use ServiceContainer if none provided
         if llm_client is None:
+            import warnings
+
             from services.container import ServiceContainer
 
+            warnings.warn(
+                "OrchestrationEngine: Direct ServiceContainer() access is deprecated. "
+                "Pass llm_client via constructor. (Issue #322 - ARCH-FIX-SINGLETON)",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             container = ServiceContainer()
             llm_client = container.get_service("llm")
 

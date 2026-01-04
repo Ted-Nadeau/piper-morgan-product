@@ -113,12 +113,19 @@ class TestServiceContainer:
         ServiceContainer.reset()
 
     @pytest.mark.smoke
-    def test_singleton_pattern(self):
-        """Test that ServiceContainer enforces singleton pattern."""
+    def test_independent_instances(self):
+        """Test that ServiceContainer creates independent instances (Issue #322).
+
+        The singleton pattern was removed to enable horizontal scaling.
+        Each call to ServiceContainer() now creates a fresh instance.
+        """
         container1 = ServiceContainer()
         container2 = ServiceContainer()
 
-        assert container1 is container2
+        # Containers are now independent (not singleton)
+        assert container1 is not container2
+        # Each has its own registry
+        assert container1._registry is not container2._registry
 
     @pytest.mark.asyncio
     @pytest.mark.smoke
