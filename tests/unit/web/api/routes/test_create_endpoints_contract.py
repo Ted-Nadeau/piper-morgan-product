@@ -201,6 +201,11 @@ class TestTodoCreateContract:
 class TestProjectCreateContract:
     """
     Tests for POST /api/v1/projects API contract (Issue #468)
+
+    Test Bug Fix (Bead ufj):
+    - Fixed mock to use correct method name: mock_repo.create() instead of mock_repo.create_project()
+    - The route handler calls project_repo.create(**kwargs), not project_repo.create_project()
+    - This was causing PydanticSerializationError on coroutine objects
     """
 
     @pytest.mark.smoke
@@ -216,7 +221,7 @@ class TestProjectCreateContract:
 
         # Mock project repository
         mock_repo = AsyncMock()
-        mock_repo.create_project = AsyncMock(
+        mock_repo.create = AsyncMock(
             return_value=MagicMock(
                 id=str(uuid4()),
                 name="Test Project",
