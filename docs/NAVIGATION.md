@@ -338,8 +338,8 @@ Weekly/monthly session consolidations - 100+ consolidated logs for historical re
 
 - **[Omnibus Logs](omnibus-logs/)** - Strategic insights and weekly summaries (100+ logs)
 - **[ADRs](internal/architecture/current/adrs/)** - Architectural decision records (48+)
-- **[Agent Coordination](internal/development/handoffs/)** - Multi-agent collaboration patterns
 - **[Patterns Catalog](internal/architecture/current/patterns/)** - Implementation patterns (33)
+- **[Session Logs](../dev/)** - Historical development sessions by date
 
 ---
 
