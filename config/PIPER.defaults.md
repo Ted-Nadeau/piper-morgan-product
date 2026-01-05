@@ -58,10 +58,10 @@
 3. Maintenance and knowledge management (5% allocation)
 
 **Knowledge Sources Structure**:
-- Pattern Index: `docs/patterns/PATTERN-INDEX.md`
-- Architecture Guides: `docs/architecture/`
-- User Guides: `docs/user-guides/`
-- Session Logs: `docs/development/session-logs/`
+- Pattern Index: `docs/internal/architecture/current/patterns/`
+- Architecture Guides: `docs/internal/architecture/current/`
+- User Guides: `docs/public/user-guides/`
+- Session Logs: `dev/YYYY/MM/DD/` (dated working documents)
 
 ---
 

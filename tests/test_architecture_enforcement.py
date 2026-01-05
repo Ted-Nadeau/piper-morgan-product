@@ -279,7 +279,7 @@ class TestGitHubArchitectureEnforcement:
                 "  With:",
                 "    from services.integrations.github.github_integration_router import GitHubIntegrationRouter",
                 "",
-                "📖 See: docs/architecture/github-integration-router.md",
+                "📖 See: archive/docs-architecture-2025/github-integration-router.md",
                 "🐛 Issue: GitHub #193 - CORE-GREAT-2",
             ]
         )
@@ -299,7 +299,7 @@ class TestGitHubArchitectureEnforcement:
             + [
                 "",
                 "🔧 Services must import and use GitHubIntegrationRouter instead of GitHubAgent",
-                "📖 See: docs/architecture/github-integration-router.md",
+                "📖 See: archive/docs-architecture-2025/github-integration-router.md",
                 "🐛 Issue: GitHub #193 - CORE-GREAT-2",
             ]
         )
