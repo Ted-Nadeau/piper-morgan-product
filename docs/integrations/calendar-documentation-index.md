@@ -6,7 +6,7 @@
 **File**: [`docs/integrations/calendar-integration-guide.md`](integrations/calendar-integration-guide.md)
 **Purpose**: Complete integration guide including architecture, configuration, and usage examples
 
-### Test Documentation  
+### Test Documentation
 **File**: [`docs/testing/calendar-tests.md`](testing/calendar-tests.md)
 **Purpose**: Test suite documentation with 21 test methods
 
@@ -15,7 +15,7 @@
 **Purpose**: Delegated MCP Pattern documentation
 
 ### Configuration Guide
-**File**: [`docs/configuration/calendar-setup.md`](configuration/calendar-setup.md) 
+**File**: [`docs/configuration/calendar-setup.md`](configuration/calendar-setup.md)
 **Purpose**: Step-by-step configuration and environment setup
 
 ### Troubleshooting Guide
