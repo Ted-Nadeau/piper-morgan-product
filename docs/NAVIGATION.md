@@ -4,7 +4,7 @@
 **Audience**: Agents, developers, architects, and internal contributors
 **Public Documentation**: See [README.md](README.md) for pmorgan.tech public site
 
-**Last Updated**: October 27, 2025
+**Last Updated**: January 5, 2026
 **Status**: ✅ **Complete Internal Navigation System** - Role-based access for development teams
 
 ---
@@ -68,8 +68,8 @@ Each essential briefing includes triggers for loading detailed documentation as 
 
 ### 📚 Researchers & Historians
 
-- **[Session Logs Archive](dev/2025/)** - Chronological development history (dev/2025/MM/DD/ structure)
-- **[Omnibus Logs](omnibus-logs/)** - Weekly/monthly session consolidations
+- **[Session Logs Archive](../dev/2025/)** - Chronological development history (dev/2025/MM/DD/ structure)
+- **[Omnibus Logs](omnibus-logs/)** - Weekly/monthly session consolidations (100+ logs)
 - **[Development Logs](internal/development/active/)** - Active development work and status files
 
 ### 👥 External Users
@@ -182,27 +182,30 @@ knowledge/
 
 **See**: `knowledge/README.md` for complete workflow documentation
 
-### 📦 Archives (`archives/`)
+### 📦 Archives & Historical Content
 
 **Historical preservation and archaeological research**
 
-#### Session Logs (`archives/session-logs/`)
+#### Session Logs (`dev/YYYY/MM/DD/`)
 
+Working documents and session logs are stored in date-stamped directories:
 ```
-├── 2025/                     # Chronological by year
-│   ├── 05/ (May logs)
-│   ├── 06/ (June logs)
-│   ├── 07/ (July logs)
-│   ├── 08/ (August logs)
-│   └── 09/ (September logs + index.md)
-├── omnibus-logs/             # 102+ weekly/monthly consolidations
-└── yearly-index.md           # High-level research navigation
+dev/
+├── 2025/                     # Historical year
+│   └── MM/DD/               # Date-stamped directories
+├── 2026/                     # Current year
+│   └── MM/DD/               # Date-stamped directories
+└── active/                   # Current working documents
 ```
 
-#### Artifacts & Decisions (`archives/`)
+#### Omnibus Logs (`docs/omnibus-logs/`)
 
-- **Artifacts**: Generated reports, PM files, historical deliverables
-- **Decisions**: Completed ADRs and historical planning decisions
+Weekly/monthly session consolidations - 100+ consolidated logs for historical research.
+
+#### ADRs & Decisions
+
+- **Active ADRs**: `docs/internal/architecture/current/adrs/` (48+ decisions)
+- **Patterns**: `docs/internal/architecture/current/patterns/` (33 patterns)
 
 ### 🎨 Assets (`assets/` and `docs/assets/`)
 
@@ -235,19 +238,19 @@ knowledge/
 
 ### By Work Type
 
-- **Current Tasks**: `internal/development/active/`
+- **Current Tasks**: `internal/development/active/` or `dev/active/`
 - **Strategic Planning**: `internal/planning/current/`
 - **Technical Decisions**: `internal/architecture/current/`
-- **Historical Research**: `archives/session-logs/`
+- **Historical Research**: `dev/YYYY/MM/DD/` and `omnibus-logs/`
 - **Asset Management**: `assets/` with inventory and guidelines
 
 ### By Time Period
 
-- **Today's Work**: Check `internal/` directories for current status
-- **Recent History**: `archives/session-logs/2025/09/`
-- **Project History**: `archives/session-logs/yearly-index.md`
+- **Today's Work**: Check `dev/active/` for current session logs
+- **Recent History**: `dev/2026/01/` (current month)
+- **Project History**: `dev/2025/` (historical sessions)
 - **Decision Evolution**: `internal/architecture/evolution/`
-- **Weekly Insights**: `archives/session-logs/omnibus-logs/`
+- **Weekly Insights**: `omnibus-logs/` (100+ consolidated logs)
 
 ### By Content Type
 
@@ -255,7 +258,7 @@ knowledge/
 - **Code References**: `internal/architecture/current/models/`
 - **Processes**: `internal/development/methodology-core/`
 - **Images/Assets**: `assets/` with inventory in README
-- **Historical Deliverables**: `archives/artifacts/`
+- **ADRs**: `internal/architecture/current/adrs/` (48+ decisions)
 
 ---
 
@@ -319,8 +322,8 @@ knowledge/
 
 ### Most Frequently Used
 
-- **[September 2025 Session Logs](archives/session-logs/2025/09/index.md)** - Current month activities
 - **[Active Development Work](internal/development/active/)** - What's happening now
+- **[Working Documents](../dev/active/)** - Current session logs and working docs
 - **[Domain Models Hub](internal/architecture/current/models/models-architecture.md)** - Complete model reference
 - **[Methodology Core](internal/development/methodology-core/INDEX.md)** - Development patterns and processes
 
@@ -329,14 +332,14 @@ knowledge/
 - **[Public Getting Started](public/getting-started/)** - External onboarding
 - **[Development Tools](internal/development/tools/)** - Developer setup and guides
 - **[Architecture Overview](internal/architecture/current/)** - System understanding
-- **[Historical Context](archives/session-logs/yearly-index.md)** - Project evolution
+- **[Session Logs](../dev/2025/)** - Historical development context
 
 ### For Research & Analysis
 
-- **[Omnibus Logs](archives/session-logs/omnibus-logs/)** - Strategic insights and weekly summaries
-- **[Decision Archive](archives/decisions/)** - Historical decision context
+- **[Omnibus Logs](omnibus-logs/)** - Strategic insights and weekly summaries (100+ logs)
+- **[ADRs](internal/architecture/current/adrs/)** - Architectural decision records (48+)
 - **[Agent Coordination](internal/development/handoffs/)** - Multi-agent collaboration patterns
-- **[Archaeological Index](archives/session-logs/yearly-index.md)** - Complete research navigation
+- **[Patterns Catalog](internal/architecture/current/patterns/)** - Implementation patterns (33)
 
 ---
 
@@ -345,7 +348,7 @@ knowledge/
 ### Navigation Issues
 
 - **Can't find specific content?** Check role-based quick navigation above
-- **Looking for historical material?** Start with `archives/session-logs/yearly-index.md`
+- **Looking for historical material?** Start with `dev/2025/` or `omnibus-logs/`
 - **Need methodology guidance?** Review `internal/development/methodology-core/`
 - **Asset questions?** Check `assets/README.md` and `assets/INVENTORY.md`
 
