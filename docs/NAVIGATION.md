@@ -57,7 +57,6 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Methodology](internal/development/methodology-core/)** - Development methodologies (20 core patterns)
 - **[Methodology Index](internal/development/methodology-core/INDEX.md)** - Comprehensive methodology navigation
 - **[Testing Procedures](internal/development/testing/)** - E2E bug protocol, testing guides, and procedures
-- **[Handoffs](internal/development/handoffs/)** - Agent coordination protocols
 - **[Session Templates](internal/development/tools/session-log-templates/)** - Session documentation
 
 ### 🚀 DevOps / Release Engineering
@@ -112,7 +111,6 @@ Each essential briefing includes triggers for loading detailed documentation as 
 │   └── ready-for-integration/ # Completed work
 ├── methodology-core/         # 20 development methodologies (see INDEX.md)
 ├── tools/                    # Development tools and guides
-├── handoffs/                 # Agent coordination prompts
 └── planning/                 # Current planning cycles
 ```
 
@@ -141,6 +139,8 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - [User Context Service](guides/user-context-service.md) - Multi-user context architecture guide
 - [Canonical Handlers Architecture](guides/canonical-handlers-architecture.md) - Handler design and capabilities
 - [EXECUTION/ANALYSIS Handlers](guides/execution-analysis-handlers.md) - Intent routing to domain services
+- [Preference Detection Guide](guides/preference-detection-guide.md) - Developer integration guide for preference detection
+- [CLI Publish Command](guides/cli-publish-command.md) - Publish markdown files to various platforms
 
 ## Examples
 
