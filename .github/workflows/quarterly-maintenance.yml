@@ -1,0 +1,65 @@
+# Quarterly Maintenance Sweep Reminder
+# Creates a GitHub issue every quarter to prompt maintenance tasks
+#
+# Schedule: First day of Jan, Apr, Jul, Oct at 9am UTC
+# Issue #449 (FLY-MAINT-CLEANUP) established this pattern
+
+name: Quarterly Maintenance Reminder
+
+on:
+  schedule:
+    # Runs at 9:00 UTC on Jan 1, Apr 1, Jul 1, Oct 1
+    - cron: '0 9 1 1,4,7,10 *'
+  workflow_dispatch:  # Allow manual trigger for testing
+
+jobs:
+  create-maintenance-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create Quarterly Maintenance Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date();
+            const quarter = Math.floor(today.getMonth() / 3) + 1;
+            const year = today.getFullYear();
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Quarterly Maintenance Sweep - Q${quarter} ${year}`,
+              body: `## Quarterly Maintenance Checklist
+
+            This is an automated reminder to perform routine maintenance tasks.
+            Reference: Issue #449 (FLY-MAINT-CLEANUP) established this pattern.
+
+            ### Documentation Cleanup
+            - [ ] Scan \`docs/\` root for misplaced files
+            - [ ] Check \`dev/active/\` for stale working documents
+            - [ ] Review \`docs/to-file/\` queue (if exists)
+            - [ ] Verify NAVIGATION.md links are current
+
+            ### Archive Review
+            - [ ] Move deprecated folders to \`archive/\` (gitignored)
+            - [ ] Update README stubs for any moved directories
+            - [ ] Check for orphan directories (1-2 files, not in NAVIGATION)
+
+            ### Code Hygiene
+            - [ ] Run \`find services/ -type d -not -path '*/__pycache__*' -exec sh -c '[ ! -f "$1/__init__.py" ] && echo "MISSING: $1"' _ {} \\;\`
+            - [ ] Check for TODO comments without issue numbers
+            - [ ] Review test files for hardcoded data that should be fixtures
+
+            ### Beads Health
+            - [ ] \`bd status\` - Check database health
+            - [ ] \`bd list\` - Review open beads for staleness
+            - [ ] Close any completed beads that were missed
+
+            ---
+            *This issue was automatically created by the quarterly-maintenance workflow.*
+            `,
+              labels: ['maintenance', 'documentation']
+            });
+
+            console.log('Quarterly maintenance issue created successfully');
