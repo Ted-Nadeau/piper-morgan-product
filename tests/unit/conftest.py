@@ -12,8 +12,12 @@ If tables don't exist, tests will fail with "relation does not exist" errors.
 See: dev/2025/11/22/issue-349-analysis-and-fixture.md for more details.
 """
 
+from datetime import datetime
+from uuid import UUID
+
 import pytest
 import pytest_asyncio
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -98,3 +102,49 @@ async def async_transaction(unit_db_url):
             await transaction.rollback()
 
     await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def create_test_user():
+    """
+    Factory fixture to create test users in database for FK constraint satisfaction.
+
+    Returns a callable that creates users with the given UUID.
+    Usage:
+        async def test_something(async_transaction, create_test_user):
+            async with async_transaction as session:
+                user_id = await create_test_user(session, str(uuid4()))
+                # Now can create todos with that owner_id
+    """
+
+    async def _create_user(
+        session: AsyncSession, user_id: str, username: str = None, email: str = None
+    ) -> str:
+        """Create a test user in the given session for FK constraints."""
+        if username is None:
+            username = f"test_user_{user_id[:8]}"
+        if email is None:
+            email = f"{username}@example.com"
+
+        # Insert user directly - bypasses domain validation, ensures FK constraints work
+        await session.execute(
+            text(
+                """
+                INSERT INTO users (id, username, email, password_hash, is_active, is_verified,
+                                   created_at, updated_at, role, is_alpha)
+                VALUES (:id, :username, :email, '', true, false, :created_at, :updated_at, 'user', true)
+                ON CONFLICT (id) DO NOTHING
+            """
+            ),
+            {
+                "id": user_id,
+                "username": username,
+                "email": email,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            },
+        )
+        await session.commit()
+        return user_id
+
+    return _create_user

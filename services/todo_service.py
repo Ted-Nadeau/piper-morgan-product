@@ -19,7 +19,7 @@ Adds:
 
 from datetime import datetime
 from typing import List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 
@@ -76,7 +76,7 @@ class TodoService(ItemService):
         """
         # Set defaults for required fields if not provided
         if owner_id is None:
-            owner_id = "system"  # Default owner
+            owner_id = str(uuid4())  # Default owner (valid UUID)
 
         return await self.create_item(
             text=text,

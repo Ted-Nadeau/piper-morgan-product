@@ -143,3 +143,75 @@ Investigated where "polish-sprint-progress.md"-type files come from. Key finding
 - Something else that's been superseded?
 
 **Action**: PM wants to commission a specialized agent to evaluate this for leadership team assessment.
+
+---
+
+### 12:35 - Orphan Directory Consolidation
+
+Audited docs/ subdirectories - found 8 orphan directories with only 1-2 files each, not cited in NAVIGATION.md.
+
+**Consolidation executed:**
+
+| From | To | Rationale |
+|------|-----|-----------|
+| `docs/design/spacing-system.md` | `internal/architecture/current/` | UI architecture spec |
+| `docs/reference/intent-categories.md` | `internal/architecture/current/` | Technical reference |
+| `docs/proposals/beads-integration-proposal.md` | `archive/` | Historical (Nov 2025) |
+| `docs/methodology/enhanced-autonomy...` | `internal/development/methodology-core/` | Methodology doc |
+| `docs/integration/preference-detection...` | `guides/preference-detection-guide.md` | Developer guide |
+| `docs/environments/environment-status.md` | `internal/operations/` | Ops status doc |
+| `docs/commands/publish.md` | `guides/cli-publish-command.md` | CLI documentation |
+| `docs/examples/env-mcp.example` | `config/examples/` | Config example |
+
+**NAVIGATION.md updates:**
+- Removed archived handoffs/ references (both link and tree diagram)
+- Added two new entries to Developer Guides section
+
+**Committed**: `bb7b347d` - "docs: Consolidate 8 orphan directories into proper locations"
+
+---
+
+### 13:00 - DOC-SURVEY Complete
+
+All 4 commits pushed to main. Closed bead `piper-morgan-upc`.
+
+**Session commits:**
+1. `651d3885` - Fix NAVIGATION.md paths and relocate misplaced files
+2. `df54862c` - Reorganize docs/ root (26→16 files)
+3. `bd78cb46` - Archive strays, file unfiled, archive handoffs
+4. `bb7b347d` - Consolidate 8 orphan directories
+
+**Remaining open beads (5):**
+- `5x5` - Pre-existing: test_api_degradation_integration.py
+- `ufj` - Pre-existing: test_create_endpoints_contract.py
+- `3v2` - Update test_llm_intent_classifier.py for DI (#322 follow-up)
+- `mr2` - Pre-existing: test_todo_service.py owner_id='system'
+- `zvo` - TECH-DEBT: _get_project_metadata GitHub-hardwired
+
+All are P2 tech debt - none blocking.
+
+---
+
+### 13:05 - Bead Analysis & Agent Deployment
+
+**Bead review findings:**
+- `3v2` - **CLOSED** - Tests already passing (discovered during analysis)
+- `zvo` - **DEFERRED** - Intentional tech debt for future Jira/Linear/Notion integration. Current code already supports multiple GitHub repos.
+
+**PM clarification on `zvo`**: The tech debt is about *alternate providers* (Jira instead of GitHub), not multiple GitHub repos. Multi-repo is already working.
+
+**Deployed 3 Haiku agents in parallel:**
+
+| Agent | Bead | Task | Status |
+|-------|------|------|--------|
+| aa60990 | `5x5` | Fix test_api_degradation_integration.py | Running |
+| acccefb | `ufj` | Fix test_create_endpoints_contract.py | Running |
+| ae0117d | `mr2` | Fix test_todo_service.py owner_id | Running |
+
+Awaiting agent results...
+
+---
+
+## Next Steps
+
+Awaiting agent completion and PM direction.
