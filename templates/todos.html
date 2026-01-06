@@ -82,10 +82,10 @@
 
     <!-- Todos will be rendered here by JavaScript -->
     <div id="todos-container" class="resource-list">
-      <div class="empty-state">
-        <h3>No todos yet</h3>
-        <p>Create your first todo to get started</p>
-      </div>
+      {% set icon = '✅' %}
+      {% set title = 'No todos yet.' %}
+      {% set message = 'Say "add a todo: [your task]" to create one, or I can suggest some based on your open GitHub issues.' %}
+      {% include 'components/empty-state.html' %}
     </div>
   </div>
 
@@ -135,9 +135,22 @@
 
       if (todos.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <h3>No todos yet</h3>
-            <p>Create your first todo to get started</p>
+          <div class="empty-state" role="status" aria-label="Empty state">
+            <div class="empty-state-icon" aria-hidden="true">✅</div>
+            <h2 class="empty-state-title">No todos yet.</h2>
+            <p class="empty-state-message">Say "add a todo: [your task]" to create one, or I can suggest some based on your open GitHub issues.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Check if all todos are completed
+      if (todos.every(t => t.status === 'completed' || t.completed)) {
+        container.innerHTML = `
+          <div class="empty-state" role="status" aria-label="All complete">
+            <div class="empty-state-icon" aria-hidden="true">🎯</div>
+            <h2 class="empty-state-title">All caught up!</h2>
+            <p class="empty-state-message">Your todo list is clear. Nice work.</p>
           </div>
         `;
         return;

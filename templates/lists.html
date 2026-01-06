@@ -82,10 +82,10 @@
 
     <!-- Lists will be rendered here by JavaScript -->
     <div id="lists-container" class="resource-list">
-      <div class="empty-state">
-        <h3>No lists yet</h3>
-        <p>Create your first list to get started</p>
-      </div>
+      {% set icon = '📋' %}
+      {% set title = 'No lists yet.' %}
+      {% set message = 'Say "create a list called..." to get started. Lists help you group and organize related items.' %}
+      {% include 'components/empty-state.html' %}
     </div>
   </div>
 
@@ -135,9 +135,10 @@
 
       if (lists.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <h3>No lists yet</h3>
-            <p>Create your first list to get started</p>
+          <div class="empty-state" role="status" aria-label="Empty state">
+            <div class="empty-state-icon" aria-hidden="true">📋</div>
+            <h2 class="empty-state-title">No lists yet.</h2>
+            <p class="empty-state-message">Say "create a list called..." to get started. Lists help you group and organize related items.</p>
           </div>
         `;
         return;

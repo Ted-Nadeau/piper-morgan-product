@@ -52,10 +52,10 @@
 
     <!-- Projects will be rendered here by JavaScript -->
     <div id="projects-container" class="resource-list">
-      <div class="empty-state">
-        <h3>No projects yet</h3>
-        <p>Create your first project to get started</p>
-      </div>
+      {% set icon = '📁' %}
+      {% set title = 'No projects set up yet.' %}
+      {% set message = 'Projects help me understand your work context. Say "create a project called..." to get started.' %}
+      {% include 'components/empty-state.html' %}
     </div>
   </div>
 
@@ -105,9 +105,10 @@
 
       if (projects.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <h3>No projects yet</h3>
-            <p>Create your first project to get started</p>
+          <div class="empty-state" role="status" aria-label="Empty state">
+            <div class="empty-state-icon" aria-hidden="true">📁</div>
+            <h2 class="empty-state-title">No projects set up yet.</h2>
+            <p class="empty-state-message">Projects help me understand your work context. Say "create a project called..." to get started.</p>
           </div>
         `;
         return;

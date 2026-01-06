@@ -146,10 +146,10 @@
 
     <!-- Files will be rendered here by JavaScript -->
     <div id="files-container" class="files-grid">
-      <div class="empty-state">
-        <h3>No files yet</h3>
-        <p>Upload your first file to get started</p>
-      </div>
+      {% set icon = '📄' %}
+      {% set title = 'No documents in your knowledge base yet.' %}
+      {% set message = "You can upload files, connect Notion, or just paste content into our chat—I'll remember it for later." %}
+      {% include 'components/empty-state.html' %}
     </div>
   </div>
 
@@ -198,9 +198,10 @@
 
       if (files.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <h3>No files yet</h3>
-            <p>Upload your first file to get started</p>
+          <div class="empty-state" role="status" aria-label="Empty state">
+            <div class="empty-state-icon" aria-hidden="true">📄</div>
+            <h2 class="empty-state-title">No documents in your knowledge base yet.</h2>
+            <p class="empty-state-message">You can upload files, connect Notion, or just paste content into our chat—I'll remember it for later.</p>
           </div>
         `;
         return;
