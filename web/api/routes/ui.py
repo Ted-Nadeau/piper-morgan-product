@@ -121,6 +121,7 @@ async def home(request: Request):
     If setup complete but not authenticated: redirect to login
 
     Issue #390: Smart setup/login routing
+    Issue #549: Post-setup orientation modal context
     """
     from sqlalchemy import text
 
@@ -132,7 +133,32 @@ async def home(request: Request):
     if user_id and user_id != "user":
         templates = _get_templates(request)
         user_context = _extract_user_context(request)
-        return templates.TemplateResponse("home.html", {"request": request, "user": user_context})
+
+        # Issue #549: Get setup_complete and orientation_seen for orientation modal
+        setup_complete = False
+        orientation_seen = True  # Default to True so modal doesn't show if lookup fails
+        try:
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                result = await session.execute(
+                    text("SELECT setup_complete, orientation_seen FROM users WHERE id = :user_id"),
+                    {"user_id": user_id},
+                )
+                row = result.fetchone()
+                if row:
+                    setup_complete = row[0]
+                    orientation_seen = row[1]
+        except Exception as e:
+            logger.warning(f"Error fetching user setup status: {e}, skipping orientation modal")
+
+        return templates.TemplateResponse(
+            "home.html",
+            {
+                "request": request,
+                "user": user_context,
+                "setup_complete": setup_complete,
+                "orientation_seen": orientation_seen,
+            },
+        )
 
     # Check if any users exist in database
     try:
@@ -148,6 +174,35 @@ async def home(request: Request):
 
     # Otherwise redirect to login
     return RedirectResponse(url="/login", status_code=302)
+
+
+@router.post("/api/v1/orientation/dismiss")
+async def dismiss_orientation(request: Request):
+    """
+    Mark orientation modal as seen for current user.
+
+    Issue #549: Post-setup orientation persistence
+    """
+    from fastapi.responses import JSONResponse
+    from sqlalchemy import text
+
+    from services.database.session_factory import AsyncSessionFactory
+
+    user_id = getattr(request.state, "user_id", None)
+    if not user_id or user_id == "user":
+        return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
+
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            await session.execute(
+                text("UPDATE users SET orientation_seen = true WHERE id = :user_id"),
+                {"user_id": user_id},
+            )
+            await session.commit()
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error(f"Error dismissing orientation: {e}")
+        return JSONResponse({"status": "error", "message": "Failed to save"}, status_code=500)
 
 
 @router.get("/login", response_class=HTMLResponse)

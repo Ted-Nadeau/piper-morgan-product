@@ -85,6 +85,9 @@ class User(Base):
     setup_complete = Column(Boolean, default=False, nullable=False)
     setup_completed_at = Column(DateTime, nullable=True)  # When setup was completed
 
+    # Orientation tracking (Issue #549)
+    orientation_seen = Column(Boolean, default=False, nullable=False)
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
