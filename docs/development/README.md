@@ -7,7 +7,7 @@
 - **[Active Work](../internal/development/active/)** - Current development status
 - **[Development Tools](../internal/development/tools/)** - Setup guides and workflows
 - **[Methodology](../internal/development/methodology-core/)** - 20 core development methodologies
-- **[Agent Handoffs](../internal/development/handoffs/)** - Multi-agent coordination
+- **[Working Documents](../../dev/active/)** - Session logs and current work
 
 🧭 **For comprehensive navigation**: See [NAVIGATION.md](../NAVIGATION.md)
 
