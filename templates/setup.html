@@ -187,6 +187,71 @@
             padding: 6px 12px;
             font-size: 12px;
         }
+
+        /* Piper Introduction Panel - Inline before wizard (#547) */
+        .piper-intro-panel {
+            text-align: center;
+            padding: 40px 30px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .piper-intro-panel.hidden {
+            display: none;
+        }
+
+        .piper-greeting {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+        }
+
+        .piper-description,
+        .piper-setup-intro {
+            font-size: 16px;
+            color: #5a6c7d;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .piper-intro-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .piper-intro-button:hover {
+            background: #2980b9;
+        }
+
+        .piper-intro-button:focus {
+            outline: 2px solid #2980b9;
+            outline-offset: 2px;
+        }
+
+        /* Mobile responsiveness for intro panel */
+        @media (max-width: 480px) {
+            .piper-intro-panel {
+                padding: 30px 20px;
+            }
+
+            .piper-greeting {
+                font-size: 20px;
+            }
+
+            .piper-description,
+            .piper-setup-intro {
+                font-size: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -196,6 +261,27 @@
             <img src="/assets/pm-logo.png" alt="Piper Morgan" class="auth-logo">
             <h1>Welcome to Piper Morgan</h1>
             <p>Let's get you set up in just a few steps</p>
+        </div>
+
+        <!-- Piper Introduction Panel - shown before wizard steps (#547: FTUX-PIPER-INTRO) -->
+        <div id="piper-intro" class="piper-intro-panel" role="region" aria-labelledby="piper-intro-heading">
+            <div class="piper-intro-content">
+                <h2 id="piper-intro-heading" class="piper-greeting">
+                    Hi, I'm Piper Morgan, your PM assistant! You can call me Piper.
+                </h2>
+                <p class="piper-description">
+                    I'm here to help you with product management work—tracking tasks,
+                    managing GitHub issues, prepping for standups, and staying on top
+                    of your calendar.
+                </p>
+                <p class="piper-setup-intro">
+                    Let me help you get set up. I'll need to check a few things and
+                    connect to your tools.
+                </p>
+                <button id="piper-intro-cta" class="piper-intro-button" onclick="dismissPiperIntro()">
+                    Let's get started
+                </button>
+            </div>
         </div>
 
         <!-- Progress indicator -->
@@ -350,5 +436,42 @@
     <script src="/static/js/form-validation.js"></script>
     <script src="/static/js/api-wrapper.js"></script>
     <script src="/static/js/setup.js"></script>
+    <script>
+        // Piper Intro Panel Logic (#547: FTUX-PIPER-INTRO)
+        function initPiperIntro() {
+            const introSeen = sessionStorage.getItem('piper_intro_seen');
+            const introPanel = document.getElementById('piper-intro');
+            const progressBar = document.querySelector('.setup-progress');
+            const wizardSteps = document.querySelectorAll('.setup-step');
+
+            if (introSeen === 'true') {
+                // Skip intro, show wizard
+                if (introPanel) introPanel.classList.add('hidden');
+                if (progressBar) progressBar.style.display = 'flex';
+                // Activate first step
+                if (wizardSteps.length > 0) wizardSteps[0].classList.add('active');
+            } else {
+                // Show intro, hide wizard until dismissed
+                if (introPanel) introPanel.classList.remove('hidden');
+                if (progressBar) progressBar.style.display = 'none';
+                wizardSteps.forEach(step => step.classList.remove('active'));
+            }
+        }
+
+        function dismissPiperIntro() {
+            sessionStorage.setItem('piper_intro_seen', 'true');
+
+            const introPanel = document.getElementById('piper-intro');
+            const progressBar = document.querySelector('.setup-progress');
+            const firstStep = document.querySelector('.setup-step');
+
+            if (introPanel) introPanel.classList.add('hidden');
+            if (progressBar) progressBar.style.display = 'flex';
+            if (firstStep) firstStep.classList.add('active');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initPiperIntro);
+    </script>
 </body>
 </html>
