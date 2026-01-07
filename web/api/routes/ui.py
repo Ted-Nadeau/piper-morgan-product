@@ -141,7 +141,7 @@ async def home(request: Request):
             async with AsyncSessionFactory.session_scope_fresh() as session:
                 result = await session.execute(
                     text("SELECT setup_complete, orientation_seen FROM users WHERE id = :user_id"),
-                    {"user_id": user_id},
+                    {"user_id": str(user_id)},  # Convert UUID to string for SQL comparison
                 )
                 row = result.fetchone()
                 if row:
