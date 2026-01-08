@@ -1,10 +1,14 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+import structlog
 
 from services.api.serializers import intent_to_dict
 from services.domain.models import Intent
 from services.intelligence.conversation_aware import ConversationAwareClarifyingGenerator
 from services.session.session_manager import SessionManager
 from services.shared_types import IntentCategory
+
+logger = structlog.get_logger()
 
 
 class ConversationHandler:
@@ -45,6 +49,10 @@ class ConversationHandler:
         if intent.action == "clarification_needed":
             return await self._handle_clarification_needed(intent, session_id)
 
+        # Issue #102: Enhanced greeting with calendar awareness
+        if intent.action == "greeting":
+            return await self._respond_to_greeting(intent, session_id)
+
         # Handle other conversational actions
         responses = self.RESPONSES.get(intent.action, self.RESPONSES["chitchat"])
         response = random.choice(responses)
@@ -54,6 +62,107 @@ class ConversationHandler:
             "intent": intent_to_dict(intent),
             "workflow_id": None,
         }
+
+    async def _get_calendar_summary(self) -> Optional[Dict[str, Any]]:
+        """Issue #102: Get calendar summary for greeting enhancement."""
+        try:
+            from services.integrations.calendar.calendar_integration_router import (
+                CalendarIntegrationRouter,
+            )
+
+            calendar_router = CalendarIntegrationRouter()
+            summary = await calendar_router.get_temporal_summary()
+            return summary
+        except Exception as e:
+            logger.warning(f"Could not fetch calendar for greeting: {e}")
+            return None
+
+    async def _respond_to_greeting(self, intent: Intent, session_id: str = None) -> Dict[str, Any]:
+        """Issue #102: Generate calendar-aware greeting response."""
+        import random
+
+        # Get calendar summary (may be None if unavailable)
+        calendar_summary = await self._get_calendar_summary()
+
+        if calendar_summary and not calendar_summary.get("error"):
+            # Build enhanced greeting with calendar insights
+            response = self._format_calendar_greeting(calendar_summary)
+        else:
+            # Fallback to standard greeting
+            response = random.choice(self.RESPONSES["greeting"])
+
+        return {
+            "message": response,
+            "intent": intent_to_dict(intent),
+            "workflow_id": None,
+        }
+
+    def _format_calendar_greeting(self, summary: Dict[str, Any]) -> str:
+        """Issue #102: Format greeting with calendar insights."""
+        from datetime import datetime
+
+        now = datetime.now()
+        time_greeting = self._get_time_of_day_greeting(now.hour)
+
+        lines = [f"{time_greeting}! Here's your day at a glance:\n"]
+
+        # Current/next meeting
+        if summary.get("current_meeting"):
+            meeting = summary["current_meeting"]
+            lines.append(f"📍 **Now**: {meeting.get('summary', 'Meeting in progress')}")
+        elif summary.get("next_meeting"):
+            meeting = summary["next_meeting"]
+            # Parse start_time to get readable format
+            start_time = meeting.get("start_time", "soon")
+            if "T" in str(start_time):
+                try:
+                    dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+                    start_time = dt.strftime("%I:%M %p").lstrip("0")
+                except (ValueError, AttributeError):
+                    pass
+            lines.append(f"📅 **Next**: {meeting.get('summary', 'Meeting')} at {start_time}")
+
+        # Free time blocks
+        if summary.get("free_blocks"):
+            blocks = summary["free_blocks"][:2]  # Show up to 2 free blocks
+            if blocks:
+                block_texts = []
+                for b in blocks:
+                    start = b.get("start_time", "")
+                    end = b.get("end_time", "")
+                    # Format times
+                    try:
+                        if "T" in str(start):
+                            start_dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
+                            start = start_dt.strftime("%I:%M").lstrip("0")
+                        if "T" in str(end):
+                            end_dt = datetime.fromisoformat(end.replace("Z", "+00:00"))
+                            end = end_dt.strftime("%I:%M").lstrip("0")
+                    except (ValueError, AttributeError):
+                        pass
+                    block_texts.append(f"{start}-{end}")
+                lines.append(f"⏰ **Free time**: {', '.join(block_texts)}")
+
+        # Today's meeting count from stats
+        stats = summary.get("stats", {})
+        total_meetings = stats.get("total_meetings_today", 0)
+        if total_meetings > 0:
+            lines.append(f"\n📋 {total_meetings} meeting{'s' if total_meetings != 1 else ''} today")
+        else:
+            lines.append("\n✨ Clear calendar today!")
+
+        lines.append("\nWhat would you like to focus on?")
+
+        return "\n".join(lines)
+
+    def _get_time_of_day_greeting(self, hour: int) -> str:
+        """Issue #102: Return appropriate time-of-day greeting."""
+        if hour < 12:
+            return "Good morning"
+        elif hour < 17:
+            return "Good afternoon"
+        else:
+            return "Good evening"
 
     async def _handle_clarification_needed(
         self, intent: Intent, session_id: str = None
