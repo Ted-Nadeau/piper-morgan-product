@@ -1,0 +1,366 @@
+/* Chat Widget Styles */
+
+/* ===== Phase 2: Floating Widget Container ===== */
+.chat-widget-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000; /* Below modals (2999) and toasts (3000) */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* Chat Container - Hidden when collapsed */
+.chat-widget-container .chat-container {
+  display: none;
+  width: 380px;
+  max-height: 500px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Expanded state - show chat container */
+.chat-widget-container.expanded .chat-container {
+  display: flex;
+}
+
+/* Chat header styling */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #3498db;
+  color: white;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.chat-header span {
+  font-size: 14px;
+}
+
+/* Close button in header */
+.chat-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: opacity 0.2s ease;
+}
+
+.chat-close:hover {
+  opacity: 0.8;
+}
+
+.chat-close:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Toggle Button - Always visible */
+.chat-widget-toggle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #3498db;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chat-widget-toggle:hover {
+  background: #2980b9;
+  transform: scale(1.05);
+}
+
+.chat-widget-toggle:focus {
+  outline: 2px solid rgba(52, 152, 219, 0.5);
+  outline-offset: 2px;
+}
+
+/* Change button appearance when expanded */
+.chat-widget-container.expanded .chat-widget-toggle {
+  background: #e74c3c;
+}
+
+.chat-widget-container.expanded .chat-widget-toggle:hover {
+  background: #c0392b;
+}
+
+/* Chat window sizing for floating mode */
+.chat-widget-container .chat-window {
+  height: 350px;
+  overflow-y: auto;
+  border: none;
+  padding: 16px;
+  margin-top: 0;
+  flex-grow: 1;
+}
+
+/* Chat form in floating widget */
+.chat-widget-container .chat-form {
+  display: flex;
+  margin-bottom: 0;
+  padding: 12px;
+  gap: 8px;
+  border-top: 1px solid #ecf0f1;
+  flex-shrink: 0;
+}
+
+.chat-widget-container .chat-input {
+  flex-grow: 1;
+  padding: 10px;
+  font-size: 14px;
+  margin-right: 0;
+}
+
+.chat-widget-container .submit-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+/* Slide up animation for expanded chat */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .chat-widget-container {
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .chat-widget-container .chat-container {
+    width: calc(100vw - 32px);
+    max-width: 380px;
+    max-height: calc(100vh - 200px);
+  }
+}
+
+/* ===== Original Chat Form Styles ===== */
+.chat-form {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.chat-input {
+  flex-grow: 1;
+  padding: 15px;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.submit-btn {
+  background: #3498db;
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background: #2980b9;
+}
+
+#chat-window {
+  height: 200px;
+  min-height: 150px;
+  max-height: 80vh;
+  resize: vertical;
+  overflow-y: auto;
+  border: 1px solid #ecf0f1;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  background: #fdfdfd;
+}
+
+.message {
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 80%;
+  line-height: 1.4;
+}
+
+.user-message {
+  background: #3498db;
+  color: white;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.bot-message {
+  background: #ecf0f1;
+  color: #2c3e50;
+  align-self: flex-start;
+}
+
+.bot-message.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.bot-message.thinking {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.result {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.success {
+  background: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.error {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.workflow-status {
+  margin: 20px 0;
+  padding: 15px;
+  background: #e8f4f8;
+  border-radius: 8px;
+}
+
+/* Markdown styling */
+.message h1,
+.message h2,
+.message h3,
+.message h4,
+.message h5,
+.message h6 {
+  margin: 15px 0 10px 0;
+  color: #2c3e50;
+}
+
+.message h1 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #ecf0f1;
+  padding-bottom: 5px;
+}
+
+.message h2 {
+  font-size: 1.3em;
+}
+
+.message h3 {
+  font-size: 1.1em;
+}
+
+.message ul,
+.message ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.message li {
+  margin: 5px 0;
+}
+
+.message code {
+  background: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: "Monaco", "Menlo", monospace;
+  font-size: 0.9em;
+}
+
+.message pre {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.message pre code {
+  background: none;
+  padding: 0;
+}
+
+.message blockquote {
+  border-left: 4px solid #3498db;
+  margin: 10px 0;
+  padding-left: 15px;
+  color: #7f8c8d;
+}
+
+.message strong {
+  color: #2c3e50;
+}
+
+.message em {
+  color: #34495e;
+}
+
+.message table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.message th,
+.message td {
+  border: 1px solid #ecf0f1;
+  padding: 8px;
+  text-align: left;
+}
+
+.message th {
+  background: #f8f9fa;
+  font-weight: bold;
+}
