@@ -26,6 +26,7 @@ from services.shared_types import (
     ListType,
     NodeType,
     OrderingStrategy,
+    StandupConversationState,
     TaskStatus,
     TaskType,
     TodoPriority,
@@ -1307,5 +1308,64 @@ class ConversationTurn:
             "metadata": self.metadata,
             "processing_time": self.processing_time,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }
+
+
+@dataclass
+class StandupConversation:
+    """
+    Domain model for interactive standup conversations.
+
+    Issue #552: STANDUP-CONV-STATE - Conversation State Management
+    Epic #242: CONV-MCP-STANDUP-INTERACTIVE
+
+    Wraps conversation context with standup-specific state machine and preferences.
+    Follows composition pattern (Option C from gameplan).
+    """
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    session_id: str = ""
+    user_id: str = ""
+
+    # State machine
+    state: StandupConversationState = StandupConversationState.INITIATED
+    previous_state: Optional[StandupConversationState] = None
+
+    # User preferences for this standup
+    # Examples: {"focus": "github", "exclude": ["docs"], "format": "brief"}
+    preferences: Dict[str, Any] = field(default_factory=dict)
+
+    # Generated content (evolves through refinement)
+    current_standup: Optional[str] = None
+    standup_versions: List[str] = field(default_factory=list)  # Version history
+
+    # Conversation turns (standup-specific)
+    turns: List[ConversationTurn] = field(default_factory=list)
+
+    # Context from integrations
+    # Examples: {"github_activity": [...], "calendar_events": [...]}
+    context: Dict[str, Any] = field(default_factory=dict)
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "user_id": self.user_id,
+            "state": self.state.value,
+            "previous_state": self.previous_state.value if self.previous_state else None,
+            "preferences": self.preferences,
+            "current_standup": self.current_standup,
+            "standup_versions": self.standup_versions,
+            "turns": [t.to_dict() for t in self.turns],
+            "context": self.context,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
         }

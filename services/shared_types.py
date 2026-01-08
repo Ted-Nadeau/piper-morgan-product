@@ -197,3 +197,20 @@ class PatternType(Enum):
     CONTEXT_BASED = "context_based"  # Context-triggered patterns
     PREFERENCE = "preference"  # User preference patterns
     INTEGRATION = "integration"  # Integration usage patterns
+
+
+class StandupConversationState(Enum):
+    """
+    State machine for interactive standup conversations.
+
+    Issue #552: STANDUP-CONV-STATE - Conversation State Management
+    Epic #242: CONV-MCP-STANDUP-INTERACTIVE
+    """
+
+    INITIATED = "initiated"  # User requested standup
+    GATHERING_PREFERENCES = "gathering_preferences"  # Asking refinement questions
+    GENERATING = "generating"  # Generating standup content
+    REFINING = "refining"  # User providing feedback/edits
+    FINALIZING = "finalizing"  # Confirming final version
+    COMPLETE = "complete"  # Standup delivered
+    ABANDONED = "abandoned"  # User cancelled or timed out
