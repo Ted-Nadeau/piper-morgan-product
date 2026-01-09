@@ -110,6 +110,16 @@ class ConversationHandler:
 
         # Issue #490: Check if this user should be offered portfolio onboarding
         user_id = intent.context.get("user_id") if intent.context else None
+
+        # DEBUG Issue #490: Trace greeting flow
+        logger.info(
+            "greeting_onboarding_trace",
+            user_id=user_id,
+            session_id=session_id,
+            has_context=intent.context is not None,
+            context_keys=list(intent.context.keys()) if intent.context else [],
+        )
+
         if user_id and session_id:
             onboarding_response = await self._check_portfolio_onboarding(user_id, session_id)
             if onboarding_response:
@@ -142,10 +152,10 @@ class ConversationHandler:
         """
         try:
             from services.database.repositories import ProjectRepository
-            from services.database.session import async_session_factory
+            from services.database.session_factory import AsyncSessionFactory
             from services.onboarding import FirstMeetingDetector
 
-            async with async_session_factory() as db_session:
+            async with AsyncSessionFactory.session_scope() as db_session:
                 project_repo = ProjectRepository(db_session)
                 detector = FirstMeetingDetector(project_repo)
 
@@ -257,10 +267,10 @@ class ConversationHandler:
 
         try:
             from services.database.repositories import ProjectRepository
-            from services.database.session import async_session_factory
+            from services.database.session_factory import AsyncSessionFactory
             from services.domain import models as domain
 
-            async with async_session_factory() as db_session:
+            async with AsyncSessionFactory.session_scope() as db_session:
                 project_repo = ProjectRepository(db_session)
 
                 for project_data in captured_projects:

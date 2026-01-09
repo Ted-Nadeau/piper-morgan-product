@@ -19,16 +19,64 @@ Now: Extracted to separate router module
 """
 
 from datetime import datetime
+from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from services.auth.jwt_service import JWTClaims, JWTService
 from web.utils.error_responses import internal_error, validation_error
 
 logger = structlog.get_logger()
 
 # Router configuration
 router = APIRouter(prefix="/api/v1", tags=["intent", "workflows"])
+
+# Security - optional bearer token for authentication
+security = HTTPBearer(auto_error=False)
+
+
+async def get_current_user_optional(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[JWTClaims]:
+    """
+    Issue #490: Get current user from JWT if present, otherwise return None.
+
+    This allows the /intent endpoint to work both authenticated and unauthenticated,
+    but when authenticated, we get the user_id for features like portfolio onboarding.
+
+    Issue #455: Checks both Authorization header AND auth_token cookie
+    to support web UI authentication with credentials: 'include'.
+    """
+    # Extract token from Authorization header or cookie (Issue #455)
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        # Try auth_token cookie (for web UI)
+        token = request.cookies.get("auth_token")
+
+    if not token:
+        return None
+
+    try:
+        jwt_service = getattr(request.app.state, "jwt_service", None)
+        if jwt_service is None:
+            jwt_service = JWTService()
+
+        print(
+            f"DEBUG #490: Attempting JWT verification, token present={bool(token)}, token_length={len(token) if token else 0}"
+        )
+        # Issue #490: Use validate_token (async) not verify_token (doesn't exist)
+        claims = await jwt_service.validate_token(token)
+        print(f"DEBUG #490: JWT verified successfully, user_id={claims.sub if claims else None}")
+        return claims
+    except Exception as e:
+        print(f"DEBUG #490: JWT verification FAILED: {e}")
+        logger.debug(f"JWT verification failed (continuing as unauthenticated): {e}")
+        return None
 
 
 # Helper functions for graceful degradation (Pattern-007)
@@ -111,9 +159,7 @@ async def get_workflow_status(workflow_id: str, request: Request):
             )
 
         # Get OrchestrationEngine from app state
-        orchestration_engine = getattr(
-            request.app.state, "orchestration_engine", None
-        )
+        orchestration_engine = getattr(request.app.state, "orchestration_engine", None)
 
         if orchestration_engine is None:
             # Service unavailable - return 500
@@ -142,12 +188,18 @@ async def get_workflow_status(workflow_id: str, request: Request):
 
 
 @router.post("/intent")
-async def process_intent(request: Request):
+async def process_intent(
+    request: Request,
+    current_user: Optional[JWTClaims] = Depends(get_current_user_optional),
+):
     """
     Phase 2B: Thin HTTP adapter for intent processing
 
     Delegates all business logic to IntentService.
     Route only handles HTTP concerns (request parsing, response formatting, status codes).
+
+    Issue #490: Now accepts optional authentication to pass user_id for features
+    like portfolio onboarding that require user context.
 
     Implements Pattern-007 (Async Error Handling) graceful degradation:
     - Returns 200 OK with structured response even when services unavailable
@@ -162,6 +214,22 @@ async def process_intent(request: Request):
         message = request_data.get("message", "")
         session_id = request_data.get("session_id", "default_session")
 
+        # Issue #490: Extract user_id from authenticated user if available
+        user_id = current_user.sub if current_user else None
+
+        # DEBUG Issue #490: Trace authentication flow
+        print(
+            f"DEBUG #490: intent route - has_current_user={current_user is not None}, user_id={user_id}, has_auth_cookie={'auth_token' in request.cookies}"
+        )
+        logger.info(
+            "intent_route_auth_trace",
+            has_current_user=current_user is not None,
+            user_id=user_id,
+            session_id=session_id,
+            message_preview=message[:50] if message else None,
+            has_auth_cookie="auth_token" in request.cookies,
+        )
+
         # Get IntentService from app state (dependency injection)
         intent_service = getattr(request.app.state, "intent_service", None)
 
@@ -173,9 +241,9 @@ async def process_intent(request: Request):
                 "Database temporarily unavailable. Please ensure Docker is running and try again.",
             )
 
-        # Delegate to service (all business logic)
+        # Issue #490: Pass user_id to service for user-specific features
         result = await intent_service.process_intent(
-            message=message, session_id=session_id
+            message=message, session_id=session_id, user_id=user_id
         )
 
         # Format HTTP response from service result
@@ -207,8 +275,6 @@ async def process_intent(request: Request):
 
         # Return structured IntentResponse instead of 500 error
         return _create_degradation_response(
-            request_data.get("message", "")
-            if "request_data" in locals()
-            else "",
+            request_data.get("message", "") if "request_data" in locals() else "",
             degradation_msg,
         )

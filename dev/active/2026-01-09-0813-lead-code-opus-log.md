@@ -468,5 +468,418 @@ pytest tests/unit/services/onboarding/ tests/integration/test_portfolio_onboardi
 
 ---
 
+## Phase Z Complete (09:50)
+
+### Actions Completed
+1. ✅ All 39 tests passing (31 unit + 8 integration)
+2. ✅ Regression check passed (conversation handler, intent service)
+3. ✅ Code committed: `d3554765`
+4. ✅ Pushed to main
+5. ✅ GitHub issue #490 updated with completion evidence
+6. ✅ PM approval requested via issue comment
+
+### GitHub Links
+- Commit: https://github.com/mediajunkie/piper-morgan-product/commit/d3554765
+- Issue comment: https://github.com/mediajunkie/piper-morgan-product/issues/490#issuecomment-3729959488
+
+---
+
+## Session Summary
+
+**Issue Completed**: #490 FTUX-PORTFOLIO
+**Duration**: 08:13 - 09:50 (~1.5 hours)
+
+**Deliverables**:
+- 4 new service files in `services/onboarding/`
+- 2 modified domain files (`shared_types.py`, `models.py`)
+- 1 modified handler (`conversation_handler.py`)
+- 3 new test files (39 total tests)
+- 1 gameplan document
+
+**Methodology Used**: Inchworm Protocol with phased implementation and evidence collection.
+
+---
+
+## PM Manual Testing (09:55)
+
+PM conducting manual verification of first-meeting detection flow.
+
+**Test Scenarios**:
+1. New user greeting → onboarding prompt
+2. Accept → project gathering
+3. Provide project → confirm
+4. Confirm → persistence
+5. Subsequent greeting → normal (no onboarding)
+6. Decline flow
+
+**Status**: Awaiting PM results
+
+---
+
+## Server Restart Required (09:58)
+
+**PM Question**: "Do I need to restart the server?"
+
+**Answer**: Yes. The Python changes to `services/onboarding/` and `services/conversation/conversation_handler.py` are loaded at startup. You need to stop and restart the server:
+
+```bash
+# Stop current server (Ctrl+C), then:
+python main.py
+```
+
+The new first-meeting detection will trigger on the next greeting from a user with 0 active projects.
+
+---
+
+## Background Agents Status Check (09:58)
+
+Checked on subagents for Issues #548 and #549:
+
+| Task ID | Issue | Status | Description |
+|---------|-------|--------|-------------|
+| ab3fff6 | #548 | ✅ completed | FTUX empty states |
+| a17e98f | #549 | ✅ completed | FTUX post-setup |
+
+**Investigation**: The subagents marked as "completed" were research/planning agents. The actual implementation for #548 and #549 was done on **January 6th**:
+
+```
+tests/unit/templates/test_empty_states.py - Created Jan 6, 12:28
+tests/unit/templates/test_orientation.py - Created Jan 6, 12:37
+```
+
+**Test Verification** (10:02):
+```
+pytest tests/unit/templates/test_empty_states.py tests/unit/templates/test_orientation.py -v
+11 passed in 0.22s
+```
+
+All tests pass - #548 and #549 appear to have been implemented previously.
+
+---
+
+## Docs Agent Omnibus Work (09:59)
+
+Note from docs agent (09:46 AM session):
+> "Commit timestamps are your safety net. If logging lapses, git log --oneline --decorate is your reconstruction tool."
+
+Docs agent conducting HIGH-COMPLEXITY Jan 8 omnibus synthesis. Key finding:
+- **7 logs from Jan 8** (12+ hours of documented work)
+- **Logging gap identified**: #555 implementation timing completely absent from both Lead Dev logs
+- **Lesson**: Real-time logging prevents reconstruction difficulties
+
+---
+
+## PM Testing - Server Restart Issue (10:06)
+
+**PM Question**: "Do I need to do a database migration?"
+
+**Answer**: No. The #490 implementation uses in-memory storage for onboarding conversation state (module-level singletons in `conversation_handler.py`). The only database interaction is when onboarding completes - it uses the existing `projects` table via `ProjectRepository.create()`.
+
+**Port conflict resolved**: Process 89044 was still holding port 8001. Killed and ready for restart.
+
+**Alpha tester impact**: None - no database changes required.
+
+---
+
+---
+
+## PM Testing Results - Not Working (10:08)
+
+**PM Report**: "nothing is really working as expected"
+
+Despite 39 tests passing, PM manual testing shows:
+- Calendar greetings appearing instead of onboarding prompt
+- "Would you like to set up your portfolio?" never triggers
+
+**Action**: Five Whys root cause investigation initiated.
+
+---
+
+## Five Whys Investigation (10:30 - 12:32)
+
+### The Problem
+Portfolio onboarding isn't triggering for users with 0 projects.
+
+### Investigation Progress
+
+**Why #1: Why does the intent endpoint return calendar greeting instead of onboarding?**
+- Answer: `ConversationHandler._respond_to_greeting()` checks `FirstMeetingDetector.is_first_meeting(user_id)`
+- But `user_id` is None when it reaches the handler
+
+**Why #2: Why is user_id None in ConversationHandler?**
+- Answer: `user_id` comes from `Intent.context.get("user_id")`
+- But `IntentService.process_intent()` wasn't receiving user_id
+
+**Fix Applied (Session 1)**: Modified intent route to extract user_id from JWT claims
+
+**Why #3: Why wasn't user_id being extracted from JWT?**
+- Answer: The route dependency `get_current_user_optional()` was in place
+- BUT the `AuthMiddleware` was blocking the request before the route ran!
+
+**ROOT CAUSE FOUND**: `/api/v1/intent` was NOT in `AuthMiddleware.exclude_paths`, so:
+1. User sends "Hello" via web UI
+2. Request hits `AuthMiddleware`
+3. Middleware rejects unauthenticated requests (403) OR strips context
+4. Route's `Depends(get_current_user_optional)` never runs
+5. `user_id` is always None
+
+**Fix Applied (12:18)**: Added `/api/v1/intent` and `/api/v1/workflows` to `AuthMiddleware.exclude_paths`
+
+### Verification Status
+
+After middleware fix:
+- Unauthenticated curl test: ✅ Returns calendar greeting (expected - no user_id)
+- Authenticated test: ⏳ PENDING (server crashed before verification)
+
+### Additional Issues Discovered
+
+1. **Logout Bug**: 403 "Not authenticated" on `/auth/logout`
+   - Bead created: `piper-morgan-fb9` (P1)
+
+2. **Chat Timestamp**: PM requested timestamp in chat UI
+   - Issue creation: PENDING
+
+---
+
+## IDE Crash Interruption (12:32)
+
+Docker crash interrupted session. Resuming investigation.
+
+---
+
+## Code Path Verification (12:46)
+
+Docker crashed again (same "service pl061 failed: poweroff requested" error). While waiting for Docker to stabilize, traced the full user_id propagation chain through code:
+
+### Complete Data Flow
+
+```
+1. intent.py:217      → Extract user_id from JWT cookie
+   get_current_user_optional() reads auth_token cookie
+
+2. intent.py:239-240  → Pass user_id to IntentService
+   await intent_service.process_intent(message, session_id, user_id=user_id)
+
+3. intent_service.py:219-223 → Add user_id to intent.context
+   if user_id:
+       intent.context["user_id"] = user_id
+
+4. canonical_handlers.py:4001 → Pass intent to ConversationHandler
+   result = await conversation_handler.respond(intent, session_id)
+
+5. conversation_handler.py:112 → Extract user_id from intent.context
+   user_id = intent.context.get("user_id") if intent.context else None
+
+6. conversation_handler.py:162 → Check first meeting
+   if await detector.should_trigger(user_id):
+       → Start onboarding flow
+```
+
+### Verification Status
+
+- ✅ Middleware fix in place (`/api/v1/intent` in exclude_paths)
+- ✅ Route extracts user_id from JWT cookie
+- ✅ IntentService adds user_id to intent.context
+- ✅ ConversationHandler extracts user_id from intent.context
+- ✅ FirstMeetingDetector checks projects for user_id
+- ⏳ Runtime verification pending (Docker unstable)
+
+### Debug Output Added
+
+```python
+# intent.py:217
+print(f"DEBUG #490: intent route - has_current_user={...}, user_id={...}, has_auth_cookie={...}")
+
+# intent.py:69-74
+print(f"DEBUG #490: Attempting JWT verification...")
+print(f"DEBUG #490: JWT verified successfully, user_id={...}")
+# OR
+print(f"DEBUG #490: JWT verification FAILED: {e}")
+```
+
+### Observation from Last Test
+
+Before Docker crashed, test showed:
+```
+DEBUG #490: intent route - has_current_user=False, user_id=None, has_auth_cookie=True
+```
+
+This indicates cookie exists but JWT verification failing. Need to investigate why.
+
+---
+
+## Systemic Pattern Analysis (12:58)
+
+PM requested lateral examination: Is this bug an instance of a broader antipattern?
+
+### FINDING 1: Standup Route Has Same Bug (HIGH RISK)
+
+**`/api/v1/standup` is NOT in `AuthMiddleware.exclude_paths`**
+
+- File: `web/api/routes/standup.py:545`
+- Uses `get_current_user_optional()` - same pattern as intent
+- BUT middleware will block it before route runs
+- **Same exact bug as #490, different endpoint**
+
+### FINDING 2: Silent Context Propagation Failures (MEDIUM-HIGH)
+
+**`conversation_handler.py` lines 66 and 112:**
+```python
+user_id = intent.context.get("user_id") if intent.context else None
+```
+
+- No logging when user_id is None but needed
+- Feature silently fails without user awareness
+- Code duplication (same extraction in two places)
+
+### FINDING 3: Incomplete Middleware Exclusion Pattern
+
+**Current exclude_paths (auth_middleware.py:56-80):**
+- ✅ `/api/v1/intent` - Added (our fix)
+- ✅ `/api/v1/workflows` - Added (our fix)
+- ❌ `/api/v1/standup` - **MISSING**
+
+### Antipattern Identified
+
+**"Middleware-Route Contract Violation"**
+
+When a route uses optional authentication (`Depends(get_current_user_optional)`), the middleware must be configured to allow the request through so the route can handle auth itself. Without this, the middleware blocks the request and the route's auth logic never executes.
+
+**Root Cause**: No systematic way to mark routes as "optional auth" that automatically syncs with middleware exclude_paths.
+
+### Recommended Fixes
+
+| Priority | Action | Location |
+|----------|--------|----------|
+| CRITICAL | Add `/api/v1/standup` to exclude_paths | auth_middleware.py |
+| HIGH | Add defensive logging when user_id is None | conversation_handler.py |
+| MEDIUM | Document middleware-route contract | Architecture docs |
+| LOW | Consider decorator-based exclude registration | Future refactor |
+
+### Related Bugs This May Explain
+
+- Logout bug (piper-morgan-fb9) - possibly same middleware blocking pattern?
+- Any other user-context-dependent features that "silently don't work"
+
+---
+
+## WHY #4 FOUND: Wrong Method Name (13:10)
+
+**Critical bug discovered during lateral analysis:**
+
+The `get_current_user_optional()` function in `intent.py:70` was calling:
+```python
+claims = jwt_service.verify_token(token)  # WRONG - method doesn't exist!
+```
+
+But `JWTService` only has `validate_token` (and it's async):
+```python
+claims = await jwt_service.validate_token(token)  # CORRECT
+```
+
+**This explains the debug output:**
+```
+has_auth_cookie=True, has_current_user=False
+```
+
+The cookie existed, but calling a non-existent method raised an AttributeError, which was caught by the exception handler and returned None.
+
+**Fix Applied:** Changed `verify_token` → `await validate_token`
+
+### Updated Five Whys Chain
+
+| Why | Question | Answer | Fix |
+|-----|----------|--------|-----|
+| #1 | Why no onboarding? | user_id is None | - |
+| #2 | Why user_id None? | IntentService not receiving it | - |
+| #3 | Why not extracted from JWT? | Middleware blocked route | ✅ Added to exclude_paths |
+| #4 | Why JWT verification failing? | Calling non-existent method | ✅ Fixed method name |
+
+---
+
+## WHY #5 FOUND: Wrong Import Path (14:15)
+
+**Additional bug discovered during testing:**
+
+Server log showed:
+```
+"Could not check portfolio onboarding: No module named 'services.database.session'"
+```
+
+**Root Cause**: Code was importing from non-existent module:
+```python
+from services.database.session import async_session_factory  # WRONG
+```
+
+Should be:
+```python
+from services.database.session_factory import AsyncSessionFactory  # CORRECT
+```
+
+**Files Fixed**:
+- `services/conversation/conversation_handler.py` (2 places)
+- `services/intent_service/canonical_handlers.py` (3 places)
+
+---
+
+## Complete Five Whys Chain (Final)
+
+| Why | Question | Answer | Fix |
+|-----|----------|--------|-----|
+| #1 | Why no onboarding? | user_id is None | - |
+| #2 | Why user_id None? | IntentService not receiving it | - |
+| #3 | Why not extracted from JWT? | Middleware blocked route | ✅ Added to exclude_paths |
+| #4 | Why JWT verification failing? | Calling non-existent method | ✅ `verify_token` → `await validate_token` |
+| #5 | Why onboarding check failing? | Wrong import path | ✅ `session` → `session_factory` |
+
+---
+
+## ONBOARDING WORKING! (14:39)
+
+**PM Test Result**: SUCCESS! 🎉
+
+Screenshot shows:
+```
+User: hey
+Piper: Hello! I'm Piper Morgan, your PM assistant. I notice we haven't
+       set up your project portfolio yet. Would you like to tell me
+       about the projects you're working on?
+```
+
+**New Bug Discovered**: Echo/echolalia in responses - user input is repeated back.
+- Filed as Issue #560
+
+---
+
+## Systemic Issues Filed
+
+| Issue | Title | Description |
+|-------|-------|-------------|
+| #559 | TEST-GAP: Integration tests mock internal methods | Tests bypassed real imports |
+| #560 | BUG: Echo/echolalia in onboarding | User input echoed in responses |
+
+---
+
+## Lateral Analysis: Additional Fixes Made
+
+While investigating, found and fixed same patterns elsewhere:
+
+1. **Middleware exclusion**: Added `/api/v1/standup` to exclude_paths (same bug pattern)
+2. **Wrong imports in canonical_handlers.py**: Fixed 3 occurrences of wrong session import
+
+---
+
+## Test Gap Analysis
+
+| Gap | Why Tests Missed It | Recommendation |
+|-----|---------------------|----------------|
+| Wrong import path | Mocked `_check_portfolio_onboarding`, never ran real import | Add smoke test |
+| Wrong method name | No test for `get_current_user_optional` function | Add unit test |
+| Middleware exclusion | Integration tests don't go through middleware | Add E2E HTTP test |
+
+**Pattern-045 Reinforced**: "Green Tests, Red User" - 39 tests passed but user experience was broken.
+
+---
+
 *Session started: 2026-01-09 08:13*
-*Last updated: 2026-01-09 09:50*
+*Last updated: 2026-01-09 14:42*

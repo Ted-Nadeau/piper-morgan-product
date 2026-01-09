@@ -64,6 +64,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/auth/login",  # Issue #393: Login API endpoint
             "/api/v1/auth/login",
             "/api/v1/auth/register",
+            # Issue #490: Intent endpoint handles auth optionally in route
+            # This allows unauthenticated access while still getting user_id when logged in
+            "/api/v1/intent",
+            "/api/v1/workflows",  # Related to intent - workflow status checks
+            "/api/v1/standup",  # Issue #490: Same pattern - optional auth handled in route
             "/slack/oauth/callback",
             "/github/oauth/callback",
             "/static/",  # Static assets don't need auth

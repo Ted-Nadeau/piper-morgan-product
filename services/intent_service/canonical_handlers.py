@@ -2506,10 +2506,10 @@ What would you like to set up first?"""
         """
         try:
             from services.database.models import TodoPriority, TodoStatus
-            from services.database.session import async_session_factory
+            from services.database.session_factory import AsyncSessionFactory
             from services.repositories.todo_repository import TodoRepository
 
-            async with async_session_factory() as session:
+            async with AsyncSessionFactory.session_scope() as session:
                 todo_repo = TodoRepository(session)
 
                 # Get pending todos ordered by priority
@@ -2776,14 +2776,14 @@ What would you like to set up first?"""
             from sqlalchemy import and_, select
 
             from services.database.models import TodoDB, TodoStatus
-            from services.database.session import async_session_factory
+            from services.database.session_factory import AsyncSessionFactory
             from services.repositories.todo_repository import TodoRepository
 
             # Calculate date range for target date
             start_of_day = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
             end_of_day = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
 
-            async with async_session_factory() as session:
+            async with AsyncSessionFactory.session_scope() as session:
                 # Query todos completed on target date
                 query = (
                     select(TodoDB)
@@ -3121,10 +3121,10 @@ What would you like to set up first?"""
         open_todos_count = 0
         try:
             from services.database.models import TodoStatus
-            from services.database.session import async_session_factory
+            from services.database.session_factory import AsyncSessionFactory
             from services.repositories.todo_repository import TodoRepository
 
-            async with async_session_factory() as session:
+            async with AsyncSessionFactory.session_scope() as session:
                 todo_repo = TodoRepository(session)
 
                 # Get user_id from user_context
