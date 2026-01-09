@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.3)
+# Known Issues & Feature Status (v0.8.3.2)
 
-**Version**: 0.8.3
-**Last Updated**: January 2, 2026
-**Status**: Stable Core (Setup/Login/Chat Ready - Focus Testing on Integrations)
+**Version**: 0.8.3.2
+**Last Updated**: January 8, 2026
+**Status**: Stable Core (Setup/Login/Chat/Interactive Standup Ready)
 
 ---
 
@@ -37,9 +37,20 @@ These features have been tested, completed, and are ready for alpha testing:
   - Support for OpenAI, Anthropic, Google Gemini, and **Notion** (new)
   - Alternative CLI wizard still available: `python main.py setup`
 
-- ✅ **Quality Validation** (New in 0.8.2)
+- ✅ **Interactive Standup Assistant** (New in 0.8.3.2)
 
-  - 602 automated smoke tests (<5 seconds)
+  - Conversational standup creation via chat ("let's write a standup")
+  - 7-state conversation flow (INITIATED → COMPLETE/ABANDONED)
+  - Preference gathering and learning within conversation
+  - Iterative refinement until satisfied
+  - Version history for standup drafts
+  - Performance monitoring: P95 < 500ms response times
+  - Memory optimization: Turn history limited to prevent unbounded growth
+  - Epic #242: CONV-MCP-STANDUP-INTERACTIVE complete (Issues #552-#556)
+
+- ✅ **Quality Validation** (Enhanced in 0.8.3.2)
+
+  - 860+ automated tests (260 standup tests added)
   - CI/CD quality gates with GitHub Actions
   - 100% pass rate on critical path tests
   - UI stability improvements across navigation and forms
@@ -155,12 +166,13 @@ These features have been tested, completed, and are ready for alpha testing:
 
 ### Development Quality
 
-- ✅ **Test coverage**: 100% pass rate (250+ tests)
+- ✅ **Test coverage**: 100% pass rate (860+ tests)
 
   - Auth tests: 17/17 passing
   - UUID migration tests: Verified
   - Token blacklist FK tests: Verified
   - Integration tests: Passing
+  - Standup tests: 260 tests (conversation, learning, performance)
 
 - ✅ **CI/CD pipeline**: 13/13 workflows operational
 
@@ -214,11 +226,18 @@ These features have been tested, completed, and are ready for alpha testing:
   - Token revocation on logout
   - Multi-user testing enabled
 
-- ✅ **Standup Generation**
-  - Generate daily standup reports
+- ✅ **Interactive Standup Assistant** (Enhanced in 0.8.3.2)
+  - Conversational standup creation ("let's write a standup" or "/standup")
+  - 7-state conversation flow with preference gathering
+  - Iterative refinement and version history
+  - P95 response time: 0.03ms (target: <500ms)
+  - Epic #242: CONV-MCP-STANDUP-INTERACTIVE complete
+
+- ✅ **Quick Standup Generation** (Legacy)
+  - Generate daily standup reports via button
   - 2-3 second completion time
   - AI-powered summaries
-  - Issue #379-4: Proxy endpoint fixed (was calling itself, now calls backend)
+  - Issue #379-4: Proxy endpoint fixed
 
 - ✅ **Navigation Polish** (Issue #379 - 14 fixes total)
   - Breadcrumb navigation on all pages (Home › Lists, etc.)
@@ -374,11 +393,17 @@ These features exist but need more alpha testing validation:
 - ✅ **GitHub**: PAT token configuration, issue creation, updates, search
 - ✅ **Health Dashboard**: Real-time status monitoring for all integrations
 
-### Morning Standup
+### Interactive Standup Assistant (New in 0.8.3.2)
 
-- **Status**: ✅ Working (Issue #379-4 fixed Nov 23)
-- **Features**: Multi-modal generation (text, Slack), reminder integration
-- **Testing**: Proxy endpoint corrected, 2-3 second generation time
+- **Status**: ✅ Complete (Epic #242 closed Jan 8, 2026)
+- **Features**:
+  - Conversational standup creation via chat
+  - 7-state conversation flow with state machine validation
+  - Preference gathering and learning integration
+  - Iterative refinement with version history
+  - Performance monitoring with structured logging
+- **Performance**: P95 0.03ms response time (target: <500ms)
+- **Test Coverage**: 260 standup tests passing
 - **Validation needed**: Real daily usage with alpha testers
 
 ---
@@ -447,7 +472,7 @@ Features not yet implemented or incomplete:
 | Knowledge Graph      | ✅ Complete     | Yes          | With boundaries          |
 | Learning System      | 🚧 Experimental | Partial      | Needs validation         |
 | Integrations         | ✅ Complete     | Yes          | OAuth + health dashboard (0.8.3) |
-| Standup Automation   | ✅ Complete     | Yes          | Issue #379-4 fixed       |
+| Interactive Standup  | ✅ Complete     | Yes          | Epic #242 complete (0.8.3.2) |
 | Lists Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
 | Todos Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
 | Projects Management  | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
@@ -512,12 +537,12 @@ This document will be updated:
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
 - `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
 - `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
-- `VERSION_NUMBERING.md` - Understanding version 0.8.3
-- `RELEASE-NOTES-v0.8.3.md` - What changed in this release
+- `VERSION_NUMBERING.md` - Understanding version 0.8.3.2
+- `RELEASE-NOTES-v0.8.3.2.md` - What changed in this release
 - GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
 ---
 
-_Last Updated: January 2, 2026_
-_Status: Stable core (setup, login, chat, integrations ready - 76% canonical query coverage)_
-_Software Version: 0.8.3_
+_Last Updated: January 8, 2026_
+_Status: Stable core (setup, login, chat, interactive standup ready - 76% canonical query coverage)_
+_Software Version: 0.8.3.2_

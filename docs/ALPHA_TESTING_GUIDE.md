@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.3
-**Last Updated**: January 2, 2026
+**Version**: 0.8.3.2
+**Last Updated**: January 8, 2026
 **For**: Alpha Testers
 
 ---
@@ -65,6 +65,23 @@ This is pre-release alpha software (version 0.8.3). By proceeding, you acknowled
 See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
+
+## What's New in 0.8.3.2
+
+**Interactive Standup Assistant** - The standup feature now supports conversational interactions. Start with "let's write a standup" or "/standup" and Piper will guide you through the process interactively:
+- **Preference gathering**: Tell Piper your style preferences (concise, detailed, bullet points)
+- **Iterative refinement**: Request changes until you're happy with the result
+- **Version history**: Previous versions saved if you want to compare
+- **Performance**: Sub-500ms response times with P95 at 0.03ms
+
+**Standup Monitoring Dashboard** - Behind the scenes, all standup conversations are now tracked with structured logging for debugging and performance analysis.
+
+**Epic #242 Complete** - The Interactive Standup Conversation feature (CONV-MCP-STANDUP-INTERACTIVE) is now fully implemented with:
+- Issue #552: Conversation state management (7-state machine)
+- Issue #553: Turn-based dialogue system
+- Issue #554: Preference learning integration
+- Issue #555: LLM workflow with Chain-of-Draft
+- Issue #556: Performance monitoring (<500ms target met)
 
 ## What's New in 0.8.3
 
@@ -330,15 +347,15 @@ Click the button to go to the login page and start using Piper Morgan.
 
 ## Test Scenarios to Try
 
-**Note for 0.8.3 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new integration features** - the Integration Dashboard, OAuth connections (Slack/Calendar), and Notion setup. These are the newest features and need the most attention:
+**Note for 0.8.3.2 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new Interactive Standup Assistant** and continue validating integrations.
 
 ### Priority Testing Areas
 
-1. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
-2. **OAuth Connections** - Connect/disconnect Slack and Calendar from Settings
-3. **Notion Setup** - Re-run setup wizard to test Notion configuration
-4. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
-5. **File Handling** - Upload, download, analysis, edge cases
+1. **Interactive Standup Assistant** - Try "let's write a standup" or "/standup" in chat
+2. **Standup Conversations** - Test preference gathering, refinement requests, completing standups
+3. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
+4. **OAuth Connections** - Connect/disconnect Slack and Calendar from Settings
+5. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
 
 ### Basic Functionality Tests
 
@@ -419,7 +436,34 @@ Start with these simple tests to verify everything works:
    - Log in as User C
    - Verify: CAN edit and update list
 
-### Standup Generation
+### Interactive Standup Assistant (New in 0.8.3.2)
+
+1. **Start a Standup Conversation**
+   - In the chat, say "let's write a standup" or "/standup"
+   - Piper should respond with initial guidance
+   - Verify conversation flow starts properly
+
+2. **Test Preference Gathering**
+   - Tell Piper your preferences: "I prefer bullet points" or "keep it concise"
+   - Verify Piper acknowledges and remembers your preference
+   - Generate content should reflect your stated style
+
+3. **Test Iterative Refinement**
+   - Ask Piper to make changes: "add more detail about the bug fix" or "make it shorter"
+   - Verify Piper updates the standup accordingly
+   - Previous versions should be saved for comparison
+
+4. **Complete the Standup**
+   - Say "looks good, let's use this" or "finalize"
+   - Verify standup is marked complete
+   - Check that performance is fast (sub-500ms responses)
+
+5. **Edge Cases to Test**
+   - Abandon a standup mid-conversation (say "nevermind" or navigate away)
+   - Start multiple standups in one session
+   - Long conversations (10+ turns) - verify memory isn't growing unbounded
+
+### Quick Standup Generation (Legacy)
 
 1. **Generate a Standup**
    - Navigate to http://localhost:8001/standup
@@ -551,7 +595,13 @@ The setup wizard (GUI or CLI) will guide you through Docker installation with pl
 - Check file size limit: 10MB maximum
 - Verify supported formats: PDF, DOCX, TXT, MD, JSON
 
-**Standup generation hangs or fails?**
+**Interactive Standup issues?**
+- Conversation should respond in <500ms (P95 target)
+- If conversation seems stuck, try "start over" or navigate away
+- Each turn should build on previous context
+- Preferences should be remembered within the conversation
+
+**Quick Standup generation hangs or fails?**
 - Should complete in 2-3 seconds
 - If hanging, check API key configuration: `python main.py status`
 - Verify you have activity data (lists, todos, files created)
@@ -635,7 +685,7 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.3). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.3.2). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for 2026.
 
@@ -652,5 +702,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: January 2, 2026_
-_Software version: 0.8.3_
+_Last updated: January 8, 2026_
+_Software version: 0.8.3.2_

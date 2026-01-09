@@ -15,7 +15,7 @@
 - **[Testing Guide](ALPHA_TESTING_GUIDE.md)** - What to test and how to provide feedback
 - **[Known Issues](ALPHA_KNOWN_ISSUES.md)** - Current limitations and workarounds
 - **[Alpha Agreement](ALPHA_AGREEMENT_v2.md)** - Terms and expectations
-- **[Release Notes v0.8.3](RELEASE-NOTES-v0.8.3.md)** - What's new in the latest release
+- **[Release Notes v0.8.3.2](releases/RELEASE-NOTES-v0.8.3.2.md)** - What's new in the latest release
 
 ### New to the Project?
 
@@ -248,6 +248,15 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 
 ## 🚀 Recent Releases
 
+### v0.8.3.2 - Interactive Standup Assistant (January 8, 2026)
+
+- **Interactive Standup Assistant**: Conversational standup creation via chat ("let's write a standup")
+- **7-State Conversation Flow**: Preference gathering, iterative refinement, version history
+- **Performance Monitoring**: P95 < 500ms response times with structured logging
+- **Epic #242 Complete**: CONV-MCP-STANDUP-INTERACTIVE with 260 new tests
+
+See [Release Notes v0.8.3.2](releases/RELEASE-NOTES-v0.8.3.2.md) for details.
+
 ### v0.8.3 - Integration Health Dashboard (January 2, 2026)
 
 - **Integration Health Dashboard**: Real-time status for all integrations with one-click testing
@@ -255,7 +264,7 @@ See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md
 - **Notion in Setup Wizard**: Configure Notion during initial setup with validation
 - **Bug Fixes**: Calendar OAuth state persistence, toast visibility, breadcrumb overlap
 
-See [Release Notes v0.8.3](RELEASE-NOTES-v0.8.3.md) for details.
+See [Release Notes v0.8.3](releases/RELEASE-NOTES-v0.8.3.md) for details.
 
 ### v0.8.2 - GUI Setup Wizard (December 11, 2025)
 
@@ -263,7 +272,7 @@ See [Release Notes v0.8.3](RELEASE-NOTES-v0.8.3.md) for details.
 - **602 Smoke Tests**: CI/CD quality gate validation
 - **UI Stabilization**: Toast z-index, navigation, dialog styling fixes
 
-See [Release Notes v0.8.2](RELEASE-NOTES-v0.8.2.md) for details.
+See [Release Notes v0.8.2](releases/RELEASE-NOTES-v0.8.2.md) for details.
 
 ### Previous Releases
 
