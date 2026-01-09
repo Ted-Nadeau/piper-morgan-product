@@ -114,16 +114,21 @@ class MorningStandupWorkflow:
             }
 
     async def generate_standup(self, user_id: str) -> StandupResult:
-        """Generate morning standup for user using persistent context"""
+        """Generate morning standup for user using persistent context.
+
+        Performance optimized: session context and GitHub activity are
+        fetched in parallel using asyncio.gather().
+        """
+        import asyncio
 
         start_time = time.time()
 
         try:
-            # Get session context (yesterday's work, priorities, etc.)
-            session_context = await self._get_session_context(user_id)
-
-            # Get GitHub activity from last 24 hours
-            github_activity = await self._get_github_activity()
+            # Parallel fetch: session context and GitHub activity (Issue #556 optimization)
+            session_context, github_activity = await asyncio.gather(
+                self._get_session_context(user_id),
+                self._get_github_activity(),
+            )
 
             # Generate standup content
             result = await self._generate_standup_content(

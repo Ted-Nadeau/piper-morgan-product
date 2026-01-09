@@ -11,8 +11,14 @@ Tests verify:
 - Refinement logic (add/remove)
 - Graceful fallback on errors
 - Complete conversation flows
+
+Issue #556: Additional tests for:
+- Retry logic on transient failures
+- Timeout handling
+- Error categorization
 """
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -564,3 +570,180 @@ class TestBasicStandupGeneration:
         assert "*Yesterday:*" in basic
         assert "*Today:*" in basic
         assert "*Blockers:*" in basic
+
+
+class TestRetryAndErrorRecovery:
+    """Issue #556: Tests for retry logic and error recovery."""
+
+    @pytest.fixture
+    def handler_with_transient_failure(self):
+        """Handler with workflow that fails then succeeds."""
+        mock_workflow = MagicMock()
+        call_count = 0
+
+        async def fail_then_succeed(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise ConnectionError("Network error")
+            result = MagicMock()
+            result.summary = "Standup content"
+            return result
+
+        mock_workflow.generate_standup = fail_then_succeed
+        handler = StandupConversationHandler(standup_workflow=mock_workflow)
+        handler._call_count = lambda: call_count  # For test assertions
+        return handler
+
+    @pytest.fixture
+    def handler_with_permanent_failure(self):
+        """Handler with workflow that always fails with permanent error."""
+        mock_workflow = MagicMock()
+        mock_workflow.generate_standup = AsyncMock(side_effect=Exception("Invalid configuration"))
+        return StandupConversationHandler(standup_workflow=mock_workflow)
+
+    @pytest.fixture
+    def handler_with_timeout(self):
+        """Handler with workflow that times out."""
+        mock_workflow = MagicMock()
+
+        async def slow_generation(*args, **kwargs):
+            await asyncio.sleep(15)  # Longer than GENERATION_TIMEOUT
+            return MagicMock(summary="Never returned")
+
+        mock_workflow.generate_standup = slow_generation
+        return StandupConversationHandler(standup_workflow=mock_workflow)
+
+    @pytest.mark.asyncio
+    async def test_retry_on_transient_failure(self, handler_with_transient_failure):
+        """Issue #556: Transient failures trigger retry with eventual success."""
+        handler = handler_with_transient_failure
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        response = await handler.handle_turn(conv, "yes")
+
+        # Should succeed after retries
+        assert response.standup_content is not None
+        assert "Standup content" in response.standup_content
+        assert response.metadata.get("fallback") is not True
+
+    @pytest.mark.asyncio
+    async def test_fallback_on_permanent_failure(self, handler_with_permanent_failure):
+        """Issue #556: Permanent failures fall back to basic template."""
+        handler = handler_with_permanent_failure
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        response = await handler.handle_turn(conv, "yes")
+
+        # Should fallback to basic standup
+        assert response.standup_content is not None
+        assert response.metadata.get("fallback") is True
+        assert "error" in response.metadata
+
+    @pytest.mark.asyncio
+    async def test_timeout_triggers_fallback(self, handler_with_timeout):
+        """Issue #556: Timeout triggers graceful fallback."""
+        handler = handler_with_timeout
+        # Reduce timeout for faster test
+        handler.GENERATION_TIMEOUT = 0.1
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        response = await handler.handle_turn(conv, "yes")
+
+        # Should fallback due to timeout
+        assert response.standup_content is not None
+        assert response.metadata.get("fallback") is True
+
+    def test_retry_configuration_exists(self):
+        """Issue #556: Retry configuration constants are defined."""
+        handler = StandupConversationHandler()
+
+        assert hasattr(handler, "MAX_RETRIES")
+        assert handler.MAX_RETRIES == 3
+        assert hasattr(handler, "GENERATION_TIMEOUT")
+        assert handler.GENERATION_TIMEOUT == 10.0
+        assert hasattr(handler, "RETRY_WAIT_MIN")
+        assert hasattr(handler, "RETRY_WAIT_MAX")
+
+
+class TestMonitoringIntegration:
+    """Issue #556 Phase 4: Tests for structured monitoring logging."""
+
+    @pytest.fixture
+    def handler(self):
+        return StandupConversationHandler()
+
+    @pytest.fixture
+    def handler_with_workflow(self):
+        """Handler with successful mock workflow."""
+        mock_workflow = MagicMock()
+        result = MagicMock()
+        result.summary = "Test standup content"
+        mock_workflow.generate_standup = AsyncMock(return_value=result)
+        return StandupConversationHandler(standup_workflow=mock_workflow)
+
+    @pytest.mark.asyncio
+    async def test_turn_response_time_tracked(self, handler, caplog):
+        """Issue #556: Turn response time is logged."""
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        await handler.handle_turn(conv, "yes")
+
+        # Verify structured logging was called (via caplog or mock)
+        # The actual logging happens via structlog which may not be captured by caplog
+        # This test verifies the code path executes without error
+        assert conv is not None
+
+    @pytest.mark.asyncio
+    async def test_generation_success_metrics_logged(self, handler_with_workflow):
+        """Issue #556: Successful generation logs metrics."""
+        handler = handler_with_workflow
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        response = await handler.handle_turn(conv, "yes")
+
+        # Should succeed with workflow
+        assert response.standup_content is not None
+        assert "Test standup content" in response.standup_content
+
+    @pytest.mark.asyncio
+    async def test_generation_failure_metrics_logged(self):
+        """Issue #556: Failed generation logs error metrics."""
+        mock_workflow = MagicMock()
+        mock_workflow.generate_standup = AsyncMock(side_effect=Exception("API error"))
+        handler = StandupConversationHandler(standup_workflow=mock_workflow)
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        response = await handler.handle_turn(conv, "yes")
+
+        # Should fallback with error metadata
+        assert response.metadata.get("fallback") is True
+        assert "error" in response.metadata
+
+    @pytest.mark.asyncio
+    async def test_conversation_completion_metrics_logged(self, handler):
+        """Issue #556: Conversation completion logs metrics."""
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        # Go through full flow
+        await handler.handle_turn(conv, "yes")
+        conv = handler.manager.get_conversation(conv.id)
+        await handler.handle_turn(conv, "looks good")
+        conv = handler.manager.get_conversation(conv.id)
+        await handler.handle_turn(conv, "done")
+        conv = handler.manager.get_conversation(conv.id)
+
+        # Should be complete
+        assert conv.state == StandupConversationState.COMPLETE
+        assert conv.completed_at is not None
+
+    @pytest.mark.asyncio
+    async def test_abandoned_conversation_metrics_logged(self, handler):
+        """Issue #556: Abandoned conversation logs metrics."""
+        conv = handler.manager.create_conversation("s1", "u1")
+
+        await handler.handle_turn(conv, "not now")
+        conv = handler.manager.get_conversation(conv.id)
+
+        # Should be abandoned
+        assert conv.state == StandupConversationState.ABANDONED

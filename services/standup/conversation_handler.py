@@ -8,18 +8,46 @@ Handles multi-turn standup conversations by:
 - Generating context-aware follow-up questions
 - Processing refinement requests
 - Managing graceful fallback
+
+Issue #556: Performance & Reliability enhancements:
+- Retry logic for transient failures
+- Timeout handling
+- Graceful degradation
+- Structured performance logging (Phase 4)
 """
 
+import asyncio
+import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 import structlog
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from services.domain.models import StandupConversation
 from services.shared_types import StandupConversationState
 from services.standup.conversation_manager import StandupConversationManager
 
 logger = structlog.get_logger()
+
+
+# Issue #556: Error categories for retry decisions
+class TransientError(Exception):
+    """Transient error that may succeed on retry (network, rate limit)."""
+
+    pass
+
+
+class PermanentError(Exception):
+    """Permanent error that won't succeed on retry (config, auth)."""
+
+    pass
 
 
 @dataclass
@@ -44,7 +72,18 @@ class StandupConversationHandler:
                                        +------------+ (skip preferences)
 
     Any state can transition to ABANDONED on timeout/cancel.
+
+    Issue #556: Reliability enhancements:
+    - Retry transient failures with exponential backoff
+    - Timeout handling for slow external services
+    - Graceful fallback on persistent failures
     """
+
+    # Issue #556: Retry configuration
+    MAX_RETRIES = 3
+    RETRY_WAIT_MIN = 0.5  # seconds
+    RETRY_WAIT_MAX = 2.0  # seconds
+    GENERATION_TIMEOUT = 10.0  # seconds
 
     def __init__(
         self,
@@ -72,6 +111,8 @@ class StandupConversationHandler:
 
         Routes to appropriate handler based on current state.
 
+        Issue #556 Phase 4: Adds performance monitoring with structured logging.
+
         Args:
             conversation: Current conversation
             user_message: User's message
@@ -80,7 +121,9 @@ class StandupConversationHandler:
         Returns:
             ConversationResponse with message and state
         """
+        start_time = time.perf_counter()
         state = conversation.state
+        turn_number = len(conversation.turns) + 1
 
         # State-based routing
         handlers = {
@@ -93,13 +136,35 @@ class StandupConversationHandler:
 
         handler = handlers.get(state)
         if not handler:
+            response_time_ms = (time.perf_counter() - start_time) * 1000
+            logger.info(
+                "standup_turn_no_handler",
+                conversation_id=conversation.id,
+                state=state.value,
+                response_time_ms=round(response_time_ms, 2),
+            )
             return ConversationResponse(
                 message="This conversation has ended. Start a new one with 'standup'.",
                 state=state,
                 requires_input=False,
             )
 
-        return await handler(conversation, user_message, context or {})
+        response = await handler(conversation, user_message, context or {})
+        response_time_ms = (time.perf_counter() - start_time) * 1000
+
+        # Issue #556 Phase 4: Structured performance logging
+        logger.info(
+            "standup_turn_completed",
+            conversation_id=conversation.id,
+            turn_number=turn_number,
+            from_state=state.value,
+            to_state=response.state.value,
+            response_time_ms=round(response_time_ms, 2),
+            requires_input=response.requires_input,
+            has_standup_content=response.standup_content is not None,
+        )
+
+        return response
 
     async def start_conversation(
         self,
@@ -267,18 +332,38 @@ class StandupConversationHandler:
         conversation: StandupConversation,
         context: Dict[str, Any],
     ) -> ConversationResponse:
-        """Generate standup content using workflow."""
+        """Generate standup content using workflow.
+
+        Issue #556: Enhanced with retry logic, timeout handling, and monitoring.
+        - Retries transient failures up to MAX_RETRIES times
+        - Times out after GENERATION_TIMEOUT seconds
+        - Falls back to basic template on persistent failures
+        - Logs generation timing and success/failure metrics (Phase 4)
+        """
+        generation_start = time.perf_counter()
+        used_workflow = False
+        used_fallback = False
+
         try:
             # Use existing workflow if available
             if self._workflow:
-                result = await self._workflow.generate_standup(
-                    mode="standard",
-                    context=context,
-                )
-                standup_content = result.summary if hasattr(result, "summary") else str(result)
+                standup_content = await self._generate_with_retry(context)
+                used_workflow = True
             else:
                 # Fallback to basic generation
                 standup_content = self._generate_basic_standup(context)
+
+            generation_time_ms = (time.perf_counter() - generation_start) * 1000
+
+            # Issue #556 Phase 4: Log generation success metrics
+            logger.info(
+                "standup_generation_success",
+                conversation_id=conversation.id,
+                generation_time_ms=round(generation_time_ms, 2),
+                used_workflow=used_workflow,
+                content_length=len(standup_content),
+                target_met=generation_time_ms < 500,
+            )
 
             self.manager.set_standup_content(conversation.id, standup_content)
             self.manager.transition_state(conversation.id, StandupConversationState.REFINING)
@@ -294,8 +379,123 @@ class StandupConversationHandler:
             )
 
         except Exception as e:
-            logger.error("standup_generation_failed", error=str(e))
+            generation_time_ms = (time.perf_counter() - generation_start) * 1000
+
+            # Issue #556 Phase 4: Log generation failure metrics
+            logger.error(
+                "standup_generation_failed",
+                conversation_id=conversation.id,
+                error=str(e),
+                error_type=type(e).__name__,
+                generation_time_ms=round(generation_time_ms, 2),
+                used_fallback=True,
+            )
             return self._graceful_fallback(conversation, str(e))
+
+    async def _generate_with_retry(self, context: Dict[str, Any]) -> str:
+        """Generate standup with retry logic and timeout.
+
+        Issue #556: Reliability enhancement with monitoring (Phase 4).
+        - Uses exponential backoff for retries
+        - Times out to prevent hanging on slow services
+        - Categorizes errors for retry decisions
+        - Logs retry metrics for monitoring
+        """
+        retry_start = time.perf_counter()
+        total_attempts = 0
+
+        async def _attempt_generation() -> str:
+            """Single attempt at standup generation."""
+            try:
+                # Apply timeout to the workflow call
+                result = await asyncio.wait_for(
+                    self._workflow.generate_standup(
+                        mode="standard",
+                        context=context,
+                    ),
+                    timeout=self.GENERATION_TIMEOUT,
+                )
+                return result.summary if hasattr(result, "summary") else str(result)
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "standup_generation_timeout",
+                    timeout=self.GENERATION_TIMEOUT,
+                    error_type="transient",
+                )
+                raise TransientError("Generation timed out")
+            except ConnectionError as e:
+                logger.warning(
+                    "standup_generation_connection_error",
+                    error=str(e),
+                    error_type="transient",
+                )
+                raise TransientError(str(e))
+            except Exception as e:
+                # Categorize the error
+                error_msg = str(e).lower()
+                if any(
+                    keyword in error_msg
+                    for keyword in ["rate limit", "timeout", "connection", "network"]
+                ):
+                    raise TransientError(str(e))
+                # Permanent errors don't retry
+                raise PermanentError(str(e))
+
+        # Use tenacity for retry with exponential backoff
+        try:
+            async for attempt in AsyncRetrying(
+                stop=stop_after_attempt(self.MAX_RETRIES),
+                wait=wait_exponential(
+                    multiplier=1,
+                    min=self.RETRY_WAIT_MIN,
+                    max=self.RETRY_WAIT_MAX,
+                ),
+                retry=retry_if_exception_type(TransientError),
+                reraise=True,
+            ):
+                with attempt:
+                    total_attempts = attempt.retry_state.attempt_number
+                    logger.debug(
+                        "standup_generation_attempt",
+                        attempt_number=total_attempts,
+                        max_attempts=self.MAX_RETRIES,
+                    )
+                    result = await _attempt_generation()
+
+                    # Issue #556 Phase 4: Log retry success metrics
+                    if total_attempts > 1:
+                        retry_time_ms = (time.perf_counter() - retry_start) * 1000
+                        logger.info(
+                            "standup_generation_retry_success",
+                            attempts_used=total_attempts,
+                            total_retry_time_ms=round(retry_time_ms, 2),
+                        )
+
+                    return result
+
+        except RetryError as e:
+            # All retries exhausted
+            retry_time_ms = (time.perf_counter() - retry_start) * 1000
+            logger.error(
+                "standup_generation_retries_exhausted",
+                retries=self.MAX_RETRIES,
+                total_retry_time_ms=round(retry_time_ms, 2),
+                last_error=str(e.last_attempt.exception()),
+                error_type=type(e.last_attempt.exception()).__name__,
+            )
+            raise e.last_attempt.exception()
+        except PermanentError as e:
+            # Don't retry permanent errors - log for monitoring
+            logger.warning(
+                "standup_generation_permanent_error",
+                error=str(e),
+                error_type="permanent",
+                attempts_before_fail=total_attempts,
+            )
+            raise
+
+        # Should not reach here, but return empty string as safety
+        return ""
 
     async def _generate_greeting(
         self,

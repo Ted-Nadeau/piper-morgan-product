@@ -773,4 +773,58 @@ These are correctly placed - they're historical items within their domains.
 
 ---
 
-## Session Status: Committing #449
+### 18:40 - DOC-SURVEY: Structure Audit (piper-morgan-upc)
+
+#### NAVIGATION.md vs Reality
+
+**Paths that exist:** 19 of 20 claimed paths verified ✅
+
+**Missing:**
+- `docs/archives/session-logs/` - NAVIGATION.md claims this exists, but it doesn't
+
+**Discrepancy:**
+- NAVIGATION.md says omnibus-logs are at `archives/session-logs/omnibus-logs/`
+- Reality: They're at `docs/omnibus-logs/`
+
+#### Unfiled Docs at Project Root
+
+**8 markdown files at root level:**
+- `CHANGELOG.md` - Belongs here ✅
+- `CLAUDE.md` - Belongs here ✅
+- `CONTRIBUTING.md` - Belongs here ✅
+- `README.md` - Belongs here ✅
+- `SETUP.md` - Belongs here ✅
+- `COMPREHENSIVE-TESTING-GUIDE.md` - Could move to `docs/testing/`
+- `CURSOR-AGENT-COMBINED-VERIFICATION.md` - Working doc → `dev/` or archive
+- `FILE-PLACEMENT-GUIDE.md` - Could move to `docs/guides/` or archive
+
+#### Docs Top-Level Clutter
+
+**~40+ files at `docs/` root** that should be organized:
+
+| Type | Files | Suggested Action |
+|------|-------|------------------|
+| Alpha docs (5) | `ALPHA_*.md` | Keep at root (high visibility for testers) |
+| Track validation (3) | `track-*-validation.md` | → `docs/internal/testing/` or archive |
+| Polish sprint (1) | `polish-sprint-progress.md` | → `dev/2025/` dated archive |
+| Security review (1) | `security-review-checklist.md` | → `docs/internal/operations/` |
+| Filing notes (1) | `filing-notes.md` | → archive or delete |
+| Shell script (1) | `update-doc-footers.sh` | → `scripts/` |
+| Deprecated stubs (3) | `development/`, `planning/`, `architecture/` | Keep as redirects ✅ |
+
+#### dev/active/ Analysis
+
+**Mixed content that could be better organized:**
+- Session logs (correct location while active) ✅
+- PDR drafts (5 versions of PDR-001) - Keep best, archive others
+- Canonical query files - Working docs ✅
+- Gameplan files - Working docs ✅
+- TSV file - Data artifact, could go to `data/` or archive
+
+#### dev/ Root Files
+
+**5 PERIOD-4 files at dev/ root** - These are retrospectives that should be in `dev/2025/` dated structure.
+
+---
+
+## Session Status: Preparing Survey Report

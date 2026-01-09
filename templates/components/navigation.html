@@ -724,5 +724,7 @@ async function handleLogout(event) {
 }
 </script>
 
-<!-- Phase 4: Include chat widget on all pages -->
+<!-- Phase 4: Include chat widget on all pages except home (home uses inline chat) -->
+{% if not hide_floating_widget %}
 {% include 'components/chat-widget.html' %}
+{% endif %}

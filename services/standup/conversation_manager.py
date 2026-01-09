@@ -5,6 +5,8 @@ Epic #242: CONV-MCP-STANDUP-INTERACTIVE
 
 Provides state machine management for interactive standup conversations,
 including state transitions, turn recording, and preference tracking.
+
+Issue #556 Phase 4: Enhanced with structured performance logging.
 """
 
 from datetime import datetime
@@ -34,6 +36,9 @@ class StandupConversationManager:
     - Turn recording
     - Session-scoped persistence (in-memory initially)
     """
+
+    # Issue #556: Memory optimization - limit turn history to prevent unbounded growth
+    MAX_TURN_HISTORY = 50  # Typical standups complete in 5-10 turns
 
     # Valid state transitions - defines the state machine
     VALID_TRANSITIONS: Dict[StandupConversationState, List[StandupConversationState]] = {
@@ -159,6 +164,28 @@ class StandupConversationManager:
 
         if new_state == StandupConversationState.COMPLETE:
             conversation.completed_at = datetime.now()
+            # Issue #556 Phase 4: Log conversation completion metrics
+            duration_seconds = (conversation.completed_at - conversation.created_at).total_seconds()
+            logger.info(
+                "standup_conversation_completed",
+                conversation_id=conversation_id,
+                total_turns=len(conversation.turns),
+                duration_seconds=round(duration_seconds, 2),
+                has_standup_content=conversation.current_standup is not None,
+                versions_created=(
+                    len(conversation.standup_versions) + 1 if conversation.current_standup else 0
+                ),
+            )
+        elif new_state == StandupConversationState.ABANDONED:
+            # Issue #556 Phase 4: Log abandoned conversation metrics
+            duration_seconds = (datetime.now() - conversation.created_at).total_seconds()
+            logger.info(
+                "standup_conversation_abandoned",
+                conversation_id=conversation_id,
+                turns_before_abandon=len(conversation.turns),
+                duration_seconds=round(duration_seconds, 2),
+                last_state=current_state.value,
+            )
 
         logger.info(
             "standup_conversation_state_changed",
@@ -209,6 +236,16 @@ class StandupConversationManager:
 
         conversation.turns.append(turn)
         conversation.updated_at = datetime.now()
+
+        # Issue #556: Memory optimization - trim old turns if exceeding limit
+        if len(conversation.turns) > self.MAX_TURN_HISTORY:
+            # Keep only the most recent turns
+            conversation.turns = conversation.turns[-self.MAX_TURN_HISTORY :]
+            logger.debug(
+                "standup_conversation_turns_trimmed",
+                conversation_id=conversation_id,
+                kept_turns=self.MAX_TURN_HISTORY,
+            )
 
         logger.debug(
             "standup_conversation_turn_added",

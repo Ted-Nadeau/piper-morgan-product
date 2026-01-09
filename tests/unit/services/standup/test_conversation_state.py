@@ -373,6 +373,37 @@ class TestConversationTurns:
         conv = manager.get_conversation(conversation.id)
         assert conv.updated_at >= original_updated
 
+    def test_add_turn_trims_history_when_exceeds_limit(self, manager, conversation):
+        """Issue #556: Turn history is trimmed when exceeding MAX_TURN_HISTORY."""
+        # Add more turns than the limit
+        for i in range(manager.MAX_TURN_HISTORY + 10):
+            manager.add_turn(conversation.id, f"msg{i}", f"resp{i}")
+
+        conv = manager.get_conversation(conversation.id)
+
+        # History should be trimmed to MAX_TURN_HISTORY
+        assert len(conv.turns) == manager.MAX_TURN_HISTORY
+
+        # Most recent turns should be preserved
+        assert conv.turns[-1].user_message == f"msg{manager.MAX_TURN_HISTORY + 9}"
+        assert conv.turns[0].user_message == f"msg10"  # First 10 were trimmed
+
+    def test_add_turn_keeps_recent_turns_when_trimming(self, manager, conversation):
+        """Issue #556: Trimming preserves most recent turns."""
+        # Add exactly MAX_TURN_HISTORY turns (no trimming)
+        for i in range(manager.MAX_TURN_HISTORY):
+            manager.add_turn(conversation.id, f"msg{i}", f"resp{i}")
+
+        conv = manager.get_conversation(conversation.id)
+        assert len(conv.turns) == manager.MAX_TURN_HISTORY
+
+        # Add one more - should trigger trimming
+        manager.add_turn(conversation.id, "final_msg", "final_resp")
+
+        conv = manager.get_conversation(conversation.id)
+        assert len(conv.turns) == manager.MAX_TURN_HISTORY
+        assert conv.turns[-1].user_message == "final_msg"
+
 
 class TestPreferencesAndContent:
     """Tests for preferences and standup content management."""

@@ -1,0 +1,25 @@
+<!-- Chat Inline Component - Always Visible Version
+     For use on home page where chat should be open by default
+     Dependencies: chat.css, chat.js, marked.js, permissions.js
+-->
+
+<div class="chat-inline-container" id="chat-container">
+  <div id="chat-window" class="chat-window">
+    <div class="message-container">
+      <div class="message bot-message">
+        What can I help you with today?
+      </div>
+    </div>
+  </div>
+
+  <form class="chat-form" id="chatForm">
+    <input
+      type="text"
+      name="message"
+      class="chat-input"
+      placeholder="e.g., Users are complaining about the login page being slow..."
+      required
+    />
+    <button type="submit" class="submit-btn">Send</button>
+  </form>
+</div>

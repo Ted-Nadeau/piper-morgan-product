@@ -6,23 +6,52 @@
   const chatWindow = document.getElementById("chat-window");
   let sessionId = null;
 
+  // Storage keys for session persistence
+  const STORAGE_KEYS = {
+    SESSION_ID: 'piper_chat_session_id',
+    CHAT_HISTORY: 'piper_chat_history',
+    WIDGET_STATE: 'piper_chat_widget_expanded'
+  };
+
+  // Check if localStorage is available (graceful degradation for private browsing)
+  let storageAvailable = false;
+  try {
+    const testKey = '__storage_test__';
+    localStorage.setItem(testKey, testKey);
+    localStorage.removeItem(testKey);
+    storageAvailable = true;
+  } catch (e) {
+    console.warn('localStorage not available, session persistence disabled');
+  }
+
   /**
    * Toggle chat widget expanded/collapsed state
    * Updates widget container class and manages focus/icon
+   * Persists state to localStorage for cross-page consistency
    */
   function toggleChatWidget() {
     const container = document.querySelector('.chat-widget-container');
     if (container) {
       container.classList.toggle('expanded');
+      const isExpanded = container.classList.contains('expanded');
+
+      // Persist expanded state
+      if (storageAvailable) {
+        try {
+          localStorage.setItem(STORAGE_KEYS.WIDGET_STATE, isExpanded ? 'true' : 'false');
+        } catch (e) {
+          // Ignore storage errors
+        }
+      }
 
       // Update toggle button icon when expanded
       const toggle = container.querySelector('.chat-widget-toggle');
       if (toggle) {
-        toggle.innerHTML = container.classList.contains('expanded') ? '✕' : '💬';
+        toggle.innerHTML = isExpanded ? '✕' : '💬';
       }
 
       // Focus input when expanded for better UX
-      if (container.classList.contains('expanded')) {
+      if (isExpanded) {
         const input = container.querySelector('.chat-input');
         if (input) {
           // Use setTimeout to ensure focus after DOM update
@@ -35,11 +64,6 @@
   // Make toggle globally available for onclick handlers
   window.toggleChatWidget = toggleChatWidget;
 
-  // Initialize session ID if not already set
-  if (!sessionId) {
-    sessionId = crypto.randomUUID ? crypto.randomUUID() : generateSessionId();
-  }
-
   /**
    * Generate a fallback session ID for browsers without crypto API
    */
@@ -49,12 +73,92 @@
   }
 
   /**
+   * Get or create a persistent session ID
+   * Stored in localStorage for cross-page persistence
+   */
+  function getOrCreateSessionId() {
+    if (storageAvailable) {
+      try {
+        const storedId = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
+        if (storedId) {
+          return storedId;
+        }
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+
+    // Create new session ID
+    const newId = crypto.randomUUID ? crypto.randomUUID() : generateSessionId();
+
+    // Persist if possible
+    if (storageAvailable) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.SESSION_ID, newId);
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+
+    return newId;
+  }
+
+  // Initialize session ID (persisted across pages)
+  sessionId = getOrCreateSessionId();
+
+  /**
+   * Save chat history to localStorage
+   * @param {Array} history - Array of message objects
+   */
+  function saveChatHistory(history) {
+    if (!storageAvailable) return;
+    try {
+      // Limit history to last 50 messages to avoid quota issues
+      const trimmedHistory = history.slice(-50);
+      localStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, JSON.stringify(trimmedHistory));
+    } catch (e) {
+      console.warn('Failed to save chat history:', e);
+    }
+  }
+
+  /**
+   * Load chat history from localStorage
+   * @returns {Array} Array of message objects or empty array
+   */
+  function loadChatHistory() {
+    if (!storageAvailable) return [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.CHAT_HISTORY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.warn('Failed to load chat history:', e);
+      return [];
+    }
+  }
+
+  /**
+   * Clear chat history from localStorage
+   */
+  function clearChatHistory() {
+    if (!storageAvailable) return;
+    try {
+      localStorage.removeItem(STORAGE_KEYS.CHAT_HISTORY);
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  // Track messages for persistence
+  let chatHistory = loadChatHistory();
+
+  /**
    * Append a message to the chat window
    * @param {string} html - The HTML content of the message
    * @param {boolean} isUser - Whether this is a user message
+   * @param {boolean} persist - Whether to save to history (default true)
    * @returns {HTMLElement} The message element
    */
-  function appendMessage(html, isUser = false) {
+  function appendMessage(html, isUser = false, persist = true) {
     const msgContainer = document.createElement("div");
     msgContainer.className = "message-container";
     const msgDiv = document.createElement("div");
@@ -70,7 +174,32 @@
     msgContainer.appendChild(msgDiv);
     chatWindow.appendChild(msgContainer);
     chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // Save to history for persistence (skip temporary messages like "Thinking...")
+    if (persist && html && !html.includes('Thinking...')) {
+      chatHistory.push({ content: html, isUser, timestamp: Date.now() });
+      saveChatHistory(chatHistory);
+    }
+
     return msgDiv;
+  }
+
+  /**
+   * Restore chat history from localStorage
+   * Called on initialization to restore previous conversation
+   */
+  function restoreChatHistory() {
+    if (!chatWindow) return;
+    const history = loadChatHistory();
+    if (history.length === 0) return;
+
+    // Clear any existing default messages
+    chatWindow.innerHTML = '';
+
+    // Restore each message
+    history.forEach(msg => {
+      appendMessage(msg.content, msg.isUser, false); // false = don't re-persist
+    });
   }
 
   /**
@@ -178,11 +307,37 @@
   }
 
   /**
+   * Restore widget expanded state from localStorage
+   */
+  function restoreWidgetState() {
+    if (!storageAvailable) return;
+    try {
+      const wasExpanded = localStorage.getItem(STORAGE_KEYS.WIDGET_STATE);
+      if (wasExpanded === 'true') {
+        const container = document.querySelector('.chat-widget-container');
+        if (container) {
+          container.classList.add('expanded');
+          const toggle = container.querySelector('.chat-widget-toggle');
+          if (toggle) {
+            toggle.innerHTML = '✕';
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  /**
    * Initialize the chat widget
    */
   function initChat() {
     const form = document.getElementById("chatForm");
     if (!form) return; // Chat form not found, widget not initialized
+
+    // Restore previous state
+    restoreChatHistory();
+    restoreWidgetState();
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -273,6 +428,8 @@
     pollWorkflowStatus,
     handleDirectResponse,
     handleErrorResponse,
+    clearHistory: clearChatHistory,
+    getSessionId: () => sessionId,
     init: initChat
   };
 })();

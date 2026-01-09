@@ -734,6 +734,7 @@
   <body>
     {% include 'components/skip-link.html' %}
     {% include 'components/page-transition.html' %}
+    {% set hide_floating_widget = true %}
     {% include 'components/navigation.html' %}
     {% set breadcrumbs = [{"label": "Home", "url": None}] %}
     {% include 'components/breadcrumbs.html' %}
@@ -788,30 +789,8 @@
       </div>
       {% endif %}
 
-      <!-- TODO: Remove old upload UI - replaced by /files page with new upload dialog -->
-      <!-- The quick-action "Upload a document" button above now directs to /files -->
-      <!--
-      <div class="upload-section">
-        <button class="upload-toggle" id="upload-toggle-btn">
-          📄 Upload a document to the knowledge base
-        </button>
-        <div id="upload-form-container">
-          <form id="upload-form" enctype="multipart/form-data">
-            <input
-              type="file"
-              name="file"
-              accept=".txt,.pdf,.docx,.md,.json"
-              required
-            />
-            <button type="submit" class="submit-btn">Upload</button>
-          </form>
-          <div id="upload-status"></div>
-          <div id="upload-progress">
-            <div id="upload-progress-fill">0%</div>
-          </div>
-        </div>
-      </div>
-      -->
+      <!-- Inline chat (always visible on home page) -->
+      {% include 'components/chat-inline.html' %}
 
       <div class="examples">
         <h3>💡 Try these examples:</h3>
