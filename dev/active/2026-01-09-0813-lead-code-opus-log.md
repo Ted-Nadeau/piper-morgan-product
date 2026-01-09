@@ -313,5 +313,160 @@ And update Related Documentation to add:
 
 ---
 
+---
+
+## Gameplan for #490 (09:15)
+
+Created comprehensive gameplan at: `dev/active/gameplan-490-ftux-portfolio.md`
+
+### Phase Structure
+- **Phase -1**: Infrastructure Verification ✅ COMPLETE
+  - All infrastructure confirmed (standup pattern, ProjectRepository, etc.)
+  - Skip worktree (single agent, sequential work)
+  - PM verification items answered from earlier investigation
+
+- **Phase 0**: Initial Bookending ✅ COMPLETE
+  - Issue verified and template-compliant
+  - Codebase investigation done
+
+- **Phase 0.5**: SKIP (backend-only work, no new endpoints)
+
+- **Phase 1**: First-Meeting Detection
+  - `FirstMeetingDetector` class
+  - 4 unit tests
+  - Uses `ProjectRepository.count_active_projects()`
+
+- **Phase 2**: Conversational Onboarding State Machine
+  - `PortfolioOnboardingManager` (follows StandupConversationManager)
+  - `PortfolioOnboardingHandler` (follows StandupConversationHandler)
+  - `PortfolioOnboardingState` enum
+  - 7+ unit tests
+
+- **Phase 3**: Handler Integration & Persistence
+  - Modify `canonical_handlers.py` greeting handler
+  - Connect to `ProjectRepository.create()`
+  - Integration test
+
+- **Phase Z**: Completion & Handoff
+
+### Key Decisions
+- **Pattern**: Follow standup conversation handler exactly
+- **Entity Extraction**: Keep simple - just extract project name
+- **Worktree**: Skip - overhead exceeds benefit for sequential work
+- **Scope**: MVP only - no auto-discovery, no cross-channel sync
+
+### Ready for PM Review
+Gameplan ready at `dev/active/gameplan-490-ftux-portfolio.md`
+
+---
+
+## Gameplan Template Compliance Audit (09:25)
+
+Cross-checked gameplan against `knowledge/gameplan-template.md`:
+
+### Section-by-Section Compliance
+
+| Template Section | Status | Notes |
+|-----------------|--------|-------|
+| Header (Issue, Priority, Size, Date) | ✅ | All present |
+| Phase -1: Infrastructure Verification | ✅ | Parts A, A.2, B, C all complete |
+| Phase 0: Initial Bookending | ✅ | Purpose, Actions, STOP Conditions |
+| Phase 0.5: Contract Verification | ✅ | Correctly SKIPped with rationale |
+| Phases 1-3: Development Work | ✅ | Objective, Deploy, Tasks, Deliverables, Evidence, STOP |
+| Phase Z: Completion & Handoff | ✅ | Tests, Docs, GitHub, PM Request |
+| Multi-Agent Coordination | ✅ | Deployment Map, Verification Gates |
+| STOP Conditions (Global) | ✅ | 6 conditions listed |
+| Evidence Requirements | ✅ | ✅/❌ examples |
+| Success Criteria | ✅ | 7 items with counts |
+| Implementation Notes | ✅ | Pattern, Integration, Entity Extraction |
+| Remember | ✅ | 5 principles |
+
+### Gaps Found & Fixed
+
+1. **Routing Integration Tests** (Issue #521 Learning)
+   - Added explicit section about testing full greeting → onboarding path
+   - Included BAD vs GOOD test examples
+   - Added Phase 3a verification gate
+
+2. **Evidence Collection Points**
+   - Added 4-point timing for evidence collection
+
+3. **Handoff Quality Checklist**
+   - Added 5-item checklist for subagent handoffs
+
+### Final Verdict: **100% Template Compliant**
+
+Gameplan now includes all sections from gameplan-template.md v9.2.
+
+---
+
+## Issue #490 Implementation (09:28 - 09:50)
+
+### Phase 1: First-Meeting Detection ✅
+
+**Files Created:**
+- `services/onboarding/__init__.py`
+- `services/onboarding/first_meeting_detector.py`
+- `tests/unit/services/onboarding/test_first_meeting_detector.py`
+
+**Tests:** 6 passing
+
+### Phase 2: Conversational Onboarding State Machine ✅
+
+**Files Created/Modified:**
+- `services/shared_types.py` - Added `PortfolioOnboardingState` enum
+- `services/domain/models.py` - Added `PortfolioOnboardingSession` dataclass
+- `services/onboarding/portfolio_manager.py` - State machine manager
+- `services/onboarding/portfolio_handler.py` - Turn-based conversation handler
+- `tests/unit/services/onboarding/test_portfolio_onboarding.py`
+
+**Tests:** 25 passing (31 total with Phase 1)
+
+### Phase 3: Handler Integration & Persistence ✅
+
+**Files Modified:**
+- `services/conversation/conversation_handler.py`:
+  - Added global onboarding singletons
+  - Added `_get_onboarding_components()` lazy loader
+  - Modified `respond()` to check for active onboarding
+  - Added `_handle_active_onboarding()` for turn routing
+  - Added `_persist_onboarding_projects()` for project creation
+  - Modified `_respond_to_greeting()` to trigger onboarding
+
+**Files Created:**
+- `tests/integration/test_portfolio_onboarding_e2e.py` - 8 integration tests
+
+**Tests:** 39 total (31 unit + 8 integration) - ALL PASSING
+
+### Regression Check ✅
+
+- Conversation handler tests: 24 passed, 4 skipped
+- Intent service greeting/guidance tests: 4 passed
+- No regressions detected
+
+### Evidence Summary
+
+```
+pytest tests/unit/services/onboarding/ tests/integration/test_portfolio_onboarding_e2e.py -v
+39 passed in 0.23s
+```
+
+### Files Changed Summary
+
+| File | Change Type | Description |
+|------|-------------|-------------|
+| `services/onboarding/__init__.py` | Created | Module exports |
+| `services/onboarding/first_meeting_detector.py` | Created | First-meeting detection |
+| `services/onboarding/portfolio_manager.py` | Created | State machine |
+| `services/onboarding/portfolio_handler.py` | Created | Conversation handler |
+| `services/shared_types.py` | Modified | Added PortfolioOnboardingState enum |
+| `services/domain/models.py` | Modified | Added PortfolioOnboardingSession |
+| `services/conversation/conversation_handler.py` | Modified | Integration hooks |
+| `tests/unit/services/onboarding/test_first_meeting_detector.py` | Created | 6 unit tests |
+| `tests/unit/services/onboarding/test_portfolio_onboarding.py` | Created | 25 unit tests |
+| `tests/integration/test_portfolio_onboarding_e2e.py` | Created | 8 integration tests |
+
+---
+
 *Session started: 2026-01-09 08:13*
-*Last updated: 2026-01-09 08:55*
+*Last updated: 2026-01-09 09:50*

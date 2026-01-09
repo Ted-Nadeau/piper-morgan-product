@@ -214,3 +214,20 @@ class StandupConversationState(Enum):
     FINALIZING = "finalizing"  # Confirming final version
     COMPLETE = "complete"  # Standup delivered
     ABANDONED = "abandoned"  # User cancelled or timed out
+
+
+class PortfolioOnboardingState(Enum):
+    """
+    State machine for portfolio onboarding conversations.
+
+    Issue #490: FTUX-PORTFOLIO - Project Portfolio Onboarding
+    Epic: FTUX (First Time User Experience)
+
+    Simpler than standup - focused on project capture.
+    """
+
+    INITIATED = "initiated"  # Piper offered onboarding, awaiting user response
+    GATHERING_PROJECTS = "gathering_projects"  # Collecting project info
+    CONFIRMING = "confirming"  # Confirming captured info before save
+    COMPLETE = "complete"  # Projects saved, onboarding done
+    DECLINED = "declined"  # User said no thanks

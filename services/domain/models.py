@@ -26,6 +26,7 @@ from services.shared_types import (
     ListType,
     NodeType,
     OrderingStrategy,
+    PortfolioOnboardingState,
     StandupConversationState,
     TaskStatus,
     TaskType,
@@ -1365,6 +1366,54 @@ class StandupConversation:
             "standup_versions": self.standup_versions,
             "turns": [t.to_dict() for t in self.turns],
             "context": self.context,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }
+
+
+@dataclass
+class PortfolioOnboardingSession:
+    """
+    Domain model for portfolio onboarding conversations.
+
+    Issue #490: FTUX-PORTFOLIO - Project Portfolio Onboarding
+    Epic: FTUX (First Time User Experience)
+
+    Tracks multi-turn conversation for capturing user's project portfolio.
+    Simpler than StandupConversation - focused on project capture.
+    """
+
+    id: str = field(default_factory=lambda: str(uuid4()))
+    session_id: str = ""
+    user_id: str = ""
+
+    # State machine
+    state: PortfolioOnboardingState = PortfolioOnboardingState.INITIATED
+    previous_state: Optional[PortfolioOnboardingState] = None
+
+    # Captured project info
+    # List of dicts: [{"name": "HealthTrack", "description": "Fitness app"}]
+    captured_projects: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Conversation turns
+    turns: List[ConversationTurn] = field(default_factory=list)
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "user_id": self.user_id,
+            "state": self.state.value,
+            "previous_state": self.previous_state.value if self.previous_state else None,
+            "captured_projects": self.captured_projects,
+            "turns": [t.to_dict() for t in self.turns],
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,

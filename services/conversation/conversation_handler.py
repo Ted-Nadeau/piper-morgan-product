@@ -6,9 +6,26 @@ from services.api.serializers import intent_to_dict
 from services.domain.models import Intent
 from services.intelligence.conversation_aware import ConversationAwareClarifyingGenerator
 from services.session.session_manager import SessionManager
-from services.shared_types import IntentCategory
+from services.shared_types import IntentCategory, PortfolioOnboardingState
 
 logger = structlog.get_logger()
+
+
+# Issue #490: Global onboarding manager and handler instances
+# These are module-level singletons to persist onboarding state across requests
+_onboarding_manager = None
+_onboarding_handler = None
+
+
+def _get_onboarding_components():
+    """Lazy-load onboarding components to avoid circular imports."""
+    global _onboarding_manager, _onboarding_handler
+    if _onboarding_manager is None:
+        from services.onboarding import PortfolioOnboardingHandler, PortfolioOnboardingManager
+
+        _onboarding_manager = PortfolioOnboardingManager()
+        _onboarding_handler = PortfolioOnboardingHandler(_onboarding_manager)
+    return _onboarding_manager, _onboarding_handler
 
 
 class ConversationHandler:
@@ -45,6 +62,13 @@ class ConversationHandler:
         """Generate appropriate conversational response"""
         import random
 
+        # Issue #490: Check for active onboarding session first
+        user_id = intent.context.get("user_id") if intent.context else None
+        if user_id and session_id:
+            onboarding_response = await self._handle_active_onboarding(user_id, session_id, intent)
+            if onboarding_response:
+                return onboarding_response
+
         # Handle clarification_needed action
         if intent.action == "clarification_needed":
             return await self._handle_clarification_needed(intent, session_id)
@@ -78,8 +102,18 @@ class ConversationHandler:
             return None
 
     async def _respond_to_greeting(self, intent: Intent, session_id: str = None) -> Dict[str, Any]:
-        """Issue #102: Generate calendar-aware greeting response."""
+        """
+        Issue #102: Generate calendar-aware greeting response.
+        Issue #490: Check for portfolio onboarding trigger.
+        """
         import random
+
+        # Issue #490: Check if this user should be offered portfolio onboarding
+        user_id = intent.context.get("user_id") if intent.context else None
+        if user_id and session_id:
+            onboarding_response = await self._check_portfolio_onboarding(user_id, session_id)
+            if onboarding_response:
+                return onboarding_response
 
         # Get calendar summary (may be None if unavailable)
         calendar_summary = await self._get_calendar_summary()
@@ -96,6 +130,168 @@ class ConversationHandler:
             "intent": intent_to_dict(intent),
             "workflow_id": None,
         }
+
+    async def _check_portfolio_onboarding(
+        self, user_id: str, session_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Issue #490: Check if user should be offered portfolio onboarding.
+
+        Returns an onboarding response if the user has no projects,
+        otherwise returns None to continue with normal greeting.
+        """
+        try:
+            from services.database.repositories import ProjectRepository
+            from services.database.session import async_session_factory
+            from services.onboarding import FirstMeetingDetector
+
+            async with async_session_factory() as db_session:
+                project_repo = ProjectRepository(db_session)
+                detector = FirstMeetingDetector(project_repo)
+
+                if await detector.should_trigger(user_id):
+                    # Start onboarding flow
+                    _, onboarding_handler = _get_onboarding_components()
+                    response = onboarding_handler.start_onboarding(session_id, user_id)
+
+                    logger.info(
+                        "portfolio_onboarding_triggered",
+                        user_id=user_id,
+                        session_id=session_id,
+                        onboarding_id=response.metadata.get("onboarding_id"),
+                    )
+
+                    return {
+                        "message": response.message,
+                        "intent": {
+                            "category": IntentCategory.GUIDANCE.value,
+                            "action": "portfolio_onboarding",
+                            "confidence": 1.0,
+                            "context": {
+                                "onboarding_id": response.metadata.get("onboarding_id"),
+                                "state": response.state.value,
+                            },
+                        },
+                        "workflow_id": None,
+                        "onboarding_session": response.metadata.get("onboarding_id"),
+                    }
+
+        except Exception as e:
+            logger.warning(f"Could not check portfolio onboarding: {e}")
+
+        return None
+
+    async def _handle_active_onboarding(
+        self, user_id: str, session_id: str, intent: Intent
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Issue #490: Handle messages when user has an active onboarding session.
+
+        Routes user messages to the portfolio onboarding handler if an active
+        session exists for this user.
+        """
+        try:
+            onboarding_manager, onboarding_handler = _get_onboarding_components()
+
+            # Check if user has an active onboarding session
+            session = onboarding_manager.get_session_by_user(user_id)
+            if not session:
+                return None
+
+            # Check if session is in a terminal state
+            if session.state in (
+                PortfolioOnboardingState.COMPLETE,
+                PortfolioOnboardingState.DECLINED,
+            ):
+                return None
+
+            # Route the message to the onboarding handler
+            user_message = intent.context.get("original_message", "") if intent.context else ""
+            if not user_message:
+                return None
+
+            response = onboarding_handler.handle_turn(session.id, user_message)
+
+            # If onboarding completed, persist the projects
+            if response.is_complete and response.state == PortfolioOnboardingState.COMPLETE:
+                await self._persist_onboarding_projects(user_id, response.captured_projects)
+
+            logger.info(
+                "portfolio_onboarding_turn_handled",
+                user_id=user_id,
+                session_id=session_id,
+                onboarding_id=session.id,
+                state=response.state.value,
+                is_complete=response.is_complete,
+            )
+
+            return {
+                "message": response.message,
+                "intent": {
+                    "category": IntentCategory.GUIDANCE.value,
+                    "action": "portfolio_onboarding",
+                    "confidence": 1.0,
+                    "context": {
+                        "onboarding_id": session.id,
+                        "state": response.state.value,
+                    },
+                },
+                "workflow_id": None,
+                "onboarding_session": session.id if not response.is_complete else None,
+            }
+
+        except Exception as e:
+            logger.warning(f"Could not handle active onboarding: {e}")
+
+        return None
+
+    async def _persist_onboarding_projects(self, user_id: str, captured_projects: list) -> None:
+        """
+        Issue #490: Persist projects captured during onboarding.
+
+        Creates Project entities in the database for each project the user
+        described during the onboarding conversation.
+        """
+        if not captured_projects:
+            return
+
+        try:
+            from services.database.repositories import ProjectRepository
+            from services.database.session import async_session_factory
+            from services.domain import models as domain
+
+            async with async_session_factory() as db_session:
+                project_repo = ProjectRepository(db_session)
+
+                for project_data in captured_projects:
+                    project = domain.Project(
+                        id=None,  # Will be generated
+                        owner_id=user_id,
+                        name=project_data.get("name", "Untitled Project"),
+                        description=project_data.get("description", ""),
+                        is_default=False,
+                        is_archived=False,
+                    )
+
+                    # Use BaseRepository.create via ProjectRepository
+                    await project_repo.create(
+                        owner_id=user_id,
+                        name=project.name,
+                        description=project.description,
+                        is_default=False,
+                        is_archived=False,
+                    )
+
+                await db_session.commit()
+
+                logger.info(
+                    "portfolio_onboarding_projects_persisted",
+                    user_id=user_id,
+                    project_count=len(captured_projects),
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to persist onboarding projects: {e}")
 
     def _format_calendar_greeting(self, summary: Dict[str, Any]) -> str:
         """Issue #102: Format greeting with calendar insights."""
