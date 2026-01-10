@@ -231,6 +231,17 @@ class PortfolioOnboardingHandler:
                     is_complete=True,
                 )
 
+        # Check if user is affirming they want to add more projects
+        # (e.g., "Yes, I have another project to tell you about")
+        if self._matches_patterns(message_lower, self.CONFIRM_PATTERNS):
+            response_message = "Great! What's the name of the project?"
+            self.manager.add_turn(session.id, user_message, response_message)
+            return OnboardingResponse(
+                message=response_message,
+                state=PortfolioOnboardingState.GATHERING_PROJECTS,
+                is_complete=False,
+            )
+
         # Extract project info from message
         project_info = self._extract_project_info(user_message)
         self.manager.add_project(session.id, project_info)

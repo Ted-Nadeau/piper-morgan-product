@@ -260,12 +260,17 @@ class ConversationHandler:
         Issue #490: Persist projects captured during onboarding.
 
         Creates Project entities in the database for each project the user
-        described during the onboarding conversation.
+        described during the onboarding conversation, then marks the user's
+        setup as complete.
         """
         if not captured_projects:
             return
 
         try:
+            from datetime import datetime
+
+            from sqlalchemy import text
+
             from services.database.repositories import ProjectRepository
             from services.database.session_factory import AsyncSessionFactory
             from services.domain import models as domain
@@ -292,12 +297,22 @@ class ConversationHandler:
                         is_archived=False,
                     )
 
+                # Mark user's setup as complete (Issue #490)
+                await db_session.execute(
+                    text(
+                        "UPDATE users SET setup_complete = true, "
+                        "setup_completed_at = :now WHERE id = :user_id"
+                    ),
+                    {"now": datetime.now(), "user_id": user_id},
+                )
+
                 await db_session.commit()
 
                 logger.info(
                     "portfolio_onboarding_projects_persisted",
                     user_id=user_id,
                     project_count=len(captured_projects),
+                    setup_complete=True,
                 )
 
         except Exception as e:

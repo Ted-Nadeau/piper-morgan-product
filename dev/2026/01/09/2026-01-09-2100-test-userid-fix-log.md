@@ -73,7 +73,7 @@ python -m pytest tests/features/test_morning_standup.py::TestMorningStandupWorkf
 - [x] Investigation complete
 - [x] Fix applied
 - [x] Test passes (11/11 in test file)
-- [ ] Committed
+- [x] Committed (e587db0d)
 
 ## Test Results
 

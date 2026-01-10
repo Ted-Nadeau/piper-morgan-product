@@ -231,6 +231,32 @@ class TestPortfolioOnboardingHandler:
         assert response.state == PortfolioOnboardingState.CONFIRMING
         assert "save" in response.message.lower() or "confirm" in response.message.lower()
 
+    def test_yes_in_gathering_prompts_for_project_name(self, handler):
+        """Should recognize 'yes, I have another project' as wanting to add more, not as project name."""
+        start_response = handler.start_onboarding("session-123", "user-456")
+        onboarding_id = start_response.metadata["onboarding_id"]
+
+        # Accept onboarding
+        handler.handle_turn(onboarding_id, "Sure")
+
+        # Provide first project
+        handler.handle_turn(onboarding_id, "Piper Morgan")
+
+        # Now say we want to add another - this was previously captured as project name
+        response = handler.handle_turn(
+            onboarding_id, "Yes, I have another project to tell you about"
+        )
+
+        # Should stay in GATHERING and ask for the project name
+        assert response.state == PortfolioOnboardingState.GATHERING_PROJECTS
+        assert "name" in response.message.lower() or "project" in response.message.lower()
+
+        # The phrase should NOT be captured as a project name
+        session = handler.manager.get_session(onboarding_id)
+        project_names = [p.get("name", "") for p in session.captured_projects]
+        assert "Yes, I have another project to tell you about" not in project_names
+        assert len(project_names) == 1  # Only Piper Morgan
+
 
 class TestProjectExtraction:
     """Tests for project info extraction from natural language."""

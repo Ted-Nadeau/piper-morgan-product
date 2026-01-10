@@ -1,6 +1,6 @@
-# Gameplan Template v9.2 - Complete Phase Documentation
-*Last Updated: December 4, 2025*
-*Key Addition: Worktree Assessment in Phase -1 (Issue #463 learning)*
+# Gameplan Template v9.3 - Complete Phase Documentation
+*Last Updated: January 10, 2026*
+*Key Addition: Data Flow, Integration Points, Pattern Adaptation, Conversation Design, Post-Completion sections (Issue #490 retrospective)*
 
 ---
 
@@ -10,6 +10,7 @@
 - **Phase -1**: Infrastructure Verification (with PM)
 - **Phase 0**: Initial Bookending (GitHub investigation)
 - **Phase 0.5**: Frontend-Backend Contract Verification (MANDATORY for UI work)
+- **Phase 0.6**: Data Flow & Integration Verification (NEW - for multi-layer features)
 - **Phases 1-N**: Development Work (progressive bookending)
 - **Phase Z**: Final Bookending & Handoff
 
@@ -216,6 +217,232 @@ echo "  Static files: web/static/ → /static/"
 
 ---
 
+## Phase 0.6: Data Flow & Integration Verification (NEW)
+
+### Purpose
+Prevent data propagation failures in multi-layer features. This phase is REQUIRED when the feature involves data flowing through multiple service layers (e.g., Route → Service → Handler → Repository).
+
+**Added from Issue #490 Retrospective**: The #490 portfolio onboarding gameplan followed the standup pattern but didn't account for the critical difference: standup uses `session_id` for lookup while portfolio needs `user_id`. This caused 4 bugs (beads 9mc, a0h, ejj, 3pv) that required Five Whys debugging.
+
+### When to Apply
+- ✅ Multi-turn conversational features
+- ✅ Features requiring user context across requests
+- ✅ Features that "follow an existing pattern" but with different requirements
+- ✅ Any feature touching auth/session/user_id propagation
+- ❌ Single-layer changes (skip this phase)
+- ❌ Stateless request/response features (skip this phase)
+
+### Part A: Data Flow Requirements
+
+#### User Context Propagation
+Document which layers need user_id/session_id and verify each handoff:
+
+| Layer | Needs user_id? | Needs session_id? | Source of value |
+|-------|----------------|-------------------|-----------------|
+| Route handler | [ ] | [ ] | `get_current_user` dependency |
+| Service method | [ ] | [ ] | Parameter from route |
+| Domain handler | [ ] | [ ] | Parameter from service |
+| Repository | [ ] | [ ] | Parameter from handler |
+
+**Verification Commands**:
+```bash
+# Check if route has user dependency
+grep -n "get_current_user\|current_user" web/api/routes/[file].py
+
+# Check if service method accepts user_id
+grep -n "def.*user_id" services/[service].py
+
+# Check if handler receives user_id
+grep -n "def.*user_id" services/[handler].py
+```
+
+#### State Persistence
+- [ ] Where is state stored? (in-memory dict / database / session / redis)
+- [ ] Key for lookup: `user_id` / `session_id` / `onboarding_id` / other: ______
+- [ ] How is state retrieved on subsequent requests?
+- [ ] What happens if state lookup fails? (error / create new / fallback)
+
+### Part B: Integration Points Checklist
+
+For EACH integration point where one layer calls another:
+
+| Caller | Callee | Import Path Verified? | Method Name Verified? | Parameters Available? |
+|--------|--------|----------------------|----------------------|----------------------|
+| intent_service | conversation_handler | [ ] | [ ] | [ ] |
+| conversation_handler | portfolio_handler | [ ] | [ ] | [ ] |
+| portfolio_handler | portfolio_manager | [ ] | [ ] | [ ] |
+| portfolio_manager | project_repository | [ ] | [ ] | [ ] |
+
+**Verification Commands**:
+```bash
+# Verify import path exists
+python -c "from [module.path] import [Class]"
+
+# Verify method exists
+python -c "from [module.path] import [Class]; print(hasattr([Class], '[method_name]'))"
+```
+
+### Part C: Pattern Adaptation Notes
+
+**When referencing an existing pattern (e.g., "follow standup pattern"):**
+
+| Aspect | Source Pattern | This Implementation | Why Different? |
+|--------|---------------|---------------------|----------------|
+| State lookup key | session_id | user_id | Cross-session continuity needed |
+| State storage | in-memory | in-memory | Same |
+| Auth requirement | optional | required | Need consistent user_id |
+
+**Potential Pitfalls from Differences**:
+- [ ] List each difference that could cause bugs
+- [ ] Note mitigation for each
+
+### STOP Conditions
+- If ANY import path doesn't exist → fix before implementing
+- If method name is wrong → verify correct name before calling
+- If required parameter not available at call site → trace back to find source
+- If pattern difference not documented → document before proceeding
+
+---
+
+## Phase 0.7: Conversation Design (For Conversational Features)
+
+### Purpose
+Prevent conversation flow bugs by designing before implementing. This phase is REQUIRED for any feature involving multi-turn conversations.
+
+**Added from Issue #490 Retrospective**: The "Yes, I have another project" bug occurred because the conversation design didn't account for affirmative responses that aren't content. A conversation design table would have caught this.
+
+### When to Apply
+- ✅ Onboarding flows
+- ✅ Setup wizards via chat
+- ✅ Multi-turn data gathering
+- ✅ Confirmation dialogs
+- ❌ Single-turn Q&A (skip this phase)
+
+### Part A: Happy Path Script
+
+Document the exact expected conversation:
+
+```
+Turn 1:
+  User: "Hello"
+  Piper: "[exact response]"
+  State: INITIATED → GATHERING
+
+Turn 2:
+  User: "[expected input]"
+  Piper: "[exact response]"
+  State: GATHERING → GATHERING
+
+Turn 3:
+  User: "[completion signal]"
+  Piper: "[exact response]"
+  State: GATHERING → CONFIRMING
+```
+
+### Part B: Edge Cases Table
+
+| User Input | Current State | Expected Behavior | Response Template |
+|------------|---------------|-------------------|-------------------|
+| "yes" / "sure" / "yeah" | GATHERING | Prompt for content | "Great! What's the name?" |
+| "no thanks" | ANY | Exit gracefully | "No problem! What else..." |
+| [rambling paragraph] | GATHERING | Extract or clarify? | Decision: ______ |
+| "that's all" / "done" | GATHERING | Transition to confirm | "Let me confirm..." |
+| [empty/whitespace] | ANY | Re-prompt | "I didn't catch that..." |
+
+### Part C: Pattern Definitions
+
+Define regex patterns BEFORE implementation:
+
+```python
+# Affirmation (NOT content)
+CONFIRM_PATTERNS = [
+    r"\b(yes|yeah|yep|sure|correct|right)\b",
+    # ...
+]
+
+# Completion signals
+DONE_PATTERNS = [
+    r"\b(done|that'?s? all|finished)\b",
+    # ...
+]
+
+# Decline signals
+DECLINE_PATTERNS = [
+    r"\b(no|nope|not now|skip)\b",
+    # ...
+]
+```
+
+### Part D: State Machine
+
+```
+INITIATED
+    ├── [accept] → GATHERING
+    └── [decline] → DECLINED (terminal)
+
+GATHERING
+    ├── [content] → GATHERING (add item, loop)
+    ├── [affirm without content] → GATHERING (prompt for content)
+    ├── [done signal] → CONFIRMING
+    └── [decline] → DECLINED (terminal)
+
+CONFIRMING
+    ├── [confirm] → COMPLETE (terminal)
+    ├── [add more] → GATHERING
+    └── [decline] → DECLINED (terminal)
+```
+
+### STOP Conditions
+- If edge case behavior unclear → get PM decision before implementing
+- If pattern overlap detected → resolve ambiguity before implementing
+
+---
+
+## Phase 0.8: Post-Completion Integration (NEW)
+
+### Purpose
+Ensure the feature properly integrates with the rest of the system after completion.
+
+**Added from Issue #490 Retrospective**: Portfolio onboarding created projects but didn't set `setup_complete = true`, leaving users in a broken state. This section ensures completion side-effects are specified.
+
+### When to Apply
+- ✅ Features that change user state
+- ✅ Features that create/modify database records
+- ✅ Features that should affect other feature behavior
+- ❌ Read-only features (skip this phase)
+
+### Completion Side-Effects Checklist
+
+When this feature completes successfully:
+
+| Side Effect | Table/Field | Value | Verified? |
+|-------------|-------------|-------|-----------|
+| User marked as set up | users.setup_complete | true | [ ] |
+| Timestamp recorded | users.setup_completed_at | now() | [ ] |
+| Projects created | projects table | N rows | [ ] |
+| Preference saved | user_preferences | key=value | [ ] |
+
+### Downstream Behavior Changes
+
+After this feature completes, what should behave differently?
+
+| Feature | Before Completion | After Completion |
+|---------|-------------------|------------------|
+| Greeting | Shows onboarding prompt | Shows normal greeting |
+| Orientation modal | Appears | Does not appear |
+| Project list | Empty | Shows captured projects |
+
+### Verification Query
+
+```sql
+-- Verify completion state after feature runs
+SELECT setup_complete, setup_completed_at,
+       (SELECT COUNT(*) FROM projects WHERE owner_id = users.id) as project_count
+FROM users WHERE id = '[user_id]';
+```
+
+---
+
 ## Phases 1-N: Development Work with Progressive Bookending
 
 ### Multi-Agent Deployment (DEFAULT)
@@ -255,6 +482,7 @@ Evidence: [link or output]"
 ## Test Scope Requirements in Acceptance Criteria
 - [ ] Unit tests: [what components they test]
 - [ ] Integration tests: [what flows they verify]
+- [ ] **Wiring tests**: [what import/method/parameter chains they verify] (NEW)
 - [ ] Performance tests: [what metrics required]
 - [ ] Regression tests: [what they prevent]
 
@@ -351,6 +579,7 @@ Please review and close if satisfied.
 - [ ] Phase 1: Unit tests passing
 - [ ] Phase 2: Integration tests passing
 - [ ] Phase 2a: **Routing integration tests** (for intent/handler work)
+- [ ] Phase 2b: **Wiring integration tests** (for multi-layer features) (NEW)
 - [ ] Phase 3: User verification complete
 - [ ] Phase 4: Documentation updated
 
@@ -375,6 +604,35 @@ async def test_routing_reaches_handler():
 ```
 
 **Why this matters:** Issue #521 had 17 passing unit tests but the queries failed in production because the pre-classifier intercepted them before reaching the handlers. Routing integration tests catch this.
+
+### CRITICAL: Wiring Integration Tests (Issue #490 Learning) (NEW)
+
+**For any work involving data flow through multiple service layers:**
+
+Unit tests that mock internal methods are NOT sufficient. You MUST include **wiring integration tests** that verify:
+
+```python
+# BAD: Mocks internal method (hides import/wiring bugs)
+@patch('services.conversation.conversation_handler._check_portfolio_onboarding')
+async def test_onboarding_works(mock_check):
+    mock_check.return_value = {"response": "..."}
+    # ✅ Passes but doesn't prove real wiring works
+
+# GOOD: Tests real import chain without mocking internals
+async def test_real_wiring():
+    # Verify import works
+    from services.conversation.conversation_handler import ConversationHandler
+    from services.onboarding.portfolio_handler import PortfolioOnboardingHandler
+
+    # Verify method exists
+    assert hasattr(ConversationHandler, '_handle_active_onboarding')
+
+    # Verify parameter propagation (with real objects, minimal mocking)
+    handler = ConversationHandler(...)
+    # Test with real user_id flowing through
+```
+
+**Why this matters:** Issue #490 had passing tests but failed in production because tests mocked `_check_portfolio_onboarding`, hiding that `user_id` wasn't being passed through the real code path.
 
 ### Evidence Collection Points
 1. **After each subagent returns**: Collect evidence immediately
@@ -401,6 +659,9 @@ Stop immediately and escalate if:
 - Security issues discovered
 - Assumptions prove wrong
 - **Router/adapter methods missing** (Issue #525 learning)
+- **Import path doesn't exist** (Issue #490 learning) (NEW)
+- **Method name typo** (Issue #490 learning) (NEW)
+- **Required parameter not available at call site** (Issue #490 learning) (NEW)
 
 ### Infrastructure Compatibility Check (Issue #525 Learning)
 
@@ -427,6 +688,7 @@ Before implementing handlers that call integration adapters:
 ✅ Performance metrics
 ✅ Git commits/diffs
 ✅ Before/after screenshots
+✅ SQL query showing state change (NEW)
 
 ❌ "Should work"
 ❌ "Tests pass" without output
@@ -440,6 +702,7 @@ Before implementing handlers that call integration adapters:
 - [ ] All acceptance criteria met
 - [ ] Evidence provided for each criterion
 - [ ] Tests passing (with output)
+- [ ] **Wiring tests included** (for multi-layer features) (NEW)
 - [ ] No regressions introduced
 - [ ] Documentation updated
 - [ ] GitHub issue fully updated
@@ -476,6 +739,18 @@ Before implementing handlers that call integration adapters:
 - **75% Pattern**: Complete existing work, don't replace
 - **Multi-Agent Default**: Single agent needs justification
 - **PM Closes Issues**: Agents request approval only
+- **Data Flow Matters**: Trace user_id/session_id through all layers (NEW)
+- **Test Real Wiring**: Don't mock internal methods (NEW)
+
+---
+
+## Version History
+
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| v9.3 | 2026-01-10 | Added Phase 0.6 (Data Flow), Phase 0.7 (Conversation Design), Phase 0.8 (Post-Completion), Wiring Tests requirement. Issue #490 retrospective learnings. |
+| v9.2 | 2025-12-04 | Added Worktree Assessment in Phase -1 (Issue #463 learning) |
+| v9.0 | 2025-09-22 | Initial complete phase documentation |
 
 ---
 
