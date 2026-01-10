@@ -21,16 +21,18 @@ class DemoConfigService:
         # Configuration from environment
         self.api_key = os.getenv("DEMO_API_KEY", "")
         self.api_endpoint = os.getenv("DEMO_API_ENDPOINT", "https://api.example.com")
-        self.enabled = os.getenv("DEMO_ENABLED", "true").lower() == "true"
+        # Default to disabled - demo plugin should only appear when explicitly enabled
+        self.enabled = os.getenv("DEMO_ENABLED", "false").lower() == "true"
 
     def is_configured(self) -> bool:
         """Check if integration is properly configured
 
         Returns:
-            bool: True if all required config present
+            bool: True if DEMO_ENABLED=true is set in environment.
+                  Defaults to False to prevent demo plugin from appearing
+                  in production identity responses.
         """
-        # For demo purposes, always configured
-        # Real integrations should check API keys, etc.
+        # Demo plugin disabled by default - set DEMO_ENABLED=true to enable for development
         return self.enabled
 
     def get_api_key(self) -> Optional[str]:

@@ -35,11 +35,16 @@ class TestDemoPlugin:
 
     @pytest.mark.smoke
     def test_plugin_is_configured(self):
-        """Test plugin configuration check"""
+        """Test plugin configuration check
+
+        Demo plugin should be disabled by default to prevent it from appearing
+        in production identity responses. Set DEMO_ENABLED=true to enable.
+        """
         plugin = DemoPlugin()
 
-        # Demo plugin should always be configured
-        assert plugin.is_configured() is True
+        # Demo plugin should be disabled by default (bead piper-morgan-7ik)
+        # This prevents it from appearing in user-facing identity responses
+        assert plugin.is_configured() is False
 
     @pytest.mark.asyncio
     @pytest.mark.smoke
@@ -53,16 +58,22 @@ class TestDemoPlugin:
 
     @pytest.mark.smoke
     def test_plugin_status(self):
-        """Test plugin status reporting"""
+        """Test plugin status reporting
+
+        Status should report configured=False by default (bead piper-morgan-7ik).
+        """
         plugin = DemoPlugin()
         status = plugin.get_status()
 
         assert "configured" in status
         assert "router_prefix" in status
         assert "routes" in status
-        assert status["configured"] is True
+        # Demo plugin disabled by default - won't appear in identity responses
+        assert status["configured"] is False
         assert status["router_prefix"] == "/api/integrations/demo"
-        assert status["routes"] >= 3  # At least health, echo, status
+        assert (
+            status["routes"] >= 3
+        )  # At least health, echo, status  # At least health, echo, status
 
     @pytest.mark.smoke
     def test_router_has_expected_routes(self):
@@ -89,10 +100,14 @@ class TestDemoConfigService:
 
     @pytest.mark.smoke
     def test_config_is_configured(self):
-        """Test is_configured method"""
+        """Test is_configured method
+
+        Demo plugin is disabled by default (bead piper-morgan-7ik).
+        Set DEMO_ENABLED=true in environment to enable for development.
+        """
         config = DemoConfigService()
-        # Demo should always be configured
-        assert config.is_configured() is True
+        # Demo should be disabled by default to prevent showing in identity responses
+        assert config.is_configured() is False
 
     @pytest.mark.smoke
     def test_config_get_endpoint(self):
