@@ -30,7 +30,8 @@ from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
-security = HTTPBearer()
+# piper-morgan-fb9: auto_error=False allows logout to handle missing/invalid tokens gracefully
+security = HTTPBearer(auto_error=False)
 logger = structlog.get_logger(__name__)
 
 
@@ -237,8 +238,7 @@ async def login(
 @router.post("/logout")
 async def logout(
     request: Request,
-    current_user: JWTClaims = Depends(get_current_user),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     jwt_service: JWTService = Depends(get_jwt_service),
 ):
     """
@@ -247,21 +247,37 @@ async def logout(
     The token will be added to the blacklist and no longer valid for authentication.
     Even if the token hasn't expired, it will be rejected by the middleware.
 
+    piper-morgan-fb9: This endpoint now handles authentication gracefully:
+    - If valid token: revoke it and return success
+    - If invalid/expired/revoked token: return success (already logged out)
+    - If no token: return success (nothing to log out)
+
     Args:
         request: FastAPI Request object for audit context
-        current_user: Current authenticated user (from token)
-        credentials: Bearer token credentials
+        credentials: Bearer token credentials (optional with auto_error=False)
         jwt_service: JWT service for token revocation
 
     Returns:
-        Success message with user ID
+        Success message with user ID (if known)
 
     Raises:
-        HTTPException 500: If token revocation fails
+        HTTPException 500: If token revocation fails unexpectedly
 
     Issue #249: Added audit logging
+    piper-morgan-fb9: Handle missing/invalid tokens gracefully
     """
-    token = credentials.credentials
+    # piper-morgan-fb9: Extract token from Authorization header or cookie
+    token = None
+    if credentials:
+        token = credentials.credentials
+    else:
+        # Try auth_token cookie (for web UI)
+        token = request.cookies.get("auth_token")
+
+    if not token:
+        # No token provided - user is already logged out or never logged in
+        logger.info("Logout called with no token - user already logged out")
+        return {"message": "Logged out successfully", "user_id": None}
 
     try:
         # Build audit context from request (Issue #249)
@@ -271,34 +287,49 @@ async def logout(
         if not db._initialized:
             await db.initialize()
 
+        # piper-morgan-fb9: Try to validate token to get user_id for logging
+        # If token is invalid/expired/revoked, we still consider logout successful
+        user_id = None
+        try:
+            claims = await jwt_service.validate_token(token)
+            if claims:
+                user_id = claims.user_id
+        except Exception:
+            # Token is invalid/expired/revoked - that's fine for logout
+            # Try to decode without validation to get user_id for logging
+            try:
+                import jwt as pyjwt
+
+                decoded = pyjwt.decode(token, options={"verify_signature": False})
+                user_id = decoded.get("sub") or decoded.get("user_id")
+            except Exception:
+                pass
+
         # Revoke the token via blacklist with audit logging
         # Use fresh session to avoid event loop mismatch (#442)
         async with AsyncSessionFactory.session_scope_fresh() as session:
             success = await jwt_service.revoke_token(
                 token=token,
                 reason="logout",
-                user_id=current_user.user_id,
+                user_id=user_id,
                 session=session,
                 audit_context=audit_context,
             )
             await session.commit()
 
+        # piper-morgan-fb9: Always return success - user is logged out either way
+        # Even if revoke_token returns False (e.g., token already revoked), the user is still logged out
         if success:
-            logger.info(
-                "User logged out successfully",
-                user_id=current_user.user_id,
-                user_email=current_user.user_email,
-            )
-            return {"message": "Logged out successfully", "user_id": current_user.user_id}
+            logger.info("User logged out successfully", user_id=user_id)
         else:
-            logger.error("Failed to revoke token during logout", user_id=current_user.user_id)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Logout failed: Unable to revoke token",
+            logger.info(
+                "Token may already be revoked, treating as successful logout", user_id=user_id
             )
 
+        return {"message": "Logged out successfully", "user_id": user_id}
+
     except Exception as e:
-        logger.error("Logout error", user_id=current_user.user_id, error=str(e), exc_info=True)
+        logger.error("Logout error", error=str(e), exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Logout failed: {str(e)}"
         )
@@ -364,7 +395,7 @@ async def change_password(
     request: Request,
     data: PasswordChangeRequest,
     current_user: JWTClaims = Depends(get_current_user),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     jwt_service: JWTService = Depends(get_jwt_service),
 ):
     """
@@ -433,6 +464,12 @@ async def change_password(
 
             # Change password via JWT service
             # This will verify current password, update password hash, and revoke token
+            # piper-morgan-fb9: Handle optional credentials (should not happen due to get_current_user)
+            if not credentials:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication required",
+                )
             token = credentials.credentials
             try:
                 success = await jwt_service.change_password(

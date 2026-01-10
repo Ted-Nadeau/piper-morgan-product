@@ -62,6 +62,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/setup",  # Issue #390: Setup wizard UI page
             "/api/setup",  # Issue #390: Setup wizard API endpoints
             "/auth/login",  # Issue #393: Login API endpoint
+            "/auth/logout",  # piper-morgan-fb9: Logout handles auth optionally in route
             "/api/v1/auth/login",
             "/api/v1/auth/register",
             # Issue #490: Intent endpoint handles auth optionally in route
