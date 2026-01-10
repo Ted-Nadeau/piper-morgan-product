@@ -17,6 +17,9 @@ if git diff --cached --name-only --diff-filter=A | grep -q "^$PATTERNS_DIR/patte
         | sort -n \
         | tail -1)
 
+    # Strip leading zeros for arithmetic (bash treats 08/09 as invalid octal)
+    HIGHEST_PATTERN=$((10#$HIGHEST_PATTERN))
+
     # Check each new pattern file
     git diff --cached --name-only --diff-filter=A | grep "^$PATTERNS_DIR/pattern-.*\.md$" | while read -r file; do
         # Extract number from filename

@@ -172,10 +172,29 @@ class AttentionModel:
 
     Manages attention events, focus, and prioritization using sophisticated
     algorithms that consider proximity, urgency, relationships, and patterns.
+
+    Issue #365: Added user_id support for pattern persistence.
     """
 
-    def __init__(self, memory_store: Optional[SpatialMemoryStore] = None):
+    def __init__(
+        self,
+        memory_store: Optional[SpatialMemoryStore] = None,
+        user_id: Optional[str] = None,
+        db_session_factory: Optional[Any] = None,
+    ):
+        """
+        Initialize AttentionModel.
+
+        Args:
+            memory_store: Spatial memory store for location data
+            user_id: Optional user ID for pattern persistence (Issue #365)
+            db_session_factory: Optional database session factory for persistence
+        """
         self.memory_store = memory_store or SpatialMemoryStore()
+
+        # User context for pattern persistence (Issue #365)
+        self._user_id = user_id
+        self._db_session_factory = db_session_factory
 
         # Active attention management
         self._active_events: Dict[str, AttentionEvent] = {}
@@ -208,7 +227,170 @@ class AttentionModel:
             "attention_efficiency": 1.0,
         }
 
-        logger.info("AttentionModel initialized")
+        logger.info("AttentionModel initialized", extra={"user_id": user_id})
+
+    def set_user_context(self, user_id: str) -> None:
+        """
+        Set user context for pattern persistence.
+
+        Call this method to enable pattern persistence after model creation.
+        Useful when user_id isn't available at initialization time.
+
+        Args:
+            user_id: The user ID to associate with learned patterns
+
+        Issue #365: Hybrid approach for backward compatibility.
+        """
+        self._user_id = user_id
+        logger.info("User context set for attention model", extra={"user_id": user_id})
+
+    # Pattern Persistence (Issue #365)
+
+    async def _save_pattern_to_db(self, pattern: AttentionPattern) -> bool:
+        """
+        Persist attention pattern to database.
+
+        Args:
+            pattern: The AttentionPattern to save
+
+        Returns:
+            True if saved successfully, False otherwise
+
+        Issue #365: Pattern persistence implementation.
+        """
+        if not self._user_id:
+            logger.debug("Cannot save pattern: no user_id set")
+            return False
+
+        if not self._db_session_factory:
+            logger.debug("Cannot save pattern: no db_session_factory")
+            return False
+
+        try:
+            from sqlalchemy import select
+
+            from services.database.models import LearnedPattern
+            from services.shared_types import PatternType
+
+            async with self._db_session_factory.create_session() as session:
+                # Check if pattern exists for this user
+                # Use cast for proper JSON field access in PostgreSQL
+                from sqlalchemy import String, cast
+
+                result = await session.execute(
+                    select(LearnedPattern).where(
+                        LearnedPattern.user_id == self._user_id,
+                        LearnedPattern.pattern_type == PatternType.INTEGRATION,
+                        cast(LearnedPattern.pattern_data["name"], String) == pattern.pattern_name,
+                    )
+                )
+                existing = result.scalar_one_or_none()
+
+                if existing:
+                    # Update existing pattern
+                    existing.pattern_data = {
+                        "name": pattern.pattern_name,
+                        "triggers": pattern.trigger_conditions,
+                        "attention_response": pattern.attention_response,
+                    }
+                    existing.confidence = pattern.confidence
+                    existing.usage_count = pattern.observation_count
+                    existing.last_used_at = pattern.last_observed
+                    logger.debug(
+                        "Updated existing attention pattern",
+                        extra={"pattern_name": pattern.pattern_name},
+                    )
+                else:
+                    # Create new pattern
+                    new_pattern = LearnedPattern(
+                        user_id=self._user_id,
+                        pattern_type=PatternType.INTEGRATION,
+                        pattern_data={
+                            "name": pattern.pattern_name,
+                            "triggers": pattern.trigger_conditions,
+                            "attention_response": pattern.attention_response,
+                        },
+                        confidence=pattern.confidence,
+                        usage_count=pattern.observation_count,
+                        last_used_at=pattern.last_observed,
+                    )
+                    session.add(new_pattern)
+                    logger.debug(
+                        "Created new attention pattern",
+                        extra={"pattern_name": pattern.pattern_name},
+                    )
+
+                await session.commit()
+                return True
+
+        except Exception as e:
+            logger.error(
+                "Failed to save attention pattern",
+                extra={
+                    "pattern_name": pattern.pattern_name,
+                    "error": str(e),
+                },
+            )
+            return False
+
+    async def load_patterns_from_db(self) -> int:
+        """
+        Load persisted patterns from database.
+
+        Returns:
+            Number of patterns loaded
+
+        Issue #365: Pattern persistence implementation.
+        """
+        if not self._user_id:
+            logger.debug("Cannot load patterns: no user_id set")
+            return 0
+
+        if not self._db_session_factory:
+            logger.debug("Cannot load patterns: no db_session_factory")
+            return 0
+
+        try:
+            from sqlalchemy import select
+
+            from services.database.models import LearnedPattern
+            from services.shared_types import PatternType
+
+            async with self._db_session_factory.create_session() as session:
+                result = await session.execute(
+                    select(LearnedPattern).where(
+                        LearnedPattern.user_id == self._user_id,
+                        LearnedPattern.pattern_type == PatternType.INTEGRATION,
+                        LearnedPattern.enabled == True,
+                    )
+                )
+                db_patterns = result.scalars().all()
+
+                for db_pattern in db_patterns:
+                    pattern_data = db_pattern.pattern_data or {}
+                    pattern = AttentionPattern(
+                        pattern_id=str(db_pattern.id),
+                        pattern_name=pattern_data.get("name", ""),
+                        trigger_conditions=pattern_data.get("triggers", {}),
+                        attention_response=pattern_data.get("attention_response", {}),
+                        observation_count=db_pattern.usage_count or 0,
+                        confidence=db_pattern.confidence or 0.0,
+                        last_observed=db_pattern.last_used_at,
+                    )
+                    self._learned_patterns[pattern.pattern_name] = pattern
+
+                logger.info(
+                    "Loaded attention patterns from database",
+                    extra={"count": len(db_patterns), "user_id": self._user_id},
+                )
+                return len(db_patterns)
+
+        except Exception as e:
+            logger.error(
+                "Failed to load attention patterns",
+                extra={"error": str(e), "user_id": self._user_id},
+            )
+            return 0
 
     # Core Attention Event Management
 
@@ -669,6 +851,22 @@ class AttentionModel:
             self._learned_patterns[pattern_name] = pattern
 
         self._metrics["pattern_matches"] += 1
+
+        # Persist pattern to database (Issue #365)
+        # Use fire-and-forget async save to avoid blocking
+        if self._user_id and self._db_session_factory:
+            import asyncio
+
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.create_task(self._save_pattern_to_db(pattern))
+                else:
+                    # If no event loop running, skip persistence
+                    logger.debug("No event loop running, skipping pattern persistence")
+            except RuntimeError:
+                # No event loop available
+                logger.debug("No event loop available, skipping pattern persistence")
 
     def _should_shift_based_on_patterns(self, event: AttentionEvent) -> bool:
         """Determine if focus should shift based on learned patterns"""

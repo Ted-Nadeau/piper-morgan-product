@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 47 patterns (001-047) + template (000)
+**Total Patterns**: 48 patterns (001-048) + template (000)
 
 ## Pattern Categories
 
@@ -59,6 +59,12 @@ _External system integration, plugin architecture, and platform connectivity pat
 - [Pattern-035: MCP Adapter Methods](pattern-035-mcp-adapter-methods.md) - Backward-compatible MCP migration pattern (ADR-013 Phase 2)
 - [Pattern-040: Integration Swappability Guide](pattern-040-integration-swappability-guide.md) - Router pattern for pluggable provider implementations
 
+### Infrastructure & Scheduling Patterns
+
+_Background job execution, periodic tasks, and infrastructure coordination patterns_
+
+- [Pattern-048: Periodic Background Job](pattern-048-periodic-background-job.md) - Lightweight asyncio-based periodic task execution with responsive shutdown
+
 ### Development & Process Patterns
 
 _Development methodology, quality assurance, and workflow management patterns_
@@ -107,6 +113,7 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: December 27, 2025_
-_All 47 patterns now included with logical categorization_
-_Latest additions: Pattern-045, 046, 047 (Completion Discipline Triad) - ratified by Chief Architect_
+_Last updated: January 10, 2026_
+_All 48 patterns now included with logical categorization_
+_Latest addition: Pattern-048 (Periodic Background Job) - Infrastructure & Scheduling_
+_Previous additions: Pattern-045, 046, 047 (Completion Discipline Triad) - ratified by Chief Architect_
