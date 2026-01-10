@@ -39,7 +39,7 @@ class TestMorningStandupWorkflow:
         assert workflow.preference_manager == mock_preference_manager
         assert workflow.session_manager == mock_session_manager
         assert workflow.github_domain_service == mock_github_domain_service
-        assert workflow.user_id == "xian"  # Default user
+        assert workflow.user_id == "default"  # Default from config when user_id not provided
 
     async def test_generate_standup_for_user(self):
         """Test generating standup for specific user with persistent context"""
