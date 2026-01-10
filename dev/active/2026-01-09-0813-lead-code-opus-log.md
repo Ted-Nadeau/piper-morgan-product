@@ -1208,5 +1208,85 @@ from services.database.repositories import ProjectRepository
 
 ---
 
+## 21:00 - Evening Wrap-Up and Subagent Deployment
+
+### Summary of Day's Work on Issue #490
+
+**Problem**: Portfolio onboarding worked for Turn 1-2 but failed on Turn 3+
+
+**Root Causes Found (Five Whys)**:
+1. `if user_id:` guard skipping `_check_active_onboarding()` for unauthenticated users
+2. Wrong JWT method name (`verify_token` vs `validate_token`)
+3. Wrong import path (`services.database.session` vs `session_factory`)
+4. Missing middleware exclusions for `/api/v1/intent`
+5. DONE_PATTERNS not catching "Just those two for now"
+6. Project name extraction capturing full sentences
+
+**Fixes Applied**:
+- Moved active onboarding check outside user_id guard
+- Added session_id fallback lookup
+- Fixed all import paths
+- Improved `_extract_project_info()` patterns
+- Added more DONE_PATTERNS
+
+**Commit**: a62f75c7 pushed to main
+
+### Closed Issues
+- #560: Echo bug fixed (degradation response was returning user's message)
+
+### Subagents Deployed (21:00)
+
+| Agent | Task | Target | Status |
+|-------|------|--------|--------|
+| aff3dc5 | Fix logout 403 bug | piper-morgan-fb9 | ✅ Complete |
+| a987af7 | Fix test user_id mismatch | piper-morgan-r9r | ✅ Complete |
+| ad11837 | Investigate Demo integration | piper-morgan-7ik | ✅ Complete |
+| a3bbcc7 | Write real integration tests | Issue #559 | ✅ Complete |
+
+### Subagent Results Summary
+
+**1. Logout 403 Bug (piper-morgan-fb9)**
+- Root cause: `/auth/logout` not in middleware exclude_paths + HTTPBearer returning 403
+- Fix: Added to exclude_paths, changed HTTPBearer to auto_error=False, rewrote logout() for graceful handling
+- Commit: `d954aa0e`
+
+**2. Test user_id mismatch (piper-morgan-r9r)**
+- Root cause: Test expected "xian" but code defaults to "default" from config
+- Fix: Changed test expectation to match actual default
+- Commit: `e587db0d`
+
+**3. Demo Integration (piper-morgan-7ik)**
+- Root cause: DEMO_ENABLED defaulted to "true", showing in user identity responses
+- Fix: Changed default to "false", updated tests
+- Commit: `1a2e9c3c`
+
+**4. Integration Tests (#559)**
+- Created 19 new integration tests that verify real code paths without mocking
+- Tests catch: wrong imports, wrong method names, missing middleware exclusions
+- File: `tests/integration/test_intent_wiring_integration.py`
+- Commit: `a2575bc2`
+
+### All Commits Pushed to Main
+
+```
+1a2e9c3c fix(demo-plugin): Disable Demo integration by default (bead piper-morgan-7ik)
+d954aa0e fix(auth): Fix logout 403 'Not authenticated' error (piper-morgan-fb9)
+a2575bc2 test(#559): Add integration tests for real intent wiring verification
+e587db0d fix(tests): correct user_id expectation in test_standup_workflow_initialization
+a62f75c7 fix(#490): Improve portfolio onboarding routing and project extraction
+```
+
+### Closed Issues/Beads Today
+- #560: Echo bug fixed
+
+### Tomorrow's Plan
+- PM manual testing of Issue #490 portfolio onboarding
+- Close beads that were fixed today (3pv, 9mc, a0h, ejj, fb9, r9r, 7ik)
+- Close #559 after PM review
+- Potentially close #490 if testing passes
+
+---
+
 *Session started: 2026-01-09 08:13*
-*Last updated: 2026-01-09 21:05*
+*Session ended: 2026-01-09 21:15*
+*Total duration: ~13 hours*
