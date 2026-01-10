@@ -114,21 +114,24 @@ def _extract_degradation_message(error: Exception) -> str:
     return "An unexpected error occurred. Please try again later."
 
 
-def _create_degradation_response(message: str, degradation_msg: str) -> dict:
+def _create_degradation_response(original_message: str, degradation_msg: str) -> dict:
     """Create a structured IntentResponse with degradation message.
 
     Returns a properly formatted response even when services fail,
     following Pattern-007 (graceful degradation).
 
     Args:
-        message: Original user message that failed to process
+        original_message: Original user message that failed to process (for context)
         degradation_msg: User-friendly error message
 
     Returns:
         Structured IntentResponse dict with degradation values
+
+    Issue #560: Fixed echo bug - response.message should be the degradation
+    message (what Piper says), not the original user message.
     """
     return {
-        "message": message,
+        "message": degradation_msg,
         "intent": {
             "type": "unknown",
             "confidence": 0,

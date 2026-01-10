@@ -96,12 +96,23 @@ class ServiceInitializer:
 
             # Import here to avoid circular imports
             from services.intent.intent_service import IntentService
+            from services.intent_service.classifier import IntentClassifier
+
+            # Get LLM service from registry (Issue #322: proper DI for classifier)
+            llm_service = self.registry.get("llm")
 
             # Get OrchestrationEngine from registry
             orchestration_engine = self.registry.get("orchestration")
 
-            # Create Intent service with OrchestrationEngine
-            intent_service = IntentService(orchestration_engine=orchestration_engine)
+            # Issue #560: Create classifier with LLM service properly injected
+            # This fixes "Container not initialized" errors during classification
+            intent_classifier = IntentClassifier(llm_service=llm_service)
+
+            # Create Intent service with OrchestrationEngine and properly-configured classifier
+            intent_service = IntentService(
+                orchestration_engine=orchestration_engine,
+                intent_classifier=intent_classifier,
+            )
 
             # Register
             self.registry.register(

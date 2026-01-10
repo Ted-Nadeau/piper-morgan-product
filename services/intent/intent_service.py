@@ -107,7 +107,7 @@ class IntentService:
         self.logger = structlog.get_logger()
 
     async def process_intent(
-        self, message: str, session_id: str = "default_session"
+        self, message: str, session_id: str = "default_session", user_id: str = None
     ) -> IntentProcessingResult:
         """
         Process user intent and return formatted response.
@@ -123,6 +123,7 @@ class IntentService:
         Args:
             message: The user's intent text
             session_id: Session identifier
+            user_id: Optional user ID from authenticated request (Issue #490)
 
         Returns:
             IntentProcessingResult with results
@@ -131,6 +132,23 @@ class IntentService:
             IntentProcessingError: If processing fails
         """
         try:
+            # Issue #490/#560: Active conversational processes take priority over classification
+            # Domain invariant: Once a user enters onboarding, ALL their messages belong to
+            # that process until completion/exit. This check MUST run before any classification.
+            # Check by user_id (preferred) OR session_id (fallback when not authenticated)
+            onboarding_result = await self._check_active_onboarding(
+                user_id=user_id,
+                session_id=session_id,
+                message=message,
+            )
+            if onboarding_result:
+                self.logger.info(
+                    "Active onboarding session - bypassing classification",
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+                return onboarding_result
+
             # Issue #197 Phase 2B: Ethics enforcement at universal entry point
             # Check ENABLE_ETHICS_ENFORCEMENT environment variable (default: False for gradual rollout)
             ethics_enabled = os.getenv("ENABLE_ETHICS_ENFORCEMENT", "false").lower() == "true"
@@ -209,6 +227,20 @@ class IntentService:
             intent = await self.intent_classifier.classify(message)
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
+            # Issue #490: Add user_id to intent context for downstream handlers
+            # This enables features like portfolio onboarding that need user context
+            self.logger.info(
+                "intent_service_user_id_trace",
+                user_id_param=user_id,
+                intent_category=intent.category.value if intent.category else None,
+                intent_action=intent.action,
+            )
+            if user_id:
+                if intent.context is None:
+                    intent.context = {}
+                intent.context["user_id"] = user_id
+                self.logger.info(f"Added user_id to intent context: {user_id}")
+
             # Issue #248: Extract preference detection results from intent
             # Preferences are attached by IntentProcessingHooks during classification
             preferences = getattr(intent, "preferences", None)
@@ -216,100 +248,99 @@ class IntentService:
             # Issue #300 Phase 1: Learning Handler - Capture Action
             # Store pattern_id for outcome recording
             pattern_id = None
+            # Issue #490: Use authenticated user_id if available, otherwise skip learning
+            learning_user_id = UUID(user_id) if user_id else None
             try:
-                async with AsyncSessionFactory.session_scope() as db_session:
-                    # TODO: Get actual user_id from auth context
-                    # For Phase 1, using test user "xian"
-                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
-
-                    # Issue #485: Check if user exists before capturing patterns
-                    # During fresh install, user may not exist yet - skip learning in that case
-                    user_result = await db_session.execute(
-                        select(User.id).where(User.id == str(user_id))
-                    )
-                    user_exists = user_result.scalar_one_or_none() is not None
-
-                    if not user_exists:
-                        self.logger.info(
-                            "Learning Handler: Skipping capture - user not found",
-                            user_id=str(user_id),
+                if learning_user_id:
+                    async with AsyncSessionFactory.session_scope() as db_session:
+                        # Issue #485: Check if user exists before capturing patterns
+                        # During fresh install, user may not exist yet - skip learning in that case
+                        user_result = await db_session.execute(
+                            select(User.id).where(User.id == str(learning_user_id))
                         )
-                    else:
-                        pattern_id = await self.learning_handler.capture_action(
-                            user_id=user_id,
-                            action_type=intent.category,
-                            context={"intent": intent.action, "message": message[:100]},
-                            session=db_session,
-                        )
+                        user_exists = user_result.scalar_one_or_none() is not None
 
-                        self.logger.info(
-                            "Learning Handler: Action captured",
-                            pattern_id=str(pattern_id) if pattern_id else None,
-                            action_type=intent.category.value,
-                        )
+                        if not user_exists:
+                            self.logger.info(
+                                "Learning Handler: Skipping capture - user not found",
+                                user_id=str(learning_user_id),
+                            )
+                        else:
+                            pattern_id = await self.learning_handler.capture_action(
+                                user_id=learning_user_id,
+                                action_type=intent.category,
+                                context={"intent": intent.action, "message": message[:100]},
+                                session=db_session,
+                            )
+
+                            self.logger.info(
+                                "Learning Handler: Action captured",
+                                pattern_id=str(pattern_id) if pattern_id else None,
+                                action_type=intent.category.value,
+                            )
             except Exception as e:
                 self.logger.error(f"Learning Handler: Capture failed: {e}")
                 # Continue processing even if learning fails
 
             # Issue #300 Phase 3: Get pattern suggestions
+            # Issue #490: Only fetch suggestions if we have an authenticated user
             suggestions = None
             try:
-                async with AsyncSessionFactory.session_scope() as db_session:
-                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+                if learning_user_id:
+                    async with AsyncSessionFactory.session_scope() as db_session:
+                        suggestions = await self.learning_handler.get_suggestions(
+                            user_id=learning_user_id,
+                            context={"intent": intent.action, "message": message[:100]},
+                            session=db_session,
+                        )
 
-                    suggestions = await self.learning_handler.get_suggestions(
-                        user_id=user_id,
-                        context={"intent": intent.action, "message": message[:100]},
-                        session=db_session,
-                    )
-
-                    self.logger.info(
-                        "Learning Handler: Suggestions retrieved",
-                        suggestion_count=len(suggestions) if suggestions else 0,
-                    )
+                        self.logger.info(
+                            "Learning Handler: Suggestions retrieved",
+                            suggestion_count=len(suggestions) if suggestions else 0,
+                        )
             except Exception as e:
                 self.logger.error(f"Learning Handler: Get suggestions failed: {e}")
                 # Continue processing even if suggestions fail
                 suggestions = None
 
             # Issue #300 Phase 4: Get proactive automation patterns
+            # Issue #490: Only fetch patterns if we have an authenticated user
             automation_patterns = []
             try:
-                async with AsyncSessionFactory.session_scope() as db_session:
-                    user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
+                if learning_user_id:
+                    async with AsyncSessionFactory.session_scope() as db_session:
+                        # Build context for matching
+                        current_context = {
+                            "intent": intent.category.value.upper(),  # Match against category (EXECUTION, QUERY, etc.)
+                            "message": message[:100],
+                            # Note: Don't pass None values - context matcher expects strings or missing keys
+                        }
 
-                    # Build context for matching
-                    current_context = {
-                        "intent": intent.category.value.upper(),  # Match against category (EXECUTION, QUERY, etc.)
-                        "message": message[:100],
-                        # Note: Don't pass None values - context matcher expects strings or missing keys
-                    }
-
-                    patterns = await self.learning_handler.get_automation_patterns(
-                        user_id=user_id,
-                        context=current_context,
-                        min_confidence=0.9,
-                        limit=3,
-                        session=db_session,
-                    )
-
-                    # Convert LearnedPattern objects to suggestion format with auto_triggered flag
-                    for pattern in patterns:
-                        automation_patterns.append(
-                            {
-                                "pattern_id": str(pattern.id),
-                                "confidence": round(pattern.confidence, 2),
-                                "pattern_type": pattern.pattern_type.value,
-                                "pattern_data": pattern.pattern_data,
-                                "usage_count": pattern.usage_count,
-                                "auto_triggered": True,  # Mark as proactive
-                            }
+                        patterns = await self.learning_handler.get_automation_patterns(
+                            user_id=learning_user_id,
+                            context=current_context,
+                            min_confidence=0.9,
+                            limit=3,
+                            session=db_session,
                         )
 
-                    self.logger.info(
-                        "Learning Handler: Automation patterns retrieved",
-                        pattern_count=len(automation_patterns),
-                    )
+                        # Convert LearnedPattern objects to suggestion format with auto_triggered flag
+                        for pattern in patterns:
+                            automation_patterns.append(
+                                {
+                                    "pattern_id": str(pattern.id),
+                                    "confidence": round(pattern.confidence, 2),
+                                    "pattern_type": pattern.pattern_type.value,
+                                    "pattern_data": pattern.pattern_data,
+                                    "usage_count": pattern.usage_count,
+                                    "auto_triggered": True,  # Mark as proactive
+                                }
+                            )
+
+                        self.logger.info(
+                            "Learning Handler: Automation patterns retrieved",
+                            pattern_count=len(automation_patterns),
+                        )
             except Exception as e:
                 self.logger.error(f"Learning Handler: Get automation patterns failed: {e}")
                 # Continue processing even if automation patterns fail
@@ -440,13 +471,12 @@ class IntentService:
             )
 
             # Issue #300 Phase 1: Learning Handler - Record Outcome
-            if pattern_id:
+            # Issue #490: Only record outcome if we have an authenticated user
+            if pattern_id and learning_user_id:
                 try:
                     async with AsyncSessionFactory.session_scope() as db_session:
-                        user_id = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
-
                         success = await self.learning_handler.record_outcome(
-                            user_id=user_id,
+                            user_id=learning_user_id,
                             pattern_id=pattern_id,
                             success=result.success,
                             session=db_session,
@@ -466,6 +496,125 @@ class IntentService:
         except Exception as e:
             self.logger.error(f"Intent processing error: {e}")
             raise IntentProcessingError(f"Intent processing failed: {str(e)}")
+
+    async def _check_active_onboarding(
+        self, user_id: str, session_id: str, message: str
+    ) -> Optional[IntentProcessingResult]:
+        """
+        Issue #490/#560: Check for active onboarding session and route message directly.
+
+        Active conversational processes (like onboarding) take priority over intent
+        classification. This prevents guided conversations from being derailed by
+        messages that happen to match other intent patterns.
+
+        Design principle: Once the user agrees to participate in a guided process,
+        Piper should maintain control of the conversation until:
+        - The process completes successfully
+        - The user explicitly declines/exits
+        - The session times out
+
+        Args:
+            user_id: Authenticated user ID
+            session_id: Session identifier
+            message: User's message
+
+        Returns:
+            IntentProcessingResult if active onboarding handled the message,
+            None if no active onboarding (proceed with normal classification)
+        """
+        try:
+            from services.conversation.conversation_handler import _get_onboarding_components
+            from services.shared_types import IntentCategory, PortfolioOnboardingState
+
+            # Issue #490: Use the SAME singleton manager as conversation_handler
+            # Creating a new PortfolioOnboardingManager() would lose session state!
+            manager, handler = _get_onboarding_components()
+
+            # Issue #490: Check for active session by user_id (preferred) or session_id (fallback)
+            # This ensures onboarding works even when user is not authenticated
+            session = None
+            if user_id:
+                session = manager.get_session_by_user(user_id)
+            if not session and session_id:
+                session = manager.get_session_by_session_id(session_id)
+
+            if not session:
+                return None
+
+            # Check if session is in a terminal state
+            if session.state in (
+                PortfolioOnboardingState.COMPLETE,
+                PortfolioOnboardingState.DECLINED,
+            ):
+                return None
+
+            # Active onboarding session exists - route message directly to handler
+            self.logger.info(
+                "Routing to active onboarding session",
+                user_id=user_id,
+                onboarding_id=session.id,
+                state=session.state.value,
+            )
+
+            response = handler.handle_turn(session.id, message)
+
+            # If onboarding completed, persist the projects
+            if response.is_complete and response.state == PortfolioOnboardingState.COMPLETE:
+                await self._persist_onboarding_projects(user_id, response.captured_projects)
+
+            return IntentProcessingResult(
+                success=True,
+                message=response.message,
+                intent_data={
+                    "category": IntentCategory.GUIDANCE.value,
+                    "action": "portfolio_onboarding",
+                    "confidence": 1.0,
+                    "context": {
+                        "onboarding_id": session.id,
+                        "state": response.state.value,
+                        "bypassed_classification": True,  # Indicates we skipped intent classification
+                    },
+                },
+                workflow_id=None,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.warning(f"Could not check active onboarding: {e}")
+            return None
+
+    async def _persist_onboarding_projects(self, user_id: str, captured_projects: list) -> None:
+        """
+        Issue #490: Persist captured projects from onboarding to database.
+
+        Called when onboarding completes successfully.
+        """
+        if not captured_projects:
+            return
+
+        try:
+            from services.database.repositories import ProjectRepository
+            from services.database.session_factory import AsyncSessionFactory
+
+            async with AsyncSessionFactory.session_scope() as db_session:
+                project_repo = ProjectRepository(db_session)
+                for project_info in captured_projects:
+                    await project_repo.create(
+                        name=project_info.get("name", "Unnamed Project"),
+                        description=project_info.get("description", ""),
+                        owner_id=user_id,
+                    )
+                await db_session.commit()
+
+            self.logger.info(
+                "Onboarding projects persisted",
+                user_id=user_id,
+                project_count=len(captured_projects),
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to persist onboarding projects: {e}")
+            # Don't raise - onboarding message was still delivered
 
     async def _handle_missing_engine(self, message: str) -> IntentProcessingResult:
         """

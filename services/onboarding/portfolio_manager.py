@@ -116,6 +116,21 @@ class PortfolioOnboardingManager:
                 return session
         return None
 
+    def get_session_by_session_id(self, session_id: str) -> Optional[PortfolioOnboardingSession]:
+        """
+        Retrieve active onboarding session by HTTP session ID.
+
+        Issue #490: Fallback lookup when user_id is not available.
+        Returns the most recent non-terminal session for the session_id.
+        """
+        for session in reversed(list(self._sessions.values())):
+            if session.session_id == session_id and session.state not in [
+                PortfolioOnboardingState.COMPLETE,
+                PortfolioOnboardingState.DECLINED,
+            ]:
+                return session
+        return None
+
     def transition_state(
         self,
         onboarding_id: str,

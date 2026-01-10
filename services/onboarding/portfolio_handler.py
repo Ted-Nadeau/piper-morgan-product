@@ -57,9 +57,11 @@ class PortfolioOnboardingHandler:
     # Patterns indicating user is done adding projects
     DONE_PATTERNS = [
         r"\b(that'?s? (all|it)|done|finished|no more|nothing else)\b",
-        r"\bjust (that one|the one|this one)\b",
-        r"\bonly (that|this|one)\b",
+        r"\bjust (that one|the one|this one|those|these|those two|them)\b",
+        r"\bonly (that|this|one|those|these|two)\b",
         r"\bnope,? (that'?s? it|nothing else)\b",
+        r"\bfor now\b",  # "just those two for now", "that's all for now"
+        r"\b(that|those) (is|are) (it|all)\b",  # "those are all", "that is it"
     ]
 
     # Patterns indicating user wants to confirm
@@ -349,9 +351,11 @@ class PortfolioOnboardingHandler:
         Extract project name and description from user message.
 
         Simple extraction for MVP - looks for patterns like:
-        - "called X"
-        - "named X"
-        - "X project"
+        - "called X" / "named X"
+        - "project is X" / "main project is X"
+        - "Another project is X"
+        - "working on X" / "work on X"
+        - "X project" (fallback pattern)
         - Just uses the whole message as name if no pattern found
 
         Args:
@@ -371,20 +375,32 @@ class PortfolioOnboardingHandler:
             description = message
             return {"name": name, "description": description}
 
-        # Try to extract "X project" pattern
-        project_match = re.search(
-            r"(?:a|an|my|the)\s+([^,.\n]+?)\s+(?:project|app|application|system|platform)",
+        # Try to extract "[main/my/the] project is X" pattern - check this BEFORE "X project"
+        project_is_match = re.search(
+            r"(?:my|the|main|a)\s+(?:project|app|application)\s+is\s+([^,.\n]+?)(?:\.|,|$)",
             message,
             re.IGNORECASE,
         )
-        if project_match:
-            name = project_match.group(1).strip()
+        if project_is_match:
+            name = project_is_match.group(1).strip()
             description = message
             return {"name": name, "description": description}
 
-        # Try to extract from "I'm building/working on X"
+        # Try to extract "another project is X" or "one project is X" pattern
+        another_match = re.search(
+            r"(?:another|one)\s+(?:project|app|application)\s+(?:is|called|named)\s+([^,.\n]+?)(?:\.|,|$)",
+            message,
+            re.IGNORECASE,
+        )
+        if another_match:
+            name = another_match.group(1).strip()
+            description = message
+            return {"name": name, "description": description}
+
+        # Try to extract from "I'm building/working on X" or "I work on X" or "I also work on X"
+        # Note: handles both "working on" and "work on"
         building_match = re.search(
-            r"(?:building|working on|developing|creating)\s+(?:a|an|the)?\s*([^,.\n]+?)(?:\.|,|$)",
+            r"(?:building|work(?:ing)?\s+on|developing|creating)\s+(?:a|an|the)?\s*([^,.\n]+?)(?:\.|,|$)",
             message,
             re.IGNORECASE,
         )
@@ -392,8 +408,23 @@ class PortfolioOnboardingHandler:
             name = building_match.group(1).strip()
             # Clean up trailing words
             name = re.sub(
-                r"\s+(?:right now|currently|at the moment)$", "", name, flags=re.IGNORECASE
+                r"\s+(?:right now|currently|at the moment|too|as well|also)$",
+                "",
+                name,
+                flags=re.IGNORECASE,
             )
+            description = message
+            return {"name": name, "description": description}
+
+        # Try to extract "X project" pattern (e.g., "a task management project")
+        # This is a fallback pattern since it's less specific
+        project_match = re.search(
+            r"(?:a|an|my|the)\s+([^,.\n]+?)\s+(?:project|app|application|system|platform)",
+            message,
+            re.IGNORECASE,
+        )
+        if project_match:
+            name = project_match.group(1).strip()
             description = message
             return {"name": name, "description": description}
 

@@ -97,8 +97,12 @@ Narrative explanation belongs in Phase sections (High-Complexity format) or Exec
 2. **Verify actor consistency** (same person using different agents)
 3. **Identify missing time gaps** that might indicate lost work
 4. **Cross-reference outcomes** mentioned in multiple logs
+5. **Detect logging continuity gaps** - If timestamps jump significantly (2+ hours) without documented work:
+   - Check git commits for objective timestamp anchors: `git log --oneline --since="YYYY-MM-DD 00:00" --until="YYYY-MM-DD 23:59" --format="%h %ad %s" --date=format:"%H:%M:%S"`
+   - Use commit messages to reconstruct sequence when session logs lack timestamps
+   - Document the gap in omnibus metadata (transparency > false precision)
 
-**Quality Check**: Do handoffs make sense? Are there impossible overlaps?
+**Quality Check**: Do handoffs make sense? Are there impossible overlaps? Can git commits fill any logging gaps?
 
 ### Phase 4: Intelligent Condensation
 **REMEMBER**: Source logs have full details. Omnibus must be **token-efficient summary**.
@@ -244,6 +248,19 @@ After timeline, add thematic summary with:
 ### The Single-Agent Perspective
 Each agent has limited visibility. A comprehensive omnibus requires reading ALL perspectives.
 
+### The Logging Continuity Gap ⚠️ (NEW - Jan 2026)
+**Scenario**: Agent works for several hours but session log lacks timestamps for that period. Log shows "Phase 3 complete" without documenting when or how.
+
+**Root cause**: Agent focused on implementation, session log not updated in real-time.
+
+**Detection**: Timestamp jumps 2+ hours with work claimed but no intermediate entries.
+
+**Recovery**: Git commits are your safety net. Run `git log --format="%ad %s" --date=format:"%H:%M"` for the date range to reconstruct sequence objectively.
+
+**Documentation**: When using git forensics, add a "Logging Continuity Note" in omnibus metadata explaining the reconstruction method. Transparency > false precision.
+
+**Future prevention**: Lead Developer briefings should emphasize: *"Commit timestamps are your safety net. If logging lapses, `git log --oneline` is your reconstruction tool."*
+
 ### The Detail Bloat ⚠️ (Format-Dependent)
 **For STANDARD days**: Source logs contain full details. Omnibus is a **token-efficient summary**.
 - Timeline entries: 1-2 lines max
@@ -349,6 +366,7 @@ Before finalizing an omnibus log:
 - [ ] Handoffs and coordination points preserved
 - [ ] Executive summary captures themes not just events
 - [ ] Spot-check 5 random timestamps against source logs
+- [ ] Logging continuity verified (no unexplained 2+ hour gaps; if gaps exist, git forensics applied and documented)
 - [ ] File follows naming convention (YYYY-MM-DD-omnibus-log.md)
 - [ ] Compressed appropriately (ruthlessly for STANDARD, strategically for HIGH-COMPLEXITY)
 
@@ -445,7 +463,8 @@ Before finalizing an omnibus log:
 
 ---
 *Method developed: September 17, 2025*
-*Last updated: January 1, 2026*
-*Updates in this revision: HIGH-COMPLEXITY day rigor enhancements (space allocation strategy, compression ratio awareness, detail preservation guidance, red flag detection)*
+*Last updated: January 9, 2026*
+*Updates in this revision: Logging continuity gap detection and git forensics recovery (Phase 3 step 5, new pitfall section, validation checklist item)*
+*Previous revision (Jan 1): HIGH-COMPLEXITY day rigor enhancements (space allocation strategy, compression ratio awareness, detail preservation guidance, red flag detection)*
 *Next review: After next weekly docs audit*
 *Owner: Documentation team with PM oversight*
