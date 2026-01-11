@@ -186,3 +186,91 @@ class TestIntegrationRegistryNotionUrl:
         assert notion_config["configure_url"] == "/settings/integrations/notion"
         # Should NOT point to setup wizard
         assert notion_config["configure_url"] != "/setup#step-2"
+
+
+class TestNotionConfigServiceKeychainFallback:
+    """Tests for NotionConfigService keychain fallback (Issue #579)"""
+
+    def test_get_config_returns_env_var_first(self):
+        """Should return env var API key when available (priority over keychain)"""
+        from services.integrations.notion.config_service import NotionConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "secret_keychain_key"
+
+        with (
+            patch.dict("os.environ", {"NOTION_API_KEY": "secret_env_key"}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = NotionConfigService()
+            config_service._config = None  # Ensure fresh lookup
+            config = config_service.get_config()
+
+            assert config.api_key == "secret_env_key"
+            # Keychain should NOT be called when env var is present
+            mock_keychain.get_api_key.assert_not_called()
+
+    def test_get_config_falls_back_to_keychain(self):
+        """Should fall back to keychain when no env var is set (Issue #579)"""
+        from services.integrations.notion.config_service import NotionConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "secret_keychain_key"
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = NotionConfigService()
+            config_service._config = None  # Ensure fresh lookup
+            config = config_service.get_config()
+
+            assert config.api_key == "secret_keychain_key"
+            mock_keychain.get_api_key.assert_called_once_with("notion", username="system")
+
+    def test_get_config_returns_empty_when_nothing_configured(self):
+        """Should return empty string when neither env var nor keychain has key"""
+        from services.integrations.notion.config_service import NotionConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = NotionConfigService()
+            config_service._config = None  # Ensure fresh lookup
+            config = config_service.get_config()
+
+            assert config.api_key == ""
+
+    def test_get_config_handles_keychain_error_gracefully(self):
+        """Should return empty string if keychain throws an error"""
+        from services.integrations.notion.config_service import NotionConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.side_effect = Exception("Keychain unavailable")
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = NotionConfigService()
+            config_service._config = None  # Ensure fresh lookup
+            config = config_service.get_config()
+
+            # Should gracefully return empty string, not raise
+            assert config.api_key == ""

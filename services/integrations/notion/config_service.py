@@ -139,12 +139,15 @@ class NotionConfigService:
 
     def _load_config(self) -> NotionConfig:
         """
-        Load Notion configuration with priority: env vars > PIPER.user.md > defaults.
+        Load Notion configuration with priority: env vars > PIPER.user.md > keychain > defaults.
 
         Configuration Priority Order:
         1. Environment variables (highest priority - overrides everything)
         2. PIPER.user.md notion section (middle priority)
-        3. Hardcoded defaults (lowest priority - fallback)
+        3. Keychain (UI-saved keys via UserAPIKeyService)
+        4. Hardcoded defaults (lowest priority - fallback)
+
+        Issue #579: Added keychain fallback for UI-configured keys.
 
         Implements standard config service interface for plugin architecture.
 
@@ -157,9 +160,23 @@ class NotionConfigService:
         # Get authentication section (with fallback to empty dict)
         auth_config = user_config.get("authentication", {})
 
+        # Get API key with fallback chain: env var > user config > keychain
+        api_key = os.getenv("NOTION_API_KEY", auth_config.get("api_key", ""))
+
+        # Issue #579: Fallback to keychain if not found in env or user config
+        if not api_key:
+            try:
+                from services.infrastructure.keychain_service import KeychainService
+
+                keychain = KeychainService()
+                # Note: UserAPIKeyService stores with provider="notion", user_id="system"
+                api_key = keychain.get_api_key("notion", username="system") or ""
+            except Exception:
+                pass  # Keychain not available
+
         # Environment variables override user config for all settings
         return NotionConfig(
-            api_key=os.getenv("NOTION_API_KEY", auth_config.get("api_key", "")),
+            api_key=api_key,
             workspace_id=os.getenv("NOTION_WORKSPACE_ID", auth_config.get("workspace_id", "")),
             api_base_url=os.getenv(
                 "NOTION_API_BASE_URL",
