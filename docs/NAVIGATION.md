@@ -56,6 +56,7 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Active Work](internal/development/active/)** - Current development status
 - **[Methodology](internal/development/methodology-core/)** - Development methodologies (20 core patterns)
 - **[Methodology Index](internal/development/methodology-core/INDEX.md)** - Comprehensive methodology navigation
+- **[Gameplan Template](internal/development/methodology-core/gameplan-template.md)** - Issue implementation gameplan template (v9.3)
 - **[Testing Procedures](internal/development/testing/)** - E2E bug protocol, testing guides, and procedures
 - **[Session Templates](internal/development/tools/session-log-templates/)** - Session documentation
 

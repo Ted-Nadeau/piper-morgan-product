@@ -4,6 +4,7 @@
 **Created**: 2026-01-11
 **Status**: Ready for Implementation
 **Estimated Effort**: Small (~1.5 hours total)
+**Template Version**: 9.3
 
 ---
 
@@ -17,10 +18,45 @@ Add UI for configuring GitHub Personal Access Token (PAT) in Settings page, foll
 
 ## Phase -1: Infrastructure Verification (10 min)
 
-### Objective
-Verify all infrastructure assumptions before writing code.
+### Part A: Chief Architect's Current Understanding
 
-### Verification Checklist
+Based on available context, I believe:
+
+**Infrastructure Status**:
+- [x] Web framework: FastAPI
+- [x] Database: PostgreSQL (port 5433)
+- [x] Testing framework: pytest
+- [x] Existing endpoints: `/api/v1/settings/integrations/slack/*`, `/api/v1/settings/integrations/calendar/*`
+- [x] KeychainService: `services/infrastructure/keychain_service.py`
+
+**My understanding of the task**:
+- I believe we need to: Add token configuration UI for GitHub (simpler than OAuth)
+- I think this involves: 2 API endpoints + Settings page UI card
+- I assume the current state is: No UI for GitHub token, env var only
+
+### Part A.2: Worktree Assessment
+
+**Worktrees ADD value when**: (Not applicable)
+- [ ] Multiple agents will work in parallel ❌
+- [ ] Task duration >30 minutes ❌ (~1.5 hours but single-threaded)
+- [ ] Multi-component work ❌
+- [ ] Exploratory/risky changes ❌
+
+**Worktrees ADD overhead when**: (Applicable)
+- [x] Single agent, sequential work ✓
+- [x] Small fixes (<15 min per phase) ✓
+- [x] Tightly coupled files ✓
+
+**Assessment**: **SKIP WORKTREE** - Single agent, sequential work, ~5 files, overhead exceeds benefit.
+
+### Part B: PM Verification Required
+
+**PM, please confirm**:
+- [x] Infrastructure assumptions correct
+- [x] Task scope appropriate
+- [x] Proceed with implementation
+
+### Part C: Verification Checklist
 
 ```bash
 # 1. Verify KeychainService exists and works
@@ -117,6 +153,40 @@ Response (200):
 curl -s http://localhost:8001/api/v1/settings/integrations/github/token/status
 # Expected: 401 (auth required) or 200 with JSON
 ```
+
+---
+
+## Phase 0.6: Data Flow & Integration Verification
+
+### Applicability Assessment
+- [ ] Multi-turn conversational features ❌
+- [ ] Features requiring user context across requests ❌
+- [ ] Features that "follow an existing pattern" but with different requirements ❌
+- [x] Single-layer changes ✓
+
+**Assessment**: **SKIP** - This is a single-layer feature (Route → Keychain). No multi-layer data flow.
+
+---
+
+## Phase 0.7: Conversation Design
+
+**Assessment**: **N/A** - Not a conversational feature.
+
+---
+
+## Phase 0.8: Post-Completion Integration
+
+### Applicability Assessment
+- [ ] Features that change user state ❌
+- [ ] Features that create/modify database records ❌
+- [x] Read-only features (or keychain-only storage) ✓
+
+**Assessment**: **MINIMAL** - Token stored in keychain only, no database changes, no downstream behavior changes.
+
+### Completion Side-Effects (if any)
+| Side Effect | Storage | Value | Notes |
+|-------------|---------|-------|-------|
+| Token stored | OS Keychain | `github_token` | No DB impact |
 
 ---
 
@@ -658,5 +728,37 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 ---
 
+## STOP Conditions
+
+Stop immediately and escalate if:
+- Infrastructure doesn't match gameplan assumptions
+- KeychainService not available or different API
+- `settings_github.html` doesn't exist or has incompatible structure
+- Tests fail for any reason
+- **Import path doesn't exist** (v9.3)
+- **Method name typo** (v9.3)
+- **Required parameter not available at call site** (v9.3)
+
+---
+
+## Multi-Agent Deployment
+
+**Assessment**: **SINGLE AGENT** - Simple, sequential work following established pattern.
+
+| Phase | Agent | Rationale |
+|-------|-------|-----------|
+| All | Code Agent (single) | Sequential work, tight coupling |
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-01-11 | Initial gameplan (template v9.2) |
+| 1.1 | 2026-01-11 | Updated to template v9.3 compliance |
+
+---
+
 _Gameplan created: 2026-01-11_
-_Template version: 9.2_
+_Template version: 9.3_
