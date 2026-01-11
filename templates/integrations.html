@@ -107,6 +107,40 @@
         background: #95a5a6;
       }
 
+      .disconnect-all-btn {
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #e74c3c;
+        background: transparent;
+        border: 2px solid #e74c3c;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-left: 12px;
+      }
+
+      .disconnect-all-btn:hover {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .disconnect-all-btn:disabled {
+        color: #bdc3c7;
+        border-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .disconnect-all-btn:disabled:hover {
+        background: transparent;
+        color: #bdc3c7;
+      }
+
+      .disconnect-all-btn.disconnecting {
+        color: #95a5a6;
+        border-color: #95a5a6;
+      }
+
       /* Integration Cards */
       .integrations-list {
         display: flex;
@@ -360,6 +394,9 @@
         <button class="test-all-btn" id="test-all-btn" onclick="testAllConnections()">
           Test All Connections
         </button>
+        <button class="disconnect-all-btn" id="disconnect-all-btn" onclick="disconnectAllIntegrations()" disabled>
+          Disconnect All
+        </button>
       </div>
 
       <!-- Integration Cards -->
@@ -375,6 +412,7 @@
 
     {% include 'components/toast.html' %}
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/timestamp-utils.js"></script>
     <script src="/static/js/chat.js"></script>
     <script>
       // Integration icons mapping
@@ -564,6 +602,13 @@
             </div>
           `;
         }).join('');
+
+        // Update Disconnect All button state
+        const connectedCount = integrations.filter(i => i.status !== 'not_configured').length;
+        const disconnectAllBtn = document.getElementById('disconnect-all-btn');
+        if (disconnectAllBtn) {
+          disconnectAllBtn.disabled = connectedCount === 0;
+        }
       }
 
       async function testConnection(integrationName) {
@@ -797,6 +842,87 @@
             btn.textContent = 'Disconnect';
           }
         }
+      }
+
+      // Disconnect All integrations (Issue #544)
+      async function disconnectAllIntegrations() {
+        const btn = document.getElementById('disconnect-all-btn');
+
+        // Get list of connected integrations from current page state
+        const allCards = document.querySelectorAll('.integration-card');
+        const connected = [];
+        allCards.forEach(card => {
+          const dot = card.querySelector('.status-dot');
+          if (dot && !dot.classList.contains('not_configured')) {
+            const integrationName = card.id.replace('card-', '');
+            const displayName = card.querySelector('h3')?.textContent || integrationName;
+            connected.push({ name: integrationName, display_name: displayName });
+          }
+        });
+
+        if (connected.length === 0) {
+          showToast('info', 'No integrations to disconnect', 'Nothing to Do');
+          return;
+        }
+
+        // Confirmation dialog
+        const names = connected.map(i => `• ${i.display_name}`).join('\n');
+        if (!confirm(`Disconnect all integrations?\n\nThis will disconnect:\n${names}\n\nYou can reconnect anytime.`)) {
+          return;
+        }
+
+        // Update button state
+        if (btn) {
+          btn.disabled = true;
+          btn.classList.add('disconnecting');
+          btn.textContent = 'Disconnecting...';
+        }
+
+        // Disconnect each integration sequentially
+        let successCount = 0;
+        let failedNames = [];
+
+        for (const integration of connected) {
+          try {
+            const response = await fetch(`/api/v1/settings/integrations/${integration.name}/disconnect`, {
+              method: 'POST'
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success) {
+                successCount++;
+              } else {
+                failedNames.push(integration.display_name);
+              }
+            } else {
+              failedNames.push(integration.display_name);
+            }
+          } catch (error) {
+            console.error(`Failed to disconnect ${integration.name}:`, error);
+            failedNames.push(integration.display_name);
+          }
+        }
+
+        // Show result
+        const total = connected.length;
+        if (successCount === total) {
+          showToast('success', `${successCount} of ${total} integrations disconnected`, 'All Disconnected');
+        } else if (successCount > 0) {
+          showToast('warning', `${successCount} of ${total} disconnected. Failed: ${failedNames.join(', ')}`, 'Partial Disconnect');
+        } else {
+          showToast('error', `Failed to disconnect any integrations`, 'Disconnect Failed');
+        }
+
+        // Reset button and reload UI
+        if (btn) {
+          btn.classList.remove('disconnecting');
+          btn.textContent = 'Disconnect All';
+          // Button will be disabled by renderIntegrations if no connections remain
+        }
+
+        // Reload to update UI state
+        loadIntegrationsHealth();
       }
 
       function showError(message) {
