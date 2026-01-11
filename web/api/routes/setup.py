@@ -792,14 +792,26 @@ async def start_slack_oauth():
     User redirects to Slack, authorizes, then returns to callback.
 
     Issue #528: ALPHA-SETUP-SLACK
+    Issue #575: Added credential validation before OAuth
 
     Returns:
         dict with auth_url and state
     """
     try:
+        from services.integrations.slack.config_service import SlackConfigService
         from services.integrations.slack.oauth_handler import SlackOAuthHandler
 
-        handler = SlackOAuthHandler()
+        # Issue #575: Verify credentials are configured BEFORE starting OAuth
+        config_service = SlackConfigService()
+        config = config_service.get_config()
+
+        if not config.client_id or not config.client_secret:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Slack OAuth not configured. Set SLACK_CLIENT_ID and SLACK_CLIENT_SECRET environment variables, or configure in PIPER.user.md.",
+            )
+
+        handler = SlackOAuthHandler(config_service=config_service)
 
         # Use setup-specific redirect URI if available
         # This returns user to wizard instead of general callback
@@ -817,6 +829,8 @@ async def start_slack_oauth():
             "state": state,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("slack_oauth_start_failed", error=str(e), exc_info=True)
         raise HTTPException(

@@ -465,3 +465,75 @@
   background: #f8f9fa;
   font-weight: bold;
 }
+
+/* ===== Date/Session Dividers - Issue #564 ===== */
+.chat-date-divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  color: #666;
+  font-size: 12px;
+  user-select: none;
+}
+
+.chat-date-divider::before,
+.chat-date-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-date-divider::before {
+  margin-right: 12px;
+}
+
+.chat-date-divider::after {
+  margin-left: 12px;
+}
+
+.chat-date-divider span {
+  white-space: nowrap;
+}
+
+/* Session divider - slightly lighter than date divider */
+.chat-session-divider {
+  color: #888;
+}
+
+.chat-session-divider::before,
+.chat-session-divider::after {
+  border-bottom-style: dashed;
+}
+
+/* ===== Hover Timestamps - Issue #564 ===== */
+.message-container {
+  position: relative;
+}
+
+.message-timestamp-tooltip {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.message-container:hover .message-timestamp-tooltip {
+  opacity: 1;
+}
+
+/* ===== Staleness Indicator - Issue #564 ===== */
+.message-stale-date {
+  font-size: 10px;
+  color: #888;
+  margin-top: 4px;
+  text-align: right;
+}

@@ -1,0 +1,393 @@
+"""
+Conversation API Routes
+
+Issue #563: Session Continuity & Auto-Save
+- Get latest conversation for "Continue where you left off" prompt
+- Get conversation turns for history restoration
+
+Issue #565: Conversation History Sidebar
+- List all user conversations
+- Create new conversation
+- Get specific conversation by ID
+"""
+
+from typing import List, Optional
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+
+from services.auth.auth_middleware import get_current_user
+from services.auth.jwt_service import JWTClaims
+from services.database.repositories import ConversationRepository
+from web.api.dependencies import get_conversation_repository
+
+router = APIRouter(prefix="/api/v1/conversations", tags=["conversations"])
+logger = structlog.get_logger(__name__)
+
+
+# Response Models
+
+
+class ConversationSummary(BaseModel):
+    """Summary of a conversation for restore prompt."""
+
+    id: str
+    title: str
+    created_at: str
+    last_activity_at: Optional[str] = None
+
+
+class LatestConversationResponse(BaseModel):
+    """Response for latest conversation endpoint."""
+
+    conversation: Optional[ConversationSummary] = None
+    has_turns: bool = False
+
+
+class ConversationTurnResponse(BaseModel):
+    """Response for a single conversation turn."""
+
+    id: str
+    turn_number: int
+    user_message: str
+    assistant_response: str
+    created_at: str
+
+
+@router.get("/latest", response_model=LatestConversationResponse)
+async def get_latest_conversation(
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> LatestConversationResponse:
+    """
+    Get user's most recent active conversation for restore prompt.
+
+    Issue #563: Enables "Continue where you left off?" feature.
+    Returns the most recent conversation with turn count to determine
+    if a restore prompt should be shown.
+
+    Args:
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        LatestConversationResponse with conversation summary and has_turns flag
+
+    Example response:
+        {
+            "conversation": {
+                "id": "abc123",
+                "title": "Conversation",
+                "created_at": "2026-01-10T12:00:00",
+                "last_activity_at": "2026-01-10T12:30:00"
+            },
+            "has_turns": true
+        }
+    """
+    try:
+        # Get latest conversation for user
+        conversation = await conv_repo.get_latest_for_user(current_user.sub)
+
+        if not conversation:
+            logger.debug("No conversation found for user", user_id=current_user.sub)
+            return LatestConversationResponse(conversation=None, has_turns=False)
+
+        # Check if conversation has any turns
+        turns = await conv_repo.get_conversation_turns(conversation.id, limit=1)
+        has_turns = len(turns) > 0
+
+        logger.debug(
+            "Found latest conversation",
+            user_id=current_user.sub,
+            conversation_id=conversation.id,
+            has_turns=has_turns,
+        )
+
+        return LatestConversationResponse(
+            conversation=ConversationSummary(
+                id=conversation.id,
+                title=conversation.title or "Conversation",
+                created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+                last_activity_at=(
+                    conversation.last_activity_at.isoformat()
+                    if conversation.last_activity_at
+                    else None
+                ),
+            ),
+            has_turns=has_turns,
+        )
+
+    except Exception as e:
+        logger.error("Failed to get latest conversation", error=str(e), user_id=current_user.sub)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve conversation",
+        )
+
+
+@router.get("/{conversation_id}/turns")
+async def get_conversation_turns(
+    conversation_id: str,
+    limit: int = 50,
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> list[ConversationTurnResponse]:
+    """
+    Get turns for a specific conversation.
+
+    Issue #563: Enables conversation history restoration.
+
+    Args:
+        conversation_id: The conversation ID to fetch turns for
+        limit: Maximum number of turns to return (default 50)
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        List of ConversationTurnResponse objects ordered by turn_number
+    """
+    try:
+        # Get conversation to verify ownership
+        conversation = await conv_repo.get_latest_for_user(current_user.sub)
+
+        # If no conversation or mismatched ID, return empty (security: don't leak existence)
+        if not conversation or conversation.id != conversation_id:
+            logger.warning(
+                "Conversation access denied",
+                user_id=current_user.sub,
+                requested_conversation_id=conversation_id,
+            )
+            return []
+
+        turns = await conv_repo.get_conversation_turns(conversation_id, limit=limit)
+
+        return [
+            ConversationTurnResponse(
+                id=turn.id,
+                turn_number=turn.turn_number,
+                user_message=turn.user_message,
+                assistant_response=turn.assistant_response,
+                created_at=turn.created_at.isoformat() if turn.created_at else "",
+            )
+            for turn in turns
+        ]
+
+    except Exception as e:
+        logger.error(
+            "Failed to get conversation turns",
+            error=str(e),
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve conversation turns",
+        )
+
+
+# Issue #565: Conversation History Sidebar endpoints
+
+
+class ConversationListItem(BaseModel):
+    """Item in conversation list for sidebar."""
+
+    id: str
+    title: str
+    created_at: str
+    updated_at: Optional[str] = None
+    turn_count: int = 0
+
+
+class ConversationListResponse(BaseModel):
+    """Response for list conversations endpoint."""
+
+    conversations: List[ConversationListItem]
+    has_more: bool = False
+
+
+class CreateConversationRequest(BaseModel):
+    """Request to create a new conversation."""
+
+    title: Optional[str] = None
+
+
+class CreateConversationResponse(BaseModel):
+    """Response for create conversation endpoint."""
+
+    id: str
+    title: str
+    created_at: str
+
+
+@router.get("", response_model=ConversationListResponse)
+async def list_conversations(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> ConversationListResponse:
+    """
+    List all conversations for the current user.
+
+    Issue #565: Populates conversation history sidebar.
+
+    Args:
+        limit: Maximum number of conversations (default 50)
+        offset: Number to skip for pagination
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        ConversationListResponse with list of conversations and has_more flag
+    """
+    try:
+        # Get conversations for user
+        conversations = await conv_repo.list_for_user(
+            current_user.sub, limit=limit + 1, offset=offset
+        )
+
+        # Check if there are more
+        has_more = len(conversations) > limit
+        if has_more:
+            conversations = conversations[:limit]
+
+        # Build response with turn counts
+        items = []
+        for conv in conversations:
+            turn_count = await conv_repo.get_turn_count(conv.id)
+            items.append(
+                ConversationListItem(
+                    id=conv.id,
+                    title=conv.title or "New conversation",
+                    created_at=conv.created_at.isoformat() if conv.created_at else "",
+                    updated_at=conv.last_activity_at.isoformat() if conv.last_activity_at else None,
+                    turn_count=turn_count,
+                )
+            )
+
+        logger.debug(
+            "Listed conversations",
+            user_id=current_user.sub,
+            count=len(items),
+            has_more=has_more,
+        )
+
+        return ConversationListResponse(conversations=items, has_more=has_more)
+
+    except Exception as e:
+        logger.error("Failed to list conversations", error=str(e), user_id=current_user.sub)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list conversations",
+        )
+
+
+@router.post("", response_model=CreateConversationResponse)
+async def create_conversation(
+    request: CreateConversationRequest = CreateConversationRequest(),
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> CreateConversationResponse:
+    """
+    Create a new conversation.
+
+    Issue #565: Used by "New Chat" button in sidebar.
+
+    Args:
+        request: Optional title for the conversation
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        CreateConversationResponse with new conversation details
+    """
+    try:
+        conversation = await conv_repo.create(current_user.sub, title=request.title)
+
+        logger.info(
+            "Created new conversation",
+            user_id=current_user.sub,
+            conversation_id=conversation.id,
+        )
+
+        return CreateConversationResponse(
+            id=conversation.id,
+            title=conversation.title or "New conversation",
+            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+        )
+
+    except Exception as e:
+        logger.error("Failed to create conversation", error=str(e), user_id=current_user.sub)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create conversation",
+        )
+
+
+@router.get("/{conversation_id}")
+async def get_conversation(
+    conversation_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> ConversationListItem:
+    """
+    Get a specific conversation by ID.
+
+    Issue #565: Used when switching conversations.
+
+    Args:
+        conversation_id: The conversation ID to fetch
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        ConversationListItem with conversation details
+    """
+    try:
+        conversation = await conv_repo.get_by_id(conversation_id)
+
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        # Verify ownership
+        if conversation.user_id != current_user.sub:
+            logger.warning(
+                "Conversation access denied",
+                user_id=current_user.sub,
+                conversation_id=conversation_id,
+                owner_id=conversation.user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        turn_count = await conv_repo.get_turn_count(conversation_id)
+
+        return ConversationListItem(
+            id=conversation.id,
+            title=conversation.title or "New conversation",
+            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            updated_at=(
+                conversation.last_activity_at.isoformat() if conversation.last_activity_at else None
+            ),
+            turn_count=turn_count,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to get conversation",
+            error=str(e),
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get conversation",
+        )

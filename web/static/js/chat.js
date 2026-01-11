@@ -151,16 +151,43 @@
   // Track messages for persistence
   let chatHistory = loadChatHistory();
 
+  // Track last message timestamp for divider logic (Issue #564)
+  let lastMessageTimestamp = null;
+
   /**
    * Append a message to the chat window
    * @param {string} html - The HTML content of the message
    * @param {boolean} isUser - Whether this is a user message
    * @param {boolean} persist - Whether to save to history (default true)
+   * @param {number|string|null} timestamp - Message timestamp (default: now)
    * @returns {HTMLElement} The message element
    */
-  function appendMessage(html, isUser = false, persist = true) {
+  function appendMessage(html, isUser = false, persist = true, timestamp = null) {
+    // Determine timestamp to use (Issue #564)
+    const msgTimestamp = timestamp || Date.now();
+
+    // Check if we need date or session dividers (Issue #564)
+    if (lastMessageTimestamp && typeof TimestampUtils !== 'undefined') {
+      // Date divider takes precedence
+      if (TimestampUtils.isDifferentDay(lastMessageTimestamp, msgTimestamp)) {
+        const divider = document.createElement('div');
+        divider.className = 'chat-date-divider';
+        divider.innerHTML = `<span>${TimestampUtils.formatDateDivider(msgTimestamp)}</span>`;
+        chatWindow.appendChild(divider);
+      }
+      // Session divider for same-day gaps > 8 hours
+      else if (TimestampUtils.isSessionGap(lastMessageTimestamp, msgTimestamp)) {
+        const divider = document.createElement('div');
+        divider.className = 'chat-date-divider chat-session-divider';
+        divider.innerHTML = '<span>Earlier today</span>';
+        chatWindow.appendChild(divider);
+      }
+    }
+
     const msgContainer = document.createElement("div");
     msgContainer.className = "message-container";
+    msgContainer.dataset.timestamp = msgTimestamp;
+
     const msgDiv = document.createElement("div");
     msgDiv.className = `message ${isUser ? "user-message" : "bot-message"}`;
 
@@ -172,12 +199,32 @@
     }
 
     msgContainer.appendChild(msgDiv);
+
+    // Add hover timestamp tooltip (Issue #564)
+    if (typeof TimestampUtils !== 'undefined') {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'message-timestamp-tooltip';
+      tooltip.textContent = TimestampUtils.formatHoverTime(msgTimestamp);
+      msgContainer.appendChild(tooltip);
+
+      // Add staleness indicator for messages > 7 days old (Issue #564)
+      if (TimestampUtils.isStale(msgTimestamp)) {
+        const staleDate = document.createElement('div');
+        staleDate.className = 'message-stale-date';
+        staleDate.textContent = TimestampUtils.formatHoverTime(msgTimestamp);
+        msgContainer.appendChild(staleDate);
+      }
+    }
+
     chatWindow.appendChild(msgContainer);
     chatWindow.scrollTop = chatWindow.scrollHeight;
 
+    // Update last message timestamp for divider logic
+    lastMessageTimestamp = msgTimestamp;
+
     // Save to history for persistence (skip temporary messages like "Thinking...")
     if (persist && html && !html.includes('Thinking...')) {
-      chatHistory.push({ content: html, isUser, timestamp: Date.now() });
+      chatHistory.push({ content: html, isUser, timestamp: msgTimestamp });
       saveChatHistory(chatHistory);
     }
 
@@ -196,9 +243,12 @@
     // Clear any existing default messages
     chatWindow.innerHTML = '';
 
-    // Restore each message
+    // Reset last message timestamp for proper divider calculation (Issue #564)
+    lastMessageTimestamp = null;
+
+    // Restore each message with its original timestamp (Issue #564)
     history.forEach(msg => {
-      appendMessage(msg.content, msg.isUser, false); // false = don't re-persist
+      appendMessage(msg.content, msg.isUser, false, msg.timestamp); // false = don't re-persist
     });
   }
 

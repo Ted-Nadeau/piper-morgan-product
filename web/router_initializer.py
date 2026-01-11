@@ -45,6 +45,12 @@ class RouterInitializer:
             "Integrations API",
             "/api/v1/integrations",
         ),  # Issue #530
+        (
+            "web.api.routes.conversations",
+            "router",
+            "Conversations API",
+            "/api/v1/conversations",
+        ),  # Issue #563
     ]
 
     @staticmethod

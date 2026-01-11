@@ -353,6 +353,56 @@ class BackgroundCleanupPhase:
         print("🛑 Background cleanup shutdown complete")
 
 
+class AttentionDecayPhase:
+    """Background job for attention decay updates (Issue #365 - SLACK-ATTENTION-DECAY)
+
+    Implements Pattern-048: Periodic Background Job
+    """
+
+    @staticmethod
+    async def startup(app) -> None:
+        """Start attention decay background job"""
+        print("\n⏱️ Starting Attention Decay Job...")
+        try:
+            import asyncio
+
+            from services.integrations.slack.attention_model import AttentionModel
+            from services.scheduler.attention_decay_job import AttentionDecayJob
+
+            # Create attention model for decay tracking
+            # Note: This creates a dedicated model instance for the decay job
+            # In production, this could be shared via ServiceContainer
+            attention_model = AttentionModel()
+
+            decay_job = AttentionDecayJob(
+                attention_model=attention_model,
+                interval_minutes=5,  # Default, can be configured
+            )
+            decay_task = asyncio.create_task(decay_job.start())
+
+            # Store in app state for shutdown
+            app.state.attention_decay_job = decay_job
+            app.state.attention_decay_task = decay_task
+
+            print("✅ Attention decay job started (runs every 5 minutes)")
+        except Exception as e:
+            print(f"⚠️ Failed to start attention decay job: {e}")
+            print("   Continuing without attention decay updates\n")
+
+    @staticmethod
+    async def shutdown(app) -> None:
+        """Shutdown attention decay job"""
+        print("\n⏱️ Shutting down Attention Decay Job...")
+        if hasattr(app.state, "attention_decay_job") and app.state.attention_decay_job:
+            try:
+                await app.state.attention_decay_job.stop()
+                print("✅ Attention decay job stopped")
+            except Exception as e:
+                print(f"⚠️ Attention decay job shutdown error: {e}")
+
+        print("🛑 Attention decay shutdown complete")
+
+
 class StartupManager:
     """Orchestrates all startup phases in sequence"""
 
@@ -368,6 +418,7 @@ class StartupManager:
             PluginInitializationPhase,
             APIRouterMountingPhase,
             BackgroundCleanupPhase,
+            AttentionDecayPhase,  # Issue #365: SLACK-ATTENTION-DECAY
         ]
 
     async def startup(self) -> None:

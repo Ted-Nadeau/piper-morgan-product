@@ -89,6 +89,12 @@ class PortfolioOnboardingManager:
 
         self._sessions[session.id] = session
 
+        # Issue #490 INVESTIGATION: Trace session creation
+        print(
+            f"[PortfolioManager] Session CREATED: id={session.id}, user_id={user_id}, session_id={session_id}"
+        )
+        print(f"[PortfolioManager] Manager id={id(self)}, total sessions={len(self._sessions)}")
+
         logger.info(
             "portfolio_onboarding_session_created",
             onboarding_id=session.id,
@@ -108,12 +114,20 @@ class PortfolioOnboardingManager:
 
         Returns the most recent non-terminal session for the user.
         """
+        # Issue #490 INVESTIGATION: Trace lookup
+        print(f"[PortfolioManager] get_session_by_user called with user_id={user_id}")
+        print(
+            f"[PortfolioManager] Current sessions: {[(s.id, s.user_id, s.state.value) for s in self._sessions.values()]}"
+        )
+
         for session in reversed(list(self._sessions.values())):
             if session.user_id == user_id and session.state not in [
                 PortfolioOnboardingState.COMPLETE,
                 PortfolioOnboardingState.DECLINED,
             ]:
+                print(f"[PortfolioManager] Found session {session.id} for user {user_id}")
                 return session
+        print(f"[PortfolioManager] No active session found for user {user_id}")
         return None
 
     def get_session_by_session_id(self, session_id: str) -> Optional[PortfolioOnboardingSession]:

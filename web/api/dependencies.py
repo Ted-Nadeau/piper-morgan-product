@@ -21,7 +21,7 @@ from fastapi import HTTPException, Request
 if TYPE_CHECKING:
     from services.container import ServiceContainer
 
-from services.database.repositories import ProjectRepository
+from services.database.repositories import ConversationRepository, ProjectRepository
 from services.database.session_factory import AsyncSessionFactory
 from services.feedback.feedback_service import FeedbackService
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
@@ -159,6 +159,20 @@ async def get_project_repository() -> AsyncGenerator[ProjectRepository, None]:
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield ProjectRepository(session)
+        # Commit changes after successful route execution
+        await session.commit()
+
+
+async def get_conversation_repository() -> AsyncGenerator[ConversationRepository, None]:
+    """Dependency injection for ConversationRepository.
+
+    Provides ConversationRepository with database session for conversation operations.
+    Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
+
+    Issue #563: Added for "Continue where you left off" feature.
+    """
+    async with AsyncSessionFactory.session_scope_fresh() as session:
+        yield ConversationRepository(session)
         # Commit changes after successful route execution
         await session.commit()
 

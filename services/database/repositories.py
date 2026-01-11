@@ -827,33 +827,275 @@ class KnowledgeGraphRepository(BaseRepository):
 
 
 # PM-034 Phase 3: Conversation Repository for ConversationManager
+# Issue #563: Implemented actual persistence (was stubbed)
 class ConversationRepository(BaseRepository):
     """Repository for conversation turn operations"""
 
-    model = None  # ConversationTurn is a domain model, not a DB model yet
+    model = None  # Uses ConversationTurnDB directly via from_domain/to_domain
 
     def __init__(self, session: AsyncSession):
         super().__init__(session)
 
     async def get_conversation_turns(
-        self, conversation_id: str, limit: int = 10, is_admin: bool = False
+        self, conversation_id: str, limit: int = 100, is_admin: bool = False
     ) -> List[domain.ConversationTurn]:
-        """Get conversation turns for a conversation ID (SEC-RBAC Phase 3: admins can access any conversation)"""
-        # For now, return empty list since we don't have DB table yet
-        # This enables graceful fallback for Phase 3 implementation
-        return []
+        """Get conversation turns for a conversation ID.
 
-    async def save_turn(self, turn: domain.ConversationTurn, is_admin: bool = False) -> None:
-        """Save conversation turn to database (SEC-RBAC Phase 3: admins can save turns for any conversation)"""
-        # For now, this is a no-op since we don't have DB table yet
-        # Redis caching will handle persistence in Phase 3
-        logger.info(f"ConversationTurn saved (cache-only): {turn.id}")
+        Args:
+            conversation_id: The conversation to fetch turns for
+            limit: Maximum number of turns to return (default 100)
+            is_admin: SEC-RBAC Phase 3 - admins can access any conversation
+
+        Returns:
+            List of ConversationTurn domain objects, ordered by turn_number
+        """
+        from services.database.models import ConversationTurnDB
+
+        stmt = (
+            select(ConversationTurnDB)
+            .where(ConversationTurnDB.conversation_id == conversation_id)
+            .order_by(ConversationTurnDB.turn_number)
+            .limit(limit)
+        )
+
+        result = await self.session.execute(stmt)
+        db_turns = result.scalars().all()
+
+        return [t.to_domain() for t in db_turns]
+
+    async def save_turn(
+        self, turn: domain.ConversationTurn, is_admin: bool = False, user_id: Optional[str] = None
+    ) -> None:
+        """Save conversation turn to database.
+
+        Args:
+            turn: The ConversationTurn domain object to persist
+            is_admin: SEC-RBAC Phase 3 - admins can save turns for any conversation
+            user_id: Optional user ID to associate with conversation (Issue #563)
+        """
+        from services.database.models import ConversationTurnDB
+
+        # Issue #563: Ensure conversation exists before saving turn (FK constraint)
+        await self.ensure_conversation_exists(turn.conversation_id, user_id)
+
+        # Check if turn already exists (upsert logic)
+        existing = await self.session.get(ConversationTurnDB, turn.id)
+
+        if existing:
+            # Update existing turn
+            existing.user_message = turn.user_message
+            existing.assistant_response = turn.assistant_response
+            existing.intent = turn.intent
+            existing.entities = turn.entities
+            existing.references = turn.references
+            existing.context_used = turn.context_used
+            existing.turn_metadata = turn.metadata
+            existing.processing_time = turn.processing_time
+            existing.completed_at = turn.completed_at
+            logger.debug(f"ConversationTurn updated: {turn.id}")
+        else:
+            # Create new turn
+            db_turn = ConversationTurnDB.from_domain(turn)
+            self.session.add(db_turn)
+            logger.debug(f"ConversationTurn created: {turn.id}")
+
+        await self.session.commit()
+        logger.info(f"ConversationTurn saved to database: {turn.id}")
 
     async def get_next_turn_number(self, conversation_id: str, is_admin: bool = False) -> int:
-        """Get next turn number for conversation (SEC-RBAC Phase 3: admins can get next turn for any conversation)"""
-        # For now, return 1 as fallback
-        # This enables basic functionality while we build out full DB schema
-        return 1
+        """Get next turn number for conversation.
+
+        Args:
+            conversation_id: The conversation to get next turn number for
+            is_admin: SEC-RBAC Phase 3 - admins can get next turn for any conversation
+
+        Returns:
+            The next sequential turn number (max existing + 1, or 1 if no turns)
+        """
+        from services.database.models import ConversationTurnDB
+
+        stmt = select(func.max(ConversationTurnDB.turn_number)).where(
+            ConversationTurnDB.conversation_id == conversation_id
+        )
+
+        result = await self.session.execute(stmt)
+        max_turn = result.scalar()
+
+        return (max_turn or 0) + 1
+
+    async def ensure_conversation_exists(
+        self, conversation_id: str, user_id: Optional[str] = None
+    ) -> None:
+        """
+        Ensure a conversation exists, creating it if necessary.
+
+        This is needed because conversation_turns has a FK to conversations.
+        Issue #563: Called before saving turns to handle new sessions.
+
+        Args:
+            conversation_id: The conversation/session ID
+            user_id: Optional user ID to associate with conversation
+        """
+        from services.database.models import ConversationDB
+
+        # Check if conversation exists
+        existing = await self.session.get(ConversationDB, conversation_id)
+        if existing:
+            return
+
+        # Create new conversation
+        conversation = ConversationDB(
+            id=conversation_id,
+            user_id=user_id or conversation_id,  # Use conversation_id as fallback
+            session_id=conversation_id,
+            title=f"Conversation",
+            context={},
+            is_active=True,
+        )
+
+        self.session.add(conversation)
+        await self.session.commit()
+        logger.debug(f"Created conversation: {conversation_id}")
+
+    async def get_latest_for_user(self, user_id: str) -> Optional[domain.Conversation]:
+        """
+        Get the most recent active conversation for a user.
+
+        Issue #563: Used for "Continue where you left off" prompt.
+
+        Args:
+            user_id: The user ID to find conversations for
+
+        Returns:
+            The most recent Conversation domain object, or None if no conversations exist
+        """
+        from services.database.models import ConversationDB
+
+        stmt = (
+            select(ConversationDB)
+            .where(ConversationDB.user_id == user_id)
+            .where(ConversationDB.is_active == True)
+            .order_by(ConversationDB.created_at.desc())
+            .limit(1)
+        )
+
+        result = await self.session.execute(stmt)
+        db_conv = result.scalar_one_or_none()
+
+        if db_conv:
+            return db_conv.to_domain()
+        return None
+
+    # Issue #565: Additional methods for conversation sidebar
+
+    async def list_for_user(
+        self, user_id: str, limit: int = 50, offset: int = 0
+    ) -> List[domain.Conversation]:
+        """
+        List conversations for a user, ordered by most recent first.
+
+        Issue #565: Used for conversation history sidebar.
+
+        Args:
+            user_id: The user ID to find conversations for
+            limit: Maximum number of conversations to return (default 50)
+            offset: Number of conversations to skip for pagination
+
+        Returns:
+            List of Conversation domain objects, newest first
+        """
+        from services.database.models import ConversationDB
+
+        stmt = (
+            select(ConversationDB)
+            .where(ConversationDB.user_id == user_id)
+            .where(ConversationDB.is_active == True)
+            .order_by(ConversationDB.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+
+        result = await self.session.execute(stmt)
+        db_convs = result.scalars().all()
+
+        return [c.to_domain() for c in db_convs]
+
+    async def get_by_id(self, conversation_id: str) -> Optional[domain.Conversation]:
+        """
+        Get a specific conversation by ID.
+
+        Issue #565: Used when switching conversations in sidebar.
+
+        Args:
+            conversation_id: The conversation ID to fetch
+
+        Returns:
+            Conversation domain object, or None if not found
+        """
+        from services.database.models import ConversationDB
+
+        db_conv = await self.session.get(ConversationDB, conversation_id)
+
+        if db_conv:
+            return db_conv.to_domain()
+        return None
+
+    async def create(self, user_id: str, title: Optional[str] = None) -> domain.Conversation:
+        """
+        Create a new conversation for a user.
+
+        Issue #565: Used when clicking "New Chat" in sidebar.
+
+        Args:
+            user_id: The user ID to create conversation for
+            title: Optional title (defaults to "New conversation")
+
+        Returns:
+            The newly created Conversation domain object
+        """
+        import uuid
+
+        from services.database.models import ConversationDB
+
+        conversation_id = str(uuid.uuid4())
+
+        conversation = ConversationDB(
+            id=conversation_id,
+            user_id=user_id,
+            session_id=conversation_id,
+            title=title or "New conversation",
+            context={},
+            is_active=True,
+        )
+
+        self.session.add(conversation)
+        await self.session.commit()
+        await self.session.refresh(conversation)
+
+        logger.debug(f"Created new conversation: {conversation_id} for user: {user_id}")
+
+        return conversation.to_domain()
+
+    async def get_turn_count(self, conversation_id: str) -> int:
+        """
+        Get the number of turns in a conversation.
+
+        Issue #565: Used for conversation list display.
+
+        Args:
+            conversation_id: The conversation to count turns for
+
+        Returns:
+            Number of turns in the conversation
+        """
+        from services.database.models import ConversationTurnDB
+
+        stmt = select(func.count(ConversationTurnDB.id)).where(
+            ConversationTurnDB.conversation_id == conversation_id
+        )
+
+        result = await self.session.execute(stmt)
+        return result.scalar() or 0
 
 
 # Repository factory

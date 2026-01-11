@@ -108,10 +108,16 @@ class ServiceInitializer:
             # This fixes "Container not initialized" errors during classification
             intent_classifier = IntentClassifier(llm_service=llm_service)
 
+            # Issue #563: Create ConversationManager for turn persistence
+            from services.conversation.conversation_manager import ConversationManager
+
+            conversation_manager = ConversationManager()
+
             # Create Intent service with OrchestrationEngine and properly-configured classifier
             intent_service = IntentService(
                 orchestration_engine=orchestration_engine,
                 intent_classifier=intent_classifier,
+                conversation_manager=conversation_manager,  # Issue #563
             )
 
             # Register

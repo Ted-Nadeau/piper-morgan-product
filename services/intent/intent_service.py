@@ -22,6 +22,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from services.conversation.conversation_handler import ConversationHandler
+from services.conversation.conversation_manager import ConversationManager
 from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
 from services.domain.models import Intent
@@ -88,6 +89,7 @@ class IntentService:
         orchestration_engine: Optional[OrchestrationEngine] = None,
         intent_classifier: Optional = None,
         conversation_handler: Optional[ConversationHandler] = None,
+        conversation_manager: Optional[ConversationManager] = None,
     ):
         """
         Initialize service with dependencies.
@@ -96,21 +98,104 @@ class IntentService:
             orchestration_engine: Optional engine for workflow orchestration
             intent_classifier: Optional classifier for intent detection
             conversation_handler: Optional handler for conversation intents
+            conversation_manager: Optional manager for conversation persistence (Issue #563)
         """
         self.orchestration_engine = orchestration_engine
         self.intent_classifier = intent_classifier or classifier
         self.conversation_handler = conversation_handler
+        self.conversation_manager = conversation_manager  # Issue #563: Conversation persistence
         self.canonical_handlers = CanonicalHandlers()
         self.kg_integration = ConversationKnowledgeGraphIntegration()  # Issue #99 CORE-KNOW
         self.todo_handlers = TodoIntentHandlers()  # Issue #285: Todo chat integration
         self.learning_handler = LearningHandler()  # Issue #300: Basic Auto-Learning
         self.logger = structlog.get_logger()
 
+    async def _save_conversation_turn(
+        self,
+        session_id: str,
+        user_message: str,
+        assistant_response: str,
+        entities: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
+    ) -> None:
+        """
+        Save conversation turn via ConversationManager (Issue #563).
+
+        Follows DDD pattern: IntentService coordinates, ConversationManager persists.
+        Fails silently to avoid blocking the response - persistence is best-effort.
+
+        Args:
+            session_id: Session/conversation identifier
+            user_message: The user's original message
+            assistant_response: Piper's response
+            entities: Optional extracted entities
+            user_id: Optional user ID for conversation ownership
+        """
+        if not self.conversation_manager:
+            self.logger.debug("ConversationManager not available - skipping turn persistence")
+            return
+
+        try:
+            await self.conversation_manager.save_conversation_turn(
+                conversation_id=session_id,
+                user_message=user_message,
+                assistant_response=assistant_response,
+                entities=entities,
+                user_id=user_id,
+            )
+            self.logger.debug(
+                "Conversation turn saved",
+                session_id=session_id,
+                message_preview=user_message[:50] if user_message else None,
+            )
+        except Exception as e:
+            # Don't fail the response if persistence fails
+            self.logger.warning(
+                "Failed to save conversation turn",
+                session_id=session_id,
+                error=str(e),
+            )
+
     async def process_intent(
         self, message: str, session_id: str = "default_session", user_id: str = None
     ) -> IntentProcessingResult:
         """
         Process user intent and return formatted response.
+
+        Issue #563: Wraps _process_intent_internal to save conversation turns.
+
+        Args:
+            message: The user's intent text
+            session_id: Session identifier
+            user_id: Optional user ID from authenticated request (Issue #490)
+
+        Returns:
+            IntentProcessingResult with results
+        """
+        # Process the intent
+        result = await self._process_intent_internal(
+            message=message,
+            session_id=session_id,
+            user_id=user_id,
+        )
+
+        # Issue #563: Save conversation turn after processing (best-effort)
+        # Only save successful responses with actual content
+        if result.success and result.message:
+            await self._save_conversation_turn(
+                session_id=session_id,
+                user_message=message,
+                assistant_response=result.message,
+                user_id=user_id,
+            )
+
+        return result
+
+    async def _process_intent_internal(
+        self, message: str, session_id: str = "default_session", user_id: str = None
+    ) -> IntentProcessingResult:
+        """
+        Internal intent processing logic.
 
         Handles:
         - Ethics boundary enforcement (Issue #197 - Phase 2B)
@@ -526,17 +611,31 @@ class IntentService:
             from services.conversation.conversation_handler import _get_onboarding_components
             from services.shared_types import IntentCategory, PortfolioOnboardingState
 
+            # Issue #490 INVESTIGATION: Trace execution
+            print(
+                f"[IntentService] _check_active_onboarding called, user_id={user_id}, session_id={session_id}"
+            )
+
             # Issue #490: Use the SAME singleton manager as conversation_handler
             # Creating a new PortfolioOnboardingManager() would lose session state!
             manager, handler = _get_onboarding_components()
+
+            # Issue #490 INVESTIGATION: Show manager state
+            print(
+                f"[IntentService] manager id={id(manager)}, sessions={list(manager._sessions.keys())}"
+            )
 
             # Issue #490: Check for active session by user_id (preferred) or session_id (fallback)
             # This ensures onboarding works even when user is not authenticated
             session = None
             if user_id:
                 session = manager.get_session_by_user(user_id)
+                print(f"[IntentService] Lookup by user_id={user_id}, found={session is not None}")
             if not session and session_id:
                 session = manager.get_session_by_session_id(session_id)
+                print(
+                    f"[IntentService] Lookup by session_id={session_id}, found={session is not None}"
+                )
 
             if not session:
                 return None

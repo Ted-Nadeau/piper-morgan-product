@@ -117,8 +117,20 @@ class ConversationManager:
         user_message: str,
         assistant_response: str,
         entities: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
     ) -> ConversationTurn:
-        """Save new conversation turn and update context"""
+        """Save new conversation turn and update context.
+
+        Args:
+            conversation_id: The conversation/session ID
+            user_message: The user's message
+            assistant_response: The assistant's response
+            entities: Optional list of extracted entities
+            user_id: Optional user ID for conversation ownership (Issue #563)
+
+        Returns:
+            The saved ConversationTurn
+        """
         turn = ConversationTurn(
             id=str(uuid4()),
             conversation_id=conversation_id,
@@ -129,8 +141,8 @@ class ConversationManager:
             created_at=datetime.now(),
         )
 
-        # Save to database
-        await self._save_turn_to_database(turn)
+        # Save to database (pass user_id for conversation ownership)
+        await self._save_turn_to_database(turn, user_id=user_id)
 
         # Update cached context
         await self._update_cached_context(conversation_id, turn)
@@ -293,14 +305,21 @@ class ConversationManager:
             logger.error(f"Database query failed: {e}")
             return None
 
-    async def _save_turn_to_database(self, turn: ConversationTurn) -> None:
-        """Save conversation turn to database using AsyncSessionFactory"""
+    async def _save_turn_to_database(
+        self, turn: ConversationTurn, user_id: Optional[str] = None
+    ) -> None:
+        """Save conversation turn to database using AsyncSessionFactory.
+
+        Args:
+            turn: The ConversationTurn to save
+            user_id: Optional user ID for conversation ownership (Issue #563)
+        """
         try:
             async with AsyncSessionFactory.session_scope() as session:
                 from services.database.repositories import ConversationRepository
 
                 repo = ConversationRepository(session)
-                await repo.save_turn(turn)
+                await repo.save_turn(turn, user_id=user_id)
 
         except Exception as e:
             logger.error(f"Failed to save turn to database: {e}")

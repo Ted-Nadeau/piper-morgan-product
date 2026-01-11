@@ -427,18 +427,14 @@ class TestAttentionModelBehaviorValidation:
         return AttentionModel()
 
     # TDD Test 4: ATTENTION DECAY MODEL VALIDATION
-    # Should FAIL initially - complex decay behavior
-    # DEFERRED: Pattern learning is post-alpha (Enhancement milestone)
+    # Issue #365: SLACK-ATTENTION-DECAY - Pattern learning implemented
 
-    @pytest.mark.skip(
-        reason="Deferred: SLACK-ATTENTION-DECAY - Requires pattern learning system (Enhancement milestone)"
-    )
     async def test_attention_decay_models_with_pattern_learning(self, attention_model):
         """
         TDD: Attention decay models with pattern learning validation
 
-        EXPECTED TO FAIL: Complex decay and learning behavior
-        DEFERRED: Requires time-series learning system (post-alpha)
+        Tests decay behavior and pattern learning across different attention sources.
+        Implemented as part of Issue #365.
         """
         # CREATE: Test attention events with different decay models
 
@@ -474,13 +470,15 @@ class TestAttentionModelBehaviorValidation:
         social_intensity_t0 = social_event.get_current_intensity()
         mention_intensity_t0 = mention_event.get_current_intensity()
 
-        # ASSERTION 1: Initial intensities match base values
+        # ASSERTION 1: Initial intensities account for spatial decay factor
+        # EMERGENCY: base=1.0 * spatial=1.0 = 1.0
+        # MENTION: base=0.8 * spatial=0.9 = 0.72
+        # SOCIAL: base=0.4 * spatial=0.7 = 0.28
         assert abs(emergency_intensity_t0 - 1.0) < 0.1
-        assert abs(social_intensity_t0 - 0.4) < 0.1
-        assert abs(mention_intensity_t0 - 0.8) < 0.1
+        assert abs(social_intensity_t0 - 0.28) < 0.1
+        assert abs(mention_intensity_t0 - 0.72) < 0.1
 
         # STEP 2: Simulate time passage (30 minutes)
-        import time
         from unittest.mock import patch
 
         future_time = datetime.now() + timedelta(minutes=30)
@@ -488,18 +486,34 @@ class TestAttentionModelBehaviorValidation:
         with patch("services.integrations.slack.attention_model.datetime") as mock_datetime:
             mock_datetime.now.return_value = future_time
 
-            emergency_intensity_t30 = emergency_event.get_current_intensity()
-            social_intensity_t30 = social_event.get_current_intensity()
-            mention_intensity_t30 = mention_event.get_current_intensity()
+            # Use CONTEXTUAL decay for source-specific behavior
+            from services.integrations.slack.attention_model import AttentionDecay
 
-        # ASSERTION 2: Different decay rates by source type
+            emergency_intensity_t30 = emergency_event.get_current_intensity(
+                decay_model=AttentionDecay.CONTEXTUAL
+            )
+            social_intensity_t30 = social_event.get_current_intensity(
+                decay_model=AttentionDecay.CONTEXTUAL
+            )
+            mention_intensity_t30 = mention_event.get_current_intensity(
+                decay_model=AttentionDecay.CONTEXTUAL
+            )
+
+        # ASSERTION 2: Different decay rates by source type (CONTEXTUAL mode)
+        # EMERGENCY: 2-hour half-life, min 0.3 → ~0.84 at 30 min
+        # MENTION: 1-hour half-life, min 0.1 → ~0.51 at 30 min (adjusted by spatial=0.9)
+        # SOCIAL: 30-min half-life → ~0.14 at 30 min (adjusted by spatial=0.7)
         assert emergency_intensity_t30 > mention_intensity_t30  # Emergency decays slower
         assert mention_intensity_t30 > social_intensity_t30  # Social decays fastest
-        assert emergency_intensity_t30 > 0.7  # Emergency still strong
+        assert emergency_intensity_t30 > 0.7  # Emergency still strong (2hr half-life)
         assert social_intensity_t30 < 0.2  # Social significantly decayed
 
         # STEP 3: Pattern learning from attention events
+        # Learn from emergency event multiple times to build confidence > 0.5
+        # (New patterns start at confidence=0.3, need repeated observations)
         attention_model._learn_from_attention_event(emergency_event)
+        attention_model._learn_from_attention_event(emergency_event)
+        attention_model._learn_from_attention_event(emergency_event)  # 3rd observation
         attention_model._learn_from_attention_event(mention_event)
 
         # ASSERTION 3: Patterns learned and stored
@@ -512,6 +526,8 @@ class TestAttentionModelBehaviorValidation:
             if p.trigger_conditions.get("source") == "emergency"
         ]
         assert len(emergency_patterns) > 0
+        # Verify confidence built up above threshold
+        assert emergency_patterns[0].confidence > 0.5
 
         # STEP 4: Pattern-based attention adjustment
         new_emergency_event = attention_model.create_attention_event(

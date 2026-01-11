@@ -25,6 +25,8 @@ def _get_onboarding_components():
 
         _onboarding_manager = PortfolioOnboardingManager()
         _onboarding_handler = PortfolioOnboardingHandler(_onboarding_manager)
+        # Issue #490 INVESTIGATION: First creation
+        print(f"[ConversationHandler] Singleton CREATED: manager id={id(_onboarding_manager)}")
     return _onboarding_manager, _onboarding_handler
 
 

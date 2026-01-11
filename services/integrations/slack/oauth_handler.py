@@ -363,7 +363,11 @@ class SlackOAuthHandler:
     async def _store_workspace_tokens(
         self, workspace_data: Dict[str, Any], token_data: Dict[str, Any]
     ) -> None:
-        """Store workspace tokens using existing configuration patterns"""
+        """Store workspace tokens using secure keychain storage.
+
+        Issue #575: Now actually stores bot_token in keychain (like Calendar).
+        """
+        from services.infrastructure.keychain_service import KeychainService
 
         try:
             workspace_id = workspace_data["workspace_id"]
@@ -372,23 +376,22 @@ class SlackOAuthHandler:
             bot_token = token_data.get("access_token")
             user_token = token_data.get("authed_user", {}).get("access_token")
 
-            # In production, this would integrate with secure token storage
-            # For development, we'll use environment-style storage pattern
-
-            # Store bot token (primary for API operations)
+            # Store bot token securely in keychain (Issue #575)
             if bot_token:
-                # This would typically go to secure key-value store
-                logger.info(f"Bot token stored for workspace {workspace_id}")
+                keychain = KeychainService()
+                keychain.store_api_key("slack_bot", bot_token)
+                logger.info(f"Bot token stored in keychain for workspace {workspace_id}")
 
-                # Update configuration cache if needed
+                # Update configuration cache
                 config = self.config_service.get_config()
                 if not config.bot_token:
-                    # Set as primary bot token if none configured
                     config.bot_token = bot_token
 
-            # Store user token if available
+            # Store user token if available (also in keychain)
             if user_token:
-                logger.info(f"User token stored for workspace {workspace_id}")
+                keychain = KeychainService()
+                keychain.store_api_key("slack_user", user_token)
+                logger.info(f"User token stored in keychain for workspace {workspace_id}")
 
             # Store workspace metadata
             workspace_config = {
