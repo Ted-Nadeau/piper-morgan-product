@@ -104,7 +104,17 @@ class TestSlackConfigService:
     @pytest.mark.smoke
     def test_load_config_defaults(self):
         """Test loading configuration with default values"""
-        with patch.dict(os.environ, {}, clear=True):
+        # Mock keychain to return empty (Issue #576 added keychain support)
+        mock_keychain = Mock()
+        mock_keychain.get_api_key.return_value = None
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
             service = SlackConfigService()
             config = service.get_config()
 
@@ -144,7 +154,17 @@ class TestSlackConfigService:
     @pytest.mark.smoke
     def test_is_configured_invalid(self):
         """Test is_configured with invalid configuration"""
-        with patch.dict(os.environ, {}, clear=True):
+        # Mock keychain to return empty (Issue #576 added keychain support)
+        mock_keychain = Mock()
+        mock_keychain.get_api_key.return_value = None
+
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
             service = SlackConfigService()
             assert service.is_configured() is False
 

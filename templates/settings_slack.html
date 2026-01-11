@@ -182,6 +182,133 @@
         cursor: not-allowed;
       }
 
+      .btn-primary {
+        background: #4A154B;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #611f69;
+      }
+
+      .btn-primary:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      /* Channel Settings Card (Issue #570) */
+      .channel-settings-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .channel-settings-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .channel-settings-card .description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+      }
+
+      .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+      }
+
+      .form-group select:focus {
+        outline: none;
+        border-color: #4A154B;
+        box-shadow: 0 0 0 2px rgba(74, 21, 75, 0.1);
+      }
+
+      .form-group .help-text {
+        font-size: 12px;
+        color: #95a5a6;
+        margin-top: 6px;
+      }
+
+      /* Checkbox list for monitored channels */
+      .channel-checkbox-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        background: #fafafa;
+      }
+
+      .channel-checkbox-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .channel-checkbox-item:last-child {
+        border-bottom: none;
+      }
+
+      .channel-checkbox-item input[type="checkbox"] {
+        margin-right: 10px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .channel-checkbox-item label {
+        font-size: 14px;
+        color: #2c3e50;
+        cursor: pointer;
+        margin: 0;
+        font-weight: normal;
+      }
+
+      .channel-checkbox-item .private-badge {
+        font-size: 11px;
+        background: #f39c12;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-left: 8px;
+      }
+
+      .save-button-group {
+        margin-top: 24px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .loading-channels {
+        text-align: center;
+        padding: 20px;
+        color: #7f8c8d;
+      }
+
       /* Back Link */
       .back-link {
         display: inline-flex;
@@ -195,6 +322,115 @@
 
       .back-link:hover {
         color: #2c3e50;
+      }
+
+      /* App Configuration Card (Issue #576) */
+      .app-config-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .app-config-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .app-config-card .description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 16px;
+        line-height: 1.5;
+      }
+
+      .app-config-card .help-link {
+        font-size: 13px;
+        color: #3498db;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 20px;
+      }
+
+      .app-config-card .help-link:hover {
+        text-decoration: underline;
+      }
+
+      .app-config-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+
+      .app-config-status.configured {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .app-config-status.not-configured {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .config-form-group {
+        margin-bottom: 16px;
+      }
+
+      .config-form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 6px;
+      }
+
+      .config-form-group input {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+        box-sizing: border-box;
+      }
+
+      .config-form-group input:focus {
+        outline: none;
+        border-color: #4A154B;
+        box-shadow: 0 0 0 2px rgba(74, 21, 75, 0.1);
+      }
+
+      .config-form-group .help-text {
+        font-size: 12px;
+        color: #95a5a6;
+        margin-top: 4px;
+      }
+
+      .config-button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: #7f8c8d;
+        border: 1px solid #ddd;
+      }
+
+      .btn-secondary:hover {
+        background: #f8f9fa;
+        border-color: #bdc3c7;
       }
 
       /* Loading State */
@@ -275,6 +511,54 @@
         </div>
       </div>
 
+      <!-- App Configuration Card (Issue #576) -->
+      <div class="app-config-card" id="app-config-card">
+        <h3>🔑 App Configuration</h3>
+        <p class="description">
+          Configure your Slack app credentials. These are required for OAuth authorization.
+        </p>
+        <a href="https://api.slack.com/apps" target="_blank" class="help-link">
+          📖 Create or find your app on api.slack.com/apps
+        </a>
+
+        <!-- Status indicator -->
+        <div id="app-config-status" class="app-config-status not-configured">
+          <span id="app-config-status-icon">❌</span>
+          <span id="app-config-status-text">Checking credentials...</span>
+        </div>
+
+        <!-- Configuration form (hidden when configured, shown when not) -->
+        <div id="app-config-form" style="display: none;">
+          <div class="config-form-group">
+            <label for="slack-client-id">Client ID</label>
+            <input type="text" id="slack-client-id" placeholder="e.g., 1234567890.1234567890" />
+            <p class="help-text">Found in your Slack app's Basic Information page under App Credentials</p>
+          </div>
+
+          <div class="config-form-group">
+            <label for="slack-client-secret">Client Secret</label>
+            <input type="password" id="slack-client-secret" placeholder="Your client secret" />
+            <p class="help-text">Keep this secret! It authenticates your app with Slack.</p>
+          </div>
+
+          <div class="config-button-group">
+            <button class="btn btn-primary" id="save-app-config-btn" onclick="saveAppCredentials()">
+              Save Credentials
+            </button>
+            <button class="btn btn-secondary" id="cancel-config-btn" onclick="cancelConfigEdit()" style="display: none;">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Configured view (shown when configured) -->
+        <div id="app-config-configured" style="display: none;">
+          <button class="btn btn-secondary" onclick="showConfigForm()">
+            Update Credentials
+          </button>
+        </div>
+      </div>
+
       <!-- OAuth Card -->
       <div class="oauth-card" id="oauth-card">
         <h3 id="oauth-title">Connect to Slack</h3>
@@ -307,15 +591,68 @@
           </button>
         </div>
       </div>
+
+      <!-- Channel Settings Card (Issue #570) - Only shown when connected -->
+      <div class="channel-settings-card" id="channel-settings-card" style="display: none;">
+        <h3>📢 Channel Settings</h3>
+        <p class="description">
+          Configure which Slack channels Piper Morgan uses for notifications and monitoring.
+        </p>
+
+        <div id="channel-settings-content">
+          <div class="loading-channels">
+            <span class="loading-spinner"></span>
+            Loading channels...
+          </div>
+        </div>
+
+        <div id="channel-settings-form" style="display: none;">
+          <!-- Notification Channel -->
+          <div class="form-group">
+            <label for="notification-channel">Notification Channel</label>
+            <select id="notification-channel">
+              <option value="">Select a channel...</option>
+            </select>
+            <p class="help-text">Where Piper sends notifications and alerts</p>
+          </div>
+
+          <!-- Default Response Channel -->
+          <div class="form-group">
+            <label for="default-response-channel">Default Response Channel</label>
+            <select id="default-response-channel">
+              <option value="">Select a channel...</option>
+            </select>
+            <p class="help-text">Where Piper responds by default when not in a thread</p>
+          </div>
+
+          <!-- Monitored Channels -->
+          <div class="form-group">
+            <label>Monitored Channels</label>
+            <div class="channel-checkbox-list" id="monitored-channels-list">
+              <!-- Checkboxes populated dynamically -->
+            </div>
+            <p class="help-text">Channels where Piper listens for @mentions and messages</p>
+          </div>
+
+          <!-- Save Button -->
+          <div class="save-button-group">
+            <button class="btn btn-primary" id="save-preferences-btn" onclick="saveSlackPreferences()">
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     {% include 'components/toast.html' %}
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/timestamp-utils.js"></script>
     <script src="/static/js/chat.js"></script>
     <script>
       // Check for OAuth callback result
       document.addEventListener('DOMContentLoaded', function() {
         checkOAuthCallback();
+        loadAppCredentialsStatus();  // Issue #576: Check credentials first
         loadSlackStatus();
       });
 
@@ -365,6 +702,9 @@
           oauthDescEl.textContent = 'You can reconnect to a different workspace or refresh your connection.';
           connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Reconnect';
           disconnectBtnEl.style.display = 'block';
+          // Show channel settings and load them (Issue #570)
+          document.getElementById('channel-settings-card').style.display = 'block';
+          loadChannelSettings();
         } else if (data.configured && !data.valid) {
           // Configured but invalid (stuck state)
           iconEl.className = 'status-icon disconnected';
@@ -375,6 +715,8 @@
           oauthDescEl.textContent = 'Your Slack connection has expired. Please reconnect to restore functionality.';
           connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Reconnect';
           disconnectBtnEl.style.display = 'block';
+          // Hide channel settings when invalid (Issue #570)
+          document.getElementById('channel-settings-card').style.display = 'none';
         } else {
           // Not configured
           iconEl.className = 'status-icon disconnected';
@@ -385,6 +727,8 @@
           oauthDescEl.textContent = 'Connect your Slack workspace to enable Piper Morgan to receive messages, respond to queries, and help coordinate your team\'s work.';
           connectBtnEl.innerHTML = '<svg class="slack-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg> Add to Slack';
           disconnectBtnEl.style.display = 'none';
+          // Hide channel settings when not connected (Issue #570)
+          document.getElementById('channel-settings-card').style.display = 'none';
         }
       }
 
@@ -451,6 +795,179 @@
         }
       }
 
+      // ============================================================================
+      // Channel Settings Functions (Issue #570)
+      // ============================================================================
+
+      // Store channels globally for reuse
+      let slackChannels = [];
+
+      async function loadChannelSettings() {
+        const contentEl = document.getElementById('channel-settings-content');
+        const formEl = document.getElementById('channel-settings-form');
+
+        try {
+          // Fetch channels and preferences in parallel
+          const [channelsRes, prefsRes] = await Promise.all([
+            fetch('/api/v1/settings/integrations/slack/channels'),
+            fetch('/api/v1/settings/integrations/slack/preferences')
+          ]);
+
+          if (!channelsRes.ok) {
+            const errorData = await channelsRes.json();
+            throw new Error(errorData.detail || 'Failed to load channels');
+          }
+
+          const channelsData = await channelsRes.json();
+          slackChannels = channelsData.channels || [];
+
+          let prefs = { notification_channel: null, monitored_channels: [], default_response_channel: null };
+          if (prefsRes.ok) {
+            prefs = await prefsRes.json();
+          }
+
+          // Populate dropdowns
+          populateChannelDropdowns(slackChannels);
+
+          // Populate monitored channels checkboxes
+          populateMonitoredCheckboxes(slackChannels, prefs.monitored_channels || []);
+
+          // Set selected values
+          setSelectedPreferences(prefs);
+
+          // Hide loading, show form
+          contentEl.style.display = 'none';
+          formEl.style.display = 'block';
+
+        } catch (error) {
+          console.error('Failed to load channel settings:', error);
+          contentEl.innerHTML = `<div class="loading-channels" style="color: #e74c3c;">
+            Failed to load channels: ${error.message}
+          </div>`;
+        }
+      }
+
+      function populateChannelDropdowns(channels) {
+        const notificationSelect = document.getElementById('notification-channel');
+        const defaultResponseSelect = document.getElementById('default-response-channel');
+
+        // Clear existing options except placeholder
+        notificationSelect.innerHTML = '<option value="">Select a channel...</option>';
+        defaultResponseSelect.innerHTML = '<option value="">Select a channel...</option>';
+
+        // Sort channels alphabetically
+        const sortedChannels = [...channels].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedChannels.forEach(channel => {
+          const privateBadge = channel.is_private ? ' 🔒' : '';
+          const option1 = document.createElement('option');
+          option1.value = channel.id;
+          option1.textContent = `#${channel.name}${privateBadge}`;
+          notificationSelect.appendChild(option1);
+
+          const option2 = document.createElement('option');
+          option2.value = channel.id;
+          option2.textContent = `#${channel.name}${privateBadge}`;
+          defaultResponseSelect.appendChild(option2);
+        });
+      }
+
+      function populateMonitoredCheckboxes(channels, selectedIds) {
+        const listEl = document.getElementById('monitored-channels-list');
+        listEl.innerHTML = '';
+
+        if (channels.length === 0) {
+          listEl.innerHTML = '<p style="color: #7f8c8d; text-align: center; margin: 0;">No channels available</p>';
+          return;
+        }
+
+        // Sort channels alphabetically
+        const sortedChannels = [...channels].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedChannels.forEach(channel => {
+          const isChecked = selectedIds.includes(channel.id);
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'channel-checkbox-item';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = `monitored-${channel.id}`;
+          checkbox.value = channel.id;
+          checkbox.checked = isChecked;
+
+          const label = document.createElement('label');
+          label.htmlFor = `monitored-${channel.id}`;
+          label.textContent = `#${channel.name}`;
+
+          itemDiv.appendChild(checkbox);
+          itemDiv.appendChild(label);
+
+          if (channel.is_private) {
+            const badge = document.createElement('span');
+            badge.className = 'private-badge';
+            badge.textContent = 'Private';
+            itemDiv.appendChild(badge);
+          }
+
+          listEl.appendChild(itemDiv);
+        });
+      }
+
+      function setSelectedPreferences(prefs) {
+        // Set notification channel
+        const notificationSelect = document.getElementById('notification-channel');
+        if (prefs.notification_channel) {
+          notificationSelect.value = prefs.notification_channel;
+        }
+
+        // Set default response channel
+        const defaultResponseSelect = document.getElementById('default-response-channel');
+        if (prefs.default_response_channel) {
+          defaultResponseSelect.value = prefs.default_response_channel;
+        }
+
+        // Monitored channels already set in populateMonitoredCheckboxes
+      }
+
+      function getSelectedMonitoredChannels() {
+        const checkboxes = document.querySelectorAll('#monitored-channels-list input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+      }
+
+      async function saveSlackPreferences() {
+        const saveBtn = document.getElementById('save-preferences-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const prefs = {
+            notification_channel: document.getElementById('notification-channel').value || null,
+            monitored_channels: getSelectedMonitoredChannels(),
+            default_response_channel: document.getElementById('default-response-channel').value || null
+          };
+
+          const response = await fetch('/api/v1/settings/integrations/slack/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(prefs)
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to save preferences');
+          }
+
+          showToast('success', 'Channel settings saved successfully', 'Settings Saved');
+
+        } catch (error) {
+          console.error('Failed to save preferences:', error);
+          showToast('error', error.message, 'Save Failed');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Settings';
+        }
+      }
+
       function showToast(type, message, title = null) {
         if (typeof Toast !== 'undefined') {
           const toastTitle = title || {
@@ -471,6 +988,143 @@
           }
         } else {
           console.log(`[${type}] ${message}`);
+        }
+      }
+
+      // ============================================================================
+      // App Credentials Functions (Issue #576)
+      // ============================================================================
+
+      // Track whether credentials are configured (for edit mode logic)
+      let appCredentialsConfigured = false;
+
+      async function loadAppCredentialsStatus() {
+        try {
+          const response = await fetch('/api/v1/settings/integrations/slack/app-credentials/status');
+          if (!response.ok) {
+            // If 401, user not logged in - show not configured
+            updateAppConfigUI(false);
+            return;
+          }
+
+          const data = await response.json();
+          appCredentialsConfigured = data.configured;
+          updateAppConfigUI(data.configured);
+        } catch (error) {
+          console.error('Failed to load app credentials status:', error);
+          updateAppConfigUI(false);
+        }
+      }
+
+      function updateAppConfigUI(configured) {
+        const statusEl = document.getElementById('app-config-status');
+        const statusIconEl = document.getElementById('app-config-status-icon');
+        const statusTextEl = document.getElementById('app-config-status-text');
+        const formEl = document.getElementById('app-config-form');
+        const configuredEl = document.getElementById('app-config-configured');
+        const cancelBtn = document.getElementById('cancel-config-btn');
+        const oauthCard = document.getElementById('oauth-card');
+
+        if (configured) {
+          // Configured - show green status and "Update" button
+          statusEl.className = 'app-config-status configured';
+          statusIconEl.textContent = '✅';
+          statusTextEl.textContent = 'App credentials configured';
+          formEl.style.display = 'none';
+          configuredEl.style.display = 'block';
+          // Enable OAuth card
+          if (oauthCard) oauthCard.style.opacity = '1';
+        } else {
+          // Not configured - show red status and form
+          statusEl.className = 'app-config-status not-configured';
+          statusIconEl.textContent = '❌';
+          statusTextEl.textContent = 'App credentials not configured - required for OAuth';
+          formEl.style.display = 'block';
+          configuredEl.style.display = 'none';
+          cancelBtn.style.display = 'none';
+          // Dim OAuth card to indicate it won't work
+          if (oauthCard) oauthCard.style.opacity = '0.5';
+        }
+      }
+
+      function showConfigForm() {
+        const formEl = document.getElementById('app-config-form');
+        const configuredEl = document.getElementById('app-config-configured');
+        const cancelBtn = document.getElementById('cancel-config-btn');
+
+        formEl.style.display = 'block';
+        configuredEl.style.display = 'none';
+        // Show cancel button only if already configured (editing mode)
+        if (appCredentialsConfigured) {
+          cancelBtn.style.display = 'block';
+        }
+        // Clear form fields for security
+        document.getElementById('slack-client-id').value = '';
+        document.getElementById('slack-client-secret').value = '';
+      }
+
+      function cancelConfigEdit() {
+        const formEl = document.getElementById('app-config-form');
+        const configuredEl = document.getElementById('app-config-configured');
+
+        formEl.style.display = 'none';
+        configuredEl.style.display = 'block';
+        // Clear form fields
+        document.getElementById('slack-client-id').value = '';
+        document.getElementById('slack-client-secret').value = '';
+      }
+
+      async function saveAppCredentials() {
+        const clientId = document.getElementById('slack-client-id').value.trim();
+        const clientSecret = document.getElementById('slack-client-secret').value.trim();
+
+        // Validate inputs
+        if (!clientId) {
+          showToast('error', 'Client ID is required', 'Validation Error');
+          return;
+        }
+        if (!clientSecret) {
+          showToast('error', 'Client Secret is required', 'Validation Error');
+          return;
+        }
+
+        const saveBtn = document.getElementById('save-app-config-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/slack/app-credentials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              client_id: clientId,
+              client_secret: clientSecret
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || errorData.message || 'Failed to save credentials');
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast('success', 'App credentials saved securely', 'Credentials Saved');
+            appCredentialsConfigured = true;
+            updateAppConfigUI(true);
+            // Clear form for security
+            document.getElementById('slack-client-id').value = '';
+            document.getElementById('slack-client-secret').value = '';
+          } else {
+            throw new Error(data.message || 'Failed to save credentials');
+          }
+        } catch (error) {
+          console.error('Failed to save app credentials:', error);
+          showToast('error', error.message, 'Save Failed');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Credentials';
         }
       }
     </script>

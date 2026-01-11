@@ -142,6 +142,64 @@
         .slack-connect-btn:hover {
             background: #3E1041 !important;
         }
+        /* Slack App Credential Configuration (Issue #576) */
+        .slack-config-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .slack-config-section h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #495057;
+        }
+        .slack-config-section .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 12px;
+        }
+        .slack-config-section .help-text a {
+            color: #4A154B;
+        }
+        .slack-config-section .config-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .slack-config-section .config-input:focus {
+            border-color: #4A154B;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(74, 21, 75, 0.1);
+        }
+        .slack-config-section .save-credentials-btn {
+            background: #4A154B;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .slack-config-section .save-credentials-btn:hover {
+            background: #3E1041;
+        }
+        .slack-config-section .save-credentials-btn:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+        .slack-credentials-configured {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #155724;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
         /* Google Calendar OAuth styles (Issue #529: ALPHA-SETUP-CALENDAR) */
         .calendar-connect-btn {
             background: #4285F4 !important;  /* Google blue */
@@ -348,10 +406,29 @@
             </div>
 
             <!-- Slack OAuth Integration (Issue #528: ALPHA-SETUP-SLACK) -->
+            <!-- Issue #576: Added credential configuration before OAuth -->
             <div class="form-group">
                 <label>Slack Integration (optional)</label>
                 <div class="slack-oauth-section">
-                    <div id="slack-not-connected" class="oauth-status">
+                    <!-- Credential Configuration (Issue #576) - shown when not configured -->
+                    <div id="slack-config-needed" class="slack-config-section" style="display: none;">
+                        <h4>Configure Slack App</h4>
+                        <p class="help-text">
+                            First, create a Slack app at
+                            <a href="https://api.slack.com/apps" target="_blank">api.slack.com/apps</a>
+                            and copy your credentials below.
+                        </p>
+                        <input type="text" id="slack-client-id" class="config-input" placeholder="Client ID" />
+                        <input type="password" id="slack-client-secret" class="config-input" placeholder="Client Secret" />
+                        <button type="button" id="save-slack-credentials-btn" class="save-credentials-btn">
+                            Save Credentials
+                        </button>
+                    </div>
+                    <!-- Connect section - shown after credentials configured -->
+                    <div id="slack-not-connected" class="oauth-status" style="display: none;">
+                        <div id="slack-credentials-status" class="slack-credentials-configured">
+                            <span>✓</span> App credentials configured
+                        </div>
                         <button type="button" id="connect-slack-btn" class="auth-button slack-connect-btn">
                             Connect to Slack
                         </button>

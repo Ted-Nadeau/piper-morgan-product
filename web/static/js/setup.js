@@ -360,6 +360,112 @@
     }
 
     // =========================================================================
+    // Slack App Credential Functions (Issue #576)
+    // =========================================================================
+
+    // Check if Slack app credentials are configured
+    async function checkSlackCredentialsStatus() {
+        try {
+            const response = await fetch('/api/v1/settings/integrations/slack/app-credentials/status');
+            if (!response.ok) {
+                // If endpoint fails, show config form as fallback
+                showSlackConfigNeeded();
+                return false;
+            }
+            const data = await response.json();
+
+            if (data.configured) {
+                showSlackCredentialsConfigured();
+                return true;
+            } else {
+                showSlackConfigNeeded();
+                return false;
+            }
+        } catch (err) {
+            console.log('Slack credentials status check failed:', err);
+            // On error, show config form
+            showSlackConfigNeeded();
+            return false;
+        }
+    }
+
+    // Show credential configuration form
+    function showSlackConfigNeeded() {
+        const configSection = document.getElementById('slack-config-needed');
+        const notConnected = document.getElementById('slack-not-connected');
+        const connected = document.getElementById('slack-connected');
+
+        if (configSection) configSection.style.display = 'block';
+        if (notConnected) notConnected.style.display = 'none';
+        if (connected) connected.style.display = 'none';
+    }
+
+    // Show Connect button (credentials configured)
+    function showSlackCredentialsConfigured() {
+        const configSection = document.getElementById('slack-config-needed');
+        const notConnected = document.getElementById('slack-not-connected');
+
+        if (configSection) configSection.style.display = 'none';
+        if (notConnected) notConnected.style.display = 'block';
+    }
+
+    // Save Slack app credentials
+    async function saveSlackCredentials() {
+        const clientId = document.getElementById('slack-client-id')?.value?.trim();
+        const clientSecret = document.getElementById('slack-client-secret')?.value?.trim();
+        const btn = document.getElementById('save-slack-credentials-btn');
+
+        if (!clientId || !clientSecret) {
+            showSlackError('Both Client ID and Client Secret are required');
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+        }
+
+        try {
+            const response = await fetch('/api/v1/settings/integrations/slack/app-credentials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: clientId,
+                    client_secret: clientSecret
+                })
+            });
+
+            if (response.ok) {
+                // Clear inputs
+                document.getElementById('slack-client-id').value = '';
+                document.getElementById('slack-client-secret').value = '';
+
+                // Show success and switch to connect view
+                if (typeof showToast === 'function') {
+                    showToast('success', 'Slack app credentials saved');
+                }
+                showSlackCredentialsConfigured();
+            } else {
+                const error = await response.json();
+                showSlackError(error.detail || 'Failed to save credentials');
+            }
+        } catch (err) {
+            showSlackError('Failed to save credentials. Please try again.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Save Credentials';
+            }
+        }
+    }
+
+    // Event listener for save credentials button
+    const saveSlackCredentialsBtn = document.getElementById('save-slack-credentials-btn');
+    if (saveSlackCredentialsBtn) {
+        saveSlackCredentialsBtn.addEventListener('click', saveSlackCredentials);
+    }
+
+    // =========================================================================
     // Slack OAuth Functions (Issue #528: ALPHA-SETUP-SLACK)
     // =========================================================================
 
@@ -462,8 +568,14 @@
     }
 
     // Initialize Slack OAuth on page load
+    // Issue #576: Check credentials first, then OAuth status
     checkSlackCallbackParams();
-    checkSlackStatus();
+    checkSlackCredentialsStatus().then(credentialsConfigured => {
+        if (credentialsConfigured) {
+            // Only check OAuth status if credentials are configured
+            checkSlackStatus();
+        }
+    });
 
     // =========================================================================
     // Google Calendar OAuth Functions (Issue #529: ALPHA-SETUP-CALENDAR)

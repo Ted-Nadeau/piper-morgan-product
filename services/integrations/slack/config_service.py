@@ -162,13 +162,16 @@ class SlackConfigService:
 
     def _load_config(self) -> SlackConfig:
         """
-        Load configuration with 3-layer priority: env vars > user config > defaults.
+        Load configuration with 4-layer priority: env vars > user config > keychain > defaults.
 
         Priority order:
         1. Environment variables (highest)
         2. PIPER.user.md configuration (middle)
-        3. Hardcoded defaults (lowest)
+        3. OS Keychain (secure storage, Issue #575)
+        4. Hardcoded defaults (lowest)
         """
+        from services.infrastructure.keychain_service import KeychainService
+
         # Load user configuration from PIPER.user.md
         user_config = self._load_from_user_config()
 
@@ -179,9 +182,32 @@ class SlackConfigService:
         features_config = user_config.get("features", {})
         oauth_config = user_config.get("oauth", {})
 
+        # Issue #575/#576: Check keychain for credentials as fallback
+        keychain = KeychainService()
+        keychain_bot_token = keychain.get_api_key("slack_bot") or ""
+        keychain_client_id = keychain.get_api_key("slack_client_id") or ""
+        keychain_client_secret = keychain.get_api_key("slack_client_secret") or ""
+
+        # 4-layer priority: env > user config > keychain > default
+        bot_token = (
+            os.getenv("SLACK_BOT_TOKEN") or auth_config.get("bot_token") or keychain_bot_token or ""
+        )
+        client_id = (
+            os.getenv("SLACK_CLIENT_ID")
+            or oauth_config.get("client_id")
+            or keychain_client_id
+            or ""
+        )
+        client_secret = (
+            os.getenv("SLACK_CLIENT_SECRET")
+            or oauth_config.get("client_secret")
+            or keychain_client_secret
+            or ""
+        )
+
         return SlackConfig(
-            # Authentication (3-layer priority for each field)
-            bot_token=os.getenv("SLACK_BOT_TOKEN", auth_config.get("bot_token", "")),
+            # Authentication (4-layer priority for bot_token)
+            bot_token=bot_token,
             app_token=os.getenv("SLACK_APP_TOKEN", auth_config.get("app_token", "")),
             signing_secret=os.getenv("SLACK_SIGNING_SECRET", auth_config.get("signing_secret", "")),
             # API Configuration
@@ -215,9 +241,9 @@ class SlackConfigService:
             environment=SlackEnvironment(
                 os.getenv("SLACK_ENVIRONMENT", api_config.get("environment", "development"))
             ),
-            # OAuth Settings
-            client_id=os.getenv("SLACK_CLIENT_ID", oauth_config.get("client_id", "")),
-            client_secret=os.getenv("SLACK_CLIENT_SECRET", oauth_config.get("client_secret", "")),
+            # OAuth Settings (4-layer priority)
+            client_id=client_id,
+            client_secret=client_secret,
             redirect_uri=os.getenv("SLACK_REDIRECT_URI", oauth_config.get("redirect_uri", "")),
             # Webhook Configuration
             webhook_url=os.getenv("SLACK_WEBHOOK_URL", behavior_config.get("webhook_url", "")),

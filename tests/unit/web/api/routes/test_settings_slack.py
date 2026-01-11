@@ -1,6 +1,7 @@
 """
 Unit tests for Slack Settings API
 Issue #528: ALPHA-SETUP-SLACK - Add Slack OAuth to setup wizard
+Issue #576: OAuth App Credential Configuration in UI
 
 Tests the Slack OAuth management endpoints in settings_integrations.py.
 """
@@ -10,9 +11,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from web.api.routes.settings_integrations import (
+    SlackAppCredentialsRequest,
     disconnect_slack,
+    get_slack_app_credentials_status,
     get_slack_oauth_url,
     get_slack_settings,
+    save_slack_app_credentials,
 )
 
 
@@ -211,3 +215,141 @@ class TestIntegrationRegistrySlackUrl:
         assert slack_config["configure_url"] == "/settings/integrations/slack"
         # Should NOT be None anymore
         assert slack_config["configure_url"] is not None
+
+
+class TestSlackAppCredentials:
+    """Tests for Slack app credentials endpoints (Issue #576)"""
+
+    @pytest.mark.asyncio
+    async def test_save_credentials_stores_in_keychain(self):
+        """Should store client_id and client_secret in keychain"""
+        mock_keychain = MagicMock()
+        mock_user = MagicMock()
+        mock_user.sub = "test_user"
+
+        credentials = SlackAppCredentialsRequest(
+            client_id="1234567890.1234567890", client_secret="test_secret_value"
+        )
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            result = await save_slack_app_credentials(credentials, mock_user)
+
+            assert result["success"] is True
+            assert "saved" in result["message"].lower()
+            # Verify keychain was called with correct keys
+            mock_keychain.store_api_key.assert_any_call("slack_client_id", "1234567890.1234567890")
+            mock_keychain.store_api_key.assert_any_call("slack_client_secret", "test_secret_value")
+
+    @pytest.mark.asyncio
+    async def test_save_credentials_strips_whitespace(self):
+        """Should strip whitespace from credentials before storing"""
+        mock_keychain = MagicMock()
+        mock_user = MagicMock()
+        mock_user.sub = "test_user"
+
+        credentials = SlackAppCredentialsRequest(
+            client_id="  1234567890.1234567890  ", client_secret="  secret_with_spaces  "
+        )
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            await save_slack_app_credentials(credentials, mock_user)
+
+            # Verify whitespace was stripped
+            mock_keychain.store_api_key.assert_any_call("slack_client_id", "1234567890.1234567890")
+            mock_keychain.store_api_key.assert_any_call("slack_client_secret", "secret_with_spaces")
+
+    @pytest.mark.asyncio
+    async def test_get_status_returns_configured_when_both_present(self):
+        """Should return configured=True when both client_id and client_secret exist"""
+        mock_config_service = MagicMock()
+        mock_config = MagicMock()
+        mock_config.client_id = "1234567890.1234567890"
+        mock_config.client_secret = "secret_value"
+        mock_config_service.get_config.return_value = mock_config
+        mock_user = MagicMock()
+
+        with patch(
+            "services.integrations.slack.config_service.SlackConfigService",
+            return_value=mock_config_service,
+        ):
+            result = await get_slack_app_credentials_status(mock_user)
+
+            assert result.configured is True
+            assert result.has_client_id is True
+            assert result.has_client_secret is True
+
+    @pytest.mark.asyncio
+    async def test_get_status_returns_not_configured_when_missing_id(self):
+        """Should return configured=False when client_id is missing"""
+        mock_config_service = MagicMock()
+        mock_config = MagicMock()
+        mock_config.client_id = ""  # Empty
+        mock_config.client_secret = "secret_value"
+        mock_config_service.get_config.return_value = mock_config
+        mock_user = MagicMock()
+
+        with patch(
+            "services.integrations.slack.config_service.SlackConfigService",
+            return_value=mock_config_service,
+        ):
+            result = await get_slack_app_credentials_status(mock_user)
+
+            assert result.configured is False
+            assert result.has_client_id is False
+            assert result.has_client_secret is True
+
+    @pytest.mark.asyncio
+    async def test_get_status_returns_not_configured_when_missing_secret(self):
+        """Should return configured=False when client_secret is missing"""
+        mock_config_service = MagicMock()
+        mock_config = MagicMock()
+        mock_config.client_id = "1234567890.1234567890"
+        mock_config.client_secret = ""  # Empty
+        mock_config_service.get_config.return_value = mock_config
+        mock_user = MagicMock()
+
+        with patch(
+            "services.integrations.slack.config_service.SlackConfigService",
+            return_value=mock_config_service,
+        ):
+            result = await get_slack_app_credentials_status(mock_user)
+
+            assert result.configured is False
+            assert result.has_client_id is True
+            assert result.has_client_secret is False
+
+    @pytest.mark.asyncio
+    async def test_get_status_never_exposes_credentials(self):
+        """Status response should never contain actual credential values"""
+        mock_config_service = MagicMock()
+        mock_config = MagicMock()
+        mock_config.client_id = "secret_client_id"
+        mock_config.client_secret = "super_secret_value"
+        mock_config_service.get_config.return_value = mock_config
+        mock_user = MagicMock()
+
+        with patch(
+            "services.integrations.slack.config_service.SlackConfigService",
+            return_value=mock_config_service,
+        ):
+            result = await get_slack_app_credentials_status(mock_user)
+
+            # Convert to dict to check all fields
+            result_dict = result.model_dump()
+
+            # Should not contain actual credential values
+            for value in result_dict.values():
+                if isinstance(value, str):
+                    assert "secret_client_id" not in value
+                    assert "super_secret_value" not in value
+
+            # Only boolean fields should exist
+            assert isinstance(result.configured, bool)
+            assert isinstance(result.has_client_id, bool)
+            assert isinstance(result.has_client_secret, bool)

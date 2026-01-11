@@ -6,19 +6,106 @@ Allows users to connect/disconnect OAuth-based integrations
 (Slack, Calendar) after initial setup is complete.
 
 Issue #529: ALPHA-SETUP-CALENDAR (Settings integration)
+Issue #570: Slack Channel Selection Settings
 """
 
+import json
 import os
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import quote
 
 import structlog
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from starlette.responses import RedirectResponse
+
+from services.auth.auth_middleware import get_current_user
+from services.auth.jwt_service import JWTClaims
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1/settings/integrations", tags=["settings-integrations"])
+
+
+# ============================================================================
+# Pydantic Models for Slack Preferences (Issue #570)
+# ============================================================================
+
+
+class SlackChannel(BaseModel):
+    """Slack channel representation."""
+
+    id: str
+    name: str
+    is_private: bool = False
+
+
+class SlackChannelsResponse(BaseModel):
+    """Response containing list of Slack channels."""
+
+    channels: List[SlackChannel]
+
+
+class SlackPreferencesRequest(BaseModel):
+    """Request body for saving Slack preferences."""
+
+    notification_channel: Optional[str] = None
+    monitored_channels: List[str] = []
+    default_response_channel: Optional[str] = None
+
+
+class SlackPreferencesResponse(BaseModel):
+    """Response containing Slack preferences."""
+
+    notification_channel: Optional[str] = None
+    monitored_channels: List[str] = []
+    default_response_channel: Optional[str] = None
+
+
+# ============================================================================
+# Pydantic Models for Slack App Credentials (Issue #576)
+# ============================================================================
+
+
+class SlackAppCredentialsRequest(BaseModel):
+    """Request body for saving Slack app credentials."""
+
+    client_id: str
+    client_secret: str
+
+
+class SlackAppCredentialsStatusResponse(BaseModel):
+    """Response for credential status check (never exposes actual values)."""
+
+    configured: bool
+    has_client_id: bool
+    has_client_secret: bool
+
+
+# Simple file-based storage for Slack preferences (Issue #570)
+# This is a minimal implementation - could be moved to DB later
+SLACK_PREFERENCES_FILE = "data/slack_preferences.json"
+
+
+def _load_slack_preferences() -> dict:
+    """Load all Slack preferences from file."""
+    try:
+        if os.path.exists(SLACK_PREFERENCES_FILE):
+            with open(SLACK_PREFERENCES_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning("slack_preferences_load_failed", error=str(e))
+    return {}
+
+
+def _save_slack_preferences(prefs: dict) -> None:
+    """Save all Slack preferences to file."""
+    try:
+        os.makedirs(os.path.dirname(SLACK_PREFERENCES_FILE), exist_ok=True)
+        with open(SLACK_PREFERENCES_FILE, "w") as f:
+            json.dump(prefs, f, indent=2)
+    except Exception as e:
+        logger.error("slack_preferences_save_failed", error=str(e))
 
 
 # ============================================================================
@@ -155,6 +242,223 @@ async def disconnect_slack():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disconnect Slack: {str(e)}",
+        )
+
+
+# ============================================================================
+# Slack Channel Preferences (Issue #570)
+# ============================================================================
+
+
+@router.get("/slack/channels", response_model=SlackChannelsResponse)
+async def get_slack_channels(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Fetch available Slack channels for the user.
+
+    Returns list of channels the Slack bot has access to.
+    Issue #570: Slack Channel Selection Settings
+    """
+    try:
+        from services.integrations.slack.slack_client import SlackClient
+
+        client = SlackClient()
+        response = await client.list_channels()
+
+        if not response.success:
+            logger.warning(
+                "slack_channels_fetch_failed",
+                error=response.error.message if response.error else "Unknown error",
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to fetch Slack channels: {response.error.message if response.error else 'Unknown error'}",
+            )
+
+        # Parse channels from Slack API response
+        channels_data = response.data.get("channels", [])
+        channels = [
+            SlackChannel(
+                id=ch.get("id", ""),
+                name=ch.get("name", ""),
+                is_private=ch.get("is_private", False),
+            )
+            for ch in channels_data
+            if ch.get("id") and ch.get("name")
+        ]
+
+        logger.info("slack_channels_fetched", count=len(channels))
+
+        return SlackChannelsResponse(channels=channels)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("slack_channels_fetch_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch Slack channels: {str(e)}",
+        )
+
+
+@router.get("/slack/preferences", response_model=SlackPreferencesResponse)
+async def get_slack_preferences(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get saved Slack preferences for the current user.
+
+    Returns notification channel, monitored channels, and default response channel.
+    Issue #570: Slack Channel Selection Settings
+    """
+    try:
+        all_prefs = _load_slack_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+
+        logger.info("slack_preferences_loaded", user_id=str(current_user.sub))
+
+        return SlackPreferencesResponse(
+            notification_channel=user_prefs.get("notification_channel"),
+            monitored_channels=user_prefs.get("monitored_channels", []),
+            default_response_channel=user_prefs.get("default_response_channel"),
+        )
+
+    except Exception as e:
+        logger.error("slack_preferences_load_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load Slack preferences: {str(e)}",
+        )
+
+
+@router.post("/slack/preferences", response_model=SlackPreferencesResponse)
+async def save_slack_preferences(
+    preferences: SlackPreferencesRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Save Slack preferences for the current user.
+
+    Stores notification channel, monitored channels, and default response channel.
+    Issue #570: Slack Channel Selection Settings
+    """
+    try:
+        all_prefs = _load_slack_preferences()
+
+        # Store preferences for this user
+        user_prefs = {
+            "notification_channel": preferences.notification_channel,
+            "monitored_channels": preferences.monitored_channels,
+            "default_response_channel": preferences.default_response_channel,
+        }
+
+        all_prefs[str(current_user.sub)] = user_prefs
+        _save_slack_preferences(all_prefs)
+
+        logger.info(
+            "slack_preferences_saved",
+            user_id=str(current_user.sub),
+            notification_channel=preferences.notification_channel,
+            monitored_count=len(preferences.monitored_channels),
+        )
+
+        return SlackPreferencesResponse(
+            notification_channel=preferences.notification_channel,
+            monitored_channels=preferences.monitored_channels,
+            default_response_channel=preferences.default_response_channel,
+        )
+
+    except Exception as e:
+        logger.error("slack_preferences_save_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save Slack preferences: {str(e)}",
+        )
+
+
+# ============================================================================
+# Slack App Credentials Management (Issue #576)
+# ============================================================================
+
+
+@router.post("/slack/app-credentials")
+async def save_slack_app_credentials(
+    credentials: SlackAppCredentialsRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Save Slack app credentials to secure keychain storage.
+
+    Stores client_id and client_secret for OAuth flow.
+    Issue #576: OAuth App Credential Configuration in UI
+
+    Security: Credentials are stored in OS keychain, never logged or exposed.
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        # Validate both fields are non-empty
+        if not credentials.client_id.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="client_id is required and cannot be empty",
+            )
+        if not credentials.client_secret.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="client_secret is required and cannot be empty",
+            )
+
+        # Store in keychain
+        keychain = KeychainService()
+        keychain.store_api_key("slack_client_id", credentials.client_id.strip())
+        keychain.store_api_key("slack_client_secret", credentials.client_secret.strip())
+
+        logger.info(
+            "slack_app_credentials_saved",
+            user_id=str(current_user.sub),
+        )
+
+        return {"success": True, "message": "Slack app credentials saved securely"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("slack_app_credentials_save_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save Slack app credentials: {str(e)}",
+        )
+
+
+@router.get("/slack/app-credentials/status", response_model=SlackAppCredentialsStatusResponse)
+async def get_slack_app_credentials_status(
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Check if Slack app credentials are configured.
+
+    Returns boolean status only - NEVER returns actual credential values.
+    Issue #576: OAuth App Credential Configuration in UI
+    """
+    from services.integrations.slack.config_service import SlackConfigService
+
+    try:
+        config_service = SlackConfigService()
+        config = config_service.get_config()
+
+        has_client_id = bool(config.client_id)
+        has_client_secret = bool(config.client_secret)
+        configured = has_client_id and has_client_secret
+
+        return SlackAppCredentialsStatusResponse(
+            configured=configured,
+            has_client_id=has_client_id,
+            has_client_secret=has_client_secret,
+        )
+
+    except Exception as e:
+        logger.error("slack_app_credentials_status_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to check Slack app credentials status: {str(e)}",
         )
 
 
