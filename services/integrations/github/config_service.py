@@ -114,6 +114,9 @@ class GitHubConfigService:
         Get GitHub authentication token with environment-specific handling.
 
         Follows ADR-010: ConfigService for application layer configuration access.
+
+        Priority: env vars > keychain
+        Issue #578: Added keychain fallback for UI-configured tokens.
         """
         # Check cache first
         if "auth_token" in self._config_cache:
@@ -132,6 +135,16 @@ class GitHubConfigService:
             token = os.getenv(env_var)
             if token:
                 break
+
+        # Issue #578: Fallback to keychain if env vars not set
+        if not token:
+            try:
+                from services.infrastructure.keychain_service import KeychainService
+
+                keychain = KeychainService()
+                token = keychain.get_api_key("github_token") or None
+            except Exception:
+                pass  # Keychain not available, continue with None
 
         # Cache the result
         self._config_cache["auth_token"] = token

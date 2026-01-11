@@ -234,3 +234,91 @@ class TestIntegrationRegistryGitHubUrl:
         assert github_config["configure_url"] == "/settings/integrations/github"
         # Should NOT point to setup wizard
         assert github_config["configure_url"] != "/setup#step-3"
+
+
+class TestGitHubConfigServiceKeychainFallback:
+    """Tests for GitHubConfigService keychain fallback (Issue #578)"""
+
+    def test_get_token_returns_env_var_first(self):
+        """Should return env var token when available (priority over keychain)"""
+        from services.integrations.github.config_service import GitHubConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "ghp_keychain_token"
+
+        with (
+            patch.dict("os.environ", {"GITHUB_TOKEN": "ghp_env_token"}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = GitHubConfigService()
+            config_service.clear_cache()  # Ensure fresh lookup
+            token = config_service.get_authentication_token()
+
+            assert token == "ghp_env_token"
+            # Keychain should NOT be called when env var is present
+            mock_keychain.get_api_key.assert_not_called()
+
+    def test_get_token_falls_back_to_keychain(self):
+        """Should fall back to keychain when no env var is set (Issue #578)"""
+        from services.integrations.github.config_service import GitHubConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "ghp_keychain_token"
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = GitHubConfigService()
+            config_service.clear_cache()  # Ensure fresh lookup
+            token = config_service.get_authentication_token()
+
+            assert token == "ghp_keychain_token"
+            mock_keychain.get_api_key.assert_called_once_with("github_token")
+
+    def test_get_token_returns_none_when_nothing_configured(self):
+        """Should return None when neither env var nor keychain has token"""
+        from services.integrations.github.config_service import GitHubConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = GitHubConfigService()
+            config_service.clear_cache()  # Ensure fresh lookup
+            token = config_service.get_authentication_token()
+
+            assert token is None
+
+    def test_get_token_handles_keychain_error_gracefully(self):
+        """Should return None if keychain throws an error"""
+        from services.integrations.github.config_service import GitHubConfigService
+
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.side_effect = Exception("Keychain unavailable")
+
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+        ):
+            config_service = GitHubConfigService()
+            config_service.clear_cache()  # Ensure fresh lookup
+            token = config_service.get_authentication_token()
+
+            # Should gracefully return None, not raise
+            assert token is None
