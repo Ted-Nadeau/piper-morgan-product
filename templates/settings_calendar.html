@@ -197,6 +197,118 @@
         color: #2c3e50;
       }
 
+      /* App Configuration Card (Issue #577) */
+      .app-config-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .app-config-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .app-config-card .description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 16px;
+        line-height: 1.5;
+      }
+
+      .app-config-card .help-link {
+        display: inline-block;
+        font-size: 13px;
+        color: #3498db;
+        text-decoration: none;
+        margin-bottom: 16px;
+      }
+
+      .app-config-card .help-link:hover {
+        text-decoration: underline;
+      }
+
+      .app-config-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+
+      .app-config-status.configured {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .app-config-status.not-configured {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .config-form-group {
+        margin-bottom: 16px;
+      }
+
+      .config-form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 6px;
+      }
+
+      .config-form-group input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+
+      .config-form-group input:focus {
+        outline: none;
+        border-color: #4285f4;
+      }
+
+      .config-form-group .help-text {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 4px;
+      }
+
+      .config-button-group {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .btn-primary {
+        background: #4285f4;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #3367d6;
+      }
+
+      .btn-secondary {
+        background: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #ddd;
+      }
+
+      .btn-secondary:hover {
+        background: #e9ecef;
+      }
+
       /* Loading State */
       .loading-spinner {
         width: 20px;
@@ -275,6 +387,54 @@
         </div>
       </div>
 
+      <!-- App Configuration Card (Issue #577) -->
+      <div class="app-config-card" id="app-config-card">
+        <h3>🔑 App Configuration</h3>
+        <p class="description">
+          Configure your Google OAuth app credentials. These are required for Calendar authorization.
+        </p>
+        <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="help-link">
+          📖 Create or find your credentials on Google Cloud Console
+        </a>
+
+        <!-- Status indicator -->
+        <div id="app-config-status" class="app-config-status not-configured">
+          <span id="app-config-status-icon">❌</span>
+          <span id="app-config-status-text">Checking credentials...</span>
+        </div>
+
+        <!-- Configuration form (hidden when configured, shown when not) -->
+        <div id="app-config-form" style="display: none;">
+          <div class="config-form-group">
+            <label for="calendar-client-id">Client ID</label>
+            <input type="text" id="calendar-client-id" placeholder="e.g., 123456789.apps.googleusercontent.com" />
+            <p class="help-text">Found in your Google Cloud Console → APIs & Services → Credentials</p>
+          </div>
+
+          <div class="config-form-group">
+            <label for="calendar-client-secret">Client Secret</label>
+            <input type="password" id="calendar-client-secret" placeholder="Your client secret (GOCSPX-...)" />
+            <p class="help-text">Keep this secret! It authenticates your app with Google.</p>
+          </div>
+
+          <div class="config-button-group">
+            <button class="btn btn-primary" id="save-app-config-btn" onclick="saveAppCredentials()">
+              Save Credentials
+            </button>
+            <button class="btn btn-secondary" id="cancel-config-btn" onclick="cancelConfigEdit()" style="display: none;">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Configured view (shown when configured) -->
+        <div id="app-config-configured" style="display: none;">
+          <button class="btn btn-secondary" onclick="showConfigForm()">
+            Update Credentials
+          </button>
+        </div>
+      </div>
+
       <!-- OAuth Card -->
       <div class="oauth-card" id="oauth-card">
         <h3 id="oauth-title">Connect to Google Calendar</h3>
@@ -312,11 +472,13 @@
 
     {% include 'components/toast.html' %}
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/timestamp-utils.js"></script>
     <script src="/static/js/chat.js"></script>
     <script>
       // Check for OAuth callback result
       document.addEventListener('DOMContentLoaded', function() {
         checkOAuthCallback();
+        loadAppCredentialsStatus();  // Issue #577: Check app credentials first
         loadCalendarStatus();
       });
 
@@ -437,6 +599,142 @@
           showToast('error', error.message, 'Disconnect Failed');
           disconnectBtnEl.disabled = false;
           disconnectBtnEl.textContent = 'Disconnect';
+        }
+      }
+
+      // ============================================================================
+      // App Credentials Functions (Issue #577)
+      // ============================================================================
+
+      // Track whether credentials are configured (for edit mode logic)
+      let appCredentialsConfigured = false;
+
+      async function loadAppCredentialsStatus() {
+        try {
+          const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials/status');
+          if (!response.ok) {
+            // If 401, user not logged in - show not configured
+            updateAppConfigUI(false);
+            return;
+          }
+
+          const data = await response.json();
+          appCredentialsConfigured = data.configured;
+          updateAppConfigUI(data.configured);
+        } catch (error) {
+          console.error('Failed to load app credentials status:', error);
+          updateAppConfigUI(false);
+        }
+      }
+
+      function updateAppConfigUI(configured) {
+        const statusEl = document.getElementById('app-config-status');
+        const statusIconEl = document.getElementById('app-config-status-icon');
+        const statusTextEl = document.getElementById('app-config-status-text');
+        const formEl = document.getElementById('app-config-form');
+        const configuredEl = document.getElementById('app-config-configured');
+        const cancelBtn = document.getElementById('cancel-config-btn');
+        const oauthCard = document.getElementById('oauth-card');
+
+        if (configured) {
+          // Configured - show green status and "Update" button
+          statusEl.className = 'app-config-status configured';
+          statusIconEl.textContent = '✅';
+          statusTextEl.textContent = 'App credentials configured';
+          formEl.style.display = 'none';
+          configuredEl.style.display = 'block';
+          // Enable OAuth card
+          if (oauthCard) oauthCard.style.opacity = '1';
+        } else {
+          // Not configured - show red status and form
+          statusEl.className = 'app-config-status not-configured';
+          statusIconEl.textContent = '❌';
+          statusTextEl.textContent = 'App credentials not configured - required for OAuth';
+          formEl.style.display = 'block';
+          configuredEl.style.display = 'none';
+          cancelBtn.style.display = 'none';
+          // Dim OAuth card to indicate it won't work
+          if (oauthCard) oauthCard.style.opacity = '0.5';
+        }
+      }
+
+      function showConfigForm() {
+        const formEl = document.getElementById('app-config-form');
+        const configuredEl = document.getElementById('app-config-configured');
+        const cancelBtn = document.getElementById('cancel-config-btn');
+
+        formEl.style.display = 'block';
+        configuredEl.style.display = 'none';
+        // Show cancel button only if already configured (editing mode)
+        if (appCredentialsConfigured) {
+          cancelBtn.style.display = 'block';
+        }
+        // Clear form fields for security
+        document.getElementById('calendar-client-id').value = '';
+        document.getElementById('calendar-client-secret').value = '';
+      }
+
+      function cancelConfigEdit() {
+        const formEl = document.getElementById('app-config-form');
+        const configuredEl = document.getElementById('app-config-configured');
+
+        formEl.style.display = 'none';
+        configuredEl.style.display = 'block';
+        // Clear form fields
+        document.getElementById('calendar-client-id').value = '';
+        document.getElementById('calendar-client-secret').value = '';
+      }
+
+      async function saveAppCredentials() {
+        const clientId = document.getElementById('calendar-client-id').value.trim();
+        const clientSecret = document.getElementById('calendar-client-secret').value.trim();
+
+        // Validate inputs
+        if (!clientId) {
+          showToast('error', 'Client ID is required', 'Validation Error');
+          return;
+        }
+        if (!clientSecret) {
+          showToast('error', 'Client Secret is required', 'Validation Error');
+          return;
+        }
+
+        const saveBtn = document.getElementById('save-app-config-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              client_id: clientId,
+              client_secret: clientSecret
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to save credentials');
+          }
+
+          const data = await response.json();
+          if (data.success) {
+            showToast('success', 'Google Calendar app credentials saved securely', 'Credentials Saved');
+            appCredentialsConfigured = true;
+            updateAppConfigUI(true);
+            // Clear the form for security
+            document.getElementById('calendar-client-id').value = '';
+            document.getElementById('calendar-client-secret').value = '';
+          } else {
+            throw new Error(data.message || 'Failed to save credentials');
+          }
+        } catch (error) {
+          console.error('Failed to save credentials:', error);
+          showToast('error', error.message, 'Save Failed');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Credentials';
         }
       }
 

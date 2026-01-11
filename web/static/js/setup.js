@@ -578,6 +578,112 @@
     });
 
     // =========================================================================
+    // Google Calendar App Credential Functions (Issue #577)
+    // =========================================================================
+
+    // Check if Calendar app credentials are configured
+    async function checkCalendarCredentialsStatus() {
+        try {
+            const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials/status');
+            if (!response.ok) {
+                // If endpoint fails, show config form as fallback
+                showCalendarConfigNeeded();
+                return false;
+            }
+            const data = await response.json();
+
+            if (data.configured) {
+                showCalendarCredentialsConfigured();
+                return true;
+            } else {
+                showCalendarConfigNeeded();
+                return false;
+            }
+        } catch (err) {
+            console.log('Calendar credentials status check failed:', err);
+            // On error, show config form
+            showCalendarConfigNeeded();
+            return false;
+        }
+    }
+
+    // Show credential configuration form
+    function showCalendarConfigNeeded() {
+        const configSection = document.getElementById('calendar-config-needed');
+        const notConnected = document.getElementById('calendar-not-connected');
+        const connected = document.getElementById('calendar-connected');
+
+        if (configSection) configSection.style.display = 'block';
+        if (notConnected) notConnected.style.display = 'none';
+        if (connected) connected.style.display = 'none';
+    }
+
+    // Show Connect button (credentials configured)
+    function showCalendarCredentialsConfigured() {
+        const configSection = document.getElementById('calendar-config-needed');
+        const notConnected = document.getElementById('calendar-not-connected');
+
+        if (configSection) configSection.style.display = 'none';
+        if (notConnected) notConnected.style.display = 'block';
+    }
+
+    // Save Calendar app credentials
+    async function saveCalendarCredentials() {
+        const clientId = document.getElementById('calendar-client-id')?.value?.trim();
+        const clientSecret = document.getElementById('calendar-client-secret')?.value?.trim();
+        const btn = document.getElementById('save-calendar-credentials-btn');
+
+        if (!clientId || !clientSecret) {
+            showCalendarError('Both Client ID and Client Secret are required');
+            return;
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+        }
+
+        try {
+            const response = await fetch('/api/v1/settings/integrations/calendar/app-credentials', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: clientId,
+                    client_secret: clientSecret
+                })
+            });
+
+            if (response.ok) {
+                // Clear inputs
+                document.getElementById('calendar-client-id').value = '';
+                document.getElementById('calendar-client-secret').value = '';
+
+                // Show success and switch to connect view
+                if (typeof showToast === 'function') {
+                    showToast('success', 'Google Calendar app credentials saved');
+                }
+                showCalendarCredentialsConfigured();
+            } else {
+                const error = await response.json();
+                showCalendarError(error.detail || 'Failed to save credentials');
+            }
+        } catch (err) {
+            showCalendarError('Failed to save credentials. Please try again.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Save Credentials';
+            }
+        }
+    }
+
+    // Event listener for save calendar credentials button
+    const saveCalendarCredentialsBtn = document.getElementById('save-calendar-credentials-btn');
+    if (saveCalendarCredentialsBtn) {
+        saveCalendarCredentialsBtn.addEventListener('click', saveCalendarCredentials);
+    }
+
+    // =========================================================================
     // Google Calendar OAuth Functions (Issue #529: ALPHA-SETUP-CALENDAR)
     // =========================================================================
 
@@ -678,8 +784,14 @@
     }
 
     // Initialize Calendar OAuth on page load
+    // Issue #577: Check credentials first, then OAuth status
     checkCalendarCallbackParams();
-    checkCalendarStatus();
+    checkCalendarCredentialsStatus().then(credentialsConfigured => {
+        if (credentialsConfigured) {
+            // Only check OAuth status if credentials are configured
+            checkCalendarStatus();
+        }
+    });
 
     checkSetupStatus();
 })();

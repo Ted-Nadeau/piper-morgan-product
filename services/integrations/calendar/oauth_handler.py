@@ -55,8 +55,24 @@ class GoogleCalendarOAuthHandler:
     STATE_EXPIRATION = 900
 
     def __init__(self):
+        # Issue #577: Load credentials with keychain fallback
+        # Priority: env vars > keychain
         self.client_id = os.getenv("GOOGLE_CLIENT_ID", "")
         self.client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+        # Fallback to keychain if env vars not set
+        if not self.client_id or not self.client_secret:
+            try:
+                from services.infrastructure.keychain_service import KeychainService
+
+                keychain = KeychainService()
+                if not self.client_id:
+                    self.client_id = keychain.get_api_key("google_calendar_client_id") or ""
+                if not self.client_secret:
+                    self.client_secret = keychain.get_api_key("google_calendar_client_secret") or ""
+            except Exception:
+                pass  # Keychain not available, continue with empty values
+
         self.redirect_uri = os.getenv(
             "GOOGLE_CALENDAR_REDIRECT_URI", "http://localhost:8001/setup/calendar/oauth/callback"
         )

@@ -448,10 +448,29 @@
             </div>
 
             <!-- Google Calendar OAuth Integration (Issue #529: ALPHA-SETUP-CALENDAR) -->
+            <!-- Issue #577: Added credential configuration before OAuth -->
             <div class="form-group">
                 <label>Google Calendar (optional)</label>
                 <div class="calendar-oauth-section">
-                    <div id="calendar-not-connected" class="oauth-status">
+                    <!-- Credential Configuration (Issue #577) - shown when not configured -->
+                    <div id="calendar-config-needed" class="slack-config-section" style="display: none;">
+                        <h4>Configure Google Calendar App</h4>
+                        <p class="help-text">
+                            First, create OAuth credentials at
+                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a>.
+                            Choose "OAuth 2.0 Client ID" → "Web application".
+                        </p>
+                        <input type="text" id="calendar-client-id" class="config-input" placeholder="Client ID (xxxx.apps.googleusercontent.com)" />
+                        <input type="password" id="calendar-client-secret" class="config-input" placeholder="Client Secret (GOCSPX-...)" />
+                        <button type="button" id="save-calendar-credentials-btn" class="save-credentials-btn">
+                            Save Credentials
+                        </button>
+                    </div>
+                    <!-- Connect section - shown after credentials configured -->
+                    <div id="calendar-not-connected" class="oauth-status" style="display: none;">
+                        <div id="calendar-credentials-status" class="slack-credentials-configured">
+                            <span>✓</span> App credentials configured
+                        </div>
                         <button type="button" id="connect-calendar-btn" class="auth-button calendar-connect-btn">
                             Connect Calendar
                         </button>

@@ -82,6 +82,26 @@ class SlackAppCredentialsStatusResponse(BaseModel):
     has_client_secret: bool
 
 
+# ============================================================================
+# Pydantic Models for Calendar App Credentials (Issue #577)
+# ============================================================================
+
+
+class CalendarAppCredentialsRequest(BaseModel):
+    """Request body for saving Google Calendar app credentials."""
+
+    client_id: str
+    client_secret: str
+
+
+class CalendarAppCredentialsStatusResponse(BaseModel):
+    """Response for credential status check (never exposes actual values)."""
+
+    configured: bool
+    has_client_id: bool
+    has_client_secret: bool
+
+
 # Simple file-based storage for Slack preferences (Issue #570)
 # This is a minimal implementation - could be moved to DB later
 SLACK_PREFERENCES_FILE = "data/slack_preferences.json"
@@ -459,6 +479,104 @@ async def get_slack_app_credentials_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check Slack app credentials status: {str(e)}",
+        )
+
+
+# ============================================================================
+# Google Calendar App Credentials Management (Issue #577)
+# ============================================================================
+
+
+@router.post("/calendar/app-credentials")
+async def save_calendar_app_credentials(
+    credentials: CalendarAppCredentialsRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Save Google Calendar app credentials to secure keychain storage.
+
+    Stores client_id and client_secret for OAuth flow.
+    Issue #577: Google Calendar OAuth Credential Configuration in UI
+
+    Security: Credentials are stored in OS keychain, never logged or exposed.
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        # Validate both fields are non-empty
+        if not credentials.client_id.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="client_id is required and cannot be empty",
+            )
+        if not credentials.client_secret.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="client_secret is required and cannot be empty",
+            )
+
+        # Store in keychain
+        keychain = KeychainService()
+        keychain.store_api_key("google_calendar_client_id", credentials.client_id.strip())
+        keychain.store_api_key("google_calendar_client_secret", credentials.client_secret.strip())
+
+        logger.info(
+            "calendar_app_credentials_saved",
+            user_id=str(current_user.sub),
+        )
+
+        return {"success": True, "message": "Google Calendar app credentials saved securely"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("calendar_app_credentials_save_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save Calendar app credentials: {str(e)}",
+        )
+
+
+@router.get("/calendar/app-credentials/status", response_model=CalendarAppCredentialsStatusResponse)
+async def get_calendar_app_credentials_status(
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Check if Google Calendar app credentials are configured.
+
+    Returns boolean status only - NEVER returns actual credential values.
+    Issue #577: Google Calendar OAuth Credential Configuration in UI
+    """
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        keychain = KeychainService()
+
+        # Check keychain for credentials
+        client_id = keychain.get_api_key("google_calendar_client_id") or ""
+        client_secret = keychain.get_api_key("google_calendar_client_secret") or ""
+
+        # Also check environment variables as fallback
+        if not client_id:
+            client_id = os.getenv("GOOGLE_CLIENT_ID", "")
+        if not client_secret:
+            client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
+        has_client_id = bool(client_id)
+        has_client_secret = bool(client_secret)
+        configured = has_client_id and has_client_secret
+
+        return CalendarAppCredentialsStatusResponse(
+            configured=configured,
+            has_client_id=has_client_id,
+            has_client_secret=has_client_secret,
+        )
+
+    except Exception as e:
+        logger.error("calendar_app_credentials_status_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to check Calendar app credentials status: {str(e)}",
         )
 
 
