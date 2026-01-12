@@ -171,6 +171,41 @@ class NotionPreferencesResponse(BaseModel):
     default_database: Optional[str] = None
 
 
+# ============================================================================
+# Pydantic Models for GitHub Repository Preferences (Issue #573)
+# ============================================================================
+
+
+class GitHubRepositoryInfo(BaseModel):
+    """GitHub repository representation."""
+
+    id: int
+    name: str
+    full_name: str
+    description: str = ""
+    selected: bool = False
+
+
+class GitHubRepositoryListResponse(BaseModel):
+    """Response containing list of GitHub repositories."""
+
+    repositories: List[GitHubRepositoryInfo]
+
+
+class GitHubPreferencesRequest(BaseModel):
+    """Request body for saving GitHub preferences."""
+
+    selected_repositories: List[str]  # full_name format
+    default_repository: str
+
+
+class GitHubPreferencesResponse(BaseModel):
+    """Response containing GitHub preferences."""
+
+    selected_repositories: List[str] = []
+    default_repository: Optional[str] = None
+
+
 # Simple file-based storage for Slack preferences (Issue #570)
 # This is a minimal implementation - could be moved to DB later
 SLACK_PREFERENCES_FILE = "data/slack_preferences.json"
@@ -247,6 +282,32 @@ def _save_notion_preferences(prefs: dict) -> None:
             json.dump(prefs, f, indent=2)
     except Exception as e:
         logger.error("notion_preferences_save_failed", error=str(e))
+
+
+# Simple file-based storage for GitHub preferences (Issue #573)
+# Same pattern as Slack, Calendar, and Notion - could be moved to DB later
+GITHUB_PREFERENCES_FILE = "data/github_preferences.json"
+
+
+def _load_github_preferences() -> dict:
+    """Load all GitHub preferences from file."""
+    try:
+        if os.path.exists(GITHUB_PREFERENCES_FILE):
+            with open(GITHUB_PREFERENCES_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning("github_preferences_load_failed", error=str(e))
+    return {}
+
+
+def _save_github_preferences(prefs: dict) -> None:
+    """Save all GitHub preferences to file."""
+    try:
+        os.makedirs(os.path.dirname(GITHUB_PREFERENCES_FILE), exist_ok=True)
+        with open(GITHUB_PREFERENCES_FILE, "w") as f:
+            json.dump(prefs, f, indent=2)
+    except Exception as e:
+        logger.error("github_preferences_save_failed", error=str(e))
 
 
 # ============================================================================
@@ -1601,6 +1662,170 @@ async def disconnect_github():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disconnect GitHub: {str(e)}",
+        )
+
+
+# ============================================================================
+# GitHub Repository Preferences (Issue #573)
+# ============================================================================
+
+
+@router.get("/github/repositories", response_model=GitHubRepositoryListResponse)
+async def get_github_repositories(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get list of accessible GitHub repositories for the user.
+
+    Returns repository IDs, names, and current selection status.
+    Requires a connected GitHub account.
+    Issue #573: GitHub repository preferences
+    """
+    import aiohttp
+
+    from services.infrastructure.keychain_service import KeychainService
+
+    try:
+        keychain = KeychainService()
+        token = keychain.get_api_key("github_token")
+
+        # Also check environment variables as fallback
+        if not token:
+            token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="GitHub not connected. Please add your token first.",
+            )
+
+        # Fetch repositories from GitHub API
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://api.github.com/user/repos",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github.v3+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+                params={"per_page": 100, "sort": "updated"},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    logger.error(
+                        "github_repository_list_failed",
+                        status=response.status,
+                        error=error_text,
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"Failed to fetch repositories from GitHub: {response.status}",
+                    )
+
+                data = await response.json()
+
+        # Load user's saved preferences
+        all_prefs = _load_github_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+        selected_repos = user_prefs.get("selected_repositories", [])
+
+        # Build repository list with selection status
+        repositories = []
+        for repo in data:
+            full_name = repo.get("full_name", "")
+            repositories.append(
+                GitHubRepositoryInfo(
+                    id=repo.get("id", 0),
+                    name=repo.get("name", ""),
+                    full_name=full_name,
+                    description=repo.get("description") or "",
+                    selected=full_name in selected_repos if selected_repos else False,
+                )
+            )
+
+        logger.info(
+            "github_repositories_fetched",
+            count=len(repositories),
+            user_id=str(current_user.sub),
+        )
+
+        return GitHubRepositoryListResponse(repositories=repositories)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("github_repository_list_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch repository list: {str(e)}",
+        )
+
+
+@router.get("/github/preferences", response_model=GitHubPreferencesResponse)
+async def get_github_preferences(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get saved GitHub preferences for the current user.
+
+    Returns selected repositories and default repository designation.
+    Issue #573: GitHub repository preferences
+    """
+    try:
+        all_prefs = _load_github_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+
+        logger.info("github_preferences_loaded", user_id=str(current_user.sub))
+
+        return GitHubPreferencesResponse(
+            selected_repositories=user_prefs.get("selected_repositories", []),
+            default_repository=user_prefs.get("default_repository"),
+        )
+
+    except Exception as e:
+        logger.error("github_preferences_load_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load GitHub preferences: {str(e)}",
+        )
+
+
+@router.post("/github/preferences", response_model=GitHubPreferencesResponse)
+async def save_github_preferences(
+    preferences: GitHubPreferencesRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Save GitHub preferences for the current user.
+
+    Stores selected repositories and default repository designation.
+    Issue #573: GitHub repository preferences
+    """
+    try:
+        all_prefs = _load_github_preferences()
+
+        # Store preferences for this user
+        user_prefs = {
+            "selected_repositories": preferences.selected_repositories,
+            "default_repository": preferences.default_repository,
+        }
+
+        all_prefs[str(current_user.sub)] = user_prefs
+        _save_github_preferences(all_prefs)
+
+        logger.info(
+            "github_preferences_saved",
+            user_id=str(current_user.sub),
+            selected_count=len(preferences.selected_repositories),
+            default_repository=preferences.default_repository,
+        )
+
+        return GitHubPreferencesResponse(
+            selected_repositories=preferences.selected_repositories,
+            default_repository=preferences.default_repository,
+        )
+
+    except Exception as e:
+        logger.error("github_preferences_save_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save GitHub preferences: {str(e)}",
         )
 
 

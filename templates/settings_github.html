@@ -244,6 +244,140 @@
           flex-direction: column;
         }
       }
+
+      /* ============================================
+         Repository Selection Card Styles (Issue #573)
+         ============================================ */
+      .repository-selection-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .repository-selection-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .repository-selection-card .description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin: 0 0 20px 0;
+        line-height: 1.5;
+      }
+
+      .repository-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ecf0f1;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .repository-list-loading {
+        padding: 20px;
+        text-align: center;
+        color: #7f8c8d;
+      }
+
+      .repository-list-empty {
+        padding: 20px;
+        text-align: center;
+        color: #95a5a6;
+        font-style: italic;
+      }
+
+      .repository-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background-color 0.2s;
+      }
+
+      .repository-item:last-child {
+        border-bottom: none;
+      }
+
+      .repository-item:hover {
+        background-color: #f8f9fa;
+      }
+
+      .repository-item input[type="checkbox"] {
+        margin-top: 4px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .repository-item-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .repository-item-name {
+        font-weight: 500;
+        color: #2c3e50;
+        margin: 0 0 4px 0;
+        word-break: break-word;
+      }
+
+      .repository-item-description {
+        font-size: 13px;
+        color: #95a5a6;
+        margin: 0;
+        word-break: break-word;
+      }
+
+      .default-repository-section {
+        margin-bottom: 20px;
+      }
+
+      .default-repository-section label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 8px;
+      }
+
+      .default-repository-section select {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 1px solid #dce4ec;
+        border-radius: 8px;
+        background: white;
+        color: #2c3e50;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237f8c8d' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+      }
+
+      .default-repository-section select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      }
+
+      .repository-selection-buttons {
+        display: flex;
+        gap: 12px;
+      }
+
+      .repository-selection-buttons .btn {
+        flex: 1;
+      }
     </style>
   </head>
   <body>
@@ -321,6 +455,36 @@
           </button>
         </div>
       </div>
+
+      <!-- Repository Selection Card (Issue #573) -->
+      <div class="repository-selection-card" id="repository-selection-card" style="display: none;">
+        <h3>📦 Repository Selection</h3>
+        <p class="description">
+          Choose which GitHub repositories Piper can access. Selected repositories will be used for issue tracking and code reference.
+        </p>
+
+        <div class="repository-list" id="repository-list">
+          <div class="repository-list-loading">
+            <span class="loading-spinner"></span> Loading repositories...
+          </div>
+        </div>
+
+        <div class="default-repository-section">
+          <label for="default-repository-select">Default Repository for Issues:</label>
+          <select id="default-repository-select">
+            <option value="">Select a default repository...</option>
+          </select>
+        </div>
+
+        <div class="repository-selection-buttons">
+          <button class="btn btn-primary" onclick="saveGitHubPreferences()">
+            Save Preferences
+          </button>
+          <button class="btn btn-secondary" onclick="refreshRepositoryList()">
+            Refresh List
+          </button>
+        </div>
+      </div>
     </div>
 
     {% include 'components/toast.html' %}
@@ -353,6 +517,9 @@
         const disconnectBtnEl = document.getElementById('disconnect-btn');
         const tokenEl = document.getElementById('token');
 
+        // Get repository selection card element (Issue #573)
+        const repoCardEl = document.getElementById('repository-selection-card');
+
         if (data.configured && data.valid) {
           // Connected and valid
           iconEl.className = 'status-icon connected';
@@ -363,6 +530,10 @@
           saveBtnEl.textContent = 'Update';
           disconnectBtnEl.style.display = 'block';
           tokenEl.placeholder = '••••••••••••••••••••••••••••••••';
+
+          // Show repository selection card and load repositories (Issue #573)
+          repoCardEl.style.display = 'block';
+          loadRepositoryList();
         } else if (data.configured && !data.valid) {
           // Configured but invalid (stuck state - Issue #541)
           iconEl.className = 'status-icon disconnected';
@@ -373,6 +544,9 @@
           saveBtnEl.textContent = 'Reconnect';
           disconnectBtnEl.style.display = 'block';
           tokenEl.placeholder = 'Enter a new valid token';
+
+          // Hide repository selection when not valid (Issue #573)
+          repoCardEl.style.display = 'none';
         } else {
           // Not configured
           iconEl.className = 'status-icon disconnected';
@@ -383,6 +557,9 @@
           saveBtnEl.textContent = 'Connect';
           disconnectBtnEl.style.display = 'none';
           tokenEl.placeholder = 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+
+          // Hide repository selection when not connected (Issue #573)
+          repoCardEl.style.display = 'none';
         }
       }
 
@@ -474,6 +651,166 @@
           disconnectBtnEl.disabled = false;
           disconnectBtnEl.textContent = 'Disconnect';
         }
+      }
+
+      // ============================================
+      // Repository Selection Functions (Issue #573)
+      // ============================================
+
+      // Store loaded repositories for reference
+      let loadedRepositories = [];
+
+      async function loadRepositoryList() {
+        const listEl = document.getElementById('repository-list');
+        listEl.innerHTML = '<div class="repository-list-loading"><span class="loading-spinner"></span> Loading repositories...</div>';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/github/repositories');
+          if (!response.ok) {
+            if (response.status === 401) {
+              listEl.innerHTML = '<div class="repository-list-empty">Connect GitHub first to see repositories</div>';
+              return;
+            }
+            throw new Error('Failed to load repositories');
+          }
+
+          const data = await response.json();
+          loadedRepositories = data.repositories || [];
+          renderRepositoryList(loadedRepositories);
+        } catch (error) {
+          console.error('Failed to load repositories:', error);
+          listEl.innerHTML = '<div class="repository-list-empty">Failed to load repositories. Please try again.</div>';
+          showToast('error', 'Failed to load GitHub repositories', 'Error');
+        }
+      }
+
+      function renderRepositoryList(repositories) {
+        const listEl = document.getElementById('repository-list');
+
+        if (!repositories || repositories.length === 0) {
+          listEl.innerHTML = '<div class="repository-list-empty">No repositories found. Make sure your token has the correct permissions.</div>';
+          updateDefaultDropdown([]);
+          return;
+        }
+
+        listEl.innerHTML = repositories.map(repo => `
+          <div class="repository-item">
+            <input type="checkbox"
+                   id="repo-${escapeHtml(repo.full_name.replace('/', '-'))}"
+                   value="${escapeHtml(repo.full_name)}"
+                   ${repo.selected ? 'checked' : ''}
+                   onchange="updateDefaultDropdown()">
+            <div class="repository-item-content">
+              <p class="repository-item-name">${escapeHtml(repo.full_name)}</p>
+              ${repo.description ? `<p class="repository-item-description">${escapeHtml(repo.description)}</p>` : ''}
+            </div>
+          </div>
+        `).join('');
+
+        updateDefaultDropdown(repositories);
+      }
+
+      function updateDefaultDropdown(repositories = null) {
+        const selectEl = document.getElementById('default-repository-select');
+        const repos = repositories || loadedRepositories;
+
+        // Get currently selected repository full_names
+        const selectedFullNames = getSelectedRepositoryFullNames();
+
+        // Filter to only selected repositories
+        const selectedRepos = repos.filter(repo => selectedFullNames.includes(repo.full_name));
+
+        // Preserve current selection if still valid
+        const currentDefault = selectEl.value;
+
+        // Build options
+        selectEl.innerHTML = '<option value="">Select a default repository...</option>';
+        selectedRepos.forEach(repo => {
+          const option = document.createElement('option');
+          option.value = repo.full_name;
+          option.textContent = repo.full_name;
+          if (repo.full_name === currentDefault) {
+            option.selected = true;
+          }
+          selectEl.appendChild(option);
+        });
+
+        // Load saved default if not set
+        if (!selectEl.value) {
+          loadGitHubPreferences().then(prefs => {
+            if (prefs && prefs.default_repository && selectedFullNames.includes(prefs.default_repository)) {
+              selectEl.value = prefs.default_repository;
+            }
+          });
+        }
+      }
+
+      function getSelectedRepositoryFullNames() {
+        const checkboxes = document.querySelectorAll('#repository-list input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+      }
+
+      async function loadGitHubPreferences() {
+        try {
+          const response = await fetch('/api/v1/settings/integrations/github/preferences');
+          if (response.ok) {
+            return await response.json();
+          }
+        } catch (error) {
+          console.error('Failed to load preferences:', error);
+        }
+        return null;
+      }
+
+      async function refreshRepositoryList() {
+        showToast('info', 'Refreshing repository list...', 'Refreshing');
+        await loadRepositoryList();
+        showToast('success', 'Repository list refreshed', 'Refreshed');
+      }
+
+      async function saveGitHubPreferences() {
+        const selectedRepositories = getSelectedRepositoryFullNames();
+        const defaultRepository = document.getElementById('default-repository-select').value;
+
+        if (selectedRepositories.length === 0) {
+          showToast('warning', 'Please select at least one repository', 'No Selection');
+          return;
+        }
+
+        if (!defaultRepository) {
+          showToast('warning', 'Please select a default repository', 'No Default');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/github/preferences', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              selected_repositories: selectedRepositories,
+              default_repository: defaultRepository,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to save preferences');
+          }
+
+          showToast('success', 'Repository preferences saved', 'Saved');
+        } catch (error) {
+          console.error('Failed to save preferences:', error);
+          showToast('error', error.message, 'Save Failed');
+        }
+      }
+
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       function showToast(type, message, title = null) {
