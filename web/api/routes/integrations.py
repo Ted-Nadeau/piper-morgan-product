@@ -422,59 +422,119 @@ async def _test_integration(integration_id: str) -> Dict[str, Any]:
 
 
 async def _test_notion() -> Dict[str, Any]:
-    """Test Notion API connection"""
+    """Test Notion API connection using stored API key (Issue #562)"""
     try:
-        from services.integrations.notion.notion_integration_router import NotionIntegrationRouter
+        import aiohttp
 
-        router = NotionIntegrationRouter()
-        if await router.test_connection():
-            return {"success": True}
-        else:
-            return {"success": False, "error_type": "api_key_invalid"}
-    except ImportError:
-        return {"success": False, "error": "Notion integration not available"}
+        from services.integrations.notion.config_service import NotionConfigService
+
+        config_service = NotionConfigService()
+        config = config_service.get_config()
+        api_key = config.api_key
+
+        if not api_key:
+            return {
+                "success": False,
+                "error": "Notion not connected. Please add your API key.",
+                "error_type": "not_configured",
+            }
+
+        # Test with users/me endpoint using stored API key
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://api.notion.com/v1/users/me",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Notion-Version": "2022-06-28",
+                },
+            ) as response:
+                if response.status == 200:
+                    return {"success": True}
+                else:
+                    return {
+                        "success": False,
+                        "error": "API key invalid or expired",
+                        "error_type": "api_key_invalid",
+                    }
+
     except Exception as e:
         return {"success": False, "error": str(e), "error_type": "connection_failed"}
 
 
 async def _test_slack() -> Dict[str, Any]:
-    """Test Slack API connection"""
+    """Test Slack API connection using stored OAuth token (Issue #562)"""
     try:
-        from services.integrations.slack.slack_integration_router import SlackIntegrationRouter
+        import aiohttp
 
-        router = SlackIntegrationRouter()
-        result = await router.test_auth()
-        if result.get("ok"):
-            return {"success": True}
-        else:
+        from services.infrastructure.keychain_service import KeychainService
+
+        keychain = KeychainService()
+        token = keychain.get_api_key("slack")
+
+        if not token:
             return {
                 "success": False,
-                "error": result.get("error", "Unknown error"),
-                "error_type": "token_invalid",
+                "error": "Slack not connected. Click Connect to authorize.",
+                "error_type": "not_configured",
             }
-    except ImportError:
-        return {"success": False, "error": "Slack integration not available"}
+
+        # Test with auth.test endpoint using stored OAuth token
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://slack.com/api/auth.test",
+                headers={"Authorization": f"Bearer {token}"},
+            ) as response:
+                data = await response.json()
+
+                if data.get("ok"):
+                    return {"success": True}
+                else:
+                    return {
+                        "success": False,
+                        "error": data.get("error", "Token invalid or expired"),
+                        "error_type": "token_invalid",
+                    }
+
     except Exception as e:
         return {"success": False, "error": str(e), "error_type": "connection_failed"}
 
 
 async def _test_github() -> Dict[str, Any]:
-    """Test GitHub API connection"""
+    """Test GitHub API connection using stored PAT (Issue #562)"""
     try:
-        from services.integrations.github.github_integration_router import GitHubIntegrationRouter
+        import aiohttp
 
-        router = GitHubIntegrationRouter()
-        result = router.test_connection()
-        if result.get("authenticated"):
-            return {"success": True}
-        else:
+        from services.infrastructure.keychain_service import KeychainService
+
+        keychain = KeychainService()
+        token = keychain.get_api_key("github")
+
+        if not token:
             return {
                 "success": False,
-                "error": result.get("error", "Not authenticated"),
-                "error_type": "token_invalid",
+                "error": "GitHub not connected. Please add your token.",
+                "error_type": "not_configured",
             }
-    except ImportError:
-        return {"success": False, "error": "GitHub integration not available"}
+
+        # Test with user endpoint using stored PAT
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://api.github.com/user",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github.v3+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            ) as response:
+                if response.status == 200:
+                    return {"success": True}
+                else:
+                    return {
+                        "success": False,
+                        "error": "Token invalid or expired",
+                        "error_type": "token_invalid",
+                    }
+
     except Exception as e:
         return {"success": False, "error": str(e), "error_type": "connection_failed"}
 

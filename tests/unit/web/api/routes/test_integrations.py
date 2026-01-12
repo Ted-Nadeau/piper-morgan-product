@@ -228,31 +228,71 @@ class TestAllConnectionsEndpoint:
 
 
 class TestNotionIntegration:
-    """Tests for Notion-specific test logic"""
+    """Tests for Notion-specific test logic (Issue #562: Uses stored API key)"""
 
     @pytest.mark.asyncio
-    async def test_notion_success_returns_true(self):
-        """Notion test should return success when router.test_connection returns True"""
-        mock_router = MagicMock()
-        mock_router.test_connection = AsyncMock(return_value=True)
+    async def test_notion_success_when_api_valid(self):
+        """Notion test should return success when API key is valid (Issue #562)"""
+        mock_config = MagicMock()
+        mock_config.api_key = "test_api_key"
 
-        with patch(
-            "services.integrations.notion.notion_integration_router.NotionIntegrationRouter",
-            return_value=mock_router,
+        mock_config_service = MagicMock()
+        mock_config_service.get_config.return_value = mock_config
+
+        mock_response = AsyncMock()
+        mock_response.status = 200
+
+        mock_session_instance = MagicMock()
+        mock_session_instance.get = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_response), __aexit__=AsyncMock()
+            )
+        )
+
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session_instance)
+        mock_session.__aexit__ = AsyncMock()
+
+        with (
+            patch(
+                "services.integrations.notion.config_service.NotionConfigService",
+                return_value=mock_config_service,
+            ),
+            patch("aiohttp.ClientSession", return_value=mock_session),
         ):
             result = await _test_notion()
 
             assert result["success"] is True
 
     @pytest.mark.asyncio
-    async def test_notion_failure_returns_api_key_invalid(self):
-        """Notion test should return api_key_invalid error type when returns False"""
-        mock_router = MagicMock()
-        mock_router.test_connection = AsyncMock(return_value=False)
+    async def test_notion_failure_when_api_key_invalid(self):
+        """Notion test should return api_key_invalid error type when API returns non-200 (Issue #562)"""
+        mock_config = MagicMock()
+        mock_config.api_key = "invalid_api_key"
 
-        with patch(
-            "services.integrations.notion.notion_integration_router.NotionIntegrationRouter",
-            return_value=mock_router,
+        mock_config_service = MagicMock()
+        mock_config_service.get_config.return_value = mock_config
+
+        mock_response = AsyncMock()
+        mock_response.status = 401
+
+        mock_session_instance = MagicMock()
+        mock_session_instance.get = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_response), __aexit__=AsyncMock()
+            )
+        )
+
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session_instance)
+        mock_session.__aexit__ = AsyncMock()
+
+        with (
+            patch(
+                "services.integrations.notion.config_service.NotionConfigService",
+                return_value=mock_config_service,
+            ),
+            patch("aiohttp.ClientSession", return_value=mock_session),
         ):
             result = await _test_notion()
 
@@ -260,83 +300,190 @@ class TestNotionIntegration:
             assert result["error_type"] == "api_key_invalid"
 
     @pytest.mark.asyncio
-    async def test_notion_import_error_handled(self):
-        """Should handle ImportError gracefully"""
-        with patch.dict(
-            "sys.modules", {"services.integrations.notion.notion_integration_router": None}
+    async def test_notion_not_configured_when_no_api_key(self):
+        """Notion test should return not_configured when no API key stored (Issue #562)"""
+        mock_config = MagicMock()
+        mock_config.api_key = None
+
+        mock_config_service = MagicMock()
+        mock_config_service.get_config.return_value = mock_config
+
+        with patch(
+            "services.integrations.notion.config_service.NotionConfigService",
+            return_value=mock_config_service,
         ):
             result = await _test_notion()
 
             assert result["success"] is False
-            assert "not available" in result.get("error", "")
+            assert result["error_type"] == "not_configured"
+            assert "not connected" in result["error"].lower()
 
 
 class TestGitHubIntegration:
-    """Tests for GitHub-specific test logic"""
+    """Tests for GitHub-specific test logic (Issue #562: Uses stored PAT)"""
 
     @pytest.mark.asyncio
-    async def test_github_success_when_authenticated(self):
-        """GitHub test should succeed when authenticated=True"""
-        mock_router = MagicMock()
-        mock_router.test_connection = MagicMock(return_value={"authenticated": True})
+    async def test_github_success_when_token_valid(self):
+        """GitHub test should succeed when stored PAT is valid (Issue #562)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "ghp_test_token"
 
-        with patch(
-            "services.integrations.github.github_integration_router.GitHubIntegrationRouter",
-            return_value=mock_router,
+        mock_response = AsyncMock()
+        mock_response.status = 200
+
+        mock_session_instance = MagicMock()
+        mock_session_instance.get = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_response), __aexit__=AsyncMock()
+            )
+        )
+
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session_instance)
+        mock_session.__aexit__ = AsyncMock()
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("aiohttp.ClientSession", return_value=mock_session),
         ):
             result = await _test_github()
 
             assert result["success"] is True
 
     @pytest.mark.asyncio
-    async def test_github_failure_when_not_authenticated(self):
-        """GitHub test should fail when authenticated=False"""
-        mock_router = MagicMock()
-        mock_router.test_connection = MagicMock(
-            return_value={"authenticated": False, "error": "Bad credentials"}
+    async def test_github_failure_when_token_invalid(self):
+        """GitHub test should fail when token returns 401 (Issue #562)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "invalid_token"
+
+        mock_response = AsyncMock()
+        mock_response.status = 401
+
+        mock_session_instance = MagicMock()
+        mock_session_instance.get = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_response), __aexit__=AsyncMock()
+            )
         )
 
-        with patch(
-            "services.integrations.github.github_integration_router.GitHubIntegrationRouter",
-            return_value=mock_router,
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session_instance)
+        mock_session.__aexit__ = AsyncMock()
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("aiohttp.ClientSession", return_value=mock_session),
         ):
             result = await _test_github()
 
             assert result["success"] is False
             assert result["error_type"] == "token_invalid"
 
-
-class TestSlackIntegration:
-    """Tests for Slack-specific test logic"""
-
     @pytest.mark.asyncio
-    async def test_slack_success_when_ok(self):
-        """Slack test should succeed when ok=True"""
-        mock_router = MagicMock()
-        mock_router.test_auth = AsyncMock(return_value={"ok": True})
+    async def test_github_not_configured_when_no_token(self):
+        """GitHub test should return not_configured when no token stored (Issue #562)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
 
         with patch(
-            "services.integrations.slack.slack_integration_router.SlackIntegrationRouter",
-            return_value=mock_router,
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            result = await _test_github()
+
+            assert result["success"] is False
+            assert result["error_type"] == "not_configured"
+            assert "not connected" in result["error"].lower()
+
+
+class TestSlackIntegration:
+    """Tests for Slack-specific test logic (Issue #562: Uses stored OAuth token)"""
+
+    @pytest.mark.asyncio
+    async def test_slack_success_when_token_valid(self):
+        """Slack test should succeed when stored OAuth token is valid (Issue #562)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "xoxb-test-token"
+
+        mock_response = AsyncMock()
+        mock_response.json = AsyncMock(return_value={"ok": True})
+
+        mock_session_instance = MagicMock()
+        mock_session_instance.get = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_response), __aexit__=AsyncMock()
+            )
+        )
+
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session_instance)
+        mock_session.__aexit__ = AsyncMock()
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("aiohttp.ClientSession", return_value=mock_session),
         ):
             result = await _test_slack()
 
             assert result["success"] is True
 
     @pytest.mark.asyncio
-    async def test_slack_failure_with_error(self):
-        """Slack test should fail and include error when ok=False"""
-        mock_router = MagicMock()
-        mock_router.test_auth = AsyncMock(return_value={"ok": False, "error": "invalid_auth"})
+    async def test_slack_failure_when_token_invalid(self):
+        """Slack test should fail and include error when API returns ok=False (Issue #562)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = "invalid_token"
 
-        with patch(
-            "services.integrations.slack.slack_integration_router.SlackIntegrationRouter",
-            return_value=mock_router,
+        mock_response = AsyncMock()
+        mock_response.json = AsyncMock(return_value={"ok": False, "error": "invalid_auth"})
+
+        mock_session_instance = MagicMock()
+        mock_session_instance.get = MagicMock(
+            return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_response), __aexit__=AsyncMock()
+            )
+        )
+
+        mock_session = MagicMock()
+        mock_session.__aenter__ = AsyncMock(return_value=mock_session_instance)
+        mock_session.__aexit__ = AsyncMock()
+
+        with (
+            patch(
+                "services.infrastructure.keychain_service.KeychainService",
+                return_value=mock_keychain,
+            ),
+            patch("aiohttp.ClientSession", return_value=mock_session),
         ):
             result = await _test_slack()
 
             assert result["success"] is False
             assert result["error"] == "invalid_auth"
+            assert result["error_type"] == "token_invalid"
+
+    @pytest.mark.asyncio
+    async def test_slack_not_configured_when_no_token(self):
+        """Slack test should return not_configured when no token stored (Issue #562)"""
+        mock_keychain = MagicMock()
+        mock_keychain.get_api_key.return_value = None
+
+        with patch(
+            "services.infrastructure.keychain_service.KeychainService",
+            return_value=mock_keychain,
+        ):
+            result = await _test_slack()
+
+            assert result["success"] is False
+            assert result["error_type"] == "not_configured"
+            assert "not connected" in result["error"].lower()
 
 
 class TestCalendarIntegration:
