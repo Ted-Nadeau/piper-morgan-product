@@ -1443,29 +1443,38 @@
 
       // Switch to a different conversation
       async function switchConversation(conversationId) {
-        if (conversationId === activeConversationId) return;
+        console.log('[DEBUG #574] switchConversation called:', conversationId, 'current:', activeConversationId);
+        if (conversationId === activeConversationId) {
+          console.log('[DEBUG #574] Same conversation, returning early');
+          return;
+        }
 
         setActiveConversation(conversationId);
 
         try {
+          console.log('[DEBUG #574] Fetching turns for:', conversationId);
           const response = await fetch(`/api/v1/conversations/${conversationId}/turns`, {
             credentials: 'include'
           });
+          console.log('[DEBUG #574] Response status:', response.status);
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
           }
 
           const turns = await response.json();
+          console.log('[DEBUG #574] Turns received:', turns.length, turns);
 
           // Clear current chat
           clearChat();
 
           // Load conversation turns
+          console.log('[DEBUG #574] Loading', turns.length, 'turns into chat');
           turns.forEach(turn => {
             const timestamp = new Date(turn.created_at).getTime();
-            appendMessage(turn.user_message, true, false, timestamp);
-            appendMessage(turn.assistant_response, false, false, timestamp);
+            // Use ChatWidget.appendMessage (exported from chat.js IIFE)
+            ChatWidget.appendMessage(turn.user_message, true, false, timestamp);
+            ChatWidget.appendMessage(turn.assistant_response, false, false, timestamp);
           });
 
           // Scroll to bottom
@@ -1476,7 +1485,7 @@
 
         } catch (error) {
           console.error('Failed to load conversation:', error);
-          showToast('Failed to load conversation', 'error');
+          Toast.error('Failed to load conversation', error.message);
         }
       }
 
@@ -1511,7 +1520,7 @@
 
         } catch (error) {
           console.error('Failed to create conversation:', error);
-          showToast('Failed to create new conversation', 'error');
+          Toast.error('Failed to create conversation', error.message);
         }
       }
 

@@ -148,19 +148,33 @@ async def get_conversation_turns(
         List of ConversationTurnResponse objects ordered by turn_number
     """
     try:
-        # Get conversation to verify ownership
-        conversation = await conv_repo.get_latest_for_user(current_user.sub)
+        # Get the specific conversation by ID and verify ownership
+        # Fix for #574: Was using get_latest_for_user() which only returned most recent,
+        # causing all other conversations to fail the ownership check
+        conversation = await conv_repo.get_by_id(conversation_id)
 
-        # If no conversation or mismatched ID, return empty (security: don't leak existence)
-        if not conversation or conversation.id != conversation_id:
+        # Debug logging for #574
+        logger.info(
+            "DEBUG #574: get_conversation_turns called",
+            conversation_id=conversation_id,
+            conversation_found=conversation is not None,
+            conversation_user_id=str(conversation.user_id) if conversation else None,
+            current_user_sub=current_user.sub,
+            types=f"conv.user_id={type(conversation.user_id).__name__ if conversation else 'N/A'}, sub={type(current_user.sub).__name__}",
+        )
+
+        # Verify conversation exists and user owns it (security: don't leak existence)
+        if not conversation or str(conversation.user_id) != str(current_user.sub):
             logger.warning(
                 "Conversation access denied",
                 user_id=current_user.sub,
                 requested_conversation_id=conversation_id,
+                conversation_user_id=str(conversation.user_id) if conversation else None,
             )
             return []
 
         turns = await conv_repo.get_conversation_turns(conversation_id, limit=limit)
+        logger.info("DEBUG #574: turns fetched", turn_count=len(turns))
 
         return [
             ConversationTurnResponse(
