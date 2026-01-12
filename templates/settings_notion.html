@@ -244,6 +244,140 @@
           flex-direction: column;
         }
       }
+
+      /* ============================================
+         Database Selection Card Styles (Issue #572)
+         ============================================ */
+      .database-selection-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .database-selection-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .database-selection-card .description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin: 0 0 20px 0;
+        line-height: 1.5;
+      }
+
+      .database-list {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ecf0f1;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .database-list-loading {
+        padding: 20px;
+        text-align: center;
+        color: #7f8c8d;
+      }
+
+      .database-list-empty {
+        padding: 20px;
+        text-align: center;
+        color: #95a5a6;
+        font-style: italic;
+      }
+
+      .database-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f5f5f5;
+        transition: background-color 0.2s;
+      }
+
+      .database-item:last-child {
+        border-bottom: none;
+      }
+
+      .database-item:hover {
+        background-color: #f8f9fa;
+      }
+
+      .database-item input[type="checkbox"] {
+        margin-top: 4px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .database-item-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .database-item-name {
+        font-weight: 500;
+        color: #2c3e50;
+        margin: 0 0 4px 0;
+        word-break: break-word;
+      }
+
+      .database-item-description {
+        font-size: 13px;
+        color: #95a5a6;
+        margin: 0;
+        word-break: break-word;
+      }
+
+      .default-database-section {
+        margin-bottom: 20px;
+      }
+
+      .default-database-section label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 8px;
+      }
+
+      .default-database-section select {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        border: 1px solid #dce4ec;
+        border-radius: 8px;
+        background: white;
+        color: #2c3e50;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237f8c8d' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+      }
+
+      .default-database-section select:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      }
+
+      .database-selection-buttons {
+        display: flex;
+        gap: 12px;
+      }
+
+      .database-selection-buttons .btn {
+        flex: 1;
+      }
     </style>
   </head>
   <body>
@@ -320,6 +454,36 @@
           </button>
         </div>
       </div>
+
+      <!-- Database Selection Card (Issue #572) -->
+      <div class="database-selection-card" id="database-selection-card" style="display: none;">
+        <h3>📚 Database Selection</h3>
+        <p class="description">
+          Choose which Notion databases Piper can access. Selected databases will be used for task creation and notes.
+        </p>
+
+        <div class="database-list" id="database-list">
+          <div class="database-list-loading">
+            <span class="loading-spinner"></span> Loading databases...
+          </div>
+        </div>
+
+        <div class="default-database-section">
+          <label for="default-database-select">Default Database for Tasks:</label>
+          <select id="default-database-select">
+            <option value="">Select a default database...</option>
+          </select>
+        </div>
+
+        <div class="database-selection-buttons">
+          <button class="btn btn-primary" onclick="saveNotionPreferences()">
+            Save Preferences
+          </button>
+          <button class="btn btn-secondary" onclick="refreshDatabaseList()">
+            Refresh List
+          </button>
+        </div>
+      </div>
     </div>
 
     {% include 'components/toast.html' %}
@@ -352,6 +516,9 @@
         const disconnectBtnEl = document.getElementById('disconnect-btn');
         const apiKeyEl = document.getElementById('api-key');
 
+        // Get database selection card element (Issue #572)
+        const dbCardEl = document.getElementById('database-selection-card');
+
         if (data.configured && data.valid) {
           // Connected and valid
           iconEl.className = 'status-icon connected';
@@ -362,6 +529,10 @@
           saveBtnEl.textContent = 'Update';
           disconnectBtnEl.style.display = 'block';
           apiKeyEl.placeholder = '••••••••••••••••••••••••••••••••';
+
+          // Show database selection card and load databases (Issue #572)
+          dbCardEl.style.display = 'block';
+          loadDatabaseList();
         } else if (data.configured && !data.valid) {
           // Configured but invalid (stuck state - Issue #540)
           iconEl.className = 'status-icon disconnected';
@@ -372,6 +543,9 @@
           saveBtnEl.textContent = 'Reconnect';
           disconnectBtnEl.style.display = 'block';
           apiKeyEl.placeholder = 'Enter a new valid API key';
+
+          // Hide database selection when not valid (Issue #572)
+          dbCardEl.style.display = 'none';
         } else {
           // Not configured
           iconEl.className = 'status-icon disconnected';
@@ -382,6 +556,9 @@
           saveBtnEl.textContent = 'Connect';
           disconnectBtnEl.style.display = 'none';
           apiKeyEl.placeholder = 'secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+
+          // Hide database selection when not connected (Issue #572)
+          dbCardEl.style.display = 'none';
         }
       }
 
@@ -473,6 +650,166 @@
           disconnectBtnEl.disabled = false;
           disconnectBtnEl.textContent = 'Disconnect';
         }
+      }
+
+      // ============================================
+      // Database Selection Functions (Issue #572)
+      // ============================================
+
+      // Store loaded databases for reference
+      let loadedDatabases = [];
+
+      async function loadDatabaseList() {
+        const listEl = document.getElementById('database-list');
+        listEl.innerHTML = '<div class="database-list-loading"><span class="loading-spinner"></span> Loading databases...</div>';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/notion/databases');
+          if (!response.ok) {
+            if (response.status === 401) {
+              listEl.innerHTML = '<div class="database-list-empty">Connect Notion first to see databases</div>';
+              return;
+            }
+            throw new Error('Failed to load databases');
+          }
+
+          const data = await response.json();
+          loadedDatabases = data.databases || [];
+          renderDatabaseList(loadedDatabases);
+        } catch (error) {
+          console.error('Failed to load databases:', error);
+          listEl.innerHTML = '<div class="database-list-empty">Failed to load databases. Please try again.</div>';
+          showToast('error', 'Failed to load Notion databases', 'Error');
+        }
+      }
+
+      function renderDatabaseList(databases) {
+        const listEl = document.getElementById('database-list');
+
+        if (!databases || databases.length === 0) {
+          listEl.innerHTML = '<div class="database-list-empty">No databases found. Make sure you have shared databases with your Notion integration.</div>';
+          updateDefaultDropdown([]);
+          return;
+        }
+
+        listEl.innerHTML = databases.map(db => `
+          <div class="database-item">
+            <input type="checkbox"
+                   id="db-${escapeHtml(db.id)}"
+                   value="${escapeHtml(db.id)}"
+                   ${db.selected ? 'checked' : ''}
+                   onchange="updateDefaultDropdown()">
+            <div class="database-item-content">
+              <p class="database-item-name">${escapeHtml(db.name)}</p>
+              ${db.description ? `<p class="database-item-description">${escapeHtml(db.description)}</p>` : ''}
+            </div>
+          </div>
+        `).join('');
+
+        updateDefaultDropdown(databases);
+      }
+
+      function updateDefaultDropdown(databases = null) {
+        const selectEl = document.getElementById('default-database-select');
+        const dbs = databases || loadedDatabases;
+
+        // Get currently selected database IDs
+        const selectedIds = getSelectedDatabaseIds();
+
+        // Filter to only selected databases
+        const selectedDbs = dbs.filter(db => selectedIds.includes(db.id));
+
+        // Preserve current selection if still valid
+        const currentDefault = selectEl.value;
+
+        // Build options
+        selectEl.innerHTML = '<option value="">Select a default database...</option>';
+        selectedDbs.forEach(db => {
+          const option = document.createElement('option');
+          option.value = db.id;
+          option.textContent = db.name;
+          if (db.id === currentDefault) {
+            option.selected = true;
+          }
+          selectEl.appendChild(option);
+        });
+
+        // Load saved default if not set
+        if (!selectEl.value) {
+          loadNotionPreferences().then(prefs => {
+            if (prefs && prefs.default_database && selectedIds.includes(prefs.default_database)) {
+              selectEl.value = prefs.default_database;
+            }
+          });
+        }
+      }
+
+      function getSelectedDatabaseIds() {
+        const checkboxes = document.querySelectorAll('#database-list input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+      }
+
+      async function loadNotionPreferences() {
+        try {
+          const response = await fetch('/api/v1/settings/integrations/notion/preferences');
+          if (response.ok) {
+            return await response.json();
+          }
+        } catch (error) {
+          console.error('Failed to load preferences:', error);
+        }
+        return null;
+      }
+
+      async function refreshDatabaseList() {
+        showToast('info', 'Refreshing database list...', 'Refreshing');
+        await loadDatabaseList();
+        showToast('success', 'Database list refreshed', 'Refreshed');
+      }
+
+      async function saveNotionPreferences() {
+        const selectedDatabases = getSelectedDatabaseIds();
+        const defaultDatabase = document.getElementById('default-database-select').value;
+
+        if (selectedDatabases.length === 0) {
+          showToast('warning', 'Please select at least one database', 'No Selection');
+          return;
+        }
+
+        if (!defaultDatabase) {
+          showToast('warning', 'Please select a default database', 'No Default');
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/notion/preferences', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              selected_databases: selectedDatabases,
+              default_database: defaultDatabase,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to save preferences');
+          }
+
+          showToast('success', 'Database preferences saved', 'Saved');
+        } catch (error) {
+          console.error('Failed to save preferences:', error);
+          showToast('error', error.message, 'Save Failed');
+        }
+      }
+
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       function showToast(type, message, title = null) {

@@ -137,6 +137,40 @@ class CalendarPreferencesResponse(BaseModel):
     primary_calendar: Optional[str] = None
 
 
+# ============================================================================
+# Pydantic Models for Notion Workspace Preferences (Issue #572)
+# ============================================================================
+
+
+class NotionDatabaseInfo(BaseModel):
+    """Notion database representation."""
+
+    id: str
+    name: str
+    description: str = ""
+    selected: bool = False
+
+
+class NotionDatabaseListResponse(BaseModel):
+    """Response containing list of Notion databases."""
+
+    databases: List[NotionDatabaseInfo]
+
+
+class NotionPreferencesRequest(BaseModel):
+    """Request body for saving Notion preferences."""
+
+    selected_databases: List[str]
+    default_database: str
+
+
+class NotionPreferencesResponse(BaseModel):
+    """Response containing Notion preferences."""
+
+    selected_databases: List[str] = []
+    default_database: Optional[str] = None
+
+
 # Simple file-based storage for Slack preferences (Issue #570)
 # This is a minimal implementation - could be moved to DB later
 SLACK_PREFERENCES_FILE = "data/slack_preferences.json"
@@ -187,6 +221,32 @@ def _save_calendar_preferences(prefs: dict) -> None:
             json.dump(prefs, f, indent=2)
     except Exception as e:
         logger.error("calendar_preferences_save_failed", error=str(e))
+
+
+# Simple file-based storage for Notion preferences (Issue #572)
+# Same pattern as Slack and Calendar - could be moved to DB later
+NOTION_PREFERENCES_FILE = "data/notion_preferences.json"
+
+
+def _load_notion_preferences() -> dict:
+    """Load all Notion preferences from file."""
+    try:
+        if os.path.exists(NOTION_PREFERENCES_FILE):
+            with open(NOTION_PREFERENCES_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning("notion_preferences_load_failed", error=str(e))
+    return {}
+
+
+def _save_notion_preferences(prefs: dict) -> None:
+    """Save all Notion preferences to file."""
+    try:
+        os.makedirs(os.path.dirname(NOTION_PREFERENCES_FILE), exist_ok=True)
+        with open(NOTION_PREFERENCES_FILE, "w") as f:
+            json.dump(prefs, f, indent=2)
+    except Exception as e:
+        logger.error("notion_preferences_save_failed", error=str(e))
 
 
 # ============================================================================
@@ -1209,6 +1269,173 @@ async def disconnect_notion():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disconnect Notion: {str(e)}",
+        )
+
+
+# ============================================================================
+# Notion Workspace Preferences (Issue #572)
+# ============================================================================
+
+
+@router.get("/notion/databases", response_model=NotionDatabaseListResponse)
+async def get_notion_databases(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get list of available Notion databases for the user.
+
+    Returns database IDs, names, and current selection status.
+    Requires a connected Notion account.
+    Issue #572: Notion workspace preferences
+    """
+    import aiohttp
+
+    from services.integrations.notion.config_service import NotionConfigService
+
+    try:
+        config_service = NotionConfigService()
+        config = config_service.get_config()
+        api_key = config.api_key
+
+        if not api_key:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Notion not connected. Please add your API key first.",
+            )
+
+        # Fetch databases from Notion API
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.notion.com/v1/search",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Notion-Version": "2022-06-28",
+                    "Content-Type": "application/json",
+                },
+                json={"filter": {"property": "object", "value": "database"}},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    logger.error(
+                        "notion_database_list_failed",
+                        status=response.status,
+                        error=error_text,
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"Failed to fetch databases from Notion: {response.status}",
+                    )
+
+                data = await response.json()
+
+        # Load user's saved preferences
+        all_prefs = _load_notion_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+        selected_databases = user_prefs.get("selected_databases", [])
+
+        # Build database list with selection status
+        databases = []
+        for db in data.get("results", []):
+            db_id = db.get("id", "")
+            # Get title from title property
+            title_prop = db.get("title", [])
+            name = (
+                title_prop[0].get("plain_text", "Unnamed Database")
+                if title_prop
+                else "Unnamed Database"
+            )
+            # Get description if available
+            description = db.get("description", [])
+            desc_text = description[0].get("plain_text", "") if description else ""
+
+            databases.append(
+                NotionDatabaseInfo(
+                    id=db_id,
+                    name=name,
+                    description=desc_text,
+                    selected=db_id in selected_databases if selected_databases else False,
+                )
+            )
+
+        logger.info("notion_databases_fetched", count=len(databases), user_id=str(current_user.sub))
+
+        return NotionDatabaseListResponse(databases=databases)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("notion_database_list_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch database list: {str(e)}",
+        )
+
+
+@router.get("/notion/preferences", response_model=NotionPreferencesResponse)
+async def get_notion_preferences(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get saved Notion preferences for the current user.
+
+    Returns selected databases and default database designation.
+    Issue #572: Notion workspace preferences
+    """
+    try:
+        all_prefs = _load_notion_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+
+        logger.info("notion_preferences_loaded", user_id=str(current_user.sub))
+
+        return NotionPreferencesResponse(
+            selected_databases=user_prefs.get("selected_databases", []),
+            default_database=user_prefs.get("default_database"),
+        )
+
+    except Exception as e:
+        logger.error("notion_preferences_load_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load Notion preferences: {str(e)}",
+        )
+
+
+@router.post("/notion/preferences", response_model=NotionPreferencesResponse)
+async def save_notion_preferences(
+    preferences: NotionPreferencesRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Save Notion preferences for the current user.
+
+    Stores selected databases and default database designation.
+    Issue #572: Notion workspace preferences
+    """
+    try:
+        all_prefs = _load_notion_preferences()
+
+        # Store preferences for this user
+        user_prefs = {
+            "selected_databases": preferences.selected_databases,
+            "default_database": preferences.default_database,
+        }
+
+        all_prefs[str(current_user.sub)] = user_prefs
+        _save_notion_preferences(all_prefs)
+
+        logger.info(
+            "notion_preferences_saved",
+            user_id=str(current_user.sub),
+            selected_count=len(preferences.selected_databases),
+            default_database=preferences.default_database,
+        )
+
+        return NotionPreferencesResponse(
+            selected_databases=preferences.selected_databases,
+            default_database=preferences.default_database,
+        )
+
+    except Exception as e:
+        logger.error("notion_preferences_save_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save Notion preferences: {str(e)}",
         )
 
 
