@@ -331,6 +331,141 @@
         height: 18px;
       }
 
+      /* Calendar Selection Card (Issue #571) */
+      .calendar-selection-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+
+      .calendar-selection-card h3 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .calendar-selection-card .description {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-bottom: 16px;
+        line-height: 1.5;
+      }
+
+      .calendar-list {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 16px;
+      }
+
+      .calendar-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e9ecef;
+        gap: 12px;
+      }
+
+      .calendar-item:last-child {
+        border-bottom: none;
+      }
+
+      .calendar-item:hover {
+        background: #f8f9fa;
+      }
+
+      .calendar-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
+      .calendar-item-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .calendar-item-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .calendar-item-name .primary-badge {
+        font-size: 11px;
+        background: #4285f4;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 500;
+      }
+
+      .calendar-item-description {
+        font-size: 12px;
+        color: #7f8c8d;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .primary-calendar-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      .primary-calendar-section label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+        white-space: nowrap;
+      }
+
+      .primary-calendar-section select {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+      }
+
+      .primary-calendar-section select:focus {
+        outline: none;
+        border-color: #4285f4;
+      }
+
+      .calendar-selection-buttons {
+        display: flex;
+        gap: 12px;
+      }
+
+      .calendar-list-empty {
+        padding: 24px;
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 14px;
+      }
+
+      .calendar-list-loading {
+        padding: 24px;
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 14px;
+      }
+
       /* Responsive */
       @media (max-width: 768px) {
         .settings-container {
@@ -338,6 +473,15 @@
         }
 
         .button-group {
+          flex-direction: column;
+        }
+
+        .primary-calendar-section {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .calendar-selection-buttons {
           flex-direction: column;
         }
       }
@@ -468,6 +612,36 @@
           </button>
         </div>
       </div>
+
+      <!-- Calendar Selection Card (Issue #571) -->
+      <div class="calendar-selection-card" id="calendar-selection-card" style="display: none;">
+        <h3>📅 Calendar Selection</h3>
+        <p class="description">
+          Choose which calendars to sync with Piper Morgan. Events from selected calendars will be used for scheduling awareness.
+        </p>
+
+        <div class="calendar-list" id="calendar-list">
+          <div class="calendar-list-loading">
+            <span class="loading-spinner"></span> Loading calendars...
+          </div>
+        </div>
+
+        <div class="primary-calendar-section">
+          <label for="primary-calendar-select">Primary Calendar:</label>
+          <select id="primary-calendar-select">
+            <option value="">Select a primary calendar...</option>
+          </select>
+        </div>
+
+        <div class="calendar-selection-buttons">
+          <button class="btn btn-primary" id="save-calendar-prefs-btn" onclick="saveCalendarPreferences()">
+            Save Preferences
+          </button>
+          <button class="btn btn-secondary" id="refresh-calendars-btn" onclick="refreshCalendarList()">
+            Refresh List
+          </button>
+        </div>
+      </div>
     </div>
 
     {% include 'components/toast.html' %}
@@ -517,6 +691,7 @@
         const oauthDescEl = document.getElementById('oauth-description');
         const connectBtnEl = document.getElementById('connect-btn');
         const disconnectBtnEl = document.getElementById('disconnect-btn');
+        const calendarSelectionCard = document.getElementById('calendar-selection-card');  // Issue #571
 
         if (data.configured && data.valid) {
           // Connected and valid
@@ -528,6 +703,11 @@
           oauthDescEl.textContent = 'You can reconnect to a different account or refresh your connection.';
           connectBtnEl.innerHTML = '<svg class="google-logo" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Reconnect';
           disconnectBtnEl.style.display = 'block';
+          // Issue #571: Show calendar selection and load calendars
+          if (calendarSelectionCard) {
+            calendarSelectionCard.style.display = 'block';
+            loadCalendarList();
+          }
         } else if (data.configured && !data.valid) {
           // Configured but invalid (stuck state)
           iconEl.className = 'status-icon disconnected';
@@ -538,6 +718,8 @@
           oauthDescEl.textContent = 'Your Google Calendar connection has expired. Please reconnect to restore functionality.';
           connectBtnEl.innerHTML = '<svg class="google-logo" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Reconnect';
           disconnectBtnEl.style.display = 'block';
+          // Issue #571: Hide calendar selection when not valid
+          if (calendarSelectionCard) calendarSelectionCard.style.display = 'none';
         } else {
           // Not configured
           iconEl.className = 'status-icon disconnected';
@@ -548,6 +730,8 @@
           oauthDescEl.textContent = 'Connect your Google Calendar to help Piper Morgan understand your schedule, suggest optimal meeting times, and avoid scheduling conflicts.';
           connectBtnEl.innerHTML = '<svg class="google-logo" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Connect with Google';
           disconnectBtnEl.style.display = 'none';
+          // Issue #571: Hide calendar selection when not connected
+          if (calendarSelectionCard) calendarSelectionCard.style.display = 'none';
         }
       }
 
@@ -736,6 +920,168 @@
           saveBtn.disabled = false;
           saveBtn.textContent = 'Save Credentials';
         }
+      }
+
+      // ============================================================================
+      // Calendar Selection Functions (Issue #571)
+      // ============================================================================
+
+      // Store loaded calendars for reference
+      let loadedCalendars = [];
+
+      async function loadCalendarList() {
+        const calendarListEl = document.getElementById('calendar-list');
+        calendarListEl.innerHTML = '<div class="calendar-list-loading"><span class="loading-spinner"></span> Loading calendars...</div>';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/calendar/calendars');
+          if (!response.ok) {
+            if (response.status === 401) {
+              calendarListEl.innerHTML = '<div class="calendar-list-empty">Please connect your Google Calendar first.</div>';
+              return;
+            }
+            throw new Error('Failed to load calendars');
+          }
+
+          const data = await response.json();
+          loadedCalendars = data.calendars || [];
+
+          if (loadedCalendars.length === 0) {
+            calendarListEl.innerHTML = '<div class="calendar-list-empty">No calendars found.</div>';
+            return;
+          }
+
+          renderCalendarList(loadedCalendars);
+          updatePrimaryDropdown(loadedCalendars);
+
+        } catch (error) {
+          console.error('Failed to load calendars:', error);
+          calendarListEl.innerHTML = '<div class="calendar-list-empty">Failed to load calendars. Please try again.</div>';
+          showToast('error', 'Failed to load calendar list', 'Error');
+        }
+      }
+
+      function renderCalendarList(calendars) {
+        const calendarListEl = document.getElementById('calendar-list');
+        calendarListEl.innerHTML = calendars.map(cal => `
+          <div class="calendar-item">
+            <input type="checkbox" id="cal-${escapeHtml(cal.id)}" value="${escapeHtml(cal.id)}"
+                   ${cal.selected ? 'checked' : ''} onchange="updatePrimaryDropdown()">
+            <div class="calendar-item-info">
+              <div class="calendar-item-name">
+                ${escapeHtml(cal.name)}
+                ${cal.primary ? '<span class="primary-badge">Google Primary</span>' : ''}
+              </div>
+              ${cal.description ? `<div class="calendar-item-description">${escapeHtml(cal.description)}</div>` : ''}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      function updatePrimaryDropdown(calendars = null) {
+        const selectEl = document.getElementById('primary-calendar-select');
+        const cals = calendars || loadedCalendars;
+
+        // Get currently selected calendars
+        const selectedIds = getSelectedCalendarIds();
+
+        // Get current primary selection
+        const currentPrimary = selectEl.value;
+
+        // Rebuild dropdown with only selected calendars
+        const selectedCalendars = cals.filter(cal => selectedIds.includes(cal.id));
+
+        selectEl.innerHTML = '<option value="">Select a primary calendar...</option>';
+        selectedCalendars.forEach(cal => {
+          const option = document.createElement('option');
+          option.value = cal.id;
+          option.textContent = cal.name + (cal.primary ? ' (Google Primary)' : '');
+          selectEl.appendChild(option);
+        });
+
+        // Restore selection if still valid
+        if (selectedIds.includes(currentPrimary)) {
+          selectEl.value = currentPrimary;
+        } else if (selectedCalendars.length === 1) {
+          // Auto-select if only one calendar selected
+          selectEl.value = selectedCalendars[0].id;
+        }
+      }
+
+      function getSelectedCalendarIds() {
+        const checkboxes = document.querySelectorAll('#calendar-list input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+      }
+
+      async function refreshCalendarList() {
+        const refreshBtn = document.getElementById('refresh-calendars-btn');
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = 'Refreshing...';
+
+        try {
+          await loadCalendarList();
+          showToast('success', 'Calendar list refreshed', 'Refreshed');
+        } finally {
+          refreshBtn.disabled = false;
+          refreshBtn.textContent = 'Refresh List';
+        }
+      }
+
+      async function saveCalendarPreferences() {
+        const selectedCalendars = getSelectedCalendarIds();
+        const primaryCalendar = document.getElementById('primary-calendar-select').value;
+
+        // Validation
+        if (selectedCalendars.length === 0) {
+          showToast('warning', 'Please select at least one calendar', 'No Selection');
+          return;
+        }
+
+        if (!primaryCalendar) {
+          showToast('warning', 'Please select a primary calendar', 'Primary Required');
+          return;
+        }
+
+        if (!selectedCalendars.includes(primaryCalendar)) {
+          showToast('warning', 'Primary calendar must be in the selected list', 'Invalid Selection');
+          return;
+        }
+
+        const saveBtn = document.getElementById('save-calendar-prefs-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const response = await fetch('/api/v1/settings/integrations/calendar/preferences', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              selected_calendars: selectedCalendars,
+              primary_calendar: primaryCalendar
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to save preferences');
+          }
+
+          showToast('success', `Saved ${selectedCalendars.length} calendar(s)`, 'Preferences Saved');
+
+        } catch (error) {
+          console.error('Failed to save preferences:', error);
+          showToast('error', error.message, 'Save Failed');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Preferences';
+        }
+      }
+
+      // Utility function to escape HTML
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
       }
 
       function showToast(type, message, title = null) {

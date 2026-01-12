@@ -102,6 +102,41 @@ class CalendarAppCredentialsStatusResponse(BaseModel):
     has_client_secret: bool
 
 
+# ============================================================================
+# Pydantic Models for Calendar Sync Preferences (Issue #571)
+# ============================================================================
+
+
+class CalendarInfo(BaseModel):
+    """Google Calendar representation."""
+
+    id: str
+    name: str
+    description: str = ""
+    primary: bool = False
+    selected: bool = False
+
+
+class CalendarListResponse(BaseModel):
+    """Response containing list of Google calendars."""
+
+    calendars: List[CalendarInfo]
+
+
+class CalendarPreferencesRequest(BaseModel):
+    """Request body for saving calendar preferences."""
+
+    selected_calendars: List[str]
+    primary_calendar: str
+
+
+class CalendarPreferencesResponse(BaseModel):
+    """Response containing calendar preferences."""
+
+    selected_calendars: List[str] = []
+    primary_calendar: Optional[str] = None
+
+
 # Simple file-based storage for Slack preferences (Issue #570)
 # This is a minimal implementation - could be moved to DB later
 SLACK_PREFERENCES_FILE = "data/slack_preferences.json"
@@ -126,6 +161,32 @@ def _save_slack_preferences(prefs: dict) -> None:
             json.dump(prefs, f, indent=2)
     except Exception as e:
         logger.error("slack_preferences_save_failed", error=str(e))
+
+
+# Simple file-based storage for Calendar preferences (Issue #571)
+# Same pattern as Slack - could be moved to DB later
+CALENDAR_PREFERENCES_FILE = "data/calendar_preferences.json"
+
+
+def _load_calendar_preferences() -> dict:
+    """Load all calendar preferences from file."""
+    try:
+        if os.path.exists(CALENDAR_PREFERENCES_FILE):
+            with open(CALENDAR_PREFERENCES_FILE, "r") as f:
+                return json.load(f)
+    except Exception as e:
+        logger.warning("calendar_preferences_load_failed", error=str(e))
+    return {}
+
+
+def _save_calendar_preferences(prefs: dict) -> None:
+    """Save all calendar preferences to file."""
+    try:
+        os.makedirs(os.path.dirname(CALENDAR_PREFERENCES_FILE), exist_ok=True)
+        with open(CALENDAR_PREFERENCES_FILE, "w") as f:
+            json.dump(prefs, f, indent=2)
+    except Exception as e:
+        logger.error("calendar_preferences_save_failed", error=str(e))
 
 
 # ============================================================================
@@ -797,6 +858,172 @@ async def disconnect_calendar():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to disconnect Calendar: {str(e)}",
+        )
+
+
+# ============================================================================
+# Calendar Sync Preferences (Issue #571)
+# ============================================================================
+
+
+@router.get("/calendar/calendars", response_model=CalendarListResponse)
+async def get_calendar_list(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get list of available Google calendars for the user.
+
+    Returns calendar IDs, names, and current selection status.
+    Requires a connected Google Calendar account.
+    Issue #571: Calendar sync preferences
+    """
+    import aiohttp
+
+    from services.infrastructure.keychain_service import KeychainService
+    from services.integrations.calendar.oauth_handler import GoogleCalendarOAuthHandler
+
+    try:
+        keychain = KeychainService()
+        refresh_token = keychain.get_api_key("google_calendar")
+
+        if not refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Calendar not connected. Please connect Google Calendar first.",
+            )
+
+        # Get fresh access token
+        handler = GoogleCalendarOAuthHandler()
+        tokens = await handler.refresh_access_token(refresh_token)
+
+        if not tokens:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Failed to refresh calendar token. Please reconnect Google Calendar.",
+            )
+
+        # Fetch calendar list from Google API
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://www.googleapis.com/calendar/v3/users/me/calendarList",
+                headers={"Authorization": f"Bearer {tokens.access_token}"},
+            ) as response:
+                if response.status != 200:
+                    error_text = await response.text()
+                    logger.error(
+                        "calendar_list_fetch_failed",
+                        status=response.status,
+                        error=error_text,
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_502_BAD_GATEWAY,
+                        detail=f"Failed to fetch calendars from Google: {response.status}",
+                    )
+
+                data = await response.json()
+
+        # Load user's saved preferences
+        all_prefs = _load_calendar_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+        selected_calendars = user_prefs.get("selected_calendars", [])
+
+        # Build calendar list with selection status
+        calendars = []
+        for cal in data.get("items", []):
+            cal_id = cal.get("id", "")
+            calendars.append(
+                CalendarInfo(
+                    id=cal_id,
+                    name=cal.get("summary", "Unnamed Calendar"),
+                    description=cal.get("description", ""),
+                    primary=cal.get("primary", False),
+                    selected=(
+                        cal_id in selected_calendars
+                        if selected_calendars
+                        else cal.get("primary", False)
+                    ),
+                )
+            )
+
+        logger.info("calendar_list_fetched", count=len(calendars), user_id=str(current_user.sub))
+
+        return CalendarListResponse(calendars=calendars)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("calendar_list_fetch_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch calendar list: {str(e)}",
+        )
+
+
+@router.get("/calendar/preferences", response_model=CalendarPreferencesResponse)
+async def get_calendar_preferences(current_user: JWTClaims = Depends(get_current_user)):
+    """
+    Get saved calendar sync preferences for the current user.
+
+    Returns selected calendars and primary calendar designation.
+    Issue #571: Calendar sync preferences
+    """
+    try:
+        all_prefs = _load_calendar_preferences()
+        user_prefs = all_prefs.get(str(current_user.sub), {})
+
+        logger.info("calendar_preferences_loaded", user_id=str(current_user.sub))
+
+        return CalendarPreferencesResponse(
+            selected_calendars=user_prefs.get("selected_calendars", []),
+            primary_calendar=user_prefs.get("primary_calendar"),
+        )
+
+    except Exception as e:
+        logger.error("calendar_preferences_load_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load calendar preferences: {str(e)}",
+        )
+
+
+@router.post("/calendar/preferences", response_model=CalendarPreferencesResponse)
+async def save_calendar_preferences(
+    preferences: CalendarPreferencesRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    """
+    Save calendar sync preferences for the current user.
+
+    Stores selected calendars and primary calendar designation.
+    Issue #571: Calendar sync preferences
+    """
+    try:
+        all_prefs = _load_calendar_preferences()
+
+        # Store preferences for this user
+        user_prefs = {
+            "selected_calendars": preferences.selected_calendars,
+            "primary_calendar": preferences.primary_calendar,
+        }
+
+        all_prefs[str(current_user.sub)] = user_prefs
+        _save_calendar_preferences(all_prefs)
+
+        logger.info(
+            "calendar_preferences_saved",
+            user_id=str(current_user.sub),
+            selected_count=len(preferences.selected_calendars),
+            primary_calendar=preferences.primary_calendar,
+        )
+
+        return CalendarPreferencesResponse(
+            selected_calendars=preferences.selected_calendars,
+            primary_calendar=preferences.primary_calendar,
+        )
+
+    except Exception as e:
+        logger.error("calendar_preferences_save_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save calendar preferences: {str(e)}",
         )
 
 
