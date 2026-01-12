@@ -949,6 +949,62 @@ git commit -m "your message"
 
 **See**: `docs/dev-tips/preventing-pre-commit-failures.md` for details.
 
+---
+
+## ISSUE CLOSURE PROTOCOL
+
+**"Closing an issue properly"** means updating BOTH the description AND adding a closing comment. This ensures issues are accurate historical records.
+
+### Before Closing Any Issue
+
+1. **Update the description checkboxes** - Every `[ ]` that was completed becomes `[x]`
+2. **Update the Completion Matrix** - Mark items as "Complete" with evidence links
+3. **Add verification evidence** - Link to commits, test output, or PR
+4. **Update status** - Change "In Progress" or "Not Started" to "COMPLETE"
+
+### Closing Comment Requirements
+
+Add a closing comment with:
+```markdown
+## Implementation Complete ✅
+
+### Summary
+[1-2 sentence summary of what was done]
+
+### Changes Made
+- [File]: [What changed]
+- [File]: [What changed]
+
+### Test Results
+[Test command and output summary]
+
+### Verification
+- Commit: [hash]
+- Tests: [X] passing
+```
+
+### Why This Matters
+
+- **Unchecked boxes = incomplete work** - Anyone reviewing sees unfinished tasks
+- **Comments alone aren't enough** - Description is the source of truth
+- **Future planning depends on accurate records** - We make decisions based on what's "done"
+- **Audit cost is real** - Incomplete records require re-verification (as we discovered 2026-01-11)
+
+### Anti-Pattern: The "Comment-Only Close"
+
+❌ **Wrong**: Add evidence comment, close issue, leave description boxes unchecked
+✅ **Right**: Update description boxes, add evidence comment, then close
+
+### Issue Closure Checklist
+
+Before running `gh issue close <number>`:
+- [ ] All description checkboxes checked (or explicitly marked "deferred with PM approval")
+- [ ] Completion Matrix updated with evidence
+- [ ] Closing comment added with implementation evidence
+- [ ] Status in description shows "COMPLETE"
+
+---
+
 ## PYTHON PACKAGE STRUCTURE REQUIREMENTS
 
 **CRITICAL**: ALL directories under `services/` that contain `.py` files MUST have `__init__.py`
