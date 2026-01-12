@@ -144,16 +144,20 @@ See [ALPHA_KNOWN_ISSUES.md](../ALPHA_KNOWN_ISSUES.md) for current known issues.
 
 ## What's Next
 
-**Coming in Sprint B2:**
-- **Calendar Scanning on Greeting**: Piper will check your calendar when you say hello
-- **Discovery-Oriented Intent**: Better handling of exploratory queries
-- **Capability Concierge**: Piper explains what it can do when asked
+**Sprint B1 Complete** - All planned work delivered in this release.
 
-**February 2026:**
-- MUX Foundation (Modeled User Experience) - consciousness-aware models
+**Next Priority: MUX (Modeled User Experience)**
+
+The MUX super-epics represent our UX 2.0 initiative, bringing consciousness-aware interaction models to Piper:
+- **Spatial context awareness**: Understanding user's work environment
+- **Temporal intelligence**: Calendar-aware interactions
+- **Capability discovery**: Piper explains what it can do when asked
+
+**Roadmap:**
+- MUX Foundation work begins Q1 2026
 - Beta preparation (v0.9 target: April 2026)
 
-**Bug fixes and polish:**
+**Ongoing:**
 - Alpha tester feedback continues to drive improvements
 - Capabilities naming standardization in progress
 
@@ -163,7 +167,7 @@ See [ALPHA_KNOWN_ISSUES.md](../ALPHA_KNOWN_ISSUES.md) for current known issues.
 
 - PM: xian
 - Lead Developer: Claude Code (Opus)
-- Alpha Testers: Ted Nadeau, lasko
+- Alpha Testers: Thank you to our alpha testing team for their valuable feedback
 
 ---
 
