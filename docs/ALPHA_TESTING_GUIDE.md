@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.3.2
-**Last Updated**: January 8, 2026
+**Version**: 0.8.4
+**Last Updated**: January 12, 2026
 **For**: Alpha Testers
 
 ---
@@ -51,7 +51,7 @@
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.3). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.4). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -65,6 +65,26 @@ This is pre-release alpha software (version 0.8.3). By proceeding, you acknowled
 See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
+
+## What's New in 0.8.4
+
+**Integration Settings (Epic #543)** - All integration credentials can now be managed from Settings → Integrations:
+- **Slack**: OAuth Connect/Disconnect button
+- **Google Calendar**: OAuth Connect/Disconnect with sync preferences
+- **GitHub**: Personal Access Token configuration with secure keychain fallback
+- **Notion**: API Key configuration with workspace preferences
+- **Disconnect All**: One-click to reset all integrations
+
+**Portfolio Onboarding (#490)** - New users now experience conversational project setup:
+- Triggered automatically on first greeting ("Hello!")
+- Tell Piper about your projects in natural language
+- Creates Project entities for better context in future conversations
+- Multi-turn flow with confirmation before saving
+
+**Bug Fixes**:
+- Logout 403 "Not authenticated" error fixed
+- Integration Test button now uses correct OAuth tokens (#562)
+- Demo integration disabled by default (was confusing users)
 
 ## What's New in 0.8.3.2
 
@@ -347,7 +367,7 @@ Click the button to go to the login page and start using Piper Morgan.
 
 ## Test Scenarios to Try
 
-**Note for 0.8.3.2 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new Interactive Standup Assistant** and continue validating integrations.
+**Note for 0.8.4 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new Integration Settings and Portfolio Onboarding** and continue validating the Interactive Standup Assistant.
 
 ### Priority Testing Areas
 
@@ -685,7 +705,7 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.3.2). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.4). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for 2026.
 
@@ -703,4 +723,4 @@ Thank you for being an early adopter and helping us improve! 🚀
 ---
 
 _Last updated: January 8, 2026_
-_Software version: 0.8.3.2_
+_Software version: 0.8.4_

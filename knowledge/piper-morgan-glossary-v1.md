@@ -1,7 +1,7 @@
 # Piper Morgan Glossary
 
-**Version**: 1.0
-**Date**: November 30, 2025
+**Version**: 1.1
+**Date**: January 12, 2026
 **Purpose**: Define project terminology, jargon, and concepts
 
 ---
@@ -32,6 +32,143 @@ Context where action happens. Can be physical (office), digital (Slack channel),
 
 ### Situation
 Container holding sequences of Moments. The frame, not a fourth substrate. Has narrative structure with dramatic tension.
+
+---
+
+## Domain Models
+
+These are the core data structures in Piper's codebase (defined in `services/domain/models.py`). They represent how Piper *instantiates* the conceptual Object Model (Entity/Moment/Place/Situation) into concrete, implementable structures.
+
+**Relationship to Object Model**: The Object Model above describes the *grammar* - the philosophical foundation. Domain Models are the *vocabulary* - specific nouns that follow that grammar. For example, a `Conversation` is a type of `Situation`; a `ConversationTurn` is a type of `Moment`; a `User` is a type of `Entity`.
+
+### User-Created Objects
+
+#### Project
+A named context container that groups related integrations (GitHub repos, Slack channels, Notion pages). When you tell Piper you're working on a project, it knows which data sources to query. Projects can be shared with other users and have a default project per user.
+
+**Relationships**: Contains ProjectIntegrations, owned by User, can be shared via SharePermission.
+
+#### Todo
+A single actionable item with title, optional description, priority, and status. Can belong to a TodoList or exist independently.
+
+**Relationships**: Belongs to User (owner), optionally belongs to TodoList, can link to Project.
+
+#### TodoList
+A named collection of Todos. Used to organize related tasks (e.g., "Sprint 42 Tasks", "Personal Errands").
+
+**Relationships**: Contains Todos, owned by User.
+
+#### List
+A generic named collection for organizing items. More flexible than TodoList—can hold various item types.
+
+**Relationships**: Contains ListItems, owned by User, can be shared.
+
+#### ListItem
+An entry within a List. Flexible content structure.
+
+**Relationships**: Belongs to List.
+
+### Document & Knowledge Objects
+
+#### Document
+A file or content unit that Piper can analyze and remember. Includes uploaded files, pasted content, or federated content from integrations.
+
+**Relationships**: Owned by User, can belong to Project, produces AnalysisResult.
+
+#### UploadedFile
+Metadata about a file uploaded to Piper, including type detection and validation status.
+
+**Relationships**: Becomes a Document after processing.
+
+#### KnowledgeNode
+A discrete piece of knowledge extracted from documents or conversations. Part of Piper's knowledge graph.
+
+**Relationships**: Connected to other KnowledgeNodes via KnowledgeEdge.
+
+#### KnowledgeEdge
+A relationship between two KnowledgeNodes (e.g., "supports", "contradicts", "elaborates").
+
+**Relationships**: Connects two KnowledgeNodes.
+
+### Conversation Objects
+
+#### Conversation
+A chat session between User and Piper. Maintains context across multiple turns.
+
+**Relationships**: Contains ConversationTurns, belongs to User, associated with Project context.
+
+#### ConversationTurn
+A single exchange (user message + Piper response) within a Conversation.
+
+**Relationships**: Belongs to Conversation.
+
+#### StandupConversation
+A specialized conversation for interactive standup creation. Has 7 states (INITIATED → COMPLETE) and tracks preferences.
+
+**Relationships**: Type of Conversation with standup-specific state machine.
+
+#### PortfolioOnboardingSession
+A conversation guiding new users through setting up their project portfolio.
+
+**Relationships**: Type of onboarding flow, creates Projects.
+
+### Work & Intent Objects
+
+#### Intent
+A classified user request with category (EXECUTION, ANALYSIS, etc.), confidence score, and extracted entities.
+
+**Relationships**: Derived from user message, routes to handlers.
+
+#### Task
+A unit of work Piper performs, with status tracking and result.
+
+**Relationships**: Created from Intent, produces WorkflowResult.
+
+#### Workflow
+A multi-step process Piper executes (e.g., standup generation, document analysis).
+
+**Relationships**: Contains Tasks, produces WorkflowResult.
+
+#### WorkflowResult
+The outcome of a completed Workflow, including success/failure status and any generated content.
+
+**Relationships**: Produced by Workflow.
+
+### Spatial & Context Objects
+
+#### SpatialContext
+The current "where" of a user—physical location, digital context (which app/channel), and temporal context.
+
+**Relationships**: Associated with User session, informs Piper's responses.
+
+#### SpatialObject
+A thing in the user's context that Piper tracks (a meeting, a document, a person mentioned).
+
+**Relationships**: Exists within SpatialContext.
+
+#### SpatialEvent
+Something that happened in the user's context (meeting started, file uploaded, message received).
+
+**Relationships**: Occurs within SpatialContext, may create/modify SpatialObjects.
+
+### Integration Objects
+
+#### ProjectIntegration
+A connection between a Project and an external service (GitHub repo, Slack channel, Notion database).
+
+**Relationships**: Belongs to Project, configures federation.
+
+### Ethics & Boundaries
+
+#### EthicalDecision
+A record of when Piper made a decision involving ethical considerations (privacy, consent, boundaries).
+
+**Relationships**: Logged for audit, may reference User and context.
+
+#### BoundaryViolation
+A record of when a user request crossed ethical boundaries and how Piper responded.
+
+**Relationships**: Logged for audit, informs future behavior.
 
 ---
 

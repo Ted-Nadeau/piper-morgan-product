@@ -1,0 +1,54 @@
+# Release Notes Index
+
+This directory contains release notes for all Piper Morgan versions.
+
+---
+
+## Current Version
+
+**v0.8.4** (January 12, 2026) - [Release Notes](RELEASE-NOTES-v0.8.4.md)
+
+Sprint B1 complete: Integration Settings (Epic #543), Portfolio Onboarding (#490), and Slack Attention Decay (#365).
+
+---
+
+## Release History
+
+| Version | Date | Type | Highlights |
+|---------|------|------|------------|
+| [v0.8.4](RELEASE-NOTES-v0.8.4.md) | Jan 12, 2026 | Feature | Integration Settings, Portfolio Onboarding |
+| [v0.8.3.2](RELEASE-NOTES-v0.8.3.2.md) | Jan 8, 2026 | Feature | Interactive Standup Assistant (Epic #242) |
+| [v0.8.3.1](RELEASE-NOTES-v0.8.3.1.md) | Jan 7, 2026 | Patch | FTUX improvements (greeting panel, empty states, post-setup orientation) |
+| [v0.8.3](RELEASE-NOTES-v0.8.3.md) | Jan 2, 2026 | Feature | Epic #314 CONV-UX-PERSIST complete |
+| [v0.8.2](RELEASE-NOTES-v0.8.2.md) | Dec 2025 | Feature | UX polish, accessibility improvements |
+| [v0.8.1](RELEASE-NOTES-v0.8.1.md) | Nov 2025 | Feature | Version display, startup refactoring |
+
+---
+
+## Versioning Strategy
+
+Piper Morgan uses semantic versioning with the following pattern:
+
+- **Major (0.x.x)**: Pre-1.0 alpha phase
+- **Minor (x.8.x)**: Feature releases, epic completions
+- **Patch (x.x.3)**: Bug fixes, small improvements
+
+See [versioning.md](../versioning.md) for full versioning strategy.
+
+---
+
+## Known Issues
+
+For current known issues and limitations, see [ALPHA_KNOWN_ISSUES.md](../ALPHA_KNOWN_ISSUES.md).
+
+---
+
+## For Alpha Testers
+
+- [Alpha Testing Guide](../ALPHA_TESTING_GUIDE.md) - How to test Piper Morgan
+- [Alpha Quickstart](../ALPHA_QUICKSTART.md) - Getting started fast
+- [Alpha Agreement](../ALPHA_AGREEMENT_v2.md) - Terms for alpha testing
+
+---
+
+*Last updated: January 12, 2026*

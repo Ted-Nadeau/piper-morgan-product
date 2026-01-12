@@ -1,11 +1,16 @@
 # Canonical Query Test Matrix v2
 
-**Generated**: December 25, 2025 (Updated January 8, 2026)
+**Generated**: December 25, 2025 (Updated January 12, 2026)
 **Based On**: Canonical Queries v2 (63 queries)
 **Current Implementation**: 21/63 (33%)
-**Last Tested**: January 8, 2026
+**Last Tested**: January 12, 2026
 
-**Recent Updates (v0.8.3.2)**:
+**Recent Updates (v0.8.4)**:
+- No new canonical query implementations in Sprint B1
+- Focus was on Integration Settings (Epic #543) and Portfolio Onboarding (#490)
+- Coverage remains at 33%
+
+**v0.8.3.2 Updates**:
 - Query #49 `/standup` → ✅ PASS (Slack slash command, Issue #520)
 - Query #50 `/piper help` → ✅ PASS (Slack slash command, Issue #520)
 - Interactive Standup (Epic #242) adds conversational standup creation to chat interface (complementary to Query #49)
