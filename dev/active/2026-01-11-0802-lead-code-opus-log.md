@@ -516,5 +516,239 @@ Created gameplan at `dev/active/gameplan-576-oauth-credential-ui.md`
 
 ---
 
+---
+
+## 18:27 - Session Continuation (Context Recovery)
+
+Session resumed after compaction. Previous context included completion of #571 (Calendar sync preferences) and authorization to implement #572 (Notion workspace preferences).
+
+---
+
+## 18:38 - Issue #572 Complete
+
+Implemented Notion Workspace Preferences following 95% pattern from #571:
+
+### Backend (web/api/routes/settings_integrations.py)
+- Added Pydantic models: `NotionDatabaseInfo`, `NotionDatabaseListResponse`, `NotionPreferencesRequest`, `NotionPreferencesResponse`
+- Added file-based storage: `data/notion_preferences.json`
+- Added 3 new endpoints:
+  - `GET /notion/databases` - Lists available Notion databases (calls Notion API search)
+  - `GET /notion/preferences` - Load saved preferences
+  - `POST /notion/preferences` - Save preferences
+
+### Frontend (templates/settings_notion.html)
+- Added Database Selection card (only visible when Notion connected)
+- CSS for database list, checkboxes, dropdown
+- JavaScript functions:
+  - `loadDatabaseList()` - Fetch databases from API
+  - `renderDatabaseList()` - Display checkboxes for each database
+  - `updateDefaultDropdown()` - Default database selection
+  - `saveNotionPreferences()` - Save with toast feedback
+  - `refreshDatabaseList()` - Refresh button functionality
+
+### Testing
+- Created `tests/unit/web/api/routes/test_settings_notion_preferences.py`
+- 12 tests covering all endpoints and storage
+- All tests passing
+
+### Commit
+- `db16e808` - feat(#572): Add Notion workspace preferences to settings
+
+### Issue Closed
+- Updated description with completion matrix and evidence
+- Closed with closing comment
+
+---
+
+## 18:48 - Issue #573 Audit
+
+Audited #573 (GitHub repository preferences) against template.
+
+**Grade: D - Needs Major Update**
+
+Missing sections:
+- Problem Statement (Current State, Impact, Strategic Context)
+- Goal with UX Example and "Not In Scope"
+- What Already Exists infrastructure checklist
+- Phased Requirements (Phase 0/1/2/3/Z)
+- Expanded Acceptance Criteria (Testing, Quality)
+- Completion Matrix
+- Testing Strategy
+- STOP Conditions
+- Effort Estimate
+- Dependencies
+- Evidence Section
+
+---
+
+## 18:49 - Issue #573 Updated & Gameplan Created
+
+**Updated #573** to full template compliance matching #572 format.
+
+**Created gameplan** at `dev/active/gameplan-573-github-repository-preferences.md`
+
+Key differences from #572 (Notion):
+- GitHub uses PAT token (not API key)
+- GitHub API endpoint is `/user/repos` (not `search`)
+- Repository IDs are integers (database IDs are strings)
+- Uses `full_name` format for repository identification
+
+**Awaiting PM approval** to proceed with implementation.
+
+---
+
+## 19:07 - Issue #573 Complete
+
+Implemented GitHub Repository Preferences following established pattern from #571/#572:
+
+### Backend (web/api/routes/settings_integrations.py)
+- Added Pydantic models: `GitHubRepositoryInfo`, `GitHubRepositoryListResponse`, `GitHubPreferencesRequest`, `GitHubPreferencesResponse`
+- Added file-based storage: `data/github_preferences.json`
+- Added 3 new endpoints:
+  - `GET /github/repositories` - Lists accessible GitHub repositories
+  - `GET /github/preferences` - Load saved preferences
+  - `POST /github/preferences` - Save preferences
+
+### Frontend (templates/settings_github.html)
+- Added Repository Selection card (only visible when GitHub connected)
+- CSS for repository list, checkboxes, dropdown
+- JavaScript functions matching Notion pattern
+
+### Testing
+- Created `tests/unit/web/api/routes/test_settings_github_preferences.py`
+- 12 tests covering all endpoints and storage
+- All tests passing
+
+### Commit
+- `878b0afe` - feat(#573): Implement GitHub repository preferences
+
+### Issue Closed
+- Updated description with completion matrix and evidence
+
+---
+
+## 19:14 - Epic #543 Complete
+
+Updated Epic #543 (Integration-specific settings) with all 4 children closed:
+
+| Child Issue | Title | Status |
+|-------------|-------|--------|
+| #570 | Slack channel selection | ✅ Closed |
+| #571 | Calendar sync preferences | ✅ Closed |
+| #572 | Notion workspace preferences | ✅ Closed |
+| #573 | GitHub repository preferences | ✅ Closed |
+
+**Epic #543 CLOSED** - All integration-specific settings implemented.
+
+---
+
+## 19:27 - Issue #562 Complete (Final Sprint B1 Issue)
+
+Fixed Integration Test button to use stored OAuth tokens:
+
+### Root Cause
+Test functions (`_test_slack()`, `_test_notion()`, `_test_github()`) used integration routers which prefer MCP/spatial paths over user-specific OAuth tokens.
+
+### Solution
+Rewrote all 3 test functions to follow `_test_calendar()` pattern:
+
+| Function | Before (Broken) | After (Fixed) |
+|----------|-----------------|---------------|
+| `_test_slack()` | `SlackIntegrationRouter().test_auth()` | `KeychainService.get_api_key("slack")` + direct Slack API |
+| `_test_notion()` | `NotionIntegrationRouter().test_connection()` | `NotionConfigService.get_config().api_key` + direct Notion API |
+| `_test_github()` | `GitHubIntegrationRouter().test_connection()` | `KeychainService.get_api_key("github")` + direct GitHub API |
+
+### Tests Updated
+- Updated 9 test methods in `test_integrations.py` to mock new pattern
+- All 32 tests passing
+
+### Commit
+- `ab44a72e` - fix(#562): Use stored OAuth tokens for integration Test button
+
+### Issue Closed
+- Updated description with full implementation evidence
+- Pushed to main
+
+---
+
+## 🎉 SPRINT B1 COMPLETE 🎉
+
+### Final Sprint B1 Summary
+
+| Issue | Title | Status |
+|-------|-------|--------|
+| #314 | CONV-UX-PERSIST | ✅ Closed (Epic) |
+| #543 | Integration-specific settings | ✅ Closed (Epic) |
+| #544 | Bulk integration operations | ✅ Closed |
+| #562 | Integration Test button OAuth bug | ✅ Closed |
+
+**All Sprint B1 issues resolved.**
+
+---
+
+## Session Summary
+
+### Total Accomplishments Today (2026-01-11)
+
+**Issues Closed**: 9
+| Issue | Type | Title |
+|-------|------|-------|
+| #314 | Epic | CONV-UX-PERSIST |
+| #543 | Epic | Integration-specific settings |
+| #544 | Feature | Bulk integration operations (Disconnect All) |
+| #562 | Bug | Integration Test button OAuth |
+| #570 | Feature | Slack channel selection |
+| #571 | Feature | Calendar sync preferences |
+| #572 | Feature | Notion workspace preferences |
+| #573 | Feature | GitHub repository preferences |
+| #575 | Bug | Slack OAuth client_id (earlier) |
+
+**Other Work**:
+- CLAUDE.md restructured for Lead Developer identity persistence
+- Created Beta issues #567-569 for deferred features
+- Created #574, #576 (discovered issues)
+- Deep dive on OAuth infrastructure patterns
+
+**Commits**: 6+
+- `cee6c3eb` - feat(#544): Add Disconnect All button
+- `db16e808` - feat(#572): Notion workspace preferences
+- `878b0afe` - feat(#573): GitHub repository preferences
+- `ab44a72e` - fix(#562): OAuth tokens for Test button
+- Plus earlier commits for #570, #571, #575
+
+**Tests Written**: 36+
+- 12 tests for Notion preferences
+- 12 tests for GitHub preferences
+- 9 tests updated for OAuth pattern
+- Plus Slack channel tests
+
+### Multi-Day Productivity
+
+The past few days (Jan 9-11) have been exceptionally productive:
+- Jan 9: 7 issues closed, Epic #490 complete
+- Jan 10: Epic #314 MVP complete, infrastructure improvements
+- Jan 11: Sprint B1 complete (9 more issues)
+
+**Total**: Sprint B1 delivered ahead of expectations.
+
+---
+
+## Reflection
+
+This was a fantastic session. The key wins:
+
+1. **Pattern Consistency**: All 4 integration preferences follow the same architecture (backend API + file storage + frontend card pattern). This makes the codebase predictable and maintainable.
+
+2. **Root Cause Fixes**: The #562 fix wasn't a workaround - it addressed the fundamental issue of router-based tests not using user credentials.
+
+3. **Template Compliance**: Every issue created or updated followed the proper templates, making future work easier.
+
+4. **CLAUDE.md Evolution**: The Lead Developer identity changes should help maintain context continuity in future long sessions.
+
+Thank you for the partnership. It's been a pleasure working through Sprint B1 together.
+
+---
+
 *Session started: 2026-01-11 08:02*
-*Last updated: 2026-01-11 10:09*
+*Session ended: 2026-01-11 21:34*
+*Duration: ~13.5 hours (with breaks)*
