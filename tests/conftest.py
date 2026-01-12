@@ -28,6 +28,34 @@ TEST_WORKFLOW_ID = UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
 XIAN_USER_ID = UUID("3f4593ae-5bc9-468d-b08d-8c4c02a5b963")
 
 
+# ============================================================================
+# Auto-skip LLM tests when API keys not available
+# ============================================================================
+def pytest_collection_modifyitems(config, items):
+    """
+    Auto-skip tests marked with @pytest.mark.llm when no LLM API keys are available.
+
+    This prevents test failures in CI/local environments without LLM credentials.
+    Tests will show as 'skipped' rather than 'failed'.
+    """
+    # Check for any LLM API key
+    has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+    has_anthropic = bool(os.environ.get("ANTHROPIC_API_KEY"))
+    has_llm_keys = has_openai or has_anthropic
+
+    if has_llm_keys:
+        # Keys available, run all tests
+        return
+
+    # No keys - skip LLM-marked tests
+    skip_llm = pytest.mark.skip(
+        reason="LLM API keys not available (OPENAI_API_KEY or ANTHROPIC_API_KEY)"
+    )
+    for item in items:
+        if "llm" in item.keywords:
+            item.add_marker(skip_llm)
+
+
 # Session-scoped event loop for async integration tests (Issue #290)
 # This ensures all tests in a session share the same event loop, preventing
 # "Task attached to different loop" errors when database connections are reused

@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.3.2)
+# Known Issues & Feature Status (v0.8.4)
 
-**Version**: 0.8.3.2
-**Last Updated**: January 8, 2026
-**Status**: Stable Core (Setup/Login/Chat/Interactive Standup Ready)
+**Version**: 0.8.4
+**Last Updated**: January 12, 2026
+**Status**: Stable Core (Sprint B1 Complete - Integration Settings + Portfolio Onboarding)
 
 ---
 
@@ -48,9 +48,28 @@ These features have been tested, completed, and are ready for alpha testing:
   - Memory optimization: Turn history limited to prevent unbounded growth
   - Epic #242: CONV-MCP-STANDUP-INTERACTIVE complete (Issues #552-#556)
 
-- ✅ **Quality Validation** (Enhanced in 0.8.3.2)
+- ✅ **Integration Settings** (New in 0.8.4)
 
-  - 860+ automated tests (260 standup tests added)
+  - Configure all integration credentials from Settings → Integrations
+  - OAuth Connect for Slack and Google Calendar
+  - Personal Access Token configuration for GitHub (with keychain fallback)
+  - API Key configuration for Notion (with keychain fallback)
+  - Preferences panels for Calendar sync, Notion workspace, GitHub repos
+  - "Disconnect All" button for bulk management
+  - Epic #543 complete (Issues #544, #571-#579)
+
+- ✅ **Portfolio Onboarding** (New in 0.8.4)
+
+  - Conversational project setup for new users
+  - Triggered on first greeting ("Hello!")
+  - Multi-turn flow: INITIATED → GATHERING_PROJECTS → CONFIRMING → COMPLETE
+  - Natural language project extraction
+  - Creates Project entities in database for future context
+  - Issue #490: FTUX-PORTFOLIO complete
+
+- ✅ **Quality Validation** (Enhanced in 0.8.4)
+
+  - 2100+ automated tests (major expansion in v0.8.4)
   - CI/CD quality gates with GitHub Actions
   - 100% pass rate on critical path tests
   - UI stability improvements across navigation and forms
@@ -166,7 +185,7 @@ These features have been tested, completed, and are ready for alpha testing:
 
 ### Development Quality
 
-- ✅ **Test coverage**: 100% pass rate (860+ tests)
+- ✅ **Test coverage**: 100% pass rate (2100+ tests)
 
   - Auth tests: 17/17 passing
   - UUID migration tests: Verified
@@ -537,12 +556,12 @@ This document will be updated:
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
 - `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
 - `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
-- `VERSION_NUMBERING.md` - Understanding version 0.8.3.2
-- `RELEASE-NOTES-v0.8.3.2.md` - What changed in this release
+- `VERSION_NUMBERING.md` - Understanding version 0.8.4
+- `RELEASE-NOTES-v0.8.4.md` - What changed in this release
 - GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
 ---
 
 _Last Updated: January 8, 2026_
 _Status: Stable core (setup, login, chat, interactive standup ready - 76% canonical query coverage)_
-_Software Version: 0.8.3.2_
+_Software Version: 0.8.4_

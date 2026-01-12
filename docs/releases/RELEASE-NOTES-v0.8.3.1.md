@@ -18,7 +18,9 @@ This patch release delivers the Sprint B1 P0 "First Time User Experience" (FTUX)
 
 New users now see a friendly greeting from Piper Morgan at the start of the setup wizard:
 
-> "Hi, I'm Piper Morgan. I help developers stay organized by pulling together your GitHub issues, calendar, and daily work into one place. Let's get you set up."
+> "Hi, I'm Piper Morgan, your PM assistant! You can call me Piper."
+>
+> "I'm here to help you with product management work—tracking tasks, managing GitHub issues, prepping for standups, and staying on top of your calendar."
 
 - Friendly introduction sets expectations
 - Dismissible panel (doesn't block setup)

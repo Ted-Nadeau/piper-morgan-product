@@ -1,7 +1,7 @@
 # Release Runbook
 
-**Version**: 1.0
-**Last Updated**: January 7, 2026
+**Version**: 1.1
+**Last Updated**: January 12, 2026
 
 This runbook documents the complete process for releasing a new version of Piper Morgan to production.
 
@@ -95,6 +95,27 @@ Review and update if setup process changed:
 ### 4. Navigation
 
 - [ ] `docs/NAVIGATION.md` - Add any new documentation sections created
+
+### 5. Testing Documentation
+
+Update test statistics and coverage metrics:
+
+```bash
+# Get current test count
+python -m pytest tests/ --collect-only -q 2>/dev/null | tail -3
+# Record: X tests collected
+```
+
+- [ ] `docs/ALPHA_KNOWN_ISSUES.md` - Update test count (e.g., "2100+ tests")
+- [ ] `docs/internal/testing/canonical-query-test-matrix-v2.md` - Review and update if new queries implemented:
+  - Update "Last Tested" date
+  - Update coverage percentages if changed
+  - Mark any newly passing queries
+
+### 6. Cleanup Working Files
+
+- [ ] Remove any draft release notes from `dev/YYYY/MM/DD/` (canonical location is `docs/releases/`)
+- [ ] Verify no stray working documents should be archived
 
 ---
 
@@ -221,6 +242,7 @@ After release, verify these artifacts exist:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | 2026-01-12 | Added Testing Documentation section (test count, canonical query matrix), Cleanup Working Files section |
 | 1.0 | 2026-01-07 | Initial runbook based on v0.8.3.1 release |
 
 ---

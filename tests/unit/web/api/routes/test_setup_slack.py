@@ -24,16 +24,27 @@ class TestSlackOAuthTrigger:
         """Should return Slack OAuth URL with state"""
         from web.api.routes.setup import start_slack_oauth
 
-        # When: Requesting OAuth start
-        with patch("services.integrations.slack.oauth_handler.SlackOAuthHandler") as MockHandler:
-            mock_instance = MagicMock()
-            mock_instance.generate_authorization_url.return_value = (
-                "https://slack.com/oauth/v2/authorize?client_id=test&scope=chat:write",
-                "state_abc123",
-            )
-            MockHandler.return_value = mock_instance
+        # When: Requesting OAuth start (must mock both config and handler)
+        with patch("services.integrations.slack.config_service.SlackConfigService") as MockConfig:
+            # Mock config service to return valid credentials
+            mock_config_instance = MagicMock()
+            mock_config = MagicMock()
+            mock_config.client_id = "test_client_id"
+            mock_config.client_secret = "test_client_secret"
+            mock_config_instance.get_config.return_value = mock_config
+            MockConfig.return_value = mock_config_instance
 
-            response = await start_slack_oauth()
+            with patch(
+                "services.integrations.slack.oauth_handler.SlackOAuthHandler"
+            ) as MockHandler:
+                mock_instance = MagicMock()
+                mock_instance.generate_authorization_url.return_value = (
+                    "https://slack.com/oauth/v2/authorize?client_id=test&scope=chat:write",
+                    "state_abc123",
+                )
+                MockHandler.return_value = mock_instance
+
+                response = await start_slack_oauth()
 
         # Then: Response contains auth URL and state
         assert "auth_url" in response
@@ -46,17 +57,28 @@ class TestSlackOAuthTrigger:
         """OAuth URL should include bot scopes"""
         from web.api.routes.setup import start_slack_oauth
 
-        # When: Requesting OAuth start
-        with patch("services.integrations.slack.oauth_handler.SlackOAuthHandler") as MockHandler:
-            mock_instance = MagicMock()
-            # Simulating URL with scopes parameter
-            mock_instance.generate_authorization_url.return_value = (
-                "https://slack.com/oauth/v2/authorize?client_id=test&scope=chat:write,channels:read",
-                "state_xyz789",
-            )
-            MockHandler.return_value = mock_instance
+        # When: Requesting OAuth start (must mock both config and handler)
+        with patch("services.integrations.slack.config_service.SlackConfigService") as MockConfig:
+            # Mock config service to return valid credentials
+            mock_config_instance = MagicMock()
+            mock_config = MagicMock()
+            mock_config.client_id = "test_client_id"
+            mock_config.client_secret = "test_client_secret"
+            mock_config_instance.get_config.return_value = mock_config
+            MockConfig.return_value = mock_config_instance
 
-            response = await start_slack_oauth()
+            with patch(
+                "services.integrations.slack.oauth_handler.SlackOAuthHandler"
+            ) as MockHandler:
+                mock_instance = MagicMock()
+                # Simulating URL with scopes parameter
+                mock_instance.generate_authorization_url.return_value = (
+                    "https://slack.com/oauth/v2/authorize?client_id=test&scope=chat:write,channels:read",
+                    "state_xyz789",
+                )
+                MockHandler.return_value = mock_instance
+
+                response = await start_slack_oauth()
 
         # Then: URL should contain scope parameter
         assert "scope=" in response["auth_url"]
@@ -195,15 +217,26 @@ class TestSlackOAuthStartEndpoint:
         """Endpoint should return JSON with auth_url"""
         from web.api.routes.setup import start_slack_oauth
 
-        with patch("services.integrations.slack.oauth_handler.SlackOAuthHandler") as MockHandler:
-            mock_instance = MagicMock()
-            mock_instance.generate_authorization_url.return_value = (
-                "https://slack.com/oauth/v2/authorize?test=1",
-                "test_state",
-            )
-            MockHandler.return_value = mock_instance
+        with patch("services.integrations.slack.config_service.SlackConfigService") as MockConfig:
+            # Mock config service to return valid credentials
+            mock_config_instance = MagicMock()
+            mock_config = MagicMock()
+            mock_config.client_id = "test_client_id"
+            mock_config.client_secret = "test_client_secret"
+            mock_config_instance.get_config.return_value = mock_config
+            MockConfig.return_value = mock_config_instance
 
-            result = await start_slack_oauth()
+            with patch(
+                "services.integrations.slack.oauth_handler.SlackOAuthHandler"
+            ) as MockHandler:
+                mock_instance = MagicMock()
+                mock_instance.generate_authorization_url.return_value = (
+                    "https://slack.com/oauth/v2/authorize?test=1",
+                    "test_state",
+                )
+                MockHandler.return_value = mock_instance
+
+                result = await start_slack_oauth()
 
         assert isinstance(result, dict)
         assert "auth_url" in result
@@ -225,16 +258,27 @@ class TestSlackOAuthStartEndpoint:
             },
         ):
             with patch(
-                "services.integrations.slack.oauth_handler.SlackOAuthHandler"
-            ) as MockHandler:
-                mock_instance = MagicMock()
-                mock_instance.generate_authorization_url.return_value = (
-                    "https://slack.com/oauth/v2/authorize",
-                    "state",
-                )
-                MockHandler.return_value = mock_instance
+                "services.integrations.slack.config_service.SlackConfigService"
+            ) as MockConfig:
+                # Mock config service to return valid credentials
+                mock_config_instance = MagicMock()
+                mock_config = MagicMock()
+                mock_config.client_id = "test_client_id"
+                mock_config.client_secret = "test_client_secret"
+                mock_config_instance.get_config.return_value = mock_config
+                MockConfig.return_value = mock_config_instance
 
-                await start_slack_oauth()
+                with patch(
+                    "services.integrations.slack.oauth_handler.SlackOAuthHandler"
+                ) as MockHandler:
+                    mock_instance = MagicMock()
+                    mock_instance.generate_authorization_url.return_value = (
+                        "https://slack.com/oauth/v2/authorize",
+                        "state",
+                    )
+                    MockHandler.return_value = mock_instance
 
-                # Then: Handler should be called (redirect_uri handling is internal)
-                mock_instance.generate_authorization_url.assert_called_once()
+                    await start_slack_oauth()
+
+                    # Then: Handler should be called (redirect_uri handling is internal)
+                    mock_instance.generate_authorization_url.assert_called_once()
