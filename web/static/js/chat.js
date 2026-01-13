@@ -480,6 +480,14 @@
     handleErrorResponse,
     clearHistory: clearChatHistory,
     getSessionId: () => sessionId,
+    setSessionId: (id) => {
+      // Issue #581: Allow sidebar to sync conversation selection to chat
+      sessionId = id;
+      // Persist to localStorage for refresh/bookmark scenarios
+      if (storageAvailable && id) {
+        localStorage.setItem(STORAGE_KEYS.SESSION_ID, id);
+      }
+    },
     init: initChat
   };
 })();

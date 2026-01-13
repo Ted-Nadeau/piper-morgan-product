@@ -1037,7 +1037,7 @@
     <script>
       const API_BASE_URL = "";
       const chatWindow = document.getElementById("chat-window");
-      let sessionId = null;
+      // Note: sessionId is managed by chat.js - use ChatWidget.getSessionId()/setSessionId()
 
       // G50: Initialize startup greeting with time-based message
       function initializeGreeting() {
@@ -1428,6 +1428,11 @@
       function setActiveConversation(id) {
         activeConversationId = id;
 
+        // Issue #581: Sync with chat.js so messages go to the selected conversation
+        if (window.ChatWidget && window.ChatWidget.setSessionId) {
+          ChatWidget.setSessionId(id);
+        }
+
         // Update URL for bookmarking
         if (id) {
           history.replaceState(null, '', `/?conversation=${id}`);
@@ -1547,9 +1552,8 @@
         // Check URL for conversation parameter
         const params = new URLSearchParams(window.location.search);
         const conversationId = params.get('conversation');
-        if (conversationId) {
-          activeConversationId = conversationId;
-        }
+        // Note: Don't set activeConversationId here - let switchConversation() do it
+        // so that setActiveConversation() is called and syncs to chat.js (#581)
 
         // Restore collapsed state
         const wasCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -1564,7 +1568,7 @@
         // Load conversations
         loadConversations();
 
-        // If URL had a conversation, load it
+        // If URL had a conversation, load it (this will sync to chat.js via setActiveConversation)
         if (conversationId) {
           switchConversation(conversationId);
         }
