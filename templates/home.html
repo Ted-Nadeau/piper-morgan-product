@@ -1289,6 +1289,7 @@
       }
 
       // Load conversations from API
+      // Returns the first conversation ID if available (for auto-select)
       async function loadConversations() {
         const listEl = document.getElementById('conversation-list');
 
@@ -1304,9 +1305,15 @@
           const data = await response.json();
           renderConversationList(data.conversations, data.has_more);
 
+          // Issue #583: Return first conversation ID for auto-select
+          return data.conversations && data.conversations.length > 0
+            ? data.conversations[0].id
+            : null;
+
         } catch (error) {
           console.error('Failed to load conversations:', error);
           listEl.innerHTML = '<div class="no-conversations">Unable to load conversations</div>';
+          return null;
         }
       }
 
@@ -1433,6 +1440,13 @@
           ChatWidget.setSessionId(id);
         }
 
+        // Issue #583: Persist to localStorage for refresh recovery
+        if (id) {
+          localStorage.setItem('piper_active_conversation_id', id);
+        } else {
+          localStorage.removeItem('piper_active_conversation_id');
+        }
+
         // Update URL for bookmarking
         if (id) {
           history.replaceState(null, '', `/?conversation=${id}`);
@@ -1491,6 +1505,8 @@
         } catch (error) {
           console.error('Failed to load conversation:', error);
           Toast.error('Failed to load conversation', error.message);
+          // Issue #583: Clear stale localStorage to prevent repeat failures on refresh
+          localStorage.removeItem('piper_active_conversation_id');
         }
       }
 
@@ -1548,10 +1564,16 @@
       }
 
       // Initialize sidebar on page load
-      function initSidebar() {
+      async function initSidebar() {
         // Check URL for conversation parameter
         const params = new URLSearchParams(window.location.search);
-        const conversationId = params.get('conversation');
+        let conversationId = params.get('conversation');
+
+        // Issue #583: If no URL param, try localStorage for refresh recovery
+        if (!conversationId) {
+          conversationId = localStorage.getItem('piper_active_conversation_id');
+        }
+
         // Note: Don't set activeConversationId here - let switchConversation() do it
         // so that setActiveConversation() is called and syncs to chat.js (#581)
 
@@ -1565,12 +1587,17 @@
           sidebarCollapsed = true;
         }
 
-        // Load conversations
-        loadConversations();
+        // Load conversations and get the most recent one
+        const firstConversationId = await loadConversations();
 
-        // If URL had a conversation, load it (this will sync to chat.js via setActiveConversation)
-        if (conversationId) {
-          switchConversation(conversationId);
+        // Issue #583: Auto-select conversation in priority order:
+        // 1. URL parameter (explicit link)
+        // 2. localStorage (refresh recovery)
+        // 3. Most recent conversation (default for new sessions)
+        const targetConversationId = conversationId || firstConversationId;
+
+        if (targetConversationId) {
+          switchConversation(targetConversationId);
         }
       }
 
