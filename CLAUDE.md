@@ -232,66 +232,90 @@ async def endpoint(current_user: JWTClaims = Depends(get_current_user)):
     print(current_user.username)
 ```
 
-### Identity Model (KNOWN ISSUES - See ADR-051)
+### Identity Model (ADR-051 - RequestContext Pattern)
 
-**WARNING**: The current identity model has known inconsistencies being addressed in ADR-051. Until then, follow these guidelines carefully.
+**STATUS**: ADR-051 APPROVED. Migration in progress - use RequestContext for new code.
 
-**Three Distinct Concepts** (currently conflated in code):
+**Core Principle**: Use `RequestContext` as the single source of truth for identity.
 
-| Concept | Purpose | Persistence | Current State |
-|---------|---------|-------------|---------------|
-| **User Identity** | Who is making the request | Permanent (DB) | `user_id` - but type varies (UUID/str) |
-| **Session Context** | Ephemeral request context | Per-request | `session_id` - overloaded for 3 purposes |
-| **Conversation Context** | Multi-turn conversation state | Per-conversation | `conversation_id` - sometimes uses session_id |
+| Field | Type | Purpose |
+|-------|------|---------|
+| `user_id` | UUID | Authenticated user's database PK |
+| `conversation_id` | UUID | Database PK for conversation record |
+| `request_id` | UUID | Unique per-request for tracing |
+| `user_email` | str | User's email for logging/display |
+| `timestamp` | datetime | Request timestamp (UTC) |
+| `workspace_id` | Optional[UUID] | Future multi-tenant support |
 
-**`user_id` - ALWAYS pass through call chains**:
-- **Source**: `current_user.sub` (string) from JWT claims
-- **Type inconsistency**: Database uses `UUID`, routes use `str`, services mixed
-- **Use for**: Database queries for user-owned resources (projects, todos, preferences)
-- **CRITICAL**: If a method queries user data, it MUST receive `user_id` - do NOT rely on session fallbacks
-
-**`session_id` - Ephemeral request context**:
-- **Source**: Generated per-conversation in frontend, passed via request
-- **WARNING**: Currently overloaded - used for request context, conversation tracking, AND cache keys
-- **Use for**: Conversation-scoped operations only
-
-**`conversation_id` - Persistent conversation tracking**:
-- **Source**: Database-generated UUID for conversation record
-- **Use for**: Multi-turn conversation persistence, history retrieval
-- **WARNING**: Some code incorrectly passes `session_id` as `conversation_id`
-
-**Pattern to Follow** (until ADR-051 refactor):
+**New Pattern (PREFERRED)**:
 ```python
-# In routes - extract user_id from JWT
-user_id = current_user.sub  # Always use .sub, it's the canonical user identifier
+# In routes - create RequestContext at boundary
+from services.domain.models import RequestContext
 
-# Pass user_id through ALL service calls that touch user data
-result = await service.do_something(
-    user_id=user_id,        # REQUIRED for user-scoped operations
-    session_id=session_id,  # For conversation context
-    ...
+@router.post("/endpoint")
+async def handle_request(
+    request: Request,
+    current_user: JWTClaims = Depends(get_current_user),
+):
+    # Parse request
+    data = await request.json()
+    session_id = data.get("session_id", "default")  # This IS the conversation_id
+
+    # Create context at boundary - single source of truth
+    ctx = RequestContext.from_jwt_and_request(
+        claims=current_user,
+        conversation_id=session_id,  # session_id → conversation_id mapping
+    )
+
+    # Pass context to service
+    result = await service.process(ctx=ctx, message=data["message"])
+    return result
+
+# In services - accept RequestContext
+async def process(
+    self,
+    message: str,
+    ctx: Optional[RequestContext] = None,
+    # Old params kept for backwards compatibility during migration
+    session_id: str = "default",
+    user_id: str = None,
+) -> Result:
+    # Extract from context when available
+    effective_user_id = str(ctx.user_id) if ctx else user_id
+    effective_conv_id = str(ctx.conversation_id) if ctx else session_id
+    # ... use effective_* values
+```
+
+**session_id Resolution** (per ADR-051):
+| Old Usage | Now Use |
+|-----------|---------|
+| Ephemeral request context | `ctx.request_id` |
+| Conversation identity | `ctx.conversation_id` |
+| User-context cache key | `ctx.user_id` |
+
+**Legacy Pattern** (still works, being phased out):
+```python
+# OLD: Passing individual params - DEPRECATED
+result = await service.process(
+    message=message,
+    session_id=session_id,  # Use ctx.conversation_id instead
+    user_id=user_id,        # Use ctx.user_id instead
 )
-
-# In services - require user_id, don't make it optional with session fallback
-async def get_user_projects(self, user_id: str) -> List[Project]:  # Required, not Optional
-    # Query by user_id, not session_id
-    return await self.repo.get_by_owner(user_id)
 ```
 
 **Anti-patterns to Avoid**:
 ```python
-# BAD: Making user_id optional with session fallback
-async def get_context(self, user_id: Optional[str] = None, session_id: str):
-    if user_id:
-        return await self._get_by_user(user_id)
-    return await self._get_by_session(session_id)  # Wrong! Sessions are ephemeral
+# BAD: Reconstructing context in service (violates single source of truth)
+async def process(self, user_id: str, session_id: str):
+    ctx = RequestContext(...)  # Wrong! Create at route boundary only
 
-# BAD: Using session_id as conversation_id
-conversation = await manager.get_conversation(session_id)  # Wrong identifier!
+# BAD: Using session_id for user lookups
+await self.repo.get_by_owner(session_id)  # Wrong! Use user_id
 
-# BAD: Not passing user_id through call chain
-async def handle_intent(self, message: str, session_id: str):  # Missing user_id!
-    context = await self.context_service.get(session_id)  # Will fail for user lookups
+# BAD: Optional user_id with session fallback
+if user_id:
+    return await self._get_by_user(user_id)
+return await self._get_by_session(session_id)  # Sessions are ephemeral!
 ```
 
 ---
