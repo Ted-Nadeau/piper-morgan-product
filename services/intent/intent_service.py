@@ -25,7 +25,7 @@ from services.conversation.conversation_handler import ConversationHandler
 from services.conversation.conversation_manager import ConversationManager
 from services.database.models import User
 from services.database.session_factory import AsyncSessionFactory
-from services.domain.models import Intent
+from services.domain.models import Intent, RequestContext
 from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refactored
 from services.intent_service import classifier
 from services.intent_service.action_mapper import ActionMapper
@@ -157,45 +157,64 @@ class IntentService:
             )
 
     async def process_intent(
-        self, message: str, session_id: str = "default_session", user_id: str = None
+        self,
+        message: str,
+        session_id: str = "default_session",
+        user_id: str = None,
+        ctx: Optional[RequestContext] = None,
     ) -> IntentProcessingResult:
         """
         Process user intent and return formatted response.
 
         Issue #563: Wraps _process_intent_internal to save conversation turns.
+        ADR-051 Phase 3: Accepts RequestContext for unified identity handling.
 
         Args:
             message: The user's intent text
-            session_id: Session identifier
-            user_id: Optional user ID from authenticated request (Issue #490)
+            session_id: Session identifier (deprecated - use ctx.conversation_id)
+            user_id: Optional user ID (deprecated - use ctx.user_id)
+            ctx: RequestContext with unified identity (preferred)
 
         Returns:
             IntentProcessingResult with results
         """
+        # ADR-051: Extract from context when available, fallback to old params
+        effective_user_id = str(ctx.user_id) if ctx else user_id
+        effective_session_id = str(ctx.conversation_id) if ctx else session_id
+
         # Process the intent
         result = await self._process_intent_internal(
             message=message,
-            session_id=session_id,
-            user_id=user_id,
+            session_id=effective_session_id,
+            user_id=effective_user_id,
+            ctx=ctx,
         )
 
         # Issue #563: Save conversation turn after processing (best-effort)
         # Only save successful responses with actual content
         if result.success and result.message:
             await self._save_conversation_turn(
-                session_id=session_id,
+                session_id=effective_session_id,
                 user_message=message,
                 assistant_response=result.message,
-                user_id=user_id,
+                user_id=effective_user_id,
             )
 
         return result
 
     async def _process_intent_internal(
-        self, message: str, session_id: str = "default_session", user_id: str = None
+        self,
+        message: str,
+        session_id: str = "default_session",
+        user_id: str = None,
+        ctx: Optional[RequestContext] = None,
     ) -> IntentProcessingResult:
         """
         Internal intent processing logic.
+
+        ADR-051 Phase 3: Accepts RequestContext for unified identity handling.
+        ctx is optional during migration; when present, user_id/session_id are
+        already extracted from it by process_intent().
 
         Handles:
         - Ethics boundary enforcement (Issue #197 - Phase 2B)

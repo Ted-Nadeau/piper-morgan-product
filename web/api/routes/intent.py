@@ -269,10 +269,10 @@ async def process_intent(
             )
 
         # Issue #490: Pass user_id to service for user-specific features
-        # ADR-051 Phase 2: ctx created above; Phase 3 will pass ctx to service
-        # For now, service still receives old params (dual pattern per ADR-051)
+        # ADR-051 Phase 3: Pass RequestContext alongside old params (dual pattern)
+        # ctx is None for unauthenticated requests - service handles gracefully
         result = await intent_service.process_intent(
-            message=message, session_id=session_id, user_id=user_id
+            message=message, session_id=session_id, user_id=user_id, ctx=ctx
         )
 
         # Format HTTP response from service result
