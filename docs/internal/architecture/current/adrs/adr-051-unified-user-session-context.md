@@ -1,8 +1,9 @@
 # ADR-051: Unified User Session Context
 
-**Status**: PROPOSED (Awaiting Chief Architect Review)
+**Status**: APPROVED
 **Date**: 2026-01-13
 **Authors**: Lead Developer (Claude Code)
+**Approved By**: Chief Architect (2026-01-13)
 **Issue**: #584
 **Deciders**: Chief Architect
 
@@ -63,9 +64,11 @@ This pattern emerged from:
 
 ## Decision
 
-### Proposed Solution: Unified `RequestContext` Model
+### Approved Solution: Unified `RequestContext` Model
 
-Create a single, immutable context object that flows through the entire request lifecycle:
+Create a single, immutable context object that flows through the entire request lifecycle.
+
+**Chief Architect Decision**: Single `RequestContext` approved. The three concepts have different lifecycles but same scope of need - always needed together for request processing.
 
 ```python
 # services/domain/models.py
@@ -78,37 +81,75 @@ class RequestContext:
     This is the single source of truth for identity and context.
     Passed through all service calls - never optional, never reconstructed.
     """
-    # User Identity (permanent)
+    # Core identity (required)
     user_id: UUID                    # Authenticated user's database PK
-    username: str                    # Display name
-
-    # Conversation Context (persistent per-conversation)
     conversation_id: UUID            # Database PK for conversation record
-
-    # Request Context (ephemeral)
     request_id: UUID                 # Unique per-request for tracing
+
+    # Denormalized for convenience
+    username: str                    # Display name (saves lookup cost on logs)
     timestamp: datetime              # Request timestamp
 
-    # Optional context
+    # Future-proofing
     workspace_id: Optional[UUID] = None  # For future multi-tenant support
 
     @classmethod
     def from_jwt_and_request(
         cls,
         claims: JWTClaims,
-        conversation_id: UUID,
+        conversation_id: str,
         request_id: Optional[UUID] = None,
     ) -> "RequestContext":
         """Factory method to create context from JWT claims and request data."""
+        # Validation - fail fast on malformed input
+        if not claims.sub:
+            raise ValueError("JWT claims missing 'sub' field")
+        if not conversation_id:
+            raise ValueError("conversation_id is required")
+
         return cls(
-            user_id=UUID(claims.sub),  # Canonical: JWT sub claim as UUID
-            username=claims.username,
-            conversation_id=conversation_id,
+            user_id=UUID(claims.sub),  # str → UUID at boundary
+            conversation_id=UUID(conversation_id),  # str → UUID at boundary
             request_id=request_id or uuid4(),
+            username=claims.username,
             timestamp=datetime.utcnow(),
             workspace_id=UUID(claims.workspace_id) if claims.workspace_id else None,
         )
+
+    def __str__(self) -> str:
+        """String representation for logging/debugging."""
+        return f"RequestContext(user={self.user_id}, conv={self.conversation_id}, req={self.request_id})"
 ```
+
+### Type Strategy (APPROVED)
+
+**Decision**: UUID internally, str at boundaries
+
+| Layer | Type | Rationale |
+|-------|------|-----------|
+| Routes | Accept `str`, convert via factory | Boundary conversion |
+| Services | Always `UUID` | Type safety |
+| Repositories | Always `UUID` | Type safety |
+| Responses | Convert to `str` at serialization | API contract |
+
+### Session_id Resolution (APPROVED)
+
+| Current Usage | Becomes |
+|---------------|---------|
+| Ephemeral request context | `request_id` |
+| Conversation identity | `conversation_id` |
+| User-context cache key | `user_id` (cache was using wrong key) |
+
+### Scope (APPROVED)
+
+**Core four IDs in RequestContext**:
+- `user_id` - Who is making the request
+- `conversation_id` - Which conversation this is
+- `request_id` - This specific request (for tracing)
+- `workspace_id` - Which workspace (optional, future multi-tenant)
+
+**Domain entities (NOT in RequestContext)**:
+`project_id`, `intent_id`, `workflow_id`, `task_id`, etc. - these are processed BY requests, not context FOR requests.
 
 ### Propagation Pattern
 
@@ -142,34 +183,18 @@ class IntentService:
         return await self._route_intent(ctx, classified_intent)
 ```
 
-### Type Consistency
+### Migration Strategy (APPROVED - Compressed Timeline)
 
-Standardize on:
-- **`UUID` internally** for all ID fields in domain models and services
-- **`str` at boundaries** (HTTP requests/responses, JWT claims)
-- **Explicit conversion** at boundary only, using `UUID(str_value)`
+**Chief Architect Guidance**: Incremental but compressed to 2-3 focused days. Do NOT let Phase 2 become permanent.
 
-### Migration Strategy
+| Phase | Scope | Target |
+|-------|-------|--------|
+| 1 | Add `RequestContext` model, factory, documentation | Day 1 AM |
+| 2 | Update routes to create context, pass alongside old params | Day 1 PM |
+| 3 | Update services to use context, update tests | Day 2 |
+| 4 | Remove old patterns, enforce consistency | Day 2-3 |
 
-**Phase 1: Add `RequestContext`** (non-breaking)
-- Create the model in `domain/models.py`
-- Add factory method
-- Document in CLAUDE.md
-
-**Phase 2: Route-level adoption** (incremental)
-- Update routes to create `RequestContext`
-- Pass to services alongside existing parameters
-- Services accept both patterns during migration
-
-**Phase 3: Service-level migration** (incremental)
-- Update services to use `RequestContext`
-- Remove old parameter patterns
-- Update tests
-
-**Phase 4: Cleanup** (breaking)
-- Remove fallback patterns in `UserContextService`
-- Remove `session_id` parameter from methods that should use `conversation_id`
-- Enforce type consistency
+**CRITICAL WARNING**: Do NOT leave Phase 2 (dual patterns) as permanent state. This is exactly how the current mess happened.
 
 ## Alternatives Considered
 
@@ -197,6 +222,18 @@ Document the existing inconsistencies and establish conventions.
 
 **Decision**: Rejected - documentation alone hasn't prevented bugs
 
+### Hybrid Option (Optional Enhancement)
+Create context in middleware, attach to `request.state`, but still pass as explicit parameter:
+
+```python
+@app.middleware("http")
+async def add_request_context(request: Request, call_next):
+    request.state.context = RequestContext.from_jwt_and_request(...)
+    return await call_next(request)
+```
+
+**Decision**: Not required for current scale, but valid for future consideration.
+
 ## Consequences
 
 ### Positive
@@ -207,27 +244,28 @@ Document the existing inconsistencies and establish conventions.
 - Foundation for multi-tenant support
 
 ### Negative
-- Significant refactoring effort
+- Significant refactoring effort (mitigated by compressed timeline)
 - All services need signature updates
 - Tests need updates
 - Learning curve for new pattern
 
 ### Risks
-- Incomplete migration leaves two patterns
-- Over-engineering if simpler solution exists
-- Breaking changes during migration
+- Incomplete migration leaves two patterns (mitigated by compressed timeline)
+- Breaking changes during migration (mitigated by phased approach)
 
-## Questions for Chief Architect
+## Chief Architect Review
 
-1. **Is `RequestContext` the right abstraction?** Should it be split (e.g., `UserContext` + `ConversationContext` + `RequestMetadata`)?
+**Questions Asked**:
+1. Single `RequestContext` vs split abstractions? → **Single approved**
+2. Type standardization? → **UUID internal, str at boundary approved**
+3. Migration approach? → **Incremental, compressed to 2-3 days**
+4. Scope? → **Core four IDs only**
+5. Alternative patterns? → **Explicit passing approved**
 
-2. **Type standardization**: Is `UUID` internally / `str` at boundaries the right choice? Or should we use `str` everywhere for simplicity?
-
-3. **Migration approach**: Incremental (Phases 1-4) or big-bang refactor?
-
-4. **Scope**: Should this include all 14 ID concepts, or focus on the core three (`user_id`, `session_id`, `conversation_id`)?
-
-5. **Alternative patterns**: Are there patterns from other projects that handle this better?
+**Additional Recommendations Incorporated**:
+- Validation in factory (fail fast)
+- `__str__` for logging
+- Optional enforcement decorator for critical paths
 
 ## References
 
@@ -235,8 +273,10 @@ Document the existing inconsistencies and establish conventions.
 - Issue #582 - Bug caused by missing `user_id` propagation
 - Issue #490 - Portfolio onboarding bug (related to session/user confusion)
 - ADR-049 - Conversational State (related context management)
+- Chief Architect Memo - `dev/active/memo-lead-dev-identity-model-response.md`
 
 ---
 
 _ADR created: 2026-01-13_
-_Status: PROPOSED - Awaiting Chief Architect review_
+_Status: APPROVED by Chief Architect (2026-01-13)_
+_Implementation: Scheduled as focused 2-3 day sprint_

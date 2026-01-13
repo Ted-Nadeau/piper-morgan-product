@@ -10,7 +10,7 @@ from __future__ import annotations
 # 2025-06-15: Added Project and ProjectIntegration models for PM-009
 # 2025-06-17: Cleaned separation - removed SQLAlchemy code, fixed duplicate imports
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
@@ -36,8 +36,99 @@ from services.shared_types import (
     WorkflowType,
 )
 
+# =============================================================================
+# REQUEST CONTEXT - ADR-051: Unified User Session Context
+# =============================================================================
 
+
+@dataclass(frozen=True)
+class RequestContext:
+    """
+    Unified context for all request processing (ADR-051).
+
+    This is the single source of truth for identity and context.
+    Passed through all service calls - never optional, never reconstructed.
+
+    Created at request boundary (in routes), passed explicitly to all services.
+    Immutable (frozen) to prevent modification during request lifecycle.
+
+    Attributes:
+        user_id: Authenticated user's database PK (UUID)
+        conversation_id: Database PK for conversation record (UUID)
+        request_id: Unique per-request for tracing (UUID)
+        user_email: User's email for logging/display (denormalized)
+        timestamp: Request timestamp
+
+    Example:
+        # In route - create at boundary
+        ctx = RequestContext.from_jwt_and_request(
+            claims=current_user,
+            conversation_id=request.conversation_id,
+        )
+
+        # In service - receive and use
+        async def process(self, ctx: RequestContext, message: str):
+            projects = await self.repo.get_by_owner(ctx.user_id)
+    """
+
+    # Core identity (required)
+    user_id: UUID  # Authenticated user's database PK
+    conversation_id: UUID  # Database PK for conversation record
+    request_id: UUID  # Unique per-request for tracing
+
+    # Denormalized for convenience (saves lookup cost on logs)
+    user_email: str  # User's email for logging/display
+    timestamp: datetime  # Request timestamp
+
+    # Future-proofing
+    workspace_id: Optional[UUID] = None  # For future multi-tenant support
+
+    @classmethod
+    def from_jwt_and_request(
+        cls,
+        claims: "JWTClaims",  # Forward reference to avoid circular import
+        conversation_id: str,
+        request_id: Optional[UUID] = None,
+    ) -> "RequestContext":
+        """
+        Factory method to create context from JWT claims and request data.
+
+        Args:
+            claims: JWT claims from authenticated request
+            conversation_id: Conversation ID from request (as string)
+            request_id: Optional request ID (generated if not provided)
+
+        Returns:
+            RequestContext: Immutable context for request processing
+
+        Raises:
+            ValueError: If claims.sub or conversation_id is missing
+        """
+        # Validation - fail fast on malformed input
+        if not claims.sub or not str(claims.sub).strip():
+            raise ValueError("JWT claims missing 'sub' field")
+        if not conversation_id or not str(conversation_id).strip():
+            raise ValueError("conversation_id is required")
+
+        return cls(
+            user_id=UUID(claims.sub),  # str → UUID at boundary
+            conversation_id=UUID(conversation_id),  # str → UUID at boundary
+            request_id=request_id or uuid4(),
+            user_email=claims.user_email,
+            timestamp=datetime.now(timezone.utc),
+            workspace_id=UUID(claims.workspace_id) if claims.workspace_id else None,
+        )
+
+    def __str__(self) -> str:
+        """String representation for logging/debugging."""
+        return f"RequestContext(user={self.user_id}, conv={self.conversation_id}, req={self.request_id})"
+
+
+# =============================================================================
 # SEC-RBAC Phase 2: Role-Based Permissions
+# =============================================================================
+
+
 class ShareRole(str, Enum):
     """Role for shared resource access (SEC-RBAC Phase 2)"""
 
