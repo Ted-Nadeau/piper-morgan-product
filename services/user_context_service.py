@@ -90,6 +90,9 @@ class UserContextService:
         Issue #280: Now loads generic PIPER.md and merges with user preferences
         from alpha_users.preferences JSONB field.
 
+        Issue #582: Now also loads projects from the projects table (portfolio).
+        Database projects take precedence over config-based projects.
+
         Args:
             session_id: Session identifier
             user_id: Optional user ID to load database preferences
@@ -111,15 +114,28 @@ class UserContextService:
             # 3. Merge configurations (user preferences override generic)
             merged_config = {**generic_config, **user_prefs}
 
-            # 4. Extract context from merged config
+            # 4. Issue #582: Load projects from database (portfolio)
+            # Database projects take precedence over config-based projects
+            db_projects = []
+            if user_id:
+                db_projects = await self._load_projects_from_db(user_id)
+
+            # 5. Determine project source with priority:
+            #    - Database projects (from portfolio onboarding) - highest priority
+            #    - User preferences projects
+            #    - Config-based projects (PIPER.md) - fallback
+            if db_projects:
+                projects = db_projects
+            elif user_prefs:
+                projects = self._extract_projects_from_prefs(user_prefs)
+            else:
+                projects = self._extract_projects(merged_config)
+
+            # 6. Extract context from merged config
             context = UserContext(
                 user_id=user_id or session_id,
                 organization=self._extract_organization(merged_config),
-                projects=(
-                    self._extract_projects_from_prefs(user_prefs)
-                    if user_prefs
-                    else self._extract_projects(merged_config)
-                ),
+                projects=projects,
                 priorities=(
                     self._extract_priorities_from_prefs(user_prefs)
                     if user_prefs
@@ -133,6 +149,7 @@ class UserContextService:
                 session_id=session_id,
                 user_id=user_id,
                 has_user_prefs=bool(user_prefs),
+                has_db_projects=bool(db_projects),
                 org=context.organization,
                 project_count=len(context.projects),
                 priority_count=len(context.priorities),
@@ -149,6 +166,48 @@ class UserContextService:
             )
             # Return empty context
             return UserContext(user_id=user_id or session_id)
+
+    async def _load_projects_from_db(self, user_id: UUID) -> list:
+        """
+        Issue #582: Load projects from the projects table.
+
+        This connects portfolio onboarding (which saves projects to DB)
+        with standup/status features (which read from UserContext).
+
+        Args:
+            user_id: User UUID
+
+        Returns:
+            List of project names, or empty list if none found
+        """
+        try:
+            from services.database.repositories import ProjectRepository
+            from services.database.session_factory import AsyncSessionFactory
+
+            async with AsyncSessionFactory.session_scope_fresh() as session:
+                project_repo = ProjectRepository(session)
+                db_projects = await project_repo.list_active_projects(owner_id=str(user_id))
+
+                if db_projects:
+                    project_names = [p.name for p in db_projects]
+                    logger.debug(
+                        "projects_loaded_from_db",
+                        user_id=user_id,
+                        project_count=len(project_names),
+                        project_names=project_names,
+                    )
+                    return project_names
+                else:
+                    logger.debug("no_projects_in_db", user_id=user_id)
+                    return []
+
+        except Exception as e:
+            logger.warning(
+                "projects_db_load_failed",
+                user_id=user_id,
+                error=str(e),
+            )
+            return []
 
     async def _load_user_preferences_from_db(self, user_id: UUID) -> Dict[str, Any]:
         """

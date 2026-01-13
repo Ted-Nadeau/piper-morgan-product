@@ -123,19 +123,22 @@ class CanonicalHandlers:
         }
         return intent.category in canonical_categories
 
-    async def handle(self, intent: Intent, session_id: str) -> Dict:
-        """Route to appropriate canonical handler"""
+    async def handle(self, intent: Intent, session_id: str, user_id: str = None) -> Dict:
+        """Route to appropriate canonical handler.
+
+        Issue #582: Added user_id parameter to enable database project lookup.
+        """
         try:
             if intent.category == IntentCategoryEnum.IDENTITY:
                 return await self._handle_identity_query(intent, session_id)
             elif intent.category == IntentCategoryEnum.TEMPORAL:
                 return await self._handle_temporal_query(intent, session_id)
             elif intent.category == IntentCategoryEnum.STATUS:
-                return await self._handle_status_query(intent, session_id)
+                return await self._handle_status_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.PRIORITY:
-                return await self._handle_priority_query(intent, session_id)
+                return await self._handle_priority_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.GUIDANCE:
-                return await self._handle_guidance_query(intent, session_id)
+                return await self._handle_guidance_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.CONVERSATION:
                 # Issue #286: Handle CONVERSATION in canonical section
                 return await self._handle_conversation_query(intent, session_id)
@@ -1067,17 +1070,21 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         return "\n".join(lines)
 
-    async def _handle_status_query(self, intent: Intent, session_id: str) -> Dict:
+    async def _handle_status_query(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
         """
         Handle 'What am I working on?' queries with spatial awareness.
 
         GREAT-4C Phase 1: Adds spatial intelligence for response granularity.
         GREAT-4C Phase 2: Adds error handling for missing configuration.
         Issue #500: Routes project-specific queries to dedicated handler.
+        Issue #582: Added user_id parameter to enable database project lookup.
         """
         # Try to get user context with error handling
+        # Issue #582: Pass user_id to enable loading projects from database
         try:
-            user_context = await user_context_service.get_user_context(session_id)
+            user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception as e:
             logger.error(f"Failed to load user context: {e}")
             return {
@@ -1449,17 +1456,21 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             "requires_clarification": False,
         }
 
-    async def _handle_priority_query(self, intent: Intent, session_id: str) -> Dict:
+    async def _handle_priority_query(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
         """
         Handle 'What's my top priority?' queries with spatial awareness.
 
         GREAT-4C Phase 1: Adds spatial intelligence for response granularity.
         GREAT-4C Phase 2: Adds error handling for missing configuration.
         Issue #511: Routes priority recommendation queries to dedicated handler.
+        Issue #582: Added user_id parameter to enable database project lookup.
         """
         # Try to get user context with error handling
+        # Issue #582: Pass user_id to enable loading projects from database
         try:
-            user_context = await user_context_service.get_user_context(session_id)
+            user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception as e:
             logger.error(f"Failed to load user context: {e}")
             return {
@@ -3852,7 +3863,9 @@ What would you like to set up first?"""
 
         return result
 
-    async def _handle_guidance_query(self, intent: Intent, session_id: str) -> Dict:
+    async def _handle_guidance_query(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
         """
         Handle 'What should I focus on?' queries with spatial awareness.
 
@@ -3861,6 +3874,7 @@ What would you like to set up first?"""
         Issue #495: Adds calendar context for meeting-aware guidance.
         Issue #497: Synthesizes calendar + projects + priorities for personalized focus.
         Issue #498: Detects and routes setup requests to appropriate guidance.
+        Issue #582: Added user_id parameter to enable database project lookup.
         """
         # Issue #498: Check if this is a setup request first
         setup_topic = self._detect_setup_request(intent)
@@ -3868,7 +3882,8 @@ What would you like to set up first?"""
             # Route to appropriate setup guidance
             if setup_topic == "projects":
                 try:
-                    user_context = await user_context_service.get_user_context(session_id)
+                    # Issue #582: Pass user_id to enable loading projects from database
+                    user_context = await user_context_service.get_user_context(session_id, user_id)
                 except Exception:
                     user_context = None
                 return self._format_project_setup_guidance(user_context)
@@ -3881,9 +3896,10 @@ What would you like to set up first?"""
         current_hour = current_time.hour
 
         # Try to get user-specific context with fallback to generic guidance
+        # Issue #582: Pass user_id to enable loading projects from database
         user_context = None
         try:
-            user_context = await user_context_service.get_user_context(session_id)
+            user_context = await user_context_service.get_user_context(session_id, user_id)
         except Exception as e:
             logger.warning(f"Using generic guidance, user context unavailable: {e}")
 

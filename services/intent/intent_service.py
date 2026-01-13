@@ -460,7 +460,8 @@ class IntentService:
             # Issue #286: Handle canonical intents (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, CONVERSATION)
             # CONVERSATION moved to canonical section for architectural consistency
             if self.canonical_handlers.can_handle(intent):
-                canonical_result = await self.canonical_handlers.handle(intent, session_id)
+                # Issue #582: Pass user_id to enable database project lookup
+                canonical_result = await self.canonical_handlers.handle(intent, session_id, user_id)
                 return IntentProcessingResult(
                     success=True,
                     message=canonical_result["message"],
