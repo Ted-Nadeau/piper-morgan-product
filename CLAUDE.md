@@ -228,8 +228,70 @@ from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims
 
 async def endpoint(current_user: JWTClaims = Depends(get_current_user)):
-    print(current_user.sub)  # user_id
+    print(current_user.sub)  # user_id (as string)
     print(current_user.username)
+```
+
+### Identity Model (KNOWN ISSUES - See ADR-051)
+
+**WARNING**: The current identity model has known inconsistencies being addressed in ADR-051. Until then, follow these guidelines carefully.
+
+**Three Distinct Concepts** (currently conflated in code):
+
+| Concept | Purpose | Persistence | Current State |
+|---------|---------|-------------|---------------|
+| **User Identity** | Who is making the request | Permanent (DB) | `user_id` - but type varies (UUID/str) |
+| **Session Context** | Ephemeral request context | Per-request | `session_id` - overloaded for 3 purposes |
+| **Conversation Context** | Multi-turn conversation state | Per-conversation | `conversation_id` - sometimes uses session_id |
+
+**`user_id` - ALWAYS pass through call chains**:
+- **Source**: `current_user.sub` (string) from JWT claims
+- **Type inconsistency**: Database uses `UUID`, routes use `str`, services mixed
+- **Use for**: Database queries for user-owned resources (projects, todos, preferences)
+- **CRITICAL**: If a method queries user data, it MUST receive `user_id` - do NOT rely on session fallbacks
+
+**`session_id` - Ephemeral request context**:
+- **Source**: Generated per-conversation in frontend, passed via request
+- **WARNING**: Currently overloaded - used for request context, conversation tracking, AND cache keys
+- **Use for**: Conversation-scoped operations only
+
+**`conversation_id` - Persistent conversation tracking**:
+- **Source**: Database-generated UUID for conversation record
+- **Use for**: Multi-turn conversation persistence, history retrieval
+- **WARNING**: Some code incorrectly passes `session_id` as `conversation_id`
+
+**Pattern to Follow** (until ADR-051 refactor):
+```python
+# In routes - extract user_id from JWT
+user_id = current_user.sub  # Always use .sub, it's the canonical user identifier
+
+# Pass user_id through ALL service calls that touch user data
+result = await service.do_something(
+    user_id=user_id,        # REQUIRED for user-scoped operations
+    session_id=session_id,  # For conversation context
+    ...
+)
+
+# In services - require user_id, don't make it optional with session fallback
+async def get_user_projects(self, user_id: str) -> List[Project]:  # Required, not Optional
+    # Query by user_id, not session_id
+    return await self.repo.get_by_owner(user_id)
+```
+
+**Anti-patterns to Avoid**:
+```python
+# BAD: Making user_id optional with session fallback
+async def get_context(self, user_id: Optional[str] = None, session_id: str):
+    if user_id:
+        return await self._get_by_user(user_id)
+    return await self._get_by_session(session_id)  # Wrong! Sessions are ephemeral
+
+# BAD: Using session_id as conversation_id
+conversation = await manager.get_conversation(session_id)  # Wrong identifier!
+
+# BAD: Not passing user_id through call chain
+async def handle_intent(self, message: str, session_id: str):  # Missing user_id!
+    context = await self.context_service.get(session_id)  # Will fail for user lookups
 ```
 
 ---
