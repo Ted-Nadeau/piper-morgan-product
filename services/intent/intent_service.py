@@ -234,6 +234,31 @@ class IntentService:
                 )
                 return onboarding_result
 
+            # Issue #585: Check for /standup command BEFORE classification
+            # This routes the explicit command to the interactive handler
+            if message.strip().lower() == "/standup":
+                self.logger.info(
+                    "Standup command detected - starting interactive flow",
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+                return await self._start_standup_conversation(user_id, session_id)
+
+            # Issue #585: Check for active standup conversation
+            # Similar to onboarding - active conversations take priority over classification
+            standup_result = await self._check_active_standup(
+                user_id=user_id,
+                session_id=session_id,
+                message=message,
+            )
+            if standup_result:
+                self.logger.info(
+                    "Active standup session - bypassing classification",
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+                return standup_result
+
             # Issue #197 Phase 2B: Ethics enforcement at universal entry point
             # Check ENABLE_ETHICS_ENFORCEMENT environment variable (default: False for gradual rollout)
             ethics_enabled = os.getenv("ENABLE_ETHICS_ENFORCEMENT", "false").lower() == "true"
@@ -682,6 +707,193 @@ class IntentService:
         except Exception as e:
             self.logger.warning(f"Could not check active onboarding: {e}")
             return None
+
+    async def _check_active_standup(
+        self, user_id: str, session_id: str, message: str
+    ) -> Optional[IntentProcessingResult]:
+        """
+        Issue #585: Check for active standup conversation and route message directly.
+
+        Active conversational processes (like interactive standup) take priority over intent
+        classification. This prevents guided conversations from being derailed by
+        messages that happen to match other intent patterns.
+
+        Design principle: Once the user starts a standup conversation, Piper should
+        maintain control of the conversation until:
+        - The conversation completes successfully
+        - The user explicitly cancels
+        - The session times out or is abandoned
+
+        Args:
+            user_id: Authenticated user ID
+            session_id: Session identifier
+            message: User's message
+
+        Returns:
+            IntentProcessingResult if active standup handled the message,
+            None if no active standup (proceed with normal classification)
+        """
+        try:
+            from services.conversation.conversation_handler import _get_standup_components
+            from services.shared_types import IntentCategory, StandupConversationState
+
+            # Issue #585 INVESTIGATION: Trace execution
+            print(
+                f"[IntentService] _check_active_standup called, user_id={user_id}, session_id={session_id}"
+            )
+
+            # Issue #585: Use the SAME singleton manager as conversation_handler
+            # Creating a new StandupConversationManager() would lose session state!
+            manager, handler = _get_standup_components()
+
+            # Issue #585 INVESTIGATION: Show manager state
+            print(
+                f"[IntentService] standup manager id={id(manager)}, conversations={list(manager._conversations.keys())}"
+            )
+
+            # Issue #585: Check for active conversation by session_id
+            # The StandupConversationManager uses session_id for lookup
+            conversation = None
+            if session_id:
+                conversation = manager.get_conversation_by_session(session_id)
+                print(
+                    f"[IntentService] Lookup by session_id={session_id}, found={conversation is not None}"
+                )
+
+            if not conversation:
+                return None
+
+            # Check if conversation is in a terminal state
+            if conversation.state in (
+                StandupConversationState.COMPLETE,
+                StandupConversationState.ABANDONED,
+            ):
+                return None
+
+            # Active standup conversation exists - route message directly to handler
+            self.logger.info(
+                "Routing to active standup conversation",
+                user_id=user_id,
+                conversation_id=conversation.id,
+                state=conversation.state.value,
+            )
+
+            response = await handler.handle_turn(conversation, message)
+
+            return IntentProcessingResult(
+                success=True,
+                message=response.message,
+                intent_data={
+                    "category": IntentCategory.EXECUTION.value,
+                    "action": "standup_conversation_turn",
+                    "confidence": 1.0,
+                    "context": {
+                        "conversation_id": conversation.id,
+                        "state": response.state.value,
+                        "bypassed_classification": True,  # Indicates we skipped intent classification
+                    },
+                },
+                workflow_id=None,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.warning(f"Could not check active standup: {e}")
+            return None
+
+    async def _start_standup_conversation(
+        self, user_id: str, session_id: str
+    ) -> IntentProcessingResult:
+        """
+        Issue #585: Start a new interactive standup conversation.
+
+        This method is called when the user sends /standup command.
+        It creates a new conversation via StandupConversationHandler.
+
+        Args:
+            user_id: Authenticated user ID
+            session_id: Session identifier
+
+        Returns:
+            IntentProcessingResult with the initial conversation greeting
+        """
+        try:
+            from services.conversation.conversation_handler import _get_standup_components
+            from services.shared_types import IntentCategory, StandupConversationState
+
+            manager, handler = _get_standup_components()
+
+            # Check for existing active conversation
+            existing = manager.get_conversation_by_session(session_id) if session_id else None
+            if existing and existing.state not in (
+                StandupConversationState.COMPLETE,
+                StandupConversationState.ABANDONED,
+            ):
+                # Active session exists - offer to continue or restart
+                response_msg = (
+                    "You have a standup conversation in progress. "
+                    "Would you like to continue where you left off, or start fresh?\n"
+                    "Reply 'continue' or 'restart'."
+                )
+                return IntentProcessingResult(
+                    success=True,
+                    message=response_msg,
+                    intent_data={
+                        "category": IntentCategory.EXECUTION.value,
+                        "action": "standup_session_exists",
+                        "confidence": 1.0,
+                        "context": {
+                            "conversation_id": existing.id,
+                            "state": existing.state.value,
+                        },
+                    },
+                    workflow_id=None,
+                    requires_clarification=False,
+                )
+
+            # Start new standup conversation
+            response = await handler.start_conversation(
+                session_id=session_id,
+                user_id=user_id,
+            )
+
+            self.logger.info(
+                "Started interactive standup conversation",
+                user_id=user_id,
+                session_id=session_id,
+                state=response.state.value,
+            )
+
+            return IntentProcessingResult(
+                success=True,
+                message=response.message,
+                intent_data={
+                    "category": IntentCategory.EXECUTION.value,
+                    "action": "standup_started",
+                    "confidence": 1.0,
+                    "context": {
+                        "state": response.state.value,
+                        "requires_input": response.requires_input,
+                        "suggestions": response.suggestions,
+                    },
+                },
+                workflow_id=None,
+                requires_clarification=False,
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to start standup conversation: {e}")
+            return IntentProcessingResult(
+                success=False,
+                message="Unable to start standup conversation. Please try again.",
+                intent_data={
+                    "category": "EXECUTION",
+                    "action": "standup_error",
+                    "confidence": 1.0,
+                },
+                error=str(e),
+                error_type="StandupConversationError",
+            )
 
     async def _persist_onboarding_projects(self, user_id: str, captured_projects: list) -> None:
         """

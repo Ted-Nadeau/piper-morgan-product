@@ -30,6 +30,26 @@ def _get_onboarding_components():
     return _onboarding_manager, _onboarding_handler
 
 
+# Issue #585: Global standup conversation components (mirrors portfolio pattern)
+# These are module-level singletons to persist standup conversation state across requests
+_standup_manager = None
+_standup_handler = None
+
+
+def _get_standup_components():
+    """Lazy-load standup conversation components to avoid circular imports."""
+    global _standup_manager, _standup_handler
+    if _standup_manager is None:
+        from services.standup.conversation_handler import StandupConversationHandler
+        from services.standup.conversation_manager import StandupConversationManager
+
+        _standup_manager = StandupConversationManager()
+        _standup_handler = StandupConversationHandler(conversation_manager=_standup_manager)
+        # Issue #585 INVESTIGATION: First creation
+        print(f"[ConversationHandler] Standup singleton CREATED: manager id={id(_standup_manager)}")
+    return _standup_manager, _standup_handler
+
+
 class ConversationHandler:
     """Handles conversational intents like greetings and chitchat"""
 
