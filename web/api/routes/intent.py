@@ -26,6 +26,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from services.auth.jwt_service import JWTClaims, JWTService
+from services.domain.models import RequestContext
 from web.utils.error_responses import internal_error, validation_error
 
 logger = structlog.get_logger()
@@ -220,6 +221,28 @@ async def process_intent(
         # Issue #490: Extract user_id from authenticated user if available
         user_id = current_user.sub if current_user else None
 
+        # ADR-051 Phase 2: Create RequestContext at boundary (when authenticated)
+        # session_id semantically IS conversation_id (ADR-051 resolution)
+        # ctx is None for unauthenticated requests - services handle gracefully
+        ctx: Optional[RequestContext] = None
+        if current_user:
+            try:
+                ctx = RequestContext.from_jwt_and_request(
+                    claims=current_user,
+                    conversation_id=session_id,
+                )
+                logger.debug(
+                    "request_context_created",
+                    context=str(ctx),
+                )
+            except ValueError as e:
+                # Malformed JWT claims - log but continue without context
+                logger.warning(
+                    "request_context_creation_failed",
+                    error=str(e),
+                    has_sub=bool(current_user.sub),
+                )
+
         # DEBUG Issue #490: Trace authentication flow
         print(
             f"DEBUG #490: intent route - has_current_user={current_user is not None}, user_id={user_id}, has_auth_cookie={'auth_token' in request.cookies}"
@@ -229,6 +252,7 @@ async def process_intent(
             has_current_user=current_user is not None,
             user_id=user_id,
             session_id=session_id,
+            has_request_context=ctx is not None,
             message_preview=message[:50] if message else None,
             has_auth_cookie="auth_token" in request.cookies,
         )
@@ -245,6 +269,8 @@ async def process_intent(
             )
 
         # Issue #490: Pass user_id to service for user-specific features
+        # ADR-051 Phase 2: ctx created above; Phase 3 will pass ctx to service
+        # For now, service still receives old params (dual pattern per ADR-051)
         result = await intent_service.process_intent(
             message=message, session_id=session_id, user_id=user_id
         )
