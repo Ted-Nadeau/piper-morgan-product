@@ -215,8 +215,23 @@ class PreClassifier:
     ]
 
     # Issue #523: Phase A Canonical Query patterns
+    # Issue #589: Added today's calendar/meeting patterns to route to QUERY instead of TEMPORAL
     # Calendar queries - Queries #34, #35, #61
     CALENDAR_QUERY_PATTERNS = [
+        # Issue #589: Today's calendar queries - should route to meeting_time (QUERY)
+        # These MUST be checked before TEMPORAL_PATTERNS to prevent misrouting
+        r"\bwhat'?s on my calendar\b",
+        r"\bwhat is on my calendar\b",
+        r"\bmy calendar today\b",
+        r"\bcalendar today\b",
+        r"\bmeetings today\b",
+        r"\bdo i have any meetings\b",
+        r"\bdo i have meetings\b",
+        r"\bwhat meetings do i have\b",
+        r"\bwhat meetings\b",
+        r"\bmy schedule today\b",
+        r"\btoday'?s schedule\b",
+        r"\bschedule for today\b",
         # Meeting time query - Query #34
         r"\bhow much time in meetings\b",
         r"\bhow much time.*meetings\b",
@@ -514,21 +529,35 @@ class PreClassifier:
             )
 
         # Issue #523: Phase A Canonical Query patterns
+        # Issue #589: Check Calendar queries BEFORE temporal to route to QUERY handler
         # Check Calendar queries (Queries #34, #35, #61)
         if PreClassifier._matches_patterns(
             clean_for_matching, PreClassifier.CALENDAR_QUERY_PATTERNS
         ):
             # Determine specific action based on which pattern matched
+            # Issue #589: Today's calendar patterns route to meeting_time
             if any(
                 re.search(pattern, clean_for_matching)
                 for pattern in [
+                    r"\bwhat'?s on my calendar\b",
+                    r"\bwhat is on my calendar\b",
+                    r"\bmy calendar today\b",
+                    r"\bcalendar today\b",
+                    r"\bmeetings today\b",
+                    r"\bdo i have any meetings\b",
+                    r"\bdo i have meetings\b",
+                    r"\bwhat meetings do i have\b",
+                    r"\bwhat meetings\b",
+                    r"\bmy schedule today\b",
+                    r"\btoday'?s schedule\b",
+                    r"\bschedule for today\b",
                     r"\bhow much time in meetings\b",
                     r"\bhow much time.*meetings\b",
                     r"\btime spent in meetings\b",
                     r"\bmeeting time\b",
                 ]
             ):
-                action = "meeting_time_query"
+                action = "meeting_time"
             elif any(
                 re.search(pattern, clean_for_matching)
                 for pattern in [
@@ -538,9 +567,9 @@ class PreClassifier:
                     r"\brecurring meetings\b",
                 ]
             ):
-                action = "recurring_meetings_query"
+                action = "recurring_meetings"
             else:
-                action = "week_calendar_query"
+                action = "week_calendar"
 
             return Intent(
                 category=IntentCategory.QUERY,

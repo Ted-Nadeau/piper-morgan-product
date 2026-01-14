@@ -2994,5 +2994,90 @@
     "metadata": {
       "test": true
     }
+  },
+  {
+    "pattern_id": "query_pattern_test_feature_20260111_214152",
+    "pattern_type": "query_pattern",
+    "source_feature": "test_feature",
+    "pattern_data": {
+      "query": "search for project management tools",
+      "action": "search_projects",
+      "entity": "project"
+    },
+    "confidence": 1.0,
+    "usage_count": 1,
+    "success_rate": 1.0,
+    "first_seen": "2026-01-11T21:41:52.955453",
+    "last_used": "2026-01-11T21:41:52.957956",
+    "feedback_score": 1.0,
+    "metadata": {
+      "test": true
+    }
+  },
+  {
+    "pattern_id": "query_pattern_orchestration_IntentCategory.QUERY_20260111_214153",
+    "pattern_type": "query_pattern",
+    "source_feature": "orchestration_IntentCategory.QUERY",
+    "pattern_data": {
+      "query": "find project management tools",
+      "action": "search_projects",
+      "entity": "project",
+      "category": "IntentCategory.QUERY"
+    },
+    "confidence": 0.95,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2026-01-11T21:41:53.038077",
+    "last_used": "2026-01-11T21:41:53.038077",
+    "feedback_score": 0.0,
+    "metadata": {
+      "timestamp": "2026-01-11T21:41:53.038073",
+      "success": true
+    }
+  },
+  {
+    "pattern_id": "workflow_pattern_CREATE_TICKET_20260111_214153",
+    "pattern_type": "workflow_pattern",
+    "source_feature": "CREATE_TICKET",
+    "pattern_data": {
+      "action": "create_issue"
+    },
+    "confidence": 0.9,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2026-01-11T21:41:53.043444",
+    "last_used": "2026-01-11T21:41:53.043444",
+    "feedback_score": 0.0,
+    "metadata": {}
+  },
+  {
+    "pattern_id": "query_pattern_QUERY_20260111_214153",
+    "pattern_type": "query_pattern",
+    "source_feature": "QUERY",
+    "pattern_data": {
+      "action": "search_files"
+    },
+    "confidence": 0.8,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2026-01-11T21:41:53.045850",
+    "last_used": "2026-01-11T21:41:53.045850",
+    "feedback_score": 0.0,
+    "metadata": {}
+  },
+  {
+    "pattern_id": "query_pattern_test_analytics_20260111_214153",
+    "pattern_type": "query_pattern",
+    "source_feature": "test_analytics",
+    "pattern_data": {
+      "query": "test query 2"
+    },
+    "confidence": 0.7,
+    "usage_count": 0,
+    "success_rate": 0.0,
+    "first_seen": "2026-01-11T21:41:53.055601",
+    "last_used": "2026-01-11T21:41:53.055601",
+    "feedback_score": 0.0,
+    "metadata": {}
   }
 ]

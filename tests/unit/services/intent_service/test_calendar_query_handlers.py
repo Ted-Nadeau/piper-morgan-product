@@ -65,7 +65,8 @@ class TestMeetingTimeQueryRouting:
                 intent, mock_workflow, "test-session"
             )
 
-            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+            # Issue #586: user_id is now passed as third argument (None by default)
+            mock_handler.assert_called_once_with(intent, mock_workflow.id, None)
 
     @pytest.mark.asyncio
     async def test_routes_how_much_time_in_meetings_action(self, intent_service, mock_workflow):
@@ -141,7 +142,8 @@ class TestRecurringMeetingsQueryRouting:
                 intent, mock_workflow, "test-session"
             )
 
-            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+            # Issue #586: user_id is now passed as third argument (None by default)
+            mock_handler.assert_called_once_with(intent, mock_workflow.id, None)
 
     @pytest.mark.asyncio
     async def test_routes_review_recurring_meetings_action(self, intent_service, mock_workflow):
@@ -217,7 +219,8 @@ class TestWeekCalendarQueryRouting:
                 intent, mock_workflow, "test-session"
             )
 
-            mock_handler.assert_called_once_with(intent, mock_workflow.id)
+            # Issue #586: user_id is now passed as third argument (None by default)
+            mock_handler.assert_called_once_with(intent, mock_workflow.id, None)
 
     @pytest.mark.asyncio
     async def test_routes_week_ahead_action(self, intent_service, mock_workflow):
@@ -521,7 +524,7 @@ class TestWeekCalendarQueryResults:
         )
 
         # Mock events for different days
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         tomorrow = now + timedelta(days=1)
 
         mock_events = [
@@ -687,7 +690,7 @@ class TestCalendarHandlerErrors:
 class TestPreClassifierRoutingIntegration:
     """Test full routing path from pre-classifier to handlers (Issue #521)"""
 
-    def test_meeting_time_query_routes_to_query_category(self):
+    def test_meeting_time_routes_to_query_category(self):
         """Test 'how much time in meetings' routes to QUERY category"""
         from services.intent_service.pre_classifier import PreClassifier
 
@@ -695,10 +698,11 @@ class TestPreClassifierRoutingIntegration:
 
         assert result is not None
         assert result.category == IntentCategory.QUERY
-        assert result.action == "meeting_time_query"
+        # Issue #589: Action changed to match IntentService handler expectation
+        assert result.action == "meeting_time"
         assert result.confidence == 1.0
 
-    def test_meeting_time_query_variants(self):
+    def test_meeting_time_variants(self):
         """Test meeting time query pattern variants all route correctly"""
         from services.intent_service.pre_classifier import PreClassifier
 
@@ -713,9 +717,9 @@ class TestPreClassifierRoutingIntegration:
             result = PreClassifier.pre_classify(query)
             assert result is not None, f"Failed to classify: {query}"
             assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
-            assert result.action == "meeting_time_query", f"Wrong action for: {query}"
+            assert result.action == "meeting_time", f"Wrong action for: {query}"
 
-    def test_recurring_meetings_query_routes_to_query_category(self):
+    def test_recurring_meetings_routes_to_query_category(self):
         """Test 'review my recurring meetings' routes to QUERY category"""
         from services.intent_service.pre_classifier import PreClassifier
 
@@ -723,10 +727,10 @@ class TestPreClassifierRoutingIntegration:
 
         assert result is not None
         assert result.category == IntentCategory.QUERY
-        assert result.action == "recurring_meetings_query"
+        assert result.action == "recurring_meetings"
         assert result.confidence == 1.0
 
-    def test_recurring_meetings_query_variants(self):
+    def test_recurring_meetings_variants(self):
         """Test recurring meetings query pattern variants all route correctly"""
         from services.intent_service.pre_classifier import PreClassifier
 
@@ -740,9 +744,9 @@ class TestPreClassifierRoutingIntegration:
             result = PreClassifier.pre_classify(query)
             assert result is not None, f"Failed to classify: {query}"
             assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
-            assert result.action == "recurring_meetings_query", f"Wrong action for: {query}"
+            assert result.action == "recurring_meetings", f"Wrong action for: {query}"
 
-    def test_week_calendar_query_routes_to_query_category(self):
+    def test_week_calendar_routes_to_query_category(self):
         """Test 'what's my week look like' routes to QUERY category"""
         from services.intent_service.pre_classifier import PreClassifier
 
@@ -750,10 +754,10 @@ class TestPreClassifierRoutingIntegration:
 
         assert result is not None
         assert result.category == IntentCategory.QUERY
-        assert result.action == "week_calendar_query"
+        assert result.action == "week_calendar"
         assert result.confidence == 1.0
 
-    def test_week_calendar_query_variants(self):
+    def test_week_calendar_variants(self):
         """Test week calendar query pattern variants all route correctly"""
         from services.intent_service.pre_classifier import PreClassifier
 
@@ -767,4 +771,4 @@ class TestPreClassifierRoutingIntegration:
             result = PreClassifier.pre_classify(query)
             assert result is not None, f"Failed to classify: {query}"
             assert result.category == IntentCategory.QUERY, f"Wrong category for: {query}"
-            assert result.action == "week_calendar_query", f"Wrong action for: {query}"
+            assert result.action == "week_calendar", f"Wrong action for: {query}"

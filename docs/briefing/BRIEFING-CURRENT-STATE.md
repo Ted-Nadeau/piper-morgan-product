@@ -1,195 +1,218 @@
 # BRIEFING-CURRENT-STATE.md - Where We Are Right Now
 
-> **💡 For current system state** (intent categories, plugins, patterns, architecture):
+> **For current system state** (intent categories, plugins, patterns, architecture):
 > **Use Serena symbolic queries instead of reading this file.**
-> See `CLAUDE.md` "Live System State" section or `knowledge/serena-briefing-queries.md` for query patterns.
+> See `CLAUDE.md` "Live System State" section for query patterns.
 > **This file focuses on sprint/epic position and methodology context.**
 
 ---
 
-## 📊 STATUS BANNER
+## STATUS BANNER
 
-**Current Position**: 3.3.7 - Completed Great Refactor (GREAT), Core functionality (CORE), and am now in ALPHA testing against version 0.8.3
-**Last Updated**: January 3, 2026, 08:43 AM PDT
+**Current Position**: 4.2.1.1 - Sprint B1 COMPLETE, MUX Phase Ready
+**Version**: v0.8.4 (released January 12, 2026)
+**Last Updated**: January 12, 2026, 3:00 PM PT
 
-**Sprint A12**: 🐛 IN PROGRESS
+**Next Phase**: MUX-V1 (Modeled User Experience - Vision)
 
 ---
 
+## Inchworm Position
 
 ```
-1. ✅ The Great Refactor
+1. ✅ The Great Refactor (GREAT)
 2. ✅ CORE functionality
-3. 🐛 ALPHA testing
-    1. ✅Initial alpha testing - 0.8.0
-    2. ✅ Alpha onboarding/auth testing - 0.8.1, 0.8.1.1-3, 0.8.2
-    3. 🐛Alpha Setup evolution - 0.8.3
-        1. ✅ BUG: test_intent_enricher_high_confidence fails - UploadedFile model schema mismatch
-        2. ✅ BUG-P0: Unhandled EXECUTION actions return 422 instead of graceful message
-        3. ✅ TEST-FIX: test_bypass_prevention.py fails with 401 - TestClient missing auth
-        4. ✅ALPHA-SETUP-VERIFY: Integration health check dashboard
-        5. ✅ALPHA-SETUP-NOTION: Add Notion integration to setup wizard
-        6. ✅ALPHA-SETUP-SLACK: Add Slack OAuth to setup wizard
-        7. 🐛 ALPHA-SETUP-CALENDAR: Add Google Calendar to setup wizard
-        8. ALPHA-SETUP-MANAGE: Integration Management Post-Setup
-        9. ALPHA-SETTINGS-INTEGRATIONS: Enhanced Integration Management
-        10. BUG: Integration Test button uses MCP instead of OAuth token
-        11. Notion integration stuck with no recovery path
-        12. GitHub integration stuck with no recovery path
-        13. ARCH-SCHEMA-VALID: Add Schema Validation Check on Startup
-        14. FLY-MAINT-CLEANUP: Scan and archive deprecated folders
-        15. FLY-COORD-TREES: Git Worktrees for Multi-Agent Coordination
-        16. FTUX-TESTPLAN: Canonical Query Test Matrix for Alpha Testing
-        17. 🛑 SEC-ENCRYPT-ATREST: Implement Encryption at Rest for Sensitive Data
-        ARCH-FIX-SINGLETON: Replace ServiceContainer singleton to enable horizontal scaling
-4. Complete MVP track
-    1. B2 - Beta Enablers
-        1. CONV-UX-GREET: Calendar Scanning on Greeting
-        2. CONV-MCP-STANDUP-INTERACTIVE: Interactive Standup Assistant
-        3. CONV-UX-PERSIST: Conversation History & Persistence
-        4. SLACK-ATTENTION-DECAY: Implement pattern learning for attention models
-        5. MUX-INTERACT-DISCOVERY: Discovery-Oriented Intent Architecture
-        6. FTUX-PORTFOLIO: Project Portfolio Onboarding - Multi-Layer User Project Setup
-        7. FTUX-CONCIERGE: Capability Concierge - Self-Aware Capability Discovery & Communication
-        8. FTUX-QUICK-2: Better defaults for GitHub issue creation
-        9. FTUX-QUICK-3: Add calendar context to focus guidance
-    2. MUX: Modeled User Experience
-    3. MVP: Minimum Valuable Product
-5. Start beta testing on 0.9
+3. ✅ ALPHA testing (v0.8.0 → v0.8.4)
+4. 🎯 MVP Track
+   4.1. ✅ B1 - FTUX & Conversations (COMPLETE Jan 11)
+   4.2. 🎯 MUX-V1: Vision & Conceptual Architecture ← NEXT
+   4.3. MUX-V2: Integration & Learning
+   4.4. MUX-INTERACT: Interaction Design
+   4.5. MUX-IMPLEMENT: UI Polish
+5. Beta testing on 0.9
 6. Launch 1.0
 ```
 
 ---
 
-## 📈 SYSTEM CAPABILITY
+## Sprint B1 Completion (Jan 5-11, 2026)
+
+### Summary
+- **Issues Closed**: 23+ in 3 days
+- **Epics Completed**: 3 (Epic #242, #314, #543)
+- **Release**: v0.8.4
+
+### What Was Delivered
+
+**FTUX (First-Time User Experience)**:
+- #547: Piper greeting in setup wizard
+- #548: Empty state voice guide templates
+- #549: Post-setup orientation modal
+- #550: "Ask Piper" chat bridge buttons
+- #490: Portfolio onboarding conversation
+
+**Conversations**:
+- Epic #242: Interactive Standup Assistant (5 children: #552-556)
+- Epic #314: Conversation Persistence (4 children: #563-566)
+- #102: Calendar-aware greeting
+
+**Integration Settings**:
+- Epic #543: Integration-specific settings (4 children: #570-573)
+- #544: Disconnect All button
+- #576-579: OAuth credential UI (Slack, Calendar, GitHub, Notion)
+
+**Infrastructure**:
+- #365: Slack Attention Decay (Pattern-048)
+- #559: Integration test wiring verification
+- #562: OAuth token fix for Test button
+
+### Key Patterns Established
+- **Pattern-045**: Green Tests, Red User
+- **Pattern-046**: Beads Completion Discipline
+- **Pattern-047**: Time Lord Alert
+- **Pattern-048**: Periodic Background Job
+
+---
+
+## SYSTEM CAPABILITY
 
 > **Use Serena for live state**: `mcp__serena__find_symbol`, `mcp__serena__list_dir`
-> See CLAUDE.md "Live System State" section for query patterns.
 
 ### Current Capabilities (January 2026)
 
 **Intent Classification**: 15 categories
-- EXECUTION, ANALYSIS, SYNTHESIS, STRATEGY, PLANNING, REVIEW, LEARNING
-- QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
+```python
+# From services/shared_types.py IntentCategory enum
+EXECUTION, ANALYSIS, SYNTHESIS, STRATEGY, PLANNING, REVIEW, LEARNING,
+QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
+```
 
 **Active Integrations**: 7 plugins
-- Slack (OAuth connect from Settings)
-- GitHub (PAT token configuration)
+- Slack (OAuth from Settings)
+- GitHub (PAT configuration)
 - Notion (API key in setup wizard)
-- Google Calendar (OAuth connect from Settings)
+- Google Calendar (OAuth from Settings)
 - MCP (Model Context Protocol)
 - Spatial (spatial intelligence)
 - Demo (reference implementation)
 
-**Pattern Catalog**: 47 patterns across 5 categories
-- Core Architecture (repository, service, factory, etc.)
+**Pattern Catalog**: 48 patterns (001-048) across 5 categories
+- Core Architecture (repository, service, factory, error handling)
 - Data & Query (CQRS-lite, query layer, context resolution)
-- AI & Intelligence (intent classification, LLM adapter)
+- AI & Intelligence (intent classification, LLM adapter, multi-agent)
 - Integration & Platform (plugin interface, MCP)
-- Development & Process (verification first, session management, Beads discipline)
+- Development & Process (verification first, Beads discipline, Time Lord Alert)
 
-**Canonical Queries**: 19/25 working (76%)
-- Identity: 5/5 ✅
-- Temporal: 5/5 ✅
-- Spatial: 4/5 ✅
-- Capability: 5/5 ✅
-- Predictive: 1/5 (partial)
+**ADRs**: 53 architectural decision records
 
 ---
 
-### Current Sprint (A12)
+## What's Next: MUX Phase
 
-**A12: Alpha Setup Evolution** - Active (January 2026)
+### MUX-V1: Vision & Conceptual Architecture
+**Status**: Ready to begin
 
-#### ✅ COMPLETED in v0.8.3 (January 2, 2026)
-- **#527**: ALPHA-SETUP-NOTION - Notion API key in setup wizard with validation
-- **#528**: ALPHA-SETTINGS-INTEGRATIONS - OAuth endpoints for Slack/Calendar from Settings
-- **#529**: Calendar OAuth singleton fix (state persistence)
-- **#530**: Integration Health Dashboard with real-time status and test buttons
+**Scope**:
+- VISION-OBJECT-MODEL - ADR-045 formalization
+- VISION-GRAMMAR-CORE - "Entities experience Moments in Places"
+- VISION-CONSCIOUSNESS - Extract from Morning Standup
+- VISION-METAPHORS - Native/Federated/Synthetic
 
-#### 🐛 IN PROGRESS
-- **ALPHA-SETUP-CALENDAR**: Google Calendar OAuth refinements
-- **BUG**: Integration Test button uses MCP instead of OAuth token
-- **Notion/GitHub stuck state**: No recovery path when integration fails
+### MUX-TECH: Technical Implementation
+**GitHub Issues**:
+- #433: MUX-TECH-PHASE1-GRAMMAR
+- #434: MUX-TECH-PHASE2-ENTITY
+- #435: MUX-TECH-PHASE3-OWNERSHIP
+- #436: MUX-TECH-PHASE4-COMPOSTING
 
-#### ⏳ QUEUED (from roadmap banner)
-- ALPHA-SETUP-MANAGE: Integration Management Post-Setup
-- ARCH-SCHEMA-VALID: Schema Validation Check on Startup
-- FLY-MAINT-CLEANUP: Scan and archive deprecated folders
-- FLY-COORD-TREES: Git Worktrees for Multi-Agent Coordination
-- SEC-ENCRYPT-ATREST: Encryption at Rest (blocked - requires architecture decision)
-- ARCH-FIX-SINGLETON: ServiceContainer singleton replacement
-
----
-
-## 📊 METRICS SNAPSHOT (January 2026)
-
-### Quality Metrics
-- **Test Count**: 2,733 collected
-- **Smoke Tests**: 602+ (<5 seconds)
-- **Pass Rate**: 100% (CI/CD gates)
-- **Canonical Query Coverage**: 76% (19/25)
-
-### Performance (locked in from CRAFT)
-- **Workflow Response**: 2-3s
-- **Cache Hit Rate**: 84.6%
-- **CI/CD Pipeline**: 100% operational (13/13)
-
-### Alpha Status
-- **Version**: 0.8.3
-- **Active Testers**: 2 (lasko onboarded Jan 2)
-- **Branch Strategy**: main (dev) → production (stable alpha)
+### MUX Gates (Milestones)
+- #531: MUX-GATE-1 - Foundation Phase Complete
+- #532: MUX-GATE-2 - Core Implementation Complete
+- #533: MUX-GATE-3 - Integration Phase Complete
+- #534: MUX-GATE-4 - Interaction Design Complete
 
 ---
 
-## 🔄 ROADMAP ALIGNMENT (v12.3)
+## Open Issues by Priority
 
-### January 2026: Foundation & Discovery
-**Week 1-2: Alpha Critical** ← WE ARE HERE
-- ✅ ALPHA-SETUP-NOTION, SLACK, VERIFY complete
-- 🐛 Calendar refinements in progress
-- Security issues (#358, #322, #484) queued
+### Bugs
+- #574: Conversation history panel doesn't switch correctly
 
-**Week 3-4: Beta Enablers**
-- Conversational Glue implementation
-- Canonical Queries B1 (#519 - GitHub operations)
-- Canonical Queries B2 (#520 - Slack commands)
+### MUX Phase
+- #433-436: MUX-TECH Phases 1-4
+- #477, #474: MUX Lists (vision + tech)
+- #488: MUX-INTERACT-DISCOVERY
+- #567-569: Portfolio extensions
 
-### February 2026: MUX Foundation
-- V1 Vision Sprint → GATE-1
-- X1 Tech Phase (Grammar, Entity, Ownership) → GATE-2
+### Architecture
+- #551: Command Parity Across Interfaces
+- #557: WebSocket Infrastructure
 
-### March 2026: MUX Integration & Interaction
-- V2 Vision mapping → GATE-3
-- I1 Recognition patterns → GATE-4
+### Security
+- #542: Token revocation on disconnect
+- #482: KMS integration
 
-### April 2026: Beta Launch
-- v0.9 release
-- Expanded user base
+### Tech Debt
+- #558: LLM-based preference extraction
+- #546: Alternate issue providers
+- #471-472: Infrastructure and Slack TDD gaps
 
 ---
 
-## 🎯 ALPHA TESTING FOCUS
+## Metrics Snapshot (January 2026)
 
-### What's Stable (light testing)
+### Quality
+- **Pattern Count**: 48 (001-048)
+- **ADR Count**: 53
+- **Total Docs**: 961 markdown files
+- **Python Code**: 755,335 lines
+
+### Version History
+| Version | Date | Milestone |
+|---------|------|-----------|
+| v0.8.4 | Jan 12, 2026 | Sprint B1 Complete |
+| v0.8.3.2 | Jan 8, 2026 | Epic #242 Standup |
+| v0.8.3.1 | Jan 7, 2026 | FTUX batch |
+| v0.8.3 | Jan 2, 2026 | Setup wizard |
+
+### Learning System Status (per Jan 11 audit)
+**Built** (140+ tests):
+- Preference Learning (standup domain)
+- Attention Decay (Slack domain)
+- Query Learning Loop
+
+**Spec Only** (not implemented):
+- Composting Pipeline
+- Insight Journal
+- Dreaming/Rest-Period Jobs
+
+---
+
+## Alpha Testing Focus
+
+### What's Stable
 - Setup wizard (GUI and CLI)
 - Login/authentication
-- Chat interface with 19 canonical queries
+- Chat interface with 15 intent categories
 - Lists, todos, projects, files CRUD
-- Permission system with conversational commands
+- Integration Settings (Slack, Calendar, GitHub, Notion)
+- Portfolio onboarding
 
-### Where to Focus Testing (v0.8.3)
-- 🔍 Integration Health Dashboard (Settings → Integrations)
-- 🔍 OAuth Connections (Slack, Calendar connect/disconnect)
-- 🔍 Notion setup in wizard
-- 🔍 File handling edge cases
-- 🔍 Permission sharing workflows
-
-### Known Limitations
-- Predictive queries (4/5 not implemented - roadmap v1.1)
-- GitHub OAuth (uses PAT, OAuth planned for 0.8.4)
-- Encryption at rest (planned for beta)
+### Known Issues
+- #574: Conversation history switching bug
+- Predictive queries not implemented (planned for MUX)
 
 ---
 
-*Last Updated: January 3, 2026, 9:00 AM PDT - Sprint A12 Status*
+## Key Documents
+
+**Roadmap**: `docs/internal/planning/roadmap/roadmap.md` (v13.0)
+**Patterns**: `docs/internal/architecture/current/patterns/` (48 patterns)
+**ADRs**: `docs/internal/architecture/current/adrs/` (53 ADRs)
+**Release Notes**: `docs/releases/RELEASE-NOTES-v0.8.4.md`
+**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 11)
+
+---
+
+*Last Updated: January 12, 2026, 3:00 PM PT*
+*Source: GitHub commit history, beads database, Serena symbolic index*

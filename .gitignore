@@ -75,3 +75,4 @@ advisors/*/outbox/*.tmp
 # Git worktrees for multi-agent isolation
 # Each agent gets an isolated worktree in .trees/<prompt-id>-<session>/
 .trees/
+external/ted-multichat/

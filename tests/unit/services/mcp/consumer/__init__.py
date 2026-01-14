@@ -1,0 +1,1 @@
+# MCP consumer unit tests

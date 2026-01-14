@@ -1,269 +1,274 @@
-# Piper Morgan Roadmap v12.2
-**Date**: 2025-11-29
-**Author**: Chief Architect
-**Status**: Active - Dual Track Implementation
+# Piper Morgan Roadmap v13.0
+**Date**: 2026-01-12
+**Author**: Documentation Agent (updated from Chief Architect v12.2)
+**Status**: Active - Sprint B1 COMPLETE, MUX Planning
 
 ---
 
 ## Executive Summary
 
-Major update from v12.1: Establishes dual-track implementation with MUX-VISION (conceptual) and MUX-TECH (technical) running in parallel with defined convergence points. First pilot of coordination queue successful. GitHub issues #432-436 created for technical implementation.
+**Major milestone achieved**: Sprint B1 completed January 11, 2026. v0.8.4 released with Integration Settings (Epic #543) and Portfolio Onboarding (#490). 23+ issues closed in 3 days (Jan 9-11). Project is ready to begin MUX (Modeled User Experience) phase.
 
-**Key Changes from v12.1**:
-- Added MUX-TECH epic with 4 implementation phases (60 hours total)
-- Established convergence points between vision and technical tracks
-- Coordination queue operational with successful pilot
-- GitHub-coordination pool alignment documented
+**Key Changes from v12.2**:
+- Sprint B1 COMPLETE - all FTUX, CONV, and Integration Settings work done
+- v0.8.4 released (January 12, 2026)
+- Completion Discipline Triad established (Patterns 045/046/047)
+- MUX phase ready to begin
 
 ---
 
-## Dual Track Visualization
+## Current Position
 
 ```
-Week 1 (Dec 2-6)          Week 2 (Dec 9-13)         Week 3 (Dec 16-20)
-┌──────────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│   MUX-VISION V1  │      │   MUX-VISION V2  │      │  MUX-INTERACT I1 │
-│   (32 hours)     │      │   (52 hours)     │      │   (48 hours)     │
-├──────────────────┤      ├──────────────────┤      ├──────────────────┤
-│ • OBJECT-MODEL   │──────>• FEATURE-MAP    │      │ • CANONICAL      │
-│ • GRAMMAR-CORE   │      │ • STANDUP-EXTRACT│      │ • RECOGNITION    │
-│ • CONSCIOUSNESS  │──┐   │ • LIFECYCLE-SPEC │──┐   │ • INTENT-BRIDGE  │
-│ • METAPHORS      │  │   │ • LEARNING-UX    │  │   │                  │
-└──────────────────┘  │   └──────────────────┘  │   └──────────────────┘
-                      │                          │
-                      ▼                          ▼
-              ┌──────────────────┐      ┌──────────────────┐
-              │   MUX-TECH X1    │      │   MUX-TECH X2    │
-              │   (24 hours)     │      │   (36 hours)     │
-              ├──────────────────┤      ├──────────────────┤
-              │ • PHASE1-GRAMMAR │──────>• PHASE2-ENTITY   │
-              │   (#433, 16h)    │      │   (#434, 24h)    │
-              │ • PHASE3-OWNERSHIP│      │ • PHASE4-COMPOST │
-              │   (#435, 8h)     │      │   (#436, 12h)    │
-              └──────────────────┘      └──────────────────┘
+Inchworm Position: 4.2.1.1 (per Chief Architect Jan 11)
 
-CONVERGENCE POINTS: V1→X1, V2→X2, LEARNING-UX→PHASE4
+1. ✅ The Great Refactor (GREAT)
+2. ✅ CORE functionality
+3. ✅ ALPHA testing (v0.8.0 → v0.8.4)
+4. 🎯 MVP Track
+   4.1. ✅ B1 - FTUX & Conversations (COMPLETE Jan 11)
+        ✅ FTUX-PIPER-INTRO (#547)
+        ✅ FTUX-EMPTY-STATES (#548)
+        ✅ FTUX-POST-SETUP (#549)
+        ✅ FTUX-QUICK-2, QUICK-3
+        ✅ FTUX-CHAT-BRIDGE (#550)
+        ✅ FTUX-CONCIERGE
+        ✅ CONV-UX-GREET (#102)
+        ✅ CONV-MCP-STANDUP-INTERACTIVE (Epic #242 - 5 children)
+        ✅ SLACK-ATTENTION-DECAY (#365)
+        ✅ FTUX-PORTFOLIO (#490)
+        ✅ TEST-GAP (#559)
+        ✅ CONV-UX-PERSIST (Epic #314 - 4 children)
+        ✅ CORE-SETTING-DISCONNECT (#544)
+        ✅ CORE-SETTINGS-INTEGRATION (Epic #543 - 4 children)
+   4.2. 🎯 MUX-V1: Vision & Conceptual Architecture (NEXT)
+   4.3. MUX-V2: Integration & Learning
+   4.4. MUX-INTERACT: Interaction Design
+   4.5. MUX-IMPLEMENT: UI Polish
+5. Beta testing on 0.9
+6. Launch 1.0
 ```
 
 ---
 
-## Sprint Organization
+## Sprint B1 Completion Summary (Jan 5-11, 2026)
 
-### COMPLETED Sprints ✅
-- Sprint S1: Security Foundation (Nov 22-23)
-- Sprint A9: Final Alpha Prep (Nov 23)
-- Alpha v0.8.1 deployed, Michelle testing
+### Issues Closed: 23+
 
-### ACTIVE Work (Nov 29)
-- ✅ Coordination queue established
-- ✅ First pilot successful (audit completed)
-- ✅ MUX-TECH issues created (#432-436)
-- ✅ Roadmap v12.2 created
+**Epics Completed**:
+- Epic #242: Interactive Standup Assistant (5 children)
+- Epic #314: Conversation Persistence (4 children)
+- Epic #543: Integration Settings (4 children)
+
+**Major Features**:
+| Issue | Feature | Commit |
+|-------|---------|--------|
+| #547 | FTUX Piper Intro | ab6716e1 |
+| #548 | FTUX Empty States | e993005f |
+| #549 | FTUX Post-Setup | b82b674a |
+| #550 | FTUX Chat Bridge | (part of FTUX batch) |
+| #490 | Portfolio Onboarding | d3554765 |
+| #365 | Slack Attention Decay | 45c8d93d |
+| #544 | Disconnect All button | cee6c3eb |
+| #562 | Integration Test OAuth fix | ab44a72e |
+| #563-566 | Conversation Persistence | (CONV-PERSIST-1 through 4) |
+| #570-573 | Integration Preferences | (Slack/Calendar/Notion/GitHub) |
+| #576-579 | OAuth Credential UI | (Slack/Calendar/GitHub/Notion) |
+
+### Key Patterns Established
+- **Pattern-045**: Green Tests, Red User (completion discipline)
+- **Pattern-046**: Beads Completion Discipline
+- **Pattern-047**: Time Lord Alert (uncertainty signaling)
+- **Pattern-048**: Periodic Background Job (from #365)
 
 ---
 
-## MUX Super-Epic Structure
+## Next Phase: MUX (Modeled User Experience)
 
-### MUX-VISION: Conceptual Architecture
-**Purpose**: Define consciousness model and patterns
-**Status**: Ready to begin Dec 2
+### MUX-VISION V1: Conceptual Architecture
+**Status**: Ready to begin
+**GitHub Issues**: #433-436 (MUX-TECH phases)
 
-#### Sprint V1: Formalization (Dec 2-6)
-- VISION-OBJECT-MODEL (8h) - ADR-045 formalization
-- VISION-GRAMMAR-CORE (12h) - "Entities experience Moments in Places"
-- VISION-CONSCIOUSNESS (8h) - Extract from Morning Standup
-- VISION-METAPHORS (4h) - Native/Federated/Synthetic
-
-#### Sprint V2: Integration (Dec 9-13)
-- VISION-FEATURE-MAP (12h) - Map features to model
-- VISION-STANDUP-EXTRACT (16h) - Pattern extraction
-- VISION-LIFECYCLE-SPEC (8h) - 8-stage with composting
-- MUX-VISION-LEARNING-UX (16h) - Complete learning system
+**Scope**:
+- VISION-OBJECT-MODEL - ADR-045 formalization
+- VISION-GRAMMAR-CORE - "Entities experience Moments in Places"
+- VISION-CONSCIOUSNESS - Extract from Morning Standup
+- VISION-METAPHORS - Native/Federated/Synthetic
 
 ### MUX-TECH: Technical Implementation
-**Purpose**: Implement consciousness-aware models
-**Status**: Begins after V1 completes
-**GitHub Issues**: #433-436
+**GitHub Issues Created**:
+- #433: MUX-TECH-PHASE1-GRAMMAR
+- #434: MUX-TECH-PHASE2-ENTITY
+- #435: MUX-TECH-PHASE3-OWNERSHIP
+- #436: MUX-TECH-PHASE4-COMPOSTING
 
-#### Sprint X1: Core Models (Dec 9-13)
-**Dependencies**: V1 must complete first
-- MUX-TECH-PHASE1-GRAMMAR (#433, 16h)
-  - Moment, Situation models
-  - 8-stage LifecycleStage enum
-  - Links to VISION-OBJECT-MODEL
-- MUX-TECH-PHASE3-OWNERSHIP (#435, 8h)
-  - Native/Federated/Synthetic types
-  - Can start after VISION-METAPHORS
-  - Independent of PHASE1
-
-#### Sprint X2: Entity & Learning (Dec 16-20)
-**Dependencies**: PHASE1 complete, V2 complete
-- MUX-TECH-PHASE2-ENTITY (#434, 24h)
-  - PiperEntity model
-  - Consciousness attributes
-  - Requires PHASE1 models
-- MUX-TECH-PHASE4-COMPOSTING (#436, 12h)
-  - Learning pipeline
-  - Connects to MUX-VISION-LEARNING-UX
-  - Needs PHASE1 lifecycle
-
-### MUX-INTERACT: Interaction Design
-**Starts**: Dec 16 (overlaps with X2)
-- Recognition patterns, trust gradient, spatial navigation
-
-### MUX-IMPLEMENT: UI Polish
-**Starts**: Jan 13
-- Navigation crisis, document management, cross-channel unity
+### MUX Gates (Milestones)
+- #531: MUX-GATE-1 - Foundation Phase Complete
+- #532: MUX-GATE-2 - Core Implementation Complete
+- #533: MUX-GATE-3 - Integration Phase Complete
+- #534: MUX-GATE-4 - Interaction Design Complete
 
 ---
 
-## Coordination Mechanisms
+## Open Issues by Category
 
-### GitHub ↔ Coordination Pool Alignment
+### MUX Phase (Future)
+- #433-436: MUX-TECH Phases 1-4
+- #477: MUX-VISION-LISTS
+- #474: MUX-TECH-LISTS
+- #488: MUX-INTERACT-DISCOVERY
+- #567-569: MUX Portfolio extensions
 
-**Pattern for Breaking Down Large Issues**:
-```yaml
-GitHub Issue: #433 (MUX-TECH-PHASE1-GRAMMAR)
-Coordination Prompts:
-  - 001-implement-moment-model.md (4h)
-  - 002-implement-situation-model.md (4h)
-  - 003-implement-lifecycle-enum.md (4h)
-  - 004-integrate-with-existing.md (4h)
-```
+### Architecture & Infrastructure
+- #551: ARCH-COMMANDS (Command Parity)
+- #557: ARCH-WebSocket Infrastructure
+- #463: FLY-COORD-TREES (Git Worktrees)
 
-**Documentation Requirements per Issue**:
-- Update domain-models.md with changes
-- Update architecture.md if structure changes
-- Update dependency diagrams if needed
-- Update ADRs for decision evolution
+### Security
+- #542: SEC Token Revocation
+- #482: SEC-KMS-INTEGRATION
 
-### Convergence Points
+### Bug Fixes
+- #574: Conversation history panel switching
 
-1. **V1 → X1**: Vision defines, Tech implements
-2. **V2 → X2**: Integration patterns inform entity work
-3. **LEARNING-UX → PHASE4**: UX design guides pipeline
-4. **X1 + X2 → I1**: Models enable interaction patterns
-
----
-
-## Critical Path & Dependencies
-
-```mermaid
-graph LR
-    V1[Vision V1] --> X1[Tech Phase 1]
-    X1 --> X2E[Phase 2 Entity]
-    V1 --> X1O[Phase 3 Ownership]
-    V2[Vision V2] --> X2C[Phase 4 Composting]
-    X2E --> I1[Interact I1]
-```
-
-**Must Complete in Order**:
-1. VISION-OBJECT-MODEL → PHASE1-GRAMMAR
-2. PHASE1-GRAMMAR → PHASE2-ENTITY
-3. VISION-LEARNING-UX → PHASE4-COMPOSTING
-
-**Can Parallelize**:
-- PHASE3-OWNERSHIP (after VISION-METAPHORS)
-- MUX-INTERACT (after core models exist)
+### Tech Debt
+- #546: Alternate issue providers
+- #558: LLM-based preference extraction
+- #471: Infrastructure Epic (OAuth, Learning, TimeSeries)
+- #472: Slack Integration TDD Gaps
 
 ---
 
-## Resource Allocation
+## Version History
 
-### Model Strategy (Updated)
-- **Vision Work**: Opus 4.5 (conceptual depth)
-- **Technical Implementation**: Sonnet 4.5 via coordination queue
-- **Simple Tasks**: Haiku 4.5 sub-agents
-- **Validation**: Cursor Agent with Sonnet 4.5
-
-### Coordination Queue Usage
-- Large issues broken into 2-8 hour prompts
-- Agents claim work autonomously
-- PM reviews completed work async
-- Documentation updates with code
+| Version | Date | Key Features |
+|---------|------|--------------|
+| v0.8.4 | Jan 12, 2026 | Sprint B1 Complete, Integration Settings, Portfolio Onboarding |
+| v0.8.3.2 | Jan 8, 2026 | Epic #242 Interactive Standup |
+| v0.8.3.1 | Jan 7, 2026 | FTUX improvements |
+| v0.8.3 | Jan 2, 2026 | Setup wizard enhancements |
+| v0.8.2 | Dec 2025 | Alpha stability |
+| v0.8.1 | Nov 2025 | Initial alpha |
 
 ---
 
 ## Success Metrics
 
-### December 2025
-- [ ] V1 Vision sprint complete (32h)
-- [ ] X1 Core models implemented (24h)
-- [ ] Morning Standup uses new models
-- [ ] Coordination queue processing 5+ prompts/week
+### January 2026 ✅ ACHIEVED
+- [x] Sprint B1 complete
+- [x] v0.8.4 released
+- [x] Integration Settings working
+- [x] Portfolio Onboarding implemented
+- [x] 23+ issues closed in 3 days
 
-### January 2026
+### February 2026 (Targets)
+- [ ] MUX-V1 Vision sprint complete
+- [ ] MUX-TECH Phase 1 (Grammar) implemented
+- [ ] Conversation history bug fixed (#574)
+- [ ] WebSocket infrastructure evaluated
+
+### March 2026 (Targets)
+- [ ] MUX-V2 Integration complete
 - [ ] Entity consciousness visible in code
 - [ ] Learning pipeline operational
-- [ ] Recognition patterns designed
-- [ ] Trust gradient implemented
 
-### February 2026
-- [ ] 75% features use consciousness models
-- [ ] Navigation crisis resolved
-- [ ] v1.0 launch ready
+---
+
+## Gate Implementation (from v12.3)
+
+### Gate Structure
+Each gate (#531-534) is a GitHub issue with mandatory checklist:
+1. All phase issues closed with evidence
+2. Pattern discovery ceremony completed
+3. No P0/P1 bugs
+4. Team alignment checkpoint
+5. PM approval
+
+### Pattern Discovery Ceremony
+End of each sprint:
+- What patterns emerged?
+- What anti-patterns appeared?
+- What should be documented?
+- Output: Pattern log updates or DRAFT patterns
 
 ---
 
 ## Risk Mitigation
 
 ### Technical Risks
-- **Model complexity**: Start with Moment, validate, then expand
-- **Breaking changes**: Feature flags for new models
-- **Performance**: Profile consciousness overhead
+- **Conversation switching bug (#574)**: Known, needs investigation
+- **MUX complexity**: Gate system provides checkpoints
+- **Learning system gap**: Composting pipeline is spec only (per Jan 11 audit)
 
 ### Process Risks
-- **Coordination overhead**: Queue reduces sync needs
-- **Documentation drift**: Updates required per issue
-- **Vision-tech mismatch**: Convergence checkpoints
+- **Completion bias**: Patterns 045/046/047 provide countermeasures
+- **Documentation drift**: Weekly audits (issue #580 template)
+- **MUX 75% Abandonment**: Mitigated by gates and Beads discipline (Pattern-046)
+
+### Contingency Plans (from v12.3)
+- If MUX slips: Continue MVP work in parallel
+- If discovery fails: Return to command paradigm
+- If gates block: Time-box investigation
 
 ---
 
-## Next Actions
+## Pattern Integration
 
-### This Week (Nov 29-Dec 1)
-- ✅ Set up coordination queue
-- ✅ Create MUX-TECH issues
-- ✅ Update roadmap to v12.2
-- ⏱️ Complete second pilot test
-- ⏱️ Brief team on dual-track approach
-
-### Next Week (Dec 2-8)
-- 🔲 Execute Vision Sprint V1
-- 🔲 Prepare Tech Sprint X1 prompts
-- 🔲 Continue alpha testing
-- 🔲 First convergence checkpoint
-
----
-
-## Change Log
-
-### v12.2 (Nov 29, 2025, 4:45 PM)
-- Added MUX-TECH epic with 4 phases
-- Established dual-track visualization
-- Documented convergence points
-- Added GitHub-coordination alignment
-- Successful first pilot noted
-
-### v12.1 (Nov 29, 2025, 11:40 AM)
-- Integrated MUX-VISION-LEARNING-UX
-- Added "Filing dreams" metaphor
-- Two-layer journal architecture
-
-### v12.0 (Nov 28, 2025)
-- Initial UX 2.0 integration
-- Discovered core grammar
+All work follows these patterns (embedded from v12.3):
+- **Pattern-006**: Verification-First
+- **Pattern-009**: GitHub Issue Tracking
+- **Pattern-021**: Session Management
+- **Pattern-045**: Green Tests, Red User (completion discipline)
+- **Pattern-046**: Beads Completion Discipline
+- **Pattern-047**: Time Lord Alert (uncertainty signaling)
+- **Pattern-048**: Periodic Background Job
 
 ---
 
 ## Notes
 
-**Inchworm Principle**: Each phase completes 100% before next begins. Convergence points allow validation without blocking parallel work.
+**Inchworm Principle**: Each phase completes 100% before next begins. Sprint B1 demonstrated this with 23+ issues closed systematically.
 
-**Morning Standup**: Remains our North Star example of consciousness working despite model limitations.
+**Completion Discipline Triad**: Patterns 045/046/047 form a reinforcing system against AI completion bias.
 
-**Coordination Queue**: Enables async work distribution, reducing real-time coordination needs.
+**Learning System Status** (per Jan 11 audit):
+- Built: Preference Learning (118 tests), Attention Decay (7 tests), Query Learning Loop
+- Spec Only: Composting Pipeline, Insight Journal, Dreaming Jobs
+
+**Dependency Stack** (from v12.3, still valid):
+1. Setup/Config (explicit wizard support) ✅ COMPLETE
+2. Conversational Glue (discovery enablement) ✅ COMPLETE (Portfolio Onboarding)
+3. MUX-VISION (conceptual architecture) ← NEXT
+4. MUX-TECH (implementation)
+5. MUX-INTERACT (discovery patterns)
+6. MUX-IMPLEMENT (polish)
 
 ---
 
-*Roadmap v12.2 - Dual tracks converging toward consciousness*
+## Change Log
+
+### v13.0 (Jan 12, 2026)
+- Sprint B1 COMPLETE documented
+- Updated inchworm position to 4.2.1.1
+- Added Sprint B1 completion summary with all 23+ issues
+- Updated version history through v0.8.4
+- Refreshed open issues from GitHub
+- Added MUX gates (#531-534)
+- Documented Completion Discipline Triad
+- **Merged v12.3 insights**: Gate implementation details, pattern discovery ceremony, contingency plans, dependency stack
+
+### v12.3 (Dec 27, 2025) - knowledge/roadmap-v12.3.md
+- Reality-based timeline (MUX in February)
+- Added setup wizard issues
+- Added gate milestones
+- Pattern insights integrated
+- Quick wins identified
+
+### v12.2 (Nov 29, 2025)
+- Added MUX-TECH epic with 4 phases
+- Established dual-track visualization
+- Documented convergence points
+
+---
+
+*Roadmap v13.0 - Sprint B1 Complete, MUX Phase Beginning*

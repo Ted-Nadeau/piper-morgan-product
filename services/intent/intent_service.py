@@ -535,8 +535,9 @@ class IntentService:
             self.logger.info(f"Workflow created with ID: {workflow.id}")
 
             # Handle QUERY intents with domain services
+            # Issue #586: Pass user_id for timezone-aware calendar queries
             if intent.category.value.upper() == "QUERY":
-                result = await self._handle_query_intent(intent, workflow, session_id)
+                result = await self._handle_query_intent(intent, workflow, session_id, user_id)
                 result.suggestions = all_suggestions
                 result.preferences = preferences  # Issue #248: Attach preference detection results
                 return result
@@ -981,13 +982,14 @@ class IntentService:
             )
 
     async def _handle_query_intent(
-        self, intent: Intent, workflow, session_id: str
+        self, intent: Intent, workflow, session_id: str, user_id: Optional[str] = None
     ) -> IntentProcessingResult:
         """
         Handle QUERY category intents (standup, projects, generic).
 
         Routes to appropriate domain service based on intent action.
         Issue #516: Added document search routing to Notion
+        Issue #586: Added user_id parameter for timezone-aware calendar queries
         """
         self.logger.info(f"Processing QUERY intent: {intent.action}")
 
@@ -1021,14 +1023,15 @@ class IntentService:
             return await self._handle_comment_issue_query(intent, workflow.id)
 
         # Issue #518: Calendar queries (Canonical Queries #34, #35, #61)
+        # Issue #586: Pass user_id for timezone-aware queries
         elif intent.action in ["meeting_time", "how_much_time_in_meetings", "calendar_analysis"]:
-            return await self._handle_meeting_time_query(intent, workflow.id)
+            return await self._handle_meeting_time_query(intent, workflow.id, user_id)
 
         elif intent.action in ["recurring_meetings", "review_recurring_meetings", "audit_meetings"]:
-            return await self._handle_recurring_meetings_query(intent, workflow.id)
+            return await self._handle_recurring_meetings_query(intent, workflow.id, user_id)
 
         elif intent.action in ["week_calendar", "week_ahead", "whats_my_week_like"]:
-            return await self._handle_week_calendar_query(intent, workflow.id)
+            return await self._handle_week_calendar_query(intent, workflow.id, user_id)
 
         # Issue #518: Productivity query (Canonical Query #51)
         elif intent.action in [
@@ -2409,17 +2412,19 @@ class IntentService:
             )
 
     async def _handle_meeting_time_query(
-        self, intent: Intent, workflow_id: str
+        self, intent: Intent, workflow_id: str, user_id: Optional[str] = None
     ) -> IntentProcessingResult:
         """
         Handle "How much time in meetings?" query.
 
         Issue #518: Canonical Query #34 - Calendar Cluster
+        Issue #586: Added user_id for timezone-aware queries
         Returns total meeting duration for the current week.
 
         Args:
             intent: The classified intent
             workflow_id: Current workflow ID
+            user_id: Optional user ID for timezone-aware queries
 
         Returns:
             IntentProcessingResult with meeting time summary or graceful fallback
@@ -2432,8 +2437,8 @@ class IntentService:
                 CalendarIntegrationRouter,
             )
 
-            # Initialize router
-            calendar_router = CalendarIntegrationRouter()
+            # Initialize router with user_id for timezone awareness (Issue #586)
+            calendar_router = CalendarIntegrationRouter(user_id=user_id)
 
             # Check if calendar is configured by attempting authentication
             is_configured = await calendar_router.authenticate()
@@ -2456,7 +2461,7 @@ class IntentService:
                     implemented=False,  # Graceful degradation
                 )
 
-            # Get today's events
+            # Get today's events (Issue #586: user_id passed through router)
             events = await calendar_router.get_todays_events()
 
             # Filter to meetings only (exclude all-day events)
@@ -2522,17 +2527,19 @@ class IntentService:
             )
 
     async def _handle_recurring_meetings_query(
-        self, intent: Intent, workflow_id: str
+        self, intent: Intent, workflow_id: str, user_id: Optional[str] = None
     ) -> IntentProcessingResult:
         """
         Handle "Review my recurring meetings" query.
 
         Issue #518: Canonical Query #35 - Calendar Cluster
+        Issue #586: Added user_id for timezone-aware queries
         Returns list of recurring meetings with frequency and time commitment.
 
         Args:
             intent: The classified intent
             workflow_id: Current workflow ID
+            user_id: Optional user ID for timezone-aware queries
 
         Returns:
             IntentProcessingResult with recurring meetings or graceful fallback
@@ -2545,8 +2552,8 @@ class IntentService:
                 CalendarIntegrationRouter,
             )
 
-            # Initialize router
-            calendar_router = CalendarIntegrationRouter()
+            # Initialize router with user_id for timezone awareness (Issue #586)
+            calendar_router = CalendarIntegrationRouter(user_id=user_id)
 
             # Check if calendar is configured by attempting authentication
             is_configured = await calendar_router.authenticate()
@@ -2617,17 +2624,19 @@ class IntentService:
             )
 
     async def _handle_week_calendar_query(
-        self, intent: Intent, workflow_id: str
+        self, intent: Intent, workflow_id: str, user_id: Optional[str] = None
     ) -> IntentProcessingResult:
         """
         Handle "What's my week look like?" query.
 
         Issue #518: Canonical Query #61 - Calendar Cluster
+        Issue #586: Added user_id for timezone-aware queries
         Returns calendar view for the current week (next 7 days).
 
         Args:
             intent: The classified intent
             workflow_id: Current workflow ID
+            user_id: Optional user ID for timezone-aware queries
 
         Returns:
             IntentProcessingResult with week calendar view or graceful fallback
@@ -2640,8 +2649,8 @@ class IntentService:
                 CalendarIntegrationRouter,
             )
 
-            # Initialize router
-            calendar_router = CalendarIntegrationRouter()
+            # Initialize router with user_id for timezone awareness (Issue #586)
+            calendar_router = CalendarIntegrationRouter(user_id=user_id)
 
             # Check if calendar is configured by attempting authentication
             is_configured = await calendar_router.authenticate()
@@ -2665,9 +2674,9 @@ class IntentService:
                 )
 
             # Get events for the next 7 days via router (Issue #518 fix - CORE-QUERY-1 pattern)
-            from datetime import datetime, timedelta
+            from datetime import datetime, timedelta, timezone
 
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             end_date = now + timedelta(days=7)
             events = await calendar_router.get_events_in_range(now, end_date)
 

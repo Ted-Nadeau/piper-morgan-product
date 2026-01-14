@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 48 patterns (001-048) + template (000)
+**Total Patterns**: 49 patterns (001-049) + template (000)
 
 ## Pattern Categories
 
@@ -86,6 +86,7 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-045: Green Tests, Red User](pattern-045-green-tests-red-user.md) - Anti-pattern: tests pass but users fail (COMPLETION DISCIPLINE TRIAD)
 - [Pattern-046: Beads Completion Discipline](pattern-046-beads-completion-discipline.md) - Systematic completion enforcement using `bd` CLI (COMPLETION DISCIPLINE TRIAD)
 - [Pattern-047: Time Lord Alert](pattern-047-time-lord-alert.md) - Uncertainty signaling for AI agents (COMPLETION DISCIPLINE TRIAD)
+- [Pattern-049: Audit Cascade](pattern-049-audit-cascade.md) - Institutionalized skepticism at every handoff point (VELOCITY PATTERN)
 
 ## Pattern Development
 
@@ -113,7 +114,7 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: January 10, 2026_
-_All 48 patterns now included with logical categorization_
-_Latest addition: Pattern-048 (Periodic Background Job) - Infrastructure & Scheduling_
-_Previous additions: Pattern-045, 046, 047 (Completion Discipline Triad) - ratified by Chief Architect_
+_Last updated: January 13, 2026_
+_All 49 patterns now included with logical categorization_
+_Latest addition: Pattern-049 (Audit Cascade) - Development & Process_
+_Previous additions: Pattern-048 (Periodic Background Job), Pattern-045/046/047 (Completion Discipline Triad)_

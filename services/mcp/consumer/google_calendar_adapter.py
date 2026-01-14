@@ -213,8 +213,42 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             logger.debug(f"Keychain auth failed, falling back to file-based: {e}")
             return False
 
-    async def get_todays_events(self) -> List[Dict[str, Any]]:
-        """Get today's calendar events from Google Calendar (with token counting)"""
+    async def _get_user_timezone(self, user_id: Optional[str] = None) -> str:
+        """
+        Get user's timezone from preferences, with fallback.
+
+        Issue #586: Added for timezone-aware calendar queries.
+
+        Args:
+            user_id: Optional user ID to look up timezone preference
+
+        Returns:
+            str: User's timezone string (e.g., "America/Los_Angeles")
+        """
+        if user_id:
+            try:
+                from uuid import UUID
+
+                from services.domain.user_preference_manager import UserPreferenceManager
+
+                pref_manager = UserPreferenceManager()
+                return await pref_manager.get_reminder_timezone(UUID(user_id))
+            except Exception as e:
+                logger.warning(f"Could not get user timezone: {e}")
+        return "America/Los_Angeles"  # Default fallback
+
+    async def get_todays_events(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get today's calendar events from Google Calendar (with token counting).
+
+        Issue #586: Added user_id parameter for timezone-aware queries.
+
+        Args:
+            user_id: Optional user ID for timezone-aware day boundaries
+
+        Returns:
+            List[Dict[str, Any]]: List of today's calendar events
+        """
         if self._circuit_open:
             logger.warning("Google Calendar circuit breaker is open")
             return []
@@ -224,16 +258,26 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 return []
 
         try:
+            # Issue #586: Get user's timezone for day boundary calculation
+            user_timezone = await self._get_user_timezone(user_id)
 
             async def _get_events():
-                from datetime import datetime, timedelta
+                from datetime import timezone
+                from zoneinfo import ZoneInfo
 
-                now = datetime.utcnow()
-                start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                # Issue #586: Use user's timezone for day boundaries
+                user_tz = ZoneInfo(user_timezone)
+
+                # Get current time in user's timezone
+                now_local = datetime.now(user_tz)
+
+                # Get start/end of day in user's timezone
+                start_of_day = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
                 end_of_day = start_of_day + timedelta(days=1)
 
-                time_min = start_of_day.isoformat() + "Z"
-                time_max = end_of_day.isoformat() + "Z"
+                # Convert to UTC for Google API (RFC3339 format)
+                time_min = start_of_day.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+                time_max = end_of_day.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
                 events_result = (
                     self._service.events()
@@ -262,7 +306,7 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 input_data="",
             )
 
-            logger.info(f"Retrieved {len(events)} events for today")
+            logger.info(f"Retrieved {len(events)} events for today (timezone: {user_timezone})")
             self._reset_circuit_breaker()
             return events
 
@@ -275,6 +319,8 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         """
         Process a calendar event for temporal awareness
 
+        Issue #586: Fixed to use timezone-aware datetime for status calculation.
+
         Args:
             event: Raw Google Calendar event
 
@@ -282,6 +328,8 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             Dict[str, Any]: Processed event data or None if invalid
         """
         try:
+            from datetime import timezone
+
             # Extract essential event information
             event_id = event.get("id", "")
             summary = event.get("summary", "No Title")
@@ -307,10 +355,23 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 end_time = start_time + timedelta(hours=1)  # Default 1-hour duration
 
             # Calculate event status
-            now = datetime.now()
-            if now < start_time:
+            # Issue #586: Use timezone-aware now() for consistent comparison
+            now = datetime.now(timezone.utc)
+
+            # Ensure start_time and end_time are timezone-aware for comparison
+            if start_time.tzinfo is None:
+                # All-day events have naive datetimes, treat as UTC for comparison
+                start_time_aware = start_time.replace(tzinfo=timezone.utc)
+                end_time_aware = (
+                    end_time.replace(tzinfo=timezone.utc) if end_time.tzinfo is None else end_time
+                )
+            else:
+                start_time_aware = start_time
+                end_time_aware = end_time
+
+            if now < start_time_aware:
                 status = "upcoming"
-            elif now > end_time:
+            elif now > end_time_aware:
                 status = "completed"
             else:
                 status = "current"
@@ -579,9 +640,9 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         try:
 
             async def _get_recurring():
-                now = datetime.utcnow()
-                time_min = now.isoformat() + "Z"
-                time_max = (now + timedelta(days=days_ahead)).isoformat() + "Z"
+                now = datetime.now(timezone.utc)
+                time_min = now.isoformat().replace("+00:00", "Z")
+                time_max = (now + timedelta(days=days_ahead)).isoformat().replace("+00:00", "Z")
 
                 # Get events without expanding recurring (singleEvents=False)
                 events_result = (

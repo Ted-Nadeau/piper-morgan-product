@@ -351,7 +351,40 @@ class QueryRouter:
                 },
             )
 
-        # Temporal queries
+        # Calendar queries (Issue #589: Must be BEFORE temporal to prevent misrouting)
+        # These route to QUERY/meeting_time to use timezone-aware calendar adapter (#586)
+        elif any(
+            phrase in message_lower
+            for phrase in [
+                "what's on my calendar",
+                "what is on my calendar",
+                "whats on my calendar",
+                "my calendar today",
+                "calendar today",
+                "meetings today",
+                "do i have any meetings",
+                "do i have meetings",
+                "what meetings do i have",
+                "what meetings",
+                "my schedule today",
+                "today's schedule",
+                "todays schedule",
+                "schedule for today",
+            ]
+        ):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="meeting_time",
+                confidence=0.95,
+                original_message=message,
+                context={
+                    "rule_based": True,
+                    "calendar_query": True,
+                    "session_id": session_id,
+                },
+            )
+
+        # Temporal queries (pure time/date questions, NOT calendar)
         elif any(
             phrase in message_lower
             for phrase in [

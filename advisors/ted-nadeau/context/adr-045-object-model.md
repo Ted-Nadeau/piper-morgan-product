@@ -1,1 +1,0 @@
-../../../docs/internal/architecture/current/adrs/adr-045-object-model.md

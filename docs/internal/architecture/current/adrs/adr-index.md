@@ -1,7 +1,7 @@
 # Architectural Decision Records (ADR) Index
 
-**Last Updated**: November 30, 2025
-**Total ADRs**: 47
+**Last Updated**: January 13, 2026
+**Total ADRs**: 55 (000-054)
 **Status**: Active
 
 ## Overview
@@ -82,8 +82,9 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## ADR Status Summary
 
-- **Total**: 47 ADRs
-- **Accepted**: 47 ADRs (all current ADRs are accepted/implemented)
+- **Total**: 55 ADRs (000-054)
+- **Accepted**: ~50 ADRs
+- **Proposed/Draft**: ~5 ADRs (047, 049, 050, 051, 053, 054)
 - **Superseded**: 0 ADRs
 - **Deprecated**: 0 ADRs
 
@@ -91,7 +92,7 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ### Creating New ADRs
 
-1. Use next sequential number (next: ADR-046)
+1. Use next sequential number (next: ADR-055)
 2. Follow naming convention: `adr-XXX-descriptive-title.md`
 3. Include required sections: Status, Date, Context, Decision, Consequences
 4. Update this index when adding new ADRs
@@ -105,7 +106,13 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 
 ## Recent Changes
 
-- **November 30, 2025**: Added ADR-046 (Micro-Format Agent Architecture) - Typed input decomposition and specialized agent routing for coordination; emerges from Ted Nadeau's advisor mailbox insights - Total now 47 ADRs (000-046)
+- **January 13, 2026**: Added ADR-053 (Trust Computation Architecture), ADR-054 (Cross-Session Memory Architecture) - Trust gradient and memory persistence from PDR-002; Updated ADR-052 (Tool-Based MCP Standardization)
+- **January 13, 2026**: Added ADR-050 (Conversation-as-Graph Model), ADR-051 (Unified User Session Context) - Multi-party conversation modeling and user context unification
+- **January 9, 2026**: Added ADR-049 (Conversational State and Hierarchical Intent) - Multi-turn conversation architecture from FTUX-PORTFOLIO
+- **January 4, 2026**: Added ADR-048 (ServiceContainer Lifecycle Management) - Singleton pattern and lifecycle management from ARCH-FIX-SINGLETON
+- **December 3, 2025**: Added ADR-047 (Async Event Loop Awareness) - Database connection event loop handling from setup wizard debugging
+- **October 17, 2025**: Added ADR-052 (Tool-Based MCP Standardization) - MCP implementation standardization from CORE-MCP-MIGRATION
+- **November 30, 2025**: Added ADR-046 (Micro-Format Agent Architecture) - Typed input decomposition and specialized agent routing for coordination; emerges from Ted Nadeau's advisor mailbox insights
 - **November 29, 2025**: Added ADR-045 (Object Model - "Entities Experience Moments in Places") - Foundational conceptual grammar establishing how Piper perceives the world through Entities, Places, Moments, and Situations - Total was 46 ADRs (000-045)
 - **November 24, 2025**: Added ADR-044 (Lightweight RBAC vs Traditional) - Security architecture decision for role-based access control
 - **November 22, 2025**: Added ADR-043 (Application-Layer Stored Procedures) - Documents Piper's stored procedure pattern at application layer (orchestration, workflows, intent handlers) - Total was 43 ADRs (000-043)
@@ -136,3 +143,11 @@ This index provides a complete catalog of all Architectural Decision Records (AD
 - [ADR-039: Canonical Handler Fast-Path Pattern](adr-039-canonical-handler-pattern.md) - Dual-path architecture for intent classification
 - [ADR-040: Local Database Per Environment](adr-040-local-database-per-environment.md) - CODE ≠ DATA architecture (git-managed code, PostgreSQL per environment data)
 - [ADR-043: Application-Layer Stored Procedures](adr-043-application-layer-stored-procedures.md) - Application-layer workflow composition pattern through OrchestrationEngine, WorkflowFactory, and IntentService (supports ADR-019)
+- [ADR-047: Async Event Loop Awareness](adr-047-async-event-loop-awareness.md) - Database connection event loop handling for CLI/HTTP contexts
+- [ADR-048: ServiceContainer Lifecycle Management](adr-048-service-container-lifecycle.md) - Singleton pattern and lazy initialization for service container
+- [ADR-049: Conversational State and Hierarchical Intent](adr-049-conversational-state-hierarchical-intent.md) - Multi-turn conversation architecture
+- [ADR-050: Conversation-as-Graph Model](adr-050-conversation-as-graph-model.md) - Multi-party, multi-agent conversational modeling
+- [ADR-051: Unified User Session Context](adr-051-unified-user-session-context.md) - Unifying user_id and session_id patterns
+- [ADR-052: Tool-Based MCP Standardization](adr-052-tool-based-mcp-standardization.md) - Standardize on tool-based MCP implementation
+- [ADR-053: Trust Computation Architecture](adr-053-trust-computation-architecture.md) - Trust gradient model implementation from PDR-002
+- [ADR-054: Cross-Session Memory Architecture](adr-054-cross-session-memory-architecture.md) - Three-layer context persistence model from PDR-002

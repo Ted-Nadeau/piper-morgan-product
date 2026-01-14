@@ -96,6 +96,21 @@ Pattern usage analysis should distinguish between "not mentioned because working
 ### Description
 Patterns 045, 046, and 047 form a reinforcing system that prevents premature closure and ensures quality completion.
 
+### Completion Theater Family
+
+Three patterns document different manifestations of the same underlying failure:
+declaring work "done" before achieving actual user value.
+
+| Pattern | Failure Mode | Signal |
+|---------|--------------|--------|
+| 045: Green Tests, Red User | Tests pass but feature doesn't work for users | QA pass + user complaints |
+| 046: Beads Completion | Multiple items at 80% instead of one at 100% | Scattered partial progress |
+| 047: Time Lord Alert | Time pressure causes verification shortcuts | Deadline proximity + skipped steps |
+
+**Root cause**: Completion bias - the human tendency to seek closure prematurely.
+
+**Universal remedy**: Verification at every stage (see Audit Cascade methodology).
+
 ### The System
 ```
 Pattern-045: Green Tests, Red User

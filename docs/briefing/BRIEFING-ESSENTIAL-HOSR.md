@@ -69,11 +69,12 @@
 - Evidence-based completion before advancement
 - Prevents work falling through cracks
 
-**Advisor Mailbox Pattern**:
-- Asynchronous communication with human advisors (Ted, Sam)
-- Hybrid approach respecting existing channels
-- Synthesis of advisor input for team consumption
-- Integration of external expertise
+**Agent Mailbox Pattern** (see `mailboxes/README.md`):
+- Asynchronous communication between agents and advisors
+- File-based inbox/read/outbox structure
+- `mailboxes/[role-slug]/` for each participant
+- External advisors (Ted, Sam) have outbox for responses
+- Internal roles check inbox at session start
 
 **The Handoff Problem**:
 - Ensuring clean handoffs between 5+ agents

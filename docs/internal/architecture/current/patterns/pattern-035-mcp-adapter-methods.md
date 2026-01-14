@@ -6,7 +6,7 @@
 
 ## Context
 
-During Phase 2 of MCP+Spatial migration (ADR-013), integration routers need to provide backward-compatible interfaces while delegating to new MCP spatial adapters. This creates a challenge:
+During MCP+Spatial migration (see ADR-038 for current spatial patterns, ADR-052 for tool-based MCP standardization), integration routers need to provide backward-compatible interfaces while delegating to new MCP spatial adapters. This creates a challenge:
 
 - Existing feature-layer consumers expect stable method names (e.g., `get_recent_issues()`, `get_issue()`)
 - New MCP spatial adapters use different method names (e.g., `list_github_issues_direct()`, `get_github_issue_direct()`)
@@ -15,7 +15,7 @@ During Phase 2 of MCP+Spatial migration (ADR-013), integration routers need to p
 
 ### When This Pattern Applies
 
-- During Phase 2 (Dual Implementation) of ADR-013 MCP migrations
+- During dual implementation phases of MCP migrations
 - When modernizing integrations without breaking existing consumers
 - When adding MCP+Spatial capabilities to legacy integration code
 - When routers need async initialization for API tokens or configuration
@@ -63,7 +63,7 @@ class GitHubIntegrationRouter:
     Integration router for GitHub operations.
     Provides stable interface while delegating to MCP+Spatial implementation.
 
-    ARCHITECTURAL PATTERN (ADR-013 Phase 2):
+    ARCHITECTURAL PATTERN (ADR-038 Delegated MCP Pattern, ADR-052 Tool-Based MCP):
     - Consumers call router methods (get_recent_issues, etc.)
     - Router delegates to MCP+Spatial adapter
     - Adapter provides 8-dimensional spatial context
@@ -174,7 +174,7 @@ class GitHubIntegrationRouter:
 
 ### When to Use
 
-- ✅ During ADR-013 Phase 2 migrations (dual MCP+Spatial implementation)
+- ✅ During MCP+Spatial migrations (dual implementation phase)
 - ✅ When existing consumers depend on stable method signatures
 - ✅ When adding spatial intelligence to existing integrations
 - ✅ When async initialization is needed (API tokens, configuration)
@@ -184,7 +184,7 @@ class GitHubIntegrationRouter:
 
 - ❌ For new integrations (use MCP adapter directly)
 - ❌ When no existing consumers exist (no backward compatibility needed)
-- ❌ In Phase 3 (MCP only) after migration complete
+- ❌ After migration complete (consumers should call MCP adapter directly)
 - ❌ When performance overhead of delegation is unacceptable
 
 ### Best Practices
@@ -228,6 +228,12 @@ class GitHubIntegrationRouter:
 - [Pattern-022: MCP+Spatial Intelligence Integration](pattern-022-mcp-spatial-intelligence-integration.md) - Underlying MCP adapter pattern
 - [Pattern-008: DDD Service Layer](pattern-008-ddd-service-layer.md) - Domain services call these routers
 - [Pattern-031: Plugin Wrapper](pattern-031-plugin-wrapper.md) - Similar adapter approach for plugins
+
+### Related ADRs
+
+- [ADR-038: Spatial Intelligence Architecture Patterns](adr-038-spatial-intelligence-patterns.md) - Three valid spatial patterns (Granular, Embedded, Delegated MCP)
+- [ADR-052: Tool-Based MCP Standardization](adr-052-tool-based-mcp-standardization.md) - Tool-based MCP as canonical protocol approach
+- [ADR-029: Domain Service Mediation Architecture](adr-029-domain-service-mediation-architecture.md) - How domain services interact with routers
 
 ### Alternatives
 
@@ -289,7 +295,8 @@ issues = await mcp_adapter.list_github_issues_direct(limit=10)
 
 ### Documentation
 
-- **ADR-013**: MCP+Spatial Integration Pattern (Phase 2)
+- **ADR-038**: Spatial Intelligence Architecture Patterns (current spatial policy)
+- **ADR-052**: Tool-Based MCP Standardization (protocol architecture)
 - **ADR-029**: Domain Service Mediation Architecture
 - **Issue #119**: CORE-STAND-FOUND (Sprint A4 implementation)
 
@@ -311,3 +318,4 @@ issues = await mcp_adapter.list_github_issues_direct(limit=10)
 _Pattern created: October 19, 2025_
 _Sprint: A4 (CORE-STAND-FOUND)_
 _Status: Emerging (proven in production)_
+_Last Updated: January 13, 2026 (reference updates: ADR-013 → ADR-038, ADR-052)_

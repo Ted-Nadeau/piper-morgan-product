@@ -41,14 +41,29 @@ class CalendarIntegrationRouter:
         - Feature Flags: USE_SPATIAL_CALENDAR, ALLOW_LEGACY_CALENDAR
     """
 
-    def __init__(self, config_service: Optional[CalendarConfigService] = None):
-        """Initialize router with feature flag checking and config service"""
+    def __init__(
+        self,
+        config_service: Optional[CalendarConfigService] = None,
+        user_id: Optional[str] = None,
+    ):
+        """
+        Initialize router with feature flag checking and config service.
+
+        Issue #586: Added user_id parameter for timezone-aware calendar queries.
+
+        Args:
+            config_service: Optional CalendarConfigService instance
+            user_id: Optional user ID for timezone-aware queries
+        """
         # Use FeatureFlags service for consistency with GitHub router
         self.use_spatial = FeatureFlags.should_use_spatial_calendar()
         self.allow_legacy = FeatureFlags.is_legacy_calendar_allowed()
 
         # Store config service (create default if not provided)
         self.config_service = config_service or CalendarConfigService()
+
+        # Issue #586: Store user_id for timezone-aware queries
+        self._user_id = user_id
 
         # Initialize spatial integration
         self.spatial_calendar = None
@@ -124,9 +139,15 @@ class CalendarIntegrationRouter:
                 "Enable USE_SPATIAL_CALENDAR=true or check GoogleCalendarMCPAdapter setup."
             )
 
-    async def get_todays_events(self) -> List[Dict[str, Any]]:
+    async def get_todays_events(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get today's calendar events from Google Calendar.
+
+        Issue #586: Added user_id parameter for timezone-aware queries.
+
+        Args:
+            user_id: Optional user ID for timezone-aware queries.
+                    If not provided, uses self._user_id from __init__.
 
         Returns:
             List[Dict[str, Any]]: List of today's calendar events
@@ -136,10 +157,13 @@ class CalendarIntegrationRouter:
         """
         integration, is_legacy = self._get_preferred_integration("get_todays_events")
 
+        # Issue #586: Use provided user_id or fall back to instance user_id
+        effective_user_id = user_id or self._user_id
+
         if integration:
             if is_legacy:
                 self._warn_deprecation_if_needed("get_todays_events", is_legacy)
-            return await integration.get_todays_events()
+            return await integration.get_todays_events(user_id=effective_user_id)
         else:
             raise RuntimeError("No calendar integration available for get_todays_events")
 
