@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.4
-**Last Updated**: January 12, 2026
+**Version**: 0.8.4.1
+**Last Updated**: January 13, 2026
 **For**: Alpha Testers
 
 ---
@@ -65,6 +65,19 @@ This is pre-release alpha software (version 0.8.4). By proceeding, you acknowled
 See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
+
+## What's New in 0.8.4.1
+
+**Bug Fixes**:
+- Chat now auto-loads conversation on page refresh (#583)
+- `/standup` command correctly routes to interactive handler (#585)
+- UserContextService properly connects to database projects (#582)
+- Chat sidebar sync with conversation selection (#581)
+- Conversation history sidebar switching fixed (#574)
+
+**Architecture Improvement**:
+- New `RequestContext` model for unified identity handling (ADR-051, #584)
+- Foundation for better user/session management across the codebase
 
 ## What's New in 0.8.4
 
@@ -722,5 +735,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: January 8, 2026_
-_Software version: 0.8.4_
+_Last updated: January 13, 2026_
+_Software version: 0.8.4.1_

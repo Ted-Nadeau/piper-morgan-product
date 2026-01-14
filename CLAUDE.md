@@ -30,6 +30,26 @@ If a session explicitly assigns you a different role (Coding Agent, Architect, e
 
 ---
 
+## Mailbox Check (Session Start)
+
+Before starting work, check your inbox for messages from other agents or advisors:
+
+```bash
+ls mailboxes/lead/inbox/
+```
+
+If messages exist:
+1. Read each message with the Read tool
+2. Move to `read/` folder after reading: `mv mailboxes/lead/inbox/[file] mailboxes/lead/read/`
+3. Create response in sender's inbox if `Response-Requested: yes`
+4. Note any action items for your session
+
+**Role slugs**: `ceo`, `arch`, `cio`, `lead`, `comms`, `ppm`, `cxo`, `hosr`, `ted-nadeau`
+
+See `mailboxes/README.md` for full conventions.
+
+---
+
 ## Quick Commands
 
 ```bash

@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.4)
+# Known Issues & Feature Status (v0.8.4.1)
 
-**Version**: 0.8.4
-**Last Updated**: January 12, 2026
-**Status**: Stable Core (Sprint B1 Complete - Integration Settings + Portfolio Onboarding)
+**Version**: 0.8.4.1
+**Last Updated**: January 13, 2026
+**Status**: Stable Core (Sprint B1 Complete + Bug Fixes)
 
 ---
 
