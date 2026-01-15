@@ -111,7 +111,7 @@ class PreClassifier:
         r"\bevents.*tomorrow\b",
         r"\bnext event\b",
         # Relative time
-        r"\bagenda.*today\b",
+        # Note: "agenda" patterns moved to CALENDAR_QUERY_PATTERNS (Issue #588)
         r"\bwork on today\b",
         r"\bwhat.*yesterday\b",
         r"\bdid.*yesterday\b",
@@ -232,6 +232,13 @@ class PreClassifier:
         r"\bmy schedule today\b",
         r"\btoday'?s schedule\b",
         r"\bschedule for today\b",
+        # Issue #588: Agenda patterns (calendar queries, not temporal status)
+        r"\bagenda.*today\b",
+        r"\bagenda.*tomorrow\b",
+        r"\bagenda.*this week\b",
+        r"\bagenda.*next week\b",
+        r"\bmy agenda\b",
+        r"\bon my agenda\b",
         # Issue #588: Tomorrow calendar queries
         r"\bcalendar.*tomorrow\b",
         r"\btomorrow'?s calendar\b",
@@ -571,6 +578,18 @@ class PreClassifier:
                     r"\bhow much time.*meetings\b",
                     r"\btime spent in meetings\b",
                     r"\bmeeting time\b",
+                    # Issue #588: Tomorrow patterns route to meeting_time (single-day queries)
+                    r"\bcalendar.*tomorrow\b",
+                    r"\btomorrow'?s calendar\b",
+                    r"\bmeetings.*tomorrow\b",
+                    r"\bschedule.*tomorrow\b",
+                    r"\btomorrow'?s schedule\b",
+                    r"\bwhat'?s on my calendar.*tomorrow\b",
+                    r"\bmy calendar tomorrow\b",
+                    r"\bagenda.*today\b",
+                    r"\bagenda.*tomorrow\b",
+                    r"\bmy agenda\b",
+                    r"\bon my agenda\b",
                 ]
             ):
                 action = "meeting_time"

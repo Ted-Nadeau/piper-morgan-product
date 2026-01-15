@@ -2466,7 +2466,8 @@ class IntentService:
                 )
 
             # Issue #588: Parse date range from original message
-            original_message = intent.original_message or ""
+            # Note: original_message may be in intent.original_message OR intent.context["original_message"]
+            original_message = intent.original_message or intent.context.get("original_message", "")
             start_date, end_date, date_label = parse_relative_date(original_message)
 
             # Get events for the requested date range
@@ -2518,7 +2519,8 @@ class IntentService:
                     "meeting_count": meeting_count,
                     "meetings": meetings,
                 },
-                workflow_id=workflow_id,
+                # Issue #588: Direct response - no workflow polling needed
+                workflow_id=None,
                 requires_clarification=False,
             )
 
@@ -2532,7 +2534,8 @@ class IntentService:
                     "action": intent.action,
                     "confidence": intent.confidence,
                 },
-                workflow_id=workflow_id,
+                # Issue #588: Direct response - no workflow polling needed
+                workflow_id=None,
                 error=str(e),
                 error_type="CalendarMeetingTimeQueryError",
             )

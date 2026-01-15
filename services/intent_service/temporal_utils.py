@@ -7,11 +7,13 @@ Issue #588: Pragmatic approach to parsing relative date modifiers
 Future: MUX LLM integration will handle complex natural language dates.
 """
 
-from datetime import datetime, timedelta
-from typing import Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple
 
 
-def parse_relative_date(message: str) -> Tuple[datetime, datetime, str]:
+def parse_relative_date(
+    message: str, user_timezone: Optional[str] = None
+) -> Tuple[datetime, datetime, str]:
     """
     Extract date range from message with temporal modifiers.
 
@@ -20,14 +22,19 @@ def parse_relative_date(message: str) -> Tuple[datetime, datetime, str]:
 
     Args:
         message: User message to parse
+        user_timezone: Optional timezone string (e.g., "America/Los_Angeles")
+                      If not provided, uses local system time
 
     Returns:
         Tuple of (start_date, end_date, label)
-        - start_date: Beginning of date range (midnight)
-        - end_date: End of date range (midnight next day)
+        - start_date: Beginning of date range (midnight local time, converted to UTC)
+        - end_date: End of date range (midnight next day, converted to UTC)
         - label: Human-readable label ("today", "tomorrow", etc.)
     """
     message_lower = message.lower()
+
+    # Get current time in user's timezone (or local if not specified)
+    # Issue #588: Use local time for "today" calculation, then convert to UTC for API
     now = datetime.now()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 

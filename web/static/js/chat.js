@@ -229,8 +229,8 @@
     // Update last message timestamp for divider logic
     lastMessageTimestamp = msgTimestamp;
 
-    // Save to history for persistence (skip temporary messages like "Thinking...")
-    if (persist && html && !html.includes('Thinking...')) {
+    // Save to history for persistence (skip temporary messages like "Thinking..." or "Starting workflow...")
+    if (persist && html && !html.includes('Thinking...') && !html.includes('Starting workflow...')) {
       chatHistory.push({ content: html, isUser, timestamp: msgTimestamp });
       saveChatHistory(chatHistory);
     }
@@ -342,7 +342,8 @@
   function handleDirectResponse(result, element) {
     if (typeof renderBotMessage === 'function') {
       // Use DDD bot message renderer if available
-      const html = renderBotMessage(result.message || result.reply || "", "reply", false);
+      // Issue #588: Use "success" type to ensure markdown is parsed (renderBotMessage only parses for "success")
+      const html = renderBotMessage(result.message || result.reply || "", "success", false);
       element.innerHTML = html;
     } else {
       // Fallback: render markdown manually

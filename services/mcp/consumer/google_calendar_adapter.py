@@ -578,8 +578,23 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         try:
 
             async def _get_events():
-                time_min = start_date.isoformat() + "Z"
-                time_max = end_date.isoformat() + "Z"
+                # Issue #588: Convert local time to UTC for Google Calendar API
+                # If datetime is naive (no timezone), assume it's local time and convert to UTC
+                from datetime import timezone as tz
+
+                if start_date.tzinfo is None:
+                    # Naive datetime - treat as local, convert to UTC
+                    local_tz = datetime.now().astimezone().tzinfo
+                    start_utc = start_date.replace(tzinfo=local_tz).astimezone(tz.utc)
+                    end_utc = end_date.replace(tzinfo=local_tz).astimezone(tz.utc)
+                else:
+                    # Already timezone-aware
+                    start_utc = start_date.astimezone(tz.utc)
+                    end_utc = end_date.astimezone(tz.utc)
+
+                # Format as ISO with Z suffix (UTC)
+                time_min = start_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+                time_max = end_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
                 events_result = (
                     self._service.events()
