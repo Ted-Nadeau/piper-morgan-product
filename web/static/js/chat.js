@@ -191,11 +191,18 @@
     const msgDiv = document.createElement("div");
     msgDiv.className = `message ${isUser ? "user-message" : "bot-message"}`;
 
-    // If it's a user message, use textContent; if bot message, use innerHTML for markdown
+    // If it's a user message, use textContent; if bot message, use renderBotMessage for markdown
+    // Issue #592: Use DDD domain service for consistent markdown rendering
     if (isUser) {
       msgDiv.textContent = html;
     } else {
-      msgDiv.innerHTML = html;
+      // Use renderBotMessage() from bot-message-renderer.js for consistent markdown parsing
+      if (typeof renderBotMessage !== 'undefined') {
+        msgDiv.innerHTML = renderBotMessage(html, 'success', false);
+      } else {
+        // Fallback if bot-message-renderer.js not loaded
+        msgDiv.innerHTML = typeof marked !== 'undefined' ? marked.parse(html) : html;
+      }
     }
 
     msgContainer.appendChild(msgDiv);
