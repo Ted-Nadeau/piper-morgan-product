@@ -274,8 +274,11 @@ async def list_conversations(
                 ConversationListItem(
                     id=conv.id,
                     title=conv.title or "New conversation",
-                    created_at=conv.created_at.isoformat() if conv.created_at else "",
-                    updated_at=conv.last_activity_at.isoformat() if conv.last_activity_at else None,
+                    # Issue #587: Append Z to indicate UTC timezone for proper JS parsing
+                    created_at=f"{conv.created_at.isoformat()}Z" if conv.created_at else "",
+                    updated_at=(
+                        f"{conv.last_activity_at.isoformat()}Z" if conv.last_activity_at else None
+                    ),
                     turn_count=turn_count,
                 )
             )

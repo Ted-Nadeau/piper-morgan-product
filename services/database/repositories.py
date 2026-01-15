@@ -1006,11 +1006,15 @@ class ConversationRepository(BaseRepository):
         """
         from services.database.models import ConversationDB
 
+        # Issue #587: Sort by last_activity_at (most recently active first)
+        # Use COALESCE to fall back to created_at for conversations with no activity yet
         stmt = (
             select(ConversationDB)
             .where(ConversationDB.user_id == user_id)
             .where(ConversationDB.is_active == True)
-            .order_by(ConversationDB.created_at.desc())
+            .order_by(
+                func.coalesce(ConversationDB.last_activity_at, ConversationDB.created_at).desc()
+            )
             .offset(offset)
             .limit(limit)
         )
