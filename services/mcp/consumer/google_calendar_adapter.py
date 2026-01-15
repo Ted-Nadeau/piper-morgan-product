@@ -396,11 +396,14 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             logger.error(f"Failed to process event: {e}")
             return None
 
-    async def get_current_meeting(self) -> Optional[Dict[str, Any]]:
-        """Get currently active meeting if any (with token counting)"""
+    async def get_current_meeting(self, user_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Get currently active meeting if any (with token counting)
+
+        Issue #596: Added user_id parameter for timezone-aware queries.
+        """
 
         async def _get():
-            events = await self.get_todays_events()
+            events = await self.get_todays_events(user_id=user_id)
             for event in events:
                 if event["status"] == "current":
                     return event
@@ -414,11 +417,14 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
         return result
 
-    async def get_next_meeting(self) -> Optional[Dict[str, Any]]:
-        """Get next upcoming meeting today (with token counting)"""
+    async def get_next_meeting(self, user_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Get next upcoming meeting today (with token counting)
+
+        Issue #596: Added user_id parameter for timezone-aware queries.
+        """
 
         async def _get():
-            events = await self.get_todays_events()
+            events = await self.get_todays_events(user_id=user_id)
             for event in events:
                 if event["status"] == "upcoming":
                     return event
@@ -432,17 +438,22 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
         return result
 
-    async def get_free_time_blocks(self) -> List[Dict[str, Any]]:
-        """Calculate free time blocks between meetings (with token counting)"""
+    async def get_free_time_blocks(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Calculate free time blocks between meetings (with token counting)
+
+        Issue #596: Added user_id parameter for timezone-aware queries.
+        """
 
         async def _get():
             from datetime import datetime, timedelta
 
-            events = await self.get_todays_events()
+            events = await self.get_todays_events(user_id=user_id)
             meetings = [e for e in events if not e["is_all_day"]]
 
+            # Issue #596: Use timezone-aware datetime to avoid comparison errors
+            now = datetime.now().astimezone()
+
             if not meetings:
-                now = datetime.now()
                 end_of_day = now.replace(hour=18, minute=0, second=0, microsecond=0)
                 return [
                     {
@@ -454,11 +465,13 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 ]
 
             free_blocks = []
-            now = datetime.now()
             meetings.sort(key=lambda x: x["start_time"])
 
             for i, meeting in enumerate(meetings):
                 meeting_start = datetime.fromisoformat(meeting["start_time"])
+                # Issue #596: Ensure meeting_start is timezone-aware
+                if meeting_start.tzinfo is None:
+                    meeting_start = meeting_start.replace(tzinfo=now.tzinfo)
 
                 if i == 0 and now < meeting_start:
                     gap_duration = int((meeting_start - now).total_seconds() / 60)
@@ -476,6 +489,11 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                     next_meeting = meetings[i + 1]
                     meeting_end = datetime.fromisoformat(meeting["end_time"])
                     next_start = datetime.fromisoformat(next_meeting["start_time"])
+                    # Issue #596: Ensure datetimes are timezone-aware
+                    if meeting_end.tzinfo is None:
+                        meeting_end = meeting_end.replace(tzinfo=now.tzinfo)
+                    if next_start.tzinfo is None:
+                        next_start = next_start.replace(tzinfo=now.tzinfo)
 
                     gap_duration = int((next_start - meeting_end).total_seconds() / 60)
                     if gap_duration > 15:
@@ -499,17 +517,20 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         logger.info(f"Found {len(result)} free time blocks")
         return result
 
-    async def get_temporal_summary(self) -> Dict[str, Any]:
-        """Get comprehensive temporal summary for standup integration (with token counting)"""
+    async def get_temporal_summary(self, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """Get comprehensive temporal summary for standup integration (with token counting)
+
+        Issue #596: Added user_id parameter for timezone-aware queries.
+        """
 
         async def _get():
             from datetime import datetime
 
             try:
-                current_meeting = await self.get_current_meeting()
-                next_meeting = await self.get_next_meeting()
-                free_blocks = await self.get_free_time_blocks()
-                all_events = await self.get_todays_events()
+                current_meeting = await self.get_current_meeting(user_id=user_id)
+                next_meeting = await self.get_next_meeting(user_id=user_id)
+                free_blocks = await self.get_free_time_blocks(user_id=user_id)
+                all_events = await self.get_todays_events(user_id=user_id)
 
                 total_meetings = len([e for e in all_events if not e["is_all_day"]])
                 total_meeting_time = sum(
@@ -737,7 +758,11 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
 
         if next_meeting:
             next_start = datetime.fromisoformat(next_meeting["start_time"])
-            time_until = next_start - datetime.now()
+            # Issue #596: Use timezone-aware datetime for comparison
+            now = datetime.now().astimezone()
+            if next_start.tzinfo is None:
+                next_start = next_start.replace(tzinfo=now.tzinfo)
+            time_until = next_start - now
             minutes_until = int(time_until.total_seconds() / 60)
 
             if minutes_until <= 15:

@@ -132,7 +132,8 @@ class CanonicalHandlers:
             if intent.category == IntentCategoryEnum.IDENTITY:
                 return await self._handle_identity_query(intent, session_id)
             elif intent.category == IntentCategoryEnum.TEMPORAL:
-                return await self._handle_temporal_query(intent, session_id)
+                # Issue #596: Pass user_id for timezone-aware calendar queries
+                return await self._handle_temporal_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.STATUS:
                 return await self._handle_status_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.PRIORITY:
@@ -660,7 +661,9 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         return message
 
-    async def _handle_temporal_query(self, intent: Intent, session_id: str) -> Dict:
+    async def _handle_temporal_query(
+        self, intent: Intent, session_id: str, user_id: Optional[str] = None
+    ) -> Dict:
         """
         Handle 'What day is it?' and time-related queries with spatial awareness.
 
@@ -668,6 +671,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         Issue #499: Routes agenda requests to dedicated handler.
         Issue #501: Routes retrospective requests to dedicated handler.
         Issue #504: Routes last activity requests to dedicated handler.
+        Issue #596: Added user_id parameter for timezone-aware calendar queries.
         """
         # Issue #499: Check if this is an agenda request first
         if self._detect_agenda_request(intent):
@@ -720,8 +724,9 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 CalendarIntegrationRouter,
             )
 
+            # Issue #596: Pass user_id for timezone-aware calendar queries
             calendar_adapter = CalendarIntegrationRouter()
-            temporal_summary = await calendar_adapter.get_temporal_summary()
+            temporal_summary = await calendar_adapter.get_temporal_summary(user_id=user_id)
 
             # Adjust calendar detail based on spatial pattern
             if spatial_pattern == "EMBEDDED":
@@ -776,14 +781,31 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 # Only show stats block if no current/next meeting mentioned
                 if temporal_summary.get("current_meeting"):
                     current_meeting = temporal_summary["current_meeting"]
-                    message += f" You're currently in: {current_meeting.get('title', 'a meeting')}"
-                    calendar_context["current_meeting"] = current_meeting.get("title", "Meeting")
+                    # Issue #596: Google Calendar uses 'summary' not 'title'
+                    meeting_title = current_meeting.get("summary") or current_meeting.get(
+                        "title", "a meeting"
+                    )
+                    message += f" You're currently in: {meeting_title}"
+                    calendar_context["current_meeting"] = meeting_title
                 elif temporal_summary.get("next_meeting"):
                     next_meeting = temporal_summary["next_meeting"]
-                    message += f" Your next meeting is: {next_meeting.get('title', 'Meeting')} at {next_meeting.get('start_time', 'TBD')}"
+                    # Issue #596: Format start_time as human-readable
+                    start_time_raw = next_meeting.get("start_time", "TBD")
+                    try:
+                        from datetime import datetime as dt
+
+                        start_dt = dt.fromisoformat(start_time_raw)
+                        start_time_formatted = start_dt.strftime("%I:%M %p").lstrip("0")
+                    except (ValueError, TypeError):
+                        start_time_formatted = start_time_raw
+                    # Issue #596: Google Calendar uses 'summary' not 'title'
+                    meeting_title = next_meeting.get("summary") or next_meeting.get(
+                        "title", "Meeting"
+                    )
+                    message += f" Your next meeting is: {meeting_title} at {start_time_formatted}"
                     calendar_context["next_meeting"] = {
-                        "title": next_meeting.get("title", "Meeting"),
-                        "time": next_meeting.get("start_time", "TBD"),
+                        "title": meeting_title,
+                        "time": start_time_formatted,
                     }
                 else:
                     # No current or upcoming meeting - show daily summary

@@ -224,9 +224,14 @@ class CalendarIntegrationRouter:
         else:
             raise RuntimeError("No calendar integration available for get_free_time_blocks")
 
-    async def get_temporal_summary(self) -> Dict[str, Any]:
+    async def get_temporal_summary(self, user_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Get comprehensive temporal summary for standup integration.
+
+        Issue #596: Added user_id parameter for timezone-aware queries.
+
+        Args:
+            user_id: Optional user ID for timezone-aware day boundaries
 
         Returns:
             Dict[str, Any]: Temporal awareness summary with current meeting,
@@ -240,7 +245,7 @@ class CalendarIntegrationRouter:
         if integration:
             if is_legacy:
                 self._warn_deprecation_if_needed("get_temporal_summary", is_legacy)
-            return await integration.get_temporal_summary()
+            return await integration.get_temporal_summary(user_id=user_id)
         else:
             raise RuntimeError("No calendar integration available for get_temporal_summary")
 
