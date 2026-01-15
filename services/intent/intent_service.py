@@ -2419,7 +2419,8 @@ class IntentService:
 
         Issue #518: Canonical Query #34 - Calendar Cluster
         Issue #586: Added user_id for timezone-aware queries
-        Returns total meeting duration for the current week.
+        Issue #588: Added support for tomorrow/this week/next week via temporal parsing
+        Returns total meeting duration for the requested date range.
 
         Args:
             intent: The classified intent
@@ -2436,6 +2437,9 @@ class IntentService:
             from services.integrations.calendar.calendar_integration_router import (
                 CalendarIntegrationRouter,
             )
+
+            # Issue #588: Parse temporal modifiers (today, tomorrow, this week, etc.)
+            from services.intent_service.temporal_utils import parse_relative_date
 
             # Initialize router with user_id for timezone awareness (Issue #586)
             calendar_router = CalendarIntegrationRouter(user_id=user_id)
@@ -2461,14 +2465,21 @@ class IntentService:
                     implemented=False,  # Graceful degradation
                 )
 
-            # Get today's events (Issue #586: user_id passed through router)
-            events = await calendar_router.get_todays_events()
+            # Issue #588: Parse date range from original message
+            original_message = intent.original_message or ""
+            start_date, end_date, date_label = parse_relative_date(original_message)
+
+            # Get events for the requested date range
+            events = await calendar_router.get_events_in_range(start_date, end_date)
 
             # Filter to meetings only (exclude all-day events)
             meetings = [e for e in events if not e.get("is_all_day", False)]
 
+            # Issue #588: Use date_label in response (today, tomorrow, this week, etc.)
+            date_label_title = date_label.title()  # "today" -> "Today"
+
             if not meetings:
-                message = "You have no meetings scheduled for today."
+                message = f"You have no meetings scheduled for {date_label}."
                 total_minutes = 0
                 meeting_count = 0
             else:
@@ -2487,7 +2498,7 @@ class IntentService:
                 else:
                     time_str = f"{minutes} minute{'s' if minutes != 1 else ''}"
 
-                message = f"**Meeting Time Today**: {time_str} across {meeting_count} meeting{'s' if meeting_count != 1 else ''}\n\n"
+                message = f"**Meeting Time {date_label_title}**: {time_str} across {meeting_count} meeting{'s' if meeting_count != 1 else ''}\n\n"
 
                 # Add meeting list
                 message += "Meetings:\n"

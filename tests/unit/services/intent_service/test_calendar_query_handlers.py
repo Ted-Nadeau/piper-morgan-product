@@ -360,6 +360,7 @@ class TestMeetingTimeQueryResults:
             category=IntentCategory.QUERY,
             action="meeting_time",
             context={"original_message": "how much time in meetings"},
+            original_message="how much time in meetings",  # Issue #588: needed for temporal parsing
         )
 
         mock_events = [
@@ -383,13 +384,14 @@ class TestMeetingTimeQueryResults:
             },
         ]
 
+        # Issue #588: Mock at router level since handler now uses get_events_in_range
         with patch(
-            "services.mcp.consumer.google_calendar_adapter.GoogleCalendarMCPAdapter"
-        ) as MockAdapter:
-            mock_adapter = MagicMock()
-            mock_adapter.authenticate = AsyncMock(return_value=True)
-            mock_adapter.get_todays_events = AsyncMock(return_value=mock_events)
-            MockAdapter.return_value = mock_adapter
+            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.authenticate = AsyncMock(return_value=True)
+            mock_router.get_events_in_range = AsyncMock(return_value=mock_events)
+            MockRouter.return_value = mock_router
 
             result = await intent_service._handle_meeting_time_query(intent, "workflow-id")
 
@@ -408,15 +410,17 @@ class TestMeetingTimeQueryResults:
             category=IntentCategory.QUERY,
             action="meeting_time",
             context={"original_message": "how much time in meetings"},
+            original_message="how much time in meetings",  # Issue #588: needed for temporal parsing
         )
 
+        # Issue #588: Mock at router level since handler now uses get_events_in_range
         with patch(
-            "services.mcp.consumer.google_calendar_adapter.GoogleCalendarMCPAdapter"
-        ) as MockAdapter:
-            mock_adapter = MagicMock()
-            mock_adapter.authenticate = AsyncMock(return_value=True)
-            mock_adapter.get_todays_events = AsyncMock(return_value=[])
-            MockAdapter.return_value = mock_adapter
+            "services.integrations.calendar.calendar_integration_router.CalendarIntegrationRouter"
+        ) as MockRouter:
+            mock_router = MagicMock()
+            mock_router.authenticate = AsyncMock(return_value=True)
+            mock_router.get_events_in_range = AsyncMock(return_value=[])
+            MockRouter.return_value = mock_router
 
             result = await intent_service._handle_meeting_time_query(intent, "workflow-id")
 

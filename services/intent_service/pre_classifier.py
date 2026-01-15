@@ -232,6 +232,22 @@ class PreClassifier:
         r"\bmy schedule today\b",
         r"\btoday'?s schedule\b",
         r"\bschedule for today\b",
+        # Issue #588: Tomorrow calendar queries
+        r"\bcalendar.*tomorrow\b",
+        r"\btomorrow'?s calendar\b",
+        r"\bmeetings.*tomorrow\b",
+        r"\bschedule.*tomorrow\b",
+        r"\btomorrow'?s schedule\b",
+        r"\bwhat'?s on my calendar.*tomorrow\b",
+        r"\bmy calendar tomorrow\b",
+        r"\bwhat'?s.*tomorrow\b",
+        # Issue #588: This week / next week calendar queries
+        r"\bcalendar.*this week\b",
+        r"\bcalendar.*next week\b",
+        r"\bschedule.*this week\b",
+        r"\bschedule.*next week\b",
+        r"\bmeetings.*this week\b",
+        r"\bmeetings.*next week\b",
         # Meeting time query - Query #34
         r"\bhow much time in meetings\b",
         r"\bhow much time.*meetings\b",
