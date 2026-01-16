@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.3
+**Version**: 0.8.4.2
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes setup, plus initial configuration
@@ -11,15 +11,15 @@
 
 ---
 
-## What's New in 0.8.3
+## What's New in 0.8.4.2
 
-**Integration Health Dashboard** - New dashboard at Settings → Integrations. See real-time health status, test connections with one click, and connect/disconnect integrations.
+**Calendar Bug Fixes** - Fixed critical bugs where "How about today?" showed "No meetings" when you had meetings scheduled. Tomorrow queries now work correctly.
 
-**OAuth Connection Management** - Connect Slack and Google Calendar directly from the web UI. No more editing environment variables - just click "Connect" and authorize.
+**Markdown Rendering** - Chat messages now render markdown properly on initial display.
 
-**Notion in Setup Wizard** - Configure Notion API key during initial setup with automatic validation.
+**Sidebar Ordering** - Conversations display in correct chronological order.
 
-**Stable Core** - Setup, login, chat, and workflows are stable. Focus your testing on the new integration features.
+See [Release Notes v0.8.4.2](releases/RELEASE-NOTES-v0.8.4.2.md) for full details.
 
 ---
 

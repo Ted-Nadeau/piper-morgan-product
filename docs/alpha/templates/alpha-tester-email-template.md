@@ -1,7 +1,7 @@
 # Alpha Tester Pre-Qualification Email Template
 
-**Version**: 0.8.3.1
-**Last Updated**: January 7, 2026
+**Version**: 0.8.4.2
+**Last Updated**: January 15, 2026
 
 ## Subject Lines (A/B test these)
 

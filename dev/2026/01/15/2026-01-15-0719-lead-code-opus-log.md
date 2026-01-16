@@ -229,4 +229,23 @@ PM returned - no bugs from alpha testing. However, discovered release process ga
 **Prevention**: PM now has a prompt pattern to invoke releases properly:
 > "Cut a release for v0.8.X.Y. Follow the release runbook at docs/internal/operations/release-runbook.md step by step."
 
+### Second Round (17:20):
+
+PM pointed out ALPHA docs still showing old versions on pmorgan.tech. Completed full inventory:
+
+**Files Updated to v0.8.4.2**:
+- `docs/ALPHA_TESTING_GUIDE.md`
+- `docs/ALPHA_KNOWN_ISSUES.md` (including title)
+- `docs/ALPHA_QUICKSTART.md` (including "What's New" section)
+- `docs/ALPHA_AGREEMENT_v2.md` (3 occurrences)
+- `docs/alpha/templates/alpha-tester-email-template.md`
+- `docs/operations/alpha-onboarding/email-template.md` (multiple occurrences)
+
+**Release Runbook v1.3**:
+- Marked Alpha Documentation as MANDATORY (not "review and update as needed")
+- Marked Alpha Templates as MANDATORY
+- Added specific file locations and what to update in each
+
+**Memory Updated**: `release-process-prompt-pattern.md` now has complete 10-file inventory.
+
 ---

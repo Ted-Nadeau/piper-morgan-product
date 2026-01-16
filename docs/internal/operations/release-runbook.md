@@ -1,6 +1,6 @@
 # Release Runbook
 
-**Version**: 1.2
+**Version**: 1.3
 **Last Updated**: January 15, 2026
 
 This runbook documents the complete process for releasing a new version of Piper Morgan to production.
@@ -99,22 +99,21 @@ Create `docs/releases/RELEASE-NOTES-vX.Y.Z.md` with:
   - Add row to Version History table
   - Update "Last updated" date at bottom
 
-### 2. Alpha Documentation (docs/ALPHA*)
+### 2. Alpha Documentation (MANDATORY - update version numbers)
 
-Review and update as needed:
+These files have version numbers in their headers that MUST be updated:
 
-- [ ] `docs/ALPHA_TESTING_GUIDE.md` - Version number, new features section
-- [ ] `docs/ALPHA_KNOWN_ISSUES.md` - Version number, update "What Works" section
-- [ ] `docs/ALPHA_QUICKSTART.md` - Version number, highlights section
-- [ ] `docs/ALPHA_AGREEMENT_v2.md` - Version number in header
+- [ ] `docs/ALPHA_TESTING_GUIDE.md` - Update **Version** and **Last Updated** in header
+- [ ] `docs/ALPHA_KNOWN_ISSUES.md` - Update **Version**, **Last Updated**, and title `(vX.Y.Z)`
+- [ ] `docs/ALPHA_QUICKSTART.md` - Update **Version** and "What's New" section
+- [ ] `docs/ALPHA_AGREEMENT_v2.md` - Update version in 3 places (header, line 15, line 153)
 
-### 3. Alpha Templates (docs/alpha/templates/)
+### 3. Alpha Templates (MANDATORY - update version numbers)
 
-Review and update if setup process changed:
+These templates reference version numbers that MUST be updated:
 
-- [ ] `alpha-tester-email-template.md` - Version number, prerequisites, setup highlights
-- [ ] `alpha-tester-checkin-template.md` - Any new feedback areas
-- [ ] `alpha-tester-profile-template.md` - Any new tracking fields
+- [ ] `docs/alpha/templates/alpha-tester-email-template.md` - Update **Version** and **Last Updated**
+- [ ] `docs/operations/alpha-onboarding/email-template.md` - Update version in multiple places (header, body text, footer)
 
 ### 4. Root README and Navigation
 
@@ -267,6 +266,7 @@ After release, verify these artifacts exist:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3 | 2026-01-15 | Complete file inventory: marked Alpha docs and templates as MANDATORY, added specific file locations |
 | 1.2 | 2026-01-15 | Added "How to Invoke" section, expanded mandatory release notes section (docs/releases/README.md, versioning.md) |
 | 1.1 | 2026-01-12 | Added Testing Documentation section (test count, canonical query matrix), Cleanup Working Files section |
 | 1.0 | 2026-01-07 | Initial runbook based on v0.8.3.1 release |

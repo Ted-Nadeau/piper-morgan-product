@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.4.1)
+# Known Issues & Feature Status (v0.8.4.2)
 
-**Version**: 0.8.4.1
-**Last Updated**: January 13, 2026
-**Status**: Stable Core (Sprint B1 Complete + Bug Fixes)
+**Version**: 0.8.4.2
+**Last Updated**: January 15, 2026
+**Status**: Stable Core (Sprint A20 - Calendar Bug Fixes)
 
 ---
 
