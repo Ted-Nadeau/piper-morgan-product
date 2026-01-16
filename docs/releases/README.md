@@ -6,9 +6,9 @@ This directory contains release notes for all Piper Morgan versions.
 
 ## Current Version
 
-**v0.8.4** (January 12, 2026) - [Release Notes](RELEASE-NOTES-v0.8.4.md)
+**v0.8.4.2** (January 15, 2026) - [Release Notes](RELEASE-NOTES-v0.8.4.2.md)
 
-Sprint B1 complete: Integration Settings (Epic #543), Portfolio Onboarding (#490), and Slack Attention Decay (#365).
+Alpha Testing Sprint A20: Critical calendar bug fixes - TEMPORAL handler now correctly shows calendar data, "tomorrow" queries working.
 
 ---
 
@@ -16,6 +16,8 @@ Sprint B1 complete: Integration Settings (Epic #543), Portfolio Onboarding (#490
 
 | Version | Date | Type | Highlights |
 |---------|------|------|------------|
+| [v0.8.4.2](RELEASE-NOTES-v0.8.4.2.md) | Jan 15, 2026 | Patch | Calendar bug fixes (#596, #588), markdown rendering |
+| [v0.8.4.1](RELEASE-NOTES-v0.8.4.1.md) | Jan 14, 2026 | Patch | Calendar/TEMPORAL timezone fixes, intent routing |
 | [v0.8.4](RELEASE-NOTES-v0.8.4.md) | Jan 12, 2026 | Feature | Integration Settings, Portfolio Onboarding |
 | [v0.8.3.2](RELEASE-NOTES-v0.8.3.2.md) | Jan 8, 2026 | Feature | Interactive Standup Assistant (Epic #242) |
 | [v0.8.3.1](RELEASE-NOTES-v0.8.3.1.md) | Jan 7, 2026 | Patch | FTUX improvements (greeting panel, empty states, post-setup orientation) |
@@ -51,4 +53,4 @@ For current known issues and limitations, see [ALPHA_KNOWN_ISSUES.md](../ALPHA_K
 
 ---
 
-*Last updated: January 12, 2026*
+*Last updated: January 15, 2026*

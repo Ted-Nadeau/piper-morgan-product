@@ -1,9 +1,23 @@
 # Release Runbook
 
-**Version**: 1.1
-**Last Updated**: January 12, 2026
+**Version**: 1.2
+**Last Updated**: January 15, 2026
 
 This runbook documents the complete process for releasing a new version of Piper Morgan to production.
+
+---
+
+## How to Invoke a Release
+
+**For Claude Code agents**: When the PM says "release" or "cut a release", you MUST:
+
+1. Read this entire runbook first
+2. Follow every step sequentially
+3. Check off each item before proceeding
+4. Do NOT skip documentation updates
+
+**Prompt pattern for PM to use**:
+> "Cut a release for v0.8.X.Y. Follow the release runbook at docs/internal/operations/release-runbook.md step by step."
 
 ---
 
@@ -70,7 +84,22 @@ Create `docs/releases/RELEASE-NOTES-vX.Y.Z.md` with:
 
 ## Documentation Updates
 
-### 1. Alpha Documentation (docs/ALPHA*)
+**CRITICAL**: These steps are NOT optional. Skipping documentation updates means the release is incomplete.
+
+### 1. Release Notes (MANDATORY)
+
+- [ ] `docs/releases/RELEASE-NOTES-vX.Y.Z.md` - Create release notes file
+- [ ] `docs/releases/README.md` - Update release index:
+  - Update "Current Version" section
+  - Add new row to Release History table
+  - Update "Last updated" date
+- [ ] `docs/README.md` - Update release notes link to new version
+- [ ] `docs/versioning.md` - Update:
+  - "Current Version" at top
+  - Add row to Version History table
+  - Update "Last updated" date at bottom
+
+### 2. Alpha Documentation (docs/ALPHA*)
 
 Review and update as needed:
 
@@ -79,7 +108,7 @@ Review and update as needed:
 - [ ] `docs/ALPHA_QUICKSTART.md` - Version number, highlights section
 - [ ] `docs/ALPHA_AGREEMENT_v2.md` - Version number in header
 
-### 2. Alpha Templates (docs/alpha/templates/)
+### 3. Alpha Templates (docs/alpha/templates/)
 
 Review and update if setup process changed:
 
@@ -87,13 +116,9 @@ Review and update if setup process changed:
 - [ ] `alpha-tester-checkin-template.md` - Any new feedback areas
 - [ ] `alpha-tester-profile-template.md` - Any new tracking fields
 
-### 3. README Files
+### 4. Root README and Navigation
 
-- [ ] `docs/README.md` - Release notes link points to new version
 - [ ] `README.md` (root) - Verify still accurate (usually no changes needed)
-
-### 4. Navigation
-
 - [ ] `docs/NAVIGATION.md` - Add any new documentation sections created
 
 ### 5. Testing Documentation
@@ -242,6 +267,7 @@ After release, verify these artifacts exist:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | 2026-01-15 | Added "How to Invoke" section, expanded mandatory release notes section (docs/releases/README.md, versioning.md) |
 | 1.1 | 2026-01-12 | Added Testing Documentation section (test count, canonical query matrix), Cleanup Working Files section |
 | 1.0 | 2026-01-07 | Initial runbook based on v0.8.3.1 release |
 

@@ -1,6 +1,6 @@
 # Piper Morgan Versioning Strategy
 
-## Current Version: 0.8.1
+## Current Version: 0.8.4.2
 
 ## Versioning Scheme
 
@@ -86,8 +86,15 @@ During alpha testing, versions follow this pattern:
 
 | Version | Date       | Milestone | Notes                                          |
 | ------- | ---------- | --------- | ---------------------------------------------- |
-| 0.8.0   | Oct 2025   | Sprint A8 | Alpha tester onboarding preparation            |
+| 0.8.4.2 | Jan 2026   | Sprint A20| Calendar bug fixes (#596, #588)                |
+| 0.8.4.1 | Jan 2026   | Sprint A20| Calendar/TEMPORAL timezone fixes               |
+| 0.8.4   | Jan 2026   | Sprint B1 | Integration Settings, Portfolio Onboarding     |
+| 0.8.3.2 | Jan 2026   | Sprint B1 | Interactive Standup Assistant (Epic #242)      |
+| 0.8.3.1 | Jan 2026   | Sprint B1 | FTUX improvements                              |
+| 0.8.3   | Jan 2026   | Sprint A17| Epic #314 CONV-UX-PERSIST complete             |
+| 0.8.2   | Dec 2025   | Sprint A13| UX polish, accessibility improvements          |
 | 0.8.1   | Nov 2025   | Sprint A9 | Bug fixes and improvements from alpha testing  |
+| 0.8.0   | Oct 2025   | Sprint A8 | Alpha tester onboarding preparation            |
 | 1.0.0   | TBD        | MVP       | Target MVP release                             |
 
 ## Guidelines for Contributors
@@ -100,5 +107,5 @@ During alpha testing, versions follow this pattern:
 
 ---
 
-_Last updated: November 24, 2025_
-_Current version: 0.8.1_
+_Last updated: January 15, 2026_
+_Current version: 0.8.4.2_
