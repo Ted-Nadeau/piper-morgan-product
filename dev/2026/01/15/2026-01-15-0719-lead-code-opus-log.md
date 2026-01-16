@@ -248,4 +248,17 @@ PM pointed out ALPHA docs still showing old versions on pmorgan.tech. Completed 
 
 **Memory Updated**: `release-process-prompt-pattern.md` now has complete 10-file inventory.
 
+**Commits**:
+- `9277580d` - docs: Complete v0.8.4.2 release documentation (release notes, README, versioning)
+- `d8a46f16` - docs: Complete v0.8.4.2 ALPHA documentation updates (all ALPHA docs + runbook v1.3)
+
+---
+
+## 17:35 - Session Paused
+
+PM resuming alpha testing. Documentation now complete for v0.8.4.2.
+
+**Lesson Learned**: When releasing, always invoke the runbook explicitly:
+> "Cut a release for vX.Y.Z. Follow the release runbook at docs/internal/operations/release-runbook.md step by step."
+
 ---
