@@ -4,7 +4,7 @@
 **Date**: January 13, 2026
 **Author**: Chief Architect
 **Input**: Ted Nadeau, "MultiChat – Multi-Party, Multi-Agent Conversational Modeling Platform" PRD v1.0
-**Related**: PDR-101 (Multi-Entity Conversation Support), ADR-046 (Moment.type Agent Architecture)
+**Related**: PDR-101 (Multi-Entity Conversation Support), ADR-046 (Moment.type Agent Architecture), ADR-054 (Cross-Session Memory)
 
 ## Context
 
@@ -169,6 +169,8 @@ The graph model enables multiple view projections over the same data:
 **ADR-046 (Moment.type)**: Moment.types map to ConversationNodeTypes. The decomposition pipeline produces typed nodes that populate the graph.
 
 **ADR-045 (Object Model)**: "Entities experience Moments in Places" — a ConversationGraph is a Place where multiple Entities collaborate through typed Moments (Nodes).
+
+**ADR-054 (Cross-Session Memory)**: The graph model defines conversation *structure*; cross-session memory (ADR-054) handles *persistence* across sessions. A `ConversationGraph` may span multiple sessions; memory retrieval queries the graph.
 
 **ConversationSession/Turn**: Existing models become a simplified view over the graph—ConversationTurn is a shorthand for a message Node and its assistant response Node linked by 'reply'.
 
