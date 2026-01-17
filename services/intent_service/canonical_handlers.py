@@ -728,8 +728,18 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             calendar_adapter = CalendarIntegrationRouter()
             temporal_summary = await calendar_adapter.get_temporal_summary(user_id=user_id)
 
+            # Issue #597: Check explicit success state before interpreting calendar data
+            # If calendar query failed, don't make claims about meeting count
+            if not temporal_summary.get("success", True):  # Default True for backward compat
+                logger.warning(
+                    f"Calendar query failed: {temporal_summary.get('error', 'Unknown error')}"
+                )
+                if spatial_pattern != "EMBEDDED":
+                    message += "\n\n⚠️ Note: Calendar data unavailable right now."
+                calendar_context["calendar_service"] = "unavailable"
+                calendar_context["error"] = temporal_summary.get("error")
             # Adjust calendar detail based on spatial pattern
-            if spatial_pattern == "EMBEDDED":
+            elif spatial_pattern == "EMBEDDED":
                 # EMBEDDED: Minimal - just current/next meeting
                 if temporal_summary.get("current_meeting"):
                     current_meeting = temporal_summary["current_meeting"]
@@ -781,26 +791,28 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 # Only show stats block if no current/next meeting mentioned
                 if temporal_summary.get("current_meeting"):
                     current_meeting = temporal_summary["current_meeting"]
-                    # Issue #596: Google Calendar uses 'summary' not 'title'
-                    meeting_title = current_meeting.get("summary") or current_meeting.get(
-                        "title", "a meeting"
+                    # Issue #597: Use normalized 'title' field, fallback to 'summary'
+                    meeting_title = current_meeting.get("title") or current_meeting.get(
+                        "summary", "a meeting"
                     )
                     message += f" You're currently in: {meeting_title}"
                     calendar_context["current_meeting"] = meeting_title
                 elif temporal_summary.get("next_meeting"):
                     next_meeting = temporal_summary["next_meeting"]
-                    # Issue #596: Format start_time as human-readable
-                    start_time_raw = next_meeting.get("start_time", "TBD")
-                    try:
-                        from datetime import datetime as dt
+                    # Issue #597: Use pre-formatted time if available, fallback to manual formatting
+                    start_time_formatted = next_meeting.get("start_time_formatted")
+                    if not start_time_formatted:
+                        start_time_raw = next_meeting.get("start_time", "TBD")
+                        try:
+                            from datetime import datetime as dt
 
-                        start_dt = dt.fromisoformat(start_time_raw)
-                        start_time_formatted = start_dt.strftime("%I:%M %p").lstrip("0")
-                    except (ValueError, TypeError):
-                        start_time_formatted = start_time_raw
-                    # Issue #596: Google Calendar uses 'summary' not 'title'
-                    meeting_title = next_meeting.get("summary") or next_meeting.get(
-                        "title", "Meeting"
+                            start_dt = dt.fromisoformat(start_time_raw)
+                            start_time_formatted = start_dt.strftime("%I:%M %p").lstrip("0")
+                        except (ValueError, TypeError):
+                            start_time_formatted = start_time_raw
+                    # Issue #597: Use normalized 'title' field, fallback to 'summary'
+                    meeting_title = next_meeting.get("title") or next_meeting.get(
+                        "summary", "Meeting"
                     )
                     message += f" Your next meeting is: {meeting_title} at {start_time_formatted}"
                     calendar_context["next_meeting"] = {

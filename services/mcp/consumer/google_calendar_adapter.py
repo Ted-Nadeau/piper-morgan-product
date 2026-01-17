@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -42,6 +43,69 @@ from services.integrations.spatial_adapter import (
 from .consumer_core import MCPConsumerCore
 
 logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# VALUE OBJECTS - Issue #597: Explicit result types for calendar data
+# =============================================================================
+
+
+@dataclass
+class CalendarStats:
+    """Statistics about calendar load for a time period."""
+
+    total_meetings: int
+    total_meeting_minutes: int
+    total_free_minutes: int
+    calendar_load: str  # "heavy" or "light"
+
+
+@dataclass
+class TemporalSummaryResult:
+    """
+    Result type for temporal summary queries.
+
+    Issue #597: Explicit success/error state prevents misleading messages
+    when calendar data is unavailable. Handlers should check `success` before
+    interpreting `stats` - a failed query should NOT be treated as "no meetings".
+
+    This follows the Result pattern used elsewhere in the codebase
+    (IntentProcessingResult, ValidationResult, etc.)
+    """
+
+    success: bool
+    current_meeting: Optional[Dict[str, Any]] = None
+    next_meeting: Optional[Dict[str, Any]] = None
+    free_blocks: Optional[List[Dict[str, Any]]] = None
+    stats: Optional[CalendarStats] = None
+    recommendations: Optional[List[str]] = None
+    timestamp: Optional[str] = None
+    error: Optional[str] = None
+    error_type: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict for backward compatibility with existing handlers."""
+        if not self.success:
+            return {
+                "success": False,
+                "error": self.error,
+                "error_type": self.error_type,
+                "timestamp": self.timestamp,
+            }
+        return {
+            "success": True,
+            "current_meeting": self.current_meeting,
+            "next_meeting": self.next_meeting,
+            "free_blocks": self.free_blocks,
+            "stats": {
+                "total_meetings_today": self.stats.total_meetings if self.stats else 0,
+                "total_meeting_minutes": self.stats.total_meeting_minutes if self.stats else 0,
+                "total_free_minutes": self.stats.total_free_minutes if self.stats else 0,
+                "calendar_load": self.stats.calendar_load if self.stats else "unknown",
+            },
+            "recommendations": self.recommendations,
+            "timestamp": self.timestamp,
+        }
 
 
 class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
@@ -376,12 +440,22 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
             else:
                 status = "current"
 
+            # Issue #597: Format times as human-readable for presentation layer
+            def format_time_human(dt: datetime) -> str:
+                """Format datetime as human-readable time (e.g., '2:30 PM')."""
+                return dt.strftime("%I:%M %p").lstrip("0")
+
             # Create processed event
+            # Issue #597: Normalize field names - provide both 'title' and 'summary'
+            # for forward/backward compatibility
             processed = {
                 "id": event_id,
-                "summary": summary,
+                "title": summary,  # Normalized field name (preferred)
+                "summary": summary,  # Google's field name (backward compat)
                 "start_time": start_time.isoformat(),
+                "start_time_formatted": format_time_human(start_time_aware),  # Human-readable
                 "end_time": end_time.isoformat(),
+                "end_time_formatted": format_time_human(end_time_aware),  # Human-readable
                 "status": status,
                 "location": event.get("location", ""),
                 "description": event.get("description", ""),
@@ -521,6 +595,7 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         """Get comprehensive temporal summary for standup integration (with token counting)
 
         Issue #596: Added user_id parameter for timezone-aware queries.
+        Issue #597: Returns TemporalSummaryResult with explicit success/error state.
         """
 
         async def _get():
@@ -538,31 +613,40 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
                 )
                 total_free_time = sum(b["duration_minutes"] for b in free_blocks)
 
-                summary = {
-                    "current_meeting": current_meeting,
-                    "next_meeting": next_meeting,
-                    "free_blocks": free_blocks,
-                    "stats": {
-                        "total_meetings_today": total_meetings,
-                        "total_meeting_minutes": total_meeting_time,
-                        "total_free_minutes": total_free_time,
-                        "calendar_load": "heavy" if total_meeting_time > 240 else "light",
-                    },
-                    "recommendations": self._generate_recommendations(
+                # Issue #597: Create typed result with explicit success state
+                stats = CalendarStats(
+                    total_meetings=total_meetings,
+                    total_meeting_minutes=total_meeting_time,
+                    total_free_minutes=total_free_time,
+                    calendar_load="heavy" if total_meeting_time > 240 else "light",
+                )
+
+                result = TemporalSummaryResult(
+                    success=True,
+                    current_meeting=current_meeting,
+                    next_meeting=next_meeting,
+                    free_blocks=free_blocks,
+                    stats=stats,
+                    recommendations=self._generate_recommendations(
                         current_meeting, next_meeting, free_blocks
                     ),
-                    "timestamp": datetime.now().isoformat(),
-                }
+                    timestamp=datetime.now().isoformat(),
+                )
 
-                return summary
+                # Return dict for backward compatibility
+                return result.to_dict()
 
             except Exception as e:
                 logger.error(f"Failed to generate temporal summary: {e}")
-                return {
-                    "error": "Calendar unavailable",
-                    "fallback": "Static calendar patterns from configuration",
-                    "timestamp": datetime.now().isoformat(),
-                }
+                # Issue #597: Return explicit error state - handlers must check 'success'
+                # before interpreting stats. Do NOT return 0 meetings on error.
+                error_result = TemporalSummaryResult(
+                    success=False,
+                    error="Calendar unavailable",
+                    error_type=type(e).__name__,
+                    timestamp=datetime.now().isoformat(),
+                )
+                return error_result.to_dict()
 
         result = await self.token_counter.wrap_mcp_call(
             "calendar_get_temporal_summary",
