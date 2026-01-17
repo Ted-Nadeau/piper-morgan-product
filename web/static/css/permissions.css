@@ -9,6 +9,11 @@
   margin-left: 8px;
 }
 
+/* Hide empty badges (e.g., OWNER in single-user context) */
+.permission-badge:empty {
+  display: none;
+}
+
 .permission-badge.owner {
   background: #667eea;
   color: white;

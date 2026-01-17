@@ -57,9 +57,12 @@ function getUserRole(resource) {
 }
 
 // Format role for display
+// NOTE: OWNER returns empty string because in single-user context, all items
+// are owned by the user - the badge provides no information. Restore 'Owner'
+// when multi-user/sharing feature ships (see issue #600).
 function formatRole(role) {
   const roleLabels = {
-    'OWNER': 'Owner',
+    'OWNER': '',  // Hidden in single-user context (redundant)
     'ADMIN': 'Admin',
     'EDITOR': 'Editor',
     'VIEWER': 'Viewer',
