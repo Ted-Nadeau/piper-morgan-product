@@ -126,17 +126,17 @@ class TestCICDSpatialFederation:
                 {
                     "id": 789,
                     "name": "test",
-                    "status": "running",
-                    "conclusion": None,
+                    "status": "completed",  # Issue #591: First job complete
+                    "conclusion": "success",
                     "started_at": "2025-08-13T14:00:00Z",
-                    "completed_at": None,
+                    "completed_at": "2025-08-13T14:05:00Z",
                 },
                 {
                     "id": 790,
                     "name": "build",
-                    "status": "pending",
+                    "status": "running",  # Issue #591: Second job still running
                     "conclusion": None,
-                    "started_at": None,
+                    "started_at": "2025-08-13T14:05:00Z",
                     "completed_at": None,
                 },
             ],

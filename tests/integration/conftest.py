@@ -136,3 +136,21 @@ async def real_client(integration_db):
 
     # Restore original method after test
     db.get_session = original_get_session
+
+
+@pytest.fixture
+def test_client():
+    """
+    Synchronous HTTP test client for integration tests.
+
+    Issue #590: Some integration tests use sync TestClient pattern.
+    This fixture provides a simple sync client for API testing.
+
+    Note: For tests requiring database isolation, use `real_client` instead.
+    """
+    from fastapi.testclient import TestClient
+
+    from web.app import app
+
+    with TestClient(app) as client:
+        yield client
