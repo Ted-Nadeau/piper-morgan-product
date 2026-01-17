@@ -213,7 +213,7 @@
               </div>
             </div>
             <p>Status: ${todo.status || 'pending'}</p>
-            <small>${todo.due_date ? 'Due: ' + todo.due_date : 'No due date'}</small>
+            ${todo.due_date ? `<small>Due: ${todo.due_date}</small>` : ''}
           </div>
         `;
       }).join('');

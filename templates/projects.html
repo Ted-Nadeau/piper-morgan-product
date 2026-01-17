@@ -170,8 +170,8 @@
                 ${actionButtons}
               </div>
             </div>
-            <p>${project.description || 'No description'}</p>
-            <small>${project.start_date ? 'Start: ' + project.start_date : 'No start date'}</small>
+            ${project.description ? `<p>${project.description}</p>` : ''}
+            ${project.start_date ? `<small>Start: ${project.start_date}</small>` : ''}
           </div>
         `;
       }).join('');

@@ -200,7 +200,7 @@
                 ${actionButtons}
               </div>
             </div>
-            <p>${list.description || 'No description'}</p>
+            ${list.description ? `<p>${list.description}</p>` : ''}
             <small>Items: ${list.item_count || 0}</small>
           </div>
         `;
