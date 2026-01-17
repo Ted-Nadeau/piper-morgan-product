@@ -873,7 +873,7 @@ class ConversationRepository(BaseRepository):
             is_admin: SEC-RBAC Phase 3 - admins can save turns for any conversation
             user_id: Optional user ID to associate with conversation (Issue #563)
         """
-        from services.database.models import ConversationTurnDB
+        from services.database.models import ConversationDB, ConversationTurnDB
 
         # Issue #563: Ensure conversation exists before saving turn (FK constraint)
         await self.ensure_conversation_exists(turn.conversation_id, user_id)
@@ -898,6 +898,16 @@ class ConversationRepository(BaseRepository):
             db_turn = ConversationTurnDB.from_domain(turn)
             self.session.add(db_turn)
             logger.debug(f"ConversationTurn created: {turn.id}")
+
+            # Issue #598: Auto-title conversation on first turn
+            if turn.turn_number == 1 and turn.user_message:
+                db_conv = await self.session.get(ConversationDB, turn.conversation_id)
+                if db_conv and db_conv.title == "New conversation":
+                    new_title = self.generate_title_from_message(turn.user_message)
+                    db_conv.title = new_title
+                    logger.debug(
+                        f"Auto-titled conversation: {turn.conversation_id} -> {new_title[:30]}..."
+                    )
 
         await self.session.commit()
         logger.info(f"ConversationTurn saved to database: {turn.id}")
@@ -1100,6 +1110,65 @@ class ConversationRepository(BaseRepository):
 
         result = await self.session.execute(stmt)
         return result.scalar() or 0
+
+    async def update_title(self, conversation_id: str, title: str) -> None:
+        """
+        Update conversation title.
+
+        Issue #598: Used to auto-generate title from first user message.
+
+        Args:
+            conversation_id: The conversation to update
+            title: The new title
+        """
+        from services.database.models import ConversationDB
+
+        db_conv = await self.session.get(ConversationDB, conversation_id)
+        if db_conv:
+            db_conv.title = title
+            await self.session.commit()
+            logger.debug(f"Updated conversation title: {conversation_id} -> {title[:30]}...")
+
+    @staticmethod
+    def generate_title_from_message(message: str, max_length: int = 50) -> str:
+        """
+        Generate a conversation title from a user message.
+
+        Issue #598: Auto-title conversations based on first user message.
+
+        Args:
+            message: The user message to derive title from
+            max_length: Maximum title length (default 50)
+
+        Returns:
+            A cleaned, truncated title string
+        """
+        import re
+
+        if not message:
+            return "New conversation"
+
+        # Strip markdown formatting
+        cleaned = re.sub(r"\*\*|__|\*|_|`|##+\s*", "", message)
+        # Strip URLs
+        cleaned = re.sub(r"https?://\S+", "", cleaned)
+        # Strip excessive whitespace
+        cleaned = " ".join(cleaned.split())
+        # Trim leading/trailing whitespace
+        cleaned = cleaned.strip()
+
+        if not cleaned:
+            return "New conversation"
+
+        # Truncate with ellipsis if too long
+        if len(cleaned) > max_length:
+            # Try to break at word boundary
+            truncated = cleaned[:max_length].rsplit(" ", 1)[0]
+            if len(truncated) < max_length * 0.7:  # If we lost too much, just hard truncate
+                truncated = cleaned[: max_length - 3]
+            return truncated + "..."
+
+        return cleaned
 
 
 # Repository factory
