@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from setup_real_system import setup_real_intent_service, validate_real_system
+from .setup_real_system import setup_real_intent_service, validate_real_system
 
 
 async def test_cache_effectiveness():
