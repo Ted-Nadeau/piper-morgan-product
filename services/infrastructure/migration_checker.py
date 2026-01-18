@@ -102,10 +102,21 @@ async def check_pending_migrations() -> List[str]:
             logger.debug("migration_check_skipped", reason="database not accessible")
             return []
         if "alembic_version" in error_str:
-            # Table doesn't exist - fresh database, all migrations pending
-            logger.info("migration_check_complete", status="fresh_database")
-            # Return empty - alembic upgrade head will handle fresh DB
-            return []
+            # Issue #609: Table doesn't exist - fresh database, all migrations pending
+            # Return all migrations as pending to force user to run alembic upgrade head
+            try:
+                alembic_cfg = Config("alembic.ini")
+                script = ScriptDirectory.from_config(alembic_cfg)
+                all_revisions = list(script.walk_revisions())
+                pending = [rev.revision for rev in all_revisions]
+                logger.info(
+                    "migration_check_complete", status="fresh_database", pending_count=len(pending)
+                )
+                return pending
+            except Exception:
+                # Can't get revision list - return placeholder to block startup
+                logger.warning("migration_check_fresh_db_fallback")
+                return ["<fresh database - run alembic upgrade head>"]
 
         logger.warning("migration_check_error", error=str(e))
         return []
