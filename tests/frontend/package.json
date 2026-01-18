@@ -1,0 +1,19 @@
+{
+  "name": "piper-morgan-frontend-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend JavaScript tests for Piper Morgan web application",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
