@@ -73,6 +73,29 @@ alembic upgrade head              # Run migrations
 ./scripts/fix-newlines.sh
 ```
 
+### Reliable Server Restart (Issue #594)
+
+**IMPORTANT**: If the server seems stuck or changes aren't reflecting, use this procedure:
+
+```bash
+# 1. Find what's on port 8001
+lsof -i :8001
+
+# 2. Kill by PID (get PID from column 2 of lsof output)
+kill <PID>
+
+# 3. Verify port is free
+lsof -i :8001  # Should return nothing
+
+# 4. Start fresh
+python main.py
+
+# 5. Verify new process is running
+lsof -i :8001  # Should show new PID
+```
+
+**Why this matters**: `pkill -f "python main.py"` may fail if the process name differs. Always use port-based detection to find the actual server process.
+
 ---
 
 ## Architecture Overview
