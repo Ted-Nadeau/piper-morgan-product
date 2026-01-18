@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.4.2
+**Version**: 0.8.4.3
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes setup, plus initial configuration
@@ -11,15 +11,15 @@
 
 ---
 
-## What's New in 0.8.4.2
+## What's New in 0.8.4.3
 
-**Calendar Bug Fixes** - Fixed critical bugs where "How about today?" showed "No meetings" when you had meetings scheduled. Tomorrow queries now work correctly.
+**Fresh Install Fixes** - Complete overhaul of the first-time user experience. Server now validates database migrations at startup, blocking cryptic errors.
 
-**Markdown Rendering** - Chat messages now render markdown properly on initial display.
+**Multi-User Support** - The setup wizard is now accessible for new user registration, not just first-time setup.
 
-**Sidebar Ordering** - Conversations display in correct chronological order.
+**UI Polish** - Conversation titles auto-generate from first message and are editable. Resource cards no longer show "null" for missing fields.
 
-See [Release Notes v0.8.4.2](releases/RELEASE-NOTES-v0.8.4.2.md) for full details.
+See [Release Notes v0.8.4.3](releases/RELEASE-NOTES-v0.8.4.3.md) for full details.
 
 ---
 
@@ -111,12 +111,16 @@ The GUI setup wizard guides you through configuration with a visual interface:
 ### Step 1: Welcome Screen
 The setup wizard welcome screen explains what will be configured and gives you a clear starting point.
 
+<img src="assets/images/alpha-onboarding/setup-wizard-welcome.png" alt="Setup wizard welcome screen" width="600">
+
 ### Step 2: System Health Check
 Automatic validation of your system:
 - ✓ Docker installed and running
 - ✓ Python version correct
 - ✓ Port 8001 available
 - ✓ Database accessible
+
+<img src="assets/images/alpha-onboarding/setup-wizard-health-check.png" alt="Setup wizard health check" width="600">
 
 ### Step 3: API Key Configuration
 Configure your LLM API keys through a form interface. Much easier than pasting in the terminal - you can see what you're typing, correct mistakes, and get immediate validation feedback.
@@ -126,14 +130,20 @@ Supports:
 - Anthropic (Claude)
 - Google Gemini (new in 0.8.2)
 
+<img src="assets/images/alpha-onboarding/setup-wizard-api-keys.png" alt="Setup wizard API key configuration" width="600">
+
 ### Step 4: User Account Creation
 Create your admin account:
 - Username and email
 - Secure password (min 8 chars, bcrypt-hashed)
 - Confirmation and validation
 
+<img src="assets/images/alpha-onboarding/setup-wizard-user-creation.png" alt="Setup wizard user account creation" width="600">
+
 ### Step 5: Setup Complete
 Setup confirmation with next steps and quick links to start using Piper.
+
+<img src="assets/images/alpha-onboarding/setup-wizard-success.png" alt="Setup wizard success screen" width="600">
 
 ---
 

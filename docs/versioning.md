@@ -1,6 +1,6 @@
 # Piper Morgan Versioning Strategy
 
-## Current Version: 0.8.4.2
+## Current Version: 0.8.4.3
 
 ## Versioning Scheme
 
@@ -86,6 +86,7 @@ During alpha testing, versions follow this pattern:
 
 | Version | Date       | Milestone | Notes                                          |
 | ------- | ---------- | --------- | ---------------------------------------------- |
+| 0.8.4.3 | Jan 2026   | Sprint A20| Fresh install fixes (#605-#609), UI polish     |
 | 0.8.4.2 | Jan 2026   | Sprint A20| Calendar bug fixes (#596, #588)                |
 | 0.8.4.1 | Jan 2026   | Sprint A20| Calendar/TEMPORAL timezone fixes               |
 | 0.8.4   | Jan 2026   | Sprint B1 | Integration Settings, Portfolio Onboarding     |

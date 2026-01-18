@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.4.2
-**Last Updated**: January 15, 2026
+**Version**: 0.8.4.3
+**Last Updated**: January 18, 2026
 **For**: Alpha Testers
 
 ---
