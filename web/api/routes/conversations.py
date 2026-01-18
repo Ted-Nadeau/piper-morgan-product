@@ -226,6 +226,15 @@ class CreateConversationRequest(BaseModel):
     title: Optional[str] = None
 
 
+class UpdateTitleRequest(BaseModel):
+    """Request to update conversation title. Issue #604."""
+
+    title: str
+
+    class Config:
+        json_schema_extra = {"example": {"title": "Monday Planning Session"}}
+
+
 class CreateConversationResponse(BaseModel):
     """Response for create conversation endpoint."""
 
@@ -407,4 +416,98 @@ async def get_conversation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get conversation",
+        )
+
+
+@router.patch("/{conversation_id}/title")
+async def update_conversation_title(
+    conversation_id: str,
+    request: UpdateTitleRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    conv_repo: ConversationRepository = Depends(get_conversation_repository),
+) -> ConversationListItem:
+    """
+    Update conversation title.
+
+    Issue #604: Allows users to edit auto-generated conversation titles.
+
+    Args:
+        conversation_id: The conversation ID to update
+        request: New title (1-100 characters)
+        current_user: Current authenticated user
+        conv_repo: Conversation repository (injected)
+
+    Returns:
+        Updated ConversationListItem
+    """
+    try:
+        # Validate title length
+        title = request.title.strip()
+        if not title:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Title cannot be empty",
+            )
+        if len(title) > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Title cannot exceed 100 characters",
+            )
+
+        # Get conversation and verify ownership
+        conversation = await conv_repo.get_by_id(conversation_id)
+
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        if str(conversation.user_id) != str(current_user.sub):
+            logger.warning(
+                "Conversation title update denied",
+                user_id=current_user.sub,
+                conversation_id=conversation_id,
+                owner_id=conversation.user_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+
+        # Update title
+        await conv_repo.update_title(conversation_id, title)
+
+        logger.info(
+            "Updated conversation title",
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+            new_title=title[:30],
+        )
+
+        # Return updated conversation
+        turn_count = await conv_repo.get_turn_count(conversation_id)
+
+        return ConversationListItem(
+            id=conversation.id,
+            title=title,
+            created_at=conversation.created_at.isoformat() if conversation.created_at else "",
+            updated_at=(
+                conversation.last_activity_at.isoformat() if conversation.last_activity_at else None
+            ),
+            turn_count=turn_count,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "Failed to update conversation title",
+            error=str(e),
+            user_id=current_user.sub,
+            conversation_id=conversation_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update conversation title",
         )

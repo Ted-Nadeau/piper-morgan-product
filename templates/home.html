@@ -162,6 +162,49 @@
         margin-bottom: 4px;
       }
 
+      /* Issue #604: Editable titles */
+      .conversation-item-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .conversation-title-wrapper {
+        flex: 1;
+        min-width: 0; /* Allow text truncation */
+      }
+
+      .conversation-edit-btn {
+        opacity: 0;
+        background: none;
+        border: none;
+        padding: 2px 4px;
+        cursor: pointer;
+        color: #666;
+        font-size: 12px;
+        border-radius: 3px;
+        transition: opacity 0.15s, background 0.15s;
+      }
+
+      .conversation-item:hover .conversation-edit-btn {
+        opacity: 1;
+      }
+
+      .conversation-edit-btn:hover {
+        background: rgba(0,0,0,0.1);
+        color: #333;
+      }
+
+      .conversation-title-input {
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #3498db;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+      }
+
       .conversation-meta {
         font-size: 12px;
         color: #888;
@@ -1386,6 +1429,7 @@
       }
 
       // Render a single conversation item
+      // Issue #604: Added edit button for editable titles
       function renderConversationItem(conv) {
         const isActive = conv.id === activeConversationId;
         const title = conv.title || 'New conversation';
@@ -1396,7 +1440,12 @@
           <div class="conversation-item ${isActive ? 'active' : ''}"
                onclick="switchConversation('${conv.id}')"
                data-id="${conv.id}">
-            <div class="conversation-title">${escapeHtml(title)}</div>
+            <div class="conversation-item-header">
+              <div class="conversation-title-wrapper">
+                <div class="conversation-title" id="title-${conv.id}">${escapeHtml(title)}</div>
+              </div>
+              <button class="conversation-edit-btn" onclick="event.stopPropagation(); editConversationTitle('${conv.id}', '${escapeHtml(title).replace(/'/g, "\\'")}')" title="Edit title">&#9998;</button>
+            </div>
             <div class="conversation-meta">${date}${turnCount > 0 ? ' · ' + turnCount + ' messages' : ''}</div>
           </div>
         `;
@@ -1429,6 +1478,76 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+      }
+
+      // Issue #604: Edit conversation title inline
+      function editConversationTitle(conversationId, currentTitle) {
+        const titleEl = document.getElementById(`title-${conversationId}`);
+        if (!titleEl) return;
+
+        // Create input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'conversation-title-input';
+        input.value = currentTitle;
+        input.maxLength = 100;
+
+        // Replace title with input
+        const wrapper = titleEl.parentElement;
+        wrapper.replaceChild(input, titleEl);
+        input.focus();
+        input.select();
+
+        // Handle save on Enter or blur
+        const saveTitle = async () => {
+          const newTitle = input.value.trim();
+          if (newTitle && newTitle !== currentTitle) {
+            await updateConversationTitle(conversationId, newTitle);
+          } else {
+            // Restore original title
+            const newTitleEl = document.createElement('div');
+            newTitleEl.className = 'conversation-title';
+            newTitleEl.id = `title-${conversationId}`;
+            newTitleEl.textContent = currentTitle;
+            wrapper.replaceChild(newTitleEl, input);
+          }
+        };
+
+        input.addEventListener('blur', saveTitle);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+          } else if (e.key === 'Escape') {
+            input.value = currentTitle; // Reset to original
+            input.blur();
+          }
+        });
+      }
+
+      // Issue #604: Update conversation title via API
+      async function updateConversationTitle(conversationId, newTitle) {
+        try {
+          const response = await fetch(`/api/v1/conversations/${conversationId}/title`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ title: newTitle })
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Failed to update title');
+          }
+
+          // Refresh the conversation list to show updated title
+          await loadConversations();
+
+        } catch (error) {
+          console.error('Failed to update title:', error);
+          alert('Failed to update title: ' + error.message);
+          await loadConversations(); // Refresh to restore original
+        }
       }
 
       // Set active conversation
