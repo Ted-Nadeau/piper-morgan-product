@@ -54,8 +54,10 @@
   ```bash
   pip install pre-commit
   pre-commit install
+  pre-commit install --hook-type pre-push
   pre-commit run --all-files
   ```
+  Note: `--hook-type pre-push` installs the release notes enforcement hook for production pushes.
 - [ ] **IDE recognizes Python 3.11** type hints
   - [ ] VS Code: Python interpreter set to venv/bin/python
   - [ ] PyCharm: Project interpreter set to Python 3.11

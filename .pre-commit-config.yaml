@@ -141,3 +141,15 @@ repos:
           Detects manual test scripts incorrectly named with test_ prefix.
           Manual tests (with load_dotenv, hardcoded IDs) should be named
           manual_*.py or script_*.py to exclude from pytest collection.
+      - id: release-notes-check
+        name: Release Notes Enforcement (Production)
+        entry: scripts/check-release-notes.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+        description: |
+          Enforces release notes for production deployments.
+          When pushing to production with a version change in pyproject.toml,
+          requires docs/releases/RELEASE-NOTES-vX.Y.Z.md to exist.
+          See docs/internal/operations/release-runbook.md for details.

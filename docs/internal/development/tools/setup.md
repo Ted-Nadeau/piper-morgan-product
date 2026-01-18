@@ -256,13 +256,16 @@ echo "=== Docker Validation Complete ==="
 ## Pre-commit Setup
 
 ```bash
-# Install pre-commit hooks
+# Install pre-commit hooks (pre-commit and pre-push)
 pip install pre-commit
 pre-commit install
+pre-commit install --hook-type pre-push
 
 # Run pre-commit on all files
 pre-commit run --all-files
 ```
+
+**Note**: The `--hook-type pre-push` installs the release notes enforcement hook, which ensures release notes exist in `docs/releases/` when pushing version changes to production.
 
 ## Testing Setup
 
