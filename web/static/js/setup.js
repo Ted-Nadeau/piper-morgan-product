@@ -347,16 +347,12 @@
     }
 
     // Check initial setup status
+    // Issue #608: Removed redirect to /login when setup_complete.
+    // /setup should always be accessible for new user registration
+    // (multi-user support for teams, shared machines, etc.)
     async function checkSetupStatus() {
-        try {
-            const response = await fetch('/setup/status');
-            const data = await response.json();
-            if (data.setup_complete) {
-                window.location.href = '/login';
-            }
-        } catch (err) {
-            // Ignore - just continue with setup
-        }
+        // No-op: setup wizard is always accessible
+        // Users who already have an account can use the "Log In" link
     }
 
     // =========================================================================
