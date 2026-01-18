@@ -1,7 +1,7 @@
 # Alpha Tester Pre-Qualification Email Template
 
 **Version**: 2.1
-**For**: Piper Morgan 0.8.4.2 Alpha Release
+**For**: Piper Morgan 0.8.4.3 Alpha Release
 **Purpose**: Internal template for PM to send to potential alpha testers
 **Last Updated**: December 11, 2025
 
@@ -44,7 +44,7 @@ Accounts & API Keys You'll Need:
 □ Budget $5-20 for API testing costs
 □ Notion account (optional but recommended)
 
-**WHAT MAKES THIS EASY (New in 0.8.4.2)**
+**WHAT MAKES THIS EASY (New in 0.8.4.3)**
 
 Our GUI setup wizard (`python main.py` → opens in browser) will:
 - Check your system automatically (Docker, Python, ports, database)
@@ -61,7 +61,7 @@ After setup, you can optionally configure your preferences (`python main.py pref
 
 **CRITICAL DISCLAIMERS**
 
-This is ALPHA software (version 0.8.4.2). That means:
+This is ALPHA software (version 0.8.4.3). That means:
 - It will have bugs and rough edges
 - It might crash or lose data
 - Security is not fully audited (data not yet encrypted at rest)
@@ -75,7 +75,7 @@ Week 1: Guided setup call (30 mins) + initial testing
 Week 2-3: You test, I fix bugs you find
 Week 4+: Quick weekly check-ins
 
-Setup, login, and the chat interface are stable in 0.8.4.2. **Focus your testing on workflows**: lists, todos, projects, file management, and integrations. The goal is finding PM workflows that delight you, despite the rough edges.
+Setup, login, and the chat interface are stable in 0.8.4.3. **Focus your testing on workflows**: lists, todos, projects, file management, and integrations. The goal is finding PM workflows that delight you, despite the rough edges.
 
 **STILL INTERESTED?**
 
@@ -154,11 +154,11 @@ Attachments:
 Before sending:
 
 - [ ] Personalize name and tester number
-- [ ] Verify all technical claims are current for version 0.8.4.2
+- [ ] Verify all technical claims are current for version 0.8.4.3
 - [ ] Attach current documentation (from docs/)
 - [ ] Schedule setup call before sending confirmation
 - [ ] Update internal tracking (who's in alpha cohort)
-- [ ] Mention GUI setup wizard improvement (new in 0.8.4.2)
+- [ ] Mention GUI setup wizard improvement (new in 0.8.4.3)
 
 ---
 
@@ -169,7 +169,7 @@ Before sending:
 **Documentation References**: Always reference official docs by filename:
 - `ALPHA_TESTING_GUIDE.md` (not "the guide")
 - `ALPHA_AGREEMENT_v2.md` (not "the legal doc")
-- Version 0.8.4.2 (not "alpha" or "latest")
+- Version 0.8.4.3 (not "alpha" or "latest")
 
 **Support Commitment**: Only promise what you can deliver. Small cohort (2-5) is manageable for close support.
 
@@ -187,5 +187,5 @@ Before sending:
 ---
 
 _Template Version: 2.1_
-_For Software Version: 0.8.4.2_
-_Last Updated: December 11, 2025_
+_For Software Version: 0.8.4.3_
+_Last Updated: January 18, 2026_

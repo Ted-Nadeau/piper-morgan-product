@@ -115,12 +115,20 @@ These templates reference version numbers that MUST be updated:
 - [ ] `docs/alpha/templates/alpha-tester-email-template.md` - Update **Version** and **Last Updated**
 - [ ] `docs/operations/alpha-onboarding/email-template.md` - Update version in multiple places (header, body text, footer)
 
-### 4. Root README and Navigation
+### 4. Briefing Documentation (MANDATORY - update version)
+
+- [ ] `docs/briefing/BRIEFING-CURRENT-STATE.md` - Update:
+  - **Version** in STATUS BANNER
+  - **Last Updated** date
+  - Add row to Version History table
+  - Update Release Notes link at bottom
+
+### 5. Root README and Navigation
 
 - [ ] `README.md` (root) - Verify still accurate (usually no changes needed)
 - [ ] `docs/NAVIGATION.md` - Add any new documentation sections created
 
-### 5. Testing Documentation
+### 6. Testing Documentation
 
 Update test statistics and coverage metrics:
 
@@ -136,7 +144,7 @@ python -m pytest tests/ --collect-only -q 2>/dev/null | tail -3
   - Update coverage percentages if changed
   - Mark any newly passing queries
 
-### 6. Cleanup Working Files
+### 7. Cleanup Working Files
 
 - [ ] Remove any draft release notes from `dev/YYYY/MM/DD/` (canonical location is `docs/releases/`)
 - [ ] Verify no stray working documents should be archived

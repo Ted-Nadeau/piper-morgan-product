@@ -10,8 +10,8 @@
 ## STATUS BANNER
 
 **Current Position**: 4.2.7 - A20 Alpha Testing Round 2 in progress
-**Version**: v0.8.4.2 (released January 15, 2026)
-**Last Updated**: January 16, 2026, 7:30 AM PT
+**Version**: v0.8.4.3 (released January 18, 2026)
+**Last Updated**: January 18, 2026, 11:45 AM PT
 
 **Current Focus**: A20 Alpha Testing - bug fixes and polish
 **Next Phase**: MUX-V1 (Modeled User Experience - Vision)
@@ -190,6 +190,7 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 ### Version History
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.8.4.3 | Jan 18, 2026 | Fresh install fixes (#605-#609) |
 | v0.8.4.2 | Jan 15, 2026 | A20 bug fixes (#588, #596) |
 | v0.8.4.1 | Jan 13, 2026 | RequestContext pattern (#584) |
 | v0.8.4 | Jan 12, 2026 | Sprint B1 Complete |
@@ -231,10 +232,10 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 **Roadmap**: `docs/internal/planning/roadmap/roadmap.md` (v13.0)
 **Patterns**: `docs/internal/architecture/current/patterns/` (50 patterns)
 **ADRs**: `docs/internal/architecture/current/adrs/` (57 ADRs)
-**Release Notes**: `docs/releases/RELEASE-NOTES-v0.8.4.2.md`
-**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 15)
+**Release Notes**: `docs/releases/RELEASE-NOTES-v0.8.4.3.md`
+**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 17)
 
 ---
 
-*Last Updated: January 16, 2026, 7:30 AM PT*
+*Last Updated: January 18, 2026, 11:45 AM PT*
 *Source: GitHub commit history, beads database, Serena symbolic index*

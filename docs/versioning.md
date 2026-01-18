@@ -108,5 +108,5 @@ During alpha testing, versions follow this pattern:
 
 ---
 
-_Last updated: January 15, 2026_
-_Current version: 0.8.4.2_
+_Last updated: January 18, 2026_
+_Current version: 0.8.4.3_
