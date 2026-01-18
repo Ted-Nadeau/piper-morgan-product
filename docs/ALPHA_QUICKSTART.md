@@ -83,16 +83,20 @@ cp .env.example .env
 # 3. Start Docker containers
 docker-compose up -d
 
-# 4. Start server for first-time setup
+# 4. Run database migrations (REQUIRED)
+python -m alembic upgrade head
+# This creates/updates all database tables
+
+# 5. Start server for first-time setup
 python main.py
 # → Opens http://localhost:8001/setup (GUI setup wizard)
 
-# 5. Complete setup wizard (web browser)
+# 6. Complete setup wizard (web browser)
 # → Navigate through visual setup screens
 # → Configure API keys, create user account
 # → See "Setup Wizard Walkthrough" below for details
 
-# 6. Configure preferences (optional, 2 mins)
+# 7. Configure preferences (optional, 2 mins)
 python main.py preferences
 # → Answer 5 questions about your work style
 # → Or skip and configure later via Settings page
@@ -105,15 +109,9 @@ python main.py preferences
 The GUI setup wizard guides you through configuration with a visual interface:
 
 ### Step 1: Welcome Screen
-
-![Setup Wizard - Welcome](assets/images/alpha-onboarding/setup-wizard-welcome.png)
-
 The setup wizard welcome screen explains what will be configured and gives you a clear starting point.
 
 ### Step 2: System Health Check
-
-![Setup Wizard - Health Check](assets/images/alpha-onboarding/setup-wizard-health-check.png)
-
 Automatic validation of your system:
 - ✓ Docker installed and running
 - ✓ Python version correct
@@ -121,9 +119,6 @@ Automatic validation of your system:
 - ✓ Database accessible
 
 ### Step 3: API Key Configuration
-
-![Setup Wizard - API Keys](assets/images/alpha-onboarding/setup-wizard-api-keys.png)
-
 Configure your LLM API keys through a form interface. Much easier than pasting in the terminal - you can see what you're typing, correct mistakes, and get immediate validation feedback.
 
 Supports:
@@ -132,18 +127,12 @@ Supports:
 - Google Gemini (new in 0.8.2)
 
 ### Step 4: User Account Creation
-
-![Setup Wizard - User Creation](assets/images/alpha-onboarding/setup-wizard-user-creation.png)
-
 Create your admin account:
 - Username and email
 - Secure password (min 8 chars, bcrypt-hashed)
 - Confirmation and validation
 
 ### Step 5: Setup Complete
-
-![Setup Wizard - Success](assets/images/alpha-onboarding/setup-wizard-success.png)
-
 Setup confirmation with next steps and quick links to start using Piper.
 
 ---
@@ -234,6 +223,26 @@ docker ps         # Should show containers
 ```bash
 lsof -i :8001     # See what's using it
 kill -9 [PID]     # Kill it
+```
+
+### Database/migration issues?
+
+```bash
+# If setup wizard fails with "column does not exist" error:
+python -m alembic upgrade head
+
+# If alembic command not found (not in venv):
+source venv/bin/activate
+alembic upgrade head
+
+# Verify database is running:
+docker ps | grep postgres
+# Should show: piper-postgres running on port 5433
+
+# Reset database completely (WARNING: deletes all data):
+docker-compose down -v
+docker-compose up -d
+python -m alembic upgrade head
 ```
 
 ### API key issues?
@@ -379,4 +388,4 @@ This is **alpha software** (0.8.3). Expect bugs. Don't use for production. You'r
 
 **Happy testing!** 🚀
 
-_Last Updated: January 2, 2026_
+_Last Updated: January 17, 2026_

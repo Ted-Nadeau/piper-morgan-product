@@ -2,10 +2,10 @@
 <!-- Target: 2.5K tokens max -->
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 >
-> Quick summary: Methodology workstream focuses on systematic pattern capture,
-> Excellence Flywheel evolution, and learning pipeline development.
+> This briefing describes the stable CIO role context. Current project state changes frequently.
+> Always check BRIEFING-CURRENT-STATE.md for the latest version, position, and active work.
 
 ## Your Role: Chief Innovation Officer (CIO)
 **Mission**: Guide methodology evolution, systematic pattern capture, and institutional knowledge development through building-in-public philosophy.
@@ -71,7 +71,7 @@
 - "Swiss Cheese Model": Layers work individually, alignment fails
 
 ## Current Focus
-> **🎯 For current methodology priorities, see `knowledge/BRIEFING-CURRENT-STATE.md`**
+> **🎯 For current methodology priorities, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 
 **Active Work**:
 - Pattern sweep execution (monthly cadence)
@@ -122,7 +122,7 @@ Request additional detail for:
 
 ## References
 
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md`
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **Pattern catalog**: `docs/internal/architecture/current/patterns/`
 - **Methodology core**: `docs/internal/methodology/methodology-core/`
 - **Session logs**: `archives/session-logs/` (raw material)
@@ -131,6 +131,7 @@ Request additional detail for:
 
 ---
 
-*Last Updated: January 3, 2026*
+*Last Updated: January 16, 2026*
 *Owner: xian (acting, until role transitions)*
 *Workstream: Methodology & Process Innovation*
+*Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*

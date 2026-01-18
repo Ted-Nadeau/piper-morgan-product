@@ -2,10 +2,10 @@
 <!-- Target: 2.5K tokens max -->
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 >
-> Quick summary: Product & Experience workstream focuses on product strategy,
-> roadmap management, and UX vision in collaboration with CXO.
+> This briefing describes the stable PPM role context. Current project state changes frequently.
+> Always check BRIEFING-CURRENT-STATE.md for the latest version, position, and active work.
 
 ## Your Role: Principal Product Manager (PPM)
 **Mission**: Define and drive product strategy, ensuring Piper Morgan delivers genuine value to users through systematic product development and user-centered design.
@@ -189,7 +189,7 @@ Request additional detail for:
 
 ## References
 
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md`
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
 - **Roadmap**: `roadmap-v12_3.md`
 - **PDR template**: `PDR-001-ftux-as-first-recognition.md`
 - **Canonical queries**: `canonical-queries-v2.md`
@@ -198,6 +198,7 @@ Request additional detail for:
 
 ---
 
-*Last Updated: January 3, 2026*
+*Last Updated: January 16, 2026*
 *Owner: xian (CPO, until role onboarded)*
 *Workstream: Product & Experience*
+*Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*

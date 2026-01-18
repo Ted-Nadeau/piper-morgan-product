@@ -1,20 +1,897 @@
+🚀 Starting Piper Morgan...
+   ⏳ Initializing services...
+2026-01-15 08:05:54 [debug    ] Using default configuration (no user config found) path=config/PIPER.md
+2026-01-15 08:05:54 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.md
+2026-01-15 08:05:57 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2026-01-15 08:05:57 [debug    ] Selection config loaded: env=development, excluded=['anthropic'], default=openai
+2026-01-15 08:05:57 [debug    ] Retrieved API key for openai from keychain
+2026-01-15 08:05:57 [debug    ] Retrieved API key for anthropic from keychain
+2026-01-15 08:05:57 [debug    ] Retrieved API key for gemini from keychain
+2026-01-15 08:05:57 [debug    ] Retrieved API key for perplexity from keychain
+2026-01-15 08:05:57 [debug    ] Retrieved API key for anthropic from keychain
+2026-01-15 08:05:57 [info     ] Anthropic client initialized
+2026-01-15 08:05:57 [debug    ] Retrieved API key for openai from keychain
+2026-01-15 08:05:57 [info     ] OpenAI client initialized
+2026-01-15 08:06:01 [info     ] Initializing LLM domain service...
+2026-01-15 08:06:01 [info     ] Keychain service initialized   backend=Keyring service_name=piper-morgan
+2026-01-15 08:06:01 [debug    ] Selection config loaded: env=development, excluded=['anthropic'], default=openai
+2026-01-15 08:06:01 [info     ] Validating LLM providers...
+2026-01-15 08:06:01 [debug    ] Retrieved API key for openai from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for anthropic from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for gemini from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for perplexity from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for openai from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for anthropic from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for gemini from keychain
+2026-01-15 08:06:01 [debug    ] Retrieved API key for perplexity from keychain
+2026-01-15 08:06:03 [info     ] ✅ openai: Valid
+2026-01-15 08:06:03 [info     ] ✅ anthropic: Valid
+2026-01-15 08:06:03 [info     ] ✅ gemini: Valid
+2026-01-15 08:06:03 [info     ] ✅ perplexity: Valid
+2026-01-15 08:06:03 [info     ] ✅ openai: Valid
+2026-01-15 08:06:03 [info     ] ✅ anthropic: Valid
+2026-01-15 08:06:03 [info     ] ✅ gemini: Valid
+2026-01-15 08:06:03 [info     ] ✅ perplexity: Valid
+2026-01-15 08:06:03 [info     ] LLM providers validated: 4/4
+2026-01-15 08:06:03 [info     ] LLM client initialized
+2026-01-15 08:06:03 [info     ] Initializing Pattern-012 LLM adapters...
+2026-01-15 08:06:03 [debug    ] Retrieved API key for openai from keychain
+2026-01-15 08:06:03 [debug    ] Retrieved API key for anthropic from keychain
+2026-01-15 08:06:03 [debug    ] Retrieved API key for gemini from keychain
+2026-01-15 08:06:03 [debug    ] Retrieved API key for perplexity from keychain
+2026-01-15 08:06:03 [debug    ] Retrieved API key for openai from keychain
+2026-01-15 08:06:03 [debug    ] factory_creating_adapter       adapter_class=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
+2026-01-15 08:06:03 [info     ] openai_adapter_initialized     model=gpt-4-turbo-preview timeout=60.0
+2026-01-15 08:06:03 [info     ] factory_adapter_created        adapter_type=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
+2026-01-15 08:06:03 [info     ] adapter_initialized            adapter_type=OpenAIAdapter model=gpt-4-turbo-preview provider=openai
+2026-01-15 08:06:03 [debug    ] Retrieved API key for anthropic from keychain
+2026-01-15 08:06:03 [debug    ] factory_creating_adapter       adapter_class=ClaudeAdapter model=claude-sonnet-4-20250514 provider=anthropic
+2026-01-15 08:06:03 [info     ] claude_adapter_initialized     model=claude-sonnet-4-20250514 timeout=60.0
+2026-01-15 08:06:03 [info     ] factory_adapter_created        adapter_type=ClaudeAdapter model=claude-sonnet-4-20250514 provider=anthropic
+2026-01-15 08:06:03 [info     ] adapter_initialized            adapter_type=ClaudeAdapter model=claude-sonnet-4-20250514 provider=anthropic
+2026-01-15 08:06:03 [debug    ] Retrieved API key for gemini from keychain
+2026-01-15 08:06:03 [debug    ] factory_creating_adapter       adapter_class=GeminiAdapter model=gemini-pro provider=gemini
+2026-01-15 08:06:03 [info     ] gemini_adapter_initialized     model=gemini-pro
+2026-01-15 08:06:03 [info     ] factory_adapter_created        adapter_type=GeminiAdapter model=gemini-pro provider=gemini
+2026-01-15 08:06:03 [info     ] adapter_initialized            adapter_type=GeminiAdapter model=gemini-pro provider=gemini
+2026-01-15 08:06:03 [debug    ] Retrieved API key for perplexity from keychain
+2026-01-15 08:06:03 [debug    ] factory_creating_adapter       adapter_class=PerplexityAdapter model=pplx-70b-online provider=perplexity
+2026-01-15 08:06:03 [info     ] perplexity_adapter_initialized model=pplx-70b-online online_search=True
+2026-01-15 08:06:03 [info     ] factory_adapter_created        adapter_type=PerplexityAdapter model=pplx-70b-online provider=perplexity
+2026-01-15 08:06:03 [info     ] adapter_initialized            adapter_type=PerplexityAdapter model=pplx-70b-online provider=perplexity
+2026-01-15 08:06:03 [info     ] Pattern-012 adapters initialized: 4/4
+2026-01-15 08:06:03 [info     ] LLM domain service initialized successfully
+2026-01-15 08:06:03 [info     ] Adapters available: [<LLMProvider.OPENAI: 'openai'>, <LLMProvider.ANTHROPIC: 'anthropic'>, <LLMProvider.GEMINI: 'gemini'>, <LLMProvider.PERPLEXITY: 'perplexity'>]
+{"event": "JWT_SECRET_KEY not set, using development fallback", "logger": "services.auth.jwt_service", "level": "warning", "timestamp": "2026-01-15T16:06:05.716045Z"}
+   ✓ Services initialized (3/3)
 
 ============================================================
-🚀 Welcome to Piper Morgan!
+✅ Piper Morgan is running!
 ============================================================
 
-Setup required before first use.
-This takes about 5 minutes and will:
-  • Verify system requirements
-  • Create your user account
-  • Configure API keys (OpenAI, Anthropic, GitHub)
+🌐 Web Interface:     http://localhost:8001
+🔧 API Documentation: http://localhost:8001/docs
+📊 Health Check:      http://localhost:8001/health
 
-Choose an option:
-  [1] Run setup wizard
-  [2] Quit
+Press Ctrl+C to stop the server
+============================================================
 
-Your choice: Traceback (most recent call last):
-  File "/Users/xian/Development/piper-morgan/main.py", line 344, in <module>
-    choice = input(
-             ^^^^^^
-EOFError: EOF when reading a line
+   ⏳ Opening browser...
+
+============================================================
+🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)
+============================================================
+✅ Phase 1.5: ServiceContainer initialized successfully
+   Services available: ['llm', 'orchestration', 'intent']
+
+============================================================
+🔍 CORE-GREAT-2D: Configuration Validation
+============================================================
+
+============================================================
+CONFIGURATION VALIDATION SUMMARY
+============================================================
+
+❌ GITHUB: invalid
+   GitHub token appears invalid (wrong format)
+
+   Recovery:
+   GitHub personal access tokens should start with 'ghp_' or 'github_pat_'. Verify token at: https://github.com/settings/tokens
+
+❌ SLACK: missing
+   Slack configuration incomplete: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET not set
+
+   Recovery:
+   Set missing environment variables: SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_SIGNING_SECRET. Get credentials from: https://api.slack.com/apps → Your App → OAuth & Permissions / Basic Information
+
+❌ NOTION: invalid
+   Notion API key appears invalid (should start with 'secret_')
+
+   Recovery:
+   Verify API key from https://www.notion.so/my-integrations
+
+✅ CALENDAR: valid
+   Google Calendar configuration valid
+
+============================================================
+Valid: 1 | Optional: 0 | Invalid: 3
+============================================================
+
+
+⚠️ WARNING: Some service configurations are invalid
+Services will operate in degraded mode
+
+
+============================================================
+🔍 Issue #484: Database Schema Validation
+============================================================
+2026-01-15 08:06:08,512 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+select pg_catalog.version()
+2026-01-15 08:06:08,512 INFO sqlalchemy.engine.Engine [raw sql] ()
+[raw sql] ()
+2026-01-15 08:06:08,515 INFO sqlalchemy.engine.Engine select current_schema()
+select current_schema()
+2026-01-15 08:06:08,515 INFO sqlalchemy.engine.Engine [raw sql] ()
+[raw sql] ()
+2026-01-15 08:06:08,518 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+show standard_conforming_strings
+2026-01-15 08:06:08,518 INFO sqlalchemy.engine.Engine [raw sql] ()
+[raw sql] ()
+2026-01-15 08:06:08,519 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+BEGIN (implicit)
+2026-01-15 08:06:08,519 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,519 INFO sqlalchemy.engine.Engine [generated in 0.00007s] ('users',)
+[generated in 0.00007s] ('users',)
+2026-01-15 08:06:08,532 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,532 INFO sqlalchemy.engine.Engine [cached since 0.01248s ago] ('user_api_keys',)
+[cached since 0.01248s ago] ('user_api_keys',)
+2026-01-15 08:06:08,534 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,534 INFO sqlalchemy.engine.Engine [cached since 0.01429s ago] ('audit_logs',)
+[cached since 0.01429s ago] ('audit_logs',)
+2026-01-15 08:06:08,535 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,535 INFO sqlalchemy.engine.Engine [cached since 0.01607s ago] ('products',)
+[cached since 0.01607s ago] ('products',)
+2026-01-15 08:06:08,537 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,537 INFO sqlalchemy.engine.Engine [cached since 0.01785s ago] ('features',)
+[cached since 0.01785s ago] ('features',)
+2026-01-15 08:06:08,539 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,539 INFO sqlalchemy.engine.Engine [cached since 0.01928s ago] ('work_items',)
+[cached since 0.01928s ago] ('work_items',)
+2026-01-15 08:06:08,540 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,541 INFO sqlalchemy.engine.Engine [cached since 0.02136s ago] ('intents',)
+[cached since 0.02136s ago] ('intents',)
+2026-01-15 08:06:08,541 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,541 INFO sqlalchemy.engine.Engine [cached since 0.0221s ago] ('workflows',)
+[cached since 0.0221s ago] ('workflows',)
+2026-01-15 08:06:08,542 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,542 INFO sqlalchemy.engine.Engine [cached since 0.02284s ago] ('tasks',)
+[cached since 0.02284s ago] ('tasks',)
+2026-01-15 08:06:08,543 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,543 INFO sqlalchemy.engine.Engine [cached since 0.02368s ago] ('stakeholders',)
+[cached since 0.02368s ago] ('stakeholders',)
+2026-01-15 08:06:08,544 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,544 INFO sqlalchemy.engine.Engine [cached since 0.02429s ago] ('projects',)
+[cached since 0.02429s ago] ('projects',)
+2026-01-15 08:06:08,544 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,544 INFO sqlalchemy.engine.Engine [cached since 0.02503s ago] ('project_integrations',)
+[cached since 0.02503s ago] ('project_integrations',)
+2026-01-15 08:06:08,545 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,545 INFO sqlalchemy.engine.Engine [cached since 0.02555s ago] ('uploaded_files',)
+[cached since 0.02555s ago] ('uploaded_files',)
+2026-01-15 08:06:08,545 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,546 INFO sqlalchemy.engine.Engine [cached since 0.02622s ago] ('conversations',)
+[cached since 0.02622s ago] ('conversations',)
+2026-01-15 08:06:08,546 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,546 INFO sqlalchemy.engine.Engine [cached since 0.0269s ago] ('conversation_turns',)
+[cached since 0.0269s ago] ('conversation_turns',)
+2026-01-15 08:06:08,547 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,547 INFO sqlalchemy.engine.Engine [cached since 0.02752s ago] ('knowledge_nodes',)
+[cached since 0.02752s ago] ('knowledge_nodes',)
+2026-01-15 08:06:08,547 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,547 INFO sqlalchemy.engine.Engine [cached since 0.02806s ago] ('knowledge_edges',)
+[cached since 0.02806s ago] ('knowledge_edges',)
+2026-01-15 08:06:08,548 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,548 INFO sqlalchemy.engine.Engine [cached since 0.02856s ago] ('todo_lists',)
+[cached since 0.02856s ago] ('todo_lists',)
+2026-01-15 08:06:08,548 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,549 INFO sqlalchemy.engine.Engine [cached since 0.02923s ago] ('list_memberships',)
+[cached since 0.02923s ago] ('list_memberships',)
+2026-01-15 08:06:08,549 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,549 INFO sqlalchemy.engine.Engine [cached since 0.02978s ago] ('lists',)
+[cached since 0.02978s ago] ('lists',)
+2026-01-15 08:06:08,550 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,550 INFO sqlalchemy.engine.Engine [cached since 0.03044s ago] ('list_items',)
+[cached since 0.03044s ago] ('list_items',)
+2026-01-15 08:06:08,550 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,550 INFO sqlalchemy.engine.Engine [cached since 0.03099s ago] ('feedback',)
+[cached since 0.03099s ago] ('feedback',)
+2026-01-15 08:06:08,551 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,551 INFO sqlalchemy.engine.Engine [cached since 0.03159s ago] ('personality_profiles',)
+[cached since 0.03159s ago] ('personality_profiles',)
+2026-01-15 08:06:08,551 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,551 INFO sqlalchemy.engine.Engine [cached since 0.03214s ago] ('token_blacklist',)
+[cached since 0.03214s ago] ('token_blacklist',)
+2026-01-15 08:06:08,552 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,552 INFO sqlalchemy.engine.Engine [cached since 0.03274s ago] ('items',)
+[cached since 0.03274s ago] ('items',)
+2026-01-15 08:06:08,552 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,553 INFO sqlalchemy.engine.Engine [cached since 0.03323s ago] ('todo_items',)
+[cached since 0.03323s ago] ('todo_items',)
+2026-01-15 08:06:08,553 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,553 INFO sqlalchemy.engine.Engine [cached since 0.03392s ago] ('learned_patterns',)
+[cached since 0.03392s ago] ('learned_patterns',)
+2026-01-15 08:06:08,554 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-15 08:06:08,554 INFO sqlalchemy.engine.Engine [cached since 0.03453s ago] ('learning_settings',)
+[cached since 0.03453s ago] ('learning_settings',)
+2026-01-15 08:06:08,554 INFO sqlalchemy.engine.Engine ROLLBACK
+ROLLBACK
+Config file not found: config/PIPER.user.md
+/Users/xian/Development/piper-morgan/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:200: UserWarning: Field name "validate" in "StoreKeyRequest" shadows an attribute in parent "BaseModel"
+  warnings.warn(
+/Users/xian/Development/piper-morgan/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:200: UserWarning: Field name "validate" in "RotateKeyRequest" shadows an attribute in parent "BaseModel"
+  warnings.warn(
+ERROR:    [Errno 48] error while attempting to bind on address ('127.0.0.1', 8001): [errno 48] address already in use
+============================================================
+Schema Validation Report (Issue #484)
+============================================================
+Tables checked: 28
+Columns checked: 330
+Mismatches found: 1
+
+❌ Schema drift detected:
+
+  knowledge_nodes.embedding_vector:
+    Model: JSON
+    Database: _float8
+    Reason: Type mismatch: model uses JSON, database uses _float8
+
+
+⚠️ WARNING: Schema drift detected!
+Database may not match models. Check logs for details.
+This could cause runtime errors.
+
+
+🔧 Phase 1.5: Getting services from ServiceContainer...
+✅ IntentService retrieved from container
+✅ LLM service retrieved from container
+✅ OrchestrationEngine retrieved from container
+✅ Phase 1.5: All services retrieved from ServiceContainer
+
+
+============================================================
+🎨 Phase 4: Initializing Web Components
+============================================================
+✅ Jinja2Templates initialized
+✅ PiperConfigParser initialized
+✅ PersonalityResponseEnhancer initialized
+✅ Port configuration loaded
+✅ Phase 4: Web Components initialized successfully
+
+
+🔌 Phase 3B: Initializing Plugin System...
+  📦 Loaded 5/5 plugin(s)
+    ✅ demo
+    ✅ calendar
+    ✅ notion
+    ✅ github
+    ✅ slack
+  ✅ Calendar plugin initialized (spatial: True)
+  ✅ Notion plugin initialized (spatial: True)
+  ✅ GitHub plugin initialized (spatial: True)
+  ✅ Slack plugin initialized (spatial: True)
+  ✅ Initialized 5/5 plugin(s)
+  ✅ Mounted 5 router(s)
+✅ Plugin system initialized
+
+
+🧹 Starting Background Cleanup Job...
+✅ Blacklist cleanup job started (runs every 24 hours)
+
+⏱️ Starting Attention Decay Job...
+✅ Attention decay job started (runs every 5 minutes)
+🚀 Web server startup complete
+   🌐 Browser opened
+
+⏱️ Shutting down Attention Decay Job...
+✅ Attention decay job stopped
+🛑 Attention decay shutdown complete
+
+🧹 Shutting down Background Cleanup Job...
+✅ Blacklist cleanup job stopped
+🛑 Background cleanup shutdown complete
+
+🔌 Shutting down Plugin System...
+✅ Plugin shutdown: 5/5 successful
+🛑 Plugin system shutdown complete
+
+🔧 Shutting down ServiceContainer...
+✅ ServiceContainer shutdown successful
+🛑 Web server shutdown complete

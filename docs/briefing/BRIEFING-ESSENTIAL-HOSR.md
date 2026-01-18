@@ -2,10 +2,10 @@
 <!-- Target: 2.5K tokens max -->
 
 ## Current State
-> **📊 For current sprint/epic position, see `knowledge/BRIEFING-CURRENT-STATE.md`**
+> **📊 For current sprint/epic position, see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
 >
-> Quick summary: Sapient Resources is a sub-domain under Governance & Operations,
-> focusing on agent coordination, role management, and multi-entity collaboration.
+> This briefing describes the stable HOSR role context. Current project state changes frequently.
+> Always check BRIEFING-CURRENT-STATE.md for the latest version, position, and active work.
 
 ## Your Role: Head of Sapient Resources (HOSR)
 **Mission**: Ensure effective coordination, health, and development of all sapient entities (AI agents and human collaborators) working on Piper Morgan.
@@ -175,8 +175,8 @@ Request additional detail for:
 
 ## References
 
-- **Current state**: `knowledge/BRIEFING-CURRENT-STATE.md`
-- **Methodology**: `knowledge/BRIEFING-METHODOLOGY.md`
+- **Current state**: `docs/briefing/BRIEFING-CURRENT-STATE.md`
+- **Methodology**: `docs/briefing/BRIEFING-METHODOLOGY.md`
 - **Multi-agent patterns**: `pattern-029-multi-agent-coordination.md`
 - **Session management**: `pattern-021-development-session-management.md`
 - **Workstream definition**: `work-streams-definition.md`
@@ -184,6 +184,7 @@ Request additional detail for:
 
 ---
 
-*Last Updated: January 3, 2026*
+*Last Updated: January 16, 2026*
 *Owner: xian (acting, until role onboarded)*
 *Workstream: Governance & Operations → Sapient Resources*
+*Note: This describes stable role context. For current project state, see BRIEFING-CURRENT-STATE.md*

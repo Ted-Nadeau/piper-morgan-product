@@ -95,9 +95,22 @@ This issue tracks the architectural debt for future cleanup.
 
 ## Upgrade Notes
 
-- **No database migrations required**
+- **Database migration required**: Run `python -m alembic upgrade head` (adds `orientation_seen` column)
 - **No configuration changes required**
 - **Server restart required** to pick up calendar fixes
+
+### Migration Command
+
+```bash
+# If using virtual environment (recommended):
+source venv/bin/activate
+alembic upgrade head
+
+# Or without activating venv:
+python -m alembic upgrade head
+```
+
+**Note**: If you skip this step, account creation in the setup wizard will fail with a database error.
 
 ---
 

@@ -52,6 +52,18 @@ else:
     # Quiet mode (default) - minimal output
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
 
+# SECURITY: Install URL parameter redaction filter to prevent API key leaks in logs
+# See: 2026-01-17 security incident (Gemini API key leaked via httpx INFO logs)
+from services.infrastructure.logging.url_redaction import (
+    install_root_redaction_filter,
+    install_url_redaction_filter,
+)
+
+# Install on HTTP client loggers (httpx, httpcore, urllib3, etc.)
+install_url_redaction_filter()
+# Also install on root logger for comprehensive coverage
+install_root_redaction_filter()
+
 logger = logging.getLogger(__name__)
 
 
@@ -325,6 +337,24 @@ if __name__ == "__main__":
             print("  --verbose, -v               - Show detailed startup information")
             print("  --no-browser                - Don't auto-launch browser (on by default)")
             sys.exit(1)
+
+    # Check for pending database migrations (Issue #605: prevent cryptic errors)
+    from services.infrastructure.migration_checker import check_pending_migrations
+
+    pending = asyncio.run(check_pending_migrations())
+    if pending:
+        print("\n" + "=" * 60)
+        print("⚠️  Database migrations pending!")
+        print("=" * 60)
+        print(f"\nYou have {len(pending)} pending migration(s):")
+        for migration in pending[:5]:  # Show first 5
+            print(f"  • {migration}")
+        if len(pending) > 5:
+            print(f"  ... and {len(pending) - 5} more")
+        print("\nRun this command to apply migrations:")
+        print("  python -m alembic upgrade head")
+        print("\nThen restart the server.\n")
+        sys.exit(1)
 
     # Check if setup is complete before starting normally
     from scripts.setup_wizard import is_setup_complete

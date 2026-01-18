@@ -13,13 +13,14 @@ Piper Morgan is an intelligent PM assistant that transforms how product managers
 
 We're building this with a revolutionary approach: one human PM collaborating with AI agents as the entire development team. This isn't just about building a product - it's about discovering new methods for human-AI excellence.
 
-## Current Mission
+## Current State
 
-We are systematically completing our foundation through The Great Refactor. After discovering that many components reached 75% completion before being abandoned, we've adopted the Inchworm Protocol: complete each piece 100% before moving forward. No exceptions.
+> **📊 For current sprint/epic position and version, always see `docs/briefing/BRIEFING-CURRENT-STATE.md`**
+>
+> This document describes the project's stable context (vision, architecture, methodology).
+> Current state changes frequently - check BRIEFING-CURRENT-STATE.md for the latest.
 
-**Current Focus**: CORE-GREAT sequence (5 epics) to establish architectural stability
-**Timeline**: 7 weeks to solid foundation
-**North Star**: When "Create a GitHub issue about X" works end-to-end, we know we've succeeded
+We follow the Inchworm Protocol: complete each piece 100% before moving forward. No exceptions. The 75% Pattern (components abandoned before completion) is our primary anti-pattern to prevent.
 
 ## Technical Foundation
 
@@ -61,60 +62,17 @@ config/             # PIPER.md and user config
 
 **Evidence-Based Progress**: No "done" without proof. Terminal output, test results, working demos.
 
-## What We've Built (In Order)
+## Core Systems
 
-1. **Knowledge Base** - RAG system with embeddings (working)
+> **Note**: For current operational status, see `docs/briefing/BRIEFING-CURRENT-STATE.md`
 
-   - Location: `services/knowledge/`, `services/embeddings/`
-
-2. **Intent Classification** - Sophisticated multi-tier system (infrastructure excellent, universality incomplete)
-
-   - Location: `services/intent_service/`
-   - ADR-032 for universal entry requirement
-
-3. **Orchestration Engine** - ✅ Fully operational (wired up late Sept 2025)
-
-   - Location: `services/orchestration/engine.py`
-   - Disabled line: `# self.query_router = QueryRouter(self.session)`
-
-4. **Query Router** - A/B tested routing with fallbacks (75% complete, disabled)
-
-   - Location: `services/queries/query_router.py`
-   - PM-034 implementation incomplete
-
-5. **GitHub Integration** - Issue creation and management (works directly, broken through chat)
-
-   - Location: `services/integrations/github/`
-
-6. **Slack Integration** - Message sending (works directly, not through orchestration)
-
-   - Location: `services/integrations/slack/`
-
-7. **Spatial Intelligence** - 8-dimensional context system (designed, partially implemented)
-
-   - Location: `services/intelligence/spatial/`
-   - ADR-013 for MCP + Spatial pattern
-
-8. **Learning System** - Continuous improvement (exists but barely connected)
-   - Location: `services/learning/`
-
-## Current State Frank Assessment
-
-**What Works** (~30%):
-
-- Knowledge base uploads and retrieval
-- Intent classification infrastructure
-- Direct GitHub/Slack operations
-- Basic chat interactions
-
-**What's Blocked** (~70%):
-
-- QueryRouter disabled, blocking orchestration
-- ~~OrchestrationEngine never initialized~~ ✅ FIXED Sept 2025
-- Multiple patterns coexisting (dual repositories, mixed configs)
-- CLI bypasses intent classification entirely
-
-**The Pattern**: Most components reached 75% completion, hit a blocker, and were worked around rather than fixed. We're now systematically completing each one.
+| System | Location | Purpose |
+|--------|----------|---------|
+| Intent Classification | `services/intent_service/` | Universal entry point for all requests |
+| Integrations | `services/integrations/` | Slack, GitHub, Notion, Calendar, MCP, Spatial |
+| Orchestration | `services/orchestration/` | Workflow coordination |
+| Learning | `services/learning/` | Preference and pattern learning |
+| Knowledge | `services/knowledge/` | RAG system with embeddings |
 
 ## Learning Philosophy
 
@@ -134,15 +92,10 @@ For complete documentation structure, see: **docs/NAVIGATION.md**
 
 **Key Documents**:
 
-- `/docs/architecture/architecture/current/adrs/` - ADRs (currently 36)
-- `/docs/planning/roadmap.md` - Current roadmap
-- `/docs/briefing/CURRENT-STATE.md` - This doc on the filesystem
-- `/docs/briefing/METHODOLOGY.md` - How we work
-
-**Pattern References**:
-
-- Pattern Catalog: `/docs/internal/architecture/current/patterns/README.md`
-- Domain Models: `/docs/domain-models-index.md`
+- `docs/briefing/BRIEFING-CURRENT-STATE.md` - Current sprint/version/position (check this first!)
+- `docs/internal/architecture/current/adrs/` - Architectural Decision Records
+- `docs/internal/architecture/current/patterns/` - Pattern Catalog
+- `docs/internal/planning/roadmap/` - Current roadmap
 
 **Finding Things**:
 
@@ -186,4 +139,6 @@ The path is clearer today than it has ever been. We have strong aversion to leav
 
 _Welcome to the Piper Morgan project. Your contribution matters._
 
-**Document Maintenance**: Updated after each epic completion. See CURRENT-STATE.md for latest status.
+**Document Maintenance**: This document describes stable project context. For current state (version, sprint position, active issues), always check `docs/briefing/BRIEFING-CURRENT-STATE.md`.
+
+*Last Updated: January 16, 2026*

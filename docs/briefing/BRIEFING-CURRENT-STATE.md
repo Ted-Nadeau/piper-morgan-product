@@ -9,10 +9,11 @@
 
 ## STATUS BANNER
 
-**Current Position**: 4.2.1.1 - Sprint B1 COMPLETE, MUX Phase Ready
-**Version**: v0.8.4 (released January 12, 2026)
-**Last Updated**: January 12, 2026, 3:00 PM PT
+**Current Position**: 4.2.7 - A20 Alpha Testing Round 2 in progress
+**Version**: v0.8.4.2 (released January 15, 2026)
+**Last Updated**: January 16, 2026, 7:30 AM PT
 
+**Current Focus**: A20 Alpha Testing - bug fixes and polish
 **Next Phase**: MUX-V1 (Modeled User Experience - Vision)
 
 ---
@@ -23,12 +24,28 @@
 1. ✅ The Great Refactor (GREAT)
 2. ✅ CORE functionality
 3. ✅ ALPHA testing (v0.8.0 → v0.8.4)
-4. 🎯 MVP Track
-   4.1. ✅ B1 - FTUX & Conversations (COMPLETE Jan 11)
-   4.2. 🎯 MUX-V1: Vision & Conceptual Architecture ← NEXT
-   4.3. MUX-V2: Integration & Learning
-   4.4. MUX-INTERACT: Interaction Design
-   4.5. MUX-IMPLEMENT: UI Polish
+4. 🎯 Complete build of MVP
+   4.1. ✅ B1 - Beta Enablers (v0.8.3.1, v0.8.3.2) - COMPLETE Jan 11
+   4.2. 🐛 A20 - Alpha Testing round 2 (v0.8.4, .1, .2) ← CURRENT
+        ✅ BUG: Chat input ignores selected conversation (#581)
+        ✅ BUG: Standup command says no projects (#582)
+        ✅ BUG: Piper's replies not persisting (#583)
+        ✅ BUG: /standup routes to STATUS handler (#585)
+        ✅ TECH-DEBT: Document user_id vs session_id patterns (#584)
+        ✅ BUG: Markdown rendering regression (#592)
+        ✅ BUG: Calendar timezone/tomorrow queries (#588)
+        ✅ BUG: TEMPORAL handler stale data (#596)
+        🐛 BUG-TESTING: Fix missing test_client fixture (#590)
+        BUG-TESTING: Fix CICD spatial test assertion (#591)
+        FLY-RUN-RESTART: Document server restart procedure
+        ARCH-TEMPORAL-GAPS: Systematic datetime issues (#597)
+   4.3. MUX: Modeled User Experience
+        MUX-V1: Vision, Conceptual architecture
+        MUX-TECH: Architectural model implementation
+        MUX-V2: Integration Mapping
+        MUX-INTERACT: Interaction Design
+        MUX-IMPLEMENT: UI Polish
+   4.4. MVP: Minimum Valuable Product (M1-M6)
 5. Beta testing on 0.9
 6. Launch 1.0
 ```
@@ -96,14 +113,14 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 - Spatial (spatial intelligence)
 - Demo (reference implementation)
 
-**Pattern Catalog**: 48 patterns (001-048) across 5 categories
+**Pattern Catalog**: 50 patterns (001-050) across 5 categories
 - Core Architecture (repository, service, factory, error handling)
 - Data & Query (CQRS-lite, query layer, context resolution)
 - AI & Intelligence (intent classification, LLM adapter, multi-agent)
 - Integration & Platform (plugin interface, MCP)
-- Development & Process (verification first, Beads discipline, Time Lord Alert)
+- Development & Process (verification first, Beads discipline, Time Lord Alert, Audit Cascade)
 
-**ADRs**: 53 architectural decision records
+**ADRs**: 57 architectural decision records (000-056)
 
 ---
 
@@ -135,8 +152,11 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 
 ## Open Issues by Priority
 
-### Bugs
-- #574: Conversation history panel doesn't switch correctly
+### A20 Alpha Testing (Current)
+- #590: Fix missing test_client fixture (BUG-TESTING)
+- #591: Fix CICD spatial test assertion (BUG-TESTING)
+- #597: Systematic datetime and data presentation issues (ARCH-TEMPORAL-GAPS)
+- FLY-RUN-RESTART: Document server restart procedure
 
 ### MUX Phase
 - #433-436: MUX-TECH Phases 1-4
@@ -162,14 +182,16 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 ## Metrics Snapshot (January 2026)
 
 ### Quality
-- **Pattern Count**: 48 (001-048)
-- **ADR Count**: 53
-- **Total Docs**: 961 markdown files
-- **Python Code**: 755,335 lines
+- **Pattern Count**: 50 (001-050)
+- **ADR Count**: 57 (000-056)
+- **Total Docs**: 961+ markdown files
+- **Python Code**: 755,335+ lines
 
 ### Version History
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.8.4.2 | Jan 15, 2026 | A20 bug fixes (#588, #596) |
+| v0.8.4.1 | Jan 13, 2026 | RequestContext pattern (#584) |
 | v0.8.4 | Jan 12, 2026 | Sprint B1 Complete |
 | v0.8.3.2 | Jan 8, 2026 | Epic #242 Standup |
 | v0.8.3.1 | Jan 7, 2026 | FTUX batch |
@@ -207,12 +229,12 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 ## Key Documents
 
 **Roadmap**: `docs/internal/planning/roadmap/roadmap.md` (v13.0)
-**Patterns**: `docs/internal/architecture/current/patterns/` (48 patterns)
-**ADRs**: `docs/internal/architecture/current/adrs/` (53 ADRs)
-**Release Notes**: `docs/releases/RELEASE-NOTES-v0.8.4.md`
-**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 11)
+**Patterns**: `docs/internal/architecture/current/patterns/` (50 patterns)
+**ADRs**: `docs/internal/architecture/current/adrs/` (57 ADRs)
+**Release Notes**: `docs/releases/RELEASE-NOTES-v0.8.4.2.md`
+**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 15)
 
 ---
 
-*Last Updated: January 12, 2026, 3:00 PM PT*
+*Last Updated: January 16, 2026, 7:30 AM PT*
 *Source: GitHub commit history, beads database, Serena symbolic index*

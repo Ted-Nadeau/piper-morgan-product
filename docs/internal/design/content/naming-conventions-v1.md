@@ -1,9 +1,9 @@
 # Piper Morgan Naming Conventions
 
-**Version**: 1.0 Draft
-**Date**: January 12, 2026
-**Authors**: CXO (primary), with input from PM and PPM
-**Status**: Draft — Pending Communications Chief review
+**Version**: 1.0
+**Date**: January 17, 2026
+**Authors**: CXO (primary), with input from PM, PPM, and Communications Chief
+**Status**: Ratified
 **Location**: `docs/internal/design/naming-conventions.md`
 
 ---
@@ -16,12 +16,14 @@ This document establishes naming conventions for Piper Morgan's capabilities, fe
 
 ## Core Principles
 
-### 1. Plain by Default
+### 1. Plain by Default (But Not Cold)
 
 90% of capabilities use functional, transparent names. Users should understand what will happen before they act.
 
 **Good**: "What should I focus on?", "Create Issue", "Upload Document"
 **Avoid**: "Priority Coach", "Document Intelligence Engine", "Smart Upload"
+
+**Important**: Plain language doesn't mean clinical or cold. Piper is a warm, professional colleague. Plain naming applies to *feature names and categories*—the voice and tone in help text, responses, and UI copy should still reflect Piper's personality. See `piper-style-guide.md` for voice guidance.
 
 ### 2. Flagship Features Earn Memorable Names
 
@@ -40,7 +42,14 @@ When in doubt, use the natural query rather than inventing a branded wrapper.
 **Good**: "What should I focus on?" (natural query)
 **Avoid**: "Focus Assistant", "Priority Assistant", "Calendar Assistant"
 
-Exception: "Standup Assistant" is approved for the interactive standup conversation because it maps clearly to a distinct capability and doesn't conflict with "Morning Standup" (the one-click version).
+**When "Assistant" IS appropriate**: Use "X Assistant" only when ALL of these criteria are met:
+1. The capability involves a multi-turn conversation (not a single query/response)
+2. The capability has a distinct workflow or state machine
+3. There's no natural query that captures the full capability
+4. The name doesn't conflict with an existing flagship feature
+
+**Approved**: "Standup Assistant" (interactive standup conversation—distinct from "Morning Standup" one-click version)
+**Not approved**: "Focus Assistant" (use natural query "What should I focus on?" instead)
 
 ### 4. Benefits Over Mechanics
 
@@ -234,12 +243,27 @@ If a situation requires breaking conventions, document:
 
 ---
 
+## Related Documents
+
+This document focuses on **naming** (what we call things). For other aspects of Piper's communication:
+
+| Document | Scope |
+|----------|-------|
+| `piper-style-guide.md` | Voice, tone, first-person conventions |
+| `empty-state-voice-guide-v1.md` | Empty state messaging patterns |
+| *Voice Guide (future)* | Confidence/uncertainty expressions |
+
+**Note**: Confidence and uncertainty expressions (e.g., "I think...", "I'm not sure but...") are not yet documented. Flag for future voice guide work.
+
+---
+
 ## Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 Draft | 2026-01-12 | Initial draft from CXO/PM/PPM synthesis |
+| 1.0 | 2026-01-17 | Incorporated Comms refinements: (1) "Plain ≠ Cold" clarification, (2) principled "X Assistant" criteria, (3) related documents section, (4) flagged confidence/uncertainty gap |
 
 ---
 
-*Pending: Communications Chief review and input*
+*Ratified: January 17, 2026*
