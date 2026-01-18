@@ -1,13 +1,18 @@
 """Issue #484: Convert owner_id columns to UUID with FK to users
 
 This migration ensures type consistency across the codebase by converting
-owner_id columns in todo_lists, lists, and todo_items tables from VARCHAR
-to UUID, with foreign key constraints to the users table.
+owner_id columns in lists and todo_items tables from VARCHAR to UUID,
+with foreign key constraints to the users table.
+
+NOTE: todo_lists was removed from this migration (2026-01-17) because the
+todo_lists table was dropped and replaced by 'lists' in migration
+6m5s5d1t6500 (Universal List Architecture, Aug 2025). Fresh database installs
+would fail because todo_lists doesn't exist.
 
 Background (Pattern-045 "Green Tests, Red User"):
 - On Dec 7, 2025, 705 unit tests passed while all CRUD operations failed
 - Root cause: Domain models used owner_id: UUID while some DB models used String
-- This migration fixes the remaining 3 tables that still use VARCHAR
+- This migration fixes the remaining 2 tables that still use VARCHAR
 
 Operations:
 1. Clean up orphaned data (non-UUID owner_ids and missing user references)
@@ -15,7 +20,6 @@ Operations:
 3. Add foreign key constraints to users(id)
 
 Tables affected:
-- todo_lists.owner_id: VARCHAR -> UUID with FK to users(id)
 - lists.owner_id: VARCHAR -> UUID with FK to users(id)
 - todo_items.owner_id: VARCHAR -> UUID with FK to users(id)
 
@@ -158,57 +162,8 @@ def upgrade() -> None:
     )
     print("    - Added FK constraint to users(id)")
 
-    # ============================================================
-    # Table 3: todo_lists
-    # ============================================================
-    print("  Processing todo_lists...")
-
-    # Step 3a: Delete non-UUID values
-    result = conn.execute(
-        sa.text(
-            f"""
-            DELETE FROM todo_lists
-            WHERE owner_id IS NOT NULL
-            AND owner_id !~ '{UUID_PATTERN}';
-        """
-        )
-    )
-    print(f"    - Deleted {result.rowcount} rows with non-UUID owner_id")
-
-    # Step 3b: Delete orphaned references
-    result = conn.execute(
-        sa.text(
-            """
-            DELETE FROM todo_lists
-            WHERE owner_id IS NOT NULL
-            AND owner_id::uuid NOT IN (SELECT id FROM users);
-        """
-        )
-    )
-    print(f"    - Deleted {result.rowcount} rows with orphaned owner_id")
-
-    # Step 3c: Convert VARCHAR to UUID
-    conn.execute(
-        sa.text(
-            """
-            ALTER TABLE todo_lists
-            ALTER COLUMN owner_id TYPE uuid USING owner_id::uuid;
-        """
-        )
-    )
-    print("    - Converted owner_id to UUID type")
-
-    # Step 3d: Add FK constraint
-    conn.execute(
-        sa.text(
-            """
-            ALTER TABLE todo_lists
-            ADD CONSTRAINT fk_todo_lists_owner_id
-            FOREIGN KEY (owner_id) REFERENCES users(id);
-        """
-        )
-    )
-    print("    - Added FK constraint to users(id)")
+    # NOTE: todo_lists section removed - table was dropped in migration
+    # 6m5s5d1t6500 and replaced by 'lists' (already handled above)
 
     print("Issue #484: Migration complete!")
 
@@ -259,22 +214,7 @@ def downgrade() -> None:
         )
     )
 
-    # todo_lists
-    conn.execute(
-        sa.text(
-            """
-            ALTER TABLE todo_lists
-            DROP CONSTRAINT IF EXISTS fk_todo_lists_owner_id;
-        """
-        )
-    )
-    conn.execute(
-        sa.text(
-            """
-            ALTER TABLE todo_lists
-            ALTER COLUMN owner_id TYPE varchar USING owner_id::text;
-        """
-        )
-    )
+    # NOTE: todo_lists section removed - table doesn't exist
+    # (was dropped in migration 6m5s5d1t6500)
 
     print("Issue #484: Downgrade complete (orphaned data not restored)")
