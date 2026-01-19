@@ -246,38 +246,9 @@ git push      # Runs fast tests via pre-push hook
 
 See **[🧪 Test Guide](internal/development/active/pending-review/TEST-GUIDE.md)** for complete documentation.
 
-## 🚀 Recent Releases
+## 🚀 Release History
 
-### v0.8.3.2 - Interactive Standup Assistant (January 8, 2026)
-
-- **Interactive Standup Assistant**: Conversational standup creation via chat ("let's write a standup")
-- **7-State Conversation Flow**: Preference gathering, iterative refinement, version history
-- **Performance Monitoring**: P95 < 500ms response times with structured logging
-- **Epic #242 Complete**: CONV-MCP-STANDUP-INTERACTIVE with 260 new tests
-
-See [Release Notes v0.8.3.2](releases/RELEASE-NOTES-v0.8.3.2.md) for details.
-
-### v0.8.3 - Integration Health Dashboard (January 2, 2026)
-
-- **Integration Health Dashboard**: Real-time status for all integrations with one-click testing
-- **OAuth Connection Management**: Connect/disconnect Slack and Calendar directly from Settings
-- **Notion in Setup Wizard**: Configure Notion during initial setup with validation
-- **Bug Fixes**: Calendar OAuth state persistence, toast visibility, breadcrumb overlap
-
-See [Release Notes v0.8.3](releases/RELEASE-NOTES-v0.8.3.md) for details.
-
-### v0.8.2 - GUI Setup Wizard (December 11, 2025)
-
-- **GUI Setup Wizard**: Visual web interface for initial configuration
-- **602 Smoke Tests**: CI/CD quality gate validation
-- **UI Stabilization**: Toast z-index, navigation, dialog styling fixes
-
-See [Release Notes v0.8.2](releases/RELEASE-NOTES-v0.8.2.md) for details.
-
-### Previous Releases
-
-- [v0.8.1.3](dev/2025/11/30/RELEASE-NOTES-v0.8.1.3.md) - Alpha setup refinements
-- [v0.8.1.2](dev/2025/11/30/RELEASE-NOTES-v0.8.1.2.md) - Bug fixes
+For the complete release history, changelogs, and upgrade notes, see the **[Release Notes Index](releases/README.md)**.
 
 ## 📚 Enhanced Development Documentation
 

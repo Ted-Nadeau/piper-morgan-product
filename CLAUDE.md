@@ -825,7 +825,7 @@ grep -r "ClassName" . --include="*.py"
 
 ```
 main.py                      # Entry point (not web/app.py)
-web/app.py                   # FastAPI app (678 lines, refactored in GREAT-3A)
+web/app.py                   # FastAPI app (~280 lines after GREAT-3A refactor)
 services/domain/models.py    # Domain models truth source
 services/shared_types.py     # ALL enums go here
 services/config.py           # Settings
@@ -835,7 +835,7 @@ config/PIPER.user.md        # User config (not YAML)
 **Documentation** (verified locations):
 
 ```
-docs/internal/architecture/current/adrs/     # ADRs (36+ exist!)
+docs/internal/architecture/current/adrs/     # ADRs (55 as of Jan 2026)
 docs/internal/architecture/current/patterns/ # Pattern catalog
 docs/internal/architecture/current/models/   # Domain models
 docs/internal/development/methodology-core/  # Methodologies (if exists)

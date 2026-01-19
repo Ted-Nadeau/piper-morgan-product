@@ -1,7 +1,7 @@
 # Release Runbook
 
-**Version**: 1.3
-**Last Updated**: January 15, 2026
+**Version**: 1.4
+**Last Updated**: January 19, 2026
 
 This runbook documents the complete process for releasing a new version of Piper Morgan to production.
 
@@ -123,10 +123,10 @@ These templates reference version numbers that MUST be updated:
   - Add row to Version History table
   - Update Release Notes link at bottom
 
-### 5. Root README and Navigation
+### 5. Docs README and Navigation
 
-- [ ] `README.md` (root) - Verify still accurate (usually no changes needed)
-- [ ] `docs/NAVIGATION.md` - Add any new documentation sections created
+- [ ] `docs/README.md` - Update release notes quick link (line ~18) to new version
+- [ ] `docs/NAVIGATION.md` - Add any new documentation sections created (usually no changes needed)
 
 ### 6. Testing Documentation
 
@@ -270,10 +270,93 @@ After release, verify these artifacts exist:
 
 ---
 
+## Documentation Audit Step
+
+**CRITICAL**: Before marking the release as complete, run this verification step.
+
+### Audit Command
+
+```bash
+# Search for any docs still referencing the OLD version
+# Replace "0.8.4.2" with the previous version number
+grep -r "0\.8\.4\.2" docs/ --include="*.md" | grep -v "releases/" | grep -v "omnibus-logs/"
+```
+
+If any files show up (other than historical release notes), they need updating.
+
+### Quick Audit Checklist
+
+| Category | Files | Check For |
+|----------|-------|-----------|
+| **Tier 1: Core Docs** | | |
+| Release Notes | `docs/releases/RELEASE-NOTES-vX.Y.Z.md` | File exists |
+| Release Index | `docs/releases/README.md` | Current Version updated, table row added |
+| Versioning | `docs/versioning.md` | Version at top, history table, footer date |
+| Briefing | `docs/briefing/BRIEFING-CURRENT-STATE.md` | STATUS BANNER version, Last Updated, history table |
+| **Tier 2: Alpha Docs** | | |
+| Testing Guide | `docs/ALPHA_TESTING_GUIDE.md` | Header version, What's New section, footer |
+| Known Issues | `docs/ALPHA_KNOWN_ISSUES.md` | Header version, title with (vX.Y.Z) |
+| Quickstart | `docs/ALPHA_QUICKSTART.md` | Header version, What's New section |
+| Agreement | `docs/ALPHA_AGREEMENT_v2.md` | Version in 3 places |
+| **Tier 3: Other Docs** | | |
+| Docs README | `docs/README.md` | Release notes quick link (line ~18) |
+| Email (alpha) | `docs/alpha/templates/alpha-tester-email-template.md` | Version, Last Updated |
+| Email (ops) | `docs/operations/alpha-onboarding/email-template.md` | Version, For version, Last Updated, footer |
+
+---
+
+## Completion Matrix
+
+**Copy this matrix into your release commit message or session log to track completion:**
+
+```markdown
+## Release vX.Y.Z Completion Matrix
+
+### Pre-Release
+- [ ] All planned issues closed
+- [ ] Tests passing: _____ passed, _____ skipped
+- [ ] Recent commits reviewed
+
+### Version Bump
+- [ ] pyproject.toml updated
+- [ ] Release notes created
+
+### Documentation Updates (MANDATORY)
+- [ ] docs/releases/RELEASE-NOTES-vX.Y.Z.md created
+- [ ] docs/releases/README.md updated
+- [ ] docs/versioning.md updated
+- [ ] docs/briefing/BRIEFING-CURRENT-STATE.md updated
+- [ ] docs/README.md updated (release notes quick link)
+- [ ] docs/ALPHA_TESTING_GUIDE.md updated
+- [ ] docs/ALPHA_KNOWN_ISSUES.md updated
+- [ ] docs/ALPHA_QUICKSTART.md updated
+- [ ] docs/ALPHA_AGREEMENT_v2.md updated
+- [ ] docs/alpha/templates/alpha-tester-email-template.md updated
+- [ ] docs/operations/alpha-onboarding/email-template.md updated
+
+### Git Operations
+- [ ] Newlines fixed (./scripts/fix-newlines.sh)
+- [ ] Committed with release message
+- [ ] Tag created: vX.Y.Z
+- [ ] Pushed to main
+- [ ] Tag pushed
+
+### GitHub Release
+- [ ] Release published
+
+### Post-Release Verification
+- [ ] Release notes display correctly
+- [ ] Documentation audit passed (no stale version numbers)
+- [ ] Session log updated
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.4 | 2026-01-19 | Added Documentation Audit Step with grep command, added Completion Matrix template |
 | 1.3 | 2026-01-15 | Complete file inventory: marked Alpha docs and templates as MANDATORY, added specific file locations |
 | 1.2 | 2026-01-15 | Added "How to Invoke" section, expanded mandatory release notes section (docs/releases/README.md, versioning.md) |
 | 1.1 | 2026-01-12 | Added Testing Documentation section (test count, canonical query matrix), Cleanup Working Files section |

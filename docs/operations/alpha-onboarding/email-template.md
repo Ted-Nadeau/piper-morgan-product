@@ -1,9 +1,9 @@
 # Alpha Tester Pre-Qualification Email Template
 
-**Version**: 2.1
+**Version**: 2.2
 **For**: Piper Morgan 0.8.4.3 Alpha Release
 **Purpose**: Internal template for PM to send to potential alpha testers
-**Last Updated**: December 11, 2025
+**Last Updated**: January 19, 2026
 
 ---
 
@@ -186,6 +186,6 @@ Before sending:
 
 ---
 
-_Template Version: 2.1_
+_Template Version: 2.2_
 _For Software Version: 0.8.4.3_
-_Last Updated: January 18, 2026_
+_Last Updated: January 19, 2026_

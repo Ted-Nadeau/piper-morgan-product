@@ -1,10 +1,26 @@
 # Piper Morgan Alpha Testing Guide
 
 **Version**: 0.8.4.3
-**Last Updated**: January 18, 2026
+**Last Updated**: January 19, 2026
 **For**: Alpha Testers
 
 ---
+
+## Quick Navigation
+
+This guide has three main sections:
+
+| Section | Description | Start Here If... |
+|---------|-------------|------------------|
+| **[Chapter 1: Setup](#chapter-1-setup)** | Prerequisites, installation, configuration | You're setting up for the first time |
+| **[Chapter 2: Testing](#chapter-2-testing)** | Test scenarios, features to explore | You already have an account and want to start testing |
+| **[Chapter 3: Troubleshooting](#chapter-3-troubleshooting)** | Common issues and solutions | Something isn't working |
+
+**Already have an account?** Jump directly to [Chapter 2: Testing](#chapter-2-testing).
+
+---
+
+# Chapter 1: Setup
 
 ## Before You Begin - Prerequisites Checklist
 
@@ -51,7 +67,7 @@
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.4). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.4.3). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -65,6 +81,35 @@ This is pre-release alpha software (version 0.8.4). By proceeding, you acknowled
 See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
+
+## What's New in 0.8.4.3
+
+**Fresh Install Fixes** - Critical fixes for new alpha testers (#605-#609):
+- Server now validates migrations at startup (clear error messages instead of cryptic failures)
+- Fresh installs route to web GUI wizard (not CLI)
+- `/setup` accessible for new user registration (multi-user support)
+- Fresh databases properly detected and migrated
+
+**UI/UX Improvements**:
+- Auto-generated conversation titles from first message (#598)
+- Editable conversation titles (#604)
+- Cleaner resource cards (no "null" placeholders) (#599)
+- Calendar data displays in human-readable format (#597)
+
+**Testing Infrastructure**:
+- Frontend JavaScript testing framework with Jest + jsdom (#593)
+- 45 tests for Toast and FormValidation modules
+
+## What's New in 0.8.4.2
+
+**Calendar Bug Fixes** - Major improvements to TEMPORAL handler:
+- "How about today?" now correctly shows calendar data (#596)
+- Tomorrow queries display correct meeting times (#588)
+- Calendar times shown in human-readable format (not ISO timestamps)
+
+**Other Fixes**:
+- Markdown rendering in chat messages (#592)
+- Sidebar conversation ordering (#587)
 
 ## What's New in 0.8.4.1
 
@@ -378,6 +423,10 @@ Click the button to go to the login page and start using Piper Morgan.
 
 ---
 
+# Chapter 2: Testing
+
+This chapter covers what to test and how. If you're already set up, **start here**.
+
 ## Test Scenarios to Try
 
 **Note for 0.8.4 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new Integration Settings and Portfolio Onboarding** and continue validating the Interactive Standup Assistant.
@@ -408,6 +457,8 @@ Start with these simple tests to verify everything works:
 
 ### Lists, Todos, and Projects Management
 
+**Basic CRUD Operations** (test these first):
+
 1. **Create a List**
    - Navigate to http://localhost:8001/lists
    - Click "Create New List" button
@@ -415,23 +466,19 @@ Start with these simple tests to verify everything works:
    - Enter description: "Testing the Lists feature"
    - Verify list appears in the list view
 
-2. **Share a List**
-   - Open the list you just created
-   - Click "Share" button
-   - Enter another user's email (if multi-user testing)
-   - Select role: Editor
-   - Verify sharing modal shows success
+2. **Edit and Delete**
+   - Open the list you created
+   - Edit the name or description
+   - Try deleting a list (should show confirmation)
 
-3. **Test Permission Badges**
-   - Notice "Owner" badge on your list
-   - If shared with another user, verify their role badge shows
-
-4. **Repeat for Todos and Projects**
+3. **Repeat for Todos and Projects**
    - Navigate to /todos and /projects
    - Same CRUD operations available
    - Test that all three resource types work consistently
 
 ### File Management
+
+**Basic File Operations** (test these first):
 
 1. **Upload a File**
    - Navigate to http://localhost:8001/files
@@ -450,24 +497,6 @@ Start with these simple tests to verify everything works:
 4. **Test File Privacy**
    - Files are owner-based (private to you)
    - Other users should NOT see your files
-
-### Permission System
-
-1. **Conversational Permission Commands**
-   Try these in the chat interface:
-   - "share my Alpha Testing Tasks list with [email] as editor"
-   - "who can access my Alpha Testing Tasks?"
-   - "show me shared lists"
-   - "give [email] viewer access to my project plan"
-
-2. **Role-Based Access Testing** (requires 2 users)
-   - Create a list as User A
-   - Share with User B as "Viewer"
-   - Log in as User B
-   - Verify: Can view list but NOT edit/delete
-   - Share same list with User C as "Editor"
-   - Log in as User C
-   - Verify: CAN edit and update list
 
 ### Interactive Standup Assistant (New in 0.8.3.2)
 
@@ -537,6 +566,45 @@ Start with these simple tests to verify everything works:
    - Check Privacy & Data settings has informative content
 
 ---
+
+## Advanced Testing (Multi-User Sharing)
+
+> **Note**: These features require multiple user accounts and are considered advanced. Focus on basic CRUD operations first.
+
+### Sharing Lists, Todos, and Projects
+
+1. **Share a List**
+   - Open a list you created
+   - Click "Share" button
+   - Enter another user's email (if multi-user testing)
+   - Select role: Editor
+   - Verify sharing modal shows success
+
+2. **Test Permission Badges**
+   - Notice "Owner" badge on your list
+   - If shared with another user, verify their role badge shows
+
+### Permission System
+
+1. **Conversational Permission Commands**
+   Try these in the chat interface:
+   - "share my Alpha Testing Tasks list with [email] as editor"
+   - "who can access my Alpha Testing Tasks?"
+   - "show me shared lists"
+   - "give [email] viewer access to my project plan"
+
+2. **Role-Based Access Testing** (requires 2 users)
+   - Create a list as User A
+   - Share with User B as "Viewer"
+   - Log in as User B
+   - Verify: Can view list but NOT edit/delete
+   - Share same list with User C as "Editor"
+   - Log in as User C
+   - Verify: CAN edit and update list
+
+---
+
+# Chapter 3: Troubleshooting
 
 ## Troubleshooting
 
@@ -718,7 +786,7 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.4). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.4.3). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for 2026.
 
@@ -735,5 +803,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: January 13, 2026_
-_Software version: 0.8.4.1_
+_Last updated: January 19, 2026_
+_Software version: 0.8.4.3_

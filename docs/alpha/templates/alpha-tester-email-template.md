@@ -1,7 +1,7 @@
 # Alpha Tester Pre-Qualification Email Template
 
-**Version**: 0.8.4.2
-**Last Updated**: January 15, 2026
+**Version**: 0.8.4.3
+**Last Updated**: January 19, 2026
 
 ## Subject Lines (A/B test these)
 
@@ -9,7 +9,7 @@
 - "Piper Morgan alpha access - Prerequisites inside"
 - "[Name], before we set up Piper Morgan..."
 
-## Email Template
+## Email Templatea
 
 Hey [Name],
 
