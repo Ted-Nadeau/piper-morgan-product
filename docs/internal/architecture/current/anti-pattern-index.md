@@ -225,6 +225,28 @@ See `dev/active/anti-pattern-phase2-experiment-results.md` for full analysis.
 
 ---
 
+## Coverage Gap Analysis
+
+**Current Coverage**: 9 of 58 patterns (15.5%)
+
+### Patterns WITH Coverage
+
+035, 045, 046, 047, 049, 051, 052, 053, 054
+
+### Priority Gaps (Next Sweep Focus)
+
+| Priority | Category | Patterns | Est. Anti-Patterns |
+|----------|----------|----------|-------------------|
+| P1 | Core Architecture | 001-008, 014-015, 017, 034 | 10-15 |
+| P2 | Data & Query | 013, 016, 023, 025, 026 | 5-8 |
+| P3 | AI & Intelligence | 012, 019-020, 022, 028-029, 055-058 | 8-12 |
+
+**Target**: 50% coverage (29 patterns) by end of Q1 2026
+
+See `dev/active/anti-pattern-coverage-gap-analysis.md` for full breakdown.
+
+---
+
 ## Related Documentation
 
 - [Pattern Catalog README](patterns/README.md)
@@ -232,8 +254,10 @@ See `dev/active/anti-pattern-phase2-experiment-results.md` for full analysis.
 - [Grammar Transformation Guide](../../../development/grammar-transformation-guide.md)
 - [Consciousness Philosophy](consciousness-philosophy.md)
 - [Staggered Audit Calendar](../../operations/staggered-audit-calendar-2026.md)
+- [Coverage Gap Analysis](../../../../dev/active/anti-pattern-coverage-gap-analysis.md)
 
 ---
 
 *Index created: 2026-01-21*
+*Last updated: 2026-01-21 (added coverage gap analysis)*
 *Maintainer: Documentation Management Agent*
