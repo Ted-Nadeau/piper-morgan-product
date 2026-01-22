@@ -1,0 +1,100 @@
+# Agent Skills Index
+
+This directory contains formalized Agent Skills - self-contained procedural instructions that transform Claude from general-purpose to specialized for specific recurring tasks.
+
+**Last Updated**: January 21, 2026
+
+---
+
+## Available Skills
+
+| Skill | Scope | Description | Version |
+|-------|-------|-------------|---------|
+| [create-session-log](./create-session-log/SKILL.md) | Cross-role | Create properly named session logs; one log per role per day | 1.0 |
+| [check-mailbox](./check-mailbox/SKILL.md) | Cross-role | Check inbox at session start, process messages, move to read/ | 1.0 |
+| [close-issue-properly](./close-issue-properly/SKILL.md) | Cross-role | Close GitHub issues with evidence, updated descriptions, audit-ready records | 1.0 |
+
+---
+
+## Skill Tiers
+
+### Tier 1: Cross-Role Foundation (Mandatory)
+Skills every agent should know. High frequency, low complexity.
+
+- **create-session-log** - Start of every session
+- **check-mailbox** - Session start protocol
+- **close-issue-properly** - End of every tracked task
+
+### Tier 2: Role-Specific Operations
+Skills for specific workflows or roles.
+
+- **create-omnibus-log** - *(planned)* Docs agent daily synthesis
+- **create-gameplan** - *(planned)* Lead Dev sprint planning
+- **run-debug-protocol** - *(planned)* Systematic debugging framework
+
+### Tier 3: Specialized Processes
+Less frequent but high-value skills.
+
+- **pattern-sweep-execution** - *(planned)* 6-week pattern analysis
+- **anti-pattern-scan** - *(planned)* Emergent anti-pattern detection
+- **create-adr** - *(planned)* Architecture decision records
+
+---
+
+## How to Use Skills
+
+**Invoking a skill**: Reference by name when starting relevant work.
+```
+"Use the create-session-log skill to start this session."
+```
+
+**When to use**: Skills are triggered by specific contexts documented in each SKILL.md's "When to Use" section.
+
+**Skill anatomy**: Each skill contains:
+- Trigger patterns (when to use)
+- Step-by-step procedure
+- Anti-patterns to avoid
+- Quality checklist
+- Examples
+
+---
+
+## Creating New Skills
+
+New skills follow the harvest → spec → draft → audit → pilot workflow:
+
+1. **Identify candidate** from methodology docs, CLAUDE.md, or observed patterns
+2. **Write specification** in `dev/active/skill-{name}-spec.md`
+3. **Draft SKILL.md** in `.claude/skills/{name}/SKILL.md`
+4. **Audit** against spec and best practices
+5. **Pilot test** with realistic scenarios
+6. **Add to this index** with scope and version
+
+**Metadata requirements** (per CIO guidance):
+```yaml
+---
+scope: cross-role | role-specific
+version: 1.0
+created: YYYY-MM-DD
+---
+```
+
+---
+
+## Skill Adoption Status
+
+| Phase | Status | Date |
+|-------|--------|------|
+| Pilot: create-session-log | Complete | 2026-01-21 |
+| Pilot: close-issue-properly | Complete | 2026-01-21 |
+| Tier 1: check-mailbox | Complete | 2026-01-21 |
+| Tier 1 rollout | In Progress | - |
+| Tier 2 development | Planned | - |
+
+---
+
+## References
+
+- **CIO Memo**: `mailboxes/cio/memo-skill-adoption-proposal-2026-01-21.md`
+- **Skill Candidates**: `dev/active/skill-harvest-candidates.md`
+- **anthropics/skills spec**: External reference for skill format best practices

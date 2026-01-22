@@ -101,9 +101,26 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 - **Experimental**: Patterns under active development
 - **Deprecated**: Legacy patterns being phased out
 
+## Related Resources
+
+### Anti-Pattern Index
+
+The **[Anti-Pattern Index](../anti-pattern-index.md)** provides bidirectional navigation between patterns and their associated anti-patterns:
+
+- **42 anti-patterns** across 5 categories (Grammar, Testing, Architecture, Process, Integration)
+- Links from anti-patterns → patterns that address them
+- Reverse index: patterns → anti-patterns they prevent
+- Updated during 6-week pattern sweeps
+
+Use the anti-pattern index to:
+- Understand common pitfalls related to a pattern
+- Find patterns that address a known problem
+- Discover traps to avoid when implementing a pattern
+
 ## Navigation
 
 - **[Main Documentation](../README.md)** - Return to main docs
+- **[Anti-Pattern Index](../anti-pattern-index.md)** - Common pitfalls and traps
 - **[Architecture Overview](../architecture/README.md)** - System architecture documentation
 - **[Development Guides](../development/README.md)** - Developer resources
 
@@ -114,7 +131,6 @@ See [pattern-000-template.md](pattern-000-template.md) for the standard template
 
 ---
 
-_Last updated: January 13, 2026_
-_All 49 patterns now included with logical categorization_
-_Latest addition: Pattern-049 (Audit Cascade) - Development & Process_
-_Previous additions: Pattern-048 (Periodic Background Job), Pattern-045/046/047 (Completion Discipline Triad)_
+_Last updated: January 21, 2026_
+_Added anti-pattern index navigation (42 anti-patterns across 5 categories)_
+_Note: Pattern catalog may have additional patterns (050+) not yet indexed here_
