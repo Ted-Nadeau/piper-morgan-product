@@ -1,0 +1,92 @@
+"""
+Consciousness Expression Framework
+
+This module provides tools for transforming data-driven output into
+conscious expression that feels like interaction with an embodied AI.
+
+Created: January 21, 2026
+Issue: #407 MUX-VISION-STANDUP-EXTRACT
+ADR: ADR-056 Consciousness Expression Patterns
+
+Usage:
+    from services.consciousness import inject_consciousness, validate_mvc
+
+    # Transform data into conscious narrative
+    output = await inject_consciousness(standup_result)
+
+    # Validate output meets MVC requirements
+    result = validate_mvc(output)
+    if not result.passes:
+        output = ensure_mvc(output)
+"""
+
+from services.consciousness.context import ConsciousnessContext, analyze_context
+from services.consciousness.conversation_consciousness import (
+    format_chitchat_conscious,
+    format_clarification_conscious,
+    format_farewell_conscious,
+    format_greeting_conscious,
+    format_thanks_conscious,
+)
+from services.consciousness.error_consciousness import (
+    enhance_error_pattern,
+    format_conversational_error_conscious,
+    format_error_conscious,
+)
+from services.consciousness.injection import ensure_mvc, inject_consciousness
+from services.consciousness.loading_consciousness import (
+    format_progress_conscious,
+    get_conscious_loading_message,
+)
+from services.consciousness.standup_consciousness import (
+    format_accomplishments_conscious,
+    format_blockers_conscious,
+    format_full_standup_conscious,
+    format_priorities_conscious,
+    format_standup_closing_conscious,
+    format_standup_greeting_conscious,
+)
+from services.consciousness.todo_consciousness import (
+    format_next_todo_conscious,
+    format_todo_completed_conscious,
+    format_todo_created_conscious,
+    format_todo_deleted_conscious,
+    format_todo_list_conscious,
+)
+from services.consciousness.validation import MVCResult, validate_mvc
+
+__all__ = [
+    # Core framework
+    "ConsciousnessContext",
+    "analyze_context",
+    "inject_consciousness",
+    "ensure_mvc",
+    "validate_mvc",
+    "MVCResult",
+    # Todo consciousness (Phase 3)
+    "format_todo_list_conscious",
+    "format_todo_created_conscious",
+    "format_todo_completed_conscious",
+    "format_todo_deleted_conscious",
+    "format_next_todo_conscious",
+    # Conversation consciousness (Phase 3)
+    "format_greeting_conscious",
+    "format_farewell_conscious",
+    "format_thanks_conscious",
+    "format_chitchat_conscious",
+    "format_clarification_conscious",
+    # Loading consciousness (Wave 1)
+    "get_conscious_loading_message",
+    "format_progress_conscious",
+    # Error consciousness (Wave 1)
+    "format_error_conscious",
+    "format_conversational_error_conscious",
+    "enhance_error_pattern",
+    # Standup consciousness (Wave 2)
+    "format_standup_greeting_conscious",
+    "format_accomplishments_conscious",
+    "format_priorities_conscious",
+    "format_blockers_conscious",
+    "format_standup_closing_conscious",
+    "format_full_standup_conscious",
+]

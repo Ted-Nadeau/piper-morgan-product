@@ -130,6 +130,21 @@ Verify that ownership describes relationships, not just foreign keys.
 - No semantic categories for relationship types
 - No explanation of how Piper relates to the object
 
+### 6.5. Ownership Metaphor Tests
+Verify that ownership uses consciousness metaphors correctly.
+
+**Pass criteria:**
+- Native uses "Mind" metaphor in experience language
+- Federated uses "Senses" metaphor in experience language
+- Synthetic uses "Understanding" metaphor in experience language
+- Classification follows decision tree from ownership-metaphors.md
+
+**Fail indicators:**
+- Generic ownership labels without metaphor connection
+- Wrong category for information type
+- Missing provenance for Synthetic
+- Stale confidence for Federated
+
 ### 7. Design Principle Tests (4 tests)
 Verify that CXO design principles are honored.
 

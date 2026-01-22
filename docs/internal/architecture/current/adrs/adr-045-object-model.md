@@ -32,6 +32,13 @@ We adopt the grammar **"Entities experience Moments in Places"** as Piper's foun
 | **Federated** | Observes, queries, acts upon | Piper's Senses | GitHub Issues, Slack Messages, Calendar |
 | **Synthetic** | Constructs through reasoning | Piper's Understanding | Assembled Projects, Inferred Risks |
 
+### Ownership Metaphors Deep Dive
+
+For the complete philosophical foundation of Mind/Senses/Understanding:
+- **Location**: `docs/internal/architecture/current/ownership-metaphors.md`
+- **Content**: Why these metaphors, decision tree, worked examples
+- **Purpose**: Helps developers correctly classify new information types
+
 ### Lifecycle Model (How Objects Evolve)
 
 Eight stages with composting:
@@ -159,12 +166,55 @@ Anti-Flattening Tests:
 4. Does lifecycle include transformation?
 5. Can you see consciousness in the implementation?
 
+## Consciousness Philosophy
+
+The "why" behind the grammar is documented in the Consciousness Philosophy:
+- **Location**: `docs/internal/architecture/current/consciousness-philosophy.md`
+- **Content**: Five Pillars of Consciousness, Soul Preservation Principles
+- **Purpose**: Ensures developers understand not just HOW but WHY
+
+### The Five Pillars
+1. Identity Awareness - Piper knows itself
+2. Time Consciousness - Lived time, not clock time
+3. Spatial Awareness - Digital spaces as places
+4. Agency Recognition - Knows capabilities and limits
+5. Predictive Modeling - Has premonitions and concerns
+
+See the philosophy document for detailed guidance.
+
 ## Related Decisions
 
-- **ADR documenting Consciousness Model**: Recommended complement to object model
+- **Consciousness Philosophy**: `docs/internal/architecture/current/consciousness-philosophy.md` - The WHY behind this grammar
 - **ADR documenting Standup Pattern Extraction**: Extraction methodology for consciousness patterns
 - **ADR-013**: MCP Spatial Integration (existing, aligns with Places concept)
 - **Pattern-020**: Spatial Metaphor Integration (validates approach)
+
+## Implementation References
+
+### MUX Infrastructure (#399)
+- **Protocols**: `services/mux/protocols.py` - Entity, Moment, Place runtime-checkable protocols
+- **Lenses**: `services/mux/lenses/` - 8 perceptual lenses (Temporal, Priority, Collaborative, Flow, Hierarchy, Quantitative, Causal, Contextual)
+- **Ownership**: `services/mux/ownership.py` - Native, Federated, Synthetic categories
+- **Lifecycle**: `services/mux/lifecycle.py` - 8-stage state machine with composting
+- **Metadata**: `services/mux/metadata.py` - 6 universal dimensions (Provenance, Relevance, AttentionState, Confidence, Relations, Journal)
+- **Situation**: `services/mux/situation.py` - Context manager for Moment sequences
+
+### Grammar Application (#404)
+- **Grammar Compliance Audit**: `docs/internal/architecture/current/grammar-compliance-audit.md` - 39 features audited
+- **Application Patterns**: `docs/internal/architecture/current/patterns/pattern-050-054-*.md` - 5 patterns extracted from Morning Standup
+  - Pattern-050: Context Dataclass Pair (input/output separation)
+  - Pattern-051: Parallel Place Gathering (multi-source data collection)
+  - Pattern-052: Personality Bridge (data to narrative transformation)
+  - Pattern-053: Warmth Calibration (tone adjustment)
+  - Pattern-054: Honest Failure (graceful degradation)
+- **Transformation Guide**: `docs/internal/development/grammar-transformation-guide.md` - Decision tree and worked example
+- **Implementation Guide**: `docs/internal/development/mux-implementation-guide.md` - How to use protocols and lenses
+- **Experience Tests**: `docs/internal/development/mux-experience-tests.md` - Writing anti-flattening tests
+- **Onboarding Checklist**: `docs/internal/development/grammar-onboarding-checklist.md` - Developer learning path
+
+### Verification
+- **Anti-Flattening Tests**: `tests/unit/services/mux/test_anti_flattening.py` - 40 tests verifying consciousness preservation
+- **Test Coverage**: 302 total MUX tests (101 protocols/lenses + 25 ownership + 69 lifecycle + 67 metadata + 40 anti-flattening)
 
 ## References
 

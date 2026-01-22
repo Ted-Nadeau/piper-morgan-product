@@ -3,11 +3,22 @@ StandupToChatBridge - Domain Service
 
 Bridges standup metrics to conversational chat format with personality enhancement.
 Maintains data integrity while adding warm, engaging narrative flow.
+
+Issue #632: Now uses consciousness wrappers for identity voice,
+epistemic humility, and dialogue invitation.
 """
 
 import logging
 import re
 from typing import Any, Dict, List, Optional
+
+from services.consciousness.standup_consciousness import (
+    format_accomplishments_conscious,
+    format_blockers_conscious,
+    format_priorities_conscious,
+    format_standup_closing_conscious,
+    format_standup_greeting_conscious,
+)
 
 from .personality_profile import ActionLevel, ConfidenceDisplayStyle, PersonalityProfile
 
@@ -32,50 +43,68 @@ class StandupToChatBridge:
         }
 
     def adapt_standup_for_chat(self, standup_response: Dict[str, Any]) -> str:
-        """Transform standup JSON to conversational format"""
+        """Transform standup JSON to conversational format with consciousness.
+
+        Issue #632: Now uses consciousness wrappers for identity voice,
+        epistemic humility, and dialogue invitation.
+        """
         try:
             if not standup_response or "data" not in standup_response:
-                return "I don't have standup information available right now."
+                return "I don't have standup information available right now. Want me to check what's going on?"
 
             data = standup_response["data"]
             metadata = standup_response.get("metadata", {})
 
-            # Build conversational narrative
+            # Determine data sources for attribution
+            sources = []
+            if data.get("github_activity", {}).get("commits"):
+                sources.append("GitHub")
+            if metadata.get("context_source") == "persistent":
+                sources.append("our conversations")
+
+            # Build conscious narrative
             sections = []
+
+            # Greeting with source attribution
+            sections.append(format_standup_greeting_conscious(sources or ["your recent activity"]))
 
             # Yesterday's accomplishments
             if data.get("yesterday_accomplishments"):
-                sections.append(self._format_accomplishments(data["yesterday_accomplishments"]))
+                sections.append(format_accomplishments_conscious(data["yesterday_accomplishments"]))
 
             # Today's priorities
             if data.get("today_priorities"):
-                sections.append(self._format_priorities(data["today_priorities"]))
+                sections.append(format_priorities_conscious(data["today_priorities"]))
 
             # Blockers
-            if data.get("blockers"):
-                sections.append(self._format_blockers(data["blockers"]))
-            else:
-                sections.append("No blockers - clear path ahead! 🚀")
+            sections.append(format_blockers_conscious(data.get("blockers", [])))
 
-            # Performance summary
-            if data.get("generation_time_ms") and data.get("time_saved_minutes"):
-                sections.append(self._format_performance_summary(data, metadata))
+            # Closing with metrics
+            metrics = {
+                "generation_time_ms": data.get("generation_time_ms"),
+                "time_saved_minutes": data.get("time_saved_minutes"),
+            }
+            sections.append(format_standup_closing_conscious(metrics))
 
             return "\n\n".join(sections)
 
         except Exception as e:
             logger.error(f"Error adapting standup for chat: {e}")
-            return "I encountered an issue formatting your standup. Here's the raw data available."
+            return "I ran into something while preparing your standup. Want me to try again?"
 
     def apply_personality_to_standup(
         self, standup_data: Dict[str, Any], profile: PersonalityProfile
     ) -> str:
-        """Apply personality preferences to standup content"""
+        """Apply personality preferences to standup content.
+
+        Note: Base content now uses consciousness patterns.
+        Personality enhancements layer on top.
+        """
         try:
-            # First convert to chat format
+            # First convert to conscious chat format
             base_content = self.adapt_standup_for_chat(standup_data)
 
-            # Apply personality enhancements
+            # Apply personality enhancements (warmth, action orientation)
             enhanced_content = self._enhance_with_personality(base_content, profile, standup_data)
 
             return enhanced_content

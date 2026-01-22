@@ -1,9 +1,68 @@
 import re
 import string
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import List, Optional, Tuple
 
 from services.domain.models import Intent
 from services.shared_types import IntentCategory
+
+
+@dataclass
+class MultiIntentResult:
+    """
+    Result of multi-intent detection (Issue #595).
+
+    Contains all detected intents from a single message, enabling
+    "handle all" strategy for messages like "Hi Piper! What's on my agenda?"
+
+    This detection logic is designed to be reusable for #427
+    (Unified Conversation Model) where more sophisticated strategy
+    selection (handle all, chain, or clarify) will be implemented.
+    """
+
+    intents: List[Intent] = field(default_factory=list)
+    original_message: str = ""
+    is_multi_intent: bool = False
+
+    @property
+    def primary_intent(self) -> Optional[Intent]:
+        """Get the primary (most important) intent.
+
+        Priority order for determining primary intent:
+        1. Non-conversational intents (QUERY, EXECUTION, etc.) take precedence
+        2. Among conversational intents, return the first one
+        """
+        if not self.intents:
+            return None
+
+        # Find first non-conversational intent
+        for intent in self.intents:
+            if intent.category != IntentCategory.CONVERSATION:
+                return intent
+
+        # Fall back to first intent if all are conversational
+        return self.intents[0]
+
+    @property
+    def secondary_intents(self) -> List[Intent]:
+        """Get all intents except the primary one."""
+        primary = self.primary_intent
+        if not primary:
+            return []
+        return [i for i in self.intents if i.id != primary.id]
+
+    @property
+    def has_greeting(self) -> bool:
+        """Check if any intent is a greeting."""
+        return any(
+            i.category == IntentCategory.CONVERSATION and i.action == "greeting"
+            for i in self.intents
+        )
+
+    @property
+    def has_substantive_intent(self) -> bool:
+        """Check if there's a non-conversational intent."""
+        return any(i.category != IntentCategory.CONVERSATION for i in self.intents)
 
 
 class PreClassifier:
@@ -809,3 +868,217 @@ class PreClassifier:
             if re.search(pattern, message):
                 return True
         return False
+
+    @staticmethod
+    def detect_multiple_intents(message: str) -> MultiIntentResult:
+        """
+        Detect ALL intents present in a message (Issue #595).
+
+        Unlike pre_classify() which returns the first match, this method
+        finds all matching patterns to support multi-intent messages like
+        "Hi Piper! What's on my agenda?"
+
+        This detection logic is designed to be reusable for #427
+        (Unified Conversation Model).
+
+        Args:
+            message: The user's message to analyze
+
+        Returns:
+            MultiIntentResult containing all detected intents
+        """
+        import structlog
+
+        logger = structlog.get_logger()
+        clean_msg = message.strip().lower()
+        clean_for_matching = clean_msg.rstrip(string.punctuation + "!?.,;:😊🙂👋")
+
+        intents: List[Intent] = []
+
+        # Define pattern groups with their intent mapping
+        # Each tuple: (patterns, category, action_resolver)
+        # action_resolver is either a string or a callable that takes the message
+        pattern_groups: List[Tuple[List[str], IntentCategory, str]] = [
+            # Conversational patterns (lower priority)
+            (PreClassifier.GREETING_PATTERNS, IntentCategory.CONVERSATION, "greeting"),
+            (PreClassifier.FAREWELL_PATTERNS, IntentCategory.CONVERSATION, "farewell"),
+            (PreClassifier.THANKS_PATTERNS, IntentCategory.CONVERSATION, "thanks"),
+            # Identity patterns
+            (PreClassifier.IDENTITY_PATTERNS, IntentCategory.IDENTITY, "get_identity"),
+            # Calendar/agenda patterns (high priority for #595)
+            (PreClassifier.CALENDAR_QUERY_PATTERNS, IntentCategory.QUERY, "meeting_time"),
+            # Contextual patterns
+            (PreClassifier.CONTEXTUAL_QUERY_PATTERNS, IntentCategory.QUERY, "contextual_query"),
+            # GitHub patterns
+            (PreClassifier.GITHUB_QUERY_PATTERNS, IntentCategory.QUERY, "github_query"),
+            # Productivity patterns
+            (PreClassifier.PRODUCTIVITY_QUERY_PATTERNS, IntentCategory.QUERY, "productivity_query"),
+            # Todo patterns
+            (PreClassifier.TODO_QUERY_PATTERNS, IntentCategory.QUERY, "list_todos_query"),
+            # Document patterns
+            (PreClassifier.DOCUMENT_QUERY_PATTERNS, IntentCategory.QUERY, "update_document_query"),
+            # Temporal patterns
+            (PreClassifier.TEMPORAL_PATTERNS, IntentCategory.TEMPORAL, "get_current_time"),
+            # Status patterns
+            (PreClassifier.STATUS_PATTERNS, IntentCategory.STATUS, "get_project_status"),
+            # Priority patterns
+            (PreClassifier.PRIORITY_PATTERNS, IntentCategory.PRIORITY, "get_top_priority"),
+            # Guidance patterns
+            (PreClassifier.GUIDANCE_PATTERNS, IntentCategory.GUIDANCE, "get_contextual_guidance"),
+        ]
+
+        # Check each pattern group
+        for patterns, category, action in pattern_groups:
+            if PreClassifier._matches_patterns(clean_for_matching, patterns):
+                # Refine action for specific pattern groups that need it
+                final_action = action
+
+                # Special handling for calendar queries to get specific action
+                if category == IntentCategory.QUERY and action == "meeting_time":
+                    final_action = PreClassifier._get_calendar_action(clean_for_matching)
+
+                # Special handling for contextual queries
+                elif category == IntentCategory.QUERY and action == "contextual_query":
+                    final_action = PreClassifier._get_contextual_action(clean_for_matching)
+
+                # Special handling for GitHub queries
+                elif category == IntentCategory.QUERY and action == "github_query":
+                    final_action = PreClassifier._get_github_action(clean_for_matching)
+
+                # Special handling for todo queries
+                elif category == IntentCategory.QUERY and action == "list_todos_query":
+                    final_action = PreClassifier._get_todo_action(clean_for_matching)
+
+                intent = Intent(
+                    category=category,
+                    action=final_action,
+                    confidence=1.0,
+                    context={"original_message": message, "multi_intent_detection": True},
+                )
+                intents.append(intent)
+
+                logger.debug(
+                    "multi_intent_detected",
+                    category=category.value,
+                    action=final_action,
+                )
+
+        result = MultiIntentResult(
+            intents=intents,
+            original_message=message,
+            is_multi_intent=len(intents) > 1,
+        )
+
+        logger.info(
+            "multi_intent_detection_complete",
+            message_preview=message[:50],
+            intent_count=len(intents),
+            is_multi_intent=result.is_multi_intent,
+            has_greeting=result.has_greeting,
+            has_substantive=result.has_substantive_intent,
+        )
+
+        return result
+
+    @staticmethod
+    def _get_calendar_action(message: str) -> str:
+        """Determine specific calendar action based on pattern match."""
+        # Check for recurring meetings
+        recurring_patterns = [
+            r"\breview.*recurring meetings\b",
+            r"\bshow.*recurring meetings\b",
+            r"\baudit.*standing meetings\b",
+            r"\brecurring meetings\b",
+        ]
+        if PreClassifier._matches_patterns(message, recurring_patterns):
+            return "recurring_meetings"
+
+        # Check for week calendar
+        week_patterns = [
+            r"\bwhat'?s my week look like\b",
+            r"\bshow.*my week\b",
+            r"\bweek ahead\b",
+            r"\bweek calendar\b",
+            r"\bcalendar.*this week\b",
+            r"\bcalendar.*next week\b",
+            r"\bschedule.*this week\b",
+            r"\bschedule.*next week\b",
+            r"\bmeetings.*this week\b",
+            r"\bmeetings.*next week\b",
+            r"\bagenda.*this week\b",
+            r"\bagenda.*next week\b",
+        ]
+        if PreClassifier._matches_patterns(message, week_patterns):
+            return "week_calendar"
+
+        # Default: meeting_time (single day queries)
+        return "meeting_time"
+
+    @staticmethod
+    def _get_contextual_action(message: str) -> str:
+        """Determine specific contextual action based on pattern match."""
+        changes_patterns = [
+            r"\bwhat changed since\b",
+            r"\bwhat'?s changed since\b",
+            r"\bshow.*changes since\b",
+            r"\bshow me.*changed\b",
+            r"\bchanges since\b",
+            r"\bactivity since\b",
+            r"\bupdates since\b",
+        ]
+        if PreClassifier._matches_patterns(message, changes_patterns):
+            return "changes_query"
+        return "attention_query"
+
+    @staticmethod
+    def _get_github_action(message: str) -> str:
+        """Determine specific GitHub action based on pattern match."""
+        shipped_patterns = [
+            r"\bwhat did we ship\b",
+            r"\bwhat shipped\b",
+            r"\bshow.*what.*shipped\b",
+            r"\bwhat.*shipped.*week\b",
+        ]
+        if PreClassifier._matches_patterns(message, shipped_patterns):
+            return "shipped_query"
+
+        stale_patterns = [
+            r"\bshow.*stale prs\b",
+            r"\bstale pull requests\b",
+            r"\bold prs\b",
+            r"\bprs.*needing review\b",
+        ]
+        if PreClassifier._matches_patterns(message, stale_patterns):
+            return "stale_prs_query"
+
+        close_patterns = [
+            r"\bclose issue\s*#?\d+\b",
+            r"\bclose.*completed.*issue\b",
+            r"\bclose.*issue\b",
+        ]
+        if PreClassifier._matches_patterns(message, close_patterns):
+            return "close_issue_query"
+
+        comment_patterns = [
+            r"\bcomment on issue\s*#?\d+\b",
+            r"\badd comment to issue\s*#?\d+\b",
+            r"\breply to issue\s*#?\d+\b",
+            r"\bcomment\s+on\s+#?\d+\b",
+        ]
+        if PreClassifier._matches_patterns(message, comment_patterns):
+            return "comment_issue_query"
+
+        return "review_issue_query"
+
+    @staticmethod
+    def _get_todo_action(message: str) -> str:
+        """Determine specific todo action based on pattern match."""
+        list_patterns = [
+            r"\bshow my todos\b",
+            r"\blist my todos\b",
+            r"\bwhat are my todos\b",
+            r"\bmy todos\b",
+        ]
+        if PreClassifier._matches_patterns(message, list_patterns):
+            return "list_todos_query"
+        return "next_todo_query"

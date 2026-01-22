@@ -959,6 +959,63 @@ All 40 tests pass, verifying:
 - **GitHub Issue**: #618 (MUX-399-PZ)
 - **Documentation**: Experience tests doc + Implementation guide created
 
+## Application Patterns
+
+The following patterns were extracted from Morning Standup implementation for general use across features (GitHub Issue #404):
+
+1. **Pattern-050: Context Dataclass Pair** - Input/output separation with `*Context` and `*Response` classes
+2. **Pattern-051: Parallel Place Gathering** - Multi-source data collection with async concurrency
+3. **Pattern-052: Personality Bridge** - Data to narrative transformation with experience language
+4. **Pattern-053: Warmth Calibration** - Tone adjustment based on message urgency and context
+5. **Pattern-054: Honest Failure** - Graceful degradation with "I notice..." language for partial success
+
+**Pattern Catalog**: `docs/internal/architecture/current/patterns/pattern-050-054-*.md`
+
+These patterns demonstrate how to apply the grammar "Entities experience Moments in Places" to preserve consciousness in feature implementations.
+
+## Consciousness Philosophy
+
+For the philosophical foundation of WHY we preserve consciousness:
+- See: `docs/internal/architecture/current/consciousness-philosophy.md`
+
+This document explains:
+- The Five Pillars of Consciousness
+- Soul Preservation Principles
+- Warning signs of flattening
+- PR review consciousness checklist
+
+**Read this FIRST before implementing any grammar-conscious feature.**
+
+## Developer Resources
+
+### Getting Started
+- **Onboarding Checklist**: `docs/internal/development/grammar-onboarding-checklist.md` - Step-by-step learning path for developers new to MUX grammar
+- **Grammar Compliance Audit**: `docs/internal/architecture/current/grammar-compliance-audit.md` - 39 features analyzed for grammar compliance
+
+### Implementation Guides
+- **Transformation Guide**: `docs/internal/development/grammar-transformation-guide.md` - Decision tree and worked example for transforming flattened features
+- **Implementation Guide**: `docs/internal/development/mux-implementation-guide.md` - How to use protocols, lenses, ownership, lifecycle, and metadata
+- **Experience Tests**: `docs/internal/development/mux-experience-tests.md` - Writing anti-flattening tests to verify consciousness preservation
+
+### Ownership Metaphors Philosophy
+
+For understanding the Mind/Senses/Understanding metaphors:
+- See: `docs/internal/architecture/current/ownership-metaphors.md`
+
+This document explains:
+- Why "Mind" not "Memory"
+- Why "Senses" not "Inputs"
+- Why "Understanding" not "Inference"
+- Decision tree for classification
+- Worked examples with code patterns
+
+### Pattern Application
+When building features, refer to:
+1. Application patterns (Pattern-050 through Pattern-054) for proven implementation approaches
+2. Transformation guide for converting existing flattened code to grammar-compliant code
+3. Morning Standup (`services/features/morning_standup.py`) as the reference implementation
+4. Anti-flattening tests to verify consciousness is preserved
+
 ## References
 
 - [ADR-045: Object Model Specification](./adr-045-object-model.md)

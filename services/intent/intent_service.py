@@ -30,6 +30,7 @@ from services.ethics.boundary_enforcer_refactored import boundary_enforcer_refac
 from services.intent_service import classifier
 from services.intent_service.action_mapper import ActionMapper
 from services.intent_service.canonical_handlers import CanonicalHandlers
+from services.intent_service.pre_classifier import MultiIntentResult
 from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.learning.learning_handler import LearningHandler
@@ -59,6 +60,11 @@ class IntentProcessingResult:
         None  # Phase 3: Pattern suggestions  # CORE-CRAFT-GAP: Track actual implementation vs placeholders
     )
     preferences: Optional[Dict[str, Any]] = None  # Issue #248: Preference detection results
+    # Issue #595: Multi-intent support
+    multi_intent_greeting: bool = (
+        False  # True if greeting was detected alongside substantive intent
+    )
+    secondary_intents: Optional[List[Dict[str, Any]]] = None  # Other intents detected
 
 
 class IntentProcessingError(Exception):
@@ -351,9 +357,46 @@ class IntentService:
             if self.orchestration_engine is None:
                 return await self._handle_missing_engine(message)
 
-            # Classify intent
+            # Issue #595: Multi-intent classification
+            # Use classify_multiple to detect all intents in message
             self.logger.info(f"Processing intent with OrchestrationEngine: {message}")
-            intent = await self.intent_classifier.classify(message)
+            multi_result = await self.intent_classifier.classify_multiple(message)
+
+            # Issue #595: Handle multi-intent messages with "handle all" strategy
+            # If greeting + substantive intent detected, handle both
+            if (
+                multi_result.is_multi_intent
+                and multi_result.has_greeting
+                and multi_result.has_substantive_intent
+            ):
+                self.logger.info(
+                    "multi_intent_handling",
+                    intent_count=len(multi_result.intents),
+                    has_greeting=True,
+                    primary_category=(
+                        multi_result.primary_intent.category.value
+                        if multi_result.primary_intent
+                        else None
+                    ),
+                )
+                # Use primary intent (substantive) for main processing
+                # The greeting will be handled via multi_intent context
+                intent = multi_result.primary_intent
+                # Mark that we detected a greeting so response can include acknowledgment
+                if intent.context is None:
+                    intent.context = {}
+                intent.context["multi_intent_greeting"] = True
+                intent.context["secondary_intents"] = [
+                    {"category": i.category.value, "action": i.action}
+                    for i in multi_result.secondary_intents
+                ]
+            else:
+                # Single intent or all-conversational - use primary
+                intent = multi_result.primary_intent
+                if intent is None:
+                    # No intents detected - fall back to standard classification
+                    intent = await self.intent_classifier.classify(message)
+
             self.logger.info(f"Intent classified as: {intent.category} - {intent.action}")
 
             # Issue #490: Add user_id to intent context for downstream handlers
@@ -506,13 +549,32 @@ class IntentService:
             if self.canonical_handlers.can_handle(intent):
                 # Issue #582: Pass user_id to enable database project lookup
                 canonical_result = await self.canonical_handlers.handle(intent, session_id, user_id)
+
+                # Issue #595: Add greeting prefix if multi-intent with greeting detected
+                response_message = canonical_result["message"]
+                multi_intent_greeting = (
+                    intent.context.get("multi_intent_greeting", False) if intent.context else False
+                )
+                if multi_intent_greeting:
+                    # Prepend friendly greeting acknowledgment to substantive response
+                    response_message = f"Hi there! {response_message}"
+                    self.logger.info(
+                        "multi_intent_greeting_added",
+                        original_length=len(canonical_result["message"]),
+                    )
+
                 return IntentProcessingResult(
                     success=True,
-                    message=canonical_result["message"],
+                    message=response_message,
                     intent_data=canonical_result["intent"],
                     requires_clarification=canonical_result.get("requires_clarification", False),
                     suggestions=all_suggestions,
                     preferences=preferences,  # Issue #248: Attach preference detection results
+                    # Issue #595: Multi-intent tracking
+                    multi_intent_greeting=multi_intent_greeting,
+                    secondary_intents=(
+                        intent.context.get("secondary_intents") if intent.context else None
+                    ),
                 )
 
             # Create workflow with timeout protection (Bug #166)

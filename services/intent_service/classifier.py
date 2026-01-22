@@ -33,7 +33,7 @@ from services.intent_service.cache import IntentCache
 # --- Add fuzzy matcher import ---
 from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_match
 from services.intent_service.intent_hooks import IntentProcessingHooks
-from services.intent_service.pre_classifier import PreClassifier
+from services.intent_service.pre_classifier import MultiIntentResult, PreClassifier
 from services.intent_service.preference_handler import PreferenceDetectionHandler
 from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
 from services.knowledge_graph import get_ingester
@@ -349,6 +349,67 @@ class IntentClassifier:
             logger.error(f"Classification failed: {e}", exc_info=True)
             # Raise a structured error instead of falling back
             raise IntentClassificationFailedError(details={"original_error": str(e)})
+
+    async def classify_multiple(
+        self,
+        message: str,
+        context: Optional[Dict] = None,
+        session: Optional[Any] = None,
+        spatial_context: Optional[Dict] = None,
+    ) -> MultiIntentResult:
+        """
+        Detect and classify multiple intents in a message (Issue #595).
+
+        This method first uses rule-based multi-intent detection for common
+        patterns (like "Hi Piper! What's on my agenda?"), then falls back to
+        LLM classification for unmatched messages.
+
+        The detection logic is designed to be reusable for #427
+        (Unified Conversation Model).
+
+        Args:
+            message: User input text
+            context: Optional context dict
+            session: Optional session object
+            spatial_context: Optional spatial context
+
+        Returns:
+            MultiIntentResult containing all detected intents
+        """
+        # First, try rule-based multi-intent detection
+        multi_result = PreClassifier.detect_multiple_intents(message)
+
+        if multi_result.intents:
+            logger.info(
+                "multi_intent_preclassified",
+                message_preview=message[:50],
+                intent_count=len(multi_result.intents),
+                is_multi_intent=multi_result.is_multi_intent,
+            )
+            return multi_result
+
+        # Fall back to standard LLM classification (returns single intent)
+        # Wrap in MultiIntentResult for consistent interface
+        try:
+            single_intent = await self.classify(
+                message=message,
+                context=context,
+                session=session,
+                spatial_context=spatial_context,
+            )
+            return MultiIntentResult(
+                intents=[single_intent],
+                original_message=message,
+                is_multi_intent=False,
+            )
+        except Exception as e:
+            logger.error(f"Multi-intent classification failed: {e}", exc_info=True)
+            # Return empty result on failure
+            return MultiIntentResult(
+                intents=[],
+                original_message=message,
+                is_multi_intent=False,
+            )
 
     async def _classify_with_reasoning(
         self,
