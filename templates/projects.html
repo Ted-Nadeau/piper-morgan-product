@@ -47,7 +47,7 @@
     <div class="page-header">
       <h1>My Projects</h1>
       <button class="create-resource-btn" onclick="createNewProject()">
-        + Create New Project
+        + Start a project
       </button>
     </div>
 
@@ -181,8 +181,8 @@
     function createNewProject() {
       Dialog.show({
         mode: 'form',
-        title: 'Create New Project',
-        confirmText: 'Create',
+        title: 'Start a Project',
+        confirmText: 'Create it',
         content: `
           <div class="form-group">
             <label>Project Name</label>
@@ -244,8 +244,8 @@
     // Delete project
     function deleteProject(projectId) {
       Dialog.confirm({
-        title: 'Delete Project',
-        message: 'Are you sure you want to delete this project? This cannot be undone.',
+        title: 'Remove this project?',
+        message: "I'll remove this project. This can't be undone.",
         onConfirm: async () => {
           try {
             // TODO: Call API to delete

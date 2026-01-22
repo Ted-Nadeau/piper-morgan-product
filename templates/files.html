@@ -143,7 +143,7 @@
     <div class="page-header">
       <h1>📄 Files</h1>
       <button class="create-resource-btn" onclick="openUploadDialog()">
-        + Upload File
+        + Add a file
       </button>
     </div>
 
@@ -279,8 +279,8 @@
     function openUploadDialog() {
       Dialog.show({
         mode: 'form',
-        title: 'Upload File',
-        confirmText: 'Upload',
+        title: 'Add a File',
+        confirmText: 'Upload it',
         content: `
           <div class="form-group">
             <label>Select File</label>
@@ -348,8 +348,8 @@
     // Delete file
     function deleteFile(fileId) {
       Dialog.confirm({
-        title: 'Delete File',
-        message: 'Are you sure you want to delete this file? This cannot be undone.',
+        title: 'Remove this file?',
+        message: "I'll remove this from your files. This can't be undone.",
         onConfirm: async () => {
           try {
             const response = await fetch(`/api/v1/files/${fileId}`, {
