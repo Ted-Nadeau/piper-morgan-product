@@ -66,6 +66,16 @@ install_root_redaction_filter()
 
 logger = logging.getLogger(__name__)
 
+# Consciousness-enhanced CLI messages (Issue #633)
+from services.consciousness.cli_consciousness import (
+    format_cli_error_conscious,
+    format_cli_success_conscious,
+    format_ready_conscious,
+    format_services_ready_conscious,
+    format_shutdown_conscious,
+    format_startup_conscious,
+)
+
 
 def should_open_browser() -> bool:
     """Check if browser should be opened (Issue #461: on by default)"""
@@ -106,7 +116,7 @@ async def main():
         if args.verbose:
             logger.info("Starting Piper Morgan...")
         else:
-            print("🚀 Starting Piper Morgan...")
+            print(format_startup_conscious())
 
         # Initialize service container
         from services.container import ServiceContainer
@@ -124,7 +134,7 @@ async def main():
             logger.info(f"Services initialized: {container.list_services()}")
         else:
             services = container.list_services()
-            print(f"   ✓ Services initialized ({len(services)}/{len(services)})")
+            print(f"   {format_services_ready_conscious(len(services))}")
 
         # Start web server
         import uvicorn
@@ -133,12 +143,13 @@ async def main():
             logger.info("Starting web server on http://127.0.0.1:8001")
         else:
             # G50: Clear Server Startup Message with all necessary URLs
+            # Issue #633: Consciousness-enhanced messaging
             print("\n" + "=" * 60)
-            print("✅ Piper Morgan is running!")
+            print(format_ready_conscious("http://localhost:8001"))
             print("=" * 60)
-            print("\n🌐 Web Interface:     http://localhost:8001")
-            print("🔧 API Documentation: http://localhost:8001/docs")
-            print("📊 Health Check:      http://localhost:8001/health")
+            print("\n   Web Interface:     http://localhost:8001")
+            print("   API Documentation: http://localhost:8001/docs")
+            print("   Health Check:      http://localhost:8001/health")
             print("\nPress Ctrl+C to stop the server")
             print("=" * 60 + "\n")
 
@@ -162,14 +173,14 @@ async def main():
         if args.verbose:
             logger.info("Shutting down gracefully...")
         else:
-            print("\n👋 Shutting down gracefully...")
+            print(f"\n{format_shutdown_conscious()}")
         container = ServiceContainer()
         container.shutdown()
     except Exception as e:
         if args.verbose:
             logger.error(f"Startup failed: {e}", exc_info=True)
         else:
-            print(f"❌ Error: {e}")
+            print(format_cli_error_conscious(str(e)))
         sys.exit(1)
 
 
@@ -241,7 +252,11 @@ if __name__ == "__main__":
                 # Store in OS keychain (global scope)
                 try:
                     keychain.store_api_key(provider, secret)
-                    print(f"✓ Stored {provider} key in OS keychain")
+                    print(
+                        format_cli_success_conscious(
+                            "stored", f"your {provider} key in the OS keychain"
+                        )
+                    )
                 except Exception as e:
                     print(f"❌ Failed to store key: {e}")
                     sys.exit(1)

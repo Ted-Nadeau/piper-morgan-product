@@ -1,6 +1,17 @@
 {# G24: Confirmation Dialog Component
    Modal dialog for confirming destructive actions (delete, reset, clear, etc.)
    Provides clear warning and two-button flow (Cancel / Confirm)
+
+   CONSCIOUSNESS PATTERN (#638):
+   Use ui_consciousness helpers for clear but not scary confirmations:
+
+   Python (in route/handler):
+     from services.consciousness import format_delete_confirmation_conscious, format_button_label_conscious
+     message = format_delete_confirmation_conscious("todo", "Buy groceries")
+     # Returns: 'Remove "Buy groceries"? This can\'t be undone.'
+
+     cancel_label = format_button_label_conscious("cancel")  # "Never mind"
+     confirm_label = format_button_label_conscious("delete")  # "Remove this"
 #}
 
 <div

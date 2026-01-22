@@ -21,6 +21,16 @@ import structlog
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from services.consciousness.files_consciousness import (
+    format_files_conscious,
+    format_projects_conscious,
+)
+from services.consciousness.learning_consciousness import format_patterns_learned_conscious
+from services.consciousness.search_consciousness import (
+    format_no_results_conscious,
+    format_search_error_conscious,
+    format_search_results_conscious,
+)
 from services.conversation.conversation_handler import ConversationHandler
 from services.conversation.conversation_manager import ConversationManager
 from services.database.models import User
@@ -1178,11 +1188,18 @@ class IntentService:
         """
         Handle list_projects/show_projects query actions.
 
-        Phase 3C: Restore list_projects functionality.
+        Phase 3C: Restore list_projects functionality with consciousness wrapper.
+        Issue: #635 CONSCIOUSNESS-TRANSFORM Files/Projects
         """
+        # TODO: Replace hardcoded projects with actual data from repository
+        projects = [
+            {"name": "Piper Morgan Platform", "active": True},
+            {"name": "Issue Tracker Integration", "active": True},
+            {"name": "Documentation Updates", "active": True},
+        ]
         return IntentProcessingResult(
             success=True,
-            message="Here are your active projects:\n1. Piper Morgan Platform\n2. Issue Tracker Integration\n3. Documentation Updates",
+            message=format_projects_conscious(projects),
             intent_data={
                 "category": intent.category.value,
                 "action": intent.action,
@@ -1303,7 +1320,7 @@ class IntentService:
             if not results:
                 return IntentProcessingResult(
                     success=True,
-                    message=f"No documents found matching '{search_query}'. Try a different search term.",
+                    message=format_no_results_conscious(search_query),
                     intent_data={
                         "category": intent.category.value,
                         "action": intent.action,
@@ -1337,16 +1354,12 @@ class IntentService:
                     }
                 )
 
-            # Format message
-            message_lines = [f"Found {len(results)} documents matching '{search_query}':\n"]
-            for i, doc in enumerate(result_summaries, 1):
-                message_lines.append(f"{i}. **{doc['title']}**")
-                if doc.get("url"):
-                    message_lines.append(f"   {doc['url']}")
-
+            # Format message with consciousness wrapper (Issue #634)
             return IntentProcessingResult(
                 success=True,
-                message="\n".join(message_lines),
+                message=format_search_results_conscious(
+                    search_query, result_summaries, "your Notion workspace"
+                ),
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
@@ -1363,7 +1376,7 @@ class IntentService:
             self.logger.error(f"Notion document search error: {e}")
             return IntentProcessingResult(
                 success=False,
-                message=f"Unable to search documents: {str(e)}",
+                message=format_search_error_conscious(str(e)),
                 intent_data={
                     "category": intent.category.value,
                     "action": intent.action,
@@ -8119,33 +8132,18 @@ Content to summarize:
         return recommendations
 
     def _format_learning_response(self, patterns: List[Dict[str, Any]], total_analyzed: int) -> str:
-        """Format human-readable response message.
+        """Format human-readable response message with consciousness.
+
+        Issue #636: Now uses consciousness wrapper for identity voice.
 
         Args:
             patterns: List of identified patterns
             total_analyzed: Total number of items analyzed
 
         Returns:
-            Formatted message string
+            Formatted message string with consciousness
         """
-        if not patterns:
-            return f"Analyzed {total_analyzed} items but found no recurring patterns."
-
-        # Create preview of top 3 patterns
-        preview = []
-        for i, pattern in enumerate(patterns[:3], 1):
-            preview.append(
-                f"{i}. {pattern['description']} ({pattern['occurrences']} occurrences, "
-                f"confidence: {pattern['confidence']:.2f})"
-            )
-
-        preview_text = "\n".join(preview)
-
-        return (
-            f"Learned {len(patterns)} patterns from {total_analyzed} items:\n\n"
-            f"{preview_text}\n\n"
-            f"See intent_data.patterns_found for complete details."
-        )
+        return format_patterns_learned_conscious(patterns, total_analyzed)
 
     async def _handle_unknown_intent(
         self, intent: Intent, workflow, session_id: str

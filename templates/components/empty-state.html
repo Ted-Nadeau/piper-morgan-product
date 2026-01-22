@@ -8,6 +8,23 @@
      {# % set cta_text = 'Upload Document' % #}
      {# % set cta_url = '#upload' % #}
      {# % include 'components/empty-state.html' % #}
+
+     CONSCIOUSNESS PATTERN (#638):
+     Use ui_consciousness helpers for warm, inviting messages:
+
+     Python (in route/handler):
+       from services.consciousness import get_empty_state_data
+       empty_data = get_empty_state_data("todos")  # Returns dict with icon, title, message, cta_text
+
+     Or use individual functions:
+       from services.consciousness import (
+           format_empty_state_conscious,     # message
+           format_empty_state_title_conscious,  # title
+           get_empty_state_icon,             # icon
+           get_empty_state_cta,              # cta_text
+       )
+
+     Entity types: todos, files, projects, lists, conversations, integrations
 -->
 
 <div class="empty-state" role="status" aria-label="Empty state">

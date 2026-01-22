@@ -35,6 +35,12 @@ security = HTTPBearer(auto_error=False)
 logger = structlog.get_logger(__name__)
 
 
+from services.consciousness.auth_consciousness import (
+    format_logout_success_conscious,
+    format_password_changed_conscious,
+)
+
+
 def build_audit_context(request: Request) -> Dict[str, Any]:
     """
     Extract audit context from FastAPI request.
@@ -277,7 +283,7 @@ async def logout(
     if not token:
         # No token provided - user is already logged out or never logged in
         logger.info("Logout called with no token - user already logged out")
-        return {"message": "Logged out successfully", "user_id": None}
+        return {"message": format_logout_success_conscious(), "user_id": None}
 
     try:
         # Build audit context from request (Issue #249)
@@ -326,7 +332,7 @@ async def logout(
                 "Token may already be revoked, treating as successful logout", user_id=user_id
             )
 
-        return {"message": "Logged out successfully", "user_id": user_id}
+        return {"message": format_logout_success_conscious(), "user_id": user_id}
 
     except Exception as e:
         logger.error("Logout error", error=str(e), exc_info=True)
@@ -489,7 +495,7 @@ async def change_password(
                     )
                     return PasswordChangeResponse(
                         success=True,
-                        message="Password changed successfully. Please log in with your new password.",
+                        message=format_password_changed_conscious(),
                     )
                 else:
                     logger.error(
