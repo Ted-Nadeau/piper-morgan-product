@@ -141,12 +141,41 @@ Run the extraction scripts and classify candidates:
 
 ---
 
+## Phase 5: Skill Formalization Review
+
+**New for 2026**: Evaluate skill candidates for formalization during each sweep.
+
+**Reference**: `.claude/skills/SKILLS.md` (rubric and candidates)
+
+### Rubric (Score ≥ 3 to formalize)
+
+| Criterion | Signal |
+|-----------|--------|
+| Frequency | Happens 3+ times/week across agents |
+| Friction | Agents doing it inconsistently |
+| Error Cost | Mistakes cause rework/PM intervention |
+| Docs Exist | Procedure written somewhere (not yet skill) |
+| Cross-Role | Multiple roles need it |
+
+### Checklist
+
+- [ ] Review `dev/active/skill-harvest-candidates.md`
+- [ ] Score top 3-5 candidates against rubric
+- [ ] Formalize any scoring ≥ 3 (spec → draft → audit → pilot)
+- [ ] Add new candidates discovered during sweep
+- [ ] Update `.claude/skills/SKILLS.md` adoption status
+
+**Expected Outcomes**: 1-2 new skills formalized per sweep
+
+---
+
 ## Expected Outcomes
 
 Based on previous sweeps:
 - TRUE EMERGENCE: 0-2 patterns per 6 weeks
 - PATTERN EVOLUTION: 5-10 refinements
 - PATTERN USAGE: 40+ applications
+- SKILL FORMALIZATION: 1-2 new skills per sweep
 
 ---
 
@@ -161,6 +190,7 @@ Based on previous sweeps:
 - [ ] `docs/internal/architecture/current/anti-pattern-index.md` (updated)
 - [ ] `dev/active/emergent-anti-pattern-candidates.md` (Phase 3a output)
 - [ ] DRAFT-pattern files (if TRUE EMERGENCE found)
+- [ ] `.claude/skills/SKILLS.md` (updated if skills formalized)
 
 ---
 
@@ -172,6 +202,7 @@ Based on previous sweeps:
 - [ ] Final report in reports directory
 - [ ] GitHub issue updated with results
 - [ ] Session log completed
+- [ ] Skill candidates evaluated (Phase 5)
 
 ---
 
@@ -182,4 +213,4 @@ Based on previous sweeps:
 ---
 
 **Methodology**: Pattern Sweep 2.0 (#524)
-**Template Version**: 1.3 (January 21, 2026) - Added human review gate for emergent anti-pattern candidates
+**Template Version**: 1.4 (January 21, 2026) - Added Phase 5 skill formalization review

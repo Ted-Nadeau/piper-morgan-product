@@ -59,6 +59,42 @@ Less frequent but high-value skills.
 
 ---
 
+## Skill Formalization Trigger
+
+**When**: During each pattern sweep (6-week cadence)
+**Where**: Phase 5 of pattern sweep template
+
+### Formalization Rubric
+
+Score candidates against these 5 criteria. **Formalize when score ≥ 3**:
+
+| Criterion | Weight | Signal |
+|-----------|--------|--------|
+| **Frequency** | 1 | Happens 3+ times per week across agents |
+| **Friction** | 1 | Agents doing it inconsistently or asking "how?" |
+| **Error Cost** | 1 | Mistakes cause rework or PM intervention |
+| **Docs Exist** | 1 | Procedure already written somewhere (not yet a skill) |
+| **Cross-Role** | 1 | Multiple roles need it (higher multiplier effect) |
+
+### Evaluation Process
+
+During each pattern sweep:
+1. Review `dev/active/skill-harvest-candidates.md` for pending candidates
+2. Score top 3-5 candidates against rubric
+3. Formalize any scoring ≥ 3
+4. Add new candidates discovered during sweep
+5. Update adoption status in this index
+
+### Example Scoring
+
+| Candidate | Freq | Friction | Error | Docs | Cross | Score | Action |
+|-----------|------|----------|-------|------|-------|-------|--------|
+| create-omnibus-log | ✓ | ✓ | | ✓ | | 3 | Formalize |
+| run-debug-protocol | ✓ | ✓ | ✓ | ✓ | ✓ | 5 | Formalize |
+| create-adr | | | | ✓ | | 1 | Wait |
+
+---
+
 ## Creating New Skills
 
 New skills follow the harvest → spec → draft → audit → pilot workflow:
