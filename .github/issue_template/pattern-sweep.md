@@ -61,6 +61,7 @@ assignees: ''
 - [ ] Create `dev/active/pattern-evolution-report.md`
 - [ ] Variations documented
 - [ ] Anti-patterns identified
+- [ ] **Anti-pattern index updated** (`docs/internal/architecture/current/anti-pattern-index.md`)
 - [ ] Lifecycle stages assigned
 
 ### Agent E: Meta-Pattern Synthesizer (Opus)
@@ -71,7 +72,56 @@ assignees: ''
 
 ---
 
-## Phase 3: Synthesis & Validation
+## Phase 3: Anti-Pattern Index Update
+
+**New for 2026**: Update the anti-pattern index as part of each sweep.
+
+- [ ] Scan new/modified patterns for anti-patterns
+- [ ] Scan new/modified ADRs for anti-patterns
+- [ ] Add new entries with stable IDs (G-xx, T-xx, A-xx, P-xx, I-xx)
+- [ ] Update reverse index (Pattern → Anti-patterns)
+- [ ] Update "Last Scan" date in index
+
+**Reference**: `docs/internal/architecture/current/anti-pattern-index.md`
+
+---
+
+## Phase 3a: Emergent Anti-Pattern Scan
+
+**Automated Detection** (validated in Phase 2 experiment - 63% precision):
+
+Run the extraction scripts and classify candidates:
+
+```bash
+# Best strategy (60% precision) - session log lessons learned
+./scripts/extract-session-lessons.sh [start_date] [end_date]
+
+# Code comment mining (50% precision)
+./scripts/extract-code-comments.sh services/
+
+# ADR rejected alternatives (28% precision, highest volume)
+./scripts/extract-adr-rejected.sh
+```
+
+**Classification Workflow**:
+- [ ] Run `extract-session-lessons.sh` for analysis period
+- [ ] Run `extract-code-comments.sh` against changed directories
+- [ ] Run `extract-adr-rejected.sh` for new/modified ADRs
+- [ ] Review candidates and classify: TRUE EMERGENT / VARIATION / FALSE POSITIVE
+- [ ] Document all candidates in `dev/active/emergent-anti-pattern-candidates.md`
+
+**⚠️ HUMAN REVIEW GATE** (Required):
+- [ ] **Chief Architect or PM reviews** `emergent-anti-pattern-candidates.md`
+- [ ] Human approves which TRUE EMERGENT candidates merge to index
+- [ ] Only after approval: Add approved entries to anti-pattern-index.md with stable IDs
+
+**Why**: ~37% false positive rate in automated detection. Anti-patterns are traps, bad habits, and seductive fake patterns - not pattern negation. Human judgment required to distinguish genuine anti-patterns from noise.
+
+**Expected Outcomes**: 5-15 candidates per sweep, ~60% precision (based on Phase 2 experiment)
+
+---
+
+## Phase 4: Synthesis & Validation
 
 - [ ] Final report created in `docs/internal/development/reports/`
 - [ ] All validation test cases pass:
@@ -108,6 +158,8 @@ Based on previous sweeps:
 - [ ] `dev/active/pattern-evolution-report.md`
 - [ ] `dev/active/pattern-meta-synthesis.md`
 - [ ] `docs/internal/development/reports/pattern-sweep-2.0-results-YYYY-MM-DD.md`
+- [ ] `docs/internal/architecture/current/anti-pattern-index.md` (updated)
+- [ ] `dev/active/emergent-anti-pattern-candidates.md` (Phase 3a output)
 - [ ] DRAFT-pattern files (if TRUE EMERGENCE found)
 
 ---
@@ -116,6 +168,7 @@ Based on previous sweeps:
 
 - [ ] FALSE POSITIVE TEST passed (known patterns not flagged as new)
 - [ ] All 5 agent deliverables complete
+- [ ] Anti-pattern index updated with new entries
 - [ ] Final report in reports directory
 - [ ] GitHub issue updated with results
 - [ ] Session log completed
@@ -129,4 +182,4 @@ Based on previous sweeps:
 ---
 
 **Methodology**: Pattern Sweep 2.0 (#524)
-**Template Version**: 1.0 (December 27, 2025)
+**Template Version**: 1.3 (January 21, 2026) - Added human review gate for emergent anti-pattern candidates

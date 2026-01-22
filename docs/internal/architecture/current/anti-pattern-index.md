@@ -1,0 +1,239 @@
+# Anti-Pattern Index
+
+**Purpose**: Cross-reference index of anti-patterns documented throughout the codebase. Links to source documents without duplicating content.
+
+**Last Scan**: 2026-01-21
+**Documents Scanned**: 10 patterns, 8 ADRs, 4 MUX design docs
+
+---
+
+## Quick Reference by Category
+
+| Category | Count | Key Sources |
+|----------|-------|-------------|
+| Grammar/Consciousness | 12 | grammar-transformation-guide, consciousness-philosophy, ownership-metaphors |
+| Testing | 4 | pattern-045, pattern-049 |
+| Architecture | 11 | ADR-006, ADR-010, ADR-039, ADR-040, ADR-043, ADR-051 |
+| Process/Methodology | 10 | pattern-046, pattern-047, systematic-excellence, omnibus-logs |
+| Integration | 5 | pattern-035, pattern-054 |
+
+**Total Indexed**: 42 anti-patterns
+
+---
+
+## Grammar & Consciousness Anti-Patterns
+
+Anti-patterns related to the MUX grammar ("Entities experience Moments in Places") and preserving consciousness in responses.
+
+| ID | Anti-Pattern | Source | Recommended Pattern |
+|----|--------------|--------|---------------------|
+| G-01 | Query language in responses | [grammar-transformation-guide.md#anti-pattern-1-query-language-in-responses](../../../development/grammar-transformation-guide.md#anti-pattern-1-query-language-in-responses) | [Pattern-052](patterns/pattern-052-personality-bridge.md) |
+| G-02 | Timestamps without context | [grammar-transformation-guide.md#anti-pattern-2-timestamps-without-context](../../../development/grammar-transformation-guide.md#anti-pattern-2-timestamps-without-context) | [Pattern-053](patterns/pattern-053-warmth-calibration.md) |
+| G-03 | IDs instead of names | [grammar-transformation-guide.md#anti-pattern-3-ids-instead-of-names](../../../development/grammar-transformation-guide.md#anti-pattern-3-ids-instead-of-names) | EntityProtocol |
+| G-04 | Config strings as Places | [grammar-transformation-guide.md#anti-pattern-4-config-strings-as-places](../../../development/grammar-transformation-guide.md#anti-pattern-4-config-strings-as-places) | PlaceProtocol |
+| G-05 | Mechanical error messages | [grammar-transformation-guide.md#anti-pattern-5-mechanical-error-messages](../../../development/grammar-transformation-guide.md#anti-pattern-5-mechanical-error-messages) | [Pattern-054](patterns/pattern-054-honest-failure.md) |
+| G-06 | Status codes instead of states | [grammar-transformation-guide.md#anti-pattern-6-status-codes-instead-of-states](../../../development/grammar-transformation-guide.md#anti-pattern-6-status-codes-instead-of-states) | MomentProtocol |
+| G-07 | Raw data dumps | [grammar-transformation-guide.md#anti-pattern-7-raw-data-dumps](../../../development/grammar-transformation-guide.md#anti-pattern-7-raw-data-dumps) | [Pattern-052](patterns/pattern-052-personality-bridge.md) |
+| G-08 | Treating NATIVE as cache | [ownership-metaphors.md#part-3](ownership-metaphors.md) | Mind/Senses/Understanding model |
+| G-09 | Losing place context | [ownership-metaphors.md#part-4](ownership-metaphors.md) | [Pattern-051](patterns/pattern-051-parallel-place-gathering.md) |
+| G-10 | Hiding uncertainty | [ownership-metaphors.md#part-5](ownership-metaphors.md) | [Pattern-054](patterns/pattern-054-honest-failure.md) |
+| G-11 | Third-person system language | [consciousness-philosophy.md#pillar-1](consciousness-philosophy.md) | First-person presence |
+| G-12 | Alert/warning spam tone | [consciousness-philosophy.md#part-5](consciousness-philosophy.md) | Supportive reframing |
+
+---
+
+## Testing Anti-Patterns
+
+Anti-patterns related to testing strategy and verification.
+
+| ID | Anti-Pattern | Source | Recommended Pattern |
+|----|--------------|--------|---------------------|
+| T-01 | Mocked dependencies hiding integration issues | [pattern-045](patterns/pattern-045-green-tests-red-user.md) | Integration testing requirements |
+| T-02 | Schema/model drift not caught by tests | [pattern-045](patterns/pattern-045-green-tests-red-user.md) | Schema validation on startup |
+| T-03 | Type mismatches only enforced at DB level | [pattern-045](patterns/pattern-045-green-tests-red-user.md) | Dataclass field validators |
+| T-04 | Skipping audit "just this once" | [pattern-049](patterns/pattern-049-audit-cascade.md#anti-patterns) | Audit cascade discipline |
+
+---
+
+## Architecture Anti-Patterns
+
+Anti-patterns related to system architecture, configuration, and design decisions.
+
+| ID | Anti-Pattern | Source | Recommended Pattern |
+|----|--------------|--------|---------------------|
+| A-01 | Dual repository implementations | [ADR-005](adrs/adr-005-eliminate-dual-repository-implementations.md) | Single repository per entity |
+| A-02 | get_session() anti-pattern | [ADR-006](adrs/adr-006-standardize-async-session-management.md) | Async session factory |
+| A-03 | Direct environment access in domain layers | [ADR-010](adrs/adr-010-configuration-patterns.md#avoid-direct-environment-access) | Configuration service injection |
+| A-04 | Mixed configuration patterns in same service | [ADR-010](adrs/adr-010-configuration-patterns.md#avoid-mixed-patterns) | Consistent access patterns |
+| A-05 | Database stored procedures for app logic | [ADR-043](adrs/adr-043-application-layer-stored-procedures.md) | Application layer logic |
+| A-06 | Shared database across environments | [ADR-040](adrs/adr-040-local-database-per-environment.md) | Local database per environment |
+| A-07 | **LLM-for-Everything** - Using LLM for deterministic operations | [ADR-039](adrs/adr-039-canonical-handler-pattern.md) | Canonical handlers for simple queries |
+| A-08 | **Keyword-Only Matching** - Pure keyword matching without LLM capability | [ADR-039](adrs/adr-039-canonical-handler-pattern.md) | Hybrid approach |
+| A-09 | **Shared Dev Database** - Multiple environments sharing one database | [ADR-040](adrs/adr-040-local-database-per-environment.md) | Local database per environment |
+| A-10 | **Thread-Local Injection** - Implicit context via thread locals | [ADR-051](adrs/adr-051-unified-user-session-context.md) | Explicit parameter passing |
+| A-11 | **Verification Theater** - Process without actual verification | [ADR-028](adrs/adr-028-verification-pyramid.md) | Evidence-based verification pyramid |
+
+---
+
+## Process/Methodology Anti-Patterns
+
+Anti-patterns related to development workflow and agent behavior.
+
+| ID | Anti-Pattern | Source | Recommended Pattern |
+|----|--------------|--------|---------------------|
+| P-01 | 75% complete then abandoned | [pattern-046](patterns/pattern-046-beads-completion-discipline.md) | Beads completion discipline |
+| P-02 | Rationalizing incomplete work as "optional" | [pattern-046](patterns/pattern-046-beads-completion-discipline.md) | Explicit PM approval for deferrals |
+| P-03 | Proceeding with uncertainty (completion bias) | [pattern-047](patterns/pattern-047-time-lord-alert.md) | Time Lord Alert escape hatch |
+| P-04 | Silent escalation avoidance | [pattern-047](patterns/pattern-047-time-lord-alert.md#anti-patterns-it-prevents) | Explicit uncertainty signals |
+| P-05 | **"Good Enough" Trap** - Shipping code that "works" without considering maintainability | [systematic-excellence.md](../../../../piper-education/frameworks/emergent/systematic-excellence.md) | Define "done" to include excellence |
+| P-06 | **"Refactor Later" Lie** - Promising cleanup that never happens | [systematic-excellence.md](../../../../piper-education/frameworks/emergent/systematic-excellence.md) | Refactor as you go |
+| P-07 | **"Deadline" Pressure** - Sacrificing quality for speed | [systematic-excellence.md](../../../../piper-education/frameworks/emergent/systematic-excellence.md) | Negotiate scope, not quality |
+| P-08 | **80% Completion Trap** - Declaring done without evidence | [the-completion-discipline-draft.md](../../../../public/comms/drafts/the-completion-discipline-draft.md) | Completion matrix with evidence |
+| P-09 | **"Should Have Known" Syndrome** - Reactive discovery of obvious requirements | [2025-10-29-omnibus-log.md](../../../omnibus-logs/2025-10-29-omnibus-log.md) | Comprehensive upfront audit |
+| P-10 | **Escalation Timing Failure** - Debugging too long before seeking help | [2025-11-16-omnibus-log.md](../../../omnibus-logs/2025-11-16-omnibus-log.md) | Escalate after first untested commit |
+
+---
+
+## Integration Anti-Patterns
+
+Anti-patterns related to external service integration.
+
+| ID | Anti-Pattern | Source | Recommended Pattern |
+|----|--------------|--------|---------------------|
+| I-01 | Silent failures / swallowed exceptions | [pattern-054](patterns/pattern-054-honest-failure.md) | Honest failure with suggestion |
+| I-02 | Generic error messages ("Something went wrong") | [pattern-054](patterns/pattern-054-honest-failure.md) | Specific diagnosis + remediation |
+| I-03 | **Forgetting initialize()** - Using adapter without async initialization | [pattern-035](patterns/pattern-035-mcp-adapter-methods.md) | Lazy init pattern |
+| I-04 | **Non-Idempotent Init** - Initialize that breaks on repeat calls | [pattern-035](patterns/pattern-035-mcp-adapter-methods.md) | Make initialize() idempotent |
+| I-05 | **Sync Init for Async Ops** - Synchronous initialization for async operations | [pattern-035](patterns/pattern-035-mcp-adapter-methods.md) | Async initialization |
+
+---
+
+## Reverse Index: Pattern → Anti-Patterns Addressed
+
+| Pattern/Document | Anti-Patterns Addressed |
+|------------------|------------------------|
+| [Pattern-045](patterns/pattern-045-green-tests-red-user.md) | T-01, T-02, T-03 |
+| [Pattern-046](patterns/pattern-046-beads-completion-discipline.md) | P-01, P-02 |
+| [Pattern-047](patterns/pattern-047-time-lord-alert.md) | P-03, P-04 |
+| [Pattern-049](patterns/pattern-049-audit-cascade.md) | T-04 |
+| [Pattern-051](patterns/pattern-051-parallel-place-gathering.md) | G-09 |
+| [Pattern-052](patterns/pattern-052-personality-bridge.md) | G-01, G-07 |
+| [Pattern-053](patterns/pattern-053-warmth-calibration.md) | G-02 |
+| [Pattern-054](patterns/pattern-054-honest-failure.md) | G-05, G-10, I-01, I-02 |
+| [ADR-005](adrs/adr-005-eliminate-dual-repository-implementations.md) | A-01 |
+| [ADR-006](adrs/adr-006-standardize-async-session-management.md) | A-02 |
+| [ADR-010](adrs/adr-010-configuration-patterns.md) | A-03, A-04 |
+| [ADR-040](adrs/adr-040-local-database-per-environment.md) | A-06 |
+| [ADR-043](adrs/adr-043-application-layer-stored-procedures.md) | A-05 |
+| [consciousness-philosophy.md](consciousness-philosophy.md) | G-11, G-12 |
+| [ownership-metaphors.md](ownership-metaphors.md) | G-08, G-09, G-10 |
+| [grammar-transformation-guide.md](../../../development/grammar-transformation-guide.md) | G-01 through G-07 |
+| [pattern-035](patterns/pattern-035-mcp-adapter-methods.md) | I-03, I-04, I-05 |
+| [ADR-028](adrs/adr-028-verification-pyramid.md) | A-11 |
+| [ADR-039](adrs/adr-039-canonical-handler-pattern.md) | A-07, A-08 |
+| [ADR-051](adrs/adr-051-unified-user-session-context.md) | A-10 |
+| [systematic-excellence.md](../../../../piper-education/frameworks/emergent/systematic-excellence.md) | P-05, P-06, P-07 |
+| [the-completion-discipline-draft.md](../../../../public/comms/drafts/the-completion-discipline-draft.md) | P-08 |
+| [2025-10-29-omnibus-log.md](../../../omnibus-logs/2025-10-29-omnibus-log.md) | P-09 |
+| [2025-11-16-omnibus-log.md](../../../omnibus-logs/2025-11-16-omnibus-log.md) | P-10 |
+
+---
+
+## Scan Methodology
+
+### Documents Scanned (Pilot)
+
+**Patterns** (10):
+- pattern-045-green-tests-red-user.md
+- pattern-046-beads-completion-discipline.md
+- pattern-047-time-lord-alert.md
+- pattern-048-periodic-background-job.md
+- pattern-049-audit-cascade.md
+- pattern-050-context-dataclass-pair.md
+- pattern-051-parallel-place-gathering.md
+- pattern-052-personality-bridge.md
+- pattern-053-warmth-calibration.md
+- pattern-054-honest-failure.md
+
+**ADRs** (8):
+- adr-005-eliminate-dual-repository-implementations.md
+- adr-006-standardize-async-session-management.md
+- adr-010-configuration-patterns.md
+- adr-015-wild-claim.md
+- adr-039-canonical-handler-pattern.md
+- adr-040-local-database-per-environment.md
+- adr-043-application-layer-stored-procedures.md
+- adr-044-lightweight-rbac-vs-traditional.md
+
+**MUX Design Docs** (4):
+- grammar-transformation-guide.md
+- consciousness-philosophy.md
+- ownership-metaphors.md
+- grammar-onboarding-checklist.md
+
+### Keywords Searched
+
+- `anti-pattern`, `Anti-Pattern`, `antipattern`
+- `❌`, `Bad:`, `Flattened`
+- `avoid`, `don't do`, `mistake`
+
+---
+
+## Phase 2: Emergent Anti-Pattern Detection (Completed)
+
+**Experiment Executed**: 2026-01-21
+
+**5 Detection Strategies Used**:
+1. **Negative language clustering** - "should not", "avoid", "never" proximity scoring (50% precision)
+2. **Contrast pattern detection** - "instead of X, do Y" structures (38% precision)
+3. **Code comment mining** - WARNING, CAUTION, HACK, XXX markers (50% precision)
+4. **ADR rejected alternatives** - ❌ options in decision docs (28% precision, highest volume)
+5. **Session log lessons learned** - "lesson learned", "should have", "root cause" (60% precision, **best**)
+
+**Results**:
+- Candidates scanned: ~80 passages
+- TRUE EMERGENT: 14 (added to index above)
+- VARIATION: 6 (related to existing)
+- FALSE POSITIVE: 8
+- **Overall Precision**: 63%
+
+**Automation Recommendations**:
+- Session log mining: HIGH feasibility (clear markers)
+- Code comment mining: HIGH feasibility (regex patterns)
+- ADR rejected sections: MEDIUM (section parsing)
+- Negative language: LOW (needs ML/proximity)
+
+See `dev/active/anti-pattern-phase2-experiment-results.md` for full analysis.
+
+---
+
+## Update Protocol
+
+**Triggers**:
+1. Weekly documentation audit (FLY-AUDIT) - quick refresh
+2. Pattern sweep (6-week cadence) - comprehensive scan
+3. After major documentation sprints
+
+**Process**:
+1. Run keyword scan against target directories
+2. Compare to existing index
+3. Add new anti-patterns with stable IDs (never renumber)
+4. Update "Last Scan" date
+5. Mark superseded patterns if any
+
+**Next Pattern Sweep**: Feb 3, 2026 (per staggered-audit-calendar-2026.md)
+
+---
+
+## Related Documentation
+
+- [Pattern Catalog README](patterns/README.md)
+- [ADR Index](adrs/adr-index.md)
+- [Grammar Transformation Guide](../../../development/grammar-transformation-guide.md)
+- [Consciousness Philosophy](consciousness-philosophy.md)
+- [Staggered Audit Calendar](../../operations/staggered-audit-calendar-2026.md)
+
+---
+
+*Index created: 2026-01-21*
+*Maintainer: Documentation Management Agent*

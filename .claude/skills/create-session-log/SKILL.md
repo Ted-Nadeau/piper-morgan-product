@@ -1,0 +1,189 @@
+# create-session-log
+
+Create a properly named and structured session log file at the start of a work session.
+
+## When to Use
+
+Use this skill when:
+- Starting a new work session with any agent role
+- PM assigns you a role and tasks for the day
+- Resuming work after a break (check for existing log first)
+
+**Note on subagents**:
+- If you are a **Task tool subagent** doing quick exploration/search that returns results directly, you do NOT create a session log.
+- If you are a **programmer subagent** (`prog` role) doing substantive implementation work (writing code, fixing bugs, running tests), you SHOULD create a session log unless the work is trivial enough to capture in a single entry in the coordinating agent's log.
+
+## Key Principle: One Log Per Role Per Day
+
+**A single consolidated log per role per day is preferable to fragmented logs**, even if efforts are separate. Always check for an existing same-day log before creating a new one.
+
+## Procedure
+
+### Step 1: Check for Existing Same-Day Log
+
+Before creating a new log, check if one already exists:
+
+```bash
+ls dev/active/*$(date +%Y-%m-%d)*{role}*log.md
+```
+
+**If found**: Continue that log instead of creating a new one. Add a section:
+```markdown
+### {TIME} - Session Resumed
+- [Context of resumption]
+```
+
+**If not found**: Proceed to create new log.
+
+### Step 2: Determine File Name
+
+**Format**: `YYYY-MM-DD-HHMM-{role}-{tool}-{model}-log.md`
+
+**Location**: `dev/active/`
+
+**Components**:
+- `YYYY-MM-DD`: Today's date
+- `HHMM`: Current time in 24-hour format (no colon)
+- `{role}`: Role slug (see table below)
+- `{tool}`:
+  - `code` for Claude Code CLI
+  - `cursor` for Cursor IDE
+  - Omit entirely for direct API/Console (e.g., `arch-opus-log.md`)
+- `{model}`: `opus`, `sonnet`, or `haiku`
+
+### Step 3: Create File with Standard Header
+
+```markdown
+# Session Log: {date}-{time}-{role}-{tool}-{model}
+
+**Role**: {Full Role Name}
+**Model**: {Tool} ({Model})
+**Date**: {Day of Week}, {Month} {Day}, {Year}
+**Start Time**: {Time in 12-hour format}
+
+## Session Objectives
+
+1. [Primary objective from PM]
+2. [Secondary objectives if any]
+
+## Work Log
+
+### {Time} - Session Start
+- Created session log
+- [Initial context or task]
+```
+
+### Step 4: Fill Initial Content
+
+- Record objectives from PM's instructions
+- Note any handoff context
+- Begin work log with first timestamped entry
+
+## Role Slug Reference
+
+| Role | Slug | Typical Model |
+|------|------|---------------|
+| Lead Developer | `lead` | opus |
+| Chief Architect | `arch` | opus |
+| Communications Director | `comms` | opus/sonnet |
+| Documentation Manager | `docs` | haiku |
+| Programmer (subagent) | `prog` | sonnet/haiku |
+| Chief Innovation Officer | `cio` | opus |
+| Chief Experience Officer | `cxo` | opus |
+| Head of Sapient Resources | `hosr` | opus |
+| Product & Project Manager | `ppm` | opus |
+| Executive Summary Agent | `exec` | opus/sonnet |
+| Spec Writer | `spec` | opus |
+
+## Examples
+
+### Example 1: New Session Log
+
+**PM says**: "Good morning! You are my docs agent. Create omnibus for yesterday."
+
+**Check**: `ls dev/active/*2026-01-22*docs*log.md` → Not found
+
+**Create**: `dev/active/2026-01-22-0800-docs-code-haiku-log.md`
+
+```markdown
+# Session Log: 2026-01-22-0800-docs-code-haiku
+
+**Role**: Documentation Management Specialist
+**Model**: Claude Code (Haiku)
+**Date**: Wednesday, January 22, 2026
+**Start Time**: 8:00 AM
+
+## Session Objectives
+
+1. Create omnibus log for January 21, 2026
+2. Check mailbox for requests
+
+## Work Log
+
+### 8:00 AM - Session Start
+- Created session log
+- PM confirmed omnibus for Jan 21 is primary task
+```
+
+### Example 2: Resuming Existing Log
+
+**PM says**: "Continue working on the anti-pattern index."
+
+**Check**: `ls dev/active/*2026-01-21*docs*log.md`
+**Found**: `2026-01-21-0750-docs-code-haiku-log.md`
+
+**Action**: Open existing log and add:
+
+```markdown
+### 2:30 PM - Session Resumed
+- PM assigned continuation of anti-pattern index work
+- Previous session completed Phase 2 experiment
+```
+
+### Example 3: Lead Developer Log
+
+**Create**: `dev/active/2026-01-21-0900-lead-code-opus-log.md`
+
+```markdown
+# Session Log: 2026-01-21-0900-lead-code-opus
+
+**Role**: Lead Developer
+**Model**: Claude Code (Opus)
+**Date**: Tuesday, January 21, 2026
+**Start Time**: 9:00 AM
+
+## Session Objectives
+
+1. Review PR #543 and merge if passing
+2. Coordinate Phase 2 implementation across subagents
+
+## Work Log
+
+### 9:00 AM - Session Start
+- Created session log
+- Checking mailbox for overnight messages
+```
+
+## Anti-Patterns to Avoid
+
+| Don't Do This | Why | Do This Instead |
+|---------------|-----|-----------------|
+| Create multiple logs for same role same day | Hard to synthesize for omnibus | Continue existing log |
+| Use wrong role slug | Breaks discovery and omnibus | Use exact slugs from table |
+| Omit time from filename | Ambiguous, breaks sorting | Always include HHMM |
+| Leave objectives blank | Log lacks purpose context | Fill from PM instructions |
+| Skip the existence check | Creates duplicate logs | Always check first |
+
+## Quality Checklist
+
+After creating/resuming a session log:
+- [ ] File is in `dev/active/`
+- [ ] Filename follows convention exactly
+- [ ] Header metadata is complete
+- [ ] Objectives reflect PM's actual instructions
+- [ ] Work log has first timestamped entry
+- [ ] No duplicate same-day log for this role
+
+## After the Session
+
+Session logs in `dev/active/` may be archived to `dev/YYYY/MM/DD/` after the session ends. This is typically handled by PM or documentation processes, not during the session itself.
