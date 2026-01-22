@@ -1030,6 +1030,9 @@ class List:
     metadata: Dict[str, Any] = field(default_factory=dict)
     tags: List[str] = field(default_factory=list)
 
+    # Project associations (many-to-many - L1 Sprint #477)
+    project_ids: List[str] = field(default_factory=list)
+
     # Ownership and sharing (SEC-RBAC Phase 1.3 & 1.4 & 2)
     owner_id: Optional[str] = None
     shared_with: List[SharePermission] = field(default_factory=list)  # Array of {user_id, role}
@@ -1086,6 +1089,7 @@ class List:
             "is_default": self.is_default,
             "metadata": self.metadata,
             "tags": self.tags,
+            "project_ids": self.project_ids,
             "owner_id": self.owner_id,
             "shared_with": [perm.to_dict() for perm in self.shared_with],
             "created_at": self.created_at.isoformat() if self.created_at else None,

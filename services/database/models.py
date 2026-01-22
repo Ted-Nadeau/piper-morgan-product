@@ -1081,6 +1081,9 @@ class ListDB(Base):
     list_metadata = Column("metadata", JSON, default=dict)
     tags = Column(postgresql.JSONB, default=list)  # Array of tag strings
 
+    # Project associations (many-to-many - L1 Sprint #477)
+    project_ids = Column(postgresql.JSONB, default=list)  # Array of project IDs
+
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -1106,6 +1109,9 @@ class ListDB(Base):
         ),  # GIN index for JSON array
         Index("idx_lists_default", "owner_id", "item_type", "is_default"),
         Index("idx_lists_tags", "tags", postgresql_using="gin"),  # GIN index for tag search
+        Index(
+            "idx_lists_projects", "project_ids", postgresql_using="gin"
+        ),  # GIN index for project lookup
     )
 
     def to_domain(self) -> domain.List:
@@ -1123,6 +1129,7 @@ class ListDB(Base):
             is_default=self.is_default,
             metadata=self.list_metadata or {},
             tags=self.tags or [],
+            project_ids=self.project_ids or [],
             created_at=self.created_at,
             updated_at=self.updated_at,
             owner_id=self.owner_id,
@@ -1147,6 +1154,7 @@ class ListDB(Base):
             is_default=list_obj.is_default,
             metadata=list_obj.metadata,
             tags=list_obj.tags,
+            project_ids=list_obj.project_ids,
             created_at=list_obj.created_at,
             updated_at=list_obj.updated_at,
             owner_id=list_obj.owner_id,

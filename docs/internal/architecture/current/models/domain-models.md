@@ -594,6 +594,127 @@ class OwnershipTransformation:
 
 ---
 
+## List/Item Type Hierarchy
+
+**File**: `services/domain/primitives.py` (Item), `services/domain/models.py` (List, Todo)
+**Updated**: January 22, 2026 (L1 Sprint #477)
+
+Lists are fundamental data structures for one-dimensional ordered collections. This hierarchy supports both native lists created in Piper and federated lists synced from external systems.
+
+### Type Hierarchy
+
+```
+Item (primitives.py) - Universal list item
+├── id: str
+├── text: str
+├── position: int (ordering)
+├── list_id: Optional[str]
+│
+└── Todo (models.py) - Item with lifecycle semantics
+    ├── description: str
+    ├── status: str (pending/in_progress/completed/cancelled)
+    ├── priority: str (low/medium/high/urgent)
+    ├── completed: bool
+    ├── due_date: Optional[datetime]
+    ├── project_id: Optional[str]
+    ├── external_refs: Dict[str, Any]  # Boundary object pattern
+    └── (Future: other item types like Feature, Attendee)
+
+List (models.py) - Universal container
+├── id: str
+├── name: str
+├── item_type: str  # "todo", "feature", etc. - discriminator
+├── list_type: str  # "personal", "shared", "project"
+├── is_default: bool  # User's default list for this item_type
+├── project_ids: List[str]  # Many-to-many with Projects
+├── owner_id: str
+├── shared_with: List[SharePermission]
+│
+└── TodoList (models.py) - Backward compatibility wrapper
+    └── Delegates to List(item_type="todo")
+```
+
+### Key Design Decisions (L1 Sprint #477)
+
+1. **Lists are concrete artifacts**, not inferred views
+   - Users explicitly create named lists
+   - Piper can assist: "Want me to make a list from what you mentioned?"
+
+2. **Default list pattern**: Every user has a default list per item_type
+   - Loose todos go to user's default todo list (not orphaned)
+   - `List.is_default=True` + `List.item_type="todo"` identifies it
+
+3. **List ↔ Project: Association, not containment**
+   - Many-to-many via `List.project_ids`
+   - A list can exist independently (personal "Errands" list)
+   - A project can have multiple lists
+   - A list can span multiple projects
+
+4. **Boundary object pattern** for federation
+   - `Todo.external_refs` tracks source system (Asana, Trello, GitHub)
+   - Same domain model whether native or federated
+   - Enables uniform queries across sources
+
+### Relationships
+
+```
+User ←──owns──→ List (one-to-many)
+User ←──owns──→ Todo (one-to-many)
+Project ←──associated──→ List (many-to-many via project_ids)
+List ←──contains──→ Item/Todo (one-to-many via list_id)
+```
+
+### Usage Examples
+
+```python
+from services.domain.models import List, Todo
+from services.domain.primitives import Item
+
+# Create a todo list associated with a project
+todo_list = List(
+    name="Launch Checklist",
+    item_type="todo",
+    project_ids=["proj-123", "proj-456"],  # Associated with multiple projects
+    owner_id="user-789",
+)
+
+# Create a todo in that list
+todo = Todo(
+    text="Review PR",
+    list_id=todo_list.id,
+    priority="high",
+    project_id="proj-123",  # Direct project reference
+)
+
+# Federated todo from external system
+federated_todo = Todo(
+    text="Fix bug #42",
+    list_id=todo_list.id,
+    external_refs={
+        "source": "github",
+        "external_id": "issue-42",
+        "repo": "owner/repo",
+        "sync_status": "synced",
+    },
+)
+```
+
+---
+
+## Recent Updates (January 22, 2026)
+
+### L1 Sprint #477 - List/Project Association
+
+**Added** `project_ids` field to List model for many-to-many association:
+- Domain model: `services/domain/models.py`
+- Database model: `services/database/models.py`
+- Migration: `e90b452fe6ff_add_project_ids_to_lists_l1_sprint_477.py`
+- GIN index for efficient project-based queries
+
+**Documented** List/Item type hierarchy and design decisions.
+
+---
+
 ## Recent Updates (January 21, 2026)
 
 ### MUX-TECH X1 Sprint - Consciousness and Ownership Models
