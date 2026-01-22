@@ -297,29 +297,22 @@ class TestLifecyclePreservesTransformation:
             assert len(state.experience_phrase) > 10  # Meaningful phrase
 
     def test_lifecycle_tells_story(self):
-        """Lifecycle history is narrative, not audit log."""
-        consciousness_words = [
-            "sense",
-            "forming",
-            "recognize",
-            "pattern",
-            "attention",
-            "significant",
-            "considering",
-            "proposal",
-            "part of",
-            "established",
-            "served",
-            "passing",
-            "rests",
-            "memory",
-            "transformed",
-            "nourishment",
+        """Lifecycle history is narrative, not audit log.
+
+        Experience phrases use first-person consciousness language,
+        expressed as conversational sentence starters.
+        """
+        # New consciousness markers: first-person perspective, action verbs
+        consciousness_markers = [
+            "i ",  # First person singular
+            "i'",  # Contractions like I'm, I've
+            "we'",  # First person plural (we're)
+            "this",  # Referential language
         ]
         for state in LifecycleState:
             phrase = state.experience_phrase.lower()
-            # Experience phrases use consciousness language
-            matches = [w for w in consciousness_words if w in phrase]
+            # Experience phrases use consciousness language - first person perspective
+            matches = [w for w in consciousness_markers if w in phrase]
             assert len(matches) >= 1, f"State {state.name} phrase lacks consciousness language"
 
 
@@ -431,18 +424,19 @@ class TestDesignPrinciplesPreserved:
     """
 
     def test_lifecycle_uses_experience_not_status_codes(self):
-        """Lifecycle uses 'I sense...' not 'status=1'."""
+        """Lifecycle uses 'I just noticed...' not 'status=1'."""
         emergent = LifecycleState.EMERGENT
         phrase = emergent.experience_phrase.lower()
-        # Uses consciousness language
-        assert "sense" in phrase or "forming" in phrase
+        # Uses consciousness language - first person perspective
+        assert "i " in phrase or "i'" in phrase  # First person
         # NOT: assert emergent.value == 1
 
     def test_composting_uses_transformation_language(self):
-        """Composting says 'transformed' not 'deleted'."""
+        """Composting says 'I learned' not 'deleted'."""
         composted = LifecycleState.COMPOSTED
         phrase = composted.experience_phrase.lower()
-        assert "transform" in phrase or "nourishment" in phrase
+        # Learning language - transformation expressed as learning
+        assert "learned" in phrase or "learning" in phrase
 
     def test_journal_insight_uses_learning_language(self):
         """Insights capture learning, not events."""
@@ -534,12 +528,12 @@ class TestConsciousnessVocabulary:
         assert "Understanding" in " ".join(metaphors)
 
     def test_lifecycle_experience_uses_consciousness_language(self):
-        """Lifecycle phrases use consciousness language ('I' or 'This')."""
+        """Lifecycle phrases use consciousness language ('I', 'We', or 'This')."""
         consciousness_count = 0
         for state in LifecycleState:
             phrase = state.experience_phrase
-            # Uses first person ('I') or demonstrates perspective ('This')
-            if "I " in phrase or "This " in phrase:
+            # Uses first person ('I', 'We') or demonstrates perspective ('This')
+            if "I " in phrase or "I'" in phrase or "We'" in phrase or "This " in phrase:
                 consciousness_count += 1
 
         # All states should use consciousness-perspective language

@@ -2,6 +2,8 @@
 Simplified Slack Response Handler
 Foundation Repair: Eliminate global state and complex consolidation patterns
 Implements immediate response pattern with circuit breaker protection
+
+Issue #620: Grammar-conscious Slack responses
 """
 
 import logging
@@ -9,11 +11,15 @@ import time
 from typing import Any, Dict, Optional
 
 from services.domain.models import Intent, SpatialEvent
+
+# Issue #620: Grammar-conscious response components
+from services.integrations.slack.response_context import SlackResponseContext
 from services.integrations.slack.slack_client import SlackClient
 from services.integrations.slack.spatial_adapter import SlackSpatialAdapter
+from services.integrations.slack.spatial_types import AttentionLevel, EmotionalValence
 from services.intent_service.classifier import IntentClassifier
 from services.orchestration.engine import OrchestrationEngine
-from services.shared_types import IntentCategory
+from services.shared_types import IntentCategory, PlaceType
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +96,7 @@ class SimpleSlackResponseHandler:
         self.session_start = time.time()
 
         self.logger.info("SimpleSlackResponseHandler initialized with immediate response pattern")
+        self.logger.info("Grammar-conscious response components initialized (#620)")
 
     async def handle_spatial_event(self, spatial_event: SpatialEvent) -> Optional[Dict[str, Any]]:
         """
@@ -272,7 +279,7 @@ class SimpleSlackResponseHandler:
         if intent.category != IntentCategory.EXECUTION:
             return {
                 "type": "simple_response",
-                "content": self._get_simple_response_for_intent(intent),
+                "content": self._get_simple_response_for_intent(intent, slack_context),
                 "intent": intent,
             }
 
@@ -300,18 +307,75 @@ class SimpleSlackResponseHandler:
                 "intent": intent,
             }
 
-    def _get_simple_response_for_intent(self, intent: Intent) -> str:
-        """Generate simple responses for non-execution intents"""
+    def _get_simple_response_for_intent(
+        self, intent: Intent, slack_context: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Generate grammar-conscious responses for non-execution intents.
+
+        Issue #620: Responses now adapt to Place and context.
+        """
         action = intent.action.lower()
 
+        # Build response context for grammar-conscious responses
+        response_ctx = self._build_response_context(slack_context)
+        formality = response_ctx.get_formality() if response_ctx else "professional"
+        is_dm = response_ctx.place == PlaceType.SLACK_DM if response_ctx else False
+
         if "help" in action:
-            return "🤖 I'm Piper Morgan, your AI Product Management Assistant. I can help you create tickets, analyze data, and manage projects."
+            # Grammar-conscious: No robot emoji, warm language
+            if is_dm:
+                return "Happy to help! I can assist with creating tickets, analyzing data, and managing projects. What would you like to work on?"
+            else:
+                return "I can help with tickets, data analysis, and project management. What do you need?"
         elif "status" in action:
-            return "📊 System status: All services operational."
-        elif "hello" in action or "hi" in action:
-            return "👋 Hello! I'm here to assist with your product management tasks."
+            # Grammar-conscious: Casual language, no technical prefix
+            return "Everything's running smoothly."
+        elif "hello" in action or "hi" in action or "greeting" in action:
+            # Grammar-conscious: Context-aware greeting
+            if is_dm:
+                return "Hey! What can I help you with?"
+            else:
+                return "Hi there! What can I help with?"
         else:
-            return f"🔍 I understand you want to {intent.action}. How can I help you with that?"
+            # Grammar-conscious: Humanized action, no technical prefix
+            humanized_action = self._humanize_action(intent.action)
+            if formality == "casual":
+                return f"Got it, you want to {humanized_action}. How can I help?"
+            else:
+                return f"I understand you want to {humanized_action}. How can I help with that?"
+
+    def _build_response_context(
+        self, slack_context: Optional[Dict[str, Any]]
+    ) -> Optional[SlackResponseContext]:
+        """
+        Build grammar-conscious response context from Slack context.
+
+        Issue #620: Enables Place-aware responses.
+        """
+        if not slack_context:
+            return None
+        try:
+            return SlackResponseContext.from_spatial_context(slack_context)
+        except Exception as e:
+            self.logger.warning(f"Failed to build response context: {e}")
+            return None
+
+    def _humanize_action(self, action: str) -> str:
+        """Convert technical action to human-readable form."""
+        # Common action mappings for Slack
+        action_narratives = {
+            "create_item": "create something",
+            "create_ticket": "create a ticket",
+            "create_issue": "create an issue",
+            "search_documents": "search for documents",
+            "search_files": "find files",
+            "get_status": "check status",
+            "list_todos": "see your todos",
+            "add_todo": "add a todo",
+            "complete_todo": "complete a todo",
+        }
+        return action_narratives.get(action, action.replace("_", " "))
 
     async def _send_response_safely(
         self, result: Dict[str, Any], slack_context: Dict[str, Any]
@@ -327,7 +391,7 @@ class SimpleSlackResponseHandler:
         self, result: Dict[str, Any], slack_context: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """Send immediate response to Slack"""
-        response_content = self._format_response_content(result)
+        response_content = self._format_response_content(result, slack_context)
         if not response_content:
             return None
 
@@ -356,19 +420,31 @@ class SimpleSlackResponseHandler:
             "response_content": response_content,
         }
 
-    def _format_response_content(self, result: Dict[str, Any]) -> Optional[str]:
-        """Format result into response content"""
+    def _format_response_content(
+        self, result: Dict[str, Any], slack_context: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """
+        Format result into grammar-conscious response content.
+
+        Issue #620: Uses warm language, avoids robot prefixes.
+        """
         result_type = result.get("type")
 
         if result_type == "simple_response":
             return result.get("content")
         elif result_type == "error_response":
-            return result.get("content")
+            # Grammar-conscious error: warm, not technical
+            content = result.get("content", "")
+            if "encountered an issue" in content.lower():
+                return "I ran into a small hiccup with that. Could you try again?"
+            return content
         elif result_type == "workflow_result":
             workflow_result = result.get("result", {})
             if isinstance(workflow_result, dict):
                 if "summary" in workflow_result:
-                    return f"✅ {workflow_result['summary']}"
+                    # Grammar-conscious: Warm completion, not checkmark prefix
+                    summary = workflow_result["summary"]
+                    return f"Done! {summary}"
                 elif "message" in workflow_result:
                     return workflow_result["message"]
             else:

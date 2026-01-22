@@ -14,6 +14,17 @@
 # - ADR-055: Object Model Implementation
 # - ADR-038: Spatial Intelligence Patterns
 
+from .consciousness import (
+    AwarenessLevel,
+    Capability,
+    ConsciousnessAttributes,
+    ConsciousnessExpression,
+    EmotionalState,
+    EntityContext,
+    EntityRole,
+    PiperEntity,
+    TrustLevel,
+)
 from .lifecycle import (
     VALID_TRANSITIONS,
     CompostingExtractor,
@@ -27,6 +38,7 @@ from .lifecycle import (
 from .ownership import (
     HasOwnership,
     OwnershipCategory,
+    OwnershipMetadata,
     OwnershipResolution,
     OwnershipResolver,
     OwnershipTransformation,
@@ -47,19 +59,30 @@ __all__ = [
     # Perception
     "Perception",
     "PerceptionMode",
-    # Ownership (P2)
-    "OwnershipCategory",
+    # Consciousness (#434)
+    "AwarenessLevel",
+    "Capability",
+    "ConsciousnessAttributes",
+    "ConsciousnessExpression",
+    "EmotionalState",
+    "EntityContext",
+    "EntityRole",
+    "PiperEntity",
+    "TrustLevel",
+    # Ownership (#435)
     "HasOwnership",
-    "OwnershipResolver",
+    "OwnershipCategory",
+    "OwnershipMetadata",
     "OwnershipResolution",
+    "OwnershipResolver",
     "OwnershipTransformation",
     # Lifecycle (P3)
-    "LifecycleState",
-    "InvalidTransitionError",
-    "LifecycleTransition",
-    "HasLifecycle",
-    "LifecycleManager",
-    "CompostResult",
     "CompostingExtractor",
+    "CompostResult",
+    "HasLifecycle",
+    "InvalidTransitionError",
+    "LifecycleManager",
+    "LifecycleState",
+    "LifecycleTransition",
     "VALID_TRANSITIONS",
 ]

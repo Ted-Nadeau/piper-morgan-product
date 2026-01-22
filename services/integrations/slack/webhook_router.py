@@ -1102,9 +1102,10 @@ class SlackWebhookRouter:
         if text == "help" or text == "":
             return await self._build_help_response()
         else:
+            # Issue #628: Warm response for unknown commands
             return {
                 "response_type": "ephemeral",
-                "text": f"Unknown subcommand: {text}. Try `/piper help`.",
+                "text": f"I don't recognize `{text}` - try `/piper help` to see what I can do!",
             }
 
     async def _build_help_response(self) -> Dict[str, Any]:
@@ -1122,20 +1123,24 @@ class SlackWebhookRouter:
         core = capabilities.get("core", [])
         integrations = capabilities.get("integrations", [])
 
-        help_text = "*Piper Morgan - Your AI Development Partner*\n\n"
-        help_text += "*Available Commands:*\n"
-        help_text += "• `/piper help` - Show this help message\n"
-        help_text += "• `/standup` - Generate your daily standup\n\n"
+        # Issue #628: Grammar-conscious help text
+        help_text = "Hi! I'm Piper, your PM assistant. Here's how I can help:\n\n"
 
-        help_text += "*Core Capabilities:*\n"
+        help_text += "*Quick Commands*\n"
+        help_text += "• `/standup` - I'll help you prep for standup\n"
+        help_text += "• `/piper help` - Show this message\n\n"
+
+        help_text += "*What I Can Do*\n"
         for cap in core:
             help_text += f"• {cap}\n"
 
         if integrations:
-            help_text += "\n*Active Integrations:*\n"
+            help_text += "\n*I'm Connected To*\n"
             for integration in integrations:
                 name = integration.get("name", "Unknown")
                 help_text += f"• {name}\n"
+
+        help_text += "\nJust ask me anything about your projects - I'm here to help!"
 
         return {
             "response_type": "ephemeral",

@@ -5,6 +5,7 @@ Provides progress indicators, streaming responses, and timeout handling
 for operations that take more than 2 seconds.
 
 Issue #256 CORE-UX-LOADING-STATES
+Enhanced with consciousness: #630 CONSCIOUSNESS-TRANSFORM: Loading States
 """
 
 import asyncio
@@ -14,6 +15,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 from uuid import uuid4
+
+from services.consciousness.loading_consciousness import get_conscious_loading_message
 
 logger = logging.getLogger(__name__)
 
@@ -81,98 +84,19 @@ class LoadingStatesService:
     def __init__(self):
         self.active_operations: Dict[str, LoadingOperation] = {}
 
-        # Operation-specific messages and timeouts
+        # Operation-specific timeouts (messages now come from consciousness module)
+        # Issue #630: Messages enhanced with consciousness patterns
         self.operation_configs = {
-            OperationType.WORKFLOW_EXECUTION: {
-                "timeout": 300,  # 5 minutes
-                "messages": {
-                    LoadingState.STARTING: "Starting workflow execution...",
-                    LoadingState.IN_PROGRESS: "Executing workflow steps...",
-                    LoadingState.COMPLETING: "Finalizing workflow results...",
-                    LoadingState.COMPLETED: "Workflow completed successfully!",
-                },
-            },
-            OperationType.LLM_QUERY: {
-                "timeout": 120,  # 2 minutes
-                "messages": {
-                    LoadingState.STARTING: "Preparing your request...",
-                    LoadingState.IN_PROGRESS: "Thinking about your question...",
-                    LoadingState.COMPLETING: "Finalizing response...",
-                    LoadingState.COMPLETED: "Response ready!",
-                },
-            },
-            OperationType.GITHUB_API: {
-                "timeout": 60,  # 1 minute
-                "messages": {
-                    LoadingState.STARTING: "Connecting to GitHub...",
-                    LoadingState.IN_PROGRESS: "Fetching data from GitHub...",
-                    LoadingState.COMPLETING: "Processing GitHub data...",
-                    LoadingState.COMPLETED: "GitHub data retrieved!",
-                },
-            },
-            OperationType.SLACK_API: {
-                "timeout": 30,  # 30 seconds
-                "messages": {
-                    LoadingState.STARTING: "Connecting to Slack...",
-                    LoadingState.IN_PROGRESS: "Sending message to Slack...",
-                    LoadingState.COMPLETING: "Confirming delivery...",
-                    LoadingState.COMPLETED: "Message sent successfully!",
-                },
-            },
-            OperationType.DATABASE_QUERY: {
-                "timeout": 30,  # 30 seconds
-                "messages": {
-                    LoadingState.STARTING: "Preparing database query...",
-                    LoadingState.IN_PROGRESS: "Searching database...",
-                    LoadingState.COMPLETING: "Processing results...",
-                    LoadingState.COMPLETED: "Data retrieved!",
-                },
-            },
-            OperationType.FILE_PROCESSING: {
-                "timeout": 180,  # 3 minutes
-                "messages": {
-                    LoadingState.STARTING: "Opening file...",
-                    LoadingState.IN_PROGRESS: "Processing file content...",
-                    LoadingState.COMPLETING: "Finalizing analysis...",
-                    LoadingState.COMPLETED: "File processed successfully!",
-                },
-            },
-            OperationType.KNOWLEDGE_SEARCH: {
-                "timeout": 60,  # 1 minute
-                "messages": {
-                    LoadingState.STARTING: "Preparing search...",
-                    LoadingState.IN_PROGRESS: "Searching knowledge base...",
-                    LoadingState.COMPLETING: "Ranking results...",
-                    LoadingState.COMPLETED: "Search completed!",
-                },
-            },
-            OperationType.INTENT_PROCESSING: {
-                "timeout": 30,  # 30 seconds
-                "messages": {
-                    LoadingState.STARTING: "Understanding your request...",
-                    LoadingState.IN_PROGRESS: "Processing intent...",
-                    LoadingState.COMPLETING: "Preparing response...",
-                    LoadingState.COMPLETED: "Request processed!",
-                },
-            },
-            OperationType.ANALYSIS: {
-                "timeout": 180,  # 3 minutes
-                "messages": {
-                    LoadingState.STARTING: "Starting analysis...",
-                    LoadingState.IN_PROGRESS: "Analyzing data...",
-                    LoadingState.COMPLETING: "Generating insights...",
-                    LoadingState.COMPLETED: "Analysis complete!",
-                },
-            },
-            OperationType.GENERATION: {
-                "timeout": 240,  # 4 minutes
-                "messages": {
-                    LoadingState.STARTING: "Preparing generation...",
-                    LoadingState.IN_PROGRESS: "Generating content...",
-                    LoadingState.COMPLETING: "Reviewing output...",
-                    LoadingState.COMPLETED: "Content generated!",
-                },
-            },
+            OperationType.WORKFLOW_EXECUTION: {"timeout": 300},  # 5 minutes
+            OperationType.LLM_QUERY: {"timeout": 120},  # 2 minutes
+            OperationType.GITHUB_API: {"timeout": 60},  # 1 minute
+            OperationType.SLACK_API: {"timeout": 30},  # 30 seconds
+            OperationType.DATABASE_QUERY: {"timeout": 30},  # 30 seconds
+            OperationType.FILE_PROCESSING: {"timeout": 180},  # 3 minutes
+            OperationType.KNOWLEDGE_SEARCH: {"timeout": 60},  # 1 minute
+            OperationType.INTENT_PROCESSING: {"timeout": 30},  # 30 seconds
+            OperationType.ANALYSIS: {"timeout": 180},  # 3 minutes
+            OperationType.GENERATION: {"timeout": 240},  # 4 minutes
         }
 
     def start_operation(
@@ -353,10 +277,11 @@ class LoadingStatesService:
             last_update_index += 1
 
     def _get_state_message(self, operation_type: OperationType, state: LoadingState) -> str:
-        """Get default message for operation type and state"""
-        config = self.operation_configs.get(operation_type, {})
-        messages = config.get("messages", {})
-        return messages.get(state, f"Operation {state.value}...")
+        """Get consciousness-enhanced message for operation type and state.
+
+        Issue #630: Messages now use consciousness patterns for identity voice.
+        """
+        return get_conscious_loading_message(operation_type.value, state.value)
 
     async def _cleanup_operation(self, operation_id: str, delay: float = 2.0) -> None:
         """Remove completed operation after delay"""

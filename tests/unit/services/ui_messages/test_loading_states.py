@@ -196,15 +196,17 @@ class TestLoadingStatesService:
 
     @pytest.mark.smoke
     def test_operation_type_configs(self, service):
-        """Test that all operation types have proper configurations"""
+        """Test that all operation types have proper configurations.
+
+        Note: Messages moved to consciousness module in #630.
+        Configs now only contain timeout values.
+        """
         for op_type in OperationType:
             assert op_type in service.operation_configs
             config = service.operation_configs[op_type]
             assert "timeout" in config
-            assert "messages" in config
-            assert LoadingState.STARTING in config["messages"]
-            assert LoadingState.IN_PROGRESS in config["messages"]
-            assert LoadingState.COMPLETED in config["messages"]
+            assert isinstance(config["timeout"], int)
+            assert config["timeout"] > 0
 
     @pytest.mark.smoke
     def test_default_messages(self, service):

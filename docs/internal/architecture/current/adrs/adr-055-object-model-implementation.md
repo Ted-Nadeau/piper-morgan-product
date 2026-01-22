@@ -1,6 +1,6 @@
 # ADR-055: Object Model Implementation - Core Grammar & Lens Infrastructure
 
-**Status**: Proposed
+**Status**: Accepted (Implemented January 21, 2026)
 **Date**: January 19, 2026
 **Deciders**: Lead Developer (implementation), PM (approval)
 **Related**: ADR-045 (Object Model Specification), ADR-038 (Spatial Intelligence Patterns)
@@ -991,6 +991,7 @@ This document explains:
 ### Getting Started
 - **Onboarding Checklist**: `docs/internal/development/grammar-onboarding-checklist.md` - Step-by-step learning path for developers new to MUX grammar
 - **Grammar Compliance Audit**: `docs/internal/architecture/current/grammar-compliance-audit.md` - 39 features analyzed for grammar compliance
+- **Feature-Object Model Map**: `docs/internal/architecture/current/feature-object-model-map.md` - Per-feature mapping of Entities/Moments/Places with canonical queries and lens annotations
 
 ### Implementation Guides
 - **Transformation Guide**: `docs/internal/development/grammar-transformation-guide.md` - Decision tree and worked example for transforming flattened features
@@ -1016,6 +1017,18 @@ When building features, refer to:
 3. Morning Standup (`services/features/morning_standup.py`) as the reference implementation
 4. Anti-flattening tests to verify consciousness is preserved
 
+### Domain Model Integration (Jan 21, 2026)
+
+The following domain models now support optional MUX lifecycle (#433):
+- **WorkItem**: `lifecycle_state`, `lifecycle_history` fields
+- **Feature**: `lifecycle_state`, `lifecycle_history` fields
+
+This enables domain objects to participate in the 8-stage lifecycle
+(EMERGENT → DERIVED → NOTICED → PROPOSED → RATIFIED → DEPRECATED → ARCHIVED → COMPOSTED)
+while maintaining backward compatibility (fields default to None).
+
+Integration tests: `tests/unit/services/mux/test_domain_integration.py` (12 tests)
+
 ## References
 
 - [ADR-045: Object Model Specification](./adr-045-object-model.md)
@@ -1025,3 +1038,4 @@ When building features, refer to:
 - Anti-Flattening Tests: `tests/unit/services/mux/test_anti_flattening.py`
 - Experience Tests Documentation: `docs/internal/development/mux-experience-tests.md`
 - Implementation Guide: `docs/internal/development/mux-implementation-guide.md`
+- **Lifecycle Experience Guide**: `docs/internal/architecture/current/lifecycle-experience-guide.md` (#408)

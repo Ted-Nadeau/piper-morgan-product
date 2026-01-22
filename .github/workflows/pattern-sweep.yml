@@ -1,0 +1,233 @@
+name: Pattern Sweep Reminder
+
+on:
+  schedule:
+    # Runs every Monday at 9:00 AM Pacific (4:00 PM UTC)
+    # Logic inside determines if it's a pattern sweep week (every 6 weeks)
+    - cron: "0 16 * * 1"
+  workflow_dispatch: # Allows manual trigger for testing or ad-hoc sweeps
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-and-create-sweep:
+    runs-on: ubuntu-latest
+    name: Create Pattern Sweep Issue (if scheduled)
+
+    steps:
+      - name: Check if pattern sweep week
+        id: check-week
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Pattern Sweep runs every 6 weeks starting Feb 3, 2026 (Week 5)
+            // 2026 schedule: Feb 3, Mar 17, Apr 27, Jun 8, Jul 20, Aug 31, Oct 12, Nov 23
+            // Reference: docs/internal/operations/staggered-audit-calendar-2026.md
+
+            const today = new Date();
+            const year = today.getFullYear();
+
+            // Define sweep dates for 2026 (and can extend for future years)
+            const sweepDates2026 = [
+              '2026-02-03', '2026-03-17', '2026-04-28', '2026-06-08',
+              '2026-07-20', '2026-08-31', '2026-10-12', '2026-11-23'
+            ];
+
+            // For 2027+, calculate dynamically (every 6 weeks from Jan 13)
+            const sweepDates2027 = [];
+            let d = new Date('2027-01-11'); // First Monday, then +6 weeks
+            for (let i = 0; i < 9; i++) {
+              sweepDates2027.push(d.toISOString().split('T')[0]);
+              d.setDate(d.getDate() + 42); // 6 weeks
+            }
+
+            const allSweepDates = year === 2026 ? sweepDates2026 : sweepDates2027;
+            const todayStr = today.toISOString().split('T')[0];
+
+            const isSweepWeek = allSweepDates.includes(todayStr);
+
+            // Also allow manual trigger to bypass date check
+            const isManualTrigger = context.eventName === 'workflow_dispatch';
+
+            console.log(`Today: ${todayStr}`);
+            console.log(`Is sweep week: ${isSweepWeek}`);
+            console.log(`Is manual trigger: ${isManualTrigger}`);
+
+            return isSweepWeek || isManualTrigger;
+
+      - name: Check for existing sweep issue
+        if: steps.check-week.outputs.result == 'true'
+        id: check-existing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date();
+            const sixWeeksAgo = new Date(today);
+            sixWeeksAgo.setDate(sixWeeksAgo.getDate() - 42);
+
+            const todayStr = today.toISOString().split('T')[0];
+            const startStr = sixWeeksAgo.toISOString().split('T')[0];
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              labels: 'process,patterns'
+            });
+
+            // Check if there's already a sweep issue for this period
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('PATTERN-SWEEP') &&
+              new Date(issue.created_at) > sixWeeksAgo
+            );
+
+            if (existingIssue) {
+              console.log(`Pattern sweep issue already exists: #${existingIssue.number}`);
+              return existingIssue.number;
+            }
+
+            // Store date range for issue creation
+            core.setOutput('start_date', startStr);
+            core.setOutput('end_date', todayStr);
+            return null;
+
+      - name: Create pattern sweep issue
+        if: steps.check-week.outputs.result == 'true' && steps.check-existing.outputs.result == 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const startDate = '${{ steps.check-existing.outputs.start_date }}';
+            const endDate = '${{ steps.check-existing.outputs.end_date }}';
+            const today = new Date().toISOString().split('T')[0];
+
+            // Build issue body - using concatenation to avoid YAML parsing issues
+            const body = '# Pattern Sweep 2.0 - ' + startDate + ' to ' + endDate + '\n\n' +
+              '**Generated**: ' + today + '\n' +
+              '**Lead**: Lead Developer\n' +
+              '**Framework**: `dev/active/pattern-sweep-2.0-framework.md`\n\n' +
+              '---\n\n' +
+              '## Scope\n\n' +
+              '**Analysis Period**: ' + startDate + ' - ' + endDate + '\n' +
+              '**Pattern Library**: `docs/internal/architecture/current/patterns/` (check count)\n\n' +
+              '---\n\n' +
+              '## Pre-Sweep Checklist\n\n' +
+              '- [ ] Pattern library index exists or needs regeneration\n' +
+              '- [ ] Data sources available for analysis period:\n' +
+              '  - [ ] `docs/omnibus-logs/` for the period\n' +
+              '  - [ ] `dev/YYYY/MM/` session logs\n' +
+              '  - [ ] Git history accessible\n\n' +
+              '---\n\n' +
+              '## Phase 1: Pattern Library Index (Agent A - Haiku)\n\n' +
+              '**Task**: Create/update `dev/active/pattern-library-index.json`\n\n' +
+              '**Acceptance Criteria**:\n' +
+              '- [ ] All patterns in catalog indexed\n' +
+              '- [ ] Each pattern has signature terms\n' +
+              '- [ ] Valid JSON output\n' +
+              '- [ ] Categories assigned\n\n' +
+              '---\n\n' +
+              '## Phase 2: Multi-Lens Analysis (Agents B-E in parallel)\n\n' +
+              '### Agent B: Usage Analyst (Haiku)\n' +
+              '- [ ] Create `dev/active/pattern-usage-analysis.md`\n' +
+              '- [ ] Frequency counts per pattern\n' +
+              '- [ ] Top 10 most-used identified\n' +
+              '- [ ] Unusual applications flagged\n\n' +
+              '### Agent C: Novelty Detector (Sonnet)\n' +
+              '- [ ] Create `dev/active/pattern-novelty-candidates.md`\n' +
+              '- [ ] Candidates verified against library\n' +
+              '- [ ] FALSE POSITIVE TEST passed\n' +
+              '- [ ] 5-tier classification applied\n\n' +
+              '### Agent D: Evolution Tracker (Sonnet)\n' +
+              '- [ ] Create `dev/active/pattern-evolution-report.md`\n' +
+              '- [ ] Variations documented\n' +
+              '- [ ] **Anti-pattern index updated** (`docs/internal/architecture/current/anti-pattern-index.md`)\n' +
+              '- [ ] Lifecycle stages assigned\n\n' +
+              '### Agent E: Meta-Pattern Synthesizer (Opus)\n' +
+              '- [ ] Create `dev/active/pattern-meta-synthesis.md`\n' +
+              '- [ ] Meta-patterns identified\n' +
+              '- [ ] Pattern-045 connections explored\n' +
+              '- [ ] Process recommendations made\n\n' +
+              '---\n\n' +
+              '## Phase 3: Anti-Pattern Index Update\n\n' +
+              '**New for 2026**: Update the anti-pattern index as part of each sweep.\n\n' +
+              '- [ ] Scan new/modified patterns for anti-patterns\n' +
+              '- [ ] Scan new/modified ADRs for anti-patterns\n' +
+              '- [ ] Add new entries with stable IDs (G-xx, T-xx, A-xx, P-xx, I-xx)\n' +
+              '- [ ] Update reverse index (Pattern -> Anti-patterns)\n' +
+              '- [ ] Update "Last Scan" date in index\n' +
+              '- [ ] Consider emergent anti-patterns (synonyms, analogies)\n\n' +
+              '**Reference**: `docs/internal/architecture/current/anti-pattern-index.md`\n\n' +
+              '---\n\n' +
+              '## Phase 4: Synthesis & Validation\n\n' +
+              '- [ ] Final report created in `docs/internal/development/reports/`\n' +
+              '- [ ] All validation test cases pass:\n' +
+              '  - [ ] Known patterns NOT flagged as new\n' +
+              '  - [ ] TRUE EMERGENCE has evidence trail\n' +
+              '- [ ] DRAFT-pattern files created for any TRUE EMERGENCE\n\n' +
+              '---\n\n' +
+              '## Classification Tiers\n\n' +
+              '1. **TRUE EMERGENCE** - Genuinely new pattern\n' +
+              '2. **PATTERN EVOLUTION** - Variation of existing\n' +
+              '3. **PATTERN COMBINATION** - Novel mixing of known patterns\n' +
+              '4. **PATTERN USAGE** - Standard application\n' +
+              '5. **ANTI-PATTERN** - Degradation or misuse\n\n' +
+              '---\n\n' +
+              '## Expected Outcomes\n\n' +
+              'Based on previous sweeps:\n' +
+              '- TRUE EMERGENCE: 0-2 patterns per 6 weeks\n' +
+              '- PATTERN EVOLUTION: 5-10 refinements\n' +
+              '- PATTERN USAGE: 40+ applications\n' +
+              '- ANTI-PATTERN INDEX: 2-5 new entries per sweep\n\n' +
+              '---\n\n' +
+              '## Deliverables Checklist\n\n' +
+              '- [ ] `dev/active/pattern-library-index.json`\n' +
+              '- [ ] `dev/active/pattern-usage-analysis.md`\n' +
+              '- [ ] `dev/active/pattern-novelty-candidates.md`\n' +
+              '- [ ] `dev/active/pattern-evolution-report.md`\n' +
+              '- [ ] `dev/active/pattern-meta-synthesis.md`\n' +
+              '- [ ] `docs/internal/development/reports/pattern-sweep-2.0-results-YYYY-MM-DD.md`\n' +
+              '- [ ] `docs/internal/architecture/current/anti-pattern-index.md` (updated)\n' +
+              '- [ ] DRAFT-pattern files (if TRUE EMERGENCE found)\n\n' +
+              '---\n\n' +
+              '## Success Criteria\n\n' +
+              '- [ ] FALSE POSITIVE TEST passed (known patterns not flagged as new)\n' +
+              '- [ ] All 5 agent deliverables complete\n' +
+              '- [ ] Anti-pattern index updated\n' +
+              '- [ ] Final report in reports directory\n' +
+              '- [ ] GitHub issue updated with results\n' +
+              '- [ ] Session log completed\n\n' +
+              '---\n\n' +
+              '## Notes\n\n' +
+              '[Add any specific focus areas or context for this sweep]\n\n' +
+              '---\n\n' +
+              '**Methodology**: Pattern Sweep 2.0 (#524)\n' +
+              '**Schedule**: Every 6 weeks per staggered-audit-calendar-2026.md\n' +
+              '**Template Version**: 1.1 (January 21, 2026) - Added anti-pattern index phase\n\n' +
+              'Generated with [Claude Code](https://claude.ai/code)';
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'PATTERN-SWEEP: ' + startDate + ' to ' + endDate,
+              body: body,
+              labels: ['process', 'patterns', 'pattern-sweep'],
+              assignees: ['mediajunkie']
+            });
+
+            console.log('Created pattern sweep issue #' + issue.data.number);
+            return issue.data.number;
+
+      - name: Post completion summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isSweepWeek = ${{ steps.check-week.outputs.result }};
+            if (isSweepWeek) {
+              console.log('✅ Pattern sweep workflow completed');
+              console.log('Check GitHub issues for the PATTERN-SWEEP issue');
+            } else {
+              console.log('ℹ️ Not a pattern sweep week - no action taken');
+              console.log('Pattern sweeps run every 6 weeks per staggered-audit-calendar-2026.md');
+            }

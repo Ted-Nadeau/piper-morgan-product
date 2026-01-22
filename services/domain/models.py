@@ -9,6 +9,7 @@ from __future__ import annotations
 # 2025-06-14: Fixed Task type field and status enum to match database model and shared_types
 # 2025-06-15: Added Project and ProjectIntegration models for PM-009
 # 2025-06-17: Cleaned separation - removed SQLAlchemy code, fixed duplicate imports
+# 2026-01-21: Added MUX lifecycle integration (#433)
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -17,6 +18,14 @@ from uuid import UUID, uuid4
 
 # Import Item primitive for Todo to extend
 from services.domain.primitives import Item
+
+# MUX Lifecycle Integration (#433)
+# Optional lifecycle support for domain models that evolve through stages
+from services.mux.lifecycle import LifecycleState, LifecycleTransition
+
+# MUX Ownership Integration (#435)
+# Tracks Piper's relationship to objects: Native (Mind), Federated (Senses), Synthetic (Understanding)
+from services.mux.ownership import OwnershipCategory, OwnershipMetadata
 
 # Import shared types for consistency
 from services.shared_types import (
@@ -187,6 +196,10 @@ class Feature:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
+    # MUX Lifecycle Integration (#433) - optional, backward compatible
+    lifecycle_state: Optional[LifecycleState] = None
+    lifecycle_history: List[LifecycleTransition] = field(default_factory=list)
+
     # Relationships
     dependencies: List["Feature"] = field(default_factory=list)
     risks: List["Risk"] = field(default_factory=list)
@@ -230,6 +243,10 @@ class WorkItem:
     product_id: Optional[str] = None
     item_metadata: Optional[Dict[str, Any]] = None
     created_at: datetime = field(default_factory=datetime.now)
+
+    # MUX Lifecycle Integration (#433) - optional, backward compatible
+    lifecycle_state: Optional[LifecycleState] = None
+    lifecycle_history: List[LifecycleTransition] = field(default_factory=list)
 
     # Relationships
     feature: Optional["Feature"] = None
@@ -299,6 +316,9 @@ class Project:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
+    # MUX Ownership (#435) - Projects are NATIVE (user-created within Piper)
+    mux_ownership: Optional[OwnershipMetadata] = None
+
     def get_integration(self, integration_type: IntegrationType) -> Optional[ProjectIntegration]:
         """Get first active integration of specified type"""
         for integration in self.integrations:
@@ -342,6 +362,7 @@ class Project:
             "is_archived": self.is_archived,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "mux_ownership": self.mux_ownership.to_dict() if self.mux_ownership else None,
         }
 
 
@@ -1182,6 +1203,10 @@ class Todo(Item):
     shared_with: List[SharePermission] = field(default_factory=list)  # Array of {user_id, role}
     assigned_to: Optional[str] = None
 
+    # MUX Ownership (#435) - Piper's relationship to this object
+    # Todos are NATIVE - created within Piper's domain
+    mux_ownership: Optional[OwnershipMetadata] = None
+
     def get_user_role(self, user_id: str) -> Optional[ShareRole]:
         """Get user's role for this todo (returns owner for owner, or role from shared_with)"""
         if self.owner_id == user_id:
@@ -1284,6 +1309,8 @@ class Todo(Item):
             "owner_id": self.owner_id,
             "shared_with": [perm.to_dict() for perm in self.shared_with],
             "assigned_to": self.assigned_to,
+            # MUX Ownership (#435)
+            "mux_ownership": self.mux_ownership.to_dict() if self.mux_ownership else None,
         }
 
 
@@ -1342,6 +1369,9 @@ class Conversation:
     updated_at: datetime = field(default_factory=datetime.now)
     last_activity_at: Optional[datetime] = None
 
+    # MUX Ownership (#435) - Conversations are NATIVE (Piper creates/manages them)
+    mux_ownership: Optional[OwnershipMetadata] = None
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
@@ -1356,6 +1386,7 @@ class Conversation:
             "last_activity_at": (
                 self.last_activity_at.isoformat() if self.last_activity_at else None
             ),
+            "mux_ownership": self.mux_ownership.to_dict() if self.mux_ownership else None,
         }
 
 

@@ -3,12 +3,18 @@ Enhanced user-friendly error message service.
 
 Converts technical errors into helpful, conversational messages with recovery suggestions.
 Issue #255 CORE-UX-ERROR-MESSAGING
+Enhanced with consciousness: #631 CONSCIOUSNESS-TRANSFORM: Error Messages
 """
 
 import logging
 import re
 from enum import Enum
 from typing import Dict, Optional, Tuple
+
+from services.consciousness.error_consciousness import (
+    enhance_error_pattern,
+    format_conversational_error_conscious,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -240,26 +246,34 @@ class UserFriendlyErrorService:
         """
         Get a conversational error message suitable for chat interfaces.
 
+        Uses consciousness patterns for identity voice, epistemic humility,
+        and dialogue invitation.
+
         Args:
             error: The technical error
             context: Optional context
 
         Returns:
-            Conversational error message string
+            Conversational error message string with consciousness
         """
-        friendly_error = self.make_user_friendly(error, context)
+        # Get base error without context (consciousness wrapper handles context)
+        friendly_error = self.make_user_friendly(error, context=None)
 
-        # Create a conversational response
+        # Use consciousness-enhanced formatting
+        # Issue #631: Error messages now use consciousness patterns
         message = friendly_error["message"]
         recovery = friendly_error["recovery"]
+        severity = friendly_error["severity"]
 
-        # Combine into natural conversation
-        if friendly_error["severity"] == ErrorSeverity.INFO:
-            return f"{message} {recovery}"
-        elif friendly_error["severity"] == ErrorSeverity.WARNING:
-            return f"Hmm, {message.lower()} {recovery}"
-        else:
-            return f"I'm sorry, {message.lower()} {recovery}"
+        # Get severity value for consciousness function
+        severity_value = severity.value if isinstance(severity, ErrorSeverity) else severity
+
+        return format_conversational_error_conscious(
+            message=message,
+            recovery=recovery,
+            severity=severity_value,
+            context=context,
+        )
 
 
 # Global instance for easy access

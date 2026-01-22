@@ -173,34 +173,48 @@ class TestUserFriendlyErrorService:
 
     @pytest.mark.smoke
     def test_conversational_error_info_severity(self, error_service):
-        """Test conversational error for INFO severity"""
+        """Test conversational error for INFO severity.
+
+        Updated in #631 to use consciousness patterns.
+        """
         error = Exception("HTTP 404 Not Found")
         message = error_service.get_conversational_error(error)
 
-        # INFO severity should be direct
-        assert not message.startswith("Hmm,")
-        assert not message.startswith("I'm sorry,")
+        # INFO severity uses "Heads up:" consciousness pattern
+        assert "Heads up:" in message or "I" in message
         assert "couldn't find what you're looking for" in message
+        # Should have dialogue invitation
+        assert "Let me know" in message or "?" in message
 
     @pytest.mark.smoke
     def test_conversational_error_warning_severity(self, error_service):
-        """Test conversational error for WARNING severity"""
+        """Test conversational error for WARNING severity.
+
+        Updated in #631 to use consciousness patterns.
+        """
         error = Exception("connection refused")
         message = error_service.get_conversational_error(error)
 
-        # WARNING severity should start with "Hmm,"
-        assert message.startswith("Hmm,")
+        # WARNING severity should use consciousness pattern with identity voice
+        assert "I noticed something:" in message or "I" in message
         assert "can't connect to the database" in message
+        # Should have dialogue invitation
+        assert "?" in message or "Let me know" in message
 
     @pytest.mark.smoke
     def test_conversational_error_error_severity(self, error_service):
-        """Test conversational error for ERROR severity"""
+        """Test conversational error for ERROR severity.
+
+        Updated in #631 to use consciousness patterns.
+        """
         error = Exception("relation 'users' does not exist")
         message = error_service.get_conversational_error(error)
 
-        # ERROR severity should start with "I'm sorry,"
-        assert message.startswith("I'm sorry,")
+        # ERROR severity should use consciousness pattern with identity voice
+        assert "I ran into something:" in message or "I" in message
         assert "trouble accessing the database" in message
+        # Should have dialogue invitation
+        assert "?" in message or "try again" in message.lower()
 
     @pytest.mark.smoke
     def test_convenience_function_make_error_user_friendly(self):

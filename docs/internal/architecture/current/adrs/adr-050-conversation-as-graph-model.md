@@ -1,7 +1,8 @@
 # ADR-050: Conversation-as-Graph Model
 
-**Status**: Proposed
-**Date**: January 13, 2026
+**Status**: Accepted
+**Date**: January 21, 2026 (Accepted)
+**Original Date**: January 13, 2026
 **Author**: Chief Architect
 **Input**: Ted Nadeau, "MultiChat – Multi-Party, Multi-Agent Conversational Modeling Platform" PRD v1.0
 **Related**: PDR-101 (Multi-Entity Conversation Support), ADR-046 (Moment.type Agent Architecture), ADR-054 (Cross-Session Memory)

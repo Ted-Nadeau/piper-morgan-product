@@ -11,7 +11,7 @@ References:
 - ADR-055: Object Model Implementation
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
@@ -389,3 +389,273 @@ class OwnershipTransformation:
             )
 
         return f"{self.from_category.metaphor} transforms to " f"{self.to_category.metaphor}"
+
+
+@dataclass
+class OwnershipMetadata:
+    """
+    Metadata tracking Piper's relationship to an object.
+
+    This dataclass can be embedded in domain models to track:
+    - How Piper knows about this object (category)
+    - Where it came from (source)
+    - How confident Piper is (confidence)
+    - Whether it needs verification
+    - Transformation history for derived objects
+
+    Example:
+        @dataclass
+        class Session:
+            id: str
+            ownership: OwnershipMetadata = field(
+                default_factory=lambda: OwnershipMetadata.native("piper-core")
+            )
+
+        @dataclass
+        class GitHubIssue:
+            id: str
+            ownership: OwnershipMetadata = field(
+                default_factory=lambda: OwnershipMetadata.federated("github")
+            )
+    """
+
+    # Core ownership attributes
+    category: OwnershipCategory
+    source: str
+    confidence: float = 1.0
+
+    # Provenance
+    created_at: Optional[datetime] = None
+    last_verified: Optional[datetime] = None
+
+    # For SYNTHETIC objects - track derivation
+    derived_from: List[str] = field(default_factory=list)
+    transformation_chain: List[str] = field(default_factory=list)
+
+    # Trust implications
+    requires_verification: bool = False
+    user_visible: bool = True
+    can_modify: bool = True
+
+    def __post_init__(self):
+        """Validate and set defaults."""
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(f"Confidence must be 0.0-1.0, got {self.confidence}")
+        if self.created_at is None:
+            self.created_at = datetime.now()
+
+    # --- Factory Methods ---
+
+    @classmethod
+    def native(
+        cls,
+        source: str = "piper",
+        confidence: float = 1.0,
+        can_modify: bool = True,
+    ) -> "OwnershipMetadata":
+        """
+        Create ownership metadata for NATIVE objects (Piper's Mind).
+
+        Native objects are created and owned by Piper - sessions, memories,
+        trust states, learning. High confidence, fully modifiable.
+
+        Args:
+            source: Origin within Piper (default "piper")
+            confidence: Certainty level (default 1.0)
+            can_modify: Whether Piper can change this (default True)
+
+        Returns:
+            OwnershipMetadata configured for native ownership
+        """
+        return cls(
+            category=OwnershipCategory.NATIVE,
+            source=source,
+            confidence=confidence,
+            requires_verification=False,
+            user_visible=True,
+            can_modify=can_modify,
+        )
+
+    @classmethod
+    def federated(
+        cls,
+        source: str,
+        confidence: float = 0.9,
+        requires_verification: bool = True,
+    ) -> "OwnershipMetadata":
+        """
+        Create ownership metadata for FEDERATED objects (Piper's Senses).
+
+        Federated objects are observed from external sources - GitHub issues,
+        Slack messages, calendar events. May be stale, cannot be modified.
+
+        Args:
+            source: External source (e.g., "github", "slack", "calendar")
+            confidence: Certainty level (default 0.9 - external data may be stale)
+            requires_verification: Whether to verify before trusting (default True)
+
+        Returns:
+            OwnershipMetadata configured for federated ownership
+        """
+        return cls(
+            category=OwnershipCategory.FEDERATED,
+            source=source,
+            confidence=confidence,
+            requires_verification=requires_verification,
+            user_visible=True,
+            can_modify=False,  # Can't change external truth
+        )
+
+    @classmethod
+    def synthetic(
+        cls,
+        source: str,
+        derived_from: List[str],
+        transformation: str,
+        confidence: float = 0.7,
+    ) -> "OwnershipMetadata":
+        """
+        Create ownership metadata for SYNTHETIC objects (Piper's Understanding).
+
+        Synthetic objects are constructed through reasoning - inferred status,
+        assembled risk, pattern recognition. Track derivation chain.
+
+        Args:
+            source: Analysis source (e.g., "risk-analysis", "pattern-match")
+            derived_from: IDs of source objects used in derivation
+            transformation: Description of transformation applied
+            confidence: Certainty level (default 0.7 - inference has uncertainty)
+
+        Returns:
+            OwnershipMetadata configured for synthetic ownership
+        """
+        return cls(
+            category=OwnershipCategory.SYNTHETIC,
+            source=source,
+            confidence=confidence,
+            derived_from=derived_from,
+            transformation_chain=[transformation],
+            requires_verification=True,
+            user_visible=True,
+            can_modify=True,
+        )
+
+    # --- Methods ---
+
+    def verify(self) -> "OwnershipMetadata":
+        """
+        Mark this object as verified.
+
+        Returns a new OwnershipMetadata with updated verification timestamp.
+        """
+        return OwnershipMetadata(
+            category=self.category,
+            source=self.source,
+            confidence=self.confidence,
+            created_at=self.created_at,
+            last_verified=datetime.now(),
+            derived_from=self.derived_from.copy(),
+            transformation_chain=self.transformation_chain.copy(),
+            requires_verification=False,
+            user_visible=self.user_visible,
+            can_modify=self.can_modify,
+        )
+
+    def promote_to_native(self, reason: str = "user_confirmation") -> "OwnershipMetadata":
+        """
+        Promote synthetic object to native after user confirmation.
+
+        When a user confirms Piper's inference, it becomes native knowledge.
+
+        Args:
+            reason: Why this is being promoted (default "user_confirmation")
+
+        Returns:
+            New OwnershipMetadata with NATIVE category
+        """
+        if self.category == OwnershipCategory.NATIVE:
+            return self  # Already native
+
+        new_chain = self.transformation_chain.copy()
+        new_chain.append(f"promoted_to_native:{reason}")
+
+        return OwnershipMetadata(
+            category=OwnershipCategory.NATIVE,
+            source=self.source,
+            confidence=1.0,
+            created_at=self.created_at,
+            last_verified=datetime.now(),
+            derived_from=self.derived_from.copy(),
+            transformation_chain=new_chain,
+            requires_verification=False,
+            user_visible=self.user_visible,
+            can_modify=True,
+        )
+
+    def derive(
+        self,
+        transformation: str,
+        new_source: str,
+        confidence_decay: float = 0.9,
+    ) -> "OwnershipMetadata":
+        """
+        Create synthetic ownership derived from this object.
+
+        Used when Piper creates understanding from observations.
+
+        Args:
+            transformation: Description of transformation applied
+            new_source: New source identifier for derived object
+            confidence_decay: Multiplier for confidence (default 0.9)
+
+        Returns:
+            New OwnershipMetadata for derived synthetic object
+        """
+        new_chain = self.transformation_chain.copy()
+        new_chain.append(transformation)
+
+        return OwnershipMetadata(
+            category=OwnershipCategory.SYNTHETIC,
+            source=new_source,
+            confidence=self.confidence * confidence_decay,
+            derived_from=self.derived_from + [self.source],
+            transformation_chain=new_chain,
+            requires_verification=True,
+            user_visible=self.user_visible,
+            can_modify=True,
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "category": self.category.value,
+            "source": self.source,
+            "confidence": self.confidence,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_verified": self.last_verified.isoformat() if self.last_verified else None,
+            "derived_from": self.derived_from,
+            "transformation_chain": self.transformation_chain,
+            "requires_verification": self.requires_verification,
+            "user_visible": self.user_visible,
+            "can_modify": self.can_modify,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "OwnershipMetadata":
+        """Create from dictionary."""
+        return cls(
+            category=OwnershipCategory(data["category"]),
+            source=data["source"],
+            confidence=data.get("confidence", 1.0),
+            created_at=(
+                datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
+            ),
+            last_verified=(
+                datetime.fromisoformat(data["last_verified"]) if data.get("last_verified") else None
+            ),
+            derived_from=data.get("derived_from", []),
+            transformation_chain=data.get("transformation_chain", []),
+            requires_verification=data.get("requires_verification", False),
+            user_visible=data.get("user_visible", True),
+            can_modify=data.get("can_modify", True),
+        )

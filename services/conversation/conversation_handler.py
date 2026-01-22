@@ -3,6 +3,13 @@ from typing import Any, Dict, Optional
 import structlog
 
 from services.api.serializers import intent_to_dict
+from services.consciousness.conversation_consciousness import (
+    format_chitchat_conscious,
+    format_clarification_conscious,
+    format_farewell_conscious,
+    format_greeting_conscious,
+    format_thanks_conscious,
+)
 from services.domain.models import Intent
 from services.intelligence.conversation_aware import ConversationAwareClarifyingGenerator
 from services.session.session_manager import SessionManager
@@ -99,9 +106,14 @@ class ConversationHandler:
         if intent.action == "greeting":
             return await self._respond_to_greeting(intent, session_id)
 
-        # Handle other conversational actions
-        responses = self.RESPONSES.get(intent.action, self.RESPONSES["chitchat"])
-        response = random.choice(responses)
+        # Issue #407: Handle other conversational actions with consciousness
+        if intent.action == "farewell":
+            response = format_farewell_conscious()
+        elif intent.action == "thanks":
+            response = format_thanks_conscious()
+        else:
+            # Chitchat and unknown actions
+            response = format_chitchat_conscious()
 
         return {
             "message": response,
@@ -150,12 +162,8 @@ class ConversationHandler:
         # Get calendar summary (may be None if unavailable)
         calendar_summary = await self._get_calendar_summary()
 
-        if calendar_summary and not calendar_summary.get("error"):
-            # Build enhanced greeting with calendar insights
-            response = self._format_calendar_greeting(calendar_summary)
-        else:
-            # Fallback to standard greeting
-            response = random.choice(self.RESPONSES["greeting"])
+        # Issue #407: Use consciousness-enhanced greeting
+        response = format_greeting_conscious(calendar_summary=calendar_summary)
 
         return {
             "message": response,

@@ -4,6 +4,9 @@ Todo Intent Handlers - Natural language interface for todo operations
 Issue #285: CORE-ALPHA-TODO-INCOMPLETE
 Wires chat commands to existing todo_management API (PM-081)
 
+Enhanced with consciousness injection (#407 MUX-VISION-STANDUP-EXTRACT)
+for more alive, present-feeling responses.
+
 Example commands:
 - "add todo: Review PR #285"
 - "show my todos"
@@ -18,6 +21,13 @@ from uuid import UUID
 import structlog
 
 from services.api.todo_management import TodoCreateRequest, TodoUpdateRequest
+from services.consciousness.todo_consciousness import (
+    format_next_todo_conscious,
+    format_todo_completed_conscious,
+    format_todo_created_conscious,
+    format_todo_deleted_conscious,
+    format_todo_list_conscious,
+)
 from services.domain.models import Intent
 from services.todo.todo_management_service import TodoManagementService
 
@@ -60,12 +70,8 @@ class TodoIntentHandlers:
                 user_id=user_id,
             )
 
-            # Format response with actual todo ID
-            response = f"✓ Added todo #{str(todo.id)[:8]}: {todo.text}"
-            if priority != "medium":
-                response += f" (priority: {priority})"
-
-            return response
+            # Format response with consciousness
+            return format_todo_created_conscious(todo)
 
         except ValueError as e:
             logger.warning("Todo creation validation failed", error=str(e), user_id=user_id)
@@ -83,28 +89,8 @@ class TodoIntentHandlers:
 
             logger.info("Todo list retrieved", user_id=user_id, count=len(todos))
 
-            if not todos:
-                return "You don't have any active todos. Try: 'add todo: [task]'"
-
-            # Format todo list
-            lines = ["Your active todos:"]
-            for idx, todo in enumerate(todos, 1):
-                status = "●" if todo.completed else "○"
-                priority_marker = ""
-                if todo.priority == "urgent":
-                    priority_marker = " 🔴"
-                elif todo.priority == "high":
-                    priority_marker = " 🟡"
-
-                # Truncate long text for readability
-                text = todo.text[:60] + "..." if len(todo.text) > 60 else todo.text
-                lines.append(f"{idx}. {status} {text}{priority_marker}")
-
-            lines.append("")
-            lines.append(f"Total: {len(todos)} active todos")
-            lines.append("Try: 'mark todo [number] as complete' or 'delete todo [number]'")
-
-            return "\n".join(lines)
+            # Format with consciousness
+            return format_todo_list_conscious(todos)
 
         except Exception as e:
             logger.error("Todo list retrieval failed", error=str(e), user_id=user_id, exc_info=True)
@@ -119,32 +105,16 @@ class TodoIntentHandlers:
             logger.info("Next todo retrieved", user_id=user_id, has_todos=len(todos) > 0)
 
             if not todos:
-                return "You don't have any active todos. Try: 'add todo: [task]'"
+                return (
+                    "I checked your todo list and it's empty - nothing pending! "
+                    "If something comes to mind, just say 'add todo: [task]'."
+                )
 
             # Get the first todo (highest priority due to sorting in repository)
             next_todo = todos[0]
 
-            # Format priority icon
-            priority_marker = ""
-            if next_todo.priority == "urgent":
-                priority_marker = " 🔴"
-            elif next_todo.priority == "high":
-                priority_marker = " 🟡"
-            elif next_todo.priority == "low":
-                priority_marker = " 🟢"
-
-            # Format response
-            response = f"Your next todo:{priority_marker}\n\n{next_todo.text}"
-
-            # Add due date if present
-            if next_todo.due_date:
-                response += f"\n\nDue: {next_todo.due_date.strftime('%Y-%m-%d')}"
-
-            # Add context if present
-            if next_todo.context:
-                response += f"\n\nContext: {next_todo.context}"
-
-            return response
+            # Format with consciousness
+            return format_next_todo_conscious(next_todo, len(todos))
 
         except Exception as e:
             logger.error("Next todo retrieval failed", error=str(e), user_id=user_id, exc_info=True)
@@ -178,9 +148,9 @@ class TodoIntentHandlers:
 
             if completed_todo:
                 logger.info("Todo completed", todo_id=str(todo.id), user_id=user_id)
-                return f"✓ Completed: {completed_todo.text}"
+                return format_todo_completed_conscious(completed_todo)
             else:
-                return f"I couldn't complete that todo. It might have been deleted."
+                return "I couldn't complete that todo. It might have been deleted."
 
         except Exception as e:
             logger.error("Todo completion failed", error=str(e), user_id=user_id, exc_info=True)
@@ -215,9 +185,9 @@ class TodoIntentHandlers:
 
             if deleted:
                 logger.info("Todo deleted", todo_id=str(todo.id), user_id=user_id)
-                return f"✓ Removed: {todo_text}"
+                return format_todo_deleted_conscious(todo_text)
             else:
-                return f"I couldn't delete that todo. It might have already been removed."
+                return "I couldn't delete that todo. It might have already been removed."
 
         except Exception as e:
             logger.error("Todo deletion failed", error=str(e), user_id=user_id, exc_info=True)

@@ -4,7 +4,7 @@
 **Audience**: Agents, developers, architects, and internal contributors
 **Public Documentation**: See [README.md](README.md) for pmorgan.tech public site
 
-**Last Updated**: January 5, 2026
+**Last Updated**: January 20, 2026
 **Status**: ✅ **Complete Internal Navigation System** - Role-based access for development teams
 
 ---
@@ -49,6 +49,34 @@ Each essential briefing includes triggers for loading detailed documentation as 
 - **[Canonical Queries](internal/architecture/current/canonical-queries.md)** - Reference list of canonical query types (IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE)
   - See also: [ADR-039 Investigation Appendix](internal/architecture/current/adrs/adr-039-appendix-investigation.md) for routing analysis
   - Test matrix: To be created (validation coverage for all 25 canonical query patterns)
+
+### 🧠 MUX Object Model (Grammar & Consciousness)
+
+The MUX track establishes Piper's unified object model: **"Entities experience Moments in Places"**
+
+**Core Philosophy**:
+- **[ADR-045 Object Model](internal/architecture/current/adrs/adr-045-object-model.md)** - Canonical grammar definition (ACCEPTED)
+- **[Consciousness Philosophy](internal/architecture/current/consciousness-philosophy.md)** - WHY Piper has a soul (Five Pillars)
+- **[Ownership Metaphors](internal/architecture/current/ownership-metaphors.md)** - Mind/Senses/Understanding philosophy
+
+**Implementation Reference**:
+- **[ADR-055 Implementation](internal/architecture/current/adrs/adr-055-object-model-implementation.md)** - Technical implementation spec
+- **[Grammar Compliance Audit](internal/architecture/current/grammar-compliance-audit.md)** - 16 features assessed for compliance
+- **[Feature Object Model Map](internal/architecture/current/feature-object-model-map.md)** - Feature-to-grammar mappings with canonical queries
+
+**Patterns** (in `patterns/`):
+- **[Grammar Application Patterns](internal/architecture/current/patterns/grammar-application-patterns.md)** - Index of 5 MUX patterns
+- pattern-050: Context/Dataclass Pair
+- pattern-051: Parallel Place Gathering
+- pattern-052: Personality Bridge
+- pattern-053: Warmth Calibration
+- pattern-054: Honest Failure
+
+**Developer Guides** (in `development/`):
+- **[Grammar Transformation Guide](internal/development/grammar-transformation-guide.md)** - HOW to transform features
+- **[Grammar Onboarding Checklist](internal/development/grammar-onboarding-checklist.md)** - Developer onboarding
+- **[MUX Implementation Guide](internal/development/mux-implementation-guide.md)** - Technical implementation
+- **[MUX Experience Tests](internal/development/mux-experience-tests.md)** - Consciousness test criteria
 
 ### 👨‍💻 Developers
 

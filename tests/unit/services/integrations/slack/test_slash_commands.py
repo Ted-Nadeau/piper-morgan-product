@@ -41,10 +41,10 @@ class TestSlashCommandRouting:
             }
         )
         assert "response_type" in result
-        assert (
-            "Available Commands" in result.get("text", "")
-            or "help" in result.get("text", "").lower()
-        )
+        # Issue #628: Grammar-conscious help uses warm intro
+        text = result.get("text", "")
+        assert "Piper" in text
+        assert "help" in text.lower()
 
     @pytest.mark.asyncio
     async def test_piper_empty_routes_to_help(self, router):
@@ -58,7 +58,8 @@ class TestSlashCommandRouting:
             }
         )
         assert "response_type" in result
-        assert "Available Commands" in result.get("text", "")
+        # Issue #628: Grammar-conscious help uses warm intro
+        assert "Piper" in result.get("text", "")
 
     @pytest.mark.asyncio
     async def test_standup_routes_correctly(self, router):
@@ -107,9 +108,9 @@ class TestPiperHelpCommand:
     async def test_help_includes_capabilities(self, router):
         """Test help shows capabilities."""
         result = await router._handle_piper_command("help", "U123", "C456")
-        # Should include at least core capabilities
+        # Issue #628: Grammar-conscious help uses "What I Can Do"
         text = result.get("text", "")
-        assert "Capabilities" in text or "capabilities" in text
+        assert "What I Can Do" in text or "Can Do" in text
 
     @pytest.mark.asyncio
     async def test_help_is_ephemeral(self, router):
@@ -121,8 +122,10 @@ class TestPiperHelpCommand:
     async def test_unknown_subcommand_suggests_help(self, router):
         """Test unknown subcommand suggests /piper help."""
         result = await router._handle_piper_command("foobar", "U123", "C456")
-        assert "Unknown subcommand" in result.get("text", "")
-        assert "/piper help" in result.get("text", "")
+        # Issue #628: Grammar-conscious error message
+        text = result.get("text", "")
+        assert "don't recognize" in text or "foobar" in text
+        assert "/piper help" in text
 
 
 class TestStandupCommand:

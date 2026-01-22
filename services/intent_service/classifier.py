@@ -32,10 +32,20 @@ from services.intent_service.cache import IntentCache
 
 # --- Add fuzzy matcher import ---
 from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_match
+from services.intent_service.honest_failure import (
+    HonestFailureHandler,
+    create_graceful_error_response,
+)
 from services.intent_service.intent_hooks import IntentProcessingHooks
+
+# Grammar-conscious classification components (Issue #619)
+from services.intent_service.intent_types import IntentClassificationContext, IntentUnderstanding
+from services.intent_service.personality_bridge import PersonalityBridge
+from services.intent_service.place_detector import PlaceDetector
 from services.intent_service.pre_classifier import MultiIntentResult, PreClassifier
 from services.intent_service.preference_handler import PreferenceDetectionHandler
 from services.intent_service.prompts import INTENT_CLASSIFICATION_PROMPT
+from services.intent_service.warmth_calibration import WarmthCalibrator
 from services.knowledge_graph import get_ingester
 from shared.events import EventBus
 
@@ -74,6 +84,13 @@ class IntentClassifier:
         self.preference_handler = PreferenceDetectionHandler()
         self.hooks = IntentProcessingHooks(self.preference_handler)
         logger.info("Preference detection hooks initialized for #248")
+
+        # Issue #619: Grammar-conscious classification components
+        self.place_detector = PlaceDetector()
+        self.personality_bridge = PersonalityBridge()
+        self.warmth_calibrator = WarmthCalibrator()
+        self.failure_handler = HonestFailureHandler(self.warmth_calibrator)
+        logger.info("Grammar-conscious classification components initialized (#619)")
 
     @property
     def llm(self):
@@ -349,6 +366,95 @@ class IntentClassifier:
             logger.error(f"Classification failed: {e}", exc_info=True)
             # Raise a structured error instead of falling back
             raise IntentClassificationFailedError(details={"original_error": str(e)})
+
+    async def classify_conscious(
+        self,
+        message: str,
+        context: Optional[Dict] = None,
+        session: Optional[Any] = None,
+        spatial_context: Optional[Dict] = None,
+        use_cache: bool = True,
+    ) -> IntentUnderstanding:
+        """
+        Grammar-conscious intent classification (Issue #619).
+
+        This method returns IntentUnderstanding instead of raw Intent,
+        providing experiential framing of Piper's understanding.
+
+        For backward compatibility, use classify() which returns Intent.
+        New code should prefer this method for richer responses.
+
+        Args:
+            message: User input text
+            context: Optional context dict
+            session: Optional session object
+            spatial_context: Optional spatial context
+            use_cache: Whether to use cache (default True)
+
+        Returns:
+            IntentUnderstanding with Piper's experiential understanding
+        """
+        # Detect Place first
+        place, place_settings = self.place_detector.detect_with_settings(spatial_context)
+
+        # Build rich classification context
+        classification_context = IntentClassificationContext.from_classify_args(
+            message=message,
+            context=context,
+            spatial_context=spatial_context,
+            place=place,
+        )
+
+        try:
+            # Use existing classify() for the raw Intent
+            intent = await self.classify(
+                message=message,
+                context=context,
+                session=session,
+                spatial_context=spatial_context,
+                use_cache=use_cache,
+            )
+
+            # Check for low confidence - handle specially
+            if intent.confidence < 0.5:
+                return self.failure_handler.handle_low_confidence(
+                    intent=intent,
+                    context=classification_context,
+                    place_settings=place_settings,
+                )
+
+            # Check for vague intent
+            if self._seems_vague(intent):
+                return self.failure_handler.handle_vague_intent(
+                    intent=intent,
+                    context=classification_context,
+                    place_settings=place_settings,
+                )
+
+            # Transform to grammar-conscious understanding
+            understanding = self.personality_bridge.transform(
+                intent=intent,
+                context=classification_context,
+                place_settings=place_settings,
+            )
+
+            # Record for pattern detection
+            if classification_context.user_id:
+                self.personality_bridge.record_intent(
+                    classification_context.user_id,
+                    intent.action,
+                )
+
+            return understanding
+
+        except Exception as e:
+            logger.error(f"Grammar-conscious classification failed: {e}", exc_info=True)
+            # Return graceful failure instead of raising
+            return create_graceful_error_response(
+                context=classification_context,
+                place_settings=place_settings,
+                error=e,
+            )
 
     async def classify_multiple(
         self,

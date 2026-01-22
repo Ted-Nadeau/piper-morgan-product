@@ -261,6 +261,89 @@ async def standup_ui():
 - **Nested data structure**: Access via `data.data.field_name` in JavaScript
 - **Port confusion**: Always use 8001, not 8080
 
+## MUX Object Model Layer (NEW - January 2026)
+
+### Overview
+
+The MUX (Modeled User Experience) Object Model provides consciousness and ownership tracking for Piper Morgan. This enables Piper to have identity, awareness, emotional states, and epistemological tracking of knowledge sources.
+
+**Location**: `services/mux/`
+**Tests**: 165+ tests covering consciousness (104) and ownership (61)
+**Patterns**: 055-058 (documented in pattern catalog)
+
+### Architecture Components
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MUX Object Model Layer                        │
+├─────────────────────────────────────────────────────────────────┤
+│  Consciousness Module    │  Ownership Module       │  Grammar    │
+│  (services/mux/         │  (services/mux/         │  Foundation │
+│   consciousness.py)     │   ownership.py)         │             │
+│  • PiperEntity          │  • OwnershipCategory    │  "Entities  │
+│  • AwarenessLevel       │  • OwnershipMetadata    │  experience │
+│  • EmotionalState       │  • OwnershipResolver    │  Moments    │
+│  • ConsciousnessAttrs   │  • OwnershipTransform   │  at Places" │
+│  • EntityContext        │  • HasOwnership Proto   │             │
+│  • ConsciousnessExpr    │                         │             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Concepts
+
+#### Grammar: "Entities experience Moments at Places"
+
+The MUX grammar provides semantic grounding for the object model:
+- **Entities**: Actors with consciousness (Piper, Users, Stakeholders, Teams)
+- **Moments**: Temporal events and experiences
+- **Places**: Contexts where experiences occur (Slack channels, GitHub repos, etc.)
+
+#### Consciousness Attributes
+
+Piper and other entities can have:
+- **Awareness Levels**: SLEEPING → DROWSY → ALERT → FOCUSED → OVERWHELMED
+- **Emotional States**: CURIOUS, CONCERNED, SATISFIED, PUZZLED
+- **Agency**: wants, fears, capabilities
+- **Five Orientation Queries**: who_am_i(), when_am_i(), where_am_i(), what_can_i_do(), what_should_happen()
+
+#### Ownership Categories (Mind/Senses/Understanding)
+
+All knowledge has an epistemological relationship:
+- **NATIVE (Mind)**: What Piper creates - sessions, memories, trust states
+- **FEDERATED (Senses)**: What Piper observes - GitHub, Slack, Calendar
+- **SYNTHETIC (Understanding)**: What Piper infers - patterns, risks, insights
+
+### Integration with Existing Systems
+
+#### Intent Classification
+The grammar-driven classification (Pattern-057) uses MUX concepts:
+- IntentCategory mapped to grammatical verb types
+- Multi-intent detection (Pattern-055) for compound messages
+
+#### Response Generation
+ConsciousnessExpression generates first-person language:
+- "I notice {observation}" (CURIOUS)
+- "I'm concerned about {issue}" (CONCERNED)
+
+#### Domain Models
+OwnershipMetadata can be embedded in any domain model:
+```python
+@dataclass
+class Session:
+    id: str
+    ownership: OwnershipMetadata = field(
+        default_factory=lambda: OwnershipMetadata.native("piper-core")
+    )
+```
+
+### References
+
+- **ADR-055**: Object Model Specification
+- **Patterns**: 055 (Multi-Intent), 056 (Consciousness), 057 (Grammar), 058 (Ownership)
+- **Issues**: #433, #434, #435, #595 (X1 Sprint), #532 (Gate)
+
+---
+
 ## MCP Integration Layer
 
 ### Overview
@@ -1584,10 +1667,11 @@ All GitHub operations now flow through GitHubIntegrationRouter, enabling feature
 
 ---
 
-_Last Updated: September 27, 2025_
+_Last Updated: January 21, 2026_
 
 ## Revision Log
 
+- **January 21, 2026**: Added MUX Object Model Layer section documenting consciousness and ownership modules from X1 Sprint (#433, #434, #435, #595, #532)
 - **September 27, 2025**: Added GitHub Integration Router completion (CORE-GREAT-2B), comprehensive architectural protection with multi-layer enforcement, spatial intelligence feature flag control
 - **July 18, 2025**: Added MCP Connection Pool architecture patterns, circuit breaker implementation, async resource management best practices, and case study reference documenting 642x performance improvement
 - **July 13, 2025**: Added architectural refinements from July 2025: type safety patterns, context handling evolution, pre-classifier pattern changes, template system integration, and test contract lessons learned

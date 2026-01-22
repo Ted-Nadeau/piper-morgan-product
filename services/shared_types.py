@@ -231,3 +231,43 @@ class PortfolioOnboardingState(Enum):
     CONFIRMING = "confirming"  # Confirming captured info before save
     COMPLETE = "complete"  # Projects saved, onboarding done
     DECLINED = "declined"  # User said no thanks
+
+
+class PlaceType(str, Enum):
+    """
+    Where the interaction is happening - the Place in MUX grammar.
+
+    Issue #619: GRAMMAR-TRANSFORM: Intent Classification
+    Pattern: Pattern-051 (Parallel Place Gathering)
+
+    Different Places call for different communication styles:
+    - Slack DM: casual, personal
+    - Slack channel: professional, concise (others watching)
+    - Web chat: warm, full explanations
+    - CLI: terse, no fluff
+    """
+
+    SLACK_DM = "slack_dm"
+    SLACK_CHANNEL = "slack_channel"
+    WEB_CHAT = "web_chat"
+    CLI = "cli"
+    API = "api"
+    UNKNOWN = "unknown"
+
+
+class PerceptionMode(str, Enum):
+    """
+    How Piper perceives the intent - temporal framing.
+
+    Issue #619: GRAMMAR-TRANSFORM: Intent Classification
+    Pattern: Pattern-052 (Personality Bridge)
+
+    This represents Piper's experiential framing of understanding:
+    - NOTICING: Present awareness ("I notice you want...")
+    - REMEMBERING: Past pattern ("I remember you often ask...")
+    - ANTICIPATING: Future suggestion ("You might also want...")
+    """
+
+    NOTICING = "noticing"
+    REMEMBERING = "remembering"
+    ANTICIPATING = "anticipating"

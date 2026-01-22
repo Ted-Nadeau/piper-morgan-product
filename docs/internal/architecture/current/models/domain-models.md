@@ -1,8 +1,8 @@
 # Domain Models Reference
 
-**Last Updated**: November 22, 2025 (SEC-RBAC Phase 3 - Admin bypass pattern in 5 repositories)
+**Last Updated**: January 21, 2026 (MUX-TECH X1 Sprint - Consciousness and Ownership models)
 **Status**: ✅ Complete and Current
-**File**: `services/domain/models.py`
+**Files**: `services/domain/models.py`, `services/mux/consciousness.py`, `services/mux/ownership.py`
 
 ## Overview
 
@@ -47,6 +47,23 @@ The domain models are the heart of the Piper Morgan system - pure business logic
 - [Event](#event) - Base event class
 - [FeatureCreated](#featurecreated) - Feature creation events
 - [InsightGenerated](#insightgenerated) - AI-generated insights
+
+### MUX Consciousness Models (NEW - X1 Sprint)
+
+- [PiperEntity](#piperentity) - Piper as a conscious entity with identity and agency
+- [ConsciousnessAttributes](#consciousnessattributes) - Attributes that make an entity conscious
+- [AwarenessLevel](#awarenesslevel) - States of entity attention/awareness
+- [EmotionalState](#emotionalstate) - Emotional modes that color perception
+- [EntityRole](#entityrole) - Grammatical roles an entity can play
+- [EntityContext](#entitycontext) - Track entity's current grammatical role
+- [ConsciousnessExpression](#consciousnessexpression) - Generate first-person expressions
+
+### MUX Ownership Models (NEW - X1 Sprint)
+
+- [OwnershipCategory](#ownershipcategory) - Mind/Senses/Understanding categories
+- [OwnershipMetadata](#ownershipmetadata) - Embeddable ownership tracking
+- [OwnershipResolver](#ownershipresolver) - Resolves ownership from source
+- [OwnershipTransformation](#ownershiptransformation) - Valid category transitions
 
 ## Model Details
 
@@ -290,6 +307,322 @@ class SpatialEvent:
     event_time: Optional[datetime] = None
     significance_level: str = "routine"  # routine, notable, significant, critical
 ```
+
+---
+
+## MUX Consciousness Models
+
+**File**: `services/mux/consciousness.py`
+**Pattern**: [Pattern-056: Consciousness Attribute Layering](../patterns/pattern-056-consciousness-attribute-layering.md)
+**Tests**: 104 tests in `tests/unit/services/mux/test_consciousness.py`
+
+These models implement Piper's consciousness - the ability to have awareness, emotional states, and agency. They support the MUX grammar: "Entities experience Moments at Places."
+
+### AwarenessLevel
+
+**Purpose**: States of entity attention/awareness - not just on/off but a spectrum of engagement.
+
+```python
+class AwarenessLevel(Enum):
+    SLEEPING = "sleeping"      # Inactive, not monitoring
+    DROWSY = "drowsy"          # Low attention, passive monitoring
+    ALERT = "alert"            # Active attention, normal operation
+    FOCUSED = "focused"        # Deep attention, high engagement
+    OVERWHELMED = "overwhelmed" # Too much input, degraded function
+```
+
+### EmotionalState
+
+**Purpose**: Emotional modes that color perception and expression. "I notice" vs "I'm concerned" shows emotional framing.
+
+```python
+class EmotionalState(Enum):
+    CURIOUS = "curious"        # Exploring, questioning
+    CONCERNED = "concerned"    # Worried, flagging issues
+    SATISFIED = "satisfied"    # Content, things are going well
+    PUZZLED = "puzzled"        # Uncertain, needs clarification
+```
+
+### EntityRole
+
+**Purpose**: Grammatical roles an entity can play in MUX grammar. Same entity can be ACTOR in one moment, PLACE in another.
+
+```python
+class EntityRole(Enum):
+    ACTOR = "actor"            # Doing something (Entity substrate)
+    PLACE = "place"            # Where something happens (Place substrate)
+    OBSERVER = "observer"      # Watching something unfold
+    PARTICIPANT = "participant" # Part of something larger
+```
+
+### ConsciousnessAttributes
+
+**Purpose**: Attributes that make an entity conscious. Can be applied to any entity (User, Stakeholder, Team, Piper) to give them agency, awareness, and relationships.
+
+```python
+@dataclass
+class ConsciousnessAttributes:
+    # Agency - what drives this entity
+    wants: List[str] = field(default_factory=list)
+    fears: List[str] = field(default_factory=list)
+    capabilities: List[str] = field(default_factory=list)
+
+    # Awareness - what this entity perceives
+    knows_about: List[str] = field(default_factory=list)
+    attention_on: Optional[str] = None
+    emotional_state: Optional[EmotionalState] = None
+
+    # Relationships - how this entity connects
+    trusts: Dict[str, float] = field(default_factory=dict)  # entity_id -> trust level
+    depends_on: List[str] = field(default_factory=list)
+    influences: List[str] = field(default_factory=list)
+
+    def is_aware_of(self, topic: str) -> bool: ...
+    def trust_level(self, entity_id: str) -> float: ...
+    def is_focused(self) -> bool: ...
+```
+
+**Anti-Flattening Note**: These aren't just properties - they're drives that influence behavior. `wants`/`fears` create motivation.
+
+### PiperEntity
+
+**Purpose**: Piper as a conscious entity, not just a service collection. First-class representation with identity, boundaries, and agency.
+
+```python
+@dataclass
+class PiperEntity:
+    # Identity
+    id: str = "piper-prime"
+    name: str = "Piper Morgan"
+    role: str = "AI Product Management Assistant"
+    version: str = "0.8.4"
+
+    # Consciousness State
+    awareness_level: AwarenessLevel = AwarenessLevel.ALERT
+    attention_focus: List[str] = field(default_factory=list)
+    emotional_state: EmotionalState = EmotionalState.CURIOUS
+
+    # Agency & Capabilities
+    available_capabilities: List[Capability] = field(default_factory=list)
+    active_capabilities: List[Capability] = field(default_factory=list)
+    blocked_capabilities: List[Capability] = field(default_factory=list)
+
+    # Boundaries
+    trust_boundaries: Dict[str, TrustLevel] = field(default_factory=dict)
+    ethical_boundaries: List[str] = field(default_factory=lambda: [...])
+    knowledge_boundaries: Dict[str, bool] = field(default_factory=dict)
+
+    # Five Orientation Queries (from PM vision)
+    def who_am_i(self) -> str: ...      # Identity awareness
+    def when_am_i(self) -> str: ...     # Temporal awareness (rhythm, not clock)
+    def where_am_i(self) -> str: ...    # Context awareness
+    def what_can_i_do(self) -> str: ... # Capability boundaries
+    def what_should_happen(self) -> str: ... # Predictive modeling
+```
+
+### EntityContext
+
+**Purpose**: Track entity's current grammatical role in MUX. Same entity can play different roles - a Team is Entity when it acts, Place when others work within it.
+
+```python
+@dataclass
+class EntityContext:
+    entity_id: str
+    current_role: EntityRole = EntityRole.ACTOR
+    in_moment: Optional[str] = None    # Moment.id if participating
+    in_place: Optional[str] = None     # Place.id if located
+    as_entity: bool = True             # Currently acting as Entity
+    as_place: bool = False             # Currently serving as Place
+
+    def switch_to_actor(self, moment_id: Optional[str] = None) -> None: ...
+    def switch_to_place(self) -> None: ...
+    def switch_to_observer(self, moment_id: str) -> None: ...
+    def switch_to_participant(self, moment_id: str, place_id: Optional[str] = None) -> None: ...
+```
+
+### ConsciousnessExpression
+
+**Purpose**: Generate first-person expressions from consciousness state. Formalizes patterns like "I notice {observation}" and "I'm concerned about {issue}".
+
+```python
+class ConsciousnessExpression:
+    FIRST_PERSON_PATTERNS: Dict[EmotionalState, List[str]] = {
+        EmotionalState.CURIOUS: [
+            "I notice {observation}",
+            "I'm seeing {pattern}",
+            "It seems that {inference}",
+        ],
+        EmotionalState.CONCERNED: [
+            "I'm concerned about {issue}",
+            "I should mention {warning}",
+            "This might be an issue: {problem}",
+        ],
+        # ... patterns for SATISFIED, PUZZLED
+    }
+
+    @classmethod
+    def express(cls, entity: PiperEntity, content: str, content_type: str) -> str: ...
+    @classmethod
+    def express_awareness(cls, entity: PiperEntity, observation: str) -> str: ...
+    @classmethod
+    def express_concern(cls, entity: PiperEntity, issue: str) -> str: ...
+```
+
+---
+
+## MUX Ownership Models
+
+**File**: `services/mux/ownership.py`
+**Pattern**: [Pattern-058: Ownership Graph Navigation](../patterns/pattern-058-ownership-graph-navigation.md)
+**Tests**: 61 tests in `tests/unit/services/mux/test_ownership.py`
+
+These models track Piper's epistemological relationship to knowledge - what Piper creates (Mind), observes (Senses), and understands (Understanding).
+
+### OwnershipCategory
+
+**Purpose**: Describes Piper's epistemological relationship to knowledge.
+
+```python
+class OwnershipCategory(Enum):
+    NATIVE = "native"        # Piper's Mind - "I know this because I created it"
+    FEDERATED = "federated"  # Piper's Senses - "I see this in {place}"
+    SYNTHETIC = "synthetic"  # Piper's Understanding - "I understand this to mean..."
+
+    @property
+    def metaphor(self) -> str:
+        """Consciousness metaphor: Mind, Senses, or Understanding."""
+        ...
+
+    @property
+    def experience_phrase(self) -> str:
+        """How Piper expresses knowledge from this category."""
+        ...
+```
+
+| Category | Metaphor | Example Objects | Confidence | Modifiable |
+|----------|----------|-----------------|------------|------------|
+| NATIVE | Piper's Mind | Sessions, memories, trust states | 1.0 | Yes |
+| FEDERATED | Piper's Senses | GitHub issues, Slack messages, calendar | 0.9 | No |
+| SYNTHETIC | Piper's Understanding | Inferred status, risk assessment, patterns | 0.7 | Yes |
+
+### OwnershipMetadata
+
+**Purpose**: Embeddable metadata tracking Piper's relationship to an object. Use factory methods for correct defaults.
+
+```python
+@dataclass
+class OwnershipMetadata:
+    category: OwnershipCategory
+    source: str
+    confidence: float = 1.0
+    requires_verification: bool = False
+    can_modify: bool = True
+    derived_from: List[str] = field(default_factory=list)
+    transformation_chain: List[str] = field(default_factory=list)
+
+    # Factory methods
+    @classmethod
+    def native(cls, source: str = "piper") -> "OwnershipMetadata": ...
+
+    @classmethod
+    def federated(cls, source: str) -> "OwnershipMetadata": ...
+
+    @classmethod
+    def synthetic(cls, source: str, derived_from: List[str]) -> "OwnershipMetadata": ...
+
+    # Transformation methods
+    def promote_to_native(self, reason: str) -> "OwnershipMetadata": ...
+    def derive(self, transformation: str, new_source: str) -> "OwnershipMetadata": ...
+```
+
+**Usage in domain models**:
+
+```python
+@dataclass
+class Session:
+    id: str
+    ownership: OwnershipMetadata = field(
+        default_factory=lambda: OwnershipMetadata.native("piper-core")
+    )
+
+@dataclass
+class GitHubIssue:
+    id: str
+    ownership: OwnershipMetadata = field(
+        default_factory=lambda: OwnershipMetadata.federated("github")
+    )
+```
+
+### OwnershipResolver
+
+**Purpose**: Resolves ownership categories based on source and attributes.
+
+```python
+class OwnershipResolver:
+    NATIVE_SOURCES = frozenset({"piper", "system", "internal", "memory"})
+    FEDERATED_SOURCES = frozenset({"github", "slack", "notion", "calendar", ...})
+    SYNTHETIC_SOURCES = frozenset({"inference", "analysis", "synthesis", ...})
+
+    def determine(self, source: str, created_by: Optional[str] = None,
+                  is_derived: bool = False) -> OwnershipCategory: ...
+
+    def resolve(self, source: str, ...) -> OwnershipResolution: ...
+```
+
+### OwnershipTransformation
+
+**Purpose**: Represents valid transformations between ownership categories as Piper's relationship to knowledge evolves.
+
+```python
+@dataclass(frozen=True)
+class OwnershipTransformation:
+    from_category: OwnershipCategory
+    to_category: OwnershipCategory
+    reason: Optional[str] = None
+
+    def is_valid(self) -> bool: ...
+
+# Valid transformations:
+# FEDERATED -> SYNTHETIC: Observation becomes understanding
+# SYNTHETIC -> NATIVE: Understanding becomes memory (user confirms)
+# FEDERATED -> NATIVE: Observation becomes memory (direct capture)
+
+# Invalid transformations:
+# NATIVE -> FEDERATED: Can't "un-create" something
+# NATIVE -> SYNTHETIC: Can't make certain knowledge uncertain
+```
+
+---
+
+## Recent Updates (January 21, 2026)
+
+### MUX-TECH X1 Sprint - Consciousness and Ownership Models
+
+**Added 2 new model modules** with complete implementations:
+
+| Module | Models | Tests | Pattern |
+|--------|--------|-------|---------|
+| `services/mux/consciousness.py` | 9 classes/enums | 104 tests | Pattern-056 |
+| `services/mux/ownership.py` | 7 classes/enums | 61 tests | Pattern-058 |
+
+**New Models Added**:
+
+- **Consciousness**: AwarenessLevel, EmotionalState, EntityRole, ConsciousnessAttributes, Capability, TrustLevel, PiperEntity, EntityContext, ConsciousnessExpression
+- **Ownership**: OwnershipCategory, HasOwnership (Protocol), OwnershipResolution, OwnershipResolver, OwnershipTransformation, OwnershipMetadata
+
+**Key Architectural Additions**:
+
+1. **Five Orientation Queries** on PiperEntity: `who_am_i()`, `when_am_i()`, `where_am_i()`, `what_can_i_do()`, `what_should_happen()`
+2. **Mind/Senses/Understanding** metaphor for knowledge ownership
+3. **Grammatical roles** (ACTOR/PLACE/OBSERVER/PARTICIPANT) for entity context
+4. **First-person expression patterns** keyed by emotional state
+
+**References**:
+- Issues: #433, #434, #435, #595
+- Gate: #532 (MUX-GATE-2)
+- Patterns: 055, 056, 057, 058
+
+---
 
 ## Recent Updates (July 31, 2025)
 

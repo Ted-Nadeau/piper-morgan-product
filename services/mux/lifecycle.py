@@ -75,18 +75,20 @@ class LifecycleState(Enum):
 
     @property
     def experience_phrase(self) -> str:
-        """How Piper expresses experiencing objects in this state."""
+        """How Piper expresses experiencing objects in this state.
+
+        These phrases are designed for conversational UI - short, actionable,
+        and how Piper would naturally begin describing something in this state.
+        """
         phrases = {
-            LifecycleState.EMERGENT: (
-                "I sense something forming, though its shape is not yet clear"
-            ),
-            LifecycleState.DERIVED: ("I recognize a pattern emerging from the noise"),
-            LifecycleState.NOTICED: ("This has caught my attention - it seems significant"),
-            LifecycleState.PROPOSED: ("I am considering this proposal for its merits"),
-            LifecycleState.RATIFIED: ("This is now part of our established reality"),
-            LifecycleState.DEPRECATED: ("This served us well, but its time is passing"),
-            LifecycleState.ARCHIVED: ("This rests in memory, preserved though no longer active"),
-            LifecycleState.COMPOSTED: ("This has transformed into nourishment for future growth"),
+            LifecycleState.EMERGENT: "I just noticed...",
+            LifecycleState.DERIVED: "I figured out from...",
+            LifecycleState.NOTICED: "I'm aware of...",
+            LifecycleState.PROPOSED: "I think we should...",
+            LifecycleState.RATIFIED: "We're doing...",
+            LifecycleState.DEPRECATED: "This used to be...",
+            LifecycleState.ARCHIVED: "I remember when...",
+            LifecycleState.COMPOSTED: "I learned that...",
         }
         return phrases[self]
 
@@ -161,6 +163,52 @@ VALID_TRANSITIONS: Dict[LifecycleState, Set[LifecycleState]] = {
     LifecycleState.COMPOSTED: set(),  # Terminal state - nothing beyond compost
 }
 
+# Transition explanation templates - how Piper explains why something moved between states
+TRANSITION_EXPLANATIONS: Dict[tuple, str] = {
+    (LifecycleState.EMERGENT, LifecycleState.DERIVED): "I recognized a pattern in {object}",
+    (LifecycleState.EMERGENT, LifecycleState.NOTICED): "I noticed {object} needed attention",
+    (LifecycleState.DERIVED, LifecycleState.NOTICED): "{object} caught my attention",
+    (LifecycleState.DERIVED, LifecycleState.DEPRECATED): "{object} is no longer relevant",
+    (LifecycleState.NOTICED, LifecycleState.PROPOSED): "I think we should act on {object}",
+    (LifecycleState.NOTICED, LifecycleState.DEPRECATED): "{object} is no longer a priority",
+    (LifecycleState.PROPOSED, LifecycleState.RATIFIED): "We agreed to proceed with {object}",
+    (LifecycleState.PROPOSED, LifecycleState.DEPRECATED): "We decided not to pursue {object}",
+    (LifecycleState.RATIFIED, LifecycleState.DEPRECATED): "{object} has served its purpose",
+    (LifecycleState.DEPRECATED, LifecycleState.ARCHIVED): "I'm preserving {object} for reference",
+    (LifecycleState.ARCHIVED, LifecycleState.COMPOSTED): "{object} has taught me something",
+}
+
+
+def transition_explanation(
+    from_state: LifecycleState,
+    to_state: LifecycleState,
+    object_name: str = "this",
+    reason: Optional[str] = None,
+) -> str:
+    """
+    Generate a user-friendly explanation for a lifecycle transition.
+
+    Args:
+        from_state: The state the object is transitioning from
+        to_state: The state the object is transitioning to
+        object_name: Name/description of the object being transitioned
+        reason: Optional additional context for why the transition happened
+
+    Returns:
+        A friendly explanation string, or a generic message if transition unknown
+    """
+    key = (from_state, to_state)
+    template = TRANSITION_EXPLANATIONS.get(key)
+
+    if template:
+        explanation = template.format(object=object_name)
+        if reason:
+            explanation = f"{explanation} - {reason}"
+        return explanation
+
+    # Fallback for unknown transitions (shouldn't happen with valid transitions)
+    return f"{object_name} moved from {from_state.value} to {to_state.value}"
+
 
 class InvalidTransitionError(Exception):
     """
@@ -180,6 +228,33 @@ class InvalidTransitionError(Exception):
             f"Valid transitions from {from_state.value}: "
             f"{[s.value for s in VALID_TRANSITIONS[from_state]]}"
         )
+
+    @property
+    def user_message(self) -> str:
+        """
+        A user-friendly message explaining why this transition isn't possible.
+
+        No technical jargon, no state names - just friendly language.
+        """
+        # Get the state ordinals for comparison
+        states = list(LifecycleState)
+        from_idx = states.index(self.from_state)
+        to_idx = states.index(self.to_state)
+
+        # From COMPOSTED - terminal state
+        if self.from_state == LifecycleState.COMPOSTED:
+            return "Once something becomes a learning, it stays that way"
+
+        # Going backward
+        if to_idx < from_idx:
+            return "I can't go back to that state - things only move forward"
+
+        # Skipping states (forward but not a valid transition)
+        if self.to_state not in VALID_TRANSITIONS[self.from_state]:
+            return "That's too big a jump - let's take it one step at a time"
+
+        # Generic fallback
+        return "That transition isn't possible right now"
 
 
 @dataclass(frozen=True)
@@ -468,3 +543,57 @@ class CompostingExtractor:
             lessons.append("Every object teaches something through its existence")
 
         return lessons
+
+
+def get_composting_narrative(compost_result: CompostResult) -> str:
+    """
+    Generate a user-facing narrative for a composting event.
+
+    This creates a reflective, learning-focused story of what was gained
+    from the object's journey - using the "filing dreams" metaphor rather
+    than "deletion" language.
+
+    Args:
+        compost_result: The result from CompostingExtractor.extract()
+
+    Returns:
+        A narrative string suitable for user display
+    """
+    journey = compost_result.journey
+    lessons = compost_result.lessons
+    summary = compost_result.object_summary
+
+    # Get object name from summary, with fallback
+    object_name = summary.get("title") or summary.get("name") or "this"
+
+    # Determine journey type for narrative selection
+    journey_length = len(journey)
+    reached_ratified = LifecycleState.RATIFIED in journey
+
+    # Format lessons for display
+    if lessons:
+        lessons_text = "; ".join(lessons[:3])  # Limit to 3 for readability
+    else:
+        lessons_text = "every experience teaches something"
+
+    # Select narrative template based on journey characteristics
+    if journey_length >= 6 and reached_ratified:
+        # Full lifecycle with ratification - complete journey
+        narrative = f"Having had time to reflect on {object_name}, " f"I learned: {lessons_text}."
+    elif journey_length >= 6:
+        # Full lifecycle but never ratified
+        narrative = (
+            f"{object_name} went through many stages but never quite landed. "
+            f"Still, I noticed: {lessons_text}."
+        )
+    elif journey_length <= 3 and not reached_ratified:
+        # Short lifecycle - quick deprecation
+        narrative = f"{object_name} was brief, but I noticed: {lessons_text}."
+    elif reached_ratified:
+        # Ratified then deprecated - something worked for a while
+        narrative = f"{object_name} worked for a while. " f"Looking back: {lessons_text}."
+    else:
+        # Default reflective narrative
+        narrative = f"Reflecting on {object_name}: {lessons_text}."
+
+    return narrative

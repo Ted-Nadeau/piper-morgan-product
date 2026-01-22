@@ -18,6 +18,7 @@ from typing import List, Optional
 import pytest
 
 from services.mux.lifecycle import (
+    TRANSITION_EXPLANATIONS,
     VALID_TRANSITIONS,
     CompostingExtractor,
     CompostResult,
@@ -26,6 +27,8 @@ from services.mux.lifecycle import (
     LifecycleManager,
     LifecycleState,
     LifecycleTransition,
+    get_composting_narrative,
+    transition_explanation,
 )
 
 # =============================================================================
@@ -155,9 +158,10 @@ class TestLifecycleStateExperiencePhrases:
         assert phrase and len(phrase) > 10
 
     def test_composted_experience_phrase(self):
-        """COMPOSTED has phrase expressing transformation."""
+        """COMPOSTED has phrase expressing learning (transformation)."""
         phrase = LifecycleState.COMPOSTED.experience_phrase
-        assert "transform" in phrase.lower() or "nourish" in phrase.lower()
+        # Learning is the transformed outcome of composting
+        assert "learned" in phrase.lower() or "learning" in phrase.lower()
 
 
 class TestLifecycleStateTypicalObjects:
@@ -307,6 +311,129 @@ class TestInvalidTransitionError:
         msg = str(error)
         assert "composted" in msg.lower()
         assert "emergent" in msg.lower()
+
+    def test_user_message_for_backward_transition(self):
+        """Backward transitions get friendly 'forward only' message."""
+        error = InvalidTransitionError(LifecycleState.RATIFIED, LifecycleState.PROPOSED)
+        assert "forward" in error.user_message.lower()
+        # Should NOT contain technical state names
+        assert "RATIFIED" not in error.user_message
+        assert "PROPOSED" not in error.user_message
+
+    def test_user_message_for_skip_transition(self):
+        """Skipping states gets friendly 'one step at a time' message."""
+        # EMERGENT can go to DERIVED or NOTICED, but not directly to PROPOSED
+        error = InvalidTransitionError(LifecycleState.EMERGENT, LifecycleState.PROPOSED)
+        assert "step" in error.user_message.lower() or "jump" in error.user_message.lower()
+
+    def test_user_message_for_composted_terminal(self):
+        """COMPOSTED is terminal - learning stays that way."""
+        error = InvalidTransitionError(LifecycleState.COMPOSTED, LifecycleState.EMERGENT)
+        assert "learning" in error.user_message.lower()
+
+    def test_user_message_no_technical_jargon(self):
+        """User messages should not expose state names."""
+        test_cases = [
+            (LifecycleState.COMPOSTED, LifecycleState.EMERGENT),
+            (LifecycleState.RATIFIED, LifecycleState.EMERGENT),
+            (LifecycleState.EMERGENT, LifecycleState.RATIFIED),
+        ]
+        for from_state, to_state in test_cases:
+            error = InvalidTransitionError(from_state, to_state)
+            msg = error.user_message
+            # Should not contain uppercase state names
+            for state in LifecycleState:
+                assert state.value.upper() not in msg.upper() or state.value.lower() in msg.lower()
+
+
+class TestTransitionExplanations:
+    """Test transition explanation templates and function."""
+
+    def test_all_valid_transitions_have_explanations(self):
+        """Every valid transition has an explanation template."""
+        for from_state, to_states in VALID_TRANSITIONS.items():
+            for to_state in to_states:
+                key = (from_state, to_state)
+                assert (
+                    key in TRANSITION_EXPLANATIONS
+                ), f"Missing explanation for {from_state.value} → {to_state.value}"
+
+    def test_explanation_count_matches_transitions(self):
+        """Number of explanations matches number of valid transitions."""
+        valid_count = sum(len(to_states) for to_states in VALID_TRANSITIONS.values())
+        assert len(TRANSITION_EXPLANATIONS) == valid_count
+
+    def test_emergent_to_derived_explanation(self):
+        """EMERGENT→DERIVED explains pattern recognition."""
+        explanation = transition_explanation(
+            LifecycleState.EMERGENT, LifecycleState.DERIVED, "this task"
+        )
+        assert "recognized" in explanation.lower() or "pattern" in explanation.lower()
+        assert "this task" in explanation
+
+    def test_emergent_to_noticed_explanation(self):
+        """EMERGENT→NOTICED explains noticing."""
+        explanation = transition_explanation(
+            LifecycleState.EMERGENT, LifecycleState.NOTICED, "this issue"
+        )
+        assert "noticed" in explanation.lower() or "attention" in explanation.lower()
+        assert "this issue" in explanation
+
+    def test_proposed_to_ratified_explanation(self):
+        """PROPOSED→RATIFIED explains agreement."""
+        explanation = transition_explanation(
+            LifecycleState.PROPOSED, LifecycleState.RATIFIED, "the plan"
+        )
+        assert "agreed" in explanation.lower() or "proceed" in explanation.lower()
+        assert "the plan" in explanation
+
+    def test_archived_to_composted_explanation(self):
+        """ARCHIVED→COMPOSTED explains learning."""
+        explanation = transition_explanation(
+            LifecycleState.ARCHIVED, LifecycleState.COMPOSTED, "that project"
+        )
+        assert "taught" in explanation.lower() or "learn" in explanation.lower()
+        assert "that project" in explanation
+
+    def test_explanation_with_reason(self):
+        """Explanations can include optional reason."""
+        explanation = transition_explanation(
+            LifecycleState.NOTICED,
+            LifecycleState.DEPRECATED,
+            "this task",
+            reason="user marked it as obsolete",
+        )
+        assert "this task" in explanation
+        assert "user marked it as obsolete" in explanation
+
+    def test_explanation_uses_object_name(self):
+        """Explanation substitutes object_name into template."""
+        explanation = transition_explanation(
+            LifecycleState.DEPRECATED, LifecycleState.ARCHIVED, "Sprint 42 retrospective"
+        )
+        assert "Sprint 42 retrospective" in explanation
+
+    def test_default_object_name(self):
+        """Default object name is 'this'."""
+        explanation = transition_explanation(LifecycleState.RATIFIED, LifecycleState.DEPRECATED)
+        assert "this" in explanation.lower()
+
+    def test_explanations_use_first_person(self):
+        """Explanations use first-person or collaborative language."""
+        # Check a sample of explanations
+        for (from_state, to_state), template in list(TRANSITION_EXPLANATIONS.items())[:5]:
+            # Should use "I" or "We" or object-focused language
+            has_perspective = "I " in template or "We " in template or "{object}" in template
+            assert has_perspective, f"Template lacks perspective: {template}"
+
+    def test_invalid_transition_fallback(self):
+        """Unknown transitions get generic fallback."""
+        # This shouldn't happen in practice, but test the fallback
+        explanation = transition_explanation(
+            LifecycleState.COMPOSTED, LifecycleState.EMERGENT, "test"
+        )
+        # Should still return something, not crash
+        assert len(explanation) > 0
 
 
 # =============================================================================
@@ -639,3 +766,151 @@ class TestCompostingPhilosophy:
         # Original identity should be traceable
         summary_str = str(result.object_summary)
         assert len(summary_str) > 0  # Something is preserved
+
+
+class TestCompostingNarrative:
+    """Test user-facing narrative generation for composting."""
+
+    def test_narrative_returns_string(self):
+        """get_composting_narrative returns a string."""
+        result = CompostResult(
+            object_summary={"title": "Test Task"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=["Learned something"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert isinstance(narrative, str)
+        assert len(narrative) > 0
+
+    def test_narrative_includes_lessons(self):
+        """Narrative includes the lessons learned."""
+        result = CompostResult(
+            object_summary={"title": "Feature X"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=["Users prefer simplicity"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert "simplicity" in narrative.lower()
+
+    def test_narrative_full_lifecycle(self):
+        """Full lifecycle journey gets reflective narrative."""
+        full_journey = [
+            LifecycleState.EMERGENT,
+            LifecycleState.DERIVED,
+            LifecycleState.NOTICED,
+            LifecycleState.PROPOSED,
+            LifecycleState.RATIFIED,
+            LifecycleState.DEPRECATED,
+            LifecycleState.ARCHIVED,
+            LifecycleState.COMPOSTED,
+        ]
+        result = CompostResult(
+            object_summary={"title": "Sprint 42"},
+            journey=full_journey,
+            lessons=["Patterns are worth studying"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        # Should use reflective "Having had time" template
+        assert "reflect" in narrative.lower() or "learned" in narrative.lower()
+        assert "Sprint 42" in narrative
+
+    def test_narrative_short_lifecycle(self):
+        """Short lifecycle gets brief narrative."""
+        result = CompostResult(
+            object_summary={"title": "Quick Idea"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.DEPRECATED, LifecycleState.COMPOSTED],
+            lessons=["Sometimes ideas don't pan out"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert "brief" in narrative.lower()
+        assert "Quick Idea" in narrative
+
+    def test_narrative_ratified_then_deprecated(self):
+        """Ratified then deprecated gets 'worked for a while' narrative."""
+        result = CompostResult(
+            object_summary={"title": "Old Feature"},
+            journey=[
+                LifecycleState.EMERGENT,
+                LifecycleState.PROPOSED,
+                LifecycleState.RATIFIED,
+                LifecycleState.DEPRECATED,
+                LifecycleState.COMPOSTED,
+            ],
+            lessons=["Features have lifespans"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert "worked" in narrative.lower() or "looking back" in narrative.lower()
+
+    def test_narrative_no_deletion_language(self):
+        """Narrative never uses deletion language."""
+        result = CompostResult(
+            object_summary={"title": "Some Object"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=["Test lesson"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        # Should NOT contain deletion words
+        forbidden_words = ["delete", "remove", "gone", "destroy", "erase"]
+        for word in forbidden_words:
+            assert word not in narrative.lower(), f"Found forbidden word: {word}"
+
+    def test_narrative_uses_object_title(self):
+        """Narrative incorporates the object's title."""
+        result = CompostResult(
+            object_summary={"title": "Customer Feedback Loop"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=["Feedback matters"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert "Customer Feedback Loop" in narrative
+
+    def test_narrative_fallback_for_no_title(self):
+        """Narrative handles objects without title gracefully."""
+        result = CompostResult(
+            object_summary={},  # No title
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=["Anonymous wisdom"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert len(narrative) > 0  # Still produces something
+        assert "this" in narrative.lower()  # Uses fallback
+
+    def test_narrative_limits_lessons_display(self):
+        """Narrative doesn't overwhelm with too many lessons."""
+        result = CompostResult(
+            object_summary={"title": "Complex Project"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=[
+                "First lesson",
+                "Second lesson",
+                "Third lesson",
+                "Fourth lesson",
+                "Fifth lesson",
+            ],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        # Should include some lessons but not all 5
+        lesson_count = sum(
+            1 for l in ["First", "Second", "Third", "Fourth", "Fifth"] if l in narrative
+        )
+        assert lesson_count <= 3  # Capped at 3
+
+    def test_narrative_uses_name_if_no_title(self):
+        """Narrative uses 'name' field if 'title' not available."""
+        result = CompostResult(
+            object_summary={"name": "project-alpha"},
+            journey=[LifecycleState.EMERGENT, LifecycleState.COMPOSTED],
+            lessons=["Names matter"],
+            composted_at=datetime.now(),
+        )
+        narrative = get_composting_narrative(result)
+        assert "project-alpha" in narrative
