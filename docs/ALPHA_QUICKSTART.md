@@ -35,7 +35,8 @@ See [Release Notes v0.8.4.3](releases/RELEASE-NOTES-v0.8.4.3.md) for full detail
 
 **For macOS/Linux/WSL2:**
 ```bash
-git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+# Fast clone (~91MB instead of ~800MB) - recommended for alpha testers
+git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 ./scripts/alpha-setup.sh
 # Script will:
@@ -49,7 +50,8 @@ cd piper-morgan-product
 
 **For Windows (Command Prompt or PowerShell):**
 ```cmd
-git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+REM Fast clone (~91MB instead of ~800MB) - recommended for alpha testers
+git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 .\scripts\alpha-setup.bat
 REM Script will:
@@ -67,7 +69,8 @@ REM → Launch the setup wizard at http://localhost:8001/setup
 
 ```bash
 # 1. Clone and setup (using production branch for alpha testing)
-git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+# --depth 1 gives you a fast ~91MB download (vs ~800MB full history)
+git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 python3.12 -m venv venv && source venv/bin/activate
 # Requires Python 3.11 or 3.12 - verify with: python --version

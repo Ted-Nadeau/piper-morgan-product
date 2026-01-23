@@ -182,7 +182,8 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 We've created a Windows batch file that automates the entire setup process:
 
 ```cmd
-git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+REM Fast clone (~91MB instead of ~800MB) - recommended for alpha testers
+git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 .\scripts\alpha-setup.bat
 ```
@@ -210,7 +211,8 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install python3.11 python3.11-venv git
 
 # 3. Clone and setup (uses bash script - faster)
-git clone -b production https://github.com/mediajunkie/piper-morgan-product.git
+# --depth 1 gives you a fast ~91MB download (vs ~800MB full history)
+git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 ./scripts/alpha-setup.sh
 ```
@@ -253,7 +255,9 @@ If you prefer not to use automated scripts, follow the guided setup below. On Wi
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/mediajunkie/piper-morgan-product.git
+# --depth 1 gives you a fast ~91MB download (vs ~800MB full history)
+# You get all the code, just not the git history (which you don't need for testing)
+git clone --depth 1 https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 ```
 
