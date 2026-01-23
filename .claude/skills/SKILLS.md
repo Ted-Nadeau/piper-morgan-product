@@ -13,6 +13,7 @@ This directory contains formalized Agent Skills - self-contained procedural inst
 | [create-session-log](./create-session-log/SKILL.md) | Cross-role | Create properly named session logs; one log per role per day | 1.0 |
 | [check-mailbox](./check-mailbox/SKILL.md) | Cross-role | Check inbox at session start, process messages, move to read/ | 1.0 |
 | [close-issue-properly](./close-issue-properly/SKILL.md) | Cross-role | Close GitHub issues with evidence, updated descriptions, audit-ready records | 1.0 |
+| [audit-cascade](./audit-cascade/SKILL.md) | Cross-role | Systematic audit-and-correct between phases; implements Pattern-049 | 1.0 |
 
 ---
 
@@ -24,6 +25,7 @@ Skills every agent should know. High frequency, low complexity.
 - **create-session-log** - Start of every session
 - **check-mailbox** - Session start protocol
 - **close-issue-properly** - End of every tracked task
+- **audit-cascade** - Between every phase of multi-step work (Pattern-049)
 
 ### Tier 2: Role-Specific Operations
 Skills for specific workflows or roles.
@@ -124,6 +126,7 @@ created: YYYY-MM-DD
 | Pilot: create-session-log | Complete | 2026-01-21 |
 | Pilot: close-issue-properly | Complete | 2026-01-21 |
 | Tier 1: check-mailbox | Complete | 2026-01-21 |
+| Tier 1: audit-cascade | Complete | 2026-01-23 |
 | Tier 1 rollout | In Progress | - |
 | Tier 2 development | Planned | - |
 

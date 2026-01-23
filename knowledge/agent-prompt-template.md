@@ -133,7 +133,34 @@ $ ls -la web/
 Actually need: endpoint addition to existing app"
 ```
 
-## ðŸŽ¯ ANTI-80% COMPLETION SAFEGUARDS (NEW CRITICAL SECTION)
+## AUDIT CASCADE DISCIPLINE (Pattern-049)
+
+**Before proceeding between phases, you MUST audit against the relevant template.**
+
+See: `.claude/skills/audit-cascade/SKILL.md` for full procedure.
+
+### Quick Reference
+| Phase | Audit Against |
+|-------|---------------|
+| Issue written | `.github/ISSUE_TEMPLATE/` |
+| Gameplan written | `knowledge/gameplan-template.md` |
+| Prompts written | `knowledge/agent-prompt-template.md` |
+
+### Critical Rule
+You have **ZERO AUTHORIZATION** to mark any template requirement as "optional", "N/A", or "not applicable" without explicit PM approval. If a requirement seems inapplicable, STOP and ask.
+
+### Audit Matrix Format
+```markdown
+| Template Requirement | Status | Notes |
+|---------------------|--------|-------|
+| [Requirement] | ✅ / ⚠️ / ❌ | [Details] |
+```
+
+Fix ALL ⚠️ and ❌ items before proceeding. One thorough audit is sufficient.
+
+---
+
+## ANTI-80% COMPLETION SAFEGUARDS
 
 ### MANDATORY Method Enumeration
 When implementing ANY interface, adapter, or router:
