@@ -1,101 +1,0 @@
-============================================================
-Error Handling Verification - Task 5
-Issue #162 - CORE-STAND-MODES-API
-Date: October 19, 2025
-============================================================
-
-Testing all error scenarios for Standup API endpoints.
-Following Pattern-034 (Error Handling Standards).
-
-============================================================
-
-=== Test 1: No Authentication ===
- curl -i -X POST http://localhost:8001/api/v1/standup/generate  -H Content-Type: application/json  -d {"mode":"standard"}
-
-=== Test 1: No Authentication ===
- curl -i -X POST http://localhost:8001/api/v1/standup/generate  -H Content-Type: application/json  -d {"mode":"standard"}
-
-=== Test 2: Invalid Token ===
- curl -i -X POST http://localhost:8001/api/v1/standup/generate  -H Content-Type: application/json  -H Authorization: Bearer invalid_token_123  -d {"mode":"standard"}
-
-=== Test 2: Invalid Token ===
- curl -i -X POST http://localhost:8001/api/v1/standup/generate  -H Content-Type: application/json  -H Authorization: Bearer invalid_token_123  -d {"mode":"standard"}
-
-=== Test 1: No Authentication ===
-
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    55  100    36  100    19    769    405 --:--:-- --:--:-- --:--:--  1195
-HTTP/1.1 401 Unauthorized
-date: Mon, 20 Oct 2025 00:37:35 GMT
-server: uvicorn
-www-authenticate: Bearer
-content-length: 36
-content-type: application/json
-
-{"detail":"Authentication required"}
-=== Test 2: Invalid Token ===
-
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    56  100    37  100    19   4093   2102 --:--:-- --:--:-- --:--:--  6222
-HTTP/1.1 401 Unauthorized
-date: Mon, 20 Oct 2025 00:37:35 GMT
-server: uvicorn
-www-authenticate: Bearer
-content-length: 37
-content-type: application/json
-
-{"detail":"Invalid or expired token"}
-=== Test 3: Invalid Mode (Pydantic validation) ===
-
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    53  100    30  100    23  22156  16986 --:--:-- --:--:-- --:--:-- 53000
-HTTP/1.1 400 Bad Request
-date: Mon, 20 Oct 2025 00:37:36 GMT
-server: uvicorn
-content-type: text/plain; charset=utf-8
-content-length: 30
-connection: close
-
-Invalid HTTP request received.
-=== Test 4: Invalid Format (Pydantic validation) ===
-
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    68  100    30  100    38  21171  26817 --:--:-- --:--:-- --:--:-- 68000
-HTTP/1.1 400 Bad Request
-date: Mon, 20 Oct 2025 00:37:36 GMT
-server: uvicorn
-content-type: text/plain; charset=utf-8
-content-length: 30
-connection: close
-
-Invalid HTTP request received.
-=== Test 5: Malformed JSON ===
-
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    44  100    30  100    14  21645  10101 --:--:-- --:--:-- --:--:-- 44000
-HTTP/1.1 400 Bad Request
-date: Mon, 20 Oct 2025 00:37:36 GMT
-server: uvicorn
-content-type: text/plain; charset=utf-8
-content-length: 30
-connection: close
-
-Invalid HTTP request received.
-=== Test 6: Empty Request Body (should use defaults) ===
-
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    32  100    30  100     2  22883   1525 --:--:-- --:--:-- --:--:-- 32000
-HTTP/1.1 400 Bad Request
-date: Mon, 20 Oct 2025 00:37:36 GMT
-server: uvicorn
-content-type: text/plain; charset=utf-8
-content-length: 30
-connection: close
-
-Invalid HTTP request received.

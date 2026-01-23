@@ -56,6 +56,20 @@ __pycache__/
 # Archive directory for large files and historical assets
 docs/archive/
 
+# Development artifacts (session logs, working docs, experiments)
+dev/
+archive/
+trash/
+
+# Test coverage reports
+htmlcov/
+.coverage
+
+# Database files
+*.sqlite3
+*.db
+data_backup/
+
 # User configuration files (private, not committed)
 config/PIPER.user.md
 **/PIPER.user.md
