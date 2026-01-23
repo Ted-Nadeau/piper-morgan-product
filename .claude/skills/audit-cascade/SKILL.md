@@ -18,13 +18,13 @@ Use this skill when:
 
 ---
 
-## The Six-Step Cascade
+## The Cascade (3 Phases, 3 Audit Gates)
 
 ```
-Write Issue → Audit Issue → Write Gameplan → Audit Gameplan → Write Prompts → Audit Prompts → Execute
+Write Issue → AUDIT → Write Gameplan → AUDIT → Write Prompts → AUDIT → Execute
 ```
 
-Each audit gate catches drift before it compounds into the next phase.
+**3 audit gates** catch drift before it compounds into the next phase. Each phase has a write step followed by an audit step.
 
 ---
 
@@ -36,7 +36,7 @@ What are you auditing?
 
 | Phase | Template Location |
 |-------|-------------------|
-| Issue | `.github/ISSUE_TEMPLATE/` (bug.md, feature.md, epic.md) |
+| Issue | `.github/ISSUE_TEMPLATE/` (feature.md, bug_report_alpha.md, e2e-bug.md) |
 | Gameplan | `knowledge/gameplan-template.md` |
 | Agent Prompts | `knowledge/agent-prompt-template.md` |
 
