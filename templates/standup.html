@@ -157,7 +157,7 @@
 
           // API returns { success: true, standup: {...}, performance_metrics: {...}, metadata: {...} }
           if (data.success) {
-            Toast.success("Standup Generated", "Your morning standup is ready!");
+            ToastMessages.success('standup_ready');
             const standup = data.standup || {};
             const metrics = data.performance_metrics || {};
             results.innerHTML = `
@@ -225,7 +225,7 @@
                         </div>
                     `;
           } else {
-            Toast.error("Generation Failed", data.detail || "Failed to generate standup");
+            ToastMessages.error('create_error', { title: 'Generation failed', body: data.detail || 'Please try again' });
             results.innerHTML = `
                         <div class="error">❌ Error generating standup: ${
                           data.detail || "Unknown error"
@@ -237,7 +237,7 @@
                     `;
           }
         } catch (error) {
-          Toast.error("Network Error", "Failed to connect to the server: " + error.message);
+          ToastMessages.error('network_error', { body: error.message || 'Check your internet connection' });
           results.innerHTML = `
                     <div class="error">❌ Network error: ${error.message}</div>
                     <div class="section">
@@ -251,6 +251,7 @@
       }
     </script>
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/toast-messages.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/focus-manager.js"></script>
     <script src="/static/js/page-transitions.js"></script>

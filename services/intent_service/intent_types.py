@@ -13,10 +13,13 @@ Pattern: Pattern-050 (Context Dataclass Pair)
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from services.domain.models import Intent
 from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+
+if TYPE_CHECKING:
+    from services.mux.orientation import OrientationState
 
 
 @dataclass
@@ -40,6 +43,10 @@ class IntentClassificationContext:
     conversation_history: Optional[List[str]] = None
     user_preferences: Optional[Dict[str, Any]] = None
     timestamp: datetime = field(default_factory=datetime.now)
+
+    # Issue #410: Piper's orientation state (perception through lenses)
+    # Set after PlaceDetector, before IntentClassifier per Arch decision
+    orientation: Optional["OrientationState"] = None
 
     @classmethod
     def from_classify_args(
@@ -88,6 +95,7 @@ class IntentUnderstanding:
     place_awareness: str  # "Since we're in Slack..." (often empty)
     perception_mode: PerceptionMode
     follow_up_suggestion: Optional[str] = None  # What Piper might ask next
+    metadata: Optional[Dict[str, Any]] = None  # Additional data (e.g., recognition state)
 
     @property
     def category(self) -> IntentCategory:

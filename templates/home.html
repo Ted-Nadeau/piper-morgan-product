@@ -1170,6 +1170,7 @@
       }
     </script>
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/toast-messages.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/session-timeout.js"></script>
     <script src="/static/js/focus-manager.js"></script>
@@ -1623,7 +1624,7 @@
 
         } catch (error) {
           console.error('Failed to load conversation:', error);
-          Toast.error('Failed to load conversation', error.message);
+          ToastMessages.error('load_error', { body: error.message || 'Try refreshing the page' });
           // Issue #583: Clear stale localStorage to prevent repeat failures on refresh
           localStorage.removeItem('piper_active_conversation_id');
         }
@@ -1660,7 +1661,7 @@
 
         } catch (error) {
           console.error('Failed to create conversation:', error);
-          Toast.error('Failed to create conversation', error.message);
+          ToastMessages.error('create_error', { body: error.message || 'Please try again' });
         }
       }
 

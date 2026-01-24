@@ -163,14 +163,20 @@ const FormValidation = {
 };
 
 // Built-in validators
+// Consciousness Pattern (#643): Clear, not charming. Remove coldness without adding personality.
+// - Use "needs" instead of "required"
+// - Be specific about what's wrong
+// - No blame language, no emojis, no "oops"
 const Validators = {
   /**
    * Require field to have a value
+   * #643: "X is required" → "We need your X"
    */
   required: () => (field) => {
     const value = field.value?.trim();
     if (!value && field.type !== 'radio' && field.type !== 'checkbox') {
-      return `${field.name.replace(/_/g, ' ')} is required`;
+      const fieldName = field.name.replace(/_/g, ' ');
+      return `We need your ${fieldName} to continue`;
     }
     return null;
   },
@@ -186,36 +192,40 @@ const Validators = {
 
   /**
    * Validate email format
+   * #643: Clear and specific
    */
   email: () => (field) => {
     const value = field.value?.trim();
     if (!value) return null;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value) ? null : 'Please enter a valid email';
+    return emailRegex.test(value) ? null : 'Please enter a valid email address';
   },
 
   /**
    * Validate minimum value
+   * #643: "Minimum value is X" → "Value needs to be at least X"
    */
   min: (minValue) => (field) => {
     const value = parseFloat(field.value);
-    return value >= minValue ? null : `Minimum value is ${minValue}`;
+    return value >= minValue ? null : `Value needs to be at least ${minValue}`;
   },
 
   /**
    * Validate maximum value
+   * #643: "Maximum value is X" → "Value can't exceed X"
    */
   max: (maxValue) => (field) => {
     const value = parseFloat(field.value);
-    return value <= maxValue ? null : `Maximum value is ${maxValue}`;
+    return value <= maxValue ? null : `Value can't exceed ${maxValue}`;
   },
 
   /**
    * Validate string length
+   * #643: "Minimum X characters required" → "Needs at least X characters"
    */
   minLength: (length) => (field) => {
     const value = field.value?.trim();
-    return value && value.length >= length ? null : `Minimum ${length} characters required`;
+    return value && value.length >= length ? null : `Needs at least ${length} characters`;
   },
 
   /**

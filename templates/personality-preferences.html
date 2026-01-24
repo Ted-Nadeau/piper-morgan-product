@@ -589,12 +589,12 @@
           const result = await response.json();
 
           if (result.status === "success") {
-            Toast.success("Preferences Saved", "Your personality preferences have been updated successfully!");
+            ToastMessages.success('preferences_saved');
           } else {
-            Toast.error("Save Failed", "Error saving preferences: " + (result.error || "Unknown error"));
+            ToastMessages.error('update_error', { title: 'Save failed', body: result.error || 'Please try again' });
           }
         } catch (error) {
-          Toast.error("Network Error", "Failed to save preferences: " + error.message);
+          ToastMessages.error('network_error', { body: error.message || 'Check your internet connection' });
         } finally {
           Loading.button(saveBtn, false);
         }
@@ -609,7 +609,7 @@
           technical_depth: "balanced",
         };
         updateUI();
-        Toast.info("Reset Complete", "Preferences reset to default values");
+        ToastMessages.info('preferences_reset');
       }
 
       // Test personality enhancement
@@ -635,10 +635,10 @@
             const enhanced = result.data.enhanced_content;
             Toast.success("Test Passed", `"${testContent}" → "${enhanced}"`);
           } else {
-            Toast.error("Test Failed", result.error || "Unknown error occurred");
+            ToastMessages.error('create_error', { title: 'Test failed', body: result.error || 'Please try again' });
           }
         } catch (error) {
-          Toast.error("Test Error", "Failed to run personality test: " + error.message);
+          ToastMessages.error('network_error', { title: 'Test error', body: error.message || 'Please try again' });
         }
       }
 
@@ -668,6 +668,7 @@
       }, savePreferences);
     </script>
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/toast-messages.js"></script>
     <script src="/static/js/loading.js"></script>
     <script src="/static/js/help-tooltip.js"></script>
     <script src="/static/js/keyboard-shortcuts.js"></script>

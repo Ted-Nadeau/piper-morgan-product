@@ -117,10 +117,32 @@ const Dialog = {
   },
 
   /**
-   * Confirm action and close dialog
-   * For form dialogs, callback can return false to keep dialog open (validation failed)
+   * Show confirmation dialog (alias for show with confirm-mode defaults)
+   * Used by templates: Dialog.confirm({ title, message, onConfirm })
+   * @param {Object} config - Same as show() config
    */
-  async confirm() {
+  confirm(config = {}) {
+    // If called with config object, it's a setup call
+    // If called without args (from button onclick), it's the confirm action
+    if (config && (config.title || config.message || config.onConfirm)) {
+      Dialog.show({
+        mode: 'confirm',
+        confirmText: config.confirmText || 'Remove',
+        ...config,
+      });
+      return;
+    }
+
+    // Called from confirm button - execute the confirmation
+    Dialog._doConfirm();
+  },
+
+  /**
+   * Execute confirmation action and close dialog
+   * For form dialogs, callback can return false to keep dialog open (validation failed)
+   * @private
+   */
+  async _doConfirm() {
     if (!Dialog.isOpen) return;
 
     if (Dialog.confirmCallback && typeof Dialog.confirmCallback === 'function') {

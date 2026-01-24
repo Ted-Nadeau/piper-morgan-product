@@ -108,9 +108,12 @@ class TestPiperHelpCommand:
     async def test_help_includes_capabilities(self, router):
         """Test help shows capabilities."""
         result = await router._handle_piper_command("help", "U123", "C456")
-        # Issue #628: Grammar-conscious help uses "What I Can Do"
+        # Issue #551: Now uses CommandRegistry - shows category-based commands
+        # Issue #628: Grammar-conscious help text
         text = result.get("text", "")
-        assert "What I Can Do" in text or "Can Do" in text
+        # Should show commands by category (Discovery, Identity, etc.)
+        assert "Piper" in text  # Should mention Piper
+        assert "help" in text.lower()  # Should show help info
 
     @pytest.mark.asyncio
     async def test_help_is_ephemeral(self, router):

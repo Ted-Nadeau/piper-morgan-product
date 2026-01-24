@@ -62,6 +62,7 @@
 
   <!-- JavaScript -->
   <script src="/static/js/toast.js"></script>
+  <script src="/static/js/toast-messages.js"></script>
   <script src="/static/js/dialog.js"></script>
   <script src="/static/js/permissions.js"></script>
   <script src="/static/js/timestamp-utils.js"></script>
@@ -98,7 +99,7 @@
         renderProjects(projects);
       } catch (error) {
         console.error('Error loading projects:', error);
-        Toast.error('Load Error', 'Failed to load projects');
+        ToastMessages.error('load_error');
       }
     }
 
@@ -135,7 +136,7 @@
         if (canDelete(project)) {
           actionButtons += `
             <button class="delete-btn" onclick="deleteProject('${project.id}')">
-              Delete
+              Remove
             </button>
           `;
         }
@@ -205,7 +206,7 @@
           const startDate = document.getElementById('new-project-start-date').value;
 
           if (!name) {
-            Toast.error('Validation Error', 'Project name is required');
+            ToastMessages.error('validation_error', { body: 'Give your project a name' });
             return false;
           }
 
@@ -218,17 +219,17 @@
             });
 
             if (response.ok) {
-              Toast.success('Success', 'Project created successfully');
+              ToastMessages.success('project_created');
               await loadProjects();
               return true;
             } else {
               const error = await response.json();
-              Toast.error('Create Error', 'Failed to create project: ' + (error.detail || 'Unknown error'));
+              ToastMessages.error('create_error', { body: error.detail || 'Please try again' });
               return false;
             }
           } catch (error) {
             console.error('Error creating project:', error);
-            Toast.error('Create Error', 'Failed to create project');
+            ToastMessages.error('create_error');
             return false;
           }
         }
@@ -238,7 +239,7 @@
     // Edit project
     function editProject(projectId) {
       // TODO: Implement edit functionality
-      Toast.info('Coming Soon', 'Edit functionality coming soon');
+      ToastMessages.info('coming_soon', { body: 'Edit functionality coming soon' });
     }
 
     // Delete project
@@ -251,11 +252,11 @@
             // TODO: Call API to delete
             // await fetch(`/api/v1/projects/${projectId}`, { method: 'DELETE' });
 
-            Toast.success('Success', 'Project deleted successfully');
+            ToastMessages.success('project_deleted');
             await loadProjects();
           } catch (error) {
             console.error('Error deleting project:', error);
-            Toast.error('Delete Error', 'Failed to delete project');
+            ToastMessages.error('delete_error');
           }
         }
       });
@@ -349,7 +350,7 @@
       const role = document.getElementById('share-role-select').value;
 
       if (!userInput) {
-        Toast.error('Validation Error', 'Please enter a user email or ID');
+        ToastMessages.error('validation_error', { body: 'Please enter a user email or ID' });
         return;
       }
 
@@ -365,16 +366,16 @@
         });
 
         if (response.ok) {
-          Toast.success('Success', 'Shared successfully');
+          ToastMessages.success('shared');
           Dialog.close();
           await loadProjects();
         } else {
           const error = await response.json();
-          Toast.error('Share Error', error.message || 'Failed to share');
+          ToastMessages.error('share_error', { body: error.message || 'Please try again' });
         }
       } catch (error) {
         console.error('Error sharing:', error);
-        Toast.error('Share Error', 'Failed to share');
+        ToastMessages.error('share_error');
       }
     }
 
@@ -387,15 +388,15 @@
         );
 
         if (response.ok) {
-          Toast.success('Success', 'Share removed');
+          ToastMessages.success('share_removed');
           Dialog.close();
           await loadProjects();
         } else {
-          Toast.error('Remove Error', 'Failed to remove share');
+          ToastMessages.error('share_error', { title: 'Couldn\\'t remove', body: 'Please try again' });
         }
       } catch (error) {
         console.error('Error removing share:', error);
-        Toast.error('Remove Error', 'Failed to remove share');
+        ToastMessages.error('share_error', { title: 'Couldn\\'t remove', body: 'Please try again' });
       }
     }
   </script>

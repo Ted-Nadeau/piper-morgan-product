@@ -535,7 +535,7 @@
       <div class="app-config-card" id="app-config-card">
         <h3>🔑 App Configuration</h3>
         <p class="description">
-          Configure your Google OAuth app credentials. These are required for Calendar authorization.
+          I need your Google OAuth app credentials to connect to your calendar.
         </p>
         <a href="https://console.cloud.google.com/apis/credentials" target="_blank" class="help-link">
           📖 Create or find your credentials on Google Cloud Console
@@ -752,38 +752,41 @@
       }
 
       async function disconnectCalendar() {
-        if (!confirm('Are you sure you want to disconnect Google Calendar? You can reconnect anytime.')) {
-          return;
-        }
+        Dialog.confirm({
+          title: 'Disconnect Google Calendar?',
+          message: "I'll disconnect your calendar. You can set it up again anytime.",
+          confirmText: 'Disconnect',
+          onConfirm: async () => {
+            const disconnectBtnEl = document.getElementById('disconnect-btn');
+            disconnectBtnEl.disabled = true;
+            disconnectBtnEl.textContent = 'Disconnecting...';
 
-        const disconnectBtnEl = document.getElementById('disconnect-btn');
-        disconnectBtnEl.disabled = true;
-        disconnectBtnEl.textContent = 'Disconnecting...';
+            try {
+              const response = await fetch('/api/v1/settings/integrations/calendar/disconnect', {
+                method: 'POST'
+              });
 
-        try {
-          const response = await fetch('/api/v1/settings/integrations/calendar/disconnect', {
-            method: 'POST'
-          });
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to disconnect');
+              }
 
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to disconnect');
+              const data = await response.json();
+
+              if (data.success) {
+                showToast('success', 'Google Calendar disconnected', 'Disconnected');
+                loadCalendarStatus();  // Refresh status
+              } else {
+                throw new Error(data.message || 'Failed to disconnect');
+              }
+            } catch (error) {
+              console.error('Disconnect failed:', error);
+              showToast('error', error.message, 'Disconnect Failed');
+              disconnectBtnEl.disabled = false;
+              disconnectBtnEl.textContent = 'Disconnect';
+            }
           }
-
-          const data = await response.json();
-
-          if (data.success) {
-            showToast('success', 'Google Calendar disconnected', 'Disconnected');
-            loadCalendarStatus();  // Refresh status
-          } else {
-            throw new Error(data.message || 'Failed to disconnect');
-          }
-        } catch (error) {
-          console.error('Disconnect failed:', error);
-          showToast('error', error.message, 'Disconnect Failed');
-          disconnectBtnEl.disabled = false;
-          disconnectBtnEl.textContent = 'Disconnect';
-        }
+        });
       }
 
       // ============================================================================
@@ -875,11 +878,11 @@
 
         // Validate inputs
         if (!clientId) {
-          showToast('error', 'Client ID is required', 'Validation Error');
+          showToast('error', 'I need a Client ID to connect', 'Missing Field');
           return;
         }
         if (!clientSecret) {
-          showToast('error', 'Client Secret is required', 'Validation Error');
+          showToast('error', 'I need a Client Secret to connect', 'Missing Field');
           return;
         }
 
@@ -947,7 +950,7 @@
           loadedCalendars = data.calendars || [];
 
           if (loadedCalendars.length === 0) {
-            calendarListEl.innerHTML = '<div class="calendar-list-empty">No calendars found.</div>';
+            calendarListEl.innerHTML = '<div class="calendar-list-empty">I don\'t see any calendars yet. Check that you\'ve authorized calendar access, then refresh.</div>';
             return;
           }
 
@@ -956,7 +959,7 @@
 
         } catch (error) {
           console.error('Failed to load calendars:', error);
-          calendarListEl.innerHTML = '<div class="calendar-list-empty">Failed to load calendars. Please try again.</div>';
+          calendarListEl.innerHTML = '<div class="calendar-list-empty">I couldn\'t load your calendars. Try refreshing the page.</div>';
           showToast('error', 'Failed to load calendar list', 'Error');
         }
       }
@@ -1038,7 +1041,7 @@
         }
 
         if (!primaryCalendar) {
-          showToast('warning', 'Please select a primary calendar', 'Primary Required');
+          showToast('warning', 'Pick a primary calendar for me to use', 'Choose Primary');
           return;
         }
 
@@ -1093,6 +1096,9 @@
             'info': 'Info'
           }[type] || 'Calendar';
 
+          // Note: Using direct Toast calls here intentionally (#642)
+          // Toast type and message are dynamic from server responses,
+          // so ToastMessages centralization doesn't apply.
           if (type === 'error' && Toast.error) {
             Toast.error(toastTitle, message);
           } else if (type === 'success' && Toast.success) {

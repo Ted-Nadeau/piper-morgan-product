@@ -99,16 +99,11 @@ class PreClassifier:
         r"\bmuch appreciated\b",
     ]
 
-    # Canonical query patterns for enhanced standup experience
-    IDENTITY_PATTERNS = [
-        r"\bwhat'?s your name\b",
-        r"\bwho are you\b",
-        r"\byour role\b",
-        r"\bwhat do you do\b",
-        r"\btell me about yourself\b",
-        r"\bintroduce yourself\b",
+    # Issue #488: DISCOVERY patterns for capability queries - "What can you do?"
+    # These return dynamic capabilities from PluginRegistry
+    # Must be checked BEFORE IDENTITY_PATTERNS to ensure proper routing
+    DISCOVERY_PATTERNS = [
         r"\bwhat are your capabilities\b",
-        # Issue #487: Added capability discovery patterns for alpha onboarding
         r"\bwhat services\b",
         r"\bwhat do you offer\b",
         r"\bwhat features\b",
@@ -118,10 +113,25 @@ class PreClassifier:
         r"\bmenu of services\b",
         r"\blist.*capabilities\b",
         r"\byour capabilities\b",
-        # Issue #487 follow-up: Additional patterns from manual testing
         r"\bcapability menu\b",
         r"\bcapabilities menu\b",
         r"\bshow.*menu\b",
+        # Additional discovery patterns
+        r"\bwhat.*able to do\b",
+        r"\bshow.*features\b",
+        r"\bavailable.*features\b",
+        r"\bhelp me get started\b",
+    ]
+
+    # Canonical query patterns for identity - "Who are you?"
+    # These return static identity information
+    IDENTITY_PATTERNS = [
+        r"\bwhat'?s your name\b",
+        r"\bwho are you\b",
+        r"\byour role\b",
+        r"\bwhat do you do\b",
+        r"\btell me about yourself\b",
+        r"\bintroduce yourself\b",
     ]
 
     TEMPORAL_PATTERNS = [
@@ -571,7 +581,17 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
-        # Check for canonical queries
+        # Issue #488: Check DISCOVERY before IDENTITY
+        # "What can you do?" should return dynamic capabilities, not static identity
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.DISCOVERY_PATTERNS):
+            return Intent(
+                category=IntentCategory.DISCOVERY,
+                action="get_capabilities",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Check for identity queries - "Who are you?"
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.IDENTITY_PATTERNS):
             return Intent(
                 category=IntentCategory.IDENTITY,

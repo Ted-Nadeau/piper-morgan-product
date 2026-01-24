@@ -515,7 +515,7 @@
       <div class="app-config-card" id="app-config-card">
         <h3>🔑 App Configuration</h3>
         <p class="description">
-          Configure your Slack app credentials. These are required for OAuth authorization.
+          I need your Slack app credentials to connect to your workspace.
         </p>
         <a href="https://api.slack.com/apps" target="_blank" class="help-link">
           📖 Create or find your app on api.slack.com/apps
@@ -761,13 +761,21 @@
       }
 
       async function disconnectSlack() {
-        if (!confirm('Are you sure you want to disconnect Slack? You can reconnect anytime.')) {
-          return;
-        }
+        Dialog.confirm({
+          title: 'Disconnect Slack?',
+          message: "I'll disconnect your Slack workspace. You can set it up again anytime.",
+          confirmText: 'Disconnect',
+          onConfirm: async () => {
+            const disconnectBtnEl = document.getElementById('disconnect-btn');
+            disconnectBtnEl.disabled = true;
+            disconnectBtnEl.textContent = 'Disconnecting...';
+            await performSlackDisconnect();
+          }
+        });
+      }
 
+      async function performSlackDisconnect() {
         const disconnectBtnEl = document.getElementById('disconnect-btn');
-        disconnectBtnEl.disabled = true;
-        disconnectBtnEl.textContent = 'Disconnecting...';
 
         try {
           const response = await fetch('/api/v1/settings/integrations/slack/disconnect', {
@@ -877,7 +885,7 @@
         listEl.innerHTML = '';
 
         if (channels.length === 0) {
-          listEl.innerHTML = '<p style="color: #7f8c8d; text-align: center; margin: 0;">No channels available</p>';
+          listEl.innerHTML = '<p style="color: #7f8c8d; text-align: center; margin: 0;">I don\'t see any channels yet. Once your workspace syncs, they\'ll appear here.</p>';
           return;
         }
 
@@ -977,6 +985,9 @@
             'info': 'Info'
           }[type] || 'Slack';
 
+          // Note: Using direct Toast calls here intentionally (#642)
+          // Toast type and message are dynamic from server responses,
+          // so ToastMessages centralization doesn't apply.
           if (type === 'error' && Toast.error) {
             Toast.error(toastTitle, message);
           } else if (type === 'success' && Toast.success) {
@@ -1080,11 +1091,11 @@
 
         // Validate inputs
         if (!clientId) {
-          showToast('error', 'Client ID is required', 'Validation Error');
+          showToast('error', 'I need a Client ID to connect', 'Missing Field');
           return;
         }
         if (!clientSecret) {
-          showToast('error', 'Client Secret is required', 'Validation Error');
+          showToast('error', 'I need a Client Secret to connect', 'Missing Field');
           return;
         }
 

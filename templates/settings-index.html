@@ -264,6 +264,7 @@
     </div>
 
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/toast-messages.js"></script>
     <script src="/static/js/timestamp-utils.js"></script>
     <script src="/static/js/chat.js"></script>
     <script>
@@ -284,8 +285,8 @@
         .catch(error => {
           console.error('Failed to load version:', error);
           document.getElementById('version-number').textContent = 'unknown';
-          if (typeof Toast !== 'undefined') {
-            Toast.warning('Version Check Failed', 'Could not retrieve version information.');
+          if (typeof ToastMessages !== 'undefined') {
+            ToastMessages.warning('version_check_failed');
           }
         });
     </script>

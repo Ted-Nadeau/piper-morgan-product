@@ -115,6 +115,7 @@ class CanonicalHandlers:
         """Check if this handler can process the intent"""
         canonical_categories = {
             IntentCategoryEnum.IDENTITY,
+            IntentCategoryEnum.DISCOVERY,  # Issue #488: Capability discovery
             IntentCategoryEnum.TEMPORAL,
             IntentCategoryEnum.STATUS,
             IntentCategoryEnum.PRIORITY,
@@ -127,10 +128,14 @@ class CanonicalHandlers:
         """Route to appropriate canonical handler.
 
         Issue #582: Added user_id parameter to enable database project lookup.
+        Issue #488: Added DISCOVERY category for capability queries.
         """
         try:
             if intent.category == IntentCategoryEnum.IDENTITY:
                 return await self._handle_identity_query(intent, session_id)
+            elif intent.category == IntentCategoryEnum.DISCOVERY:
+                # Issue #488: Handle "What can you do?" queries
+                return await self._handle_discovery_query(intent, session_id)
             elif intent.category == IntentCategoryEnum.TEMPORAL:
                 # Issue #596: Pass user_id for timezone-aware calendar queries
                 return await self._handle_temporal_query(intent, session_id, user_id)
@@ -223,6 +228,124 @@ class CanonicalHandlers:
             "spatial_pattern": spatial_pattern,
             "requires_clarification": False,
         }
+
+    async def _handle_discovery_query(self, intent: Intent, session_id: str) -> Dict:
+        """
+        Handle 'What can you do?' capability discovery queries.
+
+        Issue #488: Separated from IDENTITY to provide focused capability responses.
+        Returns dynamic capabilities from PluginRegistry with spatial awareness.
+        """
+        # Get spatial pattern for response formatting
+        spatial_pattern = None
+        if hasattr(intent, "spatial_context") and intent.spatial_context:
+            spatial_pattern = intent.spatial_context.get("pattern")
+
+        # Get dynamic capabilities from plugins
+        capabilities_data = self._get_dynamic_capabilities()
+
+        # Format response based on spatial pattern
+        if spatial_pattern == "GRANULAR":
+            message = self._format_discovery_granular(capabilities_data)
+        elif spatial_pattern == "EMBEDDED":
+            message = self._format_discovery_embedded(capabilities_data)
+        else:
+            message = self._format_discovery_standard(capabilities_data)
+
+        return {
+            "message": message,
+            "intent": {
+                "category": IntentCategoryEnum.DISCOVERY.value,
+                "action": "provide_capabilities",
+                "confidence": 1.0,
+                "context": {
+                    "capabilities": capabilities_data["capabilities_list"],
+                    "integrations": capabilities_data["integrations"],
+                    "core": capabilities_data["core"],
+                },
+            },
+            "spatial_pattern": spatial_pattern,
+            "requires_clarification": False,
+        }
+
+    def _format_discovery_standard(self, capabilities_data: Dict[str, list]) -> str:
+        """
+        DEFAULT: Standard capability response for discovery queries.
+        Issue #488: Focused on what Piper can do, not who Piper is.
+        """
+        lines = ["Here's what I can help you with:\n"]
+
+        # Core capabilities
+        lines.append("**Core Capabilities**:")
+        for cap in capabilities_data["core"]:
+            lines.append(f"  - {cap.title()}")
+
+        # Active integrations
+        integrations = capabilities_data.get("integrations", [])
+        if integrations:
+            lines.append("\n**Connected Integrations**:")
+            for integration in integrations:
+                name = integration["name"].capitalize()
+                desc = integration.get("description", f"{name} integration")
+                lines.append(f"  - **{name}**: {desc}")
+        else:
+            lines.append("\n**Available Integrations** (not yet configured):")
+            lines.append("  - Calendar, Notion, Slack, GitHub")
+
+        lines.append("\nJust ask me anything about your projects, schedule, or priorities!")
+        return "\n".join(lines)
+
+    def _format_discovery_granular(self, capabilities_data: Dict[str, list]) -> str:
+        """
+        GRANULAR: Detailed capability response with examples.
+        Issue #488: Full feature list for thorough discovery.
+        """
+        lines = ["**What I Can Do For You**\n"]
+
+        # Core capabilities with examples
+        lines.append("**Core PM Capabilities**:")
+        lines.append(
+            "  - **Development Coordination**: Track issues, manage sprints, coordinate team work"
+        )
+        lines.append("  - **Issue Tracking**: Create, update, and monitor GitHub issues")
+        lines.append("  - **Strategic Planning**: Help prioritize work and plan roadmaps")
+
+        # Active integrations with capabilities
+        integrations = capabilities_data.get("integrations", [])
+        if integrations:
+            lines.append("\n**Active Integrations**:")
+            for integration in integrations:
+                name = integration["name"].capitalize()
+                desc = integration.get("description", "")
+                capabilities = integration.get("capabilities", [])
+                lines.append(f"\n  **{name}**")
+                if desc:
+                    lines.append(f"    {desc}")
+                if capabilities:
+                    for cap in capabilities[:3]:  # Limit to 3 examples
+                        lines.append(f"    - {cap}")
+
+        # Quick commands
+        lines.append("\n**Quick Commands**:")
+        lines.append('  - "What\'s on my calendar today?"')
+        lines.append('  - "Show my standup"')
+        lines.append('  - "What should I focus on?"')
+        lines.append('  - "What\'s my top priority?"')
+
+        return "\n".join(lines)
+
+    def _format_discovery_embedded(self, capabilities_data: Dict[str, list]) -> str:
+        """
+        EMBEDDED: Brief capability summary for constrained contexts.
+        Issue #488: Compact format for embedded use.
+        """
+        core_count = len(capabilities_data["core"])
+        integration_count = len(capabilities_data.get("integrations", []))
+
+        if integration_count > 0:
+            return f"I help with PM tasks across {integration_count} integrations. Ask me about your calendar, issues, or priorities."
+        else:
+            return f"I help with {core_count} core PM capabilities: coordination, tracking, and planning."
 
     def _format_detailed_identity(self, capabilities_data: Dict[str, list]) -> str:
         """

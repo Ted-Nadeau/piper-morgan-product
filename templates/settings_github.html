@@ -619,38 +619,41 @@
       }
 
       async function disconnectGitHub() {
-        if (!confirm('Are you sure you want to disconnect GitHub? You can reconnect anytime.')) {
-          return;
-        }
+        Dialog.confirm({
+          title: 'Disconnect GitHub?',
+          message: "I'll disconnect your GitHub account. You can set it up again anytime.",
+          confirmText: 'Disconnect',
+          onConfirm: async () => {
+            const disconnectBtnEl = document.getElementById('disconnect-btn');
+            disconnectBtnEl.disabled = true;
+            disconnectBtnEl.textContent = 'Disconnecting...';
 
-        const disconnectBtnEl = document.getElementById('disconnect-btn');
-        disconnectBtnEl.disabled = true;
-        disconnectBtnEl.textContent = 'Disconnecting...';
+            try {
+              const response = await fetch('/api/v1/settings/integrations/github/disconnect', {
+                method: 'POST'
+              });
 
-        try {
-          const response = await fetch('/api/v1/settings/integrations/github/disconnect', {
-            method: 'POST'
-          });
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to disconnect');
+              }
 
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Failed to disconnect');
+              const data = await response.json();
+
+              if (data.success) {
+                showToast('success', 'GitHub disconnected', 'Disconnected');
+                loadGitHubStatus();  // Refresh status
+              } else {
+                throw new Error(data.message || 'Failed to disconnect');
+              }
+            } catch (error) {
+              console.error('Disconnect failed:', error);
+              showToast('error', error.message, 'Disconnect Failed');
+              disconnectBtnEl.disabled = false;
+              disconnectBtnEl.textContent = 'Disconnect';
+            }
           }
-
-          const data = await response.json();
-
-          if (data.success) {
-            showToast('success', 'GitHub disconnected', 'Disconnected');
-            loadGitHubStatus();  // Refresh status
-          } else {
-            throw new Error(data.message || 'Failed to disconnect');
-          }
-        } catch (error) {
-          console.error('Disconnect failed:', error);
-          showToast('error', error.message, 'Disconnect Failed');
-          disconnectBtnEl.disabled = false;
-          disconnectBtnEl.textContent = 'Disconnect';
-        }
+        });
       }
 
       // ============================================
@@ -679,7 +682,7 @@
           renderRepositoryList(loadedRepositories);
         } catch (error) {
           console.error('Failed to load repositories:', error);
-          listEl.innerHTML = '<div class="repository-list-empty">Failed to load repositories. Please try again.</div>';
+          listEl.innerHTML = '<div class="repository-list-empty">I couldn\'t load your repositories. Try refreshing the page.</div>';
           showToast('error', 'Failed to load GitHub repositories', 'Error');
         }
       }
@@ -688,7 +691,7 @@
         const listEl = document.getElementById('repository-list');
 
         if (!repositories || repositories.length === 0) {
-          listEl.innerHTML = '<div class="repository-list-empty">No repositories found. Make sure your token has the correct permissions.</div>';
+          listEl.innerHTML = '<div class="repository-list-empty">I don\'t see any repositories yet. Check that your token has repo access, then refresh.</div>';
           updateDefaultDropdown([]);
           return;
         }
@@ -822,6 +825,9 @@
             'info': 'Info'
           }[type] || 'GitHub';
 
+          // Note: Using direct Toast calls here intentionally (#642)
+          // Toast type and message are dynamic from server responses,
+          // so ToastMessages centralization doesn't apply.
           if (type === 'error' && Toast.error) {
             Toast.error(toastTitle, message);
           } else if (type === 'success' && Toast.success) {
