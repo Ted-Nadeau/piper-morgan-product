@@ -1,7 +1,8 @@
 # ADR-053: Trust Computation Architecture
 
-**Status**: PROPOSED
+**Status**: ACCEPTED
 **Date**: 2026-01-13
+**Accepted**: 2026-01-23
 **Authors**: Chief Architect
 **Deciders**: PM, CXO, PPM
 **References**: PDR-002 (Conversational Glue), PDR-001 (FTUX), Ethics-First Architecture
@@ -480,15 +481,33 @@ Train a model to predict appropriate trust level.
 
 ---
 
-## Open Questions
+## Open Questions — RESOLVED (2026-01-23)
 
-1. **Outcome classification heuristics**: How do we determine if an interaction was "successful"? Proposed: User acted on response (clicked link, ran command, continued meaningfully) = successful. Need to define signals per intent type.
+### Q1: Outcome Classification Heuristics
+**Resolution**: Define per intent type, starting with clear signals:
+- User clicked a provided link → successful
+- User ran a suggested command → successful
+- User said "thanks" or expressed satisfaction → successful
+- User asked follow-up question on same topic → successful (engagement)
+- User changed topic without acknowledgment → neutral
+- User said "that's not what I wanted" → negative
 
-2. **Stage 3→4 explicit signal**: What constitutes an "explicit user comfort signal"? Proposed: User says something like "you can just do that" or enables a "trust Piper more" option (if we add one).
+**Principle**: When uncertain, default to "neutral." The thresholds (10, 50) provide buffer for noise.
 
-3. **Cross-device trust**: If user interacts on mobile and desktop, is trust unified? Proposed: Yes, trust is per-user, not per-device.
+### Q2: Stage 3→4 Explicit Signal
+**Resolution**: Conversational signals only (no settings toggle). Recognize intent patterns like:
+- "Just handle it"
+- "Do that automatically next time"
+- "I trust you to..."
+- "You don't need to ask me about that"
 
-4. **Privacy mode interaction**: PDR-002 raises privacy mode question. Should "don't remember this session" interactions count toward trust? Proposed: No - privacy mode interactions are excluded from trust computation.
+**Note**: Per product philosophy ("settings equals abdication"), we do not add a settings toggle for trust. If future user feedback strongly requests explicit control, this could be revisited as a documented future option—but conversational trust escalation is the primary path.
+
+### Q3: Cross-Device Trust
+**Resolution**: Yes, unified per-user. Trust is about the relationship between Piper and the person, not between Piper and a device.
+
+### Q4: Privacy Mode Interaction
+**Resolution**: Correctly excluded. Privacy mode means "don't remember"—that contract extends to trust computation. Users opting for privacy mode are explicitly declining relationship-building for that session.
 
 ---
 
@@ -502,4 +521,33 @@ Train a model to predict appropriate trust level.
 
 ---
 
-*ADR-053 | PROPOSED | January 13, 2026*
+## Implementation Notes (from PPM/CXO Review)
+
+The following refinements should be addressed during implementation:
+
+### Threshold Calibration
+The values 10 (Stage 1→2) and 50 (Stage 2→3) are starting points for alpha calibration. Add explicit comments in code noting these will be tuned based on real usage patterns.
+
+### Complaint Detection Patterns
+For `handle_explicit_complaint`, detect keywords and patterns:
+- "stop doing that", "don't", "I didn't ask"
+- Negative sentiment + trust-related topic
+- Explicit "no" to proactive offer
+
+### Stage 4→3 Reversibility
+Ensure regression path from Stage 4 to Stage 3 exists (not just Stage 4→2 on explicit complaint). User might want less proactivity without full reset. Consecutive negative interactions should step down one stage at a time.
+
+### Welcome Back Pattern (CXO)
+When serving a user who has regressed due to inactivity, acknowledge once:
+> "Good to see you again! It's been a while—I'll ease back into helping proactively as we work together."
+
+Implement as one-time message per regression event, not on every interaction.
+
+### Explanation Availability at Stage 4 (CXO)
+The `explanation_level: "minimal"` setting affects *unsolicited* explanation depth only. When a user explicitly asks for explanation (via TrustExplainer), Piper provides full context regardless of trust stage.
+
+**Principle**: Trusted colleagues don't over-explain unprompted, but they answer questions fully when asked.
+
+---
+
+*ADR-053 | ACCEPTED | January 23, 2026*

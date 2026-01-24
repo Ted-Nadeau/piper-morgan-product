@@ -454,6 +454,8 @@ Higher trust = more proactive provenance sharing. Lower trust = only on request.
 
 Session Journal access restricted to Stage 4. Insight Journal available to all.
 
+> **CXO Clarification (2026-01-23)**: Users at Stage 1-3 can know the Session Journal *exists* ("I keep a record of our conversations"), but cannot access its contents until Stage 4. Transparency about existence is fine; access to contents is trust-gated.
+
 ---
 
 ## Success Metrics
@@ -480,6 +482,31 @@ This specification succeeds if:
 
 ---
 
+---
+
+## CXO Review Notes (2026-01-23)
+
+**Status**: ✅ Approved
+
+### Key Affirmations
+
+1. **Trust-gated proactivity not too conservative**: Stage 4 requiring explicit user signal creates intentional relationship moments. This is a feature, not a bug.
+
+2. **Control orthogonal to trust**: "Trust gates what Piper does proactively. Control gates what users can do intentionally." These are independent axes.
+
+3. **Session Journal Stage 4+ access appropriate**: The Session Journal is Piper's "internal notes." Showing them too early is like a colleague sharing their private observations before the relationship warrants it.
+
+### Rationale for Session Journal Access Restriction
+
+| Trust Stage | Session Journal Access | Rationale |
+|-------------|------------------------|-----------|
+| 1-2 | No access | User hasn't established relationship; full audit feels invasive |
+| 3 | No access | User trusts Piper's insights; doesn't need to audit mechanics |
+| 4 | Full access | User has explicitly signaled deep trust; transparency becomes a feature |
+
+---
+
 *Specification: D7 Trust-Based Access Rules*
 *Issue: #431 MUX-VISION-LEARN*
 *Created: 2026-01-22*
+*CXO Review: 2026-01-23 (Approved)*
