@@ -257,6 +257,47 @@ class ProjectRepository(BaseRepository):
         db_project = result.scalar_one_or_none()
         return db_project.to_domain() if db_project else None
 
+    async def search_projects(
+        self,
+        query: str,
+        owner_id: Optional[str] = None,
+        include_archived: bool = False,
+        limit: int = 20,
+    ) -> List[domain.Project]:
+        """
+        Search projects by name (partial match, case-insensitive).
+
+        Part of #567 MUX-INTERACT-CONV-SEARCH.
+
+        Args:
+            query: Search query (matches against project name)
+            owner_id: Filter to this user's projects
+            include_archived: Whether to include archived projects
+            limit: Maximum results to return
+
+        Returns:
+            List of matching projects, ordered by name
+        """
+        filters = [
+            ProjectDB.name.ilike(f"%{query}%"),
+        ]
+
+        if not include_archived:
+            filters.append(ProjectDB.is_archived == False)
+
+        if owner_id:
+            filters.append(ProjectDB.owner_id == owner_id)
+
+        result = await self.session.execute(
+            select(ProjectDB)
+            .options(selectinload(ProjectDB.integrations))
+            .where(and_(*filters))
+            .order_by(ProjectDB.name)
+            .limit(limit)
+        )
+        db_projects = result.scalars().all()
+        return [db_project.to_domain() for db_project in db_projects]
+
     async def create_default_project(self) -> domain.Project:
         logger.info("Creating default project")
         project = domain.Project(

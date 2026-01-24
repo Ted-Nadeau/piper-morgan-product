@@ -39,6 +39,7 @@ from services.shared_types import (
     TaskType,
     TodoPriority,
     TodoStatus,
+    TrustStage,
     WorkflowStatus,
     WorkflowType,
 )
@@ -1843,3 +1844,151 @@ class LearningSettings(Base, TimestampMixin):
 
 # Note: ListDB already exists at line 1126 with full implementation
 # It includes all fields from domain.List plus owner_id, shared_with, etc.
+
+
+class UserTrustProfileDB(Base, TimestampMixin):
+    """
+    Persisted trust state for a user.
+
+    Issue #647: TRUST-LEVELS-1 - Core Infrastructure
+    ADR-053: Trust Computation Architecture
+
+    Tracks user's progression through trust stages, enabling Piper to
+    calibrate proactivity appropriately. One profile per user.
+    """
+
+    __tablename__ = "user_trust_profiles"
+
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,  # One trust profile per user
+        index=True,
+    )
+
+    # Current trust stage (1=NEW, 2=BUILDING, 3=ESTABLISHED, 4=TRUSTED)
+    current_stage = Column(Integer, default=1, nullable=False)
+    highest_stage_achieved = Column(Integer, default=1, nullable=False)
+
+    # Counters for stage progression
+    # CALIBRATION: Thresholds (10 for 1→2, 50 for 2→3) are starting points
+    successful_count = Column(Integer, default=0, nullable=False)
+    neutral_count = Column(Integer, default=0, nullable=False)
+    negative_count = Column(Integer, default=0, nullable=False)
+    consecutive_negative = Column(Integer, default=0, nullable=False)
+
+    # JSON fields for complex data (bounded history for discussability)
+    recent_events = Column(JSON, default=list, nullable=False)
+    stage_history = Column(JSON, default=list, nullable=False)
+
+    # Timestamps (beyond TimestampMixin)
+    last_interaction_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_stage_change_at = Column(DateTime, nullable=True)
+
+    # Relationship
+    user = relationship("User", backref="trust_profile")
+
+    @classmethod
+    def from_domain(cls, profile: domain.UserTrustProfile) -> "UserTrustProfileDB":
+        """Create DB model from domain model."""
+        return cls(
+            user_id=profile.user_id,
+            current_stage=profile.current_stage.value,
+            highest_stage_achieved=profile.highest_stage_achieved.value,
+            successful_count=profile.successful_count,
+            neutral_count=profile.neutral_count,
+            negative_count=profile.negative_count,
+            consecutive_negative=profile.consecutive_negative,
+            recent_events=[
+                {
+                    "event_id": str(e.event_id),
+                    "timestamp": e.timestamp.isoformat(),
+                    "outcome": e.outcome,
+                    "context": e.context,
+                    "stage_at_time": e.stage_at_time.value,
+                }
+                for e in profile.recent_events
+            ],
+            stage_history=[
+                {
+                    "timestamp": ts.isoformat(),
+                    "stage": stage.value,
+                    "reason": reason,
+                }
+                for ts, stage, reason in profile.stage_history
+            ],
+            last_interaction_at=profile.last_interaction_at,
+            last_stage_change_at=profile.last_stage_change_at,
+            created_at=profile.created_at,
+        )
+
+    def to_domain(self) -> domain.UserTrustProfile:
+        """Convert DB model to domain model."""
+        from datetime import datetime as dt
+        from uuid import UUID
+
+        # Parse recent_events from JSON
+        recent_events = []
+        for e in self.recent_events or []:
+            recent_events.append(
+                domain.TrustEvent(
+                    event_id=UUID(e["event_id"]),
+                    timestamp=dt.fromisoformat(e["timestamp"]),
+                    outcome=e["outcome"],
+                    context=e["context"],
+                    stage_at_time=TrustStage(e["stage_at_time"]),
+                )
+            )
+
+        # Parse stage_history from JSON
+        stage_history = []
+        for h in self.stage_history or []:
+            stage_history.append(
+                (
+                    dt.fromisoformat(h["timestamp"]),
+                    TrustStage(h["stage"]),
+                    h["reason"],
+                )
+            )
+
+        return domain.UserTrustProfile(
+            user_id=self.user_id,
+            current_stage=TrustStage(self.current_stage),
+            highest_stage_achieved=TrustStage(self.highest_stage_achieved),
+            successful_count=self.successful_count,
+            neutral_count=self.neutral_count,
+            negative_count=self.negative_count,
+            consecutive_negative=self.consecutive_negative,
+            recent_events=recent_events,
+            stage_history=stage_history,
+            created_at=self.created_at,
+            last_interaction_at=self.last_interaction_at,
+            last_stage_change_at=self.last_stage_change_at,
+        )
+
+
+class ConversationalMemoryEntryDB(Base):
+    """
+    Database model for conversational memory entries (ADR-054 Layer 1).
+
+    Part of #657 MEM-ADR054-P1.
+    Stores memorable items from conversations for 24-hour continuity window.
+    """
+
+    __tablename__ = "conversational_memory_entries"
+
+    id = Column(String, primary_key=True)  # UUID as string
+    user_id = Column(String, nullable=False, index=True)
+    conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False)
+
+    timestamp = Column(DateTime(timezone=True), nullable=False)
+    topic_summary = Column(String(500), nullable=False)
+    entities_mentioned = Column(postgresql.JSONB, default=list)
+    outcome = Column(String(500), nullable=True)
+    user_sentiment = Column(String(20), nullable=True)  # positive/neutral/negative
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (Index("idx_cme_user_timestamp", "user_id", "timestamp"),)

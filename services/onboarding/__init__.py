@@ -42,6 +42,16 @@ from services.onboarding.portfolio_manager import (
     InvalidStateTransitionError,
     PortfolioOnboardingManager,
 )
+from services.onboarding.portfolio_service import (
+    ARCHIVE_INSTEAD_PATTERNS,
+    ARCHIVE_PATTERNS,
+    DELETE_PATTERNS,
+    PERMANENT_DELETE_PATTERNS,
+    RESTORE_PATTERNS,
+    PortfolioActionResult,
+    PortfolioResult,
+    PortfolioService,
+)
 
 __all__ = [
     # Core onboarding
@@ -68,4 +78,13 @@ __all__ = [
     "get_onboarding_formality",
     "is_warm_onboarding",
     "create_onboarding_context",
+    # Portfolio service (#569)
+    "ARCHIVE_INSTEAD_PATTERNS",
+    "ARCHIVE_PATTERNS",
+    "DELETE_PATTERNS",
+    "PERMANENT_DELETE_PATTERNS",
+    "RESTORE_PATTERNS",
+    "PortfolioActionResult",
+    "PortfolioResult",
+    "PortfolioService",
 ]
