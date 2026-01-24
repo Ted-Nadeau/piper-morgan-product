@@ -41,6 +41,7 @@ from services.shared_types import (
     TaskType,
     TodoPriority,
     TodoStatus,
+    TrustStage,
     WorkflowStatus,
     WorkflowType,
 )
@@ -1543,4 +1544,121 @@ class PortfolioOnboardingSession:
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+        }
+
+
+# =============================================================================
+# TRUST COMPUTATION - ADR-053: Trust Computation Architecture
+# =============================================================================
+
+
+@dataclass
+class TrustEvent:
+    """
+    Individual interaction that affects trust computation.
+
+    Issue #647: TRUST-LEVELS-1 - Core Infrastructure
+    ADR-053: Trust Computation Architecture
+
+    Records a single interaction outcome for trust tracking and discussability.
+    When users ask "why did you do that?", these events provide context.
+    """
+
+    event_id: UUID
+    timestamp: datetime
+    outcome: str  # "successful", "neutral", "negative"
+    context: str  # Brief description for discussability
+    stage_at_time: TrustStage
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "event_id": str(self.event_id),
+            "timestamp": self.timestamp.isoformat(),
+            "outcome": self.outcome,
+            "context": self.context,
+            "stage_at_time": self.stage_at_time.value,
+        }
+
+
+@dataclass
+class UserTrustProfile:
+    """
+    Persisted trust state for a user.
+
+    Issue #647: TRUST-LEVELS-1 - Core Infrastructure
+    ADR-053: Trust Computation Architecture
+    PDR-002: Conversational Glue
+
+    Tracks user's progression through trust stages, enabling Piper to
+    calibrate proactivity appropriately. Trust is invisible to users
+    but its effects are noticeable through behavior changes.
+
+    Key behaviors by stage:
+    - NEW (1): Respond to queries only; no unsolicited help
+    - BUILDING (2): Offer related capabilities after task completion
+    - ESTABLISHED (3): Proactive suggestions based on observed context
+    - TRUSTED (4): Anticipate needs; "I'll do X unless you stop me"
+    """
+
+    user_id: UUID
+    current_stage: TrustStage = TrustStage.NEW
+
+    # Counters for stage progression
+    # CALIBRATION: Thresholds (10 for 1→2, 50 for 2→3) are starting points
+    successful_count: int = 0
+    neutral_count: int = 0
+    negative_count: int = 0
+    consecutive_negative: int = 0
+
+    # History for discussability (bounded, not infinite)
+    recent_events: List[TrustEvent] = field(default_factory=list)
+    max_recent_events: int = 50
+
+    # Stage progression tracking
+    # List of (timestamp, new_stage, reason) tuples
+    stage_history: List[Tuple[datetime, TrustStage, str]] = field(default_factory=list)
+    highest_stage_achieved: TrustStage = TrustStage.NEW
+
+    # Timestamps
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_interaction_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    last_stage_change_at: Optional[datetime] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "user_id": str(self.user_id),
+            "current_stage": self.current_stage.value,
+            "successful_count": self.successful_count,
+            "neutral_count": self.neutral_count,
+            "negative_count": self.negative_count,
+            "consecutive_negative": self.consecutive_negative,
+            "recent_events": [
+                {
+                    "event_id": str(e.event_id),
+                    "timestamp": e.timestamp.isoformat(),
+                    "outcome": e.outcome,
+                    "context": e.context,
+                    "stage_at_time": e.stage_at_time.value,
+                }
+                for e in self.recent_events
+            ],
+            "max_recent_events": self.max_recent_events,
+            "stage_history": [
+                {
+                    "timestamp": ts.isoformat(),
+                    "stage": stage.value,
+                    "reason": reason,
+                }
+                for ts, stage, reason in self.stage_history
+            ],
+            "highest_stage_achieved": self.highest_stage_achieved.value,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_interaction_at": (
+                self.last_interaction_at.isoformat() if self.last_interaction_at else None
+            ),
+            "last_stage_change_at": (
+                self.last_stage_change_at.isoformat() if self.last_stage_change_at else None
+            ),
         }

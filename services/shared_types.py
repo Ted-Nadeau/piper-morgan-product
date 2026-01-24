@@ -3,7 +3,7 @@ Shared Types
 Common enums and types used across services
 """
 
-from enum import Enum
+from enum import Enum, IntEnum
 
 
 class IntentCategory(Enum):
@@ -17,11 +17,12 @@ class IntentCategory(Enum):
     QUERY = "query"  # CQRS-lite: For read-only data retrieval operations
     CONVERSATION = "conversation"  # For greetings, chitchat, social interaction
     IDENTITY = "identity"  # For identity queries - "What's your name and role?"
+    DISCOVERY = "discovery"  # For capability queries - "What can you do?" (#488)
     TEMPORAL = "temporal"  # For temporal queries - "What day is it?"
     STATUS = "status"  # For status queries - "What am I working on?"
     PRIORITY = "priority"  # For priority queries - "What's my top priority?"
     GUIDANCE = "guidance"  # For guidance queries - "What should I focus on?"
-    UNKNOWN = "unknown"  # For unclear or ambiguous requests
+    UNKNOWN = "unknown"  # For unclear or ambiguous requests  # For unclear or ambiguous requests
 
 
 class WorkflowType(Enum):
@@ -271,3 +272,57 @@ class PerceptionMode(str, Enum):
     NOTICING = "noticing"
     REMEMBERING = "remembering"
     ANTICIPATING = "anticipating"
+
+
+class TrustStage(IntEnum):
+    """
+    Trust stages governing Piper's proactivity level.
+
+    Issue #647: TRUST-LEVELS-1 - Core Infrastructure
+    ADR-053: Trust Computation Architecture
+    PDR-002: Conversational Glue
+
+    Users progress through these stages based on interaction history.
+    Trust is invisible to users but effects are noticeable through behavior.
+
+    CALIBRATION: Thresholds (10, 50) are starting points for alpha testing.
+    """
+
+    NEW = 1  # Respond to queries; no unsolicited help
+    BUILDING = 2  # Offer related capabilities after task completion
+    ESTABLISHED = 3  # Proactive suggestions based on observed context
+    TRUSTED = 4  # Anticipate needs; "I'll do X unless you stop me"
+
+
+class DelegationType(IntEnum):
+    """
+    Types of system-initiated delegation.
+
+    Issue #414: MUX-INTERACT-DELEGATION
+    UX Research: System-initiated delegation increases perceived self-threat.
+
+    Ordered by proactivity level (least to most proactive).
+    Higher values = more autonomous behavior.
+    """
+
+    OBSERVE = 1  # "I notice..." - passive observation
+    INFORM = 2  # "You should know..." - proactive information
+    OFFER = 3  # "Would you like me to...?" - explicit offer
+    SUGGEST = 4  # "I think we should..." - recommendation
+    CONFIRM = 5  # "I'll do X unless you say no" - opt-out action
+    AUTO = 6  # Silent execution with brief confirmation
+
+
+class RiskLevel(IntEnum):
+    """
+    Risk classification for actions.
+
+    Issue #414: MUX-INTERACT-DELEGATION
+    Used with TrustStage to determine appropriate DelegationType.
+
+    Higher risk = more restrictive delegation allowed.
+    """
+
+    LOW = 1  # Read-only queries, notifications, reminders
+    MEDIUM = 2  # Draft creation, internal state changes
+    HIGH = 3  # Send messages, delete/modify data, external actions
