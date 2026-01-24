@@ -203,8 +203,10 @@ Natural integration point for reflection summaries:
 
 **Verbal** (in conversation):
 - High: "I've noticed that..." (no qualifier)
-- Medium: "It seems like..." or "I think..."
+- Medium: "I think..." or "It looks like..." (prefer over "It seems like...")
 - Low: "I'm not sure, but it looks like..."
+
+> **CXO Note (2026-01-23)**: Prefer "I think..." or "It looks like..." over "It seems like..." for medium confidence. "Seems" is slightly hedging; "think" and "looks like" are more direct while still expressing appropriate uncertainty.
 
 ---
 

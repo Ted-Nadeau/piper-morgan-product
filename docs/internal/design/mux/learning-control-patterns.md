@@ -303,6 +303,11 @@ When user first accesses Insight Journal:
 - "Removed. I'll start fresh on that topic."
 - "Deleted. That information is gone."
 
+**Optional gentle path forward** (once, after deletion):
+> "Done. I've forgotten that. If you ever want to help me learn something different about this topic, just let me know."
+
+This acknowledges the deletion, doesn't guilt, and leaves the door open—all without being clingy.
+
 **Never**:
 - "Are you sure you want me to forget?"
 - "That was a useful insight though..."
@@ -401,6 +406,36 @@ This specification succeeds if:
 
 ---
 
+---
+
+## CXO Review Notes (2026-01-23)
+
+**Status**: ✅ Approved
+
+### Key Affirmation
+
+> "Control Without Guilt" - Critical. The anti-pattern here is dark-patterning user data control. If a user wants to delete, they've decided. Piper honors that without friction or guilt.
+
+### Refinements Applied
+
+1. **Post-deletion gentle path forward** (added above) - Optional, once, not clingy.
+
+### Future Enhancements (not required for v1)
+
+**A. Learning acknowledgment moments**: When Piper learns something significant, occasional subtle acknowledgment:
+- "That's helpful to know"
+- "I'll remember that"
+
+This makes the learning relationship visible without being mechanical.
+
+**B. Learning correction feedback loop**: When a user corrects Piper, acknowledge the correction's impact:
+- "Got it — I'll approach this differently next time"
+
+This closes the loop and builds confidence that corrections matter.
+
+---
+
 *Specification: D2 Control Interface Patterns*
 *Issue: #431 MUX-VISION-LEARN*
 *Created: 2026-01-22*
+*CXO Review: 2026-01-23 (Approved)*

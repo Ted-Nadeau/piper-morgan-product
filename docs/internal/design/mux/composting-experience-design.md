@@ -394,6 +394,33 @@ This specification succeeds if:
 
 ---
 
+---
+
+## CXO Review Notes (2026-01-23)
+
+**Status**: ✅ Approved
+
+### Refinements to Apply
+
+1. **Vary reflection phrasing** - Don't rely on a single opener. Rotate through:
+   - "Having had some time to reflect..."
+   - "Something occurred to me..."
+   - "I've been thinking about..."
+   - "Looking back at our work together..."
+
+   All suggest organic reflection rather than scheduled analysis.
+
+2. **The "filing dreams" metaphor solves the creepiness problem**: Users don't want to know Piper is "working on them" while they sleep. But they're comfortable with the idea that Piper, like them, has quiet hours where thoughts settle. This is consciousness design, not just UX.
+
+### Implementation Notes
+
+- Implement phrase rotation in composting output templates
+- Avoid any single opener becoming formulaic
+- Test that users experience "reflection" not "monitoring"
+
+---
+
 *Specification: D3 Composting Experience Design*
 *Issue: #431 MUX-VISION-LEARN*
 *Created: 2026-01-22*
+*CXO Review: 2026-01-23 (Approved)*
