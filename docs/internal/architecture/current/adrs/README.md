@@ -4,10 +4,13 @@
 
 This directory contains Architecture Decision Records (ADRs) that document significant architectural decisions, their context, rationale, and consequences.
 
-**Total ADRs**: 55 records (000-054)
+**Total ADRs**: 58 records (000-057)
 
 ## Recent ADRs
 
+- **[ADR-057: CommandRegistry - Unified Command Discovery](adr-057-command-registry.md)** (Jan 2026) - Central registry for command parity across interfaces (#551)
+- **[ADR-056: Consciousness Expression Patterns](adr-056-consciousness-expression-patterns.md)** (Jan 2026) - Template-based personality consistency
+- **[ADR-055: Object Model Implementation](adr-055-object-model-implementation.md)** (Jan 2026) - Domain model dataclass patterns
 - **[ADR-054: Cross-Session Memory Architecture](adr-054-cross-session-memory-architecture.md)** (Jan 2026) - Three-layer context persistence from PDR-002
 - **[ADR-053: Trust Computation Architecture](adr-053-trust-computation-architecture.md)** (Jan 2026) - Trust gradient model from PDR-002
 - **[ADR-052: Tool-Based MCP Standardization](adr-052-tool-based-mcp-standardization.md)** (Oct 2025, updated Jan 2026) - MCP implementation pattern standardization
@@ -39,6 +42,6 @@ See [adr-000-meta-platform.md](adr-000-meta-platform.md) for the standard ADR te
 
 ---
 
-**Last Updated**: January 13, 2026
+**Last Updated**: January 22, 2026
 **Maintained By**: Documentation Team
 **Purpose**: Directory navigation and content overview
