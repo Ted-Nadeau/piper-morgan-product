@@ -27,7 +27,10 @@ from services.feedback.feedback_service import FeedbackService
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
 from services.repositories.file_repository import FileRepository
 from services.repositories.todo_repository import TodoListRepository, TodoRepository
-from services.repositories.universal_list_repository import UniversalListRepository
+from services.repositories.universal_list_repository import (
+    UniversalListItemRepository,
+    UniversalListRepository,
+)
 
 # =============================================================================
 # ServiceContainer Dependency (Issue #322: ARCH-FIX-SINGLETON)
@@ -188,5 +191,19 @@ async def get_feedback_service() -> AsyncGenerator[FeedbackService, None]:
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield FeedbackService(session)
+        # Commit changes after successful route execution
+        await session.commit()
+
+
+async def get_list_item_repository() -> AsyncGenerator[UniversalListItemRepository, None]:
+    """Dependency injection for UniversalListItemRepository.
+
+    Provides UniversalListItemRepository with database session for list item operations.
+    Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
+
+    Issue #474: Added for list item management (add/edit/delete items).
+    """
+    async with AsyncSessionFactory.session_scope_fresh() as session:
+        yield UniversalListItemRepository(session)
         # Commit changes after successful route execution
         await session.commit()

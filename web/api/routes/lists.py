@@ -16,8 +16,10 @@ from sqlalchemy import select
 
 from services.auth.auth_middleware import get_current_user
 from services.auth.jwt_service import JWTClaims
-from services.database.models import ListDB
+from services.database.models import ItemDB, ListDB
+from services.database.session_factory import AsyncSessionFactory
 from services.domain import models as domain
+from services.domain.primitives import Item
 from web.api.dependencies import get_list_repository
 
 router = APIRouter(prefix="/api/v1/lists", tags=["lists"])
@@ -806,4 +808,392 @@ async def get_shared_lists(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve shared lists",
+        )
+
+
+# =============================================================================
+# Item Management Endpoints (Issue #474: MUX-TECH-LISTS)
+# =============================================================================
+
+
+class CreateItemRequest(BaseModel):
+    """Request model for creating an item in a list"""
+
+    text: str
+
+
+class UpdateItemRequest(BaseModel):
+    """Request model for updating an item"""
+
+    text: str
+
+
+class ItemResponse(BaseModel):
+    """Response model for item data"""
+
+    id: str
+    text: str
+    position: int
+    list_id: str
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+@router.post("/{list_id}/items")
+async def add_item_to_list(
+    list_id: str,
+    request: CreateItemRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> ItemResponse:
+    """
+    Add an item to a list with ownership validation.
+
+    Only allows adding items to lists owned by the current user.
+
+    Args:
+        list_id: ID of the list to add item to
+        request: CreateItemRequest with item text
+        current_user: Current authenticated user
+        list_repo: List repository (injected)
+
+    Returns:
+        Created item with ID and metadata
+
+    Raises:
+        HTTPException 400: Invalid input
+        HTTPException 404: List not found or not owned by user
+        HTTPException 500: Server error
+
+    Issue #474: MUX-TECH-LISTS Item Management
+    """
+    try:
+        if not request.text or not request.text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Item text is required",
+            )
+
+        # Verify list ownership
+        list_obj = await list_repo.get_list_by_id(list_id, owner_id=current_user.sub)
+        if not list_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"List not found: {list_id}",
+            )
+
+        # Get max position for new item
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            from sqlalchemy import func
+
+            max_pos_result = await session.execute(
+                select(func.max(ItemDB.position)).where(ItemDB.list_id == list_id)
+            )
+            max_position = max_pos_result.scalar() or -1
+            new_position = max_position + 1
+
+            # Create domain item
+            item = Item(
+                text=request.text.strip(),
+                position=new_position,
+                list_id=list_id,
+            )
+
+            # Save to database
+            db_item = ItemDB.from_domain(item)
+            session.add(db_item)
+            await session.commit()
+            await session.refresh(db_item)
+
+            logger.info(
+                "item_added_to_list",
+                user_id=current_user.sub,
+                list_id=list_id,
+                item_id=db_item.id,
+            )
+
+            return ItemResponse(
+                id=db_item.id,
+                text=db_item.text,
+                position=db_item.position,
+                list_id=db_item.list_id,
+                created_at=db_item.created_at.isoformat() if db_item.created_at else None,
+                updated_at=db_item.updated_at.isoformat() if db_item.updated_at else None,
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "item_add_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to add item to list",
+        )
+
+
+@router.get("/{list_id}/items")
+async def get_items_in_list(
+    list_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> dict:
+    """
+    Get all items in a list with ownership validation.
+
+    Only returns items for lists owned by the current user.
+
+    Args:
+        list_id: ID of the list
+        current_user: Current authenticated user
+        list_repo: List repository (injected)
+
+    Returns:
+        List of items in the list
+
+    Raises:
+        HTTPException 404: List not found or not owned by user
+        HTTPException 500: Server error
+
+    Issue #474: MUX-TECH-LISTS Item Management
+    """
+    try:
+        # Verify list ownership
+        list_obj = await list_repo.get_list_by_id(list_id, owner_id=current_user.sub)
+        if not list_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"List not found: {list_id}",
+            )
+
+        # Get items
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            result = await session.execute(
+                select(ItemDB).where(ItemDB.list_id == list_id).order_by(ItemDB.position.asc())
+            )
+            db_items = result.scalars().all()
+
+            logger.info(
+                "items_retrieved",
+                user_id=current_user.sub,
+                list_id=list_id,
+                count=len(db_items),
+            )
+
+            return {
+                "items": [
+                    {
+                        "id": item.id,
+                        "text": item.text,
+                        "position": item.position,
+                        "list_id": item.list_id,
+                        "created_at": item.created_at.isoformat() if item.created_at else None,
+                        "updated_at": item.updated_at.isoformat() if item.updated_at else None,
+                    }
+                    for item in db_items
+                ],
+                "count": len(db_items),
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "items_get_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve items",
+        )
+
+
+@router.put("/{list_id}/items/{item_id}")
+async def update_item(
+    list_id: str,
+    item_id: str,
+    request: UpdateItemRequest,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> ItemResponse:
+    """
+    Update an item in a list with ownership validation.
+
+    Only allows updating items in lists owned by the current user.
+
+    Args:
+        list_id: ID of the list containing the item
+        item_id: ID of the item to update
+        request: UpdateItemRequest with new text
+        current_user: Current authenticated user
+        list_repo: List repository (injected)
+
+    Returns:
+        Updated item
+
+    Raises:
+        HTTPException 400: Invalid input
+        HTTPException 404: List or item not found
+        HTTPException 500: Server error
+
+    Issue #474: MUX-TECH-LISTS Item Management
+    """
+    try:
+        if not request.text or not request.text.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Item text is required",
+            )
+
+        # Verify list ownership
+        list_obj = await list_repo.get_list_by_id(list_id, owner_id=current_user.sub)
+        if not list_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"List not found: {list_id}",
+            )
+
+        # Update item
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            result = await session.execute(
+                select(ItemDB).where(
+                    ItemDB.id == item_id,
+                    ItemDB.list_id == list_id,
+                )
+            )
+            db_item = result.scalar_one_or_none()
+
+            if not db_item:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Item not found: {item_id}",
+                )
+
+            db_item.text = request.text.strip()
+            await session.commit()
+            await session.refresh(db_item)
+
+            logger.info(
+                "item_updated",
+                user_id=current_user.sub,
+                list_id=list_id,
+                item_id=item_id,
+            )
+
+            return ItemResponse(
+                id=db_item.id,
+                text=db_item.text,
+                position=db_item.position,
+                list_id=db_item.list_id,
+                created_at=db_item.created_at.isoformat() if db_item.created_at else None,
+                updated_at=db_item.updated_at.isoformat() if db_item.updated_at else None,
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "item_update_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            item_id=item_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update item",
+        )
+
+
+@router.delete("/{list_id}/items/{item_id}")
+async def delete_item(
+    list_id: str,
+    item_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    list_repo=Depends(get_list_repository),
+) -> dict:
+    """
+    Delete an item from a list with ownership validation.
+
+    Only allows deleting items from lists owned by the current user.
+
+    Args:
+        list_id: ID of the list containing the item
+        item_id: ID of the item to delete
+        current_user: Current authenticated user
+        list_repo: List repository (injected)
+
+    Returns:
+        Success status
+
+    Raises:
+        HTTPException 404: List or item not found
+        HTTPException 500: Server error
+
+    Issue #474: MUX-TECH-LISTS Item Management
+    """
+    try:
+        # Verify list ownership
+        list_obj = await list_repo.get_list_by_id(list_id, owner_id=current_user.sub)
+        if not list_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"List not found: {list_id}",
+            )
+
+        # Delete item
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            result = await session.execute(
+                select(ItemDB).where(
+                    ItemDB.id == item_id,
+                    ItemDB.list_id == list_id,
+                )
+            )
+            db_item = result.scalar_one_or_none()
+
+            if not db_item:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Item not found: {item_id}",
+                )
+
+            await session.delete(db_item)
+            await session.commit()
+
+            logger.info(
+                "item_deleted",
+                user_id=current_user.sub,
+                list_id=list_id,
+                item_id=item_id,
+            )
+
+            return {
+                "status": "deleted",
+                "item_id": item_id,
+                "list_id": list_id,
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "item_delete_error",
+            user_id=current_user.sub,
+            list_id=list_id,
+            item_id=item_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete item",
         )

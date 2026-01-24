@@ -1086,10 +1086,14 @@ class SlackWebhookRouter:
         Handle /piper commands.
 
         Issue #520: Query #50 - "/piper help"
+        Issue #551 Phase 4: Extended subcommands for calendar, status, priority
 
         Subcommands:
         - help: Show available commands and capabilities
         - (empty): Same as help
+        - calendar: Show today's calendar
+        - status: Show current project status
+        - priority: Show top priority item
 
         Args:
             text: Command text after /piper
@@ -1097,15 +1101,148 @@ class SlackWebhookRouter:
             channel_id: Slack channel ID
 
         Returns:
-            Ephemeral response with help information
+            Ephemeral response with command output
         """
-        if text == "help" or text == "":
+        # Normalize and parse subcommand
+        subcommand = text.strip().lower() if text else ""
+
+        if subcommand == "help" or subcommand == "":
             return await self._build_help_response()
+
+        # Issue #551 Phase 4: Calendar subcommand
+        elif subcommand in ("calendar", "cal", "today"):
+            return await self._handle_calendar_subcommand(user_id, channel_id)
+
+        # Issue #551 Phase 4: Status subcommand
+        elif subcommand in ("status", "projects"):
+            return await self._handle_status_subcommand(user_id, channel_id)
+
+        # Issue #551 Phase 4: Priority subcommand
+        elif subcommand in ("priority", "focus", "top"):
+            return await self._handle_priority_subcommand(user_id, channel_id)
+
         else:
             # Issue #628: Warm response for unknown commands
             return {
                 "response_type": "ephemeral",
-                "text": f"I don't recognize `{text}` - try `/piper help` to see what I can do!",
+                "text": f"I don't recognize `{subcommand}` - try `/piper help` to see what I can do!",
+            }
+
+    async def _handle_calendar_subcommand(self, user_id: str, channel_id: str) -> Dict[str, Any]:
+        """
+        Handle /piper calendar subcommand.
+
+        Issue #551 Phase 4: Calendar parity on Slack.
+        Routes to canonical temporal handler for calendar information.
+        """
+        try:
+            from services.domain.models import Intent
+            from services.intent_service.canonical_handlers import CanonicalHandlers
+
+            handlers = CanonicalHandlers()
+
+            # Create a minimal intent for calendar query
+            intent = Intent(
+                raw_input="what's on my calendar today?",
+                classification="TEMPORAL",
+                confidence=1.0,
+            )
+
+            # Call the canonical handler
+            result = await handlers._handle_temporal_query(
+                intent, session_id=f"slack_{user_id}", user_id=user_id
+            )
+
+            message = result.get("message", "I couldn't retrieve your calendar.")
+
+            return {
+                "response_type": "ephemeral",
+                "text": message,
+            }
+
+        except Exception as e:
+            logger.error(f"Error handling calendar subcommand: {e}")
+            return {
+                "response_type": "ephemeral",
+                "text": "I'm having trouble accessing your calendar right now. Please try again later.",
+            }
+
+    async def _handle_status_subcommand(self, user_id: str, channel_id: str) -> Dict[str, Any]:
+        """
+        Handle /piper status subcommand.
+
+        Issue #551 Phase 4: Status parity on Slack.
+        Routes to canonical status handler for project status.
+        """
+        try:
+            from services.domain.models import Intent
+            from services.intent_service.canonical_handlers import CanonicalHandlers
+
+            handlers = CanonicalHandlers()
+
+            # Create a minimal intent for status query
+            intent = Intent(
+                raw_input="what am I working on?",
+                classification="STATUS",
+                confidence=1.0,
+            )
+
+            # Call the canonical handler
+            result = await handlers._handle_status_query(
+                intent, session_id=f"slack_{user_id}", user_id=user_id
+            )
+
+            message = result.get("message", "I couldn't retrieve your project status.")
+
+            return {
+                "response_type": "ephemeral",
+                "text": message,
+            }
+
+        except Exception as e:
+            logger.error(f"Error handling status subcommand: {e}")
+            return {
+                "response_type": "ephemeral",
+                "text": "I'm having trouble accessing your project status right now. Please try again later.",
+            }
+
+    async def _handle_priority_subcommand(self, user_id: str, channel_id: str) -> Dict[str, Any]:
+        """
+        Handle /piper priority subcommand.
+
+        Issue #551 Phase 4: Priority parity on Slack.
+        Routes to canonical priority handler for top priority item.
+        """
+        try:
+            from services.domain.models import Intent
+            from services.intent_service.canonical_handlers import CanonicalHandlers
+
+            handlers = CanonicalHandlers()
+
+            # Create a minimal intent for priority query
+            intent = Intent(
+                raw_input="what's my top priority?",
+                classification="PRIORITY",
+                confidence=1.0,
+            )
+
+            # Call the canonical handler
+            result = await handlers._handle_priority_query(
+                intent, session_id=f"slack_{user_id}", user_id=user_id
+            )
+
+            message = result.get("message", "I couldn't determine your top priority.")
+
+            return {
+                "response_type": "ephemeral",
+                "text": message,
+            }
+
+        except Exception as e:
+            logger.error(f"Error handling priority subcommand: {e}")
+            return {
+                "response_type": "ephemeral",
+                "text": "I'm having trouble determining your priority right now. Please try again later.",
             }
 
     async def _build_help_response(self) -> Dict[str, Any]:
@@ -1113,9 +1250,25 @@ class SlackWebhookRouter:
         Build help response with dynamic capabilities.
 
         Issue #520: Query #50 - Uses _get_dynamic_capabilities() from canonical_handlers
+        Issue #551: Now uses CommandRegistry for command list, falls back to capabilities
         """
+        from services.commands.adapters.slack_adapter import SlackCommandAdapter
+        from services.commands.definitions import register_all_commands
+        from services.commands.registry import CommandRegistry
         from services.intent_service.canonical_handlers import CanonicalHandlers
 
+        # Issue #551: Try to use CommandRegistry first
+        if not CommandRegistry.is_initialized():
+            register_all_commands()
+
+        # Check if we have commands registered
+        slack_commands = CommandRegistry.list_commands(interface=SlackCommandAdapter.interface)
+
+        if slack_commands:
+            # Use the new registry-based help
+            return SlackCommandAdapter.build_help_response()
+
+        # Fallback to original capability-based help if registry empty
         handlers = CanonicalHandlers()
         capabilities = handlers._get_dynamic_capabilities()
 
