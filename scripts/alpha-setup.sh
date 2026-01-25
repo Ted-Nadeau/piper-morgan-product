@@ -172,10 +172,21 @@ start_docker() {
     fi
 
     if [ -f "docker-compose.yml" ]; then
-        docker-compose up -d
-        print_success "Docker containers started"
-        print_warning "Waiting 5 seconds for services to initialize..."
-        sleep 5
+        # Issue #644: Check docker-compose exit code to catch startup failures
+        if docker-compose up -d; then
+            print_success "Docker containers started"
+            print_warning "Waiting 5 seconds for services to initialize..."
+            sleep 5
+        else
+            print_error "Failed to start Docker containers"
+            echo "   Common causes:"
+            echo "   - Docker daemon connection issues (restart Docker Desktop)"
+            echo "   - Port conflicts (check: docker-compose ps)"
+            echo "   - Network issues (check: docker network ls)"
+            echo ""
+            echo "   To see detailed logs: docker-compose logs"
+            exit 1
+        fi
     else
         print_warning "docker-compose.yml not found, skipping Docker startup"
     fi
