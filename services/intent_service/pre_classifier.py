@@ -694,6 +694,19 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
+        # Issue #522, #681: Check Document query patterns BEFORE PORTFOLIO
+        # "update the project plan doc" must route to QUERY, not PORTFOLIO
+        # Document patterns are more specific (require "doc/document" suffix)
+        if PreClassifier._matches_patterns(
+            clean_for_matching, PreClassifier.DOCUMENT_QUERY_PATTERNS
+        ):
+            return Intent(
+                category=IntentCategory.QUERY,
+                action="update_document_query",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
         # Issue #675: Check PORTFOLIO for project management operations
         # "Archive/delete/restore project X" routes to PortfolioService
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.PORTFOLIO_PATTERNS):
@@ -892,16 +905,7 @@ class PreClassifier:
                 context={"original_message": message},
             )
 
-        # Issue #522: Check Document query patterns - Query #40
-        if PreClassifier._matches_patterns(
-            clean_for_matching, PreClassifier.DOCUMENT_QUERY_PATTERNS
-        ):
-            return Intent(
-                category=IntentCategory.QUERY,
-                action="update_document_query",
-                confidence=1.0,
-                context={"original_message": message},
-            )
+        # Note: DOCUMENT_QUERY check moved earlier (before PORTFOLIO) per Issue #681
 
         if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.TEMPORAL_PATTERNS):
             return Intent(
