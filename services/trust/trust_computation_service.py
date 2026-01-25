@@ -41,6 +41,10 @@ STAGE_THRESHOLDS = {
 # Maximum consecutive negative interactions before stage regression
 MAX_CONSECUTIVE_NEGATIVE = 3
 
+# Floor behavior: users who have earned Stage 2 never regress below it
+# Per ADR-053 and PPM guidance (2026-01-23)
+MINIMUM_STAGE_FLOOR = TrustStage.BUILDING
+
 
 class TrustComputationService:
     """
@@ -192,6 +196,22 @@ class TrustComputationService:
 
         return profile
 
+    def _get_floor(self, profile: UserTrustProfile) -> TrustStage:
+        """
+        Determine minimum trust stage for a user (floor behavior).
+
+        Per ADR-053 and PPM guidance: Users who have earned Stage 2 (BUILDING)
+        should never regress below it. This preserves the relationship foundation
+        even through difficult periods.
+
+        Returns:
+            TrustStage.BUILDING if user has ever reached Stage 2+
+            TrustStage.NEW otherwise
+        """
+        if profile.highest_stage_achieved >= MINIMUM_STAGE_FLOOR:
+            return MINIMUM_STAGE_FLOOR
+        return TrustStage.NEW
+
     async def _check_stage_regression(
         self,
         user_id: UUID,
@@ -201,17 +221,18 @@ class TrustComputationService:
         Check if user should regress to a lower trust stage.
 
         Regression triggered by consecutive negative interactions.
-        Per ADR-053: Regression drops one stage at a time.
+        Per ADR-053: Regression drops one stage at a time, but respects floor.
         """
         if profile.consecutive_negative >= MAX_CONSECUTIVE_NEGATIVE:
             current = profile.current_stage
+            floor = self._get_floor(profile)
 
-            # Can't regress below NEW
-            if current == TrustStage.NEW:
+            # Can't regress below floor
+            if current <= floor:
                 return profile
 
-            # Determine new stage (one step down)
-            new_stage = TrustStage(current.value - 1)
+            # Determine new stage (one step down, but not below floor)
+            new_stage = TrustStage(max(current.value - 1, floor.value))
 
             return await self._regress_to_stage(
                 user_id, new_stage, f"{MAX_CONSECUTIVE_NEGATIVE} consecutive negative interactions"

@@ -528,14 +528,25 @@ The following refinements should be addressed during implementation:
 ### Threshold Calibration
 The values 10 (Stage 1→2) and 50 (Stage 2→3) are starting points for alpha calibration. Add explicit comments in code noting these will be tuned based on real usage patterns.
 
+**Status**: ⚠️ Code constants exist but calibration note not in comments. See #680.
+
 ### Complaint Detection Patterns
 For `handle_explicit_complaint`, detect keywords and patterns:
 - "stop doing that", "don't", "I didn't ask"
 - Negative sentiment + trust-related topic
 - Explicit "no" to proactive offer
 
+**Status**: ✅ Patterns implemented in `signal_detector.py`. However, complaint → Stage 2 immediate regression not wired up. See #678.
+
 ### Stage 4→3 Reversibility
 Ensure regression path from Stage 4 to Stage 3 exists (not just Stage 4→2 on explicit complaint). User might want less proactivity without full reset. Consecutive negative interactions should step down one stage at a time.
+
+**Status**: ⚠️ Consecutive negative step-down implemented. Soft regression (e.g., "ask me first next time") not yet implemented. See #679.
+
+### Floor Behavior (Stage 2 Minimum)
+Per ADR design, users who have earned Stage 2 should never regress below it. The `highest_stage_achieved` field enables this.
+
+**Status**: ✅ IMPLEMENTED (#677, 2026-01-25). `_get_floor()` helper and `MINIMUM_STAGE_FLOOR` constant added.
 
 ### Welcome Back Pattern (CXO)
 When serving a user who has regressed due to inactivity, acknowledge once:

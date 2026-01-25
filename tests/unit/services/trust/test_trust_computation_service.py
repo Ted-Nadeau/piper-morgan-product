@@ -17,6 +17,7 @@ from services.domain.models import TrustEvent, UserTrustProfile
 from services.shared_types import TrustStage
 from services.trust.trust_computation_service import (
     MAX_CONSECUTIVE_NEGATIVE,
+    MINIMUM_STAGE_FLOOR,
     STAGE_THRESHOLDS,
     TrustComputationService,
 )
@@ -266,12 +267,15 @@ class TestStageRegression:
         return TrustComputationService(mock_repo)
 
     @pytest.mark.asyncio
-    async def test_regresses_after_consecutive_negatives(self, service, mock_repo):
-        """Regresses one stage after MAX_CONSECUTIVE_NEGATIVE failures."""
+    async def test_regresses_after_consecutive_negatives_no_floor(self, service, mock_repo):
+        """User who never earned Stage 2 can regress to NEW."""
         user_id = uuid4()
+        # User is at BUILDING but highest_stage_achieved is NEW (shouldn't happen
+        # in practice, but tests the "no floor" case explicitly)
         profile = UserTrustProfile(
             user_id=user_id,
             current_stage=TrustStage.BUILDING,
+            highest_stage_achieved=TrustStage.NEW,  # Never truly earned Stage 2
             consecutive_negative=MAX_CONSECUTIVE_NEGATIVE,
         )
 
@@ -317,6 +321,124 @@ class TestStageRegression:
         result = await service._check_stage_regression(user_id, profile)
 
         mock_repo.update_stage.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_floor_enforced_stage3_to_stage2(self, service, mock_repo):
+        """User at Stage 3 who earned Stage 2 regresses to Stage 2, not Stage 1."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,  # Stage 3
+            highest_stage_achieved=TrustStage.ESTABLISHED,  # Earned Stage 3
+            consecutive_negative=MAX_CONSECUTIVE_NEGATIVE,
+        )
+
+        regressed_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,  # Stage 2 (floor)
+            consecutive_negative=0,
+        )
+        mock_repo.update_stage.return_value = regressed_profile
+        mock_repo.create_or_update.return_value = regressed_profile
+
+        result = await service._check_stage_regression(user_id, profile)
+
+        mock_repo.update_stage.assert_called_once()
+        call_args = mock_repo.update_stage.call_args
+        # Should regress to BUILDING (Stage 2), not NEW
+        assert call_args[0][1] == TrustStage.BUILDING
+
+    @pytest.mark.asyncio
+    async def test_floor_enforced_stage2_stays_at_stage2(self, service, mock_repo):
+        """User at Stage 2 who earned Stage 2 stays at Stage 2 (floor)."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,  # Stage 2
+            highest_stage_achieved=TrustStage.BUILDING,  # Earned Stage 2
+            consecutive_negative=MAX_CONSECUTIVE_NEGATIVE,
+        )
+
+        result = await service._check_stage_regression(user_id, profile)
+
+        # Should NOT regress - already at floor
+        mock_repo.update_stage.assert_not_called()
+        assert result.current_stage == TrustStage.BUILDING
+
+    @pytest.mark.asyncio
+    async def test_floor_enforced_stage4_to_stage3(self, service, mock_repo):
+        """User at Stage 4 regresses to Stage 3 (one step), not Stage 2."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.TRUSTED,  # Stage 4
+            highest_stage_achieved=TrustStage.TRUSTED,  # Earned Stage 4
+            consecutive_negative=MAX_CONSECUTIVE_NEGATIVE,
+        )
+
+        regressed_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,  # Stage 3
+            consecutive_negative=0,
+        )
+        mock_repo.update_stage.return_value = regressed_profile
+        mock_repo.create_or_update.return_value = regressed_profile
+
+        result = await service._check_stage_regression(user_id, profile)
+
+        mock_repo.update_stage.assert_called_once()
+        call_args = mock_repo.update_stage.call_args
+        # Should regress to ESTABLISHED (Stage 3), one step down
+        assert call_args[0][1] == TrustStage.ESTABLISHED
+
+
+class TestGetFloor:
+    """Test _get_floor helper method for floor enforcement."""
+
+    @pytest.fixture
+    def service(self):
+        """Create service with mock repo."""
+        return TrustComputationService(AsyncMock())
+
+    def test_floor_is_building_when_earned_building(self, service):
+        """Floor is BUILDING when user has reached BUILDING."""
+        profile = UserTrustProfile(
+            user_id=uuid4(),
+            current_stage=TrustStage.BUILDING,
+            highest_stage_achieved=TrustStage.BUILDING,
+        )
+        assert service._get_floor(profile) == TrustStage.BUILDING
+
+    def test_floor_is_building_when_earned_established(self, service):
+        """Floor is BUILDING when user has reached ESTABLISHED."""
+        profile = UserTrustProfile(
+            user_id=uuid4(),
+            current_stage=TrustStage.ESTABLISHED,
+            highest_stage_achieved=TrustStage.ESTABLISHED,
+        )
+        assert service._get_floor(profile) == TrustStage.BUILDING
+
+    def test_floor_is_building_when_earned_trusted(self, service):
+        """Floor is BUILDING when user has reached TRUSTED."""
+        profile = UserTrustProfile(
+            user_id=uuid4(),
+            current_stage=TrustStage.TRUSTED,
+            highest_stage_achieved=TrustStage.TRUSTED,
+        )
+        assert service._get_floor(profile) == TrustStage.BUILDING
+
+    def test_floor_is_new_when_never_earned_building(self, service):
+        """Floor is NEW when user has never reached BUILDING."""
+        profile = UserTrustProfile(
+            user_id=uuid4(),
+            current_stage=TrustStage.NEW,
+            highest_stage_achieved=TrustStage.NEW,
+        )
+        assert service._get_floor(profile) == TrustStage.NEW
+
+    def test_minimum_stage_floor_constant(self):
+        """Verify MINIMUM_STAGE_FLOOR is BUILDING."""
+        assert MINIMUM_STAGE_FLOOR == TrustStage.BUILDING
 
 
 class TestProgressToTrusted:
