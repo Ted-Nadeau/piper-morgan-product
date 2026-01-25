@@ -95,18 +95,39 @@ def should_open_browser() -> bool:
 
 
 async def open_browser_delayed():
-    """Open browser after a short delay to let server start"""
-    await asyncio.sleep(2)  # Wait for server to be ready
-    try:
-        webbrowser.open("http://localhost:8001")
-        if args.verbose:
-            logger.info("Browser opened to http://localhost:8001")
-        else:
-            print("   🌐 Browser opened")
-    except Exception as e:
-        if args.verbose:
-            logger.warning(f"Failed to open browser: {e}")
-        # In quiet mode, don't show browser errors (non-critical)
+    """Open browser after verifying server is ready via health endpoint.
+
+    Issue #645: Fixed race condition where browser opened before server ready.
+    Now polls /health endpoint instead of using fixed 2-second delay.
+    """
+    import aiohttp
+
+    max_attempts = 30  # 30 seconds max wait
+    health_url = "http://localhost:8001/health"
+
+    for attempt in range(max_attempts):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(health_url, timeout=aiohttp.ClientTimeout(total=1)) as resp:
+                    if resp.status == 200:
+                        webbrowser.open("http://localhost:8001")
+                        if args.verbose:
+                            logger.info(f"Browser opened after {attempt + 1} health check(s)")
+                        else:
+                            print("   🌐 Browser opened")
+                        return
+        except Exception:
+            pass  # Server not ready yet, retry
+        await asyncio.sleep(1)
+
+    # Fallback: open browser anyway after timeout (better than nothing)
+    if args.verbose:
+        logger.warning(
+            f"Server health check timed out after {max_attempts}s, opening browser anyway"
+        )
+    else:
+        print("   ⚠️ Server slow to start, opening browser anyway")
+    webbrowser.open("http://localhost:8001")
 
 
 async def main():
