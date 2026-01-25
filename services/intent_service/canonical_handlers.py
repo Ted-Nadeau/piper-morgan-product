@@ -120,6 +120,9 @@ class CanonicalHandlers:
             IntentCategoryEnum.STATUS,
             IntentCategoryEnum.PRIORITY,
             IntentCategoryEnum.GUIDANCE,
+            IntentCategoryEnum.TRUST,  # Issue #673: Trust explanation queries
+            IntentCategoryEnum.MEMORY,  # Issue #674: Memory/history queries
+            IntentCategoryEnum.PORTFOLIO,  # Issue #675: Portfolio management queries
             IntentCategoryEnum.CONVERSATION,  # Issue #286: CONVERSATION is canonical
         }
         return intent.category in canonical_categories
@@ -145,6 +148,15 @@ class CanonicalHandlers:
                 return await self._handle_priority_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.GUIDANCE:
                 return await self._handle_guidance_query(intent, session_id, user_id)
+            elif intent.category == IntentCategoryEnum.TRUST:
+                # Issue #673: Handle trust explanation queries
+                return await self._handle_trust_query(intent, session_id, user_id)
+            elif intent.category == IntentCategoryEnum.MEMORY:
+                # Issue #674: Handle memory/history queries
+                return await self._handle_memory_query(intent, session_id, user_id)
+            elif intent.category == IntentCategoryEnum.PORTFOLIO:
+                # Issue #675: Handle portfolio management queries
+                return await self._handle_portfolio_query(intent, session_id, user_id)
             elif intent.category == IntentCategoryEnum.CONVERSATION:
                 # Issue #286: Handle CONVERSATION in canonical section
                 return await self._handle_conversation_query(intent, session_id)
@@ -1386,7 +1398,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                         for issue in issues_preview[:3]:
                             title = issue.get("title", "Untitled")[:50]
                             number = issue.get("number", "?")
-                            details.append(f"    • #{number}: {title}")
+                            details.append(f"    - #{number}: {title}")
                 if repo:
                     details.append(f"  - Repository: {repo}")
             else:
@@ -1544,7 +1556,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                     for issue in issues_preview[:3]:
                         title = issue.get("title", "Untitled")[:50]
                         number = issue.get("number", "?")
-                        lines.append(f"     • #{number}: {title}")
+                        lines.append(f"     - #{number}: {title}")
 
             # Last activity
             last_activity = metadata.get("last_activity")
@@ -1731,7 +1743,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 number = issue.get("number", "?")
                 title = issue.get("title", "Untitled")
                 labels = ", ".join(issue.get("labels", []))
-                details.append(f"  • #{number}: {title}")
+                details.append(f"  - #{number}: {title}")
                 if labels:
                     details.append(f"    Labels: {labels}")
         elif priority_metadata.get("has_github"):
@@ -2226,7 +2238,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
             for issue in high_priority_issues[:3]:
                 number = issue.get("number", "?")
                 title = issue.get("title", "Untitled")
-                details.append(f"  • #{number}: {title}")
+                details.append(f"  - #{number}: {title}")
             details.append("")
 
         details.append(f"**Today's Key Focus**:")
@@ -2234,7 +2246,7 @@ General AI assistants are great for general tasks. I'm specifically designed to 
         if user_context and user_context.priorities and len(user_context.priorities) > 1:
             details.append(f"  - Secondary priorities:")
             for priority in user_context.priorities[1:3]:
-                details.append(f"    • {priority}")
+                details.append(f"    - {priority}")
 
         details.append(f"\n**This Week**:")
         details.append(f"  - Continue work on {org_text}")
@@ -2245,9 +2257,9 @@ General AI assistants are great for general tasks. I'm specifically designed to 
                 meta = (project_metadata or {}).get(project, {})
                 issues_count = meta.get("open_issues_count")
                 if issues_count is not None:
-                    details.append(f"    • {project} ({issues_count} issues)")
+                    details.append(f"    - {project} ({issues_count} issues)")
                 else:
-                    details.append(f"    • {project}")
+                    details.append(f"    - {project}")
 
         details.append(f"\n**Strategic Direction**:")
         details.append(
@@ -4157,6 +4169,675 @@ What would you like to set up first?"""
             "context_level": focus_recommendation.get("context_level", "minimal"),  # Issue #497
             "requires_clarification": False,
         }
+
+    async def _handle_trust_query(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
+        """
+        Handle TRUST category intents - trust explanations and relationship queries.
+
+        Issue #673: MUX-WIRE-TRUST - Wire TrustService to chat interface.
+
+        Routes to ExplanationHandler from services.trust for:
+        - "Why can't you...?" → Capability boundary explanation
+        - "How well do you know me?" → Trust level/relationship info
+        - "Why did you...?" → Action explanation
+        """
+        from uuid import UUID
+
+        from services.database.session_factory import AsyncSessionFactory
+        from services.repositories.user_trust_profile_repository import UserTrustProfileRepository
+        from services.trust import ExplanationHandler, TrustComputationService
+
+        try:
+            # Get original message for detection
+            original_message = intent.context.get("original_message", "")
+
+            # Handle case where user_id is not available
+            if not user_id:
+                return {
+                    "message": (
+                        "I can explain how we work together once you're signed in. "
+                        "Our working relationship develops over time as I learn your preferences."
+                    ),
+                    "intent": {
+                        "category": IntentCategoryEnum.TRUST.value,
+                        "action": "trust_no_user",
+                        "confidence": 0.8,
+                        "context": {"original_message": original_message},
+                    },
+                    "requires_clarification": False,
+                }
+
+            # Initialize trust services with proper repository injection
+            async with AsyncSessionFactory.session_scope() as session:
+                trust_repo = UserTrustProfileRepository(session)
+                trust_service = TrustComputationService(trust_repo)
+                explanation_handler = ExplanationHandler(trust_service=trust_service)
+
+                # Try to handle as explanation query
+                # ExplanationHandler.try_handle expects (user_id: UUID, message: str)
+                result = await explanation_handler.try_handle(
+                    user_id=UUID(user_id),
+                    message=original_message,
+                )
+
+                if result and result.handled:
+                    return {
+                        "message": result.response,
+                        "intent": {
+                            "category": IntentCategoryEnum.TRUST.value,
+                            "action": "trust_explanation",
+                            "confidence": 1.0,
+                            "context": {
+                                "query_type": (
+                                    result.query_type.value if result.query_type else None
+                                ),
+                                "original_message": original_message,
+                            },
+                        },
+                        "requires_clarification": False,
+                    }
+
+            # Fallback if ExplanationHandler doesn't recognize the query
+            return {
+                "message": (
+                    "I'd be happy to explain how we work together. "
+                    "Our working relationship develops over time as I learn your preferences "
+                    "and you see how I can help. What would you like to know specifically?"
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.TRUST.value,
+                    "action": "trust_fallback",
+                    "confidence": 0.8,
+                    "context": {"original_message": original_message},
+                },
+                "requires_clarification": False,
+            }
+
+        except Exception as e:
+            logger.error(f"Trust handler error: {e}")
+            return {
+                "message": (
+                    "I'm having trouble explaining that right now, "
+                    "but I'm here to help. What would you like to know about how we work together?"
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.TRUST.value,
+                    "action": "trust_error",
+                    "confidence": 0.5,
+                    "context": {"error": str(e)},
+                },
+                "requires_clarification": False,
+            }
+
+    async def _handle_memory_query(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
+        """
+        Handle MEMORY category intents - conversation history and memory queries.
+
+        Issue #674: MUX-WIRE-MEMORY - Wire UserHistoryService to chat interface.
+
+        Routes to UserHistoryService from services.memory for:
+        - "What do you remember about me?" → History summary
+        - "Show my history" → Recent conversations
+        - "Find when I mentioned X" → History search
+
+        Note: Currently uses InMemoryUserHistoryRepository. A database-backed
+        implementation will be added in a future iteration.
+        """
+        from services.memory.user_history import InMemoryUserHistoryRepository, UserHistoryService
+
+        try:
+            # Initialize history service with InMemory repository
+            # TODO: Replace with database-backed repository when available
+            history_repo = InMemoryUserHistoryRepository()
+            history_service = UserHistoryService(history_repo)
+
+            # Get original message for search context
+            original_message = intent.context.get("original_message", "")
+
+            # Determine if this is a search query or general history request
+            is_search = any(
+                keyword in original_message.lower()
+                for keyword in ["find", "search", "when did", "where did"]
+            )
+
+            if is_search and user_id:
+                # Extract search terms (simple extraction)
+                search_terms = original_message.lower()
+                for prefix in [
+                    "find when i mentioned",
+                    "find where i",
+                    "search for",
+                    "search history for",
+                ]:
+                    if prefix in search_terms:
+                        search_terms = search_terms.split(prefix)[-1].strip()
+                        break
+
+                result = await history_service.search_history(
+                    user_id=user_id,
+                    query=search_terms,
+                    limit=5,
+                )
+
+                if result.results:
+                    # Format search results as conversational response
+                    matches = []
+                    for item in result.results[:3]:
+                        matches.append(f'- {item.title}: "{item.preview}"')
+
+                    response = (
+                        f"I found {result.total_matches} conversations matching your search:\n\n"
+                        + "\n".join(matches)
+                    )
+                    if result.total_matches > 3:
+                        response += f"\n\n...and {result.total_matches - 3} more."
+                else:
+                    response = (
+                        f"I couldn't find any conversations matching '{search_terms}'. "
+                        "Would you like me to search for something else?"
+                    )
+
+                return {
+                    "message": response,
+                    "intent": {
+                        "category": IntentCategoryEnum.MEMORY.value,
+                        "action": "search_history",
+                        "confidence": 1.0,
+                        "context": {
+                            "query": search_terms,
+                            "matches": result.total_matches,
+                        },
+                    },
+                    "requires_clarification": False,
+                }
+
+            elif user_id:
+                # Get recent conversation history
+                result = await history_service.get_history(
+                    user_id=user_id,
+                    page=1,
+                    page_size=5,
+                )
+
+                if result.conversations:
+                    # Format history as conversational response
+                    history_items = []
+                    for conv in result.conversations[:3]:
+                        history_items.append(f"- {conv.title}")
+
+                    response = (
+                        f"I remember our {result.total_count} conversations. "
+                        f"Here are the most recent:\n\n" + "\n".join(history_items)
+                    )
+                    if result.total_count > 3:
+                        response += f"\n\nWould you like to explore more of our history?"
+                else:
+                    response = (
+                        "We haven't had many conversations yet, but I'm looking forward "
+                        "to getting to know you better as we work together!"
+                    )
+
+                return {
+                    "message": response,
+                    "intent": {
+                        "category": IntentCategoryEnum.MEMORY.value,
+                        "action": "get_history",
+                        "confidence": 1.0,
+                        "context": {
+                            "total_conversations": result.total_count,
+                            "page": result.page,
+                        },
+                    },
+                    "requires_clarification": False,
+                }
+
+            # Fallback if no user_id available
+            return {
+                "message": (
+                    "I can help you explore our conversation history once you're signed in. "
+                    "Each conversation we have helps me understand your work better."
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.MEMORY.value,
+                    "action": "memory_no_user",
+                    "confidence": 0.8,
+                    "context": {"original_message": original_message},
+                },
+                "requires_clarification": False,
+            }
+
+        except Exception as e:
+            logger.error(f"Memory handler error: {e}")
+            return {
+                "message": (
+                    "I'm having trouble accessing our conversation history right now. "
+                    "Is there something specific you'd like to know about our past conversations?"
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.MEMORY.value,
+                    "action": "memory_error",
+                    "confidence": 0.5,
+                    "context": {"error": str(e)},
+                },
+                "requires_clarification": False,
+            }
+
+    async def _handle_portfolio_query(
+        self, intent: Intent, session_id: str, user_id: str = None
+    ) -> Dict:
+        """
+        Handle PORTFOLIO category intents - project management operations.
+
+        Issue #675: MUX-WIRE-PORTFOLIO - Wire PortfolioService to chat interface.
+
+        Routes to PortfolioService from services.onboarding for:
+        - "Archive my project X" → PortfolioService.archive_project()
+        - "Delete my project X" → PortfolioService.delete_project()
+        - "Restore project X" → PortfolioService.restore_project()
+        - "Search projects for Y" → PortfolioService.search_projects()
+        - "Show my projects" → PortfolioService.list_active_projects()
+        """
+        import re
+
+        from services.database.repositories import ProjectRepository
+        from services.database.session_factory import AsyncSessionFactory
+        from services.onboarding.portfolio_service import (
+            ARCHIVE_PATTERNS,
+            DELETE_PATTERNS,
+            RESTORE_PATTERNS,
+            PortfolioService,
+        )
+
+        try:
+            # Get original message for pattern matching
+            original_message = intent.context.get("original_message", "")
+            message_lower = original_message.lower().strip()
+
+            # Helper to strip common trailing words from project names
+            # Fixes issue where "delete X please" captures "X please"
+            def clean_project_name(name: str) -> str:
+                if not name:
+                    return name
+                trailing_words = [
+                    "please",
+                    "now",
+                    "thanks",
+                    "thank you",
+                    "asap",
+                    "for me",
+                    "right now",
+                    "immediately",
+                    "today",
+                ]
+                cleaned = name.strip()
+                for word in trailing_words:
+                    if cleaned.lower().endswith(f" {word}"):
+                        cleaned = cleaned[: -(len(word) + 1)].strip()
+                return cleaned
+
+            # Determine operation type by matching against patterns
+            # (This doesn't require DB access)
+            operation = None
+            project_name = None
+
+            # Check archive patterns
+            for pattern in ARCHIVE_PATTERNS:
+                match = re.search(pattern, message_lower, re.IGNORECASE)
+                if match:
+                    operation = "archive"
+                    project_name = (
+                        clean_project_name(match.group(1).strip()) if match.groups() else None
+                    )
+                    break
+
+            # Check delete patterns
+            if not operation:
+                for pattern in DELETE_PATTERNS:
+                    match = re.search(pattern, message_lower, re.IGNORECASE)
+                    if match:
+                        operation = "delete"
+                        project_name = (
+                            clean_project_name(match.group(1).strip()) if match.groups() else None
+                        )
+                        break
+
+            # Check restore patterns
+            if not operation:
+                for pattern in RESTORE_PATTERNS:
+                    match = re.search(pattern, message_lower, re.IGNORECASE)
+                    if match:
+                        operation = "restore"
+                        project_name = (
+                            clean_project_name(match.group(1).strip()) if match.groups() else None
+                        )
+                        break
+
+            # Check for list/show operations
+            if not operation:
+                if any(word in message_lower for word in ["show", "list", "view", "my projects"]):
+                    operation = "list"
+
+            # Check for add/create operations
+            if not operation:
+                if any(word in message_lower for word in ["add", "create", "new project"]):
+                    operation = "add"
+
+            # Check for search operations
+            if not operation:
+                if any(word in message_lower for word in ["search", "find project"]):
+                    operation = "search"
+
+            # Handle no user_id (doesn't need DB)
+            if not user_id:
+                return {
+                    "message": (
+                        "I can help you manage your projects once you're signed in. "
+                        "You'll be able to add, archive, restore, and organize projects."
+                    ),
+                    "intent": {
+                        "category": IntentCategoryEnum.PORTFOLIO.value,
+                        "action": "portfolio_no_user",
+                        "confidence": 0.8,
+                        "context": {"original_message": original_message},
+                    },
+                    "requires_clarification": False,
+                }
+
+            # Handle add operation - create onboarding session for multi-turn flow
+            # Issue #490, P5+P7: Wire to PortfolioOnboardingManager for conversation state
+            if operation == "add":
+                if user_id:
+                    # Import onboarding components (lazy to avoid circular imports)
+                    # Get or create singleton manager (same pattern as conversation_handler)
+                    # We need to use the SAME singleton as conversation_handler
+                    from services.conversation.conversation_handler import (
+                        _get_onboarding_components,
+                    )
+                    from services.onboarding import (
+                        PortfolioOnboardingHandler,
+                        PortfolioOnboardingManager,
+                    )
+                    from services.shared_types import PortfolioOnboardingState
+
+                    onboarding_manager, _ = _get_onboarding_components()
+
+                    # Create session directly in GATHERING_PROJECTS state
+                    # (user already asked to add, so skip INITIATED)
+                    onboarding_session = onboarding_manager.create_session(
+                        session_id=session_id,
+                        user_id=user_id,
+                    )
+
+                    # Transition to GATHERING_PROJECTS since user initiated the add
+                    onboarding_manager.transition_state(
+                        onboarding_session.id,
+                        PortfolioOnboardingState.GATHERING_PROJECTS,
+                    )
+
+                    # Record the turn
+                    prompt_message = (
+                        "I'd be happy to help you add a new project! "
+                        "What would you like to call it?"
+                    )
+                    onboarding_manager.add_turn(
+                        onboarding_session.id,
+                        user_message=original_message,
+                        assistant_response=prompt_message,
+                    )
+
+                    logger.info(
+                        "portfolio_add_onboarding_started",
+                        user_id=user_id,
+                        session_id=session_id,
+                        onboarding_id=onboarding_session.id,
+                    )
+
+                    return {
+                        "message": prompt_message,
+                        "intent": {
+                            "category": IntentCategoryEnum.PORTFOLIO.value,
+                            "action": "add_project_onboarding",
+                            "confidence": 1.0,
+                            "context": {"onboarding_id": onboarding_session.id},
+                        },
+                        "requires_clarification": False,  # Onboarding handles the flow
+                    }
+                else:
+                    # No user_id - can't create session, fall back to prompt
+                    return {
+                        "message": (
+                            "I'd be happy to help you add a new project! "
+                            "Please sign in first so I can save it to your portfolio."
+                        ),
+                        "intent": {
+                            "category": IntentCategoryEnum.PORTFOLIO.value,
+                            "action": "add_project_no_user",
+                            "confidence": 1.0,
+                            "context": {},
+                        },
+                        "requires_clarification": False,
+                    }
+
+            # All remaining operations need DB access - wrap in session scope
+            async with AsyncSessionFactory.session_scope() as session:
+                project_repo = ProjectRepository(session)
+                portfolio_service = PortfolioService(project_repo)
+
+                # Handle list operation
+                if operation == "list":
+                    projects = await portfolio_service.list_active_projects(user_id=user_id)
+                    if projects:
+                        project_names = [p.name for p in projects[:5]]
+                        response = f"You have {len(projects)} active projects:\n\n" + "\n".join(
+                            f"- {name}" for name in project_names
+                        )
+                        if len(projects) > 5:
+                            response += f"\n\n...and {len(projects) - 5} more."
+                    else:
+                        response = (
+                            "You don't have any active projects yet. " "Would you like to add one?"
+                        )
+                    return {
+                        "message": response,
+                        "intent": {
+                            "category": IntentCategoryEnum.PORTFOLIO.value,
+                            "action": "list_projects",
+                            "confidence": 1.0,
+                            "context": {"project_count": len(projects)},
+                        },
+                        "requires_clarification": False,
+                    }
+
+                # Handle archive operation
+                if operation == "archive" and project_name:
+                    # Find project by name
+                    project = await portfolio_service.find_project_by_name(
+                        name=project_name, user_id=user_id
+                    )
+                    if project:
+                        result = await portfolio_service.archive_project(
+                            project_id=str(project.id), user_id=user_id
+                        )
+                        return {
+                            "message": result.message,
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "archive_project",
+                                "confidence": 1.0,
+                                "context": {
+                                    "project_name": project_name,
+                                    "status": result.status.value,
+                                },
+                            },
+                            "requires_clarification": False,
+                        }
+                    else:
+                        return {
+                            "message": (
+                                f"I couldn't find a project called '{project_name}'. "
+                                "Would you like me to list your projects?"
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "project_not_found",
+                                "confidence": 0.8,
+                                "context": {"searched_name": project_name},
+                            },
+                            "requires_clarification": True,
+                        }
+
+                # Handle delete operation (with confirmation)
+                if operation == "delete" and project_name:
+                    project = await portfolio_service.find_project_by_name(
+                        name=project_name, user_id=user_id, include_archived=True
+                    )
+                    if project:
+                        # Return confirmation request for destructive action
+                        return {
+                            "message": (
+                                f"Are you sure you want to delete '{project.name}'? "
+                                "This action cannot be undone. "
+                                "You could also archive it instead if you might need it later."
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "delete_confirm",
+                                "confidence": 1.0,
+                                "context": {
+                                    "project_id": str(project.id),
+                                    "project_name": project.name,
+                                    "awaiting_confirmation": True,
+                                },
+                            },
+                            "requires_clarification": True,
+                        }
+                    else:
+                        return {
+                            "message": (
+                                f"I couldn't find a project called '{project_name}'. "
+                                "Would you like me to list your projects?"
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "project_not_found",
+                                "confidence": 0.8,
+                                "context": {"searched_name": project_name},
+                            },
+                            "requires_clarification": True,
+                        }
+
+                # Handle restore operation
+                if operation == "restore" and project_name:
+                    project = await portfolio_service.find_project_by_name(
+                        name=project_name, user_id=user_id, include_archived=True
+                    )
+                    if project:
+                        result = await portfolio_service.restore_project(
+                            project_id=str(project.id), user_id=user_id
+                        )
+                        return {
+                            "message": result.message,
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "restore_project",
+                                "confidence": 1.0,
+                                "context": {
+                                    "project_name": project_name,
+                                    "status": result.status.value,
+                                },
+                            },
+                            "requires_clarification": False,
+                        }
+                    else:
+                        return {
+                            "message": (
+                                f"I couldn't find an archived project called '{project_name}'. "
+                                "Would you like me to list your archived projects?"
+                            ),
+                            "intent": {
+                                "category": IntentCategoryEnum.PORTFOLIO.value,
+                                "action": "project_not_found",
+                                "confidence": 0.8,
+                                "context": {"searched_name": project_name},
+                            },
+                            "requires_clarification": True,
+                        }
+
+                # Handle search operation
+                if operation == "search":
+                    # Extract search terms
+                    search_terms = message_lower
+                    for prefix in ["search projects for", "find project", "search for"]:
+                        if prefix in search_terms:
+                            search_terms = search_terms.split(prefix)[-1].strip()
+                            break
+
+                    results = await portfolio_service.search_projects(
+                        query=search_terms, user_id=user_id
+                    )
+                    if results:
+                        project_names = [p.name for p in results[:5]]
+                        response = (
+                            f"Found {len(results)} projects matching '{search_terms}':\n\n"
+                            + "\n".join(f"- {name}" for name in project_names)
+                        )
+                    else:
+                        response = (
+                            f"I couldn't find any projects matching '{search_terms}'. "
+                            "Would you like to see all your projects?"
+                        )
+                    return {
+                        "message": response,
+                        "intent": {
+                            "category": IntentCategoryEnum.PORTFOLIO.value,
+                            "action": "search_projects",
+                            "confidence": 1.0,
+                            "context": {
+                                "query": search_terms,
+                                "result_count": len(results),
+                            },
+                        },
+                        "requires_clarification": len(results) == 0,
+                    }
+
+            # Fallback for unrecognized portfolio operations (outside session - no DB needed)
+            return {
+                "message": (
+                    "I can help you manage your projects. You can ask me to:\n"
+                    "- Show your projects\n"
+                    "- Archive a project\n"
+                    "- Restore an archived project\n"
+                    "- Search for projects\n"
+                    "\nWhat would you like to do?"
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.PORTFOLIO.value,
+                    "action": "portfolio_help",
+                    "confidence": 0.7,
+                    "context": {"original_message": original_message},
+                },
+                "requires_clarification": True,
+            }
+
+        except Exception as e:
+            logger.error(f"Portfolio handler error: {e}")
+            return {
+                "message": (
+                    "I'm having trouble managing projects right now. "
+                    "Please try again in a moment."
+                ),
+                "intent": {
+                    "category": IntentCategoryEnum.PORTFOLIO.value,
+                    "action": "portfolio_error",
+                    "confidence": 0.5,
+                    "context": {"error": str(e)},
+                },
+                "requires_clarification": False,
+            }
 
     async def _handle_conversation_query(self, intent: Intent, session_id: str) -> Dict:
         """

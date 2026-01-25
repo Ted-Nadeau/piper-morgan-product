@@ -22,7 +22,10 @@ class IntentCategory(Enum):
     STATUS = "status"  # For status queries - "What am I working on?"
     PRIORITY = "priority"  # For priority queries - "What's my top priority?"
     GUIDANCE = "guidance"  # For guidance queries - "What should I focus on?"
-    UNKNOWN = "unknown"  # For unclear or ambiguous requests  # For unclear or ambiguous requests
+    TRUST = "trust"  # For trust queries - "Why can't you...?" "How well do you know me?" (#673)
+    MEMORY = "memory"  # For memory queries - "What do you remember about me?" (#674)
+    PORTFOLIO = "portfolio"  # For portfolio queries - "Archive/delete/restore project X" (#675)
+    UNKNOWN = "unknown"  # For unclear or ambiguous requests
 
 
 class WorkflowType(Enum):
@@ -142,47 +145,49 @@ class OrderingStrategy(Enum):
 
 
 # PM-040: Knowledge graph node types
+# Note: Values must be UPPERCASE to match PostgreSQL nodetype enum
 class NodeType(Enum):
-    CONCEPT = "concept"
-    DOCUMENT = "document"
-    PERSON = "person"
-    ORGANIZATION = "organization"
-    TECHNOLOGY = "technology"
-    PROCESS = "process"
-    METRIC = "metric"
-    EVENT = "event"
-    RELATIONSHIP = "relationship"
-    CUSTOM = "custom"
+    CONCEPT = "CONCEPT"
+    DOCUMENT = "DOCUMENT"
+    PERSON = "PERSON"
+    ORGANIZATION = "ORGANIZATION"
+    TECHNOLOGY = "TECHNOLOGY"
+    PROCESS = "PROCESS"
+    METRIC = "METRIC"
+    EVENT = "EVENT"
+    RELATIONSHIP = "RELATIONSHIP"
+    CUSTOM = "CUSTOM"
 
 
 # PM-040: Knowledge graph edge types (Issue #278: CORE-KNOW-ENHANCE)
+# Note: Values must be UPPERCASE to match PostgreSQL edgetype enum
 class EdgeType(Enum):
     """Basic relationship types"""
 
-    REFERENCES = "references"
-    DEPENDS_ON = "depends_on"
-    IMPLEMENTS = "implements"
-    MEASURES = "measures"
-    INVOLVES = "involves"
-    TRIGGERS = "triggers"
-    ENHANCES = "enhances"
-    REPLACES = "replaces"
-    SUPPORTS = "supports"
+    REFERENCES = "REFERENCES"
+    DEPENDS_ON = "DEPENDS_ON"
+    IMPLEMENTS = "IMPLEMENTS"
+    MEASURES = "MEASURES"
+    INVOLVES = "INVOLVES"
+    TRIGGERS = "TRIGGERS"
+    ENHANCES = "ENHANCES"
+    REPLACES = "REPLACES"
+    SUPPORTS = "SUPPORTS"
 
     """Causal relationship types (Issue #278)"""
-    BECAUSE = "because"  # X happens BECAUSE of Y
-    ENABLES = "enables"  # X ENABLES Y capability
-    REQUIRES = "requires"  # X REQUIRES Y to function
-    PREVENTS = "prevents"  # X PREVENTS Y from happening
-    LEADS_TO = "leads_to"  # X LEADS_TO Y outcome
+    BECAUSE = "BECAUSE"  # X happens BECAUSE of Y
+    ENABLES = "ENABLES"  # X ENABLES Y capability
+    REQUIRES = "REQUIRES"  # X REQUIRES Y to function
+    PREVENTS = "PREVENTS"  # X PREVENTS Y from happening
+    LEADS_TO = "LEADS_TO"  # X LEADS_TO Y outcome
 
     """Temporal relationship types (Issue #278)"""
-    BEFORE = "before"  # X occurs BEFORE Y
-    DURING = "during"  # X occurs DURING Y
-    AFTER = "after"  # X occurs AFTER Y
+    BEFORE = "BEFORE"  # X occurs BEFORE Y
+    DURING = "DURING"  # X occurs DURING Y
+    AFTER = "AFTER"  # X occurs AFTER Y
 
     """Other relationship types"""
-    CUSTOM = "custom"
+    CUSTOM = "CUSTOM"
 
 
 class PatternType(Enum):

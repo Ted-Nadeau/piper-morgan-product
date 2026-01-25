@@ -35,33 +35,18 @@ const gestureLabels: Record<GestureType, string> = {
 };
 
 export function IntentToast({ entity, intent, gesture, onDismiss }: IntentToastProps) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(50);
-
+  // Use simple React Native Animated instead of Reanimated for reliability
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) });
-    translateY.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.cubic) });
-
-    opacity.value = withDelay(
-      2000,
-      withTiming(0, { duration: 200 }, (finished) => {
-        if (finished) {
-          runOnJS(onDismiss)();
-        }
-      })
-    );
-    translateY.value = withDelay(2000, withTiming(50, { duration: 200 }));
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
+    const timer = setTimeout(() => {
+      onDismiss();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
 
   const typeConfig = entityTypeConfig[entity.type];
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
+    <Animated.View style={[styles.container]}>
       <View style={[styles.toast, { borderLeftColor: intent.confirmColor }]}>
         <View style={styles.entityInfo}>
           <Text style={styles.entityIcon}>{typeConfig.icon}</Text>
@@ -84,10 +69,12 @@ export function IntentToast({ entity, intent, gesture, onDismiss }: IntentToastP
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 120,
     left: spacing.lg,
     right: spacing.lg,
     alignItems: 'center',
+    zIndex: 9999,
+    elevation: 9999,
   },
   toast: {
     backgroundColor: colors.surfaceElevated,

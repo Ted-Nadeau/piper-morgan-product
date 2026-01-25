@@ -452,7 +452,9 @@
         // Remove the old thinking message
         thinkingDiv.remove();
 
-        if (result.workflow_id) {
+        // Issue #676: Only show workflow status when valid workflow_id exists
+        // Check for non-empty string to avoid spurious "Starting workflow..." messages
+        if (result.workflow_id && result.workflow_id.trim() !== '') {
           // If a workflow was started, create a new message bubble to poll for its status
           const statusDiv = appendMessage("Starting workflow...");
           statusDiv.classList.add("thinking");

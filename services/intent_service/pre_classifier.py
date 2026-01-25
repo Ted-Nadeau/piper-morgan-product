@@ -121,6 +121,11 @@ class PreClassifier:
         r"\bshow.*features\b",
         r"\bavailable.*features\b",
         r"\bhelp me get started\b",
+        # Issue #671: Bare "help" should show capabilities
+        r"^help$",  # Exact match for bare "help"
+        r"\bhelp\s*menu\b",
+        r"\bshow\s*help\b",
+        r"\bneed\s*help\b",
     ]
 
     # Canonical query patterns for identity - "Who are you?"
@@ -491,6 +496,84 @@ class PreClassifier:
         r"\bset up.*portfolio\b",
     ]
 
+    # Issue #673: TRUST patterns for trust explanation queries
+    # Routes to ExplanationHandler from services.trust
+    # Patterns derived from ExplanationDetector but simplified for pre-classification
+    TRUST_PATTERNS = [
+        # Capability boundary questions - "Why can't you...?"
+        r"\bwhy can'?t you\b",
+        r"\bwhy won'?t you\b",
+        r"\bwhy don'?t you\b",
+        r"\bwhy (are|do) you (so|being so|always) (cautious|careful|conservative)\b",
+        r"\bwhat can'?t you do\b",
+        r"\bwhat are your limits\b",
+        r"\bcapability (boundary|boundaries|limits)\b",
+        # Relationship/trust level questions - "How well do you know me?"
+        r"\bhow (well )?do you know me\b",
+        r"\bdo you trust me\b",
+        r"\bhow much do you trust\b",
+        r"\bwhat'?s our relationship\b",
+        r"\bhow do you see our relationship\b",
+        r"\bhow do (we|you and i) work together\b",
+        # Why did/didn't you questions about behavior
+        r"\bwhy did you (do|just|go ahead)\b",
+        r"\bwhy do you (always|keep)\b",
+        r"\bi didn'?t (ask|tell) you to\b",
+    ]
+
+    # Issue #674: MEMORY patterns for history/memory queries
+    # Routes to UserHistoryService from services.memory
+    MEMORY_PATTERNS = [
+        # Direct memory questions - "What do you remember?"
+        r"\bwhat do you remember\b",
+        r"\bwhat can you remember\b",
+        r"\bdo you remember\b",
+        r"\bremember (when|that|our|my)\b",
+        # History access patterns - "Show my history"
+        r"\b(show|view|see) (my |our )?(conversation )?history\b",
+        r"\b(my|our) (conversation )?history\b",
+        r"\bpast conversations?\b",
+        r"\bprevious (conversations?|chats?|messages?)\b",
+        r"\bconversation log\b",
+        # Search patterns - "Find when I mentioned..."
+        r"\bfind (when|where) (i|we)\b",
+        r"\bsearch (my |our )?(conversation )?history\b",
+        r"\bwhat (did|have) (i|we) (talk|discuss|say)\b",
+        r"\bwhat (i|we) (said|talked|discussed)\b",
+        # Memory meta questions - "How much do you remember?"
+        r"\bhow (much|far back) do you remember\b",
+        r"\bhow long (is|do) (your|my) memory\b",
+    ]
+
+    # Issue #675: PORTFOLIO patterns for project management operations
+    # Routes to PortfolioService from services.onboarding
+    # Note: Imports patterns from portfolio_service.py at module level for reuse
+    PORTFOLIO_PATTERNS = [
+        # Archive operations - "Archive my project X"
+        r"\barchive\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        r"\bhide\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        r"\bput\s+(.+)\s+(?:away|aside)",
+        # Delete operations - "Delete my project X"
+        r"\bdelete\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        r"\bremove\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        r"\bget rid of\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        # Restore operations - "Restore project X"
+        r"\brestore\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        r"\bunarchive\s+(?:my\s+)?(?:the\s+)?(.+)",
+        r"\bbring back\s+(?:my\s+)?(?:the\s+)?(?:project\s+)?(.+)",
+        # Search operations - "Search projects for Y"
+        r"\bsearch\s+(?:my\s+)?projects?\s+(?:for\s+)?(.+)",
+        r"\bfind\s+(?:my\s+)?project\s+(.+)",
+        # Add new project - "Add a new project"
+        r"\b(?:add|create)\s+(?:a\s+)?(?:new\s+)?project\b",
+        r"\bnew project\b",
+        # Update project - "Update project X"
+        r"\bupdate\s+(?:my\s+)?(?:the\s+)?project\b",
+        r"\bedit\s+(?:my\s+)?(?:the\s+)?project\b",
+        # List operations - "Show my projects"
+        r"\b(?:show|list|view)\s+(?:my\s+)?(?:all\s+)?(?:archived\s+)?projects\b",
+    ]
+
     # File reference patterns (with variations and typo tolerance)
     FILE_REFERENCE_PATTERNS = [
         # Direct references
@@ -587,6 +670,36 @@ class PreClassifier:
             return Intent(
                 category=IntentCategory.DISCOVERY,
                 action="get_capabilities",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #673: Check TRUST before IDENTITY
+        # "Why can't you...?" and "How well do you know me?" route to ExplanationHandler
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.TRUST_PATTERNS):
+            return Intent(
+                category=IntentCategory.TRUST,
+                action="explain_trust",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #674: Check MEMORY before IDENTITY
+        # "What do you remember about me?" routes to UserHistoryService
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.MEMORY_PATTERNS):
+            return Intent(
+                category=IntentCategory.MEMORY,
+                action="get_memory",
+                confidence=1.0,
+                context={"original_message": message},
+            )
+
+        # Issue #675: Check PORTFOLIO for project management operations
+        # "Archive/delete/restore project X" routes to PortfolioService
+        if PreClassifier._matches_patterns(clean_for_matching, PreClassifier.PORTFOLIO_PATTERNS):
+            return Intent(
+                category=IntentCategory.PORTFOLIO,
+                action="manage_portfolio",
                 confidence=1.0,
                 context={"original_message": message},
             )
@@ -939,6 +1052,15 @@ class PreClassifier:
             (PreClassifier.DOCUMENT_QUERY_PATTERNS, IntentCategory.QUERY, "update_document_query"),
             # Temporal patterns
             (PreClassifier.TEMPORAL_PATTERNS, IntentCategory.TEMPORAL, "get_current_time"),
+            # Issue #671-#675: MUX-WIRE patterns must come BEFORE STATUS to match first
+            # Discovery patterns (Issue #671)
+            (PreClassifier.DISCOVERY_PATTERNS, IntentCategory.DISCOVERY, "get_capabilities"),
+            # Trust patterns (Issue #673)
+            (PreClassifier.TRUST_PATTERNS, IntentCategory.TRUST, "explain_trust"),
+            # Memory patterns (Issue #674)
+            (PreClassifier.MEMORY_PATTERNS, IntentCategory.MEMORY, "get_memory"),
+            # Portfolio patterns (Issue #675)
+            (PreClassifier.PORTFOLIO_PATTERNS, IntentCategory.PORTFOLIO, "manage_portfolio"),
             # Status patterns
             (PreClassifier.STATUS_PATTERNS, IntentCategory.STATUS, "get_project_status"),
             # Priority patterns

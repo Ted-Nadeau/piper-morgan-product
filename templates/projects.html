@@ -392,11 +392,11 @@
           Dialog.close();
           await loadProjects();
         } else {
-          ToastMessages.error('share_error', { title: 'Couldn\\'t remove', body: 'Please try again' });
+          ToastMessages.error('share_error', { title: "Couldn't remove", body: 'Please try again' });
         }
       } catch (error) {
         console.error('Error removing share:', error);
-        ToastMessages.error('share_error', { title: 'Couldn\\'t remove', body: 'Please try again' });
+        ToastMessages.error('share_error', { title: "Couldn't remove", body: 'Please try again' });
       }
     }
   </script>

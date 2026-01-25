@@ -7110,7 +7110,7 @@ Content to summarize:
                     "category": intent.category.value,
                     "action": intent.action,
                 },
-                workflow_id="",
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="prioritization_type_required",
             )
@@ -7126,7 +7126,7 @@ Content to summarize:
                     "action": intent.action,
                     "prioritization_type": prioritization_type,
                 },
-                workflow_id="",
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="items_required",
             )
@@ -7142,7 +7142,7 @@ Content to summarize:
                     "prioritization_type": prioritization_type,
                     "item_count": 0,
                 },
-                workflow_id="",
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="items_empty",
             )
@@ -7798,7 +7798,7 @@ Content to summarize:
                     "category": intent.category.value,
                     "action": intent.action,
                 },
-                workflow_id="",
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="pattern_type_required",
             )
@@ -7814,7 +7814,7 @@ Content to summarize:
                     "action": intent.action,
                     "pattern_type": pattern_type,
                 },
-                workflow_id="",
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="source_required",
             )
@@ -7830,7 +7830,7 @@ Content to summarize:
                     "action": intent.action,
                     "pattern_type": pattern_type,
                 },
-                workflow_id="",
+                workflow_id=None,
                 requires_clarification=True,
                 clarification_type="unsupported_pattern_type",
             )

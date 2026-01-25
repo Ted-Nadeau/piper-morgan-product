@@ -422,6 +422,20 @@ class ConversationHandler:
         original_message = intent.context.get("original_message", "")
         trigger = intent.context.get("trigger", "unknown")
 
+        # For very short inputs (1-2 words) that don't match any pattern,
+        # use a generic response rather than issue-specific questions
+        word_count = len(original_message.split())
+        if word_count <= 2 and trigger == "vague_pattern":
+            return {
+                "message": (
+                    "I'm not sure what you'd like me to help with. "
+                    "You can ask me about your projects, schedule, priorities, "
+                    "or just say 'help' to see what I can do!"
+                ),
+                "intent": intent_to_dict(intent),
+                "workflow_id": None,
+            }
+
         # Use conversation-aware clarifying generator
         analysis = await self.clarifying_generator.analyze_request(
             description=original_message, conversation_id=session_id

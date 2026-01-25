@@ -164,6 +164,48 @@ ls dev/active/*$(date +%Y-%m-%d)*{role}*log.md
 - Checking mailbox for overnight messages
 ```
 
+## After Context Compaction (CRITICAL)
+
+If you've just experienced **context compaction** (conversation was summarized to save tokens):
+
+### This is NOT a New Session
+
+After compaction, you are mid-session, not starting fresh. Your log from earlier today **must** exist.
+
+### Mandatory Steps
+
+1. **DO NOT create a new log** - Your earlier log should exist
+2. **Find and verify it**:
+   ```bash
+   ls dev/active/*$(date +%Y-%m-%d)*{role}*log.md
+   ```
+3. **If found**: Add resumption entry immediately:
+   ```markdown
+   ### {TIME} - Session Resumed (Post-Compaction)
+   - Prior work: [what the summary indicates]
+   - Continuing: [current task]
+   ```
+4. **If NOT found**: **STOP. This is a critical failure.** Escalate to PM immediately. Do not proceed with implementation work.
+
+### Why This Matters
+
+The session log is your institutional memory. After compaction, you've lost the detailed conversation but the log preserves:
+- What you were working on
+- Decisions made
+- Progress achieved
+- Context for continuing
+
+Losing the log mid-session means losing hours of context that cannot be reconstructed from git commits alone.
+
+### Common Post-Compaction Mistake
+
+**Wrong**: "I don't see a log, I'll create a new one"
+**Right**: "I don't see a log from earlier today - this is a critical failure, escalating to PM"
+
+If you truly started fresh today and there's no prior log, that's fine - create one. But if you're post-compaction, the log MUST exist from before compaction.
+
+---
+
 ## Anti-Patterns to Avoid
 
 | Don't Do This | Why | Do This Instead |
@@ -173,6 +215,8 @@ ls dev/active/*$(date +%Y-%m-%d)*{role}*log.md
 | Omit time from filename | Ambiguous, breaks sorting | Always include HHMM |
 | Leave objectives blank | Log lacks purpose context | Fill from PM instructions |
 | Skip the existence check | Creates duplicate logs | Always check first |
+| Create new log after compaction | Loses institutional memory | Find and continue existing log |
+| Proceed without log after compaction | Critical context lost | STOP and escalate to PM |
 
 ## Quality Checklist
 

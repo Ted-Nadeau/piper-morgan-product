@@ -188,6 +188,9 @@ async def list_projects(
     """
     List all projects owned by current user (SEC-RBAC).
 
+    Issue #672: Now falls back to user preferences if projects table is empty,
+    matching chat handler behavior for data source consistency.
+
     Returns:
         List of projects owned by current user
 
@@ -195,14 +198,61 @@ async def list_projects(
         HTTPException 500: Server error
 
     Issue #357: SEC-RBAC Phase 1.3 Endpoint Protection
+    Issue #672: MUX-WIRE-PROJECTS-PAGE data consistency fix
     """
     try:
+        # Primary source: projects table
         projects = await project_repo.list_active_projects(owner_id=current_user.sub)
+
+        # Issue #672: Fallback to user preferences if projects table is empty
+        # This matches chat handler behavior in canonical_handlers.py
+        from_preferences = False
+        if not projects:
+            from uuid import UUID
+
+            from services.user_context_service import user_context_service
+
+            try:
+                user_id = UUID(current_user.sub)
+                user_context = await user_context_service.get_user_context(
+                    session_id="web-projects-page",
+                    user_id=user_id,
+                )
+                if user_context and user_context.projects:
+                    # Convert preference-based projects to display format
+                    # These don't have IDs since they're from preferences
+                    from_preferences = True
+                    projects = [
+                        type(
+                            "PreferenceProject",
+                            (),
+                            {
+                                "id": f"pref-{i}",
+                                "name": p if isinstance(p, str) else p,
+                                "description": "From user preferences (not yet migrated to projects table)",
+                                "owner_id": current_user.sub,
+                                "created_at": None,
+                            },
+                        )()
+                        for i, p in enumerate(user_context.projects)
+                    ]
+                    logger.info(
+                        "projects_from_preferences",
+                        user_id=current_user.sub,
+                        count=len(projects),
+                    )
+            except Exception as fallback_error:
+                logger.warning(
+                    "projects_preferences_fallback_failed",
+                    user_id=current_user.sub,
+                    error=str(fallback_error),
+                )
 
         logger.info(
             "projects_retrieved",
             user_id=current_user.sub,
             count=len(projects),
+            from_preferences=from_preferences,
         )
 
         return {
@@ -217,6 +267,7 @@ async def list_projects(
                 for p in projects
             ],
             "count": len(projects),
+            "source": "preferences" if from_preferences else "database",
         }
 
     except Exception as e:

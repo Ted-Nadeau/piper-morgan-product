@@ -296,3 +296,185 @@ class TestPreClassifier:
         for pattern in yes_no_patterns:
             intent = PreClassifier.pre_classify(pattern)
             assert intent is None, f"Expected None for yes/no pattern '{pattern}', got {intent}"
+
+    @pytest.mark.smoke
+    def test_discovery_patterns(self):
+        """Test DISCOVERY patterns return correct intent - Issue #671"""
+        discovery_patterns = [
+            "what can you do",
+            "what are your capabilities",
+            "what services",
+            "what features",
+            "show me your capabilities",
+            "help",  # Issue #671: Bare "help" should trigger DISCOVERY
+            "Help",  # Case insensitive
+            "HELP",  # All caps
+            "help menu",
+            "show help",
+            "need help",
+        ]
+
+        for pattern in discovery_patterns:
+            intent = PreClassifier.pre_classify(pattern)
+            assert intent is not None, f"Expected intent for '{pattern}', got None"
+            assert (
+                intent.category == IntentCategory.DISCOVERY
+            ), f"Expected DISCOVERY for '{pattern}', got {intent.category}"
+            assert intent.action == "get_capabilities"
+            assert intent.confidence == 1.0
+
+    @pytest.mark.smoke
+    def test_help_not_guidance(self):
+        """Test that bare 'help' routes to DISCOVERY not GUIDANCE - Issue #671"""
+        # Bare "help" should be DISCOVERY
+        intent = PreClassifier.pre_classify("help")
+        assert intent is not None
+        assert intent.category == IntentCategory.DISCOVERY
+        assert intent.category != IntentCategory.GUIDANCE
+
+        # But "help setup" should still be GUIDANCE
+        intent = PreClassifier.pre_classify("help setup my project")
+        assert intent is not None
+        assert intent.category == IntentCategory.GUIDANCE
+
+    @pytest.mark.smoke
+    def test_trust_patterns(self):
+        """Test TRUST patterns return correct intent - Issue #673"""
+        trust_patterns = [
+            # Capability boundary questions
+            "why can't you do that",
+            "why won't you just do it",
+            "why don't you just handle it",
+            "what can't you do",
+            "what are your limits",
+            # Relationship questions
+            "how well do you know me",
+            "do you trust me",
+            "how much do you trust me",
+            "what's our relationship",
+            "how do you see our relationship",
+            "how do we work together",
+            # Behavior questions
+            "why did you do that",
+            "why do you always ask",
+            "i didn't ask you to do that",
+        ]
+
+        for pattern in trust_patterns:
+            intent = PreClassifier.pre_classify(pattern)
+            assert intent is not None, f"Expected intent for '{pattern}', got None"
+            assert (
+                intent.category == IntentCategory.TRUST
+            ), f"Expected TRUST for '{pattern}', got {intent.category}"
+            assert intent.action == "explain_trust"
+            assert intent.confidence == 1.0
+
+    @pytest.mark.smoke
+    def test_trust_not_identity(self):
+        """Test that trust queries route to TRUST not IDENTITY - Issue #673"""
+        # "Why can't you" should be TRUST
+        intent = PreClassifier.pre_classify("why can't you delete my project")
+        assert intent is not None
+        assert intent.category == IntentCategory.TRUST
+        assert intent.category != IntentCategory.IDENTITY
+
+        # But "who are you" should still be IDENTITY
+        intent = PreClassifier.pre_classify("who are you")
+        assert intent is not None
+        assert intent.category == IntentCategory.IDENTITY
+
+    @pytest.mark.smoke
+    def test_memory_patterns(self):
+        """Test MEMORY patterns return correct intent - Issue #674"""
+        memory_patterns = [
+            # Direct memory questions
+            "what do you remember about me",
+            "do you remember our last conversation",
+            "remember when we talked about the project",
+            # History access
+            "show my history",
+            "view my conversation history",
+            "past conversations",
+            "previous chats",
+            # Search patterns
+            "find when I mentioned the deadline",
+            "search my history for budget",
+            "what did we talk about yesterday",
+            # Memory meta questions
+            "how much do you remember",
+            "how far back do you remember",
+        ]
+
+        for pattern in memory_patterns:
+            intent = PreClassifier.pre_classify(pattern)
+            assert intent is not None, f"Expected intent for '{pattern}', got None"
+            assert (
+                intent.category == IntentCategory.MEMORY
+            ), f"Expected MEMORY for '{pattern}', got {intent.category}"
+            assert intent.action == "get_memory"
+            assert intent.confidence == 1.0
+
+    @pytest.mark.smoke
+    def test_memory_not_trust(self):
+        """Test that memory queries route to MEMORY not TRUST - Issue #674"""
+        # "What do you remember" should be MEMORY
+        intent = PreClassifier.pre_classify("what do you remember about our project")
+        assert intent is not None
+        assert intent.category == IntentCategory.MEMORY
+        assert intent.category != IntentCategory.TRUST
+
+        # But "how well do you know me" should still be TRUST
+        intent = PreClassifier.pre_classify("how well do you know me")
+        assert intent is not None
+        assert intent.category == IntentCategory.TRUST
+
+    @pytest.mark.smoke
+    def test_portfolio_patterns(self):
+        """Test PORTFOLIO patterns return correct intent - Issue #675"""
+        portfolio_patterns = [
+            # Archive operations
+            "archive my project Alpha",
+            "hide the project Beta",
+            "put the old project away",
+            # Delete operations
+            "delete my project Gamma",
+            "remove the project Delta",
+            "get rid of my test project",
+            # Restore operations
+            "restore project Epsilon",
+            "unarchive the old project",
+            "bring back my archived project",
+            # List operations
+            "show my projects",
+            "list all projects",
+            "view my projects",
+            # Add/create operations
+            "add a new project",
+            "create a project",
+            # Search operations
+            "search projects for budget",
+            "find project deadline",
+        ]
+
+        for pattern in portfolio_patterns:
+            intent = PreClassifier.pre_classify(pattern)
+            assert intent is not None, f"Expected intent for '{pattern}', got None"
+            assert (
+                intent.category == IntentCategory.PORTFOLIO
+            ), f"Expected PORTFOLIO for '{pattern}', got {intent.category}"
+            assert intent.action == "manage_portfolio"
+            assert intent.confidence == 1.0
+
+    @pytest.mark.smoke
+    def test_portfolio_not_memory(self):
+        """Test that portfolio queries route to PORTFOLIO not MEMORY - Issue #675"""
+        # "Archive my project" should be PORTFOLIO
+        intent = PreClassifier.pre_classify("archive my project Alpha")
+        assert intent is not None
+        assert intent.category == IntentCategory.PORTFOLIO
+        assert intent.category != IntentCategory.MEMORY
+
+        # But "what do you remember" should still be MEMORY
+        intent = PreClassifier.pre_classify("what do you remember about me")
+        assert intent is not None
+        assert intent.category == IntentCategory.MEMORY
