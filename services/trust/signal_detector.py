@@ -19,7 +19,8 @@ class SignalType(str, Enum):
     """Types of trust signals detected."""
 
     ESCALATION = "escalation"  # User wants to progress to TRUSTED stage
-    COMPLAINT = "complaint"  # User is dissatisfied, may trigger regression
+    COMPLAINT = "complaint"  # User is dissatisfied, triggers immediate Stage 2 regression
+    SOFT_REGRESSION = "soft_regression"  # User wants less proactivity, drops one stage
     NONE = "none"  # No signal detected
 
 
@@ -84,6 +85,27 @@ COMPLAINT_PATTERNS = [
     (r"\b(absolutely not|definitely not|no way)\b", "strong_rejection", 0.85),
 ]
 
+# Soft regression patterns per PPM guidance (2026-01-23)
+# These indicate user wants less proactivity but hasn't complained
+# Results in one-stage regression (not immediate Stage 2 floor)
+# NOTE: "ask me first" must NOT match when preceded by "don't" or "no need to"
+# (those are escalation signals meaning user DOESN'T want to be asked)
+SOFT_REGRESSION_PATTERNS = [
+    # Ask first requests - exclude when preceded by negation
+    (r"(?<![''`]t )(?<!need to )\b(actually,? )?ask me first( next time)?\b", "ask_first", 0.85),
+    (r"\bcheck with me (first|before)\b", "check_first", 0.85),
+    (r"\bi'?d prefer (you|if you) ask\b", "prefer_ask", 0.8),
+    (r"\bplease ask (me )?(first|before)\b", "please_ask", 0.8),
+    # Let me decide
+    (r"\blet me (decide|choose|pick)\b", "let_me_decide", 0.75),
+    (r"\bi'?ll (decide|choose|handle) (that|this|it)\b", "self_decide", 0.7),
+    (r"\bi want to (decide|approve|confirm)\b", "want_to_decide", 0.8),
+    # Softer pushback (not quite complaint)
+    (r"\bmaybe (ask|check) (first|next time)\b", "soft_pushback", 0.7),
+    (r"\bnext time,? (ask|check|confirm)\b", "next_time_ask", 0.8),
+    (r"\bhold off (on|until)\b", "hold_off", 0.7),
+]
+
 
 class SignalDetector:
     """
@@ -116,6 +138,10 @@ class SignalDetector:
             (re.compile(pattern, re.IGNORECASE), name, confidence)
             for pattern, name, confidence in COMPLAINT_PATTERNS
         ]
+        self._soft_regression = [
+            (re.compile(pattern, re.IGNORECASE), name, confidence)
+            for pattern, name, confidence in SOFT_REGRESSION_PATTERNS
+        ]
 
     def detect(
         self,
@@ -141,23 +167,30 @@ class SignalDetector:
                 reasoning="Empty message",
             )
 
-        # Detect escalation signals
+        # Detect all signal types
         escalation_matches = self._match_patterns(message, self._escalation)
-        # Detect complaint signals
         complaint_matches = self._match_patterns(message, self._complaint)
+        soft_regression_matches = self._match_patterns(message, self._soft_regression)
 
-        # Context boost: complaints in response to proactive offers are stronger
-        complaint_boost = 0.0
+        # Context boost: complaints/soft regression in response to proactive offers are stronger
+        proactive_boost = 0.0
         if context and context.get("in_response_to_proactive"):
-            complaint_boost = 0.1
+            proactive_boost = 0.1
 
         # Calculate aggregate confidence
         escalation_confidence = self._aggregate_confidence(escalation_matches)
-        complaint_confidence = self._aggregate_confidence(complaint_matches) + complaint_boost
+        complaint_confidence = self._aggregate_confidence(complaint_matches) + proactive_boost
+        soft_regression_confidence = (
+            self._aggregate_confidence(soft_regression_matches) + proactive_boost
+        )
 
-        # Decision logic
-        # Complaints take precedence (negative signals are more important to catch)
-        if complaint_confidence > 0.5 and complaint_confidence >= escalation_confidence:
+        # Decision logic - priority order:
+        # 1. Complaints (most severe, immediate Stage 2)
+        # 2. Soft regression (gentler, one stage drop)
+        # 3. Escalation (positive, stage increase)
+        if complaint_confidence > 0.5 and complaint_confidence >= max(
+            escalation_confidence, soft_regression_confidence
+        ):
             phrases, patterns = zip(*complaint_matches) if complaint_matches else ([], [])
             return SignalDetectionResult(
                 signal_type=SignalType.COMPLAINT,
@@ -165,6 +198,18 @@ class SignalDetector:
                 phrases_matched=list(phrases),
                 patterns_matched=list(patterns),
                 reasoning=f"Complaint signals detected: {', '.join(patterns)}",
+            )
+
+        if soft_regression_confidence > 0.5 and soft_regression_confidence >= escalation_confidence:
+            phrases, patterns = (
+                zip(*soft_regression_matches) if soft_regression_matches else ([], [])
+            )
+            return SignalDetectionResult(
+                signal_type=SignalType.SOFT_REGRESSION,
+                confidence=min(0.95, soft_regression_confidence),
+                phrases_matched=list(phrases),
+                patterns_matched=list(patterns),
+                reasoning=f"Soft regression signals detected: {', '.join(patterns)}",
             )
 
         if escalation_confidence > 0.5:
@@ -179,7 +224,8 @@ class SignalDetector:
 
         return SignalDetectionResult(
             signal_type=SignalType.NONE,
-            confidence=1.0 - max(escalation_confidence, complaint_confidence, 0.0),
+            confidence=1.0
+            - max(escalation_confidence, complaint_confidence, soft_regression_confidence, 0.0),
             phrases_matched=[],
             patterns_matched=[],
             reasoning="No significant trust signals detected",
@@ -225,6 +271,30 @@ class SignalDetector:
             return result
         return None
 
+    def detect_soft_regression(
+        self,
+        message: str,
+        in_response_to_proactive: bool = False,
+    ) -> Optional[SignalDetectionResult]:
+        """
+        Check specifically for soft regression signals.
+
+        Soft regression means user wants less proactivity but hasn't complained.
+        Results in one-stage drop (not immediate Stage 2 floor).
+
+        Args:
+            message: User's message text
+            in_response_to_proactive: Whether this is a response to proactive behavior
+
+        Returns:
+            SignalDetectionResult if soft regression detected, None otherwise
+        """
+        context = {"in_response_to_proactive": in_response_to_proactive}
+        result = self.detect(message, context)
+        if result.signal_type == SignalType.SOFT_REGRESSION:
+            return result
+        return None
+
     def _match_patterns(
         self,
         message: str,
@@ -255,9 +325,10 @@ class SignalDetector:
             return 0.0
 
         # Get confidence values for matched patterns
+        all_patterns = ESCALATION_PATTERNS + COMPLAINT_PATTERNS + SOFT_REGRESSION_PATTERNS
         confidences = []
         for _, pattern_name in matches:
-            for _, name, confidence in ESCALATION_PATTERNS + COMPLAINT_PATTERNS:
+            for _, name, confidence in all_patterns:
                 if name == pattern_name:
                     confidences.append(confidence)
                     break
@@ -300,4 +371,24 @@ class SignalDetector:
             "No, I don't want that",
             "Don't do that again",
             "I told you not to do that",
+        ]
+
+    def get_soft_regression_examples(self) -> List[str]:
+        """
+        Return example phrases that would trigger soft regression detection.
+
+        These are softer than complaints - user wants less proactivity
+        but hasn't complained. Results in one-stage drop, not Stage 2 floor.
+
+        Useful for documentation and testing.
+        """
+        return [
+            "Actually, ask me first next time",
+            "Check with me before doing that",
+            "I'd prefer you ask",
+            "Please ask me first",
+            "Let me decide on that",
+            "I'll decide that myself",
+            "Next time, check with me",
+            "Maybe ask first next time",
         ]

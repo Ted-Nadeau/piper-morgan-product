@@ -12,6 +12,7 @@ import pytest
 from services.trust.signal_detector import (
     COMPLAINT_PATTERNS,
     ESCALATION_PATTERNS,
+    SOFT_REGRESSION_PATTERNS,
     SignalDetectionResult,
     SignalDetector,
     SignalType,
@@ -25,6 +26,7 @@ class TestSignalTypeEnum:
         """SignalType has all required values."""
         assert SignalType.ESCALATION.value == "escalation"
         assert SignalType.COMPLAINT.value == "complaint"
+        assert SignalType.SOFT_REGRESSION.value == "soft_regression"
         assert SignalType.NONE.value == "none"
 
 
@@ -63,6 +65,16 @@ class TestPatternDefinitions:
     def test_complaint_patterns_exist(self):
         """COMPLAINT_PATTERNS is not empty."""
         assert len(COMPLAINT_PATTERNS) > 0
+
+    def test_soft_regression_patterns_exist(self):
+        """SOFT_REGRESSION_PATTERNS is not empty."""
+        assert len(SOFT_REGRESSION_PATTERNS) > 0
+        # Each should be (pattern, signal_name, confidence) tuple
+        for pattern, name, confidence in SOFT_REGRESSION_PATTERNS:
+            assert isinstance(pattern, str)
+            assert isinstance(name, str)
+            assert isinstance(confidence, float)
+            assert 0 <= confidence <= 1
 
 
 class TestDetectEscalation:
@@ -280,6 +292,150 @@ class TestDetectComplaint:
         assert "strong_rejection" in result.patterns_matched
 
 
+class TestDetectSoftRegression:
+    """Test detection of soft regression signals."""
+
+    @pytest.fixture
+    def detector(self):
+        """Create SignalDetector instance."""
+        return SignalDetector()
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Actually, ask me first next time",
+            "Ask me first next time",
+            "Ask me first",
+        ],
+    )
+    def test_ask_first_phrases(self, detector, message):
+        """Ask first phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "ask_first" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Check with me first",
+            "Check with me before doing that",
+        ],
+    )
+    def test_check_first_phrases(self, detector, message):
+        """Check with me phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "check_first" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "I'd prefer you ask",
+            "I'd prefer if you ask first",
+        ],
+    )
+    def test_prefer_ask_phrases(self, detector, message):
+        """Prefer ask phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "prefer_ask" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Please ask me first",
+            "Please ask before doing that",
+        ],
+    )
+    def test_please_ask_phrases(self, detector, message):
+        """Please ask phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "please_ask" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Let me decide",
+            "Let me choose",
+            "Let me pick",
+        ],
+    )
+    def test_let_me_decide_phrases(self, detector, message):
+        """Let me decide phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "let_me_decide" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "I'll decide that",
+            "I'll choose this myself",
+            "I'll handle it",
+        ],
+    )
+    def test_self_decide_phrases(self, detector, message):
+        """Self decide phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "self_decide" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "I want to decide",
+            "I want to approve that",
+            "I want to confirm first",
+        ],
+    )
+    def test_want_to_decide_phrases(self, detector, message):
+        """Want to decide phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "want_to_decide" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Maybe ask first next time",
+            "Maybe check first",
+        ],
+    )
+    def test_soft_pushback_phrases(self, detector, message):
+        """Soft pushback phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "soft_pushback" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Next time, ask me",
+            "Next time check with me",
+            "Next time, confirm first",
+        ],
+    )
+    def test_next_time_ask_phrases(self, detector, message):
+        """Next time ask phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "next_time_ask" in result.patterns_matched
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Hold off on that",
+            "Hold off until I confirm",
+        ],
+    )
+    def test_hold_off_phrases(self, detector, message):
+        """Hold off phrases trigger soft regression."""
+        result = detector.detect(message)
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+        assert "hold_off" in result.patterns_matched
+
+
 class TestDetectNone:
     """Test that normal messages don't trigger signals."""
 
@@ -339,6 +495,21 @@ class TestContextBoost:
         # Proactive context should boost confidence
         assert result_proactive.confidence >= result_normal.confidence
 
+    def test_soft_regression_boosted_after_proactive(self, detector):
+        """Soft regression in response to proactive behavior has higher confidence."""
+        # Same message with and without proactive context
+        message = "Please ask me first"
+
+        result_normal = detector.detect(message)
+        result_proactive = detector.detect(message, context={"in_response_to_proactive": True})
+
+        # Both should be soft regression
+        assert result_normal.signal_type == SignalType.SOFT_REGRESSION
+        assert result_proactive.signal_type == SignalType.SOFT_REGRESSION
+
+        # Proactive context should boost confidence
+        assert result_proactive.confidence >= result_normal.confidence
+
 
 class TestConvenienceMethods:
     """Test convenience detection methods."""
@@ -377,6 +548,25 @@ class TestConvenienceMethods:
         # but the method should work without error
         assert result is None or result.signal_type == SignalType.COMPLAINT
 
+    def test_detect_soft_regression_returns_result(self, detector):
+        """detect_soft_regression returns result when soft regression found."""
+        result = detector.detect_soft_regression("Ask me first next time")
+        assert result is not None
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+
+    def test_detect_soft_regression_returns_none(self, detector):
+        """detect_soft_regression returns None when no soft regression."""
+        result = detector.detect_soft_regression("That looks great")
+        assert result is None
+
+    def test_detect_soft_regression_with_proactive_flag(self, detector):
+        """detect_soft_regression accepts proactive flag."""
+        result = detector.detect_soft_regression(
+            "Check with me first", in_response_to_proactive=True
+        )
+        assert result is not None
+        assert result.signal_type == SignalType.SOFT_REGRESSION
+
 
 class TestExampleMethods:
     """Test example generation methods."""
@@ -402,6 +592,16 @@ class TestExampleMethods:
             result = detector.detect(example)
             assert result.signal_type == SignalType.COMPLAINT, f"Example not detected: {example}"
 
+    def test_soft_regression_examples_are_detected(self, detector):
+        """Example soft regression phrases are actually detected."""
+        examples = detector.get_soft_regression_examples()
+        assert len(examples) > 0
+        for example in examples:
+            result = detector.detect(example)
+            assert (
+                result.signal_type == SignalType.SOFT_REGRESSION
+            ), f"Example not detected: {example}"
+
 
 class TestSignalPrecedence:
     """Test signal precedence when multiple signals present."""
@@ -411,7 +611,7 @@ class TestSignalPrecedence:
         """Create SignalDetector instance."""
         return SignalDetector()
 
-    def test_complaint_takes_precedence(self, detector):
+    def test_complaint_takes_precedence_over_escalation(self, detector):
         """Complaints take precedence over escalation (negative signals more important)."""
         # This message has both escalation and complaint signals
         # "stop doing that" is complaint, "I trust you" is escalation
@@ -419,6 +619,32 @@ class TestSignalPrecedence:
         result = detector.detect(message)
         # The complaint should win because negative signals are more important
         assert result.signal_type == SignalType.COMPLAINT
+
+    def test_complaint_takes_precedence_over_soft_regression(self, detector):
+        """Complaints take precedence over soft regression."""
+        # "stop doing that" is complaint, "ask me first" is soft regression
+        message = "Stop doing that and ask me first next time"
+        result = detector.detect(message)
+        # The complaint should win because it's more severe
+        assert result.signal_type == SignalType.COMPLAINT
+
+    def test_mixed_escalation_and_soft_regression(self, detector):
+        """Mixed signals are resolved by confidence - higher confidence wins."""
+        # "just handle it" (0.9 confidence) vs "ask me first" (0.85 confidence)
+        # The higher-confidence signal wins
+        message = "Just handle it but ask me first next time"
+        result = detector.detect(message)
+        # With current pattern confidences, escalation (0.9) beats soft regression (0.85)
+        # This is intentional - when signals conflict, we trust the stronger one
+        assert result.signal_type == SignalType.ESCALATION
+
+    def test_soft_regression_wins_when_stronger(self, detector):
+        """Soft regression wins when it has stronger signal than escalation."""
+        # Multiple soft regression patterns increase confidence
+        message = "Please ask me first, let me decide, check with me before"
+        result = detector.detect(message)
+        # Multiple soft regression signals should make it win
+        assert result.signal_type == SignalType.SOFT_REGRESSION
 
 
 class TestConfidenceScoring:

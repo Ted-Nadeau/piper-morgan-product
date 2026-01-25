@@ -541,7 +541,7 @@ For `handle_explicit_complaint`, detect keywords and patterns:
 ### Stage 4→3 Reversibility
 Ensure regression path from Stage 4 to Stage 3 exists (not just Stage 4→2 on explicit complaint). User might want less proactivity without full reset. Consecutive negative interactions should step down one stage at a time.
 
-**Status**: ⚠️ Consecutive negative step-down implemented. Soft regression (e.g., "ask me first next time") not yet implemented. See #679.
+**Status**: ✅ IMPLEMENTED (#679, 2026-01-25). Both consecutive negative step-down and soft regression signals implemented. `handle_soft_regression()` method drops one stage (respects floor). Signal patterns detect "ask me first", "check with me", etc.
 
 ### Floor Behavior (Stage 2 Minimum)
 Per ADR design, users who have earned Stage 2 should never regress below it. The `highest_stage_achieved` field enables this.

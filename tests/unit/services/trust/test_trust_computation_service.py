@@ -676,6 +676,168 @@ class TestHandleExplicitComplaint:
         assert len(reason) <= 120  # "Explicit complaint: " + 100 chars
 
 
+class TestHandleSoftRegression:
+    """Test handle_soft_regression method for one-stage regression.
+
+    Per PPM guidance: soft regression (e.g., "ask me first next time")
+    drops ONE stage at a time, not to floor like explicit complaint.
+    """
+
+    @pytest.fixture
+    def mock_repo(self):
+        """Create mock repository."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_repo):
+        """Create service with mock repo."""
+        return TrustComputationService(mock_repo)
+
+    @pytest.mark.asyncio
+    async def test_stage4_drops_to_stage3(self, service, mock_repo):
+        """User at Stage 4 (TRUSTED) drops to Stage 3 (ESTABLISHED)."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.TRUSTED,
+            highest_stage_achieved=TrustStage.TRUSTED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        established_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,
+            consecutive_negative=0,
+        )
+        mock_repo.update_stage.return_value = established_profile
+        mock_repo.create_or_update.return_value = established_profile
+
+        result = await service.handle_soft_regression(user_id, "Ask me first next time")
+
+        mock_repo.update_stage.assert_called_once()
+        call_args = mock_repo.update_stage.call_args
+        assert call_args[0][1] == TrustStage.ESTABLISHED  # One stage down, not BUILDING
+        assert "Ask me first" in call_args[0][2]
+
+    @pytest.mark.asyncio
+    async def test_stage3_drops_to_stage2(self, service, mock_repo):
+        """User at Stage 3 (ESTABLISHED) drops to Stage 2 (BUILDING)."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,
+            highest_stage_achieved=TrustStage.ESTABLISHED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        building_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            consecutive_negative=0,
+        )
+        mock_repo.update_stage.return_value = building_profile
+        mock_repo.create_or_update.return_value = building_profile
+
+        result = await service.handle_soft_regression(user_id, "Check with me first")
+
+        mock_repo.update_stage.assert_called_once()
+        call_args = mock_repo.update_stage.call_args
+        assert call_args[0][1] == TrustStage.BUILDING
+
+    @pytest.mark.asyncio
+    async def test_stage2_stays_at_floor(self, service, mock_repo):
+        """User at Stage 2 (BUILDING) stays at floor."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            highest_stage_achieved=TrustStage.BUILDING,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        result = await service.handle_soft_regression(user_id, "Let me decide")
+
+        # Should NOT call update_stage since already at floor
+        mock_repo.update_stage.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_stage1_stays_at_stage1(self, service, mock_repo):
+        """User at Stage 1 (NEW) stays at NEW."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.NEW,
+            highest_stage_achieved=TrustStage.NEW,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        result = await service.handle_soft_regression(user_id, "I'll decide")
+
+        # Should NOT call update_stage since can't regress from NEW
+        mock_repo.update_stage.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_creates_profile_if_none_exists(self, service, mock_repo):
+        """Creates profile at NEW if user has no profile."""
+        user_id = uuid4()
+        mock_repo.get_by_user_id.return_value = None
+
+        new_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.NEW,
+            highest_stage_achieved=TrustStage.NEW,
+        )
+        mock_repo.create_or_update.return_value = new_profile
+
+        result = await service.handle_soft_regression(user_id, "Hold off")
+
+        mock_repo.create_or_update.assert_called()
+        assert result.current_stage == TrustStage.NEW
+
+    @pytest.mark.asyncio
+    async def test_respects_floor_for_earned_users(self, service, mock_repo):
+        """User who earned Stage 2+ cannot regress below BUILDING."""
+        user_id = uuid4()
+        # User at BUILDING but earned ESTABLISHED before
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            highest_stage_achieved=TrustStage.ESTABLISHED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        result = await service.handle_soft_regression(user_id, "Ask me first")
+
+        # Should NOT call update_stage since at floor (BUILDING)
+        mock_repo.update_stage.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_truncates_long_reason(self, service, mock_repo):
+        """Truncates reason to 100 chars in stage history."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.TRUSTED,
+            highest_stage_achieved=TrustStage.TRUSTED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        established_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,
+        )
+        mock_repo.update_stage.return_value = established_profile
+        mock_repo.create_or_update.return_value = established_profile
+
+        long_reason = "x" * 200  # 200 chars
+        await service.handle_soft_regression(user_id, long_reason)
+
+        call_args = mock_repo.update_stage.call_args
+        reason = call_args[0][2]  # Third positional arg is reason
+        # Should include truncated reason (100 chars max)
+        assert len(reason) <= 120  # "Soft regression: " + 100 chars
+
+
 class TestExplainTrustState:
     """Test explain_trust_state method for discussability."""
 

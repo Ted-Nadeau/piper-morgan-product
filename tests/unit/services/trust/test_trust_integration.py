@@ -210,6 +210,96 @@ class TestEscalationSignalHandling:
         mock_service.record_interaction.assert_called_once()
 
 
+class TestSoftRegressionSignalHandling:
+    """Test soft regression signal detection and handling."""
+
+    @pytest.fixture
+    def mock_trust_service(self):
+        """Create mock TrustComputationService."""
+        service = AsyncMock()
+        service.get_trust_stage.return_value = TrustStage.ESTABLISHED
+        service.record_interaction.return_value = UserTrustProfile(
+            user_id=uuid4(),
+            current_stage=TrustStage.ESTABLISHED,
+        )
+        # handle_soft_regression drops one stage
+        service.handle_soft_regression.return_value = UserTrustProfile(
+            user_id=uuid4(),
+            current_stage=TrustStage.BUILDING,
+        )
+        return service
+
+    @pytest.fixture
+    def integration(self, mock_trust_service):
+        """Create TrustIntegration instance."""
+        return TrustIntegration(mock_trust_service)
+
+    @pytest.mark.asyncio
+    async def test_soft_regression_triggers_handle_soft_regression(
+        self, integration, mock_trust_service
+    ):
+        """Soft regression signal triggers handle_soft_regression."""
+        user_id = uuid4()
+        result = MockIntentProcessingResult(success=True, message="Done")
+
+        outcome = await integration.process_interaction(
+            user_id=user_id,
+            user_message="Ask me first next time",
+            processing_result=result,
+        )
+
+        # Should have called handle_soft_regression
+        mock_trust_service.handle_soft_regression.assert_called_once()
+        assert outcome["soft_regression_detected"] is True
+        assert outcome["stage_changed"] is True
+        assert outcome["outcome"] == "neutral"  # Not negative like complaint
+
+    @pytest.mark.asyncio
+    async def test_soft_regression_not_complaint(self, integration, mock_trust_service):
+        """Soft regression is not treated as a complaint."""
+        user_id = uuid4()
+        result = MockIntentProcessingResult(success=True, message="Done")
+
+        outcome = await integration.process_interaction(
+            user_id=user_id,
+            user_message="Check with me before doing that",
+            processing_result=result,
+        )
+
+        # Should call handle_soft_regression, NOT handle_explicit_complaint
+        mock_trust_service.handle_soft_regression.assert_called_once()
+        mock_trust_service.handle_explicit_complaint.assert_not_called()
+        mock_trust_service.record_interaction.assert_not_called()
+
+        # Complaint should be False
+        assert outcome["complaint_detected"] is False
+        assert outcome["soft_regression_detected"] is True
+
+    @pytest.mark.asyncio
+    async def test_soft_regression_various_phrases(self, integration, mock_trust_service):
+        """Various soft regression phrases are detected."""
+        user_id = uuid4()
+        result = MockIntentProcessingResult(success=True, message="Done")
+
+        phrases = [
+            "Please ask me first",
+            "Let me decide",
+            "I'd prefer you ask",
+            "Next time, check with me",
+        ]
+
+        for phrase in phrases:
+            mock_trust_service.handle_soft_regression.reset_mock()
+
+            outcome = await integration.process_interaction(
+                user_id=user_id,
+                user_message=phrase,
+                processing_result=result,
+            )
+
+            assert outcome["soft_regression_detected"] is True, f"Failed for: {phrase}"
+
+
 class TestGetProactivityConfig:
     """Test get_proactivity_config method."""
 

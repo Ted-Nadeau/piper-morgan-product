@@ -350,6 +350,61 @@ class TrustComputationService:
 
         return profile
 
+    async def handle_soft_regression(
+        self,
+        user_id: UUID,
+        reason: str,
+    ) -> UserTrustProfile:
+        """
+        Handle soft regression signal - user wants less proactivity.
+
+        Per PPM guidance: Soft regression drops one stage at a time, respecting
+        the floor. This is gentler than explicit complaint (which goes to Stage 2).
+
+        Examples: "ask me first next time", "check with me before"
+
+        Args:
+            user_id: User's UUID
+            reason: Brief description of the signal for audit trail
+
+        Returns:
+            Updated UserTrustProfile (one stage lower, or same if at floor)
+        """
+        profile = await self.repository.get_by_user_id(user_id)
+
+        if profile is None:
+            # No profile = NEW, can't regress
+            profile = await self.repository.create_or_update(
+                UserTrustProfile(
+                    user_id=user_id,
+                    current_stage=TrustStage.NEW,
+                    highest_stage_achieved=TrustStage.NEW,
+                )
+            )
+            return profile
+
+        floor = self._get_floor(profile)
+        current = profile.current_stage
+
+        # Can't regress below floor
+        if current <= floor:
+            logger.info(f"User {user_id} at floor ({current.name}), soft regression has no effect")
+            return profile
+
+        # Drop one stage
+        new_stage = TrustStage(current.value - 1)
+        new_stage = TrustStage(max(new_stage.value, floor.value))
+
+        profile = await self._regress_to_stage(
+            user_id, new_stage, f"Soft regression: {reason[:100]}"
+        )
+
+        logger.info(
+            f"User {user_id} soft regressed from {current.name} to {new_stage.name}: {reason[:50]}"
+        )
+
+        return profile
+
     async def explain_trust_state(self, user_id: UUID) -> str:
         """
         Generate an explanation of user's current trust state.

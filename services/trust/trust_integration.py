@@ -98,6 +98,7 @@ class TrustIntegration:
                 "stage_changed": bool,
                 "escalation_detected": bool,
                 "complaint_detected": bool,
+                "soft_regression_detected": bool,
             }
         """
         try:
@@ -123,6 +124,7 @@ class TrustIntegration:
                         "stage_changed": True,
                         "escalation_detected": True,
                         "complaint_detected": False,
+                        "soft_regression_detected": False,
                     }
 
             # 3. Handle complaint signals - immediate regression to Stage 2
@@ -146,9 +148,31 @@ class TrustIntegration:
                     "stage_changed": True,  # Complaint always triggers stage evaluation
                     "escalation_detected": False,
                     "complaint_detected": True,
+                    "soft_regression_detected": False,
                 }
 
-            # 4. Classify outcome based on processing result
+            # 4. Handle soft regression signals - one stage drop (not to floor)
+            # Per PPM guidance: "ask me first next time" is softer than complaint
+            if signal_result.signal_type == SignalType.SOFT_REGRESSION:
+                logger.info(
+                    "trust_soft_regression_signal_detected",
+                    user_id=str(user_id),
+                    patterns=signal_result.patterns_matched,
+                )
+                profile = await self.trust_service.handle_soft_regression(
+                    user_id=user_id,
+                    reason=signal_result.reasoning,
+                )
+                return {
+                    "outcome": "neutral",  # Not negative, just a preference signal
+                    "trust_stage": profile.current_stage.value,
+                    "stage_changed": True,
+                    "escalation_detected": False,
+                    "complaint_detected": False,
+                    "soft_regression_detected": True,
+                }
+
+            # 5. Classify outcome based on processing result
             context = {
                 "task_completed": processing_result.success,
                 "error_occurred": processing_result.error is not None,
@@ -177,7 +201,8 @@ class TrustIntegration:
                 "trust_stage": profile.current_stage.value,
                 "stage_changed": False,  # Will be updated by TrustComputationService
                 "escalation_detected": False,
-                "complaint_detected": complaint_detected,
+                "complaint_detected": False,
+                "soft_regression_detected": False,
             }
 
         except Exception as e:
@@ -189,6 +214,7 @@ class TrustIntegration:
                 "stage_changed": False,
                 "escalation_detected": False,
                 "complaint_detected": False,
+                "soft_regression_detected": False,
                 "error": str(e),
             }
 
