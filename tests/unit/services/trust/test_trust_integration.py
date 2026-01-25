@@ -96,8 +96,10 @@ class TestProcessInteraction:
         assert call_args.kwargs["outcome"] == "successful"
 
     @pytest.mark.asyncio
-    async def test_complaint_message_is_negative(self, integration, mock_trust_service):
-        """Complaint results in negative outcome."""
+    async def test_complaint_message_triggers_immediate_regression(
+        self, integration, mock_trust_service
+    ):
+        """Complaint triggers immediate regression via handle_explicit_complaint."""
         user_id = uuid4()
         result = MockIntentProcessingResult(success=True, message="Done")
 
@@ -110,6 +112,11 @@ class TestProcessInteraction:
         # Complaint signal should be detected
         assert outcome["complaint_detected"] is True
         assert outcome["outcome"] == "negative"
+        assert outcome["stage_changed"] is True  # Complaint always evaluates stage
+
+        # Should call handle_explicit_complaint, NOT record_interaction
+        mock_trust_service.handle_explicit_complaint.assert_called_once()
+        mock_trust_service.record_interaction.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_error_in_result_influences_outcome(self, integration, mock_trust_service):
@@ -416,10 +423,10 @@ class TestIntegrationStateless:
             processing_result=result,
         )
 
-        # Process for user 2
+        # Process for user 2 (use non-complaint message to test record_interaction path)
         await integration.process_interaction(
             user_id=user2,
-            user_message="stop that",
+            user_message="sounds good",
             processing_result=result,
         )
 

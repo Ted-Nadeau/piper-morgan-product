@@ -536,7 +536,7 @@ For `handle_explicit_complaint`, detect keywords and patterns:
 - Negative sentiment + trust-related topic
 - Explicit "no" to proactive offer
 
-**Status**: ✅ Patterns implemented in `signal_detector.py`. However, complaint → Stage 2 immediate regression not wired up. See #678.
+**Status**: ✅ IMPLEMENTED (#678, 2026-01-25). `handle_explicit_complaint()` method added and wired to TrustIntegration.
 
 ### Stage 4→3 Reversibility
 Ensure regression path from Stage 4 to Stage 3 exists (not just Stage 4→2 on explicit complaint). User might want less proactivity without full reset. Consecutive negative interactions should step down one stage at a time.

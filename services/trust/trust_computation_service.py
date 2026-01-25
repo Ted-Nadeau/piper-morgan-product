@@ -295,6 +295,61 @@ class TrustComputationService:
 
         return await self._progress_to_stage(user_id, TrustStage.TRUSTED, reason)
 
+    async def handle_explicit_complaint(
+        self,
+        user_id: UUID,
+        complaint: str,
+    ) -> UserTrustProfile:
+        """
+        Handle explicit user complaint about proactivity - immediate Stage 2.
+
+        Per ADR-053 and PPM guidance: An explicit complaint immediately drops
+        the user to Stage 2 (BUILDING), regardless of current stage. This is
+        more severe than consecutive negative interactions.
+
+        Unlike gradual regression (3 negatives → drop one stage), complaints
+        signal a fundamental breach of trust that requires immediate reset.
+
+        Args:
+            user_id: User's UUID
+            complaint: Brief description of the complaint for audit trail
+
+        Returns:
+            Updated UserTrustProfile (at Stage 2 or current if already ≤ Stage 2)
+        """
+        profile = await self.repository.get_by_user_id(user_id)
+
+        if profile is None:
+            # Create new profile at BUILDING (complaint floor)
+            profile = await self.repository.create_or_update(
+                UserTrustProfile(
+                    user_id=user_id,
+                    current_stage=TrustStage.BUILDING,
+                    highest_stage_achieved=TrustStage.BUILDING,
+                )
+            )
+            logger.info(f"Created profile at BUILDING for user {user_id} after complaint")
+            return profile
+
+        # Only regress if above BUILDING
+        if profile.current_stage > TrustStage.BUILDING:
+            old_stage = profile.current_stage
+            profile = await self.repository.update_stage(
+                user_id,
+                TrustStage.BUILDING,
+                f"Explicit complaint: {complaint[:100]}",
+            )
+            logger.warning(
+                f"User {user_id} dropped from {old_stage.name} to BUILDING "
+                f"due to explicit complaint: {complaint[:50]}"
+            )
+
+        # Reset consecutive negative counter (fresh start at BUILDING)
+        profile.consecutive_negative = 0
+        profile = await self.repository.create_or_update(profile)
+
+        return profile
+
     async def explain_trust_state(self, user_id: UUID) -> str:
         """
         Generate an explanation of user's current trust state.

@@ -503,6 +503,179 @@ class TestProgressToTrusted:
         assert "just do it" in call_args[0][2]
 
 
+class TestHandleExplicitComplaint:
+    """Test handle_explicit_complaint method for immediate Stage 2 regression."""
+
+    @pytest.fixture
+    def mock_repo(self):
+        """Create mock repository."""
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_repo):
+        """Create service with mock repo."""
+        return TrustComputationService(mock_repo)
+
+    @pytest.mark.asyncio
+    async def test_stage4_drops_to_stage2(self, service, mock_repo):
+        """User at Stage 4 (TRUSTED) drops immediately to Stage 2 (BUILDING)."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.TRUSTED,
+            highest_stage_achieved=TrustStage.TRUSTED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        building_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            consecutive_negative=0,
+        )
+        mock_repo.update_stage.return_value = building_profile
+        mock_repo.create_or_update.return_value = building_profile
+
+        result = await service.handle_explicit_complaint(user_id, "Stop doing that")
+
+        mock_repo.update_stage.assert_called_once()
+        call_args = mock_repo.update_stage.call_args
+        assert call_args[0][1] == TrustStage.BUILDING
+        assert "Stop doing that" in call_args[0][2]
+
+    @pytest.mark.asyncio
+    async def test_stage3_drops_to_stage2(self, service, mock_repo):
+        """User at Stage 3 (ESTABLISHED) drops immediately to Stage 2 (BUILDING)."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,
+            highest_stage_achieved=TrustStage.ESTABLISHED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        building_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            consecutive_negative=0,
+        )
+        mock_repo.update_stage.return_value = building_profile
+        mock_repo.create_or_update.return_value = building_profile
+
+        result = await service.handle_explicit_complaint(user_id, "I didn't ask for this")
+
+        mock_repo.update_stage.assert_called_once()
+        call_args = mock_repo.update_stage.call_args
+        assert call_args[0][1] == TrustStage.BUILDING
+
+    @pytest.mark.asyncio
+    async def test_stage2_stays_at_stage2(self, service, mock_repo):
+        """User at Stage 2 (BUILDING) stays at Stage 2 (already at floor)."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            highest_stage_achieved=TrustStage.BUILDING,
+            consecutive_negative=2,  # Had some negatives
+        )
+        mock_repo.get_by_user_id.return_value = profile
+        mock_repo.create_or_update.return_value = profile
+
+        result = await service.handle_explicit_complaint(user_id, "Stop it")
+
+        # Should NOT call update_stage since already at BUILDING
+        mock_repo.update_stage.assert_not_called()
+        # But should still reset consecutive_negative
+        assert result.consecutive_negative == 0
+
+    @pytest.mark.asyncio
+    async def test_stage1_stays_at_stage1(self, service, mock_repo):
+        """User at Stage 1 (NEW) stays at Stage 1."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.NEW,
+            highest_stage_achieved=TrustStage.NEW,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+        mock_repo.create_or_update.return_value = profile
+
+        result = await service.handle_explicit_complaint(user_id, "Don't do that")
+
+        # Should NOT call update_stage since NEW < BUILDING
+        mock_repo.update_stage.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_creates_profile_if_none_exists(self, service, mock_repo):
+        """Creates profile at BUILDING if user has no profile."""
+        user_id = uuid4()
+        mock_repo.get_by_user_id.return_value = None
+
+        new_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            highest_stage_achieved=TrustStage.BUILDING,
+        )
+        mock_repo.create_or_update.return_value = new_profile
+
+        result = await service.handle_explicit_complaint(user_id, "Complaint")
+
+        mock_repo.create_or_update.assert_called()
+        assert result.current_stage == TrustStage.BUILDING
+
+    @pytest.mark.asyncio
+    async def test_resets_consecutive_negative(self, service, mock_repo):
+        """Resets consecutive_negative counter after complaint."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.ESTABLISHED,
+            consecutive_negative=2,  # Had some negatives before complaint
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        building_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            consecutive_negative=2,  # Will be reset
+        )
+        mock_repo.update_stage.return_value = building_profile
+        mock_repo.create_or_update.return_value = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+            consecutive_negative=0,
+        )
+
+        result = await service.handle_explicit_complaint(user_id, "Stop")
+
+        # Verify consecutive_negative was reset
+        assert result.consecutive_negative == 0
+
+    @pytest.mark.asyncio
+    async def test_truncates_long_complaint(self, service, mock_repo):
+        """Truncates complaint reason to 100 chars in stage history."""
+        user_id = uuid4()
+        profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.TRUSTED,
+        )
+        mock_repo.get_by_user_id.return_value = profile
+
+        building_profile = UserTrustProfile(
+            user_id=user_id,
+            current_stage=TrustStage.BUILDING,
+        )
+        mock_repo.update_stage.return_value = building_profile
+        mock_repo.create_or_update.return_value = building_profile
+
+        long_complaint = "x" * 200  # 200 chars
+        await service.handle_explicit_complaint(user_id, long_complaint)
+
+        call_args = mock_repo.update_stage.call_args
+        reason = call_args[0][2]  # Third positional arg is reason
+        # Should include truncated complaint (100 chars max)
+        assert len(reason) <= 120  # "Explicit complaint: " + 100 chars
+
+
 class TestExplainTrustState:
     """Test explain_trust_state method for discussability."""
 

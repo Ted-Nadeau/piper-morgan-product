@@ -125,7 +125,8 @@ class TrustIntegration:
                         "complaint_detected": False,
                     }
 
-            # 3. Handle complaint signals (may trigger regression)
+            # 3. Handle complaint signals - immediate regression to Stage 2
+            # Per ADR-053 and PPM guidance: explicit complaint → Stage 2 floor
             complaint_detected = False
             if signal_result.signal_type == SignalType.COMPLAINT:
                 logger.info(
@@ -134,16 +135,15 @@ class TrustIntegration:
                     patterns=signal_result.patterns_matched,
                 )
                 complaint_detected = True
-                # Record as negative outcome
-                profile = await self.trust_service.record_interaction(
+                # Immediate regression to BUILDING (not gradual via consecutive_negative)
+                profile = await self.trust_service.handle_explicit_complaint(
                     user_id=user_id,
-                    outcome="negative",
-                    context=f"Complaint: {signal_result.reasoning}",
+                    complaint=signal_result.reasoning,
                 )
                 return {
                     "outcome": "negative",
                     "trust_stage": profile.current_stage.value,
-                    "stage_changed": False,  # Regression may have occurred
+                    "stage_changed": True,  # Complaint always triggers stage evaluation
                     "escalation_detected": False,
                     "complaint_detected": True,
                 }
