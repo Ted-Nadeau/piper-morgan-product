@@ -8,6 +8,7 @@ The pipeline:
 2. Pattern Selection - Choose appropriate patterns
 3. Narrative Construction - Build the arc
 4. MVC Validation - Ensure requirements met
+5. Channel Adaptation - Same colleague, different room (#426)
 
 Issue: #407 MUX-VISION-STANDUP-EXTRACT
 ADR: ADR-056 Consciousness Expression Patterns
@@ -16,6 +17,7 @@ ADR: ADR-056 Consciousness Expression Patterns
 import random
 from typing import Any, Dict, List, Optional
 
+from services.consciousness.channel_adapter import adapt_for_channel
 from services.consciousness.context import ConsciousnessContext, analyze_context
 from services.consciousness.templates import (
     get_accomplishment_recognition,
@@ -28,12 +30,14 @@ from services.consciousness.templates import (
     get_temporal_greeting,
 )
 from services.consciousness.validation import MVCResult, validate_mvc
+from services.shared_types import InteractionSpace
 
 
 async def inject_consciousness(
     data: Dict[str, Any],
     context: Optional[ConsciousnessContext] = None,
     format_type: str = "narrative",
+    channel: InteractionSpace = InteractionSpace.WEB_CHAT,
 ) -> str:
     """
     Transform data into conscious narrative expression.
@@ -44,9 +48,16 @@ async def inject_consciousness(
         data: Dictionary containing feature data (e.g., StandupResult as dict)
         context: Pre-analyzed context (will analyze if not provided)
         format_type: Output format - "narrative" (default), "slack", or "markdown"
+        channel: The interaction space - adapts verbosity/formality (#426)
 
     Returns:
         Conscious narrative string
+
+    Channel personality (#426 MUX-IMPLEMENT-CONSISTENT):
+        - CLI: terse, no fluff ("3 tasks. 2 meetings.")
+        - SLACK_DM: brief, casual
+        - SLACK_CHANNEL: professional, contextual
+        - WEB_CHAT: detailed, warm, exploratory
     """
     # Step 1: Context Analysis
     if context is None:
@@ -59,6 +70,10 @@ async def inject_consciousness(
     mvc_result = validate_mvc(narrative)
     if not mvc_result.passes:
         narrative = fix_mvc_gaps(narrative, mvc_result)
+
+    # Step 5: Channel Adaptation (#426)
+    # "Same Colleague, Different Room" - adapt style, preserve identity
+    narrative = adapt_for_channel(narrative, channel)
 
     # Apply format-specific transformations
     if format_type == "slack":
