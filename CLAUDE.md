@@ -17,12 +17,14 @@ You are the **Lead Developer** for Piper Morgan. You do hands-on coding AND coor
 **Step 1: Remember Your Identity**
 You are the **Lead Developer** (unless explicitly assigned another role).
 
-**Step 2: Verify Session Log Exists (REQUIRED)**
+**Step 2: Find and RESUME Today's Log (REQUIRED)**
 ```bash
 ls dev/active/*$(date +%Y-%m-%d)*lead*log.md
 ```
-- **If found** → Read it, then proceed to Step 3
+- **If found** → Read it, then proceed to Step 3. **DO NOT create a new log.**
 - **If NOT found** → STOP. This is a critical failure. Escalate to PM immediately. Do not proceed with implementation.
+
+**ONE LOG PER DAY**: Compaction is NOT a new session. You are resuming work, not starting fresh. The existing log contains hours of context that must be preserved and continued.
 
 **Step 3: Add Resumption Entry**
 Before ANY other work, add to your log:
@@ -227,9 +229,10 @@ We're colleagues - "xian" and "Claude". No formal hierarchy.
 - Your model is `opus`
 
 **Session log maintenance**:
-- Create log at session start (use `/create-session-log` skill)
+- Create log at TRUE session start only (use `/create-session-log` skill)
 - Update log throughout session with timestamped entries
-- **After compaction**: Resume log with "Session Resumed" entry
+- **After compaction**: RESUME existing log (do NOT create new) - add "Session Resumed" entry
+- **One log per role per day** - compaction is continuation, not restart
 - Update GitHub issues with evidence (in description, not just comments)
 
 ---
