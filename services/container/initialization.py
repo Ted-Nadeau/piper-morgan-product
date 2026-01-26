@@ -30,6 +30,7 @@ class ServiceInitializer:
         await self._initialize_llm_service()
         self._initialize_orchestration_engine()
         self._initialize_intent_service()
+        self._initialize_process_registry()
 
         logger.info("Service initialization sequence complete")
 
@@ -132,3 +133,26 @@ class ServiceInitializer:
         except Exception as e:
             logger.error(f"Failed to initialize Intent service: {e}", exc_info=True)
             raise ServiceInitializationError("intent", e)
+
+    def _initialize_process_registry(self) -> None:
+        """
+        Initialize ProcessRegistry for guided processes (ADR-049).
+
+        Registers default guided process adapters (onboarding, standup).
+        Must be called after intent service initialization.
+        """
+        try:
+            logger.info("Initializing ProcessRegistry (ADR-049)")
+
+            # Import here to avoid circular imports
+            from services.process import register_default_processes
+
+            # Register default guided processes (onboarding, standup)
+            register_default_processes()
+
+            logger.info("ProcessRegistry initialized successfully")
+
+        except Exception as e:
+            # Non-fatal: log warning but don't fail startup
+            # The old check methods still exist as fallback
+            logger.warning(f"Failed to initialize ProcessRegistry: {e}", exc_info=True)

@@ -45,6 +45,7 @@ from services.intent_service.todo_handlers import TodoIntentHandlers
 from services.knowledge.conversation_integration import ConversationKnowledgeGraphIntegration
 from services.learning.learning_handler import LearningHandler
 from services.orchestration.engine import OrchestrationEngine
+from services.process import ProcessCheckResult, get_process_registry
 from services.shared_types import IntentCategory
 
 
@@ -252,25 +253,21 @@ class IntentService:
             IntentProcessingError: If processing fails
         """
         try:
-            # Issue #490/#560: Active conversational processes take priority over classification
-            # Domain invariant: Once a user enters onboarding, ALL their messages belong to
-            # that process until completion/exit. This check MUST run before any classification.
-            # Check by user_id (preferred) OR session_id (fallback when not authenticated)
-            onboarding_result = await self._check_active_onboarding(
+            # ADR-049: Active guided processes take priority over classification
+            # Domain invariant: Once a user enters a guided process (onboarding, standup, etc.),
+            # ALL their messages belong to that process until completion/exit.
+            # This check MUST run before any classification.
+            guided_process_result = await self._check_active_guided_process(
                 user_id=user_id,
                 session_id=session_id,
                 message=message,
             )
-            if onboarding_result:
-                self.logger.info(
-                    "Active onboarding session - bypassing classification",
-                    user_id=user_id,
-                    session_id=session_id,
-                )
-                return onboarding_result
+            if guided_process_result:
+                return guided_process_result
 
             # Issue #585: Check for /standup command BEFORE classification
             # This routes the explicit command to the interactive handler
+            # Note: This starts a NEW standup, not checking an active one (registry handles that)
             if message.strip().lower() == "/standup":
                 self.logger.info(
                     "Standup command detected - starting interactive flow",
@@ -278,21 +275,6 @@ class IntentService:
                     session_id=session_id,
                 )
                 return await self._start_standup_conversation(user_id, session_id)
-
-            # Issue #585: Check for active standup conversation
-            # Similar to onboarding - active conversations take priority over classification
-            standup_result = await self._check_active_standup(
-                user_id=user_id,
-                session_id=session_id,
-                message=message,
-            )
-            if standup_result:
-                self.logger.info(
-                    "Active standup session - bypassing classification",
-                    user_id=user_id,
-                    session_id=session_id,
-                )
-                return standup_result
 
             # Issue #197 Phase 2B: Ethics enforcement at universal entry point
             # Check ENABLE_ETHICS_ENFORCEMENT environment variable (default: False for gradual rollout)
@@ -699,6 +681,66 @@ class IntentService:
         except Exception as e:
             self.logger.error(f"Intent processing error: {e}")
             raise IntentProcessingError(f"Intent processing failed: {str(e)}")
+
+    async def _check_active_guided_process(
+        self, user_id: str, session_id: str, message: str
+    ) -> Optional[IntentProcessingResult]:
+        """
+        ADR-049: Check for active guided processes before intent classification.
+
+        Uses the ProcessRegistry to check all registered guided processes
+        in priority order. First active process that claims the message wins.
+
+        Guided processes include: onboarding, standup, planning, feedback, etc.
+
+        Args:
+            user_id: Authenticated user ID
+            session_id: Session identifier
+            message: User's message
+
+        Returns:
+            IntentProcessingResult if a guided process handled the message,
+            None if no active process (proceed with normal classification)
+        """
+        try:
+            registry = get_process_registry()
+            result = await registry.check_active_processes(user_id, session_id, message)
+
+            if result.handled:
+                self.logger.info(
+                    "Message handled by guided process",
+                    process_type=result.process_type.value if result.process_type else None,
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+
+                # Handle onboarding completion - persist projects
+                if (
+                    result.process_type
+                    and result.process_type.value == "onboarding"
+                    and result.intent_data
+                    and result.intent_data.get("context", {}).get("state") == "complete"
+                ):
+                    # Get captured projects from the response context
+                    captured_projects = result.intent_data.get("context", {}).get(
+                        "captured_projects", []
+                    )
+                    if captured_projects:
+                        await self._persist_onboarding_projects(user_id, captured_projects)
+
+                return IntentProcessingResult(
+                    success=True,
+                    message=result.response_message or "",
+                    intent_data=result.intent_data,
+                    workflow_id=None,
+                    requires_clarification=False,
+                )
+
+            return None
+
+        except Exception as e:
+            self.logger.warning(f"Could not check active guided processes: {e}")
+            return None
 
     async def _check_active_onboarding(
         self, user_id: str, session_id: str, message: str

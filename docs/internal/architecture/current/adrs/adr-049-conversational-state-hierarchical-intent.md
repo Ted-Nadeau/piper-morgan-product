@@ -1,10 +1,12 @@
 # ADR-049: Conversational State and Hierarchical Intent Architecture
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-01-09
+**Accepted:** 2026-01-26
 **Issue:** [#490 FTUX-PORTFOLIO](https://github.com/mediajunkie/piper-morgan-product/issues/490)
+**Implementation:** [#427 MUX-IMPLEMENT-CONVERSE-MODEL](https://github.com/mediajunkie/piper-morgan-product/issues/427)
 **Author:** Lead Developer (Claude Code Opus)
-**Approver:** PM (xian)
+**Approver:** PM (xian), PPM, Chief Architect
 
 ## Context
 
@@ -148,11 +150,35 @@ The `PortfolioOnboardingManager` uses a module-level singleton to persist sessio
 
 ## Implementation Notes
 
-### Files Modified
+### Generalized Architecture (January 2026)
 
-- `services/intent/intent_service.py`: Added `_check_active_onboarding()` at start of `process_intent()`
-- `services/conversation/conversation_handler.py`: Module-level singleton for `PortfolioOnboardingManager`
-- `tests/e2e/test_onboarding_http_e2e.py`: True E2E tests that validate full flows
+The pattern has been generalized into the **ProcessRegistry** system:
+
+**New Files**:
+- `services/process/registry.py`: ProcessRegistry singleton, GuidedProcess protocol, ProcessType enum
+- `services/process/adapters.py`: OnboardingProcessAdapter, StandupProcessAdapter
+- `services/process/__init__.py`: Public API exports
+
+**Modified Files**:
+- `services/intent/intent_service.py`: Added unified `_check_active_guided_process()` using ProcessRegistry
+- `services/container/initialization.py`: Registers default processes at startup
+
+**Key Concepts**:
+- **Guided Process**: Multi-turn conversation where Piper maintains control until completion/exit
+- **ProcessRegistry**: Singleton tracking active processes per session, checks in priority order
+- **GuidedProcess Protocol**: Interface for process handlers (process_type, check_active, handle_message)
+- **ProcessType Enum**: ONBOARDING, STANDUP, PLANNING, FEEDBACK, CLARIFICATION
+
+**Test Coverage**:
+- `tests/unit/services/process/test_registry.py`: 18 tests for registry behavior
+- `tests/unit/services/process/test_adapters.py`: 14 tests for adapters
+
+### Original Files (MVP)
+
+- `services/onboarding/portfolio_manager.py`: PortfolioOnboardingManager
+- `services/standup/conversation_manager.py`: StandupConversationManager
+- `services/conversation/conversation_handler.py`: Module-level singletons
+- `tests/e2e/test_onboarding_http_e2e.py`: True E2E tests
 
 ### Pattern Compliance
 
@@ -161,14 +187,21 @@ This ADR aligns with:
 - **Pattern-046** (Beads Completion Discipline): Issue not closed until user experience verified
 - **ADR-039** (Canonical Handler Pattern): Onboarding handler follows canonical pattern
 
+### Future Vision
+
+User-defined guided processes (analogous to Claude skills) could extend this architecture.
+
 ## Related Decisions
 
 - **ADR-039**: Canonical Handler Pattern (onboarding handler structure)
 - **ADR-048**: ServiceContainer Lifecycle (why not DI for manager)
+- **ADR-050**: Conversation-as-Graph Model (related conversation architecture)
 - **Pattern-045**: Green Tests, Red User (testing philosophy)
 
 ## Review History
 
 | Date | Reviewer | Decision |
 |------|----------|----------|
-| 2026-01-09 | PM (xian) | Pending review |
+| 2026-01-09 | PM (xian) | Proposed |
+| 2026-01-26 | PPM, Chief Architect | Approved for MVP implementation |
+| 2026-01-26 | PM (xian) | Accepted - implemented in #427 |

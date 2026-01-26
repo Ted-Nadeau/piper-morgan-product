@@ -103,9 +103,11 @@ class TestStandupRoutingGap585:
         """
         FIXED (Issue #585): Active standup sessions are intercepted before classification.
 
-        Implementation: _process_intent_internal() calls _check_active_standup()
-        which uses StandupConversationManager.get_conversation_by_session() to
-        check for active sessions, then routes to handler.handle_turn().
+        Implementation: _process_intent_internal() calls _check_active_guided_process()
+        which uses the ProcessRegistry (ADR-049) to check all registered guided processes
+        including standup. The StandupProcessAdapter wraps StandupConversationManager.
+
+        Updated for ADR-049: Two-Tier Intent Architecture.
         """
         import inspect
 
@@ -114,27 +116,38 @@ class TestStandupRoutingGap585:
         # Get the source of _process_intent_internal
         internal_source = inspect.getsource(IntentService._process_intent_internal)
 
-        # Check for active standup session checking
+        # ADR-049: Now uses unified _check_active_guided_process which checks all
+        # registered processes including standup via ProcessRegistry
         has_session_check = (
-            "get_conversation_by_session" in internal_source
-            or "_check_active_standup" in internal_source
-            or "active_standup" in internal_source.lower()
+            "_check_active_guided_process" in internal_source
+            or "_check_active_standup" in internal_source  # Legacy check still present
         )
 
         assert (
             has_session_check
-        ), "_process_intent_internal should check for active standup sessions"
+        ), "_process_intent_internal should check for active guided processes (ADR-049)"
 
-        # Verify _check_active_standup method exists and uses correct pattern
+        # Verify unified check method exists (ADR-049 pattern)
+        assert hasattr(
+            IntentService, "_check_active_guided_process"
+        ), "IntentService should have _check_active_guided_process method (ADR-049)"
+
+        # Verify ProcessRegistry is used
+        check_source = inspect.getsource(IntentService._check_active_guided_process)
+        assert (
+            "get_process_registry" in check_source or "ProcessRegistry" in check_source
+        ), "_check_active_guided_process should use ProcessRegistry"
+
+        # Legacy _check_active_standup still exists for backward compatibility
         assert hasattr(
             IntentService, "_check_active_standup"
-        ), "IntentService should have _check_active_standup method"
+        ), "IntentService should still have _check_active_standup method"
 
-        check_source = inspect.getsource(IntentService._check_active_standup)
+        legacy_source = inspect.getsource(IntentService._check_active_standup)
         assert (
-            "get_conversation_by_session" in check_source
+            "get_conversation_by_session" in legacy_source
         ), "_check_active_standup should use get_conversation_by_session"
-        assert "handle_turn" in check_source, "_check_active_standup should route to handle_turn"
+        assert "handle_turn" in legacy_source, "_check_active_standup should route to handle_turn"
 
     @pytest.mark.asyncio
     async def test_standup_session_should_continue_across_turns(self):
