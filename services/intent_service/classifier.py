@@ -30,6 +30,16 @@ from services.domain.models import Intent, IntentCategory
 # GREAT-4B Phase 3: Intent caching
 from services.intent_service.cache import IntentCache
 
+# Conversation context (Issue #427)
+from services.intent_service.conversation_context import (
+    ConversationContext,
+    detect_follow_up,
+    extract_temporal_reference,
+    extract_topic,
+    get_or_create_context,
+    resolve_follow_up,
+)
+
 # --- Add fuzzy matcher import ---
 from services.intent_service.fuzzy_matcher import correct_common_typos, fuzzy_match
 from services.intent_service.honest_failure import (
@@ -432,15 +442,55 @@ class IntentClassifier:
         # Attach orientation to classification context for downstream use
         classification_context.orientation = orientation
 
+        # Issue #427: Get or create conversation context for follow-up detection
+        session_id = context.get("session_id") if context else None
+        conv_context: Optional[ConversationContext] = None
+        if session_id:
+            conv_context = get_or_create_context(session_id)
+            classification_context.conversation_context = conv_context
+
         try:
-            # Use existing classify() for the raw Intent
-            intent = await self.classify(
-                message=message,
-                context=context,
-                session=session,
-                spatial_context=spatial_context,
-                use_cache=use_cache,
-            )
+            # Issue #427: Check for conversational follow-up before LLM classification
+            # This enables "How about today?" after asking about tomorrow
+            intent: Optional[Intent] = None
+            if conv_context and conv_context.is_active:
+                follow_up_result = detect_follow_up(message, conv_context)
+                if follow_up_result:
+                    follow_up_type, extracted_data = follow_up_result
+                    resolved_intent = resolve_follow_up(
+                        follow_up_type, extracted_data, conv_context
+                    )
+                    if resolved_intent:
+                        logger.info(
+                            "follow_up_resolved",
+                            follow_up_type=follow_up_type.value,
+                            resolved_action=resolved_intent.action,
+                            inherited_from=(
+                                str(conv_context.last_turn.id) if conv_context.last_turn else None
+                            ),
+                        )
+                        intent = resolved_intent
+
+            # If not a follow-up, use existing classify() for the raw Intent
+            if intent is None:
+                intent = await self.classify(
+                    message=message,
+                    context=context,
+                    session=session,
+                    spatial_context=spatial_context,
+                    use_cache=use_cache,
+                )
+
+            # Issue #427: Record this turn in conversation context
+            if conv_context:
+                temporal_ref = extract_temporal_reference(message)
+                topic = extract_topic(message, intent)
+                conv_context.add_turn(
+                    message=message,
+                    intent=intent,
+                    temporal_reference=temporal_ref,
+                    topic=topic,
+                )
 
             # Issue #411: Check for recognition opportunity before failure handling
             # Recognition fills the gap between confident action and honest failure
@@ -531,7 +581,7 @@ class IntentClassifier:
 
         Args:
             context: Request context dict
-            place: Detected PlaceType
+            place: Detected InteractionSpace
             spatial_context: Spatial context dict
 
         Returns:

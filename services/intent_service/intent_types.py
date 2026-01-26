@@ -16,9 +16,10 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from services.domain.models import Intent
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 if TYPE_CHECKING:
+    from services.intent_service.conversation_context import ConversationContext
     from services.mux.orientation import OrientationState
 
 
@@ -38,7 +39,7 @@ class IntentClassificationContext:
     message: str
     user_id: Optional[str] = None
     session_id: Optional[str] = None
-    place: PlaceType = PlaceType.UNKNOWN
+    place: InteractionSpace = InteractionSpace.UNKNOWN
     spatial_context: Optional[Dict[str, Any]] = None
     conversation_history: Optional[List[str]] = None
     user_preferences: Optional[Dict[str, Any]] = None
@@ -48,13 +49,17 @@ class IntentClassificationContext:
     # Set after PlaceDetector, before IntentClassifier per Arch decision
     orientation: Optional["OrientationState"] = None
 
+    # Issue #427: Conversation context for follow-up detection
+    # Tracks recent turns for context-dependent phrase resolution
+    conversation_context: Optional["ConversationContext"] = None
+
     @classmethod
     def from_classify_args(
         cls,
         message: str,
         context: Optional[Dict] = None,
         spatial_context: Optional[Dict] = None,
-        place: PlaceType = PlaceType.UNKNOWN,
+        place: InteractionSpace = InteractionSpace.UNKNOWN,
     ) -> "IntentClassificationContext":
         """
         Build context from existing classify() arguments.
