@@ -1,4 +1,6 @@
 ---
+name: close-issue-properly
+description: Close GitHub issues with proper evidence and audit-ready records. Use when completing work on a tracked issue, when PM says "close the issue", or before ending a session with completed work. Updates description checkboxes and adds closing comment.
 scope: cross-role
 version: 1.0
 created: 2026-01-21

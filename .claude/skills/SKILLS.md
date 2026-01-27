@@ -2,7 +2,7 @@
 
 This directory contains formalized Agent Skills - self-contained procedural instructions that transform Claude from general-purpose to specialized for specific recurring tasks.
 
-**Last Updated**: January 21, 2026
+**Last Updated**: January 26, 2026
 
 ---
 
@@ -14,6 +14,7 @@ This directory contains formalized Agent Skills - self-contained procedural inst
 | [check-mailbox](./check-mailbox/SKILL.md) | Cross-role | Check inbox at session start, process messages, move to read/ | 1.0 |
 | [close-issue-properly](./close-issue-properly/SKILL.md) | Cross-role | Close GitHub issues with evidence, updated descriptions, audit-ready records | 1.0 |
 | [audit-cascade](./audit-cascade/SKILL.md) | Cross-role | Systematic audit-and-correct between phases; implements Pattern-049 | 1.0 |
+| [discovered-work-capture](./discovered-work-capture/SKILL.md) | Cross-role | Capture discovered issues immediately; prevents invisible work | 1.0 |
 
 ---
 
@@ -26,6 +27,7 @@ Skills every agent should know. High frequency, low complexity.
 - **check-mailbox** - Session start protocol
 - **close-issue-properly** - End of every tracked task
 - **audit-cascade** - Between every phase of multi-step work (Pattern-049)
+- **discovered-work-capture** - When noticing issues during development
 
 ### Tier 2: Role-Specific Operations
 Skills for specific workflows or roles.
@@ -127,6 +129,7 @@ created: YYYY-MM-DD
 | Pilot: close-issue-properly | Complete | 2026-01-21 |
 | Tier 1: check-mailbox | Complete | 2026-01-21 |
 | Tier 1: audit-cascade | Complete | 2026-01-23 |
+| Tier 1: discovered-work-capture | Complete | 2026-01-26 |
 | Tier 1 rollout | In Progress | - |
 | Tier 2 development | Planned | - |
 

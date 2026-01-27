@@ -1,10 +1,16 @@
+---
+name: audit-cascade
+description: Perform systematic audit-and-correct between phases of multi-step work. Use when PM says "audit cascade", before transitioning from issue to gameplan, gameplan to agent prompts, or prompts to execution. Catches drift before it accumulates.
+scope: cross-role
+version: 1.0
+created: 2026-01-23
+---
+
 # audit-cascade
 
 Perform systematic audit-and-correct steps between phases of multi-step work, using templates as checklists.
 
 **Reference**: [Pattern-049: Audit Cascade](../../../docs/internal/architecture/current/patterns/pattern-049-audit-cascade.md)
-
----
 
 ## When to Use
 

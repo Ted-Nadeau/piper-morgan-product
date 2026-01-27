@@ -251,6 +251,17 @@ jobs:
               **Q: What about files in dev/active/ vs dev/2025/MM/DD/?**
               A: dev/active/ is for current work-in-progress. Completed work should move to dated folders. Duplicates in dev/ are common and should be cleaned up.
 
+              ### ✅ Closing This Issue
+
+              **Use the \`close-issue-properly\` skill when closing this issue.**
+
+              Before closing:
+              1. Update checkboxes in this description (checked = done, unchecked = skipped/deferred)
+              2. Add closing comment with evidence (findings doc path, issues created, metrics)
+              3. Note any deferred items and why
+
+              **Anti-pattern**: Adding a comment and closing without updating description checkboxes.
+
               ### References
               - [CLAUDE.md Project Instructions](../CLAUDE.md)
               - [Architecture Documentation](../docs/architecture/architecture.md)

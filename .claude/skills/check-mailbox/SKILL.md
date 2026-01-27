@@ -1,4 +1,6 @@
 ---
+name: check-mailbox
+description: Check your agent mailbox for messages at session start. Use at the beginning of every session to review communications from other agents or advisors and note any action items.
 scope: cross-role
 version: 1.0
 created: 2026-01-21

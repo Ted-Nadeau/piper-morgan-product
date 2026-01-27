@@ -1,3 +1,11 @@
+---
+name: create-session-log
+description: Create or resume a session log at session start. Use when starting a new session, when PM assigns work, or after context compaction to find and continue your existing log. Critical for maintaining institutional memory.
+scope: cross-role
+version: 1.0
+created: 2026-01-21
+---
+
 # create-session-log
 
 Create a properly named and structured session log file at the start of a work session.

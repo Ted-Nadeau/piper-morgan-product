@@ -3,7 +3,7 @@
 _Consolidated from pattern-catalog.md and PATTERN-INDEX.md_
 _Format: ADR-style numbered patterns_
 
-**Total Patterns**: 49 patterns (001-049) + template (000)
+**Total Patterns**: 60 patterns (001-059) + template (000)
 
 ## Pattern Categories
 
@@ -87,6 +87,21 @@ _Development methodology, quality assurance, and workflow management patterns_
 - [Pattern-046: Beads Completion Discipline](pattern-046-beads-completion-discipline.md) - Systematic completion enforcement using `bd` CLI (COMPLETION DISCIPLINE TRIAD)
 - [Pattern-047: Time Lord Alert](pattern-047-time-lord-alert.md) - Uncertainty signaling for AI agents (COMPLETION DISCIPLINE TRIAD)
 - [Pattern-049: Audit Cascade](pattern-049-audit-cascade.md) - Institutionalized skepticism at every handoff point (VELOCITY PATTERN)
+- [Pattern-059: Leadership Caucus](pattern-059-leadership-caucus.md) - Facilitated multi-advisor alignment for cross-cutting decisions (COORDINATION PATTERN)
+
+### Grammar Application Patterns
+
+_Patterns for maintaining grammar awareness (Entity/Moment/Place) throughout features_
+
+- [Pattern-050: Context Dataclass Pair](pattern-050-context-dataclass-pair.md) - Maintain grammar awareness with Context/Result dataclass pairs
+- [Pattern-051: Parallel Place Gathering](pattern-051-parallel-place-gathering.md) - Synthesize information from multiple integrations concurrently
+- [Pattern-052: Personality Bridge](pattern-052-personality-bridge.md) - Transform contextual data into Piper's authentic voice
+- [Pattern-053: Warmth Calibration](pattern-053-warmth-calibration.md) - Calibrate emotional tone based on context and relationship
+- [Pattern-054: Honest Failure with Suggestion](pattern-054-honest-failure.md) - Handle integration failures with helpful guidance
+- [Pattern-055: Multi-Intent Decomposition](pattern-055-multi-intent-decomposition.md) - Detect and handle multiple intents in single messages
+- [Pattern-056: Consciousness Attribute Layering](pattern-056-consciousness-attribute-layering.md) - Layer consciousness attributes through processing
+- [Pattern-057: Grammar-Driven Classification](pattern-057-grammar-driven-classification.md) - Use grammar structure to guide intent classification
+- [Pattern-058: Ownership Graph Navigation](pattern-058-ownership-graph-navigation.md) - Navigate object relationships via ownership semantics
 
 ## Pattern Development
 
@@ -131,6 +146,5 @@ Use the anti-pattern index to:
 
 ---
 
-_Last updated: January 21, 2026_
-_Added anti-pattern index navigation (42 anti-patterns across 5 categories)_
-_Note: Pattern catalog may have additional patterns (050+) not yet indexed here_
+_Last updated: January 26, 2026_
+_Added Grammar Application Patterns (050-058) and Leadership Caucus (059)_
