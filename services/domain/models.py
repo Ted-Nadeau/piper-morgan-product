@@ -30,11 +30,14 @@ from services.mux.ownership import OwnershipCategory, OwnershipMetadata
 # Import shared types for consistency
 from services.shared_types import (
     EdgeType,
+    HardnessLevel,
     IntegrationType,
     IntentCategory,
     ListType,
     NodeType,
     OrderingStrategy,
+    PlaceConfidence,
+    PlaceType,
     PortfolioOnboardingState,
     StandupConversationState,
     TaskStatus,
@@ -900,6 +903,100 @@ class SpatialContext:
         if self.object_position is not None:
             coords["object_position"] = self.object_position
         return coords
+
+
+@dataclass
+class Place:
+    """
+    A window into an external source - where Piper observes FEDERATED data.
+
+    Issue #684: MUX-NAV-PLACES
+    ADR-045: Object Model (FEDERATED category - "Piper's Senses")
+    ownership-metaphors.md: FEDERATED objects come from places with atmosphere
+
+    Place represents Piper's view into external services like GitHub, Calendar, etc.
+    Each Place has:
+    - A type with distinct atmosphere (collaborative, temporal, reference)
+    - Confidence level based on data freshness and completeness
+    - Summary for inline display + details for expansion
+    - Hardness for trust-gated visibility
+
+    Experience language: "Over in {name}, I see..." (not "API returned...")
+
+    Example:
+        github_place = Place(
+            id="gh-piper-morgan",
+            place_type=PlaceType.ISSUE_TRACKING,
+            name="piper-morgan repository",
+            confidence=PlaceConfidence.HIGH,
+            summary="I see 3 PRs waiting for review",
+            source_url="https://github.com/mediajunkie/piper-morgan-product",
+            hardness=HardnessLevel.HARD,
+        )
+    """
+
+    id: str
+    place_type: PlaceType
+    name: str  # Human-readable: "piper-morgan repository", "your calendar"
+    confidence: PlaceConfidence
+    summary: str  # Piper's perspective: "I see 3 PRs waiting"
+    source_url: str  # Where to link for "visit source"
+    hardness: HardnessLevel  # For trust-gated visibility
+
+    # Optional detailed data
+    details: Optional[Dict[str, Any]] = None
+    last_fetched: Optional[datetime] = None
+
+    # Ownership metadata (always FEDERATED for Places)
+    ownership: OwnershipMetadata = field(
+        default_factory=lambda: OwnershipMetadata(
+            category=OwnershipCategory.FEDERATED,
+            source="external",
+            confidence=0.9,
+        )
+    )
+
+    def is_stale(self, max_age_minutes: int = 5) -> bool:
+        """Check if cached data is stale."""
+        if not self.last_fetched:
+            return True
+        age = datetime.now(timezone.utc) - self.last_fetched
+        return age.total_seconds() > (max_age_minutes * 60)
+
+    def get_staleness_indicator(self) -> str:
+        """Get human-readable staleness for UI."""
+        if not self.last_fetched:
+            return "unknown"
+        age = datetime.now(timezone.utc) - self.last_fetched
+        minutes = int(age.total_seconds() / 60)
+        if minutes < 1:
+            return "just now"
+        if minutes < 5:
+            return f"{minutes} min ago"
+        if minutes < 60:
+            return f"{minutes} minutes ago"
+        hours = minutes // 60
+        if hours < 24:
+            return f"{hours} hour{'s' if hours > 1 else ''} ago"
+        return "over a day ago"
+
+    def narrate(self) -> str:
+        """Generate consciousness-preserving narrative."""
+        staleness = self.get_staleness_indicator()
+        if staleness == "just now":
+            return f"Over in {self.name}, {self.summary}"
+        return f"Over in {self.name} ({staleness}), {self.summary}"
+
+    @property
+    def atmosphere(self) -> str:
+        """Get atmospheric description for this place type."""
+        atmospheres = {
+            PlaceType.ISSUE_TRACKING: "collaborative, status-oriented",
+            PlaceType.COMMUNICATION: "informal, conversational",
+            PlaceType.TEMPORAL: "time-bounded, scheduled",
+            PlaceType.DOCUMENTATION: "reference, authoritative",
+        }
+        return atmospheres.get(self.place_type, "unknown")
 
 
 # PM-087 Ethics Domain Models

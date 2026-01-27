@@ -1,6 +1,6 @@
 # ADR-054: Cross-Session Memory Architecture
 
-**Status**: PROPOSED
+**Status**: APPROVED
 **Date**: 2026-01-13
 **Authors**: Chief Architect
 **Deciders**: PM, CXO, PPM

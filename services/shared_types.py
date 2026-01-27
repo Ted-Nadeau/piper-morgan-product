@@ -239,7 +239,7 @@ class PortfolioOnboardingState(Enum):
     DECLINED = "declined"  # User said no thanks
 
 
-class PlaceType(str, Enum):
+class InteractionSpace(str, Enum):
     """
     Where the interaction is happening - the Place in MUX grammar.
 
@@ -259,6 +259,53 @@ class PlaceType(str, Enum):
     CLI = "cli"
     API = "api"
     UNKNOWN = "unknown"
+
+
+class PlaceType(str, Enum):
+    """
+    Type of external source Piper can observe - where Piper looks for FEDERATED data.
+
+    Issue #684: MUX-NAV-PLACES
+    ADR-045: Object Model (FEDERATED category - "Piper's Senses")
+
+    Distinct from InteractionSpace which is where user ↔ Piper conversation happens.
+    PlaceType is where Piper "looks into" to gather observations about external reality.
+
+    Each type has distinct atmosphere affecting how Piper presents what it sees:
+    - IssueTracking: collaborative, status-oriented (GitHub, JIRA)
+    - Communication: informal, conversational (Slack messages, email)
+    - Temporal: time-bounded, scheduled (Calendar, meetings)
+    - Documentation: reference, authoritative (Notion, Confluence)
+    """
+
+    ISSUE_TRACKING = "issue_tracking"
+    COMMUNICATION = "communication"
+    TEMPORAL = "temporal"
+    DOCUMENTATION = "documentation"
+
+
+class PlaceConfidence(str, Enum):
+    """
+    How confident Piper is about information from a Place.
+
+    Issue #684: MUX-NAV-PLACES
+    Pattern: Confidence-based display modes
+
+    Affects how Place data is presented to users:
+    - HIGH: Show summary inline ("I see 3 PRs waiting")
+    - MEDIUM: Offer to expand ("I noticed some activity - want details?")
+    - LOW: Suggest visiting source ("You might want to check GitHub directly")
+
+    Confidence degrades with:
+    - Cache age (stale data)
+    - Incomplete API access
+    - Rate limiting
+    - Connection issues
+    """
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 class PerceptionMode(str, Enum):
@@ -331,3 +378,34 @@ class RiskLevel(IntEnum):
     LOW = 1  # Read-only queries, notifications, reminders
     MEDIUM = 2  # Draft creation, internal state changes
     HIGH = 3  # Send messages, delete/modify data, external actions
+
+
+class HardnessLevel(IntEnum):
+    """
+    Object hardness in the home state experience.
+
+    Issue #419: MUX-NAV-HOME - Home State Design
+    ADR-045: Object Model
+    ownership-metaphors.md: NATIVE/FEDERATED/SYNTHETIC epistemology
+
+    Hardness represents how persistent and user-controlled an object is.
+    Objects can move UP the hardness spectrum through user interaction
+    (a soft observation can "harden" into a persistent project).
+
+    Hardness correlates with but is distinct from OwnershipCategory:
+    - NATIVE objects tend to be harder (user's core data)
+    - FEDERATED objects tend to be softer (observed from places)
+    - SYNTHETIC objects can vary (Piper's conclusions can harden)
+
+    Trust stage affects which hardness levels are shown:
+    - Stage 1 (NEW): Only hardest objects (user-initiated)
+    - Stage 2 (BUILDING): + Soft hints about capabilities
+    - Stage 3 (ESTABLISHED): + Soft observations ("I noticed...")
+    - Stage 4 (TRUSTED): All levels including anticipatory (softest)
+    """
+
+    HARDEST = 5  # Lenses - part of the furniture, always reachable
+    HARD = 4  # Persistent user-anchored: Projects, Lists, Products
+    MEDIUM = 3  # Objects gaining persistence through interaction
+    SOFT = 2  # Piper's contextual offerings: "I noticed 3 PRs waiting"
+    SOFTEST = 1  # Ephemeral affordances: this-moment-only offers
