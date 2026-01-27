@@ -209,6 +209,28 @@ class Feature:
     risks: List["Risk"] = field(default_factory=list)
     work_items: List["WorkItem"] = field(default_factory=list)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization.
+
+        Follows the same pattern as WorkItem.to_dict() for consistency.
+        Includes lifecycle_state when present (#705 MUX-LIFECYCLE-UI-B).
+        """
+        result = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "hypothesis": self.hypothesis,
+            "acceptance_criteria": self.acceptance_criteria,
+            "status": self.status,
+            "product_id": self.product_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        # Include lifecycle state if present (#705 MUX-LIFECYCLE-UI-B)
+        if self.lifecycle_state is not None:
+            result["lifecycle_state"] = self.lifecycle_state.value
+        return result
+
 
 @dataclass
 class Stakeholder:
@@ -258,7 +280,7 @@ class WorkItem:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
-        return {
+        result = {
             "id": self.id,
             "title": self.title,
             "description": self.description,
@@ -274,6 +296,10 @@ class WorkItem:
             "metadata": self.metadata,
             "created_at": self.created_at.isoformat(),
         }
+        # Include lifecycle state if present (#685 MUX-LIFECYCLE-OBJECTS)
+        if self.lifecycle_state is not None:
+            result["lifecycle_state"] = self.lifecycle_state.value
+        return result
 
 
 # PM-009: Project Management Domain Models

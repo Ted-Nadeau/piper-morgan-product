@@ -69,6 +69,44 @@ The map serves three functions:
 
 ---
 
+## Lifecycle Model Wiring Status
+
+**Updated**: 2026-01-26 (Post #685 MUX-LIFECYCLE-OBJECTS)
+
+This section tracks which domain models have lifecycle infrastructure wired in.
+
+### Domain Models with Lifecycle
+
+| Model | Has `lifecycle_state`? | `to_dict()` wiring? | Location | Notes |
+|-------|----------------------|---------------------|----------|-------|
+| **WorkItem** | ✅ Yes | ✅ Yes (#685) | `services/domain/models.py:251` | Full lifecycle support |
+| **Feature** | ✅ Yes | ✅ Yes (#705) | `services/domain/models.py:209` | Full lifecycle support |
+| **Insight** | ❌ No | N/A | `services/mux/composting_models.py` | Has `confidence` but no lifecycle |
+| **SurfaceableInsight** | ❌ No | Has `to_dict()` | `services/mux/composting_pipeline.py` | Trust-gating, no lifecycle |
+
+### UI Integration Status
+
+| View/Template | Displays Model | Model Ready? | UI Ready? | Issue |
+|--------------|----------------|--------------|-----------|-------|
+| Morning Standup | WorkItem | ✅ Yes | ❌ No | #703 Phase 1 |
+| Insights Page | SurfaceableInsight | ❌ No | ❌ No | Needs model work first |
+| Todos Page | (needs investigation) | ? | ❌ No | TBD |
+
+### Lifecycle UI Components (from #423)
+
+All components exist in `templates/components/`:
+- `lifecycle_indicator.html` - Visual indicator with experience phrases
+- `lifecycle_detail.html` - Detailed lifecycle view
+- `lifecycle_notification.html` - Trust-gated notification component
+
+JavaScript API: `LifecycleIndicator.create(stage, compact)` returns DOM element.
+
+### Integration Roadmap
+
+See #703 and child issues for the phased integration plan.
+
+---
+
 ## Reference Implementation (Morning Standup)
 
 **See**: `dev/2026/01/19/p0-morning-standup-analysis.md` for complete analysis
@@ -976,7 +1014,7 @@ The map serves three functions:
 
 ## Document Maintenance
 
-**Last Updated**: 2026-01-20 (Phase 1-2 complete: All feature mappings populated)
+**Last Updated**: 2026-01-26 (Added Lifecycle Model Wiring Status section post #685)
 **Next Update Trigger**: Phase 3 implementation (feature transformations begin)
 **Ownership**: @PM (xian)
 **Issue**: #406 MUX-VISION-FEATURE-MAP
