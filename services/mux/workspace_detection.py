@@ -8,7 +8,7 @@ This module provides:
 - ContextSwitch: Detected change in user's working context
 - detect_context_switch(): Detection logic for context switches
 
-Bridges existing infrastructure (PlaceType enum, spatial_context dicts)
+Bridges existing infrastructure (InteractionSpace enum, spatial_context dicts)
 to typed domain models for workspace-aware behavior.
 """
 
@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 
 @dataclass
@@ -24,7 +24,7 @@ class WorkspaceContext:
     """
     Represents a user's working context.
 
-    Built from PlaceDetector output (PlaceType) and spatial_context dict.
+    Built from PlaceDetector output (InteractionSpace) and spatial_context dict.
     Provides typed access to workspace information that was previously
     scattered across untyped dictionaries.
     """
@@ -33,25 +33,25 @@ class WorkspaceContext:
     workspace_type: str  # "slack", "web", "cli", "api", "unknown"
     friendly_name: str  # Human-readable: "#general", "web chat", "terminal"
     last_active: datetime
-    place_type: PlaceType
+    place_type: InteractionSpace
     metadata: Dict[str, Any]
 
     @classmethod
     def from_spatial_context(
         cls,
         spatial_context: Dict[str, Any],
-        place_type: PlaceType,
+        place_type: InteractionSpace,
         timestamp: Optional[datetime] = None,
     ) -> "WorkspaceContext":
         """
-        Build WorkspaceContext from spatial_context dict and PlaceType.
+        Build WorkspaceContext from spatial_context dict and InteractionSpace.
 
         This factory method bridges the existing dict-based infrastructure
         to the typed domain model.
 
         Args:
             spatial_context: Dict with location hints (room_id, channel, workspace_id, etc.)
-            place_type: PlaceType enum from PlaceDetector
+            place_type: InteractionSpace enum from PlaceDetector
             timestamp: When this context was active (defaults to now)
 
         Returns:
@@ -70,7 +70,7 @@ class WorkspaceContext:
         )
 
     @staticmethod
-    def _extract_workspace_id(ctx: Dict[str, Any], place_type: PlaceType) -> str:
+    def _extract_workspace_id(ctx: Dict[str, Any], place_type: InteractionSpace) -> str:
         """
         Extract workspace identifier based on place type.
 
@@ -80,26 +80,26 @@ class WorkspaceContext:
         - CLI: always "cli"
         - API: client_id
         """
-        if place_type in (PlaceType.SLACK_DM, PlaceType.SLACK_CHANNEL):
+        if place_type in (InteractionSpace.SLACK_DM, InteractionSpace.SLACK_CHANNEL):
             return ctx.get("workspace_id") or ctx.get("team_id") or "unknown-slack"
-        elif place_type == PlaceType.WEB_CHAT:
+        elif place_type == InteractionSpace.WEB_CHAT:
             return ctx.get("session_id") or "web-chat"
-        elif place_type == PlaceType.CLI:
+        elif place_type == InteractionSpace.CLI:
             return "cli"
-        elif place_type == PlaceType.API:
+        elif place_type == InteractionSpace.API:
             return ctx.get("client_id") or "api"
         return "unknown"
 
     @staticmethod
-    def _derive_workspace_type(place_type: PlaceType) -> str:
-        """Map PlaceType enum to workspace type string."""
+    def _derive_workspace_type(place_type: InteractionSpace) -> str:
+        """Map InteractionSpace enum to workspace type string."""
         mapping = {
-            PlaceType.SLACK_DM: "slack",
-            PlaceType.SLACK_CHANNEL: "slack",
-            PlaceType.WEB_CHAT: "web",
-            PlaceType.CLI: "cli",
-            PlaceType.API: "api",
-            PlaceType.UNKNOWN: "unknown",
+            InteractionSpace.SLACK_DM: "slack",
+            InteractionSpace.SLACK_CHANNEL: "slack",
+            InteractionSpace.WEB_CHAT: "web",
+            InteractionSpace.CLI: "cli",
+            InteractionSpace.API: "api",
+            InteractionSpace.UNKNOWN: "unknown",
         }
         return mapping.get(place_type, "unknown")
 

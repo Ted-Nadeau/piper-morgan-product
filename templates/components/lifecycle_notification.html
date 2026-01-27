@@ -1,0 +1,270 @@
+<!--
+  Lifecycle Notification Component (#423 MUX-IMPLEMENT-LIFECYCLE)
+
+  Notifies users when objects transition between lifecycle stages.
+  Trust-gated: Only Stage 3+ users see these notifications.
+  Uses experience phrases, not technical stage names.
+
+  Data attributes:
+  - data-min-stage: 3 (trust-gated)
+-->
+
+<style>
+  /* Notification container */
+  .lifecycle-notifications {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 360px;
+  }
+
+  /* Individual notification */
+  .lifecycle-notification {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #10b981;
+    animation: slideIn 0.3s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .lifecycle-notification.exiting {
+    animation: slideOut 0.3s ease forwards;
+  }
+
+  @keyframes slideOut {
+    to {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+  }
+
+  /* Stage color indicator */
+  .lifecycle-notification-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Content */
+  .lifecycle-notification-content {
+    flex: 1;
+  }
+
+  .lifecycle-notification-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin: 0 0 4px 0;
+  }
+
+  .lifecycle-notification-message {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Dismiss button */
+  .lifecycle-notification-dismiss {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 18px;
+    line-height: 1;
+    margin: -4px -4px 0 0;
+  }
+
+  .lifecycle-notification-dismiss:hover {
+    color: #666;
+  }
+
+  /* Trust-gated visibility */
+  .lifecycle-notifications.trust-hidden {
+    display: none;
+  }
+</style>
+
+<div class="lifecycle-notifications trust-hidden"
+     id="lifecycle-notifications"
+     data-min-stage="3"
+     role="region"
+     aria-label="Lifecycle notifications"
+     aria-live="polite">
+  <!-- Notifications will be appended here -->
+</div>
+
+<template id="lifecycle-notification-template">
+  <div class="lifecycle-notification" role="alert">
+    <span class="lifecycle-notification-dot" aria-hidden="true"></span>
+    <div class="lifecycle-notification-content">
+      <p class="lifecycle-notification-title"></p>
+      <p class="lifecycle-notification-message"></p>
+    </div>
+    <button class="lifecycle-notification-dismiss" aria-label="Dismiss notification">&times;</button>
+  </div>
+</template>
+
+<script>
+  /**
+   * Lifecycle Notification Manager (#423 MUX-IMPLEMENT-LIFECYCLE)
+   *
+   * Shows notifications when objects transition stages.
+   * Trust-gated: Stage 3+ only.
+   * Uses experience phrases, not technical labels.
+   */
+  (function() {
+    'use strict';
+
+    const AUTO_DISMISS_MS = 5000;
+
+    // Transition messages (natural language, not technical)
+    const TRANSITION_MESSAGES = {
+      'emergent_derived': "discovered a connection",
+      'emergent_noticed': "is now on my radar",
+      'derived_noticed': "I'm tracking this now",
+      'noticed_proposed': "I have a suggestion",
+      'proposed_ratified': "is happening now",
+      'proposed_deprecated': "didn't move forward",
+      'ratified_deprecated': "is no longer active",
+      'ratified_archived': "is complete, keeping for reference",
+      'deprecated_archived': "moved to archive",
+      'archived_composted': "became a learning",
+    };
+
+    /**
+     * Initialize notifications (check trust level)
+     */
+    function init() {
+      const container = document.getElementById('lifecycle-notifications');
+      if (!container) return;
+
+      const trustStage = window.trustStage || 1;
+      const minStage = parseInt(container.dataset.minStage || '3', 10);
+
+      if (trustStage >= minStage) {
+        container.classList.remove('trust-hidden');
+      }
+    }
+
+    /**
+     * Show a lifecycle transition notification
+     * @param {Object} options
+     * @param {string} options.objectName - Name of the object
+     * @param {string} options.fromStage - Previous stage
+     * @param {string} options.toStage - New stage
+     */
+    function show(options) {
+      const container = document.getElementById('lifecycle-notifications');
+      if (!container || container.classList.contains('trust-hidden')) {
+        return;
+      }
+
+      const template = document.getElementById('lifecycle-notification-template');
+      if (!template) return;
+
+      const clone = template.content.cloneNode(true);
+      const notification = clone.querySelector('.lifecycle-notification');
+
+      // Set title
+      const title = notification.querySelector('.lifecycle-notification-title');
+      title.textContent = options.objectName || 'Something';
+
+      // Set message using experience phrases
+      const message = notification.querySelector('.lifecycle-notification-message');
+      const transitionKey = `${options.fromStage}_${options.toStage}`;
+      const transitionText = TRANSITION_MESSAGES[transitionKey];
+
+      if (transitionText) {
+        message.textContent = transitionText;
+      } else {
+        // Fallback: use new stage's experience phrase
+        const toPhrase = window.LifecycleIndicator ?
+          window.LifecycleIndicator.getPhrase(options.toStage) :
+          `moved to ${options.toStage}`;
+        message.textContent = toPhrase;
+      }
+
+      // Set dot color
+      const dot = notification.querySelector('.lifecycle-notification-dot');
+      if (window.LifecycleIndicator) {
+        dot.style.background = window.LifecycleIndicator.getColor(options.toStage);
+      }
+
+      // Set up dismiss
+      const dismissBtn = notification.querySelector('.lifecycle-notification-dismiss');
+      dismissBtn.addEventListener('click', () => dismiss(notification));
+
+      // Add to container
+      container.appendChild(notification);
+
+      // Auto-dismiss after timeout
+      setTimeout(() => dismiss(notification), AUTO_DISMISS_MS);
+
+      return notification;
+    }
+
+    /**
+     * Dismiss a notification
+     */
+    function dismiss(notification) {
+      if (!notification || notification.classList.contains('exiting')) return;
+
+      notification.classList.add('exiting');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }
+
+    /**
+     * Clear all notifications
+     */
+    function clearAll() {
+      const container = document.getElementById('lifecycle-notifications');
+      if (!container) return;
+
+      const notifications = container.querySelectorAll('.lifecycle-notification');
+      notifications.forEach(n => dismiss(n));
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    // Expose functions globally
+    window.LifecycleNotification = {
+      show: show,
+      dismiss: dismiss,
+      clearAll: clearAll,
+      TRANSITION_MESSAGES: TRANSITION_MESSAGES,
+    };
+
+    // Mark as loaded
+    window.lifecycleNotificationLoaded = true;
+  })();
+</script>

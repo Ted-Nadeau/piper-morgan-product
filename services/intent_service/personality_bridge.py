@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional
 
 from services.domain.models import Intent
 from services.intent_service.intent_types import IntentClassificationContext, IntentUnderstanding
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 # Maps technical action names to human-readable descriptions
 ACTION_NARRATIVES: Dict[str, str] = {
@@ -239,7 +239,7 @@ class PersonalityBridge:
 
     def _note_place_awareness(
         self,
-        place: PlaceType,
+        place: InteractionSpace,
         place_settings: Dict[str, Any],
     ) -> str:
         """
@@ -249,7 +249,7 @@ class PersonalityBridge:
         weird for Piper to say "Since we're in a DM..." every time.
         Only note Place when it affects the response meaningfully.
         """
-        if place == PlaceType.SLACK_CHANNEL:
+        if place == InteractionSpace.SLACK_CHANNEL:
             return "Since we're in a channel, I'll keep this brief."
         # Most cases: no explicit Place mention
         return ""

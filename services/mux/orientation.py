@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from services.consciousness.context import ConsciousnessContext
-    from services.intent_service.place_detector import PlaceType
+    from services.intent_service.place_detector import InteractionSpace
     from services.intent_service.spatial_intent_classifier import SpatialIntentContext
     from services.trust.proactivity_gate import ProactivityConfig
     from services.user_context_service import UserContext
@@ -126,7 +126,7 @@ class OrientationState:
         cls,
         user_context: Optional["UserContext"] = None,
         consciousness_context: Optional["ConsciousnessContext"] = None,
-        place: Optional["PlaceType"] = None,
+        place: Optional["InteractionSpace"] = None,
         spatial_context: Optional["SpatialIntentContext"] = None,
         trust_context: Optional[TrustContext] = None,
         piper_entity: Optional[Any] = None,  # PiperEntity from consciousness.py
@@ -140,7 +140,7 @@ class OrientationState:
         Args:
             user_context: User-specific context (priorities, preferences)
             consciousness_context: Temporal/situational awareness
-            place: Detected PlaceType from PlaceDetector
+            place: Detected InteractionSpace from PlaceDetector
             spatial_context: Detailed spatial/channel context
             trust_context: Trust state for surfacing decisions
             piper_entity: PiperEntity instance for self-awareness
@@ -218,7 +218,7 @@ class OrientationState:
 
     @staticmethod
     def _perceive_spatial(
-        place: Optional["PlaceType"] = None,
+        place: Optional["InteractionSpace"] = None,
         spatial_context: Optional["SpatialIntentContext"] = None,
     ) -> OrientationPillar:
         """

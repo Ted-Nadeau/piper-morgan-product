@@ -1,0 +1,310 @@
+<!--
+  Lifecycle Indicator Component (#423 MUX-IMPLEMENT-LIFECYCLE)
+
+  Displays an object's lifecycle stage using experience phrases, not technical labels.
+  Supports compact mode (dot only) and expanded mode (dot + phrase).
+
+  Data attributes:
+  - data-lifecycle-stage: emergent, derived, noticed, proposed, ratified, deprecated, archived, composted
+  - data-compact: true/false (default: false)
+
+  Stage Colors (semantic):
+  - EMERGENT: #bfdbfe (soft blue) - forming
+  - DERIVED: #ddd6fe (light purple) - connected
+  - NOTICED: #fef08a (yellow) - attention
+  - PROPOSED: #fed7aa (orange) - action needed
+  - RATIFIED: #bbf7d0 (green) - active
+  - DEPRECATED: #e5e7eb (gray) - inactive
+  - ARCHIVED: #f3f4f6 (light gray) - reference
+  - COMPOSTED: #fde68a (warm gold) - transformed
+
+  Experience Phrases (from lifecycle.py):
+  - EMERGENT: "I just noticed..."
+  - DERIVED: "I figured out from..."
+  - NOTICED: "I'm aware of..."
+  - PROPOSED: "I think we should..."
+  - RATIFIED: "We're doing..."
+  - DEPRECATED: "This used to be..."
+  - ARCHIVED: "I remember when..."
+  - COMPOSTED: "I learned that..."
+-->
+
+<style>
+  /* Lifecycle Indicator Base Styles */
+  .lifecycle-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  /* Stage dot */
+  .lifecycle-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Stage colors */
+  .lifecycle-indicator[data-lifecycle-stage="emergent"] .lifecycle-dot {
+    background: #bfdbfe;
+    box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="derived"] .lifecycle-dot {
+    background: #ddd6fe;
+    box-shadow: 0 0 0 2px rgba(221, 214, 254, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="noticed"] .lifecycle-dot {
+    background: #fef08a;
+    box-shadow: 0 0 0 2px rgba(254, 240, 138, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="proposed"] .lifecycle-dot {
+    background: #fed7aa;
+    box-shadow: 0 0 0 2px rgba(254, 215, 170, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="ratified"] .lifecycle-dot {
+    background: #bbf7d0;
+    box-shadow: 0 0 0 2px rgba(187, 247, 208, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="deprecated"] .lifecycle-dot {
+    background: #e5e7eb;
+    box-shadow: 0 0 0 2px rgba(229, 231, 235, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="archived"] .lifecycle-dot {
+    background: #f3f4f6;
+    box-shadow: 0 0 0 2px rgba(243, 244, 246, 0.3);
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="composted"] .lifecycle-dot {
+    background: #fde68a;
+    box-shadow: 0 0 0 2px rgba(253, 230, 138, 0.3);
+  }
+
+  /* Experience phrase text */
+  .lifecycle-phrase {
+    color: #666;
+    font-size: 13px;
+  }
+
+  /* Compact mode - dot only */
+  .lifecycle-indicator[data-compact="true"] .lifecycle-phrase {
+    display: none;
+  }
+
+  /* Tooltip container */
+  .lifecycle-indicator {
+    position: relative;
+  }
+
+  /* Tooltip */
+  .lifecycle-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s, visibility 0.15s;
+    z-index: 100;
+  }
+
+  .lifecycle-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #2c3e50;
+  }
+
+  .lifecycle-indicator:hover .lifecycle-tooltip,
+  .lifecycle-indicator:focus .lifecycle-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Forward-looking badge (for active items) */
+  .lifecycle-forward {
+    display: none;
+    font-size: 11px;
+    color: #888;
+    margin-left: 4px;
+  }
+
+  .lifecycle-indicator[data-lifecycle-stage="ratified"] .lifecycle-forward,
+  .lifecycle-indicator[data-lifecycle-stage="proposed"] .lifecycle-forward {
+    display: inline;
+  }
+</style>
+
+<template id="lifecycle-indicator-template">
+  <div class="lifecycle-indicator"
+       data-lifecycle-stage=""
+       data-compact="false"
+       role="status"
+       tabindex="0"
+       aria-label="">
+    <span class="lifecycle-dot" aria-hidden="true"></span>
+    <span class="lifecycle-phrase"></span>
+    <span class="lifecycle-forward" aria-hidden="true"></span>
+    <span class="lifecycle-tooltip" role="tooltip"></span>
+  </div>
+</template>
+
+<script>
+  /**
+   * Lifecycle Indicator Manager (#423 MUX-IMPLEMENT-LIFECYCLE)
+   *
+   * Creates and manages lifecycle indicators with:
+   * - Experience phrases (not technical labels)
+   * - Stage-specific colors
+   * - Compact and expanded modes
+   * - Tooltip on hover showing full phrase
+   */
+  (function() {
+    'use strict';
+
+    // Experience phrases - MUST match services/mux/lifecycle.py
+    const EXPERIENCE_PHRASES = {
+      emergent: "I just noticed...",
+      derived: "I figured out from...",
+      noticed: "I'm aware of...",
+      proposed: "I think we should...",
+      ratified: "We're doing...",
+      deprecated: "This used to be...",
+      archived: "I remember when...",
+      composted: "I learned that...",
+    };
+
+    // Forward-looking messages for active stages
+    const FORWARD_MESSAGES = {
+      proposed: "→ awaiting decision",
+      ratified: "→ in progress",
+    };
+
+    // Stage colors for reference
+    const STAGE_COLORS = {
+      emergent: '#bfdbfe',
+      derived: '#ddd6fe',
+      noticed: '#fef08a',
+      proposed: '#fed7aa',
+      ratified: '#bbf7d0',
+      deprecated: '#e5e7eb',
+      archived: '#f3f4f6',
+      composted: '#fde68a',
+    };
+
+    /**
+     * Get experience phrase for a stage
+     * @param {string} stage - Lifecycle stage
+     * @returns {string} - Experience phrase
+     */
+    function getExperiencePhrase(stage) {
+      return EXPERIENCE_PHRASES[stage] || 'Unknown state';
+    }
+
+    /**
+     * Create a lifecycle indicator element
+     * @param {string} stage - Lifecycle stage (emergent, derived, etc.)
+     * @param {boolean} compact - Whether to show compact mode (default: false)
+     * @returns {HTMLElement} - Lifecycle indicator element
+     */
+    function createIndicator(stage, compact = false) {
+      const template = document.getElementById('lifecycle-indicator-template');
+      if (!template) {
+        console.error('Lifecycle indicator template not found');
+        return null;
+      }
+
+      const clone = template.content.cloneNode(true);
+      const indicator = clone.querySelector('.lifecycle-indicator');
+
+      // Set data attributes
+      indicator.dataset.lifecycleStage = stage;
+      indicator.dataset.compact = compact.toString();
+
+      // Set experience phrase (not technical label!)
+      const phrase = getExperiencePhrase(stage);
+      indicator.querySelector('.lifecycle-phrase').textContent = phrase;
+      indicator.querySelector('.lifecycle-tooltip').textContent = phrase;
+
+      // Set ARIA label
+      indicator.setAttribute('aria-label', `Lifecycle: ${phrase}`);
+
+      // Set forward-looking message if applicable
+      const forwardEl = indicator.querySelector('.lifecycle-forward');
+      if (FORWARD_MESSAGES[stage]) {
+        forwardEl.textContent = FORWARD_MESSAGES[stage];
+      }
+
+      return indicator;
+    }
+
+    /**
+     * Update an existing indicator's stage
+     * @param {HTMLElement} indicator - Indicator element
+     * @param {string} newStage - New lifecycle stage
+     */
+    function updateIndicator(indicator, newStage) {
+      indicator.dataset.lifecycleStage = newStage;
+
+      const phrase = getExperiencePhrase(newStage);
+      indicator.querySelector('.lifecycle-phrase').textContent = phrase;
+      indicator.querySelector('.lifecycle-tooltip').textContent = phrase;
+      indicator.setAttribute('aria-label', `Lifecycle: ${phrase}`);
+
+      const forwardEl = indicator.querySelector('.lifecycle-forward');
+      if (FORWARD_MESSAGES[newStage]) {
+        forwardEl.textContent = FORWARD_MESSAGES[newStage];
+      } else {
+        forwardEl.textContent = '';
+      }
+    }
+
+    /**
+     * Get all valid lifecycle stages
+     * @returns {string[]} - Array of stage names
+     */
+    function getStages() {
+      return Object.keys(EXPERIENCE_PHRASES);
+    }
+
+    /**
+     * Get color for a stage
+     * @param {string} stage - Lifecycle stage
+     * @returns {string} - Hex color
+     */
+    function getStageColor(stage) {
+      return STAGE_COLORS[stage] || '#e5e7eb';
+    }
+
+    // Expose functions globally
+    window.LifecycleIndicator = {
+      create: createIndicator,
+      update: updateIndicator,
+      getPhrase: getExperiencePhrase,
+      getColor: getStageColor,
+      getStages: getStages,
+      PHRASES: EXPERIENCE_PHRASES,
+      COLORS: STAGE_COLORS,
+    };
+
+    // Mark as loaded
+    window.lifecycleIndicatorLoaded = true;
+  })();
+</script>

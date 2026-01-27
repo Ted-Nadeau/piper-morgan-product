@@ -1,0 +1,606 @@
+<!--
+  Privacy Mode Component (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+
+  Provides privacy controls following D2 patterns:
+  - Start/end private session
+  - Visual indicator during private session
+  - Retroactive marking of conversations
+  - Clear, honest communication about what "private" means
+
+  Design reference: PDR-002 (Privacy Mode)
+  "If private, it must truly be private" - no privacy theater
+-->
+
+<style>
+  /* Privacy Mode Banner (shown during private session) */
+  .privacy-mode-banner {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .privacy-mode-banner.hidden {
+    display: none;
+  }
+
+  .privacy-mode-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .privacy-mode-icon {
+    font-size: 18px;
+  }
+
+  .privacy-mode-text {
+    font-size: 14px;
+    color: #991b1b;
+    margin: 0;
+  }
+
+  .privacy-mode-text strong {
+    font-weight: 600;
+  }
+
+  .privacy-mode-end-btn {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #fca5a5;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #b91c1c;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .privacy-mode-end-btn:hover {
+    background: #fef2f2;
+    border-color: #f87171;
+  }
+
+  /* Privacy Start Dialog */
+  .privacy-start-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .privacy-start-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .privacy-dialog-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 420px;
+    padding: 24px;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.2s ease;
+  }
+
+  .privacy-start-dialog.open .privacy-dialog-content {
+    transform: scale(1) translateY(0);
+  }
+
+  .privacy-dialog-icon {
+    font-size: 40px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .privacy-dialog-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 12px 0;
+    text-align: center;
+  }
+
+  .privacy-dialog-description {
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0 0 20px 0;
+  }
+
+  .privacy-what-means {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .privacy-what-means-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 10px 0;
+  }
+
+  .privacy-what-means ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.6;
+  }
+
+  .privacy-what-means li {
+    margin-bottom: 4px;
+  }
+
+  .privacy-dialog-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .privacy-dialog-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .privacy-dialog-btn.cancel {
+    background: none;
+    border: 1px solid #d1d5db;
+    color: #475569;
+  }
+
+  .privacy-dialog-btn.cancel:hover {
+    background: #f3f4f6;
+  }
+
+  .privacy-dialog-btn.confirm {
+    background: #dc2626;
+    border: none;
+    color: white;
+  }
+
+  .privacy-dialog-btn.confirm:hover {
+    background: #b91c1c;
+  }
+
+  /* Mark Private Dialog (for existing conversations) */
+  .privacy-mark-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .privacy-mark-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .privacy-mark-preview {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  /* Quick toggle button (for use in UI) */
+  .privacy-quick-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .privacy-quick-toggle:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .privacy-quick-toggle.active {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  .privacy-quick-toggle .privacy-toggle-icon {
+    font-size: 14px;
+  }
+</style>
+
+<!-- Privacy Mode Banner Template -->
+<template id="privacy-banner-template">
+  <div class="privacy-mode-banner hidden" role="status" aria-live="polite">
+    <div class="privacy-mode-info">
+      <span class="privacy-mode-icon" aria-hidden="true">🔒</span>
+      <p class="privacy-mode-text">
+        <strong>Private session</strong> — This conversation won't be remembered
+      </p>
+    </div>
+    <button class="privacy-mode-end-btn">End private session</button>
+  </div>
+</template>
+
+<!-- Privacy Start Dialog Template -->
+<template id="privacy-start-dialog-template">
+  <div class="privacy-start-dialog" role="dialog" aria-modal="true" aria-labelledby="privacy-start-title">
+    <div class="privacy-dialog-content">
+      <div class="privacy-dialog-icon" aria-hidden="true">🔒</div>
+      <h2 class="privacy-dialog-title" id="privacy-start-title">Start private session?</h2>
+
+      <p class="privacy-dialog-description">
+        Everything in this conversation will be private until you end the session.
+      </p>
+
+      <div class="privacy-what-means">
+        <h3 class="privacy-what-means-title">What this means</h3>
+        <ul>
+          <li>This conversation won't appear in your history</li>
+          <li>I won't learn from anything we discuss</li>
+          <li>No context will carry forward to future sessions</li>
+        </ul>
+      </div>
+
+      <div class="privacy-dialog-actions">
+        <button class="privacy-dialog-btn cancel">Cancel</button>
+        <button class="privacy-dialog-btn confirm">Start private session</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Mark Private Dialog Template -->
+<template id="privacy-mark-dialog-template">
+  <div class="privacy-mark-dialog" role="alertdialog" aria-modal="true" aria-labelledby="privacy-mark-title">
+    <div class="privacy-dialog-content">
+      <div class="privacy-dialog-icon" aria-hidden="true">🔒</div>
+      <h2 class="privacy-dialog-title" id="privacy-mark-title">Mark as private?</h2>
+
+      <div class="privacy-mark-preview"></div>
+
+      <p class="privacy-dialog-description">
+        This will remove this conversation from your visible history and exclude it from learning.
+      </p>
+
+      <div class="privacy-dialog-actions">
+        <button class="privacy-dialog-btn cancel">Cancel</button>
+        <button class="privacy-dialog-btn confirm">Mark as private</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Quick Toggle Template -->
+<template id="privacy-toggle-template">
+  <button class="privacy-quick-toggle" aria-pressed="false">
+    <span class="privacy-toggle-icon">🔓</span>
+    <span class="privacy-toggle-label">Private mode</span>
+  </button>
+</template>
+
+<script>
+  /**
+   * Privacy Mode Manager (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+   *
+   * Implements honest privacy controls:
+   * - Start/end private sessions
+   * - Mark existing conversations as private
+   * - Clear visual indication of privacy state
+   *
+   * Key principle: "If private, it must truly be private"
+   */
+  (function() {
+    'use strict';
+
+    let isPrivate = false;
+    let currentDialog = null;
+    let bannerElement = null;
+
+    /**
+     * Start a private session
+     * @returns {Promise<boolean>} - true if user confirmed
+     */
+    function startPrivateSession() {
+      return new Promise((resolve) => {
+        const template = document.getElementById('privacy-start-dialog-template');
+        if (!template) {
+          console.error('Privacy start dialog template not found');
+          resolve(false);
+          return;
+        }
+
+        const clone = template.content.cloneNode(true);
+        const dialog = clone.querySelector('.privacy-start-dialog');
+
+        // Cancel button
+        const cancelBtn = dialog.querySelector('.cancel');
+        cancelBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          resolve(false);
+        });
+
+        // Confirm button
+        const confirmBtn = dialog.querySelector('.confirm');
+        confirmBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          setPrivacyState(true);
+          if (window.showToast) {
+            window.showToast('Private session started', 'info');
+          }
+          resolve(true);
+        });
+
+        // Click outside to close
+        dialog.addEventListener('click', (e) => {
+          if (e.target === dialog) {
+            closeDialog(dialog);
+            resolve(false);
+          }
+        });
+
+        // ESC to close
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') {
+            closeDialog(dialog);
+            document.removeEventListener('keydown', handleEsc);
+            resolve(false);
+          }
+        };
+        document.addEventListener('keydown', handleEsc);
+
+        // Show dialog
+        document.body.appendChild(dialog);
+        currentDialog = dialog;
+        requestAnimationFrame(() => {
+          dialog.classList.add('open');
+          confirmBtn.focus();
+        });
+      });
+    }
+
+    /**
+     * End the current private session
+     */
+    function endPrivateSession() {
+      setPrivacyState(false);
+      if (window.showToast) {
+        window.showToast('Private session ended', 'info');
+      }
+    }
+
+    /**
+     * Mark an existing conversation as private
+     * @param {Object} conversation - The conversation to mark
+     * @returns {Promise<boolean>} - true if user confirmed
+     */
+    function markAsPrivate(conversation) {
+      return new Promise((resolve) => {
+        const template = document.getElementById('privacy-mark-dialog-template');
+        if (!template) {
+          console.error('Privacy mark dialog template not found');
+          resolve(false);
+          return;
+        }
+
+        const clone = template.content.cloneNode(true);
+        const dialog = clone.querySelector('.privacy-mark-dialog');
+
+        // Set preview text
+        const preview = dialog.querySelector('.privacy-mark-preview');
+        preview.textContent = '"' + (conversation.topic_summary || conversation.summary || 'This conversation') + '"';
+
+        // Cancel button
+        const cancelBtn = dialog.querySelector('.cancel');
+        cancelBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          resolve(false);
+        });
+
+        // Confirm button
+        const confirmBtn = dialog.querySelector('.confirm');
+        confirmBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          if (window.showToast) {
+            window.showToast('Marked as private', 'info');
+          }
+          resolve(true);
+        });
+
+        // Click outside to close
+        dialog.addEventListener('click', (e) => {
+          if (e.target === dialog) {
+            closeDialog(dialog);
+            resolve(false);
+          }
+        });
+
+        // ESC to close
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') {
+            closeDialog(dialog);
+            document.removeEventListener('keydown', handleEsc);
+            resolve(false);
+          }
+        };
+        document.addEventListener('keydown', handleEsc);
+
+        // Show dialog
+        document.body.appendChild(dialog);
+        currentDialog = dialog;
+        requestAnimationFrame(() => {
+          dialog.classList.add('open');
+          cancelBtn.focus();
+        });
+      });
+    }
+
+    /**
+     * Set the privacy state and update UI
+     * @param {boolean} private - Whether privacy mode is active
+     */
+    function setPrivacyState(private_) {
+      isPrivate = private_;
+
+      // Update banner
+      if (bannerElement) {
+        if (isPrivate) {
+          bannerElement.classList.remove('hidden');
+        } else {
+          bannerElement.classList.add('hidden');
+        }
+      }
+
+      // Update any quick toggles
+      document.querySelectorAll('.privacy-quick-toggle').forEach(toggle => {
+        const icon = toggle.querySelector('.privacy-toggle-icon');
+        toggle.classList.toggle('active', isPrivate);
+        toggle.setAttribute('aria-pressed', isPrivate);
+        if (icon) {
+          icon.textContent = isPrivate ? '🔒' : '🔓';
+        }
+      });
+
+      // Dispatch event for other components
+      window.dispatchEvent(new CustomEvent('privacyStateChange', {
+        detail: { isPrivate: isPrivate }
+      }));
+    }
+
+    /**
+     * Get current privacy state
+     * @returns {boolean} - Whether privacy mode is active
+     */
+    function getPrivacyState() {
+      return isPrivate;
+    }
+
+    /**
+     * Close a dialog with animation
+     */
+    function closeDialog(dialog) {
+      if (!dialog) return;
+
+      dialog.classList.remove('open');
+      setTimeout(() => {
+        if (dialog.parentNode) {
+          dialog.parentNode.removeChild(dialog);
+        }
+        if (currentDialog === dialog) {
+          currentDialog = null;
+        }
+      }, 200);
+    }
+
+    /**
+     * Mount the privacy banner
+     * @param {HTMLElement} container - Container to mount banner into
+     */
+    function mountBanner(container) {
+      const template = document.getElementById('privacy-banner-template');
+      if (!template) {
+        console.error('Privacy banner template not found');
+        return;
+      }
+
+      const clone = template.content.cloneNode(true);
+      bannerElement = clone.querySelector('.privacy-mode-banner');
+
+      // End session button
+      const endBtn = bannerElement.querySelector('.privacy-mode-end-btn');
+      endBtn.addEventListener('click', endPrivateSession);
+
+      // Set initial state
+      if (isPrivate) {
+        bannerElement.classList.remove('hidden');
+      }
+
+      container.appendChild(bannerElement);
+    }
+
+    /**
+     * Create a quick toggle button
+     * @param {HTMLElement} container - Container to mount toggle into
+     */
+    function createQuickToggle(container) {
+      const template = document.getElementById('privacy-toggle-template');
+      if (!template) {
+        console.error('Privacy toggle template not found');
+        return;
+      }
+
+      const clone = template.content.cloneNode(true);
+      const toggle = clone.querySelector('.privacy-quick-toggle');
+
+      toggle.addEventListener('click', async () => {
+        if (isPrivate) {
+          endPrivateSession();
+        } else {
+          await startPrivateSession();
+        }
+      });
+
+      // Set initial state
+      if (isPrivate) {
+        toggle.classList.add('active');
+        toggle.setAttribute('aria-pressed', 'true');
+        toggle.querySelector('.privacy-toggle-icon').textContent = '🔒';
+      }
+
+      container.appendChild(toggle);
+    }
+
+    // Expose globally
+    window.PrivacyMode = {
+      startPrivateSession: startPrivateSession,
+      endPrivateSession: endPrivateSession,
+      markAsPrivate: markAsPrivate,
+      setPrivacyState: setPrivacyState,
+      getPrivacyState: getPrivacyState,
+      mountBanner: mountBanner,
+      createQuickToggle: createQuickToggle,
+    };
+
+    // Mark as loaded
+    window.privacyModeLoaded = true;
+  })();
+</script>

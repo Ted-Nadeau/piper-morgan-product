@@ -1,7 +1,7 @@
 # Known Issues & Feature Status (v0.8.4.3)
 
-**Version**: 0.8.4.3
-**Last Updated**: January 18, 2026
+**Version**: 0.8.4.4
+**Last Updated**: January 26, 2026
 **Status**: Stable Core (Sprint A20 - Fresh Install Fixes)
 
 ---
@@ -67,9 +67,18 @@ These features have been tested, completed, and are ready for alpha testing:
   - Creates Project entities in database for future context
   - Issue #490: FTUX-PORTFOLIO complete
 
-- ✅ **Quality Validation** (Enhanced in 0.8.4)
+- ✅ **Places & Home State UI** (New in 0.8.4.4)
 
-  - 2100+ automated tests (major expansion in v0.8.4)
+  - HomeStateService for context-aware home page rendering
+  - PlaceService for window-based navigation (Places as Windows #684)
+  - InteractionSpace enum for communication channel awareness
+  - 15 new template components for Places UI
+  - 638 template tests for UI stability
+  - Issues #419 and #684 complete
+
+- ✅ **Quality Validation** (Enhanced in 0.8.4.4)
+
+  - 5200+ automated tests (major expansion in v0.8.4.4)
   - CI/CD quality gates with GitHub Actions
   - 100% pass rate on critical path tests
   - UI stability improvements across navigation and forms

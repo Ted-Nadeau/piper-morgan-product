@@ -31,7 +31,7 @@ from services.mux.workspace_memory import (
     get_relevant_memory,
     on_context_switch,
 )
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 # =============================================================================
 # Test Fixtures
@@ -42,7 +42,7 @@ def make_workspace(
     workspace_id: str = "ws-1",
     workspace_type: str = "slack",
     friendly_name: str = "#general",
-    place_type: PlaceType = PlaceType.SLACK_CHANNEL,
+    place_type: InteractionSpace = InteractionSpace.SLACK_CHANNEL,
     metadata: dict = None,
 ) -> WorkspaceContext:
     """Helper to create test WorkspaceContext."""

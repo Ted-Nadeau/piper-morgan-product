@@ -1,0 +1,846 @@
+<!-- Command Palette Component (#421 MUX-NAV-PALETTE) -->
+<!-- Usage: {% include 'components/command_palette.html' %} -->
+<!-- Requires: window.trustStage from #419 -->
+
+<style>
+/* Command Palette Overlay */
+.command-palette-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.command-palette-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Command Palette Container */
+.command-palette {
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  width: 90%;
+  max-width: 560px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  overflow: hidden;
+}
+
+.command-palette.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scale(1);
+}
+
+/* Search Input */
+.command-palette-search {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ecf0f1;
+  gap: 12px;
+}
+
+.command-palette-search-icon {
+  color: #95a5a6;
+  flex-shrink: 0;
+}
+
+.command-palette-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #2c3e50;
+  background: transparent;
+}
+
+.command-palette-input::placeholder {
+  color: #bdc3c7;
+}
+
+.command-palette-shortcut {
+  font-size: 11px;
+  color: #95a5a6;
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+/* Command List */
+.command-palette-list {
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+/* Category Header */
+.command-category {
+  padding: 8px 20px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #95a5a6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Command Item */
+.command-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  gap: 12px;
+}
+
+.command-item:hover,
+.command-item.selected {
+  background: #f5f7fa;
+}
+
+.command-item.selected {
+  background: #e3f2fd;
+}
+
+.command-item-icon {
+  width: 20px;
+  height: 20px;
+  color: #7f8c8d;
+  flex-shrink: 0;
+}
+
+.command-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.command-item-name {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.command-item-name .match {
+  background: #fff3cd;
+  border-radius: 2px;
+}
+
+.command-item-description {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.command-item-shortcut {
+  font-size: 11px;
+  color: #95a5a6;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* Empty State */
+.command-palette-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #95a5a6;
+}
+
+.command-palette-empty-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  color: #bdc3c7;
+}
+
+.command-palette-empty-text {
+  font-size: 14px;
+}
+
+/* Footer */
+.command-palette-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid #ecf0f1;
+  background: #fafafa;
+  font-size: 11px;
+  color: #95a5a6;
+}
+
+.command-palette-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.command-palette-footer-hint kbd {
+  background: #e8e8e8;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 10px;
+}
+</style>
+
+<!-- Overlay -->
+<div class="command-palette-overlay" id="command-palette-overlay" aria-hidden="true"></div>
+
+<!-- Palette -->
+<div class="command-palette" id="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+  <!-- Search -->
+  <div class="command-palette-search">
+    <svg class="command-palette-search-icon" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="7" cy="7" r="5"/>
+      <path d="M11 11l3 3"/>
+    </svg>
+    <input
+      type="text"
+      class="command-palette-input"
+      id="command-palette-input"
+      placeholder="What would you like to do?"
+      autocomplete="off"
+      spellcheck="false"
+      aria-label="Search commands"
+    >
+    <span class="command-palette-shortcut">esc</span>
+  </div>
+
+  <!-- Command List -->
+  <div class="command-palette-list" id="command-palette-list" role="listbox">
+    <!-- Commands populated by JavaScript -->
+  </div>
+
+  <!-- Footer -->
+  <div class="command-palette-footer">
+    <div class="command-palette-footer-hint">
+      <kbd>↑↓</kbd> navigate
+      <kbd>↵</kbd> select
+      <kbd>esc</kbd> close
+    </div>
+    <span id="command-palette-count"></span>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Command Registry
+  // Categories: Navigation, Action, Query, Meta
+  // Hardness: HARDEST(5), HARD(4), MEDIUM(3), SOFT(2), SOFTEST(1)
+  const COMMANDS = [
+    // Navigation - always available at appropriate trust levels
+    {
+      id: 'nav-home',
+      name: 'Go home',
+      description: 'Return to home',
+      category: 'Navigation',
+      icon: 'home',
+      action: () => window.location.href = '/',
+      hardness: 5,  // HARDEST - always visible
+      shortcut: null
+    },
+    {
+      id: 'nav-standup',
+      name: 'Check in',
+      description: 'Start your daily check-in',
+      category: 'Navigation',
+      icon: 'sun',
+      action: () => window.location.href = '/standup',
+      hardness: 4,  // HARD - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'nav-todos',
+      name: 'View to-dos',
+      description: 'See things you need to do',
+      category: 'Navigation',
+      icon: 'check',
+      action: () => window.location.href = '/todos',
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'nav-projects',
+      name: 'View projects',
+      description: 'See what you\'re working on',
+      category: 'Navigation',
+      icon: 'folder',
+      action: () => window.location.href = '/projects',
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'nav-documents',
+      name: 'View documents',
+      description: 'See what I know about your files',
+      category: 'Navigation',
+      icon: 'file',
+      action: () => window.location.href = '/documents',
+      hardness: 2,  // SOFT - Stage 4+
+      shortcut: null
+    },
+    {
+      id: 'nav-collections',
+      name: 'View collections',
+      description: 'Browse your lists',
+      category: 'Navigation',
+      icon: 'list',
+      action: () => window.location.href = '/lists',
+      hardness: 2,  // SOFT - Stage 4+
+      shortcut: null
+    },
+    {
+      id: 'nav-learning',
+      name: 'Learning',
+      description: 'Continue learning',
+      category: 'Navigation',
+      icon: 'book',
+      action: () => window.location.href = '/learning',
+      hardness: 4,  // HARD - Stage 3+
+      shortcut: null
+    },
+
+    // Actions
+    {
+      id: 'action-new-todo',
+      name: 'Create to-do',
+      description: 'Add something to do',
+      category: 'Action',
+      icon: 'plus',
+      action: () => window.location.href = '/todos?new=1',
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'action-new-project',
+      name: 'Create project',
+      description: 'Start a new project',
+      category: 'Action',
+      icon: 'folder-plus',
+      action: () => window.location.href = '/projects?new=1',
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+
+    // Query
+    {
+      id: 'query-urgent',
+      name: 'What\'s urgent?',
+      description: 'See what needs attention now',
+      category: 'Query',
+      icon: 'alert',
+      action: () => {
+        // Dispatch to chat
+        const event = new CustomEvent('piperQuery', { detail: { query: 'what\'s urgent?' } });
+        document.dispatchEvent(event);
+        window.location.href = '/?q=urgent';
+      },
+      hardness: 2,  // SOFT - Stage 4+
+      shortcut: null
+    },
+    {
+      id: 'query-today',
+      name: 'What\'s on today?',
+      description: 'See your schedule',
+      category: 'Query',
+      icon: 'calendar',
+      action: () => {
+        const event = new CustomEvent('piperQuery', { detail: { query: 'what\'s on today?' } });
+        document.dispatchEvent(event);
+        window.location.href = '/?q=today';
+      },
+      hardness: 2,  // SOFT - Stage 4+
+      shortcut: null
+    },
+
+    // Lifecycle Filters (#423)
+    {
+      id: 'filter-emergent',
+      name: 'Show emerging items',
+      description: 'Things I just noticed',
+      category: 'Filter',
+      icon: 'sparkle',
+      action: () => {
+        const event = new CustomEvent('lifecycleFilter', { detail: { stage: 'emergent' } });
+        document.dispatchEvent(event);
+        window.location.href = '/?filter=emergent';
+      },
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'filter-proposed',
+      name: 'Show proposed items',
+      description: 'Things awaiting decision',
+      category: 'Filter',
+      icon: 'question',
+      action: () => {
+        const event = new CustomEvent('lifecycleFilter', { detail: { stage: 'proposed' } });
+        document.dispatchEvent(event);
+        window.location.href = '/?filter=proposed';
+      },
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'filter-active',
+      name: 'Show active items',
+      description: 'Things in progress',
+      category: 'Filter',
+      icon: 'play',
+      action: () => {
+        const event = new CustomEvent('lifecycleFilter', { detail: { stage: 'ratified' } });
+        document.dispatchEvent(event);
+        window.location.href = '/?filter=active';
+      },
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'filter-archived',
+      name: 'Show archived items',
+      description: 'Things kept for reference',
+      category: 'Filter',
+      icon: 'archive',
+      action: () => {
+        const event = new CustomEvent('lifecycleFilter', { detail: { stage: 'archived' } });
+        document.dispatchEvent(event);
+        window.location.href = '/?filter=archived';
+      },
+      hardness: 2,  // SOFT - Stage 4+
+      shortcut: null
+    },
+    {
+      id: 'filter-learnings',
+      name: 'Show composted learnings',
+      description: 'Insights from past work',
+      category: 'Filter',
+      icon: 'lightbulb',
+      action: () => {
+        const event = new CustomEvent('lifecycleFilter', { detail: { stage: 'composted' } });
+        document.dispatchEvent(event);
+        window.location.href = '/insights';
+      },
+      hardness: 2,  // SOFT - Stage 4+
+      shortcut: null
+    },
+
+    // History (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+    {
+      id: 'history-view',
+      name: 'View history',
+      description: 'See past conversations',
+      category: 'History',
+      icon: 'clock',
+      action: () => {
+        if (window.HistorySidebar) {
+          window.HistorySidebar.open();
+        }
+      },
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: '⌘H'
+    },
+    {
+      id: 'history-search',
+      name: 'Search conversations',
+      description: 'Find something we discussed',
+      category: 'History',
+      icon: 'search',
+      action: () => {
+        if (window.HistorySidebar) {
+          window.HistorySidebar.open();
+          // Focus search after sidebar opens
+          setTimeout(() => {
+            const searchInput = document.querySelector('.history-search-input');
+            if (searchInput) searchInput.focus();
+          }, 100);
+        }
+      },
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+    {
+      id: 'history-private',
+      name: 'Start private session',
+      description: 'This conversation won\'t be remembered',
+      category: 'History',
+      icon: 'lock',
+      action: () => {
+        if (window.PrivacyMode) {
+          window.PrivacyMode.startPrivateSession();
+        }
+      },
+      hardness: 3,  // MEDIUM - Stage 3+
+      shortcut: null
+    },
+
+    // Meta
+    {
+      id: 'meta-settings',
+      name: 'Settings',
+      description: 'Adjust your preferences',
+      category: 'Meta',
+      icon: 'settings',
+      action: () => window.location.href = '/settings',
+      hardness: 5,  // HARDEST - always visible
+      shortcut: null
+    },
+    {
+      id: 'meta-help',
+      name: 'Help',
+      description: 'Get help using Piper',
+      category: 'Meta',
+      icon: 'help',
+      action: () => window.location.href = '/help',
+      hardness: 5,  // HARDEST - always visible
+      shortcut: null
+    },
+    {
+      id: 'meta-logout',
+      name: 'Log out',
+      description: 'Sign out of Piper',
+      category: 'Meta',
+      icon: 'logout',
+      action: () => {
+        if (typeof handleLogout === 'function') {
+          handleLogout(new Event('click'));
+        } else {
+          window.location.href = '/logout';
+        }
+      },
+      hardness: 5,  // HARDEST - always visible
+      shortcut: null
+    }
+  ];
+
+  // Icons (simple SVG paths)
+  const ICONS = {
+    home: '<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>',
+    sun: '<circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M3 13l1.5-1.5M11.5 4.5L13 3"/>',
+    check: '<path d="M5 13l4 4L19 7"/>',
+    folder: '<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
+    file: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+    list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    book: '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    'folder-plus': '<path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/><path d="M12 11v6M9 14h6"/>',
+    alert: '<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+    logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+    // History icons (#425)
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>',
+    lock: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>'
+  };
+
+  // Trust stage mapping: 1=NEW, 2=BUILDING, 3=ESTABLISHED, 4=TRUSTED
+  // Hardness: 5=HARDEST (Stage 1+), 4=HARD (Stage 3+), 3=MEDIUM (Stage 3+), 2=SOFT (Stage 4+), 1=SOFTEST (Stage 4+)
+  function getMinTrustStage(hardness) {
+    if (hardness >= 5) return 1;  // HARDEST - always visible
+    if (hardness >= 4) return 3;  // HARD - Stage 3+
+    if (hardness >= 3) return 3;  // MEDIUM - Stage 3+
+    return 4;                      // SOFT/SOFTEST - Stage 4+
+  }
+
+  // State
+  let isOpen = false;
+  let selectedIndex = 0;
+  let filteredCommands = [];
+
+  // DOM elements
+  const overlay = document.getElementById('command-palette-overlay');
+  const palette = document.getElementById('command-palette');
+  const input = document.getElementById('command-palette-input');
+  const list = document.getElementById('command-palette-list');
+  const countEl = document.getElementById('command-palette-count');
+
+  // Get visible commands based on trust stage
+  function getVisibleCommands() {
+    const trustStage = window.trustStage || 1;
+    return COMMANDS.filter(cmd => {
+      const minStage = getMinTrustStage(cmd.hardness);
+      return trustStage >= minStage;
+    });
+  }
+
+  // Fuzzy match
+  function fuzzyMatch(text, query) {
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+
+    if (!query) return { match: true, score: 0, indices: [] };
+
+    let queryIdx = 0;
+    let indices = [];
+
+    for (let i = 0; i < text.length && queryIdx < query.length; i++) {
+      if (lowerText[i] === lowerQuery[queryIdx]) {
+        indices.push(i);
+        queryIdx++;
+      }
+    }
+
+    if (queryIdx === query.length) {
+      // Calculate score based on consecutive matches and position
+      let score = indices.length;
+      let consecutive = 0;
+      for (let i = 1; i < indices.length; i++) {
+        if (indices[i] === indices[i-1] + 1) {
+          consecutive++;
+        }
+      }
+      score += consecutive * 2;
+      if (indices[0] === 0) score += 5; // Bonus for starting match
+
+      return { match: true, score, indices };
+    }
+
+    return { match: false, score: 0, indices: [] };
+  }
+
+  // Filter commands
+  function filterCommands(query) {
+    const visible = getVisibleCommands();
+
+    if (!query) {
+      return visible;
+    }
+
+    const results = visible
+      .map(cmd => {
+        const nameMatch = fuzzyMatch(cmd.name, query);
+        const descMatch = fuzzyMatch(cmd.description, query);
+        const bestMatch = nameMatch.score >= descMatch.score ? nameMatch : descMatch;
+        return { ...cmd, match: bestMatch };
+      })
+      .filter(cmd => cmd.match.match)
+      .sort((a, b) => b.match.score - a.match.score);
+
+    return results;
+  }
+
+  // Highlight matched characters
+  function highlightMatches(text, indices) {
+    if (!indices || indices.length === 0) return text;
+
+    let result = '';
+    let lastIdx = 0;
+
+    indices.forEach(idx => {
+      result += text.slice(lastIdx, idx);
+      result += `<span class="match">${text[idx]}</span>`;
+      lastIdx = idx + 1;
+    });
+
+    result += text.slice(lastIdx);
+    return result;
+  }
+
+  // Render icon
+  function renderIcon(iconName) {
+    const path = ICONS[iconName] || ICONS.help;
+    return `<svg class="command-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+  }
+
+  // Render command list
+  function renderCommands() {
+    const query = input.value;
+    filteredCommands = filterCommands(query);
+
+    if (filteredCommands.length === 0) {
+      list.innerHTML = `
+        <div class="command-palette-empty">
+          <svg class="command-palette-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 15h8M9 9h.01M15 9h.01"/>
+          </svg>
+          <div class="command-palette-empty-text">No commands found</div>
+        </div>
+      `;
+      countEl.textContent = '';
+      return;
+    }
+
+    // Group by category
+    const grouped = {};
+    filteredCommands.forEach(cmd => {
+      if (!grouped[cmd.category]) {
+        grouped[cmd.category] = [];
+      }
+      grouped[cmd.category].push(cmd);
+    });
+
+    let html = '';
+    const categoryOrder = ['Navigation', 'Action', 'Query', 'Filter', 'History', 'Meta'];
+
+    categoryOrder.forEach(category => {
+      const cmds = grouped[category];
+      if (!cmds || cmds.length === 0) return;
+
+      html += `<div class="command-category">${category}</div>`;
+
+      cmds.forEach((cmd, idx) => {
+        const globalIdx = filteredCommands.indexOf(cmd);
+        const isSelected = globalIdx === selectedIndex;
+        const nameHtml = cmd.match ? highlightMatches(cmd.name, cmd.match.indices) : cmd.name;
+
+        html += `
+          <div class="command-item ${isSelected ? 'selected' : ''}"
+               data-index="${globalIdx}"
+               role="option"
+               aria-selected="${isSelected}">
+            ${renderIcon(cmd.icon)}
+            <div class="command-item-content">
+              <div class="command-item-name">${nameHtml}</div>
+              <div class="command-item-description">${cmd.description}</div>
+            </div>
+            ${cmd.shortcut ? `<span class="command-item-shortcut">${cmd.shortcut}</span>` : ''}
+          </div>
+        `;
+      });
+    });
+
+    list.innerHTML = html;
+    countEl.textContent = `${filteredCommands.length} command${filteredCommands.length === 1 ? '' : 's'}`;
+
+    // Add click handlers
+    list.querySelectorAll('.command-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const idx = parseInt(item.dataset.index, 10);
+        executeCommand(idx);
+      });
+
+      item.addEventListener('mouseenter', () => {
+        const idx = parseInt(item.dataset.index, 10);
+        selectedIndex = idx;
+        updateSelection();
+      });
+    });
+  }
+
+  // Update selection highlight
+  function updateSelection() {
+    list.querySelectorAll('.command-item').forEach((item, idx) => {
+      const itemIdx = parseInt(item.dataset.index, 10);
+      if (itemIdx === selectedIndex) {
+        item.classList.add('selected');
+        item.setAttribute('aria-selected', 'true');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('selected');
+        item.setAttribute('aria-selected', 'false');
+      }
+    });
+  }
+
+  // Execute command
+  function executeCommand(index) {
+    const cmd = filteredCommands[index];
+    if (cmd && cmd.action) {
+      close();
+      cmd.action();
+    }
+  }
+
+  // Open palette
+  function open() {
+    if (isOpen) return;
+    isOpen = true;
+    window.commandPaletteExists = true;
+
+    selectedIndex = 0;
+    input.value = '';
+    renderCommands();
+
+    overlay.classList.add('active');
+    palette.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+
+    // Focus input after animation
+    setTimeout(() => {
+      input.focus();
+    }, 50);
+  }
+
+  // Close palette
+  function close() {
+    if (!isOpen) return;
+    isOpen = false;
+
+    overlay.classList.remove('active');
+    palette.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  // Event handlers
+  input.addEventListener('input', () => {
+    selectedIndex = 0;
+    renderCommands();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selectedIndex = Math.min(selectedIndex + 1, filteredCommands.length - 1);
+      updateSelection();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selectedIndex = Math.max(selectedIndex - 1, 0);
+      updateSelection();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      executeCommand(selectedIndex);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    }
+  });
+
+  overlay.addEventListener('click', close);
+
+  // Global keyboard shortcut (Cmd/Ctrl+K)
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      if (isOpen) {
+        close();
+      } else {
+        open();
+      }
+    }
+  });
+
+  // Listen for custom event from nav trigger (#420)
+  document.addEventListener('openCommandPalette', () => {
+    open();
+  });
+
+  // Initialize - render with current trust level
+  renderCommands();
+})();
+</script>

@@ -23,7 +23,7 @@ from services.mux.workspace_navigation import (
     navigate_language,
     reference_language,
 )
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 # =============================================================================
 # Test Fixtures
@@ -33,7 +33,7 @@ from services.shared_types import PlaceType
 def make_context(
     workspace_id: str = "workspace-1",
     friendly_name: str = "#general",
-    place_type: PlaceType = PlaceType.SLACK_CHANNEL,
+    place_type: InteractionSpace = InteractionSpace.SLACK_CHANNEL,
     hours_ago: float = 0,
 ) -> WorkspaceContext:
     """Helper to create test WorkspaceContext instances."""

@@ -1,0 +1,436 @@
+<!--
+  Reflection Summary Component (#424 MUX-IMPLEMENT-COMPOST)
+
+  Morning/session-start reflection display with rotating openers.
+  Trust-gated: Stage 3+ only (push-eligible users).
+  Uses experience phrases, never surveillance language.
+
+  Design reference: D3 Composting Experience Design
+  - "Composting is reflection, not surveillance"
+  - Rotation through openers prevents formulaic feeling
+  - 2-4 insights max per summary
+
+  Data attributes:
+  - data-min-stage: 3 (trust-gated)
+-->
+
+<style>
+  /* Reflection Summary Container */
+  .reflection-summary {
+    background: linear-gradient(135deg, #fefdf5 0%, #fdf6e3 100%);
+    border-radius: 12px;
+    padding: 24px;
+    border-left: 4px solid #d4a373;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  /* Trust-gated visibility */
+  .reflection-summary.trust-hidden {
+    display: none;
+  }
+
+  /* Header with opener */
+  .reflection-summary-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .reflection-opener {
+    font-size: 16px;
+    font-weight: 500;
+    color: #5c4033;
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+  }
+
+  /* Dismiss button */
+  .reflection-dismiss {
+    background: none;
+    border: none;
+    color: #a0522d;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 13px;
+    border-radius: 4px;
+    margin-left: 16px;
+    white-space: nowrap;
+  }
+
+  .reflection-dismiss:hover {
+    background: rgba(212, 163, 115, 0.2);
+  }
+
+  /* Insights list */
+  .reflection-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Individual insight */
+  .reflection-insight {
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    border-left: 3px solid #d4a373;
+  }
+
+  .reflection-insight-topic {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b7355;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .reflection-insight-text {
+    font-size: 14px;
+    color: #4a3728;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* Confidence indicator (subtle) */
+  .reflection-insight-confidence {
+    font-size: 12px;
+    color: #a0522d;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Footer with engagement options */
+  .reflection-footer {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid rgba(212, 163, 115, 0.3);
+  }
+
+  .reflection-action {
+    background: none;
+    border: 1px solid #d4a373;
+    color: #8b5a2b;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .reflection-action:hover {
+    background: #d4a373;
+    color: white;
+  }
+
+  .reflection-action.primary {
+    background: #d4a373;
+    color: white;
+  }
+
+  .reflection-action.primary:hover {
+    background: #c49363;
+  }
+
+  /* Empty state */
+  .reflection-empty {
+    text-align: center;
+    padding: 32px;
+    color: #8b7355;
+    font-style: italic;
+  }
+
+  /* ARIA live region for announcements */
+  .reflection-announcement {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+</style>
+
+<template id="reflection-summary-template">
+  <div class="reflection-summary trust-hidden"
+       data-min-stage="3"
+       role="region"
+       aria-label="Morning reflection">
+
+    <div class="reflection-summary-header">
+      <p class="reflection-opener"></p>
+      <button class="reflection-dismiss" aria-label="Dismiss reflection">Not now</button>
+    </div>
+
+    <div class="reflection-insights" role="list" aria-label="Insights">
+      <!-- Insights will be rendered here -->
+    </div>
+
+    <div class="reflection-footer">
+      <button class="reflection-action primary" data-action="acknowledge">
+        Thanks, keep these in mind
+      </button>
+      <button class="reflection-action" data-action="discuss">
+        Let's discuss
+      </button>
+    </div>
+
+    <div class="reflection-announcement" aria-live="polite" aria-atomic="true">
+      <!-- Announcements for screen readers -->
+    </div>
+  </div>
+</template>
+
+<template id="reflection-insight-template">
+  <div class="reflection-insight" role="listitem">
+    <div class="reflection-insight-topic"></div>
+    <p class="reflection-insight-text"></p>
+    <div class="reflection-insight-confidence"></div>
+  </div>
+</template>
+
+<script>
+  /**
+   * Reflection Summary Manager (#424 MUX-IMPLEMENT-COMPOST)
+   *
+   * Creates morning/session-start reflection displays with:
+   * - Rotating openers (never same twice in a row)
+   * - 2-4 insights maximum
+   * - Confidence-based language
+   * - Trust-gating (Stage 3+ only)
+   *
+   * Design: D3 Composting Experience Design
+   * "Composting is reflection, not surveillance"
+   */
+  (function() {
+    'use strict';
+
+    // Reflection openers - rotated to prevent formulaic feeling
+    // From D3: "Vary reflection phrasing - Don't rely on a single opener"
+    const REFLECTION_OPENERS = [
+      "Having had some time to reflect...",
+      "Something occurred to me...",
+      "I've been thinking about our recent work...",
+      "Looking back at our work together...",
+      "A few things have been on my mind...",
+    ];
+
+    // Track last used opener to prevent immediate repeats
+    let lastOpenerIndex = -1;
+
+    // Confidence language thresholds (from D3)
+    const CONFIDENCE_LANGUAGE = {
+      high: {   // 0.8+
+        prefix: "",  // No qualifier needed
+        suffix: "(high confidence)",
+      },
+      medium: { // 0.6-0.8
+        prefix: "I think ",
+        suffix: "(medium confidence)",
+      },
+      low: {    // 0.4-0.6
+        prefix: "I'm not sure, but ",
+        suffix: "(something to consider)",
+      },
+    };
+
+    // Min/max insights per summary (from D3: "2-4 insights max")
+    const MIN_INSIGHTS = 2;
+    const MAX_INSIGHTS = 4;
+
+    /**
+     * Get a rotated opener (never same twice in a row)
+     * @returns {string}
+     */
+    function getRotatedOpener() {
+      let newIndex;
+      do {
+        newIndex = Math.floor(Math.random() * REFLECTION_OPENERS.length);
+      } while (newIndex === lastOpenerIndex && REFLECTION_OPENERS.length > 1);
+
+      lastOpenerIndex = newIndex;
+      return REFLECTION_OPENERS[newIndex];
+    }
+
+    /**
+     * Get confidence language based on score
+     * @param {number} confidence - 0.0 to 1.0
+     * @returns {Object} - {prefix, suffix}
+     */
+    function getConfidenceLanguage(confidence) {
+      if (confidence >= 0.8) return CONFIDENCE_LANGUAGE.high;
+      if (confidence >= 0.6) return CONFIDENCE_LANGUAGE.medium;
+      return CONFIDENCE_LANGUAGE.low;
+    }
+
+    /**
+     * Format insight text with confidence prefix
+     * @param {string} text - Raw insight text
+     * @param {number} confidence - Confidence score
+     * @returns {string}
+     */
+    function formatInsightText(text, confidence) {
+      const lang = getConfidenceLanguage(confidence);
+      // Only add prefix if it exists and text doesn't already start with it
+      if (lang.prefix && !text.toLowerCase().startsWith(lang.prefix.toLowerCase().trim())) {
+        return lang.prefix + text.charAt(0).toLowerCase() + text.slice(1);
+      }
+      return text;
+    }
+
+    /**
+     * Create a reflection summary
+     * @param {Object} options
+     * @param {Array} options.insights - Array of {topic, text, confidence}
+     * @param {number} options.trustStage - Current trust stage
+     * @returns {HTMLElement|null}
+     */
+    function create(options) {
+      const template = document.getElementById('reflection-summary-template');
+      if (!template) {
+        console.error('Reflection summary template not found');
+        return null;
+      }
+
+      const trustStage = options.trustStage || 1;
+
+      // Trust-gate: Stage 3+ only
+      if (trustStage < 3) {
+        return null;
+      }
+
+      // Filter and limit insights
+      let insights = options.insights || [];
+
+      // Respect min/max limits
+      if (insights.length < MIN_INSIGHTS) {
+        return null; // Not enough insights to show
+      }
+      insights = insights.slice(0, MAX_INSIGHTS);
+
+      const clone = template.content.cloneNode(true);
+      const summary = clone.querySelector('.reflection-summary');
+
+      // Set opener (rotated)
+      const opener = summary.querySelector('.reflection-opener');
+      opener.textContent = getRotatedOpener();
+
+      // Render insights
+      const insightsContainer = summary.querySelector('.reflection-insights');
+      const insightTemplate = document.getElementById('reflection-insight-template');
+
+      insights.forEach(insight => {
+        const insightClone = insightTemplate.content.cloneNode(true);
+        const insightEl = insightClone.querySelector('.reflection-insight');
+
+        // Set topic
+        const topicEl = insightEl.querySelector('.reflection-insight-topic');
+        topicEl.textContent = insight.topic || 'Observation';
+
+        // Set text with confidence-based language
+        const textEl = insightEl.querySelector('.reflection-insight-text');
+        textEl.textContent = formatInsightText(insight.text, insight.confidence || 0.5);
+
+        // Set confidence indicator (subtle)
+        const confEl = insightEl.querySelector('.reflection-insight-confidence');
+        const lang = getConfidenceLanguage(insight.confidence || 0.5);
+        confEl.textContent = lang.suffix;
+
+        insightsContainer.appendChild(insightEl);
+      });
+
+      // Set up dismiss button
+      const dismissBtn = summary.querySelector('.reflection-dismiss');
+      dismissBtn.addEventListener('click', () => dismiss(summary));
+
+      // Set up action buttons
+      const actionBtns = summary.querySelectorAll('.reflection-action');
+      actionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const action = btn.dataset.action;
+          handleAction(summary, action, insights);
+        });
+      });
+
+      // Show if trust-gated
+      summary.classList.remove('trust-hidden');
+
+      return summary;
+    }
+
+    /**
+     * Dismiss the reflection summary
+     * @param {HTMLElement} summary
+     */
+    function dismiss(summary) {
+      summary.style.opacity = '0';
+      summary.style.transform = 'translateY(-10px)';
+      summary.style.transition = 'all 0.3s ease';
+
+      setTimeout(() => {
+        summary.remove();
+      }, 300);
+
+      // Fire event
+      window.dispatchEvent(new CustomEvent('reflection-dismissed', {
+        detail: { reason: 'user-dismissed' }
+      }));
+    }
+
+    /**
+     * Handle action button clicks
+     * @param {HTMLElement} summary
+     * @param {string} action - 'acknowledge' or 'discuss'
+     * @param {Array} insights
+     */
+    function handleAction(summary, action, insights) {
+      // Fire event with action and insights
+      window.dispatchEvent(new CustomEvent('reflection-action', {
+        detail: { action, insights }
+      }));
+
+      if (action === 'acknowledge') {
+        // User acknowledged - dismiss with thanks
+        const announcement = summary.querySelector('.reflection-announcement');
+        announcement.textContent = 'Reflection acknowledged';
+        dismiss(summary);
+      }
+      // 'discuss' action handled by event listener
+    }
+
+    /**
+     * Initialize reflection for trust stage
+     * @param {number} trustStage
+     */
+    function init(trustStage) {
+      // Apply trust visibility to any existing summaries
+      const summaries = document.querySelectorAll('.reflection-summary');
+      summaries.forEach(summary => {
+        const minStage = parseInt(summary.dataset.minStage || '3', 10);
+        if (trustStage >= minStage) {
+          summary.classList.remove('trust-hidden');
+        }
+      });
+    }
+
+    // Expose functions globally
+    window.ReflectionSummary = {
+      create: create,
+      dismiss: dismiss,
+      init: init,
+      getRotatedOpener: getRotatedOpener,
+      getConfidenceLanguage: getConfidenceLanguage,
+      OPENERS: REFLECTION_OPENERS,
+      MIN_INSIGHTS: MIN_INSIGHTS,
+      MAX_INSIGHTS: MAX_INSIGHTS,
+    };
+
+    // Mark as loaded
+    window.reflectionSummaryLoaded = true;
+  })();
+</script>

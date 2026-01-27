@@ -1,0 +1,588 @@
+<!--
+  Insight Controls Component (#424 MUX-IMPLEMENT-COMPOST)
+
+  Reusable control flows for insights following D2 spec:
+  - Correction: Shows before/after, no arguing
+  - Deletion: Permanent, requires confirmation
+  - Reset: Requires typing "RESET"
+
+  Design reference: D2 Control Interface Patterns
+  "Forthright, transparent, correctable."
+-->
+
+<style>
+  /* Correction Dialog */
+  .insight-control-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .insight-control-dialog.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .insight-control-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 460px;
+    padding: 24px;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.2s ease;
+  }
+
+  .insight-control-dialog.open .insight-control-content {
+    transform: scale(1) translateY(0);
+  }
+
+  .insight-control-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 16px 0;
+  }
+
+  /* Correction specific */
+  .correction-before-after {
+    margin-bottom: 16px;
+  }
+
+  .correction-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .correction-value {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+    border-left: 3px solid #e5e7eb;
+    margin-bottom: 12px;
+  }
+
+  .correction-value.new {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+  }
+
+  .correction-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+    margin-bottom: 16px;
+  }
+
+  .correction-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Delete specific */
+  .delete-warning {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .delete-warning-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .delete-warning-text {
+    font-size: 14px;
+    color: #991b1b;
+    margin: 0;
+  }
+
+  .delete-insight-preview {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  /* Reset specific */
+  .reset-list {
+    background: #fef2f2;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .reset-list-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #991b1b;
+    margin: 0 0 8px 0;
+  }
+
+  .reset-list ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #7f1d1d;
+  }
+
+  .reset-list li {
+    margin-bottom: 4px;
+  }
+
+  .reset-confirm-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    text-align: center;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .reset-confirm-input:focus {
+    outline: none;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+
+  .reset-confirm-hint {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Actions */
+  .insight-control-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .insight-control-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .insight-control-btn.cancel {
+    background: none;
+    border: 1px solid #d1d5db;
+    color: #666;
+  }
+
+  .insight-control-btn.cancel:hover {
+    background: #f3f4f6;
+  }
+
+  .insight-control-btn.primary {
+    background: #3b82f6;
+    border: none;
+    color: white;
+  }
+
+  .insight-control-btn.primary:hover {
+    background: #2563eb;
+  }
+
+  .insight-control-btn.danger {
+    background: #ef4444;
+    border: none;
+    color: white;
+  }
+
+  .insight-control-btn.danger:hover {
+    background: #dc2626;
+  }
+
+  .insight-control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>
+
+<!-- Correction Dialog Template -->
+<template id="correction-dialog-template">
+  <div class="insight-control-dialog correction-dialog" role="dialog" aria-modal="true" aria-labelledby="correction-title">
+    <div class="insight-control-content">
+      <h2 class="insight-control-title" id="correction-title">Correct this insight</h2>
+
+      <div class="correction-before-after">
+        <div class="correction-label">What I thought</div>
+        <div class="correction-value before"></div>
+
+        <div class="correction-label">What you'd like me to know</div>
+        <textarea class="correction-input" placeholder="The correct understanding..."></textarea>
+      </div>
+
+      <div class="insight-control-actions">
+        <button class="insight-control-btn cancel">Cancel</button>
+        <button class="insight-control-btn primary submit">Save Correction</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Delete Dialog Template -->
+<template id="delete-dialog-template">
+  <div class="insight-control-dialog delete-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title">
+    <div class="insight-control-content">
+      <h2 class="insight-control-title" id="delete-title">Delete this insight?</h2>
+
+      <div class="delete-warning">
+        <div class="delete-warning-icon">&#9888;</div>
+        <p class="delete-warning-text">This action is permanent. I cannot recover this insight once deleted.</p>
+      </div>
+
+      <div class="delete-insight-preview"></div>
+
+      <div class="insight-control-actions">
+        <button class="insight-control-btn cancel">Keep it</button>
+        <button class="insight-control-btn danger submit">Delete permanently</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Reset Dialog Template -->
+<template id="reset-dialog-template">
+  <div class="insight-control-dialog reset-dialog" role="alertdialog" aria-modal="true" aria-labelledby="reset-title">
+    <div class="insight-control-content">
+      <h2 class="insight-control-title" id="reset-title">Reset all learnings?</h2>
+
+      <div class="reset-list">
+        <div class="reset-list-title">What will be deleted:</div>
+        <ul>
+          <li>All learned preferences</li>
+          <li>All pattern observations</li>
+          <li>All communication style learnings</li>
+          <li>All project-specific insights</li>
+        </ul>
+      </div>
+
+      <p style="font-size: 13px; color: #666; margin-bottom: 12px;">
+        This cannot be undone. I'll need to start learning about you from scratch.
+      </p>
+
+      <input type="text"
+             class="reset-confirm-input"
+             placeholder="Type RESET to confirm"
+             autocomplete="off">
+      <p class="reset-confirm-hint">Type exactly "RESET" (all caps) to confirm</p>
+
+      <div class="insight-control-actions">
+        <button class="insight-control-btn cancel">Keep my learnings</button>
+        <button class="insight-control-btn danger submit" disabled>Reset everything</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  /**
+   * Insight Controls Manager (#424 MUX-IMPLEMENT-COMPOST)
+   *
+   * Implements D2 Control Interface Patterns:
+   * - Correction: Shows before/after, no arguing
+   * - Deletion: Permanent, requires confirmation
+   * - Reset: Requires typing "RESET"
+   *
+   * D2 Core Principle: "Forthright, transparent, correctable"
+   */
+  (function() {
+    'use strict';
+
+    // D2: Response patterns (no guilt, no arguing)
+    const RESPONSES = {
+      correction: "Thanks, I'll remember that.",
+      deletion: "Got it, that's gone.",
+      reset: "Starting fresh.",
+      confirm: "Thanks for confirming!",
+    };
+
+    let currentDialog = null;
+
+    /**
+     * Open correction dialog
+     * @param {Object} insight - The insight to correct
+     * @returns {Promise<Object|null>} - {before, after} or null if cancelled
+     */
+    function openCorrection(insight) {
+      return new Promise((resolve) => {
+        const template = document.getElementById('correction-dialog-template');
+        if (!template) {
+          console.error('Correction dialog template not found');
+          resolve(null);
+          return;
+        }
+
+        const clone = template.content.cloneNode(true);
+        const dialog = clone.querySelector('.correction-dialog');
+
+        // Set before value
+        const beforeEl = dialog.querySelector('.correction-value.before');
+        const beforeText = insight.expression || insight.text || '';
+        beforeEl.textContent = beforeText;
+
+        // Get input
+        const input = dialog.querySelector('.correction-input');
+
+        // Set up cancel
+        const cancelBtn = dialog.querySelector('.cancel');
+        cancelBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          resolve(null);
+        });
+
+        // Set up submit
+        const submitBtn = dialog.querySelector('.submit');
+        submitBtn.addEventListener('click', () => {
+          const after = input.value.trim();
+          if (after) {
+            closeDialog(dialog);
+            // D2: "Thanks, I'll remember that"
+            if (window.showToast) {
+              window.showToast(RESPONSES.correction, 'success');
+            }
+            resolve({ before: beforeText, after: after });
+          }
+        });
+
+        // Click outside to close
+        dialog.addEventListener('click', (e) => {
+          if (e.target === dialog) {
+            closeDialog(dialog);
+            resolve(null);
+          }
+        });
+
+        // ESC to close
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') {
+            closeDialog(dialog);
+            document.removeEventListener('keydown', handleEsc);
+            resolve(null);
+          }
+        };
+        document.addEventListener('keydown', handleEsc);
+
+        // Show dialog
+        document.body.appendChild(dialog);
+        currentDialog = dialog;
+        requestAnimationFrame(() => {
+          dialog.classList.add('open');
+          input.focus();
+        });
+      });
+    }
+
+    /**
+     * Open delete confirmation dialog
+     * @param {Object} insight - The insight to delete
+     * @returns {Promise<boolean>} - true if confirmed, false if cancelled
+     */
+    function openDelete(insight) {
+      return new Promise((resolve) => {
+        const template = document.getElementById('delete-dialog-template');
+        if (!template) {
+          console.error('Delete dialog template not found');
+          resolve(false);
+          return;
+        }
+
+        const clone = template.content.cloneNode(true);
+        const dialog = clone.querySelector('.delete-dialog');
+
+        // Set preview text
+        const previewEl = dialog.querySelector('.delete-insight-preview');
+        previewEl.textContent = '"' + (insight.expression || insight.text || '') + '"';
+
+        // Set up cancel
+        const cancelBtn = dialog.querySelector('.cancel');
+        cancelBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          resolve(false);
+        });
+
+        // Set up submit
+        const submitBtn = dialog.querySelector('.submit');
+        submitBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          // D2: "Got it, that's gone"
+          if (window.showToast) {
+            window.showToast(RESPONSES.deletion, 'info');
+          }
+          resolve(true);
+        });
+
+        // Click outside to close
+        dialog.addEventListener('click', (e) => {
+          if (e.target === dialog) {
+            closeDialog(dialog);
+            resolve(false);
+          }
+        });
+
+        // ESC to close
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') {
+            closeDialog(dialog);
+            document.removeEventListener('keydown', handleEsc);
+            resolve(false);
+          }
+        };
+        document.addEventListener('keydown', handleEsc);
+
+        // Show dialog
+        document.body.appendChild(dialog);
+        currentDialog = dialog;
+        requestAnimationFrame(() => {
+          dialog.classList.add('open');
+          cancelBtn.focus();
+        });
+      });
+    }
+
+    /**
+     * Open reset confirmation dialog
+     * @param {Object} stats - Optional stats {insightCount, patternCount}
+     * @returns {Promise<boolean>} - true if confirmed, false if cancelled
+     */
+    function openReset(stats) {
+      return new Promise((resolve) => {
+        const template = document.getElementById('reset-dialog-template');
+        if (!template) {
+          console.error('Reset dialog template not found');
+          resolve(false);
+          return;
+        }
+
+        const clone = template.content.cloneNode(true);
+        const dialog = clone.querySelector('.reset-dialog');
+
+        const input = dialog.querySelector('.reset-confirm-input');
+        const submitBtn = dialog.querySelector('.submit');
+
+        // Enable submit only when "RESET" is typed
+        input.addEventListener('input', () => {
+          submitBtn.disabled = input.value !== 'RESET';
+        });
+
+        // Set up cancel
+        const cancelBtn = dialog.querySelector('.cancel');
+        cancelBtn.addEventListener('click', () => {
+          closeDialog(dialog);
+          resolve(false);
+        });
+
+        // Set up submit
+        submitBtn.addEventListener('click', () => {
+          if (input.value === 'RESET') {
+            closeDialog(dialog);
+            // D2: "Starting fresh"
+            if (window.showToast) {
+              window.showToast(RESPONSES.reset, 'info');
+            }
+            resolve(true);
+          }
+        });
+
+        // Click outside to close
+        dialog.addEventListener('click', (e) => {
+          if (e.target === dialog) {
+            closeDialog(dialog);
+            resolve(false);
+          }
+        });
+
+        // ESC to close
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') {
+            closeDialog(dialog);
+            document.removeEventListener('keydown', handleEsc);
+            resolve(false);
+          }
+        };
+        document.addEventListener('keydown', handleEsc);
+
+        // Show dialog
+        document.body.appendChild(dialog);
+        currentDialog = dialog;
+        requestAnimationFrame(() => {
+          dialog.classList.add('open');
+          input.focus();
+        });
+      });
+    }
+
+    /**
+     * Close dialog with animation
+     */
+    function closeDialog(dialog) {
+      if (!dialog) return;
+
+      dialog.classList.remove('open');
+      setTimeout(() => {
+        if (dialog.parentNode) {
+          dialog.parentNode.removeChild(dialog);
+        }
+        if (currentDialog === dialog) {
+          currentDialog = null;
+        }
+      }, 200);
+    }
+
+    /**
+     * Close current dialog
+     */
+    function closeCurrentDialog() {
+      if (currentDialog) {
+        closeDialog(currentDialog);
+      }
+    }
+
+    // Expose functions globally
+    window.InsightControls = {
+      openCorrection: openCorrection,
+      openDelete: openDelete,
+      openReset: openReset,
+      closeDialog: closeCurrentDialog,
+      RESPONSES: RESPONSES,
+    };
+
+    // Mark as loaded
+    window.insightControlsLoaded = true;
+  })();
+</script>

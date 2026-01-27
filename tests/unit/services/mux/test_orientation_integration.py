@@ -24,7 +24,7 @@ from services.mux.orientation import (
     RecognitionGenerator,
     TrustContext,
 )
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 # --- Fixtures ---
 
@@ -105,7 +105,7 @@ class TestOrientationPipeline:
         context = IntentClassificationContext(
             message="What's on my plate today?",
             user_id="user-123",
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
             orientation=orientation,
         )
 
@@ -118,7 +118,7 @@ class TestOrientationPipeline:
         context = IntentClassificationContext(
             message="Hello",
             user_id="user-123",
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
         )
 
         assert context.orientation is None

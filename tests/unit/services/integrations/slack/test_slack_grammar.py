@@ -12,7 +12,7 @@ import pytest
 from services.domain.models import Intent
 from services.integrations.slack.response_context import SlackResponseContext
 from services.integrations.slack.simple_response_handler import SimpleSlackResponseHandler
-from services.shared_types import IntentCategory, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace
 
 
 class TestSimpleResponseHandlerGrammar:
@@ -244,7 +244,7 @@ class TestResponseContextIntegration:
         ctx = mock_handler._build_response_context(slack_context)
 
         assert ctx is not None
-        assert ctx.place == PlaceType.SLACK_DM
+        assert ctx.place == InteractionSpace.SLACK_DM
         assert ctx.channel_id == "D123"
 
     def test_build_response_context_channel(self, mock_handler):
@@ -254,7 +254,7 @@ class TestResponseContextIntegration:
         ctx = mock_handler._build_response_context(slack_context)
 
         assert ctx is not None
-        assert ctx.place == PlaceType.SLACK_CHANNEL
+        assert ctx.place == InteractionSpace.SLACK_CHANNEL
 
     def test_build_response_context_handles_none(self, mock_handler):
         """Handles None slack_context gracefully."""

@@ -1,0 +1,400 @@
+<!--
+  Lifecycle Detail Card (#423 MUX-IMPLEMENT-LIFECYCLE)
+
+  Shows an object's journey through lifecycle stages.
+  Current stage highlighted, past stages with dates, future stages grayed.
+
+  Usage: Include in any page that shows object details.
+  Requires: lifecycle_indicator.html for indicator component
+-->
+
+<style>
+  /* Lifecycle Detail Card */
+  .lifecycle-detail {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .lifecycle-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .lifecycle-detail-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+
+  /* Journey Timeline */
+  .lifecycle-journey {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  /* Timeline connector line */
+  .lifecycle-journey::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: #e5e7eb;
+  }
+
+  /* Journey step */
+  .lifecycle-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    position: relative;
+  }
+
+  /* Step dot */
+  .lifecycle-step-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #e5e7eb;
+    z-index: 1;
+    margin-top: 2px;
+  }
+
+  /* Step content */
+  .lifecycle-step-content {
+    flex: 1;
+  }
+
+  .lifecycle-step-phrase {
+    font-size: 14px;
+    color: #333;
+    margin: 0 0 2px 0;
+  }
+
+  .lifecycle-step-date {
+    font-size: 12px;
+    color: #888;
+  }
+
+  /* Past stages - completed */
+  .lifecycle-step[data-status="past"] .lifecycle-step-dot {
+    background: #10b981;
+  }
+
+  .lifecycle-step[data-status="past"] .lifecycle-step-phrase {
+    color: #666;
+  }
+
+  /* Current stage - highlighted */
+  .lifecycle-step[data-status="current"] {
+    background: rgba(59, 130, 246, 0.05);
+    margin: 0 -12px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .lifecycle-step[data-status="current"] .lifecycle-step-dot {
+    width: 14px;
+    height: 14px;
+    margin-top: 0;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  .lifecycle-step[data-status="current"] .lifecycle-step-phrase {
+    font-weight: 600;
+    color: #1e40af;
+  }
+
+  /* Future stages - grayed out */
+  .lifecycle-step[data-status="future"] {
+    opacity: 0.4;
+  }
+
+  .lifecycle-step[data-status="future"] .lifecycle-step-phrase {
+    color: #999;
+  }
+
+  /* Forward-looking message */
+  .lifecycle-forward-message {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f0fdf4;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #166534;
+    display: none;
+  }
+
+  .lifecycle-detail[data-show-forward="true"] .lifecycle-forward-message {
+    display: block;
+  }
+
+  /* ARIA live region for updates */
+  .lifecycle-detail-announcement {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+</style>
+
+<template id="lifecycle-detail-template">
+  <div class="lifecycle-detail"
+       data-show-forward="false"
+       role="region"
+       aria-label="Lifecycle journey">
+
+    <div class="lifecycle-detail-header">
+      <h4 class="lifecycle-detail-title">Journey</h4>
+    </div>
+
+    <div class="lifecycle-journey" role="list" aria-label="Lifecycle stages">
+      <!-- Steps will be rendered here -->
+    </div>
+
+    <div class="lifecycle-forward-message" role="status">
+      <!-- Forward-looking message for active items -->
+    </div>
+
+    <div class="lifecycle-detail-announcement" aria-live="polite" aria-atomic="true">
+      <!-- Announcements for screen readers -->
+    </div>
+  </div>
+</template>
+
+<template id="lifecycle-step-template">
+  <div class="lifecycle-step" data-status="" role="listitem">
+    <span class="lifecycle-step-dot" aria-hidden="true"></span>
+    <div class="lifecycle-step-content">
+      <p class="lifecycle-step-phrase"></p>
+      <span class="lifecycle-step-date"></span>
+    </div>
+  </div>
+</template>
+
+<script>
+  /**
+   * Lifecycle Detail Manager (#423 MUX-IMPLEMENT-LIFECYCLE)
+   *
+   * Creates and manages lifecycle journey views with:
+   * - Current stage highlighted
+   * - Past stages with dates
+   * - Future stages grayed out
+   * - Forward-looking messages for active items
+   */
+  (function() {
+    'use strict';
+
+    // Ordered stages for journey display
+    const STAGE_ORDER = [
+      'emergent',
+      'derived',
+      'noticed',
+      'proposed',
+      'ratified',
+      'deprecated',
+      'archived',
+      'composted'
+    ];
+
+    // Forward-looking messages
+    const FORWARD_MESSAGES = {
+      emergent: "Still forming - I'll learn more as this develops.",
+      derived: "Connected to other things I know.",
+      noticed: "Now on my radar.",
+      proposed: "Waiting to see what happens with this.",
+      ratified: "This is happening - I'm tracking progress.",
+      deprecated: "No longer active, but still here for reference.",
+      archived: "Keeping this for when you need it.",
+      composted: null, // Terminal state, no forward message
+    };
+
+    /**
+     * Get the index of a stage in the ordered list
+     */
+    function getStageIndex(stage) {
+      return STAGE_ORDER.indexOf(stage);
+    }
+
+    /**
+     * Create a lifecycle detail card
+     * @param {Object} journey - Object with currentStage and optional history
+     * @returns {HTMLElement}
+     */
+    function createDetail(journey) {
+      const template = document.getElementById('lifecycle-detail-template');
+      if (!template) {
+        console.error('Lifecycle detail template not found');
+        return null;
+      }
+
+      const clone = template.content.cloneNode(true);
+      const detail = clone.querySelector('.lifecycle-detail');
+      const journeyContainer = detail.querySelector('.lifecycle-journey');
+      const forwardMessage = detail.querySelector('.lifecycle-forward-message');
+
+      const currentStage = journey.currentStage || 'emergent';
+      const history = journey.history || {};
+      const currentIndex = getStageIndex(currentStage);
+
+      // Render each stage
+      STAGE_ORDER.forEach((stage, index) => {
+        const step = createStep(stage, index, currentIndex, history[stage]);
+        journeyContainer.appendChild(step);
+      });
+
+      // Set forward-looking message
+      const message = FORWARD_MESSAGES[currentStage];
+      if (message) {
+        forwardMessage.textContent = message;
+        detail.dataset.showForward = 'true';
+      }
+
+      return detail;
+    }
+
+    /**
+     * Create a journey step element
+     */
+    function createStep(stage, stageIndex, currentIndex, date) {
+      const template = document.getElementById('lifecycle-step-template');
+      const clone = template.content.cloneNode(true);
+      const step = clone.querySelector('.lifecycle-step');
+
+      // Determine status
+      let status;
+      if (stageIndex < currentIndex) {
+        status = 'past';
+      } else if (stageIndex === currentIndex) {
+        status = 'current';
+      } else {
+        status = 'future';
+      }
+
+      step.dataset.status = status;
+      step.dataset.stage = stage;
+
+      // Set phrase (use LifecycleIndicator if available)
+      const phraseEl = step.querySelector('.lifecycle-step-phrase');
+      if (window.LifecycleIndicator) {
+        phraseEl.textContent = window.LifecycleIndicator.getPhrase(stage);
+      } else {
+        // Fallback phrases
+        const phrases = {
+          emergent: "I just noticed...",
+          derived: "I figured out from...",
+          noticed: "I'm aware of...",
+          proposed: "I think we should...",
+          ratified: "We're doing...",
+          deprecated: "This used to be...",
+          archived: "I remember when...",
+          composted: "I learned that...",
+        };
+        phraseEl.textContent = phrases[stage];
+      }
+
+      // Set date if available
+      const dateEl = step.querySelector('.lifecycle-step-date');
+      if (date && status === 'past') {
+        dateEl.textContent = formatDate(date);
+      } else if (status === 'current') {
+        dateEl.textContent = 'Now';
+      } else {
+        dateEl.textContent = '';
+      }
+
+      // Set color on dot
+      const dot = step.querySelector('.lifecycle-step-dot');
+      if (window.LifecycleIndicator && (status === 'current' || status === 'past')) {
+        dot.style.background = window.LifecycleIndicator.getColor(stage);
+      }
+
+      return step;
+    }
+
+    /**
+     * Format date for display
+     */
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return diffDays + ' days ago';
+      return date.toLocaleDateString();
+    }
+
+    /**
+     * Update an existing detail card
+     */
+    function updateDetail(detail, newStage, date) {
+      const steps = detail.querySelectorAll('.lifecycle-step');
+      const newIndex = getStageIndex(newStage);
+
+      steps.forEach((step, index) => {
+        const stage = step.dataset.stage;
+        let status;
+
+        if (index < newIndex) {
+          status = 'past';
+        } else if (index === newIndex) {
+          status = 'current';
+        } else {
+          status = 'future';
+        }
+
+        step.dataset.status = status;
+
+        // Update date for current
+        const dateEl = step.querySelector('.lifecycle-step-date');
+        if (status === 'current') {
+          dateEl.textContent = 'Now';
+        }
+      });
+
+      // Update forward message
+      const forwardMessage = detail.querySelector('.lifecycle-forward-message');
+      const message = FORWARD_MESSAGES[newStage];
+      if (message) {
+        forwardMessage.textContent = message;
+        detail.dataset.showForward = 'true';
+      } else {
+        detail.dataset.showForward = 'false';
+      }
+
+      // Announce update
+      const announcement = detail.querySelector('.lifecycle-detail-announcement');
+      if (announcement) {
+        const phrase = window.LifecycleIndicator ?
+          window.LifecycleIndicator.getPhrase(newStage) :
+          newStage;
+        announcement.textContent = 'Lifecycle updated: ' + phrase;
+      }
+    }
+
+    // Expose functions globally
+    window.LifecycleDetail = {
+      create: createDetail,
+      update: updateDetail,
+      STAGE_ORDER: STAGE_ORDER,
+      FORWARD_MESSAGES: FORWARD_MESSAGES,
+    };
+
+    // Mark as loaded
+    window.lifecycleDetailLoaded = true;
+  })();
+</script>

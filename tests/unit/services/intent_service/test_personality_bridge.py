@@ -5,7 +5,7 @@ import pytest
 from services.domain.models import Intent
 from services.intent_service.intent_types import IntentClassificationContext
 from services.intent_service.personality_bridge import ACTION_NARRATIVES, PersonalityBridge
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 
 class TestPersonalityBridge:
@@ -27,7 +27,7 @@ class TestPersonalityBridge:
     def basic_context(self):
         return IntentClassificationContext(
             message="add a todo",
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
         )
 
     @pytest.fixture
@@ -75,7 +75,7 @@ class TestPersonalityBridge:
         context = IntentClassificationContext(
             message="add another",
             user_id="user-1",
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
         )
         intent = Intent(
             category=IntentCategory.EXECUTION,
@@ -142,7 +142,7 @@ class TestPersonalityBridge:
         """Slack channel gets brevity note."""
         context = IntentClassificationContext(
             message="add a todo",
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
         )
         understanding = bridge.transform(basic_intent, context, professional_settings)
         assert "brief" in understanding.place_awareness.lower()

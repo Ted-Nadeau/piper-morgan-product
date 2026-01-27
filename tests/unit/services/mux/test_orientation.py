@@ -53,8 +53,8 @@ class MockConsciousnessContext:
     meeting_count: int = 0
 
 
-class MockPlaceType:
-    """Mock PlaceType enum for testing."""
+class MockInteractionSpace:
+    """Mock InteractionSpace enum for testing."""
 
     def __init__(self, name: str):
         self.name = name
@@ -209,7 +209,7 @@ class TestOrientationState:
 
     def test_gather_with_place(self):
         """Should incorporate place into spatial pillar."""
-        place = MockPlaceType("SLACK_DM")
+        place = MockInteractionSpace("SLACK_DM")
         state = OrientationState.gather(place=place)
 
         assert "direct message" in state.spatial.perception
@@ -246,7 +246,7 @@ class TestOrientationState:
         """Should return only high-confidence pillars."""
         piper = MockPiperEntity()
         consciousness = MockConsciousnessContext()
-        place = MockPlaceType("WEB_CHAT")
+        place = MockInteractionSpace("WEB_CHAT")
 
         state = OrientationState.gather(
             piper_entity=piper,
@@ -324,7 +324,7 @@ class TestPerceptionLanguage:
 
     def test_spatial_uses_partnership_language(self):
         """Spatial pillar should use 'we're' for partnership (CXO guidance)."""
-        place = MockPlaceType("WEB_CHAT")
+        place = MockInteractionSpace("WEB_CHAT")
         state = OrientationState.gather(place=place)
 
         assert "We're" in state.spatial.perception or "we're" in state.spatial.perception

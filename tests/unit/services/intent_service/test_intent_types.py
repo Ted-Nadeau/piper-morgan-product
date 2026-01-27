@@ -11,25 +11,25 @@ import pytest
 
 from services.domain.models import Intent
 from services.intent_service.intent_types import IntentClassificationContext, IntentUnderstanding
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 
-class TestPlaceType:
-    """Test PlaceType enum."""
+class TestInteractionSpace:
+    """Test InteractionSpace enum."""
 
-    def test_all_places_defined(self):
-        """All expected Place types exist."""
-        assert PlaceType.SLACK_DM == "slack_dm"
-        assert PlaceType.SLACK_CHANNEL == "slack_channel"
-        assert PlaceType.WEB_CHAT == "web_chat"
-        assert PlaceType.CLI == "cli"
-        assert PlaceType.API == "api"
-        assert PlaceType.UNKNOWN == "unknown"
+    def test_all_spaces_defined(self):
+        """All expected InteractionSpace types exist."""
+        assert InteractionSpace.SLACK_DM == "slack_dm"
+        assert InteractionSpace.SLACK_CHANNEL == "slack_channel"
+        assert InteractionSpace.WEB_CHAT == "web_chat"
+        assert InteractionSpace.CLI == "cli"
+        assert InteractionSpace.API == "api"
+        assert InteractionSpace.UNKNOWN == "unknown"
 
     def test_is_string_enum(self):
-        """PlaceType is a string enum for easy serialization."""
-        assert isinstance(PlaceType.SLACK_DM, str)
-        assert PlaceType.SLACK_DM == "slack_dm"
+        """InteractionSpace is a string enum for easy serialization."""
+        assert isinstance(InteractionSpace.SLACK_DM, str)
+        assert InteractionSpace.SLACK_DM == "slack_dm"
 
 
 class TestPerceptionMode:
@@ -53,7 +53,7 @@ class TestIntentClassificationContext:
         """Can create with just a message."""
         ctx = IntentClassificationContext(message="add a todo")
         assert ctx.message == "add a todo"
-        assert ctx.place == PlaceType.UNKNOWN
+        assert ctx.place == InteractionSpace.UNKNOWN
         assert ctx.user_id is None
 
     def test_full_creation(self):
@@ -62,13 +62,13 @@ class TestIntentClassificationContext:
             message="add a todo",
             user_id="user-123",
             session_id="session-456",
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             spatial_context={"channel": "D123"},
             conversation_history=["hello", "hi there"],
             user_preferences={"brevity": "concise"},
         )
         assert ctx.user_id == "user-123"
-        assert ctx.place == PlaceType.SLACK_DM
+        assert ctx.place == InteractionSpace.SLACK_DM
         assert len(ctx.conversation_history) == 2
         assert ctx.user_preferences["brevity"] == "concise"
 
@@ -85,7 +85,7 @@ class TestIntentClassificationContext:
             message="find documents",
         )
         assert ctx.message == "find documents"
-        assert ctx.place == PlaceType.UNKNOWN
+        assert ctx.place == InteractionSpace.UNKNOWN
         assert ctx.user_id is None
 
     def test_from_classify_args_with_context(self):
@@ -94,12 +94,12 @@ class TestIntentClassificationContext:
             message="find documents",
             context={"user_id": "u1", "session_id": "s1"},
             spatial_context={"channel": "C123"},
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
         )
         assert ctx.message == "find documents"
         assert ctx.user_id == "u1"
         assert ctx.session_id == "s1"
-        assert ctx.place == PlaceType.SLACK_CHANNEL
+        assert ctx.place == InteractionSpace.SLACK_CHANNEL
         assert ctx.spatial_context == {"channel": "C123"}
 
     def test_from_classify_args_handles_none_context(self):

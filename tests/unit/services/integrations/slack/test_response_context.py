@@ -11,7 +11,7 @@ import pytest
 
 from services.integrations.slack.response_context import SlackResponseContext, _infer_valence
 from services.integrations.slack.spatial_types import AttentionLevel, EmotionalValence
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 
 class TestSlackResponseContext:
@@ -20,17 +20,17 @@ class TestSlackResponseContext:
     def test_basic_creation(self):
         """Can create with minimal fields."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             channel_id="D123",
         )
-        assert ctx.place == PlaceType.SLACK_DM
+        assert ctx.place == InteractionSpace.SLACK_DM
         assert ctx.channel_id == "D123"
         assert ctx.attention_level == AttentionLevel.AMBIENT
 
     def test_full_creation(self):
         """Can create with all fields."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
             channel_id="C123",
             channel_name="general",
             is_thread=True,
@@ -62,7 +62,7 @@ class TestFromSpatialContext:
                 "user_id": "U456",
             }
         )
-        assert ctx.place == PlaceType.SLACK_DM
+        assert ctx.place == InteractionSpace.SLACK_DM
         assert ctx.channel_id == "D123"
         assert ctx.user_id == "U456"
 
@@ -74,7 +74,7 @@ class TestFromSpatialContext:
                 "channel_name": "general",
             }
         )
-        assert ctx.place == PlaceType.SLACK_CHANNEL
+        assert ctx.place == InteractionSpace.SLACK_CHANNEL
         assert ctx.channel_name == "general"
 
     def test_direct_mention_attention(self):
@@ -138,7 +138,7 @@ class TestFormality:
     def test_dm_is_casual(self):
         """DMs should be casual."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             channel_id="D123",
         )
         assert ctx.get_formality() == "casual"
@@ -146,7 +146,7 @@ class TestFormality:
     def test_direct_mention_is_warm(self):
         """Direct mentions should be warm."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
             channel_id="C123",
             attention_level=AttentionLevel.DIRECT,
         )
@@ -155,7 +155,7 @@ class TestFormality:
     def test_channel_is_professional(self):
         """Regular channel messages should be professional."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
             channel_id="C123",
         )
         assert ctx.get_formality() == "professional"
@@ -167,7 +167,7 @@ class TestConciseness:
     def test_channel_should_be_concise(self):
         """Channel responses should be concise."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
             channel_id="C123",
         )
         assert ctx.should_be_concise() is True
@@ -175,7 +175,7 @@ class TestConciseness:
     def test_dm_can_be_detailed(self):
         """DM responses can be more detailed."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             channel_id="D123",
         )
         assert ctx.should_be_concise() is False
@@ -187,7 +187,7 @@ class TestFrustrationDetection:
     def test_negative_valence_is_frustrated(self):
         """Negative emotional valence indicates frustration."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             channel_id="D123",
             emotional_valence=EmotionalValence.NEGATIVE,
         )
@@ -196,7 +196,7 @@ class TestFrustrationDetection:
     def test_many_thread_messages_is_frustrated(self):
         """Many messages in thread might indicate confusion."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             channel_id="D123",
             is_new_conversation=False,
             messages_in_thread=5,
@@ -206,7 +206,7 @@ class TestFrustrationDetection:
     def test_normal_conversation_not_frustrated(self):
         """Normal conversation is not frustrated."""
         ctx = SlackResponseContext(
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             channel_id="D123",
         )
         assert ctx.user_seems_frustrated() is False

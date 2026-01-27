@@ -1,0 +1,651 @@
+<!--
+  Insight Card Component (#424 MUX-IMPLEMENT-COMPOST)
+
+  Expanded view of a single insight with controls.
+  Shows type, confidence (with appropriate language), source count, narrative.
+  Control actions: Correct, Delete, Confirm (D2 compliance).
+
+  Design references:
+  - D2: Control Interface Patterns
+  - D3: Composting Experience Design
+
+  Data attributes:
+  - data-insight-id: Unique insight identifier
+-->
+
+<style>
+  /* Insight Card Modal */
+  .insight-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  .insight-modal.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Card Container */
+  .insight-card-detail {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.2s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .insight-modal.open .insight-card-detail {
+    transform: scale(1) translateY(0);
+  }
+
+  /* Card Header */
+  .insight-card-detail-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .insight-card-detail-type {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: #f3f4f6;
+    color: #666;
+  }
+
+  .insight-card-detail-type.pattern {
+    background: #ddd6fe;
+    color: #7c3aed;
+  }
+
+  .insight-card-detail-type.insight {
+    background: #fef08a;
+    color: #854d0e;
+  }
+
+  .insight-card-detail-type.correction {
+    background: #bfdbfe;
+    color: #1d4ed8;
+  }
+
+  .insight-card-detail-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #888;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+  }
+
+  .insight-card-detail-close:hover {
+    color: #333;
+  }
+
+  /* Card Body */
+  .insight-card-detail-body {
+    padding: 24px;
+  }
+
+  /* Confidence display */
+  .insight-card-detail-confidence {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .insight-confidence-bar {
+    flex: 1;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .insight-confidence-fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+
+  .insight-confidence-fill.medium {
+    background: #f59e0b;
+  }
+
+  .insight-confidence-fill.low {
+    background: #9ca3af;
+  }
+
+  .insight-confidence-text {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  /* Expression/Text */
+  .insight-card-detail-expression {
+    font-size: 18px;
+    color: #333;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+  }
+
+  /* Narrative explanation */
+  .insight-card-detail-narrative {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .insight-card-detail-narrative-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  /* Sources */
+  .insight-card-detail-sources {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+
+  /* Card Actions */
+  .insight-card-detail-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .insight-detail-action {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+  }
+
+  .insight-detail-action.confirm {
+    background: #10b981;
+    color: white;
+    border: none;
+  }
+
+  .insight-detail-action.confirm:hover {
+    background: #059669;
+  }
+
+  .insight-detail-action.correct {
+    background: white;
+    color: #3b82f6;
+    border: 1px solid #3b82f6;
+  }
+
+  .insight-detail-action.correct:hover {
+    background: #eff6ff;
+  }
+
+  .insight-detail-action.delete {
+    background: white;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+  }
+
+  .insight-detail-action.delete:hover {
+    background: #fef2f2;
+  }
+
+  /* Correction Input Flow */
+  .insight-correction-flow {
+    display: none;
+    padding: 16px;
+    background: #f0f9ff;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .insight-correction-flow.active {
+    display: block;
+  }
+
+  .insight-correction-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .insight-correction-before {
+    font-size: 13px;
+    color: #888;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    border-left: 3px solid #e5e7eb;
+  }
+
+  .insight-correction-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 12px;
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .insight-correction-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .insight-correction-submit {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .insight-correction-submit:hover {
+    background: #2563eb;
+  }
+
+  .insight-correction-cancel {
+    background: none;
+    border: none;
+    color: #666;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+</style>
+
+<template id="insight-card-detail-template">
+  <div class="insight-modal" role="dialog" aria-modal="true" aria-labelledby="insight-modal-title">
+    <div class="insight-card-detail">
+      <header class="insight-card-detail-header">
+        <span class="insight-card-detail-type"></span>
+        <button class="insight-card-detail-close" aria-label="Close">&times;</button>
+      </header>
+
+      <div class="insight-card-detail-body">
+        <!-- Confidence display -->
+        <div class="insight-card-detail-confidence">
+          <div class="insight-confidence-bar">
+            <div class="insight-confidence-fill"></div>
+          </div>
+          <span class="insight-confidence-text"></span>
+        </div>
+
+        <!-- Expression with confidence language -->
+        <p class="insight-card-detail-expression" id="insight-modal-title"></p>
+
+        <!-- Correction flow (hidden initially) -->
+        <div class="insight-correction-flow">
+          <div class="insight-correction-label">What should I know instead?</div>
+          <div class="insight-correction-before"></div>
+          <textarea class="insight-correction-input" placeholder="The correct understanding..."></textarea>
+          <button class="insight-correction-submit">Save Correction</button>
+          <button class="insight-correction-cancel">Cancel</button>
+        </div>
+
+        <!-- Narrative explanation -->
+        <div class="insight-card-detail-narrative">
+          <div class="insight-card-detail-narrative-label">How I arrived at this</div>
+          <p class="insight-card-detail-narrative-text"></p>
+        </div>
+
+        <!-- Sources -->
+        <p class="insight-card-detail-sources"></p>
+
+        <!-- Actions (D2 compliance) -->
+        <div class="insight-card-detail-actions">
+          <button class="insight-detail-action confirm" data-action="confirm">
+            That's right
+          </button>
+          <button class="insight-detail-action correct" data-action="correct">
+            Correct
+          </button>
+          <button class="insight-detail-action delete" data-action="delete">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  /**
+   * Insight Card Detail Manager (#424 MUX-IMPLEMENT-COMPOST)
+   *
+   * Creates expanded insight views with:
+   * - Type indicator (pattern, insight, correction)
+   * - Confidence with appropriate language (D3)
+   * - Narrative explanation
+   * - Control actions (D2)
+   */
+  (function() {
+    'use strict';
+
+    // Confidence language (D3 spec)
+    const CONFIDENCE_LANGUAGE = {
+      high: {   // 0.8+
+        text: "I've noticed that...",
+        suffix: "high confidence",
+      },
+      medium: { // 0.6-0.8
+        text: "I think...",
+        suffix: "medium confidence",
+      },
+      low: {    // 0.4-0.6
+        text: "I'm not sure, but...",
+        suffix: "something to consider",
+      },
+    };
+
+    // Type labels
+    const TYPE_LABELS = {
+      pattern: "Pattern",
+      insight: "Insight",
+      correction: "Correction",
+    };
+
+    let currentInsight = null;
+    let currentModal = null;
+
+    /**
+     * Get confidence level
+     * @param {number} confidence - 0.0 to 1.0
+     * @returns {string} - 'high', 'medium', or 'low'
+     */
+    function getConfidenceLevel(confidence) {
+      if (confidence >= 0.8) return 'high';
+      if (confidence >= 0.6) return 'medium';
+      return 'low';
+    }
+
+    /**
+     * Format expression with confidence prefix
+     * @param {string} text - Raw text
+     * @param {number} confidence - Confidence score
+     * @returns {string}
+     */
+    function formatExpression(text, confidence) {
+      const level = getConfidenceLevel(confidence);
+      const lang = CONFIDENCE_LANGUAGE[level];
+
+      // Only add prefix if text doesn't already start with it
+      const prefix = lang.text;
+      if (!text.toLowerCase().startsWith(prefix.toLowerCase().substring(0, 5))) {
+        return prefix + " " + text.charAt(0).toLowerCase() + text.slice(1);
+      }
+      return text;
+    }
+
+    /**
+     * Open insight detail modal
+     * @param {Object} insight - Insight data
+     */
+    function open(insight) {
+      const template = document.getElementById('insight-card-detail-template');
+      if (!template) {
+        console.error('Insight card detail template not found');
+        return null;
+      }
+
+      currentInsight = insight;
+
+      const clone = template.content.cloneNode(true);
+      const modal = clone.querySelector('.insight-modal');
+
+      // Set type
+      const typeEl = modal.querySelector('.insight-card-detail-type');
+      const insightType = insight.learning_type || insight.type || 'insight';
+      typeEl.textContent = TYPE_LABELS[insightType] || insightType;
+      typeEl.classList.add(insightType);
+
+      // Set confidence bar
+      const confidence = insight.confidence || 0.5;
+      const level = getConfidenceLevel(confidence);
+      const fillEl = modal.querySelector('.insight-confidence-fill');
+      fillEl.style.width = (confidence * 100) + '%';
+      if (level === 'medium') fillEl.classList.add('medium');
+      if (level === 'low') fillEl.classList.add('low');
+
+      // Set confidence text
+      const confTextEl = modal.querySelector('.insight-confidence-text');
+      confTextEl.textContent = CONFIDENCE_LANGUAGE[level].suffix;
+
+      // Set expression with confidence language
+      const exprEl = modal.querySelector('.insight-card-detail-expression');
+      const rawText = insight.expression || insight.text || '';
+      exprEl.textContent = formatExpression(rawText, confidence);
+
+      // Set narrative
+      const narrativeTextEl = modal.querySelector('.insight-card-detail-narrative-text');
+      narrativeTextEl.textContent = insight.narrative ||
+        "This emerged from observing patterns in our work together.";
+
+      // Set sources
+      const sourcesEl = modal.querySelector('.insight-card-detail-sources');
+      const sourceCount = insight.source_count || (insight.source_objects || []).length || 1;
+      sourcesEl.textContent = `Based on ${sourceCount} observation${sourceCount !== 1 ? 's' : ''}`;
+
+      // Set up close button
+      const closeBtn = modal.querySelector('.insight-card-detail-close');
+      closeBtn.addEventListener('click', () => close());
+
+      // Click outside to close
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) close();
+      });
+
+      // Set up action buttons
+      setupActions(modal, insight);
+
+      // Set up correction flow
+      setupCorrectionFlow(modal, insight);
+
+      // Add to DOM
+      document.body.appendChild(modal);
+      currentModal = modal;
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+        modal.classList.add('open');
+      });
+
+      // Trap focus
+      modal.querySelector('.insight-card-detail-close').focus();
+
+      // ESC to close
+      const handleEsc = (e) => {
+        if (e.key === 'Escape') {
+          close();
+          document.removeEventListener('keydown', handleEsc);
+        }
+      };
+      document.addEventListener('keydown', handleEsc);
+
+      return modal;
+    }
+
+    /**
+     * Set up action buttons
+     */
+    function setupActions(modal, insight) {
+      const confirmBtn = modal.querySelector('[data-action="confirm"]');
+      const correctBtn = modal.querySelector('[data-action="correct"]');
+      const deleteBtn = modal.querySelector('[data-action="delete"]');
+
+      confirmBtn.addEventListener('click', () => handleConfirm(insight));
+      correctBtn.addEventListener('click', () => showCorrectionFlow(modal));
+      deleteBtn.addEventListener('click', () => handleDelete(insight));
+    }
+
+    /**
+     * Set up correction flow
+     */
+    function setupCorrectionFlow(modal, insight) {
+      const flow = modal.querySelector('.insight-correction-flow');
+      const beforeEl = flow.querySelector('.insight-correction-before');
+      const inputEl = flow.querySelector('.insight-correction-input');
+      const submitBtn = flow.querySelector('.insight-correction-submit');
+      const cancelBtn = flow.querySelector('.insight-correction-cancel');
+
+      // Set before text
+      beforeEl.textContent = insight.expression || insight.text || '';
+
+      submitBtn.addEventListener('click', () => {
+        const newValue = inputEl.value.trim();
+        if (newValue) {
+          handleCorrection(insight, newValue);
+        }
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        flow.classList.remove('active');
+        inputEl.value = '';
+      });
+    }
+
+    /**
+     * Show correction input flow
+     */
+    function showCorrectionFlow(modal) {
+      const flow = modal.querySelector('.insight-correction-flow');
+      flow.classList.add('active');
+      flow.querySelector('.insight-correction-input').focus();
+    }
+
+    /**
+     * Handle confirm action (D2)
+     */
+    function handleConfirm(insight) {
+      // D2: "That's what I had noted—glad to confirm it's correct!"
+      if (window.showToast) {
+        window.showToast("Thanks for confirming! I'll keep that in mind.", 'success');
+      }
+
+      // Fire event
+      window.dispatchEvent(new CustomEvent('insight-confirmed', {
+        detail: { insight, action: 'confirm' }
+      }));
+
+      close();
+    }
+
+    /**
+     * Handle correction action (D2)
+     */
+    function handleCorrection(insight, newValue) {
+      // D2: "Thanks for the correction. I've updated my understanding"
+      if (window.showToast) {
+        window.showToast("Thanks, I'll remember that.", 'success');
+      }
+
+      // Fire event with before/after
+      window.dispatchEvent(new CustomEvent('insight-corrected', {
+        detail: {
+          insight,
+          action: 'correct',
+          before: insight.expression || insight.text,
+          after: newValue,
+        }
+      }));
+
+      close();
+    }
+
+    /**
+     * Handle delete action (D2)
+     */
+    function handleDelete(insight) {
+      // D2: Confirmation required
+      const text = insight.expression || insight.text || 'this insight';
+      if (confirm(`This will permanently remove:\n\n"${text}"\n\nThis cannot be undone. Continue?`)) {
+        // D2: "Got it, that's gone"
+        if (window.showToast) {
+          window.showToast("Got it, that's gone.", 'info');
+        }
+
+        // Fire event
+        window.dispatchEvent(new CustomEvent('insight-deleted', {
+          detail: { insight, action: 'delete' }
+        }));
+
+        close();
+      }
+    }
+
+    /**
+     * Close the modal
+     */
+    function close() {
+      if (!currentModal) return;
+
+      currentModal.classList.remove('open');
+
+      setTimeout(() => {
+        if (currentModal && currentModal.parentNode) {
+          currentModal.parentNode.removeChild(currentModal);
+        }
+        currentModal = null;
+        currentInsight = null;
+      }, 200);
+    }
+
+    // Expose functions globally
+    window.InsightCardDetail = {
+      open: open,
+      close: close,
+      formatExpression: formatExpression,
+      getConfidenceLevel: getConfidenceLevel,
+      CONFIDENCE_LANGUAGE: CONFIDENCE_LANGUAGE,
+      TYPE_LABELS: TYPE_LABELS,
+    };
+
+    // Mark as loaded
+    window.insightCardDetailLoaded = true;
+  })();
+</script>

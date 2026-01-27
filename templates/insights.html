@@ -1,0 +1,742 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Insights | Piper Morgan{% endblock %}
+
+{% block head %}
+<style>
+  /* Insights Page Layout (#424 MUX-IMPLEMENT-COMPOST) */
+  .insights-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* Page Header */
+  .insights-header {
+    margin-bottom: 32px;
+  }
+
+  .insights-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+  }
+
+  .insights-subtitle {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+  }
+
+  /* Topic Filter Tabs */
+  .insights-topics {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .insights-topic-tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .insights-topic-tab:hover {
+    border-color: #d4a373;
+    color: #8b5a2b;
+  }
+
+  .insights-topic-tab.active {
+    background: #d4a373;
+    border-color: #d4a373;
+    color: white;
+  }
+
+  .insights-topic-count {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .insights-topic-tab.active .insights-topic-count {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Insights Grid */
+  .insights-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Insight Card */
+  .insight-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+  }
+
+  .insight-card:hover {
+    border-color: #d4a373;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .insight-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .insight-card-topic {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b7355;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .insight-card-confidence {
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+  }
+
+  .insight-card-text {
+    font-size: 15px;
+    color: #333;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+  }
+
+  .insight-card-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  /* Control Actions (D2 compliance) */
+  .insight-card-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .insight-action {
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+  }
+
+  .insight-action:hover {
+    background: #f5f5f5;
+  }
+
+  .insight-action.correct {
+    color: #3b82f6;
+  }
+
+  .insight-action.correct:hover {
+    background: #eff6ff;
+  }
+
+  .insight-action.delete {
+    color: #ef4444;
+  }
+
+  .insight-action.delete:hover {
+    background: #fef2f2;
+  }
+
+  .insight-action.confirm {
+    color: #10b981;
+  }
+
+  .insight-action.confirm:hover {
+    background: #f0fdf4;
+  }
+
+  /* Empty State */
+  .insights-empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: #666;
+  }
+
+  .insights-empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .insights-empty-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin: 0 0 8px 0;
+  }
+
+  .insights-empty-text {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+  }
+
+  /* Loading State */
+  .insights-loading {
+    text-align: center;
+    padding: 48px;
+    color: #888;
+  }
+
+  /* Trust-gated visibility */
+  .insights-container.trust-hidden {
+    display: none;
+  }
+
+  /* Reset Section (at bottom) */
+  .insights-reset-section {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+  }
+
+  .insights-reset-link {
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+    background: none;
+    border: none;
+    text-decoration: underline;
+  }
+
+  .insights-reset-link:hover {
+    color: #ef4444;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="insights-page">
+  <header class="insights-header">
+    <h1 class="insights-title">Insight Journal</h1>
+    <p class="insights-subtitle">What I've learned from our work together</p>
+  </header>
+
+  <!-- Trust-gated container -->
+  <div class="insights-container trust-hidden"
+       id="insights-container"
+       data-min-stage="1"
+       role="main"
+       aria-label="Insights by topic">
+
+    <!-- Topic Filter Tabs -->
+    <nav class="insights-topics" role="tablist" aria-label="Filter by topic">
+      <button class="insights-topic-tab active"
+              role="tab"
+              aria-selected="true"
+              data-topic="all">
+        All
+        <span class="insights-topic-count" id="count-all">0</span>
+      </button>
+      <button class="insights-topic-tab"
+              role="tab"
+              aria-selected="false"
+              data-topic="work-patterns">
+        Work Patterns
+        <span class="insights-topic-count" id="count-work-patterns">0</span>
+      </button>
+      <button class="insights-topic-tab"
+              role="tab"
+              aria-selected="false"
+              data-topic="projects">
+        Projects
+        <span class="insights-topic-count" id="count-projects">0</span>
+      </button>
+      <button class="insights-topic-tab"
+              role="tab"
+              aria-selected="false"
+              data-topic="preferences">
+        Preferences
+        <span class="insights-topic-count" id="count-preferences">0</span>
+      </button>
+      <button class="insights-topic-tab"
+              role="tab"
+              aria-selected="false"
+              data-topic="relationships">
+        Relationships
+        <span class="insights-topic-count" id="count-relationships">0</span>
+      </button>
+      <button class="insights-topic-tab"
+              role="tab"
+              aria-selected="false"
+              data-topic="scheduling">
+        Scheduling
+        <span class="insights-topic-count" id="count-scheduling">0</span>
+      </button>
+    </nav>
+
+    <!-- Insights Grid -->
+    <div class="insights-grid" id="insights-grid" role="list">
+      <!-- Insights will be rendered here -->
+    </div>
+
+    <!-- Empty State -->
+    <div class="insights-empty" id="insights-empty" style="display: none;">
+      <div class="insights-empty-icon">&#128218;</div>
+      <h2 class="insights-empty-title">No insights yet</h2>
+      <p class="insights-empty-text">We'll learn together as we work. Check back after a few sessions.</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="insights-loading" id="insights-loading">
+      <p>Loading insights...</p>
+    </div>
+
+    <!-- Reset Section -->
+    <div class="insights-reset-section">
+      <button class="insights-reset-link" id="reset-all-btn" aria-label="Reset all learnings">
+        Start fresh (reset all learnings)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Insight Card Template -->
+<template id="insight-card-template">
+  <article class="insight-card" role="listitem">
+    <div class="insight-card-header">
+      <span class="insight-card-topic"></span>
+      <span class="insight-card-confidence"></span>
+    </div>
+    <p class="insight-card-text"></p>
+    <div class="insight-card-meta">
+      <span class="insight-card-sources"></span>
+      <span class="insight-card-date"></span>
+    </div>
+    <div class="insight-card-actions">
+      <button class="insight-action correct" data-action="correct" aria-label="Correct this insight">
+        Correct
+      </button>
+      <button class="insight-action confirm" data-action="confirm" aria-label="Confirm this insight">
+        That's right
+      </button>
+      <button class="insight-action" data-action="why" aria-label="Explain this insight">
+        Why?
+      </button>
+      <button class="insight-action delete" data-action="delete" aria-label="Delete this insight">
+        Delete
+      </button>
+    </div>
+  </article>
+</template>
+
+{% include "components/toast.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  /**
+   * Insight Journal Page (#424 MUX-IMPLEMENT-COMPOST)
+   *
+   * Browse all learnings organized by topic.
+   * Control actions: Correct, Delete, Confirm, "Why?"
+   * Design: D2 Control Interface Patterns
+   */
+  (function() {
+    'use strict';
+
+    // Topic categories for organization
+    const TOPICS = ['all', 'work-patterns', 'projects', 'preferences', 'relationships', 'scheduling'];
+
+    // Confidence language (from D3)
+    const CONFIDENCE_TEXT = {
+      high: 'high confidence',
+      medium: 'medium confidence',
+      low: 'something to consider',
+    };
+
+    let currentInsights = [];
+    let currentTopic = 'all';
+
+    /**
+     * Initialize the page
+     */
+    function init() {
+      const container = document.getElementById('insights-container');
+      if (!container) return;
+
+      // Check trust level
+      const trustStage = window.trustStage || 1;
+      const minStage = parseInt(container.dataset.minStage || '1', 10);
+
+      if (trustStage >= minStage) {
+        container.classList.remove('trust-hidden');
+        loadInsights();
+      }
+
+      // Set up topic tabs
+      setupTopicTabs();
+
+      // Set up reset button
+      setupResetButton();
+    }
+
+    /**
+     * Set up topic filter tabs
+     */
+    function setupTopicTabs() {
+      const tabs = document.querySelectorAll('.insights-topic-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active state
+          tabs.forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+          });
+          tab.classList.add('active');
+          tab.setAttribute('aria-selected', 'true');
+
+          // Filter insights
+          currentTopic = tab.dataset.topic;
+          renderInsights();
+        });
+      });
+    }
+
+    /**
+     * Set up reset button
+     */
+    function setupResetButton() {
+      const resetBtn = document.getElementById('reset-all-btn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', handleReset);
+      }
+    }
+
+    /**
+     * Load insights from backend
+     */
+    async function loadInsights() {
+      const loadingEl = document.getElementById('insights-loading');
+      const emptyEl = document.getElementById('insights-empty');
+      const gridEl = document.getElementById('insights-grid');
+
+      try {
+        // TODO: Replace with actual API call
+        // const response = await fetch('/api/insights');
+        // currentInsights = await response.json();
+
+        // Simulated empty state for now
+        currentInsights = [];
+
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        if (currentInsights.length === 0) {
+          if (emptyEl) emptyEl.style.display = 'block';
+          if (gridEl) gridEl.style.display = 'none';
+        } else {
+          if (emptyEl) emptyEl.style.display = 'none';
+          if (gridEl) gridEl.style.display = 'flex';
+          updateTopicCounts();
+          renderInsights();
+        }
+      } catch (error) {
+        console.error('Failed to load insights:', error);
+        if (loadingEl) loadingEl.textContent = 'Failed to load insights';
+      }
+    }
+
+    /**
+     * Update topic counts
+     */
+    function updateTopicCounts() {
+      const counts = { all: currentInsights.length };
+
+      TOPICS.forEach(topic => {
+        if (topic !== 'all') {
+          counts[topic] = currentInsights.filter(i => i.topic === topic).length;
+        }
+      });
+
+      // Update count badges
+      Object.keys(counts).forEach(topic => {
+        const countEl = document.getElementById(`count-${topic}`);
+        if (countEl) {
+          countEl.textContent = counts[topic];
+        }
+      });
+    }
+
+    /**
+     * Render insights based on current filter
+     */
+    function renderInsights() {
+      const gridEl = document.getElementById('insights-grid');
+      const emptyEl = document.getElementById('insights-empty');
+      if (!gridEl) return;
+
+      // Filter by topic
+      let filtered = currentInsights;
+      if (currentTopic !== 'all') {
+        filtered = currentInsights.filter(i => i.topic === currentTopic);
+      }
+
+      // Sort by recency
+      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Clear grid
+      gridEl.innerHTML = '';
+
+      if (filtered.length === 0) {
+        if (emptyEl) emptyEl.style.display = 'block';
+        gridEl.style.display = 'none';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+      gridEl.style.display = 'flex';
+
+      // Render each insight
+      const template = document.getElementById('insight-card-template');
+      filtered.forEach(insight => {
+        const card = createInsightCard(insight, template);
+        gridEl.appendChild(card);
+      });
+    }
+
+    /**
+     * Create insight card element
+     */
+    function createInsightCard(insight, template) {
+      const clone = template.content.cloneNode(true);
+      const card = clone.querySelector('.insight-card');
+
+      // Set topic
+      const topicEl = card.querySelector('.insight-card-topic');
+      topicEl.textContent = formatTopic(insight.topic);
+
+      // Set confidence
+      const confEl = card.querySelector('.insight-card-confidence');
+      confEl.textContent = getConfidenceText(insight.confidence);
+
+      // Set text
+      const textEl = card.querySelector('.insight-card-text');
+      textEl.textContent = insight.expression || insight.text;
+
+      // Set meta
+      const sourcesEl = card.querySelector('.insight-card-sources');
+      const sourceCount = insight.source_count || 1;
+      sourcesEl.textContent = `Based on ${sourceCount} observation${sourceCount !== 1 ? 's' : ''}`;
+
+      const dateEl = card.querySelector('.insight-card-date');
+      dateEl.textContent = formatDate(insight.created_at);
+
+      // Set up actions
+      const actions = card.querySelectorAll('.insight-action');
+      actions.forEach(btn => {
+        btn.addEventListener('click', () => handleAction(btn.dataset.action, insight));
+      });
+
+      // Store insight ID
+      card.dataset.insightId = insight.id;
+
+      return card;
+    }
+
+    /**
+     * Format topic for display
+     */
+    function formatTopic(topic) {
+      const map = {
+        'work-patterns': 'Work Patterns',
+        'projects': 'Projects',
+        'preferences': 'Preferences',
+        'relationships': 'Relationships',
+        'scheduling': 'Scheduling',
+      };
+      return map[topic] || topic || 'Observation';
+    }
+
+    /**
+     * Get confidence text
+     */
+    function getConfidenceText(confidence) {
+      if (confidence >= 0.8) return CONFIDENCE_TEXT.high;
+      if (confidence >= 0.6) return CONFIDENCE_TEXT.medium;
+      return CONFIDENCE_TEXT.low;
+    }
+
+    /**
+     * Format date for display
+     */
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return diffDays + ' days ago';
+      return date.toLocaleDateString();
+    }
+
+    /**
+     * Handle action button click
+     */
+    function handleAction(action, insight) {
+      switch (action) {
+        case 'correct':
+          handleCorrect(insight);
+          break;
+        case 'confirm':
+          handleConfirm(insight);
+          break;
+        case 'why':
+          handleWhy(insight);
+          break;
+        case 'delete':
+          handleDelete(insight);
+          break;
+      }
+    }
+
+    /**
+     * Handle correction (D2)
+     */
+    function handleCorrect(insight) {
+      // Fire event for correction flow
+      window.dispatchEvent(new CustomEvent('insight-correct', {
+        detail: { insight }
+      }));
+    }
+
+    /**
+     * Handle confirmation (D2)
+     */
+    function handleConfirm(insight) {
+      // D2: "That's what I had noted—glad to confirm it's correct!"
+      if (window.showToast) {
+        window.showToast("Thanks for confirming! I'll keep that in mind.", 'success');
+      }
+
+      // Fire event
+      window.dispatchEvent(new CustomEvent('insight-confirm', {
+        detail: { insight }
+      }));
+    }
+
+    /**
+     * Handle "Why?" question
+     */
+    function handleWhy(insight) {
+      // Fire event for explanation
+      window.dispatchEvent(new CustomEvent('insight-why', {
+        detail: { insight }
+      }));
+    }
+
+    /**
+     * Handle deletion (D2)
+     */
+    function handleDelete(insight) {
+      // D2: "This deletion is permanent—I can't undo it."
+      if (confirm(`This will permanently remove this insight:\n\n"${insight.expression || insight.text}"\n\nThis cannot be undone. Continue?`)) {
+        // Remove from list
+        currentInsights = currentInsights.filter(i => i.id !== insight.id);
+
+        // Remove card from DOM
+        const card = document.querySelector(`[data-insight-id="${insight.id}"]`);
+        if (card) {
+          card.style.opacity = '0';
+          card.style.transform = 'translateX(-20px)';
+          card.style.transition = 'all 0.3s ease';
+          setTimeout(() => card.remove(), 300);
+        }
+
+        // D2: "Got it, that's gone"
+        if (window.showToast) {
+          window.showToast("Got it, that's gone.", 'info');
+        }
+
+        // Update counts
+        updateTopicCounts();
+
+        // Fire event
+        window.dispatchEvent(new CustomEvent('insight-delete', {
+          detail: { insight }
+        }));
+      }
+    }
+
+    /**
+     * Handle reset all (D2)
+     */
+    function handleReset() {
+      // D2: Require typing "RESET" to confirm
+      const confirmation = prompt(
+        'This will delete ALL your insights permanently.\n\n' +
+        'What will be deleted:\n' +
+        `- All learned preferences (${currentInsights.length} insights)\n` +
+        '- All pattern observations\n' +
+        '- All communication style learnings\n\n' +
+        'This cannot be undone.\n\n' +
+        'Type RESET to confirm:'
+      );
+
+      if (confirmation === 'RESET') {
+        // Clear all insights
+        currentInsights = [];
+        updateTopicCounts();
+        renderInsights();
+
+        // D2: "Starting fresh"
+        if (window.showToast) {
+          window.showToast("Starting fresh. I'll begin learning again as we work together.", 'info');
+        }
+
+        // Fire event
+        window.dispatchEvent(new CustomEvent('insights-reset'));
+      }
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    // Expose for external use
+    window.InsightJournal = {
+      loadInsights: loadInsights,
+      renderInsights: renderInsights,
+    };
+  })();
+</script>
+{% endblock %}

@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional
 from services.domain.models import Intent
 from services.intent_service.intent_types import IntentClassificationContext, IntentUnderstanding
 from services.intent_service.warmth_calibration import WarmthCalibrator
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 
 class HonestFailureHandler:

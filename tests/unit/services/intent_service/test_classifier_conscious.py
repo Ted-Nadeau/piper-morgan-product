@@ -12,7 +12,7 @@ import pytest
 from services.domain.models import Intent
 from services.intent_service.classifier import IntentClassifier
 from services.intent_service.intent_types import IntentUnderstanding
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 
 class TestClassifyConscious:

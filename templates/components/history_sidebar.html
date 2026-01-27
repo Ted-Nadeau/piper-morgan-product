@@ -1,0 +1,709 @@
+<!--
+  History Sidebar Component (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+
+  Displays conversation history with:
+  - Date grouping (today, yesterday, this week, older)
+  - Search functionality
+  - Click to view/continue conversation
+  - Private conversation indicator
+  - Pagination
+
+  Design reference: PDR-002 (Three-Layer Context Persistence)
+  Layer 2: User History - Searchable archive
+-->
+
+<style>
+  .history-sidebar {
+    width: 320px;
+    height: 100%;
+    background: white;
+    border-left: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+  }
+
+  .history-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .history-sidebar-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .history-sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  .history-sidebar-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 18px;
+  }
+
+  .history-sidebar-close:hover {
+    background: #f1f5f9;
+  }
+
+  /* Search */
+  .history-search {
+    padding: 12px 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .history-search-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f9fafb;
+  }
+
+  .history-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+  }
+
+  .history-search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  /* Content */
+  .history-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  /* Date groups */
+  .history-group {
+    margin-bottom: 8px;
+  }
+
+  .history-group-header {
+    padding: 12px 20px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #f9fafb;
+    position: sticky;
+    top: 0;
+  }
+
+  /* Conversation items */
+  .history-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.1s ease;
+  }
+
+  .history-item:hover {
+    background: #f8fafc;
+  }
+
+  .history-item-topic {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .history-item-private {
+    color: #94a3b8;
+    font-size: 12px;
+  }
+
+  .history-item-summary {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .history-item-meta {
+    font-size: 12px;
+    color: #94a3b8;
+    display: flex;
+    gap: 12px;
+  }
+
+  .history-item-time {
+    /* Time display */
+  }
+
+  .history-item-channel {
+    /* Channel indicator */
+  }
+
+  /* Empty state */
+  .history-empty {
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .history-empty-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  .history-empty-message {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Loading */
+  .history-loading {
+    padding: 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  /* Load more */
+  .history-load-more {
+    padding: 16px 20px;
+    text-align: center;
+    border-top: 1px solid #e5e7eb;
+  }
+
+  .history-load-more-btn {
+    padding: 8px 16px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+  }
+
+  .history-load-more-btn:hover {
+    background: #e2e8f0;
+  }
+
+  /* Privacy footer */
+  .history-privacy-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+  }
+
+  .history-privacy-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #475569;
+    width: 100%;
+  }
+
+  .history-privacy-toggle:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .history-privacy-toggle.active {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  /* Search results highlight */
+  .history-search-highlight {
+    background: #fef08a;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+
+  /* Overlay for mobile */
+  .history-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+  }
+
+  .history-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+</style>
+
+<!-- History Sidebar Template -->
+<template id="history-sidebar-template">
+  <div class="history-overlay" role="presentation"></div>
+  <aside class="history-sidebar" role="complementary" aria-label="Conversation history">
+    <header class="history-sidebar-header">
+      <h2 class="history-sidebar-title">History</h2>
+      <button class="history-sidebar-close" aria-label="Close history">×</button>
+    </header>
+
+    <div class="history-search">
+      <input type="search"
+             class="history-search-input"
+             placeholder="Search conversations..."
+             aria-label="Search conversation history">
+    </div>
+
+    <div class="history-content" role="list">
+      <!-- Groups populated dynamically -->
+    </div>
+
+    <div class="history-load-more">
+      <button class="history-load-more-btn">Load more</button>
+    </div>
+
+    <footer class="history-privacy-footer">
+      <button class="history-privacy-toggle" aria-pressed="false">
+        <span class="history-privacy-icon">🔒</span>
+        <span class="history-privacy-label">Start private session</span>
+      </button>
+    </footer>
+  </aside>
+</template>
+
+<!-- History Item Template -->
+<template id="history-item-template">
+  <article class="history-item" role="listitem" tabindex="0">
+    <h3 class="history-item-topic">
+      <span class="history-item-topic-text"></span>
+      <span class="history-item-private" aria-label="Private conversation">🔒</span>
+    </h3>
+    <p class="history-item-summary"></p>
+    <div class="history-item-meta">
+      <span class="history-item-time"></span>
+      <span class="history-item-channel"></span>
+    </div>
+  </article>
+</template>
+
+<!-- History Group Template -->
+<template id="history-group-template">
+  <section class="history-group" role="group">
+    <h3 class="history-group-header"></h3>
+    <div class="history-group-items"></div>
+  </section>
+</template>
+
+<script>
+  /**
+   * History Sidebar Manager (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+   *
+   * Implements PDR-002 User History layer:
+   * - Searchable conversation archive
+   * - Date-grouped display
+   * - Privacy controls
+   * - Click to continue conversation
+   */
+  (function() {
+    'use strict';
+
+    // Date group labels
+    const DATE_GROUPS = {
+      today: 'Today',
+      yesterday: 'Yesterday',
+      thisWeek: 'This Week',
+      older: 'Older',
+    };
+
+    let isOpen = false;
+    let currentPage = 1;
+    let totalPages = 1;
+    let searchQuery = '';
+    let sidebarElement = null;
+    let overlayElement = null;
+
+    /**
+     * Determine date group for a timestamp
+     * @param {Date} date - The date to categorize
+     * @returns {string} - Group key (today, yesterday, thisWeek, older)
+     */
+    function getDateGroup(date) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const itemDate = new Date(date);
+      const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+
+      if (itemDay.getTime() >= today.getTime()) {
+        return 'today';
+      } else if (itemDay.getTime() >= yesterday.getTime()) {
+        return 'yesterday';
+      } else if (itemDay.getTime() >= weekAgo.getTime()) {
+        return 'thisWeek';
+      } else {
+        return 'older';
+      }
+    }
+
+    /**
+     * Format time for display
+     * @param {Date} date - The date to format
+     * @returns {string} - Formatted time string
+     */
+    function formatTime(date) {
+      const d = new Date(date);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      if (d >= today) {
+        // Today: show time
+        return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      } else {
+        // Other days: show date
+        return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      }
+    }
+
+    /**
+     * Group conversations by date
+     * @param {Array} conversations - List of conversation objects
+     * @returns {Object} - Grouped conversations
+     */
+    function groupByDate(conversations) {
+      const groups = {
+        today: [],
+        yesterday: [],
+        thisWeek: [],
+        older: [],
+      };
+
+      conversations.forEach(conv => {
+        const group = getDateGroup(conv.timestamp || conv.created_at);
+        groups[group].push(conv);
+      });
+
+      return groups;
+    }
+
+    /**
+     * Render a single conversation item
+     * @param {Object} conversation - Conversation data
+     * @returns {HTMLElement} - Rendered element
+     */
+    function renderItem(conversation) {
+      const template = document.getElementById('history-item-template');
+      if (!template) return null;
+
+      const clone = template.content.cloneNode(true);
+      const item = clone.querySelector('.history-item');
+
+      // Set data attributes
+      item.setAttribute('data-conversation-id', conversation.id);
+      item.setAttribute('data-topic', conversation.topic_summary || '');
+
+      // Topic
+      const topicText = item.querySelector('.history-item-topic-text');
+      topicText.textContent = conversation.topic_summary || 'Untitled conversation';
+
+      // Private indicator
+      const privateIcon = item.querySelector('.history-item-private');
+      if (!conversation.is_private) {
+        privateIcon.style.display = 'none';
+      }
+
+      // Summary
+      const summary = item.querySelector('.history-item-summary');
+      summary.textContent = conversation.summary || '';
+
+      // Time
+      const time = item.querySelector('.history-item-time');
+      time.textContent = formatTime(conversation.timestamp || conversation.created_at);
+
+      // Channel
+      const channel = item.querySelector('.history-item-channel');
+      if (conversation.channel) {
+        channel.textContent = conversation.channel;
+      } else {
+        channel.style.display = 'none';
+      }
+
+      return item;
+    }
+
+    /**
+     * Render grouped conversations
+     * @param {Object} groups - Grouped conversations
+     * @param {HTMLElement} container - Container element
+     */
+    function renderGroups(groups, container) {
+      container.innerHTML = '';
+
+      const groupOrder = ['today', 'yesterday', 'thisWeek', 'older'];
+
+      groupOrder.forEach(groupKey => {
+        const items = groups[groupKey];
+        if (items.length === 0) return;
+
+        const template = document.getElementById('history-group-template');
+        if (!template) return;
+
+        const clone = template.content.cloneNode(true);
+        const group = clone.querySelector('.history-group');
+
+        // Header
+        const header = group.querySelector('.history-group-header');
+        header.textContent = DATE_GROUPS[groupKey];
+
+        // Items
+        const itemsContainer = group.querySelector('.history-group-items');
+        items.forEach(conv => {
+          const item = renderItem(conv);
+          if (item) {
+            itemsContainer.appendChild(item);
+          }
+        });
+
+        container.appendChild(group);
+      });
+
+      // Empty state
+      const totalItems = Object.values(groups).reduce((sum, g) => sum + g.length, 0);
+      if (totalItems === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'history-empty';
+        empty.innerHTML = `
+          <div class="history-empty-icon">💬</div>
+          <p class="history-empty-message">${searchQuery ? 'No conversations match your search' : 'No conversation history yet'}</p>
+        `;
+        container.appendChild(empty);
+      }
+    }
+
+    /**
+     * Open the history sidebar
+     */
+    function open() {
+      if (sidebarElement) {
+        sidebarElement.classList.add('open');
+        if (overlayElement) overlayElement.classList.add('open');
+        isOpen = true;
+
+        // Focus search input
+        const searchInput = sidebarElement.querySelector('.history-search-input');
+        if (searchInput) searchInput.focus();
+      }
+    }
+
+    /**
+     * Close the history sidebar
+     */
+    function close() {
+      if (sidebarElement) {
+        sidebarElement.classList.remove('open');
+        if (overlayElement) overlayElement.classList.remove('open');
+        isOpen = false;
+      }
+    }
+
+    /**
+     * Toggle the history sidebar
+     */
+    function toggle() {
+      if (isOpen) {
+        close();
+      } else {
+        open();
+      }
+    }
+
+    /**
+     * Mount the history sidebar
+     * @param {HTMLElement} container - Container to mount into
+     * @param {Object} options - Configuration options
+     * @param {Function} options.onSelect - Callback when conversation selected
+     * @param {Function} options.onSearch - Callback for search
+     * @param {Function} options.onLoadMore - Callback for pagination
+     * @param {Function} options.onPrivacyToggle - Callback for privacy toggle
+     */
+    function mount(container, options = {}) {
+      const template = document.getElementById('history-sidebar-template');
+      if (!template) {
+        console.error('History sidebar template not found');
+        return;
+      }
+
+      const clone = template.content.cloneNode(true);
+      overlayElement = clone.querySelector('.history-overlay');
+      sidebarElement = clone.querySelector('.history-sidebar');
+
+      // Close button
+      const closeBtn = sidebarElement.querySelector('.history-sidebar-close');
+      closeBtn.addEventListener('click', close);
+
+      // Overlay click to close
+      overlayElement.addEventListener('click', close);
+
+      // Escape to close
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isOpen) {
+          close();
+        }
+      });
+
+      // Search
+      const searchInput = sidebarElement.querySelector('.history-search-input');
+      let searchTimeout = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          searchQuery = searchInput.value.trim();
+          if (options.onSearch) {
+            options.onSearch(searchQuery);
+          }
+        }, 300);
+      });
+
+      // Load more
+      const loadMoreBtn = sidebarElement.querySelector('.history-load-more-btn');
+      loadMoreBtn.addEventListener('click', () => {
+        if (options.onLoadMore && currentPage < totalPages) {
+          currentPage++;
+          options.onLoadMore(currentPage);
+        }
+      });
+
+      // Privacy toggle
+      const privacyToggle = sidebarElement.querySelector('.history-privacy-toggle');
+      privacyToggle.addEventListener('click', () => {
+        const isActive = privacyToggle.classList.toggle('active');
+        privacyToggle.setAttribute('aria-pressed', isActive);
+        const label = privacyToggle.querySelector('.history-privacy-label');
+        label.textContent = isActive ? 'End private session' : 'Start private session';
+
+        if (options.onPrivacyToggle) {
+          options.onPrivacyToggle(isActive);
+        }
+      });
+
+      // Item click delegation
+      const content = sidebarElement.querySelector('.history-content');
+      content.addEventListener('click', (e) => {
+        const item = e.target.closest('.history-item');
+        if (item && options.onSelect) {
+          const id = item.getAttribute('data-conversation-id');
+          const topic = item.getAttribute('data-topic');
+          options.onSelect({ id, topic });
+          close();
+        }
+      });
+
+      // Keyboard navigation for items
+      content.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          const item = e.target.closest('.history-item');
+          if (item) {
+            e.preventDefault();
+            item.click();
+          }
+        }
+      });
+
+      container.appendChild(overlayElement);
+      container.appendChild(sidebarElement);
+    }
+
+    /**
+     * Update displayed conversations
+     * @param {Array} conversations - List of conversation objects
+     * @param {Object} pagination - Pagination info { page, totalPages }
+     */
+    function update(conversations, pagination = {}) {
+      if (!sidebarElement) return;
+
+      currentPage = pagination.page || 1;
+      totalPages = pagination.totalPages || 1;
+
+      const content = sidebarElement.querySelector('.history-content');
+      const groups = groupByDate(conversations);
+      renderGroups(groups, content);
+
+      // Show/hide load more
+      const loadMoreSection = sidebarElement.querySelector('.history-load-more');
+      loadMoreSection.style.display = currentPage < totalPages ? 'block' : 'none';
+    }
+
+    /**
+     * Set privacy mode state
+     * @param {boolean} isPrivate - Whether private mode is active
+     */
+    function setPrivacyState(isPrivate) {
+      if (!sidebarElement) return;
+
+      const toggle = sidebarElement.querySelector('.history-privacy-toggle');
+      const label = toggle.querySelector('.history-privacy-label');
+
+      if (isPrivate) {
+        toggle.classList.add('active');
+        toggle.setAttribute('aria-pressed', 'true');
+        label.textContent = 'End private session';
+      } else {
+        toggle.classList.remove('active');
+        toggle.setAttribute('aria-pressed', 'false');
+        label.textContent = 'Start private session';
+      }
+    }
+
+    // Expose globally
+    window.HistorySidebar = {
+      mount: mount,
+      open: open,
+      close: close,
+      toggle: toggle,
+      update: update,
+      setPrivacyState: setPrivacyState,
+      groupByDate: groupByDate,
+      formatTime: formatTime,
+      DATE_GROUPS: DATE_GROUPS,
+    };
+
+    // Mark as loaded
+    window.historySidebarLoaded = true;
+  })();
+</script>

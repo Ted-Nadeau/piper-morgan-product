@@ -17,7 +17,7 @@ from services.integrations.slack.spatial_types import (
     EmotionalValence,
     SpatialCoordinates,
 )
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 
 @dataclass
@@ -35,7 +35,7 @@ class SlackResponseContext:
     """
 
     # Place information
-    place: PlaceType
+    place: InteractionSpace
     channel_id: str
     channel_name: Optional[str] = None
     is_thread: bool = False
@@ -79,7 +79,7 @@ class SlackResponseContext:
         """
         # Determine Place
         is_dm = spatial_context.get("is_dm", False)
-        place = PlaceType.SLACK_DM if is_dm else PlaceType.SLACK_CHANNEL
+        place = InteractionSpace.SLACK_DM if is_dm else InteractionSpace.SLACK_CHANNEL
 
         # Extract attention level
         attention_level = AttentionLevel.AMBIENT
@@ -127,7 +127,7 @@ class SlackResponseContext:
         # Determine if DM (DMs typically start with 'D')
         room_id = coords.room_id if coords else ""
         is_dm = room_id.startswith("D") if room_id else False
-        place = PlaceType.SLACK_DM if is_dm else PlaceType.SLACK_CHANNEL
+        place = InteractionSpace.SLACK_DM if is_dm else InteractionSpace.SLACK_CHANNEL
 
         # Extract attention level from spatial event
         attention_level = AttentionLevel.AMBIENT
@@ -164,7 +164,7 @@ class SlackResponseContext:
 
         DMs are more casual, public channels more professional.
         """
-        if self.place == PlaceType.SLACK_DM:
+        if self.place == InteractionSpace.SLACK_DM:
             return "casual"
         elif self.attention_level == AttentionLevel.DIRECT:
             return "warm"
@@ -177,7 +177,7 @@ class SlackResponseContext:
 
         Public channels favor brevity; DMs allow more detail.
         """
-        return self.place == PlaceType.SLACK_CHANNEL
+        return self.place == InteractionSpace.SLACK_CHANNEL
 
     def user_seems_frustrated(self) -> bool:
         """

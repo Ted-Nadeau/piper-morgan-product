@@ -14,7 +14,7 @@ from services.intent_service.honest_failure import (
     create_graceful_error_response,
 )
 from services.intent_service.intent_types import IntentClassificationContext
-from services.shared_types import IntentCategory, PerceptionMode, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace, PerceptionMode
 
 
 class TestHonestFailureHandler:
@@ -29,7 +29,7 @@ class TestHonestFailureHandler:
         return IntentClassificationContext(
             message="do the thing with the stuff",
             user_id="user-1",
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
         )
 
     @pytest.fixture
@@ -184,7 +184,7 @@ class TestCreateGracefulErrorResponse:
         """Factory function creates graceful response."""
         context = IntentClassificationContext(
             message="broken request",
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
         )
         settings = {"formality": "warm"}
 
@@ -208,7 +208,7 @@ class TestContractorTest:
         handler = HonestFailureHandler()
         context = IntentClassificationContext(
             message="test",
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
         )
         settings = {"formality": "professional"}
 

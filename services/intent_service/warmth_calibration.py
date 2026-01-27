@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Optional
 
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 
 class WarmthLevel(str, Enum):
@@ -52,7 +52,7 @@ class WarmthCalibrator:
     def calibrate(
         self,
         confidence: float,
-        place: PlaceType,
+        place: InteractionSpace,
         place_settings: Dict[str, Any],
         is_error: bool = False,
         seems_frustrated: bool = False,
@@ -93,7 +93,7 @@ class WarmthCalibrator:
     def _determine_warmth_level(
         self,
         confidence: float,
-        place: PlaceType,
+        place: InteractionSpace,
         formality: str,
         is_error: bool,
         seems_frustrated: bool,
@@ -104,7 +104,7 @@ class WarmthCalibrator:
             return WarmthLevel.SUPPORTIVE
 
         # Errors need care (but not on CLI)
-        if is_error and place != PlaceType.CLI:
+        if is_error and place != InteractionSpace.CLI:
             return WarmthLevel.SUPPORTIVE
 
         # Low confidence means Piper is uncertain - be warmer
@@ -112,11 +112,11 @@ class WarmthCalibrator:
             return WarmthLevel.WARM
 
         # Place-based defaults
-        if place == PlaceType.CLI:
+        if place == InteractionSpace.CLI:
             return WarmthLevel.COOL
-        if place == PlaceType.SLACK_DM:
+        if place == InteractionSpace.SLACK_DM:
             return WarmthLevel.WARM
-        if place == PlaceType.WEB_CHAT:
+        if place == InteractionSpace.WEB_CHAT:
             return WarmthLevel.WARM
 
         # Default based on formality
@@ -136,10 +136,10 @@ class WarmthCalibrator:
         # Only warm and supportive levels use encouragement
         return level in (WarmthLevel.WARM, WarmthLevel.SUPPORTIVE)
 
-    def _can_acknowledge_effort(self, level: WarmthLevel, place: PlaceType) -> bool:
+    def _can_acknowledge_effort(self, level: WarmthLevel, place: InteractionSpace) -> bool:
         """Can we acknowledge user's effort/difficulty?"""
         # Public channels: don't call out difficulty publicly
-        if place == PlaceType.SLACK_CHANNEL:
+        if place == InteractionSpace.SLACK_CHANNEL:
             return False
         # Only warm and supportive levels acknowledge effort
         return level in (WarmthLevel.WARM, WarmthLevel.SUPPORTIVE)

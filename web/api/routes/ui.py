@@ -122,10 +122,16 @@ async def home(request: Request):
 
     Issue #390: Smart setup/login routing
     Issue #549: Post-setup orientation modal context
+    Issue #419: Trust-gated home state (MUX-NAV-HOME)
     """
+    from uuid import UUID
+
     from sqlalchemy import text
 
     from services.database.session_factory import AsyncSessionFactory
+    from services.repositories.user_trust_profile_repository import UserTrustProfileRepository
+    from services.shared_types import TrustStage
+    from services.trust import TrustComputationService
 
     user_id = getattr(request.state, "user_id", None)
 
@@ -135,8 +141,10 @@ async def home(request: Request):
         user_context = _extract_user_context(request)
 
         # Issue #549: Get setup_complete and orientation_seen for orientation modal
+        # Issue #419: Get trust_stage for trust-gated home state
         setup_complete = False
         orientation_seen = True  # Default to True so modal doesn't show if lookup fails
+        trust_stage = TrustStage.NEW  # Default to NEW if lookup fails
         try:
             async with AsyncSessionFactory.session_scope_fresh() as session:
                 result = await session.execute(
@@ -147,6 +155,11 @@ async def home(request: Request):
                 if row:
                     setup_complete = row[0]
                     orientation_seen = row[1]
+
+                # Issue #419: Get user's trust stage for consciousness-aware home state
+                trust_repo = UserTrustProfileRepository(session)
+                trust_service = TrustComputationService(trust_repo)
+                trust_stage = await trust_service.get_trust_stage(UUID(str(user_id)))
         except Exception as e:
             logger.warning(f"Error fetching user setup status: {e}, skipping orientation modal")
 
@@ -157,6 +170,11 @@ async def home(request: Request):
                 "user": user_context,
                 "setup_complete": setup_complete,
                 "orientation_seen": orientation_seen,
+                # Issue #419: Trust stage for trust-gated home state rendering
+                # Note: Per ADR-053, trust is "invisible to users but effects noticeable"
+                # We don't show "Stage 2" to users, just vary the experience
+                "trust_stage": trust_stage.value,  # Pass as int for template logic
+                "trust_stage_name": trust_stage.name,  # Pass name for debugging/logging
             },
         )
 
@@ -289,6 +307,33 @@ async def files_ui(request: Request):
     templates = _get_templates(request)
     user_context = _extract_user_context(request)
     return templates.TemplateResponse("files.html", {"request": request, "user": user_context})
+
+
+@router.get("/documents", response_class=HTMLResponse)
+async def documents_ui(request: Request):
+    """
+    Documents page with Piper's perspective (#422 MUX-IMPLEMENT-DOCS-ACCESS).
+
+    Shows documents as Place windows with trust-gated visibility (Stage 4+).
+    Provides search, summaries, and Q&A capability.
+    """
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("documents.html", {"request": request, "user": user_context})
+
+
+@router.get("/insights", response_class=HTMLResponse)
+async def insights_ui(request: Request):
+    """
+    Insight Journal page (#424 MUX-IMPLEMENT-COMPOST).
+
+    Browse all learnings organized by topic.
+    Control actions: Correct, Delete, Confirm, "Why?"
+    Design: D2 Control Interface Patterns
+    """
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("insights.html", {"request": request, "user": user_context})
 
 
 @router.get("/settings/integrations", response_class=HTMLResponse)

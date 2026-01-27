@@ -13,7 +13,7 @@ See: #619 GRAMMAR-TRANSFORM: Intent Classification
 
 from typing import Any, Dict, Optional
 
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 
 class PlaceDetector:
@@ -26,38 +26,38 @@ class PlaceDetector:
     """
 
     # Place-specific communication settings
-    PLACE_SETTINGS: Dict[PlaceType, Dict[str, Any]] = {
-        PlaceType.SLACK_DM: {
+    PLACE_SETTINGS: Dict[InteractionSpace, Dict[str, Any]] = {
+        InteractionSpace.SLACK_DM: {
             "formality": "casual",
             "verbosity": "medium",
             "can_use_emoji": True,
             "max_response_lines": 20,
         },
-        PlaceType.SLACK_CHANNEL: {
+        InteractionSpace.SLACK_CHANNEL: {
             "formality": "professional",
             "verbosity": "concise",
             "can_use_emoji": False,
             "max_response_lines": 10,
         },
-        PlaceType.WEB_CHAT: {
+        InteractionSpace.WEB_CHAT: {
             "formality": "warm",
             "verbosity": "full",
             "can_use_emoji": True,
             "max_response_lines": 50,
         },
-        PlaceType.CLI: {
+        InteractionSpace.CLI: {
             "formality": "terse",
             "verbosity": "minimal",
             "can_use_emoji": False,
             "max_response_lines": 5,
         },
-        PlaceType.API: {
+        InteractionSpace.API: {
             "formality": "neutral",
             "verbosity": "structured",
             "can_use_emoji": False,
             "max_response_lines": 100,
         },
-        PlaceType.UNKNOWN: {
+        InteractionSpace.UNKNOWN: {
             "formality": "professional",
             "verbosity": "medium",
             "can_use_emoji": False,
@@ -65,41 +65,41 @@ class PlaceDetector:
         },
     }
 
-    def detect(self, spatial_context: Optional[Dict[str, Any]]) -> PlaceType:
+    def detect(self, spatial_context: Optional[Dict[str, Any]]) -> InteractionSpace:
         """
-        Determine PlaceType from spatial context.
+        Determine InteractionSpace from spatial context.
 
         Args:
             spatial_context: Dictionary with location hints from the request.
                 Common keys: room_id, channel, is_dm, source, workspace_id
 
         Returns:
-            PlaceType indicating where this conversation is happening.
+            InteractionSpace indicating where this conversation is happening.
         """
         if not spatial_context:
-            return PlaceType.UNKNOWN
+            return InteractionSpace.UNKNOWN
 
         # Check for explicit source indicator (highest priority)
         source = spatial_context.get("source", "").lower()
         if source == "cli":
-            return PlaceType.CLI
+            return InteractionSpace.CLI
         if source == "api":
-            return PlaceType.API
+            return InteractionSpace.API
         if source in ("web", "web_chat"):
-            return PlaceType.WEB_CHAT
+            return InteractionSpace.WEB_CHAT
 
         # Check for Slack indicators
         if self._is_slack_context(spatial_context):
             if spatial_context.get("is_dm", False):
-                return PlaceType.SLACK_DM
+                return InteractionSpace.SLACK_DM
             # Any Slack context without is_dm = public channel
-            return PlaceType.SLACK_CHANNEL
+            return InteractionSpace.SLACK_CHANNEL
 
         # Check for web indicators
         if spatial_context.get("browser") or spatial_context.get("web_session"):
-            return PlaceType.WEB_CHAT
+            return InteractionSpace.WEB_CHAT
 
-        return PlaceType.UNKNOWN
+        return InteractionSpace.UNKNOWN
 
     def _is_slack_context(self, spatial_context: Dict[str, Any]) -> bool:
         """Check if this looks like a Slack context."""
@@ -113,21 +113,21 @@ class PlaceDetector:
         ]
         return any(key in spatial_context for key in slack_indicators)
 
-    def get_place_settings(self, place: PlaceType) -> Dict[str, Any]:
+    def get_place_settings(self, place: InteractionSpace) -> Dict[str, Any]:
         """
         Get communication settings appropriate for this Place.
 
         Args:
-            place: The PlaceType to get settings for.
+            place: The InteractionSpace to get settings for.
 
         Returns:
             Dictionary with formality, verbosity, emoji, and line limit settings.
         """
-        return self.PLACE_SETTINGS.get(place, self.PLACE_SETTINGS[PlaceType.UNKNOWN])
+        return self.PLACE_SETTINGS.get(place, self.PLACE_SETTINGS[InteractionSpace.UNKNOWN])
 
     def detect_with_settings(
         self, spatial_context: Optional[Dict[str, Any]]
-    ) -> tuple[PlaceType, Dict[str, Any]]:
+    ) -> tuple[InteractionSpace, Dict[str, Any]]:
         """
         Convenience method to detect Place and get settings in one call.
 
@@ -135,7 +135,7 @@ class PlaceDetector:
             spatial_context: Location context dictionary.
 
         Returns:
-            Tuple of (PlaceType, settings dictionary).
+            Tuple of (InteractionSpace, settings dictionary).
         """
         place = self.detect(spatial_context)
         settings = self.get_place_settings(place)

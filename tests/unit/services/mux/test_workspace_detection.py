@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from services.mux.workspace_detection import ContextSwitch, WorkspaceContext, detect_context_switch
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 # =============================================================================
 # Test Fixtures
@@ -27,7 +27,7 @@ def make_context(
     workspace_id: str = "workspace-1",
     workspace_type: str = "slack",
     friendly_name: str = "#general",
-    place_type: PlaceType = PlaceType.SLACK_CHANNEL,
+    place_type: InteractionSpace = InteractionSpace.SLACK_CHANNEL,
     hours_ago: float = 0,
     metadata: dict = None,
 ) -> WorkspaceContext:
@@ -56,7 +56,7 @@ class TestWorkspaceContext:
         assert ctx.workspace_id == "workspace-1"
         assert ctx.workspace_type == "slack"
         assert ctx.friendly_name == "#general"
-        assert ctx.place_type == PlaceType.SLACK_CHANNEL
+        assert ctx.place_type == InteractionSpace.SLACK_CHANNEL
 
     def test_matches_same_workspace(self):
         """matches() returns True for same workspace_id."""
@@ -77,16 +77,16 @@ class TestWorkspaceContextFromSpatialContext:
     def test_slack_dm_extracts_workspace_id(self):
         """Slack DM extracts workspace_id from spatial_context."""
         spatial = {"workspace_id": "T12345", "is_dm": True}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.SLACK_DM)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.SLACK_DM)
 
         assert ctx.workspace_id == "T12345"
         assert ctx.workspace_type == "slack"
-        assert ctx.place_type == PlaceType.SLACK_DM
+        assert ctx.place_type == InteractionSpace.SLACK_DM
 
     def test_slack_channel_uses_team_id_fallback(self):
         """Slack channel falls back to team_id if no workspace_id."""
         spatial = {"team_id": "T99999", "channel": "general"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.SLACK_CHANNEL)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.SLACK_CHANNEL)
 
         assert ctx.workspace_id == "T99999"
         assert ctx.workspace_type == "slack"
@@ -95,21 +95,21 @@ class TestWorkspaceContextFromSpatialContext:
     def test_slack_channel_generates_friendly_name(self):
         """Slack channel generates #channel-name friendly name."""
         spatial = {"workspace_id": "T12345", "channel": "random"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.SLACK_CHANNEL)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.SLACK_CHANNEL)
 
         assert ctx.friendly_name == "#random"
 
     def test_slack_channel_preserves_hash_prefix(self):
         """Slack channel doesn't double the # prefix."""
         spatial = {"workspace_id": "T12345", "channel": "#already-prefixed"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.SLACK_CHANNEL)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.SLACK_CHANNEL)
 
         assert ctx.friendly_name == "#already-prefixed"
 
     def test_web_chat_extracts_session_id(self):
         """Web chat extracts session_id from spatial_context."""
         spatial = {"session_id": "sess-abc123"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.WEB_CHAT)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.WEB_CHAT)
 
         assert ctx.workspace_id == "sess-abc123"
         assert ctx.workspace_type == "web"
@@ -118,14 +118,14 @@ class TestWorkspaceContextFromSpatialContext:
     def test_web_chat_defaults_without_session(self):
         """Web chat defaults to 'web-chat' if no session_id."""
         spatial = {}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.WEB_CHAT)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.WEB_CHAT)
 
         assert ctx.workspace_id == "web-chat"
 
     def test_cli_always_cli_workspace(self):
         """CLI always uses 'cli' as workspace_id."""
         spatial = {"anything": "ignored"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.CLI)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.CLI)
 
         assert ctx.workspace_id == "cli"
         assert ctx.workspace_type == "cli"
@@ -134,7 +134,7 @@ class TestWorkspaceContextFromSpatialContext:
     def test_api_extracts_client_id(self):
         """API extracts client_id from spatial_context."""
         spatial = {"client_id": "my-api-client"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.API)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.API)
 
         assert ctx.workspace_id == "my-api-client"
         assert ctx.workspace_type == "api"
@@ -143,7 +143,7 @@ class TestWorkspaceContextFromSpatialContext:
     def test_unknown_place_type(self):
         """Unknown place type returns unknown workspace."""
         spatial = {}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.UNKNOWN)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.UNKNOWN)
 
         assert ctx.workspace_id == "unknown"
         assert ctx.workspace_type == "unknown"
@@ -152,7 +152,7 @@ class TestWorkspaceContextFromSpatialContext:
     def test_copies_metadata(self):
         """Factory copies spatial_context to metadata."""
         spatial = {"channel": "general", "custom": "value"}
-        ctx = WorkspaceContext.from_spatial_context(spatial, PlaceType.SLACK_CHANNEL)
+        ctx = WorkspaceContext.from_spatial_context(spatial, InteractionSpace.SLACK_CHANNEL)
 
         assert ctx.metadata == spatial
         # Verify it's a copy, not the same dict
@@ -162,14 +162,14 @@ class TestWorkspaceContextFromSpatialContext:
     def test_custom_timestamp(self):
         """Factory accepts custom timestamp."""
         ts = datetime(2026, 1, 24, 10, 0, 0, tzinfo=timezone.utc)
-        ctx = WorkspaceContext.from_spatial_context({}, PlaceType.CLI, timestamp=ts)
+        ctx = WorkspaceContext.from_spatial_context({}, InteractionSpace.CLI, timestamp=ts)
 
         assert ctx.last_active == ts
 
     def test_default_timestamp_is_now(self):
         """Factory defaults timestamp to current time."""
         before = datetime.now(timezone.utc)
-        ctx = WorkspaceContext.from_spatial_context({}, PlaceType.CLI)
+        ctx = WorkspaceContext.from_spatial_context({}, InteractionSpace.CLI)
         after = datetime.now(timezone.utc)
 
         assert before <= ctx.last_active <= after
@@ -350,8 +350,10 @@ class TestPlaceDetectorIntegration:
         web_spatial = {"session_id": "web-sess-1", "source": "web"}
 
         # Build contexts like call sites would
-        slack_ctx = WorkspaceContext.from_spatial_context(slack_spatial, PlaceType.SLACK_CHANNEL)
-        web_ctx = WorkspaceContext.from_spatial_context(web_spatial, PlaceType.WEB_CHAT)
+        slack_ctx = WorkspaceContext.from_spatial_context(
+            slack_spatial, InteractionSpace.SLACK_CHANNEL
+        )
+        web_ctx = WorkspaceContext.from_spatial_context(web_spatial, InteractionSpace.WEB_CHAT)
 
         # Detect switch
         switch = detect_context_switch(web_ctx, slack_ctx)
@@ -368,17 +370,17 @@ class TestPlaceDetectorIntegration:
 
         slack_ctx_early = WorkspaceContext.from_spatial_context(
             slack_spatial,
-            PlaceType.SLACK_CHANNEL,
+            InteractionSpace.SLACK_CHANNEL,
             timestamp=datetime.now(timezone.utc) - timedelta(hours=1),
         )
         web_ctx = WorkspaceContext.from_spatial_context(
             web_spatial,
-            PlaceType.WEB_CHAT,
+            InteractionSpace.WEB_CHAT,
             timestamp=datetime.now(timezone.utc) - timedelta(minutes=30),
         )
         slack_ctx_now = WorkspaceContext.from_spatial_context(
             slack_spatial,
-            PlaceType.SLACK_CHANNEL,
+            InteractionSpace.SLACK_CHANNEL,
             timestamp=datetime.now(timezone.utc),
         )
 

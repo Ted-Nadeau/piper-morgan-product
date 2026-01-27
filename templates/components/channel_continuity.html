@@ -1,0 +1,353 @@
+<!--
+  Channel Continuity Component (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+
+  Shows when user switches between channels (Slack, Web, CLI):
+  - "You were just working on..." (not surveillance language)
+  - Offers continue or fresh start
+  - Uses natural, non-creepy language
+
+  Design reference: PDR-002 (Cross-Channel Continuity)
+  Anti-pattern: "I saw you in Slack" (surveillance language)
+  Preferred: "You were just working on..." (natural reminder)
+-->
+
+<style>
+  .channel-continuity {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .channel-continuity.hidden {
+    display: none;
+  }
+
+  .channel-continuity-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .channel-continuity-content {
+    flex: 1;
+  }
+
+  .channel-continuity-message {
+    font-size: 14px;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+  }
+
+  .channel-continuity-topic {
+    font-weight: 600;
+    color: #0369a1;
+  }
+
+  .channel-continuity-meta {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0 0 12px 0;
+  }
+
+  .channel-continuity-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .channel-continuity-btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+  }
+
+  .channel-continuity-btn.primary {
+    background: #0284c7;
+    color: white;
+  }
+
+  .channel-continuity-btn.primary:hover {
+    background: #0369a1;
+  }
+
+  .channel-continuity-btn.secondary {
+    background: white;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+  }
+
+  .channel-continuity-btn.secondary:hover {
+    background: #f8fafc;
+  }
+
+  .channel-continuity-dismiss {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 4px;
+  }
+
+  .channel-continuity-dismiss:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #64748b;
+  }
+
+  /* Channel icons */
+  .channel-icon-slack {
+    color: #4A154B;
+  }
+
+  .channel-icon-web {
+    color: #3b82f6;
+  }
+
+  .channel-icon-cli {
+    color: #10b981;
+  }
+
+  .channel-icon-mobile {
+    color: #8b5cf6;
+  }
+</style>
+
+<!-- Channel Continuity Template -->
+<template id="channel-continuity-template">
+  <div class="channel-continuity" role="region" aria-label="Recent activity" style="position: relative;">
+    <div class="channel-continuity-icon"></div>
+    <div class="channel-continuity-content">
+      <p class="channel-continuity-message">
+        You were just working on <span class="channel-continuity-topic"></span>
+      </p>
+      <p class="channel-continuity-meta"></p>
+      <div class="channel-continuity-actions">
+        <button class="channel-continuity-btn primary continue-btn">Continue here</button>
+        <button class="channel-continuity-btn secondary dismiss-btn">Start fresh</button>
+      </div>
+    </div>
+    <button class="channel-continuity-dismiss" aria-label="Dismiss">×</button>
+  </div>
+</template>
+
+<script>
+  /**
+   * Channel Continuity Manager (#425 MUX-IMPLEMENT-MEMORY-SYNC)
+   *
+   * Implements cross-channel awareness without surveillance language:
+   * - "You were just working on..." (natural reminder)
+   * - Never: "I saw you in Slack" (creepy)
+   * - Offers choice: continue or fresh start
+   */
+  (function() {
+    'use strict';
+
+    // Channel display configuration
+    const CHANNEL_CONFIG = {
+      slack: {
+        icon: '💬',
+        name: 'Slack',
+        iconClass: 'channel-icon-slack',
+      },
+      web: {
+        icon: '🌐',
+        name: 'the web',
+        iconClass: 'channel-icon-web',
+      },
+      cli: {
+        icon: '⌨️',
+        name: 'the command line',
+        iconClass: 'channel-icon-cli',
+      },
+      mobile: {
+        icon: '📱',
+        name: 'mobile',
+        iconClass: 'channel-icon-mobile',
+      },
+    };
+
+    // Natural language phrases (no surveillance language)
+    const CONTINUITY_PHRASES = {
+      sameChannel: "You were just working on",
+      differentChannel: "You were working on",
+      recentPrefix: "just now",
+      minutesAgo: "a few minutes ago",
+      shortGap: "earlier",
+    };
+
+    /**
+     * Format the time since last activity naturally
+     * @param {number} minutesSince - Minutes since last activity
+     * @returns {string} - Natural time phrase
+     */
+    function formatTimeSince(minutesSince) {
+      if (minutesSince < 2) {
+        return CONTINUITY_PHRASES.recentPrefix;
+      } else if (minutesSince < 30) {
+        return CONTINUITY_PHRASES.minutesAgo;
+      } else {
+        return CONTINUITY_PHRASES.shortGap;
+      }
+    }
+
+    /**
+     * Build the meta text (time and optionally channel)
+     * @param {string} channel - The previous channel
+     * @param {number} minutesSince - Minutes since last activity
+     * @param {boolean} showChannel - Whether to mention the channel
+     * @returns {string} - Meta text
+     */
+    function buildMetaText(channel, minutesSince, showChannel) {
+      const timeText = formatTimeSince(minutesSince);
+      const channelConfig = CHANNEL_CONFIG[channel];
+
+      if (showChannel && channelConfig) {
+        // Only mention channel if different from current
+        return `${timeText} in ${channelConfig.name}`;
+      } else {
+        return timeText;
+      }
+    }
+
+    /**
+     * Render the channel continuity component
+     * @param {Object} context - Continuity context
+     * @param {string} context.topic - The topic being worked on
+     * @param {string} context.channel - The previous channel
+     * @param {number} context.minutesSince - Minutes since last activity
+     * @param {string} context.currentChannel - The current channel
+     * @returns {HTMLElement|null} - The rendered element
+     */
+    function render(context) {
+      const template = document.getElementById('channel-continuity-template');
+      if (!template) {
+        console.error('Channel continuity template not found');
+        return null;
+      }
+
+      const clone = template.content.cloneNode(true);
+      const container = clone.querySelector('.channel-continuity');
+
+      const channelConfig = CHANNEL_CONFIG[context.channel] || CHANNEL_CONFIG.web;
+      const isDifferentChannel = context.channel !== context.currentChannel;
+
+      // Icon
+      const iconEl = container.querySelector('.channel-continuity-icon');
+      iconEl.textContent = channelConfig.icon;
+      iconEl.classList.add(channelConfig.iconClass);
+
+      // Topic
+      const topicEl = container.querySelector('.channel-continuity-topic');
+      topicEl.textContent = context.topic || 'something';
+
+      // Message prefix (only mention channel if different)
+      const messageEl = container.querySelector('.channel-continuity-message');
+      const prefix = isDifferentChannel
+        ? CONTINUITY_PHRASES.differentChannel
+        : CONTINUITY_PHRASES.sameChannel;
+      // Replace the text node before the span
+      messageEl.childNodes[0].textContent = prefix + ' ';
+
+      // Meta (time, optionally channel)
+      const metaEl = container.querySelector('.channel-continuity-meta');
+      metaEl.textContent = buildMetaText(
+        context.channel,
+        context.minutesSince || 0,
+        isDifferentChannel
+      );
+
+      return container;
+    }
+
+    /**
+     * Mount the channel continuity component
+     * @param {HTMLElement} targetElement - Container to mount into
+     * @param {Object} context - Continuity context
+     * @param {Function} onContinue - Callback when Continue clicked
+     * @param {Function} onDismiss - Callback when Dismiss/Fresh clicked
+     */
+    function mount(targetElement, context, onContinue, onDismiss) {
+      const element = render(context);
+      if (!element) return;
+
+      // Continue button
+      const continueBtn = element.querySelector('.continue-btn');
+      continueBtn.addEventListener('click', () => {
+        if (onContinue) onContinue(context);
+        targetElement.innerHTML = '';
+      });
+
+      // Dismiss/fresh button
+      const dismissBtn = element.querySelector('.dismiss-btn');
+      dismissBtn.addEventListener('click', () => {
+        if (onDismiss) onDismiss(context);
+        targetElement.innerHTML = '';
+      });
+
+      // X button
+      const closeBtn = element.querySelector('.channel-continuity-dismiss');
+      closeBtn.addEventListener('click', () => {
+        if (onDismiss) onDismiss(context);
+        targetElement.innerHTML = '';
+      });
+
+      targetElement.innerHTML = '';
+      targetElement.appendChild(element);
+    }
+
+    /**
+     * Check if we should show continuity indicator
+     * @param {Object} context - Continuity context
+     * @returns {boolean} - Whether to show the indicator
+     */
+    function shouldShow(context) {
+      // Don't show if no topic
+      if (!context.topic) return false;
+
+      // Don't show if too long ago (over 30 minutes)
+      if (context.minutesSince > 30) return false;
+
+      // Don't show if same channel and very recent (user might just be refreshing)
+      if (context.channel === context.currentChannel && context.minutesSince < 1) {
+        return false;
+      }
+
+      return true;
+    }
+
+    // Expose globally
+    window.ChannelContinuity = {
+      render: render,
+      mount: mount,
+      shouldShow: shouldShow,
+      formatTimeSince: formatTimeSince,
+      CHANNEL_CONFIG: CHANNEL_CONFIG,
+      CONTINUITY_PHRASES: CONTINUITY_PHRASES,
+    };
+
+    // Mark as loaded
+    window.channelContinuityLoaded = true;
+  })();
+</script>

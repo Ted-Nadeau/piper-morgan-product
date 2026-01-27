@@ -7,7 +7,7 @@ from services.intent_service.warmth_calibration import (
     WarmthCalibrator,
     WarmthLevel,
 )
-from services.shared_types import PlaceType
+from services.shared_types import InteractionSpace
 
 
 class TestWarmthCalibrator:
@@ -35,7 +35,7 @@ class TestWarmthCalibrator:
         """CLI context produces COOL warmth."""
         calibration = calibrator.calibrate(
             confidence=0.9,
-            place=PlaceType.CLI,
+            place=InteractionSpace.CLI,
             place_settings=terse_settings,
         )
         assert calibration.level == WarmthLevel.COOL
@@ -44,7 +44,7 @@ class TestWarmthCalibrator:
         """Slack DM produces WARM warmth."""
         calibration = calibrator.calibrate(
             confidence=0.9,
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             place_settings=casual_settings,
         )
         assert calibration.level == WarmthLevel.WARM
@@ -53,7 +53,7 @@ class TestWarmthCalibrator:
         """Frustrated users get SUPPORTIVE warmth."""
         calibration = calibrator.calibrate(
             confidence=0.9,
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
             place_settings=professional_settings,
             seems_frustrated=True,
         )
@@ -63,7 +63,7 @@ class TestWarmthCalibrator:
         """Low confidence increases warmth level."""
         calibration = calibrator.calibrate(
             confidence=0.3,
-            place=PlaceType.SLACK_CHANNEL,
+            place=InteractionSpace.SLACK_CHANNEL,
             place_settings=professional_settings,
         )
         assert calibration.level == WarmthLevel.WARM
@@ -72,7 +72,7 @@ class TestWarmthCalibrator:
         """Errors trigger SUPPORTIVE (except CLI)."""
         calibration = calibrator.calibrate(
             confidence=0.9,
-            place=PlaceType.WEB_CHAT,
+            place=InteractionSpace.WEB_CHAT,
             place_settings=casual_settings,
             is_error=True,
         )
@@ -84,7 +84,7 @@ class TestWarmthCalibrator:
         """WARM level can use encouragement."""
         calibration = calibrator.calibrate(
             confidence=0.9,
-            place=PlaceType.SLACK_DM,
+            place=InteractionSpace.SLACK_DM,
             place_settings=casual_settings,
         )
         assert calibration.can_use_encouragement is True
@@ -93,7 +93,7 @@ class TestWarmthCalibrator:
         """Terse formality disables encouragement."""
         calibration = calibrator.calibrate(
             confidence=0.9,
-            place=PlaceType.CLI,
+            place=InteractionSpace.CLI,
             place_settings=terse_settings,
         )
         assert calibration.can_use_encouragement is False

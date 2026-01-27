@@ -19,7 +19,7 @@ from services.integrations.slack.spatial_adapter import SlackSpatialAdapter
 from services.integrations.slack.spatial_types import AttentionLevel, EmotionalValence
 from services.intent_service.classifier import IntentClassifier
 from services.orchestration.engine import OrchestrationEngine
-from services.shared_types import IntentCategory, PlaceType
+from services.shared_types import IntentCategory, InteractionSpace
 
 logger = logging.getLogger(__name__)
 
@@ -320,7 +320,7 @@ class SimpleSlackResponseHandler:
         # Build response context for grammar-conscious responses
         response_ctx = self._build_response_context(slack_context)
         formality = response_ctx.get_formality() if response_ctx else "professional"
-        is_dm = response_ctx.place == PlaceType.SLACK_DM if response_ctx else False
+        is_dm = response_ctx.place == InteractionSpace.SLACK_DM if response_ctx else False
 
         if "help" in action:
             # Grammar-conscious: No robot emoji, warm language
