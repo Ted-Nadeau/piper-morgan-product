@@ -30,6 +30,14 @@ A bounded significant occurrence with theatrical unity - has beginning, middle, 
 ### Place
 Context where action happens. Can be physical (office), digital (Slack channel), or conceptual (sprint planning). From grammar: "Entities experience Moments in **Places**."
 
+In implementation, Place manifests in two forms:
+
+**InteractionSpace** (`services/shared_types.py`): Where user ↔ Piper conversation happens. Values: SLACK_DM, SLACK_CHANNEL, WEB_CHAT, CLI, API. Affects communication style (casual in DM, terse in CLI).
+
+**PlaceType** (`services/shared_types.py`): Where Piper observes FEDERATED data - external sources Piper "looks into." Values: ISSUE_TRACKING (GitHub), COMMUNICATION (messages), TEMPORAL (Calendar), DOCUMENTATION (Notion). Each has distinct atmosphere affecting how Piper presents observations.
+
+See also: PlaceConfidence (HIGH/MEDIUM/LOW) for confidence-based display modes.
+
 ### Situation
 Container holding sequences of Moments. The frame, not a fourth substrate. Has narrative structure with dramatic tension.
 
@@ -90,6 +98,23 @@ A relationship between two KnowledgeNodes (e.g., "supports", "contradicts", "ela
 
 **Relationships**: Connects two KnowledgeNodes.
 
+### Process & Guided Objects
+
+#### Guided Process
+A multi-turn conversation where Piper maintains control until completion or exit. Has defined states and transitions. Guided processes are checked BEFORE intent classification to prevent derailment. Examples: portfolio onboarding, standup, planning (future), feedback (future). See ADR-049.
+
+**Relationships**: Checked by Process Registry before Intent classification.
+
+#### Process Registry
+The singleton system that tracks active guided processes per session. Located at `services/process/registry.py`. Checks all registered processes in priority order before intent classification. See ADR-049.
+
+**Relationships**: Manages all ProcessType instances, accessed during request routing.
+
+#### Process Type
+A category of guided process with its own state machine and handler. Defined in `ProcessType` enum. Current types: ONBOARDING, STANDUP. Future (Advanced Layer): PLANNING, FEEDBACK, CLARIFICATION. See ADR-049, #698, #699, #700.
+
+**Relationships**: Each ProcessType maps to a handler, registered in Process Registry.
+
 ### Conversation Objects
 
 #### Conversation
@@ -105,12 +130,12 @@ A single exchange (user message + Piper response) within a Conversation.
 #### StandupConversation
 A specialized conversation for interactive standup creation. Has 7 states (INITIATED → COMPLETE) and tracks preferences.
 
-**Relationships**: Type of Conversation with standup-specific state machine.
+**Relationships**: Type of Conversation with standup-specific state machine. This is a type of Guided Process. See: Guided Process, Process Registry.
 
 #### PortfolioOnboardingSession
 A conversation guiding new users through setting up their project portfolio.
 
-**Relationships**: Type of onboarding flow, creates Projects.
+**Relationships**: Type of onboarding flow, creates Projects. This is a type of Guided Process. See: Guided Process, Process Registry.
 
 ### Work & Intent Objects
 
@@ -128,6 +153,8 @@ A unit of work Piper performs, with status tracking and result.
 A multi-step process Piper executes (e.g., standup generation, document analysis).
 
 **Relationships**: Contains Tasks, produces WorkflowResult.
+
+**Note**: Workflows are distinct from Guided Processes. Workflows are sequences of steps Piper executes (may be non-interactive). Guided Processes are interactive multi-turn conversations with user participation. See: Guided Process.
 
 #### WorkflowResult
 The outcome of a completed Workflow, including success/failure status and any generated content.
