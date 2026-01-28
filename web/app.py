@@ -241,6 +241,9 @@ RouterInitializer.mount_router(app, "web.api.routes.debug", "router", "Debug Rou
 RouterInitializer.mount_router(
     app, "web.api.routes.conversations", "router", "Conversations API"  # Issue #563
 )
+RouterInitializer.mount_router(
+    app, "web.api.routes.work_items", "router", "Work Items API"  # Issue #710
+)
 
 # Web components (Jinja2 templates, config_parser, personality_enhancer) are now initialized
 # in WebComponentsInitializationPhase during startup and stored in app.state (Phase 4)

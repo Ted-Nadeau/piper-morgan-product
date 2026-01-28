@@ -6,16 +6,16 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 64px 24px;
+  padding: var(--space-4xl) var(--space-xl);
   max-width: 480px;
-  margin: 48px auto;
+  margin: var(--space-3xl) auto;
 }
 
 .empty-state-icon {
   width: 64px;
   height: 64px;
   margin-bottom: var(--space-lg);
-  font-size: 48px;
+  font-size: var(--font-size-4xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +25,7 @@
 }
 
 .empty-state-title {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   margin: 0 0 var(--space-sm) 0;
@@ -91,54 +91,54 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .empty-state {
-    padding: 48px 20px;
-    margin: 32px auto;
+    padding: var(--space-3xl) var(--space-lg);
+    margin: var(--space-2xl) auto;
   }
 
   .empty-state-icon {
     width: 64px;
     height: 64px;
-    font-size: 56px;
-    margin-bottom: 20px;
+    font-size: var(--font-size-5xl);
+    margin-bottom: var(--space-lg);
   }
 
   .empty-state-title {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
   }
 
   .empty-state-message {
-    font-size: 15px;
-    margin-bottom: 24px;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--space-xl);
   }
 
   .empty-state-cta {
     width: 100%;
-    padding: 12px 24px;
+    padding: var(--space-sm) var(--space-xl);
   }
 }
 
 /* Small screens */
 @media (max-width: 480px) {
   .empty-state {
-    padding: 32px 16px;
-    margin: 24px auto;
+    padding: var(--space-2xl) var(--space-md);
+    margin: var(--space-xl) auto;
   }
 
   .empty-state-icon {
     width: 56px;
     height: 56px;
-    font-size: 48px;
-    margin-bottom: 16px;
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--space-md);
   }
 
   .empty-state-title {
-    font-size: 18px;
-    margin-bottom: 8px;
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-sm);
   }
 
   .empty-state-message {
-    font-size: 14px;
-    margin-bottom: 20px;
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-lg);
   }
 }
 

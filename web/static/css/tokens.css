@@ -1,32 +1,42 @@
 /* Design Tokens - Light Theme
    Centralized source of truth for all design values
-   WCAG 2.2 AA Compliant color palette
-   All colors verified for accessibility
-   Version: 1.0.0
+   WCAG 2.1 AA Compliant color palette
+
+   Contrast Audit: 2026-01-27
+   - All text colors verified ≥4.5:1 on white backgrounds
+   - Large text (≥18pt bold or ≥24pt) verified ≥3:1
+   - Interactive elements verified ≥4.5:1
+   - See docs/accessibility/contrast-audit-2026-01.md for full audit
+
+   Version: 1.1.0
 */
 
 :root {
   /* ===== COLOR PALETTE - LIGHT THEME ===== */
 
   /* Primary Blues (main interaction color) */
-  --color-primary: #3498db; /* Default blue - used for links, focus states, primary actions */
-  --color-primary-dark: #2980b9; /* Darker blue for hover states */
-  --color-primary-light: rgba(52, 152, 219, 0.1); /* Light tint for backgrounds */
+  --color-primary: #2077b2; /* Default blue - links, focus states, primary actions (4.84:1) */
+  --color-primary-dark: #1a6a9e; /* Darker blue for hover states (5.83:1) */
+  --color-primary-light: rgba(32, 119, 178, 0.1); /* Light tint for backgrounds */
+  --color-primary-decorative: #3498db; /* Original blue - decorative use only, not for text */
 
   /* Accent Colors */
-  --color-accent-success: #27ae60; /* Green for success states */
-  --color-accent-success-dark: #229954; /* Darker green for hover */
-  --color-accent-success-light: rgba(39, 174, 96, 0.1); /* Light green background */
+  --color-accent-success: #1e8449; /* Green for success states (4.72:1) */
+  --color-accent-success-dark: #196f3d; /* Darker green for hover (6.02:1) */
+  --color-accent-success-light: rgba(30, 132, 73, 0.1); /* Light green background */
+  --color-accent-success-decorative: #27ae60; /* Original green - decorative use only */
 
-  --color-accent-danger: #c0392b; /* Red for destructive actions */
-  --color-accent-danger-dark: #a93226; /* Darker red for hover */
+  --color-accent-danger: #c0392b; /* Red for destructive actions (5.44:1) */
+  --color-accent-danger-dark: #a93226; /* Darker red for hover (6.56:1) */
   --color-accent-danger-light: rgba(192, 57, 43, 0.3); /* Light red for shadows */
 
-  --color-accent-error: #e74c3c; /* Error red for form validation */
-  --color-accent-error-dark: #c62828; /* Darker error red */
+  --color-accent-error: #d63031; /* Error red for form validation (4.85:1) */
+  --color-accent-error-dark: #b71c1c; /* Darker error red (6.28:1) */
   --color-accent-error-light: #ffebee; /* Light error background */
+  --color-accent-error-decorative: #e74c3c; /* Original red - decorative use only */
 
-  --color-accent-warning: #f39c12; /* Orange for warnings */
+  --color-accent-warning: #8a6d00; /* Orange/amber for warning text (4.92:1) */
+  --color-accent-warning-bg: #f39c12; /* Original orange - for backgrounds with dark text */
   --color-accent-warning-light: rgba(243, 156, 18, 0.1); /* Light warning background */
 
   /* Neutral Colors - Grayscale */
@@ -38,8 +48,9 @@
   --color-neutral-light-gray-4: #e0e0e0; /* Very light gray for borders */
   --color-neutral-light-gray-5: #f0f0f0; /* Shimmer animation color */
 
-  --color-neutral-medium-gray: #95a5a6; /* Medium gray for secondary actions */
-  --color-neutral-medium-gray-dark: #7f8c8d; /* Darker medium gray for text */
+  --color-neutral-medium-gray: #687a7c; /* Medium gray for secondary actions (4.50:1) */
+  --color-neutral-medium-gray-dark: #636e72; /* Darker medium gray for text (5.24:1) */
+  --color-neutral-medium-gray-decorative: #95a5a6; /* Original gray - borders, decorative only */
 
   --color-neutral-dark-gray: #555555; /* Dark gray for body text */
   --color-neutral-dark-gray-2: #34495e; /* Darker gray for code blocks */
@@ -55,17 +66,23 @@
   --color-special-dark-text: #e0e0e0; /* Light text for dark backgrounds */
 
   /* Semantic Colors (Aliases for better readability) */
-  --color-text-primary: #2c3e50; /* Primary text color */
-  --color-text-secondary: #7f8c8d; /* Secondary text, muted text */
-  --color-text-tertiary: #555555; /* Tertiary text */
-  --color-text-light: #bdc3c7; /* Light text, placeholders, icons */
+  --color-text-primary: #2c3e50; /* Primary text color (10.98:1) */
+  --color-text-secondary: #636e72; /* Secondary text, muted text (5.24:1) */
+  --color-text-tertiary: #555555; /* Tertiary text (7.46:1) */
+  --color-text-muted: #636e72; /* Muted text, same as secondary (5.24:1) */
+  --color-text-disabled: #757575; /* Disabled text - WCAG exempt but still 4.61:1 */
+  --color-text-light: #767676; /* Light text, placeholders with labels (4.54:1) */
+  --color-text-placeholder: #bdc3c7; /* Placeholder ONLY with visible labels - WCAG exempt */
 
   --color-background-primary: #ffffff; /* Primary background */
   --color-background-secondary: #f5f5f5; /* Secondary background */
   --color-background-tertiary: #ecf0f1; /* Tertiary background (hover states) */
 
   --color-border-light: #ecf0f1; /* Light borders */
-  --color-border-medium: #95a5a6; /* Medium borders */
+  --color-border-medium: #95a5a6; /* Medium borders - decorative, no text contrast needed */
+
+  /* Disabled state background */
+  --color-disabled: #bdc3c7; /* Disabled background - use with dark text */
 
   --color-overlay-dark: rgba(0, 0, 0, 0.7); /* Dark overlay for modals */
   --color-overlay-light: rgba(0, 0, 0, 0.5); /* Lighter overlay */
@@ -131,15 +148,15 @@
   --shadow-2xl: 0 20px 60px rgba(0, 0, 0, 0.5); /* Modal shadow */
 
   /* Shadow with primary color tint */
-  --shadow-primary: 0 4px 12px rgba(52, 152, 219, 0.3); /* Primary color shadow */
-  --shadow-primary-lg: 0 6px 16px rgba(52, 152, 219, 0.3); /* Large primary shadow */
+  --shadow-primary: 0 4px 12px rgba(32, 119, 178, 0.3); /* Primary color shadow */
+  --shadow-primary-lg: 0 6px 16px rgba(32, 119, 178, 0.3); /* Large primary shadow */
 
   /* Shadow with danger color tint */
   --shadow-danger: 0 4px 12px rgba(192, 57, 43, 0.3); /* Danger color shadow */
   --shadow-danger-lg: 0 6px 16px rgba(192, 57, 43, 0.3); /* Large danger shadow */
 
   /* Shadow with success color tint */
-  --shadow-success-lg: 0 6px 16px rgba(39, 174, 96, 0.3); /* Success color shadow */
+  --shadow-success-lg: 0 6px 16px rgba(30, 132, 73, 0.3); /* Success color shadow */
 
   /* Border Widths */
   --border-width-thin: 1px;
@@ -175,7 +192,7 @@
   /* ===== FOCUS STATES ===== */
 
   --focus-outline-width: 2px;
-  --focus-outline-color: #3498db;
+  --focus-outline-color: #2077b2;
   --focus-outline-offset: 2px;
   --focus-outline: var(--focus-outline-width) solid var(--focus-outline-color);
 
@@ -186,8 +203,9 @@
 
   /* High contrast mode support */
   @media (prefers-contrast: more) {
-    --color-text-secondary: #666;
-    --color-text-light: #999;
+    --color-text-secondary: #4a4a4a; /* Enhanced contrast: 7.67:1 */
+    --color-text-light: #595959; /* Enhanced contrast: 6.63:1 */
+    --color-text-disabled: #595959; /* Enhanced contrast: 6.63:1 */
   }
 
   /* Reduced motion - disable animations */

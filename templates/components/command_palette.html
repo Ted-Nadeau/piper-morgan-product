@@ -1,5 +1,5 @@
 <!-- Command Palette Component (#421 MUX-NAV-PALETTE) -->
-<!-- Usage: {% include 'components/command_palette.html' %} -->
+<!-- Usage: { % include 'components/command_palette.html' % } -->
 <!-- Requires: window.trustStage from #419 -->
 
 <style>
@@ -211,7 +211,7 @@
 <div class="command-palette" id="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
   <!-- Search -->
   <div class="command-palette-search">
-    <svg class="command-palette-search-icon" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+    <svg class="command-palette-search-icon" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
       <circle cx="7" cy="7" r="5"/>
       <path d="M11 11l3 3"/>
     </svg>
@@ -222,7 +222,12 @@
       placeholder="What would you like to do?"
       autocomplete="off"
       spellcheck="false"
+      role="combobox"
       aria-label="Search commands"
+      aria-controls="command-palette-list"
+      aria-expanded="false"
+      aria-autocomplete="list"
+      aria-activedescendant=""
     >
     <span class="command-palette-shortcut">esc</span>
   </div>
@@ -711,6 +716,7 @@
 
         html += `
           <div class="command-item ${isSelected ? 'selected' : ''}"
+               id="command-item-${globalIdx}"
                data-index="${globalIdx}"
                role="option"
                aria-selected="${isSelected}">
@@ -719,7 +725,7 @@
               <div class="command-item-name">${nameHtml}</div>
               <div class="command-item-description">${cmd.description}</div>
             </div>
-            ${cmd.shortcut ? `<span class="command-item-shortcut">${cmd.shortcut}</span>` : ''}
+            ${cmd.shortcut ? `<span class="command-item-shortcut" aria-hidden="true">${cmd.shortcut}</span>` : ''}
           </div>
         `;
       });
@@ -751,6 +757,8 @@
         item.classList.add('selected');
         item.setAttribute('aria-selected', 'true');
         item.scrollIntoView({ block: 'nearest' });
+        // Update aria-activedescendant on input
+        input.setAttribute('aria-activedescendant', item.id);
       } else {
         item.classList.remove('selected');
         item.setAttribute('aria-selected', 'false');
@@ -780,6 +788,7 @@
     overlay.classList.add('active');
     palette.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
+    input.setAttribute('aria-expanded', 'true');
 
     // Focus input after animation
     setTimeout(() => {
@@ -795,6 +804,8 @@
     overlay.classList.remove('active');
     palette.classList.remove('active');
     overlay.setAttribute('aria-hidden', 'true');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-activedescendant', '');
   }
 
   // Event handlers

@@ -349,6 +349,9 @@ class Project:
     # MUX Ownership (#435) - Projects are NATIVE (user-created within Piper)
     mux_ownership: Optional[OwnershipMetadata] = None
 
+    # MUX Lifecycle Integration (#709) - Projects naturally evolve through lifecycle stages
+    lifecycle_state: Optional[LifecycleState] = None
+
     def get_integration(self, integration_type: IntegrationType) -> Optional[ProjectIntegration]:
         """Get first active integration of specified type"""
         for integration in self.integrations:
@@ -370,8 +373,11 @@ class Project:
         return errors
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization"""
-        return {
+        """Convert to dictionary for serialization.
+
+        Includes lifecycle_state when present (#709 MUX-LIFECYCLE-UI-PROJECTS).
+        """
+        result = {
             "id": self.id,
             "owner_id": self.owner_id,
             "name": self.name,
@@ -394,6 +400,12 @@ class Project:
             "updated_at": self.updated_at.isoformat(),
             "mux_ownership": self.mux_ownership.to_dict() if self.mux_ownership else None,
         }
+
+        # Include lifecycle state if present (#709 MUX-LIFECYCLE-UI-PROJECTS)
+        if self.lifecycle_state is not None:
+            result["lifecycle_state"] = self.lifecycle_state.value
+
+        return result
 
 
 @dataclass
@@ -1335,6 +1347,10 @@ class Todo(Item):
     # Todos are NATIVE - created within Piper's domain
     mux_ownership: Optional[OwnershipMetadata] = None
 
+    # MUX Lifecycle Integration (#708) - optional, for todos that warrant lifecycle treatment
+    # Follows "Lifecycle Optionality" principle: simple status + optional lifecycle_state
+    lifecycle_state: Optional[LifecycleState] = None
+
     def get_user_role(self, user_id: str) -> Optional[ShareRole]:
         """Get user's role for this todo (returns owner for owner, or role from shared_with)"""
         if self.owner_id == user_id:
@@ -1393,8 +1409,11 @@ class Todo(Item):
         self.updated_at = datetime.now()
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization"""
-        return {
+        """Convert to dictionary for serialization.
+
+        Includes lifecycle_state when present (#708 MUX-LIFECYCLE-UI-TODOS).
+        """
+        result = {
             # Inherited from Item
             "id": self.id,
             "text": self.text,
@@ -1440,6 +1459,10 @@ class Todo(Item):
             # MUX Ownership (#435)
             "mux_ownership": self.mux_ownership.to_dict() if self.mux_ownership else None,
         }
+        # Include lifecycle state if present (#708 MUX-LIFECYCLE-UI-TODOS)
+        if self.lifecycle_state is not None:
+            result["lifecycle_state"] = self.lifecycle_state.value
+        return result
 
 
 # PM-081: Backward compatibility - TodoList as alias for List(item_type='todo')

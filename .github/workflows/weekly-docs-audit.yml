@@ -87,6 +87,13 @@ jobs:
                 - [ ] .cursor/rules/ files (if modified) - Note: NOT docs/cursorrules/
                 - [ ] docs/internal/planning/roadmap/roadmap.md (if modified)
                 - [ ] **BRIEFING-* files**: Update docs/briefing/ (auto-syncs to knowledge/ via symlinks)
+              - [ ] **BRIEFING-CURRENT-STATE refresh** (PRIORITY): Verify \`knowledge/BRIEFING-CURRENT-STATE.md\` reflects:
+                - Current sprint/epic position (Inchworm Position section)
+                - Recent progress summary (week table with issues closed, tests added)
+                - Updated metrics snapshot (pattern count, ADR count, test suite size)
+                - Current open items and blockers
+                - Last Updated timestamp matches audit date
+                - **Note**: This file goes stale quickly during high-velocity sprints - refresh weekly minimum
                 - [ ] [List other changed files here after running command]
               - [ ] Verify knowledge base matches current docs version
               - [ ] **Check for stale knowledge/ files**: No duplicates, only symlinks and unique files

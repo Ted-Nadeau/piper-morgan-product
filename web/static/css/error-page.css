@@ -14,7 +14,7 @@
   justify-content: center;
   min-height: 100vh;
   padding: var(--space-lg);
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, var(--color-background-secondary) 0%, var(--color-neutral-light-blue-gray) 100%);
 }
 
 .error-content {
@@ -124,7 +124,7 @@
 }
 
 .error-actions .btn-secondary:hover {
-  background: #d5dbdb;
+  background: var(--color-neutral-light-gray-3);
   transform: translateY(-2px);
 }
 
@@ -143,23 +143,23 @@
 }
 
 .error-help h2 {
-  margin: 0 0 12px 0;
-  font-size: 16px;
-  color: #2c3e50;
-  font-weight: 600;
+  margin: 0 0 var(--space-sm) 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .error-help ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: var(--space-lg);
   list-style-position: inside;
 }
 
 .error-help li {
-  margin: 8px 0;
-  color: #555;
-  font-size: 14px;
-  line-height: 1.5;
+  margin: var(--space-sm) 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
 }
 
 .error-help li:last-child {
@@ -169,34 +169,34 @@
 /* Mobile responsive */
 @media (max-width: 768px) {
   .error-container {
-    padding: 16px;
+    padding: var(--space-md);
   }
 
   .error-content {
-    padding: 32px 24px;
+    padding: var(--space-2xl) var(--space-xl);
   }
 
   .error-icon {
-    font-size: 56px;
-    margin-bottom: 16px;
+    font-size: var(--font-size-5xl);
+    margin-bottom: var(--space-md);
   }
 
   .error-title {
     font-size: 1.5em;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-sm);
   }
 
   .error-message {
-    font-size: 15px;
-    margin-bottom: 8px;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--space-sm);
   }
 
   .error-code {
-    margin-bottom: 24px;
+    margin-bottom: var(--space-xl);
   }
 
   .error-actions {
-    margin-bottom: 32px;
+    margin-bottom: var(--space-2xl);
     flex-direction: column;
   }
 
@@ -206,54 +206,54 @@
   }
 
   .error-help {
-    padding: 16px;
+    padding: var(--space-md);
   }
 
   .error-help h2 {
-    font-size: 15px;
-    margin-bottom: 10px;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--space-sm);
   }
 
   .error-help li {
-    font-size: 13px;
+    font-size: var(--font-size-sm);
   }
 }
 
 @media (max-width: 480px) {
   .error-container {
-    padding: 12px;
+    padding: var(--space-sm);
   }
 
   .error-content {
-    padding: 24px 16px;
-    border-radius: 8px;
+    padding: var(--space-xl) var(--space-md);
+    border-radius: var(--border-radius-md);
   }
 
   .error-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
+    font-size: var(--font-size-4xl);
+    margin-bottom: var(--space-sm);
   }
 
   .error-title {
     font-size: 1.3em;
-    margin-bottom: 10px;
+    margin-bottom: var(--space-sm);
   }
 
   .error-message {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .error-code {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 
   .error-actions {
-    gap: 8px;
+    gap: var(--space-sm);
   }
 
   .error-actions .btn {
-    padding: 10px 20px;
-    font-size: 14px;
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-size-sm);
   }
 }
 
@@ -272,7 +272,7 @@
   }
 }
 
-/* Dark mode support (if needed) */
+/* Dark mode support - intentionally hardcoded for dark mode specific contrast */
 @media (prefers-color-scheme: dark) {
   .error-container {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -297,7 +297,7 @@
 
   .error-help {
     background: #1a472a;
-    border-left-color: #27ae60;
+    border-left-color: var(--color-accent-success);
   }
 
   .error-help h2 {

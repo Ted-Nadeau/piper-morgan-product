@@ -5,6 +5,9 @@ This module provides helper functions for integrating lifecycle-aware
 language into intent handler responses. Handlers can use these helpers
 to describe objects with lifecycle-appropriate phrases.
 
+Also provides status-to-lifecycle mapping and synchronization functions
+for automatically managing lifecycle state based on object status.
+
 Example:
     from services.mux.lifecycle_integration import describe_with_lifecycle
 
@@ -14,11 +17,44 @@ Example:
     )
     # Returns: "I just noticed the authentication feature..." if EMERGENT
     # Returns: "the authentication feature" if no lifecycle state
+
+Example (initialization):
+    from services.mux.lifecycle_integration import initialize_lifecycle
+
+    item = WorkItem(status="open")
+    initialize_lifecycle(item)
+    # item.lifecycle_state is now LifecycleState.NOTICED
 """
 
-from typing import Any, Optional
+import logging
+from typing import Any, Dict, Optional
 
-from services.mux.lifecycle import LifecycleState, transition_explanation
+from services.mux.lifecycle import (
+    InvalidTransitionError,
+    LifecycleManager,
+    LifecycleState,
+    transition_explanation,
+)
+
+logger = logging.getLogger(__name__)
+
+# Status-to-lifecycle mappings for domain objects
+# These define the canonical mapping from object status to lifecycle state
+
+WORKITEM_STATUS_TO_LIFECYCLE: Dict[str, LifecycleState] = {
+    "open": LifecycleState.NOTICED,
+    "in_progress": LifecycleState.RATIFIED,
+    "done": LifecycleState.DEPRECATED,
+    "closed": LifecycleState.ARCHIVED,
+}
+
+FEATURE_STATUS_TO_LIFECYCLE: Dict[str, LifecycleState] = {
+    "draft": LifecycleState.EMERGENT,
+    "proposed": LifecycleState.PROPOSED,
+    "approved": LifecycleState.RATIFIED,
+    "shipped": LifecycleState.DEPRECATED,
+    "archived": LifecycleState.ARCHIVED,
+}
 
 
 def describe_with_lifecycle(
@@ -132,3 +168,105 @@ def get_lifecycle_state(obj: Any) -> Optional[LifecycleState]:
         LifecycleState or None
     """
     return getattr(obj, "lifecycle_state", None)
+
+
+def get_lifecycle_for_status(obj: Any) -> Optional[LifecycleState]:
+    """
+    Get the appropriate lifecycle state for an object's current status.
+
+    Uses the status-to-lifecycle mappings defined for each object type.
+
+    Args:
+        obj: Object with a status field (WorkItem, Feature, etc.)
+
+    Returns:
+        Appropriate LifecycleState or None if no mapping exists
+    """
+    status = getattr(obj, "status", None)
+    if status is None:
+        return None
+
+    # Determine object type and get appropriate mapping
+    class_name = obj.__class__.__name__
+
+    if class_name == "WorkItem":
+        return WORKITEM_STATUS_TO_LIFECYCLE.get(status)
+    elif class_name == "Feature":
+        return FEATURE_STATUS_TO_LIFECYCLE.get(status)
+
+    return None
+
+
+def initialize_lifecycle(obj: Any) -> bool:
+    """
+    Set initial lifecycle_state based on object's current status.
+
+    Only sets lifecycle_state if it's currently None. This prevents
+    overwriting explicitly set lifecycle states.
+
+    Args:
+        obj: Object to initialize (must have lifecycle_state attribute)
+
+    Returns:
+        True if lifecycle was initialized, False otherwise
+    """
+    # Only initialize if lifecycle_state exists and is None
+    if not hasattr(obj, "lifecycle_state"):
+        return False
+
+    if obj.lifecycle_state is not None:
+        return False  # Already has a state
+
+    lifecycle = get_lifecycle_for_status(obj)
+    if lifecycle:
+        obj.lifecycle_state = lifecycle
+        return True
+
+    return False
+
+
+def sync_lifecycle_to_status(obj: Any, notify: bool = False) -> bool:
+    """
+    Synchronize lifecycle_state to match current status.
+
+    If the object's status has changed, attempts to transition the
+    lifecycle state to match. Invalid transitions are logged but
+    do not raise exceptions.
+
+    Args:
+        obj: Object to sync (must have lifecycle_state and status)
+        notify: Whether to trigger notifications (future use)
+
+    Returns:
+        True if lifecycle was updated, False otherwise
+    """
+    target_state = get_lifecycle_for_status(obj)
+    if target_state is None:
+        return False
+
+    current_state = getattr(obj, "lifecycle_state", None)
+
+    # Already in target state
+    if current_state == target_state:
+        return False
+
+    # No current state - just set it (initialization case)
+    if current_state is None:
+        obj.lifecycle_state = target_state
+        return True
+
+    # Attempt transition
+    try:
+        manager = LifecycleManager()
+        manager.transition(obj, target_state)
+        logger.debug(
+            f"Lifecycle transition: {obj.__class__.__name__} "
+            f"{current_state.value} -> {target_state.value}"
+        )
+        return True
+    except InvalidTransitionError as e:
+        # Invalid transitions are not errors - just log and skip
+        logger.warning(
+            f"Lifecycle transition skipped for {obj.__class__.__name__}: " f"{e.user_message}"
+        )
+        return False

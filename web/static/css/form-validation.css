@@ -20,7 +20,7 @@ input[aria-invalid="true"]:focus,
 select[aria-invalid="true"]:focus,
 textarea[aria-invalid="true"]:focus {
   border-color: var(--color-accent-error);
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+  box-shadow: var(--shadow-error-sm);
   outline: none;
 }
 
@@ -97,7 +97,7 @@ textarea[aria-invalid="false"] {
 }
 
 .validation-summary li {
-  margin-bottom: 6px;
+  margin-bottom: var(--space-xs);
 }
 
 .validation-summary li:last-child {
@@ -107,8 +107,8 @@ textarea[aria-invalid="false"] {
 /* Mobile responsive */
 @media (max-width: 768px) {
   .error-message {
-    font-size: 12px;
-    padding: 8px 10px;
+    font-size: var(--font-size-xs);
+    padding: var(--space-sm) var(--space-sm);
   }
 }
 

@@ -21,7 +21,11 @@ from fastapi import HTTPException, Request
 if TYPE_CHECKING:
     from services.container import ServiceContainer
 
-from services.database.repositories import ConversationRepository, ProjectRepository
+from services.database.repositories import (
+    ConversationRepository,
+    ProjectRepository,
+    WorkItemRepository,
+)
 from services.database.session_factory import AsyncSessionFactory
 from services.feedback.feedback_service import FeedbackService
 from services.knowledge.knowledge_graph_service import KnowledgeGraphService
@@ -205,5 +209,19 @@ async def get_list_item_repository() -> AsyncGenerator[UniversalListItemReposito
     """
     async with AsyncSessionFactory.session_scope_fresh() as session:
         yield UniversalListItemRepository(session)
+        # Commit changes after successful route execution
+        await session.commit()
+
+
+async def get_work_item_repository() -> AsyncGenerator[WorkItemRepository, None]:
+    """Dependency injection for WorkItemRepository.
+
+    Provides WorkItemRepository with database session for work item operations.
+    Uses AsyncSessionFactory.session_scope_fresh() for event loop safety.
+
+    Issue #710: Added for Work Items view with lifecycle indicators.
+    """
+    async with AsyncSessionFactory.session_scope_fresh() as session:
+        yield WorkItemRepository(session)
         # Commit changes after successful route execution
         await session.commit()

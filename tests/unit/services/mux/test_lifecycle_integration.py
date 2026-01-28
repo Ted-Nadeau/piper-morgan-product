@@ -10,13 +10,18 @@ from typing import Optional
 
 import pytest
 
-from services.mux.lifecycle import LifecycleState
+from services.mux.lifecycle import LifecycleState, LifecycleTransition
 from services.mux.lifecycle_integration import (
+    FEATURE_STATUS_TO_LIFECYCLE,
+    WORKITEM_STATUS_TO_LIFECYCLE,
     describe_with_lifecycle,
     explain_transition,
     format_lifecycle_context,
+    get_lifecycle_for_status,
     get_lifecycle_state,
     has_lifecycle,
+    initialize_lifecycle,
+    sync_lifecycle_to_status,
 )
 
 
@@ -34,6 +39,37 @@ class MockTodo:
 
     title: str
     completed: bool = False
+
+
+@dataclass
+class MockWorkItem:
+    """Mock WorkItem with status and lifecycle state for testing status-to-lifecycle mapping."""
+
+    title: str
+    status: str = "open"
+    lifecycle_state: Optional[LifecycleState] = None
+
+    # Make class name match what get_lifecycle_for_status expects
+    @property
+    def __class_name__(self):
+        return "WorkItem"
+
+
+# Override __class__.__name__ for MockWorkItem to return "WorkItem"
+MockWorkItem.__name__ = "WorkItem"
+
+
+@dataclass
+class MockFeatureWithStatus:
+    """Mock Feature with status and lifecycle state for testing status-to-lifecycle mapping."""
+
+    name: str
+    status: str = "draft"
+    lifecycle_state: Optional[LifecycleState] = None
+
+
+# Override __class__.__name__ for MockFeatureWithStatus to return "Feature"
+MockFeatureWithStatus.__name__ = "Feature"
 
 
 class TestDescribeWithLifecycle:
@@ -186,3 +222,282 @@ class TestWiringFromHandlers:
 
         assert callable(describe_with_lifecycle)
         assert callable(has_lifecycle)
+
+
+class TestStatusToLifecycleMappings:
+    """Test status-to-lifecycle mapping dictionaries."""
+
+    def test_workitem_status_mapping_has_all_statuses(self):
+        """WorkItem mapping covers common statuses."""
+        assert "open" in WORKITEM_STATUS_TO_LIFECYCLE
+        assert "in_progress" in WORKITEM_STATUS_TO_LIFECYCLE
+        assert "done" in WORKITEM_STATUS_TO_LIFECYCLE
+        assert "closed" in WORKITEM_STATUS_TO_LIFECYCLE
+
+    def test_workitem_open_maps_to_noticed(self):
+        """Open WorkItems map to NOTICED state."""
+        assert WORKITEM_STATUS_TO_LIFECYCLE["open"] == LifecycleState.NOTICED
+
+    def test_workitem_in_progress_maps_to_ratified(self):
+        """In-progress WorkItems map to RATIFIED state."""
+        assert WORKITEM_STATUS_TO_LIFECYCLE["in_progress"] == LifecycleState.RATIFIED
+
+    def test_workitem_done_maps_to_deprecated(self):
+        """Done WorkItems map to DEPRECATED state."""
+        assert WORKITEM_STATUS_TO_LIFECYCLE["done"] == LifecycleState.DEPRECATED
+
+    def test_workitem_closed_maps_to_archived(self):
+        """Closed WorkItems map to ARCHIVED state."""
+        assert WORKITEM_STATUS_TO_LIFECYCLE["closed"] == LifecycleState.ARCHIVED
+
+    def test_feature_status_mapping_has_all_statuses(self):
+        """Feature mapping covers common statuses."""
+        assert "draft" in FEATURE_STATUS_TO_LIFECYCLE
+        assert "proposed" in FEATURE_STATUS_TO_LIFECYCLE
+        assert "approved" in FEATURE_STATUS_TO_LIFECYCLE
+        assert "shipped" in FEATURE_STATUS_TO_LIFECYCLE
+        assert "archived" in FEATURE_STATUS_TO_LIFECYCLE
+
+    def test_feature_draft_maps_to_emergent(self):
+        """Draft Features map to EMERGENT state."""
+        assert FEATURE_STATUS_TO_LIFECYCLE["draft"] == LifecycleState.EMERGENT
+
+    def test_feature_proposed_maps_to_proposed(self):
+        """Proposed Features map to PROPOSED state."""
+        assert FEATURE_STATUS_TO_LIFECYCLE["proposed"] == LifecycleState.PROPOSED
+
+    def test_feature_approved_maps_to_ratified(self):
+        """Approved Features map to RATIFIED state."""
+        assert FEATURE_STATUS_TO_LIFECYCLE["approved"] == LifecycleState.RATIFIED
+
+    def test_feature_shipped_maps_to_deprecated(self):
+        """Shipped Features map to DEPRECATED state."""
+        assert FEATURE_STATUS_TO_LIFECYCLE["shipped"] == LifecycleState.DEPRECATED
+
+    def test_feature_archived_maps_to_archived(self):
+        """Archived Features map to ARCHIVED state."""
+        assert FEATURE_STATUS_TO_LIFECYCLE["archived"] == LifecycleState.ARCHIVED
+
+
+class TestGetLifecycleForStatus:
+    """Test get_lifecycle_for_status helper."""
+
+    def test_workitem_returns_correct_lifecycle(self):
+        """WorkItem with status returns appropriate lifecycle."""
+
+        # Create a real-enough mock that class name check works
+        @dataclass
+        class WorkItem:
+            status: str
+
+        item = WorkItem(status="open")
+        result = get_lifecycle_for_status(item)
+        assert result == LifecycleState.NOTICED
+
+    def test_feature_returns_correct_lifecycle(self):
+        """Feature with status returns appropriate lifecycle."""
+
+        @dataclass
+        class Feature:
+            status: str
+
+        feature = Feature(status="draft")
+        result = get_lifecycle_for_status(feature)
+        assert result == LifecycleState.EMERGENT
+
+    def test_unknown_status_returns_none(self):
+        """Unknown status returns None."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+
+        item = WorkItem(status="unknown_status")
+        result = get_lifecycle_for_status(item)
+        assert result is None
+
+    def test_object_without_status_returns_none(self):
+        """Object without status attribute returns None."""
+        todo = MockTodo(title="Test")
+        result = get_lifecycle_for_status(todo)
+        assert result is None
+
+    def test_unknown_class_returns_none(self):
+        """Unknown class type returns None."""
+
+        @dataclass
+        class UnknownType:
+            status: str
+
+        obj = UnknownType(status="open")
+        result = get_lifecycle_for_status(obj)
+        assert result is None
+
+
+class TestInitializeLifecycle:
+    """Test initialize_lifecycle helper."""
+
+    def test_workitem_open_initialized_to_noticed(self):
+        """Open WorkItem gets initialized to NOTICED."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        item = WorkItem(status="open")
+        result = initialize_lifecycle(item)
+        assert result is True
+        assert item.lifecycle_state == LifecycleState.NOTICED
+
+    def test_feature_draft_initialized_to_emergent(self):
+        """Draft Feature gets initialized to EMERGENT."""
+
+        @dataclass
+        class Feature:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        feature = Feature(status="draft")
+        result = initialize_lifecycle(feature)
+        assert result is True
+        assert feature.lifecycle_state == LifecycleState.EMERGENT
+
+    def test_does_not_overwrite_existing_state(self):
+        """Does not overwrite existing lifecycle state."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        item = WorkItem(status="open", lifecycle_state=LifecycleState.RATIFIED)
+        result = initialize_lifecycle(item)
+        assert result is False
+        assert item.lifecycle_state == LifecycleState.RATIFIED  # Unchanged
+
+    def test_returns_false_if_no_lifecycle_attribute(self):
+        """Returns False if object has no lifecycle_state attribute."""
+        todo = MockTodo(title="Test")
+        result = initialize_lifecycle(todo)
+        assert result is False
+
+    def test_returns_false_for_unknown_status(self):
+        """Returns False if status doesn't map to lifecycle."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        item = WorkItem(status="weird_status")
+        result = initialize_lifecycle(item)
+        assert result is False
+        assert item.lifecycle_state is None
+
+
+class TestSyncLifecycleToStatus:
+    """Test sync_lifecycle_to_status helper."""
+
+    def test_sync_from_none_to_noticed(self):
+        """Syncing from None state just sets the state."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        item = WorkItem(status="open")
+        result = sync_lifecycle_to_status(item)
+        assert result is True
+        assert item.lifecycle_state == LifecycleState.NOTICED
+
+    def test_sync_already_correct_returns_false(self):
+        """Returns False if already in correct state."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        item = WorkItem(status="open", lifecycle_state=LifecycleState.NOTICED)
+        result = sync_lifecycle_to_status(item)
+        assert result is False
+        assert item.lifecycle_state == LifecycleState.NOTICED
+
+    def test_sync_valid_forward_transition(self):
+        """Valid forward transition updates state."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        # NOTICED -> DEPRECATED is valid (when status changes to done)
+        item = WorkItem(status="done", lifecycle_state=LifecycleState.NOTICED)
+        result = sync_lifecycle_to_status(item)
+        assert result is True
+        assert item.lifecycle_state == LifecycleState.DEPRECATED
+
+    def test_sync_feature_proposed_to_ratified(self):
+        """Feature PROPOSED -> RATIFIED is valid transition."""
+
+        @dataclass
+        class Feature:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        # PROPOSED -> RATIFIED is valid (when feature is approved)
+        feature = Feature(status="approved", lifecycle_state=LifecycleState.PROPOSED)
+        result = sync_lifecycle_to_status(feature)
+        assert result is True
+        assert feature.lifecycle_state == LifecycleState.RATIFIED
+
+    def test_sync_skip_requires_intermediate_states(self):
+        """Some status changes require intermediate lifecycle states (by design)."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        # NOTICED -> RATIFIED is NOT a valid direct transition
+        # (would need to go through PROPOSED first)
+        # This is handled gracefully - logged and returns False
+        item = WorkItem(status="in_progress", lifecycle_state=LifecycleState.NOTICED)
+        result = sync_lifecycle_to_status(item)
+        assert result is False  # Transition skipped (not a valid hop)
+        assert item.lifecycle_state == LifecycleState.NOTICED  # Unchanged
+
+    def test_sync_invalid_transition_returns_false(self):
+        """Invalid transition returns False without crashing."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        # ARCHIVED -> NOTICED would be backward (invalid)
+        item = WorkItem(status="open", lifecycle_state=LifecycleState.ARCHIVED)
+        result = sync_lifecycle_to_status(item)
+        assert result is False
+        # State unchanged (invalid transition skipped)
+        assert item.lifecycle_state == LifecycleState.ARCHIVED
+
+    def test_sync_unknown_status_returns_false(self):
+        """Unknown status returns False."""
+
+        @dataclass
+        class WorkItem:
+            status: str
+            lifecycle_state: Optional[LifecycleState] = None
+
+        item = WorkItem(status="weird", lifecycle_state=LifecycleState.NOTICED)
+        result = sync_lifecycle_to_status(item)
+        assert result is False
+
+    def test_sync_object_without_status_returns_false(self):
+        """Object without status returns False."""
+        feature = MockFeature(name="Test", lifecycle_state=LifecycleState.EMERGENT)
+        result = sync_lifecycle_to_status(feature)
+        assert result is False

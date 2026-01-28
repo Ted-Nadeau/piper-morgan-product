@@ -419,6 +419,25 @@ async def projects_ui(request: Request):
     )
 
 
+@router.get("/projects/{project_id}", response_class=HTMLResponse)
+async def project_detail_ui(request: Request, project_id: str):
+    """Project detail view with lifecycle indicators (#711 MUX-PROJECT-DETAIL-VIEW)"""
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse(
+        "project_detail.html",
+        {"request": request, "user": user_context, "project_id": project_id},
+    )
+
+
+@router.get("/work-items", response_class=HTMLResponse)
+async def work_items_ui(request: Request):
+    """Work Items view with lifecycle indicators (Issue #710)"""
+    templates = _get_templates(request)
+    user_context = _extract_user_context(request)
+    return templates.TemplateResponse("work_items.html", {"request": request, "user": user_context})
+
+
 @router.get("/settings/privacy", response_class=HTMLResponse)
 async def privacy_settings_ui(request: Request):
     """Serve the privacy & data settings page (Coming Soon)"""

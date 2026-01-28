@@ -51,6 +51,12 @@ class RouterInitializer:
             "Conversations API",
             "/api/v1/conversations",
         ),  # Issue #563
+        (
+            "web.api.routes.work_items",
+            "router",
+            "Work Items API",
+            "/api/v1/work-items",
+        ),  # Issue #710
     ]
 
     @staticmethod

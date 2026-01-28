@@ -252,6 +252,8 @@ async def list_todos(
                     "priority": t.priority,
                     "owner_id": t.owner_id,
                     "created_at": t.created_at.isoformat() if t.created_at else None,
+                    # MUX Lifecycle (#708) - include when present for UI indicator
+                    "lifecycle_state": t.lifecycle_state.value if t.lifecycle_state else None,
                 }
                 for t in todos
             ],

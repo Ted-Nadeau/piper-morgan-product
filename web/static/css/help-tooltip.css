@@ -12,7 +12,7 @@
 .help-tooltip {
   position: relative;
   display: inline-block;
-  margin-left: 8px;
+  margin-left: var(--space-sm);
   vertical-align: middle;
 }
 
@@ -36,7 +36,7 @@
 
 .help-icon:hover {
   background: var(--color-special-blue-hover);
-  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+  box-shadow: var(--shadow-primary-sm);
 }
 
 .help-icon:focus {
@@ -48,27 +48,27 @@
   transform: scale(0.95);
 }
 
-/* Tooltip content */
+/* Tooltip content - uses dark theme for contrast against light backgrounds */
 .help-content {
   position: absolute;
   top: 100%;
   left: 0;
-  background: #2c3e50;
-  color: #e0e0e0;
-  border: 1px solid #007acc;
-  border-radius: 6px;
-  padding: 12px 14px;
-  margin-top: 8px;
+  background: var(--color-text-primary);
+  color: var(--color-neutral-light-gray-2);
+  border: 1px solid var(--color-special-blue-dark);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
   min-width: 200px;
   max-width: 300px;
-  font-size: 13px;
-  line-height: 1.5;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  z-index: var(--z-index-dropdown);
+  box-shadow: var(--shadow-lg);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-8px);
-  transition: all 0.2s ease;
+  transition: var(--transition-all);
   pointer-events: none;
 }
 
@@ -76,12 +76,12 @@
   content: '';
   position: absolute;
   bottom: 100%;
-  left: 12px;
+  left: var(--space-sm);
   width: 8px;
   height: 8px;
-  background: #2c3e50;
-  border-top: 1px solid #007acc;
-  border-left: 1px solid #007acc;
+  background: var(--color-text-primary);
+  border-top: 1px solid var(--color-special-blue-dark);
+  border-left: 1px solid var(--color-special-blue-dark);
   border-radius: 2px;
   transform: rotate(45deg);
 }
@@ -96,8 +96,8 @@
 
 /* Update button state when active */
 .help-icon[aria-expanded="true"] {
-  background: #005a9e;
-  box-shadow: 0 2px 8px rgba(0, 122, 204, 0.3);
+  background: var(--color-special-blue-hover);
+  box-shadow: var(--shadow-primary-sm);
 }
 
 /* Adjust tooltip position if near right edge */
@@ -108,7 +108,7 @@
 
 .help-tooltip.right-align .help-content::before {
   left: auto;
-  right: 12px;
+  right: var(--space-sm);
 }
 
 /* Respect prefers-reduced-motion */
@@ -127,7 +127,7 @@
   .help-content {
     min-width: 160px;
     max-width: 250px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }
 
@@ -135,12 +135,12 @@
   .help-content {
     min-width: 140px;
     max-width: 200px;
-    padding: 10px 12px;
+    padding: var(--space-sm);
   }
 
   .help-icon {
     width: 20px;
     height: 20px;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }

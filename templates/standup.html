@@ -8,99 +8,101 @@
     <link rel="stylesheet" href="/static/css/skip-link.css" />
     <link rel="stylesheet" href="/static/css/page-transitions.css" />
     <link rel="stylesheet" href="/static/css/hover-focus-states.css" />
+    <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/spacing.css" />
     <link rel="stylesheet" href="/static/css/chat.css" />
     <style>
       body {
-        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: var(--font-family);
         margin: 0;
-        padding: 20px;
-        background: #f5f5f5;
+        padding: var(--space-md);
+        background: var(--color-background-secondary);
       }
       .container {
         max-width: 1000px;
         margin: 1.5rem auto 0;
-        background: white;
-        border-radius: 10px;
-        padding: 30px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        background: var(--color-background-primary);
+        border-radius: var(--border-radius-lg);
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-sm);
       }
       .header {
         text-align: center;
-        margin-bottom: 30px;
+        margin-bottom: var(--space-lg);
       }
       .header h1 {
-        color: #2c3e50;
+        color: var(--color-text-primary);
         margin: 0;
-        font-size: 2.5em;
+        font-size: var(--font-size-3xl);
       }
       .loading {
         text-align: center;
-        color: #7f8c8d;
+        color: var(--color-text-secondary);
         font-style: italic;
       }
+      /* Semantic alert colors - intentionally not tokenized */
       .error {
         background: #ffebee;
         color: #c62828;
-        padding: 15px;
-        border-radius: 5px;
-        margin: 20px 0;
+        padding: var(--space-md);
+        border-radius: var(--border-radius-sm);
+        margin: var(--space-md) 0;
       }
       .success {
         color: #2e7d32;
       }
       .section {
-        margin: 20px 0;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
+        margin: var(--space-md) 0;
+        padding: var(--space-md);
+        background: var(--color-background-tertiary);
+        border-radius: var(--border-radius-md);
       }
       .section h2 {
-        color: #34495e;
+        color: var(--color-text-primary);
         margin-top: 0;
       }
       .metrics {
         display: flex;
         justify-content: space-around;
         text-align: center;
-        margin: 20px 0;
+        margin: var(--space-md) 0;
       }
       .metric {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        background: var(--color-background-primary);
+        padding: var(--space-md);
+        border-radius: var(--border-radius-md);
+        box-shadow: var(--shadow-xs);
       }
       .metric-value {
-        font-size: 2em;
+        font-size: var(--font-size-2xl);
         font-weight: bold;
-        color: #27ae60;
+        color: var(--color-accent-success);
       }
       .metric-label {
-        color: #7f8c8d;
+        color: var(--color-text-secondary);
         margin-top: 5px;
       }
       pre {
-        background: #2c3e50;
-        color: white;
-        padding: 15px;
-        border-radius: 5px;
+        background: var(--color-text-primary);
+        color: var(--color-neutral-white);
+        padding: var(--space-md);
+        border-radius: var(--border-radius-sm);
         overflow-x: auto;
       }
       button {
-        background: #3498db;
-        color: white;
+        background: var(--color-primary);
+        color: var(--color-neutral-white);
         border: none;
-        padding: 12px 24px;
-        border-radius: 6px;
+        padding: var(--space-sm) var(--space-lg);
+        border-radius: var(--border-radius-md);
         cursor: pointer;
-        font-size: 16px;
+        font-size: var(--font-size-base);
       }
       button:hover {
-        background: #2980b9;
+        background: var(--color-primary-dark);
       }
       button:disabled {
-        background: #bdc3c7;
+        background: var(--color-disabled);
         cursor: not-allowed;
       }
     </style>

@@ -27,6 +27,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
 import services.domain.models as domain
+from services.mux.lifecycle import LifecycleState
 from services.shared_types import (
     EdgeType,
     IntegrationType,
@@ -316,6 +317,8 @@ class WorkItem(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # MUX Lifecycle (#710) - optional lifecycle state for MUX UI indicators
+    lifecycle_state = Column(String(50), nullable=True)
 
     # Relationships
     product = relationship("Product", back_populates="work_items")
@@ -323,6 +326,14 @@ class WorkItem(Base):
 
     def to_domain(self) -> domain.WorkItem:
         """Convert database model to domain model"""
+        # Convert lifecycle_state string to enum if present (#710)
+        lifecycle_state = None
+        if self.lifecycle_state:
+            try:
+                lifecycle_state = LifecycleState(self.lifecycle_state)
+            except ValueError:
+                pass  # Invalid value, leave as None
+
         return domain.WorkItem(
             id=self.id,
             title=self.title,
@@ -338,6 +349,7 @@ class WorkItem(Base):
             external_url=self.external_url,
             metadata=self.item_metadata or {},  # Map item_metadata to metadata
             created_at=self.created_at,
+            lifecycle_state=lifecycle_state,
         )
 
     @classmethod
@@ -485,6 +497,8 @@ class ProjectDB(Base):
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # MUX Lifecycle (#718) - optional lifecycle state for MUX UI indicators
+    lifecycle_state = Column(String(50), nullable=True)
 
     # Relationships
     integrations = relationship(
@@ -502,6 +516,14 @@ class ProjectDB(Base):
                     )
                 )
 
+        # Convert lifecycle_state string to enum if present (#718)
+        lifecycle_state = None
+        if self.lifecycle_state:
+            try:
+                lifecycle_state = LifecycleState(self.lifecycle_state)
+            except ValueError:
+                pass  # Invalid value, leave as None
+
         project = domain.Project(
             id=self.id,
             owner_id=self.owner_id or "",
@@ -512,6 +534,7 @@ class ProjectDB(Base):
             is_archived=self.is_archived,
             created_at=self.created_at,
             updated_at=self.updated_at,
+            lifecycle_state=lifecycle_state,
         )
         # Map integrations relationship
         project.integrations = [integration.to_domain() for integration in self.integrations]

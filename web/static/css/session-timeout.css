@@ -14,14 +14,14 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--color-overlay-dark);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 3000;
+  z-index: var(--z-index-toast);
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
+  transition: var(--transition-all);
   pointer-events: none;
 }
 
@@ -32,15 +32,15 @@
 }
 
 .session-timeout-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  background: var(--color-neutral-white);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-2xl);
   max-width: 450px;
   width: 90%;
-  padding: 32px;
+  padding: var(--space-2xl);
   position: relative;
   animation: slideUp 0.3s ease;
-  border: 2px solid #e74c3c;
+  border: var(--border-width-thick) solid var(--color-accent-error);
 }
 
 @keyframes slideUp {
@@ -56,122 +56,122 @@
 
 .session-timeout-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--space-md);
+  right: var(--space-md);
   background: none;
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #7f8c8d;
+  color: var(--color-text-muted);
   padding: 0;
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  border-radius: var(--border-radius-sm);
+  transition: var(--transition-all);
 }
 
 .session-timeout-close:hover {
-  background: #ecf0f1;
-  color: #2c3e50;
+  background: var(--color-background-tertiary);
+  color: var(--color-text-primary);
 }
 
 .session-timeout-close:focus {
-  outline: 2px solid #e74c3c;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-accent-error);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .session-timeout-icon {
-  font-size: 48px;
+  font-size: var(--font-size-4xl);
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 }
 
 .session-timeout-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 var(--space-md) 0;
   font-size: 1.5em;
-  color: #e74c3c;
-  font-weight: 600;
+  color: var(--color-accent-error);
+  font-weight: var(--font-weight-semibold);
   text-align: center;
 }
 
 .session-timeout-message {
-  color: #2c3e50;
-  font-size: 15px;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--space-xl) 0;
   text-align: center;
 }
 
 .session-timeout-message span {
-  font-weight: 600;
-  color: #e74c3c;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-error);
   font-size: 1.1em;
 }
 
 .session-timeout-actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .session-timeout-actions .btn {
   flex: 1;
-  padding: 12px 20px;
+  padding: var(--space-sm) var(--space-lg);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  font-weight: var(--font-weight-semibold);
+  transition: var(--transition-all);
 }
 
 .session-timeout-actions .btn-primary {
-  background: #27ae60;
-  color: white;
+  background: var(--color-accent-success);
+  color: var(--color-neutral-white);
 }
 
 .session-timeout-actions .btn-primary:hover {
-  background: #229954;
+  background: var(--color-accent-success-dark);
   transform: translateY(-1px);
 }
 
 .session-timeout-actions .btn-primary:focus {
-  outline: 2px solid #27ae60;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-accent-success);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .session-timeout-actions .btn-secondary {
-  background: #95a5a6;
-  color: white;
+  background: var(--color-neutral-medium-gray);
+  color: var(--color-neutral-white);
 }
 
 .session-timeout-actions .btn-secondary:hover {
-  background: #7f8c8d;
+  background: var(--color-text-muted);
   transform: translateY(-1px);
 }
 
 .session-timeout-actions .btn-secondary:focus {
-  outline: 2px solid #95a5a6;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-neutral-medium-gray);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .session-timeout-note {
-  background: #f0f8ff;
-  border-left: 4px solid #3498db;
-  padding: 12px;
-  border-radius: 4px;
+  background: var(--color-primary-light);
+  border-left: var(--border-width-thick) solid var(--color-primary);
+  padding: var(--space-sm);
+  border-radius: var(--border-radius-sm);
   margin: 0;
-  color: #2c3e50;
-  font-size: 13px;
-  line-height: 1.5;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
 }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
   .session-timeout-content {
-    padding: 24px;
+    padding: var(--space-xl);
     max-width: 90%;
   }
 
@@ -180,7 +180,7 @@
   }
 
   .session-timeout-message {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .session-timeout-actions {

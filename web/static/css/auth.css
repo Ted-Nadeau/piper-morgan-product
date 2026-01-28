@@ -1,92 +1,92 @@
 .auth-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 48px;
+    background: var(--color-background-primary);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--space-3xl);
     width: 100%;
     max-width: 420px;
 }
 
 .auth-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: var(--space-xl);
 }
 
 .auth-logo {
     width: 64px;
     height: 64px;
-    border-radius: 12px;
+    border-radius: var(--border-radius-lg);
     display: block;
-    margin: 0 auto 16px;
+    margin: 0 auto var(--space-md);
     object-fit: contain;
 }
 
 .auth-header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    color: #2c3e50;
-    margin: 0 0 8px 0;
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-xs) 0;
 }
 
 .auth-header p {
-    font-size: 15px;
-    color: #7f8c8d;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
     margin: 0;
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--space-md);
 }
 
 .form-group label {
     display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #2c3e50;
-    margin-bottom: 8px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    margin-bottom: var(--space-xs);
 }
 
 .form-group input {
     width: 100%;
-    padding: 12px 16px;
-    font-size: 15px;
-    border: 1px solid #ecf0f1;
-    border-radius: 8px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-base);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-all);
     box-sizing: border-box;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 .error-message {
-    background: #fee;
-    border: 1px solid #e74c3c;
-    border-radius: 8px;
-    padding: 12px 16px;
-    color: #c0392b;
-    font-size: 14px;
-    margin-bottom: 20px;
+    background: var(--color-accent-error-light);
+    border: 1px solid var(--color-accent-error);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-sm) var(--space-md);
+    color: var(--color-accent-danger);
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--space-md);
 }
 
 .auth-button {
     width: 100%;
-    padding: 12px 16px;
-    font-size: 16px;
-    font-weight: 600;
-    color: white;
-    background: #3498db;
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-neutral-white);
+    background: var(--color-primary);
     border: none;
-    border-radius: 8px;
+    border-radius: var(--border-radius-md);
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: var(--transition-all);
 }
 
 .auth-button:hover {
-    background: #2980b9;
+    background: var(--color-primary-dark);
 }
 
 .auth-button:active {
@@ -94,7 +94,7 @@
 }
 
 .auth-button:disabled {
-    background: #bdc3c7;
+    background: var(--color-disabled);
     cursor: not-allowed;
 }
 
@@ -111,21 +111,21 @@
 
 .auth-footer {
     text-align: center;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid #ecf0f1;
+    margin-top: var(--space-lg);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--color-border-light);
 }
 
 .auth-footer p {
-    font-size: 14px;
-    color: #7f8c8d;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
     margin: 0;
 }
 
 .auth-footer a {
-    color: #3498db;
+    color: var(--color-primary);
     text-decoration: none;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
 }
 
 .auth-footer a:hover {
@@ -135,7 +135,7 @@
 /* Responsive */
 @media (max-width: 768px) {
     .auth-container {
-        padding: 32px 24px;
-        margin: 16px;
+        padding: var(--space-xl) var(--space-lg);
+        margin: var(--space-md);
     }
 }

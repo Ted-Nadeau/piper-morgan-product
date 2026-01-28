@@ -22,20 +22,29 @@ When conversation context is compacted, **remember your identity**:
 
 ---
 
-## Session Start
+## Session Start Protocol (BEFORE ANY WORK)
+
+**This applies whether starting fresh or resuming after compaction.**
 
 ```bash
-# 1. Check mailbox
+# 1. Create session log FIRST (even if you think you'll be quick)
+mkdir -p dev/$(date +%Y/%m/%d)
+# Create: dev/YYYY/MM/DD/YYYY-MM-DD-HHMM-[role]-code-opus-log.md
+
+# 2. Check mailbox
 ls mailboxes/lead/inbox/
 # Read messages, move to read/, respond if requested
 
-# 2. Load current context
+# 3. Load current context
 # See docs/briefing/BRIEFING-CURRENT-STATE.md for sprint status
 # See docs/briefing/PROJECT.md for project overview
 
-# 3. Check your branch (never develop on main)
+# 4. Check your branch (never develop on main)
 git branch  # Should show claude/* branch, not main
 ```
+
+**If resuming after compaction and no log exists for today → CREATE IT FIRST.**
+Do not proceed with tasks until session log exists.
 
 ---
 

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learning System Dashboard - Piper Morgan</title>
+    <!-- tokens.css MUST be first - defines CSS variables used by other stylesheets -->
+    <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/empty-state.css" />
     <link rel="stylesheet" href="/static/css/toast.css" />
     <link rel="stylesheet" href="/static/css/dialog.css" />
@@ -13,49 +15,49 @@
     <link rel="stylesheet" href="/static/css/spacing.css" />
     <link rel="stylesheet" href="/static/css/chat.css" />
     <style>
-        /* Base Styles - Use CSS theme variables */
+        /* Base Styles - Use CSS design tokens */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: var(--font-family);
             margin: 0;
-            padding: 20px;
-            background: var(--bg-primary, #f5f5f5);
-            color: var(--text-primary, #1f2937);
+            padding: var(--space-md);
+            background: var(--color-background-secondary);
+            color: var(--color-text-primary);
             line-height: 1.6;
         }
 
         .dashboard-container {
             max-width: 1400px;
             margin: 0 auto;
-            background: var(--bg-primary, #f5f5f5);
-            color: var(--text-primary, #1f2937);
-            padding: 20px;
-            border-radius: 8px;
+            background: var(--color-background-secondary);
+            color: var(--color-text-primary);
+            padding: var(--space-md);
+            border-radius: var(--border-radius-md);
         }
 
         /* Header */
         .dashboard-header {
             text-align: center;
             margin-bottom: 40px;
-            border-bottom: 2px solid var(--primary-color, #3498db);
-            padding-bottom: 20px;
+            border-bottom: 2px solid var(--color-primary);
+            padding-bottom: var(--space-md);
         }
 
         .dashboard-header h1 {
-            color: var(--primary-color, #3498db);
+            color: var(--color-primary);
             margin: 0 0 10px 0;
             font-size: 2.5em;
-            font-weight: 600;
+            font-weight: var(--font-weight-semibold);
         }
 
         .dashboard-header p {
-            color: var(--text-secondary, #7f8c8d);
+            color: var(--color-text-secondary);
             margin: 5px 0;
             font-size: 1.1em;
         }
 
         .last-updated {
-            font-size: 0.9em;
-            color: var(--text-secondary, #7f8c8d);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
             margin-top: 10px;
         }
 
@@ -63,8 +65,8 @@
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 24px;
-            margin-bottom: 20px;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-md);
         }
 
         .card-full-width {
@@ -73,11 +75,11 @@
 
         /* Card Styles - Simple, no effects */
         .card {
-            background: var(--bg-secondary, #f8f9fa);
-            padding: 25px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color, #ecf0f1);
-            border-left: 4px solid var(--primary-color, #3498db);
+            background: var(--color-background-tertiary);
+            padding: var(--space-lg);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--color-border-light);
+            border-left: 4px solid var(--color-primary);
             display: flex;
             flex-direction: column;
         }
@@ -86,16 +88,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color, #ecf0f1);
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--color-border-light);
             flex-shrink: 0;
         }
 
         .card-title {
             font-size: 1.4em;
-            font-weight: 600;
-            color: var(--primary-color, #3498db);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-primary);
             margin: 0;
         }
 
@@ -104,14 +106,14 @@
             gap: 10px;
         }
 
-        /* Status Badge */
+        /* Status Badge - semantic colors intentionally not tokenized */
         .status-badge {
             display: inline-flex;
             align-items: center;
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: 600;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
             gap: 6px;
         }
 
@@ -150,16 +152,16 @@
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
+            gap: var(--space-md);
             width: 100%;
         }
 
         .metric {
             text-align: center;
-            padding: 15px;
-            background: var(--bg-tertiary, #e0e0e0);
-            border-radius: 8px;
-            border: 1px solid var(--border-color, #ecf0f1);
+            padding: var(--space-md);
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--color-border-light);
             min-height: 100px;
             display: flex;
             flex-direction: column;
@@ -169,53 +171,54 @@
 
         .metric-value {
             font-size: 2.5em;
-            font-weight: 700;
-            color: var(--primary-color, #3498db);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-primary);
             margin: 0;
             line-height: 1;
         }
 
         .metric-label {
-            font-size: 0.9em;
-            color: var(--text-secondary, #7f8c8d);
-            margin-top: 8px;
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-top: var(--space-xs);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         /* Buttons - Simple, no hover transforms */
         button {
-            background: var(--primary-color, #3498db);
-            color: white;
+            background: var(--color-primary);
+            color: var(--color-neutral-white);
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: var(--space-sm) var(--space-lg);
+            border-radius: var(--border-radius-md);
             cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 600;
+            font-size: var(--font-size-base);
+            font-weight: var(--font-weight-semibold);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-xs);
         }
 
         button:hover:not(:disabled) {
-            background: var(--primary-color-hover, #2980b9);
+            background: var(--color-primary-dark);
         }
 
         button:disabled {
-            background: var(--text-secondary, #7f8c8d);
+            background: var(--color-text-secondary);
             cursor: not-allowed;
             opacity: 0.6;
         }
 
         button.secondary {
-            background: var(--text-secondary, #7f8c8d);
+            background: var(--color-text-secondary);
         }
 
         button.secondary:hover:not(:disabled) {
-            background: var(--text-primary, #1f2937);
+            background: var(--color-text-primary);
         }
 
+        /* Semantic button colors - intentionally not tokenized */
         button.danger {
             background: #e74c3c;
         }
@@ -236,17 +239,17 @@
         .privacy-settings {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: var(--space-md);
         }
 
         .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px;
-            background: var(--bg-tertiary, #e0e0e0);
-            border-radius: 8px;
-            border: 1px solid var(--border-color, #ecf0f1);
+            padding: var(--space-md);
+            background: var(--color-background-secondary);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--color-border-light);
         }
 
         .setting-info {
@@ -254,14 +257,14 @@
         }
 
         .setting-name {
-            font-weight: 600;
-            color: var(--text-primary, #1f2937);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
             margin-bottom: 4px;
         }
 
         .setting-description {
-            font-size: 0.85em;
-            color: var(--text-secondary, #7f8c8d);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
         }
 
         /* Toggle Switch */
@@ -284,8 +287,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: var(--text-secondary, #7f8c8d);
-            transition: 0.3s;
+            background-color: var(--color-text-secondary);
+            transition: var(--transition-all);
             border-radius: 26px;
         }
 
@@ -296,13 +299,13 @@
             width: 18px;
             left: 4px;
             bottom: 4px;
-            background-color: white;
-            transition: 0.3s;
+            background-color: var(--color-neutral-white);
+            transition: var(--transition-all);
             border-radius: 50%;
         }
 
         input:checked + .toggle-slider {
-            background-color: var(--primary-color, #3498db);
+            background-color: var(--color-primary);
         }
 
         input:checked + .toggle-slider:before {
@@ -313,12 +316,12 @@
         .loading {
             text-align: center;
             padding: 40px;
-            color: var(--text-secondary, #7f8c8d);
+            color: var(--color-text-secondary);
         }
 
         .spinner {
-            border: 3px solid var(--bg-tertiary, #e0e0e0);
-            border-top: 3px solid var(--primary-color, #3498db);
+            border: 3px solid var(--color-background-tertiary);
+            border-top: 3px solid var(--color-primary);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -331,11 +334,11 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Error/Success Messages */
+        /* Error/Success Messages - semantic colors intentionally not tokenized */
         .message {
-            padding: 14px 18px;
-            border-radius: 8px;
-            margin: 16px 0;
+            padding: var(--space-md);
+            border-radius: var(--border-radius-md);
+            margin: var(--space-md) 0;
             display: none;
         }
 
@@ -357,60 +360,60 @@
 
         /* Pattern Distribution */
         .pattern-distribution {
-            margin-top: 20px;
+            margin-top: var(--space-md);
         }
 
         .pattern-bar {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
-            gap: 12px;
+            margin-bottom: var(--space-sm);
+            gap: var(--space-sm);
         }
 
         .pattern-label {
             min-width: 180px;
-            font-size: 0.9em;
-            color: var(--text-primary, #1f2937);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
         }
 
         .pattern-bar-bg {
             flex: 1;
             height: 24px;
-            background: var(--bg-tertiary, #e0e0e0);
-            border-radius: 4px;
+            background: var(--color-background-tertiary);
+            border-radius: var(--border-radius-sm);
             overflow: hidden;
             position: relative;
         }
 
         .pattern-bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary-color, #3498db), var(--primary-color-hover, #2980b9));
-            border-radius: 4px;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
+            border-radius: var(--border-radius-sm);
             transition: width 0.5s ease;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 8px;
+            padding-right: var(--space-xs);
         }
 
         .pattern-count {
-            color: white;
-            font-size: 0.8em;
-            font-weight: 600;
+            color: var(--color-neutral-white);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-semibold);
         }
 
         /* Footer */
         .dashboard-footer {
             text-align: center;
             margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color, #ecf0f1);
-            color: var(--text-secondary, #7f8c8d);
-            font-size: 0.9em;
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--color-border-light);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
         }
 
         .dashboard-footer a {
-            color: var(--primary-color, #3498db);
+            color: var(--color-primary);
             text-decoration: none;
         }
 
@@ -435,7 +438,7 @@
             .setting-item {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 12px;
+                gap: var(--space-sm);
             }
         }
 
@@ -488,7 +491,7 @@
                     </div>
                 </div>
                 <div>
-                    <p style="color: var(--text-secondary, #7f8c8d); margin-bottom: 20px;">
+                    <p style="color: var(--color-text-secondary); margin-bottom: 20px;">
                         Control whether the system learns from your interactions
                     </p>
                     <div class="card-actions">
@@ -598,7 +601,7 @@
                     <h2 class="card-title">Data Management</h2>
                 </div>
                 <div>
-                    <p style="color: var(--text-secondary, #7f8c8d); margin-bottom: 20px;">
+                    <p style="color: var(--color-text-secondary); margin-bottom: 20px;">
                         Export or clear your learned data
                     </p>
                     <div class="card-actions" style="flex-direction: column; align-items: stretch;">

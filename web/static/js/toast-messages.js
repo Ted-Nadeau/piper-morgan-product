@@ -37,6 +37,11 @@ const TOAST_MESSAGES = {
   project_updated: { title: 'Updated', body: 'Project saved' },
   project_deleted: { title: 'Done', body: 'Project removed' },
 
+  // Work item operations
+  work_item_created: { title: 'Created', body: 'Work item added' },
+  work_item_updated: { title: 'Updated', body: 'Work item saved' },
+  work_item_deleted: { title: 'Done', body: 'Work item removed' },
+
   // File operations
   file_uploaded: { title: 'Uploaded', body: 'File ready' },
   file_deleted: { title: 'Done', body: 'File removed' },

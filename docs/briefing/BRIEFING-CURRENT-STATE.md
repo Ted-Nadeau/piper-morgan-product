@@ -9,12 +9,13 @@
 
 ## STATUS BANNER
 
-**Current Position**: 4.2.7 - A20 Alpha Testing Round 2 in progress
-**Version**: v0.8.4.3 (released January 18, 2026)
-**Last Updated**: January 18, 2026, 11:45 AM PT
+**Current Position**: 4.3.4 - MUX-IMPLEMENT P3 complete, P4 in progress
+**Version**: v0.8.4.3 (pyproject.toml source of truth)
+**Last Updated**: January 27, 2026, 6:30 AM PT
 
-**Current Focus**: A20 Alpha Testing - bug fixes and polish
-**Next Phase**: MUX-V1 (Modeled User Experience - Vision)
+**Current Focus**: MUX-IMPLEMENT - Lifecycle wiring and UI integration
+**Active Epics**: #401 MUX-VISION (child epics mostly complete)
+**Next Phase**: MVP Milestones (M1-M6)
 
 ---
 
@@ -26,25 +27,13 @@
 3. ✅ ALPHA testing (v0.8.0 → v0.8.4)
 4. 🎯 Complete build of MVP
    4.1. ✅ B1 - Beta Enablers (v0.8.3.1, v0.8.3.2) - COMPLETE Jan 11
-   4.2. 🐛 A20 - Alpha Testing round 2 (v0.8.4, .1, .2) ← CURRENT
-        ✅ BUG: Chat input ignores selected conversation (#581)
-        ✅ BUG: Standup command says no projects (#582)
-        ✅ BUG: Piper's replies not persisting (#583)
-        ✅ BUG: /standup routes to STATUS handler (#585)
-        ✅ TECH-DEBT: Document user_id vs session_id patterns (#584)
-        ✅ BUG: Markdown rendering regression (#592)
-        ✅ BUG: Calendar timezone/tomorrow queries (#588)
-        ✅ BUG: TEMPORAL handler stale data (#596)
-        🐛 BUG-TESTING: Fix missing test_client fixture (#590)
-        BUG-TESTING: Fix CICD spatial test assertion (#591)
-        FLY-RUN-RESTART: Document server restart procedure
-        ARCH-TEMPORAL-GAPS: Systematic datetime issues (#597)
-   4.3. MUX: Modeled User Experience
-        MUX-V1: Vision, Conceptual architecture
-        MUX-TECH: Architectural model implementation
-        MUX-V2: Integration Mapping
-        MUX-INTERACT: Interaction Design
-        MUX-IMPLEMENT: UI Polish
+   4.2. ✅ A20 - Alpha Testing round 2 (v0.8.4.x) - COMPLETE Jan 18
+   4.3. 🎯 MUX: Modeled User Experience ← CURRENT
+        ✅ MUX-V1: Vision, Conceptual architecture - COMPLETE Jan 20
+        ✅ MUX-TECH: Architectural model implementation - COMPLETE Jan 21
+        ✅ MUX-WIRE: Integration wiring (#670 epic) - COMPLETE Jan 24
+        ✅ MUX-INTERACT: Interaction Design (#488) - Gate #534 PASSED Jan 24
+        🎯 MUX-IMPLEMENT: UI Polish - P1-P3 COMPLETE, P4 in progress
    4.4. MVP: Minimum Valuable Product (M1-M6)
 5. Beta testing on 0.9
 6. Launch 1.0
@@ -52,42 +41,44 @@
 
 ---
 
-## Sprint B1 Completion (Jan 5-11, 2026)
+## Recent Progress (Jan 18-27, 2026)
 
-### Summary
-- **Issues Closed**: 23+ in 3 days
-- **Epics Completed**: 3 (Epic #242, #314, #543)
-- **Release**: v0.8.4
+### Week Summary (Jan 18-26)
+| Day | Rating | Issues Closed | Tests Added | Key Theme |
+|-----|--------|---------------|-------------|-----------|
+| Jan 18 | Standard | 6 | ~50 | Fresh install fixes |
+| Jan 19 | HIGH-COMPLEXITY | 24 | ~100 | MUX-V1 Track established |
+| Jan 20 | HIGH-VELOCITY | 18 | ~200 | 7 epics closed |
+| Jan 21 | HIGH-COMPLEXITY | 26 | ~400 | Skill formalization, anti-patterns |
+| Jan 22 | HIGH-COMPLEXITY | 13 | ~300 | Consciousness transforms |
+| Jan 23 | HIGH-COMPLEXITY | 18 | ~636 | TRUST-LEVELS complete |
+| Jan 24 | HIGH-COMPLEXITY | 22 | ~900 | Mobile PoC breakthrough, Gate #534 |
+| Jan 25 | HIGH-VELOCITY | 21 | ~1000 | MUX-IMPLEMENT P1-P3 |
+| Jan 26 | HIGH-ALIGNMENT | 5 | ~80 | ADR-049 ProcessRegistry |
 
-### What Was Delivered
+**Total**: ~150 issues closed, ~3600+ tests added in 9 days
 
-**FTUX (First-Time User Experience)**:
-- #547: Piper greeting in setup wizard
-- #548: Empty state voice guide templates
-- #549: Post-setup orientation modal
-- #550: "Ask Piper" chat bridge buttons
-- #490: Portfolio onboarding conversation
+### Key Accomplishments
 
-**Conversations**:
-- Epic #242: Interactive Standup Assistant (5 children: #552-556)
-- Epic #314: Conversation Persistence (4 children: #563-566)
-- #102: Calendar-aware greeting
+**MUX Track Complete Through P3**:
+- MUX-V1 Vision (#399, #408) - Object model and lifecycle specs
+- MUX-TECH (#433-436) - Grammar, entity, ownership, composting
+- MUX-WIRE (#670) - 12 wiring gap issues resolved
+- MUX-INTERACT (#488) - Gate #534 passed
+- MUX-IMPLEMENT P1-P3 (#419-427) - Navigation, docs access, conversation model
 
-**Integration Settings**:
-- Epic #543: Integration-specific settings (4 children: #570-573)
-- #544: Disconnect All button
-- #576-579: OAuth credential UI (Slack, Calendar, GitHub, Notion)
+**Architecture Decisions**:
+- ADR-049 (Two-Tier Intent Architecture) - ACCEPTED Jan 26
+- ADR-053 (Trust Levels) - ACCEPTED Jan 23
+- ProcessRegistry pattern for guided processes
 
-**Infrastructure**:
-- #365: Slack Attention Decay (Pattern-048)
-- #559: Integration test wiring verification
-- #562: OAuth token fix for Test button
+**Methodology Improvements**:
+- Skill frontmatter for discovery (Jan 25)
+- Simple trigger architecture for protocols (Jan 26)
+- Pattern-059 Leadership Caucus (Jan 26)
+- Audit Cascade skill (Pattern-049)
 
-### Key Patterns Established
-- **Pattern-045**: Green Tests, Red User
-- **Pattern-046**: Beads Completion Discipline
-- **Pattern-047**: Time Lord Alert
-- **Pattern-048**: Periodic Background Job
+**Test Suite Growth**: 4200 → 5200+ tests
 
 ---
 
@@ -97,11 +88,12 @@
 
 ### Current Capabilities (January 2026)
 
-**Intent Classification**: 15 categories
+**Intent Classification**: 19 categories
 ```python
 # From services/shared_types.py IntentCategory enum
 EXECUTION, ANALYSIS, SYNTHESIS, STRATEGY, PLANNING, REVIEW, LEARNING,
-QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
+QUERY, CONVERSATION, IDENTITY, DISCOVERY, TEMPORAL, STATUS, PRIORITY,
+GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 ```
 
 **Active Integrations**: 7 plugins
@@ -113,101 +105,104 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 - Spatial (spatial intelligence)
 - Demo (reference implementation)
 
-**Pattern Catalog**: 50 patterns (001-050) across 5 categories
+**Pattern Catalog**: 60 patterns (001-059) across 5 categories
 - Core Architecture (repository, service, factory, error handling)
 - Data & Query (CQRS-lite, query layer, context resolution)
 - AI & Intelligence (intent classification, LLM adapter, multi-agent)
 - Integration & Platform (plugin interface, MCP)
-- Development & Process (verification first, Beads discipline, Time Lord Alert, Audit Cascade)
+- Development & Process (verification first, Beads discipline, Audit Cascade)
+- Grammar Application (050-058) - consciousness, ownership, warmth
 
-**ADRs**: 57 architectural decision records (000-056)
+**ADRs**: 60 architectural decision records (000-057 + drafts)
 
----
-
-## What's Next: MUX Phase
-
-### MUX-V1: Vision & Conceptual Architecture
-**Status**: Ready to begin
-
-**Scope**:
-- VISION-OBJECT-MODEL - ADR-045 formalization
-- VISION-GRAMMAR-CORE - "Entities experience Moments in Places"
-- VISION-CONSCIOUSNESS - Extract from Morning Standup
-- VISION-METAPHORS - Native/Federated/Synthetic
-
-### MUX-TECH: Technical Implementation
-**GitHub Issues**:
-- #433: MUX-TECH-PHASE1-GRAMMAR
-- #434: MUX-TECH-PHASE2-ENTITY
-- #435: MUX-TECH-PHASE3-OWNERSHIP
-- #436: MUX-TECH-PHASE4-COMPOSTING
-
-### MUX Gates (Milestones)
-- #531: MUX-GATE-1 - Foundation Phase Complete
-- #532: MUX-GATE-2 - Core Implementation Complete
-- #533: MUX-GATE-3 - Integration Phase Complete
-- #534: MUX-GATE-4 - Interaction Design Complete
+**Skills**: 5 Tier 1 skills
+- create-session-log
+- check-mailbox
+- close-issue-properly
+- audit-cascade
+- discovered-work-capture
 
 ---
 
-## Open Issues by Priority
+## What's Next: MUX-IMPLEMENT P4 and MVP Milestones
 
-### A20 Alpha Testing (Current)
-- #590: Fix missing test_client fixture (BUG-TESTING)
-- #591: Fix CICD spatial test assertion (BUG-TESTING)
-- #597: Systematic datetime and data presentation issues (ARCH-TEMPORAL-GAPS)
-- FLY-RUN-RESTART: Document server restart procedure
+### MUX-IMPLEMENT P4 (Current)
+**Status**: In progress
 
-### MUX Phase
-- #433-436: MUX-TECH Phases 1-4
-- #477, #474: MUX Lists (vision + tech)
-- #488: MUX-INTERACT-DISCOVERY
-- #567-569: Portfolio extensions
+**Open Issues**:
+- #703 MUX-LIFECYCLE-UI (tracking) - Child issues #704, #705
+- #704 MUX-LIFECYCLE-UI-A: Morning Standup (BLOCKED - architecture mismatch)
+- #705 MUX-LIFECYCLE-UI-B: Feature.to_dict() (COMPLETE, pending closure)
 
-### Architecture
-- #551: Command Parity Across Interfaces
-- #557: WebSocket Infrastructure
+**Blocked**:
+- #704 requires PM decision on standup architecture
 
-### Security
-- #542: Token revocation on disconnect
-- #482: KMS integration
+### MVP Milestones (M1-M6)
 
-### Tech Debt
-- #558: LLM-based preference extraction
-- #546: Alternate issue providers
-- #471-472: Infrastructure and Slack TDD gaps
+**M1 - MVP Foundation**:
+- #696 BUG-AUTH: settings_integrations hardcoded user_id
+- #697 BUG-AUTH: intent_service hardcoded user_id
+
+**M2 - MVP Activation**:
+- #683 MUX-WIRE-DOD
+- #690-695 WIRE-* issues (boundary, canonical, slack, standup, github)
+
+**Advanced Layer** (Post-MVP):
+- #688 ADR-050 Phases 1-3
+- #698-700 Guided Process types (planning, feedback, clarification)
+- #702 MUX-LIFECYCLE-NOTIFICATIONS
 
 ---
 
-## Metrics Snapshot (January 2026)
+## Open Items by Priority
+
+### Blocked (Awaiting PM Decision)
+- #704 MUX-LIFECYCLE-UI-A: Standup doesn't render WorkItems
+
+### Ready for Implementation
+- #696, #697: Auth bugs (M1)
+- #690-695: Wiring issues (M2)
+
+### Pending Review
+- #705 MUX-LIFECYCLE-UI-B: Implementation complete
+
+### Advanced Layer Backlog
+- #688, #698-702: Post-MVP features
+
+---
+
+## Metrics Snapshot (January 27, 2026)
 
 ### Quality
-- **Pattern Count**: 50 (001-050)
-- **ADR Count**: 57 (000-056)
-- **Total Docs**: 961+ markdown files
-- **Python Code**: 755,335+ lines
+- **Pattern Count**: 60 (001-059)
+- **ADR Count**: 60 (000-057 + drafts)
+- **Skill Count**: 5 (Tier 1 complete)
+- **Test Suite**: 5200+ tests
+- **Total Docs**: 1000+ markdown files
 
-### Version History
+### Version History (Recent)
 | Version | Date | Milestone |
 |---------|------|-----------|
 | v0.8.4.3 | Jan 18, 2026 | Fresh install fixes (#605-#609) |
-| v0.8.4.2 | Jan 15, 2026 | A20 bug fixes (#588, #596) |
-| v0.8.4.1 | Jan 13, 2026 | RequestContext pattern (#584) |
-| v0.8.4 | Jan 12, 2026 | Sprint B1 Complete |
-| v0.8.3.2 | Jan 8, 2026 | Epic #242 Standup |
-| v0.8.3.1 | Jan 7, 2026 | FTUX batch |
-| v0.8.3 | Jan 2, 2026 | Setup wizard |
+| - | Jan 19-20 | MUX-V1 Vision complete |
+| - | Jan 21-22 | Consciousness transforms, skills |
+| - | Jan 23 | TRUST-LEVELS epic complete |
+| - | Jan 24 | Gate #534 MUX-INTERACT passed |
+| - | Jan 25 | MUX-IMPLEMENT P1-P3 complete |
+| - | Jan 26 | ADR-049 ProcessRegistry |
 
-### Learning System Status (per Jan 11 audit)
-**Built** (140+ tests):
-- Preference Learning (standup domain)
-- Attention Decay (Slack domain)
-- Query Learning Loop
+### System Status
+**Built and Tested**:
+- Trust Levels system (453 tests)
+- Lifecycle management (147 tests)
+- Process Registry (32 tests)
+- Consciousness transforms
+- Grammar-conscious templates
 
 **Spec Only** (not implemented):
-- Composting Pipeline
-- Insight Journal
-- Dreaming/Rest-Period Jobs
+- Full composting pipeline
+- Insight journal
+- Cross-session memory (24-hour window only)
 
 ---
 
@@ -216,26 +211,30 @@ QUERY, CONVERSATION, IDENTITY, TEMPORAL, STATUS, PRIORITY, GUIDANCE, UNKNOWN
 ### What's Stable
 - Setup wizard (GUI and CLI)
 - Login/authentication
-- Chat interface with 15 intent categories
+- Chat interface with 19 intent categories
 - Lists, todos, projects, files CRUD
 - Integration Settings (Slack, Calendar, GitHub, Notion)
-- Portfolio onboarding
+- Portfolio onboarding (now with ProcessRegistry)
+- Trust-appropriate proactivity
+- Guided processes (onboarding, standup)
 
 ### Known Issues
-- #574: Conversation history switching bug
-- Predictive queries not implemented (planned for MUX)
+- Lifecycle indicators not yet visible in UI (#703)
+- Standup doesn't render WorkItem objects (#704)
+- Some TODOs for auth context (#696, #697)
 
 ---
 
 ## Key Documents
 
-**Roadmap**: `docs/internal/planning/roadmap/roadmap.md` (v13.0)
-**Patterns**: `docs/internal/architecture/current/patterns/` (50 patterns)
-**ADRs**: `docs/internal/architecture/current/adrs/` (57 ADRs)
-**Release Notes**: `docs/releases/RELEASE-NOTES-v0.8.4.3.md`
-**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 17)
+**Roadmap**: `docs/internal/planning/roadmap/roadmap.md`
+**Patterns**: `docs/internal/architecture/current/patterns/` (60 patterns)
+**ADRs**: `docs/internal/architecture/current/adrs/` (60 ADRs)
+**Skills**: `.claude/skills/` (5 Tier 1 skills)
+**Omnibus Logs**: `docs/omnibus-logs/` (current through Jan 26)
+**Glossary**: `knowledge/piper-morgan-glossary-v1.1.md`
 
 ---
 
-*Last Updated: January 18, 2026, 11:45 AM PT*
-*Source: GitHub commit history, beads database, Serena symbolic index*
+*Last Updated: January 27, 2026, 6:30 AM PT*
+*Source: GitHub commit history, omnibus logs, Serena symbolic index*

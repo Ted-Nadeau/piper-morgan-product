@@ -162,6 +162,12 @@ async def get_project(
             "owner_id": project_obj.owner_id,
             "created_at": project_obj.created_at.isoformat() if project_obj.created_at else None,
             "updated_at": project_obj.updated_at.isoformat() if project_obj.updated_at else None,
+            # MUX Lifecycle (#711) - include when present for UI indicator
+            "lifecycle_state": (
+                getattr(project_obj, "lifecycle_state", None).value
+                if getattr(project_obj, "lifecycle_state", None)
+                else None
+            ),
         }
 
     except HTTPException:
@@ -263,6 +269,13 @@ async def list_projects(
                     "description": p.description,
                     "owner_id": p.owner_id,
                     "created_at": p.created_at.isoformat() if p.created_at else None,
+                    # MUX Lifecycle (#709) - include when present for UI indicator
+                    # getattr handles PreferenceProject objects which lack this field
+                    "lifecycle_state": (
+                        getattr(p, "lifecycle_state", None).value
+                        if getattr(p, "lifecycle_state", None)
+                        else None
+                    ),
                 }
                 for p in projects
             ],
@@ -280,6 +293,97 @@ async def list_projects(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve projects",
+        )
+
+
+@router.get("/{project_id}/work-items")
+async def get_project_work_items(
+    project_id: str,
+    current_user: JWTClaims = Depends(get_current_user),
+    project_repo=Depends(get_project_repository),
+) -> dict:
+    """
+    Get work items associated with a project (#711 MUX-PROJECT-DETAIL-VIEW).
+
+    Returns work items where project_id matches, with lifecycle_state for MUX UI.
+
+    Args:
+        project_id: Project ID to get work items for
+        current_user: Current authenticated user
+        project_repo: Project repository (injected)
+
+    Returns:
+        List of work items with lifecycle_state
+
+    Raises:
+        HTTPException 404: Project not found or not owned by current user
+        HTTPException 500: Server error
+    """
+    from sqlalchemy import select
+
+    from services.database.models import WorkItem as WorkItemDB
+    from services.database.session_factory import AsyncSessionFactory
+
+    try:
+        # First verify project exists and user owns it (SEC-RBAC)
+        project_obj = await project_repo.get_by_id(project_id, owner_id=current_user.sub)
+
+        if not project_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project not found: {project_id}",
+            )
+
+        # Query work items for this project
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            result = await session.execute(
+                select(WorkItemDB).where(WorkItemDB.project_id == project_id)
+            )
+            db_work_items = result.scalars().all()
+
+            # Convert to domain objects to get lifecycle_state mapping
+            work_items = [wi.to_domain() for wi in db_work_items]
+
+        logger.info(
+            "project_work_items_retrieved",
+            user_id=current_user.sub,
+            project_id=project_id,
+            count=len(work_items),
+        )
+
+        return {
+            "work_items": [
+                {
+                    "id": w.id,
+                    "title": w.title,
+                    "description": w.description,
+                    "type": w.type,
+                    "status": w.status,
+                    "priority": w.priority,
+                    "assignee": w.assignee,
+                    "created_at": w.created_at.isoformat() if w.created_at else None,
+                    # MUX Lifecycle (#711) - include when present for UI indicator
+                    "lifecycle_state": w.lifecycle_state.value if w.lifecycle_state else None,
+                }
+                for w in work_items
+            ],
+            "count": len(work_items),
+            "project_id": project_id,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "project_work_items_error",
+            user_id=current_user.sub,
+            project_id=project_id,
+            error=str(e),
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve project work items",
         )
 
 
