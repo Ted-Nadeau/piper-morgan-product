@@ -9,13 +9,13 @@
 
 ## STATUS BANNER
 
-**Current Position**: 4.3.4 - MUX-IMPLEMENT P3 complete, P4 in progress
-**Version**: v0.8.4.3 (pyproject.toml source of truth)
-**Last Updated**: January 27, 2026, 6:30 AM PT
+**Current Position**: 4.3.5 - MUX-IMPLEMENT COMPLETE
+**Version**: v0.8.5 (pyproject.toml source of truth)
+**Last Updated**: January 27, 2026, 9:30 AM PT
 
-**Current Focus**: MUX-IMPLEMENT - Lifecycle wiring and UI integration
-**Active Epics**: #401 MUX-VISION (child epics mostly complete)
-**Next Phase**: MVP Milestones (M1-M6)
+**Current Focus**: MVP Milestones (M1-M6)
+**Active Epics**: MVP foundation sprints starting
+**Next Phase**: M1 - MVP Foundation
 
 ---
 
@@ -28,13 +28,13 @@
 4. 🎯 Complete build of MVP
    4.1. ✅ B1 - Beta Enablers (v0.8.3.1, v0.8.3.2) - COMPLETE Jan 11
    4.2. ✅ A20 - Alpha Testing round 2 (v0.8.4.x) - COMPLETE Jan 18
-   4.3. 🎯 MUX: Modeled User Experience ← CURRENT
+   4.3. ✅ MUX: Modeled User Experience - COMPLETE Jan 27
         ✅ MUX-V1: Vision, Conceptual architecture - COMPLETE Jan 20
         ✅ MUX-TECH: Architectural model implementation - COMPLETE Jan 21
         ✅ MUX-WIRE: Integration wiring (#670 epic) - COMPLETE Jan 24
         ✅ MUX-INTERACT: Interaction Design (#488) - Gate #534 PASSED Jan 24
-        🎯 MUX-IMPLEMENT: UI Polish - P1-P3 COMPLETE, P4 in progress
-   4.4. MVP: Minimum Valuable Product (M1-M6)
+        ✅ MUX-IMPLEMENT: UI Polish (#403) - COMPLETE Jan 27
+   4.4. 🎯 MVP: Minimum Valuable Product (M1-M6) ← CURRENT
 5. Beta testing on 0.9
 6. Launch 1.0
 ```
@@ -183,6 +183,7 @@ GUIDANCE, TRUST, MEMORY, PORTFOLIO, UNKNOWN
 ### Version History (Recent)
 | Version | Date | Milestone |
 |---------|------|-----------|
+| v0.8.5 | Jan 27, 2026 | MUX-IMPLEMENT complete, WCAG 2.1 AA |
 | v0.8.4.3 | Jan 18, 2026 | Fresh install fixes (#605-#609) |
 | - | Jan 19-20 | MUX-V1 Vision complete |
 | - | Jan 21-22 | Consciousness transforms, skills |

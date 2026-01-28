@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.4.3
+**Version**: 0.8.5
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes setup, plus initial configuration
@@ -11,15 +11,17 @@
 
 ---
 
-## What's New in 0.8.4.3
+## What's New in 0.8.5
 
-**Fresh Install Fixes** - Complete overhaul of the first-time user experience. Server now validates database migrations at startup, blocking cryptic errors.
+**MUX Complete** - The Modeled User Experience (MUX) super epic is complete! Full accessibility compliance and design token system.
 
-**Multi-User Support** - The setup wizard is now accessible for new user registration, not just first-time setup.
+**WCAG 2.1 AA Accessibility** - All color contrast ratios now meet accessibility standards. ARIA landmarks and keyboard navigation throughout.
 
-**UI Polish** - Conversation titles auto-generate from first message and are editable. Resource cards no longer show "null" for missing fields.
+**Design Token System** - Centralized CSS tokens with documented contrast ratios, high contrast mode support, and reduced motion preferences.
 
-See [Release Notes v0.8.4.3](releases/RELEASE-NOTES-v0.8.4.3.md) for full details.
+**Lifecycle State Persistence** - Projects, work items, features, and todos now persist lifecycle state to the database.
+
+See [Release Notes v0.8.5](releases/RELEASE-NOTES-v0.8.5.md) for full details.
 
 ---
 

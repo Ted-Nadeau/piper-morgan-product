@@ -1,7 +1,7 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.4.3
-**Last Updated**: January 19, 2026
+**Version**: 0.8.5
+**Last Updated**: January 27, 2026
 **For**: Alpha Testers
 
 ---
@@ -67,7 +67,7 @@ This guide has three main sections:
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.4.3). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.5). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -82,6 +82,24 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 
 ---
 
+## What's New in 0.8.5
+
+**MUX-IMPLEMENT Complete** - Full accessibility and design polish:
+- WCAG 2.1 AA contrast compliance (11 colors fixed, all ratios ≥4.5:1)
+- ARIA landmarks throughout navigation and command palette
+- Design token system v1.1.0 with documented contrast ratios
+- Lifecycle state persistence for projects, work items, features, todos
+
+**Accessibility Improvements** (#428, #429, #430):
+- Full ARIA audit: 8 components with proper roles and attributes
+- Keyboard navigation support throughout
+- High contrast mode support (`prefers-contrast: more`)
+- Reduced motion support (`prefers-reduced-motion: reduce`)
+
+**Architecture**:
+- ADR-049 ProcessRegistry for guided processes
+- Feature.to_dict() with lifecycle serialization
+
 ## What's New in 0.8.4.3
 
 **Fresh Install Fixes** - Critical fixes for new alpha testers (#605-#609):
@@ -89,16 +107,6 @@ See `ALPHA_AGREEMENT.md` for complete legal terms.
 - Fresh installs route to web GUI wizard (not CLI)
 - `/setup` accessible for new user registration (multi-user support)
 - Fresh databases properly detected and migrated
-
-**UI/UX Improvements**:
-- Auto-generated conversation titles from first message (#598)
-- Editable conversation titles (#604)
-- Cleaner resource cards (no "null" placeholders) (#599)
-- Calendar data displays in human-readable format (#597)
-
-**Testing Infrastructure**:
-- Frontend JavaScript testing framework with Jest + jsdom (#593)
-- 45 tests for Toast and FormValidation modules
 
 ## What's New in 0.8.4.2
 
@@ -790,7 +798,7 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.4.3). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.5). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
 If guided setup seems overwhelming, a hosted version is planned for 2026.
 
@@ -808,4 +816,4 @@ Thank you for being an early adopter and helping us improve! 🚀
 ---
 
 _Last updated: January 19, 2026_
-_Software version: 0.8.4.3_
+_Software version: 0.8.5_

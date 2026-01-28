@@ -1,8 +1,8 @@
-# Known Issues & Feature Status (v0.8.4.3)
+# Known Issues & Feature Status (v0.8.5)
 
-**Version**: 0.8.4.4
-**Last Updated**: January 26, 2026
-**Status**: Stable Core (Sprint A20 - Fresh Install Fixes)
+**Version**: 0.8.5
+**Last Updated**: January 27, 2026
+**Status**: MUX Complete (Accessibility & Polish)
 
 ---
 

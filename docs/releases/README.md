@@ -6,9 +6,9 @@ This directory contains release notes for all Piper Morgan versions.
 
 ## Current Version
 
-**v0.8.4.3** (January 18, 2026) - [Release Notes](RELEASE-NOTES-v0.8.4.3.md)
+**v0.8.5** (January 27, 2026) - [Release Notes](RELEASE-NOTES-v0.8.5.md)
 
-Alpha Testing Sprint A20: Fresh install fixes - migration validation, web setup routing, multi-user support.
+MUX-IMPLEMENT Complete: Full accessibility compliance (WCAG 2.1 AA), design token system, lifecycle state persistence.
 
 ---
 
@@ -16,6 +16,7 @@ Alpha Testing Sprint A20: Fresh install fixes - migration validation, web setup 
 
 | Version | Date | Type | Highlights |
 |---------|------|------|------------|
+| [v0.8.5](RELEASE-NOTES-v0.8.5.md) | Jan 27, 2026 | Feature | MUX-IMPLEMENT complete, WCAG 2.1 AA accessibility |
 | [v0.8.4.3](RELEASE-NOTES-v0.8.4.3.md) | Jan 18, 2026 | Patch | Fresh install fixes (#605-#609), UI polish |
 | [v0.8.4.2](RELEASE-NOTES-v0.8.4.2.md) | Jan 15, 2026 | Patch | Calendar bug fixes (#596, #588), markdown rendering |
 | [v0.8.4.1](RELEASE-NOTES-v0.8.4.1.md) | Jan 14, 2026 | Patch | Calendar/TEMPORAL timezone fixes, intent routing |
@@ -54,4 +55,4 @@ For current known issues and limitations, see [ALPHA_KNOWN_ISSUES.md](../ALPHA_K
 
 ---
 
-*Last updated: January 18, 2026*
+*Last updated: January 27, 2026*
