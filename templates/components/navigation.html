@@ -543,7 +543,8 @@
       </li>
       <li class="nav-item-trust-gated" data-min-trust-stage="3"><a href="/learning" class="nav-link" id="nav-learning" data-nav-path="/learning">Learning</a></li>
       <!-- History (#425 MUX-IMPLEMENT-MEMORY-SYNC) -->
-      <li class="nav-item-trust-gated" data-min-trust-stage="2">
+      <!-- Issue #732: Lowered from stage 2 to 1 - users should always see their own history -->
+      <li class="nav-item-trust-gated" data-min-trust-stage="1">
         <button class="nav-link nav-history-trigger" id="nav-history-trigger" aria-label="View history">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16" style="margin-right: 6px;" aria-hidden="true">
             <circle cx="8" cy="8" r="6"/>

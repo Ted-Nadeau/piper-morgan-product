@@ -268,6 +268,39 @@ async def process_intent(
                 "Database temporarily unavailable. Please ensure Docker is running and try again.",
             )
 
+        # Issue #731: Auto-create conversation if none exists for this session
+        # This ensures conversations are persisted even when user types directly
+        # in the chat input without clicking "+ New Chat" button
+        if user_id and session_id and session_id != "default_session":
+            try:
+                from services.database.models import ConversationDB
+                from services.database.session_factory import AsyncSessionFactory
+
+                async with AsyncSessionFactory.session_scope_fresh() as db_session:
+                    # Check if conversation exists
+                    existing = await db_session.get(ConversationDB, session_id)
+                    if not existing:
+                        # Create new conversation with the session_id as its ID
+                        # This ensures the frontend's localStorage session_id matches the DB
+                        conversation = ConversationDB(
+                            id=session_id,
+                            user_id=user_id,
+                            session_id=session_id,
+                            title="New conversation",
+                            context={},
+                            is_active=True,
+                        )
+                        db_session.add(conversation)
+                        await db_session.commit()
+                        logger.info(
+                            "Auto-created conversation for session",
+                            session_id=session_id,
+                            user_id=user_id,
+                        )
+            except Exception as e:
+                # Don't fail the intent if conversation creation fails
+                logger.warning(f"Failed to auto-create conversation: {e}")
+
         # Issue #490: Pass user_id to service for user-specific features
         # ADR-051 Phase 3: Pass RequestContext alongside old params (dual pattern)
         # ctx is None for unauthenticated requests - service handles gracefully

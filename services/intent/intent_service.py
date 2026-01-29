@@ -715,6 +715,18 @@ class IntentService:
                 )
 
                 # Handle onboarding completion - persist projects
+                # Issue #731 DEBUG: Trace persistence check
+                print(f"[IntentService] Checking onboarding completion:")
+                print(
+                    f"  process_type={result.process_type.value if result.process_type else None}"
+                )
+                print(
+                    f"  state={result.intent_data.get('context', {}).get('state') if result.intent_data else None}"
+                )
+                print(
+                    f"  captured_projects={result.intent_data.get('context', {}).get('captured_projects', []) if result.intent_data else []}"
+                )
+
                 if (
                     result.process_type
                     and result.process_type.value == "onboarding"
@@ -725,8 +737,12 @@ class IntentService:
                     captured_projects = result.intent_data.get("context", {}).get(
                         "captured_projects", []
                     )
+                    print(
+                        f"[IntentService] PERSISTENCE TRIGGERED! captured_projects={captured_projects}, user_id={user_id}"
+                    )
                     if captured_projects:
                         await self._persist_onboarding_projects(user_id, captured_projects)
+                        print(f"[IntentService] _persist_onboarding_projects completed")
 
                 return IntentProcessingResult(
                     success=True,

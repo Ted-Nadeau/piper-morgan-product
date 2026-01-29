@@ -269,9 +269,22 @@ class PortfolioOnboardingHandler:
         """Handle confirmation of captured projects."""
         message_lower = user_message.lower()
 
+        # Issue #731 DEBUG: Trace confirming flow
+        print(f"[OnboardingHandler] _handle_confirming called, message='{user_message}'")
+        print(
+            f"[OnboardingHandler] Session state={session.state.value}, captured_projects={len(session.captured_projects)}"
+        )
+        print(
+            f"[OnboardingHandler] CONFIRM_PATTERNS match={self._matches_patterns(message_lower, self.CONFIRM_PATTERNS)}"
+        )
+
         # Check for confirmation
         if self._matches_patterns(message_lower, self.CONFIRM_PATTERNS):
+            print(f"[OnboardingHandler] CONFIRM MATCHED! Transitioning to COMPLETE...")
             self.manager.transition_state(session.id, PortfolioOnboardingState.COMPLETE)
+            print(
+                f"[OnboardingHandler] State transitioned. captured_projects={session.captured_projects}"
+            )
 
             project_names = [p.get("name", "unnamed") for p in session.captured_projects]
             project_list = ", ".join(project_names)
