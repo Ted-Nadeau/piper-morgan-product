@@ -158,7 +158,7 @@ Before sending:
 - [ ] Attach current documentation (from docs/)
 - [ ] Schedule setup call before sending confirmation
 - [ ] Update internal tracking (who's in alpha cohort)
-- [ ] Mention accessibility improvements (new in 0.8.5)
+- [ ] Mention accessibility improvements (in 0.8.5)
 
 ---
 

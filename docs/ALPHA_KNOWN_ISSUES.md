@@ -84,13 +84,13 @@ These features have been tested, completed, and are ready for alpha testing:
   - High contrast mode and reduced motion preferences
   - Design token system v1.1.0
 
-- ✅ **Lifecycle State Persistence** (New in 0.8.5)
+- ✅ **Lifecycle State Persistence** (0.8.5)
 
   - Projects, todos, work items, and features track lifecycle state
   - Visual lifecycle indicators in UI views
   - New Work Items view and Project Detail view
 
-- ✅ **Quality Validation** (Enhanced in 0.8.5)
+- ✅ **Quality Validation** (0.8.5)
 
   - 5253 automated tests (major expansion through MUX-IMPLEMENT)
   - CI/CD quality gates with GitHub Actions
@@ -612,7 +612,7 @@ This document will be updated:
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
 - `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
 - `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
-- `VERSION_NUMBERING.md` - Understanding version 0.8.5
+- `VERSION_NUMBERING.md` - Understanding version 0.8.5.1
 - `releases/RELEASE-NOTES-v0.8.5.md` - What changed in this release
 - GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
@@ -620,4 +620,4 @@ This document will be updated:
 
 _Last Updated: January 28, 2026_
 _Status: MUX Complete - Accessible UI, lifecycle persistence, 5253 tests (76% canonical query coverage)_
-_Software Version: 0.8.5_
+_Software Version: 0.8.5.1_
