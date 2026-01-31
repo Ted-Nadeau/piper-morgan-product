@@ -197,12 +197,12 @@ class TodoManagementService:
 
             return todos
 
-    async def get_todo(self, todo_id: UUID, user_id: Optional[UUID] = None) -> Optional[Todo]:
+    async def get_todo(self, todo_id: UUID, user_id: UUID) -> Optional[Todo]:
         """Get a specific todo by ID.
 
         Args:
             todo_id: Todo ID
-            user_id: Optional user ID for ownership validation
+            user_id: REQUIRED - User ID for multi-tenancy isolation
 
         Returns:
             Todo if found and authorized, None otherwise
@@ -215,12 +215,8 @@ class TodoManagementService:
         async with AsyncSessionFactory.session_scope() as session:
             todo_repo = TodoRepository(session)
 
-            todo = await todo_repo.get_todo_by_id(todo_id)
-
-            # Validate ownership if user_id provided
-            if todo and user_id and todo.owner_id != user_id:
-                # User doesn't own this todo
-                return None
+            # SEC-MULTITENANCY Phase 4: Pass owner_id for isolation
+            todo = await todo_repo.get_todo_by_id(todo_id, owner_id=str(user_id))
 
             return todo
 
@@ -229,7 +225,7 @@ class TodoManagementService:
 
         Args:
             todo_id: Todo to complete
-            user_id: User completing the todo (for authorization)
+            user_id: REQUIRED - User completing the todo (for authorization and isolation)
 
         Returns:
             Completed todo, or None if not found/unauthorized
@@ -241,20 +237,12 @@ class TodoManagementService:
         async with AsyncSessionFactory.session_scope() as session:
             todo_repo = TodoRepository(session)
 
-            # Get todo
-            todo = await todo_repo.get_todo_by_id(todo_id)
-            if not todo:
-                return None
+            # SEC-MULTITENANCY Phase 4: Complete with owner_id for isolation
+            completed_todo = await todo_repo.complete_todo(todo_id, owner_id=str(user_id))
 
-            # Validate ownership
-            if todo.owner_id != user_id:
-                return None  # Not authorized
-
-            # Complete todo
-            completed_todo = await todo_repo.complete_todo(todo_id)
-
-            # Commit the transaction
-            await session.commit()
+            if completed_todo:
+                # Commit the transaction
+                await session.commit()
 
             return completed_todo
 
@@ -263,7 +251,7 @@ class TodoManagementService:
 
         Args:
             todo_id: Todo to reopen
-            user_id: User reopening (for authorization)
+            user_id: REQUIRED - User reopening (for authorization and isolation)
 
         Returns:
             Reopened todo, or None if not found/unauthorized
@@ -271,20 +259,12 @@ class TodoManagementService:
         async with AsyncSessionFactory.session_scope() as session:
             todo_repo = TodoRepository(session)
 
-            # Get todo
-            todo = await todo_repo.get_todo_by_id(todo_id)
-            if not todo:
-                return None
+            # SEC-MULTITENANCY Phase 4: Reopen with owner_id for isolation
+            reopened_todo = await todo_repo.reopen_todo(todo_id, owner_id=str(user_id))
 
-            # Validate ownership
-            if todo.owner_id != user_id:
-                return None
-
-            # Reopen todo
-            reopened_todo = await todo_repo.reopen_todo(todo_id)
-
-            # Commit the transaction
-            await session.commit()
+            if reopened_todo:
+                # Commit the transaction
+                await session.commit()
 
             return reopened_todo
 
@@ -293,7 +273,7 @@ class TodoManagementService:
 
         Args:
             todo_id: Todo to update
-            user_id: User updating (for authorization)
+            user_id: REQUIRED - User updating (for authorization and isolation)
             **updates: Fields to update
 
         Returns:
@@ -310,25 +290,19 @@ class TodoManagementService:
         async with AsyncSessionFactory.session_scope() as session:
             todo_repo = TodoRepository(session)
 
-            # Get todo
-            todo = await todo_repo.get_todo_by_id(todo_id)
-            if not todo:
-                return None
-
-            # Validate ownership
-            if todo.owner_id != user_id:
-                return None
-
             # Prepare updates dict (repository expects dict, not object)
             update_dict = {}
             for key, value in updates.items():
                 update_dict[key] = value
 
-            # Save via repository (repository adds updated_at automatically)
-            updated_todo = await todo_repo.update_todo(str(todo.id), update_dict)
+            # SEC-MULTITENANCY Phase 4: Update with owner_id for isolation
+            updated_todo = await todo_repo.update_todo(
+                str(todo_id), update_dict, owner_id=str(user_id)
+            )
 
-            # Commit the transaction
-            await session.commit()
+            if updated_todo:
+                # Commit the transaction
+                await session.commit()
 
             return updated_todo
 
@@ -337,7 +311,7 @@ class TodoManagementService:
 
         Args:
             todo_id: Todo to delete
-            user_id: User deleting (for authorization)
+            user_id: REQUIRED - User deleting (for authorization and isolation)
 
         Returns:
             True if deleted, False if not found/unauthorized
@@ -349,19 +323,11 @@ class TodoManagementService:
         async with AsyncSessionFactory.session_scope() as session:
             todo_repo = TodoRepository(session)
 
-            # Get todo
-            todo = await todo_repo.get_todo_by_id(todo_id)
-            if not todo:
-                return False
+            # SEC-MULTITENANCY Phase 4: Delete with owner_id for isolation
+            deleted = await todo_repo.delete_todo(todo_id, owner_id=str(user_id))
 
-            # Validate ownership
-            if todo.owner_id != user_id:
-                return False
+            if deleted:
+                # Commit the transaction
+                await session.commit()
 
-            # Delete
-            await todo_repo.delete_todo(todo_id)
-
-            # Commit the transaction
-            await session.commit()
-
-            return True
+            return deleted

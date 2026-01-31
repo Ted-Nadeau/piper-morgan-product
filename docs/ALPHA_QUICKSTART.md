@@ -1,6 +1,6 @@
 # Piper Morgan Alpha - Quick Start
 
-**Version**: 0.8.5
+**Version**: 0.8.5.1
 **Branch**: `production` (stable alpha releases)
 **For**: Experienced developers who want to dive in fast
 **Time**: 2-5 minutes setup, plus initial configuration
@@ -11,17 +11,17 @@
 
 ---
 
-## What's New in 0.8.5
+## What's New in 0.8.5.1
 
-**MUX Complete** - The Modeled User Experience (MUX) super epic is complete! Full accessibility compliance and design token system.
+**14 Alpha Testing Bug Fixes** - Fast-follow patch addressing issues discovered during post-MUX testing.
 
-**WCAG 2.1 AA Accessibility** - All color contrast ratios now meet accessibility standards. ARIA landmarks and keyboard navigation throughout.
+**Authentication & Session Fixes** - Logout now works correctly, username displays properly, conversations persist when typing directly.
 
-**Design Token System** - Centralized CSS tokens with documented contrast ratios, high contrast mode support, and reduced motion preferences.
+**Portfolio Onboarding Fixed** - Projects now save to database correctly. Multiple root causes addressed.
 
-**Lifecycle State Persistence** - Projects, work items, features, and todos now persist lifecycle state to the database.
+**Navigation & UI Improvements** - History sidebar works, first-time user routing fixed, autofill disabled on chat input.
 
-See [Release Notes v0.8.5](releases/RELEASE-NOTES-v0.8.5.md) for full details.
+See [Release Notes v0.8.5.1](releases/RELEASE-NOTES-v0.8.5.1.md) for full details.
 
 ---
 
@@ -133,7 +133,7 @@ Configure your LLM API keys through a form interface. Much easier than pasting i
 Supports:
 - OpenAI (GPT-4, GPT-3.5)
 - Anthropic (Claude)
-- Google Gemini (new in 0.8.2)
+- Google Gemini
 
 <img src="./assets/images/alpha-onboarding/setup-wizard-api-keys.png" alt="Setup wizard API key configuration" width="600">
 
@@ -206,18 +206,20 @@ After logging in to http://localhost:8001:
 
 ---
 
-## Testing Focus for 0.8.3
+## Testing Focus for 0.8.5.1
 
 **What's Stable** (light testing recommended):
 - ✅ Setup wizard (GUI and CLI)
 - ✅ Login/authentication
 - ✅ Chat interface
 - ✅ Lists, todos, projects, files
+- ✅ Integration Dashboard and OAuth connections
 
 **Where to Focus Testing** (these need your attention):
-- 🔍 **Integration Dashboard**: Settings → Integrations, test buttons, health status
-- 🔍 **OAuth Connections**: Connect/disconnect Slack and Calendar from Settings
-- 🔍 **Notion Setup**: Re-run setup wizard to test Notion configuration
+- 🔍 **Lifecycle indicators**: Check that projects and todos show lifecycle state
+- 🔍 **Work Items view**: New view at /work-items
+- 🔍 **Project Detail view**: Click into a project to see its detail page
+- 🔍 **Accessibility**: Keyboard navigation, screen reader compatibility
 - 🔍 **File handling**: Upload, download, analysis
 - 🔍 **Permission system**: Sharing resources, role-based access
 
@@ -338,9 +340,15 @@ After `python main.py` starts the server at http://localhost:8001:
 
 ---
 
-## What's Working in 0.8.3
+## What's Working in 0.8.5.1
 
-✅ **Integration Dashboard** (New in 0.8.3):
+✅ **MUX-IMPLEMENT Complete** (0.8.5):
+   - WCAG 2.1 AA accessibility compliance
+   - Design token system v1.1.0
+   - Lifecycle state persistence for projects, todos, work items, features
+   - New Work Items and Project Detail views
+
+✅ **Integration Dashboard & OAuth**:
    - Real-time health status for all integrations
    - One-click test buttons
    - OAuth connect/disconnect for Slack and Calendar
@@ -351,6 +359,7 @@ After `python main.py` starts the server at http://localhost:8001:
    - System health checks
    - API key validation (OpenAI, Anthropic, Gemini, Notion)
    - User account creation
+   - Portfolio onboarding on first greeting
    - CLI setup wizard (alternative method)
 
 ✅ **Authentication & Security**:
@@ -370,15 +379,15 @@ After `python main.py` starts the server at http://localhost:8001:
    - Files upload/download/delete (10MB max, 5 formats)
    - Permission system (share resources, role-based access)
    - Conversational permission commands
-   - Standup generation (2-3 sec)
+   - Interactive standup assistant
    - Logout functionality
-   - Breadcrumb navigation
-   - Theme support (light/dark mode)
+   - Breadcrumb navigation and keyboard navigation
+   - ARIA landmarks throughout
 
 ✅ **Quality Validation**:
-   - 602+ automated smoke tests (<5 seconds)
+   - 5253 automated tests passing
    - CI/CD quality gates
-   - UI stability improvements
+   - UI stability improvements (638 template tests)
 
 See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known limitations.
 
@@ -389,18 +398,18 @@ See [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) for complete status and known
 - **Full Guide**: [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) (comprehensive setup)
 - **Known Issues**: [ALPHA_KNOWN_ISSUES.md](ALPHA_KNOWN_ISSUES.md) (bugs and status)
 - **Legal**: [ALPHA_AGREEMENT_v2.md](ALPHA_AGREEMENT_v2.md) (terms and conditions)
-- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.3 means)
+- **Version Info**: [VERSION_NUMBERING.md](VERSION_NUMBERING.md) (what 0.8.5 means)
 
 ---
 
 ## Remember
 
-This is **alpha software** (0.8.3). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
+This is **alpha software** (0.8.5.1). Expect bugs. Don't use for production. You're responsible for API costs. See `ALPHA_AGREEMENT_v2.md` for details.
 
-**Testing Focus**: Core features are stable. Focus your testing on the new Integration Dashboard and OAuth connections.
+**Testing Focus**: Core features are stable. Focus your testing on the new lifecycle indicators, Work Items view, and accessibility improvements.
 
 ---
 
 **Happy testing!** 🚀
 
-_Last Updated: January 17, 2026_
+_Last Updated: January 28, 2026_

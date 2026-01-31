@@ -1009,6 +1009,7 @@
     {% include 'components/toast.html' %}
     {% include 'components/session-timeout-modal.html' %}
     {% include 'components/confirmation-dialog.html' %}
+    {% include 'components/history_sidebar.html' %}
     <script>
       // G8: Logged-in User Indicator - Pass user context from server to navigation
       {% if user %}
@@ -1856,6 +1857,136 @@
 
         // Load Places when DOM is ready
         document.addEventListener('DOMContentLoaded', loadPlaces);
+      })();
+    </script>
+
+    <!-- Issue #735: History Sidebar initialization -->
+    <script>
+      (function() {
+        'use strict';
+
+        // Check if HistorySidebar component is loaded
+        if (!window.historySidebarLoaded) {
+          console.warn('#735: HistorySidebar component not loaded');
+          return;
+        }
+
+        // State for history sidebar
+        let currentHistoryPage = 1;
+        let currentHistoryQuery = '';
+
+        /**
+         * Fetch conversations from API and transform for HistorySidebar.
+         * @param {string} query - Search query (optional)
+         * @param {number} page - Page number (for pagination)
+         */
+        async function fetchHistoryConversations(query = '', page = 1) {
+          const params = new URLSearchParams();
+          params.set('limit', '20');
+          params.set('offset', String((page - 1) * 20));
+          // Note: API doesn't have search yet, but we include the param for future use
+          if (query) params.set('q', query);
+
+          const response = await fetch(`/api/conversations?${params}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch conversations: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // Transform API response to HistorySidebar format
+          return {
+            conversations: data.conversations.map(conv => ({
+              id: conv.id,
+              topic_summary: conv.title || 'Untitled conversation',
+              summary: '', // API doesn't return summary yet
+              timestamp: conv.updated_at || conv.created_at,
+              is_private: false, // API doesn't return privacy status yet
+              channel: 'web'
+            })),
+            pagination: {
+              page: page,
+              totalPages: data.has_more ? page + 1 : page
+            }
+          };
+        }
+
+        /**
+         * Load history data and update the sidebar.
+         */
+        async function loadHistoryData(query = '', page = 1) {
+          try {
+            currentHistoryQuery = query;
+            currentHistoryPage = page;
+            const data = await fetchHistoryConversations(query, page);
+            window.HistorySidebar.update(data.conversations, data.pagination);
+          } catch (error) {
+            console.error('#735: Failed to load history:', error);
+            // Show empty state on error
+            window.HistorySidebar.update([], { page: 1, totalPages: 1 });
+          }
+        }
+
+        /**
+         * Handle conversation selection from history sidebar.
+         */
+        function handleHistorySelect(conversation) {
+          console.log('#735: Selected conversation:', conversation.id);
+          // Use existing switchConversation function
+          if (typeof switchConversation === 'function') {
+            switchConversation(conversation.id);
+          } else {
+            console.warn('#735: switchConversation not available');
+          }
+        }
+
+        /**
+         * Handle search in history sidebar.
+         */
+        function handleHistorySearch(query) {
+          console.log('#735: Search:', query);
+          loadHistoryData(query, 1);
+        }
+
+        /**
+         * Handle load more in history sidebar.
+         */
+        function handleHistoryLoadMore(page) {
+          console.log('#735: Load more, page:', page);
+          loadHistoryData(currentHistoryQuery, page);
+        }
+
+        /**
+         * Handle privacy toggle in history sidebar.
+         */
+        function handleHistoryPrivacyToggle(isPrivate) {
+          console.log('#735: Privacy mode:', isPrivate ? 'enabled' : 'disabled');
+          // TODO: Wire to privacy API when available
+          // For now, just log the action
+        }
+
+        /**
+         * Initialize the History sidebar.
+         */
+        function initHistorySidebar() {
+          console.log('#735: Initializing History sidebar');
+
+          // Mount the sidebar
+          window.HistorySidebar.mount(document.body, {
+            onSelect: handleHistorySelect,
+            onSearch: handleHistorySearch,
+            onLoadMore: handleHistoryLoadMore,
+            onPrivacyToggle: handleHistoryPrivacyToggle
+          });
+
+          // Load initial data
+          loadHistoryData();
+
+          console.log('#735: History sidebar mounted');
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', initHistorySidebar);
       })();
     </script>
   </body>

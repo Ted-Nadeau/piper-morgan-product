@@ -188,9 +188,13 @@ async def home(request: Request):
         if user_count == 0:
             return RedirectResponse(url="/setup", status_code=302)
     except Exception as e:
-        logger.warning(f"Error checking user count: {e}, defaulting to login")
+        # Issue #722: If database query fails (e.g., during startup race condition),
+        # redirect to setup rather than login. First-time users shouldn't see login.
+        # Setup wizard handles its own error states more gracefully.
+        logger.warning(f"Error checking user count: {e}, redirecting to setup wizard")
+        return RedirectResponse(url="/setup", status_code=302)
 
-    # Otherwise redirect to login
+    # Users exist and user not authenticated - redirect to login
     return RedirectResponse(url="/login", status_code=302)
 
 
@@ -229,16 +233,36 @@ async def login_page(request: Request):
     Serve login page.
 
     If user is already authenticated, redirect to homepage.
+    If no users exist, redirect to setup wizard.
     Otherwise, show login form.
 
     Issue #393: CORE-UX-AUTH - Login UI
+    Issue #722: Redirect to setup if no users exist
     """
+    from sqlalchemy import text
+
+    from services.database.session_factory import AsyncSessionFactory
+
     templates = _get_templates(request)
 
     # Check if user is already authenticated (has valid user_id in state)
     user_id = getattr(request.state, "user_id", None)
     if user_id and user_id != "user":  # "user" is the default placeholder
         return RedirectResponse(url="/", status_code=302)
+
+    # Issue #722: Check if any users exist - if not, redirect to setup wizard
+    # First-time users shouldn't see login page, they should see setup
+    try:
+        async with AsyncSessionFactory.session_scope_fresh() as session:
+            result = await session.execute(text("SELECT COUNT(*) FROM users"))
+            user_count = result.scalar_one()
+
+        if user_count == 0:
+            return RedirectResponse(url="/setup", status_code=302)
+    except Exception as e:
+        # If database query fails, redirect to setup (safer for first-time users)
+        logger.warning(f"Error checking user count on login page: {e}, redirecting to setup")
+        return RedirectResponse(url="/setup", status_code=302)
 
     return templates.TemplateResponse("login.html", {"request": request})
 

@@ -178,14 +178,23 @@ async def main():
         if should_open_browser():
             asyncio.create_task(open_browser_delayed())
             if not args.verbose:
-                print("   ⏳ Opening browser...")
+                print("   ⏳ Browser will open when server is ready...")
+
+        # Issue #720: Race condition - "Ready" message printed before server binds socket
+        # Solution: Use log_level="info" to show uvicorn's startup message, which only
+        # appears AFTER the socket is bound. Users should wait for that message.
+        # The open_browser_delayed() already polls /health before opening browser.
+        if not args.verbose:
+            print("\n   Note: Wait for 'Application startup complete' before navigating manually")
 
         config = uvicorn.Config(
             "web.app:app",
             host="127.0.0.1",
             port=8001,
             reload=False,  # Disable reload (incompatible with initialized services)
-            log_level="warning" if not args.verbose else "info",  # Quiet uvicorn in quiet mode
+            # Issue #720: Always show INFO level to display "Application startup complete"
+            # This message only appears after socket is bound, signaling true readiness
+            log_level="info",
         )
         server = uvicorn.Server(config)
         await server.serve()

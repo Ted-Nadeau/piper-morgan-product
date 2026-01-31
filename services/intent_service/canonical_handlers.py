@@ -1279,6 +1279,50 @@ General AI assistants are great for general tasks. I'm specifically designed to 
 
         # Check if we have project data
         if not projects:
+            # Issue #737: Start onboarding session so "yes" response is handled properly
+            # Previously just returned a teaser message without creating a session,
+            # causing "yes" to route to small talk instead of onboarding handler
+            if user_id and session_id:
+                try:
+                    # Get or create singleton manager (matches conversation_handler.py pattern)
+                    from services.conversation.conversation_handler import (
+                        _get_onboarding_components,
+                    )
+                    from services.onboarding import (
+                        PortfolioOnboardingHandler,
+                        PortfolioOnboardingManager,
+                    )
+
+                    _, onboarding_handler = _get_onboarding_components()
+
+                    # Start the onboarding session
+                    response = onboarding_handler.start_onboarding(session_id, user_id)
+
+                    logger.info(
+                        "portfolio_onboarding_started_from_status",
+                        user_id=user_id,
+                        session_id=session_id,
+                        onboarding_id=response.metadata.get("onboarding_id"),
+                    )
+
+                    return {
+                        "message": response.message,
+                        "intent": {
+                            "category": IntentCategoryEnum.GUIDANCE.value,
+                            "action": "portfolio_onboarding",
+                            "confidence": 1.0,
+                            "context": {
+                                "onboarding_id": response.metadata.get("onboarding_id"),
+                                "state": response.state.value,
+                            },
+                        },
+                        "workflow_id": None,
+                        "onboarding_session": response.metadata.get("onboarding_id"),
+                    }
+                except Exception as e:
+                    logger.warning(f"Could not start portfolio onboarding: {e}")
+
+            # Fallback if onboarding couldn't start
             return {
                 "message": "You don't have any active projects configured in your PIPER.md yet. "
                 "Would you like me to help you set up your project portfolio?",

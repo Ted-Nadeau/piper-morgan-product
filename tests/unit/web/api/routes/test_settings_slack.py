@@ -100,6 +100,10 @@ class TestGetSlackOAuthUrl:
             "secure_state_token",
         )
 
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with (
             patch("services.integrations.slack.config_service.SlackConfigService"),
             patch(
@@ -107,17 +111,25 @@ class TestGetSlackOAuthUrl:
                 return_value=mock_oauth_handler,
             ),
         ):
-            result = await get_slack_oauth_url()
+            result = await get_slack_oauth_url(current_user=mock_user)
 
             assert result["success"] is True
             assert "slack.com/oauth" in result["authorization_url"]
             assert result["state"] == "secure_state_token"
+            # Verify user_id was passed to generate_authorization_url
+            mock_oauth_handler.generate_authorization_url.assert_called_once_with(
+                user_id="test-user-123"
+            )
 
     @pytest.mark.asyncio
     async def test_handles_oauth_generation_failure(self):
         """Should raise HTTPException when OAuth URL generation fails"""
         mock_config = MagicMock()
         mock_config.get_config.side_effect = Exception("Missing client_id")
+
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         with patch(
             "services.integrations.slack.config_service.SlackConfigService",
@@ -126,7 +138,7 @@ class TestGetSlackOAuthUrl:
             from fastapi import HTTPException
 
             with pytest.raises(HTTPException) as exc_info:
-                await get_slack_oauth_url()
+                await get_slack_oauth_url(current_user=mock_user)
 
             assert exc_info.value.status_code == 500
             assert "Failed to generate" in str(exc_info.value.detail)
@@ -223,7 +235,8 @@ class TestSlackAppCredentials:
     @pytest.mark.asyncio
     async def test_save_credentials_stores_in_keychain(self):
         """Should store client_id and client_secret in keychain"""
-        mock_keychain = MagicMock()
+        # Issue #734: Now uses IntegrationConfigService
+        mock_config_service = MagicMock()
         mock_user = MagicMock()
         mock_user.sub = "test_user"
 
@@ -232,21 +245,23 @@ class TestSlackAppCredentials:
         )
 
         with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
+            "services.integrations.integration_config_service.IntegrationConfigService",
+            return_value=mock_config_service,
         ):
             result = await save_slack_app_credentials(credentials, mock_user)
 
             assert result["success"] is True
             assert "saved" in result["message"].lower()
-            # Verify keychain was called with correct keys
-            mock_keychain.store_api_key.assert_any_call("slack_client_id", "1234567890.1234567890")
-            mock_keychain.store_api_key.assert_any_call("slack_client_secret", "test_secret_value")
+            # Verify IntegrationConfigService was called
+            mock_config_service.store_slack_credentials.assert_called_once_with(
+                "1234567890.1234567890", "test_secret_value"
+            )
 
     @pytest.mark.asyncio
     async def test_save_credentials_strips_whitespace(self):
         """Should strip whitespace from credentials before storing"""
-        mock_keychain = MagicMock()
+        # Issue #734: Now uses IntegrationConfigService
+        mock_config_service = MagicMock()
         mock_user = MagicMock()
         mock_user.sub = "test_user"
 
@@ -255,14 +270,15 @@ class TestSlackAppCredentials:
         )
 
         with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
+            "services.integrations.integration_config_service.IntegrationConfigService",
+            return_value=mock_config_service,
         ):
             await save_slack_app_credentials(credentials, mock_user)
 
-            # Verify whitespace was stripped
-            mock_keychain.store_api_key.assert_any_call("slack_client_id", "1234567890.1234567890")
-            mock_keychain.store_api_key.assert_any_call("slack_client_secret", "secret_with_spaces")
+            # Verify whitespace was stripped by checking store_slack_credentials was called with stripped values
+            mock_config_service.store_slack_credentials.assert_called_once_with(
+                "1234567890.1234567890", "secret_with_spaces"
+            )
 
     @pytest.mark.asyncio
     async def test_get_status_returns_configured_when_both_present(self):

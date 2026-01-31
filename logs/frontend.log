@@ -1,16 +1,18 @@
-2026-01-15 08:06:01 [debug    ] Using user configuration       path=config/PIPER.user.md
-2026-01-15 08:06:01 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
-2026-01-15 08:06:02 [info     ] Integration Health Monitor initialized
-2026-01-15 08:06:02 [info     ] Registered component for health monitoring: database_connection
-2026-01-15 08:06:02 [info     ] Registered component for health monitoring: slack_integration
-2026-01-15 08:06:02 [info     ] Registered component for health monitoring: query_response_formatter
-2026-01-15 08:06:02 [info     ] Registered component for health monitoring: type_system
-2026-01-15 08:06:02 [warning  ] JWT_SECRET_KEY not set, using development fallback
-2026-01-15 08:06:02 [info     ] JWTService initialized         access_expire_min=30 algorithm=HS256 blacklist_enabled=False refresh_expire_days=7
-2026-01-15 08:06:02 [info     ] UserService initialized
-2026-01-15 08:06:02 [info     ] ✅ AuthMiddleware registered (Issue #393 - cookie-based authentication)
-INFO:     Started server process [76522]
+2026-01-28 08:39:57 [debug    ] Using user configuration       path=config/PIPER.user.md
+2026-01-28 08:39:57 [info     ] PiperConfigLoader initialized  config_path=config/PIPER.user.md
+2026-01-28 08:39:57 [info     ] Integration Health Monitor initialized
+2026-01-28 08:39:57 [info     ] Registered component for health monitoring: database_connection
+2026-01-28 08:39:57 [info     ] Registered component for health monitoring: slack_integration
+2026-01-28 08:39:57 [info     ] Registered component for health monitoring: query_response_formatter
+2026-01-28 08:39:57 [info     ] Registered component for health monitoring: type_system
+2026-01-28 08:39:57 [warning  ] JWT_SECRET_KEY not set, using development fallback
+2026-01-28 08:39:57 [info     ] JWTService initialized         access_expire_min=30 algorithm=HS256 blacklist_enabled=False refresh_expire_days=7
+2026-01-28 08:39:57 [info     ] UserService initialized
+2026-01-28 08:39:57 [info     ] ✅ AuthMiddleware registered (Issue #393 - cookie-based authentication)
+INFO:     Started server process [9970]
 INFO:     Waiting for application startup.
+{"event": "\u274c gemini: Invalid API key: 400", "logger": "services.config.llm_config_service", "level": "warning", "timestamp": "2026-01-28T16:40:00.851958Z"}
+{"event": "\u26a0\ufe0f gemini: Invalid API key: 400", "logger": "services.domain.llm_domain_service", "level": "warning", "timestamp": "2026-01-28T16:40:00.852080Z"}
 
 ============================================================
 🔧 Phase 1.5: Initializing ServiceContainer (DDD pattern)
@@ -66,14 +68,14 @@ Services will operate in degraded mode
 ============================================================
 🔍 Issue #484: Database Schema Validation
 ============================================================
-2026-01-15 08:06:08,920 INFO sqlalchemy.engine.Engine select pg_catalog.version()
-2026-01-15 08:06:08,920 INFO sqlalchemy.engine.Engine [raw sql] ()
-2026-01-15 08:06:08,923 INFO sqlalchemy.engine.Engine select current_schema()
-2026-01-15 08:06:08,923 INFO sqlalchemy.engine.Engine [raw sql] ()
-2026-01-15 08:06:08,927 INFO sqlalchemy.engine.Engine show standard_conforming_strings
-2026-01-15 08:06:08,927 INFO sqlalchemy.engine.Engine [raw sql] ()
-2026-01-15 08:06:08,929 INFO sqlalchemy.engine.Engine BEGIN (implicit)
-2026-01-15 08:06:08,930 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:00,995 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-01-28 08:40:00,995 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-01-28 08:40:00,996 INFO sqlalchemy.engine.Engine select current_schema()
+2026-01-28 08:40:00,996 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-01-28 08:40:00,997 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-01-28 08:40:00,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-01-28 08:40:00,998 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-01-28 08:40:00,998 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -84,8 +86,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,930 INFO sqlalchemy.engine.Engine [generated in 0.00023s] ('users',)
-2026-01-15 08:06:08,940 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:00,998 INFO sqlalchemy.engine.Engine [generated in 0.00006s] ('users',)
+2026-01-28 08:40:01,003 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -96,8 +98,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,940 INFO sqlalchemy.engine.Engine [cached since 0.0102s ago] ('user_api_keys',)
-2026-01-15 08:06:08,944 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,003 INFO sqlalchemy.engine.Engine [cached since 0.004912s ago] ('user_api_keys',)
+2026-01-28 08:40:01,004 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -108,8 +110,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,945 INFO sqlalchemy.engine.Engine [cached since 0.01478s ago] ('audit_logs',)
-2026-01-15 08:06:08,948 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,004 INFO sqlalchemy.engine.Engine [cached since 0.006694s ago] ('audit_logs',)
+2026-01-28 08:40:01,006 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -120,8 +122,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,949 INFO sqlalchemy.engine.Engine [cached since 0.01873s ago] ('products',)
-2026-01-15 08:06:08,952 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,006 INFO sqlalchemy.engine.Engine [cached since 0.007935s ago] ('products',)
+2026-01-28 08:40:01,007 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -132,8 +134,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,952 INFO sqlalchemy.engine.Engine [cached since 0.02225s ago] ('features',)
-2026-01-15 08:06:08,956 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,007 INFO sqlalchemy.engine.Engine [cached since 0.009483s ago] ('features',)
+2026-01-28 08:40:01,008 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -144,8 +146,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,956 INFO sqlalchemy.engine.Engine [cached since 0.02632s ago] ('work_items',)
-2026-01-15 08:06:08,960 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,008 INFO sqlalchemy.engine.Engine [cached since 0.01057s ago] ('work_items',)
+2026-01-28 08:40:01,009 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -156,8 +158,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,960 INFO sqlalchemy.engine.Engine [cached since 0.02989s ago] ('intents',)
-2026-01-15 08:06:08,961 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,009 INFO sqlalchemy.engine.Engine [cached since 0.0116s ago] ('intents',)
+2026-01-28 08:40:01,010 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -168,8 +170,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,961 INFO sqlalchemy.engine.Engine [cached since 0.03149s ago] ('workflows',)
-2026-01-15 08:06:08,963 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,010 INFO sqlalchemy.engine.Engine [cached since 0.01204s ago] ('workflows',)
+2026-01-28 08:40:01,010 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -180,8 +182,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,963 INFO sqlalchemy.engine.Engine [cached since 0.0329s ago] ('tasks',)
-2026-01-15 08:06:08,964 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,010 INFO sqlalchemy.engine.Engine [cached since 0.0124s ago] ('tasks',)
+2026-01-28 08:40:01,010 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -192,8 +194,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,964 INFO sqlalchemy.engine.Engine [cached since 0.03423s ago] ('stakeholders',)
-2026-01-15 08:06:08,965 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,010 INFO sqlalchemy.engine.Engine [cached since 0.01279s ago] ('stakeholders',)
+2026-01-28 08:40:01,011 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -204,8 +206,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,965 INFO sqlalchemy.engine.Engine [cached since 0.03554s ago] ('projects',)
-2026-01-15 08:06:08,967 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,011 INFO sqlalchemy.engine.Engine [cached since 0.01312s ago] ('projects',)
+2026-01-28 08:40:01,011 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -216,8 +218,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,967 INFO sqlalchemy.engine.Engine [cached since 0.03709s ago] ('project_integrations',)
-2026-01-15 08:06:08,968 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,011 INFO sqlalchemy.engine.Engine [cached since 0.01356s ago] ('project_integrations',)
+2026-01-28 08:40:01,012 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -228,8 +230,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,968 INFO sqlalchemy.engine.Engine [cached since 0.03846s ago] ('uploaded_files',)
-2026-01-15 08:06:08,969 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,012 INFO sqlalchemy.engine.Engine [cached since 0.01388s ago] ('uploaded_files',)
+2026-01-28 08:40:01,012 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -240,8 +242,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,970 INFO sqlalchemy.engine.Engine [cached since 0.03975s ago] ('conversations',)
-2026-01-15 08:06:08,971 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,012 INFO sqlalchemy.engine.Engine [cached since 0.01421s ago] ('conversations',)
+2026-01-28 08:40:01,012 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -252,8 +254,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,971 INFO sqlalchemy.engine.Engine [cached since 0.04142s ago] ('conversation_turns',)
-2026-01-15 08:06:08,973 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,012 INFO sqlalchemy.engine.Engine [cached since 0.01456s ago] ('conversation_turns',)
+2026-01-28 08:40:01,013 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -264,8 +266,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,973 INFO sqlalchemy.engine.Engine [cached since 0.0433s ago] ('knowledge_nodes',)
-2026-01-15 08:06:08,975 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,013 INFO sqlalchemy.engine.Engine [cached since 0.01491s ago] ('knowledge_nodes',)
+2026-01-28 08:40:01,013 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -276,8 +278,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,975 INFO sqlalchemy.engine.Engine [cached since 0.04484s ago] ('knowledge_edges',)
-2026-01-15 08:06:08,976 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,013 INFO sqlalchemy.engine.Engine [cached since 0.01525s ago] ('knowledge_edges',)
+2026-01-28 08:40:01,013 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -288,8 +290,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,976 INFO sqlalchemy.engine.Engine [cached since 0.04631s ago] ('todo_lists',)
-2026-01-15 08:06:08,977 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,013 INFO sqlalchemy.engine.Engine [cached since 0.01556s ago] ('todo_lists',)
+2026-01-28 08:40:01,014 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -300,8 +302,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,977 INFO sqlalchemy.engine.Engine [cached since 0.04763s ago] ('list_memberships',)
-2026-01-15 08:06:08,979 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,014 INFO sqlalchemy.engine.Engine [cached since 0.01587s ago] ('list_memberships',)
+2026-01-28 08:40:01,014 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -312,8 +314,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,979 INFO sqlalchemy.engine.Engine [cached since 0.04899s ago] ('lists',)
-2026-01-15 08:06:08,980 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,014 INFO sqlalchemy.engine.Engine [cached since 0.01616s ago] ('lists',)
+2026-01-28 08:40:01,014 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -324,8 +326,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,981 INFO sqlalchemy.engine.Engine [cached since 0.05076s ago] ('list_items',)
-2026-01-15 08:06:08,982 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,014 INFO sqlalchemy.engine.Engine [cached since 0.01653s ago] ('list_items',)
+2026-01-28 08:40:01,015 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -336,8 +338,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,982 INFO sqlalchemy.engine.Engine [cached since 0.05238s ago] ('feedback',)
-2026-01-15 08:06:08,983 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,015 INFO sqlalchemy.engine.Engine [cached since 0.01683s ago] ('feedback',)
+2026-01-28 08:40:01,015 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -348,8 +350,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,984 INFO sqlalchemy.engine.Engine [cached since 0.05377s ago] ('personality_profiles',)
-2026-01-15 08:06:08,985 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,015 INFO sqlalchemy.engine.Engine [cached since 0.01716s ago] ('personality_profiles',)
+2026-01-28 08:40:01,015 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -360,8 +362,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,985 INFO sqlalchemy.engine.Engine [cached since 0.05522s ago] ('token_blacklist',)
-2026-01-15 08:06:08,986 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,015 INFO sqlalchemy.engine.Engine [cached since 0.01749s ago] ('token_blacklist',)
+2026-01-28 08:40:01,016 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -372,8 +374,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,986 INFO sqlalchemy.engine.Engine [cached since 0.05654s ago] ('items',)
-2026-01-15 08:06:08,987 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,016 INFO sqlalchemy.engine.Engine [cached since 0.01782s ago] ('items',)
+2026-01-28 08:40:01,016 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -384,8 +386,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,988 INFO sqlalchemy.engine.Engine [cached since 0.0578s ago] ('todo_items',)
-2026-01-15 08:06:08,990 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,016 INFO sqlalchemy.engine.Engine [cached since 0.01817s ago] ('todo_items',)
+2026-01-28 08:40:01,016 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -396,8 +398,8 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,990 INFO sqlalchemy.engine.Engine [cached since 0.06048s ago] ('learned_patterns',)
-2026-01-15 08:06:08,993 INFO sqlalchemy.engine.Engine
+2026-01-28 08:40:01,016 INFO sqlalchemy.engine.Engine [cached since 0.01865s ago] ('learned_patterns',)
+2026-01-28 08:40:01,017 INFO sqlalchemy.engine.Engine
                 SELECT
                     column_name,
                     data_type,
@@ -408,8 +410,32 @@ Services will operate in degraded mode
                 WHERE table_schema = 'public'
                 AND table_name = $1
 
-2026-01-15 08:06:08,993 INFO sqlalchemy.engine.Engine [cached since 0.06306s ago] ('learning_settings',)
-2026-01-15 08:06:08,994 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-01-28 08:40:01,017 INFO sqlalchemy.engine.Engine [cached since 0.01901s ago] ('learning_settings',)
+2026-01-28 08:40:01,017 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-28 08:40:01,017 INFO sqlalchemy.engine.Engine [cached since 0.01932s ago] ('user_trust_profiles',)
+2026-01-28 08:40:01,017 INFO sqlalchemy.engine.Engine
+                SELECT
+                    column_name,
+                    data_type,
+                    udt_name,
+                    is_nullable,
+                    column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                AND table_name = $1
+
+2026-01-28 08:40:01,017 INFO sqlalchemy.engine.Engine [cached since 0.01966s ago] ('conversational_memory_entries',)
+2026-01-28 08:40:01,018 INFO sqlalchemy.engine.Engine ROLLBACK
 Integrations directory not found: services/integrations
 No plugins discovered
 /Users/xian/Development/piper-morgan/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:200: UserWarning: Field name "validate" in "StoreKeyRequest" shadows an attribute in parent "BaseModel"
@@ -417,4 +443,82 @@ No plugins discovered
 /Users/xian/Development/piper-morgan/venv/lib/python3.12/site-packages/pydantic/_internal/_fields.py:200: UserWarning: Field name "validate" in "RotateKeyRequest" shadows an attribute in parent "BaseModel"
   warnings.warn(
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8081 (Press CTRL+C to quit)
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 8081): address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+============================================================
+Schema Validation Report (Issue #484)
+============================================================
+Tables checked: 30
+Columns checked: 356
+Mismatches found: 3
+
+❌ Schema drift detected:
+
+  knowledge_nodes.embedding_vector:
+    Model: JSON
+    Database: _float8
+    Reason: Type mismatch: model uses JSON, database uses _float8
+
+  conversational_memory_entries.timestamp:
+    Model: DateTime
+    Database: timestamptz
+    Reason: Type mismatch: model uses DateTime, database uses timestamptz
+
+  conversational_memory_entries.created_at:
+    Model: DateTime
+    Database: timestamptz
+    Reason: Type mismatch: model uses DateTime, database uses timestamptz
+
+
+⚠️ WARNING: Schema drift detected!
+Database may not match models. Check logs for details.
+This could cause runtime errors.
+
+
+🔧 Phase 1.5: Getting services from ServiceContainer...
+✅ IntentService retrieved from container
+✅ LLM service retrieved from container
+✅ OrchestrationEngine retrieved from container
+✅ Phase 1.5: All services retrieved from ServiceContainer
+
+
+============================================================
+🎨 Phase 4: Initializing Web Components
+============================================================
+✅ Jinja2Templates initialized
+✅ PiperConfigParser initialized
+✅ PersonalityResponseEnhancer initialized
+✅ Port configuration loaded
+✅ Phase 4: Web Components initialized successfully
+
+
+🔌 Phase 3B: Initializing Plugin System...
+  ⚠️  No plugins enabled in configuration
+  ✅ Initialized 0/0 plugin(s)
+  ✅ Mounted 0 router(s)
+✅ Plugin system initialized
+
+
+🧹 Starting Background Cleanup Job...
+✅ Blacklist cleanup job started (runs every 24 hours)
+
+⏱️ Starting Attention Decay Job...
+✅ Attention decay job started (runs every 5 minutes)
+🚀 Web server startup complete
+
+⏱️ Shutting down Attention Decay Job...
+✅ Attention decay job stopped
+🛑 Attention decay shutdown complete
+
+🧹 Shutting down Background Cleanup Job...
+✅ Blacklist cleanup job stopped
+🛑 Background cleanup shutdown complete
+
+🔌 Shutting down Plugin System...
+✅ Plugin shutdown: 0/0 successful
+🛑 Plugin system shutdown complete
+
+🔧 Shutting down ServiceContainer...
+✅ ServiceContainer shutdown successful
+🛑 Web server shutdown complete

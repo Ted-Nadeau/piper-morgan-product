@@ -950,6 +950,14 @@ class ConversationRepository(BaseRepository):
                         f"Auto-titled conversation: {turn.conversation_id} -> {new_title[:30]}..."
                     )
 
+        # Issue #726: Update last_activity_at so sidebar ordering works correctly
+        db_conv = await self.session.get(ConversationDB, turn.conversation_id)
+        if db_conv:
+            from datetime import datetime
+
+            db_conv.last_activity_at = datetime.utcnow()
+            logger.debug(f"Updated last_activity_at for conversation: {turn.conversation_id}")
+
         await self.session.commit()
         logger.info(f"ConversationTurn saved to database: {turn.id}")
 

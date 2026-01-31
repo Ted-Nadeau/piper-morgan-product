@@ -56,22 +56,25 @@ class GoogleCalendarOAuthHandler:
 
     def __init__(self):
         # Issue #577: Load credentials with keychain fallback
-        # Priority: env vars > keychain
+        # Issue #734: Uses IntegrationConfigService for app credentials
+        # Priority: env vars > IntegrationConfigService
         self.client_id = os.getenv("GOOGLE_CLIENT_ID", "")
         self.client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-        # Fallback to keychain if env vars not set
+        # Fallback to IntegrationConfigService if env vars not set
         if not self.client_id or not self.client_secret:
             try:
-                from services.infrastructure.keychain_service import KeychainService
+                from services.integrations.integration_config_service import (
+                    IntegrationConfigService,
+                )
 
-                keychain = KeychainService()
+                config_service = IntegrationConfigService()
                 if not self.client_id:
-                    self.client_id = keychain.get_api_key("google_calendar_client_id") or ""
+                    self.client_id = config_service.get_google_client_id() or ""
                 if not self.client_secret:
-                    self.client_secret = keychain.get_api_key("google_calendar_client_secret") or ""
+                    self.client_secret = config_service.get_google_client_secret() or ""
             except Exception:
-                pass  # Keychain not available, continue with empty values
+                pass  # Config service not available, continue with empty values
 
         self.redirect_uri = os.getenv(
             "GOOGLE_CALENDAR_REDIRECT_URI", "http://localhost:8001/setup/calendar/oauth/callback"
@@ -82,15 +85,49 @@ class GoogleCalendarOAuthHandler:
         ]
         # State storage is now module-level (_PENDING_STATES) to persist across instances
 
-    def generate_authorization_url(self) -> Tuple[str, str]:
+    def generate_authorization_url(
+        self, user_id: str, return_url: Optional[str] = None
+    ) -> Tuple[str, str]:
         """
-        Generate Google OAuth authorization URL with state.
+        Generate Google OAuth authorization URL with user-scoped state.
+
+        Issue #734: SEC-MULTITENANCY - Embed user_id in OAuth state for
+        multi-tenant isolation.
+
+        Args:
+            user_id: The ID of the user initiating OAuth flow (required)
+            return_url: Optional URL to redirect to after OAuth completes
 
         Returns:
             Tuple of (authorization_url, state_token)
+
+        Raises:
+            ValueError: If user_id is not provided
         """
-        state = secrets.token_urlsafe(32)
-        _PENDING_STATES[state] = time.time()
+        if not user_id:
+            raise ValueError("user_id is required for OAuth state")
+
+        # Create state with user_id, nonce, and optional return_url
+        nonce = secrets.token_urlsafe(16)
+        state_data = {
+            "user_id": user_id,
+            "nonce": nonce,
+        }
+        if return_url:
+            state_data["return_url"] = return_url
+
+        # Encode state as base64 JSON (safe for URL parameter)
+        import base64
+        import json
+
+        state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip("=")
+
+        # Store nonce with timestamp and user_id for verification
+        # Issue #734: Store user_id to detect tampering
+        _PENDING_STATES[nonce] = {
+            "created_at": time.time(),
+            "user_id": user_id,
+        }
 
         params = {
             "client_id": self.client_id,
@@ -106,44 +143,115 @@ class GoogleCalendarOAuthHandler:
 
         logger.info(
             "calendar_oauth_url_generated",
+            user_id=user_id,
             state_prefix=state[:8],
             redirect_uri=self.redirect_uri,
         )
 
         return auth_url, state
 
-    def _verify_state(self, state: str) -> bool:
-        """Verify state token is valid and not expired."""
-        if state not in _PENDING_STATES:
+    def _verify_state(self, state: str) -> Tuple[bool, Optional[str]]:
+        """
+        Verify state token is valid and not expired.
+
+        Issue #734: SEC-MULTITENANCY - Extract user_id from state and verify
+        against stored value to detect tampering.
+
+        Args:
+            state: The base64-encoded state parameter from callback
+
+        Returns:
+            Tuple of (is_valid, user_id). user_id is None if invalid.
+        """
+        import base64
+        import json
+
+        # Decode state to extract nonce and user_id
+        try:
+            # Add padding if needed for base64 decode
+            padded = state + "=" * (4 - len(state) % 4)
+            decoded = base64.urlsafe_b64decode(padded)
+            state_data = json.loads(decoded)
+        except (ValueError, json.JSONDecodeError) as e:
             logger.warning(
-                "calendar_oauth_state_not_found", state_prefix=state[:8] if state else "none"
+                "calendar_oauth_state_decode_failed",
+                state_prefix=state[:8] if state else "none",
+                error=str(e),
             )
-            return False
+            return False, None
 
-        created_at = _PENDING_STATES[state]
+        nonce = state_data.get("nonce")
+        user_id = state_data.get("user_id")
+
+        if not nonce or not user_id:
+            logger.warning(
+                "calendar_oauth_state_missing_fields",
+                has_nonce=bool(nonce),
+                has_user_id=bool(user_id),
+            )
+            return False, None
+
+        if nonce not in _PENDING_STATES:
+            logger.warning(
+                "calendar_oauth_state_not_found", nonce_prefix=nonce[:8] if nonce else "none"
+            )
+            return False, None
+
+        nonce_data = _PENDING_STATES[nonce]
+        created_at = nonce_data["created_at"]
+
         if time.time() - created_at > self.STATE_EXPIRATION:
-            del _PENDING_STATES[state]
-            logger.warning("calendar_oauth_state_expired", state_prefix=state[:8])
-            return False
+            del _PENDING_STATES[nonce]
+            logger.warning("calendar_oauth_state_expired", nonce_prefix=nonce[:8])
+            return False, None
 
-        del _PENDING_STATES[state]
-        return True
+        # Issue #734: Verify user_id matches stored value (detect tampering)
+        stored_user_id = nonce_data.get("user_id")
+        if stored_user_id and stored_user_id != user_id:
+            logger.warning(
+                "calendar_oauth_state_user_id_mismatch",
+                expected=stored_user_id,
+                received=user_id,
+            )
+            del _PENDING_STATES[nonce]
+            return False, None
+
+        # Remove state after successful verification (single-use)
+        del _PENDING_STATES[nonce]
+        return True, user_id
+
+    def verify_state(self, state: str) -> Tuple[bool, Optional[str]]:
+        """
+        Public method to verify OAuth state and extract user_id.
+
+        Issue #734: SEC-MULTITENANCY - State verification for multi-tenant.
+
+        Args:
+            state: The base64-encoded state parameter from callback
+
+        Returns:
+            Tuple of (is_valid, user_id). user_id is None if invalid.
+        """
+        return self._verify_state(state)
 
     async def handle_oauth_callback(self, code: str, state: str) -> Dict:
         """
         Handle OAuth callback: verify state, exchange code, get user info.
 
+        Issue #734: SEC-MULTITENANCY - Extract and return user_id from state.
+
         Args:
             code: Authorization code from Google
-            state: State token for CSRF verification
+            state: State token for CSRF verification (includes user_id)
 
         Returns:
-            Dict with tokens and user info
+            Dict with tokens, user info, and user_id from state
 
         Raises:
             ValueError: If state is invalid or expired
         """
-        if not self._verify_state(state):
+        is_valid, user_id = self._verify_state(state)
+        if not is_valid:
             raise ValueError("Invalid or expired state token")
 
         # Exchange code for tokens
@@ -154,6 +262,7 @@ class GoogleCalendarOAuthHandler:
 
         logger.info(
             "calendar_oauth_callback_success",
+            user_id=user_id,
             email=user_info.get("email", "unknown"),
             has_refresh_token=bool(tokens.refresh_token),
         )
@@ -161,6 +270,7 @@ class GoogleCalendarOAuthHandler:
         return {
             "tokens": tokens,
             "user": user_info,
+            "user_id": user_id,  # Issue #734: Return user_id for per-user storage
         }
 
     async def _exchange_code_for_tokens(self, code: str) -> CalendarTokens:

@@ -196,6 +196,7 @@ async def login(
             user_id=user_id,
             user_email=user_email,
             scopes=["user"],  # Default scope for alpha users
+            username=username,  # Issue #730: Include username in token
         )
 
         # Set cookie for web clients
@@ -282,8 +283,15 @@ async def logout(
 
     if not token:
         # No token provided - user is already logged out or never logged in
+        # Issue #723: Still delete cookie in case browser has stale cookie
         logger.info("Logout called with no token - user already logged out")
-        return {"message": format_logout_success_conscious(), "user_id": None}
+        from fastapi.responses import JSONResponse
+
+        response = JSONResponse(
+            content={"message": format_logout_success_conscious(), "user_id": None}
+        )
+        response.delete_cookie(key="auth_token", path="/")
+        return response
 
     try:
         # Build audit context from request (Issue #249)
@@ -332,7 +340,14 @@ async def logout(
                 "Token may already be revoked, treating as successful logout", user_id=user_id
             )
 
-        return {"message": format_logout_success_conscious(), "user_id": user_id}
+        # Issue #723: Clear the auth_token cookie so browser stops sending revoked token
+        from fastapi.responses import JSONResponse
+
+        response = JSONResponse(
+            content={"message": format_logout_success_conscious(), "user_id": user_id}
+        )
+        response.delete_cookie(key="auth_token", path="/")
+        return response
 
     except Exception as e:
         logger.error("Logout error", error=str(e), exc_info=True)

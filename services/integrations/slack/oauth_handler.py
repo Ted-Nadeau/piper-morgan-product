@@ -51,34 +51,62 @@ class SlackOAuthHandler:
 
     def generate_authorization_url(
         self,
+        user_id: str,
         scopes: Optional[list] = None,
         user_scopes: Optional[list] = None,
         redirect_uri: Optional[str] = None,
+        return_url: Optional[str] = None,
     ) -> Tuple[str, str]:
         """
-        Generate Slack OAuth authorization URL with secure state.
+        Generate Slack OAuth authorization URL with user-scoped state.
+
+        Issue #734: SEC-MULTITENANCY - Embed user_id in OAuth state.
 
         Args:
+            user_id: The ID of the user initiating OAuth flow (required)
             scopes: Bot token scopes (optional, uses defaults)
             user_scopes: User token scopes (optional)
             redirect_uri: Custom redirect URI (optional, uses config)
+            return_url: Optional URL to redirect to after OAuth completes
 
         Returns:
             Tuple of (authorization_url, state) for OAuth flow
+
+        Raises:
+            ValueError: If user_id is not provided
         """
+        if not user_id:
+            raise ValueError("user_id is required for OAuth state")
+
         try:
-            config = self.config_service.get_config()
+            import base64
+            import json
 
-            # Generate secure state token
-            state = secrets.token_urlsafe(32)
+            # Issue #734: Pass user_id for multi-tenancy isolation
+            config = self.config_service.get_config(user_id=user_id)
 
-            # Store state with expiration (15 minutes)
-            self._oauth_states[state] = {
+            # Generate secure nonce
+            nonce = secrets.token_urlsafe(16)
+
+            # Create state with user_id, nonce, and optional return_url
+            state_data = {
+                "user_id": user_id,
+                "nonce": nonce,
+            }
+            if return_url:
+                state_data["return_url"] = return_url
+
+            # Encode state as base64 JSON
+            state = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode().rstrip("=")
+
+            # Store nonce with metadata for verification
+            self._oauth_states[nonce] = {
                 "created_at": datetime.utcnow(),
                 "expires_at": datetime.utcnow() + timedelta(minutes=15),
                 "scopes": scopes,
                 "user_scopes": user_scopes,
                 "redirect_uri": redirect_uri or config.redirect_uri,
+                "user_id": user_id,  # Also store for verification
             }
 
             # Default scopes for spatial metaphor capabilities
@@ -117,7 +145,9 @@ class SlackOAuthHandler:
             # Construct authorization URL
             authorization_url = f"{self.auth_url}?{urlencode(auth_params)}"
 
-            logger.info(f"Generated OAuth authorization URL with state {state[:8]}...")
+            logger.info(
+                f"Generated OAuth authorization URL for user {user_id}, state {state[:8]}..."
+            )
             return authorization_url, state
 
         except Exception as e:
@@ -130,22 +160,37 @@ class SlackOAuthHandler:
         """
         Handle OAuth callback and complete token exchange.
 
+        Issue #734: SEC-MULTITENANCY - Extract and return user_id from state.
+
         Args:
             code: Authorization code from Slack
-            state: State parameter for security verification
+            state: State parameter for security verification (includes user_id)
             received_redirect_uri: Redirect URI from callback (for verification)
 
         Returns:
-            Dictionary containing workspace info and tokens
+            Dictionary containing workspace info, tokens, and user_id
         """
+        import base64
+        import json
+
         try:
-            # Verify state parameter
-            if not self._verify_oauth_state(state):
+            # Verify state parameter and extract user_id
+            is_valid, user_id = self._verify_oauth_state(state)
+            if not is_valid:
                 raise SlackAuthFailedError("Invalid or expired OAuth state")
 
-            # Get stored state data
-            state_data = self._oauth_states.pop(state, {})
-            expected_redirect_uri = state_data.get("redirect_uri")
+            # Extract nonce from state to get stored data
+            try:
+                padded = state + "=" * (4 - len(state) % 4)
+                decoded = base64.urlsafe_b64decode(padded)
+                state_data = json.loads(decoded)
+                nonce = state_data.get("nonce")
+            except (ValueError, json.JSONDecodeError):
+                raise SlackAuthFailedError("Could not decode state parameter")
+
+            # Get stored state data and clean up (single-use)
+            nonce_data = self._oauth_states.pop(nonce, {})
+            expected_redirect_uri = nonce_data.get("redirect_uri")
 
             # Verify redirect URI if provided
             if received_redirect_uri and expected_redirect_uri:
@@ -153,16 +198,20 @@ class SlackOAuthHandler:
                     raise SlackAuthFailedError("Redirect URI mismatch")
 
             # Exchange code for tokens
-            token_data = await self._exchange_code_for_tokens(code, expected_redirect_uri)
+            # Issue #734: Pass user_id for multi-tenancy config access
+            token_data = await self._exchange_code_for_tokens(
+                code, expected_redirect_uri, user_id=user_id
+            )
 
             # Initialize spatial workspace representation
             workspace_data = await self._initialize_spatial_workspace(token_data)
 
             # Store tokens using configuration patterns
-            await self._store_workspace_tokens(workspace_data, token_data)
+            # Issue #734: Pass user_id for per-user storage
+            await self._store_workspace_tokens(workspace_data, token_data, user_id=user_id)
 
             logger.info(
-                f"OAuth callback completed for workspace {workspace_data.get('workspace_name')}"
+                f"OAuth callback completed for workspace {workspace_data.get('workspace_name')}, user_id={user_id}"
             )
 
             return {
@@ -171,30 +220,91 @@ class SlackOAuthHandler:
                 "spatial_mapping": workspace_data.get("spatial_context"),
                 "tokens_stored": True,
                 "installation_complete": True,
+                "user_id": user_id,  # Issue #734: Return user_id for caller
             }
 
         except Exception as e:
             logger.error(f"OAuth callback handling failed: {e}")
-            # Clean up state on failure
-            self._oauth_states.pop(state, None)
+            # Clean up state on failure - try to extract nonce
+            try:
+                padded = state + "=" * (4 - len(state) % 4)
+                decoded = base64.urlsafe_b64decode(padded)
+                state_data = json.loads(decoded)
+                nonce = state_data.get("nonce")
+                if nonce:
+                    self._oauth_states.pop(nonce, None)
+            except Exception:
+                pass
             raise SlackAuthFailedError(f"OAuth callback failed: {e}") from e
 
-    def _verify_oauth_state(self, state: str) -> bool:
-        """Verify OAuth state parameter for security"""
+    def _verify_oauth_state(self, state: str) -> Tuple[bool, Optional[str]]:
+        """
+        Verify OAuth state parameter and extract user_id.
 
-        if state not in self._oauth_states:
-            logger.warning(f"Unknown OAuth state: {state[:8]}...")
-            return False
+        Issue #734: SEC-MULTITENANCY - Extract user_id from state.
 
-        state_data = self._oauth_states[state]
+        Args:
+            state: The base64-encoded state parameter from callback
+
+        Returns:
+            Tuple of (is_valid, user_id). user_id is None if invalid.
+        """
+        import base64
+        import json
+
+        # Decode state to extract nonce and user_id
+        try:
+            padded = state + "=" * (4 - len(state) % 4)
+            decoded = base64.urlsafe_b64decode(padded)
+            state_data = json.loads(decoded)
+        except (ValueError, json.JSONDecodeError) as e:
+            logger.warning(f"Failed to decode OAuth state: {e}")
+            return False, None
+
+        nonce = state_data.get("nonce")
+        user_id = state_data.get("user_id")
+
+        if not nonce or not user_id:
+            logger.warning(
+                f"OAuth state missing required fields (nonce={bool(nonce)}, user_id={bool(user_id)})"
+            )
+            return False, None
+
+        if nonce not in self._oauth_states:
+            logger.warning(f"Unknown OAuth nonce: {nonce[:8]}...")
+            return False, None
+
+        nonce_data = self._oauth_states[nonce]
 
         # Check expiration
-        if datetime.utcnow() > state_data["expires_at"]:
-            logger.warning(f"Expired OAuth state: {state[:8]}...")
-            self._oauth_states.pop(state, None)
-            return False
+        if datetime.utcnow() > nonce_data["expires_at"]:
+            logger.warning(f"Expired OAuth state for nonce: {nonce[:8]}...")
+            self._oauth_states.pop(nonce, None)
+            return False, None
 
-        return True
+        # Verify user_id matches stored value (prevent tampering)
+        stored_user_id = nonce_data.get("user_id")
+        if stored_user_id and stored_user_id != user_id:
+            logger.warning(
+                f"OAuth state user_id mismatch: expected {stored_user_id}, got {user_id}"
+            )
+            return False, None
+
+        return True, user_id
+
+    def verify_oauth_state(self, state: str) -> Tuple[bool, Optional[str]]:
+        """
+        Public method to verify OAuth state and extract user_id.
+
+        Issue #734: SEC-MULTITENANCY - State verification for multi-tenant.
+
+        Args:
+            state: The base64-encoded state parameter from callback
+
+        Returns:
+            Tuple of (is_valid, user_id). user_id is None if invalid.
+        """
+        return self._verify_oauth_state(state)
 
     def _verify_redirect_uri(self, received: str, expected: str) -> bool:
         """Verify redirect URI matches expected value"""
@@ -210,14 +320,44 @@ class SlackOAuthHandler:
             and received_parsed.path == expected_parsed.path
         )
 
-    async def _exchange_code_for_tokens(self, code: str, redirect_uri: str) -> Dict[str, Any]:
-        """Exchange authorization code for access tokens"""
+    async def _exchange_code_for_tokens(
+        self, code: str, redirect_uri: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Exchange authorization code for access tokens.
 
-        config = self.config_service.get_config()
+        Args:
+            code: Authorization code from OAuth callback
+            redirect_uri: Redirect URI used in auth request
+            user_id: User ID for config access (Issue #734)
+
+        Returns:
+            Token response data from Slack
+
+        Issue #734: Added user_id parameter for multi-tenancy config access.
+        Note: client_id and client_secret are app credentials (not user-scoped),
+        but we need user_id for config access pattern consistency.
+        """
+        # Issue #734: Pass user_id for multi-tenancy config access
+        # Note: client_id/secret are app credentials, but we use user config for timeout etc.
+        config = self.config_service.get_config(user_id=user_id) if user_id else None
+
+        # Use IntegrationConfigService for app credentials as fallback
+        if not config or not config.client_id:
+            from services.integrations.integration_config_service import IntegrationConfigService
+
+            integration_config = IntegrationConfigService()
+            client_id = integration_config.get_slack_client_id()
+            client_secret = integration_config.get_slack_client_secret()
+            timeout_seconds = 30  # Default timeout
+        else:
+            client_id = config.client_id
+            client_secret = config.client_secret
+            timeout_seconds = config.timeout_seconds
 
         token_params = {
-            "client_id": config.client_id,
-            "client_secret": config.client_secret,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "code": code,
             "redirect_uri": redirect_uri,
         }
@@ -228,7 +368,7 @@ class SlackOAuthHandler:
                     self.token_url,
                     data=token_params,
                     headers={"Content-Type": "application/x-www-form-urlencoded"},
-                    timeout=config.timeout_seconds,
+                    timeout=timeout_seconds,
                 )
 
                 response.raise_for_status()
@@ -361,11 +501,20 @@ class SlackOAuthHandler:
         )
 
     async def _store_workspace_tokens(
-        self, workspace_data: Dict[str, Any], token_data: Dict[str, Any]
+        self,
+        workspace_data: Dict[str, Any],
+        token_data: Dict[str, Any],
+        user_id: Optional[str] = None,
     ) -> None:
         """Store workspace tokens using secure keychain storage.
 
         Issue #575: Now actually stores bot_token in keychain (like Calendar).
+        Issue #734: SEC-MULTITENANCY - Accepts user_id for per-user storage.
+
+        Args:
+            workspace_data: Workspace metadata
+            token_data: OAuth token response
+            user_id: User ID for per-user token storage (Issue #734)
         """
         from services.infrastructure.keychain_service import KeychainService
 
@@ -376,22 +525,32 @@ class SlackOAuthHandler:
             bot_token = token_data.get("access_token")
             user_token = token_data.get("authed_user", {}).get("access_token")
 
+            # Issue #734: Use user-scoped key names when user_id is provided
+            bot_key = f"slack_bot_{user_id}" if user_id else "slack_bot"
+            user_key = f"slack_user_{user_id}" if user_id else "slack_user"
+
             # Store bot token securely in keychain (Issue #575)
             if bot_token:
                 keychain = KeychainService()
-                keychain.store_api_key("slack_bot", bot_token)
-                logger.info(f"Bot token stored in keychain for workspace {workspace_id}")
+                keychain.store_api_key(bot_key, bot_token)
+                logger.info(
+                    f"Bot token stored in keychain for workspace {workspace_id}, user_id={user_id}"
+                )
 
                 # Update configuration cache
-                config = self.config_service.get_config()
-                if not config.bot_token:
-                    config.bot_token = bot_token
+                # Issue #734: Pass user_id for multi-tenancy isolation
+                if user_id:
+                    config = self.config_service.get_config(user_id=user_id)
+                    if not config.bot_token:
+                        config.bot_token = bot_token
 
             # Store user token if available (also in keychain)
             if user_token:
                 keychain = KeychainService()
-                keychain.store_api_key("slack_user", user_token)
-                logger.info(f"User token stored in keychain for workspace {workspace_id}")
+                keychain.store_api_key(user_key, user_token)
+                logger.info(
+                    f"User token stored in keychain for workspace {workspace_id}, user_id={user_id}"
+                )
 
             # Store workspace metadata
             workspace_config = {
@@ -408,6 +567,7 @@ class SlackOAuthHandler:
                     if token_data.get("authed_user", {}).get("scope")
                     else []
                 ),
+                "user_id": user_id,  # Issue #734: Track owning user
             }
 
             # This would typically go to database or secure storage

@@ -729,6 +729,28 @@ async def complete_setup(req: SetupCompleteRequest):
                 except Exception as e:
                     logger.warning("notion_key_storage_failed", user_id=req.user_id, error=str(e))
 
+            # Issue #724: Also store GLOBAL copies of LLM keys (without user prefix)
+            # This allows LLMClient to find keys during server startup when no user context exists.
+            # Keys are stored both as:
+            # - {user_id}_openai_api_key (for multi-user support)
+            # - openai_api_key (for startup initialization)
+            from services.infrastructure.keychain_service import KeychainService
+
+            keychain = KeychainService()
+            if req.openai_key:
+                try:
+                    keychain.store_api_key("openai", req.openai_key)  # No username = global
+                    logger.info("global_openai_key_stored", reason="startup_initialization")
+                except Exception as e:
+                    logger.warning("global_openai_key_storage_failed", error=str(e))
+
+            if req.anthropic_key:
+                try:
+                    keychain.store_api_key("anthropic", req.anthropic_key)  # No username = global
+                    logger.info("global_anthropic_key_stored", reason="startup_initialization")
+                except Exception as e:
+                    logger.warning("global_anthropic_key_storage_failed", error=str(e))
+
             # Mark setup as complete (Issue #389)
             await session.execute(
                 text(
@@ -784,15 +806,18 @@ async def complete_setup(req: SetupCompleteRequest):
 
 
 @router.get("/slack/oauth/start")
-async def start_slack_oauth():
+async def start_slack_oauth(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Generate Slack OAuth URL for setup wizard.
 
-    Returns authorization URL and state token for CSRF protection.
-    User redirects to Slack, authorizes, then returns to callback.
-
     Issue #528: ALPHA-SETUP-SLACK
     Issue #575: Added credential validation before OAuth
+    Issue #734: SEC-MULTITENANCY - Requires authentication, embeds user_id in state.
+
+    Returns authorization URL and state token for CSRF protection.
+    User redirects to Slack, authorizes, then returns to callback.
 
     Returns:
         dict with auth_url and state
@@ -817,12 +842,12 @@ async def start_slack_oauth():
         # This returns user to wizard instead of general callback
         redirect_uri = os.getenv("SLACK_SETUP_REDIRECT_URI", os.getenv("SLACK_REDIRECT_URI", ""))
 
-        # Generate OAuth URL with state for CSRF protection
+        # Issue #734: Pass user_id for multi-tenant state
         auth_url, state = handler.generate_authorization_url(
-            redirect_uri=redirect_uri if redirect_uri else None
+            user_id=current_user.sub, redirect_uri=redirect_uri if redirect_uri else None
         )
 
-        logger.info("slack_oauth_started", state=state[:8] + "...")
+        logger.info("slack_oauth_started", user_id=current_user.sub, state=state[:8] + "...")
 
         return {
             "auth_url": auth_url,
@@ -848,14 +873,16 @@ async def handle_slack_oauth_callback(
     """
     Handle Slack OAuth callback for setup wizard.
 
+    Issue #528: ALPHA-SETUP-SLACK
+    Issue #734: SEC-MULTITENANCY - user_id extracted from state and used
+    for per-user token storage in SlackOAuthHandler.
+
     Exchanges authorization code for tokens and redirects back to
     setup wizard with success/error status in query params.
 
-    Issue #528: ALPHA-SETUP-SLACK
-
     Args:
         code: Authorization code from Slack
-        state: State token for CSRF verification
+        state: State token for CSRF verification (includes user_id)
         error: Error from Slack (if authorization denied)
 
     Returns:
@@ -881,11 +908,14 @@ async def handle_slack_oauth_callback(
         handler = SlackOAuthHandler()
         result = await handler.handle_oauth_callback(code, state)
 
+        # Issue #734: user_id is already extracted and used for storage in handler
+        user_id = result.get("user_id")
+
         # Extract workspace name from result
         workspace_name = result.get("workspace", {}).get("workspace_name", "Workspace")
         workspace_name_encoded = quote(workspace_name)
 
-        logger.info("slack_oauth_success", workspace=workspace_name)
+        logger.info("slack_oauth_success", user_id=user_id, workspace=workspace_name)
 
         # Redirect back to setup wizard with success
         return RedirectResponse(
@@ -945,14 +975,17 @@ async def get_slack_status():
 
 
 @router.get("/calendar/oauth/start")
-async def start_calendar_oauth():
+async def start_calendar_oauth(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Generate Google Calendar OAuth URL for setup wizard.
 
+    Issue #529: ALPHA-SETUP-CALENDAR
+    Issue #734: SEC-MULTITENANCY - Requires authentication, embeds user_id in state.
+
     Returns authorization URL and state token for CSRF protection.
     User redirects to Google, authorizes, then returns to callback.
-
-    Issue #529: ALPHA-SETUP-CALENDAR
 
     Returns:
         dict with auth_url and state
@@ -969,9 +1002,10 @@ async def start_calendar_oauth():
                 detail="Google Calendar OAuth not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
             )
 
-        auth_url, state = handler.generate_authorization_url()
+        # Issue #734: Pass user_id for multi-tenant state
+        auth_url, state = handler.generate_authorization_url(user_id=current_user.sub)
 
-        logger.info("calendar_oauth_started", state=state[:8] + "...")
+        logger.info("calendar_oauth_started", user_id=current_user.sub, state=state[:8] + "...")
 
         return {
             "auth_url": auth_url,
@@ -997,14 +1031,15 @@ async def handle_calendar_oauth_callback(
     """
     Handle Google Calendar OAuth callback.
 
+    Issue #529: ALPHA-SETUP-CALENDAR
+    Issue #734: SEC-MULTITENANCY - Extracts user_id from state for per-user storage.
+
     Exchanges authorization code for tokens and redirects back to
     setup wizard with success/error status in query params.
 
-    Issue #529: ALPHA-SETUP-CALENDAR
-
     Args:
         code: Authorization code from Google
-        state: State token for CSRF verification
+        state: State token for CSRF verification (includes user_id)
         error: Error from Google (if authorization denied)
 
     Returns:
@@ -1031,18 +1066,23 @@ async def handle_calendar_oauth_callback(
         handler = GoogleCalendarOAuthHandler()
         result = await handler.handle_oauth_callback(code, state)
 
-        # Store refresh token securely
+        # Issue #734: Extract user_id from callback result
+        user_id = result.get("user_id")
+
+        # Store refresh token securely with user-scoped key
         tokens = result["tokens"]
         if tokens.refresh_token:
             keychain = KeychainService()
-            keychain.store_api_key("google_calendar", tokens.refresh_token)
-            logger.info("calendar_refresh_token_stored")
+            # Issue #734: Use user-scoped key for per-user storage
+            key_name = f"google_calendar_{user_id}" if user_id else "google_calendar"
+            keychain.store_api_key(key_name, tokens.refresh_token)
+            logger.info("calendar_refresh_token_stored", user_id=user_id)
 
         # Get user email for display
         user_email = result["user"].get("email", "Calendar")
         email_encoded = quote(user_email)
 
-        logger.info("calendar_oauth_success", email=user_email)
+        logger.info("calendar_oauth_success", user_id=user_id, email=user_email)
 
         # Redirect back to setup wizard with success
         return RedirectResponse(

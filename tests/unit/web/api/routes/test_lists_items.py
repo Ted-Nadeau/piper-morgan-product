@@ -34,6 +34,7 @@ class TestListItemEndpoints:
             jti="test-jti-123",
             user_id=UUID("00000000-0000-0000-0000-000000000001"),
             user_email="test@example.com",
+            username="test",  # Issue #730
             scopes=["read", "write"],
             token_type="access",
         )
@@ -399,6 +400,7 @@ class TestItemOwnershipValidation:
             jti="test-jti-456",
             user_id=UUID("00000000-0000-0000-0000-000000000002"),
             user_email="usera@example.com",
+            username="usera",  # Issue #730
             scopes=["read", "write"],
             token_type="access",
         )

@@ -255,7 +255,8 @@ class TestGitHubConfigServiceKeychainFallback:
         ):
             config_service = GitHubConfigService()
             config_service.clear_cache()  # Ensure fresh lookup
-            token = config_service.get_authentication_token()
+            # Issue #734: Now requires user_id
+            token = config_service.get_authentication_token(user_id="test-user-123")
 
             assert token == "ghp_env_token"
             # Keychain should NOT be called when env var is present
@@ -277,10 +278,14 @@ class TestGitHubConfigServiceKeychainFallback:
         ):
             config_service = GitHubConfigService()
             config_service.clear_cache()  # Ensure fresh lookup
-            token = config_service.get_authentication_token()
+            # Issue #734: Now requires user_id
+            token = config_service.get_authentication_token(user_id="test-user-123")
 
             assert token == "ghp_keychain_token"
-            mock_keychain.get_api_key.assert_called_once_with("github_token")
+            # Issue #734: Now passes user_id to keychain
+            mock_keychain.get_api_key.assert_called_once_with(
+                "github_token", username="test-user-123"
+            )
 
     def test_get_token_returns_none_when_nothing_configured(self):
         """Should return None when neither env var nor keychain has token"""
@@ -298,7 +303,8 @@ class TestGitHubConfigServiceKeychainFallback:
         ):
             config_service = GitHubConfigService()
             config_service.clear_cache()  # Ensure fresh lookup
-            token = config_service.get_authentication_token()
+            # Issue #734: Now requires user_id
+            token = config_service.get_authentication_token(user_id="test-user-123")
 
             assert token is None
 
@@ -318,7 +324,8 @@ class TestGitHubConfigServiceKeychainFallback:
         ):
             config_service = GitHubConfigService()
             config_service.clear_cache()  # Ensure fresh lookup
-            token = config_service.get_authentication_token()
+            # Issue #734: Now requires user_id
+            token = config_service.get_authentication_token(user_id="test-user-123")
 
             # Should gracefully return None, not raise
             assert token is None

@@ -116,13 +116,19 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
     for temporal awareness and standup enhancement.
     """
 
-    def __init__(self, config_service: Optional[CalendarConfigService] = None):
+    def __init__(
+        self,
+        config_service: Optional[CalendarConfigService] = None,
+        user_id: Optional[str] = None,
+    ):
         """
         Initialize Google Calendar MCP adapter with config service.
 
         Args:
             config_service: Optional CalendarConfigService for dependency injection.
                           If not provided, creates a default instance.
+            user_id: User ID for multi-tenancy isolation (Issue #734).
+                    Required for user-scoped configuration.
         """
         super().__init__("google_calendar_mcp")
         self.mcp_consumer = MCPConsumerCore()
@@ -131,8 +137,11 @@ class GoogleCalendarMCPAdapter(BaseSpatialAdapter):
         # Store config service (service injection pattern)
         self.config_service = config_service or CalendarConfigService()
 
-        # Load configuration from service
-        config = self.config_service.get_config()
+        # Issue #734: Store user_id for multi-tenancy isolation
+        self._user_id = user_id or "system"  # Default to "system" for backward compatibility
+
+        # Load configuration from service with user_id
+        config = self.config_service.get_config(user_id=self._user_id)
 
         # Google Calendar API configuration
         self._credentials: Optional[Credentials] = None

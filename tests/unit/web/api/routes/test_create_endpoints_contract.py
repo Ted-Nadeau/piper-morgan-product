@@ -44,6 +44,7 @@ def mock_current_user():
         jti=str(uuid4()),
         user_id=user_id,
         user_email="test@example.com",
+        username="test",  # Issue #730
         scopes=["user"],
         token_type="access",
         session_id=None,

@@ -486,11 +486,16 @@ class ProjectDB(Base):
     """A PM project with multiple tool integrations"""
 
     __tablename__ = "projects"
+    __table_args__ = (
+        # Composite unique constraint: project names unique per owner (multi-tenancy)
+        # Issue #736: Changed from name-only to (owner_id, name)
+        UniqueConstraint("owner_id", "name", name="uq_projects_owner_name"),
+    )
 
     id = Column(String, primary_key=True)
     # owner_id is UUID in database - must match schema (Issue #479)
     owner_id = Column(postgresql.UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
-    name = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False)  # Unique per owner via __table_args__
     description = Column(Text)
     shared_with = Column(JSON, default=lambda: [])
     is_default = Column(Boolean, default=False)

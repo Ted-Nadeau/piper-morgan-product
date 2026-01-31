@@ -97,7 +97,8 @@ class TestCompleteOAuthToSpatialWorkflow:
         EXPECTED TO FAIL: This is the complete integration we need to build
         """
         # STEP 1: Generate OAuth authorization URL (registers state)
-        auth_url, state = oauth_handler.generate_authorization_url()
+        # Issue #734: Now requires user_id for multi-tenancy
+        auth_url, state = oauth_handler.generate_authorization_url(user_id="test-user-123")
         assert state is not None, "OAuth state should be generated"
 
         # Mock successful OAuth response (async response from httpx)

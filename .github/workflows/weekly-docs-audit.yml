@@ -266,6 +266,10 @@ jobs:
               1. Update checkboxes in this description (checked = done, unchecked = skipped/deferred)
               2. Add closing comment with evidence (findings doc path, issues created, metrics)
               3. Note any deferred items and why
+              4. **Update the staggered audit calendar** (\`docs/internal/operations/staggered-audit-calendar-2026.md\`):
+                 - Update "Tracking Dashboard" section with completion date
+                 - Set "Last Completed" to today's date for Documentation Audit row
+                 - Calculate and update "Next Due" (3-4 weeks out per calendar)
 
               **Anti-pattern**: Adding a comment and closing without updating description checkboxes.
 

@@ -49,10 +49,12 @@ app = FastAPI(
 # Must be registered before other middleware so it sets request.state.user_id early
 try:
     from services.auth.auth_middleware import AuthMiddleware
-    from services.auth.jwt_service import JWTService
+    from services.auth.container import AuthContainer
     from services.auth.user_service import UserService
 
-    jwt_service = JWTService()
+    # Issue #723: Use AuthContainer to get JWTService with blacklist support
+    # Plain JWTService() has no blacklist, so revoked tokens aren't rejected
+    jwt_service = AuthContainer.get_jwt_service()
     user_service = UserService()
 
     app.add_middleware(AuthMiddleware, jwt_service=jwt_service, user_service=user_service)

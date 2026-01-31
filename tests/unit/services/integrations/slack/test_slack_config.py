@@ -1,6 +1,8 @@
 """
 Tests for Slack Configuration Service
 Tests ADR-010 compliant configuration patterns for Slack integration.
+
+Issue #734: Updated to require user_id parameter for multi-tenancy isolation.
 """
 
 import os
@@ -13,6 +15,9 @@ from services.integrations.slack.config_service import (
     SlackConfigService,
     SlackEnvironment,
 )
+
+# Test user ID for all tests
+TEST_USER_ID = "test-user-123"
 
 
 class TestSlackConfig:
@@ -67,7 +72,8 @@ class TestSlackConfigService:
         service = SlackConfigService(feature_flags=mock_flags)
 
         assert service.feature_flags == mock_flags
-        assert service._config is None
+        # Issue #734: Now uses _config_cache dict instead of _config
+        assert service._config_cache == {}
 
     @pytest.mark.smoke
     def test_init_without_feature_flags(self):
@@ -75,7 +81,8 @@ class TestSlackConfigService:
         service = SlackConfigService()
 
         assert service.feature_flags is not None
-        assert service._config is None
+        # Issue #734: Now uses _config_cache dict instead of _config
+        assert service._config_cache == {}
 
     @patch.dict(
         os.environ,
@@ -92,7 +99,8 @@ class TestSlackConfigService:
     def test_load_config_from_environment(self):
         """Test loading configuration from environment variables"""
         service = SlackConfigService()
-        config = service.get_config()
+        # Issue #734: Now requires user_id
+        config = service.get_config(user_id=TEST_USER_ID)
 
         assert config.bot_token == "xoxb-test-token"
         assert config.app_token == "xapp-test-token"
@@ -116,7 +124,8 @@ class TestSlackConfigService:
             ),
         ):
             service = SlackConfigService()
-            config = service.get_config()
+            # Issue #734: Now requires user_id
+            config = service.get_config(user_id=TEST_USER_ID)
 
             assert config.bot_token == ""
             assert config.api_base_url == "https://slack.com/api"
@@ -129,11 +138,12 @@ class TestSlackConfigService:
         service = SlackConfigService()
 
         # First call should load config
-        config1 = service.get_config()
-        assert service._config is not None
+        # Issue #734: Now requires user_id
+        config1 = service.get_config(user_id=TEST_USER_ID)
+        assert TEST_USER_ID in service._config_cache
 
         # Second call should return cached config
-        config2 = service.get_config()
+        config2 = service.get_config(user_id=TEST_USER_ID)
         assert config1 is config2
 
     @pytest.mark.smoke
@@ -149,7 +159,8 @@ class TestSlackConfigService:
             },
         ):
             service = SlackConfigService()
-            assert service.is_configured() is True
+            # Issue #734: Now requires user_id
+            assert service.is_configured(user_id=TEST_USER_ID) is True
 
     @pytest.mark.smoke
     def test_is_configured_invalid(self):
@@ -166,28 +177,32 @@ class TestSlackConfigService:
             ),
         ):
             service = SlackConfigService()
-            assert service.is_configured() is False
+            # Issue #734: Now requires user_id
+            assert service.is_configured(user_id=TEST_USER_ID) is False
 
     @pytest.mark.smoke
     def test_get_environment(self):
         """Test getting current environment"""
         with patch.dict(os.environ, {"SLACK_ENVIRONMENT": "staging"}):
             service = SlackConfigService()
-            assert service.get_environment() == SlackEnvironment.STAGING
+            # Issue #734: Now requires user_id
+            assert service.get_environment(user_id=TEST_USER_ID) == SlackEnvironment.STAGING
 
     @pytest.mark.smoke
     def test_is_production_true(self):
         """Test is_production when in production environment"""
         with patch.dict(os.environ, {"SLACK_ENVIRONMENT": "production"}):
             service = SlackConfigService()
-            assert service.is_production() is True
+            # Issue #734: Now requires user_id
+            assert service.is_production(user_id=TEST_USER_ID) is True
 
     @pytest.mark.smoke
     def test_is_production_false(self):
         """Test is_production when not in production environment"""
         with patch.dict(os.environ, {"SLACK_ENVIRONMENT": "development"}):
             service = SlackConfigService()
-            assert service.is_production() is False
+            # Issue #734: Now requires user_id
+            assert service.is_production(user_id=TEST_USER_ID) is False
 
 
 class TestSlackEnvironment:

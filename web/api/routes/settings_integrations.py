@@ -316,9 +316,13 @@ def _save_github_preferences(prefs: dict) -> None:
 
 
 @router.get("/slack/connect")
-async def connect_slack():
+async def connect_slack(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Start Slack OAuth flow from Settings page.
+
+    Issue #734: SEC-MULTITENANCY - Requires authentication, embeds user_id in state.
 
     Returns authorization URL for OAuth. After completion,
     redirects back to /settings/integrations with status.
@@ -337,11 +341,14 @@ async def connect_slack():
             ),
         )
 
+        # Issue #734: Pass user_id for multi-tenant state
         auth_url, state = handler.generate_authorization_url(
-            redirect_uri=redirect_uri if redirect_uri else None
+            user_id=current_user.sub, redirect_uri=redirect_uri if redirect_uri else None
         )
 
-        logger.info("slack_settings_oauth_started", state=state[:8] + "...")
+        logger.info(
+            "slack_settings_oauth_started", user_id=current_user.sub, state=state[:8] + "..."
+        )
 
         return {
             "auth_url": auth_url,
@@ -365,6 +372,9 @@ async def handle_slack_callback(
     """
     Handle Slack OAuth callback for Settings page.
 
+    Issue #734: SEC-MULTITENANCY - user_id extracted from state and used
+    for per-user token storage in SlackOAuthHandler.
+
     Redirects back to /settings/integrations with status.
     """
     # Handle OAuth error
@@ -387,10 +397,13 @@ async def handle_slack_callback(
         handler = SlackOAuthHandler()
         result = await handler.handle_oauth_callback(code, state)
 
+        # Issue #734: user_id is already extracted and used for storage in handler
+        user_id = result.get("user_id")
+
         workspace_name = result.get("workspace", {}).get("workspace_name", "Workspace")
         workspace_name_encoded = quote(workspace_name)
 
-        logger.info("slack_settings_oauth_success", workspace=workspace_name)
+        logger.info("slack_settings_oauth_success", user_id=user_id, workspace=workspace_name)
 
         return RedirectResponse(
             url=f"/settings/integrations?slack_success=true&slack_workspace={workspace_name_encoded}",
@@ -590,10 +603,11 @@ async def save_slack_app_credentials(
 
     Stores client_id and client_secret for OAuth flow.
     Issue #576: OAuth App Credential Configuration in UI
+    Issue #734: Uses IntegrationConfigService for app credentials
 
     Security: Credentials are stored in OS keychain, never logged or exposed.
     """
-    from services.infrastructure.keychain_service import KeychainService
+    from services.integrations.integration_config_service import IntegrationConfigService
 
     try:
         # Validate both fields are non-empty
@@ -608,10 +622,11 @@ async def save_slack_app_credentials(
                 detail="client_secret is required and cannot be empty",
             )
 
-        # Store in keychain
-        keychain = KeychainService()
-        keychain.store_api_key("slack_client_id", credentials.client_id.strip())
-        keychain.store_api_key("slack_client_secret", credentials.client_secret.strip())
+        # Store via IntegrationConfigService (Issue #734)
+        config_service = IntegrationConfigService()
+        config_service.store_slack_credentials(
+            credentials.client_id.strip(), credentials.client_secret.strip()
+        )
 
         logger.info(
             "slack_app_credentials_saved",
@@ -679,10 +694,11 @@ async def save_calendar_app_credentials(
 
     Stores client_id and client_secret for OAuth flow.
     Issue #577: Google Calendar OAuth Credential Configuration in UI
+    Issue #734: Uses IntegrationConfigService for app credentials
 
     Security: Credentials are stored in OS keychain, never logged or exposed.
     """
-    from services.infrastructure.keychain_service import KeychainService
+    from services.integrations.integration_config_service import IntegrationConfigService
 
     try:
         # Validate both fields are non-empty
@@ -697,10 +713,11 @@ async def save_calendar_app_credentials(
                 detail="client_secret is required and cannot be empty",
             )
 
-        # Store in keychain
-        keychain = KeychainService()
-        keychain.store_api_key("google_calendar_client_id", credentials.client_id.strip())
-        keychain.store_api_key("google_calendar_client_secret", credentials.client_secret.strip())
+        # Store via IntegrationConfigService (Issue #734)
+        config_service = IntegrationConfigService()
+        config_service.store_google_credentials(
+            credentials.client_id.strip(), credentials.client_secret.strip()
+        )
 
         logger.info(
             "calendar_app_credentials_saved",
@@ -728,15 +745,16 @@ async def get_calendar_app_credentials_status(
 
     Returns boolean status only - NEVER returns actual credential values.
     Issue #577: Google Calendar OAuth Credential Configuration in UI
+    Issue #734: Uses IntegrationConfigService for app credentials
     """
-    from services.infrastructure.keychain_service import KeychainService
+    from services.integrations.integration_config_service import IntegrationConfigService
 
     try:
-        keychain = KeychainService()
+        config_service = IntegrationConfigService()
 
-        # Check keychain for credentials
-        client_id = keychain.get_api_key("google_calendar_client_id") or ""
-        client_secret = keychain.get_api_key("google_calendar_client_secret") or ""
+        # Check via IntegrationConfigService (Issue #734)
+        client_id = config_service.get_google_client_id() or ""
+        client_secret = config_service.get_google_client_secret() or ""
 
         # Also check environment variables as fallback
         if not client_id:
@@ -830,9 +848,13 @@ async def get_calendar_settings():
 
 
 @router.get("/calendar/connect")
-async def connect_calendar():
+async def connect_calendar(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Start Google Calendar OAuth flow from Settings page.
+
+    Issue #734: SEC-MULTITENANCY - Requires authentication, embeds user_id in state.
 
     Returns authorization URL for OAuth. After completion,
     redirects back to /settings/integrations with status.
@@ -856,12 +878,15 @@ async def connect_calendar():
             "http://localhost:8001/api/v1/settings/integrations/calendar/callback",
         )
 
-        auth_url, state = handler.generate_authorization_url()
+        # Issue #734: Pass user_id for multi-tenant state
+        auth_url, state = handler.generate_authorization_url(user_id=current_user.sub)
 
         # Restore original
         handler.redirect_uri = original_redirect
 
-        logger.info("calendar_settings_oauth_started", state=state[:8] + "...")
+        logger.info(
+            "calendar_settings_oauth_started", user_id=current_user.sub, state=state[:8] + "..."
+        )
 
         return {
             "auth_url": auth_url,
@@ -886,6 +911,8 @@ async def handle_calendar_callback(
 ):
     """
     Handle Google Calendar OAuth callback for Settings page.
+
+    Issue #734: SEC-MULTITENANCY - Extracts user_id from state for per-user storage.
 
     Redirects back to /settings/integrations with status.
     """
@@ -919,17 +946,22 @@ async def handle_calendar_callback(
 
         result = await handler.handle_oauth_callback(code, state)
 
-        # Store refresh token securely
+        # Issue #734: Extract user_id from callback result
+        user_id = result.get("user_id")
+
+        # Store refresh token securely with user-scoped key
         tokens = result["tokens"]
         if tokens.refresh_token:
             keychain = KeychainService()
-            keychain.store_api_key("google_calendar", tokens.refresh_token)
-            logger.info("calendar_refresh_token_stored_settings")
+            # Issue #734: Use user-scoped key for per-user storage
+            key_name = f"google_calendar_{user_id}" if user_id else "google_calendar"
+            keychain.store_api_key(key_name, tokens.refresh_token)
+            logger.info("calendar_refresh_token_stored_settings", user_id=user_id)
 
         user_email = result["user"].get("email", "Calendar")
         email_encoded = quote(user_email)
 
-        logger.info("calendar_settings_oauth_success", email=user_email)
+        logger.info("calendar_settings_oauth_success", user_id=user_id, email=user_email)
 
         return RedirectResponse(
             url=f"/settings/integrations?calendar_success=true&calendar_email={email_encoded}",
@@ -1885,12 +1917,16 @@ async def get_slack_settings():
 
 
 @router.get("/slack/authorize")
-async def get_slack_oauth_url():
+async def get_slack_oauth_url(
+    current_user: JWTClaims = Depends(get_current_user),
+):
     """
     Get Slack OAuth authorization URL.
 
-    Generates a secure OAuth URL to initiate Slack workspace connection.
     Issue #528: ALPHA-SETUP-SLACK
+    Issue #734: SEC-MULTITENANCY - Requires authentication, embeds user_id in state.
+
+    Generates a secure OAuth URL to initiate Slack workspace connection.
     """
     try:
         from services.integrations.slack.config_service import SlackConfigService
@@ -1899,7 +1935,8 @@ async def get_slack_oauth_url():
         config_service = SlackConfigService()
         oauth_handler = SlackOAuthHandler(config_service)
 
-        auth_url, state = oauth_handler.generate_authorization_url()
+        # Issue #734: Pass user_id for multi-tenant state
+        auth_url, state = oauth_handler.generate_authorization_url(user_id=current_user.sub)
 
         return {
             "success": True,

@@ -77,11 +77,18 @@ class PortfolioOnboardingManager:
 
         Args:
             session_id: Session identifier
-            user_id: User identifier
+            user_id: User identifier (required for multi-tenancy isolation)
 
         Returns:
             New PortfolioOnboardingSession instance
+
+        Raises:
+            ValueError: If user_id is None or empty
         """
+        # Issue #734: Validate user_id for multi-tenancy isolation
+        if not user_id:
+            raise ValueError("user_id is required for multi-tenancy isolation")
+
         session = PortfolioOnboardingSession(
             session_id=session_id,
             user_id=user_id,
@@ -114,8 +121,10 @@ class PortfolioOnboardingManager:
 
         Returns the most recent non-terminal session for the user.
         """
-        # Issue #490 INVESTIGATION: Trace lookup
-        print(f"[PortfolioManager] get_session_by_user called with user_id={user_id}")
+        # Issue #490 INVESTIGATION: Trace lookup with manager ID for singleton verification
+        print(
+            f"[PortfolioManager] get_session_by_user called, manager id={id(self)}, user_id={user_id}"
+        )
         print(
             f"[PortfolioManager] Current sessions: {[(s.id, s.user_id, s.state.value) for s in self._sessions.values()]}"
         )

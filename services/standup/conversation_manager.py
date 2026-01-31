@@ -85,12 +85,19 @@ class StandupConversationManager:
 
         Args:
             session_id: Session identifier
-            user_id: User identifier
+            user_id: User identifier (required for multi-tenancy isolation)
             initial_context: Optional initial context (e.g., from integrations)
 
         Returns:
             New StandupConversation instance
+
+        Raises:
+            ValueError: If user_id is None or empty
         """
+        # Issue #734: Validate user_id for multi-tenancy isolation
+        if not user_id:
+            raise ValueError("user_id is required for multi-tenancy isolation")
+
         conversation = StandupConversation(
             session_id=session_id,
             user_id=user_id,
@@ -120,6 +127,21 @@ class StandupConversationManager:
         """
         for conv in reversed(list(self._conversations.values())):
             if conv.session_id == session_id and conv.state not in [
+                StandupConversationState.COMPLETE,
+                StandupConversationState.ABANDONED,
+            ]:
+                return conv
+        return None
+
+    def get_conversation_by_user(self, user_id: str) -> Optional[StandupConversation]:
+        """
+        Retrieve active conversation for a user.
+
+        Issue #734: Primary lookup method for multi-tenancy isolation.
+        Returns the most recent non-terminal conversation for the user.
+        """
+        for conv in reversed(list(self._conversations.values())):
+            if conv.user_id == user_id and conv.state not in [
                 StandupConversationState.COMPLETE,
                 StandupConversationState.ABANDONED,
             ]:

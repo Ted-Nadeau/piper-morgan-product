@@ -37,31 +37,48 @@ class UniversalListRepository(BaseRepository):
         return db_list.to_domain()
 
     async def get_list_by_id(
-        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+        self, list_id: str, owner_id: str, is_admin: bool = False
     ) -> Optional[domain.List]:
-        """Get universal list by ID - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        """Get universal list by ID - verify ownership (admin bypass in SEC-RBAC Phase 3)
+
+        Args:
+            list_id: The list ID to retrieve
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         filters = [ListDB.id == list_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(ListDB).where(and_(*filters)))
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def get_list_for_read(
-        self, list_id: str, user_id: Optional[str] = None
-    ) -> Optional[domain.List]:
-        """Get list for reading - allows both owner AND shared users to access (SEC-RBAC Phase 2)"""
+    async def get_list_for_read(self, list_id: str, user_id: str) -> Optional[domain.List]:
+        """Get list for reading - allows both owner AND shared users to access (SEC-RBAC Phase 2)
+
+        Args:
+            list_id: The list ID to retrieve
+            user_id: REQUIRED - the user ID requesting access
+
+        Raises:
+            ValueError: If user_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not user_id:
+            raise ValueError("user_id is required for multi-tenancy isolation")
+
         # Always get the list first
         result = await self.session.execute(select(ListDB).where(ListDB.id == list_id))
         db_list = result.scalar_one_or_none()
 
         if not db_list:
             return None
-
-        # If no user_id provided, return the list
-        if not user_id:
-            return db_list.to_domain()
 
         # Convert to domain to check access
         domain_list = db_list.to_domain()
@@ -139,13 +156,26 @@ class UniversalListRepository(BaseRepository):
         return [db_list.to_domain() for db_list in db_lists]
 
     async def update_list(
-        self, list_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+        self, list_id: str, updates: Dict, owner_id: str, is_admin: bool = False
     ) -> Optional[domain.List]:
-        """Update universal list - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+        """Update universal list - verify ownership (admin bypass in SEC-RBAC Phase 3)
+
+        Args:
+            list_id: The list ID to update
+            updates: Dictionary of fields to update
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         updates["updated_at"] = datetime.now()
 
         filters = [ListDB.id == list_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -154,10 +184,20 @@ class UniversalListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_item_counts(
-        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
-    ) -> None:
-        """Update cached item counts - optionally verify ownership (admin bypass in SEC-RBAC Phase 3)"""
+    async def update_item_counts(self, list_id: str, owner_id: str, is_admin: bool = False) -> None:
+        """Update cached item counts - verify ownership (admin bypass in SEC-RBAC Phase 3)
+
+        Args:
+            list_id: The list ID to update counts for
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         # Get total count through list items
         total_result = await self.session.execute(
             select(func.count(ListItemDB.id)).where(ListItemDB.list_id == list_id)
@@ -179,7 +219,7 @@ class UniversalListRepository(BaseRepository):
 
         # Update the list with new counts (with ownership verification if provided)
         filters = [ListDB.id == list_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         await self.session.execute(
@@ -190,12 +230,22 @@ class UniversalListRepository(BaseRepository):
             )
         )
 
-    async def delete_list(
-        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
-    ) -> bool:
-        """Delete a list - optionally verify ownership (admin bypass in SEC-RBAC Phase 3, cascades to items)"""
+    async def delete_list(self, list_id: str, owner_id: str, is_admin: bool = False) -> bool:
+        """Delete a list - verify ownership (admin bypass in SEC-RBAC Phase 3, cascades to items)
+
+        Args:
+            list_id: The list ID to delete
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         filters = [ListDB.id == list_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(ListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(ListDB).where(and_(*filters)))
@@ -623,18 +673,37 @@ class TodoListRepository:
         # Convert back to TodoList for compatibility
         return domain.TodoList(**result.to_dict())
 
-    async def get_list_by_id(self, list_id: str) -> Optional[domain.TodoList]:
-        """Get todo list by ID"""
-        result = await self.universal_repo.get_list_by_id(list_id)
+    async def get_list_by_id(
+        self, list_id: str, owner_id: str, is_admin: bool = False
+    ) -> Optional[domain.TodoList]:
+        """Get todo list by ID - verify ownership
+
+        Args:
+            list_id: The list ID to retrieve
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        result = await self.universal_repo.get_list_by_id(
+            list_id, owner_id=owner_id, is_admin=is_admin
+        )
         if result and result.item_type == "todo":
             return domain.TodoList(**result.to_dict())
         return None
 
-    async def get_list_for_read(
-        self, list_id: str, user_id: Optional[str] = None
-    ) -> Optional[domain.TodoList]:
-        """Get todo list for reading - allows both owner AND shared users to access"""
-        result = await self.universal_repo.get_list_for_read(list_id, user_id)
+    async def get_list_for_read(self, list_id: str, user_id: str) -> Optional[domain.TodoList]:
+        """Get todo list for reading - allows both owner AND shared users to access
+
+        Args:
+            list_id: The list ID to retrieve
+            user_id: REQUIRED - the user ID requesting access
+
+        Raises:
+            ValueError: If user_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        result = await self.universal_repo.get_list_for_read(list_id, user_id=user_id)
         if result and result.item_type == "todo":
             return domain.TodoList(**result.to_dict())
         return None

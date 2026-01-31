@@ -24,6 +24,10 @@ class TestCalendarOAuthTrigger:
         """Should return Google OAuth URL with state"""
         from web.api.routes.setup import start_calendar_oauth
 
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         # When: Requesting OAuth start
         with patch(
             "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
@@ -37,18 +41,24 @@ class TestCalendarOAuthTrigger:
             )
             MockHandler.return_value = mock_instance
 
-            response = await start_calendar_oauth()
+            response = await start_calendar_oauth(current_user=mock_user)
 
         # Then: Response contains auth URL and state
         assert "auth_url" in response
         assert "state" in response
         assert "accounts.google.com" in response["auth_url"]
         assert response["state"] == "state_abc123"
+        # Verify user_id was passed to generate_authorization_url
+        mock_instance.generate_authorization_url.assert_called_once_with(user_id="test-user-123")
 
     @pytest.mark.asyncio
     async def test_oauth_url_includes_calendar_scope(self):
         """OAuth URL should include calendar.readonly scope"""
         from web.api.routes.setup import start_calendar_oauth
+
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         # When: Requesting OAuth start
         with patch(
@@ -63,7 +73,7 @@ class TestCalendarOAuthTrigger:
             )
             MockHandler.return_value = mock_instance
 
-            response = await start_calendar_oauth()
+            response = await start_calendar_oauth(current_user=mock_user)
 
         # Then: URL should contain calendar scope
         assert "calendar" in response["auth_url"].lower()
@@ -72,6 +82,10 @@ class TestCalendarOAuthTrigger:
     async def test_oauth_url_requests_offline_access(self):
         """OAuth URL should request offline access for refresh token"""
         from web.api.routes.setup import start_calendar_oauth
+
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         with patch(
             "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
@@ -85,7 +99,7 @@ class TestCalendarOAuthTrigger:
             )
             MockHandler.return_value = mock_instance
 
-            response = await start_calendar_oauth()
+            response = await start_calendar_oauth(current_user=mock_user)
 
         # Then: URL should request offline access
         assert "offline" in response["auth_url"] or "consent" in response["auth_url"]
@@ -97,6 +111,10 @@ class TestCalendarOAuthTrigger:
 
         from web.api.routes.setup import start_calendar_oauth
 
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch(
             "services.integrations.calendar.oauth_handler.GoogleCalendarOAuthHandler"
         ) as MockHandler:
@@ -106,7 +124,7 @@ class TestCalendarOAuthTrigger:
             MockHandler.return_value = mock_instance
 
             with pytest.raises(HTTPException) as exc_info:
-                await start_calendar_oauth()
+                await start_calendar_oauth(current_user=mock_user)
 
             assert exc_info.value.status_code == 503
             assert "not configured" in exc_info.value.detail.lower()

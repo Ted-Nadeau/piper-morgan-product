@@ -1,8 +1,17 @@
 # Piper Morgan Alpha Testing Guide
 
-**Version**: 0.8.5
-**Last Updated**: January 27, 2026
+**Version**: 0.8.5.1
+**Last Updated**: January 31, 2026
 **For**: Alpha Testers
+
+---
+
+## Returning Tester? Start Here
+
+If you already have Piper set up and running, skip straight to what matters:
+- **[What's New in 0.8.5.1](#whats-new-in-0851)** - MUX complete, accessibility, lifecycle indicators
+- **[What to Test in 0.8.5.1](#what-to-test-in-0851)** - Priority testing areas for this release
+- **[Troubleshooting](#chapter-3-troubleshooting)** - If something isn't working
 
 ---
 
@@ -16,7 +25,7 @@ This guide has three main sections:
 | **[Chapter 2: Testing](#chapter-2-testing)** | Test scenarios, features to explore | You already have an account and want to start testing |
 | **[Chapter 3: Troubleshooting](#chapter-3-troubleshooting)** | Common issues and solutions | Something isn't working |
 
-**Already have an account?** Jump directly to [Chapter 2: Testing](#chapter-2-testing).
+**First-time setup?** Start with [Chapter 1](#chapter-1-setup). **Already have an account?** Jump to [Chapter 2: Testing](#chapter-2-testing).
 
 ---
 
@@ -67,7 +76,7 @@ This guide has three main sections:
 
 **⚠️ ALPHA SOFTWARE WARNING ⚠️**
 
-This is pre-release alpha software (version 0.8.5). By proceeding, you acknowledge:
+This is pre-release alpha software (version 0.8.5.1). By proceeding, you acknowledge:
 
 1. **Expected Issues**: Bugs, crashes, and incomplete features are normal
 2. **Data Loss Risk**: Your data may be lost at any time without warning
@@ -78,108 +87,47 @@ This is pre-release alpha software (version 0.8.5). By proceeding, you acknowled
 7. **No Warranty**: Software provided "as-is" without any warranty whatsoever
 8. **No Support SLA**: Best-effort support only, no guaranteed response times
 
-See `ALPHA_AGREEMENT.md` for complete legal terms.
+See `ALPHA_AGREEMENT_v2.md` for complete legal terms.
 
 ---
 
-## What's New in 0.8.5
+## What's New in 0.8.5.1
 
-**MUX-IMPLEMENT Complete** - Full accessibility and design polish:
-- WCAG 2.1 AA contrast compliance (11 colors fixed, all ratios ≥4.5:1)
-- ARIA landmarks throughout navigation and command palette
-- Design token system v1.1.0 with documented contrast ratios
-- Lifecycle state persistence for projects, work items, features, todos
+**MUX-IMPLEMENT Complete** - The Modeled User Experience super epic is done. This is the biggest release since alpha started:
 
-**Accessibility Improvements** (#428, #429, #430):
-- Full ARIA audit: 8 components with proper roles and attributes
-- Keyboard navigation support throughout
-- High contrast mode support (`prefers-contrast: more`)
-- Reduced motion support (`prefers-reduced-motion: reduce`)
+- **WCAG 2.1 AA Accessibility**: All color contrast ratios meet accessibility standards (11 colors fixed, all ratios ≥4.5:1). ARIA landmarks throughout navigation and command palette. Keyboard navigation, high contrast mode, and reduced motion support.
+- **Lifecycle State Persistence**: Projects, work items, features, and todos now persist lifecycle state to the database with visual indicators in the UI.
+- **New Views**: Work Items view and Project Detail view with lifecycle indicators.
+- **Design Token System v1.1.0**: Centralized CSS tokens with documented contrast ratios.
+- **ProcessRegistry**: Guided processes (onboarding, standup) now use a unified architecture (ADR-049).
 
-**Architecture**:
-- ADR-049 ProcessRegistry for guided processes
-- Feature.to_dict() with lifecycle serialization
+**Since 0.8.4** (included in this release):
+- Fresh install fixes for new testers (#605-#609)
+- Calendar bug fixes (human-readable times, correct day handling)
+- Chat auto-loads conversation on refresh
+- Portfolio onboarding on first greeting
+- Integration Settings management from the UI
+- Interactive Standup Assistant with conversational flow
+- 5253 automated tests passing (up from ~2100)
 
-## What's New in 0.8.4.3
+See [Release Notes v0.8.5](releases/RELEASE-NOTES-v0.8.5.md) for full details.
 
-**Fresh Install Fixes** - Critical fixes for new alpha testers (#605-#609):
-- Server now validates migrations at startup (clear error messages instead of cryptic failures)
-- Fresh installs route to web GUI wizard (not CLI)
-- `/setup` accessible for new user registration (multi-user support)
-- Fresh databases properly detected and migrated
+<details>
+<summary><strong>Previous release history (0.8.3 - 0.8.4.3)</strong></summary>
 
-## What's New in 0.8.4.2
+**0.8.4.3**: Fresh install fixes, migration validation at startup, GUI wizard routing.
 
-**Calendar Bug Fixes** - Major improvements to TEMPORAL handler:
-- "How about today?" now correctly shows calendar data (#596)
-- Tomorrow queries display correct meeting times (#588)
-- Calendar times shown in human-readable format (not ISO timestamps)
+**0.8.4.2**: Calendar bug fixes (TEMPORAL handler), markdown rendering, sidebar ordering.
 
-**Other Fixes**:
-- Markdown rendering in chat messages (#592)
-- Sidebar conversation ordering (#587)
+**0.8.4.1**: Chat auto-load on refresh, `/standup` routing fix, RequestContext model (ADR-051).
 
-## What's New in 0.8.4.1
+**0.8.4**: Integration Settings (OAuth for Slack/Calendar, PAT for GitHub, API key for Notion), Portfolio Onboarding, logout fix.
 
-**Bug Fixes**:
-- Chat now auto-loads conversation on page refresh (#583)
-- `/standup` command correctly routes to interactive handler (#585)
-- UserContextService properly connects to database projects (#582)
-- Chat sidebar sync with conversation selection (#581)
-- Conversation history sidebar switching fixed (#574)
+**0.8.3.2**: Interactive Standup Assistant (conversational standup creation, preference learning, iterative refinement).
 
-**Architecture Improvement**:
-- New `RequestContext` model for unified identity handling (ADR-051, #584)
-- Foundation for better user/session management across the codebase
+**0.8.3**: Integration Health Dashboard, OAuth Connection Management, Notion in Setup Wizard.
 
-## What's New in 0.8.4
-
-**Integration Settings (Epic #543)** - All integration credentials can now be managed from Settings → Integrations:
-- **Slack**: OAuth Connect/Disconnect button
-- **Google Calendar**: OAuth Connect/Disconnect with sync preferences
-- **GitHub**: Personal Access Token configuration with secure keychain fallback
-- **Notion**: API Key configuration with workspace preferences
-- **Disconnect All**: One-click to reset all integrations
-
-**Portfolio Onboarding (#490)** - New users now experience conversational project setup:
-- Triggered automatically on first greeting ("Hello!")
-- Tell Piper about your projects in natural language
-- Creates Project entities for better context in future conversations
-- Multi-turn flow with confirmation before saving
-
-**Bug Fixes**:
-- Logout 403 "Not authenticated" error fixed
-- Integration Test button now uses correct OAuth tokens (#562)
-- Demo integration disabled by default (was confusing users)
-
-## What's New in 0.8.3.2
-
-**Interactive Standup Assistant** - The standup feature now supports conversational interactions. Start with "let's write a standup" or "/standup" and Piper will guide you through the process interactively:
-- **Preference gathering**: Tell Piper your style preferences (concise, detailed, bullet points)
-- **Iterative refinement**: Request changes until you're happy with the result
-- **Version history**: Previous versions saved if you want to compare
-- **Performance**: Sub-500ms response times with P95 at 0.03ms
-
-**Standup Monitoring Dashboard** - Behind the scenes, all standup conversations are now tracked with structured logging for debugging and performance analysis.
-
-**Epic #242 Complete** - The Interactive Standup Conversation feature (CONV-MCP-STANDUP-INTERACTIVE) is now fully implemented with:
-- Issue #552: Conversation state management (7-state machine)
-- Issue #553: Turn-based dialogue system
-- Issue #554: Preference learning integration
-- Issue #555: LLM workflow with Chain-of-Draft
-- Issue #556: Performance monitoring (<500ms target met)
-
-## What's New in 0.8.3
-
-**Integration Health Dashboard** - New dashboard at Settings → Integrations showing real-time status of all integrations. One-click "Test" buttons let you verify each integration is working. Visual status indicators show healthy, degraded, or failed states with helpful fix suggestions.
-
-**OAuth Connection Management** - Connect and disconnect Slack and Google Calendar directly from the Settings page. No more editing environment variables - just click "Connect" and authorize through the OAuth flow. Connected integrations show account details (workspace name, email).
-
-**Notion in Setup Wizard** - The setup wizard now includes Notion API key configuration. Enter your key and see immediate validation with workspace name confirmation before saving.
-
-**Stable Core Features** - Setup, login, chat, lists, todos, and file management are stable. **Focus your testing on the new integration features**: the dashboard, OAuth connections, and Notion setup.
-
-**Bug Fixes** - Calendar OAuth now works reliably (state persistence fix). Toast notifications are visible and readable (7-second duration). Breadcrumb navigation no longer overlaps.
+</details>
 
 ---
 
@@ -265,7 +213,7 @@ If you prefer not to use automated scripts, follow the guided setup below. On Wi
 ```bash
 # --depth 1 gives you a fast ~91MB download (vs ~800MB full history)
 # You get all the code, just not the git history (which you don't need for testing)
-git clone --depth 1 https://github.com/mediajunkie/piper-morgan-product.git
+git clone --depth 1 -b production https://github.com/mediajunkie/piper-morgan-product.git
 cd piper-morgan-product
 ```
 
@@ -287,7 +235,7 @@ pip install -r requirements.txt
 
 ### Step 4: Start Server for First-Time Setup
 
-**New in 0.8.2+**: Setup now uses a visual web interface by default.
+Setup uses a visual web interface by default.
 
 ```bash
 python main.py
@@ -375,8 +323,7 @@ After login, you'll see the Piper Morgan chat interface.
 
 ---
 
-## Setup Wizard Walkthrough (New in 0.8.2)
-
+## Setup Wizard Walkthrough
 The GUI setup wizard provides a visual, step-by-step interface for configuration. Here's what to expect at each stage:
 
 ### Step 1: Welcome Screen
@@ -439,17 +386,19 @@ Click the button to go to the login page and start using Piper Morgan.
 
 This chapter covers what to test and how. If you're already set up, **start here**.
 
-## Test Scenarios to Try
+## What to Test in 0.8.5.1
 
-**Note for 0.8.4 Testers**: Setup, login, chat, and core workflows are stable. **Focus your testing on the new Integration Settings and Portfolio Onboarding** and continue validating the Interactive Standup Assistant.
+Setup, login, chat, and core workflows are stable. The MUX-IMPLEMENT epic brought significant UI improvements. **Focus your testing on new features and the improved experience.**
 
 ### Priority Testing Areas
 
-1. **Interactive Standup Assistant** - Try "let's write a standup" or "/standup" in chat
-2. **Standup Conversations** - Test preference gathering, refinement requests, completing standups
-3. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
-4. **OAuth Connections** - Connect/disconnect Slack and Calendar from Settings
-5. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
+1. **Lifecycle Indicators** - Do projects and todos show their lifecycle state? Does it persist across sessions?
+2. **Work Items View** - Navigate to /work-items. Create, view, and manage work items.
+3. **Project Detail View** - Click into any project to see its detail page with work items.
+4. **Accessibility** - Try keyboard-only navigation. Tab through the interface. Try the command palette.
+5. **Interactive Standup Assistant** - Try "let's write a standup" or "/standup" in chat
+6. **Integration Dashboard** - Settings → Integrations, test buttons, health status display
+7. **Workflow Management** - Lists, todos, projects (CRUD operations, sharing, permissions)
 
 ### Basic Functionality Tests
 
@@ -639,10 +588,9 @@ The setup wizard (GUI or CLI) will guide you through Docker installation with pl
 - On Windows: Check if Docker Desktop service is running
 - Test manually with: `docker --version`
 
-**"Python 3.9+ not found"**
+**"Python 3.11+ not found"**
 
-- Install Python 3.9+: https://www.python.org/downloads/
-- Recommended: Python 3.11+ for best compatibility
+- Install Python 3.11 or 3.12: https://www.python.org/downloads/
 - Test with: `python --version`
 
 **"Port 8001 not available"**
@@ -798,9 +746,9 @@ See original testing guide for detailed manual steps.
 
 ## Questions?
 
-Remember: This is alpha software (version 0.8.5). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
+Remember: This is alpha software (version 0.8.5.1). The GUI setup wizard handles most complexity, but you're still testing early-stage software. Expect bugs and incomplete features.
 
-If guided setup seems overwhelming, a hosted version is planned for 2026.
+If guided setup seems overwhelming, a hosted version is planned for later in 2026.
 
 Thank you for being an early adopter and helping us improve! 🚀
 
@@ -815,5 +763,5 @@ Thank you for being an early adopter and helping us improve! 🚀
 
 ---
 
-_Last updated: January 19, 2026_
-_Software version: 0.8.5_
+_Last updated: January 28, 2026_
+_Software version: 0.8.5.1_

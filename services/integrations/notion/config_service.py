@@ -68,25 +68,42 @@ class NotionConfig:
 
 
 class NotionConfigService:
-    """Notion configuration service following ADR-010 patterns"""
+    """
+    Notion configuration service following ADR-010 patterns.
+
+    Issue #734: Updated for multi-tenancy isolation.
+    All user-scoped methods now require user_id parameter.
+    """
 
     def __init__(self, feature_flags: Optional[FeatureFlags] = None):
         self.feature_flags = feature_flags or FeatureFlags()
-        self._config: Optional[NotionConfig] = None
+        # Per-user config cache (keyed by user_id)
+        self._config_cache: Dict[str, NotionConfig] = {}
 
-    def get_config(self) -> NotionConfig:
+    def get_config(self, user_id: str) -> NotionConfig:
         """
         Get Notion configuration with environment variable loading.
 
         Implements standard config service interface for plugin architecture.
         Returns NotionConfig object with all settings loaded from environment.
 
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
         Returns:
-            NotionConfig: Complete Notion configuration
+            NotionConfig: Complete Notion configuration with user-scoped API key
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
         """
-        if self._config is None:
-            self._config = self._load_config()
-        return self._config
+        if not user_id:
+            raise ValueError("user_id is required")
+
+        if user_id not in self._config_cache:
+            self._config_cache[user_id] = self._load_config(user_id)
+        return self._config_cache[user_id]
 
     def _load_from_user_config(self) -> Dict[str, Any]:
         """
@@ -107,9 +124,9 @@ class NotionConfigService:
             content = user_config_path.read_text()
 
             # Find the Notion Integration section
-            # Look for heading pattern: ## 📝 Notion Integration
+            # Look for heading pattern: ## Notion Integration
             notion_section_match = re.search(
-                r"##\s+📝\s+Notion Integration(.*?)(?=##\s+|$)", content, re.DOTALL
+                r"##\s+\U0001F4DD\s+Notion Integration(.*?)(?=##\s+|$)", content, re.DOTALL
             )
 
             if not notion_section_match:
@@ -137,22 +154,24 @@ class NotionConfigService:
             print(f"Warning: Could not load Notion config from PIPER.user.md: {e}")
             return {}
 
-    def _load_config(self) -> NotionConfig:
+    def _load_config(self, user_id: str) -> NotionConfig:
         """
         Load Notion configuration with priority: env vars > PIPER.user.md > keychain > defaults.
 
         Configuration Priority Order:
         1. Environment variables (highest priority - overrides everything)
         2. PIPER.user.md notion section (middle priority)
-        3. Keychain (UI-saved keys via UserAPIKeyService)
+        3. User-scoped keychain (UI-saved keys via UserAPIKeyService)
         4. Hardcoded defaults (lowest priority - fallback)
 
-        Issue #579: Added keychain fallback for UI-configured keys.
-
-        Implements standard config service interface for plugin architecture.
+        Args:
+            user_id: User identifier for scoping credentials
 
         Returns:
             NotionConfig: Configuration loaded with priority order applied
+
+        Issue #579: Added keychain fallback for UI-configured keys.
+        Issue #734: Keychain lookups now scoped by user_id.
         """
         # Load from PIPER.user.md first (base layer)
         user_config = self._load_from_user_config()
@@ -160,17 +179,17 @@ class NotionConfigService:
         # Get authentication section (with fallback to empty dict)
         auth_config = user_config.get("authentication", {})
 
-        # Get API key with fallback chain: env var > user config > keychain
+        # Get API key with fallback chain: env var > user config > user-scoped keychain
         api_key = os.getenv("NOTION_API_KEY", auth_config.get("api_key", ""))
 
-        # Issue #579: Fallback to keychain if not found in env or user config
+        # Issue #579/#734: Fallback to user-scoped keychain if not found in env or user config
         if not api_key:
             try:
                 from services.infrastructure.keychain_service import KeychainService
 
                 keychain = KeychainService()
-                # Note: UserAPIKeyService stores with provider="notion", user_id="system"
-                api_key = keychain.get_api_key("notion", username="system") or ""
+                # User-scoped API key lookup (per ADR-058)
+                api_key = keychain.get_api_key("notion", username=user_id) or ""
             except Exception:
                 pass  # Keychain not available
 
@@ -206,23 +225,78 @@ class NotionConfigService:
             ),
         )
 
-    def is_configured(self) -> bool:
+    def is_configured(self, user_id: str) -> bool:
         """
-        Check if Notion is properly configured.
+        Check if Notion is properly configured for the given user.
 
         Implements standard config service interface for plugin architecture.
         Validates that API key exists, which is the minimum requirement for Notion operations.
 
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
         Returns:
             bool: True if Notion is properly configured
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
         """
-        config = self.get_config()
+        if not user_id:
+            raise ValueError("user_id is required")
+        config = self.get_config(user_id)
         return config.validate()
 
-    def get_environment(self) -> NotionEnvironment:
-        """Get current Notion environment"""
-        return self.get_config().environment
+    def get_environment(self, user_id: str) -> NotionEnvironment:
+        """
+        Get current Notion environment.
 
-    def is_production(self) -> bool:
-        """Check if running in production environment"""
-        return self.get_environment() == NotionEnvironment.PRODUCTION
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            NotionEnvironment enum value
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+        return self.get_config(user_id).environment
+
+    def is_production(self, user_id: str) -> bool:
+        """
+        Check if running in production environment.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            True if in production environment
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+        return self.get_environment(user_id) == NotionEnvironment.PRODUCTION
+
+    def clear_cache(self, user_id: Optional[str] = None) -> None:
+        """
+        Clear configuration cache.
+
+        Args:
+            user_id: If provided, clear only that user's cache.
+                     If None, clear entire cache.
+
+        Issue #734: Added for multi-tenancy support.
+        """
+        if user_id:
+            self._config_cache.pop(user_id, None)
+        else:
+            self._config_cache.clear()

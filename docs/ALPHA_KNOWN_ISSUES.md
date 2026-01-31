@@ -1,7 +1,7 @@
-# Known Issues & Feature Status (v0.8.5)
+# Known Issues & Feature Status (v0.8.5.1)
 
-**Version**: 0.8.5
-**Last Updated**: January 27, 2026
+**Version**: 0.8.5.1
+**Last Updated**: January 31, 2026
 **Status**: MUX Complete (Accessibility & Polish)
 
 ---
@@ -76,12 +76,26 @@ These features have been tested, completed, and are ready for alpha testing:
   - 638 template tests for UI stability
   - Issues #419 and #684 complete
 
-- ✅ **Quality Validation** (Enhanced in 0.8.4.4)
+- ✅ **Accessibility** (0.8.5)
 
-  - 5200+ automated tests (major expansion in v0.8.4.4)
+  - WCAG 2.1 AA contrast compliance (all ratios ≥4.5:1)
+  - ARIA landmarks throughout navigation and command palette
+  - Keyboard navigation support
+  - High contrast mode and reduced motion preferences
+  - Design token system v1.1.0
+
+- ✅ **Lifecycle State Persistence** (New in 0.8.5)
+
+  - Projects, todos, work items, and features track lifecycle state
+  - Visual lifecycle indicators in UI views
+  - New Work Items view and Project Detail view
+
+- ✅ **Quality Validation** (Enhanced in 0.8.5)
+
+  - 5253 automated tests (major expansion through MUX-IMPLEMENT)
   - CI/CD quality gates with GitHub Actions
   - 100% pass rate on critical path tests
-  - UI stability improvements across navigation and forms
+  - 638 template tests for UI stability
 
 - ✅ **System health checker** (`python main.py status`)
 
@@ -194,13 +208,15 @@ These features have been tested, completed, and are ready for alpha testing:
 
 ### Development Quality
 
-- ✅ **Test coverage**: 100% pass rate (2100+ tests)
+- ✅ **Test coverage**: 100% pass rate (5253 tests)
 
   - Auth tests: 17/17 passing
   - UUID migration tests: Verified
   - Token blacklist FK tests: Verified
   - Integration tests: Passing
   - Standup tests: 260 tests (conversation, learning, performance)
+  - Template tests: 638 tests for UI stability
+  - Lifecycle tests: 147 tests
 
 - ✅ **CI/CD pipeline**: 13/13 workflows operational
 
@@ -292,7 +308,7 @@ These features have been tested, completed, and are ready for alpha testing:
 ## 🗣️ Chat Capabilities (Canonical Query Status)
 
 **Reference**: [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
-**Last Verified**: December 24, 2025 (240 unit tests passing)
+**Last Verified**: December 24, 2025 (240 unit tests passing, 19 intent categories as of Jan 2026)
 
 Piper understands 25 canonical queries across 5 categories. Here's what actually works:
 
@@ -438,21 +454,51 @@ These features exist but need more alpha testing validation:
 
 ## 📋 Planned for Beta (0.9.0)
 
-Features not yet implemented or incomplete:
+<!-- TODO: Refine after PPM roadmap review. Current list based on open MVP milestone issues. -->
 
-**[PM: Please populate based on roadmap]**
+### MVP Foundation (M1)
 
-### High Priority
+- **Encryption at rest** for sensitive data (#358)
+- **Auth context fixes**: Remove hardcoded user IDs from intent service and settings (#696, #697)
+- **RBAC Phases 4-5**: Projects and Files ownership enforcement (#470)
+- **WebSocket infrastructure** for real-time communication (#557)
+- **Token revocation** on integration disconnect (#542)
+- **Test reliability** improvements for production confidence (#190, #352)
 
-- [ ] **[TBD]**: Specify beta priorities
+### MVP Activation (M2)
 
-### Medium Priority
+- **Wiring gaps**: Database-backed repositories in canonical handlers, boundary enforcer in LLM classifier, Slack blocker detection, GitHub service integration (#690-695)
+- **Notion integration activation** (#304)
+- **Lifecycle UI completion**: Lists, Home/Conversations views (#714, #715)
+- **Insight surfacing rules** (#707)
+- **E2E testing** and CI smoke test integration (#191, #276)
 
-- [ ] **[TBD]**: Additional planned features
+### MVP Skills (M3)
 
-### Nice to Have
+- **Core Skills Library** implementation (#315)
+- **Enhanced priority and focus queries** with real data (#496, #497)
+- **Features View** with lifecycle (#716)
+- **Multi-Agent Coordinator** deployment (#118)
 
-- [ ] **[TBD]**: Future enhancements
+### MVP Document Revolution (M4)
+
+- **Unified document processing** via Skills (#302)
+- **File Browser and Document Management UI** (#313)
+- **Document Viewer** with lifecycle (#712, #713)
+
+### MVP Polish (M5)
+
+- **Registration and password reset** flow (#441)
+- **Interactive Slack standup** features (#244)
+- **Priority calculation engine** (#103)
+- **Database migration rollback** testing (#338)
+
+### MVP Future (M6)
+
+- **Cross-channel portfolio sharing** (#568)
+- **Strategic recommendations** (#106)
+- **Time allocation analysis** (#104)
+- **Alternate issue providers** (Jira, Linear, Notion) (#546)
 
 ---
 
@@ -529,15 +575,16 @@ What we're specifically trying to validate:
 
 **What to Focus On:**
 
+- Lifecycle indicators (do they show up on projects and todos?)
+- New views (Work Items, Project Detail)
+- Accessibility (keyboard navigation, screen reader support)
 - Setup experience (did wizard work smoothly?)
-- Preference configuration (did it personalize effectively?)
 - Core workflows (task management, document handling)
 - Integration points (if you use GitHub/Slack/Notion)
 - Overall "feel" (is it delightful or frustrating?)
 
 **What to Ignore:**
 
-- UI polish (we know it's rough)
 - Missing features (see "Planned for Beta")
 - One-off quirks (unless they're blocking)
 
@@ -565,12 +612,12 @@ This document will be updated:
 - `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
 - `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
 - `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
-- `VERSION_NUMBERING.md` - Understanding version 0.8.4
-- `RELEASE-NOTES-v0.8.4.md` - What changed in this release
+- `VERSION_NUMBERING.md` - Understanding version 0.8.5
+- `releases/RELEASE-NOTES-v0.8.5.md` - What changed in this release
 - GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
 
 ---
 
-_Last Updated: January 8, 2026_
-_Status: Stable core (setup, login, chat, interactive standup ready - 76% canonical query coverage)_
-_Software Version: 0.8.4_
+_Last Updated: January 28, 2026_
+_Status: MUX Complete - Accessible UI, lifecycle persistence, 5253 tests (76% canonical query coverage)_
+_Software Version: 0.8.5_

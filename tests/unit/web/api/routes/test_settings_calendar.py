@@ -170,8 +170,8 @@ class TestCalendarAppCredentials:
 
     @pytest.mark.asyncio
     async def test_save_credentials_stores_in_keychain(self):
-        """Should store client_id and client_secret in keychain"""
-        mock_keychain = MagicMock()
+        """Should store client_id and client_secret via IntegrationConfigService (Issue #734)"""
+        mock_config_service = MagicMock()
         mock_user = MagicMock()
         mock_user.sub = "test_user"
 
@@ -181,25 +181,22 @@ class TestCalendarAppCredentials:
         )
 
         with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
+            "services.integrations.integration_config_service.IntegrationConfigService",
+            return_value=mock_config_service,
         ):
             result = await save_calendar_app_credentials(credentials, mock_user)
 
             assert result["success"] is True
             assert "saved" in result["message"].lower()
-            # Verify keychain was called with correct keys
-            mock_keychain.store_api_key.assert_any_call(
-                "google_calendar_client_id", "123456789.apps.googleusercontent.com"
-            )
-            mock_keychain.store_api_key.assert_any_call(
-                "google_calendar_client_secret", "GOCSPX-test_secret_value"
+            # Verify IntegrationConfigService was called with correct credentials
+            mock_config_service.store_google_credentials.assert_called_once_with(
+                "123456789.apps.googleusercontent.com", "GOCSPX-test_secret_value"
             )
 
     @pytest.mark.asyncio
     async def test_save_credentials_strips_whitespace(self):
-        """Should strip whitespace from credentials before storing"""
-        mock_keychain = MagicMock()
+        """Should strip whitespace from credentials before storing (Issue #734)"""
+        mock_config_service = MagicMock()
         mock_user = MagicMock()
         mock_user.sub = "test_user"
 
@@ -209,33 +206,30 @@ class TestCalendarAppCredentials:
         )
 
         with patch(
-            "services.infrastructure.keychain_service.KeychainService",
-            return_value=mock_keychain,
+            "services.integrations.integration_config_service.IntegrationConfigService",
+            return_value=mock_config_service,
         ):
             await save_calendar_app_credentials(credentials, mock_user)
 
             # Verify whitespace was stripped
-            mock_keychain.store_api_key.assert_any_call(
-                "google_calendar_client_id", "123456789.apps.googleusercontent.com"
-            )
-            mock_keychain.store_api_key.assert_any_call(
-                "google_calendar_client_secret", "GOCSPX-secret_with_spaces"
+            mock_config_service.store_google_credentials.assert_called_once_with(
+                "123456789.apps.googleusercontent.com", "GOCSPX-secret_with_spaces"
             )
 
     @pytest.mark.asyncio
     async def test_get_status_returns_configured_when_both_present(self):
-        """Should return configured=True when both client_id and client_secret exist in keychain"""
-        mock_keychain = MagicMock()
-        mock_keychain.get_api_key.side_effect = lambda key: {
-            "google_calendar_client_id": "123456789.apps.googleusercontent.com",
-            "google_calendar_client_secret": "GOCSPX-secret_value",
-        }.get(key, None)
+        """Should return configured=True when both client_id and client_secret exist (Issue #734)"""
+        mock_config_service = MagicMock()
+        mock_config_service.get_google_client_id.return_value = (
+            "123456789.apps.googleusercontent.com"
+        )
+        mock_config_service.get_google_client_secret.return_value = "GOCSPX-secret_value"
         mock_user = MagicMock()
 
         with (
             patch(
-                "services.infrastructure.keychain_service.KeychainService",
-                return_value=mock_keychain,
+                "services.integrations.integration_config_service.IntegrationConfigService",
+                return_value=mock_config_service,
             ),
             patch.dict("os.environ", {}, clear=True),
         ):
@@ -247,18 +241,16 @@ class TestCalendarAppCredentials:
 
     @pytest.mark.asyncio
     async def test_get_status_returns_not_configured_when_missing_id(self):
-        """Should return configured=False when client_id is missing"""
-        mock_keychain = MagicMock()
-        mock_keychain.get_api_key.side_effect = lambda key: {
-            "google_calendar_client_id": "",  # Empty
-            "google_calendar_client_secret": "GOCSPX-secret_value",
-        }.get(key, "")
+        """Should return configured=False when client_id is missing (Issue #734)"""
+        mock_config_service = MagicMock()
+        mock_config_service.get_google_client_id.return_value = ""  # Empty
+        mock_config_service.get_google_client_secret.return_value = "GOCSPX-secret_value"
         mock_user = MagicMock()
 
         with (
             patch(
-                "services.infrastructure.keychain_service.KeychainService",
-                return_value=mock_keychain,
+                "services.integrations.integration_config_service.IntegrationConfigService",
+                return_value=mock_config_service,
             ),
             patch.dict("os.environ", {}, clear=True),
         ):
@@ -270,18 +262,18 @@ class TestCalendarAppCredentials:
 
     @pytest.mark.asyncio
     async def test_get_status_returns_not_configured_when_missing_secret(self):
-        """Should return configured=False when client_secret is missing"""
-        mock_keychain = MagicMock()
-        mock_keychain.get_api_key.side_effect = lambda key: {
-            "google_calendar_client_id": "123456789.apps.googleusercontent.com",
-            "google_calendar_client_secret": "",  # Empty
-        }.get(key, "")
+        """Should return configured=False when client_secret is missing (Issue #734)"""
+        mock_config_service = MagicMock()
+        mock_config_service.get_google_client_id.return_value = (
+            "123456789.apps.googleusercontent.com"
+        )
+        mock_config_service.get_google_client_secret.return_value = ""  # Empty
         mock_user = MagicMock()
 
         with (
             patch(
-                "services.infrastructure.keychain_service.KeychainService",
-                return_value=mock_keychain,
+                "services.integrations.integration_config_service.IntegrationConfigService",
+                return_value=mock_config_service,
             ),
             patch.dict("os.environ", {}, clear=True),
         ):
@@ -293,15 +285,16 @@ class TestCalendarAppCredentials:
 
     @pytest.mark.asyncio
     async def test_get_status_falls_back_to_env_vars(self):
-        """Should check environment variables as fallback when keychain is empty"""
-        mock_keychain = MagicMock()
-        mock_keychain.get_api_key.return_value = ""  # Keychain returns nothing
+        """Should check environment variables as fallback when service returns empty (Issue #734)"""
+        mock_config_service = MagicMock()
+        mock_config_service.get_google_client_id.return_value = ""  # Service returns nothing
+        mock_config_service.get_google_client_secret.return_value = ""
         mock_user = MagicMock()
 
         with (
             patch(
-                "services.infrastructure.keychain_service.KeychainService",
-                return_value=mock_keychain,
+                "services.integrations.integration_config_service.IntegrationConfigService",
+                return_value=mock_config_service,
             ),
             patch.dict(
                 "os.environ",
@@ -319,18 +312,16 @@ class TestCalendarAppCredentials:
 
     @pytest.mark.asyncio
     async def test_get_status_never_exposes_credentials(self):
-        """Status response should never contain actual credential values"""
-        mock_keychain = MagicMock()
-        mock_keychain.get_api_key.side_effect = lambda key: {
-            "google_calendar_client_id": "secret_client_id_value",
-            "google_calendar_client_secret": "super_secret_value",
-        }.get(key, "")
+        """Status response should never contain actual credential values (Issue #734)"""
+        mock_config_service = MagicMock()
+        mock_config_service.get_google_client_id.return_value = "secret_client_id_value"
+        mock_config_service.get_google_client_secret.return_value = "super_secret_value"
         mock_user = MagicMock()
 
         with (
             patch(
-                "services.infrastructure.keychain_service.KeychainService",
-                return_value=mock_keychain,
+                "services.integrations.integration_config_service.IntegrationConfigService",
+                return_value=mock_config_service,
             ),
             patch.dict("os.environ", {}, clear=True),
         ):

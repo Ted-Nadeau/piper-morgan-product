@@ -24,6 +24,10 @@ class TestSlackOAuthTrigger:
         """Should return Slack OAuth URL with state"""
         from web.api.routes.setup import start_slack_oauth
 
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         # When: Requesting OAuth start (must mock both config and handler)
         with patch("services.integrations.slack.config_service.SlackConfigService") as MockConfig:
             # Mock config service to return valid credentials
@@ -44,18 +48,26 @@ class TestSlackOAuthTrigger:
                 )
                 MockHandler.return_value = mock_instance
 
-                response = await start_slack_oauth()
+                response = await start_slack_oauth(current_user=mock_user)
 
         # Then: Response contains auth URL and state
         assert "auth_url" in response
         assert "state" in response
         assert "slack.com/oauth" in response["auth_url"]
         assert response["state"] == "state_abc123"
+        # Verify user_id was passed (redirect_uri may be None)
+        mock_instance.generate_authorization_url.assert_called_once_with(
+            user_id="test-user-123", redirect_uri=None
+        )
 
     @pytest.mark.asyncio
     async def test_oauth_url_includes_required_scopes(self):
         """OAuth URL should include bot scopes"""
         from web.api.routes.setup import start_slack_oauth
+
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         # When: Requesting OAuth start (must mock both config and handler)
         with patch("services.integrations.slack.config_service.SlackConfigService") as MockConfig:
@@ -78,7 +90,7 @@ class TestSlackOAuthTrigger:
                 )
                 MockHandler.return_value = mock_instance
 
-                response = await start_slack_oauth()
+                response = await start_slack_oauth(current_user=mock_user)
 
         # Then: URL should contain scope parameter
         assert "scope=" in response["auth_url"]
@@ -217,6 +229,10 @@ class TestSlackOAuthStartEndpoint:
         """Endpoint should return JSON with auth_url"""
         from web.api.routes.setup import start_slack_oauth
 
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
+
         with patch("services.integrations.slack.config_service.SlackConfigService") as MockConfig:
             # Mock config service to return valid credentials
             mock_config_instance = MagicMock()
@@ -236,7 +252,7 @@ class TestSlackOAuthStartEndpoint:
                 )
                 MockHandler.return_value = mock_instance
 
-                result = await start_slack_oauth()
+                result = await start_slack_oauth(current_user=mock_user)
 
         assert isinstance(result, dict)
         assert "auth_url" in result
@@ -248,6 +264,10 @@ class TestSlackOAuthStartEndpoint:
         import os
 
         from web.api.routes.setup import start_slack_oauth
+
+        # Issue #734: Mock current_user with user_id
+        mock_user = MagicMock()
+        mock_user.sub = "test-user-123"
 
         # When: SLACK_SETUP_REDIRECT_URI is set
         with patch.dict(
@@ -278,7 +298,7 @@ class TestSlackOAuthStartEndpoint:
                     )
                     MockHandler.return_value = mock_instance
 
-                    await start_slack_oauth()
+                    await start_slack_oauth(current_user=mock_user)
 
-                    # Then: Handler should be called (redirect_uri handling is internal)
+                    # Then: Handler should be called with user_id
                     mock_instance.generate_authorization_url.assert_called_once()

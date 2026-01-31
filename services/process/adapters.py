@@ -52,6 +52,11 @@ class OnboardingProcessAdapter:
 
         manager, _ = self._get_components()
 
+        # Issue #490 INVESTIGATION: Verify singleton manager ID matches creation
+        print(
+            f"[OnboardingProcessAdapter] check_active: manager id={id(manager)}, sessions={len(manager._sessions)}"
+        )
+
         # Try user_id first (preferred), then session_id (fallback)
         session = None
         if user_id:
@@ -95,16 +100,25 @@ class OnboardingProcessAdapter:
         # Handle the turn
         response = handler.handle_turn(session.id, message)
 
+        # Issue #728: Include captured_projects in context for persistence
+        # IntentService._check_active_guided_process() looks for this
+        # to persist projects when onboarding completes
+        context = {
+            "onboarding_id": session.id,
+            "state": response.state.value,
+            "bypassed_classification": True,
+            "guided_process": ProcessType.ONBOARDING.value,
+        }
+
+        # Add captured_projects when onboarding completes
+        if response.is_complete and response.captured_projects:
+            context["captured_projects"] = response.captured_projects
+
         intent_data = {
             "category": IntentCategory.GUIDANCE.value,
             "action": "portfolio_onboarding",
             "confidence": 1.0,
-            "context": {
-                "onboarding_id": session.id,
-                "state": response.state.value,
-                "bypassed_classification": True,
-                "guided_process": ProcessType.ONBOARDING.value,
-            },
+            "context": context,
         }
 
         return ProcessCheckResult.handled_by(

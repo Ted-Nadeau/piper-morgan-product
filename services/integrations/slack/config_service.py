@@ -77,17 +77,39 @@ class SlackConfig:
 
 
 class SlackConfigService:
-    """Slack configuration service following ADR-010 patterns"""
+    """
+    Slack configuration service following ADR-010 patterns.
+
+    Issue #734: Updated for multi-tenancy isolation.
+    All user-scoped methods now require user_id parameter.
+    """
 
     def __init__(self, feature_flags: Optional[FeatureFlags] = None):
         self.feature_flags = feature_flags or FeatureFlags()
-        self._config: Optional[SlackConfig] = None
+        # Per-user config cache (keyed by user_id)
+        self._config_cache: Dict[str, SlackConfig] = {}
 
-    def get_config(self) -> SlackConfig:
-        """Get Slack configuration with environment variable loading"""
-        if self._config is None:
-            self._config = self._load_config()
-        return self._config
+    def get_config(self, user_id: str) -> SlackConfig:
+        """
+        Get Slack configuration with environment variable loading.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            SlackConfig object with user-scoped credentials
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+
+        if user_id not in self._config_cache:
+            self._config_cache[user_id] = self._load_config(user_id)
+        return self._config_cache[user_id]
 
     def _load_from_user_config(self) -> Dict[str, Any]:
         """
@@ -109,9 +131,9 @@ class SlackConfigService:
             content = user_config_path.read_text()
 
             # Find the Slack Integration section
-            # Look for heading pattern: ## 💬 Slack Integration or ## slack:
+            # Look for heading pattern: ## Slack Integration or ## slack:
             slack_section_match = re.search(
-                r"##\s+💬\s+Slack Integration(.*?)(?=##\s+|$)", content, re.DOTALL
+                r"##\s+\U0001F4AC\s+Slack Integration(.*?)(?=##\s+|$)", content, re.DOTALL
             )
 
             if not slack_section_match:
@@ -160,15 +182,20 @@ class SlackConfigService:
             logger.error(f"Error loading Slack config from PIPER.user.md: {e}")
             return {}
 
-    def _load_config(self) -> SlackConfig:
+    def _load_config(self, user_id: str) -> SlackConfig:
         """
         Load configuration with 4-layer priority: env vars > user config > keychain > defaults.
 
         Priority order:
         1. Environment variables (highest)
         2. PIPER.user.md configuration (middle)
-        3. OS Keychain (secure storage, Issue #575)
+        3. OS Keychain with user-scoping (secure storage, Issue #575/#734)
         4. Hardcoded defaults (lowest)
+
+        Args:
+            user_id: User identifier for scoping credentials
+
+        Issue #734: Keychain lookups now scoped by user_id.
         """
         from services.infrastructure.keychain_service import KeychainService
 
@@ -182,16 +209,20 @@ class SlackConfigService:
         features_config = user_config.get("features", {})
         oauth_config = user_config.get("oauth", {})
 
-        # Issue #575/#576: Check keychain for credentials as fallback
+        # Issue #575/#576/#734: Check keychain for credentials with user-scoping
         keychain = KeychainService()
-        keychain_bot_token = keychain.get_api_key("slack_bot") or ""
+        # User-scoped token (per ADR-058)
+        keychain_bot_token = keychain.get_api_key("slack_bot", username=user_id) or ""
+        # App credentials (shared, no user scoping)
         keychain_client_id = keychain.get_api_key("slack_client_id") or ""
         keychain_client_secret = keychain.get_api_key("slack_client_secret") or ""
 
         # 4-layer priority: env > user config > keychain > default
+        # bot_token is user-scoped
         bot_token = (
             os.getenv("SLACK_BOT_TOKEN") or auth_config.get("bot_token") or keychain_bot_token or ""
         )
+        # client_id/secret are app credentials (shared)
         client_id = (
             os.getenv("SLACK_CLIENT_ID")
             or oauth_config.get("client_id")
@@ -206,7 +237,7 @@ class SlackConfigService:
         )
 
         return SlackConfig(
-            # Authentication (4-layer priority for bot_token)
+            # Authentication (4-layer priority for bot_token, user-scoped)
             bot_token=bot_token,
             app_token=os.getenv("SLACK_APP_TOKEN", auth_config.get("app_token", "")),
             signing_secret=os.getenv("SLACK_SIGNING_SECRET", auth_config.get("signing_secret", "")),
@@ -241,7 +272,7 @@ class SlackConfigService:
             environment=SlackEnvironment(
                 os.getenv("SLACK_ENVIRONMENT", api_config.get("environment", "development"))
             ),
-            # OAuth Settings (4-layer priority)
+            # OAuth Settings (4-layer priority, app credentials)
             client_id=client_id,
             client_secret=client_secret,
             redirect_uri=os.getenv("SLACK_REDIRECT_URI", oauth_config.get("redirect_uri", "")),
@@ -252,15 +283,75 @@ class SlackConfigService:
             ),
         )
 
-    def is_configured(self) -> bool:
-        """Check if Slack is properly configured"""
-        config = self.get_config()
+    def is_configured(self, user_id: str) -> bool:
+        """
+        Check if Slack is properly configured for the given user.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            True if Slack is properly configured
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+        config = self.get_config(user_id)
         return config.validate()
 
-    def get_environment(self) -> SlackEnvironment:
-        """Get current Slack environment"""
-        return self.get_config().environment
+    def get_environment(self, user_id: str) -> SlackEnvironment:
+        """
+        Get current Slack environment.
 
-    def is_production(self) -> bool:
-        """Check if running in production environment"""
-        return self.get_environment() == SlackEnvironment.PRODUCTION
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            SlackEnvironment enum value
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+        return self.get_config(user_id).environment
+
+    def is_production(self, user_id: str) -> bool:
+        """
+        Check if running in production environment.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            True if in production environment
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+        return self.get_environment(user_id) == SlackEnvironment.PRODUCTION
+
+    def clear_cache(self, user_id: Optional[str] = None) -> None:
+        """
+        Clear configuration cache.
+
+        Args:
+            user_id: If provided, clear only that user's cache.
+                     If None, clear entire cache.
+
+        Issue #734: Added for multi-tenancy support.
+        """
+        if user_id:
+            self._config_cache.pop(user_id, None)
+        else:
+            self._config_cache.clear()

@@ -1,7 +1,7 @@
 # Release Runbook
 
-**Version**: 1.4
-**Last Updated**: January 19, 2026
+**Version**: 1.5
+**Last Updated**: January 28, 2026
 
 This runbook documents the complete process for releasing a new version of Piper Morgan to production.
 
@@ -112,8 +112,8 @@ These files have version numbers in their headers that MUST be updated:
 
 These templates reference version numbers that MUST be updated:
 
-- [ ] `docs/alpha/templates/alpha-tester-email-template.md` - Update **Version** and **Last Updated**
 - [ ] `docs/operations/alpha-onboarding/email-template.md` - Update version in multiple places (header, body text, footer)
+  - **Note**: This is the single canonical email template. No duplicates should exist.
 
 ### 4. Briefing Documentation (MANDATORY - update version)
 
@@ -284,6 +284,27 @@ grep -r "0\.8\.4\.2" docs/ --include="*.md" | grep -v "releases/" | grep -v "omn
 
 If any files show up (other than historical release notes), they need updating.
 
+### Content Accuracy Audit
+
+**Why this exists**: The version number grep above catches stale version strings, but content drift is harder to detect. In the v0.8.5 release, we found stale test counts (602 vs 5253), wrong Python versions (3.9 vs 3.11), wrong branch names (`main` vs `production`), and outdated feature labels — none of which would be caught by a version number grep.
+
+For each alpha-facing document, verify these content areas are current:
+
+| Content Area | Where to Check | Common Drift |
+|-------------|----------------|--------------|
+| **Test counts** | ALPHA_KNOWN_ISSUES, ALPHA_QUICKSTART | Run `pytest --collect-only -q` and compare |
+| **Python version** | ALPHA_TESTING_GUIDE, ALPHA_AGREEMENT, email template | Currently 3.11 or 3.12 |
+| **Git branch** | Release notes, ALPHA_TESTING_GUIDE, ALPHA_QUICKSTART | Testers use `production`, not `main` |
+| **"What's New" sections** | ALPHA_TESTING_GUIDE, ALPHA_QUICKSTART | Should reflect THIS release, not old ones |
+| **"What's Working" lists** | ALPHA_QUICKSTART | Must match actual current capabilities |
+| **"New in X.Y" labels** | All alpha docs | Remove or update labels from old releases |
+| **"Planned for Beta"** | ALPHA_KNOWN_ISSUES | Should reflect current MVP milestone issues |
+| **Feature descriptions** | All alpha docs | Must match what's actually shipped |
+| **Accessibility claims** | Email template, ALPHA_TESTING_GUIDE | Update if WCAG compliance changed |
+| **Screenshots** | ALPHA_TESTING_GUIDE, ALPHA_QUICKSTART | Flag if UI changed since last capture |
+
+**Procedure**: Read each alpha doc in full. For each content area above, verify the claim matches reality. If screenshots are stale, flag for PM (screenshots require human capture).
+
 ### Quick Audit Checklist
 
 | Category | Files | Check For |
@@ -300,8 +321,8 @@ If any files show up (other than historical release notes), they need updating.
 | Agreement | `docs/ALPHA_AGREEMENT_v2.md` | Version in 3 places |
 | **Tier 3: Other Docs** | | |
 | Docs README | `docs/README.md` | Release notes quick link (line ~18) |
-| Email (alpha) | `docs/alpha/templates/alpha-tester-email-template.md` | Version, Last Updated |
-| Email (ops) | `docs/operations/alpha-onboarding/email-template.md` | Version, For version, Last Updated, footer |
+| Email template | `docs/operations/alpha-onboarding/email-template.md` | Version, For version, Last Updated, footer |
+| | | **Note**: Single canonical template. No duplicates should exist. |
 
 ---
 
@@ -331,7 +352,6 @@ If any files show up (other than historical release notes), they need updating.
 - [ ] docs/ALPHA_KNOWN_ISSUES.md updated
 - [ ] docs/ALPHA_QUICKSTART.md updated
 - [ ] docs/ALPHA_AGREEMENT_v2.md updated
-- [ ] docs/alpha/templates/alpha-tester-email-template.md updated
 - [ ] docs/operations/alpha-onboarding/email-template.md updated
 
 ### Git Operations
@@ -346,7 +366,9 @@ If any files show up (other than historical release notes), they need updating.
 
 ### Post-Release Verification
 - [ ] Release notes display correctly
-- [ ] Documentation audit passed (no stale version numbers)
+- [ ] Version number audit passed (grep for old version)
+- [ ] Content accuracy audit passed (test counts, Python version, branch names, feature claims)
+- [ ] Screenshots flagged for refresh if UI changed
 - [ ] Session log updated
 ```
 
@@ -356,6 +378,7 @@ If any files show up (other than historical release notes), they need updating.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5 | 2026-01-28 | Added Content Accuracy Audit (beyond version grep), consolidated to single email template, updated Completion Matrix |
 | 1.4 | 2026-01-19 | Added Documentation Audit Step with grep command, added Completion Matrix template |
 | 1.3 | 2026-01-15 | Complete file inventory: marked Alpha docs and templates as MANDATORY, added specific file locations |
 | 1.2 | 2026-01-15 | Added "How to Invoke" section, expanded mandatory release notes section (docs/releases/README.md, versioning.md) |

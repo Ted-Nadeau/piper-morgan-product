@@ -40,9 +40,9 @@ Every release MUST update these files (complete inventory):
 - `docs/ALPHA_QUICKSTART.md` - Version and "What's New" section
 - `docs/ALPHA_AGREEMENT_v2.md` - Version in 3 places (header, line 15, line 153)
 
-### Alpha Templates (2 files)
-- `docs/alpha/templates/alpha-tester-email-template.md` - Version and Last Updated
+### Alpha Template (1 file — single canonical template)
 - `docs/operations/alpha-onboarding/email-template.md` - Version in multiple places
+  - Note: The duplicate at `docs/alpha/templates/` was deleted in v0.8.5. Only one template should exist.
 
 ## Reference
 

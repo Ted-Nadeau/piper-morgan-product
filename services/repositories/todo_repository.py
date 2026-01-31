@@ -38,11 +38,23 @@ class TodoListRepository(BaseRepository):
         return db_list.to_domain()
 
     async def get_list_by_id(
-        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+        self, list_id: str, owner_id: str, is_admin: bool = False
     ) -> Optional[domain.TodoList]:
-        """Get todo list by ID - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+        """Get todo list by ID - verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
+
+        Args:
+            list_id: The list ID to retrieve
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         filters = [TodoListDB.id == list_id]
-        if owner_id and not is_admin:
+        if not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(TodoListDB).where(and_(*filters)))
@@ -95,13 +107,26 @@ class TodoListRepository(BaseRepository):
         return [db_list.to_domain() for db_list in db_lists]
 
     async def update_list(
-        self, list_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+        self, list_id: str, updates: Dict, owner_id: str, is_admin: bool = False
     ) -> Optional[domain.TodoList]:
-        """Update todo list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+        """Update todo list - verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
+
+        Args:
+            list_id: The list ID to update
+            updates: Dictionary of fields to update
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         updates["updated_at"] = datetime.now()
 
         filters = [TodoListDB.id == list_id]
-        if owner_id and not is_admin:
+        if not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -110,10 +135,20 @@ class TodoListRepository(BaseRepository):
         db_list = result.scalar_one_or_none()
         return db_list.to_domain() if db_list else None
 
-    async def update_todo_counts(
-        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
-    ) -> None:
-        """Update cached todo counts for a list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+    async def update_todo_counts(self, list_id: str, owner_id: str, is_admin: bool = False) -> None:
+        """Update cached todo counts for a list - verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
+
+        Args:
+            list_id: The list ID to update counts for
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         # Get current counts through list memberships
         total_result = await self.session.execute(
             select(func.count(ListMembershipDB.id)).where(ListMembershipDB.list_id == list_id)
@@ -130,7 +165,7 @@ class TodoListRepository(BaseRepository):
 
         # Update the list with new counts (with ownership verification if provided)
         filters = [TodoListDB.id == list_id]
-        if owner_id and not is_admin:
+        if not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         await self.session.execute(
@@ -141,12 +176,22 @@ class TodoListRepository(BaseRepository):
             )
         )
 
-    async def delete_list(
-        self, list_id: str, owner_id: Optional[str] = None, is_admin: bool = False
-    ) -> bool:
-        """Delete a todo list - optionally verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)"""
+    async def delete_list(self, list_id: str, owner_id: str, is_admin: bool = False) -> bool:
+        """Delete a todo list - verify ownership (SEC-RBAC Phase 3: admins bypass ownership check)
+
+        Args:
+            list_id: The list ID to delete
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         filters = [TodoListDB.id == list_id]
-        if owner_id and not is_admin:
+        if not is_admin:
             filters.append(TodoListDB.owner_id == owner_id)
 
         result = await self.session.execute(select(TodoListDB).where(and_(*filters)))
@@ -158,7 +203,18 @@ class TodoListRepository(BaseRepository):
         return False
 
     async def search_lists_by_name(self, owner_id: str, query: str) -> List[domain.TodoList]:
-        """Search lists by name (case-insensitive)"""
+        """Search lists by name (case-insensitive)
+
+        Args:
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            query: Search query string
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         result = await self.session.execute(
             select(TodoListDB)
             .where(
@@ -191,11 +247,23 @@ class TodoRepository(BaseRepository):
         return db_todo.to_domain()
 
     async def get_todo_by_id(
-        self, todo_id: str, owner_id: Optional[str] = None, is_admin: bool = False
+        self, todo_id: str, owner_id: str, is_admin: bool = False
     ) -> Optional[domain.Todo]:
-        """Get todo by ID with optional subtask loading (admin bypass in SEC-RBAC Phase 3)"""
+        """Get todo by ID with optional subtask loading (admin bypass in SEC-RBAC Phase 3)
+
+        Args:
+            todo_id: The todo ID to retrieve
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         filters = [TodoDB.id == todo_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(TodoDB.owner_id == owner_id)
 
         result = await self.session.execute(
@@ -337,16 +405,29 @@ class TodoRepository(BaseRepository):
         return [db_todo.to_domain() for db_todo in db_todos]
 
     async def update_todo(
-        self, todo_id: str, updates: Dict, owner_id: Optional[str] = None, is_admin: bool = False
+        self, todo_id: str, updates: Dict, owner_id: str, is_admin: bool = False
     ) -> Optional[domain.Todo]:
-        """Update todo with optimistic field updates (admin bypass in SEC-RBAC Phase 3)"""
+        """Update todo with optimistic field updates (admin bypass in SEC-RBAC Phase 3)
+
+        Args:
+            todo_id: The todo ID to update
+            updates: Dictionary of fields to update
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         # Separate inherited fields (from ItemDB) from child-specific fields (from TodoDB)
         inherited_fields = {"text", "position", "list_id", "created_at"}
         child_updates = {k: v for k, v in updates.items() if k not in inherited_fields}
         parent_updates = {k: v for k, v in updates.items() if k in inherited_fields}
 
         filters = [TodoDB.id == todo_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(TodoDB.owner_id == owner_id)
 
         # Always update updated_at on parent table (ItemDB)
@@ -378,28 +459,65 @@ class TodoRepository(BaseRepository):
         return db_todo.to_domain() if db_todo else None
 
     async def complete_todo(
-        self, todo_id: str, completion_notes: str = ""
+        self, todo_id: str, owner_id: str, completion_notes: str = "", is_admin: bool = False
     ) -> Optional[domain.Todo]:
-        """Complete a todo with timestamp and notes"""
+        """Complete a todo with timestamp and notes
+
+        Args:
+            todo_id: The todo ID to complete
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            completion_notes: Optional notes about completion
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         updates = {
             "status": TodoStatus.COMPLETED,
             "completed_at": datetime.now(),
             "completion_notes": completion_notes,
             "updated_at": datetime.now(),
         }
-        return await self.update_todo(todo_id, updates)
+        return await self.update_todo(todo_id, updates, owner_id=owner_id, is_admin=is_admin)
 
-    async def reopen_todo(self, todo_id: str) -> Optional[domain.Todo]:
-        """Reopen a completed todo"""
+    async def reopen_todo(
+        self, todo_id: str, owner_id: str, is_admin: bool = False
+    ) -> Optional[domain.Todo]:
+        """Reopen a completed todo
+
+        Args:
+            todo_id: The todo ID to reopen
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         updates = {"status": TodoStatus.PENDING, "completed_at": None, "updated_at": datetime.now()}
-        return await self.update_todo(todo_id, updates)
+        return await self.update_todo(todo_id, updates, owner_id=owner_id, is_admin=is_admin)
 
-    async def delete_todo(
-        self, todo_id: str, owner_id: Optional[str] = None, is_admin: bool = False
-    ) -> bool:
-        """Delete a todo (admin bypass in SEC-RBAC Phase 3, cascades to subtodos and memberships)"""
+    async def delete_todo(self, todo_id: str, owner_id: str, is_admin: bool = False) -> bool:
+        """Delete a todo (admin bypass in SEC-RBAC Phase 3, cascades to subtodos and memberships)
+
+        Args:
+            todo_id: The todo ID to delete
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            is_admin: If True, bypasses ownership check
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         filters = [TodoDB.id == todo_id]
-        if owner_id and not is_admin:  # Only check ownership if not admin
+        if not is_admin:  # Only check ownership if not admin
             filters.append(TodoDB.owner_id == owner_id)
 
         result = await self.session.execute(select(TodoDB).where(and_(*filters)))
@@ -803,9 +921,22 @@ class TodoManagementRepository:
         self.memberships = ListMembershipRepository(session)
 
     async def create_todo_in_list(
-        self, todo: domain.Todo, list_id: str, added_by: str
+        self, todo: domain.Todo, list_id: str, added_by: str, owner_id: str
     ) -> tuple[domain.Todo, domain.ListMembership]:
-        """Create a todo and add it to a list in one operation"""
+        """Create a todo and add it to a list in one operation
+
+        Args:
+            todo: The todo domain object to create
+            list_id: The list to add the todo to
+            added_by: Who is adding the todo
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         # Create the todo
         created_todo = await self.todos.create_todo(todo)
 
@@ -814,25 +945,36 @@ class TodoManagementRepository:
             list_id=list_id, todo_id=created_todo.id, added_by=added_by
         )
 
-        # Update list counts
-        await self.todo_lists.update_todo_counts(list_id)
+        # Update list counts with owner verification
+        await self.todo_lists.update_todo_counts(list_id, owner_id=owner_id)
 
         return created_todo, membership
 
-    async def delete_todo_from_everywhere(self, todo_id: str) -> Dict[str, int]:
-        """Delete a todo from all lists and remove the todo itself"""
+    async def delete_todo_from_everywhere(self, todo_id: str, owner_id: str) -> Dict[str, int]:
+        """Delete a todo from all lists and remove the todo itself
+
+        Args:
+            todo_id: The todo ID to delete
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
         # Get all lists containing this todo for count updates
         lists_with_todo = await self.memberships.get_lists_for_todo(todo_id)
 
         # Remove from all lists
         memberships_deleted = await self.memberships.delete_memberships_for_todo(todo_id)
 
-        # Delete the todo itself
-        todo_deleted = await self.todos.delete_todo(todo_id)
+        # Delete the todo itself with owner verification
+        todo_deleted = await self.todos.delete_todo(todo_id, owner_id=owner_id)
 
         # Update counts for affected lists
         for todo_list in lists_with_todo:
-            await self.todo_lists.update_todo_counts(todo_list.id)
+            await self.todo_lists.update_todo_counts(todo_list.id, owner_id=owner_id)
 
         return {
             "todo_deleted": 1 if todo_deleted else 0,
@@ -841,11 +983,25 @@ class TodoManagementRepository:
         }
 
     async def complete_todo_in_all_lists(
-        self, todo_id: str, completion_notes: str = ""
+        self, todo_id: str, owner_id: str, completion_notes: str = ""
     ) -> Optional[domain.Todo]:
-        """Complete a todo and update counts in all containing lists"""
-        # Complete the todo
-        completed_todo = await self.todos.complete_todo(todo_id, completion_notes)
+        """Complete a todo and update counts in all containing lists
+
+        Args:
+            todo_id: The todo ID to complete
+            owner_id: REQUIRED - the owner ID for multi-tenancy isolation
+            completion_notes: Optional notes about completion
+
+        Raises:
+            ValueError: If owner_id is None or empty (SEC-MULTITENANCY Phase 4)
+        """
+        if not owner_id:
+            raise ValueError("owner_id is required for multi-tenancy isolation")
+
+        # Complete the todo with owner verification
+        completed_todo = await self.todos.complete_todo(
+            todo_id, owner_id=owner_id, completion_notes=completion_notes
+        )
 
         if completed_todo:
             # Get all lists containing this todo
@@ -853,7 +1009,7 @@ class TodoManagementRepository:
 
             # Update counts for all affected lists
             for todo_list in lists_with_todo:
-                await self.todo_lists.update_todo_counts(todo_list.id)
+                await self.todo_lists.update_todo_counts(todo_list.id, owner_id=owner_id)
 
         return completed_todo
 

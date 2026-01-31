@@ -6,9 +6,9 @@ This directory contains release notes for all Piper Morgan versions.
 
 ## Current Version
 
-**v0.8.5** (January 27, 2026) - [Release Notes](RELEASE-NOTES-v0.8.5.md)
+**v0.8.5.1** (January 31, 2026) - [Release Notes](RELEASE-NOTES-v0.8.5.1.md)
 
-MUX-IMPLEMENT Complete: Full accessibility compliance (WCAG 2.1 AA), design token system, lifecycle state persistence.
+Alpha testing bug fixes: 14 issues fixed including authentication, portfolio onboarding, navigation, and UI improvements.
 
 ---
 
@@ -16,6 +16,7 @@ MUX-IMPLEMENT Complete: Full accessibility compliance (WCAG 2.1 AA), design toke
 
 | Version | Date | Type | Highlights |
 |---------|------|------|------------|
+| [v0.8.5.1](RELEASE-NOTES-v0.8.5.1.md) | Jan 31, 2026 | Patch | 14 alpha testing bug fixes |
 | [v0.8.5](RELEASE-NOTES-v0.8.5.md) | Jan 27, 2026 | Feature | MUX-IMPLEMENT complete, WCAG 2.1 AA accessibility |
 | [v0.8.4.3](RELEASE-NOTES-v0.8.4.3.md) | Jan 18, 2026 | Patch | Fresh install fixes (#605-#609), UI polish |
 | [v0.8.4.2](RELEASE-NOTES-v0.8.4.2.md) | Jan 15, 2026 | Patch | Calendar bug fixes (#596, #588), markdown rendering |

@@ -146,7 +146,7 @@ python -m alembic upgrade head
 ### For Existing Users
 
 ```bash
-git pull origin main
+git pull origin production
 python -m alembic upgrade head  # Adds lifecycle_state columns
 python main.py
 ```

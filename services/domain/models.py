@@ -53,6 +53,11 @@ from services.shared_types import (
 # REQUEST CONTEXT - ADR-051: Unified User Session Context
 # =============================================================================
 
+# Issue #734: Default workspace for single-tenant deployments
+# This UUID is used when no explicit workspace_id is provided.
+# For multi-tenant deployments, each tenant will have their own workspace_id.
+DEFAULT_WORKSPACE_ID = UUID("00000000-0000-0000-0000-000000000000")
+
 
 @dataclass(frozen=True)
 class RequestContext:
@@ -123,13 +128,16 @@ class RequestContext:
         if not conversation_id or not str(conversation_id).strip():
             raise ValueError("conversation_id is required")
 
+        # Issue #734: Use DEFAULT_WORKSPACE_ID for single-tenant deployments
+        workspace = UUID(claims.workspace_id) if claims.workspace_id else DEFAULT_WORKSPACE_ID
+
         return cls(
             user_id=UUID(claims.sub),  # str → UUID at boundary
             conversation_id=UUID(conversation_id),  # str → UUID at boundary
             request_id=request_id or uuid4(),
             user_email=claims.user_email,
             timestamp=datetime.now(timezone.utc),
-            workspace_id=UUID(claims.workspace_id) if claims.workspace_id else None,
+            workspace_id=workspace,
         )
 
     def __str__(self) -> str:

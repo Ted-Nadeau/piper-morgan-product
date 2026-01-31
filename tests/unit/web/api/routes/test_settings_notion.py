@@ -207,7 +207,8 @@ class TestNotionConfigServiceKeychainFallback:
         ):
             config_service = NotionConfigService()
             config_service._config = None  # Ensure fresh lookup
-            config = config_service.get_config()
+            # Issue #734: Now requires user_id
+            config = config_service.get_config(user_id="test-user-123")
 
             assert config.api_key == "secret_env_key"
             # Keychain should NOT be called when env var is present
@@ -229,10 +230,12 @@ class TestNotionConfigServiceKeychainFallback:
         ):
             config_service = NotionConfigService()
             config_service._config = None  # Ensure fresh lookup
-            config = config_service.get_config()
+            # Issue #734: Now requires user_id
+            config = config_service.get_config(user_id="test-user-123")
 
             assert config.api_key == "secret_keychain_key"
-            mock_keychain.get_api_key.assert_called_once_with("notion", username="system")
+            # Issue #734: Now passes user_id to keychain
+            mock_keychain.get_api_key.assert_called_once_with("notion", username="test-user-123")
 
     def test_get_config_returns_empty_when_nothing_configured(self):
         """Should return empty string when neither env var nor keychain has key"""
@@ -250,7 +253,8 @@ class TestNotionConfigServiceKeychainFallback:
         ):
             config_service = NotionConfigService()
             config_service._config = None  # Ensure fresh lookup
-            config = config_service.get_config()
+            # Issue #734: Now requires user_id
+            config = config_service.get_config(user_id="test-user-123")
 
             assert config.api_key == ""
 
@@ -270,7 +274,8 @@ class TestNotionConfigServiceKeychainFallback:
         ):
             config_service = NotionConfigService()
             config_service._config = None  # Ensure fresh lookup
-            config = config_service.get_config()
+            # Issue #734: Now requires user_id
+            config = config_service.get_config(user_id="test-user-123")
 
             # Should gracefully return empty string, not raise
             assert config.api_key == ""

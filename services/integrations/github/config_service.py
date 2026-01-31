@@ -76,21 +76,27 @@ class GitHubConfigService:
     the established patterns for Application/Domain layer services.
 
     Implements standard config service interface for plugin architecture:
-    - get_config() -> dict: Returns complete configuration
-    - is_configured() -> bool: Validates required config present
-    - _load_config() -> dict: Loads config from environment
+    - get_config(user_id) -> dict: Returns complete configuration
+    - is_configured(user_id) -> bool: Validates required config present
+    - _load_config(user_id) -> dict: Loads config from environment
 
     GitHub-specific extensions:
-    - get_client_configuration(): Returns GitHubClientConfig object
-    - get_authentication_token(): Returns GitHub auth token
+    - get_client_configuration(user_id): Returns GitHubClientConfig object
+    - get_authentication_token(user_id): Returns GitHub auth token
     - get_default_repository(): Returns default repository
-    - get_configuration_summary(): Returns masked config for debugging
+    - get_configuration_summary(user_id): Returns masked config for debugging
+
+    Issue #734: Updated for multi-tenancy isolation.
+    All user-scoped methods now require user_id parameter.
     """
 
     def __init__(self, environment: Optional[GitHubEnvironment] = None):
         self._environment = environment or self._detect_environment()
-        self._config_cache: Dict[str, Any] = {}
-        self._client_config: Optional[GitHubClientConfig] = None
+        # Per-user config cache (keyed by user_id)
+        self._user_config_cache: Dict[str, Dict[str, Any]] = {}
+        self._user_client_config: Dict[str, GitHubClientConfig] = {}
+        # Shared config cache (not user-scoped)
+        self._shared_config_cache: Dict[str, Any] = {}
 
     def _detect_environment(self) -> GitHubEnvironment:
         """Detect current environment from infrastructure layer"""
@@ -109,18 +115,33 @@ class GitHubConfigService:
 
         return environment_mapping.get(env_name, GitHubEnvironment.DEVELOPMENT)
 
-    def get_authentication_token(self) -> Optional[str]:
+    def get_authentication_token(self, user_id: str) -> Optional[str]:
         """
         Get GitHub authentication token with environment-specific handling.
 
         Follows ADR-010: ConfigService for application layer configuration access.
 
-        Priority: env vars > keychain
+        Priority: env vars > user-scoped keychain
         Issue #578: Added keychain fallback for UI-configured tokens.
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            GitHub token if available, None otherwise
+
+        Raises:
+            ValueError: If user_id is None or empty
         """
-        # Check cache first
-        if "auth_token" in self._config_cache:
-            return self._config_cache["auth_token"]
+        if not user_id:
+            raise ValueError("user_id is required")
+
+        # Check user-specific cache first
+        if user_id not in self._user_config_cache:
+            self._user_config_cache[user_id] = {}
+        if "auth_token" in self._user_config_cache[user_id]:
+            return self._user_config_cache[user_id]["auth_token"]
 
         # Environment-specific token resolution
         token_env_vars = [
@@ -136,24 +157,25 @@ class GitHubConfigService:
             if token:
                 break
 
-        # Issue #578: Fallback to keychain if env vars not set
+        # Issue #578/#734: Fallback to user-scoped keychain if env vars not set
         if not token:
             try:
                 from services.infrastructure.keychain_service import KeychainService
 
                 keychain = KeychainService()
-                token = keychain.get_api_key("github_token") or None
+                # User-scoped token lookup (per ADR-058)
+                token = keychain.get_api_key("github_token", username=user_id) or None
             except Exception:
                 pass  # Keychain not available, continue with None
 
         # Cache the result
-        self._config_cache["auth_token"] = token
+        self._user_config_cache[user_id]["auth_token"] = token
         return token
 
     def get_default_repository(self) -> Optional[str]:
-        """Get default GitHub repository for issue creation"""
-        if "default_repo" in self._config_cache:
-            return self._config_cache["default_repo"]
+        """Get default GitHub repository for issue creation (shared, not user-scoped)"""
+        if "default_repo" in self._shared_config_cache:
+            return self._shared_config_cache["default_repo"]
 
         # Environment-specific repository configuration
         repo_env_vars = [
@@ -168,18 +190,32 @@ class GitHubConfigService:
             if repo:
                 break
 
-        self._config_cache["default_repo"] = repo
+        self._shared_config_cache["default_repo"] = repo
         return repo
 
-    def get_client_configuration(self) -> GitHubClientConfig:
+    def get_client_configuration(self, user_id: str) -> GitHubClientConfig:
         """
         Get comprehensive GitHub client configuration.
 
         Returns environment-specific configuration for GitHub API client
         following ADR-010 configuration access patterns.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            GitHubClientConfig with user-scoped authentication token
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
         """
-        if self._client_config:
-            return self._client_config
+        if not user_id:
+            raise ValueError("user_id is required")
+
+        if user_id in self._user_client_config:
+            return self._user_client_config[user_id]
 
         # Build retry configuration based on environment
         retry_config = GitHubRetryConfig()
@@ -193,9 +229,9 @@ class GitHubConfigService:
             retry_config.base_delay_seconds = 0.1
             retry_config.rate_limit_retry_enabled = False
 
-        # Build client configuration
-        self._client_config = GitHubClientConfig(
-            token=self.get_authentication_token(),
+        # Build client configuration with user-scoped token
+        client_config = GitHubClientConfig(
+            token=self.get_authentication_token(user_id),
             user_agent=f"Piper-Morgan-PM/1.0 ({self._environment.value})",
             timeout_seconds=self._get_timeout_config(),
             per_page=self._get_pagination_config(),
@@ -203,7 +239,8 @@ class GitHubConfigService:
             retry_config=retry_config,
         )
 
-        return self._client_config
+        self._user_client_config[user_id] = client_config
+        return client_config
 
     def _get_timeout_config(self) -> int:
         """Get API timeout configuration"""
@@ -287,12 +324,12 @@ class GitHubConfigService:
 
     def get_allowed_repositories(self) -> List[str]:
         """
-        Get list of repositories allowed for operations.
+        Get list of repositories allowed for operations (shared, not user-scoped).
 
         Returns environment-specific repository allowlist for security.
         """
-        if "allowed_repos" in self._config_cache:
-            return self._config_cache["allowed_repos"]
+        if "allowed_repos" in self._shared_config_cache:
+            return self._shared_config_cache["allowed_repos"]
 
         repos_env = os.getenv("GITHUB_ALLOWED_REPOS", "")
         if repos_env:
@@ -302,7 +339,7 @@ class GitHubConfigService:
             default_repo = self.get_default_repository()
             repos = [default_repo] if default_repo else []
 
-        self._config_cache["allowed_repos"] = repos
+        self._shared_config_cache["allowed_repos"] = repos
         return repos
 
     def is_repository_allowed(self, repo_name: str) -> bool:
@@ -316,20 +353,34 @@ class GitHubConfigService:
         return repo_name in allowed_repos
 
     def get_environment(self) -> GitHubEnvironment:
-        """Get current environment"""
+        """Get current environment (shared, not user-scoped)"""
         return self._environment
 
-    def get_configuration_summary(self) -> Dict[str, Any]:
+    def get_configuration_summary(self, user_id: str) -> Dict[str, Any]:
         """
         Get summary of current configuration for debugging/monitoring.
 
         Returns masked configuration data suitable for logging/debugging.
+
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
+        Returns:
+            Configuration summary with user-scoped token status
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
         """
-        client_config = self.get_client_configuration()
+        if not user_id:
+            raise ValueError("user_id is required")
+
+        client_config = self.get_client_configuration(user_id)
 
         return {
             "environment": self._environment.value,
-            "has_authentication_token": self.get_authentication_token() is not None,
+            "has_authentication_token": self.get_authentication_token(user_id) is not None,
             "default_repository": self.get_default_repository(),
             "allowed_repositories_count": len(self.get_allowed_repositories()),
             "client_configuration": client_config.to_dict(),
@@ -344,7 +395,7 @@ class GitHubConfigService:
 
     # ===== Standard Config Service Interface (for plugin architecture) =====
 
-    def get_config(self) -> Dict[str, Any]:
+    def get_config(self, user_id: str) -> Dict[str, Any]:
         """
         Returns complete configuration dictionary (standard interface).
 
@@ -352,12 +403,22 @@ class GitHubConfigService:
         Returns dictionary with all GitHub configuration including authentication,
         repository settings, and feature flags.
 
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
         Returns:
             Dict[str, Any]: Complete GitHub configuration
-        """
-        return self.get_configuration_summary()
 
-    def is_configured(self) -> bool:
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
+        """
+        if not user_id:
+            raise ValueError("user_id is required")
+        return self.get_configuration_summary(user_id)
+
+    def is_configured(self, user_id: str) -> bool:
         """
         Returns True if all required config present (standard interface).
 
@@ -365,16 +426,26 @@ class GitHubConfigService:
         Checks if GitHub authentication token is available, which is the
         minimum requirement for GitHub operations.
 
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
         Returns:
             bool: True if GitHub is properly configured
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
         """
+        if not user_id:
+            raise ValueError("user_id is required")
         try:
-            token = self.get_authentication_token()
+            token = self.get_authentication_token(user_id)
             return bool(token)
         except Exception:
             return False
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self, user_id: str) -> Dict[str, Any]:
         """
         Private method to load config from environment (standard interface).
 
@@ -382,14 +453,37 @@ class GitHubConfigService:
         GitHub's config loading is handled dynamically in __init__ and getter methods.
         This method provides the standard interface by returning current config.
 
+        Args:
+            user_id: User identifier for scoping credentials (required)
+
         Returns:
             Dict[str, Any]: Current configuration state
+
+        Raises:
+            ValueError: If user_id is None or empty
+
+        Issue #734: Added user_id parameter for multi-tenancy isolation.
         """
-        return self.get_config()
+        if not user_id:
+            raise ValueError("user_id is required")
+        return self.get_config(user_id)
 
     # ===== Utility Methods =====
 
-    def clear_cache(self):
-        """Clear configuration cache (useful for testing)"""
-        self._config_cache.clear()
-        self._client_config = None
+    def clear_cache(self, user_id: Optional[str] = None) -> None:
+        """
+        Clear configuration cache.
+
+        Args:
+            user_id: If provided, clear only that user's cache.
+                     If None, clear entire cache.
+
+        Issue #734: Added for multi-tenancy support.
+        """
+        if user_id:
+            self._user_config_cache.pop(user_id, None)
+            self._user_client_config.pop(user_id, None)
+        else:
+            self._user_config_cache.clear()
+            self._user_client_config.clear()
+            self._shared_config_cache.clear()

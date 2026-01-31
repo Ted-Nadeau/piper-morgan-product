@@ -77,6 +77,7 @@ class JWTClaims:
     # Custom claims for Piper Morgan
     user_id: UUID
     user_email: str
+    username: str  # Issue #730: Display username in UI
     scopes: List[str]  # Permissions/scopes
     token_type: str  # TokenType enum value
     session_id: Optional[str] = None
@@ -146,6 +147,7 @@ class JWTService:
         user_id: UUID,
         user_email: str,
         scopes: List[str],
+        username: Optional[str] = None,
         session_id: Optional[str] = None,
         workspace_id: Optional[str] = None,
     ) -> str:
@@ -156,6 +158,7 @@ class JWTService:
             user_id: Unique user identifier
             user_email: User email address
             scopes: List of permission scopes
+            username: Display username (Issue #730)
             session_id: Optional session identifier
             workspace_id: Optional workspace/tenant identifier
 
@@ -164,6 +167,11 @@ class JWTService:
         """
         now = datetime.now(timezone.utc)
         expire = now + timedelta(minutes=self.access_token_expire_minutes)
+
+        # Issue #730: Use provided username, or fall back to email prefix
+        display_username = username or (
+            user_email.split("@")[0] if "@" in user_email else user_email
+        )
 
         claims = JWTClaims(
             iss=self.issuer,
@@ -174,6 +182,7 @@ class JWTService:
             jti=str(uuid.uuid4()),
             user_id=user_id,
             user_email=user_email,
+            username=display_username,
             scopes=scopes,
             token_type=TokenType.ACCESS.value,
             session_id=session_id,
@@ -199,7 +208,11 @@ class JWTService:
         return token
 
     def generate_refresh_token(
-        self, user_id: UUID, user_email: str, session_id: Optional[str] = None
+        self,
+        user_id: UUID,
+        user_email: str,
+        username: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> str:
         """
         Generate JWT refresh token for long-term authentication.
@@ -207,6 +220,7 @@ class JWTService:
         Args:
             user_id: Unique user identifier
             user_email: User email address
+            username: Display username (Issue #730)
             session_id: Optional session identifier
 
         Returns:
@@ -214,6 +228,11 @@ class JWTService:
         """
         now = datetime.now(timezone.utc)
         expire = now + timedelta(days=self.refresh_token_expire_days)
+
+        # Issue #730: Use provided username, or fall back to email prefix
+        display_username = username or (
+            user_email.split("@")[0] if "@" in user_email else user_email
+        )
 
         claims = JWTClaims(
             iss=self.issuer,
@@ -224,6 +243,7 @@ class JWTService:
             jti=str(uuid.uuid4()),
             user_id=user_id,
             user_email=user_email,
+            username=display_username,
             scopes=["refresh"],  # Limited scope for refresh tokens
             token_type=TokenType.REFRESH.value,
             session_id=session_id,
@@ -249,6 +269,7 @@ class JWTService:
         self,
         user_id: UUID,
         user_email: str,
+        username: Optional[str] = None,
     ) -> str:
         """
         Generate long-lived JWT token for CLI auto-authentication (Issue #397).
@@ -256,12 +277,18 @@ class JWTService:
         Args:
             user_id: User identifier
             user_email: User email
+            username: Display username (Issue #730)
 
         Returns:
             Encoded JWT token string (90-day expiry)
         """
         now = datetime.now(timezone.utc)
         expire = now + timedelta(days=CLI_TOKEN_EXPIRE_DAYS)
+
+        # Issue #730: Use provided username, or fall back to email prefix
+        display_username = username or (
+            user_email.split("@")[0] if "@" in user_email else user_email
+        )
 
         claims = JWTClaims(
             iss=self.issuer,
@@ -272,6 +299,7 @@ class JWTService:
             jti=str(uuid.uuid4()),
             user_id=user_id,
             user_email=user_email,
+            username=display_username,
             scopes=["cli:access"],  # Limited scope for CLI
             token_type=TokenType.CLI_SESSION.value,
             session_id=None,
@@ -324,6 +352,12 @@ class JWTService:
             )
 
             # Convert back to JWTClaims dataclass
+            # Issue #730: Support username claim (may not exist in older tokens)
+            user_email = payload["user_email"]
+            username = payload.get("username") or (
+                user_email.split("@")[0] if "@" in user_email else user_email
+            )
+
             claims = JWTClaims(
                 iss=payload["iss"],
                 aud=payload["aud"],
@@ -332,7 +366,8 @@ class JWTService:
                 iat=payload["iat"],
                 jti=payload["jti"],
                 user_id=payload["user_id"],
-                user_email=payload["user_email"],
+                user_email=user_email,
+                username=username,
                 scopes=payload["scopes"],
                 token_type=payload["token_type"],
                 session_id=payload.get("session_id"),

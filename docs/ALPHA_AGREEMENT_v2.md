@@ -2,7 +2,7 @@
 
 **Effective Date: December 11, 2025**
 **Software: Piper Morgan AI PM Assistant**
-**Version: 0.8.5-alpha**
+**Version: 0.8.5.1-alpha**
 
 ## 1. Acceptance of Terms
 
@@ -12,7 +12,7 @@ By cloning, downloading, installing, or using this software, you acknowledge tha
 
 You acknowledge that:
 
-- This is pre-release, experimental software (version 0.8.5-alpha)
+- This is pre-release, experimental software (version 0.8.5.1-alpha)
 - It contains known and unknown bugs, errors, and incomplete features
 - It may crash, lose data, or behave unpredictably
 - Features may be added, removed, or changed without notice
@@ -123,7 +123,7 @@ The software may collect the following data:
 
 ## 12. System Requirements and Setup
 
-- The software requires Docker, Python 3.9+, and other system dependencies
+- The software requires Docker, Python 3.11 or 3.12, and other system dependencies
 - The interactive setup wizard will verify system requirements
 - You are responsible for maintaining proper system configuration
 - Database and service management is handled automatically
@@ -150,4 +150,4 @@ GitHub: https://github.com/mediajunkie/piper-morgan-product
 
 _Last Updated: December 11, 2025_
 _Version: 2.2_
-_Software Version: 0.8.5-alpha_
+_Software Version: 0.8.5.1-alpha_
