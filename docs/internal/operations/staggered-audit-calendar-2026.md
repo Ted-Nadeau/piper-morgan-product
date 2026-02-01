@@ -8,13 +8,13 @@
 
 ## Audit Types & Cadences
 
-| Audit Type | Cadence | Duration | Owner |
-|------------|---------|----------|-------|
-| Pattern Sweep | 6 weeks | ~1 day | Lead Dev + specialized agents |
-| Methodology Audit | 6-8 weeks | ~2 hours | CIO (xian acting) |
-| Documentation Audit | 4 weeks | ~1 hour | CoS / Doc Manager |
-| Workstream Review | Weekly | ~1 hour | CoS + PM |
-| Role Health Check | 4 weeks | ~30 min | HOSR (when active) / CoS |
+| Audit Type | Cadence | Duration | Owner | Methodology |
+|------------|---------|----------|-------|-------------|
+| Pattern Sweep | 6 weeks | ~1 day | Lead Dev + specialized agents | `dev/active/pattern-sweep-2.0-framework.md` |
+| Methodology Audit | 6-8 weeks | ~2 hours | CIO (xian acting) | TBD |
+| Documentation Audit | 4 weeks | ~1 hour | CoS / Doc Manager | `.github/workflows/weekly-docs-audit.yml` |
+| Workstream Review | Weekly | ~1 hour | CoS + PM | N/A (informal) |
+| Role Health Check | 4 weeks | ~30 min | HOSR | `docs/internal/operations/role-health-check-methodology.md` |
 
 ---
 
@@ -227,8 +227,11 @@ CoS to maintain simple tracking:
 |------------|----------------|----------|--------|
 | Pattern Sweep | Dec 27, 2025 | Feb 3, 2026 | ✅ On track |
 | Methodology | TBD | Feb 17, 2026 | ⏳ Schedule |
-| Documentation | Dec 25, 2025 | Jan 13, 2026 | ✅ On track |
-| Role Health | N/A | Jan 20, 2026 | 🆕 New |
+| Documentation | Jan 26, 2026 | Feb 10, 2026 | ✅ On track |
+| Role Health | Jan 31, 2026 (informal) | Feb 17, 2026 | ✅ Methodology defined |
+
+**Note**: Role Health Check methodology formalized Jan 31, 2026. First formal audit Feb 17, 2026.
+HOSR provided informal baseline assessment Jan 31 showing all roles Low/Medium risk.
 
 ---
 

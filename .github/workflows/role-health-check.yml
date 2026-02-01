@@ -1,0 +1,192 @@
+name: Role Health Check Reminder
+
+on:
+  schedule:
+    # Runs every Monday at 9:00 AM Pacific (4:00 PM UTC)
+    # Logic inside determines if it's a role health check week (every 4 weeks)
+    - cron: "0 16 * * 1"
+  workflow_dispatch: # Allows manual trigger for testing or ad-hoc checks
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-and-create-issue:
+    runs-on: ubuntu-latest
+    name: Create Role Health Check Issue (if scheduled)
+
+    steps:
+      - name: Check if role health check week
+        id: check-week
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Role Health Check runs every 4 weeks starting Jan 20, 2026
+            // 2026 schedule: Jan 20, Feb 17, Mar 17, Apr 13, May 11, Jun 8, Jul 6, Aug 3, Aug 31, Sep 28, Oct 26, Nov 23, Dec 21
+            // Reference: docs/internal/operations/staggered-audit-calendar-2026.md
+
+            const today = new Date();
+            const year = today.getFullYear();
+
+            // Define check dates for 2026
+            const checkDates2026 = [
+              '2026-01-20', '2026-02-17', '2026-03-17', '2026-04-13',
+              '2026-05-11', '2026-06-08', '2026-07-06', '2026-08-03',
+              '2026-08-31', '2026-09-28', '2026-10-26', '2026-11-23', '2026-12-21'
+            ];
+
+            // For 2027+, calculate dynamically (every 4 weeks from Jan 18)
+            const checkDates2027 = [];
+            let d = new Date('2027-01-18'); // First Monday, then +4 weeks
+            for (let i = 0; i < 13; i++) {
+              checkDates2027.push(d.toISOString().split('T')[0]);
+              d.setDate(d.getDate() + 28); // 4 weeks
+            }
+
+            const allCheckDates = year === 2026 ? checkDates2026 : checkDates2027;
+            const todayStr = today.toISOString().split('T')[0];
+
+            const isCheckWeek = allCheckDates.includes(todayStr);
+
+            // Also allow manual trigger to bypass date check
+            const isManualTrigger = context.eventName === 'workflow_dispatch';
+
+            console.log(`Today: ${todayStr}`);
+            console.log(`Is role health check week: ${isCheckWeek}`);
+            console.log(`Is manual trigger: ${isManualTrigger}`);
+
+            return isCheckWeek || isManualTrigger;
+
+      - name: Check for existing issue
+        if: steps.check-week.outputs.result == 'true'
+        id: check-existing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date();
+            const fourWeeksAgo = new Date(today);
+            fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              labels: 'process,sapient-resources'
+            });
+
+            // Check if there's already a role health check issue for this period
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('ROLE-HEALTH-CHECK') &&
+              new Date(issue.created_at) > fourWeeksAgo
+            );
+
+            if (existingIssue) {
+              console.log(`Role health check issue already exists: #${existingIssue.number}`);
+              return existingIssue.number;
+            }
+
+            return null;
+
+      - name: Create role health check issue
+        if: steps.check-week.outputs.result == 'true' && steps.check-existing.outputs.result == 'null'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const today = new Date().toISOString().split('T')[0];
+            const fourWeeksAgo = new Date();
+            fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+            const periodStart = fourWeeksAgo.toISOString().split('T')[0];
+
+            const body = '# Role Health Check: ' + today + '\n\n' +
+              '**Generated**: ' + today + '\n' +
+              '**Auditor**: HOSR (Head of Sapient Relations)\n' +
+              '**Period Reviewed**: ' + periodStart + ' to ' + today + '\n' +
+              '**Methodology**: `docs/internal/operations/role-health-check-methodology.md`\n\n' +
+              '---\n\n' +
+              '## Pre-Audit Checklist\n\n' +
+              '- [ ] Pull session log inventory for past 4 weeks\n' +
+              '- [ ] Check briefing document timestamps\n' +
+              '- [ ] Review any incident reports mentioning role issues\n\n' +
+              '---\n\n' +
+              '## Role Assessments\n\n' +
+              '### Tier 1 Roles (Daily/Near-daily)\n\n' +
+              '| Role | Last Session | Briefing Age | Protocol Issues | Drift Risk | Notes |\n' +
+              '|------|--------------|--------------|-----------------|------------|-------|\n' +
+              '| Lead Developer | | | | | |\n' +
+              '| Chief of Staff | | | | | |\n\n' +
+              '### Tier 2 Roles (Weekly)\n\n' +
+              '| Role | Last Session | Briefing Age | Protocol Issues | Drift Risk | Notes |\n' +
+              '|------|--------------|--------------|-----------------|------------|-------|\n' +
+              '| Communications | | | | | |\n' +
+              '| Chief Architect | | | | | |\n' +
+              '| PPM | | | | | |\n' +
+              '| Docs Management | | | | | |\n\n' +
+              '### Tier 3 Roles (As-needed)\n\n' +
+              '| Role | Last Session | Briefing Age | Protocol Issues | Drift Risk | Notes |\n' +
+              '|------|--------------|--------------|-----------------|------------|-------|\n' +
+              '| CXO | | | | | |\n' +
+              '| CIO | | | | | |\n' +
+              '| HOSR | | | | | |\n\n' +
+              '### Tier 4 Roles (Advisory/Async)\n\n' +
+              '| Role | Briefing Age | Channel Health | Notes |\n' +
+              '|------|--------------|----------------|-------|\n' +
+              '| Ted Nadeau | | | |\n\n' +
+              '---\n\n' +
+              '## Summary\n\n' +
+              '| Risk Level | Count |\n' +
+              '|------------|-------|\n' +
+              '| Low | |\n' +
+              '| Medium | |\n' +
+              '| High | |\n' +
+              '| Critical | |\n\n' +
+              '---\n\n' +
+              '## Findings Requiring Action\n\n' +
+              '_List any Medium/High/Critical findings with remediation plans_\n\n' +
+              '---\n\n' +
+              '## Post-Audit Checklist\n\n' +
+              '- [ ] All roles assessed\n' +
+              '- [ ] Remediation actions identified for Medium+ risks\n' +
+              '- [ ] PM notified if any High/Critical findings\n' +
+              '- [ ] **Update staggered audit calendar** (`docs/internal/operations/staggered-audit-calendar-2026.md`):\n' +
+              '  - Update "Tracking Dashboard" with completion date\n' +
+              '  - Set "Last Completed" to today for Role Health Check row\n' +
+              '  - Update "Next Due" (4 weeks out per calendar)\n\n' +
+              '---\n\n' +
+              '## Drift Risk Criteria (Reference)\n\n' +
+              '| Risk | Criteria |\n' +
+              '|------|----------|\n' +
+              '| **Low** | Session within tier threshold AND briefing <30 days AND no issues |\n' +
+              '| **Medium** | Session within 2x threshold OR briefing 30-60 days OR minor protocol deviation |\n' +
+              '| **High** | Session >2x threshold OR briefing >60 days OR repeated protocol failures |\n' +
+              '| **Critical** | Identity confusion observed (role behaving out of character) |\n\n' +
+              '---\n\n' +
+              '**Schedule**: Every 4 weeks per staggered-audit-calendar-2026.md\n' +
+              '**Template Version**: 1.0 (January 31, 2026)\n\n' +
+              'Generated with [Claude Code](https://claude.ai/code)';
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'ROLE-HEALTH-CHECK: ' + today,
+              body: body,
+              labels: ['process', 'sapient-resources', 'role-health-check'],
+              assignees: ['mediajunkie']
+            });
+
+            console.log('Created role health check issue #' + issue.data.number);
+            return issue.data.number;
+
+      - name: Post completion summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isCheckWeek = ${{ steps.check-week.outputs.result }};
+            if (isCheckWeek) {
+              console.log('✅ Role health check workflow completed');
+              console.log('Check GitHub issues for the ROLE-HEALTH-CHECK issue');
+            } else {
+              console.log('ℹ️ Not a role health check week - no action taken');
+              console.log('Role health checks run every 4 weeks per staggered-audit-calendar-2026.md');
+            }

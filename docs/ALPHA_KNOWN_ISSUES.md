@@ -1,623 +1,138 @@
-# Known Issues & Feature Status (v0.8.5.1)
+# Alpha Known Issues (v0.8.5.1)
 
 **Version**: 0.8.5.1
 **Last Updated**: January 31, 2026
-**Status**: MUX Complete (Accessibility & Polish)
+
+This document helps alpha testers avoid wasting time on things we already know about.
 
 ---
 
-## ✅ What Works (Production Ready)
+## Known Issues
 
-These features have been tested, completed, and are ready for alpha testing:
+### Blocking
 
-### Core Infrastructure
+_None currently. All P0 issues resolved as of January 30, 2026._
 
-- ✅ **Integration Health Dashboard** (New in 0.8.3)
+### Annoying
 
-  - Real-time health status at Settings → Integrations
-  - One-click "Test" button for each integration
-  - "Test All" button for comprehensive health check
-  - Visual status indicators (healthy, degraded, failed, not configured)
-  - Error messages with fix suggestions
+| Issue | Description | Workaround |
+|-------|-------------|------------|
+| [#696](https://github.com/mediajunkie/piper-morgan-product/issues/696) | Settings uses hardcoded user ID | Settings changes work but may not attribute to correct user in audit logs |
+| [#697](https://github.com/mediajunkie/piper-morgan-product/issues/697) | Intent service uses hardcoded user ID | Chat works but user context not fully preserved |
 
-- ✅ **OAuth Connection Management** (New in 0.8.3)
+**Impact**: Both issues affect audit trail accuracy and multi-user attribution. Single-user alpha testing is unaffected functionally.
 
-  - Connect/disconnect Slack directly from Settings UI
-  - Connect/disconnect Google Calendar from Settings UI
-  - OAuth 2.0 with PKCE and state tokens (CSRF protection)
-  - Refresh tokens stored in secure keychain
-  - No more editing environment variables for integrations
+### Cosmetic
 
-- ✅ **GUI Setup Wizard** (Enhanced in 0.8.3)
-
-  - Visual web interface at http://localhost:8001/setup
-  - System health checks with visual indicators (Docker, Python, ports, database)
-  - API key configuration via web form (much easier than CLI)
-  - User account creation with real-time validation
-  - Support for OpenAI, Anthropic, Google Gemini, and **Notion** (new)
-  - Alternative CLI wizard still available: `python main.py setup`
-
-- ✅ **Interactive Standup Assistant** (New in 0.8.3.2)
-
-  - Conversational standup creation via chat ("let's write a standup")
-  - 7-state conversation flow (INITIATED → COMPLETE/ABANDONED)
-  - Preference gathering and learning within conversation
-  - Iterative refinement until satisfied
-  - Version history for standup drafts
-  - Performance monitoring: P95 < 500ms response times
-  - Memory optimization: Turn history limited to prevent unbounded growth
-  - Epic #242: CONV-MCP-STANDUP-INTERACTIVE complete (Issues #552-#556)
-
-- ✅ **Integration Settings** (New in 0.8.4)
-
-  - Configure all integration credentials from Settings → Integrations
-  - OAuth Connect for Slack and Google Calendar
-  - Personal Access Token configuration for GitHub (with keychain fallback)
-  - API Key configuration for Notion (with keychain fallback)
-  - Preferences panels for Calendar sync, Notion workspace, GitHub repos
-  - "Disconnect All" button for bulk management
-  - Epic #543 complete (Issues #544, #571-#579)
-
-- ✅ **Portfolio Onboarding** (New in 0.8.4)
-
-  - Conversational project setup for new users
-  - Triggered on first greeting ("Hello!")
-  - Multi-turn flow: INITIATED → GATHERING_PROJECTS → CONFIRMING → COMPLETE
-  - Natural language project extraction
-  - Creates Project entities in database for future context
-  - Issue #490: FTUX-PORTFOLIO complete
-
-- ✅ **Places & Home State UI** (New in 0.8.4.4)
-
-  - HomeStateService for context-aware home page rendering
-  - PlaceService for window-based navigation (Places as Windows #684)
-  - InteractionSpace enum for communication channel awareness
-  - 15 new template components for Places UI
-  - 638 template tests for UI stability
-  - Issues #419 and #684 complete
-
-- ✅ **Accessibility** (0.8.5)
-
-  - WCAG 2.1 AA contrast compliance (all ratios ≥4.5:1)
-  - ARIA landmarks throughout navigation and command palette
-  - Keyboard navigation support
-  - High contrast mode and reduced motion preferences
-  - Design token system v1.1.0
-
-- ✅ **Lifecycle State Persistence** (0.8.5)
-
-  - Projects, todos, work items, and features track lifecycle state
-  - Visual lifecycle indicators in UI views
-  - New Work Items view and Project Detail view
-
-- ✅ **Quality Validation** (0.8.5)
-
-  - 5253 automated tests (major expansion through MUX-IMPLEMENT)
-  - CI/CD quality gates with GitHub Actions
-  - 100% pass rate on critical path tests
-  - 638 template tests for UI stability
-
-- ✅ **System health checker** (`python main.py status`)
-
-  - Database connection status
-  - API key validation
-  - Performance metrics
-  - User detection (#255)
-  - Recommendations
-
-- ✅ **Preference system** (`python main.py preferences`)
-  - 5-dimension questionnaire (communication, work, decision, learning, feedback)
-  - Stores in alpha_users.preferences (JSONB)
-  - Personalizes Piper's behavior
-
-### User Management
-
-- ✅ **Multi-user support**
-
-  - Separate alpha_users table (21 columns, 9 indexes)
-  - User migration tool (`python main.py migrate-user`)
-  - Role-based access control (superuser, user)
-  - Clean alpha/production separation
-
-- ✅ **Authentication**
-  - Password setup via interactive wizard (bcrypt, 12 rounds)
-  - JWT token generation and validation
-  - Token blacklist with CASCADE delete (Issue #291)
-  - Secure keychain storage for API keys
-  - Session management
-  - Login/logout flow
-
-### Security & Audit
-
-- ✅ **Comprehensive audit logging**
-
-  - All authentication events logged
-  - API key operations logged
-  - User actions tracked
-  - JWT operations audited
-
-- ✅ **API key management**
-
-  - Multi-provider support (OpenAI, Anthropic, Google Gemini)
-  - Key validation before storage
-  - Zero-downtime rotation
-  - Strength validation
-  - Cost tracking and usage analytics
-  - Rotation reminders
-  - Secure keychain storage (API keys never stored in plain text)
-
-- ⚠️ **Data Encryption Status** (Important Security Note)
-  - **API keys**: Encrypted in system keychain ✅
-  - **Passwords**: Bcrypt-hashed (12 rounds) ✅
-  - **Data at rest**: NOT yet fully encrypted ❌
-  - **Recommendation**: Use test data only, no sensitive information
-  - **Planned**: Full encryption at rest for beta (0.9.0)
-
-- ✅ **Boundary enforcement (ethics layer)**
-  - Content-based harassment checking
-  - Inappropriate content filtering
-  - Boundary violation prevention
-  - Knowledge graph protection
-
-### Database & Persistence
-
-- ✅ **PostgreSQL database** (via Docker)
-
-  - Alembic migrations working
-  - SSL/TLS support
-  - Connection pooling
-  - Health checks
-  - Performance tests passing
-
-- ✅ **UUID-based user IDs** (Issue #262)
-
-  - Native PostgreSQL UUID type
-  - Optimized indexing and foreign keys
-  - 1.70ms lookup performance
-  - Migration complete (Nov 10, 2025)
-
-- ✅ **Referential integrity** (Issue #291)
-
-  - Token blacklist CASCADE delete
-  - Foreign key constraints enforced
-  - Orphaned token prevention
-  - Migration complete (Nov 10, 2025)
-
-- ✅ **Knowledge graph**
-  - Node creation and updates
-  - Edge management
-  - Boundary-filtered queries
-  - Bulk operations
-  - Subgraph extraction
-
-### File Operations
-
-- ✅ **File upload** (via web interface)
-
-  - Supported formats: PDF, DOCX, TXT, MD, JSON
-  - Max size: 10MB
-  - Security: MIME type validation, size limits
-  - User-isolated storage
-  - Authentication required
-
-- ✅ **Document processing**
-  - AI-powered analysis and summarization
-  - Content extraction
-  - Integration with LLM providers
-  - Database metadata tracking
-
-### Development Quality
-
-- ✅ **Test coverage**: 100% pass rate (5253 tests)
-
-  - Auth tests: 17/17 passing
-  - UUID migration tests: Verified
-  - Token blacklist FK tests: Verified
-  - Integration tests: Passing
-  - Standup tests: 260 tests (conversation, learning, performance)
-  - Template tests: 638 tests for UI stability
-  - Lifecycle tests: 147 tests
-
-- ✅ **CI/CD pipeline**: 13/13 workflows operational
-
-### UX Polish (Sprint A7)
-
-- ✅ **Quiet startup mode** (default)
-
-  - Minimal console output
-  - Use `--verbose` flag for details
-
-- ✅ **Auto-launch browser** (#256)
-  - Opens http://localhost:8001 after startup
-  - Skips in CI/SSH environments
-  - Disable with `--no-browser` flag
-
-### User Interface (Nov 22-23, 2025)
-
-- ✅ **Lists Management** (/lists)
-  - Create, view, edit, delete lists
-  - Share with other users (Viewer/Editor/Admin roles)
-  - Permission-aware UI with role badges
-  - Breadcrumb navigation
-  - Issue #379-6: Create button fixed (was commented out, now working)
-
-- ✅ **Todos Management** (/todos)
-  - Same functionality as Lists
-  - Separate organization for tasks
-  - Issue #379-7: Create button fixed (pattern reused from Lists)
-
-- ✅ **Projects Management** (/projects)
-  - Same functionality as Lists/Todos
-  - For larger work items
-
-- ✅ **Files Management** (/files)
-  - Upload files (PDF, DOCX, TXT, MD, JSON - max 10MB)
-  - Download files
-  - Delete files
-  - Owner-based access control
-  - Issue #379-8: UI built Nov 23 (backend was ready)
-
-- ✅ **Permission System**
-  - Share resources with specific users
-  - Role-based access (Viewer, Editor, Admin, Owner)
-  - Conversational permission commands ("share my list with alex@example.com as editor")
-  - Visual permission badges in UI
-  - Permission helper functions (canEdit, canDelete, canShare, isOwner)
-
-- ✅ **Authentication UI**
-  - User menu in navigation header
-  - Logout functionality (Issue #379-14: endpoint path corrected)
-  - Token revocation on logout
-  - Multi-user testing enabled
-
-- ✅ **Interactive Standup Assistant** (Enhanced in 0.8.3.2)
-  - Conversational standup creation ("let's write a standup" or "/standup")
-  - 7-state conversation flow with preference gathering
-  - Iterative refinement and version history
-  - P95 response time: 0.03ms (target: <500ms)
-  - Epic #242: CONV-MCP-STANDUP-INTERACTIVE complete
-
-- ✅ **Quick Standup Generation** (Legacy)
-  - Generate daily standup reports via button
-  - 2-3 second completion time
-  - AI-powered summaries
-  - Issue #379-4: Proxy endpoint fixed
-
-- ✅ **Navigation Polish** (Issue #379 - 14 fixes total)
-  - Breadcrumb navigation on all pages (Home › Lists, etc.)
-  - Normalized titles (removed "My" prefix from Lists/Todos)
-  - Settings pages on unified grid
-  - Integrations placeholder page (no more 404 errors)
-  - Privacy & Data settings with clear messaging
-  - Learning dashboard cosmetic polish
-  - Home page help shortcut
-
-### Security & Access Control (Nov 21-23, 2025)
-
-- ✅ **SEC-RBAC Phase 1 Complete** (Issue #357)
-  - owner_id validation on 9 resource tables (Files, Lists, Todos, Projects, KnowledgeGraph, etc.)
-  - shared_with JSONB arrays for permission grants
-  - Admin bypass pattern (owner_id checks skip for is_admin users)
-  - All CRUD repositories RBAC-aware
-  - Migration: 5 Alembic migrations (add columns, backfill owner_id, add shared_with)
-  - 22/22 integration tests passing
-  - ADR-044: Lightweight RBAC architecture approved
+_None currently tracked._
 
 ---
 
-## 🗣️ Chat Capabilities (Canonical Query Status)
+## Partially Complete
 
-**Reference**: [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
-**Last Verified**: December 24, 2025 (240 unit tests passing, 19 intent categories as of Jan 2026)
+These features exist but have rough edges. Expect some friction.
 
-Piper understands 25 canonical queries across 5 categories. Here's what actually works:
-
-### Summary: 19/25 PASS (76%), 1 PARTIAL, 5 NOT IMPL
-
-| Category | Status | Coverage |
-|----------|--------|----------|
-| Identity (1-5) | ✅ **100%** | 5/5 PASS |
-| Temporal (6-10) | ✅ **100%** | 5/5 PASS |
-| Spatial (11-15) | ✅ 80% | 4/5 PASS, 1 NOT IMPL |
-| Capability (16-20) | ✅ **100%** | 5/5 PASS |
-| Predictive (21-25) | ⚠️ 20% | 1 PARTIAL, 4 NOT IMPL |
-
-### What Works in Chat (19 queries)
-
-**Identity Queries** (all 5 work):
-| Query | Example | Status |
-|-------|---------|--------|
-| Name/role | "What's your name?" | ✅ Works |
-| Capabilities | "What can you do?" | ✅ Dynamic list from PluginRegistry |
-| Health check | "Are you working properly?" | ✅ Checks database + integrations |
-| Help/onboarding | "How do I get help?" | ✅ Returns resources + examples |
-| Differentiation | "What makes you different?" | ✅ Unique features + positioning |
-
-**Temporal Queries** (all 5 work):
-| Query | Example | Status |
-|-------|---------|--------|
-| Date/time | "What day is it?" | ✅ With calendar context |
-| Retrospective | "What did we accomplish yesterday?" | ✅ Completed todos from yesterday |
-| Agenda | "What's on the agenda today?" | ✅ Calendar + todos + priorities |
-| Last activity | "When did we last work on this?" | ✅ GitHub activity lookup |
-| Duration | "How long have we been working on this?" | ✅ Project duration calculation |
-
-**Spatial Queries** (4 of 5 work):
-| Query | Example | Status |
-|-------|---------|--------|
-| Project list | "What projects are we working on?" | ✅ With GitHub metadata |
-| Landscape | "Show me the project landscape" | ✅ Health status grouping |
-| Priority | "Which project should I focus on?" | ✅ Smart recommendations |
-| Project status | "What's the status of [project]?" | ✅ Detailed with issues |
-| Lifecycle | "Where are we in the project lifecycle?" | ❌ Not implemented |
-
-**Capability Queries** (all 5 work):
-| Query | Example | Status |
-|-------|---------|--------|
-| GitHub issues | "Create a GitHub issue about X" | ✅ Uses defaults from PIPER.md |
-| Project list | "List all my projects" | ✅ Routes to spatial handler |
-| Status report | "Give me a status report" | ✅ Aggregated health + todos |
-| Document analysis | "Analyze this document" | ✅ Via Notion (Issue #515) |
-| Document search | "Search for X in our documents" | ✅ Via Notion (Issue #516) |
-
-### What's Partially Implemented (1 query)
-
-| Query | Example | Current Behavior |
-|-------|---------|------------------|
-| Focus guidance | "What should I focus on today?" | Returns time-based advice (no calendar integration yet) |
-
-### What's Not Yet Implemented (5 queries)
-
-These return a graceful fallback message (no errors):
-
-| Query | Example | Reason |
-|-------|---------|--------|
-| Lifecycle detection | "Where are we in the project lifecycle?" | Needs workflow state tracking (may remove from canonical list) |
-| Pattern recognition | "What patterns do you see?" | Future v1.1 feature |
-| Risk analysis | "What risks should I be aware of?" | Future v1.1 feature |
-| Opportunity detection | "What opportunities should I pursue?" | Future v1.1 feature |
-| Milestone tracking | "What's the next milestone?" | Future v1.1 feature |
-
-**For detailed testing**: See [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md)
-
-**Related Issues** (all resolved Dec 21-24, 2025):
-- #499 - Agenda aggregation ✅
-- #500 - Project-specific status ✅
-- #501 - Historical retrospective ✅
-- #504-#511 - Various temporal/spatial queries ✅
-- #513 - Status report generator ✅
-- #515 - Document analysis via Notion ✅ (Dec 24)
-- #516 - Document search via Notion ✅ (Dec 24)
+| Feature | Status | What Works | What Doesn't |
+|---------|--------|------------|--------------|
+| **Data Encryption** | Partial | API keys encrypted in keychain, passwords bcrypt-hashed | Data at rest not fully encrypted. Use test data only. |
+| **GitHub OAuth** | Not started | PAT token auth works | OAuth connect flow planned for future release |
+| **Advanced Privacy** | Basic only | Owner-based access, sharing works | Granular controls planned for beta |
 
 ---
 
-## ⚠️ Known Issues
+## Needs Testing
 
-### Minor Issues (Non-Blocking)
+These features are complete but need real-world validation from alpha testers:
 
-**Cosmetic Issues** (Low Priority):
-- Settings/Personality page: Minor layout inconsistencies (Issue #379-11 fixed)
-- Some pages had missing breadcrumbs (Issue #379 - all fixed)
-
-**Features with Placeholder Pages**:
-- ⏸️ **Advanced Privacy Controls**: Basic privacy working (owner_id, shared_with), granular controls planned for beta
-- ⏸️ **GitHub OAuth**: GitHub integration uses PAT tokens; OAuth connect flow planned for 0.8.4
-
-**All P0/P1 issues resolved** as of November 23, 2025:
-- ✅ Issue #262: UUID Migration - Complete
-- ✅ Issue #291: Token Blacklist FK - Complete
-- ✅ Issue #263: Response Humanization - Complete
-- ✅ Issue #297: Password Setup in Wizard - Complete
-- ✅ Issue #376: Frontend RBAC Awareness - Complete (Nov 22)
-- ✅ Issue #379: UI Quick Fixes - Complete (14 issues fixed, Nov 23)
-- ✅ Issue #357: SEC-RBAC Phase 1 - Complete (Nov 21)
-
-**Note**: This is alpha software. New issues may be discovered during testing.
+| Feature | What to Test | How to Access |
+|---------|--------------|---------------|
+| **Portfolio Onboarding** | Does the conversational project setup make sense? | Say "Hello!" as a new user |
+| **Interactive Standup** | Does iterative refinement feel natural? | Say "let's write a standup" |
+| **Learning System** | Does Piper adapt to your communication style over time? | Use for a few days, note any personalization |
+| **Lifecycle Indicators** | Do status badges appear correctly on projects/todos? | Check Projects and Todos views |
+| **Accessibility** | Keyboard navigation, screen reader support | Tab through UI, test with VoiceOver |
+| **Integration Health** | Does the dashboard accurately reflect your integration status? | Settings → Integrations → Test All |
 
 ---
 
-## 🚧 Experimental / Needs Testing
+## What Works
 
-These features exist but need more alpha testing validation:
+For detailed feature documentation, see [ALPHA_FEATURE_GUIDE.md](ALPHA_FEATURE_GUIDE.md).
 
-### Learning System
+**Summary by category:**
 
-- **Pattern recognition**: Implemented but needs real-world usage data
-- **Preference learning**: Working but needs validation with varied user styles
-- **Workflow optimization**: Chain-of-Draft implemented, needs testing
-- **Intelligent automation**: Safety-first system complete, needs alpha validation
-
-### Integrations (Updated in 0.8.3)
-
-**Now with OAuth and Health Dashboard!**
-
-- ✅ **Slack**: OAuth connect from Settings UI, message sending, channel reading
-- ✅ **Google Calendar**: OAuth connect from Settings UI, schedule checking, event creation
-- ✅ **Notion**: API key in setup wizard, page creation, search
-- ✅ **GitHub**: PAT token configuration, issue creation, updates, search
-- ✅ **Health Dashboard**: Real-time status monitoring for all integrations
-
-### Interactive Standup Assistant (New in 0.8.3.2)
-
-- **Status**: ✅ Complete (Epic #242 closed Jan 8, 2026)
-- **Features**:
-  - Conversational standup creation via chat
-  - 7-state conversation flow with state machine validation
-  - Preference gathering and learning integration
-  - Iterative refinement with version history
-  - Performance monitoring with structured logging
-- **Performance**: P95 0.03ms response time (target: <500ms)
-- **Test Coverage**: 260 standup tests passing
-- **Validation needed**: Real daily usage with alpha testers
+- **Setup**: GUI wizard, CLI wizard, system health checks
+- **Authentication**: Login/logout, JWT tokens, password security
+- **Integrations**: Slack (OAuth), Google Calendar (OAuth), GitHub (PAT), Notion (API key), Health Dashboard
+- **Core UI**: Lists, Todos, Projects, Files — all with CRUD and sharing
+- **Chat**: 19 of 25 canonical queries working (76%). See [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md) for details.
+- **Accessibility**: WCAG 2.1 AA compliant, keyboard nav, high contrast mode
+- **Quality**: 5,253 automated tests passing
 
 ---
 
-## 📋 Planned for Beta (0.9.0)
+## Planned for Beta
 
-<!-- TODO: Refine after PPM roadmap review. Current list based on open MVP milestone issues. -->
+Brief overview. See [roadmap](internal/planning/roadmap/roadmap.md) for full details.
 
-### MVP Foundation (M1)
-
-- **Encryption at rest** for sensitive data (#358)
-- **Auth context fixes**: Remove hardcoded user IDs from intent service and settings (#696, #697)
-- **RBAC Phases 4-5**: Projects and Files ownership enforcement (#470)
-- **WebSocket infrastructure** for real-time communication (#557)
-- **Token revocation** on integration disconnect (#542)
-- **Test reliability** improvements for production confidence (#190, #352)
-
-### MVP Activation (M2)
-
-- **Wiring gaps**: Database-backed repositories in canonical handlers, boundary enforcer in LLM classifier, Slack blocker detection, GitHub service integration (#690-695)
-- **Notion integration activation** (#304)
-- **Lifecycle UI completion**: Lists, Home/Conversations views (#714, #715)
-- **Insight surfacing rules** (#707)
-- **E2E testing** and CI smoke test integration (#191, #276)
-
-### MVP Skills (M3)
-
-- **Core Skills Library** implementation (#315)
-- **Enhanced priority and focus queries** with real data (#496, #497)
-- **Features View** with lifecycle (#716)
-- **Multi-Agent Coordinator** deployment (#118)
-
-### MVP Document Revolution (M4)
-
-- **Unified document processing** via Skills (#302)
-- **File Browser and Document Management UI** (#313)
-- **Document Viewer** with lifecycle (#712, #713)
-
-### MVP Polish (M5)
-
-- **Registration and password reset** flow (#441)
-- **Interactive Slack standup** features (#244)
-- **Priority calculation engine** (#103)
-- **Database migration rollback** testing (#338)
-
-### MVP Future (M6)
-
-- **Cross-channel portfolio sharing** (#568)
-- **Strategic recommendations** (#106)
-- **Time allocation analysis** (#104)
-- **Alternate issue providers** (Jira, Linear, Notion) (#546)
+| Milestone | Focus |
+|-----------|-------|
+| M1: Foundation | Encryption at rest, auth context fixes, WebSocket infrastructure |
+| M2: Activation | Wiring gaps, Notion activation, lifecycle UI completion |
+| M3: Skills | Core skills library, multi-agent coordinator |
+| M4: Documents | Unified document processing, file browser |
+| M5: Polish | Registration flow, priority engine |
 
 ---
 
-## 🐛 How to Report Issues
+## How to Report Issues
 
-### If You Find a Bug
+### Before Reporting
 
-1. **Check this list first** - Is it already known?
-2. **Gather context**:
-   ```bash
-   python main.py status > status.txt
-   ```
-3. **Create detailed report**:
-   ```
-   WHAT I TRIED: [specific action]
-   WHAT EXPECTED: [expected result]
-   WHAT HAPPENED: [actual result]
-   ERROR MESSAGE: [if any]
-   SYSTEM STATUS: [attach status.txt]
-   ```
+1. Check this list — is it already known?
+2. Gather context: `python main.py status > status.txt`
 
-### Reporting Channels
+### What to Include
 
-- **GitHub Issues**: For bugs and feature requests
+```
+WHAT I TRIED: [specific action]
+WHAT I EXPECTED: [expected result]
+WHAT HAPPENED: [actual result]
+ERROR MESSAGE: [if any]
+```
+
+### Where to Report
+
+- **GitHub Issues**: [Create new issue](https://github.com/mediajunkie/piper-morgan-product/issues/new)
 - **Email**: christian@[domain] for private issues
 - **Weekly Check-in**: Discuss during scheduled calls
 
 ---
 
-## 📊 Feature Completeness Matrix
+## Testing Focus
 
-| Feature Category     | Status          | Alpha Ready? | Notes                    |
-| -------------------- | --------------- | ------------ | ------------------------ |
-| Setup Wizard         | ✅ Complete     | Yes          | With Notion support (0.8.3) |
-| Integration Dashboard| ✅ Complete     | Yes          | Health status + testing (0.8.3) |
-| OAuth Connections    | ✅ Complete     | Yes          | Slack + Calendar (0.8.3) |
-| User Management      | ✅ Complete     | Yes          | UUID-based IDs (#262)    |
-| Authentication       | ✅ Complete     | Yes          | JWT + bcrypt + blacklist |
-| Password Security    | ✅ Complete     | Yes          | Bcrypt 12 rounds (#297)  |
-| API Keys             | ✅ Complete     | Yes          | Multi-provider           |
-| File Upload          | ✅ Complete     | Yes          | 10MB, 5 formats          |
-| Document Processing  | ✅ Complete     | Yes          | LLM-powered analysis     |
-| Audit Logging        | ✅ Complete     | Yes          | Comprehensive            |
-| Boundary Enforcement | ✅ Complete     | Yes          | Ethics layer             |
-| Knowledge Graph      | ✅ Complete     | Yes          | With boundaries          |
-| Learning System      | 🚧 Experimental | Partial      | Needs validation         |
-| Integrations         | ✅ Complete     | Yes          | OAuth + health dashboard (0.8.3) |
-| Interactive Standup  | ✅ Complete     | Yes          | Epic #242 complete (0.8.3.2) |
-| Lists Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
-| Todos Management     | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
-| Projects Management  | ✅ Complete     | Yes          | CRUD + sharing (Issue #376) |
-| Files Management     | ✅ Complete     | Yes          | Upload/download/delete (Issue #379) |
-| Permission System    | ✅ Complete     | Yes          | RBAC + sharing + conversational |
-| SEC-RBAC             | ✅ Complete     | Yes          | Phase 1 owner_id validation |
-| Logout Functionality | ✅ Complete     | Yes          | Issue #379-14 fixed      |
-| Navigation Polish    | ✅ Complete     | Yes          | 14 QA issues fixed       |
+**Please focus on:**
+- Setup experience — was the wizard intuitive?
+- Daily workflows — what feels natural vs. clunky?
+- Integration points — if you use GitHub/Slack/Notion/Calendar
+- Performance — any lag or delays?
+- Overall feel — delightful or frustrating?
 
----
-
-## 🎯 Alpha Testing Goals
-
-What we're specifically trying to validate:
-
-1. **Setup Experience**: Is the wizard intuitive? Any confusing steps?
-2. **Preference System**: Do the 5 dimensions make sense? Any missing?
-3. **Daily Usage**: What workflows feel natural? What's clunky?
-4. **Performance**: Is it fast enough? Any lag or delays?
-5. **Reliability**: Does it crash? Lose data? Behave unpredictably?
-6. **Value**: Does it actually help with PM work? Or just overhead?
-
----
-
-## 📝 Notes for Alpha Testers
-
-**What to Focus On:**
-
-- Lifecycle indicators (do they show up on projects and todos?)
-- New views (Work Items, Project Detail)
-- Accessibility (keyboard navigation, screen reader support)
-- Setup experience (did wizard work smoothly?)
-- Core workflows (task management, document handling)
-- Integration points (if you use GitHub/Slack/Notion)
-- Overall "feel" (is it delightful or frustrating?)
-
-**What to Ignore:**
-
-- Missing features (see "Planned for Beta")
-- One-off quirks (unless they're blocking)
-
-**What to Report:**
-
+**Please report:**
 - Blockers (can't use at all)
 - Frequent annoyances (happens repeatedly)
 - Delightful surprises (what worked great!)
-- Missing expectations (thought it would do X, doesn't)
-
----
-
-## 🔄 Update Frequency
-
-This document will be updated:
-
-- **Weekly** during active alpha testing
-- **After each alpha release** (0.8.1, 0.8.2, etc.)
-- **As issues are discovered** and fixed
+- Missing expectations (thought it would do X)
 
 ---
 
 ## See Also
 
-- `ALPHA_TESTING_GUIDE.md` - Setup and usage instructions
-- `ALPHA_AGREEMENT_v2.md` - Legal terms and conditions
-- `ALPHA_QUICKSTART.md` - Quick 2-5 minute setup guide
-- `VERSION_NUMBERING.md` - Understanding version 0.8.5.1
-- `releases/RELEASE-NOTES-v0.8.5.md` - What changed in this release
-- GitHub Issues: https://github.com/mediajunkie/piper-morgan-product/issues
+- [ALPHA_FEATURE_GUIDE.md](ALPHA_FEATURE_GUIDE.md) — What's available and how to use it
+- [ALPHA_TESTING_GUIDE.md](ALPHA_TESTING_GUIDE.md) — Setup and usage instructions
+- [ALPHA_QUICKSTART.md](ALPHA_QUICKSTART.md) — Quick 2-5 minute setup
+- [Canonical Query Test Matrix](internal/testing/canonical-query-test-matrix.md) — Chat capabilities detail
 
 ---
 
-_Last Updated: January 28, 2026_
-_Status: MUX Complete - Accessible UI, lifecycle persistence, 5253 tests (76% canonical query coverage)_
-_Software Version: 0.8.5.1_
+_Last Updated: January 31, 2026_

@@ -1,7 +1,7 @@
 # Release Runbook
 
-**Version**: 1.5
-**Last Updated**: January 28, 2026
+**Version**: 1.6
+**Last Updated**: January 31, 2026
 
 This runbook documents the complete process for releasing a new version of Piper Morgan to production.
 
@@ -305,6 +305,46 @@ For each alpha-facing document, verify these content areas are current:
 
 **Procedure**: Read each alpha doc in full. For each content area above, verify the claim matches reality. If screenshots are stale, flag for PM (screenshots require human capture).
 
+### Alpha Known Issues Maintenance
+
+**Purpose**: `ALPHA_KNOWN_ISSUES.md` exists to save testers time by documenting what's broken, incomplete, or needs testing. It is NOT a feature list.
+
+**Structure** (maintain this order):
+1. Known Issues (Blocking / Annoying / Cosmetic) — the actual purpose
+2. Partially Complete — features with rough edges
+3. Needs Testing — where to focus alpha effort
+4. What Works — brief summary only, links to Feature Guide
+5. Planned for Beta — brief, links to roadmap
+6. How to Report Issues
+
+**Per-release updates**:
+- [ ] Check GitHub for open bugs: `gh issue list --label bug --state open`
+- [ ] Move fixed issues out of Known Issues section
+- [ ] Add any new known issues discovered
+- [ ] Update "Partially Complete" if features graduated or regressed
+- [ ] Update "Needs Testing" based on what's new this release
+- [ ] Update version number and date in header
+
+**Anti-patterns to avoid**:
+- Detailed feature descriptions (belongs in ALPHA_FEATURE_GUIDE.md)
+- Resolved issue numbers (historical, not useful to testers)
+- Feature marketing copy (this is an issues doc)
+
+**Target**: Under 200 lines. If longer, content is probably misplaced.
+
+### Alpha Feature Guide Maintenance
+
+**Purpose**: `ALPHA_FEATURE_GUIDE.md` documents what Piper can do and how to use it.
+
+**Per-release updates**:
+- [ ] Add new features with brief "How to use" guidance
+- [ ] Update changed features
+- [ ] Remove deprecated features
+- [ ] Update version number and date in header
+- [ ] Update test count in Technical Details section
+
+**Structure**: Organized by user task, not by technical component.
+
 ### Quick Audit Checklist
 
 | Category | Files | Check For |
@@ -316,7 +356,8 @@ For each alpha-facing document, verify these content areas are current:
 | Briefing | `docs/briefing/BRIEFING-CURRENT-STATE.md` | STATUS BANNER version, Last Updated, history table |
 | **Tier 2: Alpha Docs** | | |
 | Testing Guide | `docs/ALPHA_TESTING_GUIDE.md` | Header version, What's New section, footer |
-| Known Issues | `docs/ALPHA_KNOWN_ISSUES.md` | Header version, title with (vX.Y.Z) |
+| Known Issues | `docs/ALPHA_KNOWN_ISSUES.md` | Header version, title with (vX.Y.Z), <200 lines |
+| Feature Guide | `docs/ALPHA_FEATURE_GUIDE.md` | Header version, test count in Technical Details |
 | Quickstart | `docs/ALPHA_QUICKSTART.md` | Header version, What's New section |
 | Agreement | `docs/ALPHA_AGREEMENT_v2.md` | Version in 3 places |
 | **Tier 3: Other Docs** | | |
@@ -349,7 +390,8 @@ For each alpha-facing document, verify these content areas are current:
 - [ ] docs/briefing/BRIEFING-CURRENT-STATE.md updated
 - [ ] docs/README.md updated (release notes quick link)
 - [ ] docs/ALPHA_TESTING_GUIDE.md updated
-- [ ] docs/ALPHA_KNOWN_ISSUES.md updated
+- [ ] docs/ALPHA_KNOWN_ISSUES.md updated (<200 lines, issues first)
+- [ ] docs/ALPHA_FEATURE_GUIDE.md updated
 - [ ] docs/ALPHA_QUICKSTART.md updated
 - [ ] docs/ALPHA_AGREEMENT_v2.md updated
 - [ ] docs/operations/alpha-onboarding/email-template.md updated
@@ -378,6 +420,7 @@ For each alpha-facing document, verify these content areas are current:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6 | 2026-01-31 | Added ALPHA_KNOWN_ISSUES and ALPHA_FEATURE_GUIDE maintenance guidance, updated Completion Matrix |
 | 1.5 | 2026-01-28 | Added Content Accuracy Audit (beyond version grep), consolidated to single email template, updated Completion Matrix |
 | 1.4 | 2026-01-19 | Added Documentation Audit Step with grep command, added Completion Matrix template |
 | 1.3 | 2026-01-15 | Complete file inventory: marked Alpha docs and templates as MANDATORY, added specific file locations |
