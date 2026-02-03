@@ -97,7 +97,13 @@ class TestFileResolverEdgeCases:
 
     @pytest.mark.smoke
     async def test_identical_filenames_different_times(self, async_transaction):
-        """Test handling multiple files with same name"""
+        """Test handling multiple files with same name but different upload times.
+
+        Issue #768: With correct timezone handling, files with significantly different
+        upload times now have different recency scores. Files 1+ hours apart will
+        have score differences > 0.2 (ambiguity threshold), so the most recent
+        file should be returned.
+        """
         owner_id = str(uuid4())
         files = []
         async with async_transaction as session:
@@ -121,8 +127,13 @@ class TestFileResolverEdgeCases:
                 action="analyze_report",
                 context={"original_message": "analyze the report"},
             )
+
+            # With correct timezone handling (#768), files hours apart have
+            # significantly different recency scores (>0.2 difference).
+            # The most recent file should be returned, not ambiguity error.
             file_id, confidence = await resolver.resolve_file_reference(intent, owner_id)
-            assert file_id == files[0].id  # Most recent
+            assert file_id == files[0].id  # Most recent file wins
+            assert confidence > 0.5  # Should have reasonable confidence
 
     @pytest.mark.smoke
     async def test_special_characters_in_filename(self, async_transaction):

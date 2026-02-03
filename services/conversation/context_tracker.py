@@ -113,7 +113,6 @@ class EnhancedContextTracker:
             "user": [
                 r"@([a-zA-Z0-9-_]+)",
                 r"user ([a-zA-Z0-9-_]+)",
-                r"(I|me|my|you|your)",
             ],
         }
 
@@ -404,6 +403,18 @@ class EnhancedContextTracker:
                 error=str(e),
             )
 
+    def _calculate_conversation_age(self, created_at: datetime) -> float:
+        """Calculate conversation age in seconds, handling timezone correctly.
+
+        Issue #768: created_at may come from database (UTC) while datetime.now()
+        is local time. Use UTC comparison to avoid negative age calculations.
+        """
+        from services.utils.datetime_utils import ensure_utc_naive, utc_now_naive
+
+        now = utc_now_naive()
+        created_utc = ensure_utc_naive(created_at)
+        return (now - created_utc).total_seconds()
+
     async def get_conversation_summary(self, conversation_id: str) -> Dict[str, Any]:
         """Get summary of conversation context"""
         conv_state = self.conversation_states.get(conversation_id)
@@ -426,7 +437,8 @@ class EnhancedContextTracker:
             "stats": {
                 "total_turns": len(conv_state.conversation_flow),
                 "unique_entities": len(conv_state.active_entities),
-                "conversation_age": (datetime.now() - conv_state.created_at).total_seconds(),
+                # Issue #768: Use UTC for comparison since created_at may come from database
+                "conversation_age": self._calculate_conversation_age(conv_state.created_at),
             },
         }
 

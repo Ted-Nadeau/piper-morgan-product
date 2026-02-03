@@ -202,8 +202,12 @@ class FileResolver:
         if not upload_time:
             return 0.0
 
-        now = datetime.now()
-        age = now - upload_time
+        # Issue #768: Use UTC for comparison since database stores times in UTC
+        from services.utils.datetime_utils import ensure_utc_naive, utc_now_naive
+
+        now = utc_now_naive()
+        upload_utc = ensure_utc_naive(upload_time)
+        age = now - upload_utc
 
         # Last 5 minutes: full score
         if age <= timedelta(minutes=5):
@@ -285,7 +289,12 @@ class FileResolver:
         # Recent references worth more
         recency_bonus = 0.0
         if file.last_referenced:
-            age = datetime.now() - file.last_referenced
+            # Issue #768: Use UTC for comparison since database stores times in UTC
+            from services.utils.datetime_utils import ensure_utc_naive, utc_now_naive
+
+            now = utc_now_naive()
+            last_ref_utc = ensure_utc_naive(file.last_referenced)
+            age = now - last_ref_utc
             if age <= timedelta(hours=1):
                 recency_bonus = 0.3
             elif age <= timedelta(hours=24):

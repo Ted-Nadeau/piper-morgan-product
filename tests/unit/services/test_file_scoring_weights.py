@@ -107,13 +107,18 @@ async def test_scoring_component_breakdown():
     )
 
     # Test scoring components in a separate session
+    # Issue #768: Must retrieve file from DB to get UTC timestamps for correct scoring
     async with AsyncSessionFactory.session_scope_fresh() as session:
         repo = FileRepository(session)
         resolver = FileResolver(repo)
-        recency_score = resolver._calculate_recency_score(file.upload_time)
-        type_score = resolver._calculate_type_score(file.file_type, intent.action)
-        name_score = resolver._calculate_name_score(file.filename, intent)
-        usage_score = resolver._calculate_usage_score(file)
+        # Retrieve the file from DB to get proper UTC timestamp
+        db_files = await repo.get_files_for_session(owner_id)
+        assert len(db_files) == 1, f"Expected 1 file, got {len(db_files)}"
+        db_file = db_files[0]
+        recency_score = resolver._calculate_recency_score(db_file.upload_time)
+        type_score = resolver._calculate_type_score(db_file.file_type, intent.action)
+        name_score = resolver._calculate_name_score(db_file.filename, intent)
+        usage_score = resolver._calculate_usage_score(db_file)
         assert 0.0 <= recency_score <= 1.0, f"Recency score {recency_score} out of range"
         assert 0.0 <= type_score <= 1.0, f"Type score {type_score} out of range"
         assert 0.0 <= name_score <= 1.0, f"Name score {name_score} out of range"
